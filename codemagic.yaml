@@ -1,0 +1,105 @@
+# codemagic.yaml — buildy aplikacji mobilnej PrzetargAI (Expo / React Native)
+#
+# Aplikacja jest w katalogu mobile/ (monorepo) — skrypty wchodzą do mobile/.
+# Natywne katalogi ios/ i android/ NIE są w repo — generuje je w CI `expo prebuild`.
+#
+# Konfiguracja po stronie Codemagic UI (wymagana przed pierwszym buildem):
+#  - Integracja App Store Connect API (rola Admin) — nazwa musi zgadzać się poniżej.
+#  - Grupa zmiennych „ios_signing" z CERTIFICATE_PRIVATE_KEY (klucz RSA, base64, Secure).
+#  - Keystore Androida (android_signing) — referencja „przetargai_keystore".
+#  - Zmienna GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (Google Play, JSON konta usługi).
+# Szczegóły: runbooks/deploy.md.
+
+workflows:
+
+  # ============================ iOS ============================
+  ios-release:
+    name: PrzetargAI iOS (TestFlight)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      # Istniejąca integracja z Codemagic (klucz API App Store Connect jest na
+      # poziomie konta — działa dla każdej apki). Reużyta z ProbWin AI.
+      app_store_connect: ProbWin AI Connect Key
+    environment:
+      groups:
+        - ios_signing            # zawiera CERTIFICATE_PRIVATE_KEY (base64, Secure)
+      vars:
+        BUNDLE_ID: pl.przetargai.app
+        APPLE_TEAM_ID: B7J6A7R258  # poziom konta — nie jest sekretem
+        XCODE_SCHEME: PrzetargAI   # nazwa schematu generowanego przez `expo prebuild`
+      node: 24
+      xcode: latest
+      cocoapods: default
+    # UWAGA: świadomie BEZ deklaratywnego bloku `ios_signing:` — robi pre-check
+    # i pada na „No matching profiles found", gdy profil tworzymy dopiero w skrypcie.
+    scripts:
+      - name: Instalacja zależności
+        script: cd mobile && npm ci
+      - name: Expo prebuild (iOS)
+        script: cd mobile && npx expo prebuild --platform ios --no-install
+      - name: Instalacja CocoaPods
+        script: cd mobile/ios && pod install
+      - name: Code signing
+        script: |
+          set -ex
+          keychain initialize
+          echo "$CERTIFICATE_PRIVATE_KEY" | base64 --decode > "$HOME/key.pem"
+          chmod 600 "$HOME/key.pem"
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE --create \
+            --certificate-key=@file:"$HOME/key.pem"
+          keychain add-certificates
+          cd mobile
+          xcode-project use-profiles \
+            --export-options-plist "$CM_BUILD_DIR/export_options.plist"
+      - name: Numer builda
+        script: cd mobile/ios && agvtool new-version -all $(($BUILD_NUMBER + 100))
+      - name: Build IPA
+        script: |
+          set -ex
+          cd mobile
+          xcode-project build-ipa \
+            --workspace "ios/$XCODE_SCHEME.xcworkspace" \
+            --scheme "$XCODE_SCHEME" \
+            --export-options-plist "$CM_BUILD_DIR/export_options.plist"
+    artifacts:
+      - mobile/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+
+  # ========================== Android ==========================
+  android-release:
+    name: PrzetargAI Android (Google Play — internal)
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      android_signing:
+        - przetargai_keystore   # NOWY keystore dla PrzetargAI (keystore jest per-aplikacja)
+      groups:
+        - google_credentials    # zawiera GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+      vars:
+        PACKAGE_NAME: pl.przetargai.app
+      node: 24
+    scripts:
+      - name: Instalacja zależności
+        script: cd mobile && npm ci
+      - name: Expo prebuild (Android)
+        script: cd mobile && npx expo prebuild --platform android --no-install
+      - name: Konfiguracja podpisu release
+        script: cd mobile && node scripts/configure-android-release-signing.mjs
+      - name: Numer wersji
+        script: cd mobile/android && echo "versionCode=$(($BUILD_NUMBER + 100))" >> gradle.properties
+      - name: Build AAB
+        script: cd mobile/android && ./gradlew bundleRelease
+    artifacts:
+      - mobile/android/app/build/outputs/bundle/release/*.aab
+    publishing:
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true

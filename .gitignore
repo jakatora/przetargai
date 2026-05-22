@@ -1,0 +1,42 @@
+# === secrets / env ===
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# === node ===
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# === database / runtime ===
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+backend/data/
+backend/logs/
+logs/
+backups/
+
+# === expo / react native ===
+.expo/
+.expo-shared/
+ios/Pods/
+android/.gradle/
+*.keystore
+
+# === build / coverage ===
+coverage/
+dist/
+build/
+
+# === editors / OS ===
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+
+# === misc ===
+*.log
