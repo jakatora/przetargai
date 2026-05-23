@@ -5,22 +5,26 @@ Aby zamknąć blocker: „Blocker {nazwa} rozwiązany. Sprawdź, oznacz, kontynu
 
 ---
 
-## [BLOCKER: HUMAN] Klucze API usług zewnętrznych
+## [RESOLVED: TIER A keys + Railway deploy] 2026-05-23
+Wszystkie klucze TIER A uzupełnione, backend wdrożony na Railway, Stripe webhook utworzony,
+`/health` zwraca 200. Patrz `agent_log.md` wpis z 2026-05-23 i `decisions.md` D-016 / D-017.
 
-Backend działa lokalnie bez nich (tryb ograniczony), ale do uruchomienia pełnej
-funkcjonalności trzeba uzupełnić w `backend/.env`:
+| Zmienna | Status |
+|---------|--------|
+| `ANTHROPIC_API_KEY` | ✅ (wkleity w czacie — zalecana rotacja, w vault: prefix `sk-ant-api03-atNxS…`) |
+| `STRIPE_SECRET_KEY` | ✅ TEST mode `sk_test_51TZ…` |
+| `STRIPE_PRICE_STANDARD` | ✅ `price_1TaDxo…` (produkt „PrzetargAI Standard" 199 PLN/mc utworzony) |
+| `STRIPE_WEBHOOK_SECRET` | ✅ `whsec_FTNi…` (endpoint `we_1TaKsv…` na `backend-production-a43e3.up.railway.app/webhooks/stripe`) |
+| `RESEND_API_KEY` | ✅ `re_j6ofN…` (wkleity w czacie — zalecana rotacja) |
+| `RAILWAY_TOKEN` | ✅ Project Access Token, deploy zrealizowany (zalecana rotacja po stabilizacji) |
+
+## [BLOCKER: HUMAN] Klucze TIER B/C — niekrytyczne dla TEST, wymagane przed LIVE
 
 | Zmienna | Skąd | Status |
 |---------|------|--------|
-| `ANTHROPIC_API_KEY` | console.anthropic.com | ⛔ do uzupełnienia |
-| `STRIPE_SECRET_KEY` | dashboard.stripe.com (TEST) | ⛔ do uzupełnienia |
-| `STRIPE_PRICE_STANDARD` | Stripe → Products → „PrzetargAI Standard" 199 zł + 23% VAT | ⛔ do uzupełnienia |
-| `STRIPE_WEBHOOK_SECRET` | Stripe → Webhooks (po dodaniu endpointu `/webhooks/stripe`) | ⛔ do uzupełnienia |
-| `FAKTUROWNIA_API_KEY` + `FAKTUROWNIA_DOMAIN` | Fakturownia → Ustawienia → API | ⛔ do uzupełnienia |
-| `RESEND_API_KEY` | resend.com (3k maili/mc darmowo) | ⛔ do uzupełnienia |
-| `SENTRY_DSN_BACKEND` | sentry.io → projekt „przetargai-backend" (Node.js) | ⛔ do uzupełnienia |
-| `B2_ACCOUNT_ID` + `B2_APP_KEY` | Backblaze B2 → bucket „przetargai-backups" | ⛔ do uzupełnienia |
-| `RAILWAY_TOKEN` | Railway → Settings → Tokens | ⛔ do uzupełnienia (deploy) |
+| `FAKTUROWNIA_API_KEY` + `FAKTUROWNIA_DOMAIN` | Fakturownia → Ustawienia → API | ⛔ **wymagane przed Stripe LIVE** (polskie B2B fakturowanie) |
+| `SENTRY_DSN_BACKEND` | sentry.io → projekt „przetargai-backend" (Node.js) | ⛔ niekrytyczne, graceful degradation |
+| `B2_ACCOUNT_ID` + `B2_APP_KEY` | Backblaze B2 → bucket „przetargai-backups" | ⛔ niekrytyczne (backupy tylko lokalne na wolumenie Railway) |
 
 Wygenerowane lokalnie (gotowe): `JWT_SECRET`, `BACKUP_ENCRYPTION_KEY`, `ADMIN_API_KEY`.
 

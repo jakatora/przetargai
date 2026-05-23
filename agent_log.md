@@ -4,6 +4,34 @@ Dziennik prac. Najnowsze wpisy na górze.
 
 ---
 
+## 2026-05-23 — Backend LIVE na Railway + Stripe webhook
+
+### Wykonane
+- **Code: usunięcie landingu** (D-016). Backend serwuje upgrade flow w pełni:
+  - `GET /upgrade?user_id=&token=` → 303 redirect do Stripe Checkout (magic link z maila)
+  - `GET /upgrade/success`, `GET /upgrade/cancel` → mobile-first HTML, zero JS, zero zależności
+  - `services/stripe.js`: `success_url`/`cancel_url` z `LANDING_URL` na `APP_URL`
+  - `services/magicLink.js`: link mailowy wskazuje na backend, nie landing
+  - 16/16 testów dalej zielone. Commit `0770fb2`.
+- **Deploy backendu (D-017): Railway GraphQL z Project Access Token**, nie CLI/UI:
+  - Projekt `adventurous-magic` (auto-name), service `backend`, root dir `backend`
+  - Wolumen `/data` na SQLite (id `2e7a8a1e-…`)
+  - Domena: `backend-production-a43e3.up.railway.app` (HTTPS auto)
+  - 28 zmiennych env: 23 z lokalnego `.env`, 2 stransformowane (NODE_ENV=production, DATABASE_PATH=/data/data.db), PORT pominięty (Railway), STRIPE_WEBHOOK_SECRET dodany po wygenerowaniu
+  - Build/deploy ~30 s przez Nixpacks
+- **Stripe webhook**: utworzony przez API (`we_1TaKsvAom97JfF2jmoJ5Hx4c`), eventy:
+  `checkout.session.completed`, `customer.subscription.deleted`. Secret `whsec_…` zapisany w:
+  Railway vars + `backend/.env` + `~/.api-keys/keys.env` (vault user-poziom, opisany w MEMORY).
+- **Smoke test**: `GET /health` → `200 {"status":"ok","app":"PrzetargAI","env":"production","db":true}` — wolumen + SQLite konfiguracja działa.
+
+### Następne kroki
+- **E2E test:** rejestracja (POST `/auth/register`) → magic link → `/upgrade` → Stripe Checkout `4242 4242 4242 4242` → webhook → upgrade na Standard. Można zrobić curl'em.
+- **Mobile build:** w `mobile/src/config.js` (gałąź `else`/production) wstaw `API_URL=https://backend-production-a43e3.up.railway.app` → Codemagic workflows `android-release` / `ios-release`. Wymaga: ikony, konta Apple/Google, konfiguracja Codemagic UI.
+- **Fakturownia (TIER B)** — wymagane przed włączeniem Stripe LIVE.
+- **Domena `przetargai.pl`** — opcjonalna, do podpięcia jako custom domain do backendu Railway (`serviceDomainCreate` z `customDomain`). Bez landingu domena jest tylko ładnym aliasem.
+
+---
+
 ## 2026-05-21 — Zmiana: buildy mobilne przez Codemagic
 
 Na życzenie właściciela buildy aplikacji idą przez **Codemagic**, nie EAS.

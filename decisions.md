@@ -4,6 +4,33 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-017 — Wdrożenie Railway przez GraphQL z Project Access Token
+**Data:** 2026-05-23
+Deploy zrealizowany przez Railway GraphQL API (`backboard.railway.com/graphql/v2`), nie przez CLI
+ani dashboard UI. Powód: user dostarczył **Project Access Token** (nie Account Token).
+CLI `railway whoami` z project tokenem zwraca `Unauthorized` (whoami żąda konta), ale wszystkie
+operacje project-scoped (`serviceCreate`, `variableCollectionUpsert`, `volumeCreate`,
+`serviceDomainCreate`, `serviceInstanceUpdate`, `serviceInstanceRedeploy`) działają bez przeszkód.
+Header: `Project-Access-Token: <uuid>` (nie `Authorization: Bearer`).
+Praktyczne: Python urllib trafia w Cloudflare 1010 z domyślnym UA `Python-urllib/3.x` —
+trzeba `User-Agent: Mozilla/5.0` w nagłówkach. Curl i PowerShell `Invoke-RestMethod` nie mają tego problemu.
+Schemat `VolumeCreate` zwraca `Volume`, który NIE ma pola `mountPath` w returnsie (mountPath jest w `VolumeInstance`).
+
+## D-016 — Rezygnacja z osobnego landingu (mobile-only MVP)
+**Data:** 2026-05-23
+Backend serwuje wszystko, co kiedyś robił landing — zero Vercela, zero osobnej domeny.
+Powód: MVP jest mobile-only; landing marketingowy = praca + koszt domeny + Vercel deploy bez
+korzyści dla produktu, w którym jedyny kanał akwizycji to App Store / Play Store + outreach B2B.
+Implementacja w `routes/upgrade.js`:
+- `GET /` z `user_id` + `token` query params → consumuje magic link → tworzy Stripe Checkout
+  → `res.redirect(303, session.url)`. Zastępuje statyczną stronę landingu, która kiedyś robiła to samo formularzem.
+- `GET /success` + `GET /cancel` → minimalistyczne HTML (`<style>` inline, brand colors, mobile-first).
+- Stripe `success_url`/`cancel_url` z `LANDING_URL` na `APP_URL`.
+- `services/magicLink.js`: URL e-maila z `LANDING_URL` na `APP_URL`.
+- `LANDING_URL` pozostaje w env declaration (deprecated, nieużywane) — można odzyskać gdy pojawi się landing.
+Apple-compliant flow zachowany: aplikacja mobilna otwiera URL Stripe Checkout w przeglądarce
+zewnętrznej; Stripe hostuje payment page; po płatności redirect na backend HTML „udane, wróć do apki".
+
 ## D-015 — Buildy mobilne przez Codemagic (nie EAS)
 **Data:** 2026-05-21
 Buildy iOS/Android realizuje Codemagic (`codemagic.yaml`), nie EAS Build —
