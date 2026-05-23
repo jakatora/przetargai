@@ -13,7 +13,7 @@ export function createUpgradeLink(userId) {
   return {
     token,
     expiresAt,
-    url: `${env.LANDING_URL}/upgrade?user_id=${encodeURIComponent(userId)}&token=${token}`,
+    url: `${env.APP_URL}/upgrade?user_id=${encodeURIComponent(userId)}&token=${token}`,
   };
 }
 
