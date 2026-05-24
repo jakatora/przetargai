@@ -25,6 +25,7 @@ const schema = z.object({
   AI_BUDGET_SOFT_USD: z.coerce.number().nonnegative().default(200),
   AI_BUDGET_HARD_USD: z.coerce.number().nonnegative().default(500),
 
+  STRIPE_PUBLISHABLE_KEY: z.string().default(''),
   STRIPE_SECRET_KEY: z.string().default(''),
   STRIPE_WEBHOOK_SECRET: z.string().default(''),
   STRIPE_PRICE_STANDARD: z.string().default(''),

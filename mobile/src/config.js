@@ -6,9 +6,10 @@ const devHost = Constants.expoConfig?.hostUri?.split(':')[0];
 
 /**
  * Adres backendu PrzetargAI.
- * - DEV: http://<IP-maszyny>:3100 (wykrywane automatycznie),
- * - PROD: ustaw publiczny adres API po wdrożeniu na Railway.
+ * - DEV: http://<IP-maszyny>:3100 (wykrywane automatycznie z Expo).
+ * - PROD: backend na Railway. Po podpięciu custom domain zmienić na
+ *   https://api.przetargai.pl (DNS CNAME → Railway custom domain).
  */
 export const API_URL = __DEV__ && devHost
   ? `http://${devHost}:3100`
-  : 'https://api.przetargai.pl';
+  : 'https://backend-production-a43e3.up.railway.app';
