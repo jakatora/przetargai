@@ -65,9 +65,16 @@ async function generateMatches(newTenders) {
 
 /**
  * Pobiera ogłoszenia z BZP, zapisuje nowe przetargi i generuje dopasowania.
+ *
+ * UWAGA: BZP API `mo-board/api/v1/notice` ma sklejoną paginację — `PageNumber`
+ * jest ignorowany i każda strona zwraca te same N najnowszych ogłoszeń.
+ * Workaround: jedno zapytanie z dużym `PageSize` (max ~500). Pętla `pages`
+ * pozostaje na wypadek poprawki BZP w przyszłości, ale w praktyce zawsze
+ * przerwie się po pierwszej iteracji (notices.length < pageSize fail-safe).
+ *
  * @param {{pages?: number, pageSize?: number}} opts
  */
-export async function runTenderFetch({ pages = 1, pageSize = 50 } = {}) {
+export async function runTenderFetch({ pages = 1, pageSize = 500 } = {}) {
   const startedAt = Date.now();
   let fetched = 0;
   const newTenderRecords = [];
