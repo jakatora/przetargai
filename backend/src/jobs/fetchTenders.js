@@ -7,60 +7,73 @@ import { sendPush } from '../services/push.js';
 import { users, tenders, matches } from '../db/repos.js';
 
 /**
- * Generuje dopasowania dla nowo pobranych przetargów.
+ * Generuje dopasowania jednego usera vs lista kandydatów (tenders).
  * Respektuje dzienny limit planu Free i wysyła push dla planu Standard.
+ * Eksportowane, by można było wywołać poza cyklem cron — np. backfill
+ * po rejestracji nowego usera lub ręcznie z /admin/match-user/:id.
+ * @returns {Promise<{created: number, evaluated: number}>}
+ */
+export async function generateMatchesForUser(user, candidateTenders) {
+  if (!user.keywords.length && !user.cpv_codes.length) return { created: 0, evaluated: 0 };
+
+  const isFree = user.premium_tier === 'free';
+  let dailyBudget = isFree
+    ? Math.max(0, env.FREE_TIER_DAILY_MATCH_LIMIT - matches.countToday(user.id))
+    : Infinity;
+  if (dailyBudget <= 0) return { created: 0, evaluated: 0 };
+
+  let created = 0;
+  let evaluated = 0;
+  const fresh = [];
+
+  for (const tender of candidateTenders) {
+    if (dailyBudget <= 0) break;
+    if (matches.exists(user.id, tender.id)) continue;
+
+    evaluated++;
+    const result = await evaluateMatch(user, tender);
+    if (result.score < env.MATCH_CONFIDENCE_THRESHOLD) continue;
+
+    const { created: ok, match } = matches.create({
+      userId: user.id,
+      tenderId: tender.id,
+      score: result.score,
+      reasoning: result.reasoning,
+      scorer: result.scorer,
+    });
+    if (ok) {
+      created++;
+      dailyBudget--;
+      fresh.push({ id: match.id, title: tender.title });
+    }
+  }
+
+  // Powiadomienia push — wyłącznie plan Standard.
+  if (user.premium_tier === 'standard' && user.push_token && fresh.length) {
+    await sendPush(user.push_token, {
+      title: 'Nowe dopasowane przetargi',
+      body: fresh.length === 1
+        ? fresh[0].title
+        : `${fresh.length} nowych przetargów dopasowanych do Twojej firmy`,
+      data: { type: 'new_matches', count: fresh.length },
+    });
+    for (const m of fresh) matches.markNotified(m.id);
+  }
+
+  return { created, evaluated };
+}
+
+/**
+ * Generuje dopasowania dla nowo pobranych przetargów × wszystkich userów.
  */
 async function generateMatches(newTenders) {
   if (!newTenders.length) return 0;
-
-  const allUsers = users.all();
-  let created = 0;
-
-  for (const user of allUsers) {
-    // Bez profilu (słowa kluczowe / CPV) matching nie ma sensu.
-    if (!user.keywords.length && !user.cpv_codes.length) continue;
-
-    const isFree = user.premium_tier === 'free';
-    let dailyBudget = isFree
-      ? Math.max(0, env.FREE_TIER_DAILY_MATCH_LIMIT - matches.countToday(user.id))
-      : Infinity;
-    if (dailyBudget <= 0) continue;
-
-    const fresh = [];
-    for (const tender of newTenders) {
-      if (dailyBudget <= 0) break;
-      if (matches.exists(user.id, tender.id)) continue;
-
-      const result = await evaluateMatch(user, tender);
-      if (result.score < env.MATCH_CONFIDENCE_THRESHOLD) continue;
-
-      const { created: ok, match } = matches.create({
-        userId: user.id,
-        tenderId: tender.id,
-        score: result.score,
-        reasoning: result.reasoning,
-        scorer: result.scorer,
-      });
-      if (ok) {
-        created++;
-        dailyBudget--;
-        fresh.push({ id: match.id, title: tender.title });
-      }
-    }
-
-    // Powiadomienia push — wyłącznie plan Standard.
-    if (user.premium_tier === 'standard' && user.push_token && fresh.length) {
-      await sendPush(user.push_token, {
-        title: 'Nowe dopasowane przetargi',
-        body: fresh.length === 1
-          ? fresh[0].title
-          : `${fresh.length} nowych przetargów dopasowanych do Twojej firmy`,
-        data: { type: 'new_matches', count: fresh.length },
-      });
-      for (const m of fresh) matches.markNotified(m.id);
-    }
+  let total = 0;
+  for (const user of users.all()) {
+    const r = await generateMatchesForUser(user, newTenders);
+    total += r.created;
   }
-  return created;
+  return total;
 }
 
 /**

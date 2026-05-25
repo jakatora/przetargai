@@ -3,13 +3,14 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired, signToken } from '../middleware/auth.js';
-import { users } from '../db/repos.js';
+import { users, tenders } from '../db/repos.js';
 import { isValidNip, normalizeNip } from '../lib/nip.js';
 import { badRequest, conflict, unauthorized } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicUser } from '../lib/serialize.js';
 import { createUpgradeLink } from '../services/magicLink.js';
 import { sendEmail, welcomeEmail } from '../services/email.js';
+import { generateMatchesForUser } from '../jobs/fetchTenders.js';
 import { logger } from '../lib/logger.js';
 
 const router = Router();
@@ -60,6 +61,16 @@ router.post('/register', ah(async (req, res) => {
   audit({ userId: user.id, action: 'register', ip: req.ip });
   sendEmail({ to: email, ...welcomeEmail(user.company_name) })
     .catch((err) => logger.error({ err: err.message }, 'Email powitalny nie wysłany'));
+
+  // Onboarding backfill: jeśli user dał keywords/CPV, dopasuj go do aktualnych
+  // tenderów w bazie. Fire-and-forget — nie blokuje response. Bez tego feed
+  // byłby pusty do następnego cron BZP (co 6h).
+  if (user.keywords.length || user.cpv_codes.length) {
+    const candidates = tenders.recent(200);
+    generateMatchesForUser(user, candidates)
+      .then((r) => logger.info({ userId: user.id, ...r }, 'Onboarding matching zakończony'))
+      .catch((err) => logger.error({ err: err.message, userId: user.id }, 'Onboarding matching nieudany'));
+  }
 
   res.status(201).json({ token: signToken(user.id), user: publicUser(user) });
 }));

@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { ah } from '../lib/asyncHandler.js';
 import { adminRequired } from '../middleware/adminAuth.js';
-import { runTenderFetch } from '../jobs/fetchTenders.js';
+import { runTenderFetch, generateMatchesForUser } from '../jobs/fetchTenders.js';
 import { createBackup } from '../services/backup.js';
 import { tenders, users } from '../db/repos.js';
 import { db } from '../db/index.js';
 import { budgetStatus } from '../services/ai.js';
+import { notFound } from '../lib/errors.js';
 
 const router = Router();
 router.use(adminRequired);
@@ -35,6 +36,42 @@ router.get('/ai-budget', ah(async (req, res) => {
 router.post('/backup', ah(async (req, res) => {
   const result = await createBackup();
   res.json(result);
+}));
+
+/** Ostatni zarejestrowani userzy — diagnostyka (czy profile sensowne). */
+router.get('/users', ah(async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+  const rows = db.prepare(`
+    SELECT id, email, company_name, company_nip, premium_tier, keywords, cpv_codes,
+           push_token, created_at
+    FROM users
+    ORDER BY created_at DESC
+    LIMIT ?`).all(limit);
+  res.json({
+    count: rows.length,
+    users: rows.map((u) => ({
+      ...u,
+      keywords: JSON.parse(u.keywords),
+      cpv_codes: JSON.parse(u.cpv_codes),
+      has_push_token: Boolean(u.push_token),
+      push_token: undefined,
+    })),
+  });
+}));
+
+/** Backfill — uruchamia matching dla istniejącego usera vs aktualne tendery w bazie. */
+router.post('/match-user/:userId', ah(async (req, res) => {
+  const user = users.findById(req.params.userId);
+  if (!user) throw notFound('Użytkownik nie istnieje');
+  const candidates = tenders.recent(500);
+  const result = await generateMatchesForUser(user, candidates);
+  res.json({
+    ok: true,
+    user_id: user.id,
+    candidates: candidates.length,
+    evaluated: result.evaluated,
+    matchesCreated: result.created,
+  });
 }));
 
 /** Ostatnie dopasowania w systemie — diagnostyka i ops (ostatni cron). */
