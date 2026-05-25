@@ -9,9 +9,10 @@ Limity znaków podane przy każdym polu.
 
 - **Nazwa aplikacji:** PrzetargAI
 - **Kategoria:** Biznes
-- **Adres polityki prywatności:** https://przetargai.pl/polityka-prywatnosci
-- **Adres wsparcia:** https://przetargai.pl
-- **E-mail kontaktowy:** support@przetargai.pl
+- **Adres polityki prywatności:** https://backend-production-a43e3.up.railway.app/polityka-prywatnosci
+- **Adres regulaminu:** https://backend-production-a43e3.up.railway.app/regulamin
+- **Adres wsparcia:** https://backend-production-a43e3.up.railway.app (placeholder do czasu kupna domeny `przetargai.pl`)
+- **E-mail kontaktowy:** jakatora68@gmail.com
 - **Klasyfikacja wiekowa:** 4+ / dla wszystkich (brak treści wrażliwych)
 
 ---

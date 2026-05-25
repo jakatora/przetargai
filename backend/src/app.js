@@ -10,6 +10,7 @@ import matchesRouter from './routes/matches.js';
 import upgradeRouter from './routes/upgrade.js';
 import webhooksRouter from './routes/webhooks.js';
 import adminRouter from './routes/admin.js';
+import legalRouter from './routes/legal.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -37,6 +38,7 @@ export function createApp() {
   app.use('/matches', apiLimiter, matchesRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminRouter);
+  app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);
   if (sentryEnabled) Sentry.setupExpressErrorHandler(app);

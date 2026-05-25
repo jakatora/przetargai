@@ -4,6 +4,20 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-018 — Stripe: cena Pro utworzona (app code jeszcze nie wspiera)
+**Data:** 2026-05-24
+Na życzenie usera utworzony produkt Stripe „PrzetargAI Pro" (`prod_UZt6PFJM9Yfm0O`)
+i cena 399 PLN/mc (`STRIPE_PRICE_PRO=price_1TajKtAom97JfF2jKBWwGnKg`, TEST mode).
+Częściowo nadpisuje D-001 — Pro był poza zakresem MVP. Sam obiekt Stripe nie
+wystarczy do działania planu Pro w aplikacji; do pełnego wpięcia trzeba jeszcze:
+
+1. migrację schematu (`users.premium_tier CHECK IN ('free','standard','pro')`),
+2. logikę webhooka Stripe rozróżniającą plan po `price_id` sesji,
+3. limity matchingu i powiadomienia dla Pro,
+4. wybór planu w UI (obecnie sztywno kierujemy na Standard).
+
+Bez tych kroków cena istnieje w Stripe, ale system nie potrafi jej obsłużyć.
+
 ## D-017 — Wdrożenie Railway przez GraphQL z Project Access Token
 **Data:** 2026-05-23
 Deploy zrealizowany przez Railway GraphQL API (`backboard.railway.com/graphql/v2`), nie przez CLI

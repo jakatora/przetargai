@@ -29,6 +29,7 @@ const schema = z.object({
   STRIPE_SECRET_KEY: z.string().default(''),
   STRIPE_WEBHOOK_SECRET: z.string().default(''),
   STRIPE_PRICE_STANDARD: z.string().default(''),
+  STRIPE_PRICE_PRO: z.string().default(''),
 
   FAKTUROWNIA_API_KEY: z.string().default(''),
   FAKTUROWNIA_DOMAIN: z.string().default(''),
