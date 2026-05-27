@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
-import { constructWebhookEvent } from '../services/stripe.js';
-import { users } from '../db/repos.js';
+import { constructWebhookEvent, stripe } from '../services/stripe.js';
+import { users, fitterPremium } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 import { audit } from '../lib/audit.js';
 import { sendEmail, subscriptionActiveEmail } from '../services/email.js';
@@ -34,6 +34,12 @@ async function handleEvent(event) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object;
+      // Branch on metadata.project — Fitter Welder Pro uses device_id, no
+      // user account; PrzetargAI uses client_reference_id → users table.
+      if (session.metadata?.project === 'fitter') {
+        await handleFitterCheckoutCompleted(session);
+        break;
+      }
       const userId = session.client_reference_id || session.metadata?.user_id;
       const user = userId ? users.findById(userId) : null;
       if (!user) {
@@ -55,8 +61,25 @@ async function handleEvent(event) {
       }).catch((err) => logger.error({ err: err.message }, 'Faktura nie wystawiona'));
       break;
     }
+    case 'customer.subscription.updated': {
+      const sub = event.data.object;
+      if (sub.metadata?.project === 'fitter') {
+        const status = sub.cancel_at_period_end ? 'canceled' : (sub.status || 'active');
+        const periodEnd = sub.current_period_end
+          ? new Date(sub.current_period_end * 1000).toISOString()
+          : null;
+        fitterPremium.updateStatusBySubscription(sub.id, status, periodEnd);
+        logger.info({ subId: sub.id, status }, 'Fitter subscription updated');
+      }
+      break;
+    }
     case 'customer.subscription.deleted': {
       const sub = event.data.object;
+      if (sub.metadata?.project === 'fitter') {
+        fitterPremium.updateStatusBySubscription(sub.id, 'canceled', null);
+        logger.info({ subId: sub.id }, 'Fitter subscription cancelled');
+        break;
+      }
       const user = users.findByStripeCustomer(sub.customer);
       if (user) {
         users.setTier(user.id, 'free');
@@ -69,6 +92,41 @@ async function handleEvent(event) {
     default:
       logger.debug({ type: event.type }, 'Webhook Stripe — zdarzenie pominięte');
   }
+}
+
+/**
+ * Aktywacja Premium dla Fitter Welder Pro. Wywołane gdy Stripe potwierdzi
+ * checkout.session.completed z metadata.project === 'fitter'. Pobiera
+ * subscription period_end z API (session sam nie ma tej informacji)
+ * i zapisuje wpis w fitter_premium keyed na device_id.
+ */
+async function handleFitterCheckoutCompleted(session) {
+  const deviceId = session.client_reference_id || session.metadata?.device_id;
+  const plan = session.metadata?.plan; // 'monthly' lub 'yearly'
+  if (!deviceId || !plan) {
+    logger.warn({ sessionId: session.id }, 'Fitter checkout: brak device_id lub plan w metadata');
+    return;
+  }
+  let periodEnd = null;
+  if (session.subscription && stripe) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(session.subscription);
+      if (sub.current_period_end) {
+        periodEnd = new Date(sub.current_period_end * 1000).toISOString();
+      }
+    } catch (err) {
+      logger.warn({ err: err.message }, 'Fitter checkout: nie udało się pobrać subscription');
+    }
+  }
+  fitterPremium.upsert({
+    deviceId,
+    plan,
+    status: 'active',
+    customerId: session.customer || null,
+    subscriptionId: session.subscription || null,
+    currentPeriodEnd: periodEnd,
+  });
+  logger.info({ deviceId, plan, sub: session.subscription }, 'Fitter Premium activated');
 }
 
 export default router;

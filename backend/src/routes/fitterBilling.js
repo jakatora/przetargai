@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { env } from '../config/env.js';
 import { createFitterCheckoutSession, isStripeEnabled } from '../services/stripe.js';
+import { fitterPremium } from '../db/repos.js';
 import { badRequest, serviceUnavailable } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { logger } from '../lib/logger.js';
@@ -39,6 +40,38 @@ router.post('/checkout', ah(async (req, res) => {
   logger.info({ deviceId, plan, sessionId: session.id }, 'Fitter checkout session created');
 
   res.json({ checkout_url: session.url });
+}));
+
+/**
+ * GET /api/fitter/billing/status?device_id=X — klient sprawdza czy jego
+ * device ma aktywną subskrypcję. Klient mobilny pobiera to przy starcie
+ * + po powrocie z Stripe Checkout (success page), żeby zaktualizować
+ * PremiumService → PremiumGate.
+ */
+router.get('/status', ah(async (req, res) => {
+  const deviceId = String(req.query.device_id || '').trim();
+  if (deviceId.length < 8) throw badRequest('Wymagane: device_id (min 8 znaków)');
+  const row = fitterPremium.findByDevice(deviceId);
+  if (!row) {
+    return res.json({
+      device_id: deviceId,
+      plan: 'free',
+      status: 'inactive',
+      is_active: false,
+      current_period_end: null,
+    });
+  }
+  const expiresAtMs = row.current_period_end
+    ? new Date(row.current_period_end).getTime()
+    : null;
+  const isActive = row.status === 'active' && (expiresAtMs === null || expiresAtMs > Date.now());
+  res.json({
+    device_id: deviceId,
+    plan: row.plan,
+    status: row.status,
+    is_active: isActive,
+    current_period_end: row.current_period_end,
+  });
 }));
 
 /** Minimal HTML success/cancel pages (reuse the PrzetargAI style). */

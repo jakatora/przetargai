@@ -253,4 +253,54 @@ export const aiUsage = {
   },
 };
 
-export const repos = { users, tenders, matches, feedback, magicLinks, aiUsage };
+// ============================ fitterPremium ============================
+// Subskrypcje Premium dla Fitter Welder Pro. Identyfikator urządzenia
+// (device_id) zamiast user_id — Fitter MVP nie wymaga konta. Aktualizowane
+// przez Stripe webhook (metadata.project === 'fitter').
+
+const _fpUpsert = lazy(`
+  INSERT INTO fitter_premium (device_id, plan, status, stripe_customer_id,
+                              stripe_subscription_id, current_period_end,
+                              created_at, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  ON CONFLICT(device_id) DO UPDATE SET
+    plan = excluded.plan,
+    status = excluded.status,
+    stripe_customer_id = excluded.stripe_customer_id,
+    stripe_subscription_id = excluded.stripe_subscription_id,
+    current_period_end = excluded.current_period_end,
+    updated_at = excluded.updated_at`);
+const _fpByDevice = lazy(`SELECT * FROM fitter_premium WHERE device_id = ?`);
+const _fpBySub = lazy(`SELECT * FROM fitter_premium WHERE stripe_subscription_id = ?`);
+const _fpUpdateBySubStatus = lazy(`
+  UPDATE fitter_premium SET status = ?, current_period_end = ?, updated_at = ?
+  WHERE stripe_subscription_id = ?`);
+
+export const fitterPremium = {
+  /**
+   * Upsert by device_id. Used on checkout.session.completed event when we
+   * first learn about a subscription, and again on invoice/subscription
+   * updates to refresh the period end.
+   */
+  upsert({ deviceId, plan, status = 'active', customerId, subscriptionId, currentPeriodEnd }) {
+    const ts = nowIso();
+    _fpUpsert().run(
+      deviceId, plan, status,
+      customerId ?? null, subscriptionId ?? null, currentPeriodEnd ?? null,
+      ts, ts,
+    );
+    return _fpByDevice().get(deviceId);
+  },
+  findByDevice(deviceId) {
+    return _fpByDevice().get(deviceId) || null;
+  },
+  findBySubscription(subscriptionId) {
+    return _fpBySub().get(subscriptionId) || null;
+  },
+  /** Update status + period end based on a webhook event. */
+  updateStatusBySubscription(subscriptionId, status, currentPeriodEnd) {
+    _fpUpdateBySubStatus().run(status, currentPeriodEnd ?? null, nowIso(), subscriptionId);
+  },
+};
+
+export const repos = { users, tenders, matches, feedback, magicLinks, aiUsage, fitterPremium };

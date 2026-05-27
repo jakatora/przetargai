@@ -98,3 +98,19 @@ CREATE TABLE IF NOT EXISTS schema_meta (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+-- Fitter Welder Pro — subskrypcje Premium (osobne od PrzetargAI users —
+-- Fitter MVP nie wymaga konta, identyfikuje urządzenie przez device_id).
+-- Tabela aktualizowana przez Stripe webhook (metadata.project = 'fitter').
+CREATE TABLE IF NOT EXISTS fitter_premium (
+  device_id              TEXT PRIMARY KEY,
+  plan                   TEXT NOT NULL CHECK (plan IN ('monthly', 'yearly')),
+  status                 TEXT NOT NULL DEFAULT 'active'
+                           CHECK (status IN ('active', 'canceled', 'past_due', 'unpaid')),
+  stripe_customer_id     TEXT,
+  stripe_subscription_id TEXT UNIQUE,
+  current_period_end     TEXT,            -- ISO 8601 (z subscription.current_period_end)
+  created_at             TEXT NOT NULL,
+  updated_at             TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_fitter_premium_sub ON fitter_premium(stripe_subscription_id);
