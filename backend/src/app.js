@@ -11,6 +11,8 @@ import upgradeRouter from './routes/upgrade.js';
 import webhooksRouter from './routes/webhooks.js';
 import adminRouter from './routes/admin.js';
 import legalRouter from './routes/legal.js';
+import fitterBillingRouter from './routes/fitterBilling.js';
+import fitterAiRouter from './routes/fitterAi.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -38,6 +40,8 @@ export function createApp() {
   app.use('/matches', apiLimiter, matchesRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminRouter);
+  app.use('/api/fitter/billing', apiLimiter, fitterBillingRouter);
+  app.use('/api/fitter/ai', apiLimiter, fitterAiRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);

@@ -30,6 +30,10 @@ const schema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().default(''),
   STRIPE_PRICE_STANDARD: z.string().default(''),
   STRIPE_PRICE_PRO: z.string().default(''),
+  // Fitter Welder Pro — added 2026-05-26. Same Stripe account, separate
+  // products/prices so we can run multiple apps off one backend.
+  STRIPE_PRICE_FITTER_MONTHLY: z.string().default(''),
+  STRIPE_PRICE_FITTER_YEARLY: z.string().default(''),
 
   FAKTUROWNIA_API_KEY: z.string().default(''),
   FAKTUROWNIA_DOMAIN: z.string().default(''),

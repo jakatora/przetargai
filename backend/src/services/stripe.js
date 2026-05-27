@@ -37,4 +37,34 @@ export function constructWebhookEvent(rawBody, signature) {
   return stripe.webhooks.constructEvent(rawBody, signature, env.STRIPE_WEBHOOK_SECRET);
 }
 
+/**
+ * Tworzy sesję Stripe Checkout dla Fitter Welder Pro (mobile-first, bez
+ * auth — identyfikator urządzenia jako client_reference_id). Plan musi być
+ * "monthly" lub "yearly". Backend wybiera odpowiednie price ID z env.
+ *
+ * Webhook (zob. routes/webhooks.js) wykryje subskrypcję po metadata.project=fitter
+ * i zapisze do tabeli fitter_premium, więc klient mobilny ma niezależny flow
+ * od PrzetargAI bez konfliktu w DB.
+ */
+export async function createFitterCheckoutSession({ plan, deviceId, customerEmail, successUrl, cancelUrl }) {
+  if (!stripe) throw serviceUnavailable('Płatności niedostępne — brak konfiguracji Stripe');
+  const priceId = plan === 'yearly'
+    ? env.STRIPE_PRICE_FITTER_YEARLY
+    : env.STRIPE_PRICE_FITTER_MONTHLY;
+  if (!priceId) throw serviceUnavailable(`Brak STRIPE_PRICE_FITTER_${plan.toUpperCase()} w konfiguracji`);
+  if (!deviceId) throw serviceUnavailable('deviceId wymagany dla Fitter checkout');
+
+  return stripe.checkout.sessions.create({
+    mode: 'subscription',
+    line_items: [{ price: priceId, quantity: 1 }],
+    customer_email: customerEmail || undefined,
+    client_reference_id: deviceId,
+    metadata: { project: 'fitter', plan, device_id: deviceId },
+    subscription_data: { metadata: { project: 'fitter', plan, device_id: deviceId } },
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    allow_promotion_codes: true,
+  });
+}
+
 export { stripe };
