@@ -303,4 +303,80 @@ export const fitterPremium = {
   },
 };
 
-export const repos = { users, tenders, matches, feedback, magicLinks, aiUsage, fitterPremium };
+// ============================ fitter_chat_message ============================
+
+const _chatInsert = lazy(`
+  INSERT INTO fitter_chat_message (room, device_id, nickname, text, flags, hidden, created_at)
+  VALUES (?, ?, ?, ?, 0, 0, ?)`);
+const _chatList = lazy(`
+  SELECT id, room, device_id, nickname, text, flags, created_at
+  FROM fitter_chat_message
+  WHERE room = ? AND hidden = 0 AND (? IS NULL OR created_at > ?)
+  ORDER BY created_at ASC
+  LIMIT ?`);
+const _chatListReverse = lazy(`
+  SELECT id, room, device_id, nickname, text, flags, created_at
+  FROM fitter_chat_message
+  WHERE room = ? AND hidden = 0
+  ORDER BY created_at DESC
+  LIMIT ?`);
+const _chatFlag = lazy(`
+  UPDATE fitter_chat_message
+  SET flags = flags + 1,
+      hidden = CASE WHEN flags + 1 >= 3 THEN 1 ELSE hidden END
+  WHERE id = ?`);
+const _chatRecentByDevice = lazy(`
+  SELECT COUNT(*) as cnt FROM fitter_chat_message
+  WHERE device_id = ? AND created_at > ?`);
+
+export const fitterChat = {
+  /**
+   * Post a message. Returns the inserted row (with id). The caller is
+   * expected to have validated text length and applied the profanity filter
+   * upstream — the repo just records.
+   */
+  post({ room, deviceId, nickname, text }) {
+    const ts = nowIso();
+    const info = _chatInsert().run(room, deviceId, nickname, text, ts);
+    return {
+      id: info.lastInsertRowid,
+      room,
+      device_id: deviceId,
+      nickname,
+      text,
+      flags: 0,
+      created_at: ts,
+    };
+  },
+
+  /**
+   * Messages in chronological order (oldest first). When [sinceIso] is
+   * supplied, returns only messages newer than that timestamp — used by
+   * the polling client to fetch deltas.
+   */
+  list({ room, sinceIso = null, limit = 100 }) {
+    return _chatList().all(room, sinceIso, sinceIso, limit);
+  },
+
+  /** Most recent N messages (used on first room open). */
+  recent({ room, limit = 50 }) {
+    const rows = _chatListReverse().all(room, limit);
+    return rows.reverse(); // chronological order for the client
+  },
+
+  /** Anyone can flag — auto-hide at >=3 reports. */
+  report({ id }) {
+    _chatFlag().run(id);
+  },
+
+  /** Rate-limit helper. Returns count of messages from a device in the
+   *  last `windowMinutes`. The route uses this to throttle spammers. */
+  recentCountForDevice({ deviceId, windowMinutes = 1 }) {
+    const since = new Date(Date.now() - windowMinutes * 60_000).toISOString();
+    return _chatRecentByDevice().get(deviceId, since).cnt;
+  },
+};
+
+export const repos = {
+  users, tenders, matches, feedback, magicLinks, aiUsage, fitterPremium, fitterChat,
+};

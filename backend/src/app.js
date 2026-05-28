@@ -13,6 +13,7 @@ import adminRouter from './routes/admin.js';
 import legalRouter from './routes/legal.js';
 import fitterBillingRouter from './routes/fitterBilling.js';
 import fitterAiRouter from './routes/fitterAi.js';
+import fitterChatRouter from './routes/fitterChat.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -42,6 +43,7 @@ export function createApp() {
   app.use('/admin', adminRouter);
   app.use('/api/fitter/billing', apiLimiter, fitterBillingRouter);
   app.use('/api/fitter/ai', apiLimiter, fitterAiRouter);
+  app.use('/api/fitter/chat', apiLimiter, fitterChatRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);

@@ -114,3 +114,19 @@ CREATE TABLE IF NOT EXISTS fitter_premium (
   updated_at             TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_fitter_premium_sub ON fitter_premium(stripe_subscription_id);
+
+-- Fitter Welder Pro — czat publiczny (rooms hardcoded w API, w bazie tylko
+-- wiadomości). Brak konta — nickname + device_id służą do identyfikacji,
+-- moderation rolling przez flag count + admin endpoint.
+CREATE TABLE IF NOT EXISTS fitter_chat_message (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  room          TEXT NOT NULL,
+  device_id     TEXT NOT NULL,
+  nickname      TEXT NOT NULL,
+  text          TEXT NOT NULL,
+  flags         INTEGER NOT NULL DEFAULT 0,
+  hidden        INTEGER NOT NULL DEFAULT 0,    -- 1 = ukryty przez moderację
+  created_at    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chat_room_created ON fitter_chat_message(room, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_device ON fitter_chat_message(device_id);
