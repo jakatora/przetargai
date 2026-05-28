@@ -14,6 +14,7 @@ import legalRouter from './routes/legal.js';
 import fitterBillingRouter from './routes/fitterBilling.js';
 import fitterAiRouter from './routes/fitterAi.js';
 import fitterChatRouter from './routes/fitterChat.js';
+import fitterScanRouter from './routes/fitterScan.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -26,6 +27,15 @@ export function createApp() {
 
   // Webhooki montowane PRZED express.json() — wymagają surowego body.
   app.use('/webhooks', webhooksRouter);
+
+  // Scan-iso route gets a higher body limit (base64-encoded photos can run
+  // 3-8 MB) — mounted BEFORE the global parser so its limit wins.
+  app.use(
+    '/api/fitter/scan-iso',
+    express.json({ limit: '12mb' }),
+    apiLimiter,
+    fitterScanRouter,
+  );
 
   app.use(express.json({ limit: '1mb' }));
 
