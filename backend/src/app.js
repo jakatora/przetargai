@@ -28,15 +28,6 @@ export function createApp() {
   // Webhooki montowane PRZED express.json() — wymagają surowego body.
   app.use('/webhooks', webhooksRouter);
 
-  // Scan-iso route gets a higher body limit (base64-encoded photos can run
-  // 3-8 MB) — mounted BEFORE the global parser so its limit wins.
-  app.use(
-    '/api/fitter/scan-iso',
-    express.json({ limit: '12mb' }),
-    apiLimiter,
-    fitterScanRouter,
-  );
-
   app.use(express.json({ limit: '1mb' }));
 
   const apiLimiter = rateLimit({
@@ -45,6 +36,16 @@ export function createApp() {
   const authLimiter = rateLimit({
     windowMs: 15 * 60_000, max: 30, standardHeaders: true, legacyHeaders: false,
   });
+
+  // Scan-iso route gets a dedicated, larger JSON parser (base64 ISO photos
+  // run 3-8 MB) layered IN FRONT of the rate limiter + router for this path
+  // only — global parser stays at 1 MB.
+  app.use(
+    '/api/fitter/scan-iso',
+    express.json({ limit: '12mb' }),
+    apiLimiter,
+    fitterScanRouter,
+  );
 
   app.use('/health', healthRouter);
   app.use('/auth', authLimiter, authRouter);
