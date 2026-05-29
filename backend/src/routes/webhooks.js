@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 import { constructWebhookEvent, stripe } from '../services/stripe.js';
-import { users, fitterPremium } from '../db/repos.js';
+import { users, fitterPremium, fitterJobs } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 import { audit } from '../lib/audit.js';
 import { sendEmail, subscriptionActiveEmail } from '../services/email.js';
@@ -38,6 +38,10 @@ async function handleEvent(event) {
       // user account; PrzetargAI uses client_reference_id → users table.
       if (session.metadata?.project === 'fitter') {
         await handleFitterCheckoutCompleted(session);
+        break;
+      }
+      if (session.metadata?.project === 'fitter_jobs') {
+        handleFitterJobCheckoutCompleted(session);
         break;
       }
       const userId = session.client_reference_id || session.metadata?.user_id;
@@ -127,6 +131,30 @@ async function handleFitterCheckoutCompleted(session) {
     currentPeriodEnd: periodEnd,
   });
   logger.info({ deviceId, plan, sub: session.subscription }, 'Fitter Premium activated');
+}
+
+/**
+ * One-time payment for Praca (Fitter Welder Pro) — marks the draft listing
+ * as paid and sets expires_at = +30d. Synchronous because nothing here
+ * requires an extra Stripe API call.
+ */
+function handleFitterJobCheckoutCompleted(session) {
+  const listingId = session.metadata?.listing_id || session.client_reference_id;
+  if (!listingId) {
+    logger.warn({ sessionId: session.id }, 'Fitter jobs: missing listing_id in metadata');
+    return;
+  }
+  const row = fitterJobs.findById(listingId);
+  if (!row) {
+    logger.warn({ listingId, sessionId: session.id }, 'Fitter jobs: listing not found');
+    return;
+  }
+  if (row.is_paid === 1) {
+    logger.info({ listingId }, 'Fitter jobs: listing already paid, ignoring duplicate webhook');
+    return;
+  }
+  fitterJobs.markPaid({ id: listingId });
+  logger.info({ listingId, sessionId: session.id }, 'Fitter job listing activated');
 }
 
 export default router;

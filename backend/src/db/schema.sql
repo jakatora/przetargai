@@ -130,3 +130,27 @@ CREATE TABLE IF NOT EXISTS fitter_chat_message (
 );
 CREATE INDEX IF NOT EXISTS idx_chat_room_created ON fitter_chat_message(room, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_chat_device ON fitter_chat_message(device_id);
+
+-- Fitter Welder Pro — moduł Praca. 49 PLN za ogłoszenie via Stripe one-time
+-- payment. Bez wyjątków — nawet Premium płaci. Listing jest DRAFT do momentu
+-- aż webhook potwierdzi płatność, wtedy ustawia is_paid=1 i expires_at +30d.
+CREATE TABLE IF NOT EXISTS fitter_job_listing (
+  id                 TEXT PRIMARY KEY,
+  device_id          TEXT NOT NULL,
+  title              TEXT NOT NULL,
+  company            TEXT NOT NULL,
+  location           TEXT NOT NULL,
+  rate               TEXT,
+  description        TEXT NOT NULL,
+  requirements_csv   TEXT,
+  contact_email      TEXT,
+  contact_phone      TEXT,
+  is_paid            INTEGER NOT NULL DEFAULT 0,
+  stripe_session_id  TEXT,
+  expires_at         TEXT,                -- ISO 8601, NULL aż do payment
+  created_at         TEXT NOT NULL,
+  updated_at         TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_job_paid_created ON fitter_job_listing(is_paid, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_job_device ON fitter_job_listing(device_id);
+CREATE INDEX IF NOT EXISTS idx_job_session ON fitter_job_listing(stripe_session_id);

@@ -67,4 +67,29 @@ export async function createFitterCheckoutSession({ plan, deviceId, customerEmai
   });
 }
 
+/**
+ * One-time Stripe Checkout dla ogłoszenia w module Praca (Fitter Welder
+ * Pro). 49 PLN za ogłoszenie, bez wyjątków (nawet Premium płaci).
+ * Webhook (routes/webhooks.js) wykryje metadata.project='fitter_jobs' i
+ * oznaczy listing jako paid + ustawi expires_at.
+ */
+export async function createFitterJobCheckoutSession({ listingId, deviceId, customerEmail, successUrl, cancelUrl }) {
+  if (!stripe) throw serviceUnavailable('Płatności niedostępne — brak konfiguracji Stripe');
+  const priceId = env.STRIPE_PRICE_FITTER_JOB_POST;
+  if (!priceId) throw serviceUnavailable('Brak STRIPE_PRICE_FITTER_JOB_POST w konfiguracji');
+  if (!listingId) throw serviceUnavailable('listingId wymagany dla job checkout');
+  if (!deviceId) throw serviceUnavailable('deviceId wymagany dla job checkout');
+
+  return stripe.checkout.sessions.create({
+    mode: 'payment', // one-time, NOT subscription
+    line_items: [{ price: priceId, quantity: 1 }],
+    customer_email: customerEmail || undefined,
+    client_reference_id: listingId,
+    metadata: { project: 'fitter_jobs', listing_id: listingId, device_id: deviceId },
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    allow_promotion_codes: false,
+  });
+}
+
 export { stripe };

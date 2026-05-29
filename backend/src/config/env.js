@@ -34,6 +34,7 @@ const schema = z.object({
   // products/prices so we can run multiple apps off one backend.
   STRIPE_PRICE_FITTER_MONTHLY: z.string().default(''),
   STRIPE_PRICE_FITTER_YEARLY: z.string().default(''),
+  STRIPE_PRICE_FITTER_JOB_POST: z.string().default(''),
 
   FAKTUROWNIA_API_KEY: z.string().default(''),
   FAKTUROWNIA_DOMAIN: z.string().default(''),

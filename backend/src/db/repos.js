@@ -377,6 +377,75 @@ export const fitterChat = {
   },
 };
 
+// ============================ fitter_job_listing ============================
+
+const _jobInsert = lazy(`
+  INSERT INTO fitter_job_listing (
+    id, device_id, title, company, location, rate, description,
+    requirements_csv, contact_email, contact_phone,
+    is_paid, stripe_session_id, expires_at, created_at, updated_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NULL, ?, ?)`);
+const _jobById = lazy(`SELECT * FROM fitter_job_listing WHERE id = ?`);
+const _jobBySession = lazy(`SELECT * FROM fitter_job_listing WHERE stripe_session_id = ?`);
+const _jobListPaid = lazy(`
+  SELECT * FROM fitter_job_listing
+  WHERE is_paid = 1
+    AND (expires_at IS NULL OR expires_at > ?)
+    AND (? IS NULL OR location LIKE ?)
+  ORDER BY created_at DESC
+  LIMIT ?`);
+const _jobListByDevice = lazy(`
+  SELECT * FROM fitter_job_listing
+  WHERE device_id = ?
+  ORDER BY created_at DESC
+  LIMIT ?`);
+const _jobMarkPaid = lazy(`
+  UPDATE fitter_job_listing
+  SET is_paid = 1, expires_at = ?, updated_at = ?
+  WHERE id = ?`);
+const _jobPurgeExpired = lazy(`
+  DELETE FROM fitter_job_listing
+  WHERE expires_at IS NOT NULL AND expires_at < ?`);
+
+export const fitterJobs = {
+  /** Create DRAFT listing (is_paid=0). Returns the inserted row. */
+  createDraft({ deviceId, title, company, location, rate, description,
+                requirementsCsv, contactEmail, contactPhone, stripeSessionId }) {
+    const id = newId();
+    const ts = nowIso();
+    _jobInsert().run(
+      id, deviceId,
+      title, company, location, rate ?? null, description,
+      requirementsCsv ?? null, contactEmail ?? null, contactPhone ?? null,
+      stripeSessionId ?? null, ts, ts,
+    );
+    return _jobById().get(id);
+  },
+  findById(id) {
+    return _jobById().get(id) || null;
+  },
+  findBySession(sessionId) {
+    return _jobBySession().get(sessionId) || null;
+  },
+  /** Mark paid + set expiry. Default expiry = 30 days from now. */
+  markPaid({ id, expiresAt }) {
+    const exp = expiresAt ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    _jobMarkPaid().run(exp, nowIso(), id);
+    return _jobById().get(id);
+  },
+  /** Paid + non-expired listings for browse view. [locationLike] optional. */
+  listPaid({ locationLike = null, limit = 100 } = {}) {
+    return _jobListPaid().all(nowIso(), locationLike, locationLike ? `%${locationLike}%` : null, limit);
+  },
+  listByDevice({ deviceId, limit = 50 }) {
+    return _jobListByDevice().all(deviceId, limit);
+  },
+  /** Housekeeping — drop expired postings. Called periodically (cron). */
+  purgeExpired() {
+    return _jobPurgeExpired().run(nowIso()).changes;
+  },
+};
+
 export const repos = {
-  users, tenders, matches, feedback, magicLinks, aiUsage, fitterPremium, fitterChat,
+  users, tenders, matches, feedback, magicLinks, aiUsage, fitterPremium, fitterChat, fitterJobs,
 };
