@@ -22,7 +22,7 @@ Aby ASC pozwolił submitować, MUSZĄ być:
 | Pole | Wartość |
 |---|---|
 | **Name** | `PrzetargAI` |
-| **Subtitle** | `Monitoring przetargów z BZP` |
+| **Subtitle** | `Przetargi z BZP i TED dla firm` (30/30 zn) |
 | **Bundle ID** | `pl.przetargai.app` |
 | **SKU** | `PRZETARGAI` |
 | **Primary Language** | Polish (Poland) |
@@ -129,8 +129,11 @@ Klikasz „**Get Started**" → odpowiadasz na pytania o zbieranie danych.
 
 ### 4.1 Promotional Text (170 zn — można aktualizować bez review)
 ```
-Nie przegap żadnego przetargu. AI codziennie analizuje BZP i powiadamia Cię o ogłoszeniach dopasowanych do profilu Twojej firmy.
+AI codziennie analizuje przetargi z BZP i TED i pokazuje tylko te dopasowane do Twojej firmy. Zamiast setek ogłoszeń — kilka trafnych każdego dnia.
 ```
+Alternatywy (obie < 170 zn):
+- „Codziennie analizujemy przetargi z BZP i TED przez AI i pokazujemy tylko dopasowane do Twojej firmy. Filtruj po trafności i nie przegap żadnej okazji."
+- „AI codziennie wybiera z BZP i TED tylko przetargi dopasowane do Twojej firmy. Zamiast setek ogłoszeń — kilka trafnych dziennie."
 
 ### 4.2 Description (4000 zn)
 ```
@@ -180,12 +183,18 @@ https://jakatora.github.io/przetargai/
 ```
 
 ### 4.7 What's New in This Version (przy każdej nowej wersji)
+
+Wersja 1.0.1 (build 104):
 ```
-Pierwsze wydanie aplikacji PrzetargAI:
-- Codzienna analiza ogłoszeń BZP z dopasowaniem AI
-- Ekran feedu z 5 najnowszymi dopasowaniami
-- Szczegóły przetargu z uzasadnieniem AI (model Claude)
-- Plan Free (5/dzień) i Standard (49 zł/mc, nielimitowany)
+Więcej źródeł i pełna kontrola nad listą przetargów:
+
+• TED — monitorujemy teraz także przetargi unijne powyżej progów, których nie ma w BZP. Więcej okazji, zwłaszcza przy większych zamówieniach.
+• Filtr trafności — ustaw minimalny procent dopasowania (70%, 80%, 90%) i widź tylko najlepsze przetargi.
+• Ściąga kodów CPV — nie musisz znać kodów. Wyszukaj swoją branżę i dodaj ją jednym dotknięciem.
+• Tryb ciemny — jasny, ciemny albo zgodny z ustawieniem telefonu.
+• Prostsza rejestracja — wystarczą e-mail i hasło, bez NIP-u i formalności.
+• Plan Standard w nowej cenie 49 zł/mies. — nielimitowane dopasowania i powiadomienia push.
+• Poprawki szybkości i stabilności.
 ```
 
 ---
