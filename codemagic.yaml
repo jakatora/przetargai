@@ -18,10 +18,10 @@ workflows:
     name: PrzetargAI iOS (TestFlight)
     instance_type: mac_mini_m2
     max_build_duration: 60
-    integrations:
-      # Istniejąca integracja z Codemagic (klucz API App Store Connect jest na
-      # poziomie konta — działa dla każdej apki). Reużyta z ProbWin AI.
-      app_store_connect: ProbWin AI Connect Key
+    # BEZ bloku `integrations:` — integracja nazwana „ProbWin AI Connect Key"
+    # żyje w INNYM zespole Codemagic niż ten z billingiem (lekcja 2026-07-10).
+    # Poświadczenia ASC idą jawnie zmiennymi APP_STORE_CONNECT_* (grupa ios_signing);
+    # `app-store-connect` i `xcode-project` czytają je automatycznie ze środowiska.
     environment:
       groups:
         - ios_signing            # zawiera CERTIFICATE_PRIVATE_KEY (base64, Secure)
@@ -70,7 +70,9 @@ workflows:
       - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
-        auth: integration
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
 
