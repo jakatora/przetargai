@@ -34,8 +34,12 @@ Klucze API zebrane wg `blockers.md`.
 1. Stripe → **Products** → utwórz „PrzetargAI Standard": 199 zł + 23% VAT,
    cykl miesięczny. Skopiuj `price_...` do `STRIPE_PRICE_STANDARD`.
 2. Stripe → **Developers → Webhooks** → dodaj endpoint:
-   `https://<backend>/webhooks/stripe`, zdarzenia:
-   `checkout.session.completed`, `customer.subscription.deleted`.
+   `https://<backend>/webhooks/stripe`, zdarzenia (KOMPLET — handler wstrzymuje
+   aktywację przy `payment_status !== 'paid'` i czeka na `async_payment_succeeded`;
+   bez `subscription.updated` niepłacący nigdy nie traci planu):
+   `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+   `checkout.session.async_payment_failed`, `invoice.paid`,
+   `customer.subscription.updated`, `customer.subscription.deleted`.
 3. Skopiuj `whsec_...` do `STRIPE_WEBHOOK_SECRET` w Railway i zredeployuj.
 
 ---
@@ -58,10 +62,18 @@ Aplikacja Expo jest „managed" — natywne katalogi `ios/`/`android/` generuje 
 `expo prebuild`.
 
 **Przygotowanie:**
-1. W `mobile/src/config.js` ustaw produkcyjny `API_URL` (gałąź `else`).
+1. Backend aplikacji: produkcyjny build bez zmiennych celuje w stałą `RAILWAY`
+   z `mobile/src/config.js`. Inny backend (np. Firebase po migracji D-024) wskazuje
+   się zmienną **`EXPO_PUBLIC_API_URL`** ustawioną w środowisku builda
+   (Codemagic → workflow → Environment variables) — zmienne `EXPO_PUBLIC_*`
+   trafiają do bundla przy budowaniu, w kodzie nic się nie edytuje.
 2. Podmień placeholdery ikon w `mobile/assets/` na docelowe.
 3. Powiadomienia push: uruchom raz `npx eas init` w `mobile/` — rejestruje projekt
    Expo i zapisuje `projectId` w `app.json` (same buildy idą przez Codemagic).
+   **iOS dodatkowo:** w Apple Developer Portal (Identifiers → `pl.przetargai.app`)
+   włącz capability **Push Notifications** ZANIM Codemagic pobierze pliki podpisu
+   (`fetch-signing-files`) — prebuild dodaje entitlement `aps-environment`
+   automatycznie (expo-notifications) i profil bez tej capability nie podpisze IPA.
 
 **Konfiguracja Codemagic UI** (dla nowej apki PrzetargAI):
 - Dodaj aplikację (repo `przetargai`) — Codemagic wykryje `codemagic.yaml`.

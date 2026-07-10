@@ -1,38 +1,48 @@
 import { useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Text, Pressable } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
-import { colors, spacing } from '../theme';
+import CpvPicker from '../components/CpvPicker';
+import { useStyle, tworzStyle } from '../context/ThemeContext';
+import { spacing } from '../theme';
 
 function parseList(text) {
   return text.split(',').map((s) => s.trim()).filter(Boolean);
 }
 
+// Rejestracja bez NIP-u i bez nazwy firmy (feedback usera 2026-07-09 + plan §7):
+// persona JDG zakłada konto samym e-mailem. Nazwę firmy można uzupełnić później
+// w ustawieniach konta; NIP schodzi do momentu wystawienia faktury.
 export default function RegisterScreen() {
   const { signUp } = useAuth();
+  const styles = useStyle(tworzStyleRejestracji);
   const [form, setForm] = useState({
     email: '',
     password: '',
-    company_nip: '',
-    company_name: '',
+    password_confirm: '',
     keywords: '',
     cpv_codes: '',
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [sciagaOtwarta, setSciagaOtwarta] = useState(false);
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
 
   async function handleRegister() {
     setError(null);
-    if (!form.email.trim() || !form.password || !form.company_nip.trim() || !form.company_name.trim()) {
-      setError('Uzupełnij email, hasło, NIP oraz nazwę firmy.');
+    if (!form.email.trim() || !form.password) {
+      setError('Uzupełnij email i hasło.');
       return;
     }
     if (form.password.length < 8) {
       setError('Hasło musi mieć co najmniej 8 znaków.');
+      return;
+    }
+    if (form.password !== form.password_confirm) {
+      setError('Hasła się różnią — wpisz dwa razy to samo hasło.');
       return;
     }
     setLoading(true);
@@ -40,8 +50,6 @@ export default function RegisterScreen() {
       await signUp({
         email: form.email.trim(),
         password: form.password,
-        company_nip: form.company_nip.trim(),
-        company_name: form.company_name.trim(),
         keywords: parseList(form.keywords),
         cpv_codes: parseList(form.cpv_codes),
       });
@@ -54,8 +62,8 @@ export default function RegisterScreen() {
   return (
     <Screen scroll>
       <Text style={styles.intro}>
-        Załóż konto firmy. Słowa kluczowe i kody CPV pozwalają AI dopasować
-        przetargi do Twojej branży.
+        Załóż konto. Słowa kluczowe pozwalają AI dopasować przetargi do tego,
+        czym się zajmujesz — możesz je zmienić w każdej chwili.
       </Text>
 
       <TextField
@@ -76,40 +84,48 @@ export default function RegisterScreen() {
         hint="Minimum 8 znaków"
       />
       <TextField
-        label="NIP firmy"
-        value={form.company_nip}
-        onChangeText={set('company_nip')}
-        keyboardType="number-pad"
-        placeholder="1234567890"
-      />
-      <TextField
-        label="Nazwa firmy"
-        value={form.company_name}
-        onChangeText={set('company_name')}
-        placeholder="np. Budownictwo Kowalski Sp. z o.o."
+        label="Powtórz hasło"
+        value={form.password_confirm}
+        onChangeText={set('password_confirm')}
+        secureTextEntry
+        placeholder="••••••••"
+        hint="Wpisz to samo hasło jeszcze raz"
       />
       <TextField
         label="Słowa kluczowe"
         value={form.keywords}
         onChangeText={set('keywords')}
         placeholder="remont, budowa drogi, instalacje"
-        hint="Po przecinku — branża i specjalizacja firmy"
+        hint="Po przecinku — czym się zajmujesz"
       />
       <TextField
         label="Kody CPV (opcjonalnie)"
         value={form.cpv_codes}
         onChangeText={set('cpv_codes')}
         placeholder="45000000, 45300000"
-        hint="Po przecinku — kody Wspólnego Słownika Zamówień"
+        hint="Po przecinku — jeśli je znasz; nie są wymagane"
+        style={styles.poleCpv}
       />
+      <Pressable onPress={() => setSciagaOtwarta(true)} hitSlop={8} accessibilityRole="button">
+        <Text style={styles.linkSciagi}>Nie znasz kodów? Otwórz ściągę CPV →</Text>
+      </Pressable>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button title="Zarejestruj firmę" onPress={handleRegister} loading={loading} />
+      <Button title="Załóż konto" onPress={handleRegister} loading={loading} />
+
+      <CpvPicker
+        widoczny={sciagaOtwarta}
+        onClose={() => setSciagaOtwarta(false)}
+        wartosc={form.cpv_codes}
+        onChange={set('cpv_codes')}
+      />
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  intro: { color: colors.textMuted, fontSize: 15, marginBottom: spacing.lg, lineHeight: 22 },
-  error: { color: colors.danger, fontSize: 14, marginBottom: spacing.sm },
-});
+const tworzStyleRejestracji = tworzStyle((k) => ({
+  intro: { color: k.textMuted, fontSize: 15, marginBottom: spacing.lg, lineHeight: 22 },
+  error: { color: k.danger, fontSize: 14, marginBottom: spacing.sm },
+  poleCpv: { marginBottom: spacing.xs },
+  linkSciagi: { color: k.blue, fontSize: 14, fontWeight: '600', marginBottom: spacing.md },
+}));

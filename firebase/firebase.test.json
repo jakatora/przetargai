@@ -1,0 +1,17 @@
+{
+  "functions": {
+    "source": "functions",
+    "codebase": "przetargai",
+    "runtime": "nodejs22"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "functions": { "port": 5002 },
+    "firestore": { "port": 8090 },
+    "ui": { "enabled": false },
+    "singleProjectMode": true
+  }
+}

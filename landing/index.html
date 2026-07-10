@@ -5,30 +5,127 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PrzetargAI — monitoring przetargów publicznych dla Twojej firmy</title>
   <meta name="description" content="PrzetargAI codziennie analizuje ogłoszenia z Biuletynu Zamówień Publicznych i powiadamia Cię tylko o przetargach dopasowanych do profilu Twojej firmy." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="canonical" href="https://przetargai.pl/" />
+
+  <!-- Open Graph -->
   <meta property="og:title" content="PrzetargAI — nie przegap żadnego przetargu" />
   <meta property="og:description" content="AI dopasowuje przetargi z BZP do profilu Twojej firmy budowlanej lub IT." />
   <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://przetargai.pl/" />
+  <meta property="og:site_name" content="PrzetargAI" />
+  <meta property="og:locale" content="pl_PL" />
+  <meta property="og:image" content="https://przetargai.pl/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="PrzetargAI — monitoring przetargów publicznych z BZP dopasowany przez AI" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PrzetargAI — nie przegap żadnego przetargu" />
+  <meta name="twitter:description" content="AI dopasowuje przetargi z BZP do profilu Twojej firmy budowlanej lub IT." />
+  <meta name="twitter:image" content="https://przetargai.pl/og-image.png" />
+
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563eb'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563eb'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Dane strukturalne (SEO) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://przetargai.pl/#organization",
+        "name": "PrzetargAI",
+        "url": "https://przetargai.pl/",
+        "description": "Monitoring przetargów publicznych z Biuletynu Zamówień Publicznych dla firm budowlanych i IT.",
+        "email": "support@przetargai.pl"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "PrzetargAI",
+        "operatingSystem": "iOS, Android",
+        "applicationCategory": "BusinessApplication",
+        "description": "AI dopasowuje przetargi z BZP do profilu Twojej firmy budowlanej lub IT i powiadamia o trafnych ogłoszeniach.",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Free",
+            "price": "0",
+            "priceCurrency": "PLN",
+            "description": "5 dopasowanych przetargów dziennie, codzienna analiza BZP."
+          },
+          {
+            "@type": "Offer",
+            "name": "Standard",
+            "price": "49",
+            "priceCurrency": "PLN",
+            "description": "Nielimitowane dopasowane przetargi i powiadomienia push, miesięcznie netto."
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Skąd pochodzą dane o przetargach?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Bezpośrednio z Biuletynu Zamówień Publicznych (BZP) prowadzonego na platformie e-Zamówienia. To oficjalne, publiczne źródło ogłoszeń o zamówieniach publicznych w Polsce." }
+          },
+          {
+            "@type": "Question",
+            "name": "Jak działa dopasowanie AI?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Na podstawie profilu Twojej firmy — słów kluczowych i kodów CPV — sztuczna inteligencja ocenia trafność każdego ogłoszenia w skali 0–100 i podaje krótkie uzasadnienie." }
+          },
+          {
+            "@type": "Question",
+            "name": "Czy mogę korzystać za darmo?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Tak. Plan Free jest bezpłatny na zawsze i obejmuje 5 dopasowanych przetargów dziennie. Nie wymaga podawania karty płatniczej." }
+          },
+          {
+            "@type": "Question",
+            "name": "Jak kupić plan Standard?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Subskrypcję aktywujesz z poziomu aplikacji — przycisk „Przejdź na Standard” otwiera bezpieczną płatność Stripe w przeglądarce. Po opłaceniu otrzymujesz fakturę VAT." }
+          },
+          {
+            "@type": "Question",
+            "name": "Czy mogę zrezygnować w dowolnym momencie?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Tak, subskrypcja jest miesięczna i możesz ją anulować w każdej chwili. Po rezygnacji konto wraca do planu Free." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
+  <a class="skip-link" href="#main">Przejdź do treści</a>
   <header class="nav">
     <div class="container nav__inner">
       <a class="brand" href="/">
         <span class="brand__mark">P</span>
         <span class="brand__name">PrzetargAI</span>
       </a>
-      <nav class="nav__links">
+      <nav class="nav__links" id="navMenu" aria-label="Główna nawigacja">
         <a href="#funkcje">Funkcje</a>
         <a href="#jak-dziala">Jak działa</a>
         <a href="#cennik">Cennik</a>
         <a href="#faq">FAQ</a>
+        <a class="btn btn--primary btn--sm nav__menu-cta" href="#cennik">Zacznij za darmo</a>
       </nav>
-      <a class="btn btn--primary btn--sm" href="#cennik">Zacznij za darmo</a>
+      <a class="btn btn--primary btn--sm nav__bar-cta" href="#cennik">Zacznij za darmo</a>
+      <button class="nav__toggle" id="navToggle" type="button" aria-label="Otwórz menu" aria-expanded="false" aria-controls="navMenu">
+        <span class="nav__toggle-bar"></span>
+        <span class="nav__toggle-bar"></span>
+        <span class="nav__toggle-bar"></span>
+      </button>
     </div>
   </header>
 
-  <main>
+  <main id="main" tabindex="-1">
     <!-- HERO -->
     <section class="hero">
       <div class="container hero__inner">
@@ -173,7 +270,7 @@
             <span class="plan__tag">Najczęściej wybierany</span>
             <h3 class="plan__name">Standard</h3>
             <div class="plan__price">
-              <span class="amount">199 zł</span><span class="period">/ miesiąc netto</span>
+              <span class="amount">49 zł</span><span class="period">/ miesiąc</span>
             </div>
             <p class="plan__desc">Dla firm, które aktywnie startują w przetargach.</p>
             <ul class="plan__list">
@@ -253,5 +350,6 @@
       <span>support@przetargai.pl</span>
     </div>
   </footer>
+  <script src="nav.js" defer></script>
 </body>
 </html>

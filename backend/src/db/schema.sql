@@ -1,10 +1,12 @@
 -- PrzetargAI — schemat bazy danych (SQLite). Idempotentny: CREATE ... IF NOT EXISTS.
 
--- Użytkownicy / firmy. Profil firmy (keywords, cpv_codes) jest niezbędny do matchingu.
+-- Użytkownicy / firmy. Profil (keywords, cpv_codes) jest niezbędny do matchingu.
+-- NIP i nazwa firmy są OPCJONALNE (migracja 001) — persona JDG rejestruje się
+-- samym e-mailem; NIP schodzi do momentu wystawienia faktury.
 CREATE TABLE IF NOT EXISTS users (
   id                     TEXT PRIMARY KEY,
-  company_nip            TEXT NOT NULL UNIQUE,
-  company_name           TEXT NOT NULL,
+  company_nip            TEXT UNIQUE,
+  company_name           TEXT,
   email                  TEXT NOT NULL UNIQUE,
   password_hash          TEXT NOT NULL,
   premium_tier           TEXT NOT NULL DEFAULT 'free'
@@ -92,6 +94,25 @@ CREATE TABLE IF NOT EXISTS magic_links (
   used_at    TEXT,
   created_at TEXT NOT NULL
 );
+
+-- Dobowy limit płatnych wywołań AI na urządzenie (migracja 003).
+CREATE TABLE IF NOT EXISTS ai_quota_device (
+  device_id  TEXT NOT NULL,
+  day        TEXT NOT NULL,
+  operation  TEXT NOT NULL,
+  calls      INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (device_id, day, operation)
+);
+CREATE INDEX IF NOT EXISTS idx_ai_quota_device_day ON ai_quota_device(day);
+
+-- Rejestr obsłużonych zdarzeń Stripe — idempotencja webhooka (migracja 002).
+CREATE TABLE IF NOT EXISTS stripe_events (
+  id           TEXT PRIMARY KEY,
+  type         TEXT NOT NULL,
+  processed_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_stripe_events_processed ON stripe_events(processed_at);
 
 -- Metadane schematu (wersjonowanie migracji).
 CREATE TABLE IF NOT EXISTS schema_meta (

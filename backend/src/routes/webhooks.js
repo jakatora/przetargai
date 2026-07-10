@@ -1,10 +1,11 @@
 import express, { Router } from 'express';
 import { constructWebhookEvent, stripe } from '../services/stripe.js';
-import { users, fitterPremium, fitterJobs } from '../db/repos.js';
+import { users, fitterPremium, fitterJobs, stripeEvents } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 import { audit } from '../lib/audit.js';
 import { sendEmail, subscriptionActiveEmail } from '../services/email.js';
 import { createStandardInvoice } from '../services/invoice.js';
+import { statusSubskrypcjiFittera, tierPrzetargAi } from '../lib/subscriptionStatus.js';
 
 const router = Router();
 
@@ -21,19 +22,41 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
     return res.status(400).json({ error: 'Nieprawidłowy podpis webhooka' });
   }
 
+  // Rezerwacja PRZED obsługą (audyt 2026-07-09). Stripe ponawia dostawę, a bez
+  // rejestru powtórka wystawiała drugą fakturę i słała drugi e-mail.
+  if (!stripeEvents.claim(event.id, event.type)) {
+    logger.info({ eventId: event.id, type: event.type }, 'Webhook Stripe — duplikat, pomijam');
+    return res.json({ received: true, duplicate: true });
+  }
+
   try {
     await handleEvent(event);
   } catch (err) {
-    // Logujemy, ale odpowiadamy 200 — błąd nie może wymuszać retry w nieskończoność.
-    logger.error({ err: err.message, type: event.type }, 'Błąd obsługi webhooka Stripe');
+    // Zwalniamy rezerwację i prosimy Stripe o ponowienie. Dawniej odpowiadaliśmy
+    // 200 mimo błędu — opłacony klient zostawał bez subskrypcji, bez śladu poza logiem.
+    try { stripeEvents.release(event.id); } catch { /* rejestr niedostępny */ }
+    logger.error({ err: err.message, eventId: event.id, type: event.type }, 'Błąd obsługi webhooka Stripe');
+    return res.status(500).json({ error: 'Obsługa zdarzenia nie powiodła się' });
   }
   res.json({ received: true });
 });
 
 async function handleEvent(event) {
   switch (event.type) {
+    // Metody asynchroniczne (przelew, odroczony BLIK) kończą sesję ZANIM pieniądze
+    // wpłyną — bramka payment_status je wstrzymuje. Stripe dosyła wtedy osobne
+    // zdarzenie z potwierdzeniem; bez jego obsługi klient płacił i nic nie dostawał.
+    case 'checkout.session.async_payment_succeeded':
     case 'checkout.session.completed': {
       const session = event.data.object;
+      // Sesja bywa „complete", gdy pieniądze jeszcze nie wpłynęły (przelew,
+      // odroczone metody płatności). Aktywacja przed zapłatą to rozdawanie
+      // subskrypcji i ogłoszeń za darmo (audyt 2026-07-09).
+      if (session.payment_status && session.payment_status !== 'paid') {
+        logger.info({ sessionId: session.id, status: session.payment_status },
+          'Checkout zakończony, ale płatność niepotwierdzona — aktywacja wstrzymana');
+        break;
+      }
       // Branch on metadata.project — Fitter Welder Pro uses device_id, no
       // user account; PrzetargAI uses client_reference_id → users table.
       if (session.metadata?.project === 'fitter') {
@@ -58,9 +81,11 @@ async function handleEvent(event) {
 
       sendEmail({ to: user.email, ...subscriptionActiveEmail(user.company_name) })
         .catch((err) => logger.error({ err: err.message }, 'Email aktywacji nie wysłany'));
+      // NIP i nazwa firmy są opcjonalne od migracji 001 — faktura dla osoby bez
+      // NIP-u to zwykła faktura imienna (Fakturownia: puste buyer_tax_no).
       createStandardInvoice({
-        buyerName: user.company_name,
-        buyerNip: user.company_nip,
+        buyerName: user.company_name ?? user.email,
+        buyerNip: user.company_nip ?? '',
         buyerEmail: user.email,
       }).catch((err) => logger.error({ err: err.message }, 'Faktura nie wystawiona'));
       break;
@@ -68,12 +93,28 @@ async function handleEvent(event) {
     case 'customer.subscription.updated': {
       const sub = event.data.object;
       if (sub.metadata?.project === 'fitter') {
-        const status = sub.cancel_at_period_end ? 'canceled' : (sub.status || 'active');
+        // `cancel_at_period_end` to zapowiedź, nie fakt — klient zapłacił do końca
+        // okresu (audyt 2026-07-09). Mapowanie statusów w lib/subscriptionStatus.js.
+        const status = statusSubskrypcjiFittera(sub);
         const periodEnd = sub.current_period_end
           ? new Date(sub.current_period_end * 1000).toISOString()
           : null;
         fitterPremium.updateStatusBySubscription(sub.id, status, periodEnd);
         logger.info({ subId: sub.id, status }, 'Fitter subscription updated');
+        break;
+      }
+      // PrzetargAI: bez tej gałęzi klient z wygasłą kartą zachowywał plan
+      // Standard w nieskończoność — zdarzenie było obsługiwane tylko dla Fittera.
+      const user = users.findByStripeCustomer(sub.customer);
+      if (!user) {
+        logger.warn({ subId: sub.id }, 'Zmiana subskrypcji: nie znaleziono użytkownika');
+        break;
+      }
+      const nalezyTier = tierPrzetargAi(sub.status);
+      if (user.premium_tier !== nalezyTier) {
+        users.setTier(user.id, nalezyTier);
+        audit({ userId: user.id, action: nalezyTier === 'standard' ? 'subscription_restored' : 'subscription_suspended' });
+        logger.info({ userId: user.id, status: sub.status, tier: nalezyTier }, 'Plan zaktualizowany po zmianie subskrypcji');
       }
       break;
     }

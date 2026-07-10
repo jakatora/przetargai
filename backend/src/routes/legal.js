@@ -114,14 +114,15 @@ dopasowanych do profilu firmy, wraz z oceną trafności i uzasadnieniem generowa
 (Claude — model Anthropic).</p>
 <h2>§4. Konto i rejestracja</h2>
 <ul>
-<li>Korzystanie wymaga rejestracji i podania prawdziwych danych firmy (NIP, nazwa, e-mail).</li>
-<li>Usługa przeznaczona dla przedsiębiorców (B2B).</li>
+<li>Do założenia Konta wystarczy adres e-mail i hasło.</li>
+<li>Dane firmy (NIP, nazwa) są wymagane dopiero przy wykupieniu planu płatnego — służą wystawieniu faktury VAT.</li>
+<li>Usługa przeznaczona dla przedsiębiorców (B2B), w tym jednoosobowych działalności gospodarczych.</li>
 <li>Użytkownik odpowiada za poufność hasła i działania na Koncie.</li>
 </ul>
 <h2>§5. Plany i ceny</h2>
 <ul>
 <li><strong>Plan Free</strong> — bezpłatny i bezterminowy, do 5 dopasowanych przetargów dziennie, bez powiadomień push.</li>
-<li><strong>Plan Standard</strong> — 199 zł netto miesięcznie + VAT 23%; nielimitowane dopasowania oraz powiadomienia push.</li>
+<li><strong>Plan Standard</strong> — 49 zł miesięcznie (brutto, zawiera VAT 23%); nielimitowane dopasowania oraz powiadomienia push.</li>
 </ul>
 <h2>§6. Płatności i faktury</h2>
 <p>Płatności obsługuje Stripe Inc. Subskrypcja odnawiana miesięcznie. Po opłaceniu Użytkownik otrzymuje

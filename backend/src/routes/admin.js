@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { ah } from '../lib/asyncHandler.js';
 import { adminRequired } from '../middleware/adminAuth.js';
-import { runTenderFetch, generateMatchesForUser } from '../jobs/fetchTenders.js';
+import { runTenderFetch } from '../jobs/fetchTenders.js';
+import { backfillUser } from '../services/matching.js';
 import { createBackup } from '../services/backup.js';
 import { tenders, users } from '../db/repos.js';
 import { db } from '../db/index.js';
@@ -59,16 +60,14 @@ router.get('/users', ah(async (req, res) => {
   });
 }));
 
-/** Backfill — uruchamia matching dla istniejącego usera vs aktualne tendery w bazie. */
+/** Backfill — matching usera vs pula kandydatów (otwarty termin, bez dopasowania). */
 router.post('/match-user/:userId', ah(async (req, res) => {
   const user = users.findById(req.params.userId);
   if (!user) throw notFound('Użytkownik nie istnieje');
-  const candidates = tenders.recent(500);
-  const result = await generateMatchesForUser(user, candidates);
+  const result = await backfillUser(user);
   res.json({
     ok: true,
     user_id: user.id,
-    candidates: candidates.length,
     evaluated: result.evaluated,
     matchesCreated: result.created,
   });

@@ -1,14 +1,17 @@
-import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '../theme';
+import { View, Text, TextInput } from 'react-native';
+import { radius, spacing } from '../theme';
+import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 
 /** Pole tekstowe z etykietą, podpowiedzią i obsługą błędu walidacji. */
 export default function TextField({ label, hint, error, style, ...inputProps }) {
+  const { kolory } = useTheme();
+  const styles = useStyle(tworzStylePola);
   return (
     <View style={[styles.wrap, style]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         style={[styles.input, error && styles.inputError]}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={kolory.textMuted}
         {...inputProps}
       />
       {error ? (
@@ -20,20 +23,20 @@ export default function TextField({ label, hint, error, style, ...inputProps }) 
   );
 }
 
-const styles = StyleSheet.create({
+const tworzStylePola = tworzStyle((k) => ({
   wrap: { marginBottom: spacing.md },
-  label: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 6 },
+  label: { fontSize: 14, fontWeight: '600', color: k.text, marginBottom: 6 },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: k.surface,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: k.border,
     borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 13,
     fontSize: 16,
-    color: colors.text,
+    color: k.text,
   },
-  inputError: { borderColor: colors.danger },
-  hint: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
-  error: { fontSize: 12, color: colors.danger, marginTop: 4 },
-});
+  inputError: { borderColor: k.danger },
+  hint: { fontSize: 12, color: k.textMuted, marginTop: 4 },
+  error: { fontSize: 12, color: k.danger, marginTop: 4 },
+}));

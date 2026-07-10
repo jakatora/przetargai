@@ -17,7 +17,8 @@ Plan **Pro (399 zł)** jest świadomie poza zakresem MVP.
 
 ```
 przetarg-ai/
-├── backend/      Node.js + SQLite — API REST (GOTOWE)
+├── backend/      Node.js + SQLite — API REST na Railway (dziś produkcja; docelowo rollback)
+├── firebase/     Cloud Functions v2 + Firestore — DOCELOWY backend (migracja D-024)
 ├── mobile/       React Native + Expo (iOS + Android) (GOTOWE)
 ├── landing/      Strona + Stripe Checkout (Vercel) (GOTOWE)
 ├── plans/        Dokumenty zakresu / planu MVP
@@ -40,7 +41,7 @@ cd backend
 npm install
 Copy-Item .env.example .env   # uzupełnij klucze API
 npm run migrate               # tworzy bazę i schemat
-npm run dev                   # uruchamia serwer na http://localhost:3000
+npm run dev                   # uruchamia serwer na http://localhost:3100
 npm test                      # testy jednostkowe
 ```
 

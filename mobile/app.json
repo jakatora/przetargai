@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -27,7 +27,8 @@
         "backgroundColor": "#2563eb"
       },
       "edgeToEdgeEnabled": true,
-      "package": "pl.przetargai.app"
+      "package": "pl.przetargai.app",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -35,6 +36,12 @@
     "plugins": [
       "expo-secure-store",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d8e781a8-e84e-4e7a-a837-9fae1d059005"
+      }
+    },
+    "owner": "jakatora12"
   }
 }

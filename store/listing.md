@@ -9,11 +9,13 @@ Limity znaków podane przy każdym polu.
 
 - **Nazwa aplikacji:** PrzetargAI
 - **Kategoria:** Biznes
-- **Adres polityki prywatności:** https://backend-production-a43e3.up.railway.app/polityka-prywatnosci
-- **Adres regulaminu:** https://backend-production-a43e3.up.railway.app/regulamin
-- **Adres wsparcia:** https://backend-production-a43e3.up.railway.app (placeholder do czasu kupna domeny `przetargai.pl`)
+- **Adres polityki prywatności:** https://jakatora.github.io/przetargai/polityka-prywatnosci.html
+- **Adres regulaminu:** https://jakatora.github.io/przetargai/regulamin.html
+- **Adres wsparcia (Support URL):** https://jakatora.github.io/przetargai/
+- **Marketing URL (Apple):** https://jakatora.github.io/przetargai/
 - **E-mail kontaktowy:** jakatora68@gmail.com
 - **Klasyfikacja wiekowa:** 4+ / dla wszystkich (brak treści wrażliwych)
+- **Copyright:** 2026 Krzysztof Kapusta
 
 ---
 
@@ -102,14 +104,17 @@ FUNKCJE
 
 PLANY
 • Free — 5 dopasowanych przetargów dziennie, bezpłatnie i bezterminowo
-• Standard (199 zł/mc) — nielimitowane dopasowania oraz powiadomienia push
+• Standard — nielimitowane dopasowania oraz powiadomienia push
 
 Dane o przetargach pochodzą z oficjalnego, publicznego źródła — Biuletynu
 Zamówień Publicznych prowadzonego na platformie e-Zamówienia.
-
-PrzetargAI to darmowe narzędzie B2B. Subskrypcję Standard aktywujesz
-wygodnie przez stronę internetową przetargai.pl.
 ```
+
+> ⚠️ **Polityka płatności Google Play (runda 30):** w opisie Play NIE wolno
+> kierować do zakupu poza Play (usunięto zdanie o stronie WWW i cenę). Przed
+> publikacją na Androida zapada decyzja: Play Billing albo ukrycie CTA zakupu
+> w buildzie Android — patrz `blockers.md`. Argument „darmowe narzędzie B2B"
+> (asc-submission-pl.md) dotyczy WYŁĄCZNIE wytycznych Apple 3.1.3(d).
 
 ---
 

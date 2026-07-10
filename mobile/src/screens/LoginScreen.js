@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
-import { colors, spacing } from '../theme';
+import { spacing } from '../theme';
 
 export default function LoginScreen({ navigation }) {
   const { signIn } = useAuth();
+  const { schemat } = useTheme();
+  const styles = useStyle(tworzStyleLogowania);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -32,7 +35,8 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <Screen scroll contentStyle={styles.content}>
-      <StatusBar style="dark" />
+      {/* Jedyny ekran bez niebieskiego nagłówka — ikony paska muszą kontrastować z tłem. */}
+      <StatusBar style={schemat === 'ciemny' ? 'light' : 'dark'} />
 
       <View style={styles.brand}>
         <View style={styles.logo}>
@@ -72,23 +76,23 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const tworzStyleLogowania = tworzStyle((k) => ({
   content: { flexGrow: 1, justifyContent: 'center' },
   brand: { alignItems: 'center', marginBottom: spacing.xl },
   logo: {
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: colors.blue,
+    backgroundColor: k.blue,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoText: { color: colors.white, fontSize: 36, fontWeight: '800' },
-  appName: { fontSize: 26, fontWeight: '800', color: colors.text, marginTop: 12 },
-  tagline: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
-  heading: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
-  error: { color: colors.danger, fontSize: 14, marginBottom: spacing.sm },
+  logoText: { color: k.white, fontSize: 36, fontWeight: '800' },
+  appName: { fontSize: 26, fontWeight: '800', color: k.text, marginTop: 12 },
+  tagline: { fontSize: 14, color: k.textMuted, marginTop: 4 },
+  heading: { fontSize: 20, fontWeight: '700', color: k.text, marginBottom: spacing.md },
+  error: { color: k.danger, fontSize: 14, marginBottom: spacing.sm },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
-  footerText: { color: colors.textMuted },
-  link: { color: colors.blue, fontWeight: '700' },
-});
+  footerText: { color: k.textMuted },
+  link: { color: k.blue, fontWeight: '700' },
+}));

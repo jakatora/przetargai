@@ -44,6 +44,7 @@ const _userUpdateProfile = lazy(`
 const _userSetPushToken = lazy(`UPDATE users SET push_token = ?, updated_at = ? WHERE id = ?`);
 const _userSetTier = lazy(`UPDATE users SET premium_tier = ?, updated_at = ? WHERE id = ?`);
 const _userSetStripeCustomer = lazy(`UPDATE users SET stripe_customer_id = ?, updated_at = ? WHERE id = ?`);
+const _userDelete = lazy('DELETE FROM users WHERE id = ?');
 const _userSetStripeSub = lazy(`UPDATE users SET stripe_subscription_id = ?, updated_at = ? WHERE id = ?`);
 
 export const users = {
@@ -90,6 +91,20 @@ export const users = {
   setStripeSubscription(id, subscriptionId) {
     _userSetStripeSub().run(subscriptionId ?? null, nowIso(), id);
   },
+
+  /**
+   * Trwale usuwa konto i dane użytkownika (RODO art. 17).
+   *
+   * SQLite kaskaduje: `matches`, `feedback` i `magic_links` mają `ON DELETE CASCADE`
+   * na `users(id)`, a `PRAGMA foreign_keys = ON` jest ustawiane przy otwarciu
+   * połączenia (db/index.js). `audit_logs` i `ai_usage` zostają — inna podstawa
+   * prawna (rozliczenia i bezpieczeństwo) i nie niosą treści profilu.
+   *
+   * Idempotentne: usunięcie nieistniejącego konta nie jest błędem.
+   */
+  usunKonto(id) {
+    _userDelete().run(id);
+  },
 };
 
 // ============================ tenders ============================
@@ -103,6 +118,15 @@ const _tenderInsert = lazy(`
   ON CONFLICT(bzp_external_id) DO NOTHING`);
 const _tenderRecent = lazy(`SELECT * FROM tenders ORDER BY fetched_at DESC LIMIT ?`);
 const _tenderCount = lazy(`SELECT COUNT(*) AS n FROM tenders`);
+// Pula kandydatów usera (naprawa P-4): każdy przetarg z otwartym terminem, dla
+// którego user NIE ma jeszcze dopasowania. Dzienny limit Free dzięki temu odracza
+// nadwyżkę na jutro, zamiast ją bezpowrotnie kasować. Brak terminu nie wyklucza.
+const _tenderCandidates = lazy(`
+  SELECT t.* FROM tenders t
+  LEFT JOIN matches m ON m.tender_id = t.id AND m.user_id = ?
+  WHERE m.id IS NULL AND (t.deadline IS NULL OR t.deadline > ?)
+  ORDER BY t.fetched_at DESC
+  LIMIT ?`);
 
 export const tenders = {
   /** Wstawia przetarg, jeśli jeszcze go nie ma. Zwraca { tender, created }. */
@@ -122,6 +146,9 @@ export const tenders = {
   },
   recent(limit = 200) {
     return _tenderRecent().all(limit);
+  },
+  candidatesForUser(userId, limit = 500) {
+    return _tenderCandidates().all(userId, nowIso(), limit);
   },
   count() {
     return _tenderCount().get().n;
@@ -446,6 +473,86 @@ export const fitterJobs = {
   },
 };
 
+// ============================ stripe_events (idempotencja) ============================
+
+const _seInsert = lazy(
+  `INSERT INTO stripe_events (id, type, processed_at) VALUES (?, ?, ?)
+   ON CONFLICT(id) DO NOTHING`,
+);
+const _seDelete = lazy('DELETE FROM stripe_events WHERE id = ?');
+
+/**
+ * Rejestr obsłużonych zdarzeń Stripe. Bez niego powtórna dostawa zdarzenia
+ * (Stripe ponawia przy każdym nie-2xx) wystawiała drugą fakturę.
+ */
+export const stripeEvents = {
+  /** true = to PIERWSZA obsługa tego zdarzenia; false = duplikat. */
+  claim(eventId, type) {
+    return _seInsert().run(eventId, type, nowIso()).changes > 0;
+  },
+  /** Zwalnia rezerwację po nieudanej obsłudze, żeby Stripe mógł ponowić. */
+  release(eventId) {
+    _seDelete().run(eventId);
+  },
+};
+
+// ============================ dobowy limit AI na urządzenie ============================
+
+const _aqdGet = lazy(
+  'SELECT calls FROM ai_quota_device WHERE device_id = ? AND day = ? AND operation = ?',
+);
+const _aqdUpsert = lazy(`
+  INSERT INTO ai_quota_device (device_id, day, operation, calls, updated_at)
+  VALUES (?, ?, ?, 1, ?)
+  ON CONFLICT(device_id, day, operation) DO UPDATE SET calls = calls + 1, updated_at = excluded.updated_at`);
+
+/** Dobowe limity wywołań AI. Premium dostaje tyle, ile potrzeba do pracy. */
+const LIMITY_AI_URZADZENIA = {
+  fitter_scan: { premium: 60, darmowy: 3 },
+  fitter_chat: { premium: 200, darmowy: 15 },
+};
+
+/** Statusy subskrypcji Fittera dające dostęp Premium. */
+const PREMIUM_AKTYWNY = new Set(['active', 'past_due']);
+
+/**
+ * Dobowy limit płatnych wywołań AI na urządzenie.
+ *
+ * Audyt 2026-07-09/10: trasy `/api/fitter/scan-iso` i `/api/fitter/ai` są
+ * nieuwierzytelnione, a każde żądanie kosztuje realne pieniądze (skan ISO to
+ * wywołanie Sonneta z wizją). `device_id` to dowolny tekst od klienta. Bramka
+ * budżetu chroni przed katastrofą, ale odpala się dopiero po przepaleniu limitu
+ * miesięcznego; limiter na adres IP obchodzi się z wielu adresów.
+ *
+ * Nie odcinamy darmowych użytkowników — to byłaby zmiana produktowa. Sprawiamy
+ * tylko, że nadużycie kosztuje atakującego tyle samo pracy, co uczciwe korzystanie.
+ */
+export const aiQuotaDevice = {
+  today() {
+    return nowIso().slice(0, 10);
+  },
+
+  used(deviceId, operation) {
+    return _aqdGet().get(deviceId, this.today(), operation)?.calls ?? 0;
+  },
+
+  /** Limit zależny od tego, czy urządzenie ma aktywne Premium. */
+  limitDlaUrzadzenia(deviceId, operation) {
+    const limity = LIMITY_AI_URZADZENIA[operation] ?? LIMITY_AI_URZADZENIA.fitter_chat;
+    const premium = fitterPremium.findByDevice(deviceId);
+    return premium && PREMIUM_AKTYWNY.has(premium.status) ? limity.premium : limity.darmowy;
+  },
+
+  /** Rezerwuje jedno wywołanie. Zwraca false, gdy dobowy limit wyczerpany. */
+  reserve(deviceId, operation, limit = null) {
+    const maks = limit ?? this.limitDlaUrzadzenia(deviceId, operation);
+    if (this.used(deviceId, operation) >= maks) return false;
+    _aqdUpsert().run(deviceId, this.today(), operation, nowIso());
+    return true;
+  },
+};
+
 export const repos = {
-  users, tenders, matches, feedback, magicLinks, aiUsage, fitterPremium, fitterChat, fitterJobs,
+  users, tenders, matches, feedback, magicLinks, aiUsage, stripeEvents, aiQuotaDevice,
+  fitterPremium, fitterChat, fitterJobs,
 };

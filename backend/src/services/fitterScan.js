@@ -3,6 +3,8 @@ import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { costUsd } from '../lib/pricing.js';
 import { aiUsage } from '../db/repos.js';
+import { aiBudgetAllows } from './ai.js';
+import { serviceUnavailable } from '../lib/errors.js';
 
 // Vision-based ISO drawing scanner. Takes a photographed/scanned iso sketch
 // (base64 JPEG/PNG) and asks Claude to extract a structured envelope matching
@@ -103,6 +105,11 @@ export async function scanFitterIso({ imageBase64, mediaType = 'image/jpeg', dev
   if (!client) {
     throw new Error('AI niedostępne — brak konfiguracji Anthropic');
   }
+  // Wspólna bramka budżetu (audyt 2026-07-09, CRITICAL). Trasa /api/fitter/scan-iso
+  // jest nieuwierzytelniona, a każdy skan to płatne wywołanie Sonneta z wizją.
+  if (!aiBudgetAllows('fitter_scan')) {
+    throw serviceUnavailable('Miesięczny budżet AI wyczerpany — skanowanie chwilowo niedostępne');
+  }
   const startedAt = Date.now();
   const resp = await client.messages.create({
     model: SCAN_MODEL,
@@ -133,11 +140,11 @@ export async function scanFitterIso({ imageBase64, mediaType = 'image/jpeg', dev
   // Track usage for the cost budget.
   const usage = resp.usage || {};
   try {
-    const dollars = costUsd({
-      model: SCAN_MODEL,
-      inputTokens: usage.input_tokens ?? 0,
-      outputTokens: usage.output_tokens ?? 0,
-    });
+    const dollars = costUsd(
+      SCAN_MODEL,
+      usage.input_tokens ?? 0,
+      usage.output_tokens ?? 0,
+    );
     aiUsage.record({
       operation: 'fitter_scan',
       model: SCAN_MODEL,

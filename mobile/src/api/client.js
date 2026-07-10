@@ -1,10 +1,21 @@
 import { API_URL } from '../config';
+import { bladOdpowiedzi, bladSieci } from './errors';
 
 let authToken = null;
+let naWygasnieciesesji = null;
 
 /** Ustawia token JWT dołączany do żądań (null = wylogowany). */
 export function setAuthToken(token) {
   authToken = token;
+}
+
+/**
+ * Rejestruje reakcję na wygaśnięcie sesji (401 z serwera).
+ * AuthContext podpina tu wylogowanie — bez tego apka wisiała na ekranie błędu,
+ * bo żaden ekran nie wiedział, że token przestał być ważny (audyt 2026-07-09).
+ */
+export function onSesjaWygasla(handler) {
+  naWygasnieciesesji = handler;
 }
 
 async function request(path, { method = 'GET', body, auth = true } = {}) {
@@ -19,7 +30,7 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new Error('Brak połączenia z serwerem. Sprawdź internet.');
+    throw bladSieci();
   }
 
   let data = null;
@@ -30,7 +41,13 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   }
 
   if (!res.ok) {
-    throw new Error(data?.error?.message || `Błąd serwera (${res.status}).`);
+    const err = bladOdpowiedzi(res.status, data);
+    // Wygasła sesja na trasie wymagającej tokenu — wyloguj raz, globalnie.
+    // Na trasach publicznych (logowanie) 401 znaczy „złe hasło", nie „wyloguj".
+    if (err.wygaslaSesja && auth && authToken && naWygasnieciesesji) {
+      naWygasnieciesesji();
+    }
+    throw err;
   }
   return data;
 }
@@ -44,7 +61,23 @@ export const api = {
   setPushToken: (pushToken) =>
     request('/auth/me/push-token', { method: 'PUT', body: { push_token: pushToken } }),
   createUpgradeLink: () => request('/auth/upgrade-link', { method: 'POST' }),
-  getMatches: () => request('/matches'),
+  /** Trwale usuwa konto i wszystkie dane (RODO art. 17). Wymaga potwierdzenia hasłem. */
+  deleteAccount: (password) => request('/auth/me', { method: 'DELETE', body: { password } }),
+  /**
+   * DEMO: przełącza plan bez Stripe i od razu przelicza dopasowania.
+   * Trasa istnieje WYŁĄCZNIE poza produkcją (tam backend zwraca 404) —
+   * wołać tylko z UI widocznego w __DEV__.
+   */
+  setDemoTier: (tier) => request('/demo/tier', { method: 'POST', body: { tier } }),
+  /**
+   * Strona dopasowań. `before` = `next_before` z poprzedniej odpowiedzi
+   * (kursor). Brak `before` = pierwsza strona.
+   */
+  getMatches: ({ before, limit = 20 } = {}) => {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (before) params.set('before', before);
+    return request(`/matches?${params.toString()}`);
+  },
   getMatch: (id) => request(`/matches/${id}`),
   sendFeedback: (id, helpful) =>
     request(`/matches/${id}/feedback`, { method: 'POST', body: { helpful } }),

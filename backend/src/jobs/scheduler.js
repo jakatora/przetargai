@@ -6,7 +6,30 @@ import { createBackup } from '../services/backup.js';
 
 const tasks = [];
 
-function schedule(name, expression, handler) {
+/**
+ * Definicja zadań harmonogramu — czysta, żeby dało się ją przetestować bez timerów.
+ * Każde zadanie niesie strefę: produkcja chodzi w UTC, a „12" ma znaczyć polskie
+ * południe, nie 13/14. Patrz env.SCHEDULER_TZ i test/scheduler.test.js.
+ * @param {typeof env} [cfg] konfiguracja (wstrzykiwalna w testach)
+ */
+export function schedulerJobs(cfg = env) {
+  return [
+    {
+      name: 'tender-fetch',
+      expression: cfg.TENDER_FETCH_CRON,
+      timezone: cfg.SCHEDULER_TZ,
+      run: () => runTenderFetch({ pages: 2 }),
+    },
+    {
+      name: 'backup',
+      expression: cfg.BACKUP_CRON,
+      timezone: cfg.SCHEDULER_TZ,
+      run: () => createBackup(),
+    },
+  ];
+}
+
+function schedule({ name, expression, timezone, run }) {
   const valid = typeof cron.validate === 'function' ? cron.validate(expression) : true;
   if (!valid) {
     logger.error({ name, expression }, 'Nieprawidłowe wyrażenie cron — zadanie pominięte');
@@ -16,19 +39,18 @@ function schedule(name, expression, handler) {
     cron.schedule(expression, async () => {
       logger.info({ name }, 'Scheduler: start zadania');
       try {
-        await handler();
+        await run();
       } catch (err) {
         logger.error({ name, err: err.message }, 'Scheduler: błąd zadania');
       }
-    }),
+    }, { timezone }),
   );
-  logger.info({ name, expression }, 'Scheduler: zadanie zarejestrowane');
+  logger.info({ name, expression, timezone }, 'Scheduler: zadanie zarejestrowane');
 }
 
-/** Uruchamia harmonogram: cykliczne pobieranie przetargów + kopie zapasowe. */
+/** Uruchamia harmonogram: codzienne pobieranie przetargów + kopie zapasowe. */
 export function startScheduler() {
-  schedule('tender-fetch', env.TENDER_FETCH_CRON, () => runTenderFetch({ pages: 2 }));
-  schedule('backup', env.BACKUP_CRON, () => createBackup());
+  for (const job of schedulerJobs()) schedule(job);
 }
 
 /** Zatrzymuje wszystkie zadania (przy zamykaniu serwera). */

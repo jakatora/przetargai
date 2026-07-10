@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Strony transakcyjne i techniczne — poza indeksem
+Disallow: /upgrade
+Disallow: /upgrade/
+
+Sitemap: https://przetargai.pl/sitemap.xml

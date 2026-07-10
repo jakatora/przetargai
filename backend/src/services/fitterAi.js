@@ -6,6 +6,8 @@ import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { costUsd } from '../lib/pricing.js';
 import { aiUsage } from '../db/repos.js';
+import { aiBudgetAllows } from './ai.js';
+import { serviceUnavailable } from '../lib/errors.js';
 
 // Fitter Welder Pro AI chat service. Reuses Anthropic SDK + budget tracking
 // from ai.js (same project, same Anthropic key) but runs against a different
@@ -138,6 +140,11 @@ export function retrieveSections(query, k = 4) {
  * @returns {Promise<{text: string, citations: string[]}>}
  */
 export async function chatFitter({ message, history = [], lang = 'pl' }) {
+  // Wspólna bramka budżetu (audyt 2026-07-09, CRITICAL). Trasa /api/fitter/ai
+  // jest nieuwierzytelniona — bez tego dowolny skrypt pali budżet obu apek.
+  if (client && !aiBudgetAllows('fitter_chat')) {
+    throw serviceUnavailable('Miesięczny budżet AI wyczerpany — asystent chwilowo niedostępny');
+  }
   if (!client) {
     return {
       text: lang === 'en'

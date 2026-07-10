@@ -1,80 +1,8 @@
-import { env } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { isMainModule } from '../lib/ids.js';
 import { searchNotices } from '../services/bzp.js';
-import { evaluateMatch } from '../services/matching.js';
-import { sendPush } from '../services/push.js';
-import { users, tenders, matches } from '../db/repos.js';
-
-/**
- * Generuje dopasowania jednego usera vs lista kandydatów (tenders).
- * Respektuje dzienny limit planu Free i wysyła push dla planu Standard.
- * Eksportowane, by można było wywołać poza cyklem cron — np. backfill
- * po rejestracji nowego usera lub ręcznie z /admin/match-user/:id.
- * @returns {Promise<{created: number, evaluated: number}>}
- */
-export async function generateMatchesForUser(user, candidateTenders) {
-  if (!user.keywords.length && !user.cpv_codes.length) return { created: 0, evaluated: 0 };
-
-  const isFree = user.premium_tier === 'free';
-  let dailyBudget = isFree
-    ? Math.max(0, env.FREE_TIER_DAILY_MATCH_LIMIT - matches.countToday(user.id))
-    : Infinity;
-  if (dailyBudget <= 0) return { created: 0, evaluated: 0 };
-
-  let created = 0;
-  let evaluated = 0;
-  const fresh = [];
-
-  for (const tender of candidateTenders) {
-    if (dailyBudget <= 0) break;
-    if (matches.exists(user.id, tender.id)) continue;
-
-    evaluated++;
-    const result = await evaluateMatch(user, tender);
-    if (result.score < env.MATCH_CONFIDENCE_THRESHOLD) continue;
-
-    const { created: ok, match } = matches.create({
-      userId: user.id,
-      tenderId: tender.id,
-      score: result.score,
-      reasoning: result.reasoning,
-      scorer: result.scorer,
-    });
-    if (ok) {
-      created++;
-      dailyBudget--;
-      fresh.push({ id: match.id, title: tender.title });
-    }
-  }
-
-  // Powiadomienia push — wyłącznie plan Standard.
-  if (user.premium_tier === 'standard' && user.push_token && fresh.length) {
-    await sendPush(user.push_token, {
-      title: 'Nowe dopasowane przetargi',
-      body: fresh.length === 1
-        ? fresh[0].title
-        : `${fresh.length} nowych przetargów dopasowanych do Twojej firmy`,
-      data: { type: 'new_matches', count: fresh.length },
-    });
-    for (const m of fresh) matches.markNotified(m.id);
-  }
-
-  return { created, evaluated };
-}
-
-/**
- * Generuje dopasowania dla nowo pobranych przetargów × wszystkich userów.
- */
-async function generateMatches(newTenders) {
-  if (!newTenders.length) return 0;
-  let total = 0;
-  for (const user of users.all()) {
-    const r = await generateMatchesForUser(user, newTenders);
-    total += r.created;
-  }
-  return total;
-}
+import { generateMatchesForAllUsers } from '../services/matching.js';
+import { tenders } from '../db/repos.js';
 
 /**
  * Pobiera ogłoszenia z BZP, zapisuje nowe przetargi i generuje dopasowania.
@@ -107,7 +35,10 @@ export async function runTenderFetch({ pages = 1, pageSize = 500 } = {}) {
     return { ok: false, error: err.message, fetched, newTenders: newTenderRecords.length, matchesCreated: 0 };
   }
 
-  const matchesCreated = await generateMatches(newTenderRecords);
+  // Dopasowania liczone z PULI kandydatów każdego usera (naprawa P-4), nie tylko
+  // z ogłoszeń pobranych w tym cyklu — dlatego biegnie także przy zerze nowych:
+  // konto Free odbiera wtedy przetargi odroczone wczoraj przez dzienny limit.
+  const matchesCreated = await generateMatchesForAllUsers();
   const durationMs = Date.now() - startedAt;
 
   logger.info(

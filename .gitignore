@@ -40,3 +40,13 @@ Thumbs.db
 
 # === misc ===
 *.log
+
+# === firebase (migracja D-024) ===
+# Klucze funkcji do wywołań lokalnych z prawdziwymi sekretami. .env.test ZOSTAJE w repo.
+firebase/functions/.env.local
+firebase/.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+.check-tmp/

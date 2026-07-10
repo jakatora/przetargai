@@ -1,5 +1,6 @@
-import { Pressable, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { colors, radius } from '../theme';
+import { Pressable, Text, ActivityIndicator } from 'react-native';
+import { radius } from '../theme';
+import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 
 /**
  * Przycisk z wariantami: primary | ghost | danger. Obsługuje stan ładowania.
@@ -12,6 +13,8 @@ export default function Button({
   disabled = false,
   style,
 }) {
+  const { kolory } = useTheme();
+  const styles = useStyle(tworzStylePrzycisku);
   const isDisabled = disabled || loading;
   const solid = variant === 'primary' || variant === 'danger';
 
@@ -30,7 +33,7 @@ export default function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={solid ? colors.white : colors.blue} />
+        <ActivityIndicator color={solid ? kolory.white : kolory.blue} />
       ) : (
         <Text style={[styles.text, solid ? styles.textLight : styles.textBlue]}>
           {title}
@@ -40,7 +43,7 @@ export default function Button({
   );
 }
 
-const styles = StyleSheet.create({
+const tworzStylePrzycisku = tworzStyle((k) => ({
   base: {
     height: 52,
     borderRadius: radius.md,
@@ -48,12 +51,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
-  primary: { backgroundColor: colors.blue },
-  ghost: { backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.border },
-  danger: { backgroundColor: colors.danger },
+  primary: { backgroundColor: k.blue },
+  ghost: { backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.border },
+  danger: { backgroundColor: k.danger },
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.5 },
   text: { fontSize: 16, fontWeight: '700' },
-  textLight: { color: colors.white },
-  textBlue: { color: colors.blue },
-});
+  textLight: { color: k.white },
+  textBlue: { color: k.blue },
+}));

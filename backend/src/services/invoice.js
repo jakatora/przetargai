@@ -1,8 +1,7 @@
 import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 
-const STANDARD_NET_PLN = 199;
-const VAT_RATE = 0.23;
+const STANDARD_BRUTTO_PLN = 49; // 49 zl/mc brutto (D-042); VAT 23% w srodku
 
 /**
  * Wystawia fakturę VAT w Fakturowni za subskrypcję Standard.
@@ -29,7 +28,7 @@ export async function createStandardInvoice({ buyerName, buyerNip, buyerEmail })
       positions: [{
         name: 'Subskrypcja PrzetargAI Standard (1 miesiąc)',
         tax: 23,
-        total_price_gross: Number((STANDARD_NET_PLN * (1 + VAT_RATE)).toFixed(2)),
+        total_price_gross: STANDARD_BRUTTO_PLN,
         quantity: 1,
       }],
     },

@@ -1,8 +1,8 @@
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { View, ActivityIndicator } from 'react-native';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme';
+import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import MatchFeedScreen from '../screens/MatchFeedScreen';
@@ -11,27 +11,44 @@ import AccountScreen from '../screens/AccountScreen';
 
 const Stack = createNativeStackNavigator();
 
-const screenOptions = {
-  headerStyle: { backgroundColor: colors.blue },
-  headerTintColor: colors.white,
-  headerTitleStyle: { fontWeight: '700' },
-  headerBackTitleVisible: false,
-  contentStyle: { backgroundColor: colors.bg },
-};
-
 export default function RootNavigator() {
   const { user, restoring } = useAuth();
+  const { kolory } = useTheme();
+  const styles = useStyle(tworzStyleNawigatora);
+
+  // Nagłówek jest brandowo niebieski w OBU motywach; motyw zmienia tła treści.
+  const screenOptions = {
+    headerStyle: { backgroundColor: kolory.blue },
+    headerTintColor: kolory.white,
+    headerTitleStyle: { fontWeight: '700' },
+    headerBackTitleVisible: false,
+    contentStyle: { backgroundColor: kolory.bg },
+  };
+
+  // Motyw nawigacji: tło pod przejściami ekranów musi zgadzać się z paletą,
+  // inaczej przy animacji mignie domyślna biel.
+  const navTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: kolory.blue,
+      background: kolory.bg,
+      card: kolory.surface,
+      text: kolory.text,
+      border: kolory.border,
+    },
+  };
 
   if (restoring) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.blue} />
+        <ActivityIndicator size="large" color={kolory.blue} />
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navTheme}>
       <Stack.Navigator screenOptions={screenOptions}>
         {user ? (
           <>
@@ -70,11 +87,11 @@ export default function RootNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
+const tworzStyleNawigatora = tworzStyle((k) => ({
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.bg,
+    backgroundColor: k.bg,
   },
-});
+}));

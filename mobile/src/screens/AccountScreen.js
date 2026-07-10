@@ -1,23 +1,33 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, Alert, Pressable } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
-import { colors, spacing, radius } from '../theme';
+import CpvPicker from '../components/CpvPicker';
+import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
+import { PREFERENCJE, ETYKIETY_PREFERENCJI } from '../lib/motyw';
+import { spacing, radius } from '../theme';
 
 function parseList(text) {
   return text.split(',').map((s) => s.trim()).filter(Boolean);
 }
 
 export default function AccountScreen() {
-  const { user, signOut, refreshUser, setUser } = useAuth();
+  const { user, signOut, refreshUser, setUser, zarejestrujPush } = useAuth();
+  const { preferencja, ustawPreferencje } = useTheme();
+  const styles = useStyle(tworzStyleKonta);
   const [keywords, setKeywords] = useState((user.keywords || []).join(', '));
   const [cpv, setCpv] = useState((user.cpv_codes || []).join(', '));
   const [saving, setSaving] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
+  const [haslo, setHaslo] = useState('');
+  const [usuwanie, setUsuwanie] = useState(false);
+  const [sciagaOtwarta, setSciagaOtwarta] = useState(false);
+  const [demoInfo, setDemoInfo] = useState(null);
+  const [demoBusy, setDemoBusy] = useState(false);
 
   const isStandard = user.premium_tier === 'standard';
 
@@ -37,17 +47,71 @@ export default function AccountScreen() {
     }
   }
 
+  /**
+   * Czeka, aż webhook Stripe podniesie plan. Płatność potwierdza się po stronie
+   * Stripe'a, a nasz backend dowiaduje się o niej osobnym żądaniem — zwykle w kilka
+   * sekund, ale nie natychmiast. Jednorazowe sprawdzenie po powrocie z przeglądarki
+   * prawie zawsze trafiało w moment PRZED webhookiem i użytkownik, który właśnie
+   * zapłacił, widział wciąż plan „Free" (audyt 2026-07-10).
+   */
+  async function poczekajNaAktywacjePlanu({ prob = 6, odstepMs = 2500 } = {}) {
+    for (let i = 0; i < prob; i++) {
+      const swiezy = await refreshUser().catch(() => null);
+      if (swiezy?.premium_tier === 'standard') {
+        // Plan aktywny — dopiero TERAZ prosimy o zgodę na powiadomienia i wysyłamy
+        // token. Bez tego użytkownik płaciłby za push, którego nie dostaje, aż do
+        // następnego zalogowania (audyt 2026-07-10).
+        zarejestrujPush();
+        return true;
+      }
+      if (i < prob - 1) await new Promise((r) => setTimeout(r, odstepMs));
+    }
+    return false;
+  }
+
   async function handleUpgrade() {
     setUpgrading(true);
     try {
       const link = await api.createUpgradeLink();
       await WebBrowser.openBrowserAsync(link.url);
-      // Po powrocie z przeglądarki odświeżamy plan (webhook mógł go zmienić).
-      await refreshUser();
+
+      const aktywny = await poczekajNaAktywacjePlanu();
+      if (!aktywny) {
+        Alert.alert(
+          'Płatność w toku',
+          'Jeśli płatność się powiodła, plan aktywuje się w ciągu kilku minut. '
+          + 'Odśwież ten ekran lub sprawdź skrzynkę e-mail.',
+        );
+      }
     } catch (err) {
       Alert.alert('Błąd', err.message);
     } finally {
       setUpgrading(false);
+    }
+  }
+
+  /**
+   * DEMO (tylko buildy deweloperskie): przełącza plan bez Stripe, żeby obejrzeć
+   * różnicę pakietów. Backend poza produkcją od razu przelicza dopasowania.
+   * Komunikat inline zamiast Alert — Alert.alert nie renderuje się na web.
+   */
+  async function przelaczDemoPlan(tier) {
+    if (demoBusy || user.premium_tier === tier) return;
+    setDemoBusy(true);
+    setDemoInfo(null);
+    try {
+      const dane = await api.setDemoTier(tier);
+      setUser(dane.user);
+      const nazwa = tier === 'standard' ? 'Standard' : 'Free';
+      setDemoInfo(
+        dane.matchesCreated > 0
+          ? `Plan ${nazwa} aktywny — dopasowano ${dane.matchesCreated} nowych przetargów. Wróć do listy, żeby zobaczyć różnicę.`
+          : `Plan ${nazwa} aktywny. Nowych dopasowań teraz brak — Free pokazuje max 5 dziennie, Standard bez limitu przy kolejnych ogłoszeniach.`,
+      );
+    } catch (err) {
+      setDemoInfo(`Nie udało się przełączyć: ${err.message}`);
+    } finally {
+      setDemoBusy(false);
     }
   }
 
@@ -58,11 +122,44 @@ export default function AccountScreen() {
     ]);
   }
 
+  /**
+   * Usunięcie konta (RODO art. 17). Google Play wymaga, by dało się to zrobić
+   * z poziomu aplikacji, a nie tylko mailem do administratora.
+   */
+  async function usunKonto() {
+    if (!haslo) {
+      Alert.alert('Podaj hasło', 'Wpisz hasło, aby potwierdzić usunięcie konta.');
+      return;
+    }
+    setUsuwanie(true);
+    try {
+      await api.deleteAccount(haslo);
+      // Konto już nie istnieje — czyścimy sesję lokalnie i wracamy do logowania.
+      await signOut();
+    } catch (err) {
+      Alert.alert('Nie udało się usunąć konta', err.message);
+    } finally {
+      setUsuwanie(false);
+    }
+  }
+
+  function potwierdzUsuniecie() {
+    Alert.alert(
+      'Usunąć konto na zawsze?',
+      'Stracisz wszystkie dopasowane przetargi i ustawienia profilu. Tej operacji nie da się cofnąć.'
+      + (isStandard ? '\n\nSubskrypcja Standard zostanie anulowana.' : ''),
+      [
+        { text: 'Anuluj', style: 'cancel' },
+        { text: 'Usuń konto', style: 'destructive', onPress: usunKonto },
+      ],
+    );
+  }
+
   return (
     <Screen scroll>
       <View style={styles.card}>
-        <Text style={styles.company}>{user.company_name}</Text>
-        <Text style={styles.muted}>NIP: {user.company_nip}</Text>
+        <Text style={styles.company}>{user.company_name || 'Moje konto'}</Text>
+        {user.company_nip ? <Text style={styles.muted}>NIP: {user.company_nip}</Text> : null}
         <Text style={styles.muted}>{user.email}</Text>
         <View style={[styles.badge, isStandard ? styles.badgeStandard : styles.badgeFree]}>
           <Text style={styles.badgeText}>Plan {isStandard ? 'Standard' : 'Free'}</Text>
@@ -81,7 +178,7 @@ export default function AccountScreen() {
           <Text style={styles.upgradeTitle}>Przejdź na Standard</Text>
           <Text style={styles.upgradeText}>
             Nielimitowane dopasowania i powiadomienia push o nowych przetargach
-            — 199 zł / miesiąc netto.
+            — 49 zł / miesiąc.
           </Text>
           <Button
             title="Przejdź na Standard"
@@ -91,6 +188,37 @@ export default function AccountScreen() {
           />
         </View>
       )}
+
+      {__DEV__ ? (
+        <View style={styles.demoCard}>
+          <Text style={styles.demoTytul}>TRYB DEMO — porównaj pakiety</Text>
+          <Text style={styles.demoOpis}>
+            Przełącza plan bez płatności i od razu przelicza dopasowania.
+            Widoczne tylko w buildzie deweloperskim.
+          </Text>
+          <View style={styles.demoPrzyciski}>
+            {['free', 'standard'].map((tier) => {
+              const aktywny = user.premium_tier === tier;
+              return (
+                <Pressable
+                  key={tier}
+                  onPress={() => przelaczDemoPlan(tier)}
+                  disabled={demoBusy}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: aktywny }}
+                  style={[styles.demoPrzycisk, aktywny && styles.demoPrzyciskAktywny]}
+                >
+                  <Text style={[styles.demoPrzyciskTekst, aktywny && styles.demoPrzyciskTekstAktywny]}>
+                    {tier === 'standard' ? 'Standard' : 'Free'}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {demoBusy ? <Text style={styles.demoInfo}>Przełączam…</Text> : null}
+          {demoInfo ? <Text style={styles.demoInfo}>{demoInfo}</Text> : null}
+        </View>
+      ) : null}
 
       <Text style={styles.sectionTitle}>Profil firmy</Text>
       <Text style={styles.sectionHint}>
@@ -110,27 +238,92 @@ export default function AccountScreen() {
         onChangeText={setCpv}
         placeholder="45000000, 45300000"
         hint="Po przecinku"
+        style={styles.poleCpv}
       />
+      <Pressable onPress={() => setSciagaOtwarta(true)} hitSlop={8} accessibilityRole="button">
+        <Text style={styles.linkSciagi}>Nie znasz kodów? Otwórz ściągę CPV →</Text>
+      </Pressable>
       <Button title="Zapisz profil" onPress={handleSave} loading={saving} />
+
+      <CpvPicker
+        widoczny={sciagaOtwarta}
+        onClose={() => setSciagaOtwarta(false)}
+        wartosc={cpv}
+        onChange={setCpv}
+      />
+
+      <Text style={styles.sectionTitle}>Wygląd</Text>
+      <Text style={styles.sectionHint}>
+        „Systemowy” podąża za ustawieniem telefonu.
+      </Text>
+      <View style={styles.motywy} accessibilityRole="radiogroup">
+        {PREFERENCJE.map((opcja) => {
+          const aktywna = preferencja === opcja;
+          return (
+            <Pressable
+              key={opcja}
+              onPress={() => ustawPreferencje(opcja)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: aktywna }}
+              style={[styles.motyw, aktywna && styles.motywAktywny]}
+            >
+              <Text style={[styles.motywTekst, aktywna && styles.motywTekstAktywny]}>
+                {ETYKIETY_PREFERENCJI[opcja]}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <View style={styles.signOut}>
         <Button title="Wyloguj się" variant="ghost" onPress={confirmSignOut} />
+      </View>
+
+      <View style={styles.strefaNiebezpieczna}>
+        <Text style={styles.naglowekNiebezpieczny}>Usunięcie konta</Text>
+        <Text style={styles.opisNiebezpieczny}>
+          Trwale usuwamy Twoje konto, profil i wszystkie dopasowane przetargi.
+          {isStandard
+            ? ' Subskrypcję Standard anulujemy automatycznie — karta nie zostanie już obciążona.'
+            : ' Tej operacji nie da się cofnąć.'}
+        </Text>
+        <TextField
+          label="Potwierdź hasłem"
+          value={haslo}
+          onChangeText={setHaslo}
+          secureTextEntry
+          placeholder="••••••••"
+        />
+        <Button
+          title="Usuń konto na zawsze"
+          variant="danger"
+          onPress={potwierdzUsuniecie}
+          loading={usuwanie}
+        />
       </View>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const tworzStyleKonta = tworzStyle((k) => ({
+  strefaNiebezpieczna: {
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: k.border,
+  },
+  naglowekNiebezpieczny: { fontSize: 16, fontWeight: '700', color: k.danger, marginBottom: spacing.xs },
+  opisNiebezpieczny: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginBottom: spacing.md },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: k.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: k.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
-  company: { fontSize: 19, fontWeight: '800', color: colors.text },
-  muted: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
+  company: { fontSize: 19, fontWeight: '800', color: k.text },
+  muted: { fontSize: 14, color: k.textMuted, marginTop: 4 },
   badge: {
     alignSelf: 'flex-start',
     marginTop: spacing.md,
@@ -138,21 +331,60 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 999,
   },
-  badgeFree: { backgroundColor: '#e7ebf3' },
-  badgeStandard: { backgroundColor: '#dcfce7' },
-  badgeText: { fontSize: 13, fontWeight: '700', color: colors.text },
+  badgeFree: { backgroundColor: k.neutralneTlo },
+  badgeStandard: { backgroundColor: k.sukcesTlo },
+  badgeText: { fontSize: 13, fontWeight: '700', color: k.text },
   upgradeCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: k.surface,
     borderRadius: radius.lg,
     borderWidth: 1.5,
-    borderColor: colors.blue,
+    borderColor: k.blue,
     padding: spacing.lg,
     marginBottom: spacing.lg,
   },
-  upgradeTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  upgradeText: { fontSize: 14, color: colors.textMuted, marginTop: 6, lineHeight: 21 },
+  upgradeTitle: { fontSize: 16, fontWeight: '800', color: k.text },
+  upgradeText: { fontSize: 14, color: k.textMuted, marginTop: 6, lineHeight: 21 },
   gap: { marginTop: spacing.md },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  sectionHint: { fontSize: 13, color: colors.textMuted, marginTop: 4, marginBottom: spacing.md },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: k.text, marginTop: spacing.lg },
+  sectionHint: { fontSize: 13, color: k.textMuted, marginTop: 4, marginBottom: spacing.md },
+  poleCpv: { marginBottom: spacing.xs },
+  linkSciagi: { color: k.blue, fontSize: 14, fontWeight: '600', marginBottom: spacing.md },
+  demoCard: {
+    backgroundColor: k.ostrzezenieTlo,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: k.ostrzezenieTekst,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  demoTytul: { fontSize: 13, fontWeight: '800', color: k.ostrzezenieTekst, letterSpacing: 0.5 },
+  demoOpis: { fontSize: 12, color: k.ostrzezenieTekst, marginTop: 4, lineHeight: 17, opacity: 0.9 },
+  demoPrzyciski: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  demoPrzycisk: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: k.ostrzezenieTekst,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  demoPrzyciskAktywny: { backgroundColor: k.ostrzezenieTekst },
+  demoPrzyciskTekst: { fontSize: 14, fontWeight: '700', color: k.ostrzezenieTekst },
+  demoPrzyciskTekstAktywny: { color: k.surface },
+  demoInfo: { fontSize: 12, color: k.ostrzezenieTekst, marginTop: spacing.sm, lineHeight: 17, fontWeight: '600' },
+  motywy: { flexDirection: 'row', gap: spacing.sm },
+  motyw: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: k.border,
+    backgroundColor: k.surface,
+    alignItems: 'center',
+  },
+  motywAktywny: { borderColor: k.blue, backgroundColor: k.wyroznienie },
+  motywTekst: { fontSize: 14, fontWeight: '600', color: k.textMuted },
+  motywTekstAktywny: { color: k.blue },
   signOut: { marginTop: spacing.lg, marginBottom: spacing.xl },
-});
+}));

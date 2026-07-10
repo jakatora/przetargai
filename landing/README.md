@@ -8,9 +8,25 @@ na Vercel pod domeną `przetargai.pl`.
 | Ścieżka | Plik | Opis |
 |---------|------|------|
 | `/` | `index.html` | Strona główna: hero, funkcje, cennik, FAQ |
+| `/regulamin` | `regulamin.html` | Regulamin serwisu |
+| `/polityka-prywatnosci` | `polityka-prywatnosci.html` | Polityka prywatności |
 | `/upgrade` | `upgrade.html` | Aktywacja subskrypcji — otwierana z aplikacji mobilnej |
 | `/upgrade/success` | `upgrade/success.html` | Po udanej płatności Stripe |
 | `/upgrade/cancel` | `upgrade/cancel.html` | Po anulowaniu płatności |
+| (dowolna nieznana) | `404.html` | Brandowana strona 404 (Vercel serwuje automatycznie) |
+
+## Zasoby i skrypty
+
+| Plik | Rola |
+|------|------|
+| `nav.js` | Mobilne menu (hamburger) — `aria-expanded`, Escape, zamykanie po kliknięciu linku |
+| `og-image.png` | Podgląd społecznościowy 1200×630 (`og:image`, `twitter:image`) |
+| `robots.txt` | Indeksacja; wyklucza `/upgrade`, wskazuje sitemapę |
+| `sitemap.xml` | Mapa strony (`/`, `/regulamin`, `/polityka-prywatnosci`) |
+
+`index.html` zawiera dane strukturalne JSON-LD (`Organization`, `SoftwareApplication`
+z ofertami Free/Standard, `FAQPage`). **Gdy zmieniasz pytania w sekcji FAQ, zaktualizuj
+też blok `FAQPage`** — inaczej dane strukturalne rozjadą się z treścią strony.
 
 ## Przepływ subskrypcji
 

@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import { isModelPriced } from '../lib/pricing.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -62,7 +63,14 @@ const schema = z.object({
   BACKUP_CRON: z.string().default('0 3 * * *'),
   BACKUP_RETENTION: z.coerce.number().int().positive().default(14),
 
-  TENDER_FETCH_CRON: z.string().default('0 */6 * * *'),
+  // Codzienne pobieranie przetargów o 12:00 czasu polskiego (SCHEDULER_TZ).
+  TENDER_FETCH_CRON: z.string().default('0 12 * * *'),
+  // Maks. wywołań AI na usera na przebieg dopasowań. Pula kandydatów jest
+  // rankowana darmową heurystyką; AI ocenia tylko czołówkę (§5 planu migracji).
+  AI_RERANK_TOP_N: z.coerce.number().int().nonnegative().default(30),
+  // Strefa dla całego harmonogramu. Produkcja (Railway) chodzi w UTC, więc bez
+  // tego „12" oznaczałoby 13/14 w Polsce.
+  SCHEDULER_TZ: z.string().default('Europe/Warsaw'),
   MATCH_CONFIDENCE_THRESHOLD: z.coerce.number().int().min(0).max(100).default(60),
   FREE_TIER_DAILY_MATCH_LIMIT: z.coerce.number().int().positive().default(5),
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(10),
@@ -101,3 +109,18 @@ export const features = {
   sentry: Boolean(env.SENTRY_DSN_BACKEND),
   backups: Boolean(env.B2_ACCOUNT_ID && env.B2_APP_KEY),
 };
+
+/*
+ * Model AI musi mieć zweryfikowaną cenę, inaczej monitoring budżetu mierzy złą
+ * liczbę. Sprawdzamy przy starcie, a nie przy pierwszym wywołaniu AI: `costUsd()`
+ * jest wołane wewnątrz bloku try w services/ai.js, więc rzucony tam błąd zostałby
+ * połknięty jako „AI niedostępne" — o 3 w nocy, w cronie, bez alertu.
+ */
+if (features.ai && !isModelPriced(env.AI_MATCH_MODEL)) {
+  console.error(
+    `❌ AI_MATCH_MODEL="${env.AI_MATCH_MODEL}" nie ma zweryfikowanej ceny w src/lib/pricing.js.\n`
+    + '   Monitoring budżetu (AI_BUDGET_SOFT_USD / AI_BUDGET_HARD_USD) byłby ślepy.\n'
+    + '   Ustaw AI_MATCH_MODEL=claude-haiku-4-5 albo dopisz model do MODEL_PRICING.',
+  );
+  process.exit(1);
+}

@@ -1,18 +1,11 @@
-/** Wspólny motyw aplikacji — spójny z landing page. */
-
-export const colors = {
-  blue: '#2563eb',
-  blueDark: '#1d4ed8',
-  navy: '#0f2557',
-  bg: '#f4f7fc',
-  surface: '#ffffff',
-  text: '#14213d',
-  textMuted: '#5b6577',
-  border: '#e3e8f2',
-  green: '#16a34a',
-  danger: '#dc2626',
-  white: '#ffffff',
-};
+/**
+ * Geometria design systemu — wspólna dla obu motywów.
+ *
+ * KOLORY celowo NIE są tu eksportowane: paleta zależy od motywu
+ * (jasny/ciemny) i żyje w src/lib/motyw.js, a komponenty biorą ją przez
+ * useTheme()/useStyle() z src/context/ThemeContext.js. Statyczny import
+ * koloru zamroziłby go w chwili importu i przełącznik by go nie zmienił.
+ */
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
 

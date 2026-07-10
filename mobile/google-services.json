@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "754372906169",
+    "project_id": "przetargai",
+    "storage_bucket": "przetargai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754372906169:android:d6caa9194bacea6ce85f68",
+        "android_client_info": {
+          "package_name": "pl.przetargai.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnpf13d8OWwsBufN-5_VCQOxrHouh4Jb8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

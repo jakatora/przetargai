@@ -5,6 +5,40 @@ Aby zamknąć blocker: „Blocker {nazwa} rozwiązany. Sprawdź, oznacz, kontynu
 
 ---
 
+## [BLOCKER: HUMAN] Deploy Firebase — zgoda na publikację (2026-07-10)
+
+Migracja D-024: kod F0–F4 gotowy (testy 166/166), Blaze włączony, Firestore
+w `europe-central2`. Czeka wyłącznie na jawną zgodę usera na: zapis 9 sekretów
+do Secret Managera + `firebase deploy --only firestore` + `--only functions`.
+Procedura i punkty powrotu: `runbooks/wdrozenie-firebase.md`.
+
+## [BLOCKER: HUMAN] Decyzja: scraping platform zakupowych (etap 2 źródeł) (2026-07-10)
+
+D-039: BZP + TED są zintegrowane (oficjalne, darmowe API). Następna warstwa —
+zapytania ofertowe < 130 tys. zł z platform (platformazakupowa.pl, Logintrade,
+OnePlace, SmartPZP, eB2B) — NIE MA publicznych API; wymaga programu scrapingowego
+(adapter per platforma, monitoring zmian HTML, przegląd ToS/prawny). To także
+pokrywa portale spółek (PKP/PGE/Orlen… prowadzą postępowania NA tych platformach).
+Architektura gotowa (rejestr źródeł). **Decyzja usera:** czy wchodzimy w scraping
+(nakład + ryzyko ToS), a jeśli tak — od której platformy zaczynamy
+(rekomendacja: platformazakupowa.pl — publiczna lista HTML, największy wolumen JST).
+
+## [BLOCKER: HUMAN] Google Play — płatności poza Play (2026-07-10, runda 30)
+
+Opis w `store/listing.md` reklamował zakup subskrypcji przez stronę WWW, a apka
+otwiera Stripe Checkout w przeglądarce — polityka płatności Google Play wymaga
+Play Billing dla usług cyfrowych konsumowanych w aplikacji i zakazuje kierowania
+do zewnętrznej płatności (mitygacja istnieje tylko dla App Store 3.1.1).
+Zdanie z opisu usunięte; zostaje DECYZJA PRODUKTOWA przed publikacją na Androida:
+wdrożyć Play Billing **albo** ukryć CTA zakupu w buildzie Android.
+
+## [BLOCKER: HUMAN] iOS Push capability w Apple Developer Portal (2026-07-10, runda 30)
+
+Prebuild (expo-notifications) dodaje entitlement `aps-environment` automatycznie.
+Przed pierwszym `fetch-signing-files` w Codemagic trzeba w Apple Developer Portal
+(Identifiers → `pl.przetargai.app`) włączyć capability **Push Notifications** —
+inaczej podpis IPA padnie albo push nie zadziała. Szczegóły: `runbooks/deploy.md` §4.
+
 ## [RESOLVED: TIER A keys + Railway deploy] 2026-05-23
 Wszystkie klucze TIER A uzupełnione, backend wdrożony na Railway, Stripe webhook utworzony,
 `/health` zwraca 200. Patrz `agent_log.md` wpis z 2026-05-23 i `decisions.md` D-016 / D-017.

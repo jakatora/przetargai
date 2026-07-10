@@ -29,6 +29,32 @@ export function budgetStatus() {
   };
 }
 
+/**
+ * Bramka budżetu — do wywołania PRZED każdym płatnym zapytaniem do Anthropica,
+ * z dowolnego serwisu (PrzetargAI i Fitter dzielą jedną tabelę `ai_usage`,
+ * więc dzielą też limit).
+ *
+ * Audyt 2026-07-09 (CRITICAL): tę bramkę miał wyłącznie `scoreTenderMatch`.
+ * `scanFitterIso` i `chatFitter` wisiały na nieuwierzytelnionych trasach i wołały
+ * Claude'a bez żadnego sprawdzenia — dowolny skrypt mógł wypompować budżet, a po
+ * przekroczeniu $500 matching AI gasł płacącym użytkownikom PrzetargAI.
+ *
+ * @param {string} operation nazwa operacji (do logu)
+ * @returns {boolean} false gdy twardy limit przekroczony — wywołania NIE wolno wykonać
+ */
+export function aiBudgetAllows(operation = 'unknown') {
+  const status = budgetStatus();
+  if (status.hardExceeded) {
+    logger.error({ operation, status }, 'Limit TWARDY budżetu AI przekroczony — wywołanie AI zablokowane');
+    return false;
+  }
+  if (status.softExceeded) {
+    logger.warn({ operation, spentUsd: status.spentUsd, soft: status.softLimitUsd },
+      'Limit miękki budżetu AI przekroczony');
+  }
+  return true;
+}
+
 function buildUserPrompt(company, tender) {
   return [
     'PROFIL FIRMY:',
@@ -71,16 +97,8 @@ function parseScore(text) {
  */
 export async function scoreTenderMatch(company, tender) {
   if (!client) return null;
-
-  const status = budgetStatus();
-  if (status.hardExceeded) {
-    logger.error({ status }, 'Limit TWARDY budżetu AI przekroczony — pomijam wywołanie AI');
-    return null;
-  }
-  if (status.softExceeded) {
-    logger.warn({ spentUsd: status.spentUsd, soft: status.softLimitUsd },
-      'Limit miękki budżetu AI przekroczony');
-  }
+  // Matching degraduje do heurystyki zamiast rzucać — feed userowi ma się pokazać.
+  if (!aiBudgetAllows('match')) return null;
 
   const model = env.AI_MATCH_MODEL;
   try {

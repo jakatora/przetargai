@@ -35,23 +35,27 @@ export async function sendEmail({ to, subject, html, text }) {
 
 // ----- szablony -----
 
+// Nazwa firmy jest opcjonalna (rejestracja bez NIP-u i nazwy — migracja 001),
+// więc szablony muszą brzmieć naturalnie także bez niej.
 export function welcomeEmail(companyName) {
+  const dlaKogo = companyName ? `dla <b>${companyName}</b> ` : '';
   return {
     subject: 'Witamy w PrzetargAI',
-    text: `Konto dla ${companyName} zostało utworzone. Monitorujemy przetargi publiczne dopasowane do profilu Twojej firmy.`,
+    text: `Twoje konto ${companyName ? `dla ${companyName} ` : ''}zostało utworzone. Monitorujemy przetargi publiczne dopasowane do Twojego profilu.`,
     html: `<p>Dzień dobry,</p>
-<p>Konto dla <b>${companyName}</b> zostało utworzone. Od teraz monitorujemy
-przetargi publiczne (BZP) dopasowane do profilu Twojej firmy.</p>
+<p>Twoje konto ${dlaKogo}zostało utworzone. Od teraz monitorujemy
+przetargi publiczne (BZP) dopasowane do Twojego profilu.</p>
 <p>Zespół PrzetargAI</p>`,
   };
 }
 
 export function subscriptionActiveEmail(companyName) {
+  const dlaKogo = companyName ? ` dla <b>${companyName}</b>` : '';
   return {
     subject: 'Subskrypcja PrzetargAI Standard jest aktywna',
-    text: `Subskrypcja Standard dla ${companyName} jest aktywna: nielimitowane dopasowania i powiadomienia push.`,
+    text: `Subskrypcja Standard${companyName ? ` dla ${companyName}` : ''} jest aktywna: nielimitowane dopasowania i powiadomienia push.`,
     html: `<p>Dzień dobry,</p>
-<p>Subskrypcja <b>PrzetargAI Standard</b> dla <b>${companyName}</b> jest aktywna.</p>
+<p>Subskrypcja <b>PrzetargAI Standard</b>${dlaKogo} jest aktywna.</p>
 <p>Masz teraz nielimitowane dopasowania przetargów oraz powiadomienia push.</p>
 <p>Zespół PrzetargAI</p>`,
   };

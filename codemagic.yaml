@@ -7,7 +7,8 @@
 #  - Integracja App Store Connect API (rola Admin) — nazwa musi zgadzać się poniżej.
 #  - Grupa zmiennych „ios_signing" z CERTIFICATE_PRIVATE_KEY (klucz RSA, base64, Secure).
 #  - Keystore Androida (android_signing) — referencja „przetargai_keystore".
-#  - Zmienna GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (Google Play, JSON konta usługi).
+#  - Grupa „google_credentials" ze zmienną GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+#    (Google Play, JSON konta usługi — nazwa musi zgadzać się z sekcją publishing).
 # Szczegóły: runbooks/deploy.md.
 
 workflows:
@@ -88,12 +89,30 @@ workflows:
     scripts:
       - name: Instalacja zależności
         script: cd mobile && npm ci
+      - name: Kontrola google-services.json
+        # app.json wskazuje ./google-services.json (FCM). Bez tego pliku prebuild
+        # pada z mało czytelnym „Cannot copy google-services.json". To konfiguracja
+        # klienta (nie sekret) — ma być w repo; ten krok daje jasny komunikat.
+        script: |
+          test -f mobile/google-services.json || {
+            echo "BRAK mobile/google-services.json — dodaj plik do repo (to nie sekret)."
+            exit 1
+          }
       - name: Expo prebuild (Android)
         script: cd mobile && npx expo prebuild --platform android --no-install
       - name: Konfiguracja podpisu release
         script: cd mobile && node scripts/configure-android-release-signing.mjs
       - name: Numer wersji
-        script: cd mobile/android && echo "versionCode=$(($BUILD_NUMBER + 100))" >> gradle.properties
+        # build.gradle z prebuilda (Expo 54) HARDKODUJE `versionCode 1` i nie czyta
+        # gradle.properties — wpis tam był no-opem i Play odrzucałby każdy kolejny
+        # upload („Version code 1 has already been used"). Podmieniamy wartość
+        # bezpośrednio w wygenerowanym pliku i weryfikujemy, że podmiana zaszła.
+        script: |
+          set -ex
+          cd mobile/android
+          NOWY=$(($BUILD_NUMBER + 100))
+          sed -i "s/versionCode 1$/versionCode $NOWY/" app/build.gradle
+          grep -q "versionCode $NOWY" app/build.gradle
       - name: Build AAB
         script: cd mobile/android && ./gradlew bundleRelease
     artifacts:

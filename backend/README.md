@@ -79,7 +79,8 @@ src/
 
 ## Przepływ matchingu
 
-1. `scheduler` (cron `TENDER_FETCH_CRON`) lub `/admin/fetch-tenders` uruchamia job.
+1. `scheduler` (cron `TENDER_FETCH_CRON`, domyślnie codziennie 12:00 w strefie
+   `SCHEDULER_TZ` = Europe/Warsaw) lub `/admin/fetch-tenders` uruchamia job.
 2. `services/bzp` pobiera ogłoszenia → `tenders.upsert` zapisuje nowe.
 3. Dla każdego użytkownika z profilem: `services/matching` liczy wynik
    (pre-filtr heurystyczny → ocena Claude z monitoringiem kosztów).

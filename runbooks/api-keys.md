@@ -94,7 +94,10 @@ Wykonujesz **po wdrożeniu backendu** (gdy znasz jego adres):
 
 1. **Developers → Webhooks → Add endpoint**.
 2. URL: `https://<adres-backendu>/webhooks/stripe`.
-3. Zdarzenia: `checkout.session.completed`, `customer.subscription.deleted`.
+3. Zdarzenia (komplet — patrz `deploy.md` §2, okrojona lista psuje płatności
+   asynchroniczne i degradację planu): `checkout.session.completed`,
+   `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`,
+   `invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`.
 4. Po zapisaniu skopiuj **Signing secret** `whsec_...` → `STRIPE_WEBHOOK_SECRET`.
 
 ## 10. 🔵 Railway — `RAILWAY_TOKEN` (opcjonalne)

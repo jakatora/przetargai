@@ -3,14 +3,15 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
 } from 'react-native';
-import { colors, spacing } from '../theme';
+import { spacing } from '../theme';
+import { useStyle, tworzStyle } from '../context/ThemeContext';
 
 /**
  * Spójny kontener ekranu. `scroll` włącza przewijanie + unikanie klawiatury.
  */
 export default function Screen({ children, scroll = false, style, contentStyle }) {
+  const styles = useStyle(tworzStyleEkranu);
   if (scroll) {
     return (
       <KeyboardAvoidingView
@@ -30,7 +31,7 @@ export default function Screen({ children, scroll = false, style, contentStyle }
   return <View style={[styles.flex, styles.content, style]}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.bg },
+const tworzStyleEkranu = tworzStyle((k) => ({
+  flex: { flex: 1, backgroundColor: k.bg },
   content: { padding: spacing.lg },
-});
+}));

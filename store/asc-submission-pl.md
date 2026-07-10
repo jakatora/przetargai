@@ -152,7 +152,7 @@ JAK TO DZIAŁA
 
 PLANY
 • Free — 5 dopasowanych przetargów dziennie, bezpłatnie i bezterminowo
-• Standard (199 zł/mc + VAT) — nielimitowane dopasowania oraz powiadomienia push
+• Standard (49 zł/mc) — nielimitowane dopasowania oraz powiadomienia push
 
 Dane o przetargach pochodzą z oficjalnego, publicznego źródła — Biuletynu Zamówień Publicznych prowadzonego na platformie e-Zamówienia (ezamowienia.gov.pl).
 
@@ -185,7 +185,7 @@ Pierwsze wydanie aplikacji PrzetargAI:
 - Codzienna analiza ogłoszeń BZP z dopasowaniem AI
 - Ekran feedu z 5 najnowszymi dopasowaniami
 - Szczegóły przetargu z uzasadnieniem AI (model Claude)
-- Plan Free (5/dzień) i Standard (199 zł/mc, nielimitowany)
+- Plan Free (5/dzień) i Standard (49 zł/mc, nielimitowany)
 ```
 
 ---
@@ -223,7 +223,7 @@ DATA SOURCE:
 All tender data comes from the official Polish government API at ezamowienia.gov.pl/mo-board/api/v1/notice (Biuletyn Zamówień Publicznych — public domain information published by the Polish Public Procurement Office). No scraping, no private data — it's the official public registry mandated by Polish law.
 
 SUBSCRIPTION FLOW (important — explains why no StoreKit):
-The "Standard" 199 PLN/month subscription is sold through our external website (jakatora.github.io/przetargai), not through in-app purchases. This is intentional — the app itself is free; the Standard subscription is a separate web-based B2B service handled by Stripe.
+The "Standard" 49 PLN/month subscription is sold through our external website (jakatora.github.io/przetargai), not through in-app purchases. This is intentional — the app itself is free; the Standard subscription is a separate web-based B2B service handled by Stripe.
 
 The "Aktywuj Standard" / "Upgrade" button in the Account screen opens an external browser to handle the magic-link upgrade flow. The app does NOT use StoreKit because it's a free professional tool, not a digital content app.
 
@@ -317,7 +317,7 @@ Najczęstsze powody odrzucenia metadata (NIE binarki):
 | Privacy Policy URL nie działa | sprawdź `https://jakatora.github.io/przetargai/polityka-prywatnosci.html` w przeglądarce |
 | Screenshots zawierają placeholder text (`reallygreatsite.com`) | wgraj nowe screenshoty z prawdziwej apki |
 | Demo account nie działa | upewnij się że konto `apple-review@przetargai.demo` istnieje w produkcyjnej bazie + ma matche w feedzie |
-| Subscription terms / pricing nie zgadza się z opisem | zostaw 199 PLN/mc spójnie wszędzie |
+| Subscription terms / pricing nie zgadza się z opisem | zostaw 49 PLN/mc spójnie wszędzie |
 | Wymaga login bez wyjaśnienia po co | dodać w Notes for Reviewer kontekst (już mamy) |
 
 ---
