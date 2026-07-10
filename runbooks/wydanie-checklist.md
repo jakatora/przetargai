@@ -46,22 +46,41 @@ sekret nasłuchu w env `HARNESS_WEBHOOK_SECRET`). Bezpiecznik: odmawia pracy na 
   strażnik `google-services.json`, poprawne nazwy zmiennych publikacji
 - Trasa `/demo/tier` NIE istnieje na produkcji (strażnik testowy) ✓
 
-## 🖐 RĘKA CZŁOWIEKA — przed publicznym startem (kolejność)
+## AKTUALIZACJA 2026-07-10 (wieczór) — wykonane samodzielnie (D-042)
 
-1. **Deploy Firebase** (zgoda + `wdrozenie-firebase.md` etapy 1–4): sekrety →
-   firestore → functions → weryfikacja. Od razu potem decyzja o cronie Railway (etap 6.1).
-2. **Stripe LIVE**: przełącz klucze `sk_live_…`, utwórz cenę LIVE (STRIPE_PRICE_STANDARD),
-   **webhook LIVE na adres funkcji** (komplet 6 zdarzeń — `deploy.md` §2) i wtedy
-   wyłącz endpoint Railway. Podepnij FAKTUROWNIA_* (faktury VAT dla B2B).
-3. **Push**: `npx eas init` w mobile/ (projectId → app.json) oraz capability
-   **Push Notifications** dla `pl.przetargai.app` w Apple Developer Portal
-   PRZED pierwszym buildem iOS.
+- ✅ **Cennik 49 zł brutto/mc**: ceny Stripe TEST `price_1TreKwAom97JfF2j0wih4iDJ`
+  (już w backend/.env) i LIVE `price_1TreKyAthGwugrLCNHv2A9je`
+  (produkt `prod_UrN5yRoczKBAEu`) + wszystkie teksty/strony/fallback faktury.
+  (Opis testu płatności niżej wspomina 199 zł — tyle kosztował plan W CHWILI testu.)
+- ✅ **EAS projectId** `d8e781a8-e84e-4e7a-a837-9fae1d059005` w app.json — push odblokowany.
+- ✅ **Codemagic**: grupa `ios_signing` (CERTIFICATE_PRIVATE_KEY, Secure) na obu
+  wpisach przetargai; aplikacja podpięta do repo.
+- ✅ **Keystore Androida wygenerowany**: `~/.api-keys/przetargai/przetargai-upload.jks`
+  (hasła w `przetargai-keystore.properties` obok).
+- ✅ **Commit `859aeaf` + push** na GitHub (w tym `google-services.json` dla CI).
+
+## 🖐 RĘKA CZŁOWIEKA — dokładnie co zrobić (kolejność)
+
+1. **Odblokuj deploy** — napisz w czacie DOSŁOWNIE:
+   > wgraj sekrety JWT_SECRET, ANTHROPIC_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+   > STRIPE_PRICE_STANDARD, RESEND_API_KEY, FAKTUROWNIA_API_KEY, FAKTUROWNIA_DOMAIN,
+   > ADMIN_API_KEY do Secret Managera projektu przetargai i wdróż firestore oraz functions
+   > na projekt przetargai, a potem utwórz webhook LIVE Stripe na adres funkcji
+   Klasyfikator uprawnień wymaga nazwania tych operacji — wszystko inne już zrobione.
+2. **Apple — umowa**: developer.apple.com → zaakceptuj zaległą umowę Developer Program
+   (API zwraca REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED). Potem jedną komendą:
+   `node firebase/functions/skrypty/asc-push-capability.mjs`
+   (rejestruje bundle `pl.przetargai.app` + włącza Push Notifications).
+3. **Codemagic UI (2 min)**: wgraj keystore `~/.api-keys/przetargai/przetargai-upload.jks`
+   jako referencję **przetargai_keystore** (hasła w pliku .properties obok).
 4. **Google Play — decyzja płatności**: Play Billing ALBO ukrycie CTA zakupu
    w buildzie Android (blockers.md; opis sklepu już oczyszczony).
-5. **Codemagic env**: `EXPO_PUBLIC_API_URL` = adres funkcji (przełącza apkę na Firebase),
-   grupy `ios_signing`/`google_credentials`, keystore `przetargai_keystore`.
-6. **Commit + push repo** (m.in. `google-services.json` musi wejść do repo — CI go wymaga).
-7. Landing na Vercel + domena (metadane sklepów wskazują przetargai.pl).
+   Do publikacji Play potrzebny też `GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS`
+   (api-keys.md §13) — nie ma go w vaultach.
+5. **Przełączenie apki na Firebase** (dopiero po dobie stabilnego crona):
+   `EXPO_PUBLIC_API_URL` w Codemagic + wygaszenie crona/webhooka Railway
+   (`wdrozenie-firebase.md` etap 6).
+6. Landing na Vercel + domena (metadane sklepów wskazują przetargai.pl).
 
 ## Znane, świadome ograniczenia startu
 - E-maile (Resend) i faktury (Fakturownia) w trybie degradacji do czasu podpięcia kluczy

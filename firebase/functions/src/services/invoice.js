@@ -11,7 +11,7 @@ const STANDARD_BRUTTO_PLN = 49;
 /**
  * Kwota brutto faktury w złotych.
  *
- * Audyt 2026-07-10: kwota była zaszyta na sztywno (199 zł netto). Klient z kodem
+ * Audyt 2026-07-10: kwota była zaszyta na sztywno (sztywna cena katalogowa). Klient z kodem
  * rabatowym płacił mniej, a fakturę dostawał na pełną cenę — zawyżony VAT i błąd
  * księgowy po obu stronach. Stripe podaje faktycznie pobraną kwotę w groszach
  * (`amount_total`); jego liczba jest jedyną prawdziwą.

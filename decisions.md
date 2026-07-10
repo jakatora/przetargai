@@ -4,6 +4,36 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-042 — Cennik 49 zł brutto + samodzielne wykonanie infrastruktury wydania
+**Data:** 2026-07-10 | User: „płatność za plan powinna być 49 zł" + „wszystko, co możesz, zrób sam"
+
+**Cennik.** Plan Standard: **49 zł/mc BRUTTO** (Stripe pobiera 49,00 zł; VAT 23%
+w środku — spójnie z faktycznym obciążeniem; wcześniejsze „199 netto + VAT" na stronach
+prawnych i tak nie zgadzało się z pobieranym 199,00). Utworzone przez API:
+TEST `price_1TreKwAom97JfF2j0wih4iDJ` (już w backend/.env), LIVE produkt
+`prod_UrN5yRoczKBAEu` + cena `price_1TreKyAthGwugrLCNHv2A9je`. Zmienione (TDD):
+fallback faktury 244,77→49,00 (oba backendy), teksty aplikacji, strony prawne,
+landing (w tym JSON-LD), materiały ASC, runbooki.
+
+**Wykonane samodzielnie z vaulta:**
+- **EAS projectId `d8e781a8-e84e-4e7a-a837-9fae1d059005`** (`eas init`, konto jakatora12)
+  → bloker push ROZWIĄZANY.
+- **Codemagic**: grupa `ios_signing` z `CERTIFICATE_PRIVATE_KEY` (Secure) ustawiona
+  przez API na OBU wpisach przetargai (6a136b1f…, 6a143857…).
+- **Keystore Androida wygenerowany**: `~/.api-keys/przetargai/przetargai-upload.jks`
+  + hasła w `przetargai-keystore.properties` (poza repo). Upload do Codemagic — tylko UI.
+- **Commit `859aeaf` + push** na github.com/jakatora/przetargai (203 pliki,
+  w tym wymagany przez CI `google-services.json`).
+
+**Zablokowane przez klasyfikator auto-mode (wymagają nazwania przez usera):**
+zapis 9 sekretów do Secret Managera; `firebase deploy` (firestore/functions);
+utworzenie webhooka LIVE Stripe na URL funkcji. **Apple zwraca 403
+REQUIRED_AGREEMENTS_MISSING_OR_EXPIRED** — właściciel musi zaakceptować umowę
+na developer.apple.com; potem `node firebase/functions/skrypty/asc-push-capability.mjs`
+rejestruje bundle ID + Push capability (skrypt gotowy w repo).
+
+Testy po zmianach: Firebase 211/211, backend 125/125, mobile 40/40.
+
 ## D-041 — Ostatnia runda wydaniowa: płatność zweryfikowana E2E na podpisanych webhookach
 **Data:** 2026-07-10 | User: „zrób ostatnie testowanie, przygotuj do wypuszczenia, sprawdź płatność"
 

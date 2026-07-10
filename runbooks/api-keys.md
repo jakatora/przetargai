@@ -57,7 +57,9 @@ Legenda: 🟢 można zrobić od razu · 🟡 wymaga domeny · 🔵 wymaga wdroż
    → `STRIPE_SECRET_KEY`.
 4. **Products → Add product**:
    - Nazwa: `PrzetargAI Standard`,
-   - Cena: **199 PLN**, model **Recurring**, okres **monthly**.
+   - Cena: **49 PLN (brutto)**, model **Recurring**, okres **monthly**.
+   - LIVE (utworzone 2026-07-10): produkt `prod_UrN5yRoczKBAEu`, cena `price_1TreKyAthGwugrLCNHv2A9je`;
+     TEST: `price_1TreKwAom97JfF2j0wih4iDJ` (już w backend/.env).
 5. Po zapisaniu kliknij cenę i skopiuj **Price ID** `price_...`
    → `STRIPE_PRICE_STANDARD`.
 6. (Opcjonalnie) włącz **Stripe Tax** dla automatycznego VAT 23%.

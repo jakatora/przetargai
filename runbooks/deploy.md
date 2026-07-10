@@ -31,8 +31,9 @@ Klucze API zebrane wg `blockers.md`.
 
 ## 2. Stripe — produkt i webhook
 
-1. Stripe → **Products** → utwórz „PrzetargAI Standard": 199 zł + 23% VAT,
-   cykl miesięczny. Skopiuj `price_...` do `STRIPE_PRICE_STANDARD`.
+1. Stripe → **Products** → produkt „PrzetargAI Standard" 49 zł BRUTTO/mc już istnieje
+   (LIVE `price_1TreKyAthGwugrLCNHv2A9je`, TEST `price_1TreKwAom97JfF2j0wih4iDJ`) —
+   skopiuj właściwy `price_...` do `STRIPE_PRICE_STANDARD`.
 2. Stripe → **Developers → Webhooks** → dodaj endpoint:
    `https://<backend>/webhooks/stripe`, zdarzenia (KOMPLET — handler wstrzymuje
    aktywację przy `payment_status !== 'paid'` i czeka na `async_payment_succeeded`;
