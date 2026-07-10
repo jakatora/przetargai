@@ -25,6 +25,7 @@ workflows:
     environment:
       groups:
         - ios_signing            # zawiera CERTIFICATE_PRIVATE_KEY (base64, Secure)
+        - produkcja              # EXPO_PUBLIC_API_URL -> backend Cloud Functions (D-043)
       vars:
         BUNDLE_ID: pl.przetargai.app
         APPLE_TEAM_ID: B7J6A7R258  # poziom konta — nie jest sekretem
@@ -83,6 +84,7 @@ workflows:
         - przetargai_keystore   # NOWY keystore dla PrzetargAI (keystore jest per-aplikacja)
       groups:
         - google_credentials    # zawiera GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        - produkcja             # EXPO_PUBLIC_API_URL -> backend Cloud Functions (D-043)
       vars:
         PACKAGE_NAME: pl.przetargai.app
       node: 24

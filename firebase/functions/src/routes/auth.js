@@ -77,16 +77,28 @@ router.post('/register', ah(async (req, res) => {
   }
 
   audit({ userId: user.id, action: 'register', ip: req.ip });
-  sendEmail({ to: email, ...welcomeEmail(user.company_name) })
-    .catch((err) => logger.error({ err: err.message }, 'Email powitalny nie wysłany'));
-
-  // Onboarding backfill: jeśli user dał keywords/CPV, dopasuj go do istniejących
-  // przetargów z otwartym terminem. Fire-and-forget — nie blokuje response.
-  // Bez tego feed byłby pusty do następnego cyklu cron (do 24 h).
-  if (user.keywords.length || user.cpv_codes.length) {
-    backfillUser(user, { wymus: true })
-      .then((r) => logger.info({ userId: user.id, ...r }, 'Onboarding matching zakończony'))
-      .catch((err) => logger.error({ err: err.message, userId: user.id }, 'Onboarding matching nieudany'));
+  /*
+   * BŁĄD PRODUKCYJNY (D-044): te operacje były fire-and-forget, a Cloud Functions
+   * ZAMRAŻAJĄ instancję po wysłaniu odpowiedzi — backfill nigdy się nie kończył
+   * i świeży użytkownik z dobrymi słowami kluczowymi dostawał PUSTY feed do
+   * najbliższego crona (emulator maskował problem, bo jego proces żyje dalej).
+   * CZEKAMY więc przed odpowiedzią. Koszt: rejestracja trwa do kilku sekund
+   * (heurystyka po puli + góra `aiQuota` wywołań AI) — to cena poprawności.
+   * Błędy nadal nie wywracają rejestracji (konto już istnieje).
+   */
+  const [mail, onboarding] = await Promise.allSettled([
+    sendEmail({ to: email, ...welcomeEmail(user.company_name) }),
+    (user.keywords.length || user.cpv_codes.length)
+      ? backfillUser(user, { wymus: true })
+      : Promise.resolve(null),
+  ]);
+  if (mail.status === 'rejected') {
+    logger.error({ err: mail.reason?.message }, 'Email powitalny nie wysłany');
+  }
+  if (onboarding.status === 'rejected') {
+    logger.error({ err: onboarding.reason?.message, userId: user.id }, 'Onboarding matching nieudany');
+  } else if (onboarding.value) {
+    logger.info({ userId: user.id, ...onboarding.value }, 'Onboarding matching zakończony');
   }
 
   res.status(201).json({ token: signToken(user.id), user: publicUser(user) });
@@ -140,14 +152,21 @@ router.patch('/me', authRequired, ah(async (req, res) => {
 
   // Zmiana kryteriów => natychmiastowa re-ocena ISTNIEJĄCYCH przetargów (§6.14
   // planu). Bez tego nowe słowo kluczowe działało wyłącznie na ogłoszenia
-  // opublikowane po zmianie — profil wyglądał na zepsuty. Fire-and-forget.
+  // opublikowane po zmianie — profil wyglądał na zepsuty.
+  // AWAIT przed odpowiedzią (D-044): Functions zamrażają tło po response —
+  // fire-and-forget nigdy nie kończył pracy na produkcji. Cooldown backfillu
+  // (10 min) nadal chroni przed lawiną odczytów puli przy klikaniu w kółko.
   const criteriaChanged =
     (data.keywords && JSON.stringify(data.keywords) !== JSON.stringify(req.user.keywords))
     || (data.cpv_codes && JSON.stringify(data.cpv_codes) !== JSON.stringify(req.user.cpv_codes));
   if (criteriaChanged) {
-    backfillUser(updated)
-      .then((r) => logger.info({ userId: updated.id, ...r }, 'Re-matching po zmianie profilu zakończony'))
-      .catch((err) => logger.error({ err: err.message, userId: updated.id }, 'Re-matching po zmianie profilu nieudany'));
+    try {
+      const wynik = await backfillUser(updated);
+      logger.info({ userId: updated.id, ...wynik }, 'Re-matching po zmianie profilu zakończony');
+    } catch (err) {
+      // Profil już zapisany — feed dogoni przy najbliższym cronie.
+      logger.error({ err: err.message, userId: updated.id }, 'Re-matching po zmianie profilu nieudany');
+    }
   }
 
   res.json({ user: publicUser(updated) });

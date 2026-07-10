@@ -46,6 +46,22 @@ sekret nasłuchu w env `HARNESS_WEBHOOK_SECRET`). Bezpiecznik: odmawia pracy na 
   strażnik `google-services.json`, poprawne nazwy zmiennych publikacji
 - Trasa `/demo/tier` NIE istnieje na produkcji (strażnik testowy) ✓
 
+## AKTUALIZACJA 2026-07-10 (noc) — PRODUKCJA LIVE (D-043/D-044)
+
+- ✅ **Backend wdrożony i LIVE**: sekrety (Stripe LIVE 49 zł), firestore, functions,
+  webhook LIVE `we_1Treqy…`; 1500 ogłoszeń; `/demo/tier`→404 na prodzie.
+- ✅ **Błąd produkcyjny naprawiony (D-044)**: fire-and-forget backfill ginął po
+  odpowiedzi (Functions zamrażają tło) → `await`; E2E na prodzie: rejestracja →
+  **5 dopasowań natychmiast** → checkout LIVE 49,00 PLN. Testy 213/213.
+- ✅ **Aplikacja celuje w produkcję domyślnie** (config.js; rollback przez
+  `EXPO_PUBLIC_API_URL`); landing/config.js → funkcje; Codemagic grupa `produkcja`
+  w obu workflow.
+- ✅ **Produkcyjny APK** podpisany `przetargai-upload.jks` (na Pulpicie).
+  ⚠️ Stary APK (debug) trzeba ODINSTALOWAĆ przed instalacją nowego.
+- ⚠️ **Resend: domena przetargai.pl NIEZWERYFIKOWANA** — maile nie wychodzą
+  (graceful). Wymaga: zakup domeny → resend.com/domains → rekordy DNS.
+- ℹ️ Stripe TEST webhook Railway zostaje aktywny (tryby rozłączne; rollback).
+
 ## AKTUALIZACJA 2026-07-10 (wieczór) — wykonane samodzielnie (D-042)
 
 - ✅ **Cennik 49 zł brutto/mc**: ceny Stripe TEST `price_1TreKwAom97JfF2j0wih4iDJ`

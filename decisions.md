@@ -4,6 +4,37 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-044 — Produkcyjna gotowość aplikacji + błąd „zamrożonego tła" wykryty na żywej produkcji
+**Data:** 2026-07-10 | User: „przygotuj aplikację, żeby była sprawna produkcyjnie"
+
+**BŁĄD PRODUKCYJNY złapany dzięki E2E na prawdziwych funkcjach:** onboarding
+backfill i re-matching po `PATCH /me` były fire-and-forget, a **Cloud Functions
+zamrażają instancję po wysłaniu odpowiedzi** — obietnica w tle nigdy nie kończyła
+pracy. Świeży użytkownik z dobrymi słowami kluczowymi dostawał PUSTY feed do
+najbliższego crona. Emulator MASKOWAŁ problem (proces żyje dalej). Naprawa:
+`await` przed odpowiedzią (rejestracja: `Promise.allSettled` z mailem powitalnym;
+PATCH: try/catch — błąd backfillu nie wywraca zapisu profilu). TDD:
+`test/onboardingBackfill.test.js` (2 testy „feed pełny NATYCHMIAST po odpowiedzi" —
+RED na wyścigu nawet na emulatorze, GREEN po await). Testy 211 → **213**.
+**Zweryfikowane na produkcji:** rejestracja → 5 dopasowań od razu (bzp 4 + ted 1,
+limit Free działa) → checkout LIVE **49,00 PLN** `cs_live_…` (bez płacenia).
+
+**Aplikacja przełączona na produkcję:**
+- `mobile/src/config.js`: domyślny adres PROD = Cloud Functions (rollback na Railway
+  przez `EXPO_PUBLIC_API_URL`); `landing/config.js` → funkcje.
+- Codemagic: zmienna `EXPO_PUBLIC_API_URL` (grupa `produkcja`) na obu wpisach apki
+  + grupa dopisana do OBU workflow w codemagic.yaml.
+- Zbudowany **produkcyjny APK** podpisany nowym keystore `przetargai-upload.jks`
+  (lokalnie tą samą ścieżką co CI: prebuild → configure-signing → assembleRelease).
+  ⚠️ Stary APK na telefonie był podpisany kluczem debug — przed instalacją trzeba
+  go ODINSTALOWAĆ (Android odrzuca zmianę podpisu).
+
+**Znaleziska produkcyjne odnotowane:** Resend odrzuca maile — **domena
+przetargai.pl niezweryfikowana** (`resend.com/domains`; wymaga zakupu domeny
+i rekordów DNS) — maile powitalne/aktywacyjne nie wychodzą (graceful, nie blokuje).
+Stripe TEST webhook Railway zostaje AKTYWNY świadomie: tryby TEST/LIVE są rozłączne,
+a Railway pozostaje ścieżką rollbacku.
+
 ## D-042 — Cennik 49 zł brutto + samodzielne wykonanie infrastruktury wydania
 **Data:** 2026-07-10 | User: „płatność za plan powinna być 49 zł" + „wszystko, co możesz, zrób sam"
 
