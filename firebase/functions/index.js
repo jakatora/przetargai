@@ -63,7 +63,12 @@ function pobierzAplikacje() {
 }
 
 /** Całe API pod jedną funkcją — Express sam routuje po ścieżce. */
-export const api = onRequest({ secrets: SEKRETY_API, memory: '512MiB' }, async (req, res) => {
+/*
+ * timeoutSeconds 300: domyslne 60 s nie miescilo backfillu planu Standard
+ * (do 30 wywolan AI po puli ~1500 ogloszen) - /admin/match-user konczyl sie
+ * 504 w trakcie incydentu D-046, a webhook aktywacji tez przelicza feed.
+ */
+export const api = onRequest({ secrets: SEKRETY_API, memory: '512MiB', timeoutSeconds: 300 }, async (req, res) => {
   const app = await pobierzAplikacje();
   return app(req, res);
 });

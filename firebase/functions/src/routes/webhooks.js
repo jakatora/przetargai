@@ -6,6 +6,24 @@ import { audit } from '../lib/audit.js';
 import { sendEmail, subscriptionActiveEmail } from '../services/email.js';
 import { createStandardInvoice } from '../services/invoice.js';
 import { tierPrzetargAi } from '../lib/subscriptionStatus.js';
+import { backfillUser } from '../services/matching.js';
+
+/**
+ * INCYDENT 2026-07-10 (D-046): klient kupił Standard, a feed dalej pokazywał
+ * 5 dopasowań — nowy plan „działał" dopiero od następnego crona. Po aktywacji
+ * przeliczamy dopasowania OD RAZU (i czekamy — Functions zamrażają tło, D-044).
+ * BEZ `wymus`: cooldown backfillu (10 min) chroni przed burzą przy ponowieniach
+ * Stripe. Błąd przeliczenia nie może wywrócić aktywacji — plan już przyznany.
+ */
+async function dowiezFeedPoAktywacji(user) {
+  try {
+    const wynik = await backfillUser(user);
+    logger.info({ userId: user.id, ...wynik }, 'Feed przeliczony po aktywacji planu');
+  } catch (err) {
+    logger.error({ err: err.message, userId: user.id },
+      'Przeliczenie feedu po aktywacji nie powiodło się — dogoni przy cronie');
+  }
+}
 
 const router = Router();
 
@@ -146,6 +164,9 @@ async function obsluzCheckout(session) {
   await users.setTier(user.id, 'standard');
   audit({ userId: user.id, action: 'subscription_activated' });
   logger.info({ userId: user.id }, 'Subskrypcja Standard aktywowana');
+
+  // Klient zapłacił i PATRZY na feed — nowy limit ma być widoczny od razu (D-046).
+  await dowiezFeedPoAktywacji(await users.findById(user.id));
 
   // E-mail nie może wywrócić webhooka — aktywacja już się udała.
   await sendEmail({ to: user.email, ...subscriptionActiveEmail(user.company_name) })
@@ -291,6 +312,9 @@ async function obsluzZmianeSubskrypcji(sub) {
   await users.setTier(user.id, nalezyTier);
   audit({ userId: user.id, action: nalezyTier === 'standard' ? 'subscription_restored' : 'subscription_suspended' });
   logger.info({ userId: user.id, status: sub.status, tier: nalezyTier }, 'Plan zaktualizowany po zmianie subskrypcji');
+
+  // Powrót do Standard (np. po opłaceniu zaległości) też dowozi feed od razu (D-046).
+  if (nalezyTier === 'standard') await dowiezFeedPoAktywacji(await users.findById(user.id));
 }
 
 async function obsluzUsuniecieSubskrypcji(sub) {

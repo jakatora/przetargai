@@ -16,7 +16,7 @@ process.env.FAKTUROWNIA_DOMAIN = 'test-domena';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 
-const { users, faktury, stripeEvents } = await import('../src/db/repos.js');
+const { users, faktury, stripeEvents, tenders, matches } = await import('../src/db/repos.js');
 const { handleEvent, przetworzZdarzenie } = await import('../src/routes/webhooks.js');
 
 let seq = 0;
@@ -65,6 +65,21 @@ test('checkout OPŁACONY aktywuje Standard, zapisuje Stripe ID i wystawia faktur
   const sesja = `cs_paid_${process.pid}`;
   fakturowniaDziala();
 
+  /*
+   * INCYDENT PRODUKCYJNY 2026-07-10: klient kupił Standard i feed dalej pokazywał
+   * 5 dopasowań — aktywacja NIE przeliczała dopasowań, różnica pojawiłaby się
+   * dopiero przy kolejnym cronie. Aktywacja MUSI dowieźć feed od razu.
+   */
+  for (let i = 0; i < 7; i++) {
+    await tenders.upsert({
+      externalId: `wp-akt-${process.pid}-${i}`,
+      title: `Przetarg testowy pakietu numer ${i}`,
+      organization: 'Gmina',
+      deadline: '2099-01-01T00:00:00.000Z',
+    });
+  }
+  tenders.odswiezPule();
+
   await handleEvent({
     type: 'checkout.session.completed',
     data: {
@@ -85,6 +100,10 @@ test('checkout OPŁACONY aktywuje Standard, zapisuje Stripe ID i wystawia faktur
   assert.equal(po.stripe_subscription_id, 'sub_wp1');
   assert.equal(wywolaniaFakturowni, 1);
   assert.equal(await faktury.zarezerwuj(sesja), false, 'druga faktura za tę sesję niemożliwa');
+
+  const feed = await matches.listForUser(user.id, 20);
+  assert.ok(feed.length >= 7,
+    `po zakupie Standard feed ma być pełny OD RAZU (jest ${feed.length}, oczekiwano ≥7) — klient zapłacił i patrzy`);
 });
 
 test('checkout z nieistniejącym userem NIE rzuca (trwały błąd danych — ponowienia nic nie dadzą)', async () => {
