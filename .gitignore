@@ -50,3 +50,7 @@ firestore-debug.log
 ui-debug.log
 
 .check-tmp/
+landing/PrzetargAI.apk
+
+# artefakt deployu hostingu (kopiowany z landing/ przy publikacji)
+firebase/hosting/

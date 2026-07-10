@@ -4,6 +4,11 @@
     "codebase": "przetargai",
     "runtime": "nodejs22"
   },
+  "hosting": {
+    "public": "hosting",
+    "cleanUrls": true,
+    "ignore": ["vercel.json", "README.md", "**/.*"]
+  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"

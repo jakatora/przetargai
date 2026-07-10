@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pobierz aplikację — PrzetargAI</title>
+  <meta name="description" content="Pobierz aplikację PrzetargAI na Androida (APK) lub z App Store. Monitoring przetargów publicznych dopasowanych do Twojej firmy." />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="robots" content="index,follow" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563eb'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .pobierz-page { max-width: 720px; margin: 0 auto; padding: 48px 20px 64px; }
+    .pobierz-page h1 { font-size: 34px; margin: 18px 0 10px; }
+    .pobierz-page .lead { color: var(--muted, #5b6577); font-size: 17px; line-height: 1.6; margin-bottom: 34px; }
+    .pobierz-karty { display: grid; gap: 18px; }
+    @media (min-width: 640px) { .pobierz-karty { grid-template-columns: 1fr 1fr; } }
+    .pobierz-karta { background: #fff; border: 1px solid #e3e8f2; border-radius: 16px; padding: 26px 22px; display: flex; flex-direction: column; gap: 12px; }
+    .pobierz-karta h2 { font-size: 20px; margin: 0; }
+    .pobierz-karta p { color: #5b6577; font-size: 14px; line-height: 1.55; margin: 0; flex: 1; }
+    .pobierz-karta .btn { text-align: center; }
+    .badge-wkrotce { display: inline-block; background: #fef3c7; color: #92400e; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 10px; margin-left: 8px; vertical-align: middle; }
+    .pobierz-meta { margin-top: 30px; background: #f4f7fc; border-radius: 12px; padding: 16px 18px; font-size: 13px; color: #5b6577; line-height: 1.6; }
+    .pobierz-meta code { word-break: break-all; background: #e9eef8; padding: 1px 5px; border-radius: 5px; font-size: 12px; }
+    .pobierz-kroki { margin: 8px 0 0 18px; padding: 0; }
+    .pobierz-kroki li { margin-bottom: 4px; }
+    .legal-back { display: inline-block; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <main class="pobierz-page">
+    <a class="legal-back" href="/">← Powrót na stronę główną</a>
+    <h1>Pobierz PrzetargAI</h1>
+    <p class="lead">
+      Codzienny monitoring przetargów z BZP i TED, dopasowany do profilu Twojej firmy.
+      Konto jest darmowe — plan Standard (49&nbsp;zł/mies.) odblokowuje nielimitowane
+      dopasowania i powiadomienia push.
+    </p>
+
+    <div class="pobierz-karty">
+      <section class="pobierz-karta">
+        <h2>Android (APK)</h2>
+        <p>
+          Bezpośrednia instalacja — wersja <strong>1.0.1</strong>, ok. 64&nbsp;MB.
+          Podpisana oficjalnym kluczem wydawcy PrzetargAI.
+        </p>
+        <a class="btn btn--primary" href="/PrzetargAI.apk" download>Pobierz APK (Android)</a>
+      </section>
+
+      <section class="pobierz-karta">
+        <h2>iPhone (App Store) <span class="badge-wkrotce">wkrótce</span></h2>
+        <p>
+          Wersja iOS przechodzi właśnie proces publikacji w App&nbsp;Store.
+          Link zacznie działać zaraz po zatwierdzeniu przez Apple.
+        </p>
+        <a class="btn btn--ghost" href="https://apps.apple.com/pl/app/id6773018962" rel="noopener">Otwórz w App Store</a>
+      </section>
+    </div>
+
+    <div class="pobierz-meta">
+      <strong>Instalacja APK na Androidzie:</strong>
+      <ol class="pobierz-kroki">
+        <li>Pobierz plik i otwórz go z paska powiadomień lub z folderu Pobrane.</li>
+        <li>Gdy Android zapyta o zgodę na instalację z tego źródła — zezwól (jednorazowo).</li>
+        <li>Po instalacji załóż konto — pierwsze dopasowania zobaczysz od razu.</li>
+      </ol>
+      <p style="margin:10px 0 0">
+        Suma kontrolna SHA-256 pliku:<br />
+        <code>89a55e885d8ebab6224fd7726d85f90c5cec1761c44500e3957b6e1fdff6e132</code>
+      </p>
+    </div>
+  </main>
+</body>
+</html>
