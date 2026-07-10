@@ -4,6 +4,29 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-045 — Pierwszy build iOS na TestFlight (przez API, bez dotykania UI)
+**Data:** 2026-07-10 | User: „zrób builda do App Store"
+
+**Wynik:** build `6a510ba4…` w Codemagic — **10/10 kroków, Publishing SUCCESS**,
+`PrzetargAI.ipa` (9,7 MB) wgrany do App Store Connect (app **6773018962**, wersja
+**1.0.1**, numer builda = BUILD_NUMBER+100). Apple przetwarza binarkę asynchronicznie
+(w ASC był widoczny jeszcze tylko stary build 103 z 2026-05-25) — pojawi się
+w TestFlight w kilkanaście–kilkadziesiąt minut.
+
+**Trzy przeszkody rozwiązane po drodze:**
+1. **Umowa Apple zaakceptowana przez usera** → skrypt `asc-push-capability.mjs`
+   przeszedł: bundle `pl.przetargai.app` istniał (JYKMT4AAVH), **PUSH_NOTIFICATIONS
+   WŁĄCZONE** — bloker push iOS zamknięty.
+2. **Dwa zespoły Codemagic:** wpis apki z billingiem NIE miał integracji
+   „ProbWin AI Connect Key" (żyje w drugim zespole). Zamiast integracji nazwanej —
+   jawne `APP_STORE_CONNECT_{PRIVATE_KEY,KEY_IDENTIFIER,ISSUER_ID}` w grupie
+   `ios_signing` (API) + `publishing.app_store_connect.api_key/key_id/issuer_id`
+   w yaml; `fetch-signing-files` czyta te zmienne automatycznie.
+3. **Błąd 90186 „train 1.0.0 closed"** — w ASC istniał zamknięty pociąg 1.0.0
+   (stary build 103 z maja). Wersja marketingowa podbita do **1.0.1** w app.json.
+
+Commity: 0c6d82c (jawne poświadczenia ASC), 9a2ee53 (wersja 1.0.1).
+
 ## D-044 — Produkcyjna gotowość aplikacji + błąd „zamrożonego tła" wykryty na żywej produkcji
 **Data:** 2026-07-10 | User: „przygotuj aplikację, żeby była sprawna produkcyjnie"
 
