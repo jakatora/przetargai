@@ -34,6 +34,10 @@ const schema = z.object({
   STRIPE_PRICE_STANDARD: z.string().default(''),
   STRIPE_PRICE_PRO: z.string().default(''),
 
+  // Fakturowanie WYŁĄCZONE decyzją usera 2026-07-10 (D-048): „na razie nie
+  // wystawiamy faktur". Włączenie = zmiana defaulta na 'true' + deploy
+  // (sekrety FAKTUROWNIA_* zostają w Secret Managerze na tę chwilę).
+  FAKTUROWANIE_ENABLED: z.enum(['true', 'false']).default('false'),
   FAKTUROWNIA_API_KEY: z.string().default(''),
   FAKTUROWNIA_DOMAIN: z.string().default(''),
 
@@ -74,7 +78,7 @@ export const features = {
   ai: Boolean(env.ANTHROPIC_API_KEY),
   stripe: Boolean(env.STRIPE_SECRET_KEY),
   email: Boolean(env.RESEND_API_KEY),
-  invoicing: Boolean(env.FAKTUROWNIA_API_KEY && env.FAKTUROWNIA_DOMAIN),
+  invoicing: env.FAKTUROWANIE_ENABLED === 'true' && Boolean(env.FAKTUROWNIA_API_KEY && env.FAKTUROWNIA_DOMAIN),
   ted: env.TED_ENABLED === 'true',
 };
 

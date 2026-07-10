@@ -4,6 +4,27 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-048 — Fakturowanie WYŁĄCZONE decyzją usera („na razie bez faktur")
+**Data:** 2026-07-10
+
+Nowy przełącznik `FAKTUROWANIE_ENABLED` (enum true/false, **default 'false'**) —
+`features.invoicing` wymaga jawnego 'true' ORAZ kluczy Fakturowni. Secret Manager
+nie przyjmuje pustych wartości („Secret Payload cannot be empty"), więc wyłącznik
+w kodzie zamiast zerowania sekretów; sekrety FAKTUROWNIA_* zostają na przyszłość.
+Strażnik `sekretyFunkcji` dostał wyjątek z odwrotnym uzasadnieniem (default
+WYŁĄCZAJĄCY jest tu celem — wzorzec wygasa, gdy default wróci na 'true').
+Ponowne włączenie faktur = default 'true' + deploy.
+
+**Domknięcie incydentu D-047:** po deployu zdarzenie
+`evt_1TrgbP…` (zakup usera) celowane resendem w NASZ endpoint → rejestr
+`stripe_events` w PROD: **status done** (claimed→processed 2,5 s) — aktywacja
+idempotentna, faktura pominięta (degradacja). Utrzymujące się `pending_webhooks: 1`
+to NIE nasz endpoint: na wspólnym koncie Stripe LIVE wisi też endpoint
+**kredyt-ai** (`we_1Ticp0…`), który odrzuca cudze zdarzenia — szum bez szkody.
+⚠️ Backlog: wspólne konto Stripe = zdarzenia krzyżowe między projektami; nasze
+sesje warto oznaczać `metadata.project='przetargai'` i filtrować na wejściu
+(dziś chronią: brak usera po client_reference_id oraz strażnik Fittera).
+
 ## D-047 — Incydent pierwszej sprzedaży LIVE + filtr minimalnego % dopasowania
 **Data:** 2026-07-10 | Pierwszy PRAWDZIWY klient (user, 49 zł) + feedback z użycia
 

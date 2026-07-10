@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 
 process.env.ANTHROPIC_API_KEY = '';
 // Fakturownia „skonfigurowana" — testy sterują jej odpowiedziami atrapą fetch.
+process.env.FAKTUROWANIE_ENABLED = 'true';
 process.env.FAKTUROWNIA_API_KEY = 'test-key';
 process.env.FAKTUROWNIA_DOMAIN = 'test-domena';
 

@@ -49,6 +49,11 @@ function sekretyFunkcjiApi() {
  */
 const PRZELACZNIKI_Z_WLACZAJACYM_DOMYSLNYM = {
   TED_ENABLED: /TED_ENABLED:\s*z\.enum\(\['true',\s*'false'\]\)\.default\('true'\)/,
+  // Fakturowanie: default WYŁĄCZAJĄCY jest tu ŚWIADOMYM stanem produktu
+  // (decyzja usera 2026-07-10, D-048) — brak dostarczenia zmiennej realizuje
+  // decyzję, niczego nie psuje po cichu. Wzorzec pilnuje, by wyjątek wygasł,
+  // gdy default wróci na 'true' (wtedy zmienna musi być dostarczana jawnie).
+  FAKTUROWANIE_ENABLED: /FAKTUROWANIE_ENABLED:\s*z\.enum\(\['true',\s*'false'\]\)\.default\('false'\)/,
 };
 
 test('KRYTYCZNE: każda zmienna sterująca features.* dociera do funkcji api', () => {

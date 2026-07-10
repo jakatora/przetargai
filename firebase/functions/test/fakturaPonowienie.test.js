@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 process.env.ANTHROPIC_API_KEY = '';
 // Fakturownia MUSI być „włączona", inaczej invoice.js kończy w trybie degradacji.
+process.env.FAKTUROWANIE_ENABLED = 'true';
 process.env.FAKTUROWNIA_API_KEY = 'test-key';
 process.env.FAKTUROWNIA_DOMAIN = 'test-domena';
 
