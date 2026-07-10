@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { font-family: "Segoe UI", -apple-system, Roboto, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  .fg {
+    position: relative; width: 1024px; height: 500px; overflow: hidden;
+    background: linear-gradient(120deg, #2f6bff 0%, #1d4ed8 52%, #12276e 100%);
+    display: flex; align-items: center;
+  }
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); }
+  .b1 { width: 460px; height: 460px; right: -120px; top: -140px; background: #6ea0ff; opacity: .45; }
+  .b2 { width: 340px; height: 340px; right: 180px; bottom: -180px; background: #ffffff; opacity: .10; }
+  .content { position: relative; z-index: 2; padding: 0 70px; max-width: 720px; }
+  .logo { display: flex; align-items: center; gap: 22px; margin-bottom: 26px; }
+  .mark {
+    width: 84px; height: 84px; border-radius: 22px; flex: none;
+    background: #fff; color: #1d4ed8; font-weight: 800; font-size: 52px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+  .name { color: #fff; font-size: 52px; font-weight: 800; letter-spacing: -0.01em; }
+  .tag { color: #dbe7ff; font-size: 30px; font-weight: 600; line-height: 1.32; }
+  .tag b { color: #fff; }
+  .badges { margin-top: 26px; display: flex; gap: 12px; }
+  .chip {
+    background: rgba(255,255,255,.16); color: #eaf1ff; font-size: 20px; font-weight: 700;
+    padding: 8px 18px; border-radius: 999px; backdrop-filter: blur(4px);
+  }
+</style>
+</head>
+<body>
+  <div class="fg">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="content">
+      <div class="logo">
+        <div class="mark">P</div>
+        <div class="name">PrzetargAI</div>
+      </div>
+      <div class="tag">Przetargi z <b>BZP i TED</b>, dopasowane do Twojej firmy przez <b>AI</b>.</div>
+      <div class="badges">
+        <span class="chip">Ocena trafności</span>
+        <span class="chip">Powiadomienia</span>
+        <span class="chip">Zacznij za darmo</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --blue: #2563eb; --blue-d: #1d4ed8; --navy: #0f2557;
+    --green: #16a34a; --ink: #0b1120;
+  }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .frame {
+    position: relative;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    background: linear-gradient(160deg, #eaf1ff 0%, #dbe7ff 42%, #cfe0ff 100%);
+  }
+  .frame.dark {
+    background: radial-gradient(120% 80% at 50% -10%, #1e3a8a 0%, #12235c 45%, #0b1633 100%);
+  }
+  .frame.brand {
+    background: linear-gradient(160deg, #2f6bff 0%, #1d4ed8 48%, #12276e 100%);
+  }
+  /* dekoracyjne miękkie plamy */
+  .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .5; }
+  .b1 { width: 46vw; height: 46vw; right: -12vw; top: -8vw; background: #7aa2ff; }
+  .b2 { width: 40vw; height: 40vw; left: -14vw; top: 30vh; background: #a7c4ff; opacity:.4; }
+  .dark .b1 { background: #3b6bff; opacity:.45; }
+  .dark .b2 { background: #1e40af; opacity:.5; }
+  .brand .b1 { background: #6ea0ff; opacity:.4; }
+  .brand .b2 { background: #ffffff; opacity:.12; }
+
+  .head {
+    position: relative; z-index: 2;
+    padding: 8.5vh 8vw 0;
+    text-align: center;
+  }
+  .eyebrow {
+    font-size: 3.1vw; font-weight: 800; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--blue);
+    margin-bottom: 2.4vh;
+  }
+  .dark .eyebrow, .brand .eyebrow { color: #cfe0ff; }
+  h1 {
+    font-size: 7.0vw; line-height: 1.08; font-weight: 800;
+    color: var(--navy); text-wrap: balance; letter-spacing: -0.01em;
+  }
+  .dark h1, .brand h1 { color: #fff; }
+  .sub {
+    margin-top: 2.6vh; font-size: 3.9vw; line-height: 1.4; font-weight: 500;
+    color: #3b4a68;
+  }
+  .dark .sub, .brand .sub { color: #c3d6ff; }
+
+  .stage { position: relative; z-index: 1; flex: 1; }
+  .phone {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    top: 6%;
+    width: 66vw;
+    border-radius: 8vw;
+    background: #0b1120;
+    padding: 1.15vw;
+    box-shadow: 0 4vh 8vh -2vh rgba(11,20,40,.42);
+  }
+  .brand .phone, .dark .phone { box-shadow: 0 4vh 9vh -2vh rgba(0,0,0,.55); }
+  .phone img {
+    display: block; width: 100%; border-radius: 6.9vw;
+  }
+</style>
+</head>
+<body>
+  <div class="frame" id="frame">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="head">
+      <div class="eyebrow" id="eyebrow">PrzetargAI</div>
+      <h1 id="title">Tytuł</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <div class="stage">
+      <div class="phone"><img id="shot" alt="" /></div>
+    </div>
+  </div>
+<script>
+  const p = new URLSearchParams(location.search);
+  const set = (id, v) => { const el = document.getElementById(id); if (v != null) el.textContent = v; };
+  document.getElementById('frame').className = 'frame ' + (p.get('theme') || '');
+  set('eyebrow', p.get('eyebrow') || 'PrzetargAI');
+  set('title', p.get('title') || '');
+  const sub = p.get('sub'); set('sub', sub || '');
+  if (!sub) document.getElementById('sub').style.display = 'none';
+  document.getElementById('shot').src = p.get('img') || '';
+</script>
+</body>
+</html>
