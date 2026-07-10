@@ -1,4 +1,4 @@
-import { useState, useCallback, useLayoutEffect } from 'react';
+import { useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
   FlatList,
   View,
@@ -12,6 +12,8 @@ import { api } from '../api/client';
 import MatchCard from '../components/MatchCard';
 import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
+import { PROGI, KLUCZ_PROGU, filtrujPoProgu, normalizujProg } from '../lib/filtrOcen';
+import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
 
 export default function MatchFeedScreen({ navigation }) {
@@ -23,6 +25,23 @@ export default function MatchFeedScreen({ navigation }) {
   const [dociaganie, setDociaganie] = useState(false);
   const [kursor, setKursor] = useState(null); // `next_before` z ostatniej strony
   const [error, setError] = useState(null);
+  const [prog, setProg] = useState(0);
+
+  // Próg filtra przeżywa restart aplikacji (życzenie usera 2026-07-10).
+  useEffect(() => {
+    let aktywny = true;
+    storage.getItem(KLUCZ_PROGU)
+      .then((zapisany) => { if (aktywny) setProg(normalizujProg(zapisany)); })
+      .catch(() => {});
+    return () => { aktywny = false; };
+  }, []);
+
+  const zmienProg = useCallback((nowy) => {
+    setProg(nowy);
+    storage.setItem(KLUCZ_PROGU, String(nowy)).catch(() => {});
+  }, []);
+
+  const widoczne = useMemo(() => filtrujPoProgu(matches, prog), [matches, prog]);
 
   /**
    * Wczytuje pierwszą stronę.
@@ -104,19 +123,47 @@ export default function MatchFeedScreen({ navigation }) {
 
   return (
     <FlatList
-      data={matches}
+      data={widoczne}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={matches.length ? styles.list : styles.listEmpty}
+      contentContainerStyle={widoczne.length ? styles.list : styles.listEmpty}
       ListHeaderComponent={
-        // Mamy starsze dane, ale odświeżenie się nie powiodło — mówimy o tym
-        // wprost, zamiast udawać, że lista jest aktualna.
-        error ? (
-          <Pressable style={styles.pasekBledu} onPress={() => load('refresh')}>
-            <Text style={styles.pasekBleduTekst}>
-              Nie udało się odświeżyć. Pokazujemy ostatnio pobrane przetargi. Dotknij, aby spróbować ponownie.
+        <View>
+          {/* Filtr minimalnego dopasowania — trwały wybór usera (D-047). */}
+          <View style={styles.progi} accessibilityRole="radiogroup">
+            {PROGI.map((opcja) => {
+              const aktywny = prog === opcja.wartosc;
+              return (
+                <Pressable
+                  key={opcja.wartosc}
+                  onPress={() => zmienProg(opcja.wartosc)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: aktywny }}
+                  style={[styles.progChip, aktywny && styles.progChipAktywny]}
+                >
+                  <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>
+                    {opcja.etykieta}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {/*
+            Mamy starsze dane, ale odświeżenie się nie powiodło — mówimy o tym
+            wprost, zamiast udawać, że lista jest aktualna.
+          */}
+          {error ? (
+            <Pressable style={styles.pasekBledu} onPress={() => load('refresh')}>
+              <Text style={styles.pasekBleduTekst}>
+                Nie udało się odświeżyć. Pokazujemy ostatnio pobrane przetargi. Dotknij, aby spróbować ponownie.
+              </Text>
+            </Pressable>
+          ) : null}
+          {prog > 0 && matches.length > 0 && widoczne.length === 0 ? (
+            <Text style={styles.pustyFiltr}>
+              Żadne z {matches.length} dopasowań nie ma {prog}%+ — obniż próg, aby je zobaczyć.
             </Text>
-          </Pressable>
-        ) : null
+          ) : null}
+        </View>
       }
       refreshControl={
         <RefreshControl
@@ -142,21 +189,45 @@ export default function MatchFeedScreen({ navigation }) {
         ) : null
       }
       ListEmptyComponent={
-        <View style={styles.center}>
-          <Text style={styles.emptyIcon}>📭</Text>
-          <Text style={styles.title}>Brak dopasowanych przetargów</Text>
-          <Text style={styles.text}>
-            Gdy pojawią się nowe przetargi pasujące do profilu Twojej firmy,
-            zobaczysz je tutaj. Sprawdź w zakładce „Konto”, czy profil ma
-            ustawione słowa kluczowe.
-          </Text>
-        </View>
+        // Pustka od FILTRA ma własny komunikat w nagłówku — ten ekran jest
+        // wyłącznie dla faktycznie pustego konta.
+        matches.length === 0 ? (
+          <View style={styles.center}>
+            <Text style={styles.emptyIcon}>📭</Text>
+            <Text style={styles.title}>Brak dopasowanych przetargów</Text>
+            <Text style={styles.text}>
+              Gdy pojawią się nowe przetargi pasujące do profilu Twojej firmy,
+              zobaczysz je tutaj. Sprawdź w zakładce „Konto”, czy profil ma
+              ustawione słowa kluczowe.
+            </Text>
+          </View>
+        ) : null
       }
     />
   );
 }
 
 const tworzStyleFeedu = tworzStyle((k) => ({
+  progi: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  progChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: k.border,
+    backgroundColor: k.surface,
+    alignItems: 'center',
+  },
+  progChipAktywny: { borderColor: k.blue, backgroundColor: k.wyroznienie },
+  progTekst: { fontSize: 13, fontWeight: '600', color: k.textMuted },
+  progTekstAktywny: { color: k.blue },
+  pustyFiltr: {
+    color: k.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
+  },
   pasekBledu: {
     backgroundColor: k.ostrzezenieTlo,
     borderRadius: radius.md,

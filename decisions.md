@@ -4,6 +4,31 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-047 — Incydent pierwszej sprzedaży LIVE + filtr minimalnego % dopasowania
+**Data:** 2026-07-10 | Pierwszy PRAWDZIWY klient (user, 49 zł) + feedback z użycia
+
+**Incydent (zgłoszenie: „kupiłem subskrypcję, a dopasowań dalej 5"):**
+1. Płatność LIVE przeszła, `checkout.session.completed` AKTYWOWAŁ plan (logi),
+   ale feed nie rósł — aktywacja NIE przeliczała dopasowań (rosły dopiero przy
+   kolejnym cronie). **Fix D-046:** po `setTier('standard')` (checkout ORAZ powrót
+   do standard w `subscription.updated`) → `await backfillUser` (bez `wymus` —
+   cooldown 10 min gasi burzę ponowień Stripe); test: po opłaconym checkoutcie
+   feed ≥7 od razu (RED przed fixem). `timeoutSeconds: 300` na funkcji `api`
+   (domyślne 60 s ucinało backfill Standard — stąd 504 na /admin/match-user).
+   User potwierdził: „teraz się pojawiły".
+2. **Fakturownia 422 „seller_name nie może być puste"** — konto Fakturowni bez
+   danych sprzedawcy; webhook zgodnie z projektem rzuca (Stripe ponawia), więc
+   faktura wystawi się automatycznie, gdy USER uzupełni dane firmy w Fakturowni
+   (Ustawienia → Dane firmy). Do tego czasu `pending_webhooks: 1` to STAN OCZEKIWANY.
+3. Resend nadal bez zweryfikowanej domeny (maile aktywacyjne nie wychodzą — graceful).
+
+**Filtr „pokaż od X%" (życzenie usera):** `mobile/src/lib/filtrOcen.js` (progi
+Wszystkie/70/80/90, normalizacja śmieci z magazynu; 5 testów) + chipy nad feedem
+(wzorzec przełącznika motywu), wybór trwały na urządzeniu. Filtr KLIENCKI świadomie:
+`where(score>=)+orderBy(created_at)` jest w Firestore nielegalne, a backend i tak
+nie tworzy dopasowań <60. Pusty wynik filtra ma własny komunikat (nie myli się
+z pustym kontem). Mobile testy 40 → 45.
+
 ## D-045 — Pierwszy build iOS na TestFlight (przez API, bez dotykania UI)
 **Data:** 2026-07-10 | User: „zrób builda do App Store"
 
