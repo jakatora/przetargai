@@ -73,16 +73,26 @@ test('KRYTYCZNE: nierówność i orderBy dotyczą TEGO SAMEGO pola', () => {
 });
 
 test('collectionGroup ma zadeklarowany indeks w firestore.indexes.json', () => {
-  // collectionGroup + orderBy NIGDY nie działa bez jawnego indeksu.
+  /*
+   * collectionGroup + orderBy NIGDY nie działa bez jawnego indeksu.
+   * Deploy produkcyjny 2026-07-10 nauczył nas drugiej połowy zasady:
+   * indeks JEDNOPOLOWY w zakresie grupy Firestore ODRZUCA w sekcji `indexes`
+   * (HTTP 400 „configure using single field index controls") — jego miejsce
+   * to `fieldOverrides[].indexes[]` z queryScope COLLECTION_GROUP.
+   * Strażnik honoruje więc OBA poprawne miejsca deklaracji.
+   */
   const uzycia = [...kod.matchAll(/collectionGroup\(\s*['"](\w+)['"]\s*\)/g)].map((m) => m[1]);
   if (!uzycia.length) return;
 
   const konfiguracja = JSON.parse(fs.readFileSync(INDEXES, 'utf8'));
-  const zadeklarowane = new Set(
-    (konfiguracja.indexes ?? [])
+  const zadeklarowane = new Set([
+    ...(konfiguracja.indexes ?? [])
       .filter((i) => i.queryScope === 'COLLECTION_GROUP')
       .map((i) => i.collectionGroup),
-  );
+    ...(konfiguracja.fieldOverrides ?? [])
+      .filter((o) => (o.indexes ?? []).some((i) => i.queryScope === 'COLLECTION_GROUP'))
+      .map((o) => o.collectionGroup),
+  ]);
   for (const grupa of uzycia) {
     assert.ok(zadeklarowane.has(grupa), `collectionGroup('${grupa}') bez indeksu COLLECTION_GROUP w firestore.indexes.json`);
   }

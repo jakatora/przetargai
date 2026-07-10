@@ -68,6 +68,19 @@ Artifact Registry, Cloud Scheduler).
 
 **Cron zacznie działać od razu.** Jeśli cron na Railway nadal biegnie — patrz Etap 6.
 
+### Lekcje z realnego deployu (2026-07-10)
+
+- Indeks JEDNOPOLOWY w zakresie grupy kolekcji NIE może być w `indexes`
+  (HTTP 400 „configure using single field index controls") — musi być
+  w `fieldOverrides[].indexes[]`; nadpisanie pola ZASTĘPUJE domyślne indeksy,
+  więc trzeba dopisać także zakresy COLLECTION (ASC+DESC).
+- Pierwsze utworzenie funkcji potrafi paść na 403 `iam.serviceaccounts.actAs`
+  (wyścig prowizjonowania konta serwisowego) — po prostu ponów deploy.
+- `POST` do funkcji bez body dostaje **411 Length Required** od frontu Google —
+  wywołania adminowe zawsze z `-H "Content-Type: application/json" -d '{}'`.
+- Zmiana wartości sekretu wymaga REDEPLOYU funkcji (wersja sekretu przypinana
+  przy deployu) — tak podmieniliśmy STRIPE_WEBHOOK_SECRET na LIVE (v2).
+
 ## Etap 4 — Weryfikacja z zewnątrz
 
 ```

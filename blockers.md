@@ -5,7 +5,14 @@ Aby zamknąć blocker: „Blocker {nazwa} rozwiązany. Sprawdź, oznacz, kontynu
 
 ---
 
-## [BLOCKER: HUMAN] Deploy Firebase — zgoda na publikację (2026-07-10)
+## [RESOLVED: Deploy Firebase] 2026-07-10 — WDROŻONE (D-043)
+
+User nazwał operacje → 9 sekretów w Secret Managerze (Stripe LIVE!), firestore
+(reguły+indeksy+TTL) i functions (api `api-00001`+, dailyTenderFetch) na produkcji;
+webhook LIVE `we_1TreqyAthGwugrLCyMXRWUft` na URL funkcji; pierwszy cykl:
+1500 ogłoszeń (bzp 500 + ted 1000), /health cron.ok=true; /demo/tier → 404 ✓.
+
+### (archiwum) [BLOCKER: HUMAN] Deploy Firebase — zgoda na publikację (2026-07-10)
 
 Migracja D-024: kod F0–F4 gotowy (testy 166/166), Blaze włączony, Firestore
 w `europe-central2`. Czeka wyłącznie na jawną zgodę usera na: zapis 9 sekretów
