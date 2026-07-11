@@ -37,3 +37,32 @@ export function publicMatch(row) {
     },
   };
 }
+
+/**
+ * Zapisany przetarg (zakładka). Ten SAM kształt co publicMatch — aplikacja
+ * renderuje listę zapisanych tym samym komponentem karty i otwiera ten sam
+ * ekran szczegółów. `saved_at` zamiast `created_at`.
+ */
+export function publicSaved(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    confidence_score: row.confidence_score,
+    reasoning: row.match_reasoning,
+    scorer: row.scorer,
+    saved_at: row.saved_at,
+    reminder_enabled: row.reminder_enabled === true,
+    remind_at: row.remind_at ?? null,
+    tender: {
+      id: row.tender_id,
+      title: row.tender_title,
+      organization: row.tender_organization,
+      budget: row.tender_budget,
+      currency: row.tender_currency,
+      deadline: row.tender_deadline,
+      url: row.tender_url,
+      cpv: row.tender_cpv,
+      source: row.tender_source ?? 'bzp',
+    },
+  };
+}

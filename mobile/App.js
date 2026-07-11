@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { SavedProvider } from './src/context/SavedContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
 // Sposób prezentacji powiadomień, gdy aplikacja jest na pierwszym planie.
@@ -23,7 +24,9 @@ export default function App() {
       <StatusBar style="light" />
       <ThemeProvider>
         <AuthProvider>
-          <RootNavigator />
+          <SavedProvider>
+            <RootNavigator />
+          </SavedProvider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -81,4 +81,14 @@ export const api = {
   getMatch: (id) => request(`/matches/${id}`),
   sendFeedback: (id, helpful) =>
     request(`/matches/${id}/feedback`, { method: 'POST', body: { helpful } }),
+
+  // ----- Zapisane przetargi (zakładki) + przypomnienia o terminie -----
+  // PUT wysyła `body: {}` celowo: bezcielesny PUT/POST do Cloud Functions
+  // dostaje 411 Length Required od frontu Google (potwierdzone na produkcji).
+  getSaved: () => request('/matches/saved'),
+  getSavedIds: () => request('/matches/saved/ids'),
+  saveTender: (id) => request(`/matches/${id}/save`, { method: 'PUT', body: {} }),
+  unsaveTender: (id) => request(`/matches/${id}/save`, { method: 'DELETE', body: {} }),
+  setReminder: (id, enabled) =>
+    request(`/matches/${id}/reminder`, { method: 'PUT', body: { enabled } }),
 };

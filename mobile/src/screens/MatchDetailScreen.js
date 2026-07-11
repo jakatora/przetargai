@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { View, Text, Alert, Linking } from 'react-native';
+import { View, Text, Alert, Linking, Pressable, Switch } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
 import { ScoreBadge } from '../components/MatchCard';
-import { useStyle, tworzStyle } from '../context/ThemeContext';
+import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
+import { useSaved } from '../context/SavedContext';
 import { spacing, radius } from '../theme';
 import { opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
@@ -20,19 +21,47 @@ function Row({ styles, label, value, last }) {
 }
 
 export default function MatchDetailScreen({ route }) {
+  const { kolory } = useTheme();
   const styles = useStyle(tworzStyleSzczegolow);
+  const { isSaved, toggle } = useSaved();
   const { match } = route.params;
   const tender = match.tender;
   const ocena = opisOceny(match.scorer);
   const [feedback, setFeedback] = useState(null);
   const [sending, setSending] = useState(false);
+  // Stan przypomnienia: znany, gdy weszliśmy z ekranu „Zapisane"; inaczej domyślnie off.
+  const [przypomnienie, setPrzypomnienie] = useState(match.reminder_enabled === true);
 
+  const zapisany = isSaved(match.id);
   const budget = formatBudget(tender.budget, tender.currency);
   const cpv = opisCpv(tender.cpv);
   // Jedno źródło prawdy o terminie — wcześniej `daysUntil` nie odróżniał
   // terminu minionego od nieznanego i po prostu nic nie pokazywał.
   const termin = opisTerminu(tender.deadline);
   const deadlineText = `${formatDate(tender.deadline)}  ·  ${termin.etykieta}`;
+  const maTermin = !!tender.deadline && !termin.minal;
+
+  async function przelaczZapis() {
+    try {
+      const teraz = await toggle(match.id);
+      if (!teraz) setPrzypomnienie(false); // usunięto z zakładek → przypomnienie też gaśnie
+    } catch (err) {
+      Alert.alert('Błąd', err.message);
+    }
+  }
+
+  async function przelaczPrzypomnienie(wartosc) {
+    setPrzypomnienie(wartosc);
+    try {
+      // Przypomnienie wymaga zapisu — gdy przetarg nie jest jeszcze w zakładkach, dopisz go.
+      if (wartosc && !zapisany) await toggle(match.id);
+      const stan = await api.setReminder(match.id, wartosc);
+      setPrzypomnienie(stan.reminder_enabled);
+    } catch (err) {
+      setPrzypomnienie(!wartosc);
+      Alert.alert('Błąd', err.message);
+    }
+  }
 
   async function handleFeedback(helpful) {
     setSending(true);
@@ -69,6 +98,37 @@ export default function MatchDetailScreen({ route }) {
         <Row styles={styles} label="Termin składania ofert" value={deadlineText} />
         {budget ? <Row styles={styles} label="Szacowana wartość" value={budget} /> : null}
         <Row styles={styles} label={cpv.etykieta} value={cpv.wartosc} last />
+      </View>
+
+      <View style={styles.akcjeCard}>
+        <Pressable
+          onPress={przelaczZapis}
+          style={styles.zapiszRzad}
+          accessibilityRole="button"
+          accessibilityState={{ selected: zapisany }}
+        >
+          <Text style={[styles.gwiazdka, { color: zapisany ? kolory.blue : kolory.textMuted }]}>
+            {zapisany ? '★' : '☆'}
+          </Text>
+          <Text style={styles.zapiszTekst}>{zapisany ? 'Zapisany w zakładkach' : 'Zapisz przetarg'}</Text>
+        </Pressable>
+
+        <View style={styles.przypRzad}>
+          <View style={styles.przypInfo}>
+            <Text style={styles.przypTytul}>Przypomnij przed terminem</Text>
+            <Text style={styles.przypOpis}>
+              {maTermin
+                ? 'Push ok. 2 dni przed terminem składania ofert.'
+                : 'Ten przetarg nie ma terminu do przypomnienia.'}
+            </Text>
+          </View>
+          <Switch
+            value={przypomnienie}
+            onValueChange={przelaczPrzypomnienie}
+            disabled={!maTermin}
+            trackColor={{ true: kolory.blue }}
+          />
+        </View>
       </View>
 
       <Text style={styles.sectionTitle}>Dlaczego to dopasowanie?</Text>
@@ -125,6 +185,27 @@ export default function MatchDetailScreen({ route }) {
 }
 
 const tworzStyleSzczegolow = tworzStyle((k) => ({
+  akcjeCard: {
+    backgroundColor: k.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
+  },
+  zapiszRzad: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  gwiazdka: { fontSize: 24, lineHeight: 26, fontWeight: '700' },
+  zapiszTekst: { fontSize: 15, fontWeight: '700', color: k.text },
+  przypRzad: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: k.border,
+  },
+  przypInfo: { flex: 1 },
+  przypTytul: { fontSize: 14, fontWeight: '700', color: k.text },
+  przypOpis: { fontSize: 12, color: k.textMuted, marginTop: 2, lineHeight: 17 },
   zrodloOceny: {
     marginTop: spacing.md,
     paddingTop: spacing.md,

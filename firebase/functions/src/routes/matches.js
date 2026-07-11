@@ -2,10 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { matches, feedback } from '../db/repos.js';
+import { matches, feedback, saved } from '../db/repos.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
-import { publicMatch } from '../lib/serialize.js';
+import { publicMatch, publicSaved } from '../lib/serialize.js';
 
 const router = Router();
 router.use(authRequired);
@@ -33,6 +33,51 @@ router.get('/', ah(async (req, res) => {
   // Pełna strona ⇒ prawdopodobnie jest kolejna. Krótsza ⇒ to koniec.
   const nastepny = rows.length === limit ? matches.kursorZ(rows[rows.length - 1]) : null;
   res.json({ matches: rows.map(publicMatch), count: rows.length, limit, next_before: nastepny });
+}));
+
+/**
+ * Lista zapisanych przetargów (zakładki) — D-049.
+ * MUSI stać PRZED `GET /:id`, inaczej Express dopasowałby /saved jako id="saved".
+ */
+router.get('/saved', ah(async (req, res) => {
+  const rows = await saved.list(req.user.id);
+  res.json({ saved: rows.map(publicSaved), count: rows.length });
+}));
+
+/** Same identyfikatory zapisanych — do zaznaczania ikony zakładki w feedzie. */
+router.get('/saved/ids', ah(async (req, res) => {
+  res.json({ ids: await saved.ids(req.user.id) });
+}));
+
+/** Zapisuje przetarg do zakładek (idempotentnie). Kopiuje pola z dopasowania. */
+router.put('/:id/save', ah(async (req, res) => {
+  const row = await matches.detail(req.user.id, req.params.id);
+  if (!row) throw notFound('Dopasowanie nie zostało znalezione');
+  const created = await saved.add(req.user.id, row);
+  audit({ userId: req.user.id, action: 'save_tender', detail: { tenderId: row.id }, ip: req.ip });
+  res.json({ saved: true, created });
+}));
+
+/** Usuwa przetarg z zakładek. */
+router.delete('/:id/save', ah(async (req, res) => {
+  await saved.remove(req.user.id, req.params.id);
+  audit({ userId: req.user.id, action: 'unsave_tender', detail: { tenderId: req.params.id }, ip: req.ip });
+  res.json({ saved: false });
+}));
+
+/**
+ * Włącza/wyłącza przypomnienie o terminie dla ZAPISANEGO przetargu (D-050).
+ * Przetarg musi być wcześniej w zakładkach; bez terminu zwracamy powód.
+ */
+const reminderSchema = z.object({ enabled: z.boolean() });
+router.put('/:id/reminder', ah(async (req, res) => {
+  const wynik = reminderSchema.safeParse(req.body);
+  if (!wynik.success) throw badRequest('Wymagane pole "enabled" typu boolean');
+
+  const stan = await saved.setReminder(req.user.id, req.params.id, wynik.data.enabled);
+  if (stan.powod === 'nie_zapisany') throw notFound('Najpierw zapisz ten przetarg');
+  audit({ userId: req.user.id, action: 'set_reminder', detail: { tenderId: req.params.id, enabled: stan.reminder_enabled }, ip: req.ip });
+  res.json(stan);
 }));
 
 /** Szczegóły pojedynczego dopasowania. */

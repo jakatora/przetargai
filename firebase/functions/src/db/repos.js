@@ -1,5 +1,6 @@
 import { getFirestore, FieldValue, FieldPath } from 'firebase-admin/firestore';
 import { newId, nowIso, startOfTodayIso } from '../lib/ids.js';
+import { obliczRemindAt } from '../lib/przypomnienia.js';
 
 /*
  * Warstwa dostępu do danych — Firestore (port z node:sqlite, D-024).
@@ -451,6 +452,105 @@ export const matches = {
 
   async markNotified(userId, matchId) {
     await matchCol(userId).doc(matchId).update({ notified: 1 });
+  },
+};
+
+// ============================ zapisane (zakładki) ============================
+
+const savedCol = (userId) => db().collection('users').doc(userId).collection('saved');
+
+export const saved = {
+  /**
+   * Zapisuje przetarg do „Zapisanych" — kopiuje zdenormalizowane pola z dopasowania,
+   * żeby lista renderowała się bez JOIN-a (tak jak feed). docId = tenderId, więc
+   * powtórny zapis tego samego przetargu jest bezpieczny.
+   * @returns {Promise<boolean>} true = powstał NOWY wpis; false = już był zapisany
+   */
+  async add(userId, match) {
+    const tenderId = match.tender_id ?? match.id;
+    const rekord = {
+      tender_id: tenderId,
+      confidence_score: match.confidence_score ?? null,
+      scorer: match.scorer ?? null,
+      match_reasoning: match.match_reasoning ?? null,
+      tender_title: match.tender_title ?? null,
+      tender_organization: match.tender_organization ?? null,
+      tender_budget: match.tender_budget ?? null,
+      tender_currency: match.tender_currency ?? 'PLN',
+      tender_deadline: match.tender_deadline ?? null,
+      tender_url: match.tender_url ?? null,
+      tender_cpv: match.tender_cpv ?? null,
+      tender_source: match.tender_source ?? 'bzp',
+      saved_at: nowIso(),
+    };
+    // create() (nie set()) — chcemy odróżnić nowy zapis od powtórnego i NIE nadpisywać saved_at.
+    try {
+      await savedCol(userId).doc(tenderId).create(rekord);
+      return true;
+    } catch (err) {
+      if (err.code === 6 /* ALREADY_EXISTS */) return false;
+      throw err;
+    }
+  },
+
+  async remove(userId, tenderId) {
+    await savedCol(userId).doc(tenderId).delete();
+  },
+
+  /** Lista zapisanych, najnowszy zapis pierwszy. Bez paginacji — zapisanych jest mało. */
+  async list(userId, limit = 100) {
+    const snap = await savedCol(userId).orderBy('saved_at', 'desc').limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /** Same identyfikatory zapisanych (do zaznaczania ikony w feedzie) — bez pobierania treści. */
+  async ids(userId) {
+    const snap = await savedCol(userId).select().get();
+    return snap.docs.map((d) => d.id);
+  },
+
+  /**
+   * Włącza/wyłącza przypomnienie o terminie dla zapisanego przetargu (D-050).
+   * remind_at liczone z `tender_deadline` (48 h przed). Przetarg bez terminu
+   * albo po terminie nie może mieć przypomnienia — zwracamy `powod`.
+   * @returns {Promise<{reminder_enabled:boolean, remind_at?:string, powod?:string}>}
+   */
+  async setReminder(userId, tenderId, enabled) {
+    const ref = savedCol(userId).doc(tenderId);
+    const doc = await ref.get();
+    if (!doc.exists) return { reminder_enabled: false, powod: 'nie_zapisany' };
+
+    if (!enabled) {
+      await ref.update({ reminder_enabled: false });
+      return { reminder_enabled: false };
+    }
+
+    const remindAt = obliczRemindAt(doc.data().tender_deadline, nowIso());
+    if (!remindAt) return { reminder_enabled: false, powod: 'brak_terminu' };
+
+    await ref.update({ reminder_enabled: true, remind_at: remindAt, reminder_notified: false });
+    return { reminder_enabled: true, remind_at: remindAt };
+  },
+
+  /**
+   * Wpisy wymagalne do wysyłki: włączone, jeszcze niepowiadomione, remind_at ≤ teraz.
+   * collectionGroup — indeks zadeklarowany w firestore.indexes.json (reminder_enabled + remind_at).
+   * `reminder_notified` filtrujemy w kodzie, żeby uniknąć trzeciego pola w indeksie.
+   * @returns {Promise<Array<{userId:string, tenderId:string, ...pola}>>}
+   */
+  async dueReminders(teraz = nowIso()) {
+    const snap = await db().collectionGroup('saved')
+      .where('reminder_enabled', '==', true)
+      .where('remind_at', '<=', teraz)
+      .get();
+    return snap.docs
+      .filter((d) => d.data().reminder_notified !== true)
+      .map((d) => ({ userId: d.ref.parent.parent.id, tenderId: d.id, ...d.data() }));
+  },
+
+  /** Oznacza przypomnienie jako wysłane — nie powtórzymy go. */
+  async markReminded(userId, tenderId) {
+    await savedCol(userId).doc(tenderId).update({ reminder_notified: true });
   },
 };
 

@@ -90,9 +90,14 @@ export default function MatchFeedScreen({ navigation }) {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable onPress={() => navigation.navigate('Account')} hitSlop={12}>
-          <Text style={styles.headerBtn}>Konto</Text>
-        </Pressable>
+        <View style={styles.headerAkcje}>
+          <Pressable onPress={() => navigation.navigate('Saved')} hitSlop={12} accessibilityLabel="Zapisane przetargi">
+            <Text style={styles.headerGwiazdka}>★</Text>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('Account')} hitSlop={12}>
+            <Text style={styles.headerBtn}>Konto</Text>
+          </Pressable>
+        </View>
       ),
     });
   }, [navigation, styles]);
@@ -236,7 +241,9 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   },
   pasekBleduTekst: { color: k.ostrzezenieTekst, fontSize: 13, lineHeight: 18 },
   stopka: { paddingVertical: spacing.lg },
-  headerBtn: { color: k.white, fontWeight: '700', fontSize: 15, marginRight: 16 },
+  headerAkcje: { flexDirection: 'row', alignItems: 'center', gap: 18, marginRight: 16 },
+  headerGwiazdka: { color: k.white, fontSize: 22, lineHeight: 24, fontWeight: '700' },
+  headerBtn: { color: k.white, fontWeight: '700', fontSize: 15 },
   list: { padding: spacing.lg },
   listEmpty: { flexGrow: 1 },
   center: {

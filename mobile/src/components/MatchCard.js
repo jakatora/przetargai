@@ -1,8 +1,29 @@
 import { Pressable, View, Text } from 'react-native';
 import { radius, spacing } from '../theme';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
+import { useSaved } from '../context/SavedContext';
 import { formatDate } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
+
+/** Przycisk zakładki — ★ zapisany (brand), ☆ do zapisania. Nie nawiguje. */
+export function SaveStar({ tenderId, styles, kolory }) {
+  const { isSaved, toggle } = useSaved();
+  const zapisany = isSaved(tenderId);
+  return (
+    <Pressable
+      onPress={() => { toggle(tenderId).catch(() => {}); }}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityState={{ selected: zapisany }}
+      accessibilityLabel={zapisany ? 'Usuń z zapisanych' : 'Zapisz przetarg'}
+      style={styles.gwiazdka}
+    >
+      <Text style={[styles.gwiazdkaZnak, { color: zapisany ? kolory.blue : kolory.textMuted }]}>
+        {zapisany ? '★' : '☆'}
+      </Text>
+    </Pressable>
+  );
+}
 
 /** Kolorowy znacznik wyniku dopasowania (0–100). */
 export function ScoreBadge({ score, size = 'md' }) {
@@ -25,6 +46,7 @@ export function ScoreBadge({ score, size = 'md' }) {
 
 /** Karta dopasowanego przetargu na liście. */
 export default function MatchCard({ match, onPress }) {
+  const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKarty);
   const tender = match.tender;
   /*
@@ -41,6 +63,7 @@ export default function MatchCard({ match, onPress }) {
       accessibilityRole="button"
       accessibilityLabel={`${tender.title}. Dopasowanie ${match.confidence_score} procent. ${termin.etykieta}.`}
     >
+      <SaveStar tenderId={tender.id} styles={styles} kolory={kolory} />
       <View style={styles.row}>
         <ScoreBadge score={match.confidence_score} />
         <View style={styles.body}>
@@ -89,7 +112,9 @@ const tworzStyleKarty = tworzStyle((k) => ({
     marginBottom: spacing.md,
   },
   pressed: { opacity: 0.7 },
-  row: { flexDirection: 'row', gap: spacing.md },
+  gwiazdka: { position: 'absolute', top: 6, right: 8, zIndex: 2, padding: 4 },
+  gwiazdkaZnak: { fontSize: 22, lineHeight: 24, fontWeight: '700' },
+  row: { flexDirection: 'row', gap: spacing.md, paddingRight: 26 },
   score: {
     borderRadius: radius.md,
     alignItems: 'center',

@@ -105,3 +105,24 @@ export const dailyTenderFetch = onSchedule(
     console.log(JSON.stringify({ severity: 'INFO', message: 'dailyTenderFetch zakończony', ...wynik }));
   },
 );
+
+/**
+ * Przypomnienia o terminach składania ofert dla ZAPISANYCH przetargów (D-050).
+ * Co 6 godzin — częściej niż cykl dobowy, bo terminy „za kilka godzin" muszą
+ * zdążyć. Push idzie tylko do użytkowników z tokenem; wpis oznaczany jako
+ * powiadomiony, więc każde przypomnienie leci dokładnie raz.
+ */
+export const remindDeadlines = onSchedule(
+  {
+    schedule: '0 */6 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 300,
+    memory: '256MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runReminderCheck } = await import('./src/jobs/remindDeadlines.js');
+    const wynik = await runReminderCheck();
+    console.log(JSON.stringify({ severity: 'INFO', message: 'remindDeadlines zakończony', ...wynik }));
+  },
+);
