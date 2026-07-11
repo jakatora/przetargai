@@ -4,6 +4,42 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-052 — Wyjaśnienie AI ogłoszenia (luka #1 z analizy konkurencji)
+**Data:** 2026-07-11 | User: „udoskonal aplikacje" (wolna ręka) po „zobacz co posiadają podobne aplikacje"
+
+**Po co.** Analiza konkurencji ([[reference_przetargai_konkurencja]]) pokazała, że
+płatni konkurenci (Och!, SmartPrzetargi, SellWith) sprzedają streszczenie/analizę
+AI ogłoszenia — a my mieliśmy tylko ocenę dopasowania. To była luka #1. Backend już
+rozmawia z Claude, więc koszt wdrożenia niski.
+
+**Uczciwość danych.** BZP odrzuca `htmlBody` przy pobieraniu (services/bzp.js) —
+NIE mamy pełnego SIWZ, tylko tytuł/CPV/zamawiający/wartość/termin. Dlatego to
+EKSPERCKA INTERPRETACJA ogłoszenia („typowo dla takiego zamówienia trzeba…"), nie
+streszczenie specyfikacji. UI mówi to wprost: „na podstawie danych przetargu, nie
+zastępuje SIWZ". Prompt zabrania modelowi zmyślać szczegóły spoza ogłoszenia.
+
+**Architektura.**
+- Czysty `lib/streszczenie.js`: `parseStreszczenie` (sanityzacja odpowiedzi modelu:
+  czego_dotyczy wymagane, dokumenty≤8, obcinanie długości), `buildSummaryPrompt`
+  (deterministyczny — dni do terminu liczone z `now`), `dniDoTerminu`. TDD 9 testów.
+- `services/ai.summarizeTender()` — osobny system prompt, budżetowane jak scoring
+  (twardy limit → null), `aiUsage` operacja `tender_summary`.
+- **Cache per przetarg** (`tenders.ai_summary`, wspólny dla wszystkich): pierwszy
+  oglądający płaci generację, reszta czyta za darmo → koszt ~ liczba różnych
+  przetargów, nie userów.
+- **Denial-of-wallet**: `streszczenieQuota` — osobny dobowy limit GENERACJI na usera
+  (free 8 / standard 60), liczy tylko cache miss.
+- `GET /matches/:id/streszczenie` (przed `/:id`): cache → quota → generacja → zapis;
+  IDOR-odporność przez `matches.detail`. Łagodna degradacja: `{streszczenie:null,
+  powod, komunikat}` przy limicie/awarii AI (nie 500).
+- Mobile: sekcja „Wyjaśnienie AI" w szczegółach — leniwa (przycisk „Wyjaśnij ten
+  przetarg"), stany ładowania/limitu, render: czego dotyczy / co przygotować (lista)
+  / na co uważać / ocena dla małej firmy.
+
+**Testy.** Backend **246/246** (+12: 9 czystych + 3 trasy: cache hit, degradacja bez
+AI, brak kolizji tras + IDOR). Mobile **56/56**, esbuild czysty. Deploy produkcyjny
+CZEKA na zgodę usera (auto-tryb zablokował — „udoskonal" nie nazywa wdrożenia).
+
 ## D-051 — Narzędzia feedu: wyszukiwarka + sortowanie (wersja 1.0.3)
 **Data:** 2026-07-11 | User: „udoskonal jeszcze aplikację, masz wolną rękę"
 

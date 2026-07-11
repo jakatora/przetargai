@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Alert, Linking, Pressable, Switch } from 'react-native';
+import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -31,6 +31,10 @@ export default function MatchDetailScreen({ route }) {
   const [sending, setSending] = useState(false);
   // Stan przypomnienia: znany, gdy weszliśmy z ekranu „Zapisane"; inaczej domyślnie off.
   const [przypomnienie, setPrzypomnienie] = useState(match.reminder_enabled === true);
+  // Wyjaśnienie AI (D-052) — leniwe: generujemy dopiero na żądanie (koszt AI).
+  const [streszczenie, setStreszczenie] = useState(null);
+  const [strLoading, setStrLoading] = useState(false);
+  const [strBlad, setStrBlad] = useState(null);
 
   const zapisany = isSaved(match.id);
   const budget = formatBudget(tender.budget, tender.currency);
@@ -60,6 +64,20 @@ export default function MatchDetailScreen({ route }) {
     } catch (err) {
       setPrzypomnienie(!wartosc);
       Alert.alert('Błąd', err.message);
+    }
+  }
+
+  async function wyjasnij() {
+    setStrLoading(true);
+    setStrBlad(null);
+    try {
+      const odp = await api.getStreszczenie(match.id);
+      if (odp.streszczenie) setStreszczenie(odp.streszczenie);
+      else setStrBlad(odp.komunikat || 'Nie udało się wygenerować wyjaśnienia.');
+    } catch (err) {
+      setStrBlad(err.message);
+    } finally {
+      setStrLoading(false);
     }
   }
 
@@ -129,6 +147,60 @@ export default function MatchDetailScreen({ route }) {
             trackColor={{ true: kolory.blue }}
           />
         </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Wyjaśnienie AI</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
+          Prosty opis ogłoszenia przygotowany przez AI na podstawie danych przetargu
+          (nie zastępuje pełnej specyfikacji SIWZ).
+        </Text>
+
+        {streszczenie ? (
+          <View style={styles.strTresc}>
+            <Text style={styles.strAkapit}>{streszczenie.czego_dotyczy}</Text>
+
+            {streszczenie.dokumenty?.length ? (
+              <View style={styles.strBlok}>
+                <Text style={styles.strNaglowek}>Co zwykle trzeba przygotować</Text>
+                {streszczenie.dokumenty.map((d, i) => (
+                  <View key={i} style={styles.strPunktRzad}>
+                    <Text style={styles.strKropka}>•</Text>
+                    <Text style={styles.strPunkt}>{d}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            {streszczenie.na_co_uwaga ? (
+              <View style={styles.strBlok}>
+                <Text style={styles.strNaglowek}>Na co zwrócić uwagę</Text>
+                <Text style={styles.strAkapit}>{streszczenie.na_co_uwaga}</Text>
+              </View>
+            ) : null}
+
+            {streszczenie.ocena ? (
+              <View style={styles.strBlok}>
+                <Text style={styles.strNaglowek}>Ocena dla małej firmy</Text>
+                <Text style={styles.strAkapit}>{streszczenie.ocena}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : strLoading ? (
+          <View style={styles.strLadowanie}>
+            <ActivityIndicator color={kolory.blue} />
+            <Text style={styles.strLadowanieTekst}>AI analizuje ogłoszenie…</Text>
+          </View>
+        ) : (
+          <View style={styles.strStart}>
+            {strBlad ? <Text style={styles.strBlad}>{strBlad}</Text> : null}
+            <Button
+              title={strBlad ? 'Spróbuj ponownie' : 'Wyjaśnij ten przetarg'}
+              onPress={wyjasnij}
+              variant="ghost"
+            />
+          </View>
+        )}
       </View>
 
       <Text style={styles.sectionTitle}>Dlaczego to dopasowanie?</Text>
@@ -239,6 +311,18 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
     marginBottom: spacing.sm,
   },
   reasoning: { fontSize: 15, color: k.text, lineHeight: 22 },
+  strPodtytul: { fontSize: 12, color: k.textMuted, lineHeight: 17, fontStyle: 'italic' },
+  strStart: { marginTop: spacing.md, gap: spacing.sm },
+  strBlad: { fontSize: 13, color: k.textMuted, lineHeight: 18 },
+  strLadowanie: { marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  strLadowanieTekst: { fontSize: 14, color: k.textMuted },
+  strTresc: { marginTop: spacing.md, gap: spacing.md },
+  strAkapit: { fontSize: 15, color: k.text, lineHeight: 22 },
+  strBlok: { gap: spacing.xs ?? 4 },
+  strNaglowek: { fontSize: 13, fontWeight: '700', color: k.blue, marginBottom: 2 },
+  strPunktRzad: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
+  strKropka: { fontSize: 15, color: k.blue, lineHeight: 22 },
+  strPunkt: { flex: 1, fontSize: 15, color: k.text, lineHeight: 22 },
   gap: { marginTop: spacing.lg },
   feedbackRow: { flexDirection: 'row', gap: spacing.md },
   feedbackBtn: { flex: 1 },

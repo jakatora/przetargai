@@ -79,6 +79,11 @@ export const api = {
     return request(`/matches?${params.toString()}`);
   },
   getMatch: (id) => request(`/matches/${id}`),
+  /**
+   * Wyjaśnienie AI ogłoszenia (D-052). Odpowiedź: { streszczenie, cached } gdy się
+   * udało, albo { streszczenie: null, powod, komunikat } przy limicie/niedostępności.
+   */
+  getStreszczenie: (id) => request(`/matches/${id}/streszczenie`),
   sendFeedback: (id, helpful) =>
     request(`/matches/${id}/feedback`, { method: 'POST', body: { helpful } }),
 

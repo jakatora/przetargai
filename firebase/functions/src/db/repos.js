@@ -252,6 +252,26 @@ export const tenders = {
     return userSnap(await db().collection('tenders').doc(id).get());
   },
 
+  /**
+   * Wyjaśnienie AI ogłoszenia jest CACHE'OWANE na dokumencie przetargu (D-052) —
+   * przetarg jest niemutowalny co do danych źródłowych, ale wyjaśnienie to pole
+   * pochodne, wspólne dla wszystkich oglądających. Pierwszy oglądający płaci za
+   * generację, reszta czyta z cache za darmo. Zwraca obiekt streszczenia lub null.
+   */
+  async getSummary(id) {
+    const snap = await db().collection('tenders').doc(id).get();
+    if (!snap.exists) return null;
+    const s = snap.data().ai_summary;
+    return s && typeof s === 'object' ? s : null;
+  },
+
+  async saveSummary(id, summary) {
+    await db().collection('tenders').doc(id).set(
+      { ai_summary: summary, ai_summary_at: nowIso() },
+      { merge: true },
+    );
+  },
+
   async recent(limit = 200) {
     const q = await db().collection('tenders').orderBy('fetched_at', 'desc').limit(limit).get();
     return q.docs.map(userSnap);
@@ -644,6 +664,34 @@ export const aiQuota = {
   /** Rezerwuje jedno wywołanie AI. Zwraca false, gdy dzienny limit wyczerpany. */
   async reserve(userId, limit) {
     const ref = quotaDoc(userId, this.today());
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const calls = doc.exists ? (doc.data().calls ?? 0) : 0;
+      if (calls >= limit) return false;
+      tx.set(ref, { calls: calls + 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+};
+
+/**
+ * Dobowy limit GENERACJI wyjaśnień AI na użytkownika (D-052, denial-of-wallet).
+ * Osobny licznik niż aiQuota — wyjaśnienie i ocena dopasowania to różne operacje
+ * o różnych limitach, a wspólny licznik mieszałby ich rozliczenie. Liczy się tylko
+ * CACHE MISS: otwarcie przetargu z gotowym wyjaśnieniem nic nie kosztuje i nie
+ * dotyka tego licznika (wołający pyta o rezerwację dopiero przy braku cache).
+ */
+const summaryQuotaDoc = (userId, day) =>
+  db().collection('users').doc(userId).collection('summary_quota').doc(day);
+
+export const streszczenieQuota = {
+  today() {
+    return nowIso().slice(0, 10);
+  },
+
+  /** Rezerwuje jedną generację. Zwraca false, gdy dobowy limit wyczerpany. */
+  async reserve(userId, limit) {
+    const ref = summaryQuotaDoc(userId, this.today());
     return db().runTransaction(async (tx) => {
       const doc = await tx.get(ref);
       const calls = doc.exists ? (doc.data().calls ?? 0) : 0;

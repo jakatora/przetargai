@@ -2,10 +2,14 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { matches, feedback, saved } from '../db/repos.js';
+import { matches, feedback, saved, tenders, streszczenieQuota } from '../db/repos.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicMatch, publicSaved } from '../lib/serialize.js';
+import { summarizeTender } from '../services/ai.js';
+
+/** Dobowy limit NOWYCH generacji wyjaśnień AI na użytkownika (cache miss). */
+const LIMIT_STRESZCZEN_DZIENNIE = { free: 8, standard: 60 };
 
 const router = Router();
 router.use(authRequired);
@@ -78,6 +82,58 @@ router.put('/:id/reminder', ah(async (req, res) => {
   if (stan.powod === 'nie_zapisany') throw notFound('Najpierw zapisz ten przetarg');
   audit({ userId: req.user.id, action: 'set_reminder', detail: { tenderId: req.params.id, enabled: stan.reminder_enabled }, ip: req.ip });
   res.json(stan);
+}));
+
+/**
+ * Wyjaśnienie AI ogłoszenia (D-052). Kolejność MUSI być przed `GET /:id`.
+ *
+ * Ścieżka: cache na przetargu (wspólny) → gdy brak: rezerwacja dobowego limitu
+ * generacji użytkownika → generacja (budżetowana w services/ai) → zapis cache.
+ * `id` to identyfikator dopasowania; przez matches.detail sprawdzamy własność
+ * (IDOR-odporność) i wyciągamy tender_id, po czym wyjaśnienie żyje na przetargu.
+ */
+router.get('/:id/streszczenie', ah(async (req, res) => {
+  const row = await matches.detail(req.user.id, req.params.id);
+  if (!row) throw notFound('Dopasowanie nie zostało znalezione');
+  const tenderId = row.tender_id;
+
+  const zCache = await tenders.getSummary(tenderId);
+  if (zCache) {
+    res.json({ streszczenie: zCache, cached: true });
+    return;
+  }
+
+  const limit = LIMIT_STRESZCZEN_DZIENNIE[req.user.premium_tier] ?? LIMIT_STRESZCZEN_DZIENNIE.free;
+  if (!await streszczenieQuota.reserve(req.user.id, limit)) {
+    res.json({
+      streszczenie: null,
+      powod: 'limit_dzienny',
+      komunikat: `Wykorzystano dzienny limit wyjaśnień (${limit}). Spróbuj jutro lub rozważ wyższy plan.`,
+    });
+    return;
+  }
+
+  // Do wyjaśnienia bierzemy PEŁNY dokument przetargu (cpv_main, budget…), nie
+  // zdenormalizowany wiersz dopasowania — findById zwraca komplet pól.
+  const tender = await tenders.findById(tenderId) ?? {
+    title: row.tender_title, organization: row.tender_organization,
+    cpv_main: row.tender_cpv, budget: row.tender_budget, currency: row.tender_currency,
+    deadline: row.tender_deadline,
+  };
+
+  const streszczenie = await summarizeTender(tender, { userId: req.user.id });
+  if (!streszczenie) {
+    res.json({
+      streszczenie: null,
+      powod: 'niedostepne',
+      komunikat: 'Nie udało się teraz wygenerować wyjaśnienia. Spróbuj ponownie za chwilę.',
+    });
+    return;
+  }
+
+  await tenders.saveSummary(tenderId, streszczenie);
+  audit({ userId: req.user.id, action: 'tender_summary', detail: { tenderId }, ip: req.ip });
+  res.json({ streszczenie, cached: false });
 }));
 
 /** Szczegóły pojedynczego dopasowania. */
