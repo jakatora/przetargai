@@ -184,13 +184,21 @@ https://jakatora.github.io/przetargai/
 
 ### 4.7 What's New in This Version (przy każdej nowej wersji)
 
-Wersja 1.0.2:
+Wersja 1.0.3:
+```
+Szybciej znajdziesz to, co ważne:
+
+• Wyszukiwarka — filtruj przetargi po nazwie lub zamawiającym, z tolerancją odmian.
+• Sortowanie — ustaw kolejność: Trafność, Termin (najbliższy pierwszy) lub Najnowsze.
+• Drobne poprawki.
+```
+
+Wersja 1.0.2 (poprzednia):
 ```
 Zapisuj przetargi i nie przegap terminu:
 
-• Zapisane przetargi — dotknij gwiazdki, aby zebrać interesujące ogłoszenia w jednym miejscu i wrócić do nich później.
+• Zapisane przetargi — dotknij gwiazdki, aby zebrać interesujące ogłoszenia i wrócić do nich później.
 • Przypomnienie o terminie — włącz powiadomienie, a damy Ci znać, zanim upłynie termin składania ofert.
-• Drobne poprawki i usprawnienia.
 ```
 
 Wersja 1.0.1 (poprzednia):

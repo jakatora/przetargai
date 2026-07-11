@@ -3,6 +3,7 @@ import {
   FlatList,
   View,
   Text,
+  TextInput,
   RefreshControl,
   ActivityIndicator,
   Pressable,
@@ -13,6 +14,7 @@ import MatchCard from '../components/MatchCard';
 import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PROGI, KLUCZ_PROGU, filtrujPoProgu, normalizujProg } from '../lib/filtrOcen';
+import { SORTOWANIA, KLUCZ_SORT, sortujDopasowania, filtrujTekst, normalizujSort } from '../lib/feedSort';
 import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
 
@@ -26,12 +28,14 @@ export default function MatchFeedScreen({ navigation }) {
   const [kursor, setKursor] = useState(null); // `next_before` z ostatniej strony
   const [error, setError] = useState(null);
   const [prog, setProg] = useState(0);
+  const [sort, setSort] = useState('trafnosc');
+  const [szukaj, setSzukaj] = useState('');
 
-  // Próg filtra przeżywa restart aplikacji (życzenie usera 2026-07-10).
+  // Próg filtra i sortowanie przeżywają restart aplikacji.
   useEffect(() => {
     let aktywny = true;
-    storage.getItem(KLUCZ_PROGU)
-      .then((zapisany) => { if (aktywny) setProg(normalizujProg(zapisany)); })
+    Promise.all([storage.getItem(KLUCZ_PROGU), storage.getItem(KLUCZ_SORT)])
+      .then(([p, s]) => { if (aktywny) { setProg(normalizujProg(p)); setSort(normalizujSort(s)); } })
       .catch(() => {});
     return () => { aktywny = false; };
   }, []);
@@ -41,7 +45,18 @@ export default function MatchFeedScreen({ navigation }) {
     storage.setItem(KLUCZ_PROGU, String(nowy)).catch(() => {});
   }, []);
 
-  const widoczne = useMemo(() => filtrujPoProgu(matches, prog), [matches, prog]);
+  const zmienSort = useCallback((nowy) => {
+    setSort(nowy);
+    storage.setItem(KLUCZ_SORT, nowy).catch(() => {});
+  }, []);
+
+  // Pipeline: próg → tekst → sortowanie. Wszystko po stronie aplikacji na
+  // wczytanych dopasowaniach (feed jednego użytkownika jest mały).
+  const widoczne = useMemo(() => {
+    const poProgu = filtrujPoProgu(matches, prog);
+    const poTekscie = filtrujTekst(poProgu, szukaj);
+    return sortujDopasowania(poTekscie, sort);
+  }, [matches, prog, szukaj, sort]);
 
   /**
    * Wczytuje pierwszą stronę.
@@ -54,7 +69,9 @@ export default function MatchFeedScreen({ navigation }) {
   const load = useCallback(async (mode) => {
     if (mode === 'refresh') setRefreshing(true);
     try {
-      const data = await api.getMatches();
+      // Większa pierwsza strona (50 = maks backendu), żeby sortowanie i szukanie
+      // objęły cały feed użytkownika bez „dociągnij" — jest go zwykle < 50.
+      const data = await api.getMatches({ limit: 50 });
       setMatches(data.matches || []);
       setKursor(data.next_before ?? null);
       setError(null);
@@ -133,6 +150,43 @@ export default function MatchFeedScreen({ navigation }) {
       contentContainerStyle={widoczne.length ? styles.list : styles.listEmpty}
       ListHeaderComponent={
         <View>
+          {/* Wyszukiwarka — po tytule i zamawiającym, z tolerancją odmian (D-051). */}
+          <View style={styles.szukajRzad}>
+            <Text style={styles.szukajIkona}>🔍</Text>
+            <TextInput
+              style={styles.szukajPole}
+              value={szukaj}
+              onChangeText={setSzukaj}
+              placeholder="Szukaj po nazwie lub zamawiającym"
+              placeholderTextColor={kolory.textMuted}
+              autoCorrect={false}
+              accessibilityLabel="Szukaj w przetargach"
+            />
+            {szukaj ? (
+              <Pressable onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel="Wyczyść szukanie">
+                <Text style={styles.szukajX}>✕</Text>
+              </Pressable>
+            ) : null}
+          </View>
+
+          {/* Sortowanie — trwały wybór (D-051). */}
+          <View style={styles.progi} accessibilityRole="radiogroup">
+            {SORTOWANIA.map((opcja) => {
+              const aktywny = sort === opcja.wartosc;
+              return (
+                <Pressable
+                  key={opcja.wartosc}
+                  onPress={() => zmienSort(opcja.wartosc)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: aktywny }}
+                  style={[styles.progChip, aktywny && styles.progChipAktywny]}
+                >
+                  <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>{opcja.etykieta}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           {/* Filtr minimalnego dopasowania — trwały wybór usera (D-047). */}
           <View style={styles.progi} accessibilityRole="radiogroup">
             {PROGI.map((opcja) => {
@@ -163,9 +217,11 @@ export default function MatchFeedScreen({ navigation }) {
               </Text>
             </Pressable>
           ) : null}
-          {prog > 0 && matches.length > 0 && widoczne.length === 0 ? (
+          {matches.length > 0 && widoczne.length === 0 ? (
             <Text style={styles.pustyFiltr}>
-              Żadne z {matches.length} dopasowań nie ma {prog}%+ — obniż próg, aby je zobaczyć.
+              {szukaj
+                ? `Brak wyników dla „${szukaj}". Wyczyść szukanie lub zmień frazę.`
+                : `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`}
             </Text>
           ) : null}
         </View>
@@ -213,7 +269,15 @@ export default function MatchFeedScreen({ navigation }) {
 }
 
 const tworzStyleFeedu = tworzStyle((k) => ({
-  progi: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  szukajRzad: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.border,
+    borderRadius: radius.md, paddingHorizontal: 12, marginBottom: spacing.sm,
+  },
+  szukajIkona: { fontSize: 15 },
+  szukajPole: { flex: 1, paddingVertical: 11, fontSize: 15, color: k.text },
+  szukajX: { color: k.textMuted, fontSize: 16, fontWeight: '700', paddingHorizontal: 2 },
+  progi: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   progChip: {
     flex: 1,
     paddingVertical: 8,

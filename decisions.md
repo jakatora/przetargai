@@ -4,6 +4,29 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-051 — Narzędzia feedu: wyszukiwarka + sortowanie (wersja 1.0.3)
+**Data:** 2026-07-11 | User: „udoskonal jeszcze aplikację, masz wolną rękę"
+
+**Po co.** Feed miał tylko filtr %. Dla wykonawcy codzienne pytania to „co zamyka
+się najwcześniej" i „znajdź ten konkretny przetarg". Dołożone (mobile-only,
+klient-side jak filtr — feed jednego usera jest mały; pierwsza strona podniesiona
+do 50):
+- **Sortowanie** (`feedSort.js`, trwałe): Trafność (domyślne) / Termin (najbliższy
+  pierwszy, bez terminu i po terminie na końcu) / Najnowsze.
+- **Wyszukiwarka** po tytule i zamawiającym, z tolerancją polskiej fleksji
+  (rdzenie słów — rodzina reguł jak ściąga CPV / textNorm; świadomy trzeci duplikat).
+- Pipeline w feedzie: próg → tekst → sort. Pusty wynik ma osobny komunikat
+  (szukanie vs próg).
+
+**Bug złapany w QA (produkcja, web).** Odwrotny warunek rdzenia
+(`rdzenZapytania.startsWith(rdzenTekstu)`) trafiał w jednoliterowe tokeny:
+„meble" łapało „Budowa boksów w **m**. Białystok". Fix: odwrotne dopasowanie tylko
+gdy rdzeń tekstu ma ≥4 znaki; test regresyjny. TDD: 11 testów `feedSort.test.js`.
+
+**QA na produkcji.** Sort po terminie: 2→3→4→5→10→11→24 dni → „Termin minął"
+na końcu. Szukanie „meble" → dokładnie 3 meblowe (bez fałszywek), „sprzatanie"
+→ „sprzątania" (fleksja). Mobile **55/55**, esbuild czysty.
+
 ## D-049/D-050 — Zapisane przetargi + przypomnienia o terminie (wersja 1.0.2)
 **Data:** 2026-07-11 | User: „udoskonal aplikację" + „użytkownicy powinni ustawiać powiadomienia do danych przetargów"
 
