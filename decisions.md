@@ -4,6 +4,39 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-049/D-050 — Zapisane przetargi + przypomnienia o terminie (wersja 1.0.2)
+**Data:** 2026-07-11 | User: „udoskonal aplikację" + „użytkownicy powinni ustawiać powiadomienia do danych przetargów"
+
+**Po co.** Aplikacja była pasywnym feedem; kciuk 👍/👎 uczył dopasowań, ale nie
+dawał listy „wrócę do tego / przygotuję ofertę". Dla wykonawcy realną wartością
+jest zakładka + przypomnienie, żeby NIE przegapić terminu składania ofert.
+
+**D-049 — Zapisane (zakładki).** Subkolekcja `users/{id}/saved` ze zdenormalizowanymi
+polami przetargu (render bez JOIN-a, docId=tenderId → idempotentne). Trasy:
+`GET /matches/saved(/ids)`, `PUT/DELETE /matches/:id/save`. Aplikacja: `SavedContext`
+(optymistyczne ★/☆ na feedzie i w szczegółach), ekran „Zapisane", wejście z nagłówka
+feedu. **Pułapka 411:** bezcielesny PUT/POST do Cloud Functions dostaje 411 Length
+Required od frontu Google — klient MUSI wysłać `body: {}` (dotyczy wszystkich
+zapisów/przełączeń w aplikacji).
+
+**D-050 — Przypomnienia o terminie.** `obliczRemindAt` (pure, 7 testów): 48 h przed
+terminem, gdy bliżej — jak najszybciej, nigdy po terminie/bez terminu. Repo:
+`setReminder` (liczy remind_at z deadline), `dueReminders` (collectionGroup
+`saved` where reminder_enabled + remind_at≤teraz; `reminder_notified` filtrowany
+w kodzie — indeks 2-polowy zadeklarowany), `markReminded`. Job `runReminderCheck`
++ `onSchedule remindDeadlines` co 6 h (push raz na przetarg; brak tokenu → i tak
+oznacz, żeby nie było pętli). Aplikacja: przełącznik „Przypomnij przed terminem"
+per przetarg (ekran Zapisane i szczegóły).
+
+**Bug złapany w QA (web).** Przełącznik `Switch` wewnątrz nawigującego `Pressable`
+karty otwierał szczegóły przy przełączaniu (na web klik checkboxa bąbelkuje —
+`Pressable` zatrzymuje, ale form control nie). Fix: nawiguje tylko górny wiersz
+karty, przełącznik jest siostrą. Feed OK (SaveStar to zagnieżdżony Pressable).
+
+**Stan.** Backend wdrożony (`api` + nowa funkcja `remindDeadlines`), Firebase
+**234/234**, mobile **45/45**. QA na PRODUKCJI: zapis→lista→przypomnienie (48 h
+przed) potwierdzone E2E. Wersja podbita do **1.0.2**.
+
 ## D-048 — Fakturowanie WYŁĄCZONE decyzją usera („na razie bez faktur")
 **Data:** 2026-07-10
 

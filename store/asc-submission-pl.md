@@ -184,17 +184,25 @@ https://jakatora.github.io/przetargai/
 
 ### 4.7 What's New in This Version (przy każdej nowej wersji)
 
-Wersja 1.0.1 (build 104):
+Wersja 1.0.2:
+```
+Zapisuj przetargi i nie przegap terminu:
+
+• Zapisane przetargi — dotknij gwiazdki, aby zebrać interesujące ogłoszenia w jednym miejscu i wrócić do nich później.
+• Przypomnienie o terminie — włącz powiadomienie, a damy Ci znać, zanim upłynie termin składania ofert.
+• Drobne poprawki i usprawnienia.
+```
+
+Wersja 1.0.1 (poprzednia):
 ```
 Więcej źródeł i pełna kontrola nad listą przetargów:
 
-• TED — monitorujemy teraz także przetargi unijne powyżej progów, których nie ma w BZP. Więcej okazji, zwłaszcza przy większych zamówieniach.
-• Filtr trafności — ustaw minimalny procent dopasowania (70%, 80%, 90%) i widź tylko najlepsze przetargi.
-• Ściąga kodów CPV — nie musisz znać kodów. Wyszukaj swoją branżę i dodaj ją jednym dotknięciem.
+• TED — monitorujemy teraz także przetargi unijne powyżej progów, których nie ma w BZP.
+• Filtr trafności — ustaw minimalny procent dopasowania (70%, 80%, 90%).
+• Ściąga kodów CPV — nie musisz znać kodów. Wyszukaj swoją branżę.
 • Tryb ciemny — jasny, ciemny albo zgodny z ustawieniem telefonu.
-• Prostsza rejestracja — wystarczą e-mail i hasło, bez NIP-u i formalności.
-• Plan Standard w nowej cenie 49 zł/mies. — nielimitowane dopasowania i powiadomienia push.
-• Poprawki szybkości i stabilności.
+• Prostsza rejestracja — wystarczą e-mail i hasło, bez NIP-u.
+• Plan Standard 49 zł/mies. — nielimitowane dopasowania i powiadomienia push.
 ```
 
 ---
