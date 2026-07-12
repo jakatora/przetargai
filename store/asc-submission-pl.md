@@ -137,30 +137,51 @@ Alternatywy (obie < 170 zn):
 
 ### 4.2 Description (4000 zn)
 ```
+WAŻNE ZASTRZEŻENIE: PrzetargAI jest niezależną, prywatną aplikacją. NIE jest aplikacją rządową ani urzędową. Nie jest powiązana z Urzędem Zamówień Publicznych, platformą e-Zamówienia, Unią Europejską ani żadną inną instytucją państwową i nie działa w ich imieniu.
+
 PrzetargAI to narzędzie dla firm, które chcą wygrywać zamówienia publiczne — bez codziennego przeglądania setek ogłoszeń.
 
-Aplikacja codziennie analizuje ogłoszenia z Biuletynu Zamówień Publicznych (BZP) i dzięki sztucznej inteligencji pokazuje Ci tylko te przetargi, które pasują do profilu Twojej firmy. Każde dopasowanie ma ocenę trafności i krótkie uzasadnienie generowane przez AI.
+Aplikacja codziennie analizuje ogłoszenia z publicznych rejestrów zamówień i dzięki sztucznej inteligencji pokazuje Ci tylko te przetargi, które pasują do profilu Twojej firmy. Każde dopasowanie ma ocenę trafności i krótkie uzasadnienie generowane przez AI.
 
 FUNKCJE
 • Dopasowanie przetargów przez AI z oceną trafności (model Claude)
-• Codzienna, automatyczna analiza ogłoszeń z BZP
+• Codzienna, automatyczna analiza nowych ogłoszeń
 • Powiadomienia push o nowych, trafnych przetargach (plan Standard)
+• Wyjaśnienie ogłoszenia przez AI prostym językiem
 • Szczegóły ogłoszenia: zamawiający, termin składania ofert, wartość, kod CPV
-• Bezpośredni link do pełnego ogłoszenia w BZP
+• Zapisywanie przetargów i przypomnienia o terminie składania ofert
+• Bezpośredni link do pełnego ogłoszenia u źródła
 
 JAK TO DZIAŁA
 1. Zakładasz konto i opisujesz profil firmy — słowa kluczowe i kody CPV.
-2. PrzetargAI codziennie pobiera nowe ogłoszenia z BZP.
+2. PrzetargAI codziennie pobiera nowe ogłoszenia z publicznych rejestrów.
 3. Sztuczna inteligencja ocenia każde ogłoszenie pod kątem Twojego profilu i pokazuje tylko trafne.
 
 PLANY
 • Free — 5 dopasowanych przetargów dziennie, bezpłatnie i bezterminowo
 • Standard (49 zł/mc) — nielimitowane dopasowania oraz powiadomienia push
 
-Dane o przetargach pochodzą z oficjalnego, publicznego źródła — Biuletynu Zamówień Publicznych prowadzonego na platformie e-Zamówienia (ezamowienia.gov.pl).
+ŹRÓDŁA INFORMACJI URZĘDOWYCH
+Wszystkie ogłoszenia pochodzą z oficjalnych, publicznie dostępnych rejestrów prowadzonych przez instytucje publiczne:
+
+1) Biuletyn Zamówień Publicznych (BZP), prowadzony przez Urząd Zamówień Publicznych na platformie e-Zamówienia:
+https://ezamowienia.gov.pl
+Urząd Zamówień Publicznych: https://www.uzp.gov.pl
+
+2) TED (Tenders Electronic Daily) — Dziennik Urzędowy Unii Europejskiej, zamówienia powyżej progów unijnych:
+https://ted.europa.eu
+
+PrzetargAI wyłącznie prezentuje i porządkuje informacje z tych publicznych źródeł. Wiążąca jest zawsze treść ogłoszenia opublikowana u źródła — oceny dopasowania i wyjaśnienia generuje sztuczna inteligencja i mają charakter wyłącznie informacyjny. Nie stanowią porady prawnej ani oficjalnej informacji urzędowej.
+
+PrzetargAI nie reprezentuje żadnej instytucji państwowej.
 
 PrzetargAI to darmowe narzędzie B2B. Subskrypcję Standard aktywujesz wygodnie przez stronę internetową.
 ```
+
+> **ZGODNOŚĆ (po odrzuceniu Google Play 2026-07-12 — „twierdzenia wprowadzające w błąd").**
+> Ten sam wymóg obowiązuje w App Store (Apple 5.2.3 / 2.3.1). Opis MUSI zawierać:
+> pełne, DZIAŁAJĄCE URL-e do źródeł informacji urzędowych + widoczne zastrzeżenie
+> o braku powiązania z instytucją państwową. Nie usuwać przy edycjach.
 
 ### 4.3 Keywords (100 zn, oddzielone PRZECINKAMI bez spacji)
 ```

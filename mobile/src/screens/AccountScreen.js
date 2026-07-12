@@ -275,6 +275,51 @@ export default function AccountScreen() {
         })}
       </View>
 
+      {/*
+        ZGODNOŚĆ — Google Play, zasady „twierdzeń wprowadzających w błąd" (2026-07-12).
+        Aplikacja podaje informacje urzędowe (ogłoszenia o zamówieniach publicznych),
+        więc MUSI: (1) wskazać oficjalne, DZIAŁAJĄCE źródła tych informacji,
+        (2) wyraźnie zastrzec, że nie reprezentuje instytucji państwowej.
+        Odrzucenie wynikło z braku tego zastrzeżenia i z linku źródłowego, który
+        recenzent uznał za niedostępny. NIE USUWAĆ tej sekcji.
+      */}
+      <Text style={styles.sectionTitle}>Źródła danych i zastrzeżenie</Text>
+      <View style={styles.zrodlaCard}>
+        <Text style={styles.zastrzezenie}>
+          PrzetargAI jest niezależną, prywatną aplikacją. Nie jest powiązana z Urzędem
+          Zamówień Publicznych, platformą e-Zamówienia, Unią Europejską ani żadną inną
+          instytucją państwową i nie działa w ich imieniu.
+        </Text>
+        <Text style={styles.zrodlaOpis}>
+          Ogłoszenia pochodzą z oficjalnych, publicznych rejestrów. Wiążąca jest
+          zawsze treść ogłoszenia u źródła — dopasowania i wyjaśnienia generuje AI
+          i mają charakter wyłącznie informacyjny.
+        </Text>
+
+        <Pressable
+          onPress={() => WebBrowser.openBrowserAsync('https://ezamowienia.gov.pl')}
+          accessibilityRole="link"
+          hitSlop={8}
+        >
+          <Text style={styles.zrodloLink}>
+            Biuletyn Zamówień Publicznych (BZP) — ezamowienia.gov.pl →
+          </Text>
+        </Pressable>
+        <Text style={styles.zrodloPodpis}>Prowadzony przez Urząd Zamówień Publicznych.</Text>
+
+        <Pressable
+          onPress={() => WebBrowser.openBrowserAsync('https://ted.europa.eu')}
+          accessibilityRole="link"
+          hitSlop={8}
+          style={styles.gap}
+        >
+          <Text style={styles.zrodloLink}>
+            TED — Tenders Electronic Daily — ted.europa.eu →
+          </Text>
+        </Pressable>
+        <Text style={styles.zrodloPodpis}>Dziennik Urzędowy UE — zamówienia powyżej progów unijnych.</Text>
+      </View>
+
       <View style={styles.signOut}>
         <Button title="Wyloguj się" variant="ghost" onPress={confirmSignOut} />
       </View>
@@ -387,4 +432,16 @@ const tworzStyleKonta = tworzStyle((k) => ({
   motywTekst: { fontSize: 14, fontWeight: '600', color: k.textMuted },
   motywTekstAktywny: { color: k.blue },
   signOut: { marginTop: spacing.lg, marginBottom: spacing.xl },
+  zrodlaCard: {
+    backgroundColor: k.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  zastrzezenie: { fontSize: 13, fontWeight: '700', color: k.text, lineHeight: 19 },
+  zrodlaOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19 },
+  zrodloLink: { fontSize: 14, fontWeight: '700', color: k.blue, lineHeight: 20 },
+  zrodloPodpis: { fontSize: 12, color: k.textMuted, lineHeight: 17 },
 }));

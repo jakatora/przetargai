@@ -82,6 +82,11 @@ AI monitoruje przetargi z BZP i powiadamia o ogłoszeniach dla Twojej firmy.
 
 **Pełny opis (max 4000):**
 ```
+WAŻNE ZASTRZEŻENIE: PrzetargAI jest niezależną, prywatną aplikacją. NIE jest
+aplikacją rządową ani urzędową. Nie jest powiązana z Urzędem Zamówień
+Publicznych, platformą e-Zamówienia, Unią Europejską ani żadną inną instytucją
+państwową i nie działa w ich imieniu ani z ich upoważnienia.
+
 PrzetargAI to narzędzie dla firm budowlanych i IT, które chcą wygrywać
 zamówienia publiczne — bez codziennego przeglądania setek ogłoszeń.
 
@@ -91,23 +96,110 @@ PrzetargAI robi to za Ciebie.
 
 JAK TO DZIAŁA
 1. Zakładasz konto i opisujesz profil firmy — słowa kluczowe i kody CPV.
-2. PrzetargAI codziennie analizuje nowe ogłoszenia z BZP.
+2. PrzetargAI codziennie pobiera nowe ogłoszenia z publicznych rejestrów.
 3. Sztuczna inteligencja ocenia trafność każdego przetargu i pokazuje Ci
    tylko te dopasowane do Twojej działalności.
 
 FUNKCJE
 • Dopasowanie przetargów przez AI z oceną trafności i uzasadnieniem
-• Codzienna, automatyczna analiza ogłoszeń z BZP
+• Codzienna, automatyczna analiza nowych ogłoszeń
 • Powiadomienia push o nowych, trafnych przetargach (plan Standard)
+• Wyjaśnienie ogłoszenia przez AI prostym językiem
 • Szczegóły ogłoszenia: zamawiający, termin składania ofert, wartość, CPV
-• Bezpośredni link do pełnego ogłoszenia w BZP
+• Zapisywanie przetargów i przypomnienia o terminie składania ofert
+• Bezpośredni link do pełnego ogłoszenia u źródła
 
 PLANY
 • Free — 5 dopasowanych przetargów dziennie, bezpłatnie i bezterminowo
 • Standard — nielimitowane dopasowania oraz powiadomienia push
 
-Dane o przetargach pochodzą z oficjalnego, publicznego źródła — Biuletynu
-Zamówień Publicznych prowadzonego na platformie e-Zamówienia.
+ŹRÓDŁA INFORMACJI URZĘDOWYCH
+Wszystkie ogłoszenia pochodzą z oficjalnych, publicznie dostępnych rejestrów
+prowadzonych przez instytucje publiczne:
+
+1) Biuletyn Zamówień Publicznych (BZP), prowadzony przez Urząd Zamówień
+   Publicznych na platformie e-Zamówienia:
+   https://ezamowienia.gov.pl
+   Urząd Zamówień Publicznych: https://www.uzp.gov.pl
+
+2) TED (Tenders Electronic Daily) — Dziennik Urzędowy Unii Europejskiej,
+   zamówienia powyżej progów unijnych:
+   https://ted.europa.eu
+
+PrzetargAI wyłącznie prezentuje i porządkuje informacje z tych publicznych
+źródeł. Wiążąca jest zawsze treść ogłoszenia opublikowana u źródła — oceny
+dopasowania i wyjaśnienia generuje sztuczna inteligencja i mają charakter
+wyłącznie informacyjny i pomocniczy. Nie stanowią porady prawnej ani
+oficjalnej informacji urzędowej.
+
+PrzetargAI nie reprezentuje żadnej instytucji państwowej.
+```
+
+> **ZGODNOŚĆ — Google Play, „twierdzenia wprowadzające w błąd" (odrzucenie 2026-07-12).**
+> Powód: „uszkodzony lub niedostępny link do źródła informacji urzędowych".
+> Naprawa (NIE usuwać przy przyszłych edycjach):
+> 1. **Pełne, działające URL-e** do źródeł (`https://ezamowienia.gov.pl`,
+>    `https://www.uzp.gov.pl`, `https://ted.europa.eu`) — zweryfikowane HTTP 200.
+>    Gołe adresy są odporne na automatyczne tłumaczenie Google, które wcześniej
+>    zamieniło „e-Zamówienia" na nieistniejące „e-Zatrzymania.gov.pl" i to właśnie
+>    ten martwy link zobaczył recenzent.
+> 2. **Widoczne zastrzeżenie** o braku powiązania z instytucją państwową — na
+>    początku i na końcu opisu.
+> 3. To samo zastrzeżenie + klikalne źródła **w aplikacji** (ekran Konto →
+>    „Źródła danych i zastrzeżenie").
+> Jeśli dodajesz tłumaczenie EN listingu — dodaj je RĘCZNIE, żeby Google nie
+> tłumaczyło automatycznie nazw własnych i domen.
+
+**Pełny opis — EN (wgraj RĘCZNIE jako en-US, żeby zablokować auto-tłumaczenie):**
+```
+IMPORTANT DISCLAIMER: PrzetargAI is an independent, private application. It is
+NOT a government or official app. It is not affiliated with, endorsed by, or
+acting on behalf of the Polish Public Procurement Office (Urzad Zamowien
+Publicznych), the e-Zamowienia platform, the European Union, or any other
+government institution.
+
+PrzetargAI helps companies win public procurement contracts without manually
+reviewing hundreds of tender notices every day.
+
+HOW IT WORKS
+1. Create an account and describe your company profile - keywords and CPV codes.
+2. PrzetargAI collects new tender notices from public registries every day.
+3. AI scores how well each tender matches your profile and shows only the
+   relevant ones.
+
+FEATURES
+• AI tender matching with a relevance score and a written justification
+• Daily automatic analysis of new tender notices
+• Push notifications about new relevant tenders (Standard plan)
+• AI explanation of a tender notice in plain language
+• Notice details: contracting authority, bid deadline, value, CPV code
+• Saved tenders and reminders before the bid submission deadline
+• Direct link to the full notice at the official source
+
+PLANS
+• Free - 5 matched tenders per day, free forever
+• Standard - unlimited matches and push notifications
+
+SOURCES OF OFFICIAL INFORMATION
+All tender notices come from official, publicly available registries operated
+by public institutions:
+
+1) Public Procurement Bulletin (Biuletyn Zamowien Publicznych, BZP), operated by
+   the Polish Public Procurement Office on the e-Zamowienia platform:
+   https://ezamowienia.gov.pl
+   Public Procurement Office: https://www.uzp.gov.pl
+
+2) TED (Tenders Electronic Daily) - Supplement to the Official Journal of the
+   European Union, for tenders above EU thresholds:
+   https://ted.europa.eu
+
+PrzetargAI only presents and organises information from these public sources.
+The notice published at the official source is always binding. Match scores and
+explanations are generated by artificial intelligence and are informational and
+supportive only. They do not constitute legal advice or official government
+information.
+
+PrzetargAI does not represent any government institution.
 ```
 
 > ⚠️ **Polityka płatności Google Play (runda 30):** w opisie Play NIE wolno
