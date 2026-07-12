@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrzetargAI — monitoring przetargów publicznych dla Twojej firmy</title>
+  <meta name="description" content="PrzetargAI codziennie analizuje ogłoszenia z BZP i TED, dopasowuje je do profilu Twojej firmy i wyjaśnia urzędowy język zwykłymi słowami. Plan darmowy, bez karty." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="canonical" href="https://przetargai.pl/" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="PrzetargAI — nie przegap żadnego przetargu" />
+  <meta property="og:description" content="AI dopasowuje przetargi z BZP i TED do profilu Twojej firmy i wyjaśnia, o co w nich chodzi." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://przetargai.pl/" />
+  <meta property="og:site_name" content="PrzetargAI" />
+  <meta property="og:locale" content="pl_PL" />
+  <meta property="og:image" content="https://przetargai.pl/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="PrzetargAI — monitoring przetargów publicznych z BZP dopasowany przez AI" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PrzetargAI — nie przegap żadnego przetargu" />
+  <meta name="twitter:description" content="AI dopasowuje przetargi z BZP i TED do profilu Twojej firmy i wyjaśnia, o co w nich chodzi." />
+  <meta name="twitter:image" content="https://przetargai.pl/og-image.png" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Dane strukturalne (SEO).
+       ⚠️ Blok FAQPage jest ręczną kopią sekcji FAQ poniżej — przy zmianie pytań
+       zaktualizuj OBA miejsca (ta sama pułapka co w landingu v1). -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://przetargai.pl/#organization",
+        "name": "PrzetargAI",
+        "url": "https://przetargai.pl/",
+        "description": "Monitoring przetargów publicznych z Biuletynu Zamówień Publicznych i TED dla małych firm.",
+        "email": "support@przetargai.pl"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "PrzetargAI",
+        "operatingSystem": "iOS, Android",
+        "applicationCategory": "BusinessApplication",
+        "description": "AI dopasowuje przetargi z BZP i TED do profilu Twojej firmy, wyjaśnia treść ogłoszenia i przypomina o terminie składania ofert.",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Free",
+            "price": "0",
+            "priceCurrency": "PLN",
+            "description": "5 dopasowanych przetargów dziennie, codzienna analiza BZP i TED."
+          },
+          {
+            "@type": "Offer",
+            "name": "Standard",
+            "price": "49",
+            "priceCurrency": "PLN",
+            "description": "Nielimitowane dopasowane przetargi, powiadomienia push i przypomnienia o terminach, miesięcznie."
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Skąd pochodzą dane o przetargach?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Z Biuletynu Zamówień Publicznych (BZP) na platformie e-Zamówienia oraz z TED — Dziennika Urzędowego Unii Europejskiej. To oficjalne, publiczne źródła ogłoszeń." }
+          },
+          {
+            "@type": "Question",
+            "name": "Jak działa dopasowanie AI?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Na podstawie profilu Twojej firmy — słów kluczowych i kodów CPV — sztuczna inteligencja ocenia trafność każdego ogłoszenia w skali 0–100 i podaje krótkie uzasadnienie." }
+          },
+          {
+            "@type": "Question",
+            "name": "Czym jest „Wyjaśnij ten przetarg”?",
+            "acceptedAnswer": { "@type": "Answer", "text": "AI tłumaczy urzędowy język ogłoszenia na zwykłe zdania: czego dotyczy zamówienie, co trzeba przygotować, na co uważać i czy ma sens dla małej firmy. To interpretacja treści ogłoszenia, a nie pełnej dokumentacji SIWZ — wiążąca jest treść u źródła." }
+          },
+          {
+            "@type": "Question",
+            "name": "Czy mogę korzystać za darmo?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Tak. Plan Free jest bezpłatny na zawsze i obejmuje 5 dopasowanych przetargów dziennie. Nie wymaga podawania karty płatniczej." }
+          },
+          {
+            "@type": "Question",
+            "name": "Jak kupić plan Standard?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Subskrypcję aktywujesz z poziomu aplikacji — przycisk „Przejdź na Standard” otwiera bezpieczną płatność Stripe w przeglądarce." }
+          },
+          {
+            "@type": "Question",
+            "name": "Czy mogę zrezygnować w dowolnym momencie?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Tak, subskrypcja jest miesięczna i możesz ją anulować w każdej chwili. Po rezygnacji konto wraca do planu Free." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Przejdź do treści</a>
+
+  <header class="nav">
+    <div class="container nav__inner">
+      <a class="brand" href="/" aria-label="PrzetargAI — strona główna">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </span>
+        <span class="brand__name">PrzetargAI</span>
+      </a>
+
+      <nav class="nav__links" id="navMenu" aria-label="Główna nawigacja">
+        <a href="#funkcje">Funkcje</a>
+        <a href="#jak-dziala">Jak działa</a>
+        <a href="#cennik">Cennik</a>
+        <a href="#faq">FAQ</a>
+        <a href="/pobierz">Pobierz aplikację</a>
+        <a class="btn btn--primary btn--sm nav__menu-cta" href="#pobierz">Zacznij za darmo</a>
+      </nav>
+
+      <a class="btn btn--primary btn--sm nav__bar-cta" href="#pobierz">Zacznij za darmo</a>
+      <button class="nav__toggle" id="navToggle" type="button" aria-label="Otwórz menu" aria-expanded="false" aria-controls="navMenu">
+        <span class="nav__toggle-bar"></span>
+        <span class="nav__toggle-bar"></span>
+        <span class="nav__toggle-bar"></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <!-- HERO — misja + wiarygodność (wzorzec Trust & Authority) -->
+    <section class="hero">
+      <div class="container hero__inner">
+        <div class="hero__copy">
+          <span class="badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            Oficjalne źródła: BZP i TED · analiza codziennie
+          </span>
+          <h1>Przetargi dla Twojej firmy same przychodzą do Ciebie</h1>
+          <p class="lead">
+            Codziennie analizujemy nowe ogłoszenia z Biuletynu Zamówień Publicznych
+            i TED. Dostajesz tylko te dopasowane do profilu Twojej firmy — z oceną
+            trafności, terminem i wyjaśnieniem, o co w nich właściwie chodzi.
+          </p>
+          <div class="hero__cta">
+            <a class="btn btn--primary btn--lg" href="#pobierz">Zacznij za darmo</a>
+            <a class="btn btn--ghost btn--lg" href="#jak-dziala">Zobacz, jak to działa</a>
+          </div>
+          <p class="hero__note">Plan darmowy na zawsze · bez karty · 5 dopasowań dziennie</p>
+        </div>
+
+        <!-- Podgląd realnego feedu = dowód produktu -->
+        <div class="hero__visual">
+          <div class="preview" role="img" aria-label="Podgląd aplikacji: lista przetargów z oceną dopasowania — 87 procent modernizacja oczyszczalni ścieków, 74 procent przebudowa drogi gminnej, 61 procent remont budynku użyteczności publicznej.">
+            <div class="preview__head" aria-hidden="true">
+              <span>Twoje dopasowania</span>
+              <span>dziś</span>
+            </div>
+            <div class="preview__body" aria-hidden="true">
+              <div class="match">
+                <div class="match__score">87%</div>
+                <div class="match__body">
+                  <span class="match__title">Modernizacja oczyszczalni ścieków</span>
+                  <span class="match__meta">Gmina Wodzisław Śląski · CPV 45252100 · termin 21 dni</span>
+                </div>
+              </div>
+              <div class="match">
+                <div class="match__score">74%</div>
+                <div class="match__body">
+                  <span class="match__title">Przebudowa drogi gminnej</span>
+                  <span class="match__meta">Powiat Kłodzki · CPV 45233120 · termin 12 dni</span>
+                </div>
+              </div>
+              <div class="match match--low">
+                <div class="match__score">61%</div>
+                <div class="match__body">
+                  <span class="match__title">Remont budynku użyteczności publicznej</span>
+                  <span class="match__meta">Miasto Opole · CPV 45453000 · termin 30 dni</span>
+                </div>
+              </div>
+            </div>
+            <div class="preview__foot" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/></svg>
+              Ocena i uzasadnienie generowane przez AI na podstawie profilu firmy
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWÓD / SKALA PROBLEMU -->
+    <section class="section section--soft">
+      <div class="container">
+        <h2 class="section__title">Przetarg to szansa — jeśli zdążysz go znaleźć</h2>
+        <p class="section__sub">Ogłoszeń jest za dużo, żeby czytać je ręcznie, i za mało czasu, żeby przegapić to jedno właściwe.</p>
+        <div class="grid grid--3">
+          <div class="stat">
+            <div class="stat__num">300+</div>
+            <p>nowych ogłoszeń w BZP każdego dnia roboczego</p>
+          </div>
+          <div class="stat">
+            <div class="stat__num">~2 h</div>
+            <p>dziennie traci firma na ręczne przeglądanie ogłoszeń</p>
+          </div>
+          <div class="stat">
+            <div class="stat__num">2 min</div>
+            <p>tyle zajmuje ustawienie profilu firmy w aplikacji</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FUNKCJE — ikony wektorowe (Lucide), zero emoji -->
+    <section class="section" id="funkcje">
+      <div class="container">
+        <h2 class="section__title">Wszystko, czego potrzebujesz, by startować w przetargach</h2>
+        <p class="section__sub">Od znalezienia ogłoszenia po zrozumienie, czego naprawdę wymaga zamawiający.</p>
+        <div class="grid grid--2">
+
+          <div class="feature">
+            <div class="feature__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
+            </div>
+            <h3>Dopasowanie przez AI</h3>
+            <p>Każde ogłoszenie dostaje ocenę 0–100 względem profilu Twojej firmy — słów kluczowych i kodów CPV — wraz z krótkim uzasadnieniem, dlaczego pasuje.</p>
+          </div>
+
+          <div class="feature">
+            <span class="feature__tag">Nowość</span>
+            <div class="feature__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>
+            </div>
+            <h3>Wyjaśnij ten przetarg</h3>
+            <p>Urzędowy język zamieniony na zwykłe zdania: czego dotyczy zamówienie, co musisz przygotować, na co uważać i czy w ogóle ma sens dla małej firmy.</p>
+          </div>
+
+          <div class="feature">
+            <div class="feature__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            </div>
+            <h3>Powiadomienia i przypomnienia</h3>
+            <p>Push o nowym trafnym ogłoszeniu — zanim znajdzie je konkurencja. I przypomnienie na 48 godzin przed upływem terminu składania ofert.</p>
+          </div>
+
+          <div class="feature">
+            <div class="feature__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10M12 7v10"/></svg>
+            </div>
+            <h3>BZP i przetargi unijne z TED</h3>
+            <p>Monitorujemy oba oficjalne źródła: krajowy Biuletyn Zamówień Publicznych oraz TED — Dziennik Urzędowy UE z postępowaniami powyżej progów unijnych.</p>
+          </div>
+
+          <div class="feature">
+            <div class="feature__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <h3>Zapisane i wyszukiwarka</h3>
+            <p>Odkładasz ciekawe ogłoszenia na później, filtrujesz feed po progu dopasowania i szukasz po nazwie zamawiającego — także z odmianą przez przypadki.</p>
+          </div>
+
+          <div class="feature">
+            <div class="feature__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-2"/><path d="M5 5h14v6a7 7 0 0 1-14 0z"/><path d="M8 22h8"/></svg>
+            </div>
+            <h3>Profil firmy w 2 minuty</h3>
+            <p>Bez NIP-u i formalności. Wpisujesz słowa kluczowe i wybierasz kody CPV z wbudowanej ściągi. Resztę robi PrzetargAI.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- JAK DZIAŁA -->
+    <section class="section section--soft" id="jak-dziala">
+      <div class="container">
+        <h2 class="section__title">Jak to działa</h2>
+        <p class="section__sub">Trzy kroki. Pierwszy zajmuje dwie minuty, resztą zajmuje się aplikacja.</p>
+        <div class="grid grid--3">
+          <div class="step">
+            <div class="step__num">1</div>
+            <h3>Opisz swoją firmę</h3>
+            <p>Zakładasz konto na e-mail i hasło, podajesz słowa kluczowe oraz kody CPV branży — w aplikacji jest ściąga wszystkich kodów z wyszukiwarką.</p>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <h3>AI przegląda ogłoszenia</h3>
+            <p>Codziennie pobieramy nowe ogłoszenia z BZP i TED, a sztuczna inteligencja ocenia dopasowanie każdego z nich do Twojego profilu.</p>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <h3>Reagujesz na czas</h3>
+            <p>Trafne przetargi trafiają do aplikacji z oceną i terminem. Jednym przyciskiem prosisz AI o wyjaśnienie ogłoszenia i decydujesz, czy startujesz.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENNIK — jawny, bez „skontaktuj się z nami" -->
+    <section class="section" id="cennik">
+      <div class="container">
+        <h2 class="section__title">Prosty cennik</h2>
+        <p class="section__sub">Zacznij za darmo. Przejdź na Standard, gdy przetargi staną się częścią Twojego planu na przychód.</p>
+        <div class="grid grid--2 pricing">
+
+          <div class="plan">
+            <h3 class="plan__name">Free</h3>
+            <div class="plan__price"><span class="amount">0 zł</span></div>
+            <p class="plan__desc">Na start i do sprawdzenia, czy w Twojej branży coś się dzieje.</p>
+            <ul class="plan__list">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>5 dopasowanych przetargów dziennie</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Codzienna analiza BZP i TED</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Ocena dopasowania z uzasadnieniem AI</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Aplikacja na iOS i Androida</li>
+            </ul>
+            <a class="btn btn--ghost btn--block" href="#pobierz">Pobierz aplikację</a>
+          </div>
+
+          <div class="plan plan--featured">
+            <span class="plan__tag">Najczęściej wybierany</span>
+            <h3 class="plan__name">Standard</h3>
+            <div class="plan__price">
+              <span class="amount">49 zł</span><span class="period">/ miesiąc</span>
+            </div>
+            <p class="plan__desc">Dla firm, które realnie startują w przetargach i nie mogą przegapić terminu.</p>
+            <ul class="plan__list">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Nielimitowane</strong> dopasowane przetargi</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Powiadomienia push</strong> o nowych ogłoszeniach</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><strong>Przypomnienia</strong> przed terminem składania ofert</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Więcej wyjaśnień ogłoszeń przez AI</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Pierwszeństwo we wsparciu</span></li>
+            </ul>
+            <a class="btn btn--primary btn--block" href="#pobierz">Wybierz Standard</a>
+            <p class="plan__fineprint">Subskrypcję aktywujesz w aplikacji — bezpieczna płatność Stripe. Anulujesz w każdej chwili.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section section--soft" id="faq">
+      <div class="container container--narrow">
+        <h2 class="section__title">Najczęstsze pytania</h2>
+        <p class="section__sub">Krótko i bez marketingowej mgły.</p>
+
+        <details class="faq">
+          <summary>Skąd pochodzą dane o przetargach?</summary>
+          <p>Z Biuletynu Zamówień Publicznych (BZP) na platformie e-Zamówienia oraz z TED — Dziennika Urzędowego Unii Europejskiej. To oficjalne, publiczne źródła ogłoszeń o zamówieniach publicznych.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Jak działa dopasowanie AI?</summary>
+          <p>Na podstawie profilu Twojej firmy — słów kluczowych i kodów CPV — sztuczna inteligencja ocenia trafność każdego ogłoszenia w skali 0–100 i podaje krótkie uzasadnienie.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Czym jest „Wyjaśnij ten przetarg”?</summary>
+          <p>To funkcja, która tłumaczy urzędowy język ogłoszenia na zwykłe zdania: czego dotyczy zamówienie, co trzeba przygotować, na co uważać i czy ma sens dla małej firmy. Uczciwie: to interpretacja treści <strong>ogłoszenia</strong>, a nie pełnej dokumentacji SIWZ. Wiążąca zawsze pozostaje treść u źródła.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Czy mogę korzystać za darmo?</summary>
+          <p>Tak. Plan Free jest bezpłatny na zawsze i obejmuje 5 dopasowanych przetargów dziennie. Nie wymaga podawania karty płatniczej.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Jak kupić plan Standard?</summary>
+          <p>Subskrypcję aktywujesz z poziomu aplikacji — przycisk „Przejdź na Standard” otwiera bezpieczną płatność Stripe w przeglądarce.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Czy mogę zrezygnować w dowolnym momencie?</summary>
+          <p>Tak, subskrypcja jest miesięczna i możesz ją anulować w każdej chwili. Po rezygnacji konto wraca do planu Free.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta" id="pobierz">
+      <div class="container cta__inner">
+        <h2>Zacznij od przetargów, które faktycznie do Ciebie pasują</h2>
+        <p>Pobierz aplikację i ustaw profil firmy w dwie minuty. Bez karty, bez zobowiązań.</p>
+        <div class="cta__buttons">
+          <a class="btn btn--primary btn--lg" href="/pobierz">Pobierz na Androida</a>
+          <a class="btn btn--ghost btn--lg" href="/pobierz">iOS — testy TestFlight</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <a class="brand" href="/">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          </span>
+          <span class="brand__name">PrzetargAI</span>
+        </a>
+        <p class="footer__tag">Monitoring przetargów publicznych dla małych firm.</p>
+
+        <!--
+          ZGODNOŚĆ (Google Play, „twierdzenia wprowadzające w błąd", 2026-07-12):
+          aplikacja podaje informacje urzędowe, więc musi wskazać oficjalne,
+          DZIAŁAJĄCE źródła i wyraźnie zastrzec brak powiązania z instytucją
+          państwową. NIE usuwać.
+        -->
+        <p class="footer__tag footer__disclaimer">
+          <strong>PrzetargAI jest niezależną, prywatną aplikacją.</strong> Nie jest powiązana
+          z Urzędem Zamówień Publicznych, platformą e-Zamówienia, Unią Europejską ani żadną
+          inną instytucją państwową i nie działa w ich imieniu.
+        </p>
+        <p class="footer__tag">
+          Źródła ogłoszeń:
+          <a href="https://ezamowienia.gov.pl" target="_blank" rel="noopener">ezamowienia.gov.pl</a>
+          (BZP, Urząd Zamówień Publicznych) ·
+          <a href="https://ted.europa.eu" target="_blank" rel="noopener">ted.europa.eu</a>
+          (TED, Dziennik Urzędowy UE). Wiążąca jest treść ogłoszenia u źródła; oceny
+          i wyjaśnienia generuje AI i mają charakter informacyjny.
+        </p>
+      </div>
+
+      <nav class="footer__links" aria-label="Stopka">
+        <a href="#funkcje">Funkcje</a>
+        <a href="#cennik">Cennik</a>
+        <a href="#faq">FAQ</a>
+        <a href="/pobierz">Pobierz aplikację</a>
+        <a href="/regulamin">Regulamin</a>
+        <a href="/polityka-prywatnosci">Polityka prywatności</a>
+        <a href="mailto:support@przetargai.pl">Kontakt</a>
+      </nav>
+    </div>
+
+    <div class="container footer__bottom">
+      <span>© 2026 PrzetargAI</span>
+      <span>support@przetargai.pl</span>
+    </div>
+  </footer>
+
+  <script>
+    // Menu mobilne: aria-expanded, Escape, klik poza, reset przy powrocie na desktop.
+    (function () {
+      var toggle = document.getElementById('navToggle');
+      var menu = document.getElementById('navMenu');
+      if (!toggle || !menu) return;
+
+      function setOpen(open) {
+        menu.dataset.open = String(open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? 'Zamknij menu' : 'Otwórz menu');
+      }
+      setOpen(false);
+
+      toggle.addEventListener('click', function () {
+        setOpen(menu.dataset.open !== 'true');
+      });
+
+      menu.addEventListener('click', function (e) {
+        if (e.target.closest('a')) setOpen(false);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && menu.dataset.open === 'true') {
+          setOpen(false);
+          toggle.focus();
+        }
+      });
+
+      document.addEventListener('click', function (e) {
+        if (menu.dataset.open !== 'true') return;
+        if (!menu.contains(e.target) && !toggle.contains(e.target)) setOpen(false);
+      });
+
+      var desktop = window.matchMedia('(min-width: 881px)');
+      desktop.addEventListener('change', function (e) {
+        if (e.matches) setOpen(false);
+      });
+    })();
+  </script>
+</body>
+</html>
