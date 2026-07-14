@@ -318,6 +318,29 @@ export default function AccountScreen() {
           </Text>
         </Pressable>
         <Text style={styles.zrodloPodpis}>Dziennik Urzędowy UE — zamówienia powyżej progów unijnych.</Text>
+
+        {/*
+          Google Play wymaga linku do polityki prywatności ZARÓWNO w listingu, JAK I
+          w aplikacji (mail o odrzuceniu 2026-07-13). Wcześniej apka nie linkowała jej
+          nigdzie — to była druga, niezależna podstawa do odrzucenia. NIE USUWAĆ.
+        */}
+        <View style={styles.prawneRzad}>
+          <Pressable
+            onPress={() => WebBrowser.openBrowserAsync('https://przetargai.web.app/polityka-prywatnosci')}
+            accessibilityRole="link"
+            hitSlop={8}
+          >
+            <Text style={styles.linkPrawny}>Polityka prywatności</Text>
+          </Pressable>
+          <Text style={styles.zrodloPodpis}>·</Text>
+          <Pressable
+            onPress={() => WebBrowser.openBrowserAsync('https://przetargai.web.app/regulamin')}
+            accessibilityRole="link"
+            hitSlop={8}
+          >
+            <Text style={styles.linkPrawny}>Regulamin</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.signOut}>
@@ -444,4 +467,10 @@ const tworzStyleKonta = tworzStyle((k) => ({
   zrodlaOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19 },
   zrodloLink: { fontSize: 14, fontWeight: '700', color: k.blue, lineHeight: 20 },
   zrodloPodpis: { fontSize: 12, color: k.textMuted, lineHeight: 17 },
+  prawneRzad: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    marginTop: spacing.sm, paddingTop: spacing.sm,
+    borderTopWidth: 1, borderTopColor: k.border,
+  },
+  linkPrawny: { fontSize: 13, fontWeight: '700', color: k.blue },
 }));
