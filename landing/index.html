@@ -321,9 +321,21 @@
         <h2>Zacznij wygrywać przetargi już dziś</h2>
         <p>Pobierz PrzetargAI i skonfiguruj profil firmy w 2 minuty.</p>
         <div class="cta__buttons">
-          <span class="store-badge">App Store — wkrótce</span>
-          <span class="store-badge">Google Play — wkrótce</span>
+          <!--
+            Realne pobieranie APK wprost z CTA (życzenie usera 2026-07-14). Wcześniej
+            były tu same plakietki „wkrótce" — strona nie dawała ŻADNEJ drogi do apki,
+            mimo że plik i strona /pobierz istniały. `download` wymusza zapis pliku
+            zamiast prób otwarcia w przeglądarce.
+          -->
+          <a class="btn btn--primary" href="/PrzetargAI.apk" download>
+            Pobierz na Androida (APK)
+          </a>
+          <a class="btn btn--ghost" href="/pobierz">Jak zainstalować?</a>
         </div>
+        <p class="cta__note">
+          Wersja 1.0.4 · plik .apk · instalacja z pominięciem sklepu.
+          App Store i Google Play — wkrótce.
+        </p>
       </div>
     </section>
   </main>

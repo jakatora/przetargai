@@ -334,6 +334,7 @@ section[id], main[id] { scroll-margin-top: 84px; }
 .cta h2 { font-size: 34px; margin-bottom: 10px; }
 .cta p { color: #b7c4dd; font-size: 17px; margin-bottom: 28px; }
 .cta__buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.cta__note { margin-top: 14px; font-size: 14px; opacity: .75; }
 .store-badge {
   background: rgba(255, 255, 255, 0.10);
   border: 1px solid rgba(255, 255, 255, 0.22);
