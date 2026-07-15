@@ -517,6 +517,28 @@ export const saved = {
     await savedCol(userId).doc(tenderId).delete();
   },
 
+  /**
+   * Ustawia etap pracy nad zapisanym przetargiem (D-054 — warsztat przetargu).
+   * Status jest już znormalizowany przez wołającego. Zwraca null, gdy przetarg
+   * nie jest zapisany (nie ma czego etapować).
+   */
+  async setStatus(userId, tenderId, status) {
+    const ref = savedCol(userId).doc(tenderId);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    await ref.update({ status, status_at: nowIso() });
+    return { status };
+  },
+
+  /** Zapisuje prywatną notatkę do zapisanego przetargu. Notatka już oczyszczona. */
+  async setNote(userId, tenderId, notatka) {
+    const ref = savedCol(userId).doc(tenderId);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    await ref.update({ notatka, notatka_at: nowIso() });
+    return { notatka };
+  },
+
   /** Lista zapisanych, najnowszy zapis pierwszy. Bez paginacji — zapisanych jest mało. */
   async list(userId, limit = 100) {
     const snap = await savedCol(userId).orderBy('saved_at', 'desc').limit(limit).get();

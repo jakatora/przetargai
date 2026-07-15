@@ -7,6 +7,7 @@ import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicMatch, publicSaved } from '../lib/serialize.js';
 import { summarizeTender } from '../services/ai.js';
+import { normalizujStatus, oczyscNotatke, STATUSY } from '../lib/statusPrzetargu.js';
 
 /** Dobowy limit NOWYCH generacji wyjaśnień AI na użytkownika (cache miss). */
 const LIMIT_STRESZCZEN_DZIENNIE = { free: 8, standard: 60 };
@@ -82,6 +83,33 @@ router.put('/:id/reminder', ah(async (req, res) => {
   if (stan.powod === 'nie_zapisany') throw notFound('Najpierw zapisz ten przetarg');
   audit({ userId: req.user.id, action: 'set_reminder', detail: { tenderId: req.params.id, enabled: stan.reminder_enabled }, ip: req.ip });
   res.json(stan);
+}));
+
+/**
+ * Ustawia etap pracy nad zapisanym przetargiem (D-054 — warsztat przetargu).
+ * MUSI stać przed `GET /:id`. Przetarg musi być wcześniej zapisany.
+ */
+const statusSchema = z.object({ status: z.string() });
+router.put('/:id/status', ah(async (req, res) => {
+  const wynik = statusSchema.safeParse(req.body);
+  if (!wynik.success) throw badRequest('Wymagane pole "status"');
+  const status = normalizujStatus(wynik.data.status);
+  const stan = await saved.setStatus(req.user.id, req.params.id, status);
+  if (!stan) throw notFound('Najpierw zapisz ten przetarg');
+  audit({ userId: req.user.id, action: 'set_status', detail: { tenderId: req.params.id, status }, ip: req.ip });
+  res.json({ status, dostepne: STATUSY });
+}));
+
+/** Zapisuje prywatną notatkę do zapisanego przetargu (D-054). */
+const notatkaSchema = z.object({ notatka: z.string() });
+router.put('/:id/notatka', ah(async (req, res) => {
+  const wynik = notatkaSchema.safeParse(req.body);
+  if (!wynik.success) throw badRequest('Wymagane pole "notatka"');
+  const notatka = oczyscNotatke(wynik.data.notatka);
+  const stan = await saved.setNote(req.user.id, req.params.id, notatka);
+  if (!stan) throw notFound('Najpierw zapisz ten przetarg');
+  audit({ userId: req.user.id, action: 'set_note', detail: { tenderId: req.params.id }, ip: req.ip });
+  res.json({ notatka });
 }));
 
 /**

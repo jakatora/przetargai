@@ -4,6 +4,36 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-054 — Warsztat przetargu: etap pracy + notatki na zapisanych
+**Data:** 2026-07-14 | User: „dodaj do aplikacji rzeczy przydatne podczas przetargów" (wolna ręka)
+
+**Po co.** „Podczas przetargu" = prowadzenie kilku postępowań naraz. „Zapisane"
+było martwą listą. Dołożony warsztat na każdym zapisanym przetargu:
+- **Etap pracy** (pipeline): Rozważam → Przygotowuję ofertę → Oferta złożona →
+  Wygrana / Przegrana. Aktywne (3 pierwsze) oddzielone od zakończonych.
+- **Prywatna notatka** (freeform): co zebrać, o co dopytać zamawiającego.
+
+Zero kosztu AI, zero danych zewnętrznych — czysta wartość na istniejącej funkcji
+(D-049). Różnicowanie: konkurenci nie dają małym firmom osobistego pipeline'u.
+
+**Architektura.**
+- Czysty `lib/statusPrzetargu.js`: `STATUSY` (5 etapów, flaga aktywny),
+  `normalizujStatus` (śmieci → domyślny), `podsumujStatusy` (licznik per etap +
+  aktywne/zakończone — pod przyszły nagłówek tablicy), `oczyscNotatke` (trim+2000).
+  TDD 6 testów. Mobile lustro `src/lib/statusPrzetargu.js` (świadomy duplikat, test parzystości).
+- Repo `saved.setStatus`/`setNote` (update na users/{id}/saved/{tenderId}, null gdy niezapisany).
+- `serialize.publicSaved` niesie `status` (dom. 'rozwazam') + `notatka`.
+- `PUT /matches/:id/status`, `PUT /matches/:id/notatka` (przed `GET /:id`;
+  IDOR-odporne przez subkolekcję usera; status normalizowany po stronie serwera).
+- Mobile: komponent `StatusPicker` (chipy) współdzielony; ekran „Zapisane" =
+  tablica (zmiana etapu wprost z listy, optymistycznie); szczegóły = pełny warsztat
+  (etap + pole notatki z „Zapisz"). Interakcja z warsztatem auto-zapisuje przetarg,
+  jeśli nie był w zakładkach.
+
+**Testy.** Backend **256/256** (+16: 6 czystych + 4 trasy [zapis/odczyt, normalizacja,
+404 niezapisany, IDOR] + reszta). Mobile **59/59** (+3). esbuild czysty. Deploy
+produkcyjny czeka na zgodę usera (razem z D-052).
+
 ## D-052 — Wyjaśnienie AI ogłoszenia (luka #1 z analizy konkurencji)
 **Data:** 2026-07-11 | User: „udoskonal aplikacje" (wolna ręka) po „zobacz co posiadają podobne aplikacje"
 

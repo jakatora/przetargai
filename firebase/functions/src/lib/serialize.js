@@ -53,6 +53,9 @@ export function publicSaved(row) {
     saved_at: row.saved_at,
     reminder_enabled: row.reminder_enabled === true,
     remind_at: row.remind_at ?? null,
+    // Warsztat przetargu (D-054): etap pracy + prywatna notatka.
+    status: row.status ?? 'rozwazam',
+    notatka: row.notatka ?? '',
     tender: {
       id: row.tender_id,
       title: row.tender_title,

@@ -10,6 +10,8 @@ import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { ScoreBadge } from '../components/MatchCard';
+import StatusPicker from '../components/StatusPicker';
+import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
 
 export default function SavedScreen({ navigation }) {
   const { kolory } = useTheme();
@@ -34,6 +36,18 @@ export default function SavedScreen({ navigation }) {
   async function usun(tenderId) {
     setItems((prev) => prev.filter((s) => s.tender.id !== tenderId));
     toggle(tenderId).catch(() => wczytaj()); // przy błędzie przywróć z serwera
+  }
+
+  async function zmienStatus(item, nowy) {
+    const poprzedni = item.status || STATUS_DOMYSLNY;
+    setItems((prev) => prev.map((s) =>
+      s.tender.id === item.tender.id ? { ...s, status: nowy } : s));
+    try {
+      await api.setStatus(item.tender.id, nowy);
+    } catch {
+      setItems((prev) => prev.map((s) =>
+        s.tender.id === item.tender.id ? { ...s, status: poprzedni } : s));
+    }
   }
 
   async function przelaczPrzypomnienie(item, wartosc) {
@@ -84,6 +98,11 @@ export default function SavedScreen({ navigation }) {
           </Pressable>
         </Pressable>
 
+        <View style={styles.etapBlok}>
+          <Text style={styles.etapEtykieta}>Etap</Text>
+          <StatusPicker wartosc={item.status || STATUS_DOMYSLNY} onChange={(v) => zmienStatus(item, v)} />
+        </View>
+
         <View style={styles.przypomnienie}>
           <View style={styles.przypInfo}>
             <Text style={styles.przypTytul}>Przypomnij przed terminem</Text>
@@ -117,7 +136,8 @@ export default function SavedScreen({ navigation }) {
           <Text style={styles.emptyIcon}>☆</Text>
           <Text style={styles.emptyTitle}>Brak zapisanych przetargów</Text>
           <Text style={styles.emptyText}>
-            Dotknij gwiazdki przy przetargu, aby zapisać go tutaj i włączyć przypomnienie o terminie.
+            Dotknij gwiazdki przy przetargu, aby zapisać go tutaj — ustawisz etap pracy,
+            dopiszesz notatki i włączysz przypomnienie o terminie.
           </Text>
         </View>
       )}
@@ -143,6 +163,10 @@ const tworzStyleZapisanych = tworzStyle((k) => ({
   miniony: { color: k.danger },
   gwiazdka: { padding: 2 },
   gwiazdkaZnak: { fontSize: 22, lineHeight: 24, fontWeight: '700' },
+  etapBlok: {
+    marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: k.border,
+  },
+  etapEtykieta: { fontSize: 13, fontWeight: '700', color: k.blue, marginBottom: spacing.sm },
   przypomnienie: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
     marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: k.border,

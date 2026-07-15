@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator } from 'react-native';
+import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
+import StatusPicker from '../components/StatusPicker';
 import { ScoreBadge } from '../components/MatchCard';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useSaved } from '../context/SavedContext';
@@ -10,6 +11,7 @@ import { spacing, radius } from '../theme';
 import { opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
+import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
 
 function Row({ styles, label, value, last }) {
   return (
@@ -35,6 +37,10 @@ export default function MatchDetailScreen({ route }) {
   const [streszczenie, setStreszczenie] = useState(null);
   const [strLoading, setStrLoading] = useState(false);
   const [strBlad, setStrBlad] = useState(null);
+  // Warsztat przetargu (D-054) — etap pracy + prywatna notatka (znane, gdy wszedł z „Zapisane").
+  const [status, setStatus] = useState(match.status || STATUS_DOMYSLNY);
+  const [notatka, setNotatka] = useState(match.notatka || '');
+  const [notatkaZapis, setNotatkaZapis] = useState('idle'); // idle | zapisywanie | zapisano
 
   const zapisany = isSaved(match.id);
   const budget = formatBudget(tender.budget, tender.currency);
@@ -63,6 +69,31 @@ export default function MatchDetailScreen({ route }) {
       setPrzypomnienie(stan.reminder_enabled);
     } catch (err) {
       setPrzypomnienie(!wartosc);
+      Alert.alert('Błąd', err.message);
+    }
+  }
+
+  async function zmienStatus(nowy) {
+    const poprzedni = status;
+    setStatus(nowy); // optymistycznie
+    try {
+      if (!zapisany) await toggle(match.id); // etap wymaga zapisu — dopisz do zakładek
+      await api.setStatus(match.id, nowy);
+    } catch (err) {
+      setStatus(poprzedni);
+      Alert.alert('Błąd', err.message);
+    }
+  }
+
+  async function zapiszNotatke() {
+    setNotatkaZapis('zapisywanie');
+    try {
+      if (!zapisany) await toggle(match.id);
+      const stan = await api.setNotatka(match.id, notatka);
+      setNotatka(stan.notatka);
+      setNotatkaZapis('zapisano');
+    } catch (err) {
+      setNotatkaZapis('idle');
       Alert.alert('Błąd', err.message);
     }
   }
@@ -145,6 +176,40 @@ export default function MatchDetailScreen({ route }) {
             onValueChange={przelaczPrzypomnienie}
             disabled={!maTermin}
             trackColor={{ true: kolory.blue }}
+          />
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Etap i notatki</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
+          Prowadź ten przetarg: ustaw etap pracy i zapisz własne notatki
+          (np. jakie dokumenty zebrać, o co dopytać zamawiającego).
+        </Text>
+
+        <Text style={styles.warsztatEtykieta}>Etap</Text>
+        <StatusPicker wartosc={status} onChange={zmienStatus} />
+
+        <Text style={[styles.warsztatEtykieta, styles.warsztatOdstep]}>Moja notatka</Text>
+        <TextInput
+          style={styles.notatka}
+          value={notatka}
+          onChangeText={(t) => { setNotatka(t); setNotatkaZapis('idle'); }}
+          placeholder="np. Zebrać: KRS, referencje z 2 podobnych robót. Dopytać o termin realizacji."
+          placeholderTextColor={kolory.textMuted}
+          multiline
+          textAlignVertical="top"
+        />
+        <View style={styles.notatkaStopka}>
+          <Text style={styles.notatkaStan}>
+            {notatkaZapis === 'zapisywanie' ? 'Zapisywanie…' : notatkaZapis === 'zapisano' ? 'Zapisano ✓' : ' '}
+          </Text>
+          <Button
+            title="Zapisz notatkę"
+            onPress={zapiszNotatke}
+            variant="ghost"
+            loading={notatkaZapis === 'zapisywanie'}
+            style={styles.notatkaBtn}
           />
         </View>
       </View>
@@ -312,6 +377,15 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   },
   reasoning: { fontSize: 15, color: k.text, lineHeight: 22 },
   strPodtytul: { fontSize: 12, color: k.textMuted, lineHeight: 17, fontStyle: 'italic' },
+  warsztatEtykieta: { fontSize: 13, fontWeight: '700', color: k.blue, marginTop: spacing.md, marginBottom: spacing.sm },
+  warsztatOdstep: { marginTop: spacing.lg },
+  notatka: {
+    minHeight: 88, borderWidth: 1, borderColor: k.border, borderRadius: radius.md ?? 10,
+    padding: spacing.sm, fontSize: 15, color: k.text, backgroundColor: k.bg ?? k.surface,
+  },
+  notatkaStopka: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
+  notatkaStan: { fontSize: 12, color: k.textMuted, fontWeight: '600' },
+  notatkaBtn: { minWidth: 140 },
   strStart: { marginTop: spacing.md, gap: spacing.sm },
   strBlad: { fontSize: 13, color: k.textMuted, lineHeight: 18 },
   strLadowanie: { marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

@@ -84,6 +84,9 @@ export const api = {
    * udało, albo { streszczenie: null, powod, komunikat } przy limicie/niedostępności.
    */
   getStreszczenie: (id) => request(`/matches/${id}/streszczenie`),
+  /** Warsztat przetargu (D-054): etap pracy + prywatna notatka zapisanego przetargu. */
+  setStatus: (id, status) => request(`/matches/${id}/status`, { method: 'PUT', body: { status } }),
+  setNotatka: (id, notatka) => request(`/matches/${id}/notatka`, { method: 'PUT', body: { notatka } }),
   sendFeedback: (id, helpful) =>
     request(`/matches/${id}/feedback`, { method: 'POST', body: { helpful } }),
 
