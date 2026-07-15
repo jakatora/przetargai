@@ -8,6 +8,8 @@ import { audit } from '../lib/audit.js';
 import { publicMatch, publicSaved } from '../lib/serialize.js';
 import { summarizeTender } from '../services/ai.js';
 import { normalizujStatus, oczyscNotatke, STATUSY } from '../lib/statusPrzetargu.js';
+import { zbudujZachete, POCZATEK_TYGODNIA_MS } from '../lib/potencjal.js';
+import { env } from '../config.js';
 
 /** Dobowy limit NOWYCH generacji wyjaśnień AI na użytkownika (cache miss). */
 const LIMIT_STRESZCZEN_DZIENNIE = { free: 8, standard: 60 };
@@ -52,6 +54,26 @@ router.get('/saved', ah(async (req, res) => {
 /** Same identyfikatory zapisanych — do zaznaczania ikony zakładki w feedzie. */
 router.get('/saved/ids', ah(async (req, res) => {
   res.json({ ids: await saved.ids(req.user.id) });
+}));
+
+/**
+ * Statystyki + zachęta do Standard (D-055 — FOMO na Free). Zwraca REALNE liczby
+ * (dopasowania dziś / w tym tygodniu) i gotowy komunikat zachęty dla planu Free.
+ * MUSI stać przed `GET /:id` (inaczej „statystyki" byłoby id dopasowania).
+ */
+router.get('/statystyki', ah(async (req, res) => {
+  const tydzienTemu = new Date(Date.now() - POCZATEK_TYGODNIA_MS).toISOString();
+  const [dzis, wTymTygodniu] = await Promise.all([
+    matches.countToday(req.user.id),
+    matches.countSince(req.user.id, tydzienTemu),
+  ]);
+  const zacheta = zbudujZachete({
+    isFree: req.user.premium_tier === 'free',
+    dzis,
+    wTymTygodniu,
+    limitDzienny: env.FREE_TIER_DAILY_MATCH_LIMIT,
+  });
+  res.json({ dzis, w_tym_tygodniu: wTymTygodniu, limit_dzienny: env.FREE_TIER_DAILY_MATCH_LIMIT, zacheta });
 }));
 
 /** Zapisuje przetarg do zakładek (idempotentnie). Kopiuje pola z dopasowania. */

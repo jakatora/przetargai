@@ -9,6 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import * as WebBrowser from 'expo-web-browser';
 import { api } from '../api/client';
 import MatchCard from '../components/MatchCard';
 import Button from '../components/Button';
@@ -30,6 +31,9 @@ export default function MatchFeedScreen({ navigation }) {
   const [prog, setProg] = useState(0);
   const [sort, setSort] = useState('trafnosc');
   const [szukaj, setSzukaj] = useState('');
+  // Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free).
+  const [zacheta, setZacheta] = useState(null);
+  const [upgrading, setUpgrading] = useState(false);
 
   // Próg filtra i sortowanie przeżywają restart aplikacji.
   useEffect(() => {
@@ -75,6 +79,8 @@ export default function MatchFeedScreen({ navigation }) {
       setMatches(data.matches || []);
       setKursor(data.next_before ?? null);
       setError(null);
+      // Statystyki poboczne — nie mogą wywalić feedu, gdy padną.
+      api.getStatystyki().then((s) => setZacheta(s.zacheta)).catch(() => {});
     } catch (err) {
       setError(err.message);
     } finally {
@@ -82,6 +88,18 @@ export default function MatchFeedScreen({ navigation }) {
       setRefreshing(false);
     }
   }, []);
+
+  async function przejdzNaStandard() {
+    setUpgrading(true);
+    try {
+      const { url } = await api.createUpgradeLink();
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      /* brak linku — cicho, baner zostaje */
+    } finally {
+      setUpgrading(false);
+    }
+  }
 
   /**
    * Dociąga kolejną stronę. Bez tego feed kończył się na pierwszej porcji, a starsze
@@ -150,6 +168,15 @@ export default function MatchFeedScreen({ navigation }) {
       contentContainerStyle={widoczne.length ? styles.list : styles.listEmpty}
       ListHeaderComponent={
         <View>
+          {/* Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free). */}
+          {zacheta?.pokaz ? (
+            <Pressable style={styles.fomo} onPress={przejdzNaStandard} disabled={upgrading} accessibilityRole="button">
+              <Text style={styles.fomoTytul}>{zacheta.tytul}</Text>
+              <Text style={styles.fomoOpis}>{zacheta.opis}</Text>
+              <Text style={styles.fomoCta}>{upgrading ? 'Otwieram…' : 'Przejdź na Standard — 49 zł/mc →'}</Text>
+            </Pressable>
+          ) : null}
+
           {/* Wyszukiwarka — po tytule i zamawiającym, z tolerancją odmian (D-051). */}
           <View style={styles.szukajRzad}>
             <Text style={styles.szukajIkona}>🔍</Text>
@@ -269,6 +296,16 @@ export default function MatchFeedScreen({ navigation }) {
 }
 
 const tworzStyleFeedu = tworzStyle((k) => ({
+  fomo: {
+    backgroundColor: k.blue,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    gap: 4,
+  },
+  fomoTytul: { fontSize: 16, fontWeight: '800', color: k.surface },
+  fomoOpis: { fontSize: 13, color: k.surface, opacity: 0.92, lineHeight: 18 },
+  fomoCta: { fontSize: 14, fontWeight: '800', color: k.surface, marginTop: 6 },
   szukajRzad: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.border,

@@ -4,6 +4,27 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-055 — FOMO na Free + potencjał (bodziec konwersji)
+**Data:** 2026-07-14 | User: „co dodać, żeby przyciągało klienta" → wybór „FOMO na Free + potencjał"
+
+**Po co.** Konwersja Free→Standard (49 zł). Plan Free pokazuje 5 dopasowań/dobę,
+reszta czeka na kolejne dni. Pokazujemy REALNĄ liczbę dopasowań i uczciwie
+zachęcamy do Standard („widzisz je z opóźnieniem, Standard = od razu").
+
+**Uczciwość danych.** Świadomie NIE pokazujemy „potencjału w zł" — BZP prawie nigdy
+nie podaje wartości (0/500, [[reference_bzp_api_dane]]), kwoty byłyby zmyślone.
+Potencjał = LICZBA dopasowań (realna).
+
+**Architektura.**
+- Czysty `lib/potencjal.js`: `zbudujZachete(...)` → {pokaz, wariant, tytul, opis, liczby}.
+  Płatny → nigdy; Free z osiągniętym dziennym limitem → 'limit' (priorytet); Free
+  z dużym tygodniem → 'tydzien'; Free mało aktywny → NIE (bez fałszywego FOMO). TDD 6.
+- `matches.countSince` (agregat count). `GET /matches/statystyki` (przed `/:id`).
+- Mobile: baner na górze feedu (tylko gdy `zacheta.pokaz`) → `createUpgradeLink` → Stripe.
+  Pobranie statystyk nie wywala feedu (catch).
+
+**Testy.** Backend **265/265** (+9), mobile **59/59**, esbuild czysty. Deploy czeka na zgodę.
+
 ## D-054 — Warsztat przetargu: etap pracy + notatki na zapisanych
 **Data:** 2026-07-14 | User: „dodaj do aplikacji rzeczy przydatne podczas przetargów" (wolna ręka)
 

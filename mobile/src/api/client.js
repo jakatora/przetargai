@@ -84,6 +84,8 @@ export const api = {
    * udało, albo { streszczenie: null, powod, komunikat } przy limicie/niedostępności.
    */
   getStreszczenie: (id) => request(`/matches/${id}/streszczenie`),
+  /** Statystyki + zachęta do Standard oparta na realnych liczbach (D-055). */
+  getStatystyki: () => request('/matches/statystyki'),
   /** Warsztat przetargu (D-054): etap pracy + prywatna notatka zapisanego przetargu. */
   setStatus: (id, status) => request(`/matches/${id}/status`, { method: 'PUT', body: { status } }),
   setNotatka: (id, notatka) => request(`/matches/${id}/notatka`, { method: 'PUT', body: { notatka } }),

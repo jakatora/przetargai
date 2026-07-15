@@ -470,6 +470,12 @@ export const matches = {
     return agg.data().count;
   },
 
+  /** Ile dopasowań powstało od daty `sinceIso` (potencjał tygodnia — D-055). */
+  async countSince(userId, sinceIso) {
+    const agg = await matchCol(userId).where('created_at', '>=', sinceIso).count().get();
+    return agg.data().count;
+  },
+
   async markNotified(userId, matchId) {
     await matchCol(userId).doc(matchId).update({ notified: 1 });
   },
