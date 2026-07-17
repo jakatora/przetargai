@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput, Share } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -126,6 +126,22 @@ export default function MatchDetailScreen({ route }) {
       Alert.alert('Błąd', err.message);
     } finally {
       setSending(false);
+    }
+  }
+
+  async function udostepnij() {
+    // Wykonawcy konsultują przetargi z partnerami/podwykonawcami — dajemy im to wprost.
+    const linie = [
+      tender.title,
+      tender.organization ? `Zamawiający: ${tender.organization}` : null,
+      `Termin składania ofert: ${formatDate(tender.deadline)}`,
+      tender.url || null,
+      '— wysłane z aplikacji PrzetargAI',
+    ].filter(Boolean);
+    try {
+      await Share.share({ message: linie.join('\n'), url: tender.url || undefined, title: tender.title });
+    } catch {
+      /* użytkownik anulował udostępnianie — nic nie robimy */
     }
   }
 
@@ -319,6 +335,13 @@ export default function MatchDetailScreen({ route }) {
           style={styles.gap}
         />
       ) : null}
+
+      <Button
+        title="Udostępnij przetarg"
+        variant="ghost"
+        onPress={udostepnij}
+        style={styles.gap}
+      />
 
       <Text style={styles.sectionTitle}>Czy to dopasowanie było trafne?</Text>
       {feedback ? (
