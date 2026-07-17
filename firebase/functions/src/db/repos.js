@@ -249,7 +249,28 @@ export const tenders = {
       return { tender: { id, ...record }, created: true };
     } catch (err) {
       if (err.code === 6 /* ALREADY_EXISTS */) {
-        return { tender: userSnap(await ref.get()), created: false };
+        const snap = await ref.get();
+        const dane = snap.data() ?? {};
+        /*
+         * Uzupełnienie brakującego meta (audyt R12). `upsert` jest create-only, więc
+         * pola dodane później (wadium/kryterium/części) NIGDY nie trafiały na przetargi
+         * zapisane wcześniej — a dzienne pobieranie re-ściąga ostatnie 7 dni z htmlBody.
+         * Backfill robimy TYLKO gdy pole nigdy nie było zapisane (undefined), więc to
+         * jednorazowy zapis na stary dokument, nie codzienna nadpiska.
+         */
+        if (dane.wadium_wymagane === undefined && dane.kryterium_oceny === undefined
+            && dane.liczba_czesci === undefined) {
+          const meta = {
+            wadium_wymagane: t.wadium_wymagane ?? null,
+            wadium_kwota: t.wadium_kwota ?? null,
+            wadium_wiele_czesci: t.wadium_wiele_czesci ?? false,
+            kryterium_oceny: t.kryterium_oceny ?? null,
+            liczba_czesci: t.liczba_czesci ?? null,
+          };
+          await ref.update(meta);
+          return { tender: { id, ...dane, ...meta }, created: false };
+        }
+        return { tender: userSnap(snap), created: false };
       }
       throw err;
     }

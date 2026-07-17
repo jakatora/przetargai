@@ -64,6 +64,29 @@ test('tenders.upsert — pierwszy raz created:true, drugi raz created:false i te
   assert.equal(pierwszy.tender.id, tenderDocId(t.externalId));
 });
 
+test('tenders.upsert — UZUPEŁNIA brakujące meta na istniejącym przetargu (audyt R12)', async () => {
+  const ext = '2026/BZP 00000099/01';
+  // Symulacja przetargu zapisanego STARYM kodem — bez pól wadium/kryterium/części.
+  const { getFirestore } = await import('firebase-admin/firestore');
+  await getFirestore().collection('tenders').doc(tenderDocId(ext)).set({
+    bzp_external_id: ext, title: 'Stary przetarg', source: 'bzp', deadline: '2099-01-01T00:00:00.000Z',
+  });
+
+  // Dzienne re-pobieranie przynosi te same ogłoszenie, ale już z meta z htmlBody.
+  const { tender } = await tenders.upsert({
+    externalId: ext, title: 'Stary przetarg', deadline: '2099-01-01T00:00:00.000Z',
+    wadium_wymagane: true, wadium_kwota: 7800, kryterium_oceny: 'cena_i_jakosc', liczba_czesci: 3,
+  });
+
+  assert.equal(tender.wadium_wymagane, true, 'meta uzupełnione, nie zgubione jak dawniej');
+  assert.equal(tender.wadium_kwota, 7800);
+  assert.equal(tender.kryterium_oceny, 'cena_i_jakosc');
+  assert.equal(tender.liczba_czesci, 3);
+  // Potwierdzenie z bazy.
+  const zBazy = await tenders.findById(tenderDocId(ext));
+  assert.equal(zBazy.wadium_kwota, 7800);
+});
+
 test('tenders.openPool — otwarty i bezterminowy wchodzą, po terminie odpada', async () => {
   await tenders.upsert({ externalId: 'pool-otwarty', title: 'Otwarty', deadline: '2099-01-01T00:00:00.000Z' });
   await tenders.upsert({ externalId: 'pool-bez', title: 'Bez terminu', deadline: null });
