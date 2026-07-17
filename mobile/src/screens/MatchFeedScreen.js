@@ -233,6 +233,14 @@ export default function MatchFeedScreen({ navigation }) {
               );
             })}
           </View>
+          {/* Licznik wyników (R14) — ile widać po filtrach; z podpowiedzią, gdy filtr zawęża. */}
+          {widoczne.length > 0 ? (
+            <Text style={styles.licznik}>
+              {widoczne.length === matches.length
+                ? `${widoczne.length} ${widoczne.length === 1 ? 'przetarg' : 'przetargów'}`
+                : `${widoczne.length} z ${matches.length} przetargów`}
+            </Text>
+          ) : null}
           {/*
             Mamy starsze dane, ale odświeżenie się nie powiodło — mówimy o tym
             wprost, zamiast udawać, że lista jest aktualna.
@@ -314,6 +322,7 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   szukajIkona: { fontSize: 15 },
   szukajPole: { flex: 1, paddingVertical: 11, fontSize: 15, color: k.text },
   szukajX: { color: k.textMuted, fontSize: 16, fontWeight: '700', paddingHorizontal: 2 },
+  licznik: { fontSize: 13, color: k.textMuted, fontWeight: '700', marginBottom: spacing.sm },
   progi: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   progChip: {
     flex: 1,
