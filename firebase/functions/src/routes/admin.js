@@ -12,13 +12,12 @@ const router = Router();
 router.use(adminRequired);
 
 /**
- * Ręczne uruchomienie pobierania przetargów z BZP + matchingu.
- * BZP ma zepsutą paginację (PageNumber ignorowany) — zamiast wielu stron sterujemy
- * rozmiarem JEDNEGO zapytania przez `pageSize` (runTenderFetch nie przyjmuje `pages`).
+ * Ręczne uruchomienie pełnego cyklu: pobranie przetargów (dzień po dniu, z docinaniem
+ * po województwach — patrz services/bzp.js) + matching. `pageSize` USUNIĘTY: od naprawy
+ * paginacji (2026-07-17) rozmiar okna nie jest już decyzją wołającego.
  */
 router.post('/fetch-tenders', ah(async (req, res) => {
-  const pageSize = Math.min(Math.max(Number(req.query.pageSize) || 500, 1), 500);
-  const result = await runTenderFetch({ pageSize });
+  const result = await runTenderFetch();
   res.json(result);
 }));
 

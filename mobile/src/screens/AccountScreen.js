@@ -46,9 +46,11 @@ export default function AccountScreen() {
         return;
       }
       // Dokładamy do istniejących (nie kasujemy tego, co user już wpisał), bez duplikatów.
+      // Cap 30 = limit backendu (profileSchema) — bez tego scalona lista mogłaby go
+      // przekroczyć i zapis profilu wróciłby z 400 (audyt R13).
       const scal = (biezace, nowe) => {
         const lista = [...parseList(biezace), ...nowe];
-        return [...new Set(lista.map((x) => x.trim()).filter(Boolean))].join(', ');
+        return [...new Set(lista.map((x) => x.trim()).filter(Boolean))].slice(0, 30).join(', ');
       };
       if (s.keywords.length) setKeywords((b) => scal(b, s.keywords));
       if (s.cpv.length) setCpv((b) => scal(b, s.cpv));
