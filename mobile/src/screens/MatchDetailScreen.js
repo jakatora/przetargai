@@ -211,7 +211,7 @@ export default function MatchDetailScreen({ route }) {
             <Text style={styles.przypTytul}>Przypomnij przed terminem</Text>
             <Text style={styles.przypOpis}>
               {maTermin
-                ? 'Push ok. 2 dni przed terminem składania ofert.'
+                ? 'Push na 7, 3 i 1 dzień przed terminem składania ofert.'
                 : 'Ten przetarg nie ma terminu do przypomnienia.'}
             </Text>
           </View>

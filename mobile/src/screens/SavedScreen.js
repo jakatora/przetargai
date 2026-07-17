@@ -109,7 +109,7 @@ export default function SavedScreen({ navigation }) {
             <Text style={styles.przypOpis}>
               {maTermin
                 ? (item.reminder_enabled
-                  ? 'Powiadomimy Cię ok. 2 dni przed terminem składania ofert.'
+                  ? 'Powiadomimy Cię na 7, 3 i 1 dzień przed terminem składania ofert.'
                   : 'Push, żebyś nie przegapił terminu.')
                 : 'Ten przetarg nie ma terminu, o którym można przypomnieć.'}
             </Text>

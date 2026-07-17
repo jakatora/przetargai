@@ -42,18 +42,18 @@ async function zapiszZTerminem(userId, deadline) {
   return tenderId;
 }
 
-test('setReminder liczy remind_at z terminu i zapisuje w wpisie', async () => {
+test('setReminder ustawia PIERWSZY etap (7 dni przed terminem) — runda 11', async () => {
   const { userId } = await uzytkownikZTokenem();
   const t = await zapiszZTerminem(userId, '2099-01-03T10:00:00.000Z');
 
   const wynik = await saved.setReminder(userId, t, true);
   assert.equal(wynik.reminder_enabled, true);
-  assert.equal(wynik.remind_at, '2099-01-01T10:00:00.000Z', '48 h przed terminem');
+  assert.equal(wynik.remind_at, '2098-12-27T10:00:00.000Z', '7 dni przed terminem (najwcześniejszy etap)');
+  assert.equal(wynik.remind_etap, 7);
 
-  const lista = await saved.list(userId);
-  const wpis = lista.find((s) => s.id === t);
-  assert.equal(wpis.reminder_enabled, true);
+  const wpis = (await saved.list(userId)).find((s) => s.id === t);
   assert.equal(wpis.reminder_notified, false);
+  assert.deepEqual(wpis.reminded_stages, []);
 });
 
 test('setReminder(false) wyłącza przypomnienie', async () => {
@@ -85,14 +85,22 @@ test('dueReminders zwraca wpisy wymagalne (remind_at ≤ teraz, niepowiadomione)
   assert.equal(moje[0].userId, userId, 'niesie właściciela do wysyłki push');
 });
 
-test('markReminded wyklucza wpis z kolejnych dueReminders', async () => {
+test('advanceReminder przesuwa etap 7→3→1, dopiero po ostatnim wyklucza', async () => {
   const { userId } = await uzytkownikZTokenem();
   const t = await zapiszZTerminem(userId, '2099-01-03T10:00:00.000Z');
-  await saved.setReminder(userId, t, true);
+  await saved.setReminder(userId, t, true); // etap 7
 
-  await saved.markReminded(userId, t);
-  const due = await saved.dueReminders('2099-01-02T00:00:00.000Z');
-  assert.equal(due.filter((d) => d.tenderId === t).length, 0, 'powiadomiony nie wraca');
+  // Zapytanie PO wszystkich etapach (7d=12-27, 3d=12-31, 1d=01-02) → każdy byłby wymagalny.
+  const po = '2099-01-05T00:00:00.000Z';
+  const etap = async () => (await saved.dueReminders(po)).find((d) => d.tenderId === t)?.remind_etap ?? 'brak';
+
+  assert.equal(await etap(), 7, 'najpierw 7 dni');
+  await saved.advanceReminder(userId, t);
+  assert.equal(await etap(), 3, 'po 7 → 3 dni, wciąż wymagalny');
+  await saved.advanceReminder(userId, t);
+  assert.equal(await etap(), 1, 'po 3 → 1 dzień, wciąż wymagalny');
+  await saved.advanceReminder(userId, t);
+  assert.equal(await etap(), 'brak', 'po 1 → koniec, wypada z kolejki');
 });
 
 // ---------------- trasa ----------------

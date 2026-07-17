@@ -1,6 +1,6 @@
 import { getFirestore, FieldValue, FieldPath } from 'firebase-admin/firestore';
 import { newId, nowIso, startOfTodayIso } from '../lib/ids.js';
-import { obliczRemindAt } from '../lib/przypomnienia.js';
+import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
 
 /*
  * Warstwa dostępu do danych — Firestore (port z node:sqlite, D-024).
@@ -595,11 +595,18 @@ export const saved = {
       return { reminder_enabled: false };
     }
 
-    const remindAt = obliczRemindAt(doc.data().tender_deadline, nowIso());
-    if (!remindAt) return { reminder_enabled: false, powod: 'brak_terminu' };
+    // Etapy 7/3/1 (runda 11): pierwszy przyszły etap. Minione przy włączeniu pomijamy.
+    const nast = nastepneRemind(doc.data().tender_deadline, nowIso(), []);
+    if (!nast) return { reminder_enabled: false, powod: 'brak_terminu' };
 
-    await ref.update({ reminder_enabled: true, remind_at: remindAt, reminder_notified: false });
-    return { reminder_enabled: true, remind_at: remindAt };
+    await ref.update({
+      reminder_enabled: true,
+      remind_at: nast.at,
+      remind_etap: nast.etap,
+      reminded_stages: [],
+      reminder_notified: false,
+    });
+    return { reminder_enabled: true, remind_at: nast.at, remind_etap: nast.etap };
   },
 
   /**
@@ -618,9 +625,26 @@ export const saved = {
       .map((d) => ({ userId: d.ref.parent.parent.id, tenderId: d.id, ...d.data() }));
   },
 
-  /** Oznacza przypomnienie jako wysłane — nie powtórzymy go. */
-  async markReminded(userId, tenderId) {
-    await savedCol(userId).doc(tenderId).update({ reminder_notified: true });
+  /**
+   * Po wysłaniu etapu przesuwa przypomnienie na następny (7→3→1→koniec). Gdy nie ma
+   * kolejnego etapu, ustawia `reminder_notified` (nie wróci w zapytaniu wymagalnych).
+   * Zwraca etap, który właśnie przesunięto (do logu), lub null gdy nic do zrobienia.
+   */
+  async advanceReminder(userId, tenderId) {
+    const ref = savedCol(userId).doc(tenderId);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    const d = doc.data();
+
+    const wyslane = [...(d.reminded_stages ?? []), d.remind_etap].filter((x) => typeof x === 'number');
+    const nast = nastepneRemind(d.tender_deadline, nowIso(), wyslane);
+
+    if (nast) {
+      await ref.update({ remind_at: nast.at, remind_etap: nast.etap, reminded_stages: wyslane });
+    } else {
+      await ref.update({ reminder_notified: true, reminded_stages: wyslane });
+    }
+    return d.remind_etap ?? null;
   },
 };
 

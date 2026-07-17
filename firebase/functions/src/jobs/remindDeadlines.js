@@ -7,12 +7,19 @@ import { sendPush } from '../services/push.js';
  *
  * Bierze wpisy z „Zapisanych", które mają włączone przypomnienie i są wymagalne
  * (remind_at ≤ teraz, jeszcze niepowiadomione). Wysyła push na token użytkownika
- * i oznacza jako powiadomione — dokładnie raz na przetarg.
+ * i PRZESUWA na następny etap 7→3→1 (runda 11) — po ostatnim etapie kończy.
  *
- * Użytkownik bez push_token (np. nie nadał zgody) jest pomijany, ale wpis
- * ZOSTAJE oznaczony jako powiadomiony — inaczej próbowalibyśmy w kółko przy
- * każdym przebiegu. To świadomy kompromis: przypomnienie to funkcja pushowa.
+ * Użytkownik bez push_token (np. nie nadał zgody) jest pomijany, ale wpis i tak
+ * PRZESUWA etap — inaczej próbowalibyśmy w kółko. To świadomy kompromis: push.
  */
+
+/** Treść przypomnienia wg etapu (7/3/1 dnia, 0 = ostatnie wezwanie). */
+function opisEtapu(etap) {
+  if (etap === 7) return 'Zostało 7 dni do składania ofert';
+  if (etap === 3) return 'Zostały 3 dni do składania ofert';
+  if (etap === 1) return 'Został 1 dzień do składania ofert';
+  return 'Termin składania ofert już blisko';
+}
 export async function runReminderCheck() {
   const startedAt = Date.now();
   const due = await saved.dueReminders();
@@ -33,16 +40,16 @@ export async function runReminderCheck() {
     try {
       const token = await tokenFor(wpis.userId);
       if (token) {
+        const naglowek = opisEtapu(wpis.remind_etap);
         await sendPush(token, {
-          title: 'Zbliża się termin przetargu',
-          body: wpis.tender_title
-            ? `Termin składania ofert: ${wpis.tender_title}`
-            : 'Zbliża się termin składania ofert dla zapisanego przetargu',
-          data: { type: 'deadline_reminder', tender_id: wpis.tenderId },
+          title: naglowek,
+          body: wpis.tender_title || 'Zapisany przetarg — zbliża się termin składania ofert',
+          data: { type: 'deadline_reminder', tender_id: wpis.tenderId, etap: String(wpis.remind_etap ?? '') },
         });
         sent++;
       }
-      await saved.markReminded(wpis.userId, wpis.tenderId);
+      // Przesuwa na następny etap 7→3→1 albo kończy — nie „raz na przetarg", tylko raz na etap.
+      await saved.advanceReminder(wpis.userId, wpis.tenderId);
     } catch (err) {
       // Nie przerywamy całej partii przez jedno nieudane przypomnienie.
       logger.error({ err: err.message, userId: wpis.userId, tenderId: wpis.tenderId },

@@ -62,11 +62,12 @@ test('wysyła push za wymagalne przypomnienie i oznacza je (nie powtarza)', asyn
   const wynik = await runReminderCheck();
   assert.equal(wynik.sent, 1, 'jeden push wysłany');
   assert.equal(wyslane.length, 1);
-  assert.match(JSON.stringify(wyslane[0]), /termin/i);
+  assert.match(JSON.stringify(wyslane[0]), /składania ofert/i, 'komunikat o zbliżającym się terminie');
 
-  // Drugi przebieg nic nie wysyła — oznaczone jako powiadomione.
+  // Drugi przebieg nie powtarza TEGO SAMEGO etapu — advanceReminder przesunął
+  // remind_at na kolejny etap (odległa przyszłość dla terminu 2099), więc niewymagalny.
   const wynik2 = await runReminderCheck();
-  assert.equal(wynik2.sent, 0, 'przypomnienie nie może się powtórzyć');
+  assert.equal(wynik2.sent, 0, 'ten sam etap się nie powtarza');
 });
 
 test('użytkownik bez tokenu: nie wysyłamy, ale oznaczamy (bez pętli)', async () => {
