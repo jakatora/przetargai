@@ -71,6 +71,17 @@ function opiszTermin(tender, nowIso) {
   return `za ${dni} ${dni === 1 ? 'dzień' : 'dni'}`;
 }
 
+/** Wadium słownie — twardy próg, więc model ma o nim wspomnieć, gdy jest znane. */
+function opiszWadium(tender) {
+  if (tender.wadium_wymagane === false) return 'nie jest wymagane';
+  if (tender.wadium_wymagane === true) {
+    return tender.wadium_kwota
+      ? `wymagane, ok. ${tender.wadium_kwota} zł (do wniesienia przed terminem składania ofert)`
+      : 'wymagane (kwota w ogłoszeniu)';
+  }
+  return 'nie podano w ogłoszeniu';
+}
+
 /**
  * Prompt użytkownika dla modelu. Deterministyczny przy stałym `nowIso`
  * (dni do terminu liczymy tu, nie w modelu). Dane przetargu owijamy znacznikami
@@ -84,6 +95,7 @@ export function buildSummaryPrompt(tender, nowIso) {
     `Zamawiający: ${tekst(tender.organization, 300) || 'nieznany'}`,
     `Kod CPV: ${tekst(tender.cpv_main ?? tender.cpvMain, 100) || 'brak'}`,
     `Szacowana wartość: ${opiszWartosc(tender)}`,
+    `Wadium: ${opiszWadium(tender)}`,
     `Termin składania ofert: ${opiszTermin(tender, nowIso)}`,
     '</przetarg>',
     '',

@@ -4,6 +4,7 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useSaved } from '../context/SavedContext';
 import { formatDate } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
+import { opisWadium } from '../lib/wadium';
 
 /** Przycisk zakładki — ★ zapisany (brand), ☆ do zapisania. Nie nawiguje. */
 export function SaveStar({ tenderId, styles, kolory }) {
@@ -55,6 +56,7 @@ export default function MatchCard({ match, onPress }) {
    * Pilne (do tygodnia) wyróżniamy, bo w tym produkcie liczy się czas reakcji.
    */
   const termin = opisTerminu(tender.deadline);
+  const wadium = opisWadium(tender);
 
   return (
     <Pressable
@@ -78,15 +80,22 @@ export default function MatchCard({ match, onPress }) {
           <Text style={styles.deadline}>
             Termin składania ofert: {formatDate(tender.deadline)}
           </Text>
-          <Text
-            style={[
-              styles.znacznik,
-              termin.minal && styles.znacznikMiniony,
-              termin.pilny && styles.znacznikPilny,
-            ]}
-          >
-            {termin.etykieta}
-          </Text>
+          <View style={styles.znacznikiRzad}>
+            <Text
+              style={[
+                styles.znacznik,
+                termin.minal && styles.znacznikMiniony,
+                termin.pilny && styles.znacznikPilny,
+              ]}
+            >
+              {termin.etykieta}
+            </Text>
+            {wadium ? (
+              <Text style={[styles.wadiumChip, wadium.ostrzezenie ? styles.wadiumChipWymaga : styles.wadiumChipBez]}>
+                {wadium.ostrzezenie ? `Wadium ${wadium.wartosc}` : 'Bez wadium'}
+              </Text>
+            ) : null}
+          </View>
         </View>
       </View>
     </Pressable>
@@ -96,13 +105,16 @@ export default function MatchCard({ match, onPress }) {
 const tworzStyleKarty = tworzStyle((k) => ({
   kartaMiniona: { opacity: 0.55 },
   znacznik: {
-    marginTop: spacing.xs,
     fontSize: 12,
     fontWeight: '700',
     color: k.textMuted,
   },
   znacznikPilny: { color: k.ostrzezenieTekst },
   znacznikMiniony: { color: k.danger },
+  znacznikiRzad: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
+  wadiumChip: { fontSize: 11, fontWeight: '800', paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, overflow: 'hidden' },
+  wadiumChipWymaga: { backgroundColor: k.ostrzezenieTlo ?? '#fef3c7', color: k.ostrzezenieTekst },
+  wadiumChipBez: { backgroundColor: (k.green ?? '#16a34a') + '22', color: k.green ?? '#16a34a' },
   card: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,

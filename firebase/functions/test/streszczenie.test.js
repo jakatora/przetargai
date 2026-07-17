@@ -96,6 +96,14 @@ test('prompt niesie kluczowe dane przetargu i jest deterministyczny', () => {
   assert.equal(p, buildSummaryPrompt(tender, now), 'deterministyczny przy tym samym now');
 });
 
+test('prompt niesie wadium, gdy znane (twardy próg)', () => {
+  const now = '2026-07-11T12:00:00.000Z';
+  const zWadium = buildSummaryPrompt({ title: 'Remont', wadium_wymagane: true, wadium_kwota: 7800 }, now);
+  assert.match(zWadium, /Wadium: wymagane, ok\. 7800 zł/);
+  const bez = buildSummaryPrompt({ title: 'Dostawa', wadium_wymagane: false }, now);
+  assert.match(bez, /Wadium: nie jest wymagane/);
+});
+
 test('prompt znosi braki: nieznana wartość i brak terminu bez wywrotki', () => {
   const tender = { title: 'Dostawa materiałów biurowych', organization: null, cpv_main: null, budget: null };
   const p = buildSummaryPrompt(tender, '2026-07-11T12:00:00.000Z');
