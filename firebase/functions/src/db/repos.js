@@ -233,6 +233,10 @@ export const tenders = {
       currency: t.currency ?? 'PLN',
       deadline: t.deadline ?? null,
       url: t.url ?? null,
+      // Wadium (D-056) — z htmlBody przy ingestii. null = ogłoszenie o tym nie mówi.
+      wadium_wymagane: t.wadium_wymagane ?? null,
+      wadium_kwota: t.wadium_kwota ?? null,
+      wadium_wiele_czesci: t.wadium_wiele_czesci ?? false,
       raw_data: raw,
       published_at: t.publishedAt ?? null,
       fetched_at: nowIso(),
@@ -348,6 +352,9 @@ export const matches = {
       tender_url: tender?.url ?? null,
       tender_cpv: tender?.cpv_main ?? null,
       tender_source: tender?.source ?? 'bzp',
+      tender_wadium_wymagane: tender?.wadium_wymagane ?? null,
+      tender_wadium_kwota: tender?.wadium_kwota ?? null,
+      tender_wadium_wiele_czesci: tender?.wadium_wiele_czesci ?? false,
     };
     try {
       await ref.create(record);
@@ -388,6 +395,9 @@ export const matches = {
       tender_url: tender?.url ?? null,
       tender_cpv: tender?.cpv_main ?? null,
       tender_source: tender?.source ?? 'bzp',
+      tender_wadium_wymagane: tender?.wadium_wymagane ?? null,
+      tender_wadium_kwota: tender?.wadium_kwota ?? null,
+      tender_wadium_wiele_czesci: tender?.wadium_wiele_czesci ?? false,
     };
     const evalRef = evalCol(userId).doc(tenderId);
     const slad = { score: Math.round(score), scorer, criteria_hash: criteriaHash, evaluated_at: nowIso() };
@@ -507,6 +517,9 @@ export const saved = {
       tender_url: match.tender_url ?? null,
       tender_cpv: match.tender_cpv ?? null,
       tender_source: match.tender_source ?? 'bzp',
+      tender_wadium_wymagane: match.tender_wadium_wymagane ?? null,
+      tender_wadium_kwota: match.tender_wadium_kwota ?? null,
+      tender_wadium_wiele_czesci: match.tender_wadium_wiele_czesci ?? false,
       saved_at: nowIso(),
     };
     // create() (nie set()) — chcemy odróżnić nowy zapis od powtórnego i NIE nadpisywać saved_at.

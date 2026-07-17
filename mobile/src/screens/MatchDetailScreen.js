@@ -12,6 +12,7 @@ import { opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
+import { opisWadium } from '../lib/wadium';
 
 function Row({ styles, label, value, last }) {
   return (
@@ -45,6 +46,7 @@ export default function MatchDetailScreen({ route }) {
   const zapisany = isSaved(match.id);
   const budget = formatBudget(tender.budget, tender.currency);
   const cpv = opisCpv(tender.cpv);
+  const wadium = opisWadium(tender);
   // Jedno źródło prawdy o terminie — wcześniej `daysUntil` nie odróżniał
   // terminu minionego od nieznanego i po prostu nic nie pokazywał.
   const termin = opisTerminu(tender.deadline);
@@ -145,6 +147,15 @@ export default function MatchDetailScreen({ route }) {
       <View style={styles.card}>
         <Row styles={styles} label="Zamawiający" value={tender.organization || 'brak danych'} />
         <Row styles={styles} label="Termin składania ofert" value={deadlineText} />
+        {wadium ? (
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Wadium</Text>
+            <Text style={[styles.rowValue, wadium.ostrzezenie && { color: kolory.ostrzezenieTekst }]}>
+              {wadium.wartosc}
+            </Text>
+            {wadium.podpis ? <Text style={styles.wadiumPodpis}>{wadium.podpis}</Text> : null}
+          </View>
+        ) : null}
         {budget ? <Row styles={styles} label="Szacowana wartość" value={budget} /> : null}
         <Row styles={styles} label={cpv.etykieta} value={cpv.wartosc} last />
       </View>
@@ -368,6 +379,7 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   rowLast: { borderBottomWidth: 0 },
   rowLabel: { fontSize: 12, color: k.textMuted, marginBottom: 2 },
   rowValue: { fontSize: 15, color: k.text, fontWeight: '600' },
+  wadiumPodpis: { fontSize: 12, color: k.textMuted, marginTop: 3, lineHeight: 16 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',

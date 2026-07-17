@@ -105,7 +105,29 @@ test('KLUCZOWE: dzień na sufity (500) dociskamy 16 zapytaniami po województwac
   assert.equal(url.length, 1 + 16, '1 próba dnia + 16 województw');
   const uzyte = url.slice(1).map((u) => new URL(u).searchParams.get('OrganizationProvince'));
   assert.deepEqual(uzyte.sort(), [...WOJEWODZTWA_TERYT].sort(), 'wszystkie 16 kodów');
-  assert.equal(wynik.length, 48, '16 województw × 3 ogłoszenia — nic nie zgubione');
+  // Pierwsza strona (500) JEST zachowana + 16 województw × 3 = 548 (audyt 2026-07-17:
+  // seedujemy mapę pierwszą stroną, żeby nie gubić rekordów bez kodu województwa).
+  assert.equal(wynik.length, 500 + 48, 'pierwsza strona + docinanie po województwach, zdeduplikowane');
+});
+
+test('REGRESJA (audyt): ogłoszenie BEZ województwa NIE ginie na dniu z sufitem', async () => {
+  /*
+   * Ogłoszenie bez poprawnego kodu TERYT (zagraniczny zamawiający / luka w danych)
+   * nie zostanie zwrócone przez ŻADNE z 16 zapytań po `OrganizationProvince`.
+   * Jeśli docinanie startuje od pustej mapy, taki rekord z pierwszej strony (500)
+   * przepada. Fix: seedujemy mapę pierwszą stroną, potem dokładamy województwa.
+   */
+  const url = podstawFetch((u) => {
+    const woj = u.searchParams.get('OrganizationProvince');
+    if (woj) return odpowiedz(ogloszenia(3, woj)); // województwa: po 3 (żadne nie zwróci „bez-woj”)
+    // pierwsza strona: sufit, w tym JEDEN rekord bez województwa
+    return odpowiedz([{ bzpNumber: 'bez-woj', orderObject: 'Zamówienie zagraniczne', cpvCode: '45000000-7' },
+      ...ogloszenia(SUFIT_ZAPYTANIA - 1, 'sufit')]);
+  });
+
+  const wynik = await pobierzOgloszeniaBzp({ from: '2026-07-17', to: '2026-07-17' });
+  const idy = wynik.map((n) => n.externalId);
+  assert.ok(idy.includes('bez-woj'), 'rekord bez województwa z pierwszej strony musi przetrwać docinanie');
 });
 
 test('dzień PONIŻEJ sufitu nie uruchamia docinania (bez 16 zbędnych zapytań)', async () => {

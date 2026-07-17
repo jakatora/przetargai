@@ -1,6 +1,7 @@
 import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
+import { parsujWadium } from '../lib/wadium.js';
 
 /*
  * Klient publicznego API Biuletynu Zamówień Publicznych (e-Zamówienia).
@@ -88,7 +89,9 @@ export function normalizeNotice(raw) {
   if (!externalId) return null;
 
   // Surowe dane bez ogromnego pola htmlBody (oszczędność miejsca w bazie).
+  // Zanim je odrzucimy, wyciągamy z niego to, co decyduje o starcie — np. wadium.
   const { htmlBody, ...rawLite } = raw;
+  const wadium = parsujWadium(htmlBody);
 
   const tenderId = firstOf(raw, ['tenderId']);
   const url = firstOf(raw, ['htmlUrl', 'url', 'link', 'noticeUrl'])
@@ -106,6 +109,10 @@ export function normalizeNotice(raw) {
     deadline: doUtcIso(firstOf(raw, ['submittingOffersDate', 'offerDeadline', 'tenderSubmissionDeadline', 'deadline'])),
     publishedAt: doUtcIso(firstOf(raw, ['publicationDate', 'publishDate', 'noticeDate', 'createdDate'])),
     url,
+    // Wadium wyciągnięte z htmlBody (D-056). Termin wniesienia = termin składania ofert.
+    wadium_wymagane: wadium.wymagane,
+    wadium_kwota: wadium.kwota,
+    wadium_wiele_czesci: wadium.wieleCzesci ?? false,
     raw: rawLite,
   };
 }
@@ -223,7 +230,11 @@ async function pobierzDzien(dzien) {
   logger.warn({ dzien, pobrane: zDnia.length },
     'BZP: doba trafiła sufit zapytania — docinam po województwach, inaczej zgubilibyśmy resztę dnia');
 
-  const wynik = new Map();
+  // Seedujemy PIERWSZĄ stroną (500), zanim dołożymy województwa. Bez tego ogłoszenia
+  // BEZ poprawnego kodu TERYT (zagraniczny zamawiający / luka w danych) — których nie
+  // zwróci żadne z 16 zapytań `OrganizationProvince` — przepadałyby na dniu z sufitem
+  // (audyt 2026-07-17). Dedup po externalId i tak scala nakładki.
+  const wynik = new Map(zDnia.map((n) => [n.externalId, n]));
   for (const woj of WOJEWODZTWA_TERYT) {
     try {
       const zWoj = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA, province: woj });

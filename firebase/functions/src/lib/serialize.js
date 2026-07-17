@@ -34,6 +34,10 @@ export function publicMatch(row) {
       url: row.tender_url,
       cpv: row.tender_cpv,
       source: row.tender_source ?? 'bzp',
+      // Wadium (D-056) — wymagane: null=nieznane, false=nie, true=tak.
+      wadium_wymagane: row.tender_wadium_wymagane ?? null,
+      wadium_kwota: row.tender_wadium_kwota ?? null,
+      wadium_wiele_czesci: row.tender_wadium_wiele_czesci ?? false,
     },
   };
 }
@@ -66,6 +70,10 @@ export function publicSaved(row) {
       url: row.tender_url,
       cpv: row.tender_cpv,
       source: row.tender_source ?? 'bzp',
+      // Wadium (D-056) — wymagane: null=nieznane, false=nie, true=tak.
+      wadium_wymagane: row.tender_wadium_wymagane ?? null,
+      wadium_kwota: row.tender_wadium_kwota ?? null,
+      wadium_wiele_czesci: row.tender_wadium_wiele_czesci ?? false,
     },
   };
 }
