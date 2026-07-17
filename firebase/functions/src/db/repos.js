@@ -752,6 +752,24 @@ export const streszczenieQuota = {
   },
 };
 
+/** Dobowy limit sugestii profilu AI (onboarding, rundy 9-10) — osobny licznik. */
+const profilQuotaDoc = (userId, day) =>
+  db().collection('users').doc(userId).collection('profil_quota').doc(day);
+
+export const profilQuota = {
+  today() { return nowIso().slice(0, 10); },
+  async reserve(userId, limit) {
+    const ref = profilQuotaDoc(userId, this.today());
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const calls = doc.exists ? (doc.data().calls ?? 0) : 0;
+      if (calls >= limit) return false;
+      tx.set(ref, { calls: calls + 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+};
+
 // ============================ feedback ============================
 
 export const feedback = {

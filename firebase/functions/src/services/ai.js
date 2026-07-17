@@ -4,6 +4,7 @@ import { logger } from '../lib/logger.js';
 import { costUsd } from '../lib/pricing.js';
 import { aiUsage } from '../db/repos.js';
 import { buildSummaryPrompt, parseStreszczenie } from '../lib/streszczenie.js';
+import { buildProfilPrompt, parsujSugestie } from '../lib/profilSugestia.js';
 
 /*
  * Domyślny timeout SDK Anthropica to 10 minut. Cykl dopasowań ma na CAŁĄ pracę
@@ -235,6 +236,48 @@ export async function summarizeTender(tender, { userId = null, nowIso = new Date
     return parseStreszczenie(text);
   } catch (err) {
     logger.error({ err: err.message }, 'Wyjaśnienie AI nie powiodło się');
+    return null;
+  }
+}
+
+/**
+ * Onboarding AI (rundy 9-10): opis firmy → {keywords, cpv}. Zwraca null przy
+ * AI-off / twardym limicie / błędzie (wołający pokazuje komunikat). Dobowy limit
+ * na użytkownika (denial-of-wallet) egzekwuje warstwa trasy.
+ */
+export async function zaproponujProfil(opis, { userId = null } = {}) {
+  if (!client) return null;
+
+  const status = await budgetStatus();
+  if (status.hardExceeded) {
+    zglosPrzekroczenieBudzetu(status, 'twardy');
+    return null;
+  }
+  if (status.softExceeded) zglosPrzekroczenieBudzetu(status, 'miękki');
+
+  const model = env.AI_MATCH_MODEL;
+  try {
+    const resp = await client.messages.create({
+      model,
+      max_tokens: 300,
+      messages: [{ role: 'user', content: buildProfilPrompt(opis) }],
+    });
+
+    const inputTokens = resp.usage?.input_tokens ?? 0;
+    const outputTokens = resp.usage?.output_tokens ?? 0;
+    await aiUsage.record({
+      operation: 'profile_suggest',
+      model,
+      inputTokens,
+      outputTokens,
+      costUsd: costUsd(model, inputTokens, outputTokens),
+      userId,
+    });
+
+    const text = resp.content?.find((block) => block.type === 'text')?.text ?? '';
+    return parsujSugestie(text);
+  } catch (err) {
+    logger.error({ err: err.message }, 'Sugestia profilu AI nie powiodła się');
     return null;
   }
 }

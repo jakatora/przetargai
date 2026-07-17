@@ -3,7 +3,8 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired, signToken } from '../middleware/auth.js';
-import { users } from '../db/repos.js';
+import { users, profilQuota } from '../db/repos.js';
+import { zaproponujProfil } from '../services/ai.js';
 import { isValidNip, normalizeNip } from '../lib/nip.js';
 import { badRequest, conflict, unauthorized, forbidden, serviceUnavailable } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
@@ -140,6 +141,32 @@ const profileSchema = z.object({
   keywords: z.array(z.string().min(1).max(60)).max(30).optional(),
   cpv_codes: z.array(z.string().min(1).max(20)).max(30).optional(),
 });
+
+/**
+ * Onboarding AI (rundy 9-10): opis firmy → propozycja słów kluczowych i CPV.
+ * Rozwiązuje wyciek aktywacji (JDG nie zna kodów CPV). Auth + dobowy limit.
+ */
+const DZIENNY_LIMIT_SUGESTII = 10;
+const opisSchema = z.object({ opis: z.string().min(3).max(600) });
+router.post('/suggest-profile', authRequired, ah(async (req, res) => {
+  const wynik = opisSchema.safeParse(req.body);
+  if (!wynik.success) throw badRequest('Podaj krótki opis firmy (min. 3 znaki)');
+
+  if (!await profilQuota.reserve(req.user.id, DZIENNY_LIMIT_SUGESTII)) {
+    res.json({ keywords: null, cpv: null, powod: 'limit_dzienny',
+      komunikat: 'Wykorzystano dzienny limit podpowiedzi. Spróbuj jutro.' });
+    return;
+  }
+
+  const sugestia = await zaproponujProfil(wynik.data.opis, { userId: req.user.id });
+  if (!sugestia) {
+    res.json({ keywords: null, cpv: null, powod: 'niedostepne',
+      komunikat: 'Nie udało się teraz przygotować podpowiedzi. Spróbuj za chwilę.' });
+    return;
+  }
+  audit({ userId: req.user.id, action: 'suggest_profile', ip: req.ip });
+  res.json(sugestia);
+}));
 
 router.patch('/me', authRequired, ah(async (req, res) => {
   const data = parseBody(profileSchema, req.body);

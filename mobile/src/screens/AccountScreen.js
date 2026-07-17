@@ -28,8 +28,37 @@ export default function AccountScreen() {
   const [sciagaOtwarta, setSciagaOtwarta] = useState(false);
   const [demoInfo, setDemoInfo] = useState(null);
   const [demoBusy, setDemoBusy] = useState(false);
+  // Onboarding AI (rundy 9-10): opis firmy → słowa kluczowe + CPV.
+  const [opisFirmy, setOpisFirmy] = useState('');
+  const [dobieranie, setDobieranie] = useState(false);
+  const [dobierInfo, setDobierInfo] = useState(null);
 
   const isStandard = user.premium_tier === 'standard';
+
+  async function dobierzProfil() {
+    if (!opisFirmy.trim() || dobieranie) return;
+    setDobieranie(true);
+    setDobierInfo(null);
+    try {
+      const s = await api.suggestProfile(opisFirmy.trim());
+      if (!s.keywords) {
+        setDobierInfo(s.komunikat || 'Nie udało się dobrać podpowiedzi.');
+        return;
+      }
+      // Dokładamy do istniejących (nie kasujemy tego, co user już wpisał), bez duplikatów.
+      const scal = (biezace, nowe) => {
+        const lista = [...parseList(biezace), ...nowe];
+        return [...new Set(lista.map((x) => x.trim()).filter(Boolean))].join(', ');
+      };
+      if (s.keywords.length) setKeywords((b) => scal(b, s.keywords));
+      if (s.cpv.length) setCpv((b) => scal(b, s.cpv));
+      setDobierInfo(`Dobrano ${s.keywords.length} słów i ${s.cpv.length} kodów CPV. Sprawdź i zapisz profil.`);
+    } catch (err) {
+      setDobierInfo(err.message);
+    } finally {
+      setDobieranie(false);
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -224,6 +253,29 @@ export default function AccountScreen() {
       <Text style={styles.sectionHint}>
         Na podstawie tych danych AI dopasowuje przetargi do Twojej firmy.
       </Text>
+
+      {/* Onboarding AI (rundy 9-10): nie wiesz jakie słowa/CPV? Opisz firmę. */}
+      <View style={styles.dobierzCard}>
+        <Text style={styles.dobierzTytul}>Nie wiesz, co wpisać?</Text>
+        <Text style={styles.dobierzOpis}>
+          Opisz jednym zdaniem, czym się zajmujesz — AI dobierze słowa kluczowe i kody CPV.
+        </Text>
+        <TextField
+          value={opisFirmy}
+          onChangeText={setOpisFirmy}
+          placeholder="np. Kładę kostkę brukową i buduję ogrodzenia"
+          multiline
+        />
+        <Button
+          title="Dobierz słowa i CPV"
+          onPress={dobierzProfil}
+          loading={dobieranie}
+          variant="ghost"
+          style={styles.gap}
+        />
+        {dobierInfo ? <Text style={styles.dobierzInfo}>{dobierInfo}</Text> : null}
+      </View>
+
       <TextField
         label="Słowa kluczowe"
         value={keywords}
@@ -416,6 +468,13 @@ const tworzStyleKonta = tworzStyle((k) => ({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: k.text, marginTop: spacing.lg },
   sectionHint: { fontSize: 13, color: k.textMuted, marginTop: 4, marginBottom: spacing.md },
   poleCpv: { marginBottom: spacing.xs },
+  dobierzCard: {
+    backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border,
+    padding: spacing.md, marginBottom: spacing.md,
+  },
+  dobierzTytul: { fontSize: 15, fontWeight: '800', color: k.text },
+  dobierzOpis: { fontSize: 13, color: k.textMuted, marginTop: 2, marginBottom: spacing.sm, lineHeight: 18 },
+  dobierzInfo: { fontSize: 13, color: k.blue, fontWeight: '600', marginTop: spacing.sm, lineHeight: 18 },
   linkSciagi: { color: k.blue, fontSize: 14, fontWeight: '600', marginBottom: spacing.md },
   demoCard: {
     backgroundColor: k.ostrzezenieTlo,

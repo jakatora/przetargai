@@ -58,6 +58,8 @@ export const api = {
   login: (payload) => request('/auth/login', { method: 'POST', body: payload, auth: false }),
   getMe: () => request('/auth/me'),
   updateProfile: (payload) => request('/auth/me', { method: 'PATCH', body: payload }),
+  /** Onboarding AI: opis firmy → { keywords, cpv } (albo { keywords: null, powod }). */
+  suggestProfile: (opis) => request('/auth/suggest-profile', { method: 'POST', body: { opis } }),
   setPushToken: (pushToken) =>
     request('/auth/me/push-token', { method: 'PUT', body: { push_token: pushToken } }),
   createUpgradeLink: () => request('/auth/upgrade-link', { method: 'POST' }),
