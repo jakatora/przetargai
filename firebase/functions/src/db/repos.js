@@ -237,6 +237,9 @@ export const tenders = {
       wadium_wymagane: t.wadium_wymagane ?? null,
       wadium_kwota: t.wadium_kwota ?? null,
       wadium_wiele_czesci: t.wadium_wiele_czesci ?? false,
+      // Meta z htmlBody (rundy 5-6).
+      kryterium_oceny: t.kryterium_oceny ?? null,
+      liczba_czesci: t.liczba_czesci ?? null,
       raw_data: raw,
       published_at: t.publishedAt ?? null,
       fetched_at: nowIso(),
@@ -355,6 +358,8 @@ export const matches = {
       tender_wadium_wymagane: tender?.wadium_wymagane ?? null,
       tender_wadium_kwota: tender?.wadium_kwota ?? null,
       tender_wadium_wiele_czesci: tender?.wadium_wiele_czesci ?? false,
+      tender_kryterium_oceny: tender?.kryterium_oceny ?? null,
+      tender_liczba_czesci: tender?.liczba_czesci ?? null,
     };
     try {
       await ref.create(record);
@@ -398,6 +403,8 @@ export const matches = {
       tender_wadium_wymagane: tender?.wadium_wymagane ?? null,
       tender_wadium_kwota: tender?.wadium_kwota ?? null,
       tender_wadium_wiele_czesci: tender?.wadium_wiele_czesci ?? false,
+      tender_kryterium_oceny: tender?.kryterium_oceny ?? null,
+      tender_liczba_czesci: tender?.liczba_czesci ?? null,
     };
     const evalRef = evalCol(userId).doc(tenderId);
     const slad = { score: Math.round(score), scorer, criteria_hash: criteriaHash, evaluated_at: nowIso() };
@@ -520,6 +527,8 @@ export const saved = {
       tender_wadium_wymagane: match.tender_wadium_wymagane ?? null,
       tender_wadium_kwota: match.tender_wadium_kwota ?? null,
       tender_wadium_wiele_czesci: match.tender_wadium_wiele_czesci ?? false,
+      tender_kryterium_oceny: match.tender_kryterium_oceny ?? null,
+      tender_liczba_czesci: match.tender_liczba_czesci ?? null,
       saved_at: nowIso(),
     };
     // create() (nie set()) — chcemy odróżnić nowy zapis od powtórnego i NIE nadpisywać saved_at.

@@ -2,6 +2,7 @@ import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
 import { parsujWadium } from '../lib/wadium.js';
+import { parsujKryterium, parsujCzesci } from '../lib/ogloszenieMeta.js';
 
 /*
  * Klient publicznego API Biuletynu Zamówień Publicznych (e-Zamówienia).
@@ -92,6 +93,8 @@ export function normalizeNotice(raw) {
   // Zanim je odrzucimy, wyciągamy z niego to, co decyduje o starcie — np. wadium.
   const { htmlBody, ...rawLite } = raw;
   const wadium = parsujWadium(htmlBody);
+  const kryterium = parsujKryterium(htmlBody);
+  const liczbaCzesci = parsujCzesci(htmlBody);
 
   const tenderId = firstOf(raw, ['tenderId']);
   const url = firstOf(raw, ['htmlUrl', 'url', 'link', 'noticeUrl'])
@@ -113,6 +116,9 @@ export function normalizeNotice(raw) {
     wadium_wymagane: wadium.wymagane,
     wadium_kwota: wadium.kwota,
     wadium_wiele_czesci: wadium.wieleCzesci ?? false,
+    // Meta z htmlBody (rundy 5-6): kryterium oceny + liczba części.
+    kryterium_oceny: kryterium,
+    liczba_czesci: liczbaCzesci,
     raw: rawLite,
   };
 }

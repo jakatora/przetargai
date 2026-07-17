@@ -13,6 +13,7 @@ import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
 import { opisWadium } from '../lib/wadium';
+import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 
 function Row({ styles, label, value, last }) {
   return (
@@ -47,6 +48,8 @@ export default function MatchDetailScreen({ route }) {
   const budget = formatBudget(tender.budget, tender.currency);
   const cpv = opisCpv(tender.cpv);
   const wadium = opisWadium(tender);
+  const kryterium = opisKryterium(tender);
+  const czesci = opisCzesci(tender);
   // Jedno źródło prawdy o terminie — wcześniej `daysUntil` nie odróżniał
   // terminu minionego od nieznanego i po prostu nic nie pokazywał.
   const termin = opisTerminu(tender.deadline);
@@ -154,6 +157,20 @@ export default function MatchDetailScreen({ route }) {
               {wadium.wartosc}
             </Text>
             {wadium.podpis ? <Text style={styles.wadiumPodpis}>{wadium.podpis}</Text> : null}
+          </View>
+        ) : null}
+        {kryterium ? (
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Kryterium oceny</Text>
+            <Text style={styles.rowValue}>{kryterium.wartosc}</Text>
+            <Text style={styles.wadiumPodpis}>{kryterium.podpis}</Text>
+          </View>
+        ) : null}
+        {czesci ? (
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Części</Text>
+            <Text style={styles.rowValue}>{czesci.wartosc}</Text>
+            <Text style={styles.wadiumPodpis}>{czesci.podpis}</Text>
           </View>
         ) : null}
         {budget ? <Row styles={styles} label="Szacowana wartość" value={budget} /> : null}

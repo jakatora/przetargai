@@ -71,6 +71,13 @@ function opiszTermin(tender, nowIso) {
   return `za ${dni} ${dni === 1 ? 'dzień' : 'dni'}`;
 }
 
+/** Kryterium i podział na części — kontekst dla oceny „czy dla małej firmy". */
+function opiszKryterium(tender) {
+  if (tender.kryterium_oceny === 'tylko_cena') return 'wygrywa najniższa cena';
+  if (tender.kryterium_oceny === 'cena_i_jakosc') return 'cena oraz kryteria jakościowe';
+  return 'nie podano';
+}
+
 /** Wadium słownie — twardy próg, więc model ma o nim wspomnieć, gdy jest znane. */
 function opiszWadium(tender) {
   if (tender.wadium_wymagane === false) return 'nie jest wymagane';
@@ -96,6 +103,8 @@ export function buildSummaryPrompt(tender, nowIso) {
     `Kod CPV: ${tekst(tender.cpv_main ?? tender.cpvMain, 100) || 'brak'}`,
     `Szacowana wartość: ${opiszWartosc(tender)}`,
     `Wadium: ${opiszWadium(tender)}`,
+    `Kryterium oceny: ${opiszKryterium(tender)}`,
+    `Podział na części: ${tender.liczba_czesci >= 2 ? `tak, ${tender.liczba_czesci}` : 'nie podano / całość'}`,
     `Termin składania ofert: ${opiszTermin(tender, nowIso)}`,
     '</przetarg>',
     '',

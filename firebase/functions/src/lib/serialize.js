@@ -38,6 +38,9 @@ export function publicMatch(row) {
       wadium_wymagane: row.tender_wadium_wymagane ?? null,
       wadium_kwota: row.tender_wadium_kwota ?? null,
       wadium_wiele_czesci: row.tender_wadium_wiele_czesci ?? false,
+      // Meta (rundy 5-6): kryterium oceny + liczba części.
+      kryterium_oceny: row.tender_kryterium_oceny ?? null,
+      liczba_czesci: row.tender_liczba_czesci ?? null,
     },
   };
 }
@@ -74,6 +77,9 @@ export function publicSaved(row) {
       wadium_wymagane: row.tender_wadium_wymagane ?? null,
       wadium_kwota: row.tender_wadium_kwota ?? null,
       wadium_wiele_czesci: row.tender_wadium_wiele_czesci ?? false,
+      // Meta (rundy 5-6): kryterium oceny + liczba części.
+      kryterium_oceny: row.tender_kryterium_oceny ?? null,
+      liczba_czesci: row.tender_liczba_czesci ?? null,
     },
   };
 }
