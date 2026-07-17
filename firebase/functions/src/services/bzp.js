@@ -18,6 +18,45 @@ const SEARCH_PATH = env.BZP_SEARCH_PATH.startsWith('/')
   ? env.BZP_SEARCH_PATH
   : `/${env.BZP_SEARCH_PATH}`;
 
+/*
+ * 🚨 PAGINACJA BZP — zmierzone na żywo 2026-07-17 ([[reference_bzp_api_dane]]).
+ * Nie zmieniaj tej strategii bez ponownego pomiaru:
+ *  • `PageNumber` jest IGNOROWANY — 3 strony × PageSize=100 zwróciły IDENTYCZNE 100
+ *    ogłoszeń. Pętla po stronach pobiera w kółko to samo.
+ *  • `PageSize` sufit = 500 (1000 → HTTP 400).
+ *  • BZP publikuje 400–500 ogłoszeń DZIENNIE — nawet okno 1-dniowe trafia sufit.
+ *  • Daty przyjmują godziny, ale sufiks `Z` (UTC) zwraca ZERO wyników.
+ *  • Z filtrów działa WYŁĄCZNIE `OrganizationProvince` (PL+TERYT). `OrderType`,
+ *    `CpvCode`, `SearchText`, `SortingColumn` są ignorowane (zwracają to samo).
+ *
+ * Stąd jedyna poprawna strategia: pętla DZIEŃ PO DNIU; gdy dzień trafi sufit —
+ * dociąć ten sam dzień po 16 województwach.
+ */
+
+/** Sufit `PageSize` w API BZP. Powyżej (1000) API zwraca HTTP 400. */
+export const SUFIT_ZAPYTANIA = 500;
+
+/**
+ * Kody TERYT województw (NIE NUTS) — jedyny filtr, który BZP honoruje.
+ * Służą do docięcia doby, która nie mieści się w sufitie jednego zapytania.
+ */
+export const WOJEWODZTWA_TERYT = [
+  'PL02', 'PL04', 'PL06', 'PL08', 'PL10', 'PL12', 'PL14', 'PL16',
+  'PL18', 'PL20', 'PL22', 'PL24', 'PL26', 'PL28', 'PL30', 'PL32',
+];
+
+/** Lista dni `YYYY-MM-DD` od `from` do `to` włącznie (czysta logika). */
+export function dniWZakresie(from, to) {
+  const dni = [];
+  const koniec = new Date(`${dateOnly(to)}T00:00:00Z`).getTime();
+  let biezacy = new Date(`${dateOnly(from)}T00:00:00Z`).getTime();
+  while (biezacy <= koniec) {
+    dni.push(new Date(biezacy).toISOString().slice(0, 10));
+    biezacy += 86_400_000;
+  }
+  return dni;
+}
+
 function firstOf(obj, keys) {
   for (const key of keys) {
     const value = obj?.[key];
@@ -119,7 +158,7 @@ async function pobierzZPonowieniem(url) {
  *   page — numeracja od 0 (przeliczana na PageNumber API od 1).
  * @returns {Promise<Array>} znormalizowane ogłoszenia
  */
-export async function searchNotices({ publishedFrom, publishedTo, page = 0, size = 50 } = {}) {
+export async function searchNotices({ publishedFrom, publishedTo, page = 0, size = 50, province } = {}) {
   const to = publishedTo ?? dateOnly(Date.now());
   const from = publishedFrom
     ?? dateOnly(Date.now() - env.BZP_LOOKBACK_DAYS * 86_400_000);
@@ -130,8 +169,10 @@ export async function searchNotices({ publishedFrom, publishedTo, page = 0, size
   url.searchParams.set('PublicationDateTo', to);
   url.searchParams.set('PageSize', String(size));
   url.searchParams.set('PageNumber', String(page + 1)); // API BZP numeruje strony od 1
+  // Jedyny filtr, który BZP realnie honoruje — służy do docięcia doby na sufitie.
+  if (province) url.searchParams.set('OrganizationProvince', province);
 
-  logger.info({ from, to, page: page + 1, size }, 'BZP: pobieranie ogłoszeń');
+  logger.info({ from, to, page: page + 1, size, province }, 'BZP: pobieranie ogłoszeń');
   const res = await pobierzZPonowieniem(url);
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -162,4 +203,72 @@ export async function searchNotices({ publishedFrom, publishedTo, page = 0, size
 
   logger.info({ count: notices.length }, 'BZP: pobrano ogłoszenia');
   return notices;
+}
+
+/** Okno jednej doby. Bez sufiksu `Z` — UTC zwraca z BZP zero wyników. */
+function oknoDoby(dzien) {
+  return { publishedFrom: `${dzien}T00:00:00`, publishedTo: `${dzien}T23:59:59` };
+}
+
+/**
+ * Pobiera jedną dobę. Gdy doba trafi sufit (500 = prawie na pewno są dalsze
+ * ogłoszenia, których API nie odda), docina ją po 16 województwach — to jedyny
+ * filtr, który BZP honoruje, a `PageNumber` jest ignorowany, więc paginacja odpada.
+ */
+async function pobierzDzien(dzien) {
+  const okno = oknoDoby(dzien);
+  const zDnia = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA });
+  if (zDnia.length < SUFIT_ZAPYTANIA) return zDnia;
+
+  logger.warn({ dzien, pobrane: zDnia.length },
+    'BZP: doba trafiła sufit zapytania — docinam po województwach, inaczej zgubilibyśmy resztę dnia');
+
+  const wynik = new Map();
+  for (const woj of WOJEWODZTWA_TERYT) {
+    try {
+      const zWoj = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA, province: woj });
+      for (const n of zWoj) wynik.set(n.externalId, n);
+      if (zWoj.length >= SUFIT_ZAPYTANIA) {
+        // Pojedyncze województwo na sufitie = nie mamy już czym ciąć (BZP nie ma
+        // innego działającego filtra). Krzyczymy — to sygnał do cięcia po godzinach.
+        logger.error({ dzien, woj, pobrane: zWoj.length },
+          'BZP: województwo też trafiło sufit — część ogłoszeń tej doby jest NIEOSIĄGALNA tym filtrem');
+      }
+    } catch (err) {
+      // Awaria jednego województwa nie może zabrać reszty doby.
+      logger.error({ err: err.message, dzien, woj }, 'BZP: województwo pominięte');
+    }
+  }
+  return [...wynik.values()];
+}
+
+/**
+ * Pobiera ogłoszenia z zakresu dni — DZIEŃ PO DNIU (patrz komentarz o paginacji
+ * na górze pliku). Zastępuje jedno zapytanie na całe okno, które przy 400–500
+ * ogłoszeniach dziennie gubiło ~85% zakresu `BZP_LOOKBACK_DAYS`.
+ *
+ * Awaria pojedynczego dnia nie przerywa całości — lepiej oddać 6 dni z 7 niż nic.
+ *
+ * @param {{from?: string, to?: string}} [opts] domyślnie ostatnie `BZP_LOOKBACK_DAYS` dni
+ * @returns {Promise<object[]>} znormalizowane ogłoszenia, zdeduplikowane po `externalId`
+ */
+export async function pobierzOgloszeniaBzp({ from, to } = {}) {
+  const doDnia = to ?? dateOnly(Date.now());
+  const odDnia = from ?? dateOnly(Date.now() - env.BZP_LOOKBACK_DAYS * 86_400_000);
+  const dni = dniWZakresie(odDnia, doDnia);
+
+  const wszystkie = new Map();
+  let bledneDni = 0;
+  for (const dzien of dni) {
+    try {
+      for (const n of await pobierzDzien(dzien)) wszystkie.set(n.externalId, n);
+    } catch (err) {
+      bledneDni++;
+      logger.error({ err: err.message, dzien }, 'BZP: dzień pominięty — reszta okna leci dalej');
+    }
+  }
+
+  logger.info({ dni: dni.length, bledneDni, ogloszenia: wszystkie.size },
+    'BZP: zakończono pobieranie dzień po dniu');
+  return [...wszystkie.values()];
 }

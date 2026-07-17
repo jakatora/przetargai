@@ -205,6 +205,22 @@ https://jakatora.github.io/przetargai/
 
 ### 4.7 What's New in This Version (przy każdej nowej wersji)
 
+Wersja 1.0.6 (AKTUALNA — bez emoji, bullet • OK):
+```
+Ta aktualizacja zamienia PrzetargAI w kompletne narzędzie do pracy z przetargami:
+
+• Wyjaśnienie AI — otwórz przetarg i poproś o prosty opis: czego dotyczy, co
+  zwykle trzeba przygotować, na co zwrócić uwagę i czy nadaje się dla małej firmy.
+• Zapisane przetargi z etapami pracy — prowadź kilka postępowań naraz: Rozważam,
+  Przygotowuję ofertę, Oferta złożona, Wygrana lub Przegrana.
+• Notatki przy przetargu — zapisz, jakie dokumenty zebrać i o co dopytać zamawiającego.
+• Przypomnienia o terminie — powiadomienie, zanim minie termin składania ofert.
+• Wyszukiwarka i sortowanie — znajdź konkretny przetarg albo ustaw listę według
+  terminu, trafności lub daty dodania.
+• Filtr trafności — pokazuj tylko przetargi powyżej wybranego procentu dopasowania.
+• Poprawki stabilności i wydajności.
+```
+
 Wersja 1.0.3:
 ```
 Szybciej znajdziesz to, co ważne:

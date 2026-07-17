@@ -1,6 +1,6 @@
 import { logger } from '../lib/logger.js';
 import { features } from '../config.js';
-import { searchNotices } from '../services/bzp.js';
+import { pobierzOgloszeniaBzp } from '../services/bzp.js';
 import { pobierzOgloszeniaTed } from '../services/ted.js';
 import { generateMatchesForAllUsers } from '../services/matching.js';
 import { tenders, cykl } from '../db/repos.js';
@@ -10,12 +10,17 @@ import { tenders, cykl } from '../db/repos.js';
  * (kształt `tenders.upsert`); awaria jednego NIE zatrzymuje pozostałych —
  * TED bywa w konserwacji, a BZP musi wtedy dalej spływać (i odwrotnie).
  *
- * BZP: `PageNumber` w mo-board API jest ignorowany — jedno zapytanie z dużym
- * `PageSize` (max ~500). TED: paginacja działa, sufit stron w adapterze.
+ * 🚨 BZP: `PageNumber` jest IGNOROWANY, sufit `PageSize` = 500, a ogłoszeń jest
+ * 400–500 DZIENNIE. Do 2026-07-17 było tu JEDNO zapytanie `PageSize=500` na całe
+ * okno `BZP_LOOKBACK_DAYS` (domyślnie 7 dni ≈ 3000+ ogłoszeń) — czyli po cichu
+ * gubiliśmy ~85% ogłoszeń, bez błędu w logach. `pobierzOgloszeniaBzp` leci dzień
+ * po dniu i docina dobę po województwach, gdy trafi sufit (szczegóły i pomiary:
+ * services/bzp.js + [[reference_bzp_api_dane]]). NIE wracać do jednego zapytania.
+ * TED: paginacja działa normalnie, sufit stron w adapterze.
  */
-function domyslneZrodla(pageSize) {
+function domyslneZrodla() {
   const zrodla = [
-    { nazwa: 'bzp', pobierz: () => searchNotices({ page: 0, size: pageSize }) },
+    { nazwa: 'bzp', pobierz: () => pobierzOgloszeniaBzp() },
   ];
   if (features.ted) {
     zrodla.push({ nazwa: 'ted', pobierz: () => pobierzOgloszeniaTed() });
@@ -24,11 +29,33 @@ function domyslneZrodla(pageSize) {
 }
 
 /**
- * Pobiera ogłoszenia ze wszystkich źródeł, zapisuje nowe i generuje dopasowania.
- * @param {{pageSize?: number, zrodla?: Array<{nazwa: string, pobierz: () => Promise<object[]>}>}} opts
- *   `zrodla` — wstrzykiwane w testach; produkcja używa rejestru domyślnego.
+ * Ile ms wolno zużyć na CAŁY przebieg (pobieranie + dopasowania).
+ *
+ * `dailyTenderFetch` ma twardy limit 540 s — po nim platforma zabija funkcję
+ * w połowie pętli. Zostawiamy 60 s zapasu na zapis śladu cyklu i raport.
  */
-export async function runTenderFetch({ pageSize = 500, zrodla = domyslneZrodla(pageSize) } = {}) {
+export const BUDZET_PRZEBIEGU_MS = 480_000;
+
+/**
+ * Ile czasu zostało dla cyklu dopasowań po pobraniu ogłoszeń.
+ *
+ * Po naprawie paginacji BZP pobieranie idzie DZIEŃ PO DNIU i trwa ~134 s zamiast
+ * ~21 s (zmierzone na żywym API). Przy stałym budżecie dopasowań 440 s suma
+ * wynosiłaby 574 s > 540 s i funkcja ginęła w połowie dopasowań — po cichu,
+ * bez błędu. Dlatego budżet dopasowań liczymy z tego, co REALNIE zostało.
+ */
+export function pozostalyBudzetMs(zuzyteMs, calosc = BUDZET_PRZEBIEGU_MS) {
+  return Math.max(0, calosc - zuzyteMs);
+}
+
+/**
+ * Pobiera ogłoszenia ze wszystkich źródeł, zapisuje nowe i generuje dopasowania.
+ * @param {{zrodla?: Array<{nazwa: string, pobierz: () => Promise<object[]>}>}} opts
+ *   `zrodla` — wstrzykiwane w testach; produkcja używa rejestru domyślnego.
+ *   (`pageSize` usunięty — rozmiar okna nie jest już decyzją wołającego, bo BZP
+ *   wymaga cięcia dzień po dniu; patrz komentarz przy `domyslneZrodla`.)
+ */
+export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
   const startedAt = Date.now();
   const statystyki = {};
   let fetched = 0;
@@ -84,7 +111,11 @@ export async function runTenderFetch({ pageSize = 500, zrodla = domyslneZrodla(p
   // przetargi odroczone wczoraj przez dzienny limit.
   let matchesCreated = 0;
   try {
-    matchesCreated = await generateMatchesForAllUsers();
+    // Budżet z tego, co ZOSTAŁO po pobieraniu — patrz `pozostalyBudzetMs`.
+    const budzetCzasuMs = pozostalyBudzetMs(Date.now() - startedAt);
+    logger.info({ pobieranieMs: Date.now() - startedAt, budzetDopasowanMs: budzetCzasuMs },
+      'fetchTenders: przechodzę do dopasowań z budżetem resztkowym');
+    matchesCreated = await generateMatchesForAllUsers({ budzetCzasuMs });
   } catch (err) {
     logger.error({ err: err.message }, 'fetchTenders: cykl dopasowań nie powiódł się');
     return {
