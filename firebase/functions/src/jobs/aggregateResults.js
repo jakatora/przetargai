@@ -18,10 +18,21 @@ import { dniWZakresie } from '../services/bzp.js';
  * @param {{dni?: number, pobierzDzien?: Function, teraz?: number}} [opts]
  *   `pobierzDzien`/`teraz` wstrzykiwane w testach.
  */
+/**
+ * Ile ms wolno zużyć na pobieranie, zanim przejdziemy do agregacji.
+ *
+ * 🚨 Bez tego 30 dni × pobranie dnia (do ~17 zapytań na dobę na suficie) potrafi
+ * przekroczyć timeout funkcji (540 s) i platforma ZABIJA ją PRZED zapisem — cała
+ * praca w kosz, po cichu (audyt R18). Lepiej zagregować 20 dni z 30 niż stracić
+ * wszystko. Zostawiamy zapas na agregację + batch zapis.
+ */
+const BUDZET_POBIERANIA_MS = 420_000;
+
 export async function runWynikiAggregation({
   dni = 30,
   pobierzDzien = pobierzSuroweWynikiDnia,
   teraz = Date.now(),
+  budzetMs = BUDZET_POBIERANIA_MS,
 } = {}) {
   const start = Date.now();
   const od = new Date(teraz - (dni - 1) * 86_400_000).toISOString().slice(0, 10);
@@ -30,7 +41,15 @@ export async function runWynikiAggregation({
 
   const sparsowane = [];
   let bledneDni = 0;
-  for (const dzien of listaDni) {
+  let pominietychDni = 0;
+  // Od NAJNOWSZYCH dni — jeśli zabraknie czasu, tracimy najstarsze (najmniej istotne).
+  for (const dzien of [...listaDni].reverse()) {
+    if (Date.now() - start > budzetMs) {
+      // `dzien` i wszystkie starsze nietknięte = indeksy 0..indexOf w oryginalnej liście.
+      pominietychDni = listaDni.indexOf(dzien) + 1;
+      logger.warn({ pominietychDni }, 'Agregacja wyników: budżet czasu wyczerpany — agreguję to, co zebrane');
+      break;
+    }
     try {
       const surowe = await pobierzDzien(dzien);
       for (const s of surowe) {
@@ -47,7 +66,7 @@ export async function runWynikiAggregation({
   const zapisane = await wynikiStats.zapisz(buckety);
 
   const wynik = {
-    ok: true, dni: listaDni.length, bledneDni,
+    ok: true, dni: listaDni.length, bledneDni, pominietychDni,
     ogloszen: sparsowane.length, bucketow: zapisane, durationMs: Date.now() - start,
   };
   logger.info(wynik, 'runWynikiAggregation: zakończono');

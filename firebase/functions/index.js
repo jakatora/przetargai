@@ -136,7 +136,9 @@ export const aggregateResults = onSchedule(
   {
     schedule: '0 4 * * 0',
     timeZone: 'Europe/Warsaw',
-    timeoutSeconds: 540,
+    // Gen2 dopuszcza do 3600 s. Budżet POBIERANIA i tak tnie się na 420 s w kodzie —
+    // ten zapas chroni przed egzekucją, gdyby agregacja/zapis trwały dłużej (audyt R18).
+    timeoutSeconds: 1800,
     memory: '512MiB',
     secrets: [JWT_SECRET],
   },

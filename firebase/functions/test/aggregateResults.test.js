@@ -46,6 +46,23 @@ test('agreguje wyniki z wielu dni i zapisuje bucket odczytywalny per klucz', asy
   assert.equal(b.probka, 3);
 });
 
+test('budżet czasu: przerywa pobieranie i AGREGUJE to, co zebrane (nie ginie mid-run)', async () => {
+  let wywolan = 0;
+  const wynik = await runWynikiAggregation({
+    dni: 30,
+    teraz: new Date('2026-07-30T12:00:00Z').getTime(),
+    budzetMs: -1, // gwarantuje przerwanie na pierwszej iteracji (0 > -1)
+    pobierzDzien: async () => {
+      wywolan++;
+      return [surowe(`X-${wywolan}`, 'PL14', '100000', 4), surowe(`Y-${wywolan}`, 'PL14', '200000', 6),
+        surowe(`Z-${wywolan}`, 'PL14', '150000', 5)];
+    },
+  });
+  assert.equal(wynik.ok, true, 'kończy się sukcesem mimo przerwania — nic nie ginie');
+  assert.ok(wynik.pominietychDni > 0, 'część dni pominięta przez budżet');
+  assert.ok(wywolan <= 2, 'przerwał wcześnie, nie pobrał wszystkich 30 dni');
+});
+
 test('awaria jednego dnia nie przerywa agregacji reszty', async () => {
   const wynik = await runWynikiAggregation({
     dni: 2,
