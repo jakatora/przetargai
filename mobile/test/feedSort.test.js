@@ -3,12 +3,35 @@ import assert from 'node:assert/strict';
 
 import {
   SORTOWANIA, sortujDopasowania, filtrujTekst, normalizujSort,
+  filtrujMalaFirma, przyjaznyMalejFirmie,
 } from '../src/lib/feedSort.js';
 
 /*
  * Narzędzia pracy z feedem (życzenie usera 2026-07-11): wyszukiwarka + sortowanie.
  * Czysta logika — bez Reacta.
  */
+
+// ---------------- filtr „dla małej firmy" (R19) ----------------
+
+const MF = (id, tender) => ({ id, tender });
+
+test('przyjaznyMalejFirmie: duże wadium = wrogie; brak/małe/nieznane = przyjazne', () => {
+  assert.equal(przyjaznyMalejFirmie({ wadium_wymagane: true, wadium_kwota: 50000 }), false);
+  assert.equal(przyjaznyMalejFirmie({ wadium_wymagane: true, wadium_kwota: 5000 }), true);
+  assert.equal(przyjaznyMalejFirmie({ wadium_wymagane: false }), true);
+  assert.equal(przyjaznyMalejFirmie({ wadium_wymagane: null }), true, 'nieznane nie chowamy');
+  assert.equal(przyjaznyMalejFirmie({ wadium_wymagane: true, wadium_kwota: null }), true, 'wymagane bez kwoty — nie chowamy');
+});
+
+test('filtrujMalaFirma: chowa duże wadium; wyłączony przepuszcza wszystko', () => {
+  const lista = [
+    MF('a', { wadium_wymagane: true, wadium_kwota: 40000 }),
+    MF('b', { wadium_wymagane: false }),
+    MF('c', { wadium_wymagane: null }),
+  ];
+  assert.deepEqual(filtrujMalaFirma(lista, true).map((m) => m.id), ['b', 'c'], 'a wypada');
+  assert.equal(filtrujMalaFirma(lista, false).length, 3, 'wyłączony = wszystko');
+});
 
 const M = (id, score, deadline, title, org = '') => ({
   id, confidence_score: score,

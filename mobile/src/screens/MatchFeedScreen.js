@@ -15,7 +15,7 @@ import MatchCard from '../components/MatchCard';
 import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PROGI, KLUCZ_PROGU, filtrujPoProgu, normalizujProg } from '../lib/filtrOcen';
-import { SORTOWANIA, KLUCZ_SORT, sortujDopasowania, filtrujTekst, normalizujSort } from '../lib/feedSort';
+import { SORTOWANIA, KLUCZ_SORT, sortujDopasowania, filtrujTekst, normalizujSort, filtrujMalaFirma } from '../lib/feedSort';
 import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
 
@@ -31,6 +31,7 @@ export default function MatchFeedScreen({ navigation }) {
   const [prog, setProg] = useState(0);
   const [sort, setSort] = useState('trafnosc');
   const [szukaj, setSzukaj] = useState('');
+  const [malaFirma, setMalaFirma] = useState(false); // filtr „dla małej firmy" (R19)
   // Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free).
   const [zacheta, setZacheta] = useState(null);
   const [upgrading, setUpgrading] = useState(false);
@@ -58,9 +59,10 @@ export default function MatchFeedScreen({ navigation }) {
   // wczytanych dopasowaniach (feed jednego użytkownika jest mały).
   const widoczne = useMemo(() => {
     const poProgu = filtrujPoProgu(matches, prog);
-    const poTekscie = filtrujTekst(poProgu, szukaj);
+    const poMalej = filtrujMalaFirma(poProgu, malaFirma);
+    const poTekscie = filtrujTekst(poMalej, szukaj);
     return sortujDopasowania(poTekscie, sort);
-  }, [matches, prog, szukaj, sort]);
+  }, [matches, prog, szukaj, sort, malaFirma]);
 
   /**
    * Wczytuje pierwszą stronę.
@@ -233,6 +235,17 @@ export default function MatchFeedScreen({ navigation }) {
               );
             })}
           </View>
+          {/* Filtr „dla małej firmy" (R19) — chowa przetargi z dużym wadium. */}
+          <Pressable
+            onPress={() => setMalaFirma((v) => !v)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: malaFirma }}
+            style={[styles.malaChip, malaFirma && styles.malaChipAktywny]}
+          >
+            <Text style={[styles.malaTekst, malaFirma && styles.malaTekstAktywny]}>
+              {malaFirma ? '✓ ' : ''}Dla małej firmy (bez dużego wadium)
+            </Text>
+          </Pressable>
           {/* Licznik wyników (R14) — ile widać po filtrach; z podpowiedzią, gdy filtr zawęża. */}
           {widoczne.length > 0 ? (
             <Text style={styles.licznik}>
@@ -322,6 +335,13 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   szukajIkona: { fontSize: 15 },
   szukajPole: { flex: 1, paddingVertical: 11, fontSize: 15, color: k.text },
   szukajX: { color: k.textMuted, fontSize: 16, fontWeight: '700', paddingHorizontal: 2 },
+  malaChip: {
+    alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999,
+    borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, marginBottom: spacing.sm,
+  },
+  malaChipAktywny: { backgroundColor: k.blue, borderColor: k.blue },
+  malaTekst: { fontSize: 13, fontWeight: '700', color: k.textMuted },
+  malaTekstAktywny: { color: k.surface },
   licznik: { fontSize: 13, color: k.textMuted, fontWeight: '700', marginBottom: spacing.sm },
   progi: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   progChip: {

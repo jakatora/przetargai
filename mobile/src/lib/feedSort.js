@@ -108,3 +108,25 @@ export function filtrujTekst(matches, zapytanie) {
     return rdzenieZapytania.every((r) => trafia(r, rdzenieTekstu));
   });
 }
+
+/** Powyżej tej kwoty wadium blokuje płynność małej firmy — filtr „dla małej firmy" chowa takie. */
+export const PROG_WADIUM_MALA_FIRMA = 20000;
+
+/**
+ * Czy przetarg jest przyjazny małej firmie? Wrogi = wymagane duże wadium (wiąże
+ * gotówkę). Nieznane wadium (null) NIE jest wrogie — nie chowamy na wszelki wypadek.
+ */
+export function przyjaznyMalejFirmie(tender) {
+  if (tender?.wadium_wymagane === true
+      && Number.isFinite(tender?.wadium_kwota)
+      && tender.wadium_kwota >= PROG_WADIUM_MALA_FIRMA) {
+    return false;
+  }
+  return true;
+}
+
+/** Filtr „dla małej firmy" — chowa przetargi z dużym wadium. `wlaczony=false` = przepuszcza wszystko. */
+export function filtrujMalaFirma(matches, wlaczony) {
+  if (!wlaczony) return matches;
+  return matches.filter((m) => przyjaznyMalejFirmie(m.tender));
+}
