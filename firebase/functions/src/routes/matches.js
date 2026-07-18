@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { matches, feedback, saved, tenders, streszczenieQuota } from '../db/repos.js';
+import { matches, feedback, saved, tenders, streszczenieQuota, wynikiStats } from '../db/repos.js';
+import { kluczWyniku } from '../lib/wynikiAgregacja.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicMatch, publicSaved } from '../lib/serialize.js';
@@ -184,6 +185,23 @@ router.get('/:id/streszczenie', ah(async (req, res) => {
   await tenders.saveSummary(tenderId, streszczenie);
   audit({ userId: req.user.id, action: 'tender_summary', detail: { tenderId }, ip: req.ip });
   res.json({ streszczenie, cached: false });
+}));
+
+/**
+ * Statystyki wyników dla przetargu (R17): „za taką robotę w regionie płacono X–Y,
+ * startowało ~N firm, w Z% wygrywał mały". Dopasowanie po (dział CPV, rodzaj,
+ * województwo). MUSI stać przed `GET /:id`. Zwraca { wyniki: null }, gdy brak danych.
+ */
+router.get('/:id/wyniki', ah(async (req, res) => {
+  const row = await matches.detail(req.user.id, req.params.id);
+  if (!row) throw notFound('Dopasowanie nie zostało znalezione');
+
+  const tender = await tenders.findById(row.tender_id);
+  const klucz = tender ? kluczWyniku(tender) : null;
+  if (!klucz) { res.json({ wyniki: null, powod: 'brak_wymiarow' }); return; }
+
+  const stat = await wynikiStats.pobierz(klucz);
+  res.json({ wyniki: stat ?? null, powod: stat ? undefined : 'brak_danych' });
 }));
 
 /** Szczegóły pojedynczego dopasowania. */

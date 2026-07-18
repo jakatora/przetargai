@@ -11,11 +11,24 @@
  * ofert jest wiarygodna niezależnie od spójności kwot ([[reference_bzp_api_dane]]).
  */
 
-/** Dwucyfrowy dział CPV z pierwszego kodu (np. 45 = roboty budowlane). */
+/** Dwucyfrowy dział CPV z pierwszego kodu (np. 45 = roboty budowlane). Przyjmuje
+ * tablicę kodów (z parsera) albo sklejony string `cpv_main` z przetargu. */
 export function dzialCpv(cpv) {
-  const pierwszy = Array.isArray(cpv) ? cpv[0] : null;
+  const pierwszy = Array.isArray(cpv) ? cpv[0] : cpv;
   const cyfry = String(pierwszy ?? '').replace(/\D/g, '');
   return cyfry.length >= 2 ? cyfry.slice(0, 2) : null;
+}
+
+/**
+ * Klucz bucketa statystyk dla PRZETARGU (serwowanie, R17). Zwraca `dział|rodzaj|woj`
+ * albo null, gdy brakuje któregokolwiek wymiaru. Symetryczne z agregacją.
+ */
+export function kluczWyniku(tender) {
+  const dzial = dzialCpv(tender?.cpv_main ?? tender?.cpv);
+  const rodzaj = tender?.rodzaj ?? null;
+  const woj = normWojewodztwo(tender?.wojewodztwo);
+  if (!dzial || !rodzaj || !woj) return null;
+  return `${dzial}|${rodzaj}|${woj}`;
 }
 
 /**

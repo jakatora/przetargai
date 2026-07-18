@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { agregujWyniki, dzialCpv, mediana } from '../src/lib/wynikiAgregacja.js';
+import { agregujWyniki, dzialCpv, mediana, kluczWyniku } from '../src/lib/wynikiAgregacja.js';
 
 /*
  * Agregacja wyników postępowań (runda 15) — estymator per (dział CPV, rodzaj,
@@ -15,6 +15,16 @@ test('dzialCpv: dwucyfrowy dział z pierwszego kodu', () => {
   assert.equal(dzialCpv(['90910000']), '90');
   assert.equal(dzialCpv([]), null);
   assert.equal(dzialCpv(null), null);
+});
+
+test('dzialCpv przyjmuje sklejony string cpv_main z przetargu', () => {
+  assert.equal(dzialCpv('45233222-1 (Roboty),45000000-7 (Roboty budowlane)'), '45');
+});
+
+test('kluczWyniku: buduje klucz z przetargu, spina „PL14"→„14"', () => {
+  assert.equal(kluczWyniku({ cpv_main: '45233000-9 (Roboty)', rodzaj: 'Works', wojewodztwo: 'PL14' }), '45|Works|14');
+  assert.equal(kluczWyniku({ cpv_main: '45000000', rodzaj: 'Works' }), null, 'brak województwa → null');
+  assert.equal(kluczWyniku({ rodzaj: 'Works', wojewodztwo: 'PL14' }), null, 'brak CPV → null');
 });
 
 test('mediana: nieparzysta i parzysta', () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput, Share } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
@@ -14,6 +14,7 @@ import { formatDate, formatBudget } from '../lib/format';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
 import { opisWadium } from '../lib/wadium';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
+import { opisWyniki } from '../lib/wyniki';
 
 function Row({ styles, label, value, last }) {
   return (
@@ -43,6 +44,16 @@ export default function MatchDetailScreen({ route }) {
   const [status, setStatus] = useState(match.status || STATUS_DOMYSLNY);
   const [notatka, setNotatka] = useState(match.notatka || '');
   const [notatkaZapis, setNotatkaZapis] = useState('idle'); // idle | zapisywanie | zapisano
+  // Statystyki wyników (R17) — lekki odczyt, pobierany raz na wejściu (bez kosztu AI).
+  const [wyniki, setWyniki] = useState(null);
+
+  useEffect(() => {
+    let aktywny = true;
+    api.getWyniki(match.id)
+      .then((d) => { if (aktywny && d.wyniki) setWyniki(opisWyniki(d.wyniki)); })
+      .catch(() => {});
+    return () => { aktywny = false; };
+  }, [match.id]);
 
   const zapisany = isSaved(match.id);
   const budget = formatBudget(tender.budget, tender.currency);
@@ -192,6 +203,18 @@ export default function MatchDetailScreen({ route }) {
         {budget ? <Row styles={styles} label="Szacowana wartość" value={budget} /> : null}
         <Row styles={styles} label={cpv.etykieta} value={cpv.wartosc} last />
       </View>
+
+      {wyniki ? (
+        <>
+          <Text style={styles.sectionTitle}>Za ile się to robi (Twój region i branża)</Text>
+          <View style={styles.card}>
+            {wyniki.cena ? <Text style={styles.wynikWiersz}>{wyniki.cena}</Text> : null}
+            {wyniki.konkurencja ? <Text style={styles.wynikWiersz}>{wyniki.konkurencja}</Text> : null}
+            {wyniki.maly ? <Text style={styles.wynikWiersz}>{wyniki.maly}</Text> : null}
+            <Text style={styles.wynikPodpis}>{wyniki.podpis}</Text>
+          </View>
+        </>
+      ) : null}
 
       <View style={styles.akcjeCard}>
         <Pressable
@@ -420,6 +443,8 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   rowLabel: { fontSize: 12, color: k.textMuted, marginBottom: 2 },
   rowValue: { fontSize: 15, color: k.text, fontWeight: '600' },
   wadiumPodpis: { fontSize: 12, color: k.textMuted, marginTop: 3, lineHeight: 16 },
+  wynikWiersz: { fontSize: 15, color: k.text, lineHeight: 22, marginBottom: 6 },
+  wynikPodpis: { fontSize: 12, color: k.textMuted, marginTop: 4, lineHeight: 16, fontStyle: 'italic' },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',

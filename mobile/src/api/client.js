@@ -86,6 +86,8 @@ export const api = {
    * udało, albo { streszczenie: null, powod, komunikat } przy limicie/niedostępności.
    */
   getStreszczenie: (id) => request(`/matches/${id}/streszczenie`),
+  /** Statystyki rozstrzygniętych postępowań dla przetargu (R17): { wyniki } albo { wyniki: null }. */
+  getWyniki: (id) => request(`/matches/${id}/wyniki`),
   /** Statystyki + zachęta do Standard oparta na realnych liczbach (D-055). */
   getStatystyki: () => request('/matches/statystyki'),
   /** Warsztat przetargu (D-054): etap pracy + prywatna notatka zapisanego przetargu. */

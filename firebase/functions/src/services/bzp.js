@@ -119,6 +119,9 @@ export function normalizeNotice(raw) {
     // Meta z htmlBody (rundy 5-6): kryterium oceny + liczba części.
     kryterium_oceny: kryterium,
     liczba_czesci: liczbaCzesci,
+    // Wymiary do statystyk wyników (R17): rodzaj + województwo (PL+TERYT).
+    rodzaj: firstOf(raw, ['orderType']),
+    wojewodztwo: firstOf(raw, ['organizationProvince']),
     raw: rawLite,
   };
 }

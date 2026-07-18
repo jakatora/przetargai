@@ -240,6 +240,9 @@ export const tenders = {
       // Meta z htmlBody (rundy 5-6).
       kryterium_oceny: t.kryterium_oceny ?? null,
       liczba_czesci: t.liczba_czesci ?? null,
+      // Wymiary do statystyk wyników (R17).
+      rodzaj: t.rodzaj ?? null,
+      wojewodztwo: t.wojewodztwo ?? null,
       raw_data: raw,
       published_at: t.publishedAt ?? null,
       fetched_at: nowIso(),
@@ -266,6 +269,8 @@ export const tenders = {
             wadium_wiele_czesci: t.wadium_wiele_czesci ?? false,
             kryterium_oceny: t.kryterium_oceny ?? null,
             liczba_czesci: t.liczba_czesci ?? null,
+            rodzaj: t.rodzaj ?? null,
+            wojewodztwo: t.wojewodztwo ?? null,
           };
           await ref.update(meta);
           return { tender: { id, ...dane, ...meta }, created: false };
