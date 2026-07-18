@@ -289,3 +289,45 @@ export async function pobierzOgloszeniaBzp({ from, to } = {}) {
     'BZP: zakończono pobieranie dzień po dniu');
   return [...wszystkie.values()];
 }
+
+/* ======================= WYNIKI POSTĘPOWAŃ (runda 16) ======================= */
+/*
+ * Osobna ścieżka pobierania `TenderResultNotice` — SUROWE ogłoszenia z `htmlBody`
+ * (parser wyników go potrzebuje). Świadomie NIE reużywa pobierzDzien/searchNotices,
+ * bo te normalizują i odrzucają htmlBody. Obowiązuje TA SAMA pułapka paginacji co
+ * wyżej (PageNumber ignorowany, sufit 500, docinanie po województwach) — przy zmianie
+ * strategii zaktualizować OBA miejsca.
+ */
+
+async function zapytanieSurowe({ noticeType, from, to, size = SUFIT_ZAPYTANIA, province }) {
+  const url = new URL(BASE + SEARCH_PATH);
+  url.searchParams.set('NoticeType', noticeType);
+  url.searchParams.set('PublicationDateFrom', from);
+  url.searchParams.set('PublicationDateTo', to);
+  url.searchParams.set('PageSize', String(size));
+  if (province) url.searchParams.set('OrganizationProvince', province);
+
+  const res = await pobierzZPonowieniem(url);
+  if (!res.ok) throw new Error(`BZP ${noticeType} odpowiedziało ${res.status}`);
+  return extractList(await res.json());
+}
+
+const idSurowego = (n) => String(n?.bzpNumber ?? n?.noticeNumber ?? n?.objectId ?? '');
+
+/** Jedna doba surowych ogłoszeń o wyniku, z docinaniem po województwach na suficie. */
+export async function pobierzSuroweWynikiDnia(dzien) {
+  const okno = oknoDoby(dzien);
+  const zDnia = await zapytanieSurowe({ noticeType: 'TenderResultNotice', ...okno });
+  if (zDnia.length < SUFIT_ZAPYTANIA) return zDnia;
+
+  const mapa = new Map(zDnia.map((n) => [idSurowego(n), n]));
+  for (const woj of WOJEWODZTWA_TERYT) {
+    try {
+      const zWoj = await zapytanieSurowe({ noticeType: 'TenderResultNotice', ...okno, province: woj });
+      for (const n of zWoj) mapa.set(idSurowego(n), n);
+    } catch (err) {
+      logger.error({ err: err.message, dzien, woj }, 'BZP wyniki: województwo pominięte');
+    }
+  }
+  return [...mapa.values()];
+}

@@ -815,6 +815,34 @@ export const profilQuota = {
   },
 };
 
+// ============================ statystyki wyników (R16) ============================
+
+/** Klucz bucketa `45|Works|PL14` bywa docId — `|` jest dozwolone, ale utwardzamy. */
+const statDocId = (klucz) => String(klucz).replace(/[/\\]/g, '_');
+
+export const wynikiStats = {
+  /** Zapisuje wszystkie buckety agregacji (nadpisuje — statystyki liczymy od nowa). */
+  async zapisz(buckety) {
+    const wpisy = Object.entries(buckety);
+    // Batch po 400 (limit 500 operacji na batch, zapas na bezpieczeństwo).
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const [klucz, stat] of wpisy.slice(i, i + 400)) {
+        batch.set(db().collection('wyniki_stats').doc(statDocId(klucz)),
+          { ...stat, klucz, updated_at: nowIso() });
+      }
+      await batch.commit();
+    }
+    return wpisy.length;
+  },
+
+  /** Statystyka dla klucza `dział|rodzaj|województwo` albo null. */
+  async pobierz(klucz) {
+    const doc = await db().collection('wyniki_stats').doc(statDocId(klucz)).get();
+    return doc.exists ? doc.data() : null;
+  },
+};
+
 // ============================ feedback ============================
 
 export const feedback = {

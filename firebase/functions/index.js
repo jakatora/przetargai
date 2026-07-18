@@ -126,3 +126,23 @@ export const remindDeadlines = onSchedule(
     console.log(JSON.stringify({ severity: 'INFO', message: 'remindDeadlines zakończony', ...wynik }));
   },
 );
+
+/**
+ * Agregacja wyników postępowań (runda 16). Statystyki cen/konkurencji zmieniają się
+ * wolno — liczymy je raz w tygodniu (niedziela 4:00) z szerokiego okna 30 dni.
+ * Osobno od dziennego matchingu, bo pobiera inny typ ogłoszeń (TenderResultNotice).
+ */
+export const aggregateResults = onSchedule(
+  {
+    schedule: '0 4 * * 0',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runWynikiAggregation } = await import('./src/jobs/aggregateResults.js');
+    const wynik = await runWynikiAggregation({ dni: 30 });
+    console.log(JSON.stringify({ severity: 'INFO', message: 'aggregateResults zakończony', ...wynik }));
+  },
+);
