@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { badRequest } from '../lib/errors.js';
+import { authRequired } from '../middleware/auth.js';
+import { umowyMonitorowane } from '../db/repos.js';
 import { ekstrahuj_i_normalizuj } from '../lib/umowaEkstrakcja.js';
 import { zbuduj_flagi_umowy } from '../lib/umowaAnaliza.js';
 
@@ -49,6 +51,59 @@ router.post('/analiza', ah(async (req, res) => {
   const tekst = await ekstrahuj_i_normalizuj(parsed.data);
   const flagi = zbuduj_flagi_umowy(tekst, parsed.data.miesiace);
   res.json({ tekst, flagi });
+}));
+
+/*
+ * Wzięcie podpisanej umowy pod monitoring waloryzacji (podzadanie 10/12). Zapisujemy
+ * dwa fakty z chwili podpisania: BRANŻĘ kontraktu (po niej dobierany jest właściwy
+ * wskaźnik cen GUS) i WSKAŹNIK BAZOWY GUS (punkt odniesienia — kolejne podzadania
+ * liczą wzrost cen jako stosunek późniejszego wskaźnika do tej bazy i alarmują po
+ * przekroczeniu progu). Rekord należy do zalogowanego użytkownika, bo to jego
+ * będziemy alarmować — stąd `authRequired`.
+ *
+ * Schemat jest luźny (typy), a semantykę (branża niepusta, wskaźnik dodatni, data
+ * poprawna) egzekwujemy niżej z czytelnymi komunikatami — spójnie z trasą /analiza.
+ */
+const monitorujSchema = z.object({
+  branza: z.string().max(120),
+  wskaznik_bazowy: z.number(),
+  wskaznik_okres: z.string().max(40).optional(),
+  data_podpisania: z.string().optional(),
+});
+
+router.post('/monitoruj', authRequired, ah(async (req, res) => {
+  const parsed = monitorujSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    throw badRequest('Podaj "branza" (branża kontraktu) i "wskaznik_bazowy" (liczba — wskaźnik GUS z chwili podpisania).');
+  }
+
+  const branza = parsed.data.branza.trim();
+  if (!branza) throw badRequest('Pole "branza" nie może być puste.');
+  // Wskaźnik cen jest zawsze dodatni (baza porównania); 0/ujemny nie ma sensu.
+  if (!(parsed.data.wskaznik_bazowy > 0)) throw badRequest('"wskaznik_bazowy" musi być liczbą dodatnią.');
+
+  // Data podpisania opcjonalna — domyślnie stemplujemy chwilę zapisu. Podaną
+  // normalizujemy do ISO 8601, żeby porównania czasu nie zależały od formatu wejścia.
+  let dataPodpisania = null;
+  if (parsed.data.data_podpisania !== undefined) {
+    const d = new Date(parsed.data.data_podpisania);
+    if (Number.isNaN(d.getTime())) throw badRequest('"data_podpisania" musi być poprawną datą (ISO 8601).');
+    dataPodpisania = d.toISOString();
+  }
+
+  const umowa = umowyMonitorowane.create({
+    userId: req.user.id,
+    branza,
+    wskaznikBazowy: parsed.data.wskaznik_bazowy,
+    wskaznikOkres: parsed.data.wskaznik_okres?.trim() || null,
+    dataPodpisania,
+  });
+  res.status(201).json({ umowa });
+}));
+
+/** Umowy wzięte pod monitoring przez zalogowanego użytkownika (najnowsze pierwsze). */
+router.get('/monitoruj', authRequired, ah(async (req, res) => {
+  res.json({ umowy: umowyMonitorowane.listForUser(req.user.id) });
 }));
 
 export default router;

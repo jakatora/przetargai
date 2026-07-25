@@ -552,7 +552,43 @@ export const aiQuotaDevice = {
   },
 };
 
+// ============================ umowa_monitorowana ============================
+// Umowa (kontrakt) wzięta pod monitoring waloryzacji. W chwili podpisania
+// zapisujemy branżę kontraktu (po niej dobierany jest wskaźnik cen GUS) oraz
+// wskaźnik bazowy GUS (punkt odniesienia — wzrost cen liczymy względem tej bazy).
+// Rekord należy do użytkownika; późniejsze podzadania (śledzenie wskaźników,
+// alarm, wniosek o waloryzację) czytają go po `user_id`.
+
+const _umInsert = lazy(`
+  INSERT INTO umowa_monitorowana (
+    id, user_id, branza, wskaznik_bazowy, wskaznik_okres, data_podpisania, created_at, updated_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+const _umByIdForUser = lazy(`SELECT * FROM umowa_monitorowana WHERE id = ? AND user_id = ?`);
+const _umListForUser = lazy(`
+  SELECT * FROM umowa_monitorowana WHERE user_id = ? ORDER BY created_at DESC`);
+
+export const umowyMonitorowane = {
+  /**
+   * Bierze umowę pod monitoring. `dataPodpisania` domyślnie = chwila zapisu.
+   * Zwraca zapisany wiersz (skopowany do właściciela, więc zawsze istnieje).
+   */
+  create({ userId, branza, wskaznikBazowy, wskaznikOkres = null, dataPodpisania = null }) {
+    const id = newId();
+    const ts = nowIso();
+    _umInsert().run(
+      id, userId, branza, wskaznikBazowy, wskaznikOkres ?? null, dataPodpisania ?? ts, ts, ts,
+    );
+    return _umByIdForUser().get(id, userId);
+  },
+  findByIdForUser(id, userId) {
+    return _umByIdForUser().get(id, userId) || null;
+  },
+  listForUser(userId) {
+    return _umListForUser().all(userId);
+  },
+};
+
 export const repos = {
   users, tenders, matches, feedback, magicLinks, aiUsage, stripeEvents, aiQuotaDevice,
-  fitterPremium, fitterChat, fitterJobs,
+  fitterPremium, fitterChat, fitterJobs, umowyMonitorowane,
 };

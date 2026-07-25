@@ -61,7 +61,7 @@ const { migrate } = await import('../src/db/migrate.js');
 const zastosowane = migrate();
 
 const { db } = await import('../src/db/index.js');
-const { stripeEvents } = await import('../src/db/repos.js');
+const { stripeEvents, umowyMonitorowane } = await import('../src/db/repos.js');
 
 after(() => {
   db.close();
@@ -73,6 +73,7 @@ test('migracja: na istniejącej bazie wykonują się WSZYSTKIE migracje po kolei
     '001_users_nip_opcjonalny',
     '002_stripe_events',
     '003_ai_quota_device',
+    '004_umowa_monitorowana',
   ]);
 });
 
@@ -103,8 +104,20 @@ test('migracja 002: rejestr zdarzeń Stripe działa (claim / duplikat / release)
   assert.equal(stripeEvents.claim('evt_1', 'checkout.session.completed'), true, 'po release ponowienie przechodzi');
 });
 
+test('migracja 004: monitoring umowy działa po aktualizacji (branża + wskaźnik bazowy GUS)', () => {
+  // Płacący klient bierze podpisaną umowę pod monitoring waloryzacji na
+  // zmigrowanej produkcji — rekord zapisuje się i czyta po właścicielu.
+  const zapis = umowyMonitorowane.create({
+    userId: 'u-platny', branza: 'budownictwo', wskaznikBazowy: 112.4, wskaznikOkres: '2026-Q2',
+  });
+  const odczyt = umowyMonitorowane.findByIdForUser(zapis.id, 'u-platny');
+  assert.equal(odczyt.branza, 'budownictwo');
+  assert.equal(odczyt.wskaznik_bazowy, 112.4);
+  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), [], 'FK do users spójne');
+});
+
 test('migracja: ponowne uruchomienie niczego nie zmienia (idempotencja)', () => {
   const drugie = migrate();
   assert.deepEqual(drugie.applied, []);
-  assert.equal(drugie.skipped, 3);
+  assert.equal(drugie.skipped, 4);
 });

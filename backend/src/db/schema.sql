@@ -175,3 +175,19 @@ CREATE TABLE IF NOT EXISTS fitter_job_listing (
 CREATE INDEX IF NOT EXISTS idx_job_paid_created ON fitter_job_listing(is_paid, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_job_device ON fitter_job_listing(device_id);
 CREATE INDEX IF NOT EXISTS idx_job_session ON fitter_job_listing(stripe_session_id);
+
+-- Monitoring umowy pod kątem waloryzacji (ulepszenie „pilnowanie waloryzacji i
+-- pułapek w umowie", migracja 004). W chwili podpisania zapisujemy branżę
+-- kontraktu (dobór wskaźnika cen GUS) i wskaźnik bazowy GUS (punkt odniesienia
+-- dla późniejszego liczenia wzrostu cen). Rekord należy do użytkownika.
+CREATE TABLE IF NOT EXISTS umowa_monitorowana (
+  id               TEXT PRIMARY KEY,
+  user_id          TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  branza           TEXT NOT NULL,              -- branża kontraktu (dobór wskaźnika GUS)
+  wskaznik_bazowy  REAL NOT NULL,              -- wartość wskaźnika GUS w chwili podpisania (baza porównania)
+  wskaznik_okres   TEXT,                       -- okres GUS bazowego (np. '2026-Q2'); opcjonalny kontekst
+  data_podpisania  TEXT NOT NULL,              -- ISO 8601 — moment podpisania (domyślnie chwila zapisu)
+  created_at       TEXT NOT NULL,
+  updated_at       TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_umowa_monitorowana_user ON umowa_monitorowana(user_id);
