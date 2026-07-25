@@ -112,3 +112,37 @@ test('wejście puste/null/undefined/nie-string → pusta lista, bez wyjątku', (
     assert.equal(typeof r.opis, 'string');
   }
 });
+
+/*
+ * DEDYKOWANE TESTY JEDNOSTKOWE — podzadanie 8/12. Utwardzenie matrycy „kary z
+ * limitem i bez": rdzeń pułapki (kara DZIENNA bez limitu — realna wartość rośnie
+ * z czasem) oraz udokumentowane ograniczenie detektora (kara wyrażona kwotowo).
+ */
+
+test('8/12: kara dzienna BEZ limitu → za_kazdy_dzien, czerwona flaga i opis ostrzega, że wartość rośnie z czasem', () => {
+  // Klasyczna pułapka feature'u: „X% za każdy dzień zwłoki" bez limitu łącznej
+  // wysokości. Suma stawek jest tylko orientacyjna — realna kara narasta z dniami.
+  const t = 'Kary umowne. Wykonawca zapłaci karę umowną za zwłokę w wykonaniu przedmiotu '
+    + 'umowy w wysokości 0,3% wynagrodzenia brutto za każdy dzień zwłoki.';
+  const r = wykryj_kary_umowne(t);
+  assert.equal(r.kary.length, 1);
+  assert.equal(r.kary[0].za_kazdy_dzien, true, 'kara naliczana za każdy dzień');
+  assert.equal(r.czy_ograniczona_limitem, false);
+  assert.ok(r.ostrzezenie, 'brak limitu przy karze dziennej → czerwona flaga');
+  assert.equal(r.ostrzezenie.poziom, 'czerwony');
+  assert.match(r.opis, /rośnie z czasem/, 'opis ostrzega, że realna wartość rośnie z czasem');
+  assert.match(r.opis, /orientacyjna/, 'opis zaznacza, że suma stawek jest orientacyjna');
+});
+
+test('8/12: kara wyrażona wyłącznie KWOTOWO (bez %) → nieuchwycona (udokumentowane ograniczenie), opis prosi o weryfikację', () => {
+  // Detektor działa na stawkach procentowych; kara „500 zł za każdy dzień" nie ma
+  // znaku %/„procent", więc świadomie NIE trafia na listę. Opis wprost kieruje do
+  // ręcznej weryfikacji zapisów kwotowych — bez fałszywej flagi.
+  const t = 'Kary umowne. Za zwłokę w wykonaniu przedmiotu umowy Wykonawca zapłaci karę '
+    + 'umowną w wysokości 500 zł za każdy dzień zwłoki.';
+  const r = wykryj_kary_umowne(t);
+  assert.equal(r.kary.length, 0, 'stawka kwotowa (500 zł) nie jest procentem — poza detekcją');
+  assert.equal(r.suma, 0);
+  assert.equal(r.ostrzezenie, null, 'brak wykrytych kar → brak flagi (nie zmyślamy braku limitu)');
+  assert.match(r.opis, /kwotowo/, 'opis uprzedza o zapisach kwotowych i prosi o ręczną weryfikację');
+});

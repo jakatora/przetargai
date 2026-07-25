@@ -160,3 +160,35 @@ test('niepoprawny czas trwania (string/NaN/0/ujemny) → traktowany jako nieznan
     assert.equal(r.ostrzezenie, null, `dla czasu trwania ${JSON.stringify(m)}`);
   }
 });
+
+/*
+ * DEDYKOWANE TESTY JEDNOSTKOWE — podzadanie 8/12. Utwardzenie matrycy przypadków
+ * z opisu ulepszenia: kombinacje „z progiem/limitem i bez" oraz granica reguły
+ * „> 6 miesięcy", których wcześniejsze testy (dopisane przy detektorach) wprost
+ * nie pokrywały.
+ */
+
+test('8/12: klauzula z progiem, ale BEZ limitu, umowa > 6 mies. → obowiązek spełniony (ostrzezenie null)', () => {
+  // Typowa klauzula „na wskaźniku GUS": jest próg uruchomienia, brak górnego
+  // limitu. Obowiązek z art. 439 Pzp dotyczy OBECNOŚCI klauzuli, nie posiadania
+  // limitu — więc dla umowy 18-miesięcznej NIE zgłaszamy czerwonej flagi.
+  const t = '§ 11. Waloryzacja wynagrodzenia. Wynagrodzenie podlega zmianie, gdy poziom '
+    + 'zmiany cen materiałów lub kosztów przekroczy 7% w stosunku do dnia zawarcia '
+    + 'umowy. Podstawą jest wskaźnik cen towarów i usług ogłaszany przez GUS.';
+  const r = wykryj_klauzule_waloryzacyjna(t, 18);
+  assert.equal(r.obecna, true);
+  assert.equal(r.prog, 7, 'próg odczytany');
+  assert.equal(r.limit, null, 'brak górnego limitu w tej klauzuli');
+  assert.equal(r.ostrzezenie, null, 'obecność klauzuli spełnia obowiązek — brak limitu nie jest naruszeniem');
+  assert.match(r.opis, /nie wykryto górnego limitu/i, 'opis sygnalizuje brak limitu do weryfikacji');
+});
+
+test('8/12: granica reguły — 7 miesięcy (tuż powyżej 6) bez klauzuli → czerwona flaga', () => {
+  // Reguła dotyczy umów DŁUŻSZYCH niż 6 mies.: 6 → brak flagi (test wyżej),
+  // 7 → już flaga. Domyka granicę od góry.
+  const r = wykryj_klauzule_waloryzacyjna(UMOWA_BEZ_KLAUZULI, 7);
+  assert.equal(r.obecna, false);
+  assert.ok(r.ostrzezenie, 'ostrzezenie powinno być obecne dla umowy > 6 mies.');
+  assert.equal(r.ostrzezenie.poziom, 'czerwony');
+  assert.equal(r.ostrzezenie.kod, 'brak_obowiazkowej_klauzuli');
+});
