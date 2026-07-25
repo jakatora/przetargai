@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
+import { budujPdf } from './helpers/buildPdf.js';
 
 /*
  * Szkielet endpointu analizy projektu umowy (POST /api/przetarg/umowa/analiza).
@@ -63,6 +64,18 @@ test('POST /api/przetarg/umowa/analiza — plik PDF (base64) jest przyjmowany', 
   const { status, json } = await analiza({ pdf_base64: 'JVBERi0xLjQKJXVkbXktcGRmLWJ5dGVz' });
   assert.equal(status, 200, JSON.stringify(json));
   assert.equal(typeof json.tekst, 'string', 'tekst zawsze jest łańcuchem');
+  assert.deepEqual(json.flagi, []);
+});
+
+test('POST /api/przetarg/umowa/analiza — z prawdziwego PDF-a wyciąga i normalizuje tekst', async () => {
+  // Dowód podpięcia util `ekstrahuj_i_normalizuj` do endpointu: szkielet 1/12
+  // dla samego PDF-a zwracał pusty `tekst` — teraz musi zawierać treść pliku.
+  const { status, json } = await analiza({
+    pdf_base64: budujPdf('Klauzula waloryzacyjna art. 439 ustawy Pzp'),
+  });
+  assert.equal(status, 200, JSON.stringify(json));
+  assert.match(json.tekst, /waloryzacyjna/, 'endpoint zwraca tekst wyekstrahowany z PDF-a');
+  assert.match(json.tekst, /439/);
   assert.deepEqual(json.flagi, []);
 });
 

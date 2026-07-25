@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { badRequest } from '../lib/errors.js';
+import { ekstrahuj_i_normalizuj } from '../lib/umowaEkstrakcja.js';
 
 /*
  * Analiza projektu UMOWY przed podpisem (ulepszenie „pilnowanie waloryzacji
@@ -9,9 +10,10 @@ import { badRequest } from '../lib/errors.js';
  * `pdf_base64` (plik PDF zakodowany w base64) — i dostaje listę flag: klauzula
  * waloryzacyjna, kary umowne i ich limit, zapisy o odbiorach i podwykonawcach.
  *
- * PODZADANIE 1/12 — SZKIELET: tylko routing + walidacja wejścia. Silnik reguł
- * (wykrywanie flag) oraz ekstrakcja tekstu z PDF-a dochodzą w kolejnych krokach,
- * dlatego handler zwraca na razie pustą kopertę wyniku { tekst, flagi: [] }.
+ * STAN: routing + walidacja wejścia (2/12) oraz ekstrakcja i normalizacja
+ * tekstu z PDF-a / pola `tekst` (podzadanie 2/12, util `ekstrahuj_i_normalizuj`).
+ * Silnik reguł (wykrywanie flag) dochodzi w kolejnych krokach, dlatego `flagi`
+ * to na razie pusta lista.
  */
 
 const router = Router();
@@ -35,9 +37,10 @@ router.post('/analiza', ah(async (req, res) => {
     throw badRequest('Podaj treść umowy: pole "tekst" (umowa jako tekst) albo "pdf_base64" (plik PDF w base64).');
   }
 
-  // Ekstrakcja tekstu z PDF-a to osobne podzadanie — na razie handler oddaje
-  // z powrotem przekazany tekst (pusty łańcuch, gdy wejściem był sam PDF).
-  const tekst = parsed.data.tekst?.trim() ?? '';
+  // Sprowadzamy wejście (surowy `tekst` albo `pdf_base64`) do jednego,
+  // znormalizowanego łańcucha. Zeskanowany/uszkodzony PDF => pusty tekst
+  // (nie błąd) — silnik reguł (kolejne podzadanie) dostanie po prostu pustkę.
+  const tekst = await ekstrahuj_i_normalizuj(parsed.data);
   res.json({ tekst, flagi: [] });
 }));
 
