@@ -40,6 +40,52 @@ function idAlboNull(v) {
   return tekstAlboNull(v);
 }
 
+/**
+ * Kategorie wgrywanych dokumentów (podzadanie 7/13). Dwie, w ustalonej kolejności:
+ * oferta wybranego wykonawcy oraz protokół postępowania (z załącznikami). Rekord
+ * `dokumenty` ma zawsze dokładnie te klucze — nieznane kategorie ignorujemy.
+ */
+export const KATEGORIE_DOKUMENTOW = ['ofertaZwyciezcy', 'protokol'];
+
+/**
+ * Normalizuje pojedynczą referencję pliku do `{ nazwa, uri, rozmiar, typMime }`.
+ * Wejściem jest asset z pickera (`expo-document-picker`: `{ uri, name, size,
+ * mimeType }`) — akceptujemy też odpowiedniki PL. Referencja bez `uri` jest
+ * bezużyteczna → `null` (wołający ją odfiltruje).
+ */
+function normalizujPlik(plik) {
+  if (!plik || typeof plik !== 'object') return null;
+  const uri = tekstAlboNull(plik.uri);
+  if (!uri) return null;
+  const rozmiarSurowy = pierwsze(plik.rozmiar, plik.size);
+  const rozmiar =
+    typeof rozmiarSurowy === 'number' && Number.isFinite(rozmiarSurowy) && rozmiarSurowy >= 0
+      ? rozmiarSurowy
+      : null;
+  return {
+    nazwa: tekstAlboNull(pierwsze(plik.nazwa, plik.name)),
+    uri,
+    rozmiar,
+    typMime: tekstAlboNull(pierwsze(plik.typMime, plik.mimeType, plik.type)),
+  };
+}
+
+/** Lista referencji plików → tablica znormalizowanych wpisów (pomija błędne). */
+function normalizujListePlikow(lista) {
+  if (!Array.isArray(lista)) return [];
+  return lista.map(normalizujPlik).filter((p) => p !== null);
+}
+
+/** Surowe `dokumenty` → `{ ofertaZwyciezcy: [...], protokol: [...] }` (tylko znane kategorie). */
+function normalizujDokumenty(dane) {
+  const zrodlo = dane && typeof dane === 'object' ? dane : {};
+  const wynik = {};
+  for (const kat of KATEGORIE_DOKUMENTOW) {
+    wynik[kat] = normalizujListePlikow(zrodlo[kat]);
+  }
+  return wynik;
+}
+
 export class PoprzetargowaKontrola {
   /**
    * @param {{
@@ -49,6 +95,7 @@ export class PoprzetargowaKontrola {
    *   dataOgloszeniaWyniku?: string|null,
    *   terminOdwolaniaKio?: string|null,
    *   status?: 'nowa'|'wniosek_wyslany'|'dokumenty_otrzymane'|'analiza_gotowa',
+   *   dokumenty?: { ofertaZwyciezcy?: Array, protokol?: Array },
    * }} [dane]
    */
   constructor(dane = {}) {
@@ -59,6 +106,8 @@ export class PoprzetargowaKontrola {
     this.dataOgloszeniaWyniku = tekstAlboNull(dane.dataOgloszeniaWyniku);
     this.terminOdwolaniaKio = tekstAlboNull(dane.terminOdwolaniaKio);
     this.status = normalizujStatus(dane.status);
+    // Wgrane referencje plików (oferta zwycięzcy + protokół) — zawsze pełny kształt.
+    this.dokumenty = normalizujDokumenty(dane.dokumenty);
   }
 
   /** Postać do serializacji (JSON w magazynie). */
@@ -70,6 +119,7 @@ export class PoprzetargowaKontrola {
       dataOgloszeniaWyniku: this.dataOgloszeniaWyniku,
       terminOdwolaniaKio: this.terminOdwolaniaKio,
       status: this.status,
+      dokumenty: this.dokumenty,
     };
   }
 
@@ -217,5 +267,56 @@ export async function oznaczWniosekWyslany(magazyn, postepowanieId) {
   if (indeksStatusu(kontrola.status) < indeksStatusu(cel)) {
     kontrola.status = cel;
   }
+  return zapiszKontrole(magazyn, kontrola);
+}
+
+/**
+ * Zapisuje wgrane dokumenty (ofertę zwycięzcy i/lub protokół) do rekordu kontroli
+ * i przesuwa status na „dokumenty_otrzymane" (podzadanie 7/13). Wołane z ekranu po
+ * wybraniu plików w pickerze.
+ *
+ * TYLKO upload + zapis — bez parsowania treści (analiza przesłanek odrzucenia to
+ * kolejne podzadania). „Zapis plików" w apce mobilnej = zapis REFERENCJI (uri +
+ * metadane z pickera), nie bajtów: magazyn trzyma tylko mały JSON.
+ *
+ * Load-or-create + MONOTONICZNIE jak {@link oznaczWniosekWyslany}: hook po
+ * przegranej jest best-effort, więc rekordu może nie być; nie cofamy dalszego
+ * etapu (np. `analiza_gotowa`). Kategorie łączymy PER-KATEGORIA — podanie niepustej
+ * listy dla kategorii NADPISUJE ją (pozwala poprawić błędny plik), a kategoria
+ * niepodana zostaje. To celowe: oferta jest jawna od otwarcia, a załączniki
+ * dochodzą do 3 dni później, więc pliki wpływają w dwóch turach i drugie wgranie
+ * nie może skasować pierwszego.
+ *
+ * Status przechodzi na „dokumenty_otrzymane" tylko, gdy po zapisie jest co najmniej
+ * jeden plik — puste wywołanie nie „udaje" otrzymania dokumentów. Best-effort:
+ * brak id → `null` (ekran nie może wywrócić UI).
+ *
+ * @param {object} magazyn magazyn z `getItem`/`setItem`
+ * @param {string|number} postepowanieId klucz naturalny (tender.id)
+ * @param {{ ofertaZwyciezcy?: Array, protokol?: Array }} [dokumenty] referencje
+ *   plików z pickera (`{ uri, name, size, mimeType }` lub odpowiedniki PL). Wpisy
+ *   bez `uri` pomijamy; nieznane kategorie ignorujemy.
+ * @returns {Promise<PoprzetargowaKontrola|null>}
+ */
+export async function zapiszDokumenty(magazyn, postepowanieId, dokumenty) {
+  const id = idAlboNull(postepowanieId);
+  if (!id) return null;
+
+  const kontrola =
+    (await wczytajKontrole(magazyn, id)) ?? new PoprzetargowaKontrola({ postepowanieId: id });
+
+  // Per-kategoria: niepusta lista nadpisuje, brak/pusto → zostaje to, co było.
+  const nowe = normalizujDokumenty(dokumenty);
+  for (const kat of KATEGORIE_DOKUMENTOW) {
+    if (nowe[kat].length > 0) kontrola.dokumenty[kat] = nowe[kat];
+  }
+
+  // „dokumenty_otrzymane" tylko gdy faktycznie mamy plik — i tylko naprzód.
+  const maPliki = KATEGORIE_DOKUMENTOW.some((kat) => kontrola.dokumenty[kat].length > 0);
+  const cel = 'dokumenty_otrzymane';
+  if (maPliki && indeksStatusu(kontrola.status) < indeksStatusu(cel)) {
+    kontrola.status = cel;
+  }
+
   return zapiszKontrole(magazyn, kontrola);
 }

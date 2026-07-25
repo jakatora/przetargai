@@ -5,11 +5,13 @@ import {
   PoprzetargowaKontrola,
   STATUSY_KONTROLI,
   STATUS_KONTROLI_DOMYSLNY,
+  KATEGORIE_DOKUMENTOW,
   zapiszKontrole,
   wczytajKontrole,
   utworzKontrolePoPrzegranej,
   dolaczPozostalyCzas,
   oznaczWniosekWyslany,
+  zapiszDokumenty,
 } from '../src/lib/poprzetargowaKontrola.js';
 
 /*
@@ -284,4 +286,153 @@ test('oznaczWniosekWyslany: brak id → null i nic nie zapisano', async () => {
   const k = await oznaczWniosekWyslany(magazyn, null);
   assert.equal(k, null);
   assert.equal(magazyn.m.size, 0);
+});
+
+/* --- Podzadanie 7/13: upload dokumentów → status dokumenty_otrzymane --- */
+
+// Kształt referencji pliku z expo-document-picker (SDK 54): asset {uri,name,size,mimeType}.
+function plikOferty() {
+  return { uri: 'file:///cache/oferta.pdf', name: 'oferta-zwyciezcy.pdf', size: 12345, mimeType: 'application/pdf' };
+}
+function plikProtokolu() {
+  return { uri: 'file:///cache/protokol.pdf', name: 'protokol.pdf', size: 6789, mimeType: 'application/pdf' };
+}
+
+test('model: domyślnie dokumenty to puste kategorie oferta+protokół', () => {
+  const k = new PoprzetargowaKontrola({ postepowanieId: 'X' });
+  assert.deepEqual(k.dokumenty, { ofertaZwyciezcy: [], protokol: [] });
+  assert.deepEqual(k.toJSON().dokumenty, { ofertaZwyciezcy: [], protokol: [] });
+});
+
+test('KATEGORIE_DOKUMENTOW: dwie kategorie w ustalonej kolejności', () => {
+  assert.deepEqual(KATEGORIE_DOKUMENTOW, ['ofertaZwyciezcy', 'protokol']);
+});
+
+test('zapiszDokumenty: zapisuje ofertę i protokół, status → dokumenty_otrzymane', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'BZP-7', status: 'wniosek_wyslany' });
+  const k = await zapiszDokumenty(magazyn, 'BZP-7', {
+    ofertaZwyciezcy: [plikOferty()],
+    protokol: [plikProtokolu()],
+  });
+  assert.ok(k instanceof PoprzetargowaKontrola);
+  assert.equal(k.status, 'dokumenty_otrzymane');
+  assert.equal(k.dokumenty.ofertaZwyciezcy.length, 1);
+  assert.equal(k.dokumenty.protokol.length, 1);
+  // Utrwalone w magazynie, nie tylko na zwróconym obiekcie.
+  const wczytana = await wczytajKontrole(magazyn, 'BZP-7');
+  assert.equal(wczytana.status, 'dokumenty_otrzymane');
+  assert.equal(wczytana.dokumenty.ofertaZwyciezcy[0].uri, 'file:///cache/oferta.pdf');
+});
+
+test('zapiszDokumenty: normalizuje referencję z pickera na {nazwa,uri,rozmiar,typMime}', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszDokumenty(magazyn, 'BZP-N', { ofertaZwyciezcy: [plikOferty()] });
+  assert.deepEqual(k.dokumenty.ofertaZwyciezcy[0], {
+    nazwa: 'oferta-zwyciezcy.pdf',
+    uri: 'file:///cache/oferta.pdf',
+    rozmiar: 12345,
+    typMime: 'application/pdf',
+  });
+});
+
+test('zapiszDokumenty: pomija wpisy bez uri (referencja bezużyteczna)', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszDokumenty(magazyn, 'BZP-U', {
+    protokol: [{ name: 'bez-uri.pdf' }, plikProtokolu()],
+  });
+  assert.equal(k.dokumenty.protokol.length, 1);
+  assert.equal(k.dokumenty.protokol[0].uri, 'file:///cache/protokol.pdf');
+});
+
+test('zapiszDokumenty: load-or-create — brak kontroli → zakłada ją z dokumentami', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszDokumenty(magazyn, 'BZP-NOWY', { protokol: [plikProtokolu()] });
+  assert.ok(k instanceof PoprzetargowaKontrola);
+  assert.equal(k.postepowanieId, 'BZP-NOWY');
+  assert.equal(k.status, 'dokumenty_otrzymane');
+  assert.ok(magazyn.m.has('kontrola:BZP-NOWY'));
+});
+
+test('zapiszDokumenty: kategorie per-kategoria — dogranie protokołu nie kasuje oferty', async () => {
+  const magazyn = atrapaMagazynu();
+  // Oferta jawna od otwarcia, załączniki dochodzą do 3 dni później → dwie tury.
+  await zapiszDokumenty(magazyn, 'BZP-2TURY', { ofertaZwyciezcy: [plikOferty()] });
+  const k = await zapiszDokumenty(magazyn, 'BZP-2TURY', { protokol: [plikProtokolu()] });
+  assert.equal(k.dokumenty.ofertaZwyciezcy.length, 1); // oferta z pierwszej tury zostaje
+  assert.equal(k.dokumenty.protokol.length, 1);
+});
+
+test('zapiszDokumenty: ponowny upload tej samej kategorii nadpisuje (poprawka błędnego pliku)', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszDokumenty(magazyn, 'BZP-FIX', { ofertaZwyciezcy: [{ uri: 'file:///zly.pdf', name: 'zly.pdf' }] });
+  const k = await zapiszDokumenty(magazyn, 'BZP-FIX', { ofertaZwyciezcy: [plikOferty()] });
+  assert.equal(k.dokumenty.ofertaZwyciezcy.length, 1);
+  assert.equal(k.dokumenty.ofertaZwyciezcy[0].uri, 'file:///cache/oferta.pdf');
+});
+
+test('zapiszDokumenty: puste wywołanie bez żadnych plików nie udaje otrzymania dokumentów', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'BZP-PUSTE', status: 'wniosek_wyslany' });
+  const k = await zapiszDokumenty(magazyn, 'BZP-PUSTE', {});
+  assert.equal(k.status, 'wniosek_wyslany'); // status się nie przesuwa
+});
+
+test('zapiszDokumenty: monotonicznie — nie cofa z analiza_gotowa', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'BZP-DALEJ', status: 'analiza_gotowa' });
+  const k = await zapiszDokumenty(magazyn, 'BZP-DALEJ', { protokol: [plikProtokolu()] });
+  assert.equal(k.status, 'analiza_gotowa'); // brak regresji, ale plik dopisany
+  assert.equal(k.dokumenty.protokol.length, 1);
+});
+
+test('zapiszDokumenty: ignoruje nieznane kategorie', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszDokumenty(magazyn, 'BZP-KAT', {
+    kosmiczne: [plikOferty()],
+    protokol: [plikProtokolu()],
+  });
+  assert.equal(k.dokumenty.protokol.length, 1);
+  assert.equal('kosmiczne' in k.dokumenty, false);
+});
+
+test('zapiszDokumenty: numeryczne id sprowadzone do stringa, klucz namespaceowany', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszDokumenty(magazyn, 7, { protokol: [plikProtokolu()] });
+  assert.equal(k.postepowanieId, '7');
+  assert.ok(magazyn.m.has('kontrola:7'));
+});
+
+test('zapiszDokumenty: brak id → null i nic nie zapisano', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszDokumenty(magazyn, null, { protokol: [plikProtokolu()] });
+  assert.equal(k, null);
+  assert.equal(magazyn.m.size, 0);
+});
+
+test('zapiszDokumenty: brak argumentu dokumenty → nie wywraca się', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'BZP-BEZ', status: 'nowa' });
+  const k = await zapiszDokumenty(magazyn, 'BZP-BEZ');
+  assert.equal(k.status, 'nowa'); // brak plików → status bez zmian
+  assert.deepEqual(k.dokumenty, { ofertaZwyciezcy: [], protokol: [] });
+});
+
+test('zapiszDokumenty: rozmiar spoza liczby → null (metadane best-effort)', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszDokumenty(magazyn, 'BZP-META', {
+    protokol: [{ uri: 'file:///p.pdf', name: 'p.pdf', size: 'duzo' }],
+  });
+  assert.equal(k.dokumenty.protokol[0].rozmiar, null);
+});
+
+test('zapiszDokumenty: dokumenty przetrwają round-trip przez magazyn (JSON)', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszDokumenty(magazyn, 'BZP-RT', {
+    ofertaZwyciezcy: [plikOferty()],
+    protokol: [plikProtokolu()],
+  });
+  const wczytana = await wczytajKontrole(magazyn, 'BZP-RT');
+  assert.equal(wczytana.dokumenty.ofertaZwyciezcy[0].nazwa, 'oferta-zwyciezcy.pdf');
+  assert.equal(wczytana.dokumenty.protokol[0].typMime, 'application/pdf');
 });
