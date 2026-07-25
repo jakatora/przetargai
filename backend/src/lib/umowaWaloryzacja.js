@@ -59,6 +59,34 @@ const OPIS_BRAK = 'Nie wykryto klauzuli waloryzacyjnej. Dla umów na okres dłu�
   + 'niż 6 miesięcy jest ona obowiązkowa (art. 439 Pzp) — sprawdź, czy nie powinna '
   + 'się w umowie znaleźć.';
 
+// Umowy DŁUŻSZE niż 6 miesięcy muszą zawierać klauzulę waloryzacyjną (art. 439 Pzp).
+const PROG_MIESIACE = 6;
+
+// Czerwona flaga zwracana w `ostrzezenie`, gdy umowa trwa dłużej niż 6 mies., a
+// klauzuli brak. Zamrożona — to współdzielona, niezmienna stała (jeden i ten sam
+// komunikat dla każdej analizy), więc nie może jej przypadkiem zmutować konsument.
+const OSTRZEZENIE_BRAK_KLAUZULI = Object.freeze({
+  poziom: 'czerwony',
+  kod: 'brak_obowiazkowej_klauzuli',
+  tytul: 'brak obowiązkowej klauzuli (Pzp)',
+  opis: 'Szacowany czas trwania umowy przekracza 6 miesięcy, a nie wykryto '
+    + 'klauzuli waloryzacyjnej. Dla takich umów jest ona obowiązkowa (art. 439 Pzp) '
+    + '— brak klauzuli to istotna wada projektu umowy.',
+});
+
+/**
+ * Czy zgłosić czerwoną flagę „brak obowiązkowej klauzuli". Tylko gdy klauzuli
+ * BRAK i znany czas trwania przekracza 6 miesięcy. Nieznany/niepoprawny czas
+ * (undefined, NaN, string, ≤0, Infinity) → `null`: konserwatywnie nie zgłaszamy
+ * naruszenia, którego nie potrafimy potwierdzić. Obecna klauzula → obowiązek
+ * spełniony, więc też `null`, niezależnie od czasu trwania.
+ */
+function ostrzezenieBrakuKlauzuli(obecna, miesiace) {
+  if (obecna) return null;
+  if (typeof miesiace !== 'number' || !Number.isFinite(miesiace)) return null;
+  return miesiace > PROG_MIESIACE ? OSTRZEZENIE_BRAK_KLAUZULI : null;
+}
+
 /** Wartość procentowa do wyświetlenia po polsku (kropka dziesiętna → przecinek). */
 function fmt(v) {
   return String(v).replace('.', ',');
@@ -79,13 +107,21 @@ function opisObecna(prog, limit) {
 /**
  * Wykrywa klauzulę waloryzacyjną w tekście umowy.
  * @param {string} tekst znormalizowany tekst umowy (surowy też zadziała)
- * @returns {{ obecna: boolean, prog: number|null, limit: number|null, opis: string }}
+ * @param {number} [miesiace] szacowany czas trwania umowy w miesiącach; gdy > 6
+ *   a klauzuli brak, wynik niesie czerwoną flagę w `ostrzezenie`. Pominięty /
+ *   niepoprawny => flagi nie zgłaszamy (nie znamy czasu trwania).
+ * @returns {{ obecna: boolean, prog: number|null, limit: number|null, opis: string,
+ *   ostrzezenie: {poziom: string, kod: string, tytul: string, opis: string}|null }}
  *   `prog`/`limit` to wartości procentowe (liczby), lub `null` gdy nieodczytane.
+ *   `ostrzezenie` = czerwona flaga braku obowiązkowej klauzuli, albo `null`.
  */
-export function wykryj_klauzule_waloryzacyjna(tekst) {
+export function wykryj_klauzule_waloryzacyjna(tekst, miesiace) {
   const t = normalize(tekst);
   if (!t || !MA_KLAUZULE.test(t)) {
-    return { obecna: false, prog: null, limit: null, opis: OPIS_BRAK };
+    return {
+      obecna: false, prog: null, limit: null, opis: OPIS_BRAK,
+      ostrzezenie: ostrzezenieBrakuKlauzuli(false, miesiace),
+    };
   }
 
   let prog = null;
@@ -114,5 +150,8 @@ export function wykryj_klauzule_waloryzacyjna(tekst) {
     if (prog != null && limit != null) break;
   }
 
-  return { obecna: true, prog, limit, opis: opisObecna(prog, limit) };
+  return {
+    obecna: true, prog, limit, opis: opisObecna(prog, limit),
+    ostrzezenie: ostrzezenieBrakuKlauzuli(true, miesiace),
+  };
 }

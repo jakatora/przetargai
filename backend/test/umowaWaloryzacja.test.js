@@ -108,3 +108,55 @@ test('wejście puste/null/undefined → obecna=false, bez wyjątku', () => {
     assert.equal(typeof r.opis, 'string');
   }
 });
+
+/*
+ * REGUŁA OSTRZEŻENIA — podzadanie 4/12. Gdy szacowany czas trwania umowy jest
+ * dłuższy niż 6 miesięcy, a klauzuli waloryzacyjnej BRAK, klauzula jest
+ * obowiązkowa (art. 439 Pzp) — detektor zwraca wtedy CZERWONĄ flagę w polu
+ * `ostrzezenie`. W pozostałych przypadkach (klauzula jest / umowa ≤ 6 mies. /
+ * czas trwania nieznany) `ostrzezenie` to `null` — nie zgłaszamy naruszenia,
+ * którego nie możemy potwierdzić.
+ */
+
+const UMOWA_BEZ_KLAUZULI = 'Umowa na świadczenie usług sprzątania. Wynagrodzenie '
+  + 'ryczałtowe 8 000 zł miesięcznie. Kara umowna za zwłokę 0,2% za każdy dzień.';
+
+test('umowa > 6 miesięcy bez klauzuli → czerwona flaga „brak obowiązkowej klauzuli (Pzp)"', () => {
+  const r = wykryj_klauzule_waloryzacyjna(UMOWA_BEZ_KLAUZULI, 12);
+  assert.equal(r.obecna, false);
+  assert.ok(r.ostrzezenie, 'ostrzezenie powinno być obecne');
+  assert.equal(r.ostrzezenie.poziom, 'czerwony');
+  assert.equal(r.ostrzezenie.tytul, 'brak obowiązkowej klauzuli (Pzp)');
+  assert.match(r.ostrzezenie.opis, /439/);
+});
+
+test('umowa > 6 miesięcy, ale klauzula JEST → ostrzezenie null (obowiązek spełniony)', () => {
+  const r = wykryj_klauzule_waloryzacyjna(KLAUZULA_PELNA, 24);
+  assert.equal(r.obecna, true);
+  assert.equal(r.ostrzezenie, null);
+});
+
+test('dokładnie 6 miesięcy bez klauzuli → ostrzezenie null (obowiązek dotyczy umów DŁUŻSZYCH niż 6 mies.)', () => {
+  const r = wykryj_klauzule_waloryzacyjna(UMOWA_BEZ_KLAUZULI, 6);
+  assert.equal(r.obecna, false);
+  assert.equal(r.ostrzezenie, null);
+});
+
+test('krótka umowa (3 mies.) bez klauzuli → ostrzezenie null', () => {
+  const r = wykryj_klauzule_waloryzacyjna(UMOWA_BEZ_KLAUZULI, 3);
+  assert.equal(r.obecna, false);
+  assert.equal(r.ostrzezenie, null);
+});
+
+test('nieznany czas trwania (bez 2. argumentu) → ostrzezenie null, kompatybilność wsteczna', () => {
+  const r = wykryj_klauzule_waloryzacyjna(UMOWA_BEZ_KLAUZULI);
+  assert.equal(r.obecna, false);
+  assert.equal(r.ostrzezenie, null, 'bez znanego czasu trwania nie zgłaszamy naruszenia');
+});
+
+test('niepoprawny czas trwania (string/NaN/0/ujemny) → traktowany jako nieznany, ostrzezenie null, bez wyjątku', () => {
+  for (const m of ['12', NaN, 0, -5, Infinity, null]) {
+    const r = wykryj_klauzule_waloryzacyjna(UMOWA_BEZ_KLAUZULI, m);
+    assert.equal(r.ostrzezenie, null, `dla czasu trwania ${JSON.stringify(m)}`);
+  }
+});
