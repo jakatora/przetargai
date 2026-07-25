@@ -128,6 +128,13 @@ export default function MatchFeedScreen({ navigation }) {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerAkcje}>
+          <Pressable
+            onPress={() => navigation.navigate('PrzeswietlenieUmowy')}
+            hitSlop={12}
+            accessibilityLabel="Prześwietlenie umowy przed podpisem"
+          >
+            <Text style={styles.headerBtn}>Umowa</Text>
+          </Pressable>
           <Pressable onPress={() => navigation.navigate('Saved')} hitSlop={12} accessibilityLabel="Zapisane przetargi">
             <Text style={styles.headerGwiazdka}>★</Text>
           </Pressable>

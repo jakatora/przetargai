@@ -53,6 +53,7 @@ export const PALETY = {
     ostrzezenieTekst: '#92400e',
     neutralneTlo: '#e7ebf3',    // plakietka „Plan Free"
     sukcesTlo: '#dcfce7',       // plakietka „Plan Standard"
+    dangerTlo: '#fee2e2',       // tło czerwonej flagi (prześwietlenie umowy)
   },
   ciemny: {
     bg: '#0f1526',
@@ -69,5 +70,6 @@ export const PALETY = {
     ostrzezenieTekst: '#fcd34d',
     neutralneTlo: '#273252',
     sukcesTlo: '#143c2a',
+    dangerTlo: '#3b1518',       // czytelny na ciemnym tle wariant czerwonego tła
   },
 };

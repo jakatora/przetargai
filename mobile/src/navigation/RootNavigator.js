@@ -8,6 +8,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import MatchFeedScreen from '../screens/MatchFeedScreen';
 import MatchDetailScreen from '../screens/MatchDetailScreen';
 import WynikKontroliScreen from '../screens/WynikKontroliScreen';
+import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
 import AccountScreen from '../screens/AccountScreen';
 import SavedScreen from '../screens/SavedScreen';
 
@@ -68,6 +69,11 @@ export default function RootNavigator() {
               name="WynikKontroli"
               component={WynikKontroliScreen}
               options={{ title: 'Szansa na odwołanie' }}
+            />
+            <Stack.Screen
+              name="PrzeswietlenieUmowy"
+              component={PrzeswietlenieUmowyScreen}
+              options={{ title: 'Prześwietlenie umowy' }}
             />
             <Stack.Screen
               name="Saved"

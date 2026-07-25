@@ -105,4 +105,15 @@ export const api = {
   unsaveTender: (id) => request(`/matches/${id}/save`, { method: 'DELETE', body: {} }),
   setReminder: (id, enabled) =>
     request(`/matches/${id}/reminder`, { method: 'PUT', body: { enabled } }),
+
+  /**
+   * Prześwietlenie projektu UMOWY przed podpisem (ulepszenie „pilnowanie
+   * waloryzacji i pułapek w umowie"). Body: co najmniej jedno z `{ tekst }` /
+   * `{ pdf_base64 }` (treść umowy) + opcjonalnie `{ miesiace }` (czas trwania —
+   * steruje flagą braku obowiązkowej klauzuli waloryzacyjnej, art. 439 Pzp).
+   * Odpowiedź: `{ tekst, flagi: [{ typ, kolor, tytul, opis }] }`, gdzie
+   * `kolor` ∈ { zielony, pomarańczowy, czerwony }.
+   */
+  analizujUmowe: (payload) =>
+    request('/api/przetarg/umowa/analiza', { method: 'POST', body: payload }),
 };
