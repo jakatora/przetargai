@@ -86,6 +86,17 @@ function normalizujDokumenty(dane) {
   return wynik;
 }
 
+/**
+ * Wynik analizy szans (podzadanie 11/13) trzymamy w rekordzie jako obiekt „jak
+ * podano" (kształt z {@link ../lib/ocenaSzans ocen_szanse_i_rekomendacja}: zarzuty,
+ * ocenaSzans, rekomendacja, uzasadnienie…) albo null, gdy analizy jeszcze nie ma.
+ * Nie parsujemy wnętrza — to nasz własny, serializowalny kształt; tu tylko odsiewamy
+ * nie-obiekty i tablice, żeby round-trip JSON był stabilny.
+ */
+function normalizujAnalize(v) {
+  return v && typeof v === 'object' && !Array.isArray(v) ? v : null;
+}
+
 export class PoprzetargowaKontrola {
   /**
    * @param {{
@@ -96,6 +107,7 @@ export class PoprzetargowaKontrola {
    *   terminOdwolaniaKio?: string|null,
    *   status?: 'nowa'|'wniosek_wyslany'|'dokumenty_otrzymane'|'analiza_gotowa',
    *   dokumenty?: { ofertaZwyciezcy?: Array, protokol?: Array },
+   *   analiza?: object|null,
    * }} [dane]
    */
   constructor(dane = {}) {
@@ -108,6 +120,8 @@ export class PoprzetargowaKontrola {
     this.status = normalizujStatus(dane.status);
     // Wgrane referencje plików (oferta zwycięzcy + protokół) — zawsze pełny kształt.
     this.dokumenty = normalizujDokumenty(dane.dokumenty);
+    // Wynik oceny szans i rekomendacji (podzadanie 11/13) albo null, gdy jej brak.
+    this.analiza = normalizujAnalize(dane.analiza);
   }
 
   /** Postać do serializacji (JSON w magazynie). */
@@ -120,6 +134,7 @@ export class PoprzetargowaKontrola {
       terminOdwolaniaKio: this.terminOdwolaniaKio,
       status: this.status,
       dokumenty: this.dokumenty,
+      analiza: this.analiza,
     };
   }
 
@@ -316,6 +331,48 @@ export async function zapiszDokumenty(magazyn, postepowanieId, dokumenty) {
   const cel = 'dokumenty_otrzymane';
   if (maPliki && indeksStatusu(kontrola.status) < indeksStatusu(cel)) {
     kontrola.status = cel;
+  }
+
+  return zapiszKontrole(magazyn, kontrola);
+}
+
+/**
+ * Zapisuje wynik analizy szans i rekomendacji do rekordu kontroli i przesuwa status
+ * na „analiza_gotowa" (podzadanie 11/13). Wołane z ekranu analizy po policzeniu
+ * wyniku przez {@link ../lib/ocenaSzans ocen_szanse_i_rekomendacja}.
+ *
+ * TYLKO zapis — samo liczenie (lista zarzutów, ocena szans, „walcz / odpuść") to
+ * czysta funkcja `ocen_szanse_i_rekomendacja`; tu rozdzielamy decyzję od persystencji,
+ * jak w reszcie lib (reguły ↔ model).
+ *
+ * Load-or-create + MONOTONICZNIE jak {@link zapiszDokumenty}: hook po przegranej jest
+ * best-effort, więc rekordu może nie być; nie cofamy statusu (a „analiza_gotowa" jest
+ * i tak ostatnim etapem). Status przechodzi na „analiza_gotowa" tylko, gdy podano
+ * PRAWDZIWY wynik analizy — puste/nieprawidłowe wywołanie nie „udaje" gotowej analizy.
+ * Ponowna analiza NADPISUJE wynik (najświeższa ocena wygrywa), status zostaje.
+ * Best-effort: brak id → `null` (ekran nie może wywrócić UI).
+ *
+ * @param {object} magazyn magazyn z `getItem`/`setItem`
+ * @param {string|number} postepowanieId klucz naturalny (tender.id)
+ * @param {object|null} wynikAnalizy wynik {@link ../lib/ocenaSzans ocen_szanse_i_rekomendacja}
+ *   (zarzuty, ocenaSzans, rekomendacja, uzasadnienie…); nie-obiekt → pomijany.
+ * @returns {Promise<PoprzetargowaKontrola|null>}
+ */
+export async function zapiszAnalize(magazyn, postepowanieId, wynikAnalizy) {
+  const id = idAlboNull(postepowanieId);
+  if (!id) return null;
+
+  const kontrola =
+    (await wczytajKontrole(magazyn, id)) ?? new PoprzetargowaKontrola({ postepowanieId: id });
+
+  const analiza = normalizujAnalize(wynikAnalizy);
+  if (analiza) {
+    kontrola.analiza = analiza;
+    // „analiza_gotowa" tylko przy realnym wyniku — i tylko naprzód.
+    const cel = 'analiza_gotowa';
+    if (indeksStatusu(kontrola.status) < indeksStatusu(cel)) {
+      kontrola.status = cel;
+    }
   }
 
   return zapiszKontrole(magazyn, kontrola);

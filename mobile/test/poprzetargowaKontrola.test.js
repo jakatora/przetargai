@@ -12,6 +12,7 @@ import {
   dolaczPozostalyCzas,
   oznaczWniosekWyslany,
   zapiszDokumenty,
+  zapiszAnalize,
 } from '../src/lib/poprzetargowaKontrola.js';
 
 /*
@@ -435,4 +436,97 @@ test('zapiszDokumenty: dokumenty przetrwają round-trip przez magazyn (JSON)', a
   const wczytana = await wczytajKontrole(magazyn, 'BZP-RT');
   assert.equal(wczytana.dokumenty.ofertaZwyciezcy[0].nazwa, 'oferta-zwyciezcy.pdf');
   assert.equal(wczytana.dokumenty.protokol[0].typMime, 'application/pdf');
+});
+
+/* --- Podzadanie 11/13: zapis wyniku analizy → status analiza_gotowa --- */
+
+// Wynik w kształcie z ocen_szanse_i_rekomendacja (podzadanie 11/13).
+function wynikAnalizy() {
+  return {
+    zarzuty: [{ rodzaj: 'zly_format_podpisu', tytul: 'Zły format podpisu', opis_zarzutu: '…', sila: 'mocna' }],
+    liczbaZarzutow: 1,
+    ocenaSzans: 'wysoka',
+    rekomendacja: { wartosc: 'walcz', etykieta: 'jest podstawa, walcz' },
+    kompletDokumentow: true,
+    uzasadnienie: 'Wykryto 1 przesłankę…',
+  };
+}
+
+test('model: domyślnie analiza to null (jeszcze nieprzeprowadzona)', () => {
+  const k = new PoprzetargowaKontrola({ postepowanieId: 'X' });
+  assert.equal(k.analiza, null);
+  assert.equal(k.toJSON().analiza, null);
+});
+
+test('model: analiza (obiekt) zachowana i przez round-trip JSON', () => {
+  const k = new PoprzetargowaKontrola({ postepowanieId: 'X', analiza: wynikAnalizy() });
+  const odtworzona = PoprzetargowaKontrola.fromJSON(JSON.parse(JSON.stringify(k)));
+  assert.deepEqual(odtworzona.analiza, wynikAnalizy());
+});
+
+test('model: analiza nie-obiekt (np. string) → null (nie zgadujemy)', () => {
+  const k = new PoprzetargowaKontrola({ postepowanieId: 'X', analiza: 'gotowe' });
+  assert.equal(k.analiza, null);
+});
+
+test('zapiszAnalize: zapisuje wynik i przesuwa status → analiza_gotowa', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'BZP-11', status: 'dokumenty_otrzymane' });
+  const k = await zapiszAnalize(magazyn, 'BZP-11', wynikAnalizy());
+  assert.ok(k instanceof PoprzetargowaKontrola);
+  assert.equal(k.status, 'analiza_gotowa');
+  assert.equal(k.analiza.rekomendacja.wartosc, 'walcz');
+  // Utrwalone w magazynie, nie tylko na zwróconym obiekcie.
+  const wczytana = await wczytajKontrole(magazyn, 'BZP-11');
+  assert.equal(wczytana.status, 'analiza_gotowa');
+  assert.equal(wczytana.analiza.ocenaSzans, 'wysoka');
+});
+
+test('zapiszAnalize: load-or-create — brak kontroli → zakłada ją z analizą', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszAnalize(magazyn, 'BZP-NOWY', wynikAnalizy());
+  assert.ok(k instanceof PoprzetargowaKontrola);
+  assert.equal(k.postepowanieId, 'BZP-NOWY');
+  assert.equal(k.status, 'analiza_gotowa');
+  assert.ok(magazyn.m.has('kontrola:BZP-NOWY'));
+});
+
+test('zapiszAnalize: bez wyniku (null) → nie udaje gotowej analizy (status bez zmian)', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'BZP-PUSTE', status: 'dokumenty_otrzymane' });
+  const k = await zapiszAnalize(magazyn, 'BZP-PUSTE', null);
+  assert.equal(k.status, 'dokumenty_otrzymane'); // status się nie przesuwa
+  assert.equal(k.analiza, null);
+});
+
+test('zapiszAnalize: ponowna analiza aktualizuje wynik, status zostaje analiza_gotowa', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszAnalize(magazyn, 'BZP-RE', wynikAnalizy());
+  const drugi = { ...wynikAnalizy(), ocenaSzans: 'niska', rekomendacja: { wartosc: 'odpusc', etykieta: 'odpuść' } };
+  const k = await zapiszAnalize(magazyn, 'BZP-RE', drugi);
+  assert.equal(k.status, 'analiza_gotowa');
+  assert.equal(k.analiza.ocenaSzans, 'niska'); // najnowszy wynik
+  assert.equal(k.analiza.rekomendacja.wartosc, 'odpusc');
+});
+
+test('zapiszAnalize: numeryczne id sprowadzone do stringa, klucz namespaceowany', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszAnalize(magazyn, 11, wynikAnalizy());
+  assert.equal(k.postepowanieId, '11');
+  assert.ok(magazyn.m.has('kontrola:11'));
+});
+
+test('zapiszAnalize: brak id → null i nic nie zapisano', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await zapiszAnalize(magazyn, null, wynikAnalizy());
+  assert.equal(k, null);
+  assert.equal(magazyn.m.size, 0);
+});
+
+test('zapiszAnalize: analiza przetrwa round-trip przez magazyn (JSON)', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszAnalize(magazyn, 'BZP-RT2', wynikAnalizy());
+  const wczytana = await wczytajKontrole(magazyn, 'BZP-RT2');
+  assert.equal(wczytana.analiza.liczbaZarzutow, 1);
+  assert.equal(wczytana.analiza.zarzuty[0].sila, 'mocna');
 });
