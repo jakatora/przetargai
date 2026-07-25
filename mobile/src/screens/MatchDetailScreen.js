@@ -12,6 +12,8 @@ import { opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
+import { utworzKontrolePoPrzegranej } from '../lib/poprzetargowaKontrola';
+import * as storage from '../lib/storage';
 import { opisWadium } from '../lib/wadium';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { opisWyniki } from '../lib/wyniki';
@@ -95,6 +97,11 @@ export default function MatchDetailScreen({ route }) {
     try {
       if (!zapisany) await toggle(match.id); // etap wymaga zapisu — dopisz do zakładek
       await api.setStatus(match.id, nowy);
+      // Przegrana → załóż poprzetargową kontrolę oferty zwycięzcy (podzadanie 2/13).
+      // Best-effort: błąd zapisu lokalnej kontroli NIE może cofnąć zmiany statusu.
+      if (nowy === 'przegrana') {
+        utworzKontrolePoPrzegranej(storage, tender).catch(() => {});
+      }
     } catch (err) {
       setStatus(poprzedni);
       Alert.alert('Błąd', err.message);

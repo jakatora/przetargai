@@ -7,6 +7,7 @@ import {
   STATUS_KONTROLI_DOMYSLNY,
   zapiszKontrole,
   wczytajKontrole,
+  utworzKontrolePoPrzegranej,
 } from '../src/lib/poprzetargowaKontrola.js';
 
 /*
@@ -129,4 +130,87 @@ test('wczytaj: uszkodzony JSON → null (traktujemy jak brak)', async () => {
   const magazyn = atrapaMagazynu();
   await magazyn.setItem('kontrola:BAD', '{nie-json');
   assert.equal(await wczytajKontrole(magazyn, 'BAD'), null);
+});
+
+/* --- Podzadanie 2/13: wykrycie przegranej → założenie kontroli --- */
+
+// Kształt jak tender w aplikacji (MatchDetailScreen: tender.id / organization / deadline).
+function tenderPrzegrany() {
+  return {
+    id: 'BZP-2026/1',
+    organization: 'Gmina Kowalewo',
+    deadline: '2026-07-10T09:00:00Z',
+    title: 'Dostawa sprzętu',
+  };
+}
+
+test('przegrana: zakłada kontrolę „nowa" z przepisanymi datami', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await utworzKontrolePoPrzegranej(magazyn, tenderPrzegrany());
+  assert.ok(k instanceof PoprzetargowaKontrola);
+  assert.equal(k.postepowanieId, 'BZP-2026/1');
+  assert.equal(k.status, 'nowa');
+  assert.equal(k.daneZamawiajacego, 'Gmina Kowalewo');
+  // deadline (termin składania) przepisany na datę otwarcia ofert.
+  assert.equal(k.dataOtwarciaOfert, '2026-07-10T09:00:00Z');
+  assert.equal(k.dataOgloszeniaWyniku, null);
+});
+
+test('przegrana: kontrola trafia do magazynu pod kluczem postępowania', async () => {
+  const magazyn = atrapaMagazynu();
+  await utworzKontrolePoPrzegranej(magazyn, tenderPrzegrany());
+  assert.ok(magazyn.m.has('kontrola:BZP-2026/1'));
+  const wczytana = await wczytajKontrole(magazyn, 'BZP-2026/1');
+  assert.equal(wczytana.status, 'nowa');
+  assert.equal(wczytana.dataOtwarciaOfert, '2026-07-10T09:00:00Z');
+});
+
+test('przegrana: idempotentna — nie nadpisuje istniejącej kontroli', async () => {
+  const magazyn = atrapaMagazynu();
+  // Analiza już ruszyła — status inny niż „nowa".
+  await zapiszKontrole(magazyn, {
+    postepowanieId: 'BZP-2026/1',
+    status: 'analiza_gotowa',
+    daneZamawiajacego: 'Coś już wpisanego',
+  });
+  const k = await utworzKontrolePoPrzegranej(magazyn, tenderPrzegrany());
+  assert.equal(k.status, 'analiza_gotowa'); // zachowany postęp
+  assert.equal(k.daneZamawiajacego, 'Coś już wpisanego');
+});
+
+test('przegrana: obsługuje obiekt z zagnieżdżonym tender (match)', async () => {
+  const magazyn = atrapaMagazynu();
+  const match = { tender: tenderPrzegrany() };
+  const k = await utworzKontrolePoPrzegranej(magazyn, match);
+  assert.equal(k.postepowanieId, 'BZP-2026/1');
+  assert.equal(k.daneZamawiajacego, 'Gmina Kowalewo');
+  assert.equal(k.dataOtwarciaOfert, '2026-07-10T09:00:00Z');
+});
+
+test('przegrana: numeryczne id postępowania sprowadzone do stringa', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await utworzKontrolePoPrzegranej(magazyn, { id: 42, organization: 'X' });
+  assert.equal(k.postepowanieId, '42');
+  assert.ok(magazyn.m.has('kontrola:42'));
+});
+
+test('przegrana: brak id → null i nic nie zapisano', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await utworzKontrolePoPrzegranej(magazyn, { organization: 'Bez id' });
+  assert.equal(k, null);
+  assert.equal(magazyn.m.size, 0);
+});
+
+test('przegrana: brak postępowania (undefined) → null, bez wyjątku', async () => {
+  const magazyn = atrapaMagazynu();
+  assert.equal(await utworzKontrolePoPrzegranej(magazyn, undefined), null);
+});
+
+test('przegrana: dataOgloszeniaWyniku przepisana, gdy postępowanie ją niesie', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await utworzKontrolePoPrzegranej(magazyn, {
+    ...tenderPrzegrany(),
+    dataOgloszeniaWyniku: '2026-07-20T12:00:00Z',
+  });
+  assert.equal(k.dataOgloszeniaWyniku, '2026-07-20T12:00:00Z');
 });

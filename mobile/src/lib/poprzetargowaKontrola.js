@@ -109,3 +109,57 @@ export async function wczytajKontrole(magazyn, postepowanieId) {
     return null; // uszkodzony wpis traktujemy jak brak
   }
 }
+
+/**
+ * Pierwsze pole z listy, które nie jest null/undefined (zachowuje 0/false).
+ * Nie używamy `??` w łańcuchu, żeby czytelnie wypisać priorytety źródeł pól.
+ */
+function pierwsze(...wartosci) {
+  for (const w of wartosci) if (w !== undefined && w !== null) return w;
+  return null;
+}
+
+/**
+ * Wykrycie przegranej (podzadanie 2/13) — wołane, gdy status postępowania zmienia
+ * się na „przegrana". Zakłada poprzetargową kontrolę oferty zwycięzcy: tworzy
+ * rekord {@link PoprzetargowaKontrola} ze statusem „nowa" i PRZEPISUJE dostępne
+ * daty z postępowania. Reszta (wyliczenie terminu KIO, analiza przesłanek) —
+ * w kolejnych podzadaniach.
+ *
+ * Przepisanie pól z tendera:
+ *  - dataOtwarciaOfert ← termin składania ofert (`deadline`) — otwarcie ofert jest
+ *    jawne i następuje zaraz po upływie terminu składania; to jedyna pewna data,
+ *    jaką mamy w momencie oznaczenia przegranej.
+ *  - daneZamawiajacego ← `organization`.
+ *  - dataOgloszeniaWyniku ← przepisujemy, jeśli postępowanie ją niesie (zwykle null
+ *    na tym etapie).
+ *
+ * IDEMPOTENTNA: jeśli kontrola już istnieje (np. użytkownik ponownie oznaczył
+ * przegraną albo analiza już ruszyła), zwracamy istniejącą BEZ nadpisania — żeby
+ * nie skasować postępów. Best-effort: brak id → `null` (hook nie może wywrócić UI).
+ *
+ * `magazyn` wstrzykiwany jak w {@link zapiszKontrole} (ekrany podają `../lib/storage`).
+ * @param {object} magazyn magazyn z `getItem`/`setItem`
+ * @param {object} postepowanie tender/postępowanie (lub obiekt z zagnieżdżonym `tender`)
+ * @returns {Promise<PoprzetargowaKontrola|null>}
+ */
+export async function utworzKontrolePoPrzegranej(magazyn, postepowanie) {
+  const post = postepowanie ?? {};
+  const tender = post.tender ?? {};
+
+  const postepowanieId = idAlboNull(pierwsze(post.id, post.postepowanieId, tender.id));
+  if (!postepowanieId) return null; // bez klucza nie ma jak powiązać kontroli z postępowaniem
+
+  // Nie nadpisujemy istniejącej kontroli — mogła już ruszyć analiza / zmienić status.
+  const istniejaca = await wczytajKontrole(magazyn, postepowanieId);
+  if (istniejaca) return istniejaca;
+
+  const kontrola = new PoprzetargowaKontrola({
+    postepowanieId,
+    daneZamawiajacego: pierwsze(post.daneZamawiajacego, post.organization, tender.organization),
+    dataOtwarciaOfert: pierwsze(post.dataOtwarciaOfert, post.deadline, tender.deadline),
+    dataOgloszeniaWyniku: pierwsze(post.dataOgloszeniaWyniku, post.result_date, tender.dataOgloszeniaWyniku),
+    status: STATUS_KONTROLI_DOMYSLNY, // „nowa"
+  });
+  return zapiszKontrole(magazyn, kontrola);
+}

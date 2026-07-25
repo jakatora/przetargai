@@ -12,6 +12,8 @@ import { opisTerminu } from '../lib/termin';
 import { ScoreBadge } from '../components/MatchCard';
 import StatusPicker from '../components/StatusPicker';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
+import { utworzKontrolePoPrzegranej } from '../lib/poprzetargowaKontrola';
+import * as storage from '../lib/storage';
 
 export default function SavedScreen({ navigation }) {
   const { kolory } = useTheme();
@@ -44,6 +46,11 @@ export default function SavedScreen({ navigation }) {
       s.tender.id === item.tender.id ? { ...s, status: nowy } : s));
     try {
       await api.setStatus(item.tender.id, nowy);
+      // Przegrana → załóż poprzetargową kontrolę oferty zwycięzcy (podzadanie 2/13).
+      // Best-effort: błąd lokalnej kontroli nie może cofnąć zmiany statusu.
+      if (nowy === 'przegrana') {
+        utworzKontrolePoPrzegranej(storage, item.tender).catch(() => {});
+      }
     } catch {
       setItems((prev) => prev.map((s) =>
         s.tender.id === item.tender.id ? { ...s, status: poprzedni } : s));
