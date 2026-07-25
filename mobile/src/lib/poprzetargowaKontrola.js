@@ -13,6 +13,8 @@
  * node:test — a chcemy model przetestować jednostkowo.
  */
 
+import { pozostaly_czas_do } from './terminKio.js';
+
 /** Etapy pracy nad kontrolą. Enum jak w `statusPrzetargu.js` ({ wartosc, etykieta }). */
 export const STATUSY_KONTROLI = [
   { wartosc: 'nowa', etykieta: 'Nowa' },
@@ -162,4 +164,24 @@ export async function utworzKontrolePoPrzegranej(magazyn, postepowanie) {
     status: STATUS_KONTROLI_DOMYSLNY, // „nowa"
   });
   return zapiszKontrole(magazyn, kontrola);
+}
+
+/**
+ * Dolicza do kontroli POLE POMOCNICZE `pozostalyCzas` — odliczanie do terminu
+ * odwołania (podzadanie 4/13), policzone z `terminOdwolaniaKio` przez
+ * {@link ../lib/terminKio pozostaly_czas_do}.
+ *
+ * To pole jest POCHODNE i ULOTNE: countdown starzeje się co godzinę, więc świadomie
+ * NIE trafia do `toJSON()` (nie utrwalamy go — liczymy na żądanie przy renderze).
+ * `terminOdwolaniaKio === null` (jeszcze niewyliczony) → `pozostalyCzas = null`.
+ *
+ * Mutuje i zwraca przekazany obiekt (best-effort: `null`/`undefined` przepuszczamy).
+ * @param {PoprzetargowaKontrola|null} kontrola
+ * @param {number} [teraz] czas odniesienia w ms — wstrzykiwany w testach
+ * @returns {PoprzetargowaKontrola|null}
+ */
+export function dolaczPozostalyCzas(kontrola, teraz) {
+  if (!kontrola) return kontrola;
+  kontrola.pozostalyCzas = pozostaly_czas_do(kontrola.terminOdwolaniaKio, teraz);
+  return kontrola;
 }

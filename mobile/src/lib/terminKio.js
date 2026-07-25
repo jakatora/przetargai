@@ -23,6 +23,7 @@
  */
 
 const MS_DZIEN = 24 * 60 * 60 * 1000;
+const MS_GODZINA = 60 * 60 * 1000;
 
 /**
  * Tryby wyznaczające długość terminu wg art. 515 ust. 1 Pzp. Enum jak
@@ -180,4 +181,46 @@ export function oblicz_termin_kio(data_ogloszenia_wyniku, tryb) {
   }
 
   return formatujDate(terminMs);
+}
+
+/**
+ * Odliczanie do upływu terminu — podzadanie 4/13. Czysta funkcja: ile jeszcze
+ * czasu zostało do granicznej daty (np. {@link oblicz_termin_kio}) i czy termin
+ * już minął. Zasila odliczanie na ekranie i pole pomocnicze kontroli
+ * ({@link ../lib/poprzetargowaKontrola dolaczPozostalyCzas}).
+ *
+ * Termin PRAWNY obejmuje CAŁY dzień graniczny — odwołanie do KIO można wnieść aż
+ * do końca tej daty. Dlatego moment upływu = KONIEC dnia granicznego = północ
+ * dnia następnego (w UTC, jak cała arytmetyka tego pliku — liczymy dni
+ * kalendarzowe, nie chwile lokalne). Świadomie inaczej niż {@link ../lib/termin
+ * opisTerminu}, gdzie `deadline` niesie konkretną godzinę złożenia oferty.
+ *
+ * `dni`/`godziny` to rozbicie pozostałego czasu w DÓŁ (floor): „zostały co
+ * najmniej 3 dni i 5 godz." — bez zawyżania, bo spóźnione odwołanie KIO odrzuca.
+ * Po upływie zwracamy `poTerminie: true` z wyzerowanym `dni`/`godziny`
+ * (surowy, ujemny dystans jest w `pozostaloMs`, gdyby ekran chciał go pokazać).
+ *
+ * @param {string|Date} termin data graniczna (ISO `YYYY-MM-DD`, pełny ISO lub `Date`).
+ * @param {number} [teraz] czas odniesienia w ms (Date.now()) — wstrzykiwany w testach.
+ * @returns {{poTerminie: boolean, dni: number, godziny: number, pozostaloMs: number}|null}
+ *   `null`, gdy `termin` jest nieczytelny (spójnie z {@link oblicz_termin_kio} —
+ *   nie zgadujemy odliczania z niepewnej daty; ekran traktuje to jak „termin nieznany").
+ */
+export function pozostaly_czas_do(termin, teraz = Date.now()) {
+  const dzienMs = naDzienUTC(termin);
+  if (dzienMs === null) return null;
+
+  const uplywMs = dzienMs + MS_DZIEN; // koniec dnia granicznego = północ następnego dnia
+  const pozostaloMs = uplywMs - teraz;
+
+  if (pozostaloMs <= 0) {
+    return { poTerminie: true, dni: 0, godziny: 0, pozostaloMs };
+  }
+
+  return {
+    poTerminie: false,
+    dni: Math.floor(pozostaloMs / MS_DZIEN),
+    godziny: Math.floor((pozostaloMs % MS_DZIEN) / MS_GODZINA),
+    pozostaloMs,
+  };
 }

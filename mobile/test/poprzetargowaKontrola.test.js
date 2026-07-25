@@ -8,6 +8,7 @@ import {
   zapiszKontrole,
   wczytajKontrole,
   utworzKontrolePoPrzegranej,
+  dolaczPozostalyCzas,
 } from '../src/lib/poprzetargowaKontrola.js';
 
 /*
@@ -213,4 +214,29 @@ test('przegrana: dataOgloszeniaWyniku przepisana, gdy postępowanie ją niesie',
     dataOgloszeniaWyniku: '2026-07-20T12:00:00Z',
   });
   assert.equal(k.dataOgloszeniaWyniku, '2026-07-20T12:00:00Z');
+});
+
+// --- Pole pomocnicze: odliczanie do terminu KIO (podzadanie 4/13) ---
+
+test('dolaczPozostalyCzas: dolicza pole pomocnicze z terminOdwolaniaKio', () => {
+  const k = new PoprzetargowaKontrola({ postepowanieId: 1, terminOdwolaniaKio: '2026-08-10' });
+  dolaczPozostalyCzas(k, Date.UTC(2026, 7, 5, 0, 0, 0)); // 6 dni przed
+  assert.equal(k.pozostalyCzas.poTerminie, false);
+  assert.equal(k.pozostalyCzas.dni, 6);
+});
+
+test('dolaczPozostalyCzas: pole POMOCNICZE nie trafia do toJSON (countdown się starzeje)', () => {
+  const k = new PoprzetargowaKontrola({ postepowanieId: 1, terminOdwolaniaKio: '2026-08-10' });
+  dolaczPozostalyCzas(k, Date.UTC(2026, 7, 5));
+  assert.equal('pozostalyCzas' in k.toJSON(), false);
+});
+
+test('dolaczPozostalyCzas: brak wyliczonego terminu → pozostalyCzas null', () => {
+  const k = new PoprzetargowaKontrola({ postepowanieId: 1 }); // terminOdwolaniaKio == null
+  dolaczPozostalyCzas(k, Date.UTC(2026, 7, 5));
+  assert.equal(k.pozostalyCzas, null);
+});
+
+test('dolaczPozostalyCzas: null przepuszczamy bez wyjątku', () => {
+  assert.equal(dolaczPozostalyCzas(null), null);
 });

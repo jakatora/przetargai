@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   oblicz_termin_kio,
+  pozostaly_czas_do,
   TRYBY_KIO,
   TRYB_KIO_DOMYSLNY,
 } from '../src/lib/terminKio.js';
@@ -134,4 +135,88 @@ test('niepoprawny Date (Invalid Date) → null', () => {
 test('data o poprawnym kształcie, ale nieistniejąca → null (bez cichej normalizacji)', () => {
   assert.equal(oblicz_termin_kio('2026-13-45', 'unijny'), null); // miesiąc 13
   assert.equal(oblicz_termin_kio('2026-02-30', 'unijny'), null); // 30 lutego
+});
+
+/*
+ * ===== Odliczanie do upływu terminu — pozostaly_czas_do (podzadanie 4/13) =====
+ * `teraz` wstrzykiwany jako ms (UTC), żeby test nie zależał od zegara/strefy.
+ * Moment upływu = koniec dnia granicznego = północ dnia następnego (UTC).
+ */
+
+// --- Pełne dni / dni + godziny (rozbicie w dół) ---
+
+test('pozostaly_czas_do: równe pełne dni przed terminem', () => {
+  // 2026-08-10 → upływ 2026-08-11T00:00Z; teraz 2026-08-05T00:00Z = dokładnie 6 dni.
+  const r = pozostaly_czas_do('2026-08-10', Date.UTC(2026, 7, 5, 0, 0, 0));
+  assert.deepEqual(
+    { poTerminie: r.poTerminie, dni: r.dni, godziny: r.godziny },
+    { poTerminie: false, dni: 6, godziny: 0 },
+  );
+});
+
+test('pozostaly_czas_do: dni + godziny liczone w dół (floor, bez zawyżania)', () => {
+  // upływ 2026-08-11T00:00Z − teraz 2026-08-05T10:30Z = 5 dni 13 godz. 30 min → 5 dni 13 godz.
+  const r = pozostaly_czas_do('2026-08-10', Date.UTC(2026, 7, 5, 10, 30, 0));
+  assert.equal(r.poTerminie, false);
+  assert.equal(r.dni, 5);
+  assert.equal(r.godziny, 13);
+});
+
+// --- Cały dzień graniczny jest jeszcze ważny (kluczowa semantyka) ---
+
+test('pozostaly_czas_do: rano DNIA granicznego termin NIE minął (można wnieść do końca dnia)', () => {
+  // termin 2026-08-05, teraz 2026-08-05T09:00Z → do północy 2026-08-06 zostaje 15 godz.
+  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 5, 9, 0, 0));
+  assert.equal(r.poTerminie, false);
+  assert.equal(r.dni, 0);
+  assert.equal(r.godziny, 15);
+});
+
+// --- Granica i po terminie ---
+
+test('pozostaly_czas_do: dokładnie w chwili upływu (północ następnego dnia) → po terminie', () => {
+  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 6, 0, 0, 0));
+  assert.deepEqual(
+    { poTerminie: r.poTerminie, dni: r.dni, godziny: r.godziny },
+    { poTerminie: true, dni: 0, godziny: 0 },
+  );
+  assert.equal(r.pozostaloMs, 0);
+});
+
+test('pozostaly_czas_do: po upływie → poTerminie=true, dni/godziny=0, ujemny pozostaloMs', () => {
+  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 6, 0, 0, 1)); // sekunda po
+  assert.equal(r.poTerminie, true);
+  assert.equal(r.dni, 0);
+  assert.equal(r.godziny, 0);
+  assert.equal(r.pozostaloMs, -1000);
+});
+
+// --- Formaty wejścia (spójnie z oblicz_termin_kio) ---
+
+test('pozostaly_czas_do: akceptuje Date i pełny ISO (dzień z pierwszych 10 znaków)', () => {
+  const teraz = Date.UTC(2026, 7, 5, 0, 0, 0);
+  const zDate = pozostaly_czas_do(new Date(Date.UTC(2026, 7, 10)), teraz);
+  const zIso = pozostaly_czas_do('2026-08-10T23:30:00Z', teraz); // godzina nie przesuwa dnia
+  assert.equal(zDate.dni, 6);
+  assert.equal(zIso.dni, 6);
+});
+
+test('pozostaly_czas_do: nieczytelny/pusty termin → null (jak oblicz_termin_kio)', () => {
+  const teraz = Date.UTC(2026, 7, 5);
+  assert.equal(pozostaly_czas_do(null, teraz), null);
+  assert.equal(pozostaly_czas_do(undefined, teraz), null);
+  assert.equal(pozostaly_czas_do('', teraz), null);
+  assert.equal(pozostaly_czas_do('nie-data', teraz), null);
+  assert.equal(pozostaly_czas_do('2026-02-30', teraz), null); // nieistniejąca data
+});
+
+// --- Współpraca z kalkulatorem terminu (cały łańcuch) ---
+
+test('pozostaly_czas_do: łańcuch z oblicz_termin_kio', () => {
+  const termin = oblicz_termin_kio('2026-07-20', 'unijny'); // → 2026-07-30
+  assert.equal(termin, '2026-07-30');
+  // teraz 2026-07-25T00:00Z → upływ 2026-07-31T00:00Z = 6 dni.
+  const r = pozostaly_czas_do(termin, Date.UTC(2026, 6, 25, 0, 0, 0));
+  assert.equal(r.poTerminie, false);
+  assert.equal(r.dni, 6);
 });
