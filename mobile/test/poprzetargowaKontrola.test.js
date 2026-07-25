@@ -9,6 +9,7 @@ import {
   wczytajKontrole,
   utworzKontrolePoPrzegranej,
   dolaczPozostalyCzas,
+  oznaczWniosekWyslany,
 } from '../src/lib/poprzetargowaKontrola.js';
 
 /*
@@ -239,4 +240,48 @@ test('dolaczPozostalyCzas: brak wyliczonego terminu → pozostalyCzas null', () 
 
 test('dolaczPozostalyCzas: null przepuszczamy bez wyjątku', () => {
   assert.equal(dolaczPozostalyCzas(null), null);
+});
+
+/* --- Podzadanie 6/13: przycisk „Wygeneruj wniosek" → status wniosek_wyslany --- */
+
+test('oznaczWniosekWyslany: „nowa" → „wniosek_wyslany" i zapis w magazynie', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'BZP-9', status: 'nowa' });
+  const k = await oznaczWniosekWyslany(magazyn, 'BZP-9');
+  assert.ok(k instanceof PoprzetargowaKontrola);
+  assert.equal(k.status, 'wniosek_wyslany');
+  // Utrwalone, nie tylko na zwróconym obiekcie.
+  const wczytana = await wczytajKontrole(magazyn, 'BZP-9');
+  assert.equal(wczytana.status, 'wniosek_wyslany');
+});
+
+test('oznaczWniosekWyslany: brak kontroli w magazynie → tworzy ją ze statusem wniosek_wyslany', async () => {
+  // Hook zakładający kontrolę po przegranej jest best-effort — mógł nie zdążyć.
+  const magazyn = atrapaMagazynu();
+  const k = await oznaczWniosekWyslany(magazyn, 'BZP-NOWY');
+  assert.ok(k instanceof PoprzetargowaKontrola);
+  assert.equal(k.postepowanieId, 'BZP-NOWY');
+  assert.equal(k.status, 'wniosek_wyslany');
+  assert.ok(magazyn.m.has('kontrola:BZP-NOWY'));
+});
+
+test('oznaczWniosekWyslany: nie cofa dalszego etapu (dokumenty_otrzymane zostaje)', async () => {
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'BZP-DALEJ', status: 'dokumenty_otrzymane' });
+  const k = await oznaczWniosekWyslany(magazyn, 'BZP-DALEJ');
+  assert.equal(k.status, 'dokumenty_otrzymane'); // brak regresji postępu
+});
+
+test('oznaczWniosekWyslany: numeryczne id sprowadzone do stringa', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await oznaczWniosekWyslany(magazyn, 7);
+  assert.equal(k.postepowanieId, '7');
+  assert.ok(magazyn.m.has('kontrola:7'));
+});
+
+test('oznaczWniosekWyslany: brak id → null i nic nie zapisano', async () => {
+  const magazyn = atrapaMagazynu();
+  const k = await oznaczWniosekWyslany(magazyn, null);
+  assert.equal(k, null);
+  assert.equal(magazyn.m.size, 0);
 });

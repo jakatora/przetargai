@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput, Share } from 'react-native';
+import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput, Share, Platform } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -12,11 +12,51 @@ import { opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
-import { utworzKontrolePoPrzegranej } from '../lib/poprzetargowaKontrola';
+import {
+  utworzKontrolePoPrzegranej,
+  wczytajKontrole,
+  oznaczWniosekWyslany,
+  STATUSY_KONTROLI,
+} from '../lib/poprzetargowaKontrola';
+import { wygeneruj_wniosek_o_protokol } from '../lib/wniosekProtokol';
 import * as storage from '../lib/storage';
 import { opisWadium } from '../lib/wadium';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { opisWyniki } from '../lib/wyniki';
+
+/** Etykieta etapu kontroli (STATUSY_KONTROLI); brak kontroli → pierwszy etap „Nowa". */
+function etykietaEtapuKontroli(status) {
+  const wpis = STATUSY_KONTROLI.find((s) => s.wartosc === status) ?? STATUSY_KONTROLI[0];
+  return wpis.etykieta;
+}
+
+/**
+ * „Pobranie/zapis" wygenerowanego pisma. Projekt nie ma expo-file-system/-sharing,
+ * więc bez nowych natywnych zależności:
+ *  - web → prawdziwe pobranie pliku .txt (Blob + <a download>),
+ *  - natywnie → arkusz udostępniania (zapis do Plików / wysyłka), jak „Udostępnij".
+ * Best-effort: zamknięcie arkusza przez użytkownika nie jest błędem — pismo i tak
+ * zostało wygenerowane.
+ */
+async function pobierzDokument(dok) {
+  if (Platform.OS === 'web') {
+    const blob = new Blob([dok.tresc], { type: dok.typMime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = dok.nazwaPliku;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    return;
+  }
+  try {
+    await Share.share({ message: dok.tresc, title: dok.tytul });
+  } catch {
+    /* użytkownik zamknął arkusz — pismo i tak wygenerowane */
+  }
+}
 
 function Row({ styles, label, value, last }) {
   return (
@@ -48,6 +88,9 @@ export default function MatchDetailScreen({ route }) {
   const [notatkaZapis, setNotatkaZapis] = useState('idle'); // idle | zapisywanie | zapisano
   // Statystyki wyników (R17) — lekki odczyt, pobierany raz na wejściu (bez kosztu AI).
   const [wyniki, setWyniki] = useState(null);
+  // Poprzetargowa kontrola oferty zwycięzcy (podzadanie 6/13) — tylko dla przegranej.
+  const [kontrola, setKontrola] = useState(null);
+  const [wniosekBusy, setWniosekBusy] = useState(false);
 
   useEffect(() => {
     let aktywny = true;
@@ -56,6 +99,17 @@ export default function MatchDetailScreen({ route }) {
       .catch(() => {});
     return () => { aktywny = false; };
   }, [match.id]);
+
+  // Kontrola jest kluczowana po `tender.id` (patrz utworzKontrolePoPrzegranej).
+  // Ładujemy ją dopiero, gdy etap = „przegrana", i odświeżamy przy zmianie etapu.
+  useEffect(() => {
+    if (status !== 'przegrana') { setKontrola(null); return; }
+    let aktywny = true;
+    wczytajKontrole(storage, tender.id)
+      .then((k) => { if (aktywny) setKontrola(k); })
+      .catch(() => {});
+    return () => { aktywny = false; };
+  }, [tender.id, status]);
 
   const zapisany = isSaved(match.id);
   const budget = formatBudget(tender.budget, tender.currency);
@@ -68,6 +122,8 @@ export default function MatchDetailScreen({ route }) {
   const termin = opisTerminu(tender.deadline);
   const deadlineText = `${formatDate(tender.deadline)}  ·  ${termin.etykieta}`;
   const maTermin = !!tender.deadline && !termin.minal;
+  // Wniosek już poszedł, gdy kontrola przeszła poza etap „nowa".
+  const wniosekWyslany = !!kontrola && kontrola.status !== 'nowa';
 
   async function przelaczZapis() {
     try {
@@ -105,6 +161,25 @@ export default function MatchDetailScreen({ route }) {
     } catch (err) {
       setStatus(poprzedni);
       Alert.alert('Błąd', err.message);
+    }
+  }
+
+  // Przycisk „Wygeneruj wniosek" (podzadanie 6/13): generuje pismo o protokół
+  // (czysta funkcja z 5/13), pobiera/udostępnia je i przesuwa etap kontroli na
+  // „wniosek_wysłany". Samo generowanie pisma jest lokalne — bez kosztu AI/API.
+  async function wygenerujWniosek() {
+    setWniosekBusy(true);
+    try {
+      const dok = wygeneruj_wniosek_o_protokol(tender, {
+        dataPisma: new Date().toISOString().slice(0, 10),
+      });
+      await pobierzDokument(dok);
+      const zaktualizowana = await oznaczWniosekWyslany(storage, tender.id);
+      if (zaktualizowana) setKontrola(zaktualizowana);
+    } catch (err) {
+      Alert.alert('Nie udało się wygenerować wniosku', err.message);
+    } finally {
+      setWniosekBusy(false);
     }
   }
 
@@ -287,6 +362,39 @@ export default function MatchDetailScreen({ route }) {
           />
         </View>
       </View>
+
+      {status === 'przegrana' ? (
+        <>
+          <Text style={styles.sectionTitle}>Przegrana? Prześwietl ofertę zwycięzcy</Text>
+          <View style={styles.card}>
+            <Text style={styles.strPodtytul}>
+              Oferty są jawne od otwarcia (załączniki najpóźniej 3 dni po). Złóż wniosek o
+              udostępnienie protokołu i ofert konkurencji — potem sprawdzimy ofertę zwycięzcy
+              pod kątem podstaw do odwołania do KIO.
+            </Text>
+
+            <View style={styles.kontrolaEtapRzad}>
+              <Text style={styles.kontrolaEtapEtykieta}>Etap kontroli</Text>
+              <Text style={styles.kontrolaEtapWartosc}>{etykietaEtapuKontroli(kontrola?.status)}</Text>
+            </View>
+
+            {wniosekWyslany ? (
+              <Text style={styles.kontrolaInfo}>
+                Wniosek wygenerowany. Wyślij go do zamawiającego i zaznacz otrzymanie
+                dokumentów, gdy dotrą — wtedy ruszy analiza oferty zwycięzcy.
+              </Text>
+            ) : null}
+
+            <Button
+              title={wniosekWyslany ? 'Wygeneruj wniosek ponownie' : 'Wygeneruj wniosek'}
+              onPress={wygenerujWniosek}
+              loading={wniosekBusy}
+              variant={wniosekWyslany ? 'ghost' : 'primary'}
+              style={styles.gap}
+            />
+          </View>
+        </>
+      ) : null}
 
       <Text style={styles.sectionTitle}>Wyjaśnienie AI</Text>
       <View style={styles.card}>
@@ -482,6 +590,13 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   strKropka: { fontSize: 15, color: k.blue, lineHeight: 22 },
   strPunkt: { flex: 1, fontSize: 15, color: k.text, lineHeight: 22 },
   gap: { marginTop: spacing.lg },
+  kontrolaEtapRzad: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: k.border,
+  },
+  kontrolaEtapEtykieta: { fontSize: 13, fontWeight: '700', color: k.blue },
+  kontrolaEtapWartosc: { fontSize: 15, fontWeight: '700', color: k.text },
+  kontrolaInfo: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: spacing.sm },
   feedbackRow: { flexDirection: 'row', gap: spacing.md },
   feedbackBtn: { flex: 1 },
   feedbackDone: { fontSize: 14, color: k.green, fontWeight: '600' },

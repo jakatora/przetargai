@@ -185,3 +185,37 @@ export function dolaczPozostalyCzas(kontrola, teraz) {
   kontrola.pozostalyCzas = pozostaly_czas_do(kontrola.terminOdwolaniaKio, teraz);
   return kontrola;
 }
+
+/** Pozycja statusu na osi postępu ({@link STATUSY_KONTROLI}). Nieznany → -1. */
+function indeksStatusu(wartosc) {
+  return STATUSY_KONTROLI.findIndex((s) => s.wartosc === wartosc);
+}
+
+/**
+ * Oznacza kontrolę jako „wniosek_wyslany" (podzadanie 6/13) — wołane z przycisku
+ * „Wygeneruj wniosek" po wygenerowaniu i pobraniu pisma o protokół.
+ *
+ * Load-or-create: hook {@link utworzKontrolePoPrzegranej} jest best-effort i mógł
+ * nie zdążyć założyć rekordu — wtedy zakładamy minimalną kontrolę pod tym
+ * postępowaniem. MONOTONICZNIE: nie cofamy dalszego etapu (dokumenty_otrzymane /
+ * analiza_gotowa), żeby ponowne kliknięcie nie skasowało postępu. Best-effort:
+ * brak id → `null` (przycisk nie może wywrócić UI).
+ *
+ * @param {object} magazyn magazyn z `getItem`/`setItem`
+ * @param {string|number} postepowanieId klucz naturalny (tender.id)
+ * @returns {Promise<PoprzetargowaKontrola|null>}
+ */
+export async function oznaczWniosekWyslany(magazyn, postepowanieId) {
+  const id = idAlboNull(postepowanieId);
+  if (!id) return null;
+
+  const kontrola =
+    (await wczytajKontrole(magazyn, id)) ?? new PoprzetargowaKontrola({ postepowanieId: id });
+
+  // Tylko naprzód: gdy kontrola jest już dalej niż „wniosek_wyslany", zostaje.
+  const cel = 'wniosek_wyslany';
+  if (indeksStatusu(kontrola.status) < indeksStatusu(cel)) {
+    kontrola.status = cel;
+  }
+  return zapiszKontrole(magazyn, kontrola);
+}
