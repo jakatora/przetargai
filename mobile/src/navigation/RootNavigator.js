@@ -7,6 +7,7 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import MatchFeedScreen from '../screens/MatchFeedScreen';
 import MatchDetailScreen from '../screens/MatchDetailScreen';
+import WynikKontroliScreen from '../screens/WynikKontroliScreen';
 import AccountScreen from '../screens/AccountScreen';
 import SavedScreen from '../screens/SavedScreen';
 
@@ -62,6 +63,11 @@ export default function RootNavigator() {
               name="MatchDetail"
               component={MatchDetailScreen}
               options={{ title: 'Szczegóły przetargu' }}
+            />
+            <Stack.Screen
+              name="WynikKontroli"
+              component={WynikKontroliScreen}
+              options={{ title: 'Szansa na odwołanie' }}
             />
             <Stack.Screen
               name="Saved"

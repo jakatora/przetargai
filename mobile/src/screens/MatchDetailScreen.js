@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput, Share, Platform } from 'react-native';
+import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput, Share } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -19,6 +19,7 @@ import {
   STATUSY_KONTROLI,
 } from '../lib/poprzetargowaKontrola';
 import { wygeneruj_wniosek_o_protokol } from '../lib/wniosekProtokol';
+import { pobierzDokument } from '../services/dokumenty';
 import * as storage from '../lib/storage';
 import { opisWadium } from '../lib/wadium';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
@@ -30,34 +31,6 @@ function etykietaEtapuKontroli(status) {
   return wpis.etykieta;
 }
 
-/**
- * „Pobranie/zapis" wygenerowanego pisma. Projekt nie ma expo-file-system/-sharing,
- * więc bez nowych natywnych zależności:
- *  - web → prawdziwe pobranie pliku .txt (Blob + <a download>),
- *  - natywnie → arkusz udostępniania (zapis do Plików / wysyłka), jak „Udostępnij".
- * Best-effort: zamknięcie arkusza przez użytkownika nie jest błędem — pismo i tak
- * zostało wygenerowane.
- */
-async function pobierzDokument(dok) {
-  if (Platform.OS === 'web') {
-    const blob = new Blob([dok.tresc], { type: dok.typMime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = dok.nazwaPliku;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    return;
-  }
-  try {
-    await Share.share({ message: dok.tresc, title: dok.tytul });
-  } catch {
-    /* użytkownik zamknął arkusz — pismo i tak wygenerowane */
-  }
-}
-
 function Row({ styles, label, value, last }) {
   return (
     <View style={[styles.row, last && styles.rowLast]}>
@@ -67,7 +40,7 @@ function Row({ styles, label, value, last }) {
   );
 }
 
-export default function MatchDetailScreen({ route }) {
+export default function MatchDetailScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleSzczegolow);
   const { isSaved, toggle } = useSaved();
@@ -124,6 +97,8 @@ export default function MatchDetailScreen({ route }) {
   const maTermin = !!tender.deadline && !termin.minal;
   // Wniosek już poszedł, gdy kontrola przeszła poza etap „nowa".
   const wniosekWyslany = !!kontrola && kontrola.status !== 'nowa';
+  // Analiza gotowa → mamy wynik do pokazania na osobnym ekranie (podzadanie 12/13).
+  const analizaGotowa = !!kontrola?.analiza;
 
   async function przelaczZapis() {
     try {
@@ -181,6 +156,13 @@ export default function MatchDetailScreen({ route }) {
     } finally {
       setWniosekBusy(false);
     }
+  }
+
+  // Przejście na ekran wyniku kontroli (podzadanie 12/13). Params serializowalne —
+  // przekazujemy kontrolę jako zwykły obiekt (toJSON), ekran tylko wyświetla dane.
+  function otworzWynikKontroli() {
+    if (!kontrola) return;
+    navigation.navigate('WynikKontroli', { tender, kontrola: kontrola.toJSON() });
   }
 
   async function zapiszNotatke() {
@@ -378,11 +360,26 @@ export default function MatchDetailScreen({ route }) {
               <Text style={styles.kontrolaEtapWartosc}>{etykietaEtapuKontroli(kontrola?.status)}</Text>
             </View>
 
-            {wniosekWyslany ? (
+            {wniosekWyslany && !analizaGotowa ? (
               <Text style={styles.kontrolaInfo}>
                 Wniosek wygenerowany. Wyślij go do zamawiającego i zaznacz otrzymanie
                 dokumentów, gdy dotrą — wtedy ruszy analiza oferty zwycięzcy.
               </Text>
+            ) : null}
+
+            {analizaGotowa ? (
+              <>
+                <Text style={styles.kontrolaInfo}>
+                  Analiza oferty zwycięzcy gotowa. Zobacz listę zarzutów, ocenę szans i
+                  termin na odwołanie do KIO.
+                </Text>
+                <Button
+                  title="Zobacz wynik kontroli"
+                  onPress={otworzWynikKontroli}
+                  variant="primary"
+                  style={styles.gap}
+                />
+              </>
             ) : null}
 
             <Button
