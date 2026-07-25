@@ -13,13 +13,14 @@ import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
 import {
-  utworzKontrolePoPrzegranej,
   wczytajKontrole,
   oznaczWniosekWyslany,
   STATUSY_KONTROLI,
 } from '../lib/poprzetargowaKontrola';
+import { uruchomSciezkeOdwolania } from '../lib/orkiestratorOdwolania';
 import { wygeneruj_wniosek_o_protokol } from '../lib/wniosekProtokol';
 import { pobierzDokument } from '../services/dokumenty';
+import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio';
 import * as storage from '../lib/storage';
 import { opisWadium } from '../lib/wadium';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
@@ -128,10 +129,17 @@ export default function MatchDetailScreen({ route, navigation }) {
     try {
       if (!zapisany) await toggle(match.id); // etap wymaga zapisu — dopisz do zakładek
       await api.setStatus(match.id, nowy);
-      // Przegrana → załóż poprzetargową kontrolę oferty zwycięzcy (podzadanie 2/13).
-      // Best-effort: błąd zapisu lokalnej kontroli NIE może cofnąć zmiany statusu.
+      // Przegrana → uruchom ścieżkę odwołania (podzadanie 13/13): załóż kontrolę,
+      // wylicz termin KIO i zaplanuj przypomnienie o zbliżającym się terminie.
+      // Best-effort: błąd tej ścieżki NIE może cofnąć zmiany statusu.
       if (nowy === 'przegrana') {
-        utworzKontrolePoPrzegranej(storage, tender).catch(() => {});
+        uruchomSciezkeOdwolania(storage, tender)
+          .then((k) => {
+            if (!k) return;
+            setKontrola(k); // od razu pokaż wyliczony termin, nie czekając na przeładowanie
+            zaplanujPowiadomienieOTerminieKio(k).catch(() => {});
+          })
+          .catch(() => {});
       }
     } catch (err) {
       setStatus(poprzedni);

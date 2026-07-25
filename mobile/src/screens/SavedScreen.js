@@ -12,7 +12,8 @@ import { opisTerminu } from '../lib/termin';
 import { ScoreBadge } from '../components/MatchCard';
 import StatusPicker from '../components/StatusPicker';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
-import { utworzKontrolePoPrzegranej } from '../lib/poprzetargowaKontrola';
+import { uruchomSciezkeOdwolania } from '../lib/orkiestratorOdwolania';
+import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio';
 import * as storage from '../lib/storage';
 
 export default function SavedScreen({ navigation }) {
@@ -46,10 +47,13 @@ export default function SavedScreen({ navigation }) {
       s.tender.id === item.tender.id ? { ...s, status: nowy } : s));
     try {
       await api.setStatus(item.tender.id, nowy);
-      // Przegrana → załóż poprzetargową kontrolę oferty zwycięzcy (podzadanie 2/13).
-      // Best-effort: błąd lokalnej kontroli nie może cofnąć zmiany statusu.
+      // Przegrana → uruchom ścieżkę odwołania (podzadanie 13/13): kontrola + termin
+      // KIO + przypomnienie o zbliżającym się terminie.
+      // Best-effort: błąd tej ścieżki nie może cofnąć zmiany statusu.
       if (nowy === 'przegrana') {
-        utworzKontrolePoPrzegranej(storage, item.tender).catch(() => {});
+        uruchomSciezkeOdwolania(storage, item.tender)
+          .then((k) => { if (k) zaplanujPowiadomienieOTerminieKio(k).catch(() => {}); })
+          .catch(() => {});
       }
     } catch {
       setItems((prev) => prev.map((s) =>
