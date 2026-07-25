@@ -16,6 +16,7 @@ import fitterAiRouter from './routes/fitterAi.js';
 import fitterChatRouter from './routes/fitterChat.js';
 import fitterScanRouter from './routes/fitterScan.js';
 import fitterJobsRouter from './routes/fitterJobs.js';
+import przetargUmowaRouter from './routes/przetargUmowa.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -73,6 +74,9 @@ export function createApp() {
   app.use('/api/fitter/ai', aiLimiter, fitterAiRouter);
   app.use('/api/fitter/chat', apiLimiter, fitterChatRouter);
   app.use('/api/fitter/jobs', apiLimiter, fitterJobsRouter);
+  // Analiza projektu umowy — treść bywa duża (całe SWZ/umowa, docelowo PDF),
+  // więc trasa dostaje własny, większy parser JSON ponad globalnym limitem 1 MB.
+  app.use('/api/przetarg/umowa', express.json({ limit: '10mb' }), apiLimiter, przetargUmowaRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);
