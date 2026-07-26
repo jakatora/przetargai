@@ -116,4 +116,28 @@ export const api = {
    */
   analizujUmowe: (payload) =>
     request('/api/przetarg/umowa/analiza', { method: 'POST', body: payload }),
+
+  // ----- Radar SWZ (ulepszenie „Radar pytań i odpowiedzi do SWZ", panel 7/7) -----
+  // Panel woła agregat `GET .../postepowania/:id` (termin pytań + pytania + timeline
+  // zmian + checklista + bramka jednym zapytaniem) oraz akcje: analiza (generuje
+  // pytania), odświeżenie (wchłania nową wersję SWZ → zmiany), odznaczenie zmiany
+  // i wysyłka z bramką. Prefiks tras: `/api/przetarg/swz`.
+  radarListaPostepowan: () => request('/api/przetarg/swz/postepowania'),
+  radarUtworzPostepowanie: (payload) =>
+    request('/api/przetarg/swz/postepowania', { method: 'POST', body: payload }),
+  radarPostepowanie: (id) => request(`/api/przetarg/swz/postepowania/${id}`),
+  /** Analiza SWZ (płatne AI, subskrypcja) — wykryte niejasności zapisze jako szkice pytań. */
+  radarAnalizuj: (id, payload) =>
+    request(`/api/przetarg/swz/postepowania/${id}/analiza`, { method: 'POST', body: payload }),
+  /** Wchłonięcie nowo opublikowanej wersji SWZ → wersjonowanie + wpis zmiany (diff). */
+  radarOdswiez: (id, payload) =>
+    request(`/api/przetarg/swz/postepowania/${id}/odswiez`, { method: 'POST', body: payload }),
+  /** Odznaczenie/cofnięcie: potwierdza, że zmianę uwzględniono w ofercie. */
+  radarUwzglednij: (id, zmianaId, uwzglednione = true) =>
+    request(`/api/przetarg/swz/postepowania/${id}/zmiany/${zmianaId}/uwzglednij`, {
+      method: 'POST', body: { uwzglednione },
+    }),
+  /** Bramka przy wysyłce: bez `wymus` blokada (409) przy nieodznaczonych zmianach. */
+  radarWyslij: (id, wymus = false) =>
+    request(`/api/przetarg/swz/postepowania/${id}/wyslij`, { method: 'POST', body: { wymus } }),
 };

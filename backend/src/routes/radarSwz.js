@@ -7,6 +7,7 @@ import { postepowaniaSwz, pytaniaSwz, zmianySwz } from '../db/repos.js';
 import { analizujSwz } from '../services/analizaSwz.js';
 import { odswiezPostepowanie } from '../jobs/monitorSwz.js';
 import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
+import { terminPytanSwz } from '../lib/terminPytanSwz.js';
 
 /*
  * Radar SWZ — uruchomienie ANALIZY treści SWZ dla danego postępowania
@@ -30,6 +31,100 @@ import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
  */
 
 const router = Router();
+
+/*
+ * ---- Zasilanie panelu UI „Radar SWZ" (podzadanie 7/7) ----
+ *
+ * Panel potrzebuje trzech rzeczy naraz: listy WYGENEROWANYCH PYTAŃ z odliczaniem do
+ * terminu ich składania, TIMELINE'u opublikowanych zmian (diff + opis skutku) oraz
+ * CHECKLISTY przedwysyłkowej z werdyktem bramki. Zamiast wołać pięć endpointów,
+ * `GET /postepowania/:id` oddaje wszystko jednym zapytaniem. `GET /postepowania`
+ * to lista z lekkim skrótem (do wyboru postępowania), a `POST /postepowania` to
+ * wejście — panel musi umieć założyć obserwowane postępowanie z poziomu apki.
+ *
+ * Wszystkie trasy czytają WYŁĄCZNIE istniejące metody repozytoriów (bez logiki AI),
+ * skopowane po właścicielu — cudze/nieistniejące => 404.
+ */
+
+/** Termin pytań do SWZ policzony z dat postępowania (albo `terminPytan: null`). */
+function terminPytaniaDla(p) {
+  return terminPytanSwz({
+    dataOgloszenia: p.data_ogloszenia,
+    terminSkladaniaOfert: p.termin_skladania_ofert,
+  });
+}
+
+/** Pusta wartość => null; podana => ISO 8601 albo 400 przy niepoprawnej dacie. */
+function normalizujDate(wartosc, pole) {
+  if (wartosc === undefined || wartosc === null || String(wartosc).trim() === '') return null;
+  const d = new Date(wartosc);
+  if (Number.isNaN(d.getTime())) throw badRequest(`"${pole}" musi być poprawną datą (ISO 8601).`);
+  return d.toISOString();
+}
+
+// Założenie obserwowanego postępowania. Daty opcjonalne (mogą dojść, gdy poznamy
+// dokumentację); bez terminu składania nie policzymy terminu pytań — panel pokaże
+// wtedy „termin nieznany", nie wymyśloną datę.
+const utworzSchema = z.object({
+  nazwa: z.string().max(300),
+  data_ogloszenia: z.string().optional(),
+  termin_skladania_ofert: z.string().optional(),
+});
+
+router.post('/postepowania', authRequired, ah(async (req, res) => {
+  const parsed = utworzSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Podaj "nazwa" postępowania (opcjonalnie "data_ogloszenia" i "termin_skladania_ofert").');
+  const nazwa = parsed.data.nazwa.trim();
+  if (!nazwa) throw badRequest('Pole "nazwa" nie może być puste.');
+
+  const postepowanie = postepowaniaSwz.create({
+    userId: req.user.id,
+    nazwa,
+    dataOgloszenia: normalizujDate(parsed.data.data_ogloszenia, 'data_ogloszenia'),
+    terminSkladaniaOfert: normalizujDate(parsed.data.termin_skladania_ofert, 'termin_skladania_ofert'),
+  });
+  res.status(201).json({ postepowanie });
+}));
+
+// Lista postępowań usera z lekkim skrótem dla kafelka: odliczanie do terminu pytań
+// i liczby (pytania / zmiany / ile jeszcze do odznaczenia w checkliście).
+router.get('/postepowania', authRequired, ah(async (req, res) => {
+  const postepowania = postepowaniaSwz.listForUser(req.user.id).map((p) => {
+    const zmiany = zmianySwz.listForPostepowanie(p.id);
+    return {
+      id: p.id,
+      nazwa: p.nazwa,
+      data_ogloszenia: p.data_ogloszenia,
+      termin_skladania_ofert: p.termin_skladania_ofert,
+      termin_pytania: terminPytaniaDla(p),
+      liczba_pytan: pytaniaSwz.listForPostepowanie(p.id).length,
+      liczba_zmian: zmiany.length,
+      do_odznaczenia: zbudujCheckliste(zmiany).do_odznaczenia,
+    };
+  });
+  res.json({ postepowania });
+}));
+
+// Agregat zasilający cały panel jednego postępowania: meta + termin pytań + pytania
+// + timeline zmian (z diffem i opisem skutku) + checklista i werdykt bramki.
+router.get('/postepowania/:id', authRequired, ah(async (req, res) => {
+  const postepowanie = mojePostepowanie(req);
+  const zmiany = zmianySwz.listForPostepowanie(postepowanie.id);
+  const checklista = zbudujCheckliste(zmiany);
+  res.json({
+    postepowanie: {
+      id: postepowanie.id,
+      nazwa: postepowanie.nazwa,
+      data_ogloszenia: postepowanie.data_ogloszenia,
+      termin_skladania_ofert: postepowanie.termin_skladania_ofert,
+    },
+    termin_pytania: terminPytaniaDla(postepowanie),
+    pytania: pytaniaSwz.listForPostepowanie(postepowanie.id),
+    zmiany,
+    checklista,
+    bramka: ocenBramke(checklista),
+  });
+}));
 
 // Wszystkie pola opcjonalne w schemacie; regułę „co najmniej jeden dokument niesie
 // treść" egzekwujemy niżej (maTresc) dla czytelnego 400 — spójnie z /umowa/analiza.

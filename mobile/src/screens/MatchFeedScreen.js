@@ -129,6 +129,13 @@ export default function MatchFeedScreen({ navigation }) {
       headerRight: () => (
         <View style={styles.headerAkcje}>
           <Pressable
+            onPress={() => navigation.navigate('RadarSwz')}
+            hitSlop={12}
+            accessibilityLabel="Radar SWZ — pytania i zmiany"
+          >
+            <Text style={styles.headerBtn}>Radar</Text>
+          </Pressable>
+          <Pressable
             onPress={() => navigation.navigate('PrzeswietlenieUmowy')}
             hitSlop={12}
             accessibilityLabel="Prześwietlenie umowy przed podpisem"

@@ -9,6 +9,7 @@ import MatchFeedScreen from '../screens/MatchFeedScreen';
 import MatchDetailScreen from '../screens/MatchDetailScreen';
 import WynikKontroliScreen from '../screens/WynikKontroliScreen';
 import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
+import RadarSwzScreen from '../screens/RadarSwzScreen';
 import Kreator118Screen from '../screens/Kreator118Screen';
 import KrokDanePodmiotuScreen from '../screens/KrokDanePodmiotuScreen';
 import AccountScreen from '../screens/AccountScreen';
@@ -76,6 +77,11 @@ export default function RootNavigator() {
               name="PrzeswietlenieUmowy"
               component={PrzeswietlenieUmowyScreen}
               options={{ title: 'Prześwietlenie umowy' }}
+            />
+            <Stack.Screen
+              name="RadarSwz"
+              component={RadarSwzScreen}
+              options={{ title: 'Radar SWZ' }}
             />
             <Stack.Screen
               name="Kreator118"
