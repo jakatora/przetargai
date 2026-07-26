@@ -9,6 +9,7 @@ import MatchFeedScreen from '../screens/MatchFeedScreen';
 import MatchDetailScreen from '../screens/MatchDetailScreen';
 import WynikKontroliScreen from '../screens/WynikKontroliScreen';
 import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
+import Kreator118Screen from '../screens/Kreator118Screen';
 import AccountScreen from '../screens/AccountScreen';
 import SavedScreen from '../screens/SavedScreen';
 
@@ -74,6 +75,11 @@ export default function RootNavigator() {
               name="PrzeswietlenieUmowy"
               component={PrzeswietlenieUmowyScreen}
               options={{ title: 'Prześwietlenie umowy' }}
+            />
+            <Stack.Screen
+              name="Kreator118"
+              component={Kreator118Screen}
+              options={{ title: 'Pożycz doświadczenie' }}
             />
             <Stack.Screen
               name="Saved"
