@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { badRequest, conflict, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
-import { postepowaniaSwz, pytaniaSwz } from '../db/repos.js';
+import { postepowaniaSwz, pytaniaSwz, zmianySwz } from '../db/repos.js';
 import { analizujSwz } from '../services/analizaSwz.js';
 import { odswiezPostepowanie } from '../jobs/monitorSwz.js';
+import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
 
 /*
  * Radar SWZ — uruchomienie ANALIZY treści SWZ dla danego postępowania
@@ -103,6 +104,68 @@ router.post('/postepowania/:id/odswiez', authRequired, ah(async (req, res) => {
     wersje: wynik.wersje,
     zmiany_wpisy: wynik.zmiany_wpisy,
   });
+}));
+
+/*
+ * BRAMKA PRZEDWYSYŁKOWA + checklista uwzględnienia zmian (podzadanie 6/7).
+ *
+ * Zamawiający publikuje odpowiedzi i zmiany SWZ aż do terminu składania; przed
+ * wysłaniem oferty wykonawca musi POTWIERDZIĆ, że każdą uwzględnił. Checklistę i
+ * decyzję bramki liczy czysta logika (lib/bramkaOferty.js) z wpisów `zmiany_swz`
+ * postępowania; router tylko sprawdza własność i utrwala odznaczenia.
+ */
+
+/** Buduje odpowiedź „stan checklisty + werdykt bramki" dla postępowania. */
+function stanChecklisty(postepowanieId, { wymus = false } = {}) {
+  const checklista = zbudujCheckliste(zmianySwz.listForPostepowanie(postepowanieId));
+  return { postepowanie_id: postepowanieId, checklista, bramka: ocenBramke(checklista, { wymus }) };
+}
+
+/** Postępowanie należące do zalogowanego usera albo 404 (bez wycieku cudzych danych). */
+function mojePostepowanie(req) {
+  const p = postepowaniaSwz.findByIdForUser(req.params.id, req.user.id);
+  if (!p) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');
+  return p;
+}
+
+// Stan checklisty przedwysyłkowej: pozycje do odznaczenia + status sekcji oferty
+// („wymaga aktualizacji") + werdykt bramki. To „endpoint stanu checklisty".
+router.get('/postepowania/:id/checklista', authRequired, ah(async (req, res) => {
+  const postepowanie = mojePostepowanie(req);
+  res.status(200).json(stanChecklisty(postepowanie.id));
+}));
+
+// Odznaczenie pozycji: wykonawca potwierdza, że uwzględnił zmianę w ofercie.
+// Body `{ uwzglednione: false }` cofa odznaczenie. Zwraca zaktualizowaną checklistę.
+const uwzglednijSchema = z.object({ uwzglednione: z.boolean().optional() });
+
+router.post('/postepowania/:id/zmiany/:zmianaId/uwzglednij', authRequired, ah(async (req, res) => {
+  const postepowanie = mojePostepowanie(req);
+  const zmiana = zmianySwz.findByIdForPostepowanie(req.params.zmianaId, postepowanie.id);
+  if (!zmiana) throw notFound('Nie znaleziono zmiany SWZ w tym postępowaniu.');
+
+  const parsed = uwzglednijSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Nieprawidłowe dane odznaczenia.');
+
+  zmianySwz.oznaczUwzglednione(zmiana.id, parsed.data.uwzglednione ?? true);
+  res.status(200).json(stanChecklisty(postepowanie.id));
+}));
+
+// Bramka przy wysyłce oferty: gdy są nieodznaczone pozycje — 409 BLOKADA. Z
+// `wymus:true` (body) lub `?wymus=1` przechodzi z OSTRZEŻENIEM (dopuszczona mimo).
+const wyslijSchema = z.object({ wymus: z.boolean().optional() });
+
+router.post('/postepowania/:id/wyslij', authRequired, ah(async (req, res) => {
+  const postepowanie = mojePostepowanie(req);
+  const parsed = wyslijSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Nieprawidłowe dane wysyłki.');
+  const wymus = parsed.data.wymus === true || String(req.query.wymus ?? '') === '1';
+
+  const stan = stanChecklisty(postepowanie.id, { wymus });
+  if (!stan.bramka.dopuszczona) {
+    throw conflict('Oferta ma nieuwzględnione zmiany/odpowiedzi SWZ — odznacz je albo wyślij z wymuszeniem.', stan);
+  }
+  res.status(200).json(stan);
 }));
 
 export default router;

@@ -5,6 +5,7 @@ import { costUsd } from '../lib/pricing.js';
 import { aiUsage, zmianySwz } from '../db/repos.js';
 import { aiBudgetAllows } from './ai.js';
 import { serviceUnavailable } from '../lib/errors.js';
+import { mapujNaSekcjeOferty } from '../lib/bramkaOferty.js';
 
 /*
  * SILNIK RÓŻNIC WERSJI SWZ (ulepszenie „Radar pytań i odpowiedzi do SWZ",
@@ -282,11 +283,17 @@ export async function zarejestrujRoznice({ postepowanieId, poprzednia = null, no
     logger.warn({ err: err.message }, 'roznicaSwz: opis skutku niedostępny — zapis zmiany z samym diffem');
   }
 
+  // Mapowanie zmiany na sekcje przygotowanej oferty (harmonogram/cena/parametry) —
+  // z opisu skutku, a gdy go brak (AI-down) — z samego diffu. Zapisane `elementy_oferty`
+  // napędzają checklistę i bramkę przedwysyłkową (podzadanie 6/7).
+  const elementyOferty = mapujNaSekcjeOferty({ opisSkutku: opis, diff });
+
   return zmianySwz.create({
     postepowanieId,
     wersjaSwzId: nowa?.id ?? null,
     dataPublikacji: nowa?.data_publikacji ?? null,
     opisSkutku: opis,
     diff,
+    elementyOferty,
   });
 }
