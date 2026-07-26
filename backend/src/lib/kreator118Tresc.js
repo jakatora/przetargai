@@ -15,10 +15,15 @@ import { isMainModule } from './ids.js';
  *      jednej realizacji o danej skali nie spełni się, składając je z kawałków
  *      (własnych ani cudzych).
  *
+ * Podzadanie 3/12 dokłada do tego modułu listę TYPOWYCH PUŁAPEK, przez które KIO
+ * uznaje udostępnienie zasobów za fikcyjne (`PULAPKI_FIKCYJNOSCI`) — do wyświetlenia
+ * użytkownikowi ORAZ jako punkt zaczepienia (stabilne id) dla walidacji na końcu
+ * kreatora, która sprawdzi, czy przygotowane zobowiązanie nie wpada w którąś z nich.
+ *
  * Świadome decyzje modelu:
- *  • Zakres CELOWO wąski — tylko te dwa filary. Elementy zobowiązania podmiotu
- *    trzeciego, obowiązek złożenia go z ofertą, pułapki KIO i podpowiedzi z sieci
- *    kontaktów to treść KOLEJNYCH podzadań, nie tego modułu.
+ *  • Zakres CELOWO wąski — dwa filary + lista pułapek. Elementy zobowiązania podmiotu
+ *    trzeciego, obowiązek złożenia go z ofertą i podpowiedzi z sieci kontaktów to
+ *    treść KOLEJNYCH podzadań, nie tego modułu.
  *  • Filar realnego udziału dotyczy WYŁĄCZNIE robót budowlanych i usług — bo tak
  *    stanowi art. 118 ust. 2 Pzp; przy dostawach nie ma wymogu wykonania części
  *    zamówienia przez podmiot udostępniający. Dlatego sekcja niesie jawne
@@ -130,7 +135,132 @@ export function sekcjaWyjasnienia(id) {
   return sekcja;
 }
 
+/** Stabilne identyfikatory pułapek — punkt zaczepienia dla UI i walidacji. */
+export const ID_PULAPEK = Object.freeze({
+  SAME_REFERENCJE: 'same-referencje',
+  ROZJAZD_ZAKRESU: 'rozjazd-zakresu-podwykonawstwa',
+  SUMOWANIE_DOSWIADCZENIA: 'sumowanie-doswiadczenia',
+  OGOLNIKOWE_ZOBOWIAZANIE: 'ogolnikowe-zobowiazanie',
+  BRAK_PODPISU_PODMIOTU: 'brak-podpisu-podmiotu',
+  PODMIOT_BEZ_ZASOBOW: 'podmiot-bez-realnych-zasobow',
+});
+
+/**
+ * @typedef {object} PulapkaFikcyjnosci
+ * @property {string} id stabilny identyfikator (patrz {@link ID_PULAPEK}).
+ * @property {string} tytul krótka nazwa pułapki.
+ * @property {string} opis na czym polega błąd i dlaczego KIO/zamawiający uznają
+ *   przez niego udostępnienie za fikcyjne (pozorne).
+ * @property {string} jak_uniknac konkretna wskazówka, jak uniknąć tej pułapki.
+ * @property {string} [powiazana_zasada] id sekcji z {@link ID_SEKCJI}, której filar
+ *   dotyczy tej pułapki (obecne tylko tam, gdzie pułapka mapuje się na filar).
+ */
+
+/**
+ * TYPOWE PUŁAPKI, przez które udostępnienie zasobów bywa uznane za fikcyjne. Do
+ * wyświetlenia użytkownikowi i do walidacji na końcu kreatora (po stabilnych id).
+ * Tablica GŁĘBOKO ZAMROŻONA — treść to fakt prawny, nie „poprawia się" po imporcie.
+ * @type {PulapkaFikcyjnosci[]}
+ */
+export const PULAPKI_FIKCYJNOSCI = deepFreeze([
+  {
+    id: ID_PULAPEK.SAME_REFERENCJE,
+    tytul: 'Użyczenie „samych referencji" bez udziału w realizacji',
+    opis:
+      'Podmiot podpisuje zobowiązanie i „użycza" swoich referencji, ale nie ma '
+      + 'wykonać żadnej części zamówienia. Przy warunkach doświadczenia w robotach '
+      + 'budowlanych i usługach art. 118 ust. 2 Pzp wymaga, by ten podmiot realnie '
+      + 'wykonał tę część, do której potrzebne jest jego doświadczenie. Sama '
+      + '„użyczka referencji" bez udziału w realizacji to dla KIO klasyczne '
+      + 'udostępnienie pozorne.',
+    jak_uniknac:
+      'W zobowiązaniu wprost wskaż zakres robót lub usług, który podmiot '
+      + 'udostępniający wykona jako podwykonawca — ten, do którego potrzebne jest '
+      + 'jego doświadczenie.',
+    powiazana_zasada: ID_SEKCJI.REALNY_UDZIAL,
+  },
+  {
+    id: ID_PULAPEK.ROZJAZD_ZAKRESU,
+    tytul: 'Rozjazd między użyczanym doświadczeniem a zakresem podwykonawstwa',
+    opis:
+      'Podmiot użycza doświadczenia w jednym zakresie (np. w budowie oczyszczalni), '
+      + 'a w zobowiązaniu deklaruje wykonanie zupełnie innej, marginalnej części '
+      + '(np. tylko dozoru czy sprzątania). KIO bada, czy zakres podwykonawstwa '
+      + 'faktycznie wykorzystuje użyczane doświadczenie — jeśli nie, udostępnienie '
+      + 'jest pozorne.',
+    jak_uniknac:
+      'Zakres, który podmiot wykona jako podwykonawca, musi pokrywać dokładnie tę '
+      + 'część zamówienia, dla której jego doświadczenie jest wymagane.',
+    powiazana_zasada: ID_SEKCJI.REALNY_UDZIAL,
+  },
+  {
+    id: ID_PULAPEK.SUMOWANIE_DOSWIADCZENIA,
+    tytul: 'Składanie warunku z kawałków (sumowanie doświadczenia)',
+    opis:
+      'Próba spełnienia warunku wymagającego jednej realizacji o danej skali przez '
+      + 'zsumowanie mniejszych zleceń — własnego i cudzego (np. dwie roboty po '
+      + '250 tys. zł zamiast jednej za 500 tys. zł). Doświadczenie jest '
+      + 'niepodzielne; sumowania KIO nie akceptuje.',
+    jak_uniknac:
+      'Cały warunek „na jedną realizację" musi pochodzić od jednego podmiotu — '
+      + 'Twojego albo firmy udostępniającej zasoby, w całości.',
+    powiazana_zasada: ID_SEKCJI.ZAKAZ_SUMOWANIA,
+  },
+  {
+    id: ID_PULAPEK.OGOLNIKOWE_ZOBOWIAZANIE,
+    tytul: 'Ogólnikowe (blankietowe) zobowiązanie',
+    opis:
+      'Zobowiązanie mówi tylko „udostępniam swoje zasoby", bez konkretów. Art. 118 '
+      + 'ust. 4 Pzp wymaga, by wynikało z niego: jaki zakres zasobów, w jaki sposób '
+      + 'i na jaki okres jest udostępniany oraz czy i w jakim zakresie podmiot '
+      + 'zrealizuje roboty lub usługi. Blankietowa deklaracja nie dowodzi realnego '
+      + 'udostępnienia i bywa uznawana za fikcyjną.',
+    jak_uniknac:
+      'W zobowiązaniu podaj konkretnie: zakres udostępnianych zasobów, sposób i '
+      + 'okres udostępnienia oraz zakres, w jakim podmiot wykona zamówienie.',
+  },
+  {
+    id: ID_PULAPEK.BRAK_PODPISU_PODMIOTU,
+    tytul: 'Zobowiązanie niepodpisane przez podmiot lub złożone po terminie',
+    opis:
+      'Zobowiązanie podpisane wyłącznie przez wykonawcę (a nie przez podmiot '
+      + 'udostępniający) albo dołączone dopiero na wezwanie, nie zaś razem z ofertą. '
+      + 'Dokument musi pochodzić od podmiotu trzeciego i być złożony wraz z ofertą — '
+      + 'inaczej nie potwierdza realnego udostępnienia zasobów.',
+    jak_uniknac:
+      'Zadbaj, by zobowiązanie podpisał sam podmiot udostępniający zasoby i by '
+      + 'zostało złożone razem z ofertą.',
+  },
+  {
+    id: ID_PULAPEK.PODMIOT_BEZ_ZASOBOW,
+    tytul: 'Podmiot udostępniający bez realnych zasobów („słup")',
+    opis:
+      'Firma użyczająca doświadczenia nie ma faktycznej zdolności (ludzi, sprzętu, '
+      + 'know-how), by wykonać deklarowaną część zamówienia — istnieje głównie na '
+      + 'papierze. Zamawiający i KIO weryfikują realną możliwość wykonania '
+      + 'deklarowanego zakresu, więc taki „słup" prowadzi do uznania udostępnienia '
+      + 'za pozorne.',
+    jak_uniknac:
+      'Wybierz podmiot, który naprawdę może wykonać tę część — najlepiej '
+      + 'podwykonawcę, z którym już realnie współpracowałeś.',
+  },
+]);
+
+/**
+ * Zwraca pułapkę po jej stabilnym id.
+ * @param {string} id identyfikator z {@link ID_PULAPEK}.
+ * @returns {PulapkaFikcyjnosci} zamrożona pułapka.
+ * @throws {RangeError} gdy id nie pasuje do żadnej pułapki.
+ */
+export function pulapka(id) {
+  const p = PULAPKI_FIKCYJNOSCI.find((x) => x.id === id);
+  if (!p) {
+    throw new RangeError(`pulapka: nieznane id pułapki „${id}"`);
+  }
+  return p;
+}
+
 // Podgląd: `node src/lib/kreator118Tresc.js --demo`
 if (isMainModule(import.meta.url) && process.argv.includes('--demo')) {
-  console.log(JSON.stringify(WYJASNIENIE_ART_118, null, 2));
+  console.log(JSON.stringify({ WYJASNIENIE_ART_118, PULAPKI_FIKCYJNOSCI }, null, 2));
 }
