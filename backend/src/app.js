@@ -17,6 +17,7 @@ import fitterChatRouter from './routes/fitterChat.js';
 import fitterScanRouter from './routes/fitterScan.js';
 import fitterJobsRouter from './routes/fitterJobs.js';
 import przetargUmowaRouter from './routes/przetargUmowa.js';
+import przetargZobowiazanieRouter from './routes/przetargZobowiazanie.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -77,6 +78,9 @@ export function createApp() {
   // Analiza projektu umowy — treść bywa duża (całe SWZ/umowa, docelowo PDF),
   // więc trasa dostaje własny, większy parser JSON ponad globalnym limitem 1 MB.
   app.use('/api/przetarg/umowa', express.json({ limit: '10mb' }), apiLimiter, przetargUmowaRouter);
+  // Eksport zobowiązania podmiotu (art. 118 Pzp) — małe pola tekstowe, globalny
+  // parser JSON (1 MB) wystarcza; „Pożycz doświadczenie" 8/12.
+  app.use('/api/przetarg/zobowiazanie', apiLimiter, przetargZobowiazanieRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);
