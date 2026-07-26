@@ -18,6 +18,7 @@ import fitterScanRouter from './routes/fitterScan.js';
 import fitterJobsRouter from './routes/fitterJobs.js';
 import przetargUmowaRouter from './routes/przetargUmowa.js';
 import przetargZobowiazanieRouter from './routes/przetargZobowiazanie.js';
+import radarSwzRouter from './routes/radarSwz.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -81,6 +82,10 @@ export function createApp() {
   // Eksport zobowiązania podmiotu (art. 118 Pzp) — małe pola tekstowe, globalny
   // parser JSON (1 MB) wystarcza; „Pożycz doświadczenie" 8/12.
   app.use('/api/przetarg/zobowiazanie', apiLimiter, przetargZobowiazanieRouter);
+  // Radar SWZ — analiza treści SWZ/umowy/przedmiaru (podzadanie 3/7). Wejście bywa
+  // duże (całe dokumenty), więc trasa dostaje własny, większy parser JSON (10 MB)
+  // ponad globalnym limitem 1 MB — jak /api/przetarg/umowa.
+  app.use('/api/przetarg/swz', express.json({ limit: '10mb' }), apiLimiter, radarSwzRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);
