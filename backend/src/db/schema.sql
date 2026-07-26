@@ -226,3 +226,6 @@ CREATE TABLE IF NOT EXISTS rozstrzygniecie_historyczne (
 CREATE INDEX IF NOT EXISTS idx_rozstrz_cpv ON rozstrzygniecie_historyczne(kod_cpv, data_rozstrzygniecia);
 CREATE INDEX IF NOT EXISTS idx_rozstrz_zamawiajacy ON rozstrzygniecie_historyczne(zamawiajacy_id);
 CREATE INDEX IF NOT EXISTS idx_rozstrz_region ON rozstrzygniecie_historyczne(region_nuts);
+-- Dobór „podobnych" rozstrzygnięć: ten sam kod CPV w tym samym regionie
+-- (WHERE kod_cpv = ? AND region_nuts = ?) — indeks złożony wiodący CPV (migracja 007).
+CREATE INDEX IF NOT EXISTS idx_rozstrz_cpv_region ON rozstrzygniecie_historyczne(kod_cpv, region_nuts);
