@@ -38,7 +38,7 @@ import {
 /** Akcent banera odliczania wg pilności terminu pytań. */
 function akcentOdliczania(stan, k) {
   if (stan === 'minelo' || stan === 'dzis') return k.danger;
-  if (stan === 'pilne') return k.ostrzezenieTekst;
+  if (stan === 'pilne') return k.ostrzezenieAkcent;
   if (stan === 'ok') return k.green;
   return k.textMuted;
 }
@@ -46,7 +46,7 @@ function akcentOdliczania(stan, k) {
 /** Akcent banera bramki wg jej poziomu (ok / blokada / ostrzeżenie). */
 function akcentBramki(poziom, k) {
   if (poziom === 'ok') return k.green;
-  if (poziom === 'ostrzezenie') return k.ostrzezenieTekst;
+  if (poziom === 'ostrzezenie') return k.ostrzezenieAkcent;
   return k.danger;
 }
 

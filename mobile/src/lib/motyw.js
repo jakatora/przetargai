@@ -51,6 +51,7 @@ export const PALETY = {
     wyroznienie: '#eaeffa',     // wiersz działu w ściądze CPV
     ostrzezenieTlo: '#fef3c7',  // pasek błędu dociągania feedu
     ostrzezenieTekst: '#92400e',
+    ostrzezenieAkcent: '#b45309', // akcent „pilne/ostrzeżenie" na BIAŁYM tle (obwódka+tytuł banera, chip) — żywy bursztyn, AA ≥4.5:1; nie mylić z ostrzezenieTekst (tekst na bursztynowym tle)
     neutralneTlo: '#e7ebf3',    // plakietka „Plan Free"
     sukcesTlo: '#dcfce7',       // plakietka „Plan Standard"
     dangerTlo: '#fee2e2',       // tło czerwonej flagi (prześwietlenie umowy)
@@ -68,6 +69,7 @@ export const PALETY = {
     wyroznienie: '#1e2947',
     ostrzezenieTlo: '#3b2f12',
     ostrzezenieTekst: '#fcd34d',
+    ostrzezenieAkcent: '#fbbf24', // żywy bursztyn na ciemnym tle (obwódka+tytuł banera, chip)
     neutralneTlo: '#273252',
     sukcesTlo: '#143c2a',
     dangerTlo: '#3b1518',       // czytelny na ciemnym tle wariant czerwonego tła
