@@ -124,6 +124,45 @@ export function createPodprogoweRepo(db) {
       return mapRow(_byHash().get(hash));
     },
 
+    /** Ogłoszenie po `id` (albo null) — szczegóły znaleziska z regulaminem (6/7). */
+    byId(id) {
+      return mapRow(_byId().get(id));
+    },
+
+    /**
+     * Lista SCALONEGO strumienia z filtrami (endpoint radaru 6/7 + panel 7/7).
+     * Filtry (wszystkie opcjonalne, łączone AND):
+     *   • `branza` / `region` — dopasowanie LIKE, bez rozróżniania wielkości liter,
+     *   • `prog`               — górny próg wartości netto (wartosc_netto < prog),
+     *   • `tylkoLatwiejszyStart` — tylko oznaczone „łatwiejszy start".
+     * Sort: najświeższe publikacje na górze (fallback na created_at). `limit`
+     * domyślnie 50, twardo ≤ 200; `offset` stronicuje. SQL składany dynamicznie —
+     * `db.prepare` per wywołanie, bo kształt WHERE zależy od podanych filtrów.
+     * @param {{branza?: string, region?: string, prog?: number,
+     *   tylkoLatwiejszyStart?: boolean, limit?: number, offset?: number}} [filtry]
+     * @returns {object[]} rekordy domenowe (bool + flagi JSON) — jak `mapRow`
+     */
+    list({ branza = '', region = '', prog, tylkoLatwiejszyStart = false, limit = 50, offset = 0 } = {}) {
+      const where = [];
+      const params = [];
+      const b = String(branza ?? '').trim();
+      const r = String(region ?? '').trim();
+      if (b) { where.push('LOWER(branza) LIKE ?'); params.push(`%${b.toLowerCase()}%`); }
+      if (r) { where.push('LOWER(region) LIKE ?'); params.push(`%${r.toLowerCase()}%`); }
+      if (Number.isFinite(prog)) { where.push('wartosc_netto < ?'); params.push(prog); }
+      if (tylkoLatwiejszyStart) where.push('latwiejszy_start = 1');
+
+      const lim = Math.min(Math.max(Number(limit) || 50, 1), 200);
+      const off = Math.max(Number(offset) || 0, 0);
+
+      let sql = 'SELECT * FROM zamowienia_podprogowe';
+      if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
+      sql += ' ORDER BY COALESCE(data_publikacji, created_at) DESC, created_at DESC LIMIT ? OFFSET ?';
+      params.push(lim, off);
+
+      return db.prepare(sql).all(...params).map(mapRow);
+    },
+
     /** Liczba ogłoszeń w tabeli. */
     count() {
       return _count().get().n;

@@ -22,7 +22,10 @@ import { normalizujPodprogowe } from '../../lib/normalizacjaPodprogowe.js';
  * @param {string} [p.region] preferencja regionu użytkownika
  * @param {{prog_netto?: number, prog_konkurencyjnosci?: number}} [p.konfig] progi
  * @returns {Promise<{zrodlo: string, pobrano: number, zakwalifikowano: number,
- *   dodano: number, duplikaty: number, odrzucono: number}>}
+ *   dodano: number, duplikaty: number, odrzucono: number, dodane: object[]}>}
+ *   `dodane` to REKORDY nowo wstawionych ogłoszeń (created=true). Monitor (6/7)
+ *   domawia regulaminy WYŁĄCZNIE dla nich — dedup gwarantuje, że każde znalezisko
+ *   trafia tam raz w życiu, więc płatne AI nie liczy w kółko tego samego.
  */
 export async function zbierzIWepnij({ adapter, repo, branza = '', region = '', konfig = {} }) {
   if (!adapter || typeof adapter.pobierz !== 'function') {
@@ -40,6 +43,7 @@ export async function zbierzIWepnij({ adapter, repo, branza = '', region = '', k
     dodano: 0,
     duplikaty: 0,
     odrzucono: 0,
+    dodane: [],
   };
 
   for (const s of Array.isArray(surowe) ? surowe : []) {
@@ -49,9 +53,13 @@ export async function zbierzIWepnij({ adapter, repo, branza = '', region = '', k
       continue;
     }
     podsumowanie.zakwalifikowano++;
-    const { created } = repo.upsert(rekord);
-    if (created) podsumowanie.dodano++;
-    else podsumowanie.duplikaty++;
+    const { rekord: zapisany, created } = repo.upsert(rekord);
+    if (created) {
+      podsumowanie.dodano++;
+      podsumowanie.dodane.push(zapisany);
+    } else {
+      podsumowanie.duplikaty++;
+    }
   }
 
   return podsumowanie;

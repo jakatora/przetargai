@@ -19,6 +19,7 @@ import fitterJobsRouter from './routes/fitterJobs.js';
 import przetargUmowaRouter from './routes/przetargUmowa.js';
 import przetargZobowiazanieRouter from './routes/przetargZobowiazanie.js';
 import radarSwzRouter from './routes/radarSwz.js';
+import radarPodprogowyRouter from './routes/radarPodprogowy.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -86,6 +87,10 @@ export function createApp() {
   // duże (całe dokumenty), więc trasa dostaje własny, większy parser JSON (10 MB)
   // ponad globalnym limitem 1 MB — jak /api/przetarg/umowa.
   app.use('/api/przetarg/swz', express.json({ limit: '10mb' }), apiLimiter, radarSwzRouter);
+  // Radar zamówień podprogowych (poniżej 170 tys. zł) — preferencje + scalony strumień
+  // + ręczne odświeżenie (podzadanie 6/7). Małe payloady (filtry/preferencje), więc
+  // globalny parser JSON (1 MB) wystarcza; pod limiterem API jak reszta tras.
+  app.use('/api/przetarg/podprogowe', apiLimiter, radarPodprogowyRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);

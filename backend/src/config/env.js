@@ -65,6 +65,14 @@ const schema = z.object({
 
   // Codzienne pobieranie przetargów o 12:00 czasu polskiego (SCHEDULER_TZ).
   TENDER_FETCH_CRON: z.string().default('0 12 * * *'),
+  // Radar zamówień podprogowych (poniżej 170 tys. zł, podzadanie 6/7) — codzienne
+  // scalanie rozproszonych źródeł (BIP/platformy zakupowe/Baza Konkurencyjności) dla
+  // KAŻDEJ zapisanej preferencji użytkownika. Kadencja jak tender-fetch (agregacja
+  // ogłoszeń, nie zmiany „na ostatnią chwilę"): raz dziennie o 7:00 czasu polskiego,
+  // odsunięte od waloryzacji (6:00). Płatne AI (streszczenie regulaminu) liczy się
+  // TYLKO dla nowo dodanych ogłoszeń (dedup po hash_dedup), więc częstsze przebiegi
+  // nie mnożą kosztu tego samego znaleziska. Brak zapisanych preferencji => no-op.
+  PODPROGOWY_MONITOR_CRON: z.string().default('0 7 * * *'),
   // Maks. wywołań AI na usera na przebieg dopasowań. Pula kandydatów jest
   // rankowana darmową heurystyką; AI ocenia tylko czołówkę (§5 planu migracji).
   AI_RERANK_TOP_N: z.coerce.number().int().nonnegative().default(30),

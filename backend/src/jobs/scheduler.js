@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { env } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { runTenderFetch } from './fetchTenders.js';
+import { runPodprogowyMonitor } from './monitorPodprogowy.js';
 import { createBackup } from '../services/backup.js';
 
 const tasks = [];
@@ -19,6 +20,12 @@ export function schedulerJobs(cfg = env) {
       expression: cfg.TENDER_FETCH_CRON,
       timezone: cfg.SCHEDULER_TZ,
       run: () => runTenderFetch({ pages: 2 }),
+    },
+    {
+      name: 'podprogowy-monitor',
+      expression: cfg.PODPROGOWY_MONITOR_CRON,
+      timezone: cfg.SCHEDULER_TZ,
+      run: () => runPodprogowyMonitor(),
     },
     {
       name: 'backup',

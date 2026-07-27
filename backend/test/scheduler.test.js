@@ -13,6 +13,7 @@ import { env } from '../src/config/env.js';
 
 const CFG = {
   TENDER_FETCH_CRON: '0 12 * * *',
+  PODPROGOWY_MONITOR_CRON: '0 7 * * *',
   BACKUP_CRON: '0 3 * * *',
   SCHEDULER_TZ: 'Europe/Warsaw',
 };
@@ -21,6 +22,13 @@ test('schedulerJobs — pobieranie przetargów codziennie o 12:00', () => {
   const fetch = schedulerJobs(CFG).find((j) => j.name === 'tender-fetch');
   assert.ok(fetch, 'brak zadania pobierania przetargów');
   assert.equal(fetch.expression, '0 12 * * *');
+});
+
+test('schedulerJobs — cykliczny monitor zamówień podprogowych (podzadanie 6/7)', () => {
+  const job = schedulerJobs(CFG).find((j) => j.name === 'podprogowy-monitor');
+  assert.ok(job, 'brak zadania cyklicznego monitora podprogowego');
+  assert.equal(job.expression, '0 7 * * *');
+  assert.equal(typeof job.run, 'function');
 });
 
 test('schedulerJobs — każde zadanie ma strefę Europe/Warsaw (nie UTC)', () => {
