@@ -56,6 +56,10 @@ export function createPodprogoweRepo(db) {
   const _byHash = lazy(db, `SELECT * FROM zamowienia_podprogowe WHERE hash_dedup = ?`);
   const _byId = lazy(db, `SELECT * FROM zamowienia_podprogowe WHERE id = ?`);
   const _count = lazy(db, `SELECT COUNT(*) AS n FROM zamowienia_podprogowe`);
+  const _setRegulamin = lazy(db, `
+    UPDATE zamowienia_podprogowe
+       SET regulamin_url = ?, regulamin_streszczenie = ?, updated_at = ?
+     WHERE id = ?`);
 
   return {
     /**
@@ -97,6 +101,22 @@ export function createPodprogoweRepo(db) {
       // (changes = 0); oddaj istniejący wiersz.
       if (!res.changes) return { rekord: mapRow(_byHash().get(hash)), created: false };
       return { rekord: mapRow(_byId().get(id)), created: true };
+    },
+
+    /**
+     * Zapisuje na istniejącym rekordzie zlokalizowany regulamin zakupowy (URL z
+     * BIP) oraz — o ile powstało — streszczenie mini-procedury z AI. Używa go
+     * usługa `services/regulaminZakupowy.js` (podzadanie 5/7). `regulamin_streszczenie`
+     * bywa `null`: gracja przy niedostępnym/wyczerpanym budżecie AI to zapis samego
+     * URL-a bez streszczenia (nie gubimy faktu, że regulamin istnieje). Zwraca
+     * zaktualizowany rekord albo `null`, gdy `id` nie istnieje.
+     * @param {string} id id ogłoszenia
+     * @param {{regulamin_url?: string|null, regulamin_streszczenie?: string|null}} dane
+     */
+    ustawRegulamin(id, { regulamin_url = null, regulamin_streszczenie = null } = {}) {
+      const res = _setRegulamin().run(regulamin_url ?? null, regulamin_streszczenie ?? null, nowIso(), id);
+      if (!res.changes) return null;
+      return mapRow(_byId().get(id));
     },
 
     /** Rekord po `hash_dedup` (albo null). */
