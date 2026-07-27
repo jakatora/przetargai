@@ -4,7 +4,9 @@ import { ah } from '../lib/asyncHandler.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { db } from '../db/index.js';
+import { postepowaniaSwz, swzWersje } from '../db/repos.js';
 import { createSejfDokumentow } from '../services/sejfDokumentow.js';
+import { createDopasowanieSejfSWZ } from '../services/dopasowanieSejfSWZ.js';
 import { jestZnanymTypem, ID_TYPOW_DOKUMENTOW, TYPY_DOKUMENTOW } from '../config/dokumentyKatalog.js';
 
 /*
@@ -36,6 +38,9 @@ import { jestZnanymTypem, ID_TYPOW_DOKUMENTOW, TYPY_DOKUMENTOW } from '../config
 
 const router = Router();
 const sejf = createSejfDokumentow(db);
+// Dopasowanie sejf ↔ SWZ (podzadanie 5/7) korzysta z tej samej instancji sejfu jako
+// źródła dokumentów; świeżość liczona jest na PRZEWIDYWANY dzień złożenia oferty.
+const dopasowanie = createDopasowanieSejfSWZ({ sejf });
 
 // ── Walidacja wejścia ────────────────────────────────────────────────────────
 
@@ -178,6 +183,64 @@ router.post('/dokumenty/:id/plik', authRequired, ah(async (req, res) => {
     ostrzezenie: wynik.ostrzezenie,
     detekcja: wynik.detekcja,
   });
+}));
+
+// ── Dopasowanie sejfu do konkretnego postępowania (podzadanie 5/7) ───────────
+//
+// POST /dopasowanie/:postepowanieId — dla postępowania NALEŻĄCEGO do użytkownika
+// (skopowane po właścicielu; cudze/nieistniejące => 404) porównuje dokumenty wymagane
+// w SWZ z zawartością sejfu WZGLĘDEM PRZEWIDYWANEGO DNIA ZŁOŻENIA i zwraca trzy koszyki:
+// świeże / przeterminuje_sie (kluczowe przy przesunięciu terminu) / brakuje + link online.
+//
+// Wymagane typy: z jawnej listy `wymagane_typy` albo z parsera treści SWZ (deterministyczny,
+// BEZ płatnego AI — patrz services/dopasowanieSejfSWZ.js). Treść SWZ z body `swz` albo z
+// najnowszej zapisanej wersji SWZ. Dzień złożenia: override `dzien_zlozenia` → termin
+// składania z postępowania → dziś. Bez płatnego AI, więc trasa tylko odczytuje/liczy.
+
+const dopasowanieSchema = z.object({
+  swz: z.string().max(5_000_000).optional(),
+  wymagane_typy: z.array(z.string().max(60)).max(50).optional(),
+  dzien_zlozenia: z.string().max(40).optional(),
+});
+
+router.post('/dopasowanie/:postepowanieId', authRequired, ah(async (req, res) => {
+  // Własność sprawdzamy WPROST (czysty 404) — bez wycieku cudzych postępowań.
+  const postepowanie = postepowaniaSwz.findByIdForUser(req.params.postepowanieId, req.user.id);
+  if (!postepowanie) throw notFound('Nie znaleziono postępowania o podanym id.');
+
+  const parsed = dopasowanieSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    throw badRequest('Niepoprawne dane dopasowania (opcjonalne: "swz", "wymagane_typy", "dzien_zlozenia").');
+  }
+  const d = parsed.data;
+
+  // Przewidywany dzień złożenia (jeśli podany) musi być realną datą — inaczej czysta
+  // logika świeżości rzuciłaby, a chcemy czytelne 400 zamiast 500.
+  const dzien = d.dzien_zlozenia?.trim();
+  if (dzien && !poprawnaDataISO(dzien)) {
+    throw badRequest('"dzien_zlozenia" musi być realną datą w formacie YYYY-MM-DD.');
+  }
+  if (d.wymagane_typy) {
+    const nieznane = d.wymagane_typy.filter((t) => !jestZnanymTypem(t));
+    if (nieznane.length) {
+      throw badRequest(`Nieznane typy dokumentów: ${nieznane.join(', ')}. Dozwolone: ${ID_TYPOW_DOKUMENTOW.join(', ')}.`);
+    }
+  }
+
+  // Treść SWZ: z body albo z najnowszej zapisanej wersji SWZ postępowania (Radar SWZ).
+  const swzTekst = d.swz?.trim()
+    ? d.swz
+    : (swzWersje.latestForPostepowanie(postepowanie.id)?.tresc ?? '');
+
+  const wynik = dopasowanie.dlaPostepowania({
+    userId: req.user.id,
+    postepowanie,
+    swzTekst,
+    wymaganeTypy: d.wymagane_typy,
+    dzienZlozenia: dzien || undefined,
+  });
+
+  res.status(200).json({ postepowanie_id: postepowanie.id, ...wynik });
 }));
 
 export default router;
