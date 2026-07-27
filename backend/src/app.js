@@ -22,6 +22,7 @@ import radarSwzRouter from './routes/radarSwz.js';
 import radarPodprogowyRouter from './routes/radarPodprogowy.js';
 import sejfDokumentowRouter from './routes/sejfDokumentow.js';
 import czarnaSkrzynkaRouter from './routes/czarnaSkrzynka.js';
+import symulatorPlynnosciRouter from './routes/symulatorPlynnosci.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -101,6 +102,11 @@ export function createApp() {
   // oryginał oferty w base64 bywają wielomegabajtowe), więc trasa dostaje własny, większy
   // parser JSON (10 MB) ponad globalnym limitem 1 MB — jak /umowa, /swz i /sejf.
   app.use('/api/przetarg/czarna-skrzynka', express.json({ limit: '10mb' }), apiLimiter, czarnaSkrzynkaRouter);
+  // Symulator płynności „czy udźwigniesz kontrakt" — wejście bywa duże (całe SWZ + wzór
+  // umowy w treści), więc trasa dostaje własny, większy parser JSON (10 MB) ponad globalnym
+  // limitem 1 MB — jak /umowa, /swz, /sejf i /czarna-skrzynka. Endpointy BEZSTANOWE (czyste
+  // usługi liczące, bez DB i płatnego AI), pod limiterem API jak reszta tras.
+  app.use('/api/przetarg/symulator-plynnosci', express.json({ limit: '10mb' }), apiLimiter, symulatorPlynnosciRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);
