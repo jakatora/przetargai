@@ -25,7 +25,7 @@ function akcentTerminu(termin, k) {
   if (termin.minal) return k.danger;
   if (termin.pilny) return k.ostrzezenieAkcent;
   if (termin.stan === 'brak') return k.textMuted;
-  return k.green;
+  return k.sukcesAkcent;
 }
 
 async function otworzLink(url) {
@@ -150,7 +150,7 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   badgeStart: {
     fontSize: 11,
     fontWeight: '800',
-    color: k.green,
+    color: k.sukcesAkcent,
     backgroundColor: k.sukcesTlo,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,

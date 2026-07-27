@@ -480,7 +480,7 @@ const tworzStyleFeedu = tworzStyle((k) => ({
     alignSelf: 'flex-start',
     fontSize: 10,
     fontWeight: '800',
-    color: k.green,
+    color: k.sukcesAkcent,
     backgroundColor: k.sukcesTlo,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,

@@ -54,6 +54,7 @@ export const PALETY = {
     ostrzezenieAkcent: '#b45309', // akcent „pilne/ostrzeżenie" na BIAŁYM tle (obwódka+tytuł banera, chip) — żywy bursztyn, AA ≥4.5:1; nie mylić z ostrzezenieTekst (tekst na bursztynowym tle)
     neutralneTlo: '#e7ebf3',    // plakietka „Plan Free"
     sukcesTlo: '#dcfce7',       // plakietka „Plan Standard"
+    sukcesAkcent: '#15803d',    // akcent „sukces/łatwiejszy start" jako MAŁY tekst (badge „Łatwiejszy start", potwierdzenie, tytuł banera „w porę") — ciemniejsza zieleń AA ≥4.5:1 na surface I sukcesTlo; nie mylić z `green` (za jasny na mały tekst: 3.0:1)
     dangerTlo: '#fee2e2',       // tło czerwonej flagi (prześwietlenie umowy)
   },
   ciemny: {
@@ -72,6 +73,7 @@ export const PALETY = {
     ostrzezenieAkcent: '#fbbf24', // żywy bursztyn na ciemnym tle (obwódka+tytuł banera, chip)
     neutralneTlo: '#273252',
     sukcesTlo: '#143c2a',
+    sukcesAkcent: '#4ade80',    // jaśniejsza zieleń na ciemnym tle (mały tekst: badge/potwierdzenie/tytuł banera) — AA ≥4.5:1 na surface I sukcesTlo
     dangerTlo: '#3b1518',       // czytelny na ciemnym tle wariant czerwonego tła
   },
 };

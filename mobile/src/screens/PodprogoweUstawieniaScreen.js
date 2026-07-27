@@ -246,6 +246,6 @@ const tworzStyleUstawien = tworzStyle((k) => ({
   prefMeta: { fontSize: 12, color: k.textMuted, marginTop: 2 },
   usun: { fontSize: 14, fontWeight: '700', color: k.danger },
 
-  odswiezInfo: { fontSize: 13, color: k.green, fontWeight: '600', marginTop: spacing.sm, lineHeight: 18 },
+  odswiezInfo: { fontSize: 13, color: k.sukcesAkcent, fontWeight: '600', marginTop: spacing.sm, lineHeight: 18 },
   odswiezPodpis: { fontSize: 12, color: k.textMuted, marginTop: spacing.sm, lineHeight: 17, fontStyle: 'italic' },
 }));
