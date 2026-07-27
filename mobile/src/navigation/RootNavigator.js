@@ -13,6 +13,7 @@ import RadarSwzScreen from '../screens/RadarSwzScreen';
 import SejfScreen from '../screens/SejfScreen';
 import RejestratorOfertyScreen from '../screens/RejestratorOfertyScreen';
 import SymulatorPlynnosciScreen from '../screens/SymulatorPlynnosciScreen';
+import ZabezpieczenieZwrotScreen from '../screens/ZabezpieczenieZwrotScreen';
 import PodprogoweDetailScreen from '../screens/PodprogoweDetailScreen';
 import PodprogoweUstawieniaScreen from '../screens/PodprogoweUstawieniaScreen';
 import Kreator118Screen from '../screens/Kreator118Screen';
@@ -102,6 +103,11 @@ export default function RootNavigator() {
               name="SymulatorPlynnosci"
               component={SymulatorPlynnosciScreen}
               options={{ title: 'Symulator płynności' }}
+            />
+            <Stack.Screen
+              name="ZabezpieczenieZwrot"
+              component={ZabezpieczenieZwrotScreen}
+              options={{ title: 'Odzyskiwacz zabezpieczenia' }}
             />
             <Stack.Screen
               name="PodprogoweDetail"

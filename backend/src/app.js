@@ -24,6 +24,7 @@ import sejfDokumentowRouter from './routes/sejfDokumentow.js';
 import czarnaSkrzynkaRouter from './routes/czarnaSkrzynka.js';
 import symulatorPlynnosciRouter from './routes/symulatorPlynnosci.js';
 import radarPlanowRouter from './routes/radarPlanow.js';
+import zabezpieczenieZwrotRouter from './routes/zabezpieczenieZwrot.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -113,6 +114,12 @@ export function createApp() {
   // 1 MB — jak /umowa, /swz, /sejf, /czarna-skrzynka i /symulator-plynnosci. Endpointy
   // BEZSTANOWE (czyste usługi liczące, bez DB i płatnego AI), pod limiterem API jak reszta.
   app.use('/api/przetarg/radar-planow', express.json({ limit: '10mb' }), apiLimiter, radarPlanowRouter);
+  // Odzyskiwacz zabezpieczenia — pilnowanie zwrotu zabezpieczenia należytego wykonania
+  // (art. 453 Pzp): harmonogram transz, alarm wymagalności, wezwanie do zwrotu, porównanie
+  // kosztu gotówka vs gwarancja. Małe payloady (kwoty/daty/pola pisma), więc globalny parser
+  // JSON (1 MB) wystarcza. Endpointy BEZSTANOWE (czyste liby liczące, bez DB i płatnego AI),
+  // pod limiterem API jak reszta tras.
+  app.use('/api/przetarg/zabezpieczenie', apiLimiter, zabezpieczenieZwrotRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);

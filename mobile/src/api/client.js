@@ -249,4 +249,21 @@ export const api = {
   /** Skrót: cała ścieżka w jednym kroku: { swz?, umowa?, kosztyMiesieczne?, czasTrwaniaMies?, poduszkaGotowki? } → { parametry, symulacja, rekomendacje }. */
   symulatorPlynnosciAnaliza: (payload) =>
     request('/api/przetarg/symulator-plynnosci/analiza', { method: 'POST', body: payload }),
+
+  // ----- Odzyskiwacz zabezpieczenia „pilnuj zwrotu swoich pieniędzy po kontrakcie" -----
+  // Po podpisaniu umowy pilnuje zwrotu zabezpieczenia należytego wykonania (art. 453 Pzp):
+  // harmonogram transz (70% w 30 dni od odbioru, ≤30% w 15 dni po rękojmi), alarm w dniu
+  // wymagalności, gotowe wezwanie do zwrotu (wariant przeterminowany dokłada art. 405 KC
+  // i odsetki), a przed podpisem — porównanie realnego kosztu „zamrozić gotówkę" vs
+  // „zapłacić prowizję za gwarancję bankową". Router BEZSTANOWY (bez DB, bez płatnego AI —
+  // czyste liby liczące), „dzisiaj" wstrzykiwane. Prefiks tras: `/api/przetarg/zabezpieczenie`.
+  /** { kwota, dataNalezytegoWykonania, dataUplywuRekojmi, procentZatrzymany?, dzisiaj?, stopaRoczna? } → { harmonogram, alarm }. */
+  zabezpieczenieHarmonogram: (payload) =>
+    request('/api/przetarg/zabezpieczenie/harmonogram', { method: 'POST', body: payload }),
+  /** { kwota, lata, prowizjaGwarancjiRocznaProc?, kosztKapitaluRocznyProc? } → { porownanie }. */
+  zabezpieczeniePorownaj: (payload) =>
+    request('/api/przetarg/zabezpieczenie/porownaj', { method: 'POST', body: payload }),
+  /** { kwota, termin, dzisiaj?, stopaRoczna?, numerUmowy?, zamawiajacy?, ... } → { wezwanie } (gotowe pismo). */
+  zabezpieczenieWezwanie: (payload) =>
+    request('/api/przetarg/zabezpieczenie/wezwanie', { method: 'POST', body: payload }),
 };

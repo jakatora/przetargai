@@ -335,6 +335,22 @@ export default function MatchDetailScreen({ route, navigation }) {
         />
       </View>
 
+      <Text style={styles.sectionTitle}>Podpisujesz umowę? Odzyskaj zabezpieczenie</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
+          Zabezpieczenie należytego wykonania (zwykle 5% ceny) to Twoje pieniądze zamrożone u
+          zamawiającego. Policzymy harmonogram zwrotu (art. 453 Pzp) i zaalarmujemy w dniu, w
+          którym możesz żądać pieniędzy — z gotowym wezwaniem. Przed podpisem porównamy koszt:
+          zamrozić gotówkę czy zapłacić za gwarancję bankową.
+        </Text>
+        <Button
+          title="Otwórz odzyskiwacz zabezpieczenia"
+          onPress={() => navigation.navigate('ZabezpieczenieZwrot', { nazwa: tender.title })}
+          variant="primary"
+          style={styles.gap}
+        />
+      </View>
+
       <Text style={styles.sectionTitle}>Etap i notatki</Text>
       <View style={styles.card}>
         <Text style={styles.strPodtytul}>
