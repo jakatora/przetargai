@@ -10,6 +10,8 @@ import MatchDetailScreen from '../screens/MatchDetailScreen';
 import WynikKontroliScreen from '../screens/WynikKontroliScreen';
 import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
 import RadarSwzScreen from '../screens/RadarSwzScreen';
+import PodprogoweDetailScreen from '../screens/PodprogoweDetailScreen';
+import PodprogoweUstawieniaScreen from '../screens/PodprogoweUstawieniaScreen';
 import Kreator118Screen from '../screens/Kreator118Screen';
 import KrokDanePodmiotuScreen from '../screens/KrokDanePodmiotuScreen';
 import AccountScreen from '../screens/AccountScreen';
@@ -82,6 +84,16 @@ export default function RootNavigator() {
               name="RadarSwz"
               component={RadarSwzScreen}
               options={{ title: 'Radar SWZ' }}
+            />
+            <Stack.Screen
+              name="PodprogoweDetail"
+              component={PodprogoweDetailScreen}
+              options={{ title: 'Zamówienie podprogowe' }}
+            />
+            <Stack.Screen
+              name="PodprogoweUstawienia"
+              component={PodprogoweUstawieniaScreen}
+              options={{ title: 'Radar podprogowy' }}
             />
             <Stack.Screen
               name="Kreator118"

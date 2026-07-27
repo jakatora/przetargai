@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
   FlatList,
+  ScrollView,
   View,
   Text,
   TextInput,
@@ -16,8 +17,39 @@ import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PROGI, KLUCZ_PROGU, filtrujPoProgu, normalizujProg } from '../lib/filtrOcen';
 import { SORTOWANIA, KLUCZ_SORT, sortujDopasowania, filtrujTekst, normalizujSort, filtrujMalaFirma } from '../lib/feedSort';
+import { sortujPodprogowe, etykietaZrodla, flagiPodprogowe, etykietaWartosciNetto } from '../lib/podprogowe';
 import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
+
+/**
+ * Kafelek scalonego strumienia podprogowego w bandzie „łatwiejszy start"
+ * (podzadanie 7/7). Kompaktowy, poziomy — stoi „obok" dużych przetargów, nie
+ * zamiast nich. Reguły „kod/liczba → słowo" i sortowanie żyją w lib/podprogowe.js.
+ */
+function KartaPodprogowa({ ogloszenie, onPress, styles }) {
+  const wartosc = etykietaWartosciNetto(ogloszenie.wartosc_netto, ogloszenie.waluta);
+  const flagi = flagiPodprogowe(ogloszenie.flagi);
+  return (
+    <Pressable onPress={onPress} style={styles.ppKarta} accessibilityRole="button">
+      {ogloszenie.latwiejszy_start ? (
+        <Text style={styles.ppBadge}>Łatwiejszy start</Text>
+      ) : null}
+      <Text style={styles.ppTytul} numberOfLines={2}>{ogloszenie.tytul}</Text>
+      {ogloszenie.zamawiajacy ? (
+        <Text style={styles.ppZamawiajacy} numberOfLines={1}>{ogloszenie.zamawiajacy}</Text>
+      ) : null}
+      {wartosc ? <Text style={styles.ppWartosc}>{wartosc}</Text> : null}
+      {flagi.length ? (
+        <View style={styles.ppFlagiRzad}>
+          {flagi.map((f) => (
+            <Text key={f.klucz} style={styles.ppFlaga}>{f.etykieta}</Text>
+          ))}
+        </View>
+      ) : null}
+      <Text style={styles.ppZrodlo}>{etykietaZrodla(ogloszenie.zrodlo)}</Text>
+    </Pressable>
+  );
+}
 
 export default function MatchFeedScreen({ navigation }) {
   const { kolory } = useTheme();
@@ -35,6 +67,10 @@ export default function MatchFeedScreen({ navigation }) {
   // Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free).
   const [zacheta, setZacheta] = useState(null);
   const [upgrading, setUpgrading] = useState(false);
+  // Radar zamówień podprogowych (panel 7/7): scalony strumień „obok" dużych przetargów.
+  // `null` = jeszcze nie wiadomo, czy user ma ustawiony radar (band się nie miga).
+  const [podprogowe, setPodprogowe] = useState([]);
+  const [podprogowePrefs, setPodprogowePrefs] = useState(null);
 
   // Próg filtra i sortowanie przeżywają restart aplikacji.
   useEffect(() => {
@@ -64,6 +100,9 @@ export default function MatchFeedScreen({ navigation }) {
     return sortujDopasowania(poTekscie, sort);
   }, [matches, prog, szukaj, sort, malaFirma]);
 
+  // Scalony strumień podprogowy — „łatwiejszy start" na górze (reguła w lib/podprogowe.js).
+  const podprogoweWidoczne = useMemo(() => sortujPodprogowe(podprogowe), [podprogowe]);
+
   /**
    * Wczytuje pierwszą stronę.
    *
@@ -83,6 +122,24 @@ export default function MatchFeedScreen({ navigation }) {
       setError(null);
       // Statystyki poboczne — nie mogą wywalić feedu, gdy padną.
       api.getStatystyki().then((s) => setZacheta(s.zacheta)).catch(() => {});
+      // Radar podprogowy — poboczny strumień; błąd NIE może wywalić głównego feedu.
+      // Zbieramy ogłoszenia dla PIERWSZEJ (nadrzędnej) preferencji użytkownika; resztą
+      // obszarów zarządza ekran ustawień. Bez preferencji band pokazuje zaproszenie.
+      api.podprogowePreferencje()
+        .then(async ({ preferencje }) => {
+          const lista = Array.isArray(preferencje) ? preferencje : [];
+          setPodprogowePrefs(lista);
+          const primary = lista[0];
+          if (!primary) { setPodprogowe([]); return; }
+          const { ogloszenia } = await api.podprogoweOgloszenia({
+            branza: primary.branza,
+            region: primary.region,
+            prog: primary.prog_netto,
+            limit: 20,
+          });
+          setPodprogowe(Array.isArray(ogloszenia) ? ogloszenia : []);
+        })
+        .catch(() => {});
     } catch (err) {
       setError(err.message);
     } finally {
@@ -191,6 +248,57 @@ export default function MatchFeedScreen({ navigation }) {
               <Text style={styles.fomoOpis}>{zacheta.opis}</Text>
               <Text style={styles.fomoCta}>{upgrading ? 'Otwieram…' : 'Przejdź na Standard — 49 zł/mc →'}</Text>
             </Pressable>
+          ) : null}
+
+          {/* ── Radar zamówień podprogowych (panel 7/7): „łatwiejszy start" OBOK dużych
+              przetargów — zakupy poniżej progu Pzp z platform/BIP-ów/Bazy Konkurencyjności. ── */}
+          {podprogowePrefs !== null ? (
+            <View style={styles.ppBand}>
+              <View style={styles.ppNaglowek}>
+                <Text style={styles.ppTytulSekcji}>Łatwiejszy start</Text>
+                <Pressable
+                  onPress={() => navigation.navigate('PodprogoweUstawienia')}
+                  hitSlop={10}
+                  accessibilityLabel="Ustawienia radaru podprogowego"
+                >
+                  <Text style={styles.ppUstaw}>{podprogowePrefs.length ? 'Ustawienia' : 'Ustaw'}</Text>
+                </Pressable>
+              </View>
+
+              {podprogowePrefs.length === 0 ? (
+                <Pressable
+                  style={styles.ppZaproszenie}
+                  onPress={() => navigation.navigate('PodprogoweUstawienia')}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.ppZaproszenieTytul}>Włącz radar zamówień podprogowych</Text>
+                  <Text style={styles.ppZaproszenieOpis}>
+                    Ustaw branżę i region, a pokażemy tu zakupy poniżej progu Pzp — zwykle bez
+                    wadium i bez KIO, z prostszą procedurą. Idealne na łatwiejszy start.
+                  </Text>
+                </Pressable>
+              ) : podprogoweWidoczne.length === 0 ? (
+                <Text style={styles.ppPusto}>
+                  Brak nowych zamówień podprogowych dla Twojego obszaru. Zajrzyj później albo
+                  odśwież w ustawieniach.
+                </Text>
+              ) : (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.ppLista}
+                >
+                  {podprogoweWidoczne.map((o) => (
+                    <KartaPodprogowa
+                      key={o.id}
+                      ogloszenie={o}
+                      styles={styles}
+                      onPress={() => navigation.navigate('PodprogoweDetail', { ogloszenie: o })}
+                    />
+                  ))}
+                </ScrollView>
+              )}
+            </View>
           ) : null}
 
           {/* Wyszukiwarka — po tytule i zamawiającym, z tolerancją odmian (D-051). */}
@@ -341,6 +449,60 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   fomoTytul: { fontSize: 16, fontWeight: '800', color: k.surface },
   fomoOpis: { fontSize: 13, color: k.surface, opacity: 0.92, lineHeight: 18 },
   fomoCta: { fontSize: 14, fontWeight: '800', color: k.surface, marginTop: 6 },
+
+  // ── Band radaru podprogowego („łatwiejszy start") ──
+  ppBand: { marginBottom: spacing.md },
+  ppNaglowek: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
+  ppTytulSekcji: { fontSize: 15, fontWeight: '800', color: k.text },
+  ppUstaw: { fontSize: 13, fontWeight: '700', color: k.blue },
+  ppZaproszenie: {
+    backgroundColor: k.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    padding: spacing.md,
+    gap: 4,
+  },
+  ppZaproszenieTytul: { fontSize: 15, fontWeight: '700', color: k.text },
+  ppZaproszenieOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19 },
+  ppPusto: { fontSize: 13, color: k.textMuted, lineHeight: 19 },
+  ppLista: { gap: spacing.sm, paddingRight: spacing.xs },
+  ppKarta: {
+    width: 250,
+    backgroundColor: k.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    padding: spacing.md,
+    gap: 4,
+  },
+  ppBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 10,
+    fontWeight: '800',
+    color: k.green,
+    backgroundColor: k.sukcesTlo,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    marginBottom: 2,
+  },
+  ppTytul: { fontSize: 14, fontWeight: '700', color: k.text, lineHeight: 19 },
+  ppZamawiajacy: { fontSize: 12, color: k.textMuted },
+  ppWartosc: { fontSize: 13, fontWeight: '700', color: k.text, marginTop: 2 },
+  ppFlagiRzad: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: 2 },
+  ppFlaga: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: k.blue,
+    backgroundColor: k.wyroznienie,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+  },
+  ppZrodlo: { fontSize: 11, color: k.textMuted, marginTop: 4 },
   szukajRzad: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.border,

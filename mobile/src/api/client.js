@@ -140,4 +140,36 @@ export const api = {
   /** Bramka przy wysyłce: bez `wymus` blokada (409) przy nieodznaczonych zmianach. */
   radarWyslij: (id, wymus = false) =>
     request(`/api/przetarg/swz/postepowania/${id}/wyslij`, { method: 'POST', body: { wymus } }),
+
+  // ----- Radar zamówień podprogowych (poniżej 170 tys. zł, panel 7/7) -----
+  // Scala zakupy, których NIE ma w BZP (postępowania wyłączone z Pzp na platformach
+  // zakupowych, e-propublico, BIP-y, Baza Konkurencyjności) w jeden strumień „obok"
+  // dużych przetargów. Prefiks tras: `/api/przetarg/podprogowe`. Odczyty czyste;
+  // `odswiez` odpala po stronie backendu monitor (płatne AI streszcza regulamin za
+  // bramką budżetu — mobil tylko wyzwala, nie liczy kosztu).
+  /** Preferencje radaru zalogowanego użytkownika: { preferencje: [...] }. */
+  podprogowePreferencje: () => request('/api/przetarg/podprogowe/preferencje'),
+  /** Zapis (upsert) preferencji branża/region/próg → { preferencja }. */
+  podprogoweZapiszPreferencje: (payload) =>
+    request('/api/przetarg/podprogowe/preferencje', { method: 'POST', body: payload }),
+  /** Usunięcie preferencji radaru (skopowane do właściciela). */
+  podprogoweUsunPreferencje: (id) =>
+    request(`/api/przetarg/podprogowe/preferencje/${id}`, { method: 'DELETE', body: {} }),
+  /** Scalony strumień z filtrami (branża/region/próg/tylko „łatwiejszy start"), stronicowany. */
+  podprogoweOgloszenia: ({ branza, region, prog, latwiejszyStart, limit, offset } = {}) => {
+    const params = new URLSearchParams();
+    if (branza) params.set('branza', branza);
+    if (region) params.set('region', region);
+    if (prog !== undefined && prog !== null && prog !== '') params.set('prog', String(prog));
+    if (latwiejszyStart) params.set('latwiejszy_start', '1');
+    if (limit !== undefined && limit !== null) params.set('limit', String(limit));
+    if (offset !== undefined && offset !== null) params.set('offset', String(offset));
+    const qs = params.toString();
+    return request(`/api/przetarg/podprogowe/ogloszenia${qs ? `?${qs}` : ''}`);
+  },
+  /** Szczegóły znaleziska WRAZ z regulaminem zakupowym: { ogloszenie }. */
+  podprogoweOgloszenie: (id) => request(`/api/przetarg/podprogowe/ogloszenia/${id}`),
+  /** Ręczny trigger odświeżenia (adaptery + domówienie regulaminów) → { odswiezono, dodano, ... }. */
+  podprogoweOdswiez: (payload = {}) =>
+    request('/api/przetarg/podprogowe/odswiez', { method: 'POST', body: payload }),
 };
