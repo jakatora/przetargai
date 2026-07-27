@@ -56,6 +56,10 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 export const api = {
   register: (payload) => request('/auth/register', { method: 'POST', body: payload, auth: false }),
   login: (payload) => request('/auth/login', { method: 'POST', body: payload, auth: false }),
+  /** Prośba o reset hasła — backend zawsze odpowiada 200 (anty-enumeracja). */
+  forgotPassword: (payload) => request('/auth/forgot-password', { method: 'POST', body: payload, auth: false }),
+  /** Ustawienie nowego hasła kodem z maila — zwraca { token, user } (od razu zalogowany). */
+  resetPassword: (payload) => request('/auth/reset-password', { method: 'POST', body: payload, auth: false }),
   getMe: () => request('/auth/me'),
   updateProfile: (payload) => request('/auth/me', { method: 'PATCH', body: payload }),
   /** Onboarding AI: opis firmy → { keywords, cpv } (albo { keywords: null, powod }). */

@@ -66,6 +66,14 @@ export default function LoginScreen({ navigation }) {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button title="Zaloguj się" onPress={handleLogin} loading={loading} />
 
+      <Text
+        style={styles.linkHaslo}
+        onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
+        accessibilityRole="link"
+      >
+        Nie pamiętasz hasła?
+      </Text>
+
       <View style={styles.footer}>
         <Text style={styles.footerText}>Nie masz jeszcze konta?</Text>
         <Text style={styles.link} onPress={() => navigation.navigate('Register')}>
@@ -92,6 +100,7 @@ const tworzStyleLogowania = tworzStyle((k) => ({
   tagline: { fontSize: 14, color: k.textMuted, marginTop: 4 },
   heading: { fontSize: 20, fontWeight: '700', color: k.text, marginBottom: spacing.md },
   error: { color: k.danger, fontSize: 14, marginBottom: spacing.sm },
+  linkHaslo: { color: k.blue, fontWeight: '700', textAlign: 'center', marginTop: spacing.md },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
   footerText: { color: k.textMuted },
   link: { color: k.blue, fontWeight: '700' },

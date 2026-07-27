@@ -46,6 +46,7 @@ const _userSetTier = lazy(`UPDATE users SET premium_tier = ?, updated_at = ? WHE
 const _userSetStripeCustomer = lazy(`UPDATE users SET stripe_customer_id = ?, updated_at = ? WHERE id = ?`);
 const _userDelete = lazy('DELETE FROM users WHERE id = ?');
 const _userSetStripeSub = lazy(`UPDATE users SET stripe_subscription_id = ?, updated_at = ? WHERE id = ?`);
+const _userSetPassword = lazy(`UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?`);
 
 export const users = {
   create({ companyNip, companyName, email, passwordHash, keywords = [], cpvCodes = [] }) {
@@ -91,6 +92,9 @@ export const users = {
   setStripeSubscription(id, subscriptionId) {
     _userSetStripeSub().run(subscriptionId ?? null, nowIso(), id);
   },
+  setPassword(id, passwordHash) {
+    _userSetPassword().run(passwordHash, nowIso(), id);
+  },
 
   /**
    * Trwale usuwa konto i dane użytkownika (RODO art. 17).
@@ -104,6 +108,33 @@ export const users = {
    */
   usunKonto(id) {
     _userDelete().run(id);
+  },
+};
+
+// ============================ password_resets ============================
+// Token resetu hasła trzymany WYŁĄCZNIE jako hash — repo nigdy nie widzi plaintextu.
+
+const _prInsert = lazy(`
+  INSERT INTO password_resets (id, user_id, token_hash, expires_at, created_at)
+  VALUES (?, ?, ?, ?, ?)`);
+const _prByHash = lazy(`SELECT * FROM password_resets WHERE token_hash = ?`);
+const _prMarkUsed = lazy(`UPDATE password_resets SET used_at = ? WHERE id = ?`);
+const _prDeleteForUser = lazy(`DELETE FROM password_resets WHERE user_id = ?`);
+
+export const passwordResets = {
+  create({ userId, tokenHash, expiresAt }) {
+    const id = newId();
+    _prInsert().run(id, userId, tokenHash, expiresAt, nowIso());
+    return id;
+  },
+  findByHash(tokenHash) {
+    return _prByHash().get(tokenHash) ?? null;
+  },
+  markUsed(id) {
+    _prMarkUsed().run(nowIso(), id);
+  },
+  deleteForUser(userId) {
+    _prDeleteForUser().run(userId);
   },
 };
 

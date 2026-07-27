@@ -84,6 +84,15 @@ export function AuthProvider({ children }) {
     await persistSession(data.token, data.user);
   }, [persistSession]);
 
+  // Odzyskiwanie hasła: prośba o kod (nie zmienia sesji) i ustawienie nowego hasła kodem
+  // (backend zwraca token → od razu logujemy, jak przy signIn).
+  const forgotPassword = useCallback((email) => api.forgotPassword({ email }), []);
+
+  const resetPassword = useCallback(async (token, password) => {
+    const data = await api.resetPassword({ token, password });
+    await persistSession(data.token, data.user);
+  }, [persistSession]);
+
   const signOut = useCallback(async () => {
     await deleteItem(TOKEN_KEY).catch(() => {});
     // Zapisany profil znika razem z tokenem — inaczej na urządzeniu zostałyby dane
@@ -120,7 +129,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, restoring, signIn, signUp, signOut, refreshUser, setUser: zapiszUsera, zarejestrujPush }}
+      value={{ user, restoring, signIn, signUp, signOut, forgotPassword, resetPassword, refreshUser, setUser: zapiszUsera, zarejestrujPush }}
     >
       {children}
     </AuthContext.Provider>

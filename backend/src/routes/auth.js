@@ -1,17 +1,25 @@
 import { Router } from 'express';
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired, signToken } from '../middleware/auth.js';
-import { users } from '../db/repos.js';
+import { users, passwordResets } from '../db/repos.js';
 import { isValidNip, normalizeNip } from '../lib/nip.js';
 import { badRequest, conflict, unauthorized, forbidden } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicUser } from '../lib/serialize.js';
 import { createUpgradeLink } from '../services/magicLink.js';
-import { sendEmail, welcomeEmail } from '../services/email.js';
+import { sendEmail, welcomeEmail, resetPasswordEmail } from '../services/email.js';
 import { backfillUser } from '../services/matching.js';
 import { logger } from '../lib/logger.js';
+
+/** Ważność kodu resetu hasła (1 h) — krótko, bo to klucz do konta. */
+const RESET_TTL_MS = 60 * 60 * 1000;
+/** Token trzymamy w bazie WYŁĄCZNIE jako hash — wyciek bazy nie pozwala przejąć konta. */
+function hashToken(token) {
+  return crypto.createHash('sha256').update(String(token)).digest('hex');
+}
 
 const router = Router();
 
@@ -102,6 +110,65 @@ router.post('/login', ah(async (req, res) => {
 
   audit({ userId: user.id, action: 'login', ip: req.ip });
   res.json({ token: signToken(user.id), user: publicUser(user) });
+}));
+
+// ---------------- odzyskiwanie hasła ----------------
+
+const forgotSchema = z.object({ email: z.string().email() });
+
+/**
+ * Prośba o reset hasła. ZAWSZE zwraca 200 z tym samym komunikatem — nie zdradzamy, czy konto
+ * istnieje (anty-enumeracja). Jeśli istnieje: kasujemy poprzednie tokeny (jeden aktywny na
+ * konto), generujemy nowy losowy token, zapisujemy jego HASH i wysyłamy kod mailem.
+ */
+router.post('/forgot-password', ah(async (req, res) => {
+  const data = parseBody(forgotSchema, req.body);
+  const email = data.email.toLowerCase().trim();
+  const user = users.findByEmail(email);
+
+  if (user) {
+    passwordResets.deleteForUser(user.id);
+    const token = crypto.randomBytes(24).toString('base64url'); // ~32 znaki, wysoka entropia
+    passwordResets.create({
+      userId: user.id,
+      tokenHash: hashToken(token),
+      expiresAt: new Date(Date.now() + RESET_TTL_MS).toISOString(),
+    });
+    audit({ userId: user.id, action: 'forgot_password', ip: req.ip });
+    sendEmail({ to: email, ...resetPasswordEmail(token) })
+      .catch((err) => logger.error({ err: err.message }, 'Email resetu hasła nie wysłany'));
+  } else {
+    audit({ userId: null, action: 'forgot_password_unknown', ip: req.ip });
+  }
+
+  res.json({ ok: true, message: 'Jeśli konto o tym adresie istnieje, wysłaliśmy na nie kod do zresetowania hasła.' });
+}));
+
+const resetSchema = z.object({
+  token: z.string().min(10, 'Podaj kod z maila').max(200),
+  password: z.string().min(8, 'Hasło musi mieć min. 8 znaków').max(200),
+});
+
+/**
+ * Ustawia nowe hasło na podstawie kodu z maila. Token musi istnieć, być nieużyty i nieprzeterminowany.
+ * Po sukcesie unieważniamy WSZYSTKIE tokeny użytkownika (jednorazowość) i od razu logujemy (zwracamy JWT).
+ */
+router.post('/reset-password', ah(async (req, res) => {
+  const data = parseBody(resetSchema, req.body);
+  const rec = passwordResets.findByHash(hashToken(data.token.trim()));
+
+  if (!rec || rec.used_at || new Date(rec.expires_at).getTime() < Date.now()) {
+    audit({ userId: rec?.user_id ?? null, action: 'reset_password_invalid', ip: req.ip });
+    throw badRequest('Kod resetu jest nieprawidłowy lub wygasł. Poproś o nowy.');
+  }
+
+  const passwordHash = await bcrypt.hash(data.password, 12);
+  users.setPassword(rec.user_id, passwordHash);
+  passwordResets.deleteForUser(rec.user_id); // zużyty + unieważnij ewentualne inne tokeny
+  audit({ userId: rec.user_id, action: 'reset_password', ip: req.ip });
+
+  const user = users.findById(rec.user_id);
+  res.json({ ok: true, token: signToken(user.id), user: publicUser(user) });
 }));
 
 // ---------------- profil ----------------

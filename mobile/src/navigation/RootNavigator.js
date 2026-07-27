@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import MatchFeedScreen from '../screens/MatchFeedScreen';
 import MatchDetailScreen from '../screens/MatchDetailScreen';
 import WynikKontroliScreen from '../screens/WynikKontroliScreen';
@@ -217,6 +219,16 @@ export default function RootNavigator() {
               name="Register"
               component={RegisterScreen}
               options={{ title: 'Rejestracja firmy' }}
+            />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+              options={{ title: 'Odzyskaj hasło' }}
+            />
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPasswordScreen}
+              options={{ title: 'Nowe hasło' }}
             />
           </>
         )}

@@ -60,3 +60,21 @@ export function subscriptionActiveEmail(companyName) {
 <p>Zespół PrzetargAI</p>`,
   };
 }
+
+// Reset hasła — token wysyłamy jako KOD do wpisania w apce (bez zależności od deep-linków).
+// Kod jest jednorazowy i ważny 1 h; treść nie ujawnia, czy konto istnieje (anty-enumeracja
+// jest po stronie endpointu — mail idzie tylko do realnych kont).
+export function resetPasswordEmail(token) {
+  return {
+    subject: 'Reset hasła w PrzetargAI',
+    text: `Aby ustawić nowe hasło, wpisz w aplikacji ten kod:\n\n${token}\n\n`
+      + `Kod jest ważny 1 godzinę i można go użyć raz. Jeśli to nie Ty prosiłeś o reset — `
+      + `zignoruj tę wiadomość, nic się nie zmieni.`,
+    html: `<p>Dzień dobry,</p>
+<p>Aby ustawić nowe hasło, wpisz w aplikacji ten kod:</p>
+<p style="font-size:15px;font-weight:bold;background:#f2f4f7;padding:12px;border-radius:8px;word-break:break-all;font-family:monospace">${token}</p>
+<p>Kod jest ważny <b>1 godzinę</b> i można go użyć raz. Jeśli to nie Ty prosiłeś o reset —
+zignoruj tę wiadomość, nic się nie zmieni.</p>
+<p>Zespół PrzetargAI</p>`,
+  };
+}
