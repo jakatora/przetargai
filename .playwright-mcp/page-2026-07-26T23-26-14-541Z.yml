@@ -1,0 +1,251 @@
+- generic [ref=f1e3]:
+  - navigation "Nawigacja pomocnicza":
+    - list:
+      - listitem:
+        - link "Przejdź do deklaracji dostępności" [ref=f1e4] [cursor=pointer]:
+          - /url: /deklaracja-dostepnosci
+      - listitem:
+        - link "Przejdź do treści" [ref=f1e5] [cursor=pointer]:
+          - /url: /
+  - generic [ref=f1e6]:
+    - paragraph [ref=f1e8]: Ta strona wykorzystuje ciasteczka.
+    - button "Akceptuję politykę dotyczącą wykorzystania plików cookies. Zamknij pop-up." [ref=f1e9] [cursor=pointer]:
+      - generic [ref=f1e13]:
+        - generic: Akceptuję politykę dotyczącą wykorzystania plików cookies.
+        - text: Zamknij
+        - generic: pop-up.
+  - banner [ref=f1e14]:
+    - generic [ref=f1e15]:
+      - generic [ref=f1e16]:
+        - button [ref=f1e17] [cursor=pointer]:
+          - generic [ref=f1e19]:
+            - generic: Rozwiń menu
+            - generic [ref=f1e20]: menu
+        - heading [level=1] [ref=f1e21]:
+          - link "Baza Konkurencyjności" [ref=f1e22] [cursor=pointer]:
+            - /url: /
+      - button [ref=f1e24] [cursor=pointer]:
+        - generic [ref=f1e26]:
+          - generic: Zaloguj się
+          - generic [ref=f1e27]: power_settings_new
+  - generic [ref=f1e30]:
+    - 'status "Ważny komunikat: Szanowni Użytkownicy, zapraszamy do korzystania z nowej funkcjonalności w sekcji Rozstrzygnięcia, gdzie mogą Państwo gromadzić pliki realizacji umowy powstałe po wyborze wykonawcy i zarządzać nimi. Nie są to pola obligatoryjne, niemniej ich wykorzystanie może ułatwić przeprowadzenie późniejszych działań kontrolnych, którym będzie poddane ogłoszenie o zamówieniu. Dodatkowo informujemy, że została zwiększona liczba załączników możliwych do umieszczenia w sekcji Moje Ogłoszenia oraz Oferty z 20 do 50." [ref=f1e31]':
+      - generic [ref=f1e32]:
+        - paragraph [ref=f1e33]: Szanowni Użytkownicy,
+        - paragraph [ref=f1e34]: zapraszamy do korzystania z nowej funkcjonalności w sekcji Rozstrzygnięcia, gdzie mogą Państwo gromadzić pliki realizacji umowy powstałe po wyborze wykonawcy i zarządzać nimi. Nie są to pola obligatoryjne, niemniej ich wykorzystanie może ułatwić przeprowadzenie późniejszych działań kontrolnych, którym będzie poddane ogłoszenie o zamówieniu.
+        - paragraph [ref=f1e35]
+        - paragraph [ref=f1e36]: Dodatkowo informujemy, że została zwiększona liczba załączników możliwych do umieszczenia w sekcji Moje Ogłoszenia oraz Oferty z 20 do 50.
+        - paragraph [ref=f1e37]
+    - main [ref=f1e38]:
+      - generic [ref=f1e41]:
+        - search [ref=f1e42]:
+          - generic: Wyszukaj ogłoszenie
+          - generic [ref=f1e43]:
+            - generic [ref=f1e44]:
+              - paragraph [ref=f1e45]: "Na przykład:"
+              - 'link "Sugerowana fraza: roboty budowlane," [ref=f1e46] [cursor=pointer]':
+                - /url: /ogloszenia/szukaj?q=roboty%20budowlane
+                - generic: "Sugerowana fraza:"
+                - text: roboty budowlane,
+              - 'link "Sugerowana fraza: dostawa komputerów," [ref=f1e47] [cursor=pointer]':
+                - /url: /ogloszenia/szukaj?q=dostawa%20komputer%C3%B3w
+                - generic: "Sugerowana fraza:"
+                - text: dostawa komputerów,
+              - 'link "Sugerowana fraza: szkolenie pracowników." [ref=f1e48] [cursor=pointer]':
+                - /url: /ogloszenia/szukaj?q=szkolenie%20pracownik%C3%B3w
+                - generic: "Sugerowana fraza:"
+                - text: szkolenie pracowników.
+            - textbox "Wyszukaj ogłoszenie" [ref=f1e51]:
+              - /placeholder: Wpisz, czego szukasz
+          - button "Wyszukaj ogłoszenie" [ref=f1e52] [cursor=pointer]:
+            - generic [ref=f1e56]:
+              - generic [ref=f1e57]: search
+              - text: Wyszukaj ogłoszenie
+          - button "Zapisz się na newsletter ogłoszeń Zaloguj się, aby zapisać się na newsletter" [ref=f1e58] [cursor=pointer]:
+            - generic [ref=f1e62]:
+              - generic [ref=f1e63]: mail
+              - text: Zapisz się na newsletter ogłoszeń
+              - generic: Zaloguj się, aby zapisać się na newsletter
+        - generic [ref=f1e64]:
+          - button "Dodaj ogłoszenie Zaloguj się, aby dodać ogłoszenie" [ref=f1e65] [cursor=pointer]:
+            - generic [ref=f1e69]:
+              - generic [ref=f1e70]: library_add
+              - text: Dodaj ogłoszenie
+              - generic: Zaloguj się, aby dodać ogłoszenie
+          - paragraph [ref=f1e71]: Wymaga logowania
+      - generic [ref=f1e72]:
+        - heading "Informacje o Bazie Konkurencyjności" [level=2] [ref=f1e76]
+        - generic [ref=f1e78]:
+          - paragraph [ref=f1e79]: To jest aktualna wersja Bazy Konkurencyjności. Można tu założyć konto, publikować ogłoszenia i składać oferty. Ogłoszenia ze starej wersji Bazy Konkurencyjności są dostępne pod jej archiwalnym adresem.
+          - paragraph [ref=f1e80]
+          - paragraph [ref=f1e81]: Baza Konkurencyjności to internetowa baza ofert zawierająca ogłoszenia beneficjentów. Wbudowana wyszukiwarka ogłoszeń pozwala w szybki i łatwy sposób odnaleźć zapytania ofertowe zamieszczone przez beneficjentów. Publikacja ogłoszeń beneficjentów jest warunkiem spełnienia tzw. zasady konkurencyjności. Zasada konkurencyjności odnosi się do beneficjentów korzystających z Europejskiego Funduszu Rozwoju Regionalnego, Europejskiego Funduszu Społecznego oraz Funduszu Spójności i jest regulowana na poziomie wytycznych w zakresie kwalifikowalności wydatków. Internetowa baza ofert pozwala w jednym miejscu zgromadzić zamówienia składane przez beneficjentów/wnioskodawców.
+          - paragraph [ref=f1e82]
+          - paragraph [ref=f1e83]: W przypadku pytań lub wątpliwości, zachęcamy do kontaktu ze wsparciem technicznym.
+          - paragraph [ref=f1e84]: Ogłoszenia zamieszczane na poprzedniej wersji Bazy Konkurencyjności zachowują ważność i wciąż są dostępne w archiwalnej wersji Bazy Konkurencyjności, której adres widnieje poniżej.
+          - paragraph [ref=f1e85]
+          - paragraph [ref=f1e86]: "Archiwalna wersja Bazy Konkurencyjności jest dostępna pod adresem:"
+          - paragraph [ref=f1e87]: https://archiwum-bazakonkurencyjnosci.funduszeeuropejskie.gov.pl/
+          - paragraph [ref=f1e88]
+          - paragraph [ref=f1e89]: Portal współfinansowany przez Unię Europejską ze środków Funduszu Spójności w ramach Programu Operacyjnego Pomoc Techniczna.
+      - generic [ref=f1e92]:
+        - heading "Wsparcie dla użytkowników" [level=2] [ref=f1e96]
+        - generic [ref=f1e99]:
+          - paragraph [ref=f1e101]: W przypadku wątpliwości w zakresie działania systemu, prosimy o zapoznanie się z treścią Pomocy, umieszczoną na dole strony głównej.
+          - generic [ref=f1e102]:
+            - paragraph [ref=f1e103]: Wsparcie dla zamawiających
+            - paragraph [ref=f1e104]: "Dla naborów/projektów rozpoczynających się od:"
+            - list [ref=f1e105]:
+              - listitem [ref=f1e106]:
+                - generic [ref=f1e107]: FAMI -
+                - link "amiz.fami@mswia.gov.pl" [ref=f1e108] [cursor=pointer]:
+                  - /url: mailto:amiz.fami@mswia.gov.pl
+              - listitem [ref=f1e109]:
+                - generic [ref=f1e110]: FBWP -
+                - link "amiz.fbwp@mswia.gov.pl" [ref=f1e111] [cursor=pointer]:
+                  - /url: mailto:amiz.fbwp@mswia.gov.pl
+              - listitem [ref=f1e112]:
+                - generic [ref=f1e113]: FEDR -
+                - link "amiz.ryby@minrol.gov.pl" [ref=f1e114] [cursor=pointer]:
+                  - /url: mailto:amiz.ryby@minrol.gov.pl
+              - listitem [ref=f1e115]:
+                - generic [ref=f1e116]: FEDS -
+                - link "amiz.feds@dolnyslask.pl" [ref=f1e117] [cursor=pointer]:
+                  - /url: mailto:amiz.feds@dolnyslask.pl
+              - listitem [ref=f1e118]:
+                - generic [ref=f1e119]: FEKP -
+                - link "amiz.fekp@kujawsko-pomorskie.pl" [ref=f1e120] [cursor=pointer]:
+                  - /url: mailto:amiz.fekp@kujawsko-pomorskie.pl
+              - listitem [ref=f1e121]:
+                - generic [ref=f1e122]: FELB -
+                - link "amiz.felb@lubuskie.pl" [ref=f1e123] [cursor=pointer]:
+                  - /url: mailto:amiz.felb@lubuskie.pl
+              - listitem [ref=f1e124]:
+                - generic [ref=f1e125]: FELD -
+                - link "amiz.feld@lodzkie.pl" [ref=f1e126] [cursor=pointer]:
+                  - /url: mailto:amiz.feld@lodzkie.pl
+              - listitem [ref=f1e127]:
+                - generic [ref=f1e128]: FELU -
+                - link "amiz.felu@lubelskie.pl" [ref=f1e129] [cursor=pointer]:
+                  - /url: mailto:amiz.felu@lubelskie.pl
+              - listitem [ref=f1e130]:
+                - generic [ref=f1e131]: FEMA -
+                - link "amiz.fema@mazovia.pl" [ref=f1e132] [cursor=pointer]:
+                  - /url: mailto:amiz.fema@mazovia.pl
+              - listitem [ref=f1e133]:
+                - generic [ref=f1e134]: FEMP -
+                - link "amiz.femp@umwm.malopolska.pl" [ref=f1e135] [cursor=pointer]:
+                  - /url: mailto:amiz.femp@umwm.malopolska.pl
+              - listitem [ref=f1e136]:
+                - generic [ref=f1e137]: FENG -
+                - link "amiz.feng@mfipr.gov.pl" [ref=f1e138] [cursor=pointer]:
+                  - /url: mailto:amiz.feng@mfipr.gov.pl
+              - listitem [ref=f1e139]:
+                - generic [ref=f1e140]: FENX -
+                - link "amiz.fenx@mfipr.gov.pl" [ref=f1e141] [cursor=pointer]:
+                  - /url: mailto:amiz.fenx@mfipr.gov.pl
+              - listitem [ref=f1e142]:
+                - generic [ref=f1e143]: FEOP -
+                - link "amiz.feop@opolskie.pl" [ref=f1e144] [cursor=pointer]:
+                  - /url: mailto:amiz.feop@opolskie.pl
+              - listitem [ref=f1e145]:
+                - generic [ref=f1e146]: FEPD -
+                - link "amiz.fepd@podlaskie.eu" [ref=f1e147] [cursor=pointer]:
+                  - /url: mailto:amiz.fepd@podlaskie.eu
+              - listitem [ref=f1e148]:
+                - generic [ref=f1e149]: FEPK -
+                - link "amiz.fepk@podkarpackie.pl" [ref=f1e150] [cursor=pointer]:
+                  - /url: mailto:amiz.fepk@podkarpackie.pl
+              - listitem [ref=f1e151]:
+                - generic [ref=f1e152]: FEPM -
+                - link "amiz.fepm@pomorskie.eu" [ref=f1e153] [cursor=pointer]:
+                  - /url: mailto:amiz.fepm@pomorskie.eu
+              - listitem [ref=f1e154]:
+                - generic [ref=f1e155]: FEPW -
+                - link "amiz.fepw@mfipr.gov.pl" [ref=f1e156] [cursor=pointer]:
+                  - /url: mailto:amiz.fepw@mfipr.gov.pl
+              - listitem [ref=f1e157]:
+                - generic [ref=f1e158]: FEPZ -
+                - link "amiz.fepz@wzp.pl" [ref=f1e159] [cursor=pointer]:
+                  - /url: mailto:amiz.fepz@wzp.pl
+              - listitem [ref=f1e160]:
+                - generic [ref=f1e161]: FERC -
+                - link "amiz.ferc@mfipr.gov.pl" [ref=f1e162] [cursor=pointer]:
+                  - /url: mailto:amiz.ferc@mfipr.gov.pl
+              - listitem [ref=f1e163]:
+                - generic [ref=f1e164]: FERS -
+                - link "amiz.fers@mfipr.gov.pl" [ref=f1e165] [cursor=pointer]:
+                  - /url: mailto:amiz.fers@mfipr.gov.pl
+              - listitem [ref=f1e166]:
+                - generic [ref=f1e167]: FESL -
+                - link "amiz.fesl@slaskie.pl" [ref=f1e168] [cursor=pointer]:
+                  - /url: mailto:amiz.fesl@slaskie.pl
+              - listitem [ref=f1e169]:
+                - generic [ref=f1e170]: FESW -
+                - link "amiz.fesw@sejmik.kielce.pl" [ref=f1e171] [cursor=pointer]:
+                  - /url: mailto:amiz.fesw@sejmik.kielce.pl
+              - listitem [ref=f1e172]:
+                - generic [ref=f1e173]: FEWM -
+                - link "amiz.fewm@warmia.mazury.pl" [ref=f1e174] [cursor=pointer]:
+                  - /url: mailto:amiz.fewm@warmia.mazury.pl
+              - listitem [ref=f1e175]:
+                - generic [ref=f1e176]: FEWP -
+                - link "amiz.fewp@umww.pl" [ref=f1e177] [cursor=pointer]:
+                  - /url: mailto:amiz.fewp@umww.pl
+              - listitem [ref=f1e178]:
+                - generic [ref=f1e179]: IZGW -
+                - link "amiz.izgw@mswia.gov.pl" [ref=f1e180] [cursor=pointer]:
+                  - /url: mailto:amiz.izgw@mswia.gov.pl
+              - listitem [ref=f1e181]:
+                - generic [ref=f1e182]: KPOD -
+                - link "amiz.kpod@mfipr.gov.pl" [ref=f1e183] [cursor=pointer]:
+                  - /url: mailto:amiz.kpod@mfipr.gov.pl
+              - listitem [ref=f1e184]:
+                - generic [ref=f1e185]: PLSK -
+                - link "amiz.plsk@mfipr.gov.pl" [ref=f1e186] [cursor=pointer]:
+                  - /url: mailto:amiz.plsk@mfipr.gov.pl
+              - listitem [ref=f1e187]:
+                - generic [ref=f1e188]: PLSN -
+                - link "amiz.plsn@mfipr.gov.pl" [ref=f1e189] [cursor=pointer]:
+                  - /url: mailto:amiz.plsn@mfipr.gov.pl
+              - listitem [ref=f1e190]:
+                - generic [ref=f1e191]: PLUA -
+                - link "amiz.plua@mfipr.gov.pl" [ref=f1e192] [cursor=pointer]:
+                  - /url: mailto:amiz.plua@mfipr.gov.pl
+              - listitem [ref=f1e193]:
+                - generic [ref=f1e194]: PTFE -
+                - link "amiz.ptfe@mfipr.gov.pl" [ref=f1e195] [cursor=pointer]:
+                  - /url: mailto:amiz.ptfe@mfipr.gov.pl
+              - listitem [ref=f1e196]:
+                - generic [ref=f1e197]: STHB -
+                - link "amiz.sthb@mfipr.gov.pl" [ref=f1e198] [cursor=pointer]:
+                  - /url: mailto:amiz.sthb@mfipr.gov.pl
+          - generic [ref=f1e199]:
+            - paragraph [ref=f1e200]: "Dla naborów/projektów z innym oznaczeniem:"
+            - list [ref=f1e201]:
+              - listitem [ref=f1e202]:
+                - link "konkurencyjnosc@mfipr.gov.pl" [ref=f1e203] [cursor=pointer]:
+                  - /url: mailto:konkurencyjnosc@mfipr.gov.pl
+          - generic [ref=f1e204]:
+            - paragraph [ref=f1e205]: Wsparcie dla oferentów
+            - paragraph [ref=f1e206]: "Dla wszystkich naborów/projektów:"
+            - list [ref=f1e207]:
+              - listitem [ref=f1e208]:
+                - link "konkurencyjnosc@mfipr.gov.pl" [ref=f1e209] [cursor=pointer]:
+                  - /url: mailto:konkurencyjnosc@mfipr.gov.pl
+  - contentinfo [ref=f1e211]:
+    - navigation "Nawigacja w stopce" [ref=f1e212]:
+      - 'img "Zestawienie znaków: Fundusze Europejskie, Barwy Rzeczypospolitej Polskiej, Unia Europejska" [ref=f1e214]'
+      - generic [ref=f1e215]: Projekt współfinansowany z Funduszu Spójności i budżetu państwa
+      - list [ref=f1e216]:
+        - listitem [ref=f1e217]:
+          - link "Pomoc" [ref=f1e218] [cursor=pointer]:
+            - /url: /pomoc
+        - listitem [ref=f1e219]:
+          - link "Regulamin" [ref=f1e220] [cursor=pointer]:
+            - /url: /regulamin
+        - listitem [ref=f1e221]:
+          - link "Komunikaty" [ref=f1e222] [cursor=pointer]:
+            - /url: /komunikaty
+        - listitem [ref=f1e223]:
+          - link "Deklaracja dostępności" [ref=f1e224] [cursor=pointer]:
+            - /url: /deklaracja-dostepnosci

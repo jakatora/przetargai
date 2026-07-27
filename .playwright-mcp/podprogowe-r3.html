@@ -1,0 +1,170 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+  body{display:flex;flex-wrap:wrap;gap:24px;padding:20px;background:#888}
+  .phone{width:360px;border-radius:24px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  .phone.wide{width:520px}
+  .scr{padding:16px;min-height:640px}
+  .light{background:#f4f7fc;color:#14213d}
+  .light .surface{background:#fff;border:1px solid #e3e8f2}
+  .light .muted{color:#5b6577}
+  .light .badge{color:#15803d;background:#dcfce7}
+  .light .chip{color:#2563eb;background:#eaeffa}
+  .light .banerPilny{border:1.5px solid #b45309;background:#fff}
+  .light .banerPilny .t{color:#b45309}
+  .light .banerOk{border:1.5px solid #15803d;background:#fff}
+  .light .banerOk .t{color:#15803d}
+  .light .link{color:#2563eb}
+  .light .btnPrim{background:#2563eb;color:#fff}
+  .light .btnGhost{border:1.5px solid #2563eb;color:#2563eb;background:transparent}
+  .dark{background:#0f1526;color:#e8edf8}
+  .dark .surface{background:#19213a;border:1px solid #2b3554}
+  .dark .muted{color:#9aa7c0}
+  .dark .badge{color:#4ade80;background:#143c2a}
+  .dark .chip{color:#5b8cff;background:#1e2947}
+  .dark .banerPilny{border:1.5px solid #fbbf24;background:#19213a}
+  .dark .banerPilny .t{color:#fbbf24}
+  .dark .banerOk{border:1.5px solid #4ade80;background:#19213a}
+  .dark .banerOk .t{color:#4ade80}
+  .dark .link{color:#5b8cff}
+  .dark .btnPrim{background:#5b8cff;color:#0f1526}
+  .dark .btnGhost{border:1.5px solid #5b8cff;color:#5b8cff;background:transparent}
+  .band{margin-bottom:16px}
+  .bandHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .bandTytul{font-size:15px;font-weight:800}
+  .bandUstaw{font-size:13px;font-weight:700}
+  .lista{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .karta{width:250px;flex:0 0 250px;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px}
+  .badge{align-self:flex-start;font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px;margin-bottom:2px}
+  .kTytul{font-size:14px;font-weight:700;line-height:19px}
+  .kZam{font-size:12px}
+  .kWartosc{font-size:13px;font-weight:700;margin-top:2px}
+  .flagi{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+  .chip{font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px}
+  .kZrodlo{font-size:11px;margin-top:4px}
+  .zaproszenie{border-radius:16px;padding:16px}
+  .zapTytul{font-size:15px;font-weight:700}
+  .zapOpis{font-size:13px;line-height:19px;margin-top:4px}
+  .dNag{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+  .dBadge{font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px}
+  .dZrodlo{font-size:12px;font-weight:700}
+  .dTytul{font-size:22px;font-weight:800;line-height:28px}
+  .dZam{font-size:14px;margin-top:4px;margin-bottom:16px}
+  .baner{border-radius:16px;padding:16px;margin-top:8px}
+  .banerT{font-size:16px;font-weight:800;line-height:22px}
+  .banerM{font-size:13px;margin-top:4px;line-height:19px}
+  .card{border-radius:16px;padding:16px;margin-top:16px}
+  .row{padding:10px 0;border-bottom:1px solid}
+  .light .row{border-color:#e3e8f2}.dark .row{border-color:#2b3554}
+  .row:last-child{border-bottom:0}
+  .rowEt{font-size:12px}
+  .rowVal{font-size:15px;font-weight:600}
+  .flagiDet{display:flex;flex-wrap:wrap;gap:4px;margin-top:16px}
+  .chipDet{font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px}
+  .sekcja{font-size:16px;font-weight:800;margin-top:24px;margin-bottom:8px}
+  .stresz{font-size:15px;line-height:22px}
+  .btn{border-radius:12px;padding:13px;text-align:center;font-weight:800;font-size:15px;margin-top:16px}
+  .stopka{font-size:12px;line-height:17px;margin-top:24px;font-style:italic}
+  .cap{font:12px/1.3 monospace;color:#fff;padding:4px 0}
+</style></head>
+<body>
+
+<div>
+<div class="cap">FEED BAND — jasny — 360px</div>
+<div class="phone light"><div class="scr">
+  <div class="band">
+    <div class="bandHead"><span class="bandTytul">Łatwiejszy start</span><span class="bandUstaw link">Ustawienia</span></div>
+    <div class="lista">
+      <div class="karta surface">
+        <span class="badge">Łatwiejszy start</span>
+        <div class="kTytul">Sprzątanie i utrzymanie czystości w budynku Urzędu Gminy</div>
+        <div class="kZam muted">Gmina Nowe Miasto nad Pilicą</div>
+        <div class="kWartosc">142 000 zł netto</div>
+        <div class="flagi"><span class="chip">bez wadium</span><span class="chip">bez KIO</span><span class="chip">prosta procedura</span></div>
+        <div class="kZrodlo muted">platformazakupowa.pl</div>
+      </div>
+      <div class="karta surface">
+        <span class="badge">Łatwiejszy start</span>
+        <div class="kTytul">Dostawa materiałów biurowych dla SP ZOZ</div>
+        <div class="kZam muted">SP ZOZ w Kętrzynie</div>
+        <div class="kWartosc">88 500 zł netto</div>
+        <div class="flagi"><span class="chip">bez wadium</span><span class="chip">bez KIO</span></div>
+        <div class="kZrodlo muted">Baza Konkurencyjności</div>
+      </div>
+    </div>
+  </div>
+</div></div>
+</div>
+
+<div>
+<div class="cap">FEED BAND — ciemny + zaproszenie — 360px</div>
+<div class="phone dark"><div class="scr">
+  <div class="band">
+    <div class="bandHead"><span class="bandTytul">Łatwiejszy start</span><span class="bandUstaw link">Ustaw</span></div>
+    <div class="zaproszenie surface">
+      <div class="zapTytul">Włącz radar zamówień podprogowych</div>
+      <div class="zapOpis muted">Ustaw branżę i region, a pokażemy tu zakupy poniżej progu Pzp — zwykle bez wadium i bez KIO, z prostszą procedurą. Idealne na łatwiejszy start.</div>
+    </div>
+  </div>
+  <div class="band">
+    <div class="bandHead"><span class="bandTytul">Łatwiejszy start</span><span class="bandUstaw link">Ustawienia</span></div>
+    <div class="lista">
+      <div class="karta surface">
+        <span class="badge">Łatwiejszy start</span>
+        <div class="kTytul">Roboty budowlane — remont chodnika przy ul. Leśnej</div>
+        <div class="kZam muted">Gmina Miejska Kraków</div>
+        <div class="kWartosc">165 000 zł netto</div>
+        <div class="flagi"><span class="chip">bez wadium</span><span class="chip">prosta procedura</span></div>
+        <div class="kZrodlo muted">eZamawiający</div>
+      </div>
+    </div>
+  </div>
+</div></div>
+</div>
+
+<div>
+<div class="cap">SZCZEGÓŁY — jasny (baner pilny) — 360px</div>
+<div class="phone light"><div class="scr">
+  <div class="dNag"><span class="dBadge badge">Łatwiejszy start</span><span class="dZrodlo muted">platformazakupowa.pl</span></div>
+  <div class="dTytul">Sprzątanie i utrzymanie czystości w budynku Urzędu Gminy</div>
+  <div class="dZam muted">Gmina Nowe Miasto nad Pilicą</div>
+  <div class="baner banerPilny"><div class="banerT t">Zostały 3 dni</div><div class="banerM muted">Termin składania ofert: 30.07.2026</div></div>
+  <div class="card surface">
+    <div class="row"><div class="rowEt muted">Szacowana wartość</div><div class="rowVal">142 000 zł netto</div></div>
+    <div class="row"><div class="rowEt muted">Branża</div><div class="rowVal">sprzątanie</div></div>
+    <div class="row"><div class="rowEt muted">Region</div><div class="rowVal">mazowieckie</div></div>
+    <div class="row"><div class="rowEt muted">Data publikacji</div><div class="rowVal">18.07.2026</div></div>
+  </div>
+  <div class="flagiDet"><span class="chipDet chip">bez wadium</span><span class="chipDet chip">bez KIO</span><span class="chipDet chip">prosta procedura</span></div>
+  <div class="sekcja">Jak wygląda mini-procedura</div>
+  <div class="card surface"><div class="stresz">Zamawiający zbiera oferty przez formularz na platformazakupowa.pl. Kryterium: 100% cena. Bez wadium. Termin związania ofertą 30 dni. Ofertę składa się elektronicznie, skan oświadczenia w załączniku.</div></div>
+  <div class="btn btnGhost">Otwórz regulamin zakupowy</div>
+  <div class="btn btnPrim">Otwórz ogłoszenie (platformazakupowa.pl)</div>
+  <div class="stopka muted">Zamówienia podprogowe to zakupy poniżej progu Pzp — zwykle bez wadium i bez KIO, z prostszą procedurą wpisaną w regulamin zakupowy zamawiającego. Radar jest pomocniczy i nie zastępuje śledzenia źródłowego ogłoszenia.</div>
+</div></div>
+</div>
+
+<div>
+<div class="cap">SZCZEGÓŁY — ciemny (baner „w porę") — 520px (tablet)</div>
+<div class="phone dark wide"><div class="scr">
+  <div class="dNag"><span class="dBadge badge">Łatwiejszy start</span><span class="dZrodlo muted">Baza Konkurencyjności</span></div>
+  <div class="dTytul">Dostawa i montaż mebli do świetlicy wiejskiej</div>
+  <div class="dZam muted">Stowarzyszenie Lokalna Grupa Działania „Dolina Sanu”</div>
+  <div class="baner banerOk"><div class="banerT t">Zostało 21 dni</div><div class="banerM muted">Termin składania ofert: 17.08.2026</div></div>
+  <div class="card surface">
+    <div class="row"><div class="rowEt muted">Szacowana wartość</div><div class="rowVal">96 000 zł netto</div></div>
+    <div class="row"><div class="rowEt muted">Branża</div><div class="rowVal">meble</div></div>
+    <div class="row"><div class="rowEt muted">Region</div><div class="rowVal">podkarpackie</div></div>
+    <div class="row"><div class="rowEt muted">Data publikacji</div><div class="rowVal">27.07.2026</div></div>
+  </div>
+  <div class="flagiDet"><span class="chipDet chip">bez wadium</span><span class="chipDet chip">bez KIO</span></div>
+  <div class="sekcja">Jak wygląda mini-procedura</div>
+  <div class="card surface"><div class="stresz">Postępowanie w trybie zasady konkurencyjności (projekt UE). Oferty na formularzu z Bazy Konkurencyjności, kryteria: cena 80% + termin 20%. Wymagane oświadczenie o braku powiązań z zamawiającym.</div></div>
+  <div class="btn btnGhost">Otwórz regulamin zakupowy</div>
+  <div class="btn btnPrim">Otwórz ogłoszenie (Baza Konkurencyjności)</div>
+  <div class="stopka muted">Zamówienia podprogowe to zakupy poniżej progu Pzp — zwykle bez wadium i bez KIO, z prostszą procedurą wpisaną w regulamin zakupowy zamawiającego.</div>
+</div></div>
+</div>
+
+</body></html>

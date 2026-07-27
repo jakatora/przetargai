@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background:#334; font-family:-apple-system,'Segoe UI',Roboto,sans-serif; padding:24px; display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+  .frame { width:390px; border-radius:24px; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,.5); }
+  .frame.narrow { width:340px; }
+  .caption { color:#fff; font-size:13px; margin-bottom:8px; font-family:monospace; }
+  .col { display:flex; flex-direction:column; }
+  .nav { height:52px; display:flex; align-items:center; padding:0 16px; font-weight:700; font-size:17px; }
+  .screen { padding:24px; }           /* spacing.lg */
+  /* --- generic tokens injected per theme via .light / .dark --- */
+  .light { --bg:#f4f7fc; --surface:#fff; --text:#14213d; --muted:#5b6577; --border:#e3e8f2; --blue:#2563eb; --green:#16a34a; --danger:#dc2626; --wyr:#eaeffa; --sukces:#dcfce7; --dngr:#fee2e2; --white:#fff; }
+  .dark  { --bg:#0f1526; --surface:#19213a; --text:#e8edf8; --muted:#9aa7c0; --border:#2b3554; --blue:#5b8cff; --green:#2fae66; --danger:#f47171; --wyr:#1e2947; --sukces:#143c2a; --dngr:#3b1518; --white:#fff; }
+  .frame { background:var(--bg); }
+  .nav { background:var(--blue); color:var(--white); }
+  .screen { background:var(--bg); }
+
+  .hero { background:var(--wyr); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:8px; }
+  .heroKrok { font-size:12px; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:.5px; }
+  .heroTytul { font-size:22px; font-weight:800; color:var(--text); margin-top:6px; line-height:28px; }
+  .heroWstep { font-size:14px; color:var(--text); margin-top:8px; line-height:21px; }
+  .sectionTitle { font-size:16px; font-weight:700; color:var(--text); margin-top:24px; margin-bottom:8px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:8px; }
+  .filarNaglowek { display:flex; flex-direction:row; align-items:flex-start; gap:8px; }
+  .filarNumer { width:26px; height:26px; border-radius:13px; background:var(--blue); color:var(--white); text-align:center; line-height:26px; font-size:14px; font-weight:800; flex:0 0 auto; }
+  .filarTytul { flex:1; font-size:16px; font-weight:700; color:var(--text); line-height:22px; }
+  .dotyczyRzad { display:flex; flex-direction:row; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .dotyczyChip { background:var(--wyr); border-radius:8px; padding:3px 8px; }
+  .dotyczyText { font-size:12px; font-weight:600; color:var(--blue); }
+  .filarTresc { font-size:14px; color:var(--text); line-height:21px; margin-top:8px; }
+  .wazneBox { background:var(--wyr); border-left:3px solid var(--blue); border-radius:8px; padding:8px; margin-top:16px; }
+  .wazneEtykieta { font-size:11px; font-weight:800; color:var(--blue); text-transform:uppercase; letter-spacing:.5px; }
+  .wazneTekst { font-size:13px; color:var(--text); line-height:19px; margin-top:3px; font-weight:600; }
+  .zasadaRzad { display:flex; flex-direction:row; gap:8px; }
+  .zasadaRzadGap { margin-top:8px; }
+  .zasadaKropka { font-size:14px; color:var(--blue); font-weight:800; line-height:21px; }
+  .zasadaTekst { flex:1; font-size:14px; color:var(--text); line-height:21px; }
+  .podstawa { font-size:12px; color:var(--muted); margin-top:16px; line-height:17px; }
+  .stopka { font-size:12px; color:var(--muted); line-height:17px; margin-top:8px; font-style:italic; }
+
+  /* form screen */
+  .sectionOpis { font-size:13px; color:var(--muted); line-height:19px; margin-bottom:16px; }
+  .field { margin-bottom:16px; }
+  .label { font-size:14px; font-weight:600; color:var(--text); margin-bottom:6px; }
+  .input { background:var(--surface); border:1.5px solid var(--border); border-radius:12px; padding:13px 14px; font-size:16px; color:var(--muted); }
+  .input.multi { min-height:96px; padding-top:12px; }
+  .input.err { border-color:var(--danger); }
+  .hint { font-size:12px; color:var(--muted); margin-top:4px; }
+  .errmsg { font-size:12px; color:var(--danger); margin-top:4px; }
+  .panel { border-radius:12px; border:1px solid; padding:16px; margin-top:8px; margin-bottom:16px; }
+  .panelBrak { background:var(--dngr); border-color:var(--danger); }
+  .panelBrakTytul { font-size:14px; font-weight:700; color:var(--danger); margin-bottom:6px; }
+  .brakRzad { display:flex; flex-direction:row; gap:8px; margin-top:2px; }
+  .brakKropka { font-size:14px; color:var(--danger); font-weight:800; line-height:20px; }
+  .brakTekst { flex:1; font-size:13px; color:var(--text); line-height:20px; }
+  .panelOk { background:var(--sukces); border-color:var(--green); }
+  .panelOkTytul { font-size:14px; font-weight:700; color:var(--green); }
+  .panelOkTresc { font-size:13px; color:var(--text); line-height:19px; margin-top:6px; }
+  .btn { height:52px; border-radius:12px; background:var(--blue); display:flex; align-items:center; justify-content:center; }
+  .btnText { font-size:16px; font-weight:700; color:var(--white); }
+  .stopkaHint { font-size:12px; color:var(--muted); margin-top:8px; line-height:17px; }
+  .stopkaOk { font-size:13px; color:var(--green); font-weight:600; margin-top:8px; line-height:18px; }
+</style></head>
+<body>
+
+<div class="col"><div class="caption">Krok 1 — light @390</div>
+<div class="frame light"><div class="nav">‹ Pożycz doświadczenie</div><div class="screen">
+  <div class="hero">
+    <div class="heroKrok">Krok 1 z 4 · Pożycz doświadczenie</div>
+    <div class="heroTytul">Nie odpadasz — ten warunek możesz wykazać doświadczeniem innej firmy</div>
+    <div class="heroWstep">Nie musisz spełniać warunku „w pojedynkę". Art. 118 Pzp pozwala Ci polegać na zdolnościach technicznych lub zawodowych (w tym na doświadczeniu) innej firmy — podmiotu udostępniającego zasoby — niezależnie od tego, jak się z nią umówisz. Są jednak dwie żelazne zasady, bez których zamawiający i KIO uznają takie „pożyczenie" za fikcję. Poznaj je, zanim przygotujesz zobowiązanie.</div>
+  </div>
+  <div class="sectionTitle">Dwie żelazne zasady</div>
+  <div class="card">
+    <div class="filarNaglowek"><div class="filarNumer">1</div><div class="filarTytul">Firma, która użycza doświadczenia, musi realnie wykonać tę część</div></div>
+    <div class="dotyczyRzad"><div class="dotyczyChip"><span class="dotyczyText">roboty budowlane</span></div><div class="dotyczyChip"><span class="dotyczyText">usługi</span></div></div>
+    <div class="filarTresc">Przy warunkach dotyczących doświadczenia w ROBOTACH BUDOWLANYCH lub USŁUGACH nie wystarczy, że inna firma podpisze papier i „użyczy" Ci swoich referencji. Art. 118 ust. 2 Pzp wymaga, żeby ten podmiot RZECZYWIŚCIE wykonał tę część zamówienia, do której potrzebne jest jego doświadczenie — w praktyce jako Twój podwykonawca. Doświadczenie „w oderwaniu" od udziału w realizacji jest niezbywalne: nie da się go przekazać jak zaświadczenia. Dlatego w zobowiązaniu trzeba wprost wskazać, jaki zakres robót lub usług wykona firma udostępniająca zasoby — inaczej udostępnienie będzie pozorne.</div>
+    <div class="wazneBox"><div class="wazneEtykieta">Zapamiętaj</div><div class="wazneTekst">Przy robotach i usługach: kto użycza doświadczenia, ten musi je faktycznie wykonać jako podwykonawca — samo „użyczenie referencji" to za mało.</div></div>
+  </div>
+  <div class="card">
+    <div class="filarNaglowek"><div class="filarNumer">2</div><div class="filarTytul">Doświadczenia nie wolno „sumować"</div></div>
+    <div class="filarTresc">Doświadczenia nie wolno „sumować" — nie da się go poskładać z kawałków. Jeśli warunek wymaga jednej realizacji o określonej skali (np. jednej roboty o wartości min. 500 tys. zł), nie spełnisz go, pokazując dwie mniejsze roboty po 250 tys. zł — ani własne, ani cudze — ani „doklejając" połowę swojego doświadczenia do połowy doświadczenia innej firmy. Takie doświadczenie jest niepodzielne: warunek musi być spełniony W CAŁOŚCI przez jeden podmiot — Ciebie albo firmę udostępniającą zasoby. Zasada jest ugruntowana w orzecznictwie (m.in. wyrok TSUE w sprawie Esaprojekt, C-387/14) i pilnowana przez KIO.</div>
+    <div class="wazneBox"><div class="wazneEtykieta">Zapamiętaj</div><div class="wazneTekst">Warunek „na jedną realizację" musi w całości pochodzić od jednego podmiotu — sumowanie mniejszych zleceń (własnych lub cudzych) to droga do odrzucenia.</div></div>
+  </div>
+  <div class="sectionTitle">W skrócie</div>
+  <div class="card">
+    <div class="zasadaRzad"><div class="zasadaKropka">•</div><div class="zasadaTekst">Przy robotach i usługach podmiot udostępniający doświadczenie musi realnie wykonać tę część zamówienia — zwykle jako podwykonawca.</div></div>
+    <div class="zasadaRzad zasadaRzadGap"><div class="zasadaKropka">•</div><div class="zasadaTekst">Doświadczenia nie wolno sumować: warunek wymagający jednej realizacji o danej skali musi w całości spełnić jeden podmiot.</div></div>
+    <div class="zasadaRzad zasadaRzadGap"><div class="zasadaKropka">•</div><div class="zasadaTekst">Samo „użyczenie referencji" bez udziału w realizacji zamawiający i KIO uznają za udostępnienie pozorne (fikcyjne).</div></div>
+  </div>
+  <div class="podstawa">Podstawa prawna: art. 118 ustawy z 11 września 2019 r. — Prawo zamówień publicznych (Pzp).</div>
+  <div class="stopka">Materiał informacyjny przygotowany na podstawie przepisów i orzecznictwa — nie zastępuje porady prawnej.</div>
+</div></div></div>
+
+<div class="col"><div class="caption">Krok 2 — light @390 (świeży formularz)</div>
+<div class="frame light"><div class="nav">‹ Pożycz doświadczenie</div><div class="screen">
+  <div class="hero">
+    <div class="heroKrok">Krok 2 z 4 · Pożycz doświadczenie</div>
+    <div class="heroTytul">Dane podmiotu i zakres udostępnienia</div>
+    <div class="heroWstep">Uzupełnij, kto użycza doświadczenia i na jakich zasadach. Cztery elementy zakresu wymaga wprost art. 118 ust. 4 Pzp — bez nich zamawiający lub KIO mogą uznać udostępnienie za pozorne.</div>
+  </div>
+  <div class="sectionTitle">Dane podmiotu udostępniającego zasoby</div>
+  <div class="sectionOpis">Kogo zobowiązanie dotyczy — kto użycza doświadczenia i podpisze dokument.</div>
+  <div class="field"><div class="label">Nazwa (firma) podmiotu udostępniającego zasoby · wymagane</div><div class="input">Wpisz…</div><div class="hint">Pełna nazwa firmy, która użycza swojego doświadczenia. Bez wskazania podmiotu nie ma kogo zobowiązać ani od kogo egzekwować udziału w realizacji.</div></div>
+  <div class="field"><div class="label">Identyfikator podmiotu (NIP / KRS / REGON) · wymagane</div><div class="input">Wpisz…</div><div class="hint">Numer jednoznacznie identyfikujący podmiot (NIP, a gdy brak — KRS lub REGON, przy podmiocie zagranicznym odpowiednik). Wiąże zobowiązanie z konkretną firmą.</div></div>
+  <div class="field"><div class="label">Adres siedziby podmiotu · opcjonalne</div><div class="input">Wpisz…</div><div class="hint">Adres siedziby — potrzebny do korespondencji i pełnej identyfikacji podmiotu.</div></div>
+  <div class="field"><div class="label">Osoba reprezentująca podmiot (podpis) · opcjonalne</div><div class="input">Wpisz…</div><div class="hint">Imię, nazwisko i funkcja osoby uprawnionej do reprezentacji — to ona podpisze zobowiązanie w imieniu podmiotu udostępniającego.</div></div>
+  <div class="sectionTitle">Zakres i warunki udostępnienia</div>
+  <div class="sectionOpis">Cztery elementy wymagane przez art. 118 ust. 4 Pzp — bez nich udostępnienie jest pozorne.</div>
+  <div class="field"><div class="label">Zakres udostępnianego doświadczenia (zasobów) · wymagane</div><div class="input multi">Wpisz…</div><div class="hint">Konkretnie, jakie doświadczenie/zasoby podmiot udostępnia — najlepiej wprost to, które pokrywa niespełniony warunek udziału (np. „budowa oczyszczalni o przepustowości min. 5000 m³/d, jedna realizacja o wartości 6 mln zł").</div></div>
+  <div class="field"><div class="label">Sposób udostępnienia i wykorzystania zasobów · wymagane</div><div class="input multi">Wpisz…</div><div class="hint">W jaki sposób podmiot udostępni i włączy swoje zasoby do realizacji zamówienia (przy doświadczeniu w robotach/usługach — przez udział w wykonaniu, zwykle jako podwykonawca, wraz z nadzorem własnej kadry). Blankietowe „udostępniam zasoby" to za mało.</div></div>
+  <div class="field"><div class="label">Okres udostępnienia zasobów · wymagane</div><div class="input multi">Wpisz…</div><div class="hint">Na jaki czas zasoby są udostępniane — powinien obejmować cały okres realizacji części zamówienia, do której potrzebne jest doświadczenie podmiotu.</div></div>
+  <div class="field"><div class="label">Zakres robót/usług realizowanych przez podmiot (podwykonawstwo) · wymagane</div><div class="input multi">Wpisz…</div><div class="hint">Czy i w jakim zakresie podmiot udostępniający SAM wykona roboty lub usługi, dla których wymagane jest jego doświadczenie. Ten zakres musi pokrywać się z udostępnianym doświadczeniem — inaczej udostępnienie będzie pozorne.</div></div>
+  <div class="panel panelBrak">
+    <div class="panelBrakTytul">Uzupełnij wymagane pola — brakuje 6 z 6</div>
+    <div class="brakRzad"><div class="brakKropka">•</div><div class="brakTekst">Nazwa (firma) podmiotu udostępniającego zasoby</div></div>
+    <div class="brakRzad"><div class="brakKropka">•</div><div class="brakTekst">Identyfikator podmiotu (NIP / KRS / REGON)</div></div>
+    <div class="brakRzad"><div class="brakKropka">•</div><div class="brakTekst">Zakres udostępnianego doświadczenia (zasobów)</div></div>
+    <div class="brakRzad"><div class="brakKropka">•</div><div class="brakTekst">Sposób udostępnienia i wykorzystania zasobów</div></div>
+    <div class="brakRzad"><div class="brakKropka">•</div><div class="brakTekst">Okres udostępnienia zasobów</div></div>
+    <div class="brakRzad"><div class="brakKropka">•</div><div class="brakTekst">Zakres robót/usług realizowanych przez podmiot (podwykonawstwo)</div></div>
+  </div>
+  <div class="btn"><div class="btnText">Dalej</div></div>
+  <div class="stopkaHint">Uzupełnij wszystkie wymagane pola — „Dalej" przeniesie Cię do kolejnego kroku dopiero, gdy zobowiązanie będzie kompletne.</div>
+</div></div></div>
+
+<div class="col"><div class="caption">Krok 1 — dark @390</div>
+<div class="frame dark"><div class="nav">‹ Pożycz doświadczenie</div><div class="screen">
+  <div class="hero">
+    <div class="heroKrok">Krok 1 z 4 · Pożycz doświadczenie</div>
+    <div class="heroTytul">Nie odpadasz — ten warunek możesz wykazać doświadczeniem innej firmy</div>
+    <div class="heroWstep">Nie musisz spełniać warunku „w pojedynkę". Art. 118 Pzp pozwala Ci polegać na zdolnościach technicznych lub zawodowych innej firmy — podmiotu udostępniającego zasoby. Są jednak dwie żelazne zasady, bez których zamawiający i KIO uznają takie „pożyczenie" za fikcję.</div>
+  </div>
+  <div class="sectionTitle">Dwie żelazne zasady</div>
+  <div class="card">
+    <div class="filarNaglowek"><div class="filarNumer">1</div><div class="filarTytul">Firma, która użycza doświadczenia, musi realnie wykonać tę część</div></div>
+    <div class="dotyczyRzad"><div class="dotyczyChip"><span class="dotyczyText">roboty budowlane</span></div><div class="dotyczyChip"><span class="dotyczyText">usługi</span></div></div>
+    <div class="filarTresc">Przy warunkach dotyczących doświadczenia w ROBOTACH BUDOWLANYCH lub USŁUGACH nie wystarczy, że inna firma „użyczy" Ci referencji. Art. 118 ust. 2 Pzp wymaga, żeby ten podmiot RZECZYWIŚCIE wykonał tę część — w praktyce jako Twój podwykonawca.</div>
+    <div class="wazneBox"><div class="wazneEtykieta">Zapamiętaj</div><div class="wazneTekst">Przy robotach i usługach: kto użycza doświadczenia, ten musi je faktycznie wykonać jako podwykonawca.</div></div>
+  </div>
+  <div class="sectionTitle">W skrócie</div>
+  <div class="card">
+    <div class="zasadaRzad"><div class="zasadaKropka">•</div><div class="zasadaTekst">Przy robotach i usługach podmiot udostępniający musi realnie wykonać tę część zamówienia.</div></div>
+    <div class="zasadaRzad zasadaRzadGap"><div class="zasadaKropka">•</div><div class="zasadaTekst">Doświadczenia nie wolno sumować: warunek musi w całości spełnić jeden podmiot.</div></div>
+  </div>
+  <div class="podstawa">Podstawa prawna: art. 118 ustawy z 11 września 2019 r. — Prawo zamówień publicznych (Pzp).</div>
+  <div class="stopka">Materiał informacyjny — nie zastępuje porady prawnej.</div>
+</div></div></div>
+
+<div class="col"><div class="caption">Krok 2 — dark @340 (błędy po „Dalej" + komplet)</div>
+<div class="frame dark narrow"><div class="nav">‹ Pożycz doświadczenie</div><div class="screen">
+  <div class="hero">
+    <div class="heroKrok">Krok 2 z 4 · Pożycz doświadczenie</div>
+    <div class="heroTytul">Dane podmiotu i zakres udostępnienia</div>
+    <div class="heroWstep">Uzupełnij, kto użycza doświadczenia i na jakich zasadach. Cztery elementy zakresu wymaga wprost art. 118 ust. 4 Pzp.</div>
+  </div>
+  <div class="sectionTitle">Dane podmiotu udostępniającego zasoby</div>
+  <div class="sectionOpis">Kogo zobowiązanie dotyczy — kto użycza doświadczenia i podpisze dokument.</div>
+  <div class="field"><div class="label">Nazwa (firma) podmiotu udostępniającego zasoby · wymagane</div><div class="input err">&nbsp;</div><div class="errmsg">To pole jest wymagane.</div></div>
+  <div class="field"><div class="label">Identyfikator podmiotu (NIP / KRS / REGON) · wymagane</div><div class="input" style="color:var(--text)">Budrex Sp. z o.o., NIP 7010012345</div><div class="hint">Numer jednoznacznie identyfikujący podmiot.</div></div>
+  <div class="panel panelOk">
+    <div class="panelOkTytul">Komplet — wszystkie wymagane elementy uzupełnione</div>
+    <div class="panelOkTresc">Warto jeszcze dodać: Adres siedziby podmiotu, Osoba reprezentująca podmiot (podpis). To pola zalecane — nie blokują przejścia dalej.</div>
+  </div>
+  <div class="btn"><div class="btnText">Dalej</div></div>
+  <div class="stopkaOk">Dane kompletne — w kolejnym kroku przygotujemy z nich zobowiązanie podmiotu.</div>
+</div></div></div>
+
+</body></html>

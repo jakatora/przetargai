@@ -15,7 +15,7 @@ function parseList(text) {
   return text.split(',').map((s) => s.trim()).filter(Boolean);
 }
 
-export default function AccountScreen() {
+export default function AccountScreen({ navigation }) {
   const { user, signOut, refreshUser, setUser, zarejestrujPush } = useAuth();
   const { preferencja, ustawPreferencje } = useTheme();
   const styles = useStyle(tworzStyleKonta);
@@ -298,6 +298,18 @@ export default function AccountScreen() {
         <Text style={styles.linkSciagi}>Nie znasz kodów? Otwórz ściągę CPV →</Text>
       </Pressable>
       <Button title="Zapisz profil" onPress={handleSave} loading={saving} />
+
+      <Text style={styles.sectionTitle}>Narzędzia firmy</Text>
+      <Text style={styles.sectionHint}>
+        Bank referencji pilnuje „terminu przydatności” Twojego doświadczenia (roboty 5 lat,
+        dostawy i usługi 3 lata) — żebyś nie odkrył w dniu składania, że kluczowa robota już
+        się nie liczy.
+      </Text>
+      <Button
+        title="Otwórz bank referencji"
+        variant="ghost"
+        onPress={() => navigation.navigate('BankReferencji')}
+      />
 
       <CpvPicker
         widoczny={sciagaOtwarta}

@@ -561,22 +561,36 @@ export const aiQuotaDevice = {
 
 const _umInsert = lazy(`
   INSERT INTO umowa_monitorowana (
-    id, user_id, branza, wskaznik_bazowy, wskaznik_okres, data_podpisania, created_at, updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+    id, user_id, branza, wskaznik_bazowy, wskaznik_okres, data_podpisania, prog, created_at, updated_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 const _umByIdForUser = lazy(`SELECT * FROM umowa_monitorowana WHERE id = ? AND user_id = ?`);
 const _umListForUser = lazy(`
   SELECT * FROM umowa_monitorowana WHERE user_id = ? ORDER BY created_at DESC`);
+// Rekordy do obsłużenia przez cykliczny job waloryzacji: mają próg z umowy (jest
+// co przekraczać) i jeszcze nie wysłały alarmu. Ponad kontami — job pracuje dla
+// wszystkich, a powiadamia właściciela rekordu.
+const _umDoSprawdzenia = lazy(`
+  SELECT * FROM umowa_monitorowana
+  WHERE prog IS NOT NULL AND alarm_wyslany = 0
+  ORDER BY created_at ASC`);
+const _umZapiszWskaznik = lazy(`
+  UPDATE umowa_monitorowana
+  SET wskaznik_aktualny = ?, wskaznik_aktualny_okres = ?, updated_at = ?
+  WHERE id = ?`);
+const _umOznaczAlarm = lazy(`
+  UPDATE umowa_monitorowana SET alarm_wyslany = 1, updated_at = ? WHERE id = ?`);
 
 export const umowyMonitorowane = {
   /**
-   * Bierze umowę pod monitoring. `dataPodpisania` domyślnie = chwila zapisu.
+   * Bierze umowę pod monitoring. `dataPodpisania` domyślnie = chwila zapisu,
+   * `prog` (próg waloryzacji z umowy, %) opcjonalny — bez niego rekord nie alarmuje.
    * Zwraca zapisany wiersz (skopowany do właściciela, więc zawsze istnieje).
    */
-  create({ userId, branza, wskaznikBazowy, wskaznikOkres = null, dataPodpisania = null }) {
+  create({ userId, branza, wskaznikBazowy, wskaznikOkres = null, dataPodpisania = null, prog = null }) {
     const id = newId();
     const ts = nowIso();
     _umInsert().run(
-      id, userId, branza, wskaznikBazowy, wskaznikOkres ?? null, dataPodpisania ?? ts, ts, ts,
+      id, userId, branza, wskaznikBazowy, wskaznikOkres ?? null, dataPodpisania ?? ts, prog ?? null, ts, ts,
     );
     return _umByIdForUser().get(id, userId);
   },
@@ -586,9 +600,226 @@ export const umowyMonitorowane = {
   listForUser(userId) {
     return _umListForUser().all(userId);
   },
+  /** Rekordy do sprawdzenia przez cykliczny job (mają próg, brak wysłanego alarmu). */
+  doSprawdzenia() {
+    return _umDoSprawdzenia().all();
+  },
+  /** Zapisuje ostatnio pobrany wskaźnik GUS (obserwacja — także gdy nie ma alarmu). */
+  zapiszWskaznik(id, wartosc, okres = null) {
+    _umZapiszWskaznik().run(wartosc, okres ?? null, nowIso(), id);
+  },
+  /** Oznacza, że alarm o przekroczeniu progu został wysłany (dedupe powiadomień). */
+  oznaczAlarmWyslany(id) {
+    _umOznaczAlarm().run(nowIso(), id);
+  },
+};
+
+// ============================ Radar SWZ ============================
+// Model danych radaru pytań i zmian SWZ (ulepszenie „Radar pytań i odpowiedzi do
+// SWZ", podzadanie 1/7). Cztery kolekcje wokół postępowania wziętego pod obserwację
+// mechanizmu wyjaśnień treści SWZ (migracja 008). Tu tylko PROSTE zapisy/odczyty —
+// bez logiki analizy (kalkulator terminu, analizator, silnik różnic to dalsze
+// podzadania). Rekord postępowania należy do użytkownika; kolekcje potomne są
+// skopowane po `postepowanie_id`.
+
+// ---------- postepowanie_swz ----------
+
+const _psInsert = lazy(`
+  INSERT INTO postepowanie_swz (
+    id, user_id, nazwa, data_ogloszenia, termin_skladania_ofert, created_at, updated_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+const _psByIdForUser = lazy(`SELECT * FROM postepowanie_swz WHERE id = ? AND user_id = ?`);
+const _psById = lazy(`SELECT * FROM postepowanie_swz WHERE id = ?`);
+const _psListForUser = lazy(`
+  SELECT * FROM postepowanie_swz WHERE user_id = ? ORDER BY created_at DESC`);
+const _psSetTerminy = lazy(`
+  UPDATE postepowanie_swz
+  SET data_ogloszenia = ?, termin_skladania_ofert = ?, updated_at = ?
+  WHERE id = ?`);
+// Postępowania wciąż w oknie monitoringu publikacji zamawiającego: termin składania
+// jeszcze nie minął (lub nieznany — obserwujemy dalej). Znany, PRZESZŁY termin
+// wypada — po nim zamawiający nie publikuje już zmian SWZ (podzadanie 5/7).
+// Porównanie leksykograficzne ISO 8601 (oba znaczniki w UTC z „Z") = porównanie chronologiczne.
+const _psDoMonitoringu = lazy(`
+  SELECT * FROM postepowanie_swz
+  WHERE termin_skladania_ofert IS NULL OR termin_skladania_ofert >= ?
+  ORDER BY created_at ASC`);
+
+export const postepowaniaSwz = {
+  /**
+   * Bierze postępowanie pod radar SWZ. `dataOgloszenia` i `terminSkladaniaOfert`
+   * są opcjonalne (mogą dojść później, gdy poznamy dokumentację). Zwraca zapisany
+   * wiersz skopowany do właściciela.
+   */
+  create({ userId, nazwa, dataOgloszenia = null, terminSkladaniaOfert = null }) {
+    const id = newId();
+    const ts = nowIso();
+    _psInsert().run(id, userId, nazwa, dataOgloszenia ?? null, terminSkladaniaOfert ?? null, ts, ts);
+    return _psByIdForUser().get(id, userId);
+  },
+  findByIdForUser(id, userId) {
+    return _psByIdForUser().get(id, userId) || null;
+  },
+  findById(id) {
+    return _psById().get(id) || null;
+  },
+  listForUser(userId) {
+    return _psListForUser().all(userId);
+  },
+  /** Uzupełnia/aktualizuje daty postępowania (ogłoszenie, termin składania). */
+  setTerminy(id, { dataOgloszenia = null, terminSkladaniaOfert = null }) {
+    _psSetTerminy().run(dataOgloszenia ?? null, terminSkladaniaOfert ?? null, nowIso(), id);
+    return _psById().get(id) || null;
+  },
+  /**
+   * Postępowania do cyklicznego monitoringu publikacji na moment `nowIso` (ISO 8601
+   * UTC): termin składania ofert jeszcze nie minął albo nie jest znany. Używa go
+   * monitor publikacji zamawiającego (jobs/monitorSwz.js) — po terminie składania
+   * nie ma już czego dociągać.
+   */
+  doMonitoringu(nowIso) {
+    return _psDoMonitoringu().all(nowIso);
+  },
+};
+
+// ---------- swz_wersja ----------
+
+const _swInsert = lazy(`
+  INSERT INTO swz_wersja (id, postepowanie_id, numer, hash, tresc, sciezka, data_publikacji, created_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  ON CONFLICT(postepowanie_id, hash) DO NOTHING`);
+const _swById = lazy(`SELECT * FROM swz_wersja WHERE id = ?`);
+const _swByHash = lazy(`SELECT * FROM swz_wersja WHERE postepowanie_id = ? AND hash = ?`);
+const _swList = lazy(`
+  SELECT * FROM swz_wersja WHERE postepowanie_id = ? ORDER BY numer ASC, data_publikacji ASC`);
+const _swLatest = lazy(`
+  SELECT * FROM swz_wersja WHERE postepowanie_id = ? ORDER BY numer DESC LIMIT 1`);
+const _swCount = lazy(`SELECT COUNT(*) AS n FROM swz_wersja WHERE postepowanie_id = ?`);
+
+export const swzWersje = {
+  /**
+   * Dopisuje kolejną wersję SWZ. Dedup po haszu treści: jeśli wersja o tym samym
+   * haszu już istnieje w postępowaniu, zwraca ją bez tworzenia duplikatu (monitor
+   * publikacji odpala się cyklicznie). `numer` liczony automatycznie, o ile nie
+   * podano. Zwraca { wersja, created }.
+   */
+  add({ postepowanieId, hash, tresc = null, sciezka = null, dataPublikacji = null, numer = null }) {
+    const existing = _swByHash().get(postepowanieId, hash);
+    if (existing) return { wersja: existing, created: false };
+    const id = newId();
+    const ts = nowIso();
+    const nr = numer ?? _swCount().get(postepowanieId).n + 1;
+    const res = _swInsert().run(id, postepowanieId, nr, hash, tresc ?? null, sciezka ?? null, dataPublikacji ?? ts, ts);
+    // Wyścig (ten sam hasz w innym wątku wpadł między SELECT a INSERT) → ON CONFLICT
+    // DO NOTHING pomija wpis (changes = 0); oddaj wtedy istniejący wiersz.
+    if (!res.changes) return { wersja: _swByHash().get(postepowanieId, hash), created: false };
+    return { wersja: _swById().get(id), created: true };
+  },
+  listForPostepowanie(postepowanieId) {
+    return _swList().all(postepowanieId);
+  },
+  latestForPostepowanie(postepowanieId) {
+    return _swLatest().get(postepowanieId) || null;
+  },
+  count(postepowanieId) {
+    return _swCount().get(postepowanieId).n;
+  },
+};
+
+// ---------- pytania_swz ----------
+
+const STATUSY_PYTANIA = new Set(['szkic', 'wyslane', 'odpowiedziane']);
+
+const _pyInsert = lazy(`
+  INSERT INTO pytania_swz (id, postepowanie_id, tresc, fragment_swz, status, created_at, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?)`);
+const _pyById = lazy(`SELECT * FROM pytania_swz WHERE id = ?`);
+const _pyList = lazy(`
+  SELECT * FROM pytania_swz WHERE postepowanie_id = ? ORDER BY created_at ASC`);
+const _pySetStatus = lazy(`
+  UPDATE pytania_swz SET status = ?, updated_at = ? WHERE id = ?`);
+
+export const pytaniaSwz = {
+  /** Zapisuje pytanie do SWZ. Domyślny status 'szkic'. Zwraca zapisany wiersz. */
+  create({ postepowanieId, tresc, fragmentSwz = null, status = 'szkic' }) {
+    if (!STATUSY_PYTANIA.has(status)) throw new Error(`Nieznany status pytania: ${status}`);
+    const id = newId();
+    const ts = nowIso();
+    _pyInsert().run(id, postepowanieId, tresc, fragmentSwz ?? null, status, ts, ts);
+    return _pyById().get(id);
+  },
+  findById(id) {
+    return _pyById().get(id) || null;
+  },
+  listForPostepowanie(postepowanieId) {
+    return _pyList().all(postepowanieId);
+  },
+  /** Przesuwa pytanie w cyklu życia (szkic → wysłane → odpowiedziane). */
+  setStatus(id, status) {
+    if (!STATUSY_PYTANIA.has(status)) throw new Error(`Nieznany status pytania: ${status}`);
+    _pySetStatus().run(status, nowIso(), id);
+    return _pyById().get(id) || null;
+  },
+};
+
+// ---------- zmiany_swz ----------
+
+function mapZmiana(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    elementy_oferty: parseJson(row.elementy_oferty, []),
+    // SQLite trzyma 0/1 — oddajemy klientowi/bramce jako boolean.
+    uwzglednione: Boolean(row.uwzglednione),
+  };
+}
+
+const _zmInsert = lazy(`
+  INSERT INTO zmiany_swz (
+    id, postepowanie_id, wersja_swz_id, data_publikacji, opis_skutku, diff, elementy_oferty, created_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+const _zmById = lazy(`SELECT * FROM zmiany_swz WHERE id = ?`);
+const _zmByIdForPostepowanie = lazy(`SELECT * FROM zmiany_swz WHERE id = ? AND postepowanie_id = ?`);
+const _zmList = lazy(`
+  SELECT * FROM zmiany_swz WHERE postepowanie_id = ? ORDER BY data_publikacji ASC, created_at ASC`);
+const _zmSetUwzglednione = lazy(`UPDATE zmiany_swz SET uwzglednione = ? WHERE id = ?`);
+
+export const zmianySwz = {
+  /**
+   * Zapisuje opublikowaną zmianę/odpowiedź zamawiającego. `elementyOferty` to
+   * lista sekcji oferty do aktualizacji (JSON string[]). `wersjaSwzId` opcjonalnie
+   * wiąże zmianę z wersją SWZ, z której wynika. Nowa zmiana startuje jako
+   * NIEuwzględniona (kolumna `uwzglednione` z DEFAULT 0) — czeka na bramkę.
+   * Zwraca zapisany wiersz (z rozpakowaną listą i `uwzglednione` jako boolean).
+   */
+  create({ postepowanieId, wersjaSwzId = null, dataPublikacji = null, opisSkutku = null, diff = null, elementyOferty = [] }) {
+    const id = newId();
+    const ts = nowIso();
+    _zmInsert().run(
+      id, postepowanieId, wersjaSwzId ?? null, dataPublikacji ?? ts,
+      opisSkutku ?? null, diff ?? null, JSON.stringify(elementyOferty ?? []), ts,
+    );
+    return mapZmiana(_zmById().get(id));
+  },
+  findById(id) {
+    return mapZmiana(_zmById().get(id));
+  },
+  /** Odczyt skopowany do postępowania (bramka weryfikuje przynależność zmiany). */
+  findByIdForPostepowanie(id, postepowanieId) {
+    return mapZmiana(_zmByIdForPostepowanie().get(id, postepowanieId));
+  },
+  listForPostepowanie(postepowanieId) {
+    return _zmList().all(postepowanieId).map(mapZmiana);
+  },
+  /** Oznacza zmianę jako uwzględnioną w ofercie (odznaczenie w checkliście) lub cofa to. */
+  oznaczUwzglednione(id, wartosc = true) {
+    _zmSetUwzglednione().run(wartosc ? 1 : 0, id);
+    return mapZmiana(_zmById().get(id));
+  },
 };
 
 export const repos = {
   users, tenders, matches, feedback, magicLinks, aiUsage, stripeEvents, aiQuotaDevice,
   fitterPremium, fitterChat, fitterJobs, umowyMonitorowane,
+  postepowaniaSwz, swzWersje, pytaniaSwz, zmianySwz,
 };

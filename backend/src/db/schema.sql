@@ -177,18 +177,24 @@ CREATE INDEX IF NOT EXISTS idx_job_device ON fitter_job_listing(device_id);
 CREATE INDEX IF NOT EXISTS idx_job_session ON fitter_job_listing(stripe_session_id);
 
 -- Monitoring umowy pod kątem waloryzacji (ulepszenie „pilnowanie waloryzacji i
--- pułapek w umowie", migracja 004). W chwili podpisania zapisujemy branżę
--- kontraktu (dobór wskaźnika cen GUS) i wskaźnik bazowy GUS (punkt odniesienia
--- dla późniejszego liczenia wzrostu cen). Rekord należy do użytkownika.
+-- pułapek w umowie", migracje 004 + 005). W chwili podpisania zapisujemy branżę
+-- kontraktu (dobór wskaźnika cen GUS), wskaźnik bazowy GUS (punkt odniesienia dla
+-- liczenia wzrostu cen) i próg waloryzacji z umowy. W trakcie realizacji cykliczny
+-- job (jobs/monitorWaloryzacji.js) dopisuje aktualny wskaźnik i alarmuje po
+-- przekroczeniu progu. Rekord należy do użytkownika.
 CREATE TABLE IF NOT EXISTS umowa_monitorowana (
-  id               TEXT PRIMARY KEY,
-  user_id          TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  branza           TEXT NOT NULL,              -- branża kontraktu (dobór wskaźnika GUS)
-  wskaznik_bazowy  REAL NOT NULL,              -- wartość wskaźnika GUS w chwili podpisania (baza porównania)
-  wskaznik_okres   TEXT,                       -- okres GUS bazowego (np. '2026-Q2'); opcjonalny kontekst
-  data_podpisania  TEXT NOT NULL,              -- ISO 8601 — moment podpisania (domyślnie chwila zapisu)
-  created_at       TEXT NOT NULL,
-  updated_at       TEXT NOT NULL
+  id                      TEXT PRIMARY KEY,
+  user_id                 TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  branza                  TEXT NOT NULL,          -- branża kontraktu (dobór wskaźnika GUS)
+  wskaznik_bazowy         REAL NOT NULL,          -- wskaźnik GUS w chwili podpisania (baza porównania)
+  wskaznik_okres          TEXT,                   -- okres GUS bazowego (np. '2026-Q2'); opcjonalny kontekst
+  data_podpisania         TEXT NOT NULL,          -- ISO 8601 — moment podpisania (domyślnie chwila zapisu)
+  prog                    REAL,                   -- próg waloryzacji z umowy (%); NULL => rekord nie alarmuje
+  wskaznik_aktualny       REAL,                   -- ostatnio pobrany wskaźnik GUS (punkt „teraz")
+  wskaznik_aktualny_okres TEXT,                   -- okres ostatniego wskaźnika
+  alarm_wyslany           INTEGER NOT NULL DEFAULT 0, -- 0/1: czy alarm o przekroczeniu progu już poszedł
+  created_at              TEXT NOT NULL,
+  updated_at              TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_umowa_monitorowana_user ON umowa_monitorowana(user_id);
 
@@ -229,3 +235,181 @@ CREATE INDEX IF NOT EXISTS idx_rozstrz_region ON rozstrzygniecie_historyczne(reg
 -- Dobór „podobnych" rozstrzygnięć: ten sam kod CPV w tym samym regionie
 -- (WHERE kod_cpv = ? AND region_nuts = ?) — indeks złożony wiodący CPV (migracja 007).
 CREATE INDEX IF NOT EXISTS idx_rozstrz_cpv_region ON rozstrzygniecie_historyczne(kod_cpv, region_nuts);
+
+-- Radar pytań i zmian SWZ (ulepszenie „Radar pytań i odpowiedzi do SWZ",
+-- migracja 008). Użytkownik bierze postępowanie pod obserwację mechanizmu
+-- wyjaśnień treści SWZ: pilnujemy mało znanego terminu pytań (koniec dnia, w
+-- którym upływa POŁOWA terminu składania ofert) oraz monitorujemy publikowane
+-- odpowiedzi i kolejne wersje SWZ aż do terminu składania. Rekord należy do
+-- użytkownika (jego trzeba ostrzec) — stąd FK do users z kaskadą. Osobne od
+-- `tenders` (surowe dane BZP) — to prywatny warsztat przygotowania oferty.
+-- `data_ogloszenia` jest tu wcześniej, bo kalkulator terminu pytań (kolejne
+-- podzadanie) liczy połowę okna z pary (ogłoszenie, termin składania).
+CREATE TABLE IF NOT EXISTS postepowanie_swz (
+  id                     TEXT PRIMARY KEY,
+  user_id                TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  nazwa                  TEXT NOT NULL,          -- nazwa/tytuł postępowania (kontekst UI)
+  data_ogloszenia        TEXT,                   -- ISO 8601 — data ogłoszenia (baza kalkulatora połowy terminu)
+  termin_skladania_ofert TEXT,                   -- ISO 8601 — termin składania ofert (koniec okna monitoringu)
+  created_at             TEXT NOT NULL,
+  updated_at             TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_postepowanie_swz_user ON postepowanie_swz(user_id);
+
+-- Kolejne wersje treści SWZ. Monitor publikacji dopisuje nową wersję, gdy zmieni
+-- się treść — dedup po `hash` (ten sam hasz = ta sama wersja, nie dublujemy).
+-- Trzymamy `tresc` (inline) i/lub `sciezka` (plik/URL); co najmniej jedno z nich.
+CREATE TABLE IF NOT EXISTS swz_wersja (
+  id              TEXT PRIMARY KEY,
+  postepowanie_id TEXT NOT NULL REFERENCES postepowanie_swz(id) ON DELETE CASCADE,
+  numer           INTEGER NOT NULL DEFAULT 1,    -- kolejny numer wersji w obrębie postępowania
+  hash            TEXT NOT NULL,                 -- hasz treści SWZ (dedup „czy to nowa wersja?")
+  tresc           TEXT,                          -- treść SWZ inline (opcjonalna, gdy trzymamy plik)
+  sciezka         TEXT,                          -- ścieżka/URL do pliku SWZ (opcjonalna, gdy treść inline)
+  data_publikacji TEXT NOT NULL,                 -- ISO 8601 — data publikacji tej wersji przez zamawiającego
+  created_at      TEXT NOT NULL,
+  UNIQUE (postepowanie_id, hash)                 -- ten sam hasz w tym samym postępowaniu = ta sama wersja
+);
+CREATE INDEX IF NOT EXISTS idx_swz_wersja_postepowanie ON swz_wersja(postepowanie_id, data_publikacji);
+
+-- Pytania do treści SWZ (wygenerowane lub ręczne). Status prowadzi cykl życia
+-- szkic → wysłane → odpowiedziane; `fragment_swz` wiąże pytanie z konkretnym
+-- fragmentem dokumentacji, którego dotyczy.
+CREATE TABLE IF NOT EXISTS pytania_swz (
+  id              TEXT PRIMARY KEY,
+  postepowanie_id TEXT NOT NULL REFERENCES postepowanie_swz(id) ON DELETE CASCADE,
+  tresc           TEXT NOT NULL,                 -- treść pytania (gotowa do wysłania)
+  fragment_swz    TEXT,                          -- powiązany fragment SWZ (cytat/odniesienie)
+  status          TEXT NOT NULL DEFAULT 'szkic'
+                    CHECK (status IN ('szkic', 'wyslane', 'odpowiedziane')),
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_pytania_swz_postepowanie ON pytania_swz(postepowanie_id, status);
+
+-- Zmiany SWZ / odpowiedzi opublikowane przez zamawiającego. Dla każdej: data
+-- publikacji, krótki opis skutku (np. „termin realizacji 60→45 dni — przelicz
+-- harmonogram i cenę"), diff wobec poprzedniej wersji oraz lista elementów oferty,
+-- których dotyczy (JSON string[]: np. harmonogram / cena / parametry). Opcjonalnie
+-- wiąże się z konkretną wersją SWZ, z której wynika (silnik różnic uzupełni ją
+-- w kolejnym podzadaniu).
+CREATE TABLE IF NOT EXISTS zmiany_swz (
+  id              TEXT PRIMARY KEY,
+  postepowanie_id TEXT NOT NULL REFERENCES postepowanie_swz(id) ON DELETE CASCADE,
+  wersja_swz_id   TEXT REFERENCES swz_wersja(id) ON DELETE SET NULL,  -- wersja, z której wynika zmiana
+  data_publikacji TEXT NOT NULL,                 -- ISO 8601 — kiedy zamawiający opublikował zmianę
+  opis_skutku     TEXT,                          -- czytelny skutek zmiany (do UI/alertu)
+  diff            TEXT,                          -- różnica wobec poprzedniej wersji
+  elementy_oferty TEXT NOT NULL DEFAULT '[]',    -- JSON: string[] — sekcje oferty do aktualizacji
+  uwzglednione    INTEGER NOT NULL DEFAULT 0,    -- 0 = „wymaga aktualizacji" (bramka), 1 = wykonawca uwzględnił zmianę
+  created_at      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_zmiany_swz_postepowanie ON zmiany_swz(postepowanie_id, data_publikacji);
+
+-- Radar zamówień podprogowych (poniżej 170 tys. zł) — model danych, podzadanie
+-- 1/7. Scala zakupy spoza Biuletynu ZP (postępowania wyłączone z Pzp na
+-- platformazakupowa.pl / eZamawiający / e-propublico, BIP-y, Baza Konkurencyjności)
+-- w jeden strumień obok „dużych" przetargów. Te same `CREATE ... IF NOT EXISTS` co
+-- w migracji 009 (bez ALTER — pułapka „duplicate column name"). SQLite bez
+-- bool/jsonb: `latwiejszy_start` = INTEGER 0/1, `flagi` = TEXT z JSON-em.
+CREATE TABLE IF NOT EXISTS zamowienia_podprogowe (
+  id                     TEXT PRIMARY KEY,
+  zrodlo                 TEXT NOT NULL
+                           CHECK (zrodlo IN ('bzp_wylaczone', 'platformazakupowa',
+                             'ezamawiajacy', 'epropublico', 'baza_konkurencyjnosci', 'bip')),
+  id_zewnetrzny          TEXT,                        -- identyfikator ogłoszenia u źródła (o ile jest)
+  tytul                  TEXT NOT NULL,               -- tytuł/przedmiot zamówienia
+  zamawiajacy            TEXT,                        -- nazwa zamawiającego (gmina/szpital/spółka)
+  branza                 TEXT,                        -- dopasowana branża użytkownika
+  region                 TEXT,                        -- region/województwo
+  wartosc_netto          REAL,                        -- szacowana wartość netto (filtr progu)
+  waluta                 TEXT NOT NULL DEFAULT 'PLN',
+  termin_skladania       TEXT,                        -- ISO 8601 — termin składania ofert
+  link                   TEXT,                        -- URL do ogłoszenia
+  regulamin_url          TEXT,                        -- URL regulaminu zakupowego zamawiającego (z BIP)
+  regulamin_streszczenie TEXT,                        -- krótkie streszczenie mini-procedury (uzupełni AI)
+  latwiejszy_start       INTEGER NOT NULL DEFAULT 0,  -- 1 = „łatwiejszy start" (bez wadium/KIO, prosta procedura)
+  flagi                  TEXT NOT NULL DEFAULT '{}',  -- JSON (jsonb): {bez_wadium, bez_kio, prosta_procedura}
+  data_publikacji        TEXT,                        -- ISO 8601 — data publikacji ogłoszenia
+  hash_dedup             TEXT NOT NULL UNIQUE,        -- odcisk ogłoszenia (dedup między źródłami/odświeżeniami)
+  created_at             TEXT NOT NULL,
+  updated_at             TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_zam_podprog_branza_region
+  ON zamowienia_podprogowe(branza, region);
+CREATE INDEX IF NOT EXISTS idx_zam_podprog_publikacja
+  ON zamowienia_podprogowe(data_publikacji);
+
+CREATE TABLE IF NOT EXISTS preferencje_radaru_podprogowego (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  branza     TEXT,                              -- branża do monitorowania
+  region     TEXT,                              -- region do monitorowania
+  prog_netto REAL NOT NULL DEFAULT 170000,      -- górny próg wartości netto (domyślnie 170 tys. zł)
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (user_id, branza, region)              -- jedna preferencja na parę branża/region użytkownika
+);
+CREATE INDEX IF NOT EXISTS idx_pref_radar_podprog_user
+  ON preferencje_radaru_podprogowego(user_id);
+
+-- Sejf dokumentów firmy z licznikiem świeżości (ulepszenie „Sejf podmiotowych
+-- środków dowodowych", migracja 010). Podręczny sejf dokumentów firmy: KRK,
+-- niezaleganie US/ZUS, polisa OC, wpis do rejestru, wykaz robót/usług,
+-- uprawnienia pracowników. Świeżość liczymy z (data_wystawienia +
+-- okres_waznosci_dni); status „gotowy / zamów nowy" i alerty (z realnym czasem
+-- oczekiwania urzędu) dokładają kolejne podzadania. Elektroniczne zaświadczenia
+-- trzymamy w oryginale (XML / podpisany PDF) — `plik_format` + flaga podpisu
+-- chronią przed skanem papieru zamiast dokumentu elektronicznego. Rekord należy
+-- do użytkownika (FK z kaskadą). Katalog typów (czas urzędu, linki e-KRK/PUE
+-- ZUS/e-US) jest w config/dokumentyKatalog.js; `typ_dokumentu` trzyma jego klucz.
+-- SQLite bez typu bool: `flaga_podpis_elektroniczny` = INTEGER 0/1.
+CREATE TABLE IF NOT EXISTS sejf_dokumenty (
+  id                         TEXT PRIMARY KEY,
+  user_id                    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  typ_dokumentu              TEXT NOT NULL,               -- klucz z config/dokumentyKatalog.js (krk, us, zus, ...)
+  data_wystawienia           TEXT,                        -- ISO 8601 — data wystawienia (baza licznika świeżości)
+  okres_waznosci_dni         INTEGER,                     -- ważność w dniach; NULL = bezterminowy (domyślnie z katalogu)
+  plik_url                   TEXT,                        -- URL/ścieżka oryginalnego pliku; NULL dopóki brak pliku
+  plik_format                TEXT CHECK (plik_format IN ('xml', 'pdf')),  -- format oryginału; NULL dopóki brak pliku
+  flaga_podpis_elektroniczny INTEGER NOT NULL DEFAULT 0,  -- 1 = dokument elektroniczny (XML/podpisany PDF); 0 = brak/skan papieru
+  notatka                    TEXT,                        -- notatka użytkownika
+  created_at                 TEXT NOT NULL,
+  updated_at                 TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sejf_dokumenty_user ON sejf_dokumenty(user_id, typ_dokumentu);
+
+-- Czarna skrzynka składania oferty (ulepszenie „Czarna skrzynka składania oferty —
+-- dowody na awarię platformy", migracja 011). Rejestrator lotu jednej próby złożenia
+-- oferty: append-only log zdarzeń ze znacznikiem czasu z zegara serwera + strefą,
+-- zrzuty ekranu zapisane w oryginale, suma kontrolna (SHA-256) i oryginał pliku
+-- oferty. Dowód musi być NIEZMIENNY (KIO kładzie ciężar udowodnienia awarii na
+-- wykonawcę), stąd log bez UPDATE/DELETE. Oba rekordy należą do użytkownika (FK z
+-- kaskadą). `postepowanie_id` jest luźnym odniesieniem (bez FK — źródła postępowań
+-- są różne). Ten sam kształt jest w migracji 011 — oba idempotentne.
+CREATE TABLE IF NOT EXISTS czarna_skrzynka_sesja (
+  id               TEXT PRIMARY KEY,
+  user_id          TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  postepowanie_id  TEXT,                         -- luźne odniesienie do postępowania (BZP/SWZ/podprogowe) — bez FK
+  strefa_czasowa   TEXT NOT NULL,                -- strefa zegara serwera w chwili startu (IANA, np. 'Europe/Warsaw')
+  hash_oferty      TEXT,                         -- SHA-256 pliku oferty (gdy wgrany) — dowód integralności
+  plik_oferty_url  TEXT,                         -- URL/ścieżka ORYGINAŁU oferty zapisanego bez modyfikacji
+  created_at       TEXT NOT NULL,
+  updated_at       TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_czarna_skrzynka_sesja_user
+  ON czarna_skrzynka_sesja(user_id, postepowanie_id);
+
+-- Append-only taśma rejestratora (INTEGER PK AUTOINCREMENT = stabilna kolejność
+-- dopisywania). Usługa nie wystawia UPDATE/DELETE — log jest niezmienny.
+CREATE TABLE IF NOT EXISTS czarna_skrzynka_zdarzenie (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  sesja_id       TEXT NOT NULL REFERENCES czarna_skrzynka_sesja(id) ON DELETE CASCADE,
+  typ            TEXT NOT NULL,                  -- 'krok'|'blad_wysylki'|'brak_epo'|'niedostepnosc'|'zrzut'|'hash_oferty'|'ping'
+  opis           TEXT,                           -- czytelny opis zdarzenia
+  plik_url       TEXT,                           -- URL zrzutu/artefaktu (dla typ='zrzut'); NULL dla wpisów tekstowych
+  czas_serwera   TEXT NOT NULL,                  -- ISO 8601 (UTC) — znacznik czasu z zegara serwera
+  strefa_czasowa TEXT NOT NULL                   -- strefa zegara serwera (IANA) — jednoznaczny „widoczny czas" dowodu
+);
+CREATE INDEX IF NOT EXISTS idx_czarna_skrzynka_zdarzenie_sesja
+  ON czarna_skrzynka_zdarzenie(sesja_id, id);

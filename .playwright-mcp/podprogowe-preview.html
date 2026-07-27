@@ -1,0 +1,144 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; margin:0; padding:0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background:#333; padding:20px; display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+.phone { width:390px; border-radius:20px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,.5); }
+.lbl { color:#fff; font-size:12px; margin:0 0 6px 4px; letter-spacing:.5px; }
+.col { display:flex; flex-direction:column; gap:8px; }
+/* geometry */
+.pad-lg{padding:24px}.pad-md{padding:16px}
+</style></head><body>
+
+<script>
+const T = {
+  jasny:{bg:'#f4f7fc',surface:'#ffffff',text:'#14213d',textMuted:'#5b6577',border:'#e3e8f2',blue:'#2563eb',green:'#16a34a',danger:'#dc2626',white:'#fff',wyroznienie:'#eaeffa',ostrzezenieTlo:'#fef3c7',ostrzezenieTekst:'#92400e',ostrzezenieAkcent:'#b45309',neutralneTlo:'#e7ebf3',sukcesTlo:'#dcfce7',dangerTlo:'#fee2e2'},
+  ciemny:{bg:'#0f1526',surface:'#19213a',text:'#e8edf8',textMuted:'#9aa7c0',border:'#2b3554',blue:'#5b8cff',green:'#2fae66',danger:'#f47171',white:'#fff',wyroznienie:'#1e2947',ostrzezenieTlo:'#3b2f12',ostrzezenieTekst:'#fcd34d',ostrzezenieAkcent:'#fbbf24',neutralneTlo:'#273252',sukcesTlo:'#143c2a',dangerTlo:'#3b1518'},
+};
+
+// -------- FEED BAND --------
+function band(k){
+  const card = (t,zam,w,flagi,zr)=>`
+    <div style="width:250px;background:${k.surface};border-radius:16px;border:1px solid ${k.border};padding:16px;display:flex;flex-direction:column;gap:4px;flex:0 0 auto">
+      <span style="align-self:flex-start;font-size:10px;font-weight:800;color:${k.green};background:${k.sukcesTlo};padding:2px 8px;border-radius:8px;margin-bottom:2px">Łatwiejszy start</span>
+      <div style="font-size:14px;font-weight:700;color:${k.text};line-height:19px">${t}</div>
+      <div style="font-size:12px;color:${k.textMuted};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${zam}</div>
+      <div style="font-size:13px;font-weight:700;color:${k.text};margin-top:2px">${w}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">${flagi.map(f=>`<span style="font-size:10px;font-weight:700;color:${k.blue};background:${k.wyroznienie};padding:2px 6px;border-radius:8px">${f}</span>`).join('')}</div>
+      <div style="font-size:11px;color:${k.textMuted};margin-top:4px">${zr}</div>
+    </div>`;
+  return `<div style="background:${k.bg};padding:24px">
+    <div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:15px;font-weight:800;color:${k.text}">Łatwiejszy start</div>
+        <div style="font-size:13px;font-weight:700;color:${k.blue}">Ustawienia</div>
+      </div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">
+        ${card('Sprzątanie budynku Urzędu Gminy w 2026 r.','Gmina Nowy Sącz','142 000 PLN netto',['bez wadium','bez KIO','prosta procedura'],'platformazakupowa.pl')}
+        ${card('Dostawa materiałów biurowych','Szpital Powiatowy w Limanowej','58 400 PLN netto',['bez wadium','bez KIO'],'Baza Konkurencyjności')}
+        ${card('Catering na konferencję','Spółka Komunalna Sp. z o.o.','21 000 PLN netto',['bez wadium'],'BIP')}
+      </div>
+    </div>
+    <!-- search row for context -->
+    <div style="display:flex;align-items:center;gap:8px;background:${k.surface};border:1.5px solid ${k.border};border-radius:12px;padding:0 12px;margin-bottom:8px">
+      <span style="font-size:15px">🔍</span>
+      <div style="flex:1;padding:11px 0;font-size:15px;color:${k.textMuted}">Szukaj po nazwie lub zamawiającym</div>
+    </div>
+  </div>`;
+}
+
+// invitation state (no prefs)
+function bandZaproszenie(k){
+  return `<div style="background:${k.bg};padding:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:15px;font-weight:800;color:${k.text}">Łatwiejszy start</div>
+      <div style="font-size:13px;font-weight:700;color:${k.blue}">Ustaw</div>
+    </div>
+    <div style="background:${k.surface};border-radius:16px;border:1px solid ${k.border};padding:16px;display:flex;flex-direction:column;gap:4px">
+      <div style="font-size:15px;font-weight:700;color:${k.text}">Włącz radar zamówień podprogowych</div>
+      <div style="font-size:13px;color:${k.textMuted};line-height:19px">Ustaw branżę i region, a pokażemy tu zakupy poniżej progu Pzp — zwykle bez wadium i bez KIO, z prostszą procedurą. Idealne na łatwiejszy start.</div>
+    </div>
+  </div>`;
+}
+
+// -------- DETAIL --------
+function detail(k){
+  const akcent = k.ostrzezenieAkcent; // pilny
+  const wiersz=(e,w,last)=>`<div style="padding:10px 0;${last?'':'border-bottom:1px solid '+k.border}">
+     <div style="font-size:12px;color:${k.textMuted};margin-bottom:2px">${e}</div>
+     <div style="font-size:15px;color:${k.text};font-weight:600">${w}</div></div>`;
+  return `<div style="background:${k.bg};padding:24px">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:800;color:${k.green};background:${k.sukcesTlo};padding:3px 8px;border-radius:8px">Łatwiejszy start</span>
+      <span style="font-size:12px;font-weight:700;color:${k.textMuted}">platformazakupowa.pl</span>
+    </div>
+    <div style="font-size:22px;font-weight:800;color:${k.text};line-height:28px">Sprzątanie budynku Urzędu Gminy w 2026 r.</div>
+    <div style="font-size:14px;color:${k.textMuted};margin-top:4px;margin-bottom:16px">Gmina Nowy Sącz</div>
+    <div style="border-radius:16px;border:1.5px solid ${akcent};background:${k.surface};padding:16px;margin-top:8px">
+      <div style="font-size:16px;font-weight:800;line-height:22px;color:${akcent}">Zostało 5 dni</div>
+      <div style="font-size:13px;color:${k.textMuted};margin-top:4px;line-height:19px">Termin składania ofert: 1 sierpnia 2026</div>
+    </div>
+    <div style="background:${k.surface};border-radius:16px;border:1px solid ${k.border};padding:16px;margin-top:16px">
+      ${wiersz('Szacowana wartość','142 000 PLN netto')}
+      ${wiersz('Branża','sprzątanie')}
+      ${wiersz('Region','małopolskie')}
+      ${wiersz('Data publikacji','20 lipca 2026',true)}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:16px">
+      ${['bez wadium','bez KIO','prosta procedura'].map(f=>`<span style="font-size:11px;font-weight:700;color:${k.blue};background:${k.wyroznienie};padding:3px 8px;border-radius:8px">${f}</span>`).join('')}
+    </div>
+    <div style="font-size:16px;font-weight:800;color:${k.text};margin-top:24px;margin-bottom:8px">Jak wygląda mini-procedura</div>
+    <div style="background:${k.surface};border-radius:16px;border:1px solid ${k.border};padding:16px">
+      <div style="font-size:15px;color:${k.text};line-height:22px">Zamawiający prowadzi postępowanie w trybie zapytania ofertowego. Oferty składa się elektronicznie przez platformazakupowa.pl do wyznaczonego terminu. Kryterium: cena 100%. Nie wymaga się wadium ani zabezpieczenia. Wybór najkorzystniejszej oferty następuje w ciągu 7 dni.</div>
+    </div>
+    <div style="height:52px;border-radius:12px;border:1.5px solid ${k.border};background:${k.surface};display:flex;align-items:center;justify-content:center;margin-top:16px">
+      <span style="font-size:16px;font-weight:700;color:${k.blue}">Otwórz regulamin zakupowy</span>
+    </div>
+    <div style="height:52px;border-radius:12px;background:${k.blue};display:flex;align-items:center;justify-content:center;margin-top:16px">
+      <span style="font-size:16px;font-weight:700;color:${k.white}">Otwórz ogłoszenie (platformazakupowa.pl)</span>
+    </div>
+    <div style="font-size:12px;color:${k.textMuted};line-height:17px;margin-top:24px;font-style:italic">Zamówienia podprogowe to zakupy poniżej progu Pzp — zwykle bez wadium i bez KIO, z prostszą procedurą wpisaną w regulamin zakupowy zamawiającego. Radar jest pomocniczy i nie zastępuje śledzenia źródłowego ogłoszenia.</div>
+  </div>`;
+}
+
+// -------- SETTINGS --------
+function settings(k){
+  const field=(label,val,hint,muted)=>`<div style="margin-bottom:16px">
+    <div style="font-size:13px;font-weight:600;color:${k.textMuted};margin-bottom:6px">${label}</div>
+    <div style="height:48px;border:1.5px solid ${k.border};border-radius:12px;background:${k.surface};display:flex;align-items:center;padding:0 14px;font-size:15px;color:${muted?k.textMuted:k.text}">${val}</div>
+    ${hint?`<div style="font-size:12px;color:${k.textMuted};margin-top:6px;line-height:16px">${hint}</div>`:''}</div>`;
+  const pref=(t,m)=>`<div style="display:flex;align-items:center;justify-content:space-between;background:${k.surface};border-radius:16px;border:1px solid ${k.border};padding:16px;margin-top:8px">
+     <div style="flex:1;margin-right:16px"><div style="font-size:15px;font-weight:700;color:${k.text}">${t}</div><div style="font-size:12px;color:${k.textMuted};margin-top:2px">${m}</div></div>
+     <div style="font-size:14px;font-weight:700;color:${k.danger}">Usuń</div></div>`;
+  return `<div style="background:${k.bg};padding:24px">
+    <div style="font-size:14px;color:${k.textMuted};line-height:21px;margin-bottom:24px">Ustaw raz branżę i region, a radar będzie zbierał zakupy poniżej progu Pzp (poniżej 170 tys. zł) z platform zakupowych, BIP-ów i Bazy Konkurencyjności — i pokaże je obok „dużych" przetargów jako „łatwiejszy start".</div>
+    <div style="background:${k.surface};border-radius:16px;border:1px solid ${k.border};padding:16px">
+      <div style="font-size:15px;font-weight:700;color:${k.text};margin-bottom:16px">Dodaj obszar do monitorowania</div>
+      ${field('Branża','np. sprzątanie, roboty budowlane, catering','',true)}
+      ${field('Region','np. mazowieckie, powiat nowosądecki','',true)}
+      ${field('Górny próg wartości netto (zł)','170000','Domyślnie 170 000 zł (stan od 1.01.2026). Podaj co najmniej branżę lub region.')}
+      <div style="height:52px;border-radius:12px;background:${k.blue};display:flex;align-items:center;justify-content:center">
+        <span style="font-size:16px;font-weight:700;color:${k.white}">Zapisz obszar</span></div>
+    </div>
+    <div style="font-size:16px;font-weight:800;color:${k.text};margin-top:24px;margin-bottom:8px">Twoje obszary</div>
+    ${pref('sprzątanie · małopolskie','Próg: 170 000 PLN netto')}
+    ${pref('catering · Wszystkie ogłoszenia','Próg: domyślny')}
+    <div style="height:52px;border-radius:12px;border:1.5px solid ${k.border};background:${k.surface};display:flex;align-items:center;justify-content:center;margin-top:16px">
+      <span style="font-size:16px;font-weight:700;color:${k.blue}">Odśwież teraz</span></div>
+    <div style="font-size:12px;color:${k.textMuted};margin-top:8px;line-height:17px;font-style:italic">Zwykle radar odświeża się sam. „Odśwież teraz" przepytuje źródła od razu.</div>
+  </div>`;
+}
+
+function phone(title, html){
+  const d=document.createElement('div');d.className='col';
+  d.innerHTML=`<div class="lbl">${title}</div><div class="phone">${html}</div>`;
+  document.body.appendChild(d);
+}
+phone('BAND · jasny', band(T.jasny));
+phone('BAND · ciemny', band(T.ciemny));
+phone('BAND zaproszenie · jasny', bandZaproszenie(T.jasny));
+phone('BAND zaproszenie · ciemny', bandZaproszenie(T.ciemny));
+phone('SZCZEGÓŁY · jasny', detail(T.jasny));
+phone('SZCZEGÓŁY · ciemny', detail(T.ciemny));
+phone('USTAWIENIA · jasny', settings(T.jasny));
+phone('USTAWIENIA · ciemny', settings(T.ciemny));
+</script>
+</body></html>

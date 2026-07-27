@@ -1,0 +1,47 @@
+- generic [active] [ref=e1]:
+  - heading "Directory listing for /" [level=1] [ref=e2]
+  - separator [ref=e3]
+  - list [ref=e4]:
+    - listitem [ref=e5]:
+      - link "console-2026-07-26T22-55-11-540Z.log" [ref=e6] [cursor=pointer]:
+        - /url: console-2026-07-26T22-55-11-540Z.log
+    - listitem [ref=e7]:
+      - link "console-2026-07-26T23-26-11-616Z.log" [ref=e8] [cursor=pointer]:
+        - /url: console-2026-07-26T23-26-11-616Z.log
+    - listitem [ref=e9]:
+      - link "console-2026-07-26T23-26-51-872Z.log" [ref=e10] [cursor=pointer]:
+        - /url: console-2026-07-26T23-26-51-872Z.log
+    - listitem [ref=e11]:
+      - link "console-2026-07-27T00-49-48-357Z.log" [ref=e12] [cursor=pointer]:
+        - /url: console-2026-07-27T00-49-48-357Z.log
+    - listitem [ref=e13]:
+      - link "console-2026-07-27T00-58-54-620Z.log" [ref=e14] [cursor=pointer]:
+        - /url: console-2026-07-27T00-58-54-620Z.log
+    - listitem [ref=e15]:
+      - link "page-2026-07-26T22-55-11-894Z.yml" [ref=e16] [cursor=pointer]:
+        - /url: page-2026-07-26T22-55-11-894Z.yml
+    - listitem [ref=e17]:
+      - link "page-2026-07-26T23-26-14-541Z.yml" [ref=e18] [cursor=pointer]:
+        - /url: page-2026-07-26T23-26-14-541Z.yml
+    - listitem [ref=e19]:
+      - link "page-2026-07-26T23-26-53-306Z.yml" [ref=e20] [cursor=pointer]:
+        - /url: page-2026-07-26T23-26-53-306Z.yml
+    - listitem [ref=e21]:
+      - link "page-2026-07-27T00-49-48-666Z.yml" [ref=e22] [cursor=pointer]:
+        - /url: page-2026-07-27T00-49-48-666Z.yml
+    - listitem [ref=e23]:
+      - link "page-2026-07-27T00-58-54-967Z.yml" [ref=e24] [cursor=pointer]:
+        - /url: page-2026-07-27T00-58-54-967Z.yml
+    - listitem [ref=e25]:
+      - link "podglad118.html" [ref=e26] [cursor=pointer]:
+        - /url: podglad118.html
+    - listitem [ref=e27]:
+      - link "podprogowe-kontrast.html" [ref=e28] [cursor=pointer]:
+        - /url: podprogowe-kontrast.html
+    - listitem [ref=e29]:
+      - link "podprogowe-preview.html" [ref=e30] [cursor=pointer]:
+        - /url: podprogowe-preview.html
+    - listitem [ref=e31]:
+      - link "radar-swz-podglad.html" [ref=e32] [cursor=pointer]:
+        - /url: radar-swz-podglad.html
+  - separator [ref=e33]

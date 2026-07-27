@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background:#2a3142; font-family:-apple-system,'Segoe UI',Roboto,sans-serif; padding:24px; display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+  .frame { width:390px; border-radius:26px; overflow:hidden; box-shadow:0 10px 44px rgba(0,0,0,.55); }
+  .frame.narrow { width:340px; }
+  .caption { color:#fff; font-size:13px; margin-bottom:8px; font-family:monospace; opacity:.9; }
+  .col { display:flex; flex-direction:column; }
+  .nav { height:52px; display:flex; align-items:center; padding:0 16px; font-weight:700; font-size:17px; }
+
+  .light { --bg:#f4f7fc; --surface:#ffffff; --text:#14213d; --muted:#5b6577; --border:#e3e8f2; --blue:#2563eb; --green:#16a34a; --danger:#dc2626; --wyr:#eaeffa; --ostrzTlo:#fef3c7; --ostrzTekst:#92400e; --ostrzAkcent:#b45309; --neutral:#e7ebf3; --sukces:#dcfce7; --dngr:#fee2e2; --white:#fff; }
+  .dark  { --bg:#0f1526; --surface:#19213a; --text:#e8edf8; --muted:#9aa7c0; --border:#2b3554; --blue:#5b8cff; --green:#2fae66; --danger:#f47171; --wyr:#1e2947; --ostrzTlo:#3b2f12; --ostrzTekst:#fcd34d; --ostrzAkcent:#fbbf24; --neutral:#273252; --sukces:#143c2a; --dngr:#3b1518; --white:#fff; }
+
+  .frame { background:var(--bg); }
+  .nav { background:var(--surface); color:var(--text); border-bottom:1px solid var(--border); }
+  .screen { background:var(--bg); padding:24px; }
+
+  /* header */
+  .powrot { font-size:14px; font-weight:700; color:var(--blue); margin-bottom:16px; }
+  .tytul { font-size:22px; font-weight:800; color:var(--text); line-height:28px; }
+  .podtytul { font-size:13px; color:var(--muted); margin-top:4px; margin-bottom:24px; }
+  .wstep { font-size:14px; color:var(--muted); line-height:21px; margin-bottom:24px; }
+
+  .sekcjaTytul { font-size:16px; font-weight:800; color:var(--text); margin-top:24px; margin-bottom:8px; }
+  .pusto { font-size:14px; color:var(--muted); line-height:20px; margin-bottom:8px; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; margin-top:16px; }
+  .kartaTytul { font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .kartaOpis { font-size:13px; color:var(--muted); line-height:19px; margin-bottom:16px; }
+
+  .label { font-size:14px; font-weight:600; color:var(--text); margin-bottom:6px; }
+  .field { margin-bottom:16px; }
+  .input { background:var(--surface); border:1.5px solid var(--border); border-radius:12px; padding:13px 14px; font-size:16px; color:var(--muted); }
+  .input.multi { min-height:110px; padding-top:14px; }
+  .hint { font-size:12px; color:var(--muted); margin-top:4px; line-height:16px; }
+
+  .btn { height:52px; border-radius:12px; background:var(--blue); display:flex; align-items:center; justify-content:center; padding:0 20px; }
+  .btn.danger { background:var(--danger); }
+  .btn.disabled { opacity:.5; }
+  .btnText { font-size:16px; font-weight:700; color:var(--white); }
+
+  /* kafelek listy */
+  .kafelek { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; margin-top:8px; }
+  .kafelekNazwa { font-size:16px; font-weight:700; color:var(--text); line-height:21px; }
+  .chip { display:inline-block; align-self:flex-start; border:1.5px solid; border-radius:8px; padding:3px 8px; margin-top:8px; }
+  .chipText { font-size:12px; font-weight:800; }
+  .kafelekMeta { font-size:12px; color:var(--muted); margin-top:8px; }
+
+  /* baner */
+  .baner { border-radius:16px; border:1.5px solid; background:var(--surface); padding:16px; margin-top:8px; }
+  .banerTytul { font-size:16px; font-weight:800; line-height:22px; }
+  .banerMeta { font-size:13px; color:var(--muted); margin-top:4px; line-height:19px; }
+
+  /* pytanie */
+  .pozycja { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; margin-top:8px; }
+  .pozycjaNaglowek { display:flex; margin-bottom:6px; }
+  .badgeNeutral { font-size:11px; font-weight:800; color:var(--muted); background:var(--neutral); padding:3px 8px; border-radius:8px; }
+  .pozycjaTresc { font-size:14px; color:var(--text); line-height:20px; }
+  .pozycjaFragment { font-size:12px; color:var(--muted); margin-top:6px; font-style:italic; }
+
+  /* zmiana */
+  .zmiana { background:var(--surface); border:1px solid var(--border); border-left:4px solid; border-radius:16px; padding:16px; margin-top:8px; }
+  .zmianaData { font-size:12px; font-weight:700; color:var(--muted); }
+  .zmianaOpis { font-size:14px; font-weight:600; color:var(--text); margin-top:4px; line-height:20px; }
+  .zmianaOpisBrak { font-size:13px; color:var(--muted); margin-top:4px; font-style:italic; }
+  .diff { background:var(--bg); border-radius:8px; padding:8px; margin-top:8px; }
+  .diffLinia { font-size:12px; line-height:17px; font-family:monospace; white-space:pre-wrap; }
+  .sekcjeRzad { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .badgeSekcja { font-size:11px; font-weight:700; color:var(--blue); background:var(--wyr); padding:3px 8px; border-radius:8px; }
+  .badgeStan { font-size:11px; font-weight:700; padding:4px 8px; border-radius:8px; }
+  .przelacznik { margin-top:16px; padding:4px 0; }
+  .przelacznikText { font-size:14px; font-weight:700; }
+
+  .stopka { font-size:12px; color:var(--muted); line-height:17px; margin-top:24px; font-style:italic; }
+  .bladCard { background:var(--ostrzTlo); border:1px solid var(--ostrzTekst); border-radius:12px; padding:16px; margin-top:16px; margin-bottom:8px; }
+  .bladText { font-size:14px; color:var(--ostrzTekst); line-height:20px; }
+</style></head>
+<body>
+
+<!-- ============ DETAL — LIGHT @390 (pilne countdown + blokada) ============ -->
+<div class="col"><div class="caption">DETAL — light @390 · pilne + blokada</div>
+<div class="frame light"><div class="nav">‹ Radar SWZ</div><div class="screen">
+  <div class="powrot">← Wszystkie postępowania</div>
+  <div class="tytul">Budowa drogi gminnej w Kolonii Wschodniej</div>
+  <div class="podtytul">Termin składania ofert: 15.08.2026</div>
+
+  <div class="baner" style="border-color:var(--ostrzAkcent)">
+    <div class="banerTytul" style="color:var(--ostrzAkcent)">Na pytania do SWZ zostało 2 dni</div>
+    <div class="banerMeta">Pytania do SWZ złóż do końca dnia 30.07.2026.</div>
+  </div>
+
+  <div class="sekcjaTytul">Pytania do SWZ (2)</div>
+  <div class="pozycja">
+    <div class="pozycjaNaglowek"><span class="badgeNeutral">Szkic</span></div>
+    <div class="pozycjaTresc">SWZ w §4 wymaga gwarancji 60 miesięcy, a wzór umowy w §9 mówi o 36 miesiącach — proszę o wskazanie wiążącego okresu gwarancji.</div>
+    <div class="pozycjaFragment">Dotyczy: Rozdz. XVII SWZ vs. §9 wzoru umowy</div>
+  </div>
+  <div class="pozycja">
+    <div class="pozycjaNaglowek"><span class="badgeNeutral">Wysłane</span></div>
+    <div class="pozycjaTresc">Przedmiar poz. 2.3 nie podaje klasy betonu dla ław fundamentowych — proszę o uzupełnienie parametru.</div>
+    <div class="pozycjaFragment">Dotyczy: Przedmiar, poz. 2.3</div>
+  </div>
+
+  <div class="card">
+    <div class="kartaTytul">Wygeneruj pytania z treści SWZ</div>
+    <div class="kartaOpis">Wklej treść SWZ — wykryjemy niejasności, sprzeczności i braki parametrów i zapiszemy je jako gotowe szkice pytań.</div>
+    <div class="input multi">Wklej tu treść SWZ…</div>
+    <div class="btn" style="margin-top:0"><div class="btnText">Wygeneruj pytania</div></div>
+  </div>
+
+  <div class="sekcjaTytul">Opublikowane zmiany (2)</div>
+  <div class="zmiana" style="border-left-color:var(--danger)">
+    <div class="zmianaData">28.07.2026</div>
+    <div class="zmianaOpis">Zamawiający zmienił termin realizacji z 60 na 45 dni — przelicz harmonogram i cenę.</div>
+    <div class="diff">
+      <div class="diffLinia" style="color:var(--muted)">  Termin realizacji zamówienia:</div>
+      <div class="diffLinia" style="color:var(--danger)">− 60 dni od dnia podpisania umowy</div>
+      <div class="diffLinia" style="color:var(--green)">+ 45 dni od dnia podpisania umowy</div>
+      <div class="diffLinia" style="color:var(--muted)">…</div>
+    </div>
+    <div class="sekcjeRzad"><span class="badgeSekcja">Harmonogram</span><span class="badgeSekcja">Cena</span></div>
+    <div class="przelacznik"><span class="przelacznikText" style="color:var(--blue)">☐ Oznacz jako uwzględnione</span></div>
+  </div>
+  <div class="zmiana" style="border-left-color:var(--green)">
+    <div class="zmianaData">24.07.2026</div>
+    <div class="zmianaOpis">Doprecyzowano klasę betonu w poz. 2.3 przedmiaru (C20/25) — zaktualizuj parametry wyceny.</div>
+    <div class="diff">
+      <div class="diffLinia" style="color:var(--green)">+ Klasa betonu ław fundamentowych: C20/25</div>
+      <div class="diffLinia" style="color:var(--muted)">…</div>
+    </div>
+    <div class="sekcjeRzad"><span class="badgeSekcja">Parametry</span></div>
+    <div class="przelacznik"><span class="przelacznikText" style="color:var(--green)">☑ Uwzględniono w ofercie</span></div>
+  </div>
+
+  <div class="card">
+    <div class="kartaTytul">Sprawdź publikacje zamawiającego</div>
+    <div class="kartaOpis">Wklej nowo opublikowaną wersję SWZ — porównamy ją z poprzednią i pokażemy różnicę oraz jej skutek.</div>
+    <div class="input multi">Wklej treść nowej wersji SWZ…</div>
+    <div class="btn" style="margin-top:0"><div class="btnText">Sprawdź zmiany</div></div>
+  </div>
+
+  <div class="sekcjaTytul">Przed wysłaniem oferty</div>
+  <div class="sekcjeRzad">
+    <span class="badgeStan" style="background:var(--dngr);color:var(--danger)">Harmonogram: wymaga aktualizacji</span>
+    <span class="badgeStan" style="background:var(--dngr);color:var(--danger)">Cena: wymaga aktualizacji</span>
+    <span class="badgeStan" style="background:var(--sukces);color:var(--green)">Parametry: ok</span>
+  </div>
+
+  <div class="baner" style="border-color:var(--danger); margin-top:16px">
+    <div class="banerTytul" style="color:var(--danger)">Wysyłka zablokowana</div>
+    <div class="banerMeta">Masz 1 nieuwzględnioną zmianę SWZ. Odznacz ją albo wyślij z wymuszeniem.</div>
+  </div>
+
+  <div class="btn danger" style="margin-top:16px"><div class="btnText">Wyślij mimo to (z ostrzeżeniem)</div></div>
+
+  <div class="stopka">Radar SWZ jest pomocniczy — nie zastępuje śledzenia oficjalnej platformy zakupowej zamawiającego.</div>
+</div></div></div>
+
+<!-- ============ DETAL — DARK @390 ============ -->
+<div class="col"><div class="caption">DETAL — dark @390 · pilne + blokada</div>
+<div class="frame dark"><div class="nav">‹ Radar SWZ</div><div class="screen">
+  <div class="powrot">← Wszystkie postępowania</div>
+  <div class="tytul">Budowa drogi gminnej w Kolonii Wschodniej</div>
+  <div class="podtytul">Termin składania ofert: 15.08.2026</div>
+
+  <div class="baner" style="border-color:var(--ostrzAkcent)">
+    <div class="banerTytul" style="color:var(--ostrzAkcent)">Na pytania do SWZ zostało 2 dni</div>
+    <div class="banerMeta">Pytania do SWZ złóż do końca dnia 30.07.2026.</div>
+  </div>
+
+  <div class="sekcjaTytul">Pytania do SWZ (1)</div>
+  <div class="pozycja">
+    <div class="pozycjaNaglowek"><span class="badgeNeutral">Szkic</span></div>
+    <div class="pozycjaTresc">SWZ w §4 wymaga gwarancji 60 miesięcy, a wzór umowy w §9 mówi o 36 miesiącach — proszę o wskazanie wiążącego okresu.</div>
+    <div class="pozycjaFragment">Dotyczy: Rozdz. XVII SWZ vs. §9 wzoru umowy</div>
+  </div>
+
+  <div class="sekcjaTytul">Opublikowane zmiany (1)</div>
+  <div class="zmiana" style="border-left-color:var(--danger)">
+    <div class="zmianaData">28.07.2026</div>
+    <div class="zmianaOpis">Zamawiający zmienił termin realizacji z 60 na 45 dni — przelicz harmonogram i cenę.</div>
+    <div class="diff">
+      <div class="diffLinia" style="color:var(--muted)">  Termin realizacji zamówienia:</div>
+      <div class="diffLinia" style="color:var(--danger)">− 60 dni od dnia podpisania umowy</div>
+      <div class="diffLinia" style="color:var(--green)">+ 45 dni od dnia podpisania umowy</div>
+    </div>
+    <div class="sekcjeRzad"><span class="badgeSekcja">Harmonogram</span><span class="badgeSekcja">Cena</span></div>
+    <div class="przelacznik"><span class="przelacznikText" style="color:var(--blue)">☐ Oznacz jako uwzględnione</span></div>
+  </div>
+
+  <div class="sekcjaTytul">Przed wysłaniem oferty</div>
+  <div class="sekcjeRzad">
+    <span class="badgeStan" style="background:var(--dngr);color:var(--danger)">Harmonogram: wymaga aktualizacji</span>
+    <span class="badgeStan" style="background:var(--dngr);color:var(--danger)">Cena: wymaga aktualizacji</span>
+    <span class="badgeStan" style="background:var(--sukces);color:var(--green)">Parametry: ok</span>
+  </div>
+
+  <div class="baner" style="border-color:var(--danger); margin-top:16px">
+    <div class="banerTytul" style="color:var(--danger)">Wysyłka zablokowana</div>
+    <div class="banerMeta">Masz 1 nieuwzględnioną zmianę SWZ. Odznacz ją albo wyślij z wymuszeniem.</div>
+  </div>
+
+  <div class="btn danger" style="margin-top:16px"><div class="btnText">Wyślij mimo to (z ostrzeżeniem)</div></div>
+  <div class="stopka">Radar SWZ jest pomocniczy — nie zastępuje śledzenia oficjalnej platformy zakupowej zamawiającego.</div>
+</div></div></div>
+
+<!-- ============ LISTA — light @390 ============ -->
+<div class="col"><div class="caption">LISTA — light @390</div>
+<div class="frame light"><div class="nav">‹ Radar SWZ</div><div class="screen">
+  <div class="wstep">Radar SWZ pilnuje dwóch rzeczy: terminu na pytania do treści SWZ (koniec dnia, w którym mija połowa terminu składania ofert) oraz zmian, które zamawiający publikuje aż do składania — i sprawdza, czy uwzględniłeś je przed wysłaniem oferty.</div>
+
+  <div class="card" style="margin-top:0">
+    <div class="sekcjaTytul" style="margin-top:0">Weź postępowanie pod radar</div>
+    <div class="field"><div class="label">Nazwa postępowania</div><div class="input">np. Budowa drogi gminnej</div></div>
+    <div class="field"><div class="label">Data ogłoszenia</div><div class="input">RRRR-MM-DD</div><div class="hint">Opcjonalnie. Razem z terminem składania wyznacza termin pytań.</div></div>
+    <div class="field"><div class="label">Termin składania ofert</div><div class="input">RRRR-MM-DD</div><div class="hint">Opcjonalnie. Bez niego nie policzymy terminu pytań.</div></div>
+    <div class="btn disabled" style="margin-top:0"><div class="btnText">Dodaj do radaru</div></div>
+  </div>
+
+  <div class="kafelek">
+    <div class="kafelekNazwa">Budowa drogi gminnej w Kolonii Wschodniej</div>
+    <div class="chip" style="border-color:var(--ostrzAkcent)"><span class="chipText" style="color:var(--ostrzAkcent)">Na pytania do SWZ zostało 2 dni</span></div>
+    <div class="kafelekMeta">Pytania: 2 · Zmiany: 2 · Do uwzględnienia: 1</div>
+  </div>
+  <div class="kafelek">
+    <div class="kafelekNazwa">Termomodernizacja Szkoły Podstawowej nr 3</div>
+    <div class="chip" style="border-color:var(--danger)"><span class="chipText" style="color:var(--danger)">Termin na pytania do SWZ minął</span></div>
+    <div class="kafelekMeta">Pytania: 5 · Zmiany: 3</div>
+  </div>
+  <div class="kafelek">
+    <div class="kafelekNazwa">Dostawa sprzętu IT dla Urzędu Miasta</div>
+    <div class="chip" style="border-color:var(--green)"><span class="chipText" style="color:var(--green)">Na pytania do SWZ zostało 9 dni</span></div>
+    <div class="kafelekMeta">Pytania: 4 · Zmiany: 0</div>
+  </div>
+</div></div></div>
+
+<!-- ============ GATE ACCENTS — light @390 (ok/ostrzezenie/blokada obok siebie) ============ -->
+<div class="col"><div class="caption">Akcenty bramki — light (ok / ostrzeżenie / blokada)</div>
+<div class="frame light"><div class="nav">‹ Radar SWZ</div><div class="screen">
+  <div class="baner" style="border-color:var(--green)">
+    <div class="banerTytul" style="color:var(--green)">Gotowe do wysłania</div>
+    <div class="banerMeta">Wszystkie opublikowane zmiany SWZ są uwzględnione. Możesz wysłać ofertę.</div>
+  </div>
+  <div class="baner" style="border-color:var(--ostrzAkcent)">
+    <div class="banerTytul" style="color:var(--ostrzAkcent)">Wysłano mimo nieuwzględnionych zmian</div>
+    <div class="banerMeta">Oferta wysłana z wymuszeniem — 1 zmiana SWZ nie była oznaczona jako uwzględniona.</div>
+  </div>
+  <div class="baner" style="border-color:var(--danger)">
+    <div class="banerTytul" style="color:var(--danger)">Wysyłka zablokowana</div>
+    <div class="banerMeta">Masz 1 nieuwzględnioną zmianę SWZ. Odznacz ją albo wyślij z wymuszeniem.</div>
+  </div>
+  <div class="sekcjaTytul">Odliczanie — warianty</div>
+  <div class="baner" style="border-color:var(--danger)">
+    <div class="banerTytul" style="color:var(--danger)">Ostatni dzień na pytania do SWZ — składasz jeszcze tylko dziś</div>
+  </div>
+  <div class="baner" style="border-color:var(--ostrzAkcent)">
+    <div class="banerTytul" style="color:var(--ostrzAkcent)">Na pytania do SWZ zostało 2 dni</div>
+  </div>
+  <div class="baner" style="border-color:var(--green)">
+    <div class="banerTytul" style="color:var(--green)">Na pytania do SWZ zostało 9 dni</div>
+  </div>
+</div></div></div>
+
+<!-- ============ NARROW @340 — dark (mały ekran, zawijanie) ============ -->
+<div class="col"><div class="caption">DETAL — dark @340 (mały ekran)</div>
+<div class="frame dark narrow"><div class="nav">‹ Radar SWZ</div><div class="screen">
+  <div class="tytul">Termomodernizacja Szkoły Podstawowej nr 3</div>
+  <div class="podtytul">Termin składania ofert: 02.09.2026</div>
+  <div class="baner" style="border-color:var(--ostrzAkcent)">
+    <div class="banerTytul" style="color:var(--ostrzAkcent)">Na pytania do SWZ zostało 2 dni</div>
+    <div class="banerMeta">Pytania do SWZ złóż do końca dnia 30.07.2026.</div>
+  </div>
+  <div class="sekcjaTytul">Opublikowane zmiany (1)</div>
+  <div class="zmiana" style="border-left-color:var(--danger)">
+    <div class="zmianaData">28.07.2026</div>
+    <div class="zmianaOpis">Zamawiający zmienił termin realizacji z 60 na 45 dni — przelicz harmonogram i cenę.</div>
+    <div class="diff">
+      <div class="diffLinia" style="color:var(--danger)">− 60 dni od dnia podpisania umowy</div>
+      <div class="diffLinia" style="color:var(--green)">+ 45 dni od dnia podpisania umowy</div>
+    </div>
+    <div class="sekcjeRzad"><span class="badgeSekcja">Harmonogram</span><span class="badgeSekcja">Cena</span><span class="badgeSekcja">Parametry</span></div>
+    <div class="przelacznik"><span class="przelacznikText" style="color:var(--blue)">☐ Oznacz jako uwzględnione</span></div>
+  </div>
+  <div class="sekcjeRzad" style="margin-top:16px">
+    <span class="badgeStan" style="background:var(--dngr);color:var(--danger)">Harmonogram: wymaga aktualizacji</span>
+    <span class="badgeStan" style="background:var(--dngr);color:var(--danger)">Cena: wymaga aktualizacji</span>
+    <span class="badgeStan" style="background:var(--sukces);color:var(--green)">Parametry: ok</span>
+  </div>
+</div></div></div>
+
+</body></html>

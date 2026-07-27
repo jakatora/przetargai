@@ -176,6 +176,33 @@ test('POST /monitoruj — wskaźnik bazowy niedodatni lub nie-liczba => 400', as
   assert.equal((await monitoruj(token, { branza: 'budownictwo', wskaznik_bazowy: '112' })).status, 400);
 });
 
+test('POST /monitoruj — zapisuje opcjonalny próg waloryzacji z umowy (podzadanie 11/12)', async () => {
+  const token = await zaloz(`prog-${process.pid}@t.pl`);
+  const { status, json } = await monitoruj(token, {
+    branza: 'budownictwo', wskaznik_bazowy: 100, prog: 10,
+  });
+  assert.equal(status, 201, JSON.stringify(json));
+  assert.equal(json.umowa.prog, 10);
+  assert.equal(json.umowa.alarm_wyslany, 0, 'nowa umowa jeszcze nie alarmowała');
+
+  const wiersz = db.prepare('SELECT prog FROM umowa_monitorowana WHERE id = ?').get(json.umowa.id);
+  assert.equal(wiersz.prog, 10);
+});
+
+test('POST /monitoruj — bez progu zapisuje null (umowa monitorowana, ale nie alarmuje)', async () => {
+  const token = await zaloz(`bezprogu-${process.pid}@t.pl`);
+  const { json } = await monitoruj(token, { branza: 'transport', wskaznik_bazowy: 105 });
+  assert.equal(json.umowa.prog, null);
+});
+
+test('POST /monitoruj — próg poza zakresem (0, 100] => 400', async () => {
+  const token = await zaloz(`zlyprog-${process.pid}@t.pl`);
+  for (const prog of [0, -5, 150]) {
+    const { status } = await monitoruj(token, { branza: 'budownictwo', wskaznik_bazowy: 100, prog });
+    assert.equal(status, 400, `prog=${prog} musi zostać odrzucony`);
+  }
+});
+
 test('GET /monitoruj — zwraca tylko umowy zalogowanego użytkownika', async () => {
   const tokenA = await zaloz(`ownerA-${process.pid}@t.pl`);
   const tokenB = await zaloz(`ownerB-${process.pid}@t.pl`);

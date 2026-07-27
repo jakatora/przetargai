@@ -13,6 +13,8 @@ import { env } from '../src/config/env.js';
 
 const CFG = {
   TENDER_FETCH_CRON: '0 12 * * *',
+  WALORYZACJA_MONITOR_CRON: '0 6 * * *',
+  SWZ_MONITOR_CRON: '0 */6 * * *',
   PODPROGOWY_MONITOR_CRON: '0 7 * * *',
   SEJF_MONITOR_CRON: '0 8 * * *',
   DOSTEPNOSC_PLATFORMY_CRON: '*/15 * * * *',
@@ -24,6 +26,20 @@ test('schedulerJobs — pobieranie przetargów codziennie o 12:00', () => {
   const fetch = schedulerJobs(CFG).find((j) => j.name === 'tender-fetch');
   assert.ok(fetch, 'brak zadania pobierania przetargów');
   assert.equal(fetch.expression, '0 12 * * *');
+});
+
+test('schedulerJobs — codzienny monitoring waloryzacji (podzadanie 11/12)', () => {
+  const job = schedulerJobs(CFG).find((j) => j.name === 'waloryzacja-monitor');
+  assert.ok(job, 'brak zadania monitoringu waloryzacji');
+  assert.equal(job.expression, '0 6 * * *');
+  assert.equal(typeof job.run, 'function');
+});
+
+test('schedulerJobs — cykliczny monitor publikacji SWZ (podzadanie 5/7)', () => {
+  const job = schedulerJobs(CFG).find((j) => j.name === 'swz-monitor');
+  assert.ok(job, 'brak zadania monitora publikacji SWZ');
+  assert.equal(job.expression, '0 */6 * * *');
+  assert.equal(typeof job.run, 'function');
 });
 
 test('schedulerJobs — cykliczny monitor zamówień podprogowych (podzadanie 6/7)', () => {

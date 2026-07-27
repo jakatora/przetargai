@@ -1,0 +1,311 @@
+- generic [ref=f3e3]:
+  - navigation "Nawigacja pomocnicza":
+    - list:
+      - listitem:
+        - link "Przejdź do deklaracji dostępności" [ref=f3e4] [cursor=pointer]:
+          - /url: /deklaracja-dostepnosci
+      - listitem:
+        - link "Przejdź do treści" [ref=f3e5] [cursor=pointer]:
+          - /url: /ogloszenia/szukaj
+  - generic [ref=f3e6]:
+    - paragraph [ref=f3e8]: Ta strona wykorzystuje ciasteczka.
+    - button "Akceptuję politykę dotyczącą wykorzystania plików cookies. Zamknij pop-up." [ref=f3e9] [cursor=pointer]:
+      - generic [ref=f3e13]:
+        - generic: Akceptuję politykę dotyczącą wykorzystania plików cookies.
+        - text: Zamknij
+        - generic: pop-up.
+  - banner [ref=f3e14]:
+    - generic [ref=f3e15]:
+      - generic [ref=f3e16]:
+        - button [ref=f3e17] [cursor=pointer]:
+          - generic [ref=f3e19]:
+            - generic: Rozwiń menu
+            - generic [ref=f3e20]: menu
+        - heading [level=1] [ref=f3e21]:
+          - link "Baza Konkurencyjności" [ref=f3e22] [cursor=pointer]:
+            - /url: /
+      - button [ref=f3e24] [cursor=pointer]:
+        - generic [ref=f3e26]:
+          - generic: Zaloguj się
+          - generic [ref=f3e27]: power_settings_new
+  - generic [ref=f3e30]:
+    - 'status "Ważny komunikat: Szanowni Użytkownicy, zapraszamy do korzystania z nowej funkcjonalności w sekcji Rozstrzygnięcia, gdzie mogą Państwo gromadzić pliki realizacji umowy powstałe po wyborze wykonawcy i zarządzać nimi. Nie są to pola obligatoryjne, niemniej ich wykorzystanie może ułatwić przeprowadzenie późniejszych działań kontrolnych, którym będzie poddane ogłoszenie o zamówieniu. Dodatkowo informujemy, że została zwiększona liczba załączników możliwych do umieszczenia w sekcji Moje Ogłoszenia oraz Oferty z 20 do 50." [ref=f3e31]':
+      - generic [ref=f3e32]:
+        - paragraph [ref=f3e33]: Szanowni Użytkownicy,
+        - paragraph [ref=f3e34]: zapraszamy do korzystania z nowej funkcjonalności w sekcji Rozstrzygnięcia, gdzie mogą Państwo gromadzić pliki realizacji umowy powstałe po wyborze wykonawcy i zarządzać nimi. Nie są to pola obligatoryjne, niemniej ich wykorzystanie może ułatwić przeprowadzenie późniejszych działań kontrolnych, którym będzie poddane ogłoszenie o zamówieniu.
+        - paragraph [ref=f3e35]
+        - paragraph [ref=f3e36]: Dodatkowo informujemy, że została zwiększona liczba załączników możliwych do umieszczenia w sekcji Moje Ogłoszenia oraz Oferty z 20 do 50.
+        - paragraph [ref=f3e37]
+    - main [ref=f3e38]:
+      - generic [ref=f3e41]:
+        - generic: Wyszukaj ogłoszenie
+        - generic [ref=f3e42]:
+          - generic [ref=f3e43]:
+            - textbox "Wyszukaj ogłoszenie" [ref=f3e45]: roboty budowlane
+            - button "Wyczyść pole szukaj" [ref=f3e46] [cursor=pointer]:
+              - generic [ref=f3e47]: cancel
+          - button "Szukaj" [ref=f3e48] [cursor=pointer]:
+            - generic [ref=f3e52]:
+              - generic [ref=f3e53]: search
+              - text: Szukaj
+      - generic [ref=f3e54]:
+        - generic [ref=f3e55]:
+          - generic [ref=f3e56]: Sortuj wyniki wyszukiwania
+          - generic [ref=f3e57]:
+            - log [ref=f3e59]
+            - generic [ref=f3e61]:
+              - generic [ref=f3e62]: Domyślnie
+              - combobox "Sortuj wyniki wyszukiwania" [ref=f3e64]
+        - button "Opcje zaawansowane Liczba aktywnych filtrów 1" [ref=f3e70] [cursor=pointer]:
+          - generic [ref=f3e74]:
+            - text: Opcje zaawansowane
+            - generic "Aktywne filtry" [ref=f3e75]:
+              - generic: Liczba aktywnych filtrów
+              - text: "1"
+      - generic [ref=f3e77]:
+        - alert [ref=f3e78]: Znaleziono około 269 ogłoszeń
+        - list [ref=f3e79]:
+          - listitem [ref=f3e80]:
+            - link [ref=f3e83] [cursor=pointer]:
+              - /url: /ogloszenia/285687
+              - generic [ref=f3e84]:
+                - mark [ref=f3e85]: Początek znalezionej frazy Roboty Koniec znalezionej frazy
+                - mark [ref=f3e86]: Początek znalezionej frazy budowlane Koniec znalezionej frazy
+                - text: polegające na budowie wiaty przystankowo – rekreacyjnej przy turystycznej ścieżce rowerowej Nakielno - Strączno
+            - paragraph [ref=f3e88]:
+              - text: Przedmiotem zamówienia są
+              - mark [ref=f3e89]: Początek znalezionej frazy roboty Koniec znalezionej frazy
+              - mark [ref=f3e90]: Początek znalezionej frazy budowlane Koniec znalezionej frazy
+              - text: polegające na budowie wiaty przystankowo - rekreacyjnej przy turystycznej ścieżce rowerowej Nakielno – Strączno w ramach realizacji Programu
+            - generic [ref=f3e91]:
+              - paragraph [ref=f3e92]: "Opublikowano: 2026-07-21"
+              - paragraph [ref=f3e93]: "Termin składania ofert: 2026-08-05 12:00:00"
+              - paragraph [ref=f3e94]: Powiatowy Zarząd Dróg
+              - paragraph [ref=f3e95]: Strączno, zachodniopomorskie
+          - listitem [ref=f3e96]:
+            - link [ref=f3e99] [cursor=pointer]:
+              - /url: /ogloszenia/285561
+              - generic [ref=f3e100]:
+                - text: ZAPYTANIE OFERTOWE NR KE/1/2026 –
+                - mark [ref=f3e101]: Początek znalezionej frazy roboty Koniec znalezionej frazy
+                - mark [ref=f3e102]: Początek znalezionej frazy budowlane Koniec znalezionej frazy
+                - text: związane z termomodernizacją budynków
+            - paragraph [ref=f3e104]: "W ramach modernizacji budynków planuje się inwestycję termomodernizacyjną obejmującą: - Wymianę poszycia dachu (demontaż istniejącego poszycia, montaż płyty warstwowej z obróbkami) - Ocieplenie ścian zewnętrznych, - Wymi"
+            - generic [ref=f3e105]:
+              - paragraph [ref=f3e106]: "Opublikowano: 2026-07-20"
+              - paragraph [ref=f3e107]: "Termin składania ofert: 2026-08-05 23:59:59"
+              - paragraph [ref=f3e108]: STAINER Sp. z o.o.
+              - paragraph [ref=f3e109]: Krzemieniewo, wielkopolskie
+          - listitem [ref=f3e110]:
+            - link "Termomodernizacja dachu Budynku Dyrekcji" [ref=f3e113] [cursor=pointer]:
+              - /url: /ogloszenia/282638
+            - paragraph [ref=f3e115]:
+              - mark [ref=f3e116]: Początek znalezionej frazy Roboty Koniec znalezionej frazy
+              - text: "należy wykonać zgodnie z projektem technicznym oraz w oparciu o rysunki i dokumenty stanowiące załączniki do zapytania ofertowego: Załącznik nr 2 – Projekt techniczny Załącznik Minimalny wymagany okres gwarancji"
+            - generic [ref=f3e117]:
+              - paragraph [ref=f3e118]: "Opublikowano: 2026-07-24"
+              - paragraph [ref=f3e119]: "Termin składania ofert: 2026-08-07 23:59:59"
+              - paragraph [ref=f3e120]: Hydro-Vacuum Spółka Akcyjna
+              - paragraph [ref=f3e121]: Grudziądz, kujawsko-pomorskie
+          - listitem [ref=f3e122]:
+            - link "Przedmiotem zamówienia jest wykonanie w systemie „zaprojektuj i wybuduj” komory do oksydacji drutów aluminiowych w atmosferze nasyconej pary wodnej wraz z niezbędnym wyposażeniem i oprogramowaniem. English Version The subject of the contract is the construction, under a ‘design and build’ contract, of a chamber for the oxidation of aluminum wires in an atmosphere saturated with water vapour together with the necessary equipment and software)" [ref=f3e125] [cursor=pointer]:
+              - /url: /ogloszenia/282515
+            - paragraph [ref=f3e127]:
+              - text: "szczególności, lecz nie wyłącznie: od zaprojektowania, przez dostawę komory zgodnie z funkcjonalnością z formularza wraz z niezbędnym do korzystania wyposażeniem i oprogramowaniem, przez"
+              - mark [ref=f3e128]: Początek znalezionej frazy roboty Koniec znalezionej frazy
+              - mark [ref=f3e129]: Początek znalezionej frazy budowlane Koniec znalezionej frazy
+              - text: (fundament), mon
+            - generic [ref=f3e130]:
+              - paragraph [ref=f3e131]: "Opublikowano: 2026-07-17"
+              - paragraph [ref=f3e132]: "Termin składania ofert: 2026-08-14 23:59:59"
+              - paragraph [ref=f3e133]: TELE-FONIKA KABLE S.A.
+              - paragraph [ref=f3e134]: Bydgoszcz, kujawsko-pomorskie
+          - listitem [ref=f3e135]:
+            - link "Postępowanie 49767863 Budowa przyłącza ciepłowniczego do budynku mieszkalnego przy ul. Bednarskiej 2 w Gdańsku" [ref=f3e138] [cursor=pointer]:
+              - /url: /ogloszenia/283362
+            - paragraph [ref=f3e140]:
+              - text: Realizacja prac związanych z budową przyłącza ciepłowniczego obejmuje
+              - mark [ref=f3e141]: Początek znalezionej frazy roboty Koniec znalezionej frazy
+              - text: technologiczne (rozumiane jako ułożenie ciepłociągu w wykonanym wykopie, wykonanie wszystkich prac spawalniczych Dział 45000000-7 Roboty budowl
+            - generic [ref=f3e142]:
+              - paragraph [ref=f3e143]: "Opublikowano: 2026-07-01"
+              - paragraph [ref=f3e144]: "Termin składania ofert: 2026-08-03 10:00:00"
+              - paragraph [ref=f3e145]: Gdańskie Przedsiębiorstwo Energetyki Cieplnej Sp. z o.o.
+              - paragraph [ref=f3e146]: Gdańsk, pomorskie
+          - listitem [ref=f3e147]:
+            - link "Budowa i demontaż osiedlowej sieci ciepłowniczej wraz z przyłączami w związku z likwidacją stacji grupowej przy ul. Emilii Hoene 10 w Gdańsku (SM „Orunia”)" [ref=f3e150] [cursor=pointer]:
+              - /url: /ogloszenia/285697
+            - paragraph [ref=f3e152]:
+              - text: Realizacja prac związanych z budową i przebudową sieci i przyłączy obejmuje
+              - mark [ref=f3e153]: Początek znalezionej frazy roboty Koniec znalezionej frazy
+              - text: technologiczne (rozumiane jako ułożenie ciepłociągu w istniejącym kanale oraz wykonanym wykopie, wykonanie Dział 45000000-7 Roboty budowl
+            - generic [ref=f3e154]:
+              - paragraph [ref=f3e155]: "Opublikowano: 2026-07-21"
+              - paragraph [ref=f3e156]: "Termin składania ofert: 2026-08-21 09:00:00"
+              - paragraph [ref=f3e157]: Gdańskie Przedsiębiorstwo Energetyki Cieplnej Sp. z o.o.
+              - paragraph [ref=f3e158]: Gdańsk, pomorskie
+          - listitem [ref=f3e159]:
+            - link "Z A P Y T A N I E O F E R T O W E NA BUDOWĘ HALI PRODUKCYJNO-MAGAZYNOWEJ Z CZĘŚCIĄ BIUROWO-SOCJALNĄ WRAZ Z INFRASTRUKTURĄ ORAZ FUNDAMENTAMI POD SILOSY" [ref=f3e162] [cursor=pointer]:
+              - /url: /ogloszenia/282918
+            - paragraph [ref=f3e164]:
+              - text: "1) Przedmiot zamówienia: Przedmiotem zamówienia są"
+              - mark [ref=f3e165]: Początek znalezionej frazy roboty Koniec znalezionej frazy
+              - mark [ref=f3e166]: Początek znalezionej frazy budowlane Koniec znalezionej frazy
+              - text: (nabycie robót budowlanych) polegające na wybudowaniu hali produkcyjno-magazynowej zlokalizowanej na terenie działek
+            - generic [ref=f3e167]:
+              - paragraph [ref=f3e168]: "Opublikowano: 2026-07-20"
+              - paragraph [ref=f3e169]: "Termin składania ofert: 2026-08-05 23:59:59"
+              - paragraph [ref=f3e170]: Prosperplast 1 sp. z o.o.
+              - paragraph [ref=f3e171]: Wieprz, śląskie
+          - listitem [ref=f3e172]:
+            - link "Wykonanie budowli wiaty oraz budowa linii 400 kV pod zadaszeniem wiaty, służących prowadzeniu badań" [ref=f3e175] [cursor=pointer]:
+              - /url: /ogloszenia/286236
+            - paragraph [ref=f3e177]:
+              - text: Materiały
+              - mark [ref=f3e178]: Początek znalezionej frazy budowlane Koniec znalezionej frazy
+              - text: wykorzystane do realizacji zamówienia powinny być odporne na niskie i wysokie temperatury.
+            - generic [ref=f3e179]:
+              - paragraph [ref=f3e180]: "Opublikowano: 2026-07-24"
+              - paragraph [ref=f3e181]: "Termin składania ofert: 2026-08-07 23:59:59"
+              - paragraph [ref=f3e182]: Zakład Usługowo Handlowy Instalatorstwo i Artykuły Elektryczne Wiśniewski Nidzica Sp. z o. o.
+              - paragraph [ref=f3e183]: Nidzica, warmińsko-mazurskie
+          - listitem [ref=f3e184]:
+            - link "Wykonanie robót budowlano–montażowych wraz z dostawą i instalacją sprzętu medycznego i wyposażenia w ramach zadania pn. „Mobilne kontenerowe laboratorium histopatologiczne zlokalizowane w Chorzowie przy ul. Strzelców Bytomskich 11, na działce ewidencyjnej nr 4025/164”, w ramach projektu pn. „KCO i UROVITA – wspólnie dla zdrowia! Nowoczesna diagnostyka oraz zintegrowana opieka onkologiczno-urologiczno-ginekologiczna w ramach AOS i POZ.”" [ref=f3e187] [cursor=pointer]:
+              - /url: /ogloszenia/252030
+            - paragraph [ref=f3e189]:
+              - text: "- wykonanie niezbędnych prac wykończeniowych i montażowych, w tym ścian, stropodachu, stolarki okiennej i drzwiowej, posadzek, obróbek blacharskich i elementów elewacyjnych. b)"
+              - mark [ref=f3e190]: Początek znalezionej frazy Roboty Koniec znalezionej frazy
+            - generic [ref=f3e191]:
+              - paragraph [ref=f3e192]: "Opublikowano: 2026-06-26"
+              - paragraph [ref=f3e193]: "Termin składania ofert: 2026-08-31 23:59:59"
+              - paragraph [ref=f3e194]: "\"UROVITA\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"
+              - paragraph [ref=f3e195]: Chorzów, śląskie
+          - listitem [ref=f3e196]:
+            - link "Kompleksowe wykonanie sieci zewnętrznych sanitarnych (sieć wodociągowa, sieć kanalizacji sanitarnej oraz sieć kanalizacji deszczowej) dla budynków „Elektrociepłowni Szombierki”" [ref=f3e199] [cursor=pointer]:
+              - /url: /ogloszenia/284384
+            - paragraph [ref=f3e201]: Przedmiotem zamówienia jest kompleksowe wykonanie sieci zewnętrznych sanitarnych (sieć wodociągowa, sieć kanalizacji sanitarnej oraz sieć kanalizacji deszczowej) dla budynków „Elektrociepłowni Szombierki” Zamówienie będ
+            - generic [ref=f3e202]:
+              - paragraph [ref=f3e203]: "Opublikowano: 2026-07-09"
+              - paragraph [ref=f3e204]: "Termin składania ofert: 2026-08-10 23:59:59"
+              - paragraph [ref=f3e205]: „ARCHE” Spółka Akcyjna
+              - paragraph [ref=f3e206]: Bytom, śląskie
+          - listitem [ref=f3e207]:
+            - link "Przedsięwzięcie termoizolacyjne budynku znajdującego się w Zajeździe Jurajskim w Podlesicach 1 celem zmniejszenia zapotrzebowania na energię użytkową." [ref=f3e210] [cursor=pointer]:
+              - /url: /ogloszenia/284475
+            - paragraph [ref=f3e212]: "Przedmiotem zamówienia objętego Zapytaniem jest realizacja robót budowlanych polegających na wymianie stolarki okiennej budynku usytuowanego przy ul. Podlesice 1, 42 – 425 Kroczyce Opis przedmiotu zamówienia: Zakres za"
+            - generic [ref=f3e213]:
+              - paragraph [ref=f3e214]: "Opublikowano: 2026-07-10"
+              - paragraph [ref=f3e215]: "Termin składania ofert: 2026-07-27 15:00:00"
+              - paragraph [ref=f3e216]: ZAJAZD JURAJSKI SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ
+              - paragraph [ref=f3e217]: Podlesice, śląskie
+          - listitem [ref=f3e218]:
+            - link "POK Green Park- centrum magazynowania i przeładunku kolejowo-samochodowego" [ref=f3e221] [cursor=pointer]:
+              - /url: /ogloszenia/283839
+            - paragraph [ref=f3e223]: "Fabrycznie nowa waga samochodowa wraz z montażem uruchomieniem pod klucz Dane ogólne: - nośność – 60 000 kg - dokładność pomiaru (klasa III) - 20 kg (miernik z możliwością rozszerzenia działki do 2 kg) - wymiary wagi - 1"
+            - generic [ref=f3e224]:
+              - paragraph [ref=f3e225]: "Opublikowano: 2026-07-17"
+              - paragraph [ref=f3e226]: "Termin składania ofert: 2026-07-27 23:59:59"
+              - paragraph [ref=f3e227]: POK ZACHÓD SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ
+              - paragraph [ref=f3e228]: Wojkowice, śląskie
+          - listitem [ref=f3e229]:
+            - link "„Montaż urządzeń rekreacyjno-sportowych wraz z utwardzeniem terenu przy ul. Zwycięstwa w Prudniku”" [ref=f3e232] [cursor=pointer]:
+              - /url: /ogloszenia/286271
+            - paragraph [ref=f3e234]: ZAPROSZENIE DO ZŁOŻENIA OFERTY CENOWEJ Dla zadania pn. „Montaż urządzeń rekreacyjno-sportowych wraz z utwardzeniem terenu przy ul. Zwycięstwa w Prudniku” w postępowaniu o udzielenie zamówienia publicznego, którego wartoś
+            - generic [ref=f3e235]:
+              - paragraph [ref=f3e236]: "Opublikowano: 2026-07-24"
+              - paragraph [ref=f3e237]: "Termin składania ofert: 2026-08-07 12:00:00"
+              - paragraph [ref=f3e238]: Gmina Prudnik - Agencja Sportu i Promocji w Prudniku
+              - paragraph [ref=f3e239]: Prudnik, opolskie
+          - listitem [ref=f3e240]:
+            - link "Uzupełnienie małej architektury w gminie Krasocin – remont altany i pomostów na wodzie w msc. Oleszno" [ref=f3e243] [cursor=pointer]:
+              - /url: /ogloszenia/286011
+            - paragraph [ref=f3e245]: 1. Przedmiot zamówienia obejmuje wykonanie remontu altany wraz z pomostami na stawie „Duży Stok” w msc. Oleszno. Celem zadania jest poprawa dostępu do małej architektury turystycznej na terenie Gminy Krasocin poprze
+            - generic [ref=f3e246]:
+              - paragraph [ref=f3e247]: "Opublikowano: 2026-07-23"
+              - paragraph [ref=f3e248]: "Termin składania ofert: 2026-08-07 10:00:00"
+              - paragraph [ref=f3e249]: Gmina Krasocin
+              - paragraph [ref=f3e250]: Oleszno, świętokrzyskie
+          - listitem [ref=f3e251]:
+            - link "„Zakup wraz z montażem 16 samoobsługowych stacji naprawy rowerów na terenie Miasta Łomża”" [ref=f3e254] [cursor=pointer]:
+              - /url: /ogloszenia/286177
+            - paragraph [ref=f3e256]: „Zakup wraz z montażem 16 samoobsługowych stacji naprawy rowerów na terenie Miasta Łomża”
+            - generic [ref=f3e257]:
+              - paragraph [ref=f3e258]: "Opublikowano: 2026-07-24"
+              - paragraph [ref=f3e259]: "Termin składania ofert: 2026-08-14 10:00:00"
+              - paragraph [ref=f3e260]: Miasto Łomża
+              - paragraph [ref=f3e261]: Łomża, podlaskie
+          - listitem [ref=f3e262]:
+            - link "Innowacyjna modernizacja zakładu prefabrykacji ukierunkowana na automatyzację, efektywność energetyczną i wdrożenie gospodarki o obiegu zamkniętym" [ref=f3e265] [cursor=pointer]:
+              - /url: /ogloszenia/286158
+            - paragraph [ref=f3e267]: Wykonanie prac budowlanych polegających na wykonaniu fundamentów pod linie sprężone zgodnie z opracowaną dokumentacją i zgodnie z zapytaniem ofertowym w załączeniu.
+            - generic [ref=f3e268]:
+              - paragraph [ref=f3e269]: "Opublikowano: 2026-07-24"
+              - paragraph [ref=f3e270]: "Termin składania ofert: 2026-08-07 23:59:59"
+              - paragraph [ref=f3e271]: PRZEDSIĘBIORSTWO GÓRNICZO-PRODUKCYJNE "BAZALT" SPÓŁKA AKCYJNA
+              - paragraph [ref=f3e272]: Żory, śląskie
+          - listitem [ref=f3e273]:
+            - link "Adaptacja istniejącego budynku w celu utworzenia Dziennego Ośrodka Opieki dla osób niesamodzielnych pn. „Pogodni Dojrzali w Gminie Olkusz”" [ref=f3e276] [cursor=pointer]:
+              - /url: /ogloszenia/283857
+            - paragraph [ref=f3e278]: Adaptacja istniejącego budynku w celu utworzenia Dziennego Ośrodka Opieki dla osób niesamodzielnych pn. „Pogodni Dojrzali w Gminie Olkusz”
+            - generic [ref=f3e279]:
+              - paragraph [ref=f3e280]: "Opublikowano: 2026-07-24"
+              - paragraph [ref=f3e281]: "Termin składania ofert: 2026-07-29 12:00:00"
+              - paragraph [ref=f3e282]: Stowarzyszenie Lokalna Grupa Działania "Nad Białą Przemszą"
+              - paragraph [ref=f3e283]: Olkusz, małopolskie
+          - listitem [ref=f3e284]:
+            - link "Wykonanie robót budowlano-montażowych polegających na dostawie i montażu zewnętrznego podnośnika nożycowego mocowanego na północnej ścianie budynku Kotłowni B1 w obiekcie „Elektrociepłowni Szombierki”." [ref=f3e287] [cursor=pointer]:
+              - /url: /ogloszenia/285589
+            - paragraph [ref=f3e289]: Przedmiotem zamówienia jest wykonanie robót budowlano-montażowych polegających na dostawie i montażu zewnętrznego podnośnika nożycowego mocowanego na północnej ścianie budynku Kotłowni B1 w obiekcie „Elektrociepłowni Szo
+            - generic [ref=f3e290]:
+              - paragraph [ref=f3e291]: "Opublikowano: 2026-07-21"
+              - paragraph [ref=f3e292]: "Termin składania ofert: 2026-08-20 23:59:59"
+              - paragraph [ref=f3e293]: „ARCHE” Spółka Akcyjna
+              - paragraph [ref=f3e294]: Bytom, śląskie
+          - listitem [ref=f3e295]:
+            - link "Wykonanie zabudowy przeciwpożarowej poddasza w budynku Administracji B5 (p. 4 i 5) „Elektrociepłowni Szombierki”." [ref=f3e298] [cursor=pointer]:
+              - /url: /ogloszenia/285597
+            - paragraph [ref=f3e300]: Przedmiotem zamówienia jest wykonanie zabudowy przeciwpożarowej poddasza w budynku Administracji B5 (p. 4 i 5) „Elektrociepłowni Szombierki”. Zamówienie będzie realizowane w obiekcie poprzemysłowym „Elektrociepłowni Szo
+            - generic [ref=f3e301]:
+              - paragraph [ref=f3e302]: "Opublikowano: 2026-07-21"
+              - paragraph [ref=f3e303]: "Termin składania ofert: 2026-08-20 23:59:59"
+              - paragraph [ref=f3e304]: „ARCHE” Spółka Akcyjna
+              - paragraph [ref=f3e305]: Bytom, śląskie
+          - listitem [ref=f3e306]:
+            - link "Kompleksowa dostawa i montaż dwóch wanien jacuzzi w budynku Maszynowni B3 w obiekcie „Elektrociepłowni Szombierki”" [ref=f3e309] [cursor=pointer]:
+              - /url: /ogloszenia/285562
+            - paragraph [ref=f3e311]: Przedmiotem zamówienia jest kompleksowa dostawa i montaż dwóch wanien jacuzzi w budynku Maszynowni B3 w obiekcie „Elektrociepłowni Szombierki”. Zamówienie będzie realizowane w obiekcie poprzemysłowym „Elektrociepłowni S
+            - generic [ref=f3e312]:
+              - paragraph [ref=f3e313]: "Opublikowano: 2026-07-21"
+              - paragraph [ref=f3e314]: "Termin składania ofert: 2026-08-20 23:59:59"
+              - paragraph [ref=f3e315]: „ARCHE” Spółka Akcyjna
+              - paragraph [ref=f3e316]: Bytom, śląskie
+        - generic [ref=f3e317]:
+          - button "Poprzednia strona" [disabled]:
+            - generic:
+              - generic:
+                - text: Poprzednia
+                - generic: strona
+          - generic [ref=f3e318]: "1"
+          - button "Następna strona" [ref=f3e319] [cursor=pointer]:
+            - generic [ref=f3e323]:
+              - text: Następna
+              - generic: strona
+      - button "Przeszukaj starą Bazę Konkurencyjności Strona zostanie otwarta w nowym oknie" [ref=f3e325] [cursor=pointer]:
+        - generic [ref=f3e329]:
+          - text: Przeszukaj starą Bazę Konkurencyjności
+          - generic: Strona zostanie otwarta w nowym oknie
+  - contentinfo [ref=f3e330]:
+    - navigation "Nawigacja w stopce" [ref=f3e331]:
+      - list [ref=f3e332]:
+        - listitem [ref=f3e333]:
+          - link "Pomoc" [ref=f3e334] [cursor=pointer]:
+            - /url: /pomoc
+        - listitem [ref=f3e335]:
+          - link "Regulamin" [ref=f3e336] [cursor=pointer]:
+            - /url: /regulamin
+        - listitem [ref=f3e337]:
+          - link "Komunikaty" [ref=f3e338] [cursor=pointer]:
+            - /url: /komunikaty
+        - listitem [ref=f3e339]:
+          - link "Deklaracja dostępności" [ref=f3e340] [cursor=pointer]:
+            - /url: /deklaracja-dostepnosci

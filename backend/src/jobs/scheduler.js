@@ -2,6 +2,8 @@ import cron from 'node-cron';
 import { env } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { runTenderFetch } from './fetchTenders.js';
+import { runWaloryzacjaMonitor } from './monitorWaloryzacji.js';
+import { runSwzMonitor } from './monitorSwz.js';
 import { runPodprogowyMonitor } from './monitorPodprogowy.js';
 import { runSejfMonitor } from './monitorSejf.js';
 import { runDostepnoscMonitor } from './dostepnosc-platformy.js';
@@ -22,6 +24,18 @@ export function schedulerJobs(cfg = env) {
       expression: cfg.TENDER_FETCH_CRON,
       timezone: cfg.SCHEDULER_TZ,
       run: () => runTenderFetch({ pages: 2 }),
+    },
+    {
+      name: 'waloryzacja-monitor',
+      expression: cfg.WALORYZACJA_MONITOR_CRON,
+      timezone: cfg.SCHEDULER_TZ,
+      run: () => runWaloryzacjaMonitor(),
+    },
+    {
+      name: 'swz-monitor',
+      expression: cfg.SWZ_MONITOR_CRON,
+      timezone: cfg.SCHEDULER_TZ,
+      run: () => runSwzMonitor(),
     },
     {
       name: 'podprogowy-monitor',

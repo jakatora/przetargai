@@ -58,6 +58,14 @@ const schema = z.object({
   BZP_NOTICE_TYPE: z.string().default('ContractNotice'),
   BZP_LOOKBACK_DAYS: z.coerce.number().int().positive().default(7),
 
+  // GUS BDL (Bank Danych Lokalnych) — wskaźniki cen dla branży kontraktu
+  // (monitoring waloryzacji, podzadanie 11/12). Odczyt BDL jest darmowy.
+  GUS_BDL_API_BASE_URL: z.string().url().default('https://bdl.stat.gov.pl/api/v1'),
+  // Mapowanie branża → ID zmiennej BDL, jako JSON (np. {"budownictwo": 217702}).
+  // Które ID odpowiada której branży trzeba potwierdzić w katalogu BDL — dlatego
+  // jest to KONFIGURACJA, a nie zaszyte liczby. Puste => job pomija każdą branżę.
+  GUS_WSKAZNIK_MAP: z.string().default('{}'),
+
   DATABASE_PATH: z.string().default('./data/data.db'),
   BACKUP_DIR: z.string().default(''),
   BACKUP_CRON: z.string().default('0 3 * * *'),
@@ -65,6 +73,15 @@ const schema = z.object({
 
   // Codzienne pobieranie przetargów o 12:00 czasu polskiego (SCHEDULER_TZ).
   TENDER_FETCH_CRON: z.string().default('0 12 * * *'),
+  // Codzienny monitoring waloryzacji o 6:00 czasu polskiego — sprawdza wskaźniki
+  // GUS dla monitorowanych umów i alarmuje po przekroczeniu progu (podzadanie 11/12).
+  WALORYZACJA_MONITOR_CRON: z.string().default('0 6 * * *'),
+  // Monitor publikacji zamawiającego (Radar SWZ 5/7) — co 6 h dociąga nowe wersje
+  // SWZ / odpowiedzi dla postępowań wciąż w oknie (przed terminem składania) i przy
+  // realnej zmianie treści tworzy wpis `zmiany_swz` (diff + opis skutku). Częściej
+  // niż raz dziennie, bo zmiany „na ostatnią chwilę" są tu istotą. Domyślnie brak
+  // wpiętego źródła => przebieg jest bezpiecznym no-opem (zero kosztu AI).
+  SWZ_MONITOR_CRON: z.string().default('0 */6 * * *'),
   // Radar zamówień podprogowych (poniżej 170 tys. zł, podzadanie 6/7) — codzienne
   // scalanie rozproszonych źródeł (BIP/platformy zakupowe/Baza Konkurencyjności) dla
   // KAŻDEJ zapisanej preferencji użytkownika. Kadencja jak tender-fetch (agregacja

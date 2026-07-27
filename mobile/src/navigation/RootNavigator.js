@@ -20,6 +20,7 @@ import Kreator118Screen from '../screens/Kreator118Screen';
 import KrokDanePodmiotuScreen from '../screens/KrokDanePodmiotuScreen';
 import AccountScreen from '../screens/AccountScreen';
 import SavedScreen from '../screens/SavedScreen';
+import BankReferencjiScreen from '../screens/BankReferencjiScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -128,6 +129,11 @@ export default function RootNavigator() {
               name="KrokDanePodmiotu"
               component={KrokDanePodmiotuScreen}
               options={{ title: 'Pożycz doświadczenie' }}
+            />
+            <Stack.Screen
+              name="BankReferencji"
+              component={BankReferencjiScreen}
+              options={{ title: 'Bank referencji' }}
             />
             <Stack.Screen
               name="Saved"
