@@ -110,8 +110,12 @@ const KWARTAL_RZYMSKI = { i: 1, ii: 2, iii: 3, iv: 4 };
  * Obsługuje: ISO „2026-09-01"/„2026-09", kwartał („II kwartał 2026", „2 kw. 2026",
  * „Q2 2026"), nazwę miesiąca („wrzesień 2026") i sam rok („2026"). Zwraca null,
  * gdy nie da się ustalić choćby roku (np. „do ustalenia").
+ *
+ * Eksportowane, bo krok 2/6 („plan przygotowań", `services/przygotowaniaPlanu.js`)
+ * cofa kamienie milowe od TEGO SAMEGO terminu — reuse zamiast drugiego parsera dat
+ * (rozjazd dwóch parserów byłby odpowiednikiem buga P-1 z dopasowania CPV).
  */
-function parsujTermin(wartosc) {
+export function parsujTermin(wartosc) {
   const t = normalize(wartosc);
   if (!t) return null;
 
