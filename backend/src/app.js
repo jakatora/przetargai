@@ -21,6 +21,7 @@ import przetargZobowiazanieRouter from './routes/przetargZobowiazanie.js';
 import radarSwzRouter from './routes/radarSwz.js';
 import radarPodprogowyRouter from './routes/radarPodprogowy.js';
 import sejfDokumentowRouter from './routes/sejfDokumentow.js';
+import czarnaSkrzynkaRouter from './routes/czarnaSkrzynka.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -96,6 +97,10 @@ export function createApp() {
   // podpisany PDF w base64; podpisane PDF-y bywają wielomegabajtowe), więc trasa dostaje
   // własny, większy parser JSON (10 MB) ponad globalnym limitem 1 MB — jak /umowa i /swz.
   app.use('/api/przetarg/sejf', express.json({ limit: '10mb' }), apiLimiter, sejfDokumentowRouter);
+  // Czarna skrzynka składania oferty — rejestrator lotu utrwala dowody (zrzuty ekranu i
+  // oryginał oferty w base64 bywają wielomegabajtowe), więc trasa dostaje własny, większy
+  // parser JSON (10 MB) ponad globalnym limitem 1 MB — jak /umowa, /swz i /sejf.
+  app.use('/api/przetarg/czarna-skrzynka', express.json({ limit: '10mb' }), apiLimiter, czarnaSkrzynkaRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);
