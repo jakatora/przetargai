@@ -193,6 +193,13 @@ export default function MatchFeedScreen({ navigation }) {
             <Text style={styles.headerBtn}>Radar</Text>
           </Pressable>
           <Pressable
+            onPress={() => navigation.navigate('Sejf')}
+            hitSlop={12}
+            accessibilityLabel="Sejf dokumentów firmy"
+          >
+            <Text style={styles.headerBtn}>Sejf</Text>
+          </Pressable>
+          <Pressable
             onPress={() => navigation.navigate('PrzeswietlenieUmowy')}
             hitSlop={12}
             accessibilityLabel="Prześwietlenie umowy przed podpisem"

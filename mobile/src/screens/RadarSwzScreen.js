@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import * as WebBrowser from 'expo-web-browser';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -15,6 +16,7 @@ import {
   etykietaSekcji,
   etykietaPoziomuBramki,
 } from '../lib/radarSwz';
+import { opisStatusu, etykietaLicznika } from '../lib/sejf';
 
 /**
  * Panel „RADAR SWZ" — podzadanie 7/7 ulepszenia „Radar pytań i odpowiedzi do SWZ".
@@ -57,6 +59,14 @@ function kolorDiffu(typ, k) {
   return k.textMuted;
 }
 
+/** Semantyczny ton statusu dokumentu (z lib/sejf) → para tokenów motyw.js (tło + tekst). */
+function tonNaTokeny(ton, k) {
+  if (ton === 'danger') return { tlo: k.dangerTlo, tekst: k.danger };
+  if (ton === 'ostrzezenie') return { tlo: k.ostrzezenieTlo, tekst: k.ostrzezenieTekst };
+  if (ton === 'sukces') return { tlo: k.sukcesTlo, tekst: k.sukcesAkcent };
+  return { tlo: k.neutralneTlo, tekst: k.textMuted };
+}
+
 export default function RadarSwzScreen() {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleRadaru);
@@ -85,6 +95,12 @@ export default function RadarSwzScreen() {
   const [wysylam, setWysylam] = useState(false);
   const [wyslijWynik, setWyslijWynik] = useState(null);
   const [bladAkcji, setBladAkcji] = useState(null);
+
+  // Dopasowanie sejfu dokumentów do TEGO postępowania (sejf 7/7). Leniwe: liczymy
+  // dopiero na żądanie (backend porównuje sejf z wymaganiami SWZ względem dnia złożenia).
+  const [dopasowanie, setDopasowanie] = useState(null);
+  const [ladujeDopasowanie, setLadujeDopasowanie] = useState(false);
+  const [bladDopasowania, setBladDopasowania] = useState(null);
 
   const wczytajListe = useCallback(async () => {
     setBladListy(null);
@@ -121,7 +137,25 @@ export default function RadarSwzScreen() {
     setBladAkcji(null);
     setSwzTekst('');
     setNowaWersja('');
+    setDopasowanie(null);
+    setBladDopasowania(null);
     wczytajDetal(id);
+  }
+
+  // Sejf 7/7: sprawdza sejf dokumentów względem wymagań SWZ tego postępowania.
+  // Bez body — backend bierze najnowszą zapisaną wersję SWZ i termin składania jako
+  // przewidywany dzień złożenia (override robi się przez dodanie treści SWZ w analizie/odświeżeniu).
+  async function sprawdzSejf() {
+    if (ladujeDopasowanie || !wybraneId) return;
+    setLadujeDopasowanie(true);
+    setBladDopasowania(null);
+    try {
+      setDopasowanie(await api.sejfDopasowanie(wybraneId));
+    } catch (err) {
+      setBladDopasowania(err.message);
+    } finally {
+      setLadujeDopasowanie(false);
+    }
   }
 
   function wroc() {
@@ -465,11 +499,126 @@ export default function RadarSwzScreen() {
         />
       )}
 
+      {/* ── Sejf dokumentów vs to postępowanie (sejf 7/7) ── */}
+      <Text style={styles.sekcjaTytul}>Twój sejf vs to postępowanie</Text>
+      <View style={styles.card}>
+        <Text style={styles.kartaOpis}>
+          Porównaj podmiotowe środki dowodowe z sejfu z wymaganiami SWZ tego postępowania —
+          względem przewidywanego dnia złożenia. Pokażemy, co masz świeże, co przeterminuje
+          się przed złożeniem (ważne przy przesunięciu terminu) i czego brakuje.
+        </Text>
+
+        {bladDopasowania ? <Text style={styles.dopBlad}>{bladDopasowania}</Text> : null}
+
+        {dopasowanie ? (
+          <>
+            <Text style={styles.dopDzien}>
+              Stan na przewidywany dzień złożenia: {formatDate(dopasowanie.dzien_zlozenia)}
+            </Text>
+
+            {(dopasowanie.wymagane_typy?.length ?? 0) === 0 ? (
+              <Text style={styles.dopPusto}>
+                Nie wykryliśmy w SWZ konkretnych wymaganych dokumentów. Wklej treść SWZ w
+                „Wygeneruj pytania" albo „Sprawdź publikacje" powyżej i spróbuj ponownie.
+              </Text>
+            ) : (
+              <>
+                {/* Masz świeże */}
+                <Text style={[styles.koszykTytul, { color: kolory.sukcesAkcent }]}>
+                  Masz świeże ({dopasowanie.swieze.length})
+                </Text>
+                {dopasowanie.swieze.length === 0 ? (
+                  <Text style={styles.koszykPusto}>Nic w tym koszyku.</Text>
+                ) : (
+                  dopasowanie.swieze.map((w) => {
+                    const t = tonNaTokeny(opisStatusu(w.status).ton, kolory);
+                    return (
+                      <View key={`s-${w.typ}`} style={styles.wpis}>
+                        <Text style={styles.wpisNazwa}>{w.nazwaTypu}</Text>
+                        <Text style={[styles.wpisBadge, { backgroundColor: t.tlo, color: t.tekst }]}>
+                          {etykietaLicznika(w)}
+                        </Text>
+                      </View>
+                    );
+                  })
+                )}
+
+                {/* Przeterminuje się przed złożeniem */}
+                <Text style={[styles.koszykTytul, { color: kolory.danger }]}>
+                  Przeterminuje się przed złożeniem ({dopasowanie.przeterminuja_sie.length})
+                </Text>
+                {dopasowanie.przeterminuja_sie.length === 0 ? (
+                  <Text style={styles.koszykPusto}>Nic w tym koszyku.</Text>
+                ) : (
+                  dopasowanie.przeterminuja_sie.map((w) => (
+                    <View key={`p-${w.typ}`} style={styles.wpis}>
+                      <View style={styles.wpisTresc}>
+                        <Text style={styles.wpisNazwa}>{w.nazwaTypu}</Text>
+                        <Text style={[styles.wpisLicznik, { color: kolory.danger }]}>{etykietaLicznika(w)}</Text>
+                      </View>
+                      {w.online ? (
+                        <Pressable onPress={() => otworzLink(w.online.url)} hitSlop={8} accessibilityRole="link">
+                          <Text style={styles.wpisLink}>{w.online.nazwa} →</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  ))
+                )}
+
+                {/* Brakuje */}
+                <Text style={[styles.koszykTytul, { color: kolory.ostrzezenieAkcent }]}>
+                  Brakuje — wyrób online ({dopasowanie.brakuje.length})
+                </Text>
+                {dopasowanie.brakuje.length === 0 ? (
+                  <Text style={styles.koszykPusto}>Nic w tym koszyku.</Text>
+                ) : (
+                  dopasowanie.brakuje.map((w) => (
+                    <View key={`b-${w.typ}`} style={styles.wpis}>
+                      <Text style={styles.wpisNazwa}>{w.nazwaTypu}</Text>
+                      {w.online ? (
+                        <Pressable onPress={() => otworzLink(w.online.url)} hitSlop={8} accessibilityRole="link">
+                          <Text style={styles.wpisLink}>{w.online.nazwa} →</Text>
+                        </Pressable>
+                      ) : (
+                        <Text style={styles.wpisBrakOnline}>brak e-usługi</Text>
+                      )}
+                    </View>
+                  ))
+                )}
+              </>
+            )}
+
+            <Button
+              title="Sprawdź ponownie"
+              variant="ghost"
+              onPress={sprawdzSejf}
+              loading={ladujeDopasowanie}
+              style={styles.dopBtn}
+            />
+          </>
+        ) : (
+          <Button
+            title="Sprawdź dokumenty w sejfie"
+            onPress={sprawdzSejf}
+            loading={ladujeDopasowanie}
+          />
+        )}
+      </View>
+
       <Text style={styles.stopka}>
         Radar SWZ jest pomocniczy — nie zastępuje śledzenia oficjalnej platformy zakupowej zamawiającego.
       </Text>
     </Screen>
   );
+}
+
+async function otworzLink(url) {
+  if (!url) return;
+  try {
+    await WebBrowser.openBrowserAsync(url);
+  } catch {
+    /* nie udało się otworzyć przeglądarki — nic nie robimy */
+  }
 }
 
 const tworzStyleRadaru = tworzStyle((k) => ({
@@ -602,6 +751,36 @@ const tworzStyleRadaru = tworzStyle((k) => ({
   },
   przelacznik: { marginTop: spacing.md, paddingVertical: spacing.xs },
   przelacznikText: { fontSize: 14, fontWeight: '700' },
+
+  // Dopasowanie sejf ↔ SWZ (sejf 7/7).
+  dopBlad: { fontSize: 13, color: k.danger, lineHeight: 18, marginTop: spacing.sm },
+  dopDzien: { fontSize: 13, fontWeight: '700', color: k.text, marginTop: spacing.sm, marginBottom: spacing.xs },
+  dopPusto: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginTop: spacing.sm },
+  dopBtn: { marginTop: spacing.md },
+  koszykTytul: { fontSize: 13, fontWeight: '800', marginTop: spacing.md, marginBottom: spacing.xs },
+  koszykPusto: { fontSize: 13, color: k.textMuted, fontStyle: 'italic' },
+  wpis: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: k.border,
+  },
+  wpisTresc: { flex: 1 },
+  wpisNazwa: { flex: 1, fontSize: 14, color: k.text, fontWeight: '600', lineHeight: 19 },
+  wpisLicznik: { fontSize: 12, fontWeight: '700', marginTop: 2 },
+  wpisBadge: {
+    fontSize: 11,
+    fontWeight: '800',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+  },
+  wpisLink: { fontSize: 13, fontWeight: '700', color: k.blue },
+  wpisBrakOnline: { fontSize: 12, color: k.textMuted, fontStyle: 'italic' },
 
   stopka: { fontSize: 12, color: k.textMuted, lineHeight: 17, marginTop: spacing.lg, fontStyle: 'italic' },
 }));

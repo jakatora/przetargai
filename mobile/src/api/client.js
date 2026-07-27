@@ -172,4 +172,32 @@ export const api = {
   /** Ręczny trigger odświeżenia (adaptery + domówienie regulaminów) → { odswiezono, dodano, ... }. */
   podprogoweOdswiez: (payload = {}) =>
     request('/api/przetarg/podprogowe/odswiez', { method: 'POST', body: payload }),
+
+  // ----- Sejf dokumentów firmy (licznik świeżości, panel 7/7) -----
+  // Podręczny sejf podmiotowych środków dowodowych (KRK, US, ZUS, polisa OC, wpis do
+  // rejestru, wykaz robót, uprawnienia) z licznikiem dni ważności i statusem „gotowy /
+  // zamów nowy / przeterminowany". Prefiks tras: `/api/przetarg/sejf`. Oryginały plików
+  // (XML/podpisany PDF) idą base64 — backend wykrywa format i podpis, ostrzega przy skanie.
+  /** Katalog typów dokumentów (ważność, czas urzędu, link „gdzie wyrobić online"). */
+  sejfKatalog: () => request('/api/przetarg/sejf/katalog'),
+  /** Lista dokumentów użytkownika wzbogacona o licznik dni + status + link online. */
+  sejfDokumenty: () => request('/api/przetarg/sejf/dokumenty'),
+  /** Dodanie dokumentu: { typ, data_wystawienia?, okres_waznosci_dni?, notatka? }. */
+  sejfDodaj: (payload) => request('/api/przetarg/sejf/dokumenty', { method: 'POST', body: payload }),
+  /** Edycja pól dokumentu (częściowa). */
+  sejfEdytuj: (id, payload) =>
+    request(`/api/przetarg/sejf/dokumenty/${id}`, { method: 'PATCH', body: payload }),
+  /** Usunięcie dokumentu (skopowane do właściciela). */
+  sejfUsun: (id) => request(`/api/przetarg/sejf/dokumenty/${id}`, { method: 'DELETE', body: {} }),
+  /** Upload ORYGINAŁU (base64): { plik_base64, nazwa_pliku? } → { dokument, ostrzezenie, detekcja }. */
+  sejfWgrajPlik: (id, payload) =>
+    request(`/api/przetarg/sejf/dokumenty/${id}/plik`, { method: 'POST', body: payload }),
+  /**
+   * Dopasowanie sejfu do postępowania z Radaru SWZ względem PRZEWIDYWANEGO dnia złożenia.
+   * Body opcjonalne: { swz?, wymagane_typy?, dzien_zlozenia? } (bez nich backend bierze
+   * najnowszą zapisaną wersję SWZ i termin składania). Zwraca trzy koszyki:
+   * { swieze, przeterminuja_sie, brakuje } + linki „gdzie wyrobić online".
+   */
+  sejfDopasowanie: (postepowanieId, payload = {}) =>
+    request(`/api/przetarg/sejf/dopasowanie/${postepowanieId}`, { method: 'POST', body: payload }),
 };
