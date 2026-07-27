@@ -73,6 +73,14 @@ const schema = z.object({
   // TYLKO dla nowo dodanych ogłoszeń (dedup po hash_dedup), więc częstsze przebiegi
   // nie mnożą kosztu tego samego znaleziska. Brak zapisanych preferencji => no-op.
   PODPROGOWY_MONITOR_CRON: z.string().default('0 7 * * *'),
+  // Sejf dokumentów firmy (podzadanie 6/7) — codzienne przypomnienia z wyprzedzeniem.
+  // Skanuje dokumenty każdego użytkownika i alarmuje o tych, które weszły w okno „zamów
+  // nowy" liczone przez `dzienAlertu` (data ważności − realny czas urzędu z katalogu):
+  // KRK pocztą (~21 dni) zapala alert istotnie wcześniej niż US/ZUS (~7 dni). Kadencja
+  // jak monitoring (agregacja stanu, nie zmiany „na ostatnią chwilę"): raz dziennie o
+  // 8:00 czasu polskiego, odsunięte od waloryzacji (6:00) i podprogowego (7:00). Bez
+  // sieci ani płatnego AI — czysta arytmetyka dat. Brak dokumentów => no-op.
+  SEJF_MONITOR_CRON: z.string().default('0 8 * * *'),
   // Maks. wywołań AI na usera na przebieg dopasowań. Pula kandydatów jest
   // rankowana darmową heurystyką; AI ocenia tylko czołówkę (§5 planu migracji).
   AI_RERANK_TOP_N: z.coerce.number().int().nonnegative().default(30),

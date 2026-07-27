@@ -14,6 +14,7 @@ import { env } from '../src/config/env.js';
 const CFG = {
   TENDER_FETCH_CRON: '0 12 * * *',
   PODPROGOWY_MONITOR_CRON: '0 7 * * *',
+  SEJF_MONITOR_CRON: '0 8 * * *',
   BACKUP_CRON: '0 3 * * *',
   SCHEDULER_TZ: 'Europe/Warsaw',
 };
@@ -28,6 +29,13 @@ test('schedulerJobs — cykliczny monitor zamówień podprogowych (podzadanie 6/
   const job = schedulerJobs(CFG).find((j) => j.name === 'podprogowy-monitor');
   assert.ok(job, 'brak zadania cyklicznego monitora podprogowego');
   assert.equal(job.expression, '0 7 * * *');
+  assert.equal(typeof job.run, 'function');
+});
+
+test('schedulerJobs — cykliczny monitor sejfu dokumentów (podzadanie 6/7)', () => {
+  const job = schedulerJobs(CFG).find((j) => j.name === 'sejf-monitor');
+  assert.ok(job, 'brak zadania cyklicznego monitora sejfu');
+  assert.equal(job.expression, '0 8 * * *');
   assert.equal(typeof job.run, 'function');
 });
 

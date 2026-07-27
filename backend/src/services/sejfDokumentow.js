@@ -240,6 +240,11 @@ export function createSejfDokumentow(db, { magazynPlikow = magazynNaDysku() } = 
   const _byUser = lazy(db, `
     SELECT * FROM sejf_dokumenty WHERE user_id = ?
     ORDER BY COALESCE(data_wystawienia, created_at) DESC, created_at DESC`);
+  // Skan WSZYSTKICH userów — dla cyklicznego monitora (podzadanie 6/7), grupując po
+  // właścicielu (jak `preferencjeRadaruRepo.listAll` w monitorze podprogowym).
+  const _wszystkie = lazy(db, `
+    SELECT * FROM sejf_dokumenty
+    ORDER BY user_id ASC, COALESCE(data_wystawienia, created_at) DESC, created_at DESC`);
   const _delete = lazy(db, `DELETE FROM sejf_dokumenty WHERE id = ? AND user_id = ?`);
   const _setPlik = lazy(db, `
     UPDATE sejf_dokumenty
@@ -310,6 +315,16 @@ export function createSejfDokumentow(db, { magazynPlikow = magazynNaDysku() } = 
   }
 
   /**
+   * Dokumenty WSZYSTKICH użytkowników, wzbogacone licznikiem świeżości (status/dni).
+   * Dla cyklicznego monitora przypomnień (jobs/monitorSejf.js) — przelot po całej
+   * bazie. `dzienOdniesienia` wstrzykiwany (test/monitor sam podaje „dziś").
+   * @param {{dzienOdniesienia?: string}} [opts]
+   */
+  function listaWszystkich(opts = {}) {
+    return _wszystkie().all().map((row) => opiszDokument(row, opts));
+  }
+
+  /**
    * Wgrywa oryginalny plik dokumentu: wykrywa format i podpis, zapisuje bajty BEZ
    * modyfikacji, ustawia `plik_url`/`plik_format`/`flaga_podpis_elektroniczny`.
    * Skan papieru (obraz w PDF) jest przyjmowany, ale flaga = false + ostrzeżenie;
@@ -352,5 +367,5 @@ export function createSejfDokumentow(db, { magazynPlikow = magazynNaDysku() } = 
     return { rekord: pobierz(userId, id), ostrzezenie, detekcja };
   }
 
-  return { utworz, pobierz, lista, aktualizuj, usun, zapiszPlik };
+  return { utworz, pobierz, lista, listaWszystkich, aktualizuj, usun, zapiszPlik };
 }

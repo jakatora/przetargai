@@ -3,6 +3,7 @@ import { env } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { runTenderFetch } from './fetchTenders.js';
 import { runPodprogowyMonitor } from './monitorPodprogowy.js';
+import { runSejfMonitor } from './monitorSejf.js';
 import { createBackup } from '../services/backup.js';
 
 const tasks = [];
@@ -26,6 +27,12 @@ export function schedulerJobs(cfg = env) {
       expression: cfg.PODPROGOWY_MONITOR_CRON,
       timezone: cfg.SCHEDULER_TZ,
       run: () => runPodprogowyMonitor(),
+    },
+    {
+      name: 'sejf-monitor',
+      expression: cfg.SEJF_MONITOR_CRON,
+      timezone: cfg.SCHEDULER_TZ,
+      run: () => runSejfMonitor(),
     },
     {
       name: 'backup',
