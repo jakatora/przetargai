@@ -24,6 +24,7 @@ import BankReferencjiScreen from '../screens/BankReferencjiScreen';
 import StraznikWezwaniaScreen from '../screens/StraznikWezwaniaScreen';
 import KalkulatorPunktowScreen from '../screens/KalkulatorPunktowScreen';
 import KontrolerGwarancjiScreen from '../screens/KontrolerGwarancjiScreen';
+import ObronaCenyScreen from '../screens/ObronaCenyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -152,6 +153,11 @@ export default function RootNavigator() {
               name="KontrolerGwarancji"
               component={KontrolerGwarancjiScreen}
               options={{ title: 'Gwarancja wadialna' }}
+            />
+            <Stack.Screen
+              name="ObronaCeny"
+              component={ObronaCenyScreen}
+              options={{ title: 'Obrona ceny' }}
             />
             <Stack.Screen
               name="Saved"

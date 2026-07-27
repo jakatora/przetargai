@@ -376,6 +376,12 @@ export default function MatchDetailScreen({ route, navigation }) {
           variant="ghost"
           style={styles.gap}
         />
+        <Button
+          title="Asystent obrony ceny (art. 224)"
+          onPress={() => navigation.navigate('ObronaCeny', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
       </View>
 
       <Text style={styles.sectionTitle}>Etap i notatki</Text>
