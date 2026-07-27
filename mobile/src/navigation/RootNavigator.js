@@ -21,6 +21,9 @@ import KrokDanePodmiotuScreen from '../screens/KrokDanePodmiotuScreen';
 import AccountScreen from '../screens/AccountScreen';
 import SavedScreen from '../screens/SavedScreen';
 import BankReferencjiScreen from '../screens/BankReferencjiScreen';
+import StraznikWezwaniaScreen from '../screens/StraznikWezwaniaScreen';
+import KalkulatorPunktowScreen from '../screens/KalkulatorPunktowScreen';
+import KontrolerGwarancjiScreen from '../screens/KontrolerGwarancjiScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -134,6 +137,21 @@ export default function RootNavigator() {
               name="BankReferencji"
               component={BankReferencjiScreen}
               options={{ title: 'Bank referencji' }}
+            />
+            <Stack.Screen
+              name="StraznikWezwania"
+              component={StraznikWezwaniaScreen}
+              options={{ title: 'Strażnik wezwania' }}
+            />
+            <Stack.Screen
+              name="KalkulatorPunktow"
+              component={KalkulatorPunktowScreen}
+              options={{ title: 'Kalkulator punktów' }}
+            />
+            <Stack.Screen
+              name="KontrolerGwarancji"
+              component={KontrolerGwarancjiScreen}
+              options={{ title: 'Gwarancja wadialna' }}
             />
             <Stack.Screen
               name="Saved"

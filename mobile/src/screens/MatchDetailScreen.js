@@ -351,6 +351,33 @@ export default function MatchDetailScreen({ route, navigation }) {
         />
       </View>
 
+      <Text style={styles.sectionTitle}>Narzędzia do tej oferty</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
+          Nie musisz być najtańszy — sprawdź, o ile drożej możesz dać, wygrywając kryteriami.
+          Zanim złożysz wadium gwarancją, przekontroluj jej treść. A gdy przyjdzie wezwanie do
+          uzupełnienia — odlicz czas i nie odpadnij formalnie.
+        </Text>
+        <Button
+          title="Kalkulator punktów (cena punktu)"
+          onPress={() => navigation.navigate('KalkulatorPunktow', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
+          title="Kontroler gwarancji wadialnej"
+          onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
+          title="Strażnik wezwania do uzupełnienia"
+          onPress={() => navigation.navigate('StraznikWezwania', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+      </View>
+
       <Text style={styles.sectionTitle}>Etap i notatki</Text>
       <View style={styles.card}>
         <Text style={styles.strPodtytul}>
