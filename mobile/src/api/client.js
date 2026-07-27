@@ -200,4 +200,34 @@ export const api = {
    */
   sejfDopasowanie: (postepowanieId, payload = {}) =>
     request(`/api/przetarg/sejf/dopasowanie/${postepowanieId}`, { method: 'POST', body: payload }),
+
+  // ----- Czarna skrzynka składania oferty (rejestrator lotu, panel 7/7) -----
+  // Prowadzi JEDNĄ próbę złożenia oferty jak rejestrator lotu: append-only taśma
+  // zdarzeń ze znacznikiem czasu serwera, zrzuty ekranu, suma kontrolna (SHA-256) pliku
+  // oferty. Gdy platforma zawiedzie — `awaria` w jednym kroku składa pakiet dowodowy i
+  // gotowe pismo o przedłużenie terminu (wysyłane PRZED upływem terminu — po nim
+  // czynności nie da się powtórzyć). Prefiks tras: `/api/przetarg/czarna-skrzynka`,
+  // trasy skopowane do właściciela SESJI. Bez płatnego AI — pismo to czysta funkcja.
+  /** Rozpoczyna sesję rejestratora. Body opcjonalne: { postepowanie_id? } → { sesja }. */
+  czarnaSkrzynkaRozpocznij: (payload = {}) =>
+    request('/api/przetarg/czarna-skrzynka/sesje', { method: 'POST', body: payload }),
+  /** Sesja właściciela + append-only taśma zdarzeń: { sesja, zdarzenia }. */
+  czarnaSkrzynkaSesja: (id) => request(`/api/przetarg/czarna-skrzynka/sesje/${id}`),
+  /** Dopisuje zdarzenie do taśmy (krok/awaria): { typ, opis? } → { zdarzenie }. */
+  czarnaSkrzynkaZdarzenie: (id, payload) =>
+    request(`/api/przetarg/czarna-skrzynka/sesje/${id}/zdarzenia`, { method: 'POST', body: payload }),
+  /** Zapis ORYGINAŁU zrzutu ekranu (base64): { plik_base64, opis? } → { zdarzenie }. */
+  czarnaSkrzynkaZrzut: (id, payload) =>
+    request(`/api/przetarg/czarna-skrzynka/sesje/${id}/zrzut`, { method: 'POST', body: payload }),
+  /** Suma kontrolna (SHA-256) pliku oferty + oryginał: { plik_base64, nazwa_pliku? } → { hash, plik_url, sesja }. */
+  czarnaSkrzynkaOferta: (id, payload) =>
+    request(`/api/przetarg/czarna-skrzynka/sesje/${id}/oferta`, { method: 'POST', body: payload }),
+  /** Buduje i zwraca tamper-evident pakiet dowodowy: { pakiet }. */
+  czarnaSkrzynkaPakiet: (id) => request(`/api/przetarg/czarna-skrzynka/sesje/${id}/pakiet`),
+  /** Składa pismo o przedłużenie z pakietu + meta postępowania: { meta? } → { pismo }. */
+  czarnaSkrzynkaPismo: (id, meta = {}) =>
+    request(`/api/przetarg/czarna-skrzynka/sesje/${id}/pismo`, { method: 'POST', body: { meta } }),
+  /** Panic button: DETEKCJA awarii → PAKIET → PISMO w jednym kroku: { meta? } → { awaria, pakiet, pismo }. */
+  czarnaSkrzynkaAwaria: (id, meta = {}) =>
+    request(`/api/przetarg/czarna-skrzynka/sesje/${id}/awaria`, { method: 'POST', body: { meta } }),
 };

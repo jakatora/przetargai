@@ -11,6 +11,7 @@ import WynikKontroliScreen from '../screens/WynikKontroliScreen';
 import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
 import RadarSwzScreen from '../screens/RadarSwzScreen';
 import SejfScreen from '../screens/SejfScreen';
+import RejestratorOfertyScreen from '../screens/RejestratorOfertyScreen';
 import PodprogoweDetailScreen from '../screens/PodprogoweDetailScreen';
 import PodprogoweUstawieniaScreen from '../screens/PodprogoweUstawieniaScreen';
 import Kreator118Screen from '../screens/Kreator118Screen';
@@ -90,6 +91,11 @@ export default function RootNavigator() {
               name="Sejf"
               component={SejfScreen}
               options={{ title: 'Sejf dokumentów' }}
+            />
+            <Stack.Screen
+              name="RejestratorOferty"
+              component={RejestratorOfertyScreen}
+              options={{ title: 'Rejestrator oferty' }}
             />
             <Stack.Screen
               name="PodprogoweDetail"

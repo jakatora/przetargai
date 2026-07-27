@@ -353,6 +353,26 @@ export default function MatchDetailScreen({ route, navigation }) {
         </View>
       </View>
 
+      <Text style={styles.sectionTitle}>Składasz ofertę? Włącz rejestrator</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
+          Rejestrator prowadzi wysyłkę krok po kroku i utrwala dowody (zrzuty, suma
+          kontrolna oferty, przebieg sesji). Jeśli platforma zawiedzie, jednym ruchem
+          złożysz pakiet dowodowy i pismo o przedłużenie terminu — złóż ofertę z zapasem
+          24 h przed terminem.
+        </Text>
+        <Button
+          title="Otwórz rejestrator oferty"
+          onPress={() => navigation.navigate('RejestratorOferty', {
+            termin: tender.deadline,
+            postepowanieId: match.id,
+            nazwa: tender.title,
+          })}
+          variant="primary"
+          style={styles.gap}
+        />
+      </View>
+
       {status === 'przegrana' ? (
         <>
           <Text style={styles.sectionTitle}>Przegrana? Prześwietl ofertę zwycięzcy</Text>
