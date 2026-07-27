@@ -15,6 +15,7 @@ const CFG = {
   TENDER_FETCH_CRON: '0 12 * * *',
   PODPROGOWY_MONITOR_CRON: '0 7 * * *',
   SEJF_MONITOR_CRON: '0 8 * * *',
+  DOSTEPNOSC_PLATFORMY_CRON: '*/15 * * * *',
   BACKUP_CRON: '0 3 * * *',
   SCHEDULER_TZ: 'Europe/Warsaw',
 };
@@ -36,6 +37,14 @@ test('schedulerJobs — cykliczny monitor sejfu dokumentów (podzadanie 6/7)', (
   const job = schedulerJobs(CFG).find((j) => j.name === 'sejf-monitor');
   assert.ok(job, 'brak zadania cyklicznego monitora sejfu');
   assert.equal(job.expression, '0 8 * * *');
+  assert.equal(typeof job.run, 'function');
+});
+
+test('schedulerJobs — cykliczny monitor dostępności platformy (Czarna skrzynka 2/7)', () => {
+  const job = schedulerJobs(CFG).find((j) => j.name === 'dostepnosc-platformy');
+  assert.ok(job, 'brak zadania monitora dostępności platformy');
+  assert.equal(job.expression, '*/15 * * * *');
+  assert.equal(job.timezone, 'Europe/Warsaw');
   assert.equal(typeof job.run, 'function');
 });
 

@@ -143,6 +143,8 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
   const _zdarzenieById = lazy(db, `SELECT * FROM czarna_skrzynka_zdarzenie WHERE id = ?`);
   const _zdarzeniaBySesja = lazy(db, `
     SELECT * FROM czarna_skrzynka_zdarzenie WHERE sesja_id = ? ORDER BY id ASC`);
+  const _sesjeOtwarte = lazy(db, `
+    SELECT * FROM czarna_skrzynka_sesja WHERE hash_oferty IS NULL ORDER BY created_at ASC, id ASC`);
 
   /** Surowy wiersz sesji przypisany do właściciela (albo null). */
   function wierszSesji(userId, sesjaId) {
@@ -226,6 +228,32 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
     return { hash, plikUrl, sesja: sesja(userId, sesjaId) };
   }
 
+  /**
+   * Otwarte sesje WSZYSTKICH użytkowników — próby złożenia oferty jeszcze w toku
+   * (oferta niezłożona: `hash_oferty IS NULL`). To one są w oknie „przed terminem",
+   * więc monitor dostępności platformy (job 2/7) utrwala w nich wynik pingu. Zapytanie
+   * systemowe (bez izolacji po user_id) — wołane wyłącznie przez scheduler, nie z żądania.
+   */
+  function sesjeOtwarte() {
+    return _sesjeOtwarte().all();
+  }
+
+  /**
+   * Utrwala wynik cyklicznego sprawdzenia dostępności platformy jako wpis 'ping' w
+   * append-only logu sesji (dowód (nie)dostępności ze znacznikiem czasu serwera + strefą).
+   * Operacja SYSTEMOWA (monitor pinguje dla właściciela) — bez userId; nie czyta ani nie
+   * modyfikuje danych innego użytkownika, tylko DOKŁADA wpis do wskazanej sesji.
+   * @param {string} sesjaId
+   * @param {{url?: string, kodHttp?: number|null, czasMs?: number|null, dostepna?: boolean}} wynik
+   */
+  function zapiszPing(sesjaId, { url = '', kodHttp = null, czasMs = null, dostepna = false } = {}) {
+    if (!_sesjaById().get(sesjaId)) throw new Error('Sesja nie istnieje');
+    const kod = kodHttp == null ? 'brak odpowiedzi' : `HTTP ${kodHttp}`;
+    const opis = `Ping ${url}: ${kod}, czas odpowiedzi ${czasMs} ms — platforma `
+      + `${dostepna ? 'dostępna' : 'NIEDOSTĘPNA'}`;
+    return wstawZdarzenie(sesjaId, { typ: 'ping', opis });
+  }
+
   return {
     rozpocznijSesje,
     sesja,
@@ -233,6 +261,8 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
     dopiszZdarzenie,
     zapiszZrzut,
     zapiszOferte,
+    sesjeOtwarte,
+    zapiszPing,
     hashPliku,
   };
 }

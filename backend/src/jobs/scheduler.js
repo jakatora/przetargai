@@ -4,6 +4,7 @@ import { logger } from '../lib/logger.js';
 import { runTenderFetch } from './fetchTenders.js';
 import { runPodprogowyMonitor } from './monitorPodprogowy.js';
 import { runSejfMonitor } from './monitorSejf.js';
+import { runDostepnoscMonitor } from './dostepnosc-platformy.js';
 import { createBackup } from '../services/backup.js';
 
 const tasks = [];
@@ -33,6 +34,12 @@ export function schedulerJobs(cfg = env) {
       expression: cfg.SEJF_MONITOR_CRON,
       timezone: cfg.SCHEDULER_TZ,
       run: () => runSejfMonitor(),
+    },
+    {
+      name: 'dostepnosc-platformy',
+      expression: cfg.DOSTEPNOSC_PLATFORMY_CRON,
+      timezone: cfg.SCHEDULER_TZ,
+      run: () => runDostepnoscMonitor(),
     },
     {
       name: 'backup',

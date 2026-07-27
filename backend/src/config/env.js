@@ -81,6 +81,14 @@ const schema = z.object({
   // 8:00 czasu polskiego, odsunięte od waloryzacji (6:00) i podprogowego (7:00). Bez
   // sieci ani płatnego AI — czysta arytmetyka dat. Brak dokumentów => no-op.
   SEJF_MONITOR_CRON: z.string().default('0 8 * * *'),
+  // Monitor dostępności platformy składania ofert (Czarna skrzynka 2/7) — cykliczny
+  // ping e-Zamówień / platformy zakupowej w godzinach przed terminem. Rejestrator lotu:
+  // wynik (kod HTTP + czas odpowiedzi + znacznik czasu serwera) trafia do append-only
+  // logu KAŻDEJ otwartej sesji (oferta jeszcze niezłożona) jako dowód (nie)dostępności —
+  // KIO kładzie ciężar udowodnienia awarii na wykonawcę, a o wartości dowodowej decyduje
+  // GĘSTOŚĆ pomiarów tuż przed terminem, stąd kadencja częstsza niż dzienna. Bez otwartych
+  // sesji => no-op (zero sieci, zero kosztu). Domyślnie co 15 minut.
+  DOSTEPNOSC_PLATFORMY_CRON: z.string().default('*/15 * * * *'),
   // Maks. wywołań AI na usera na przebieg dopasowań. Pula kandydatów jest
   // rankowana darmową heurystyką; AI ocenia tylko czołówkę (§5 planu migracji).
   AI_RERANK_TOP_N: z.coerce.number().int().nonnegative().default(30),
