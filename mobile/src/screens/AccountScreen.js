@@ -310,6 +310,11 @@ export default function AccountScreen({ navigation }) {
         variant="ghost"
         onPress={() => navigation.navigate('BankReferencji')}
       />
+      <Button
+        title="Certyfikat wykonawcy — czy się opłaca?"
+        variant="ghost"
+        onPress={() => navigation.navigate('CertyfikatWykonawcy')}
+      />
 
       <CpvPicker
         widoczny={sciagaOtwarta}

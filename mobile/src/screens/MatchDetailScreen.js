@@ -382,6 +382,24 @@ export default function MatchDetailScreen({ route, navigation }) {
           variant="ghost"
           style={styles.gap}
         />
+        <Button
+          title="Strażnik terminu związania ofertą"
+          onPress={() => navigation.navigate('TerminZwiazania', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
+          title="Wykrywacz obowiązkowej wizji lokalnej"
+          onPress={() => navigation.navigate('WizjaLokalna', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
+          title="Strażnik oświadczenia konsorcjum (art. 117)"
+          onPress={() => navigation.navigate('Konsorcjum', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
       </View>
 
       <Text style={styles.sectionTitle}>Etap i notatki</Text>

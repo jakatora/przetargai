@@ -25,6 +25,10 @@ import StraznikWezwaniaScreen from '../screens/StraznikWezwaniaScreen';
 import KalkulatorPunktowScreen from '../screens/KalkulatorPunktowScreen';
 import KontrolerGwarancjiScreen from '../screens/KontrolerGwarancjiScreen';
 import ObronaCenyScreen from '../screens/ObronaCenyScreen';
+import TerminZwiazaniaScreen from '../screens/TerminZwiazaniaScreen';
+import WizjaLokalnaScreen from '../screens/WizjaLokalnaScreen';
+import KonsorcjumScreen from '../screens/KonsorcjumScreen';
+import CertyfikatWykonawcyScreen from '../screens/CertyfikatWykonawcyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -158,6 +162,26 @@ export default function RootNavigator() {
               name="ObronaCeny"
               component={ObronaCenyScreen}
               options={{ title: 'Obrona ceny' }}
+            />
+            <Stack.Screen
+              name="TerminZwiazania"
+              component={TerminZwiazaniaScreen}
+              options={{ title: 'Termin związania' }}
+            />
+            <Stack.Screen
+              name="WizjaLokalna"
+              component={WizjaLokalnaScreen}
+              options={{ title: 'Wizja lokalna' }}
+            />
+            <Stack.Screen
+              name="Konsorcjum"
+              component={KonsorcjumScreen}
+              options={{ title: 'Oświadczenie konsorcjum' }}
+            />
+            <Stack.Screen
+              name="CertyfikatWykonawcy"
+              component={CertyfikatWykonawcyScreen}
+              options={{ title: 'Certyfikat wykonawcy' }}
             />
             <Stack.Screen
               name="Saved"
