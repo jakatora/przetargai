@@ -53,6 +53,20 @@ export function formatujZl(v) {
   return `${grupy} zł`;
 }
 
+/**
+ * Jak `formatujZl`, ale ZACHOWUJE ZNAK — dla salda narastającego, które w okresie pomostu
+ * jest UJEMNE (pieniądze wyłożone z własnej kieszeni, zanim wpłynie pierwsza złotówka od
+ * zamawiającego). 180000 → „180 000 zł", -180000 → „−180 000 zł", 0/NaN/null → „0 zł".
+ * Używa typograficznego minusa (−, U+2212) — spójnie z diffem w Radarze SWZ. NIE klampuje
+ * do zera (inaczej dołek pomostu udawałby saldo zerowe i zniknąłby z wykresu).
+ * @param {number} v saldo w złotych (może być ujemne).
+ */
+export function formatujSaldo(v) {
+  const n = Math.round(liczba(v));
+  const grupy = String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return n < 0 ? `−${grupy} zł` : `${grupy} zł`;
+}
+
 /** Polska odmiana rzeczownika „miesiąc" dla liczby n (miesiąc / miesiące / miesięcy). */
 function odmianaMiesiace(n) {
   if (n === 1) return 'miesiąc';
@@ -200,5 +214,46 @@ export function podsumowanieRekomendacji(rekomendacje) {
     wymagaFinansowania: luka > 0,
     komunikat: typeof r.komunikat === 'string' ? r.komunikat : '',
     ruchy: uporzadkujRuchy(r.ruchy),
+  });
+}
+
+// ─────────────────────────── oś salda narastającego (wykres) ─────────────────
+
+/**
+ * Zamienia miesiące symulacji (services/symulacjaPlynnosci.js) w punkty gotowe dla „osi"
+ * salda narastającego na ekranie decyzji: znak salda, sformatowaną kwotę i UDZIAŁ (0..1)
+ * długości słupka względem NAJWIĘKSZEJ amplitudy salda w całym przebiegu. Ujemne saldo to
+ * pieniądze wyłożone z własnej kieszeni (pomost) — ekran maluje je tonem `danger`, dodatnie
+ * tonem `sukces`; sam KOLOR (kontrast AA) dokłada z tokenów motyw.js, ta lib pozostaje bez
+ * kolorów. Odporny na braki: puste/niepoprawne wejście → pusta oś (ekran się nie wywraca),
+ * same zera → udział 0 (bez dzielenia przez zero). Nie mutuje wejścia; zwraca ZAMROŻONE
+ * punkty.
+ *
+ * @param {ReadonlyArray<{miesiac?:number, saldoNarastajaco?:number}>} miesiace
+ * @returns {Readonly<{
+ *   punkty: ReadonlyArray<Readonly<{miesiac:number, saldo:number, saldoLabel:string, ujemne:boolean, udzial:number}>>,
+ *   maksAmplituda:number, pusta:boolean}>}
+ */
+export function przygotujWykresSalda(miesiace) {
+  const lista = Array.isArray(miesiace) ? miesiace : [];
+  const salda = lista.map((m) => Math.round(liczba(m?.saldoNarastajaco)));
+  const maks = salda.reduce((szczyt, s) => Math.max(szczyt, Math.abs(s)), 0);
+
+  const punkty = lista.map((m, i) => {
+    const saldo = salda[i];
+    const nrMies = Number(m?.miesiac);
+    return Object.freeze({
+      miesiac: Number.isFinite(nrMies) && nrMies > 0 ? nrMies : i + 1,
+      saldo,
+      saldoLabel: formatujSaldo(saldo),
+      ujemne: saldo < 0,
+      udzial: maks > 0 ? Math.abs(saldo) / maks : 0,
+    });
+  });
+
+  return Object.freeze({
+    punkty: Object.freeze(punkty),
+    maksAmplituda: maks,
+    pusta: punkty.length === 0,
   });
 }

@@ -12,6 +12,7 @@ import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
 import RadarSwzScreen from '../screens/RadarSwzScreen';
 import SejfScreen from '../screens/SejfScreen';
 import RejestratorOfertyScreen from '../screens/RejestratorOfertyScreen';
+import SymulatorPlynnosciScreen from '../screens/SymulatorPlynnosciScreen';
 import PodprogoweDetailScreen from '../screens/PodprogoweDetailScreen';
 import PodprogoweUstawieniaScreen from '../screens/PodprogoweUstawieniaScreen';
 import Kreator118Screen from '../screens/Kreator118Screen';
@@ -96,6 +97,11 @@ export default function RootNavigator() {
               name="RejestratorOferty"
               component={RejestratorOfertyScreen}
               options={{ title: 'Rejestrator oferty' }}
+            />
+            <Stack.Screen
+              name="SymulatorPlynnosci"
+              component={SymulatorPlynnosciScreen}
+              options={{ title: 'Symulator płynności' }}
             />
             <Stack.Screen
               name="PodprogoweDetail"

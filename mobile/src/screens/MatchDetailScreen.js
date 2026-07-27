@@ -319,6 +319,22 @@ export default function MatchDetailScreen({ route, navigation }) {
         </View>
       </View>
 
+      <Text style={styles.sectionTitle}>Zanim wystartujesz — policz płynność</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
+          Sprawdź, ile własnej gotówki musisz wyłożyć, zanim zamawiający zapłaci — i czy Twoja
+          poduszka to udźwignie. Symulator czyta warunki płatności z SWZ i wzoru umowy, a wynik
+          (luka pomostowa i konkretne ruchy) to wsad do decyzji „startować czy nie" obok szansy
+          na wygraną.
+        </Text>
+        <Button
+          title="Otwórz symulator płynności"
+          onPress={() => navigation.navigate('SymulatorPlynnosci', { nazwa: tender.title })}
+          variant="primary"
+          style={styles.gap}
+        />
+      </View>
+
       <Text style={styles.sectionTitle}>Etap i notatki</Text>
       <View style={styles.card}>
         <Text style={styles.strPodtytul}>

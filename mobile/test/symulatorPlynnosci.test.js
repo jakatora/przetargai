@@ -4,10 +4,12 @@ import assert from 'node:assert/strict';
 import {
   STATUSY,
   formatujZl,
+  formatujSaldo,
   formatujMiesiace,
   opisStatusu,
   uporzadkujRuchy,
   podsumowanieRekomendacji,
+  przygotujWykresSalda,
 } from '../src/lib/symulatorPlynnosci.js';
 
 /*
@@ -39,6 +41,26 @@ test('formatujZl: null/NaN/ujemne → „0 zł" (pesymistycznie, nigdy nie wywra
   assert.equal(formatujZl(undefined), '0 zł');
   assert.equal(formatujZl('xx'), '0 zł');
   assert.equal(formatujZl(-5000), '0 zł');
+});
+
+// ---------------- formatujSaldo: kwota ZE ZNAKIEM (saldo narastające) ----------------
+
+test('formatujSaldo: dodatnie jak formatujZl, ale ujemne ZACHOWUJE znak (pomost)', () => {
+  assert.equal(formatujSaldo(180000), '180 000 zł');
+  assert.equal(formatujSaldo(-180000), '−180 000 zł');
+  assert.equal(formatujSaldo(-1234567), '−1 234 567 zł');
+});
+
+test('formatujSaldo: zero i braki → „0 zł" (bez znaku)', () => {
+  assert.equal(formatujSaldo(0), '0 zł');
+  assert.equal(formatujSaldo(-0), '0 zł');
+  assert.equal(formatujSaldo(null), '0 zł');
+  assert.equal(formatujSaldo('xx'), '0 zł');
+});
+
+test('formatujSaldo: zaokrągla do pełnych złotych zachowując znak', () => {
+  assert.equal(formatujSaldo(-1999.6), '−2 000 zł');
+  assert.equal(formatujSaldo(49.4), '49 zł');
 });
 
 // ---------------- formatujMiesiace: polska odmiana ----------------
@@ -201,4 +223,70 @@ test('podsumowanieRekomendacji: puste/niepoprawne wejście nie wywraca ekranu', 
   assert.equal(w.miesiaceLabel, '0 miesięcy');
   assert.deepEqual(w.ruchy, []);
   assert.ok(Object.isFrozen(w));
+});
+
+// ---------------- przygotujWykresSalda: oś salda narastającego dla ekranu ----------------
+
+// Migawka miesięcy z symulacji (kształt z services/symulacjaPlynnosci.js): saldo najpierw
+// nurkuje pod zero (pomost — firma wykłada z własnej kieszeni), potem wraca nad zero.
+const MIESIACE = Object.freeze([
+  { miesiac: 1, wydatki: 60000, wplywy: 0, saldoNarastajaco: -60000 },
+  { miesiac: 2, wydatki: 60000, wplywy: 0, saldoNarastajaco: -120000 },
+  { miesiac: 3, wydatki: 60000, wplywy: 0, saldoNarastajaco: -180000 }, // szczyt zapotrzebowania
+  { miesiac: 4, wydatki: 0, wplywy: 240000, saldoNarastajaco: 60000 },
+]);
+
+test('przygotujWykresSalda: udział słupka liczony względem największej amplitudy salda', () => {
+  const { punkty, maksAmplituda } = przygotujWykresSalda(MIESIACE);
+  assert.equal(maksAmplituda, 180000); // |najgłębszy dołek|
+  assert.equal(punkty.length, 4);
+  assert.equal(punkty[2].udzial, 1); // szczyt (−180 000) = pełna długość
+  assert.equal(punkty[0].udzial, 60000 / 180000);
+  assert.equal(punkty[3].udzial, 60000 / 180000);
+});
+
+test('przygotujWykresSalda: rozpoznaje ujemne saldo i formatuje kwotę ze znakiem', () => {
+  const { punkty } = przygotujWykresSalda(MIESIACE);
+  assert.equal(punkty[2].ujemne, true);
+  assert.equal(punkty[2].saldoLabel, '−180 000 zł');
+  assert.equal(punkty[3].ujemne, false);
+  assert.equal(punkty[3].saldoLabel, '60 000 zł');
+  assert.equal(punkty[0].miesiac, 1);
+});
+
+test('przygotujWykresSalda: brak amplitudy (same zera) → udział 0, bez dzielenia przez zero', () => {
+  const { punkty, maksAmplituda } = przygotujWykresSalda([
+    { miesiac: 1, saldoNarastajaco: 0 },
+    { miesiac: 2, saldoNarastajaco: 0 },
+  ]);
+  assert.equal(maksAmplituda, 0);
+  assert.ok(punkty.every((p) => p.udzial === 0));
+  assert.ok(punkty.every((p) => p.ujemne === false));
+});
+
+test('przygotujWykresSalda: numeruje miesiące od 1, gdy pole „miesiac" brakuje/śmieci', () => {
+  const { punkty } = przygotujWykresSalda([
+    { saldoNarastajaco: -1000 },
+    { miesiac: null, saldoNarastajaco: -2000 },
+  ]);
+  assert.equal(punkty[0].miesiac, 1);
+  assert.equal(punkty[1].miesiac, 2);
+});
+
+test('przygotujWykresSalda: puste/niepoprawne wejście → pusta, zamrożona oś', () => {
+  for (const zle of [[], null, undefined, 'x']) {
+    const w = przygotujWykresSalda(zle);
+    assert.deepEqual(w.punkty, []);
+    assert.equal(w.pusta, true);
+    assert.equal(w.maksAmplituda, 0);
+    assert.ok(Object.isFrozen(w));
+    assert.ok(Object.isFrozen(w.punkty));
+  }
+});
+
+test('przygotujWykresSalda: nie mutuje wejścia i zwraca zamrożone punkty', () => {
+  const kopia = JSON.parse(JSON.stringify(MIESIACE));
+  const { punkty } = przygotujWykresSalda(MIESIACE);
+  assert.deepEqual(MIESIACE, kopia, 'wejście bez zmian');
+  assert.ok(punkty.every((p) => Object.isFrozen(p)));
 });
