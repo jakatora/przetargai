@@ -23,6 +23,7 @@ import radarPodprogowyRouter from './routes/radarPodprogowy.js';
 import sejfDokumentowRouter from './routes/sejfDokumentow.js';
 import czarnaSkrzynkaRouter from './routes/czarnaSkrzynka.js';
 import symulatorPlynnosciRouter from './routes/symulatorPlynnosci.js';
+import radarPlanowRouter from './routes/radarPlanow.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -107,6 +108,11 @@ export function createApp() {
   // limitem 1 MB — jak /umowa, /swz, /sejf i /czarna-skrzynka. Endpointy BEZSTANOWE (czyste
   // usługi liczące, bez DB i płatnego AI), pod limiterem API jak reszta tras.
   app.use('/api/przetarg/symulator-plynnosci', express.json({ limit: '10mb' }), apiLimiter, symulatorPlynnosciRouter);
+  // Radar planów postępowań — cały roczny plan zamawiającego (art. 23 Pzp) bywa długą listą
+  // pozycji, więc trasa dostaje własny, większy parser JSON (10 MB) ponad globalnym limitem
+  // 1 MB — jak /umowa, /swz, /sejf, /czarna-skrzynka i /symulator-plynnosci. Endpointy
+  // BEZSTANOWE (czyste usługi liczące, bez DB i płatnego AI), pod limiterem API jak reszta.
+  app.use('/api/przetarg/radar-planow', express.json({ limit: '10mb' }), apiLimiter, radarPlanowRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);
