@@ -400,6 +400,18 @@ export default function MatchDetailScreen({ route, navigation }) {
           variant="ghost"
           style={styles.gap}
         />
+        <Button
+          title="Tarcza tajemnicy przedsiębiorstwa"
+          onPress={() => navigation.navigate('Tajemnica', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
+          title="Kreator samooczyszczenia (art. 110)"
+          onPress={() => navigation.navigate('Samooczyszczenie', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
       </View>
 
       <Text style={styles.sectionTitle}>Etap i notatki</Text>

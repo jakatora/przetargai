@@ -29,6 +29,8 @@ import TerminZwiazaniaScreen from '../screens/TerminZwiazaniaScreen';
 import WizjaLokalnaScreen from '../screens/WizjaLokalnaScreen';
 import KonsorcjumScreen from '../screens/KonsorcjumScreen';
 import CertyfikatWykonawcyScreen from '../screens/CertyfikatWykonawcyScreen';
+import TajemnicaScreen from '../screens/TajemnicaScreen';
+import SamooczyszczenieScreen from '../screens/SamooczyszczenieScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -182,6 +184,16 @@ export default function RootNavigator() {
               name="CertyfikatWykonawcy"
               component={CertyfikatWykonawcyScreen}
               options={{ title: 'Certyfikat wykonawcy' }}
+            />
+            <Stack.Screen
+              name="Tajemnica"
+              component={TajemnicaScreen}
+              options={{ title: 'Tajemnica przedsiębiorstwa' }}
+            />
+            <Stack.Screen
+              name="Samooczyszczenie"
+              component={SamooczyszczenieScreen}
+              options={{ title: 'Samooczyszczenie' }}
             />
             <Stack.Screen
               name="Saved"
