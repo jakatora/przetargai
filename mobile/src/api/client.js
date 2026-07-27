@@ -230,4 +230,23 @@ export const api = {
   /** Panic button: DETEKCJA awarii → PAKIET → PISMO w jednym kroku: { meta? } → { awaria, pakiet, pismo }. */
   czarnaSkrzynkaAwaria: (id, meta = {}) =>
     request(`/api/przetarg/czarna-skrzynka/sesje/${id}/awaria`, { method: 'POST', body: { meta } }),
+
+  // ----- Symulator płynności „czy udźwigniesz kontrakt" (kalkulator decyzji, panel 5/6) -----
+  // Zanim użytkownik zdecyduje „startować czy nie", z SWZ + wzoru umowy wyliczamy model
+  // finansowy, miesięczne przepływy i lukę finansowania pomostowego, a na końcu status
+  // (udzwigniesz/napiete/luka_krytyczna) + konkretne ruchy domknięcia luki. Router jest
+  // BEZSTANOWY (nic nie utrwala, bez płatnego AI — parser deterministyczny), więc każda
+  // trasa to czysty POST bez zapisu. Prefiks tras: `/api/przetarg/symulator-plynnosci`.
+  /** Krok 1/6: { swz?, umowa? } → { parametry } (znormalizowany model finansowy). */
+  symulatorPlynnosciParametry: (payload) =>
+    request('/api/przetarg/symulator-plynnosci/parametry', { method: 'POST', body: payload }),
+  /** Krok 2/6: { parametry, kosztyMiesieczne?, czasTrwaniaMies? } → { symulacja } (przepływy + luka). */
+  symulatorPlynnosciSymulacja: (payload) =>
+    request('/api/przetarg/symulator-plynnosci/symulacja', { method: 'POST', body: payload }),
+  /** Krok 3/6: { lukaFinansowania, miesiecyPomostowych?, poduszkaGotowki?, parametry? } → { rekomendacje }. */
+  symulatorPlynnosciRekomendacje: (payload) =>
+    request('/api/przetarg/symulator-plynnosci/rekomendacje', { method: 'POST', body: payload }),
+  /** Skrót: cała ścieżka w jednym kroku: { swz?, umowa?, kosztyMiesieczne?, czasTrwaniaMies?, poduszkaGotowki? } → { parametry, symulacja, rekomendacje }. */
+  symulatorPlynnosciAnaliza: (payload) =>
+    request('/api/przetarg/symulator-plynnosci/analiza', { method: 'POST', body: payload }),
 };
