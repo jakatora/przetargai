@@ -30,15 +30,23 @@ export function migrate() {
   ).get();
 
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-  db.exec(schema);
 
   if (fresh) {
+    // ŚWIEŻA baza: pełny, aktualny schemat od razu; migracje tylko stemplujemy jako zastosowane.
+    db.exec(schema);
     const { stamped } = stampMigrations(db, MIGRATIONS_DIR);
     logger.info({ stamped }, 'Świeża baza — schemat aktualny, migracje ostemplowane');
     return { applied: [], skipped: stamped.length };
   }
 
+  // ISTNIEJĄCA baza: NAJPIERW migracje (budują/alterują kształt PRZYROSTOWO — np. 004 tworzy
+  // umowa_monitorowana bez `prog`, a 005 dodaje `prog`), a DOPIERO POTEM schema.sql dokłada
+  // genuinnie nowe tabele (CREATE IF NOT EXISTS = no-op dla już istniejących). Odwrotna
+  // kolejność wywracała aktualizację starszej bazy: schema.sql tworzył brakującą tabelę od razu
+  // w finalnym kształcie (z `prog`), po czym migracja 005 próbowała dodać `prog` drugi raz
+  // („duplicate column name: prog").
   const { applied, skipped } = runMigrations(db, MIGRATIONS_DIR);
+  db.exec(schema);
   logger.info({ applied, skipped }, 'Migracja bazy zakończona');
   return { applied, skipped };
 }

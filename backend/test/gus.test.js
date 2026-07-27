@@ -53,9 +53,11 @@ test('pusty/nietypowy payload => null (nie wybucha)', () => {
 
 // ── idZmiennejDlaBranzy ──────────────────────────────────────────────────────
 
-// Klucze to RDZENIE (tak buduje się mapę w produkcji): jeden klucz „budowl" łapie
+// Klucze to RDZENIE (tak buduje się mapę w produkcji): jeden klucz „budow" łapie
 // i „budownictwo", i „roboty budowlane". Dopasowanie: klucz ⊂ znormalizowana branża.
-const MAPA = { budowl: 217702, transport: 196562 };
+// (Uwaga: „budowl" NIE jest podłańcuchem „budownictwo" — po „budow" jest „n" — więc
+// wspólnym rdzeniem obu jest właśnie „budow".)
+const MAPA = { budow: 217702, transport: 196562 };
 
 test('dobiera zmienną po branży, odpornie na odmianę/diakrytyki/wielkość liter', () => {
   assert.equal(idZmiennejDlaBranzy('budownictwo', MAPA), 217702);

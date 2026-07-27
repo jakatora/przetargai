@@ -80,6 +80,8 @@ test('migracja: na istniejącej bazie wykonują się WSZYSTKIE migracje po kolei
     '007_rozstrzygniecia_indeks_cpv_region',
     '008_radar_swz',
     '009_radar_podprogowy',
+    '010_sejf_dokumenty',
+    '011_czarna_skrzynka',
   ]);
 });
 
@@ -215,5 +217,5 @@ test('migracja 009: radar zamówień podprogowych (feed + preferencje) powstaje 
 test('migracja: ponowne uruchomienie niczego nie zmienia (idempotencja)', () => {
   const drugie = migrate();
   assert.deepEqual(drugie.applied, []);
-  assert.equal(drugie.skipped, 9);
+  assert.equal(drugie.skipped, 11); // 11 migracji (001–011) — wszystkie już zastosowane
 });
