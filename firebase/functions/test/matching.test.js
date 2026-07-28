@@ -52,6 +52,32 @@ test('criteriaHash — niezależny od kolejności, wrażliwy na treść', () => 
   assert.notEqual(a, c, 'dopisane słowo musi zmienić odcisk');
 });
 
+test('powiadomienie o nowych dopasowaniach trafia TAKŻE na konto FREE z tokenem push', async () => {
+  // Regresja 2026-07-28: push był pod bramką premium_tier==='standard', więc realni
+  // użytkownicy (17/18 kont na Free) nie dostawali ŻADNYCH powiadomień o nowych przetargach.
+  const user = await dodajUsera(['chodnik']);
+  await users.setPushToken(user.id, 'ExponentPushToken[TEST-FREE-0001]');
+  const swiezy = await users.findById(user.id);
+  assert.equal(swiezy.premium_tier, 'free', 'warunek testu: konto ma być Free');
+  const pula = [await dodajPrzetarg('Budowa chodnika gminnego etap 1')];
+
+  const oryginalnyFetch = globalThis.fetch;
+  let push = null;
+  globalThis.fetch = async (url, opts) => {
+    if (String(url).includes('exp.host')) { push = JSON.parse(opts.body); return { ok: true, json: async () => ({}) }; }
+    return oryginalnyFetch(url, opts);
+  };
+  try {
+    const wynik = await generateMatchesForUser(swiezy, pula);
+    assert.equal(wynik.created, 1, 'heurystyka powinna dopasować przetarg po słowie kluczowym');
+    assert.ok(push, 'konto FREE z tokenem MUSI dostać push o nowych dopasowaniach');
+    assert.match(push[0].title, /Nowe dopasowane przetargi/);
+    assert.equal(push[0].data.type, 'new_matches');
+  } finally {
+    globalThis.fetch = oryginalnyFetch;
+  }
+});
+
 test('P-4: limit dzienny Free ODRACZA przetargi — kolejne dni dowożą resztę', async () => {
   const user = await dodajUsera(['chodnik']);
   const pula = [];

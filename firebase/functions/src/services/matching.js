@@ -170,7 +170,13 @@ export async function generateMatchesForUser(user, pool) {
     }
   }
 
-  if (user.premium_tier === 'standard' && user.push_token && fresh.length) {
+  // Powiadomienie o nowych dopasowaniach idzie do KAŻDEGO planu (nie tylko standard).
+  // Zmierzone 2026-07-28: 17 z 18 kont to Free, więc bramka `premium_tier==='standard'`
+  // sprawiała, że realni użytkownicy NIE dostawali żadnych powiadomień o nowych przetargach.
+  // Free i tak dostaje dopasowania (limit dobowy), a przypomnienia o terminach
+  // (remindDeadlines) od początku szły bez bramki planu — teraz jest to spójne, a codzienny
+  // push o nowych przetargach to fundament retencji.
+  if (user.push_token && fresh.length) {
     await sendPush(user.push_token, {
       title: 'Nowe dopasowane przetargi',
       body: fresh.length === 1
