@@ -93,10 +93,22 @@ function dataOdDni(dni) {
  */
 export async function pobierzOgloszeniaTed({
   lookbackDays = env.TED_LOOKBACK_DAYS,
-  rozmiarStrony = 100,
+  rozmiarStrony = 250,
   maksStron = 10,
 } = {}) {
-  const query = `(place-of-performance IN (POL)) AND (publication-date >= ${dataOdDni(lookbackDays)}) AND (form-type = competition)`;
+  /*
+   * `SORT BY publication-date DESC` — KLUCZOWE dla świeżości feedu.
+   * Bez sortowania TED oddaje domyślną kolejność, więc gdy wolumen przekracza
+   * sufit (rozmiarStrony × maksStron), NAJNOWSZE ogłoszenia potrafią wypaść poza
+   * pobrany zakres i nie trafiają do aplikacji przez wiele dni. Zmierzone na
+   * produkcji 2026-07-28: TED = 0 nowych w niedzielę i poniedziałek przy 1521
+   * dostępnych i dawnym sufcie 1000 — apka „stała". Sortowanie malejąco gwarantuje,
+   * że strona 1 to zawsze najświeższe przetargi; przy ewentualnym ucięciu tracimy
+   * najstarsze (najmniej istotne), nie najnowsze.
+   * Składnia `SORT BY` (NIE `ORDER BY`) i `limit=250` zweryfikowane na żywym API.
+   * 250 × 10 = 2500 — zapas nad zmierzonym ~1521 ogłoszeń / 7 dni.
+   */
+  const query = `(place-of-performance IN (POL)) AND (publication-date >= ${dataOdDni(lookbackDays)}) AND (form-type = competition) SORT BY publication-date DESC`;
 
   const zebrane = [];
   let total = Infinity;

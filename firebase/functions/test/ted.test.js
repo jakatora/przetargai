@@ -126,6 +126,16 @@ test('pobieranie: dokłada strony aż zbierze totalNoticeCount', async () => {
   assert.match(zapytania[0].query, /publication-date >= \d{8}/);
 });
 
+test('pobieranie: zapytanie sortuje malejąco po dacie publikacji (najnowsze na 1. stronie)', async () => {
+  // Regresja 2026-07-28: bez SORT BY najnowsze ogłoszenia TED wypadały poza sufit
+  // stron i nie trafiały do feedu przez dni. Malejące sortowanie to naprawia.
+  let zapytanie;
+  globalThis.fetch = async (url, opts) => { zapytanie = JSON.parse(opts.body).query; return stronaTed(['1-2026'], 1); };
+
+  await pobierzOgloszeniaTed({ lookbackDays: 3 });
+  assert.match(zapytanie, /SORT BY publication-date DESC\s*$/, 'sufiks SORT BY DESC jest wymagany');
+});
+
 test('pobieranie: twardy sufit stron chroni przed niespodziewanym zalewem', async () => {
   let wywolania = 0;
   globalThis.fetch = async () => { wywolania++; return stronaTed(['x-2026'], 999999); };
