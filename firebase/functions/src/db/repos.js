@@ -160,9 +160,11 @@ export const users = {
       await Promise.all(doZwolnienia.map((ref) => ref.delete()));
     }
 
-    // 2. Magic linki (kolekcja główna, kluczowana tokenem — trzeba je odszukać).
+    // 2. Magic linki i tokeny resetu hasła (kolekcje główne, kluczowane tokenem).
     const linki = await firestore.collection('magic_links').where('user_id', '==', id).get();
     await Promise.all(linki.docs.map((d) => d.ref.delete()));
+    const resety = await firestore.collection('password_resets').where('user_id', '==', id).get();
+    await Promise.all(resety.docs.map((d) => d.ref.delete()));
 
     // 3. Dokument użytkownika WRAZ z podkolekcjami.
     await firestore.recursiveDelete(firestore.collection('users').doc(id));
@@ -170,6 +172,33 @@ export const users = {
     // Wpisy `audit_logs` i `ai_usage` celowo zostają: to dane rozliczeniowe
     // i dowody bezpieczeństwa, przechowywane na innej podstawie prawnej
     // (art. 6 ust. 1 lit. c i f RODO). Nie zawierają treści profilu.
+  },
+  async setPassword(id, passwordHash) {
+    await db().collection('users').doc(id).update({ password_hash: passwordHash, updated_at: nowIso() });
+  },
+};
+
+// ============================ password_resets ============================
+// Odzyskiwanie hasła. Token trzymany WYŁĄCZNIE jako hash (docId = token_hash) — wyciek bazy
+// nie pozwala przejąć konta. Jednorazowy i krótko ważny (patrz endpointy /auth/*-password).
+
+export const passwordResets = {
+  async create({ userId, tokenHash, expiresAt }) {
+    await db().collection('password_resets').doc(tokenHash).set({
+      user_id: userId,
+      expires_at: expiresAt,
+      used_at: null,
+      created_at: nowIso(),
+    });
+    return tokenHash;
+  },
+  async findByHash(tokenHash) {
+    const snap = await db().collection('password_resets').doc(tokenHash).get();
+    return snap.exists ? { token_hash: snap.id, ...snap.data() } : null;
+  },
+  async deleteForUser(userId) {
+    const q = await db().collection('password_resets').where('user_id', '==', userId).get();
+    await Promise.all(q.docs.map((d) => d.ref.delete()));
   },
 };
 

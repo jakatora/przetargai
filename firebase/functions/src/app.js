@@ -59,6 +59,9 @@ export function createApp() {
 
   app.use('/auth/login', zgadywanieHaselLimiter);
   app.use('/auth/register', zgadywanieHaselLimiter);
+  // Reset hasła to też wektor nadużyć (spam mailem / zgadywanie kodu) — ten sam ostrzejszy limit.
+  app.use('/auth/forgot-password', zgadywanieHaselLimiter);
+  app.use('/auth/reset-password', zgadywanieHaselLimiter);
   app.use('/auth', apiLimiter, authRouter);
 
   app.use('/matches', apiLimiter, matchesRouter);

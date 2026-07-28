@@ -1,9 +1,10 @@
 import { Router } from 'express';
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired, signToken } from '../middleware/auth.js';
-import { users, profilQuota } from '../db/repos.js';
+import { users, profilQuota, passwordResets } from '../db/repos.js';
 import { zaproponujProfil } from '../services/ai.js';
 import { isValidNip, normalizeNip } from '../lib/nip.js';
 import { badRequest, conflict, unauthorized, forbidden, serviceUnavailable } from '../lib/errors.js';
@@ -11,9 +12,15 @@ import { audit } from '../lib/audit.js';
 import { publicUser } from '../lib/serialize.js';
 import { createUpgradeLink } from '../services/magicLink.js';
 import { anulujSubskrypcje } from '../services/stripe.js';
-import { sendEmail, welcomeEmail } from '../services/email.js';
+import { sendEmail, welcomeEmail, resetPasswordEmail } from '../services/email.js';
 import { backfillUser } from '../services/matching.js';
 import { logger } from '../lib/logger.js';
+
+/** Ważność kodu resetu hasła (1 h). Token w bazie tylko jako hash — wyciek nie przejmie konta. */
+const RESET_TTL_MS = 60 * 60 * 1000;
+function hashToken(token) {
+  return crypto.createHash('sha256').update(String(token)).digest('hex');
+}
 
 const router = Router();
 
@@ -127,6 +134,64 @@ router.post('/login', ah(async (req, res) => {
 
   audit({ userId: user.id, action: 'login', ip: req.ip });
   res.json({ token: signToken(user.id), user: publicUser(user) });
+}));
+
+// ---------------- odzyskiwanie hasła ----------------
+
+const forgotSchema = z.object({ email: z.string().email() });
+
+/**
+ * Prośba o reset hasła. ZAWSZE 200 z tym samym komunikatem (anty-enumeracja). Jeśli konto
+ * istnieje: kasujemy poprzednie tokeny, generujemy nowy, zapisujemy jego HASH, wysyłamy kod mailem.
+ */
+router.post('/forgot-password', ah(async (req, res) => {
+  const data = parseBody(forgotSchema, req.body);
+  const email = data.email.toLowerCase().trim();
+  const user = await users.findByEmail(email);
+
+  if (user) {
+    await passwordResets.deleteForUser(user.id);
+    const token = crypto.randomBytes(24).toString('base64url');
+    await passwordResets.create({
+      userId: user.id,
+      tokenHash: hashToken(token),
+      expiresAt: new Date(Date.now() + RESET_TTL_MS).toISOString(),
+    });
+    audit({ userId: user.id, action: 'forgot_password', ip: req.ip });
+    sendEmail({ to: email, ...resetPasswordEmail(token) })
+      .catch((err) => logger.error({ err: err.message }, 'Email resetu hasła nie wysłany'));
+  } else {
+    audit({ userId: null, action: 'forgot_password_unknown', ip: req.ip });
+  }
+
+  res.json({ ok: true, message: 'Jeśli konto o tym adresie istnieje, wysłaliśmy na nie kod do zresetowania hasła.' });
+}));
+
+const resetSchema = z.object({
+  token: z.string().min(10, 'Podaj kod z maila').max(200),
+  password: z.string().min(8, 'Hasło musi mieć min. 8 znaków').max(200),
+});
+
+/**
+ * Ustawia nowe hasło kodem z maila. Token musi istnieć, być nieużyty i nieprzeterminowany.
+ * Po sukcesie unieważniamy wszystkie tokeny użytkownika (jednorazowość) i zwracamy JWT.
+ */
+router.post('/reset-password', ah(async (req, res) => {
+  const data = parseBody(resetSchema, req.body);
+  const rec = await passwordResets.findByHash(hashToken(data.token.trim()));
+
+  if (!rec || rec.used_at || new Date(rec.expires_at).getTime() < Date.now()) {
+    audit({ userId: rec?.user_id ?? null, action: 'reset_password_invalid', ip: req.ip });
+    throw badRequest('Kod resetu jest nieprawidłowy lub wygasł. Poproś o nowy.');
+  }
+
+  const passwordHash = await bcrypt.hash(data.password, 12);
+  await users.setPassword(rec.user_id, passwordHash);
+  await passwordResets.deleteForUser(rec.user_id);
+  audit({ userId: rec.user_id, action: 'reset_password', ip: req.ip });
+
+  const user = await users.findById(rec.user_id);
+  res.json({ ok: true, token: signToken(user.id), user: publicUser(user) });
 }));
 
 // ---------------- profil ----------------

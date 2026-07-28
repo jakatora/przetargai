@@ -28,7 +28,8 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "pl.przetargai.app",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
