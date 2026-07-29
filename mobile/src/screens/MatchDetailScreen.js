@@ -219,7 +219,7 @@ export default function MatchDetailScreen({ route, navigation }) {
       tender.organization ? `Zamawiający: ${tender.organization}` : null,
       `Termin składania ofert: ${formatDate(tender.deadline)}`,
       tender.url || null,
-      '— wysłane z aplikacji PrzetargAI',
+      '— znalezione w PrzetargAI, monitoring przetargów publicznych: https://przetargai.web.app',
     ].filter(Boolean);
     try {
       await Share.share({ message: linie.join('\n'), url: tender.url || undefined, title: tender.title });

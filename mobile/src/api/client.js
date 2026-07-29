@@ -60,6 +60,8 @@ export const api = {
   forgotPassword: (payload) => request('/auth/forgot-password', { method: 'POST', body: payload, auth: false }),
   /** Ustawienie nowego hasła kodem z maila — zwraca { token, user } (od razu zalogowany). */
   resetPassword: (payload) => request('/auth/reset-password', { method: 'POST', body: payload, auth: false }),
+  /** Publiczne statystyki (bez logowania): { lacznie, nowe24h, nowe7dni } — dowód społeczny. */
+  publicStats: () => request('/stats/public', { auth: false }),
   getMe: () => request('/auth/me'),
   updateProfile: (payload) => request('/auth/me', { method: 'PATCH', body: payload }),
   /** Onboarding AI: opis firmy → { keywords, cpv } (albo { keywords: null, powod }). */
