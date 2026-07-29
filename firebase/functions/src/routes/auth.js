@@ -109,7 +109,7 @@ router.post('/register', ah(async (req, res) => {
     logger.info({ userId: user.id, ...onboarding.value }, 'Onboarding matching zakończony');
   }
 
-  res.status(201).json({ token: signToken(user.id), user: publicUser(user) });
+  res.status(201).json({ token: signToken(user.id, user.token_version ?? 0), user: publicUser(user) });
 }));
 
 // ---------------- logowanie ----------------
@@ -133,7 +133,7 @@ router.post('/login', ah(async (req, res) => {
   }
 
   audit({ userId: user.id, action: 'login', ip: req.ip });
-  res.json({ token: signToken(user.id), user: publicUser(user) });
+  res.json({ token: signToken(user.id, user.token_version ?? 0), user: publicUser(user) });
 }));
 
 // ---------------- odzyskiwanie hasła ----------------
@@ -190,8 +190,10 @@ router.post('/reset-password', ah(async (req, res) => {
   await passwordResets.deleteForUser(rec.user_id);
   audit({ userId: rec.user_id, action: 'reset_password', ip: req.ip });
 
+  // Konto ma już zwiększony token_version (setPassword) — nowy JWT dostaje NOWY `tv`,
+  // więc działa dalej, a wszystkie stare sesje właśnie zostały unieważnione.
   const user = await users.findById(rec.user_id);
-  res.json({ ok: true, token: signToken(user.id), user: publicUser(user) });
+  res.json({ ok: true, token: signToken(user.id, user.token_version ?? 0), user: publicUser(user) });
 }));
 
 // ---------------- profil ----------------
