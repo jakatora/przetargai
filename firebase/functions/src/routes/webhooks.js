@@ -144,7 +144,11 @@ async function obsluzCheckout(session) {
 
   // Sesja bywa „complete", gdy pieniądze jeszcze nie wpłynęły (przelew, odroczone
   // metody). Aktywacja przed zapłatą to rozdawanie subskrypcji za darmo.
-  if (session.payment_status !== 'paid') {
+  // ALE `no_payment_required` to prawidłowy stan płatnej sesji, w której NIE MA nic
+  // do pobrania (kupon 100% / trial ustawiony na Cenie w Stripe). Bez tego klient z
+  // pełnym rabatem miał poprawną subskrypcję w Stripe, a u nas zostawał na Free na
+  // zawsze — żadne kolejne zdarzenie by tego nie naprawiło (audyt 2026-07-29).
+  if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
     logger.info({ sessionId: session.id, status: session.payment_status },
       'Checkout zakończony, ale płatność niepotwierdzona — aktywacja wstrzymana');
     return;

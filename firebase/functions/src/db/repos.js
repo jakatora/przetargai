@@ -60,6 +60,7 @@ export const users = {
       stripe_customer_id: null,
       stripe_subscription_id: null,
       push_token: null,
+      token_version: 0,
       created_at: ts,
       updated_at: ts,
     };
@@ -174,7 +175,13 @@ export const users = {
     // (art. 6 ust. 1 lit. c i f RODO). Nie zawierają treści profilu.
   },
   async setPassword(id, passwordHash) {
-    await db().collection('users').doc(id).update({ password_hash: passwordHash, updated_at: nowIso() });
+    // `token_version++` unieważnia WSZYSTKIE wcześniej wydane tokeny JWT (patrz
+    // middleware/auth.js). Na starym koncie bez tego pola increment(1) da 1.
+    await db().collection('users').doc(id).update({
+      password_hash: passwordHash,
+      token_version: FieldValue.increment(1),
+      updated_at: nowIso(),
+    });
   },
 };
 
@@ -532,9 +539,13 @@ export const matches = {
   async detail(userId, matchId) {
     const doc = await matchCol(userId).doc(matchId).get();
     if (!doc.exists) return null;
-    const match = { id: doc.id, ...doc.data() };
-    const tender = await tenders.findById(match.tender_id);
-    return { ...match, tender_raw: tender?.raw_data ?? '{}' };
+    // Pola przetargu są ZDENORMALIZOWANE w dokumencie dopasowania (tender_title,
+    // tender_deadline…), więc szczegóły nie wymagają drugiego odczytu. Dawniej
+    // dociągaliśmy CAŁY tender (raw_data do ~700 KB) po pole `tender_raw`, którego
+    // nikt nie konsumował — 2 odczyty Firestore zamiast 1 na 5 najgorętszych trasach
+    // (GET /:id, save, feedback, streszczenie, wyniki). Trasy potrzebujące pełnego
+    // przetargu (streszczenie/wyniki) czytają go u siebie (tenders.findById).
+    return { id: doc.id, ...doc.data() };
   },
 
   async countToday(userId) {
@@ -550,6 +561,14 @@ export const matches = {
 
   async markNotified(userId, matchId) {
     await matchCol(userId).doc(matchId).update({ notified: 1 });
+  },
+
+  /** Oznacza wiele dopasowań jako powiadomione JEDNYM batchem (zamiast N round-tripów). */
+  async markNotifiedBatch(userId, matchIds) {
+    if (!matchIds?.length) return;
+    const batch = db().batch();
+    for (const id of matchIds) batch.update(matchCol(userId).doc(id), { notified: 1 });
+    await batch.commit();
   },
 };
 

@@ -61,6 +61,32 @@ test('checkout NIEOPŁACONY (przelew w drodze) nie aktywuje planu ani faktury', 
   assert.equal(await faktury.zarezerwuj(sesja), true, 'rezerwacja faktury nie może być spalona');
 });
 
+test('checkout no_payment_required (kupon 100% / trial) AKTYWUJE Standard', async () => {
+  // Regresja 2026-07-29: warunek `!== paid` traktował `no_payment_required` jak brak
+  // płatności i NIE aktywował — klient z pełnym rabatem/trialem zostawał na Free na zawsze,
+  // mimo poprawnej subskrypcji w Stripe. `no_payment_required` = płatna sesja bez kwoty.
+  const user = await dodajUsera();
+  fakturowniaDziala();
+
+  await handleEvent({
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: `cs_npr_${process.pid}`,
+        payment_status: 'no_payment_required',
+        client_reference_id: user.id,
+        customer: 'cus_npr',
+        subscription: 'sub_npr',
+        amount_total: 0,
+      },
+    },
+  });
+
+  const po = await users.findById(user.id);
+  assert.equal(po.premium_tier, 'standard',
+    'no_payment_required MUSI aktywować Standard — to prawidłowa płatna sesja, nie brak zapłaty');
+});
+
 test('checkout OPŁACONY aktywuje Standard, zapisuje Stripe ID i wystawia fakturę raz', async () => {
   const user = await dodajUsera();
   const sesja = `cs_paid_${process.pid}`;

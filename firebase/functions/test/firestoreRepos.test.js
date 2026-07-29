@@ -117,7 +117,10 @@ test('matches — duplikat niemożliwy, countToday liczy, feed sortuje od najnow
 
   const detal = await matches.detail(u.id, tender.id);
   assert.equal(detal.confidence_score, 80);
-  assert.ok(detal.tender_raw !== undefined);
+  assert.equal(detal.tender_title, 'Przetarg A', 'szczegóły niosą zdenormalizowane pola przetargu');
+  // Optymalizacja 2026-07-29: detail NIE dociąga już całego tenderu (raw_data ~700 KB)
+  // po nieużywane `tender_raw` — 1 odczyt Firestore zamiast 2.
+  assert.equal(detal.tender_raw, undefined, 'detail nie może dociągać zbędnego tender_raw');
 });
 
 test('matches — izolacja userów: cudze dopasowanie niewidoczne (IDOR z konstrukcji)', async () => {

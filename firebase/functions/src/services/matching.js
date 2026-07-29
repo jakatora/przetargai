@@ -184,7 +184,7 @@ export async function generateMatchesForUser(user, pool) {
         : `${fresh.length} nowych przetargów dopasowanych do Twojej firmy`,
       data: { type: 'new_matches', count: fresh.length },
     });
-    for (const m of fresh) await matches.markNotified(user.id, m.id);
+    await matches.markNotifiedBatch(user.id, fresh.map((m) => m.id));
   }
 
   return { created, evaluated, aiCalls };
