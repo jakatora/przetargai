@@ -34,6 +34,7 @@ import CertyfikatWykonawcyScreen from '../screens/CertyfikatWykonawcyScreen';
 import TajemnicaScreen from '../screens/TajemnicaScreen';
 import SamooczyszczenieScreen from '../screens/SamooczyszczenieScreen';
 import KalkulatorTerminowScreen from '../screens/KalkulatorTerminowScreen';
+import KalendarzTerminowScreen from '../screens/KalendarzTerminowScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -202,6 +203,11 @@ export default function RootNavigator() {
               name="KalkulatorTerminow"
               component={KalkulatorTerminowScreen}
               options={{ title: 'Kalkulator terminów' }}
+            />
+            <Stack.Screen
+              name="KalendarzTerminow"
+              component={KalendarzTerminowScreen}
+              options={{ title: 'Kalendarz terminów' }}
             />
             <Stack.Screen
               name="Saved"

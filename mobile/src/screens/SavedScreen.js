@@ -141,6 +141,15 @@ export default function SavedScreen({ navigation }) {
       data={items}
       keyExtractor={(item) => item.id}
       contentContainerStyle={items.length ? styles.list : styles.listEmpty}
+      ListHeaderComponent={items.length ? (
+        <Pressable
+          style={styles.kalendarzBtn}
+          onPress={() => navigation.navigate('KalendarzTerminow')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.kalendarzBtnTekst}>📅  Kalendarz terminów</Text>
+        </Pressable>
+      ) : null}
       renderItem={renderItem}
       ListEmptyComponent={(
         <View style={styles.center}>
@@ -158,6 +167,12 @@ export default function SavedScreen({ navigation }) {
 
 const tworzStyleZapisanych = tworzStyle((k) => ({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
+  kalendarzBtn: {
+    backgroundColor: k.wyroznienie ?? k.surface,
+    borderWidth: 1, borderColor: k.blue, borderRadius: radius.md,
+    paddingVertical: spacing.sm + 2, alignItems: 'center', marginBottom: spacing.md,
+  },
+  kalendarzBtnTekst: { fontSize: 14, fontWeight: '800', color: k.blue },
   list: { padding: spacing.lg },
   listEmpty: { flexGrow: 1 },
   card: {
