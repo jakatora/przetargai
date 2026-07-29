@@ -123,6 +123,14 @@ test('matches — duplikat niemożliwy, countToday liczy, feed sortuje od najnow
   assert.equal(detal.tender_raw, undefined, 'detail nie może dociągać zbędnego tender_raw');
 });
 
+test('tenders.countSince — liczy przetargi pobrane od danej chwili (dowód społeczny na logowaniu)', async () => {
+  await tenders.upsert({ externalId: `cs-${process.pid}-${Date.now()}`, title: 'Świeży przetarg', deadline: null });
+  const godzineTemu = new Date(Date.now() - 3600_000).toISOString();
+  const zaGodzine = new Date(Date.now() + 3600_000).toISOString();
+  assert.ok((await tenders.countSince(godzineTemu)) >= 1, 'świeżo pobrany przetarg liczy się od godziny temu');
+  assert.equal(await tenders.countSince(zaGodzine), 0, 'nic nie zostało pobrane „w przyszłości"');
+});
+
 test('matches — izolacja userów: cudze dopasowanie niewidoczne (IDOR z konstrukcji)', async () => {
   const a = await users.create({ email: 'iso-a@t.pl', passwordHash: 'h', keywords: ['x'] });
   const b = await users.create({ email: 'iso-b@t.pl', passwordHash: 'h', keywords: ['x'] });

@@ -388,6 +388,12 @@ export const tenders = {
     const agg = await db().collection('tenders').count().get();
     return agg.data().count;
   },
+
+  /** Ile przetargów pobrano od `sinceIso` (dowód społeczny na ekranie logowania). */
+  async countSince(sinceIso) {
+    const agg = await db().collection('tenders').where('fetched_at', '>=', sinceIso).count().get();
+    return agg.data().count;
+  },
 };
 
 // ============================ matches ============================

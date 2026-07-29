@@ -13,6 +13,7 @@ import webhooksRouter from './routes/webhooks.js';
 import adminRouter from './routes/admin.js';
 import legalRouter from './routes/legal.js';
 import demoRouter from './routes/demo.js';
+import statsRouter from './routes/stats.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -54,6 +55,8 @@ export function createApp() {
 
   app.use('/webhooks', webhooksRouter);
   app.use('/health', healthRouter);
+  // Publiczne statystyki (dowód społeczny na ekranie logowania) — bez auth, z limiterem.
+  app.use('/stats', apiLimiter, statsRouter);
   // Dokumenty wymagane przez App Store / Google Play (bez landingu — D-016).
   app.use('/', legalRouter);
 
