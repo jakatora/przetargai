@@ -328,6 +328,12 @@ export default function AccountScreen({ navigation }) {
         variant="ghost"
         onPress={() => navigation.navigate('CertyfikatWykonawcy')}
       />
+      <Button
+        title="Kalkulator terminów Pzp"
+        variant="ghost"
+        onPress={() => navigation.navigate('KalkulatorTerminow')}
+        style={styles.gap}
+      />
 
       <CpvPicker
         widoczny={sciagaOtwarta}

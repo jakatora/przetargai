@@ -33,6 +33,7 @@ import KonsorcjumScreen from '../screens/KonsorcjumScreen';
 import CertyfikatWykonawcyScreen from '../screens/CertyfikatWykonawcyScreen';
 import TajemnicaScreen from '../screens/TajemnicaScreen';
 import SamooczyszczenieScreen from '../screens/SamooczyszczenieScreen';
+import KalkulatorTerminowScreen from '../screens/KalkulatorTerminowScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -196,6 +197,11 @@ export default function RootNavigator() {
               name="Samooczyszczenie"
               component={SamooczyszczenieScreen}
               options={{ title: 'Samooczyszczenie' }}
+            />
+            <Stack.Screen
+              name="KalkulatorTerminow"
+              component={KalkulatorTerminowScreen}
+              options={{ title: 'Kalkulator terminów' }}
             />
             <Stack.Screen
               name="Saved"

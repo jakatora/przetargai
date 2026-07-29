@@ -412,6 +412,12 @@ export default function MatchDetailScreen({ route, navigation }) {
           variant="ghost"
           style={styles.gap}
         />
+        <Button
+          title="Kalkulator terminów (dni robocze, święta)"
+          onPress={() => navigation.navigate('KalkulatorTerminow', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
       </View>
 
       <Text style={styles.sectionTitle}>Etap i notatki</Text>

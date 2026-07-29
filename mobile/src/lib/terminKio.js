@@ -22,7 +22,7 @@
  * strefy czasowej środowiska (test, telefon) — liczymy dni kalendarzowe, nie chwile.
  */
 
-const MS_DZIEN = 24 * 60 * 60 * 1000;
+export const MS_DZIEN = 24 * 60 * 60 * 1000;
 const MS_GODZINA = 60 * 60 * 1000;
 
 /**
@@ -56,7 +56,7 @@ function dniDlaTrybu(tryb) {
  * Dla stringa ISO bierzemy pierwsze 10 znaków (YYYY-MM-DD) — deterministycznie,
  * bez przesuwania dnia przez strefę czasową (np. „...T23:30:00Z" zostaje tym dniem).
  */
-function naDzienUTC(wartosc) {
+export function naDzienUTC(wartosc) {
   if (wartosc instanceof Date) {
     if (Number.isNaN(wartosc.getTime())) return null;
     return Date.UTC(wartosc.getUTCFullYear(), wartosc.getUTCMonth(), wartosc.getUTCDate());
@@ -133,7 +133,7 @@ function ruchomeDniWolne(rok) {
 }
 
 /** Czy dany znacznik UTC (północ dnia) to dzień ustawowo wolny od pracy w PL. */
-function czyDzienUstawowoWolny(dniaMs) {
+export function czyDzienUstawowoWolny(dniaMs) {
   const d = new Date(dniaMs);
   const klucz = `${d.getUTCMonth() + 1}-${d.getUTCDate()}`;
   if (STALE_DNI_WOLNE.has(klucz)) return true;
@@ -141,13 +141,13 @@ function czyDzienUstawowoWolny(dniaMs) {
 }
 
 /** Czy dany znacznik UTC to dzień wolny w rozumieniu art. 115 KC (sobota/niedziela/święto). */
-function czyDzienWolny(dniaMs) {
+export function czyDzienWolny(dniaMs) {
   const dzienTygodnia = new Date(dniaMs).getUTCDay(); // 0 = niedziela, 6 = sobota
   if (dzienTygodnia === 0 || dzienTygodnia === 6) return true;
   return czyDzienUstawowoWolny(dniaMs);
 }
 
-function formatujDate(dniaMs) {
+export function formatujDate(dniaMs) {
   const d = new Date(dniaMs);
   const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(d.getUTCDate()).padStart(2, '0');
