@@ -346,6 +346,12 @@ export default function AccountScreen({ navigation }) {
         onPress={() => navigation.navigate('SymulatorPunktacji')}
         style={styles.gap}
       />
+      <Button
+        title="Kalkulator kar umownych"
+        variant="ghost"
+        onPress={() => navigation.navigate('KaryUmowne')}
+        style={styles.gap}
+      />
 
       <CpvPicker
         widoczny={sciagaOtwarta}

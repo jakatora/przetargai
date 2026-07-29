@@ -407,6 +407,12 @@ export default function MatchDetailScreen({ route, navigation }) {
           style={styles.gap}
         />
         <Button
+          title="Kalkulator kar umownych"
+          onPress={() => navigation.navigate('KaryUmowne', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
           title="Strażnik terminu związania ofertą"
           onPress={() => navigation.navigate('TerminZwiazania', { nazwa: tender.title })}
           variant="ghost"

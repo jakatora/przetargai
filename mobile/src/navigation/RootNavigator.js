@@ -38,6 +38,7 @@ import KalendarzTerminowScreen from '../screens/KalendarzTerminowScreen';
 import SciezkaDoOfertyScreen from '../screens/SciezkaDoOfertyScreen';
 import KalkulatorCenyScreen from '../screens/KalkulatorCenyScreen';
 import SymulatorPunktacjiScreen from '../screens/SymulatorPunktacjiScreen';
+import KaryUmowneScreen from '../screens/KaryUmowneScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -226,6 +227,11 @@ export default function RootNavigator() {
               name="SymulatorPunktacji"
               component={SymulatorPunktacjiScreen}
               options={{ title: 'Symulator punktacji' }}
+            />
+            <Stack.Screen
+              name="KaryUmowne"
+              component={KaryUmowneScreen}
+              options={{ title: 'Kary umowne' }}
             />
             <Stack.Screen
               name="Saved"
