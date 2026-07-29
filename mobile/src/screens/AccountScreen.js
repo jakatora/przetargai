@@ -340,6 +340,12 @@ export default function AccountScreen({ navigation }) {
         onPress={() => navigation.navigate('KalkulatorCeny')}
         style={styles.gap}
       />
+      <Button
+        title="Symulator punktacji oferty"
+        variant="ghost"
+        onPress={() => navigation.navigate('SymulatorPunktacji')}
+        style={styles.gap}
+      />
 
       <CpvPicker
         widoczny={sciagaOtwarta}

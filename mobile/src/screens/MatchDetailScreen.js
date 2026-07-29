@@ -383,6 +383,12 @@ export default function MatchDetailScreen({ route, navigation }) {
           style={styles.gap}
         />
         <Button
+          title="Symulator punktacji oferty"
+          onPress={() => navigation.navigate('SymulatorPunktacji', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
           title="Kontroler gwarancji wadialnej"
           onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title })}
           variant="ghost"

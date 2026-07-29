@@ -37,6 +37,7 @@ import KalkulatorTerminowScreen from '../screens/KalkulatorTerminowScreen';
 import KalendarzTerminowScreen from '../screens/KalendarzTerminowScreen';
 import SciezkaDoOfertyScreen from '../screens/SciezkaDoOfertyScreen';
 import KalkulatorCenyScreen from '../screens/KalkulatorCenyScreen';
+import SymulatorPunktacjiScreen from '../screens/SymulatorPunktacjiScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -220,6 +221,11 @@ export default function RootNavigator() {
               name="KalkulatorCeny"
               component={KalkulatorCenyScreen}
               options={{ title: 'Kalkulator ceny' }}
+            />
+            <Stack.Screen
+              name="SymulatorPunktacji"
+              component={SymulatorPunktacjiScreen}
+              options={{ title: 'Symulator punktacji' }}
             />
             <Stack.Screen
               name="Saved"
