@@ -195,6 +195,18 @@ async function obsluzCheckout(session) {
  * @returns {Promise<void>}
  */
 export async function wystawFakture(session, user, { opis } = {}) {
+  // Decyzja właściciela (2026-07-29): przy realnie pobranym 0 zł (kupon 100%,
+  // trial, odnowienie pokryte kredytem) NIE wystawiamy faktury — brak zapłaty,
+  // brak dokumentu. Zwieramy PRZED rezerwacją i Fakturownią, żeby nie spalić
+  // identyfikatora sesji i nie wołać API na darmo.
+  // `<= 0` tylko dla LICZBY: null/undefined = „Stripe nie podał kwoty" (nie zero) →
+  // wtedy NIE pomijamy, działa dotychczasowy fallback ceny katalogowej.
+  if (Number.isFinite(session.amount_total) && session.amount_total <= 0) {
+    logger.info({ sessionId: session.id, userId: user.id },
+      'Faktura pominięta — kwota 0 zł (kupon 100% / trial): brak zapłaty do zafakturowania');
+    return;
+  }
+
   if (!await faktury.zarezerwuj(session.id)) {
     logger.info({ sessionId: session.id, userId: user.id }, 'Faktura dla tej sesji już istnieje — pomijam');
     return;

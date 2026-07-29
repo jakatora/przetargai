@@ -85,6 +85,8 @@ test('checkout no_payment_required (kupon 100% / trial) AKTYWUJE Standard', asyn
   const po = await users.findById(user.id);
   assert.equal(po.premium_tier, 'standard',
     'no_payment_required MUSI aktywować Standard — to prawidłowa płatna sesja, nie brak zapłaty');
+  // Decyzja właściciela 2026-07-29: przy 0 zł NIE wystawiamy faktury (brak zapłaty).
+  assert.equal(wywolaniaFakturowni, 0, 'kwota 0 zł → żadnego wywołania Fakturowni');
 });
 
 test('checkout OPŁACONY aktywuje Standard, zapisuje Stripe ID i wystawia fakturę raz', async () => {
