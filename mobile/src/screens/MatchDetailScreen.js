@@ -276,6 +276,18 @@ export default function MatchDetailScreen({ route, navigation }) {
         <Row styles={styles} label={cpv.etykieta} value={cpv.wartosc} last />
       </View>
 
+      <Pressable
+        style={styles.sciezkaCta}
+        onPress={() => navigation.navigate('SciezkaDoOferty', { match })}
+        accessibilityRole="button"
+      >
+        <Text style={styles.sciezkaCtaTytul}>🏆 Krok po kroku do wygranej</Text>
+        <Text style={styles.sciezkaCtaOpis}>
+          Przewodnik: co zrobić na każdym etapie — od SWZ po złożenie oferty. Odhaczaj postęp.
+        </Text>
+        <Text style={styles.sciezkaCtaLink}>Otwórz przewodnik →</Text>
+      </Pressable>
+
       {wyniki ? (
         <>
           <Text style={styles.sectionTitle}>Za ile się to robi (Twój region i branża)</Text>
@@ -716,6 +728,10 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   strKropka: { fontSize: 15, color: k.blue, lineHeight: 22 },
   strPunkt: { flex: 1, fontSize: 15, color: k.text, lineHeight: 22 },
   gap: { marginTop: spacing.lg },
+  sciezkaCta: { backgroundColor: k.blue, borderRadius: radius.lg, padding: spacing.md, marginTop: spacing.md },
+  sciezkaCtaTytul: { fontSize: 16, fontWeight: '800', color: k.white },
+  sciezkaCtaOpis: { fontSize: 13, color: k.white, opacity: 0.92, lineHeight: 18, marginTop: 4 },
+  sciezkaCtaLink: { fontSize: 14, fontWeight: '800', color: k.white, marginTop: 8 },
   kontrolaEtapRzad: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: k.border,

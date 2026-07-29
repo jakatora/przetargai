@@ -35,6 +35,7 @@ import TajemnicaScreen from '../screens/TajemnicaScreen';
 import SamooczyszczenieScreen from '../screens/SamooczyszczenieScreen';
 import KalkulatorTerminowScreen from '../screens/KalkulatorTerminowScreen';
 import KalendarzTerminowScreen from '../screens/KalendarzTerminowScreen';
+import SciezkaDoOfertyScreen from '../screens/SciezkaDoOfertyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -208,6 +209,11 @@ export default function RootNavigator() {
               name="KalendarzTerminow"
               component={KalendarzTerminowScreen}
               options={{ title: 'Kalendarz terminów' }}
+            />
+            <Stack.Screen
+              name="SciezkaDoOferty"
+              component={SciezkaDoOfertyScreen}
+              options={{ title: 'Krok po kroku do wygranej' }}
             />
             <Stack.Screen
               name="Saved"
