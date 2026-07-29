@@ -36,6 +36,7 @@ import SamooczyszczenieScreen from '../screens/SamooczyszczenieScreen';
 import KalkulatorTerminowScreen from '../screens/KalkulatorTerminowScreen';
 import KalendarzTerminowScreen from '../screens/KalendarzTerminowScreen';
 import SciezkaDoOfertyScreen from '../screens/SciezkaDoOfertyScreen';
+import KalkulatorCenyScreen from '../screens/KalkulatorCenyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -214,6 +215,11 @@ export default function RootNavigator() {
               name="SciezkaDoOferty"
               component={SciezkaDoOfertyScreen}
               options={{ title: 'Krok po kroku do wygranej' }}
+            />
+            <Stack.Screen
+              name="KalkulatorCeny"
+              component={KalkulatorCenyScreen}
+              options={{ title: 'Kalkulator ceny' }}
             />
             <Stack.Screen
               name="Saved"

@@ -371,6 +371,12 @@ export default function MatchDetailScreen({ route, navigation }) {
           uzupełnienia — odlicz czas i nie odpadnij formalnie.
         </Text>
         <Button
+          title="Kalkulator ceny ofertowej"
+          onPress={() => navigation.navigate('KalkulatorCeny', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
           title="Kalkulator punktów (cena punktu)"
           onPress={() => navigation.navigate('KalkulatorPunktow', { nazwa: tender.title })}
           variant="ghost"

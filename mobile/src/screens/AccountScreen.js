@@ -334,6 +334,12 @@ export default function AccountScreen({ navigation }) {
         onPress={() => navigation.navigate('KalkulatorTerminow')}
         style={styles.gap}
       />
+      <Button
+        title="Kalkulator ceny ofertowej"
+        variant="ghost"
+        onPress={() => navigation.navigate('KalkulatorCeny')}
+        style={styles.gap}
+      />
 
       <CpvPicker
         widoczny={sciagaOtwarta}
