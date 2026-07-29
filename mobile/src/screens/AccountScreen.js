@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { View, Text, Alert, Pressable } from 'react-native';
+import { View, Text, Alert, Pressable, Linking } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
@@ -14,6 +15,9 @@ import { spacing, radius } from '../theme';
 function parseList(text) {
   return text.split(',').map((s) => s.trim()).filter(Boolean);
 }
+
+// Ten sam adres, co w Polityce prywatności i Regulaminie (docs/*.html) — spójny kanał kontaktu.
+const KONTAKT_EMAIL = 'jakatora68@gmail.com';
 
 export default function AccountScreen({ navigation }) {
   const { user, signOut, refreshUser, setUser, zarejestrujPush } = useAuth();
@@ -34,6 +38,15 @@ export default function AccountScreen({ navigation }) {
   const [dobierInfo, setDobierInfo] = useState(null);
 
   const isStandard = user.premium_tier === 'standard';
+  const wersjaApp = Constants.expoConfig?.version ?? '—';
+
+  /** Otwiera klienta poczty z tematem zawierającym wersję (ułatwia diagnozę zgłoszeń). */
+  function otworzKontakt() {
+    const temat = encodeURIComponent(`PrzetargAI — pomoc (v${wersjaApp})`);
+    Linking.openURL(`mailto:${KONTAKT_EMAIL}?subject=${temat}`).catch(() => {
+      Alert.alert('Kontakt', `Napisz do nas na adres:\n${KONTAKT_EMAIL}`);
+    });
+  }
 
   async function dobierzProfil() {
     if (!opisFirmy.trim() || dobieranie) return;
@@ -414,6 +427,17 @@ export default function AccountScreen({ navigation }) {
         </View>
       </View>
 
+      <Text style={styles.sectionTitle}>Pomoc i kontakt</Text>
+      <View style={styles.zrodlaCard}>
+        <Text style={styles.zrodlaOpis}>
+          Masz pytanie albo problem z kontem lub płatnością? Napisz do nas — pomożemy.
+        </Text>
+        <Pressable onPress={otworzKontakt} accessibilityRole="button" hitSlop={8}>
+          <Text style={styles.zrodloLink}>Napisz do nas: {KONTAKT_EMAIL} →</Text>
+        </Pressable>
+        <Text style={styles.wersja}>PrzetargAI · wersja {wersjaApp}</Text>
+      </View>
+
       <View style={styles.signOut}>
         <Button title="Wyloguj się" variant="ghost" onPress={confirmSignOut} />
       </View>
@@ -545,6 +569,7 @@ const tworzStyleKonta = tworzStyle((k) => ({
   zrodlaOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19 },
   zrodloLink: { fontSize: 14, fontWeight: '700', color: k.blue, lineHeight: 20 },
   zrodloPodpis: { fontSize: 12, color: k.textMuted, lineHeight: 17 },
+  wersja: { fontSize: 12, color: k.textMuted, marginTop: spacing.xs },
   prawneRzad: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     marginTop: spacing.sm, paddingTop: spacing.sm,
