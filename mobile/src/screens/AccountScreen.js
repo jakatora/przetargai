@@ -210,6 +210,12 @@ export default function AccountScreen({ navigation }) {
         </View>
       </View>
 
+      <Button
+        title="🧰  Wszystkie narzędzia"
+        onPress={() => navigation.navigate('Narzedzia')}
+        style={styles.gap}
+      />
+
       {isStandard ? (
         <View style={styles.upgradeCard}>
           <Text style={styles.upgradeTitle}>Plan Standard aktywny ✓</Text>

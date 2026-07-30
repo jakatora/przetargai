@@ -44,6 +44,7 @@ import KartaDecyzjiScreen from '../screens/KartaDecyzjiScreen';
 import PulpitScreen from '../screens/PulpitScreen';
 import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
 import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
+import NarzedziaScreen from '../screens/NarzedziaScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -262,6 +263,11 @@ export default function RootNavigator() {
               name="SprawdzarkaCeny"
               component={SprawdzarkaCenyScreen}
               options={{ title: 'Sprawdzarka cenowa' }}
+            />
+            <Stack.Screen
+              name="Narzedzia"
+              component={NarzedziaScreen}
+              options={{ title: 'Narzędzia' }}
             />
             <Stack.Screen
               name="Saved"
