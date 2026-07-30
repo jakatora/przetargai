@@ -6,8 +6,11 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { SavedProvider } from './src/context/SavedContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import GranicaBledu from './src/components/GranicaBledu';
 import { celPush } from './src/lib/nawigacjaPush';
 import { nawigujDoCelu } from './src/navigation/nawigacjaRef';
+import { sledz } from './src/services/telemetria';
+import { ZDARZENIA } from './src/lib/zdarzenia';
 
 // Sposób prezentacji powiadomień, gdy aplikacja jest na pierwszym planie.
 Notifications.setNotificationHandler({
@@ -20,6 +23,11 @@ Notifications.setNotificationHandler({
 });
 
 export default function App() {
+  // Ślad startu aplikacji (analityka) — raz przy montowaniu.
+  useEffect(() => {
+    sledz(ZDARZENIA.APLIKACJA_START);
+  }, []);
+
   // Dotknięcie powiadomienia push → nawigacja na właściwy ekran.
   useEffect(() => {
     const przejdz = (odpowiedz) => {
@@ -47,13 +55,15 @@ export default function App() {
       {/* Nagłówki ekranów są brandowo niebieskie w obu motywach → jasne ikony.
           Wyjątkiem jest Login (bez nagłówka) — ustawia własny StatusBar. */}
       <StatusBar style="light" />
-      <ThemeProvider>
-        <AuthProvider>
-          <SavedProvider>
-            <RootNavigator />
-          </SavedProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <GranicaBledu>
+        <ThemeProvider>
+          <AuthProvider>
+            <SavedProvider>
+              <RootNavigator />
+            </SavedProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </GranicaBledu>
     </SafeAreaProvider>
   );
 }
