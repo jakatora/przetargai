@@ -1,6 +1,7 @@
 import { View, ActivityIndicator } from 'react-native';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { navigationRef } from './nawigacjaRef';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import LoginScreen from '../screens/LoginScreen';
@@ -86,7 +87,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
       <Stack.Navigator screenOptions={screenOptions}>
         {user ? (
           <>
