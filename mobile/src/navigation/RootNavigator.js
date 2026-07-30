@@ -41,6 +41,7 @@ import SymulatorPunktacjiScreen from '../screens/SymulatorPunktacjiScreen';
 import KaryUmowneScreen from '../screens/KaryUmowneScreen';
 import KalkulatorOdsetekScreen from '../screens/KalkulatorOdsetekScreen';
 import KartaDecyzjiScreen from '../screens/KartaDecyzjiScreen';
+import PulpitScreen from '../screens/PulpitScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -244,6 +245,11 @@ export default function RootNavigator() {
               name="KartaDecyzji"
               component={KartaDecyzjiScreen}
               options={{ title: 'Startować czy odpuścić?' }}
+            />
+            <Stack.Screen
+              name="Pulpit"
+              component={PulpitScreen}
+              options={{ title: 'Moje postępowania' }}
             />
             <Stack.Screen
               name="Saved"

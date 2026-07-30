@@ -142,13 +142,14 @@ export default function SavedScreen({ navigation }) {
       keyExtractor={(item) => item.id}
       contentContainerStyle={items.length ? styles.list : styles.listEmpty}
       ListHeaderComponent={items.length ? (
-        <Pressable
-          style={styles.kalendarzBtn}
-          onPress={() => navigation.navigate('KalendarzTerminow')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.kalendarzBtnTekst}>📅  Kalendarz terminów</Text>
-        </Pressable>
+        <View style={styles.widokiRzad}>
+          <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('Pulpit')} accessibilityRole="button">
+            <Text style={styles.widokBtnTekst}>📋  Pulpit</Text>
+          </Pressable>
+          <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('KalendarzTerminow')} accessibilityRole="button">
+            <Text style={styles.widokBtnTekst}>📅  Kalendarz</Text>
+          </Pressable>
+        </View>
       ) : null}
       renderItem={renderItem}
       ListEmptyComponent={(
@@ -167,12 +168,14 @@ export default function SavedScreen({ navigation }) {
 
 const tworzStyleZapisanych = tworzStyle((k) => ({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
-  kalendarzBtn: {
+  widokiRzad: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  widokBtn: {
+    flex: 1,
     backgroundColor: k.wyroznienie ?? k.surface,
     borderWidth: 1, borderColor: k.blue, borderRadius: radius.md,
-    paddingVertical: spacing.sm + 2, alignItems: 'center', marginBottom: spacing.md,
+    paddingVertical: spacing.sm + 2, alignItems: 'center',
   },
-  kalendarzBtnTekst: { fontSize: 14, fontWeight: '800', color: k.blue },
+  widokBtnTekst: { fontSize: 14, fontWeight: '800', color: k.blue },
   list: { padding: spacing.lg },
   listEmpty: { flexGrow: 1 },
   card: {
