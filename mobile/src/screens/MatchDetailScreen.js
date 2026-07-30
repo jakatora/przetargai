@@ -45,20 +45,20 @@ export default function MatchDetailScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleSzczegolow);
   const { isSaved, toggle } = useSaved();
-  const { match } = route.params;
-  const tender = match.tender;
-  const ocena = opisOceny(match.scorer);
+  const { match } = route?.params ?? {};
+  const tender = match?.tender;
+  const ocena = opisOceny(match?.scorer);
   const [feedback, setFeedback] = useState(null);
   const [sending, setSending] = useState(false);
   // Stan przypomnienia: znany, gdy weszliśmy z ekranu „Zapisane"; inaczej domyślnie off.
-  const [przypomnienie, setPrzypomnienie] = useState(match.reminder_enabled === true);
+  const [przypomnienie, setPrzypomnienie] = useState(match?.reminder_enabled === true);
   // Wyjaśnienie AI (D-052) — leniwe: generujemy dopiero na żądanie (koszt AI).
   const [streszczenie, setStreszczenie] = useState(null);
   const [strLoading, setStrLoading] = useState(false);
   const [strBlad, setStrBlad] = useState(null);
   // Warsztat przetargu (D-054) — etap pracy + prywatna notatka (znane, gdy wszedł z „Zapisane").
-  const [status, setStatus] = useState(match.status || STATUS_DOMYSLNY);
-  const [notatka, setNotatka] = useState(match.notatka || '');
+  const [status, setStatus] = useState(match?.status || STATUS_DOMYSLNY);
+  const [notatka, setNotatka] = useState(match?.notatka || '');
   const [notatkaZapis, setNotatkaZapis] = useState('idle'); // idle | zapisywanie | zapisano
   // Statystyki wyników (R17) — lekki odczyt, pobierany raz na wejściu (bez kosztu AI).
   const [wyniki, setWyniki] = useState(null);
@@ -67,23 +67,38 @@ export default function MatchDetailScreen({ route, navigation }) {
   const [wniosekBusy, setWniosekBusy] = useState(false);
 
   useEffect(() => {
+    if (!match?.id) return undefined;
     let aktywny = true;
     api.getWyniki(match.id)
       .then((d) => { if (aktywny && d.wyniki) setWyniki(opisWyniki(d.wyniki)); })
       .catch(() => {});
     return () => { aktywny = false; };
-  }, [match.id]);
+  }, [match?.id]);
 
   // Kontrola jest kluczowana po `tender.id` (patrz utworzKontrolePoPrzegranej).
   // Ładujemy ją dopiero, gdy etap = „przegrana", i odświeżamy przy zmianie etapu.
   useEffect(() => {
-    if (status !== 'przegrana') { setKontrola(null); return; }
+    if (status !== 'przegrana' || !tender) { setKontrola(null); return undefined; }
     let aktywny = true;
     wczytajKontrole(storage, tender.id)
       .then((k) => { if (aktywny) setKontrola(k); })
       .catch(() => {});
     return () => { aktywny = false; };
-  }, [tender.id, status]);
+  }, [tender?.id, status]);
+
+  // Osłona: ekran wymaga przekazanego dopasowania. Bez params (np. deep-link) — komunikat, nie crash.
+  if (!tender) {
+    return (
+      <Screen scroll>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: kolory.text, textAlign: 'center', marginTop: 40 }}>
+          Ten przetarg trzeba otworzyć z listy.
+        </Text>
+        <Text style={{ fontSize: 14, color: kolory.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 20 }}>
+          Wróć do feedu albo „Zapisanych" i wybierz przetarg.
+        </Text>
+      </Screen>
+    );
+  }
 
   const zapisany = isSaved(match.id);
   const budget = formatBudget(tender.budget, tender.currency);

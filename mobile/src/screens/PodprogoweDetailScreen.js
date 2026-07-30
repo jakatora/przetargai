@@ -40,7 +40,21 @@ async function otworzLink(url) {
 export default function PodprogoweDetailScreen({ route }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleSzczegolow);
-  const { ogloszenie } = route.params;
+  const { ogloszenie } = route?.params ?? {};
+
+  // Osłona: ekran wymaga przekazanego ogłoszenia. Bez params — komunikat, nie crash.
+  if (!ogloszenie) {
+    return (
+      <Screen scroll>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: kolory.text, textAlign: 'center', marginTop: 40 }}>
+          To ogłoszenie trzeba otworzyć z listy.
+        </Text>
+        <Text style={{ fontSize: 14, color: kolory.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 20 }}>
+          Wróć do radaru podprogowego i wybierz ogłoszenie.
+        </Text>
+      </Screen>
+    );
+  }
 
   const flagi = flagiPodprogowe(ogloszenie.flagi);
   const wartosc = etykietaWartosciNetto(ogloszenie.wartosc_netto, ogloszenie.waluta);
