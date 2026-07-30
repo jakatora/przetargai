@@ -42,6 +42,7 @@ import KaryUmowneScreen from '../screens/KaryUmowneScreen';
 import KalkulatorOdsetekScreen from '../screens/KalkulatorOdsetekScreen';
 import KartaDecyzjiScreen from '../screens/KartaDecyzjiScreen';
 import PulpitScreen from '../screens/PulpitScreen';
+import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -250,6 +251,11 @@ export default function RootNavigator() {
               name="Pulpit"
               component={PulpitScreen}
               options={{ title: 'Moje postępowania' }}
+            />
+            <Stack.Screen
+              name="KontrolaOferty"
+              component={KontrolaOfertyScreen}
+              options={{ title: 'Kontrola przed wysłaniem' }}
             />
             <Stack.Screen
               name="Saved"

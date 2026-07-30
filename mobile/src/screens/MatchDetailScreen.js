@@ -511,6 +511,12 @@ export default function MatchDetailScreen({ route, navigation }) {
           24 h przed terminem.
         </Text>
         <Button
+          title="Lista kontrolna przed wysłaniem"
+          onPress={() => navigation.navigate('KontrolaOferty', { match })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
           title="Otwórz rejestrator oferty"
           onPress={() => navigation.navigate('RejestratorOferty', {
             termin: tender.deadline,
