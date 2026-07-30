@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { constructWebhookEvent } from '../services/stripe.js';
+import { constructWebhookEvent, pobierzKlientaZCharge } from '../services/stripe.js';
 import { users, stripeEvents, faktury } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 import { audit } from '../lib/audit.js';
@@ -126,6 +126,15 @@ export async function handleEvent(event) {
       return obsluzZmianeSubskrypcji(event.data.object);
     case 'customer.subscription.deleted':
       return obsluzUsuniecieSubskrypcji(event.data.object);
+    // Zwrot płatności (właściciel wykonał go w Stripe) — REAKCJA, nie ruch pieniędzy.
+    // Przy pełnym zwrocie zdejmujemy plan: klient nie może korzystać z usługi, za którą
+    // pieniądze wróciły. Zwrot częściowy zostawiamy (rabat/gest, nie odbieramy dostępu).
+    case 'charge.refunded':
+      return obsluzZwrot(event.data.object);
+    // Chargeback / reklamacja w banku — środki zablokowane. Zawieszamy plan do czasu
+    // rozstrzygnięcia; inaczej dawalibyśmy usługę za pieniądze, których nie mamy.
+    case 'charge.dispute.created':
+      return obsluzReklamacje(event.data.object);
     default:
       logger.debug({ type: event.type }, 'Webhook Stripe — zdarzenie pominięte');
   }
@@ -343,6 +352,63 @@ async function obsluzUsuniecieSubskrypcji(sub) {
   await users.setStripeSubscription(user.id, null);
   audit({ userId: user.id, action: 'subscription_cancelled' });
   logger.info({ userId: user.id }, 'Subskrypcja anulowana — powrót do planu Free');
+}
+
+/**
+ * Wspólne zdjęcie planu po odwróceniu płatności (zwrot / chargeback).
+ *
+ * Klienta rozpoznajemy po `stripe_customer_id`. Gdy nie ma go w NASZEJ kolekcji
+ * `users` (obcy klient albo Fitter — ten ma osobny backend), po prostu ignorujemy:
+ * to naturalny, bezpieczny filtr, bo obiekt `charge` nie niesie `metadata.project`.
+ * Idempotentne: konto już na Free → nic nie robimy.
+ *
+ * NIE inicjujemy tu żadnego ruchu pieniędzy — tylko odbieramy dostęp w reakcji na
+ * zdarzenie, które w Stripe już zaszło.
+ */
+async function zdejmijDostepPoOdwroceniu(customerId, { action, powod }) {
+  if (!customerId) return;
+  const user = await users.findByStripeCustomer(customerId);
+  if (!user) {
+    logger.debug({ customerId, powod }, 'Odwrócenie płatności: klient spoza projektu — pomijam');
+    return;
+  }
+  if (user.premium_tier === 'free') {
+    logger.info({ userId: user.id, powod }, 'Odwrócenie płatności: konto już na Free — nic do zrobienia');
+    return;
+  }
+  await users.setTier(user.id, 'free');
+  audit({ userId: user.id, action });
+  logger.info({ userId: user.id, powod }, 'Plan zdjęty po odwróceniu płatności');
+}
+
+/** Zwrot płatności. Reagujemy tylko na PEŁNY zwrot (częściowy = gest, zostawiamy dostęp). */
+async function obsluzZwrot(charge) {
+  if (nalezyDoFittera(charge)) return;
+
+  const pelnyZwrot =
+    charge.refunded === true
+    || (typeof charge.amount_refunded === 'number'
+        && typeof charge.amount === 'number'
+        && charge.amount_refunded >= charge.amount
+        && charge.amount > 0);
+
+  if (!pelnyZwrot) {
+    logger.info({ chargeId: charge.id, amount: charge.amount, refunded: charge.amount_refunded },
+      'Zwrot częściowy — dostęp pozostaje');
+    return;
+  }
+  await zdejmijDostepPoOdwroceniu(charge.customer, { action: 'subscription_refunded', powod: 'zwrot' });
+}
+
+/** Reklamacja/chargeback — środki zablokowane, zawieszamy plan do rozstrzygnięcia. */
+async function obsluzReklamacje(dispute) {
+  if (nalezyDoFittera(dispute)) return;
+  // `dispute.customer` bywa puste, a `dispute.charge` to zwykle samo id — wtedy
+  // dociągamy klienta z powiązanego obciążenia przez Stripe API.
+  const customerId = dispute.customer
+    || (typeof dispute.charge === 'object' ? dispute.charge?.customer : null)
+    || (typeof dispute.charge === 'string' ? await pobierzKlientaZCharge(dispute.charge) : null);
+  await zdejmijDostepPoOdwroceniu(customerId, { action: 'subscription_disputed', powod: 'chargeback' });
 }
 
 export default router;

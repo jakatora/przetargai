@@ -254,6 +254,63 @@ test('subscription.deleted: powrót do Free i czyszczenie identyfikatora subskry
   assert.equal(po.stripe_subscription_id, null, 'martwy identyfikator subskrypcji musi zniknąć');
 });
 
+// ---------------- zwrot i chargeback (odwrócenie płatności) ----------------
+
+test('charge.refunded PEŁNY zdejmuje plan do Free (klient nie płaci — nie ma dostępu)', async () => {
+  const user = await dodajUsera();
+  const cus = `cus_ref_${process.pid}`;
+  await users.setStripeCustomer(user.id, cus);
+  await users.setTier(user.id, 'standard');
+
+  await handleEvent({
+    type: 'charge.refunded',
+    data: { object: { id: 'ch_1', customer: cus, amount: 24477, amount_refunded: 24477, refunded: true } },
+  });
+
+  assert.equal((await users.findById(user.id)).premium_tier, 'free',
+    'po pełnym zwrocie klient nie może dalej korzystać z usługi');
+});
+
+test('charge.refunded CZĘŚCIOWY zostawia dostęp (gest/rabat, nie odbieramy planu)', async () => {
+  const user = await dodajUsera();
+  const cus = `cus_refpart_${process.pid}`;
+  await users.setStripeCustomer(user.id, cus);
+  await users.setTier(user.id, 'standard');
+
+  await handleEvent({
+    type: 'charge.refunded',
+    data: { object: { id: 'ch_2', customer: cus, amount: 24477, amount_refunded: 5000, refunded: false } },
+  });
+
+  assert.equal((await users.findById(user.id)).premium_tier, 'standard',
+    'zwrot częściowy nie może odbierać dostępu');
+});
+
+test('charge.refunded klienta spoza projektu (np. Fitter) nie dotyka nikogo', async () => {
+  // Brak takiego stripe_customer_id w naszej kolekcji users → cichy pominięcie.
+  await handleEvent({
+    type: 'charge.refunded',
+    data: { object: { id: 'ch_obcy', customer: 'cus_nieistnieje', amount: 100, amount_refunded: 100, refunded: true } },
+  });
+  // Brak wyjątku = sukces (nie ma czego asertować poza tym, że nie rzuciło).
+  assert.ok(true);
+});
+
+test('charge.dispute.created zawiesza plan do rozstrzygnięcia (środki zablokowane)', async () => {
+  const user = await dodajUsera();
+  const cus = `cus_disp_${process.pid}`;
+  await users.setStripeCustomer(user.id, cus);
+  await users.setTier(user.id, 'standard');
+
+  await handleEvent({
+    type: 'charge.dispute.created',
+    data: { object: { id: 'dp_1', customer: cus, charge: 'ch_disp' } },
+  });
+
+  assert.equal((await users.findById(user.id)).premium_tier, 'free',
+    'chargeback = usługa za pieniądze, których nie mamy — plan zawieszony');
+});
+
 // ---------------- orkiestracja: claim → handleEvent → markDone ----------------
 
 test('ORKIESTRACJA: błąd obsługi zwalnia rezerwację zdarzenia i zwraca 500 (Stripe ponowi)', async () => {

@@ -89,4 +89,19 @@ export async function zaplanujAnulowanieNaKoniecOkresu(subscriptionId) {
   }
 }
 
+/**
+ * Zwraca `customer` (id klienta) dla danego obciążenia. Używane przy reklamacji
+ * (obiekt `dispute` niesie zwykle sam identyfikator charge, bez klienta). Best-effort:
+ * brak Stripe / błędne id → null, żeby webhook nie padał na rozpoznaniu klienta.
+ */
+export async function pobierzKlientaZCharge(chargeId) {
+  if (!stripe || !chargeId) return null;
+  try {
+    const charge = await stripe.charges.retrieve(String(chargeId));
+    return charge?.customer ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export { stripe };
