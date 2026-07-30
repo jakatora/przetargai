@@ -4,8 +4,9 @@ import { ah } from '../lib/asyncHandler.js';
 import { env } from '../config.js';
 import { users, magicLinks } from '../db/repos.js';
 import { consumeUpgradeLink } from '../services/magicLink.js';
-import { createCheckoutSession, isStripeEnabled } from '../services/stripe.js';
+import { createCheckoutSession, isStripeEnabled, zaplanujAnulowanieNaKoniecOkresu } from '../services/stripe.js';
 import { badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
+import { authRequired } from '../middleware/auth.js';
 import { audit } from '../lib/audit.js';
 import { logger } from '../lib/logger.js';
 
@@ -89,6 +90,40 @@ router.get('/', ah(async (req, res) => {
     const status = typeof err.statusCode === 'number' ? err.statusCode : (typeof err.status === 'number' ? err.status : 500);
     return res.status(status).type('html').send(pageError(err.message || 'Coś poszło nie tak. Wróć do aplikacji i spróbuj ponownie.'));
   }
+}));
+
+/**
+ * POST /upgrade/cancel — REZYGNACJA z subskrypcji inicjowana przez użytkownika.
+ * Wymaga zalogowania (JWT). Planuje anulowanie na koniec opłaconego okresu:
+ * klient zachowuje Standard do końca miesiąca, potem webhook `subscription.deleted`
+ * przełącza na Free. To nie ruch pieniędzy — sama zmiana harmonogramu.
+ *
+ * Idempotentne i łagodne: brak aktywnej subskrypcji (już Free / już anulowana) NIE
+ * jest błędem — zwracamy spójny stan „już nie odnowi się".
+ */
+router.post('/cancel', authRequired, ah(async (req, res) => {
+  const user = req.user;
+
+  if (!user.stripe_subscription_id) {
+    // Nic do anulowania (Free albo subskrypcja już zamknięta) — zwracamy sukces-idempotentnie.
+    return res.json({ zaplanowana: false, koniec_okresu_ms: null, komunikat: 'Brak aktywnej subskrypcji do anulowania.' });
+  }
+  if (!isStripeEnabled()) {
+    throw serviceUnavailable('Rezygnacja chwilowo niedostępna — spróbuj później lub napisz do obsługi');
+  }
+
+  const { zaplanowana, koniecOkresuMs } = await zaplanujAnulowanieNaKoniecOkresu(user.stripe_subscription_id);
+
+  audit({ userId: user.id, action: 'subscription_cancel_scheduled', ip: req.ip });
+  logger.info({ userId: user.id, zaplanowana, koniecOkresuMs }, 'Zaplanowano rezygnację z subskrypcji');
+
+  res.json({
+    zaplanowana,
+    koniec_okresu_ms: koniecOkresuMs,
+    komunikat: zaplanowana
+      ? 'Subskrypcja nie odnowi się. Standard działa do końca opłaconego okresu.'
+      : 'Subskrypcja była już zamknięta — nic nie zostanie pobrane.',
+  });
 }));
 
 /** GET /upgrade/success — Stripe redirectuje tu po udanej płatności. */

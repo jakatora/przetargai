@@ -69,6 +69,8 @@ export const api = {
   setPushToken: (pushToken) =>
     request('/auth/me/push-token', { method: 'PUT', body: { push_token: pushToken } }),
   createUpgradeLink: () => request('/auth/upgrade-link', { method: 'POST' }),
+  /** Rezygnacja z subskrypcji na koniec opłaconego okresu (Standard działa do końca miesiąca). */
+  anulujSubskrypcje: () => request('/upgrade/cancel', { method: 'POST', body: {} }),
   /** Trwale usuwa konto i wszystkie dane (RODO art. 17). Wymaga potwierdzenia hasłem. */
   deleteAccount: (password) => request('/auth/me', { method: 'DELETE', body: { password } }),
   /**

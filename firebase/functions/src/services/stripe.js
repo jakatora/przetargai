@@ -62,4 +62,31 @@ export async function anulujSubskrypcje(subscriptionId) {
   }
 }
 
+/**
+ * Rezygnacja INICJOWANA PRZEZ UŻYTKOWNIKA: planuje anulowanie na KONIEC opłaconego
+ * okresu (`cancel_at_period_end`). Klient zapłacił za bieżący miesiąc i zachowuje
+ * dostęp do jego końca — dopiero wtedy Stripe wyśle `customer.subscription.deleted`,
+ * które w webhooku przełącza plan na Free. Świadomie NIE anulujemy natychmiast (to
+ * robi `anulujSubskrypcje` tylko przy usuwaniu konta), żeby nie „zjeść" opłaconego
+ * okresu.
+ *
+ * To NIE jest wyprowadzanie pieniędzy (żadnego payout/transfer/refund) — czysta
+ * zmiana harmonogramu subskrypcji, dozwolona autonomicznie.
+ *
+ * @param {string} subscriptionId
+ * @returns {Promise<{zaplanowana: boolean, koniecOkresuMs: number|null}>}
+ */
+export async function zaplanujAnulowanieNaKoniecOkresu(subscriptionId) {
+  if (!stripe || !subscriptionId) return { zaplanowana: false, koniecOkresuMs: null };
+  try {
+    const sub = await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true });
+    const koniec = typeof sub.current_period_end === 'number' ? sub.current_period_end * 1000 : null;
+    return { zaplanowana: true, koniecOkresuMs: koniec };
+  } catch (err) {
+    // Subskrypcja już nie istnieje → traktujemy jak brak czego anulować, nie błąd.
+    if (err?.code === 'resource_missing') return { zaplanowana: false, koniecOkresuMs: null };
+    throw err;
+  }
+}
+
 export { stripe };

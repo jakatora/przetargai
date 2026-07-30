@@ -27,6 +27,7 @@ export default function AccountScreen({ navigation }) {
   const [cpv, setCpv] = useState((user.cpv_codes || []).join(', '));
   const [saving, setSaving] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
+  const [rezygnacja, setRezygnacja] = useState(false);
   const [haslo, setHaslo] = useState('');
   const [usuwanie, setUsuwanie] = useState(false);
   const [sciagaOtwarta, setSciagaOtwarta] = useState(false);
@@ -135,6 +136,38 @@ export default function AccountScreen({ navigation }) {
   }
 
   /**
+   * Rezygnacja z subskrypcji: planuje anulowanie na koniec opłaconego okresu.
+   * Standard działa do końca miesiąca, potem konto wraca na Free (webhook Stripe).
+   * Nie pobieramy żadnej opłaty i nie zwracamy pieniędzy — sama zmiana harmonogramu.
+   */
+  async function potwierdzRezygnacje() {
+    Alert.alert(
+      'Zrezygnować z subskrypcji?',
+      'Standard będzie działać do końca opłaconego okresu, a potem konto wróci na plan Free. '
+      + 'Nie pobierzemy kolejnej opłaty. W każdej chwili możesz wznowić subskrypcję.',
+      [
+        { text: 'Zostaję', style: 'cancel' },
+        { text: 'Rezygnuję', style: 'destructive', onPress: anulujSubskrypcje },
+      ],
+    );
+  }
+
+  async function anulujSubskrypcje() {
+    setRezygnacja(true);
+    try {
+      const wynik = await api.anulujSubskrypcje();
+      // Odświeżamy usera — plan nie zmienia się od razu (Standard do końca okresu),
+      // ale gdyby backend zaktualizował cokolwiek, chcemy to zobaczyć.
+      await refreshUser().catch(() => {});
+      Alert.alert('Rezygnacja przyjęta', wynik.komunikat || 'Subskrypcja nie odnowi się.');
+    } catch (err) {
+      Alert.alert('Nie udało się zrezygnować', err.message);
+    } finally {
+      setRezygnacja(false);
+    }
+  }
+
+  /**
    * DEMO (tylko buildy deweloperskie): przełącza plan bez Stripe, żeby obejrzeć
    * różnicę pakietów. Backend poza produkcją od razu przelicza dopasowania.
    * Komunikat inline zamiast Alert — Alert.alert nie renderuje się na web.
@@ -228,6 +261,13 @@ export default function AccountScreen({ navigation }) {
           <Text style={styles.upgradeText}>
             Masz nielimitowane dopasowania przetargów oraz powiadomienia push.
           </Text>
+          <Button
+            title="Zrezygnuj z subskrypcji"
+            variant="ghost"
+            onPress={potwierdzRezygnacje}
+            loading={rezygnacja}
+            style={styles.gap}
+          />
         </View>
       ) : (
         <View style={styles.upgradeCard}>
