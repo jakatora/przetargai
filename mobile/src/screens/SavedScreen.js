@@ -22,13 +22,18 @@ export default function SavedScreen({ navigation }) {
   const { toggle } = useSaved();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [blad, setBlad] = useState(false);
 
   const wczytaj = useCallback(async () => {
     try {
       const d = await api.getSaved();
       setItems(d.saved || []);
+      setBlad(false);
     } catch {
-      /* offline — zostaje ostatnia lista */
+      // Offline/awaria — zostaje ostatnia lista, ale gdy nie mamy CZEGO pokazać,
+      // musimy odróżnić „nie masz zapisanych" od „nie udało się wczytać" (inaczej
+      // user widzi mylący pusty stan). Wzór jak w feedzie.
+      setBlad(true);
     } finally {
       setLoading(false);
     }
@@ -152,7 +157,22 @@ export default function SavedScreen({ navigation }) {
         </View>
       ) : null}
       renderItem={renderItem}
-      ListEmptyComponent={(
+      ListEmptyComponent={blad ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyIcon}>📡</Text>
+          <Text style={styles.emptyTitle}>Nie udało się wczytać</Text>
+          <Text style={styles.emptyText}>
+            Sprawdź połączenie z internetem i spróbuj ponownie.
+          </Text>
+          <Pressable
+            style={styles.ponowBtn}
+            onPress={() => { setLoading(true); wczytaj(); }}
+            accessibilityRole="button"
+          >
+            <Text style={styles.ponowBtnTekst}>Spróbuj ponownie</Text>
+          </Pressable>
+        </View>
+      ) : (
         <View style={styles.center}>
           <Text style={styles.emptyIcon}>☆</Text>
           <Text style={styles.emptyTitle}>Brak zapisanych przetargów</Text>
@@ -206,4 +226,12 @@ const tworzStyleZapisanych = tworzStyle((k) => ({
   emptyIcon: { fontSize: 48, color: k.textMuted, marginBottom: spacing.sm },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: k.text, textAlign: 'center' },
   emptyText: { fontSize: 14, color: k.textMuted, textAlign: 'center', marginTop: spacing.sm, lineHeight: 21 },
+  ponowBtn: {
+    marginTop: spacing.lg,
+    backgroundColor: k.blue,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.md,
+  },
+  ponowBtnTekst: { color: k.white, fontSize: 15, fontWeight: '700' },
 }));
