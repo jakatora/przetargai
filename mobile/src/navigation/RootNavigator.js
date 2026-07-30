@@ -45,6 +45,7 @@ import PulpitScreen from '../screens/PulpitScreen';
 import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
 import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 import NarzedziaScreen from '../screens/NarzedziaScreen';
+import PrzewodnikStartuScreen from '../screens/PrzewodnikStartuScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -268,6 +269,11 @@ export default function RootNavigator() {
               name="Narzedzia"
               component={NarzedziaScreen}
               options={{ title: 'Narzędzia' }}
+            />
+            <Stack.Screen
+              name="PrzewodnikStartu"
+              component={PrzewodnikStartuScreen}
+              options={{ title: 'Przewodnik startu' }}
             />
             <Stack.Screen
               name="Saved"

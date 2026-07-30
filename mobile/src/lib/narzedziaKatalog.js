@@ -66,6 +66,7 @@ export const KATALOG_NARZEDZI = [
   {
     kategoria: 'Przewodniki',
     narzedzia: [
+      { ekran: 'PrzewodnikStartu', tytul: 'Przewodnik startu: czy jesteś gotowy?', opis: 'Checklista wejścia dla firmy zaczynającej z przetargami' },
       { ekran: 'SciezkaDoOferty', tytul: 'Krok po kroku do wygranej', opis: 'Cała ścieżka od SWZ po złożenie (otwórz z przetargu)' },
     ],
   },

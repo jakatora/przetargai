@@ -215,6 +215,12 @@ export default function AccountScreen({ navigation }) {
         onPress={() => navigation.navigate('Narzedzia')}
         style={styles.gap}
       />
+      <Button
+        title="🚀  Przewodnik startu — czy jesteś gotowy?"
+        variant="ghost"
+        onPress={() => navigation.navigate('PrzewodnikStartu')}
+        style={styles.gap}
+      />
 
       {isStandard ? (
         <View style={styles.upgradeCard}>
