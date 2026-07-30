@@ -526,6 +526,16 @@ export default function AccountScreen({ navigation }) {
         <Text style={styles.wersja}>PrzetargAI · wersja {wersjaApp}</Text>
       </View>
 
+      <Text style={styles.sectionTitle}>Bezpieczeństwo konta</Text>
+      <Text style={styles.sectionHint}>
+        Zmień hasło albo adres e-mail, na który się logujesz.
+      </Text>
+      <Button
+        title="Zmień hasło lub e-mail"
+        variant="ghost"
+        onPress={() => navigation.navigate('BezpieczenstwoKonta')}
+      />
+
       <View style={styles.signOut}>
         <Button title="Wyloguj się" variant="ghost" onPress={confirmSignOut} />
       </View>

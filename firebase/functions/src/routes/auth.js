@@ -274,6 +274,75 @@ router.put('/me/push-token', authRequired, ah(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ---------------- zmiana hasła (zalogowany) ----------------
+
+const zmianaHaslaSchema = z.object({
+  aktualne_haslo: z.string().min(1, 'Podaj aktualne hasło'),
+  nowe_haslo: z.string().min(8, 'Nowe hasło musi mieć min. 8 znaków').max(200),
+});
+
+/**
+ * Zmiana hasła z poziomu konta (bez maila). Wymaga aktualnego hasła — token bywa
+ * na urządzeniu, które nie jest w rękach właściciela. `setPassword` bumpuje
+ * `token_version`, więc WSZYSTKIE inne sesje zostają wylogowane; bieżącej wydajemy
+ * świeży JWT z nowym `tv`, żeby ten telefon działał dalej.
+ *
+ * Złe hasło → 403 (nie 401): klient traktuje 401 jak wygasłą sesję i wylogowuje
+ * globalnie — literówka nie może wyrzucać z aplikacji (spójne z DELETE /me).
+ */
+router.post('/change-password', authRequired, ah(async (req, res) => {
+  const data = parseBody(zmianaHaslaSchema, req.body);
+
+  const poprawne = await bcrypt.compare(data.aktualne_haslo, req.user.password_hash);
+  if (!poprawne) throw forbidden('Nieprawidłowe aktualne hasło');
+
+  const passwordHash = await bcrypt.hash(data.nowe_haslo, 12);
+  await users.setPassword(req.user.id, passwordHash);
+  audit({ userId: req.user.id, action: 'change_password', ip: req.ip });
+
+  const user = await users.findById(req.user.id);
+  res.json({
+    ok: true,
+    token: signToken(user.id, user.token_version ?? 0),
+    message: 'Hasło zmienione. Pozostałe urządzenia zostały wylogowane.',
+  });
+}));
+
+// ---------------- zmiana e-maila (zalogowany) ----------------
+
+const zmianaEmailaSchema = z.object({
+  nowy_email: z.string().email('Nieprawidłowy adres e-mail'),
+  haslo: z.string().min(1, 'Podaj hasło, aby potwierdzić zmianę'),
+});
+
+/**
+ * Zmiana adresu e-mail (tożsamości logowania). Wymaga hasła. Unikalność egzekwuje
+ * repo transakcyjnie (rezerwacja `unique/email:*`). Nie ruszamy e-maila w Stripe —
+ * dane rozliczeniowe klienta zmienia osobno obsługa, a tożsamość logowania i adres
+ * na fakturze mogą się różnić.
+ */
+router.post('/change-email', authRequired, ah(async (req, res) => {
+  const data = parseBody(zmianaEmailaSchema, req.body);
+  const nowyEmail = data.nowy_email.toLowerCase().trim();
+
+  const poprawne = await bcrypt.compare(data.haslo, req.user.password_hash);
+  if (!poprawne) throw forbidden('Nieprawidłowe hasło');
+
+  if (nowyEmail === req.user.email) {
+    throw badRequest('To jest już Twój aktualny adres e-mail');
+  }
+
+  let updated;
+  try {
+    updated = await users.updateEmail(req.user.id, nowyEmail, req.user.email);
+  } catch (err) {
+    if (err.code === 'DUPLICATE_EMAIL') throw conflict('Konto z tym adresem e-mail już istnieje');
+    throw err;
+  }
+  audit({ userId: req.user.id, action: 'change_email', ip: req.ip });
+  res.json({ ok: true, user: publicUser(updated), message: 'Adres e-mail został zmieniony.' });
+}));
+
 // ---------------- usunięcie konta (RODO art. 17) ----------------
 
 const usuniecieSchema = z.object({

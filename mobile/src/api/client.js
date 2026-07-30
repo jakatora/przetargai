@@ -71,6 +71,12 @@ export const api = {
   createUpgradeLink: () => request('/auth/upgrade-link', { method: 'POST' }),
   /** Rezygnacja z subskrypcji na koniec opłaconego okresu (Standard działa do końca miesiąca). */
   anulujSubskrypcje: () => request('/upgrade/cancel', { method: 'POST', body: {} }),
+  /** Zmiana hasła (zalogowany) — zwraca nowy token; inne sesje zostają wylogowane. */
+  changePassword: (aktualne_haslo, nowe_haslo) =>
+    request('/auth/change-password', { method: 'POST', body: { aktualne_haslo, nowe_haslo } }),
+  /** Zmiana adresu e-mail (zalogowany) — wymaga hasła; zwraca zaktualizowanego usera. */
+  changeEmail: (nowy_email, haslo) =>
+    request('/auth/change-email', { method: 'POST', body: { nowy_email, haslo } }),
   /** Trwale usuwa konto i wszystkie dane (RODO art. 17). Wymaga potwierdzenia hasłem. */
   deleteAccount: (password) => request('/auth/me', { method: 'DELETE', body: { password } }),
   /**

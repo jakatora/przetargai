@@ -183,6 +183,33 @@ export const users = {
       updated_at: nowIso(),
     });
   },
+
+  /**
+   * Zmienia adres e-mail (tożsamość logowania). Unikalność egzekwuje dokument
+   * rezerwacji `unique/email:*` — tak samo jak przy rejestracji. Zamiana jest
+   * transakcyjna: rezerwujemy nowy e-mail, zwalniamy stary i aktualizujemy konto
+   * w jednej transakcji, więc równoległa próba zajęcia tego samego adresu przegra.
+   *
+   * @throws {Error} err.code === 'DUPLICATE_EMAIL' gdy adres jest już zajęty
+   */
+  async updateEmail(id, nowyEmail, staryEmail) {
+    const ts = nowIso();
+    try {
+      await db().runTransaction(async (tx) => {
+        tx.create(UNIQUE(`email:${nowyEmail}`), { uid: id, created_at: ts });
+        tx.delete(UNIQUE(`email:${staryEmail}`));
+        tx.update(db().collection('users').doc(id), { email: nowyEmail, updated_at: ts });
+      });
+    } catch (err) {
+      if (err.code === 6 /* ALREADY_EXISTS */) {
+        const dup = new Error('Adres e-mail jest już zajęty');
+        dup.code = 'DUPLICATE_EMAIL';
+        throw dup;
+      }
+      throw err;
+    }
+    return this.findById(id);
+  },
 };
 
 // ============================ password_resets ============================

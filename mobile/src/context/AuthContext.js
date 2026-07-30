@@ -127,9 +127,30 @@ export function AuthProvider({ children }) {
     return data.user;
   }, [zapiszUsera]);
 
+  /**
+   * Zmiana hasła: backend unieważnia stary token (token_version++) i zwraca NOWY —
+   * musimy go utrwalić, inaczej najbliższe żądanie z tego telefonu poleciałoby ze
+   * starym tokenem i wylogowało właśnie tę sesję.
+   */
+  const zmienHaslo = useCallback(async (aktualneHaslo, noweHaslo) => {
+    const data = await api.changePassword(aktualneHaslo, noweHaslo);
+    if (data?.token) {
+      await setItem(TOKEN_KEY, data.token).catch(() => {});
+      setAuthToken(data.token);
+    }
+    return data;
+  }, []);
+
+  /** Zmiana e-maila: aktualizuje profil w pamięci i kopię offline (bez zmiany tokenu). */
+  const zmienEmail = useCallback(async (nowyEmail, haslo) => {
+    const data = await api.changeEmail(nowyEmail, haslo);
+    if (data?.user) zapiszUsera(data.user);
+    return data;
+  }, [zapiszUsera]);
+
   return (
     <AuthContext.Provider
-      value={{ user, restoring, signIn, signUp, signOut, forgotPassword, resetPassword, refreshUser, setUser: zapiszUsera, zarejestrujPush }}
+      value={{ user, restoring, signIn, signUp, signOut, forgotPassword, resetPassword, refreshUser, zmienHaslo, zmienEmail, setUser: zapiszUsera, zarejestrujPush }}
     >
       {children}
     </AuthContext.Provider>

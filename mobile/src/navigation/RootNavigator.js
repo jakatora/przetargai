@@ -47,6 +47,7 @@ import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
 import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 import NarzedziaScreen from '../screens/NarzedziaScreen';
 import PrzewodnikStartuScreen from '../screens/PrzewodnikStartuScreen';
+import BezpieczenstwoKontaScreen from '../screens/BezpieczenstwoKontaScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -285,6 +286,11 @@ export default function RootNavigator() {
               name="Account"
               component={AccountScreen}
               options={{ title: 'Twoje konto' }}
+            />
+            <Stack.Screen
+              name="BezpieczenstwoKonta"
+              component={BezpieczenstwoKontaScreen}
+              options={{ title: 'Bezpieczeństwo konta' }}
             />
           </>
         ) : (
