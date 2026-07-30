@@ -29,7 +29,7 @@
       "edgeToEdgeEnabled": true,
       "package": "pl.przetargai.app",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"
