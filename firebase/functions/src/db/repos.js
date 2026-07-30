@@ -594,6 +594,19 @@ export const matches = {
     return agg.data().count;
   },
 
+  /**
+   * Tytuły najświeższych dopasowań od `sinceIso` (do cotygodniowego przeglądu).
+   * Filtr i sortowanie po tym samym polu `created_at` — obsługuje indeks jednopolowy.
+   */
+  async recentTitlesSince(userId, sinceIso, limit = 5) {
+    const snap = await matchCol(userId)
+      .where('created_at', '>=', sinceIso)
+      .orderBy('created_at', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => d.data().tender_title).filter(Boolean);
+  },
+
   async markNotified(userId, matchId) {
     await matchCol(userId).doc(matchId).update({ notified: 1 });
   },

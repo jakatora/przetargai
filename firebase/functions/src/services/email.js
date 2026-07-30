@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { env, features } from '../config.js';
 import { logger } from '../lib/logger.js';
+import { budujDigest } from '../lib/digestTresc.js';
 
 const resend = features.email ? new Resend(env.RESEND_API_KEY) : null;
 
@@ -59,6 +60,11 @@ export function subscriptionActiveEmail(companyName) {
 <p>Masz teraz nielimitowane dopasowania przetargów oraz powiadomienia push.</p>
 <p>Zespół PrzetargAI</p>`,
   };
+}
+
+// Cotygodniowy przegląd — treść w czystej `budujDigest` (testowana bez configu).
+export function weeklyDigestEmail({ companyName, liczba, tytuly }) {
+  return budujDigest({ companyName, liczba, tytuly });
 }
 
 // Reset hasła — token jako KOD do wpisania w apce (bez deep-linków). Jednorazowy, ważny 1 h.

@@ -128,6 +128,27 @@ export const remindDeadlines = onSchedule(
 );
 
 /**
+ * Cotygodniowy przegląd e-mail (roadmap #10, D-057). Poniedziałek 8:00 czasu
+ * polskiego — początek tygodnia, gdy firmy planują, w co startować. Wysyłamy tylko
+ * do kont z ≥1 nowym dopasowaniem w minionym tygodniu (bez spamu). RESEND_API_KEY
+ * do wysyłki; bez niego job działa w trybie degradacji (loguje, nie wysyła).
+ */
+export const weeklyDigest = onSchedule(
+  {
+    schedule: '0 8 * * 1',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '256MiB',
+    secrets: [JWT_SECRET, RESEND_API_KEY],
+  },
+  async () => {
+    const { runWeeklyDigest } = await import('./src/jobs/weeklyDigest.js');
+    const wynik = await runWeeklyDigest();
+    console.log(JSON.stringify({ severity: 'INFO', message: 'weeklyDigest zakończony', ...wynik }));
+  },
+);
+
+/**
  * Agregacja wyników postępowań (runda 16). Statystyki cen/konkurencji zmieniają się
  * wolno — liczymy je raz w tygodniu (niedziela 4:00) z szerokiego okna 30 dni.
  * Osobno od dziennego matchingu, bo pobiera inny typ ogłoszeń (TenderResultNotice).
