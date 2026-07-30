@@ -18,6 +18,7 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PROGI, KLUCZ_PROGU, filtrujPoProgu, normalizujProg } from '../lib/filtrOcen';
 import { SORTOWANIA, KLUCZ_SORT, sortujDopasowania, filtrujTekst, normalizujSort, filtrujMalaFirma } from '../lib/feedSort';
 import { sortujPodprogowe, etykietaZrodla, flagiPodprogowe, etykietaWartosciNetto } from '../lib/podprogowe';
+import { filtrujWojewodztwo, wojewodztwaObecne, WOJEWODZTWA } from '../lib/wojewodztwa';
 import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
 
@@ -64,6 +65,7 @@ export default function MatchFeedScreen({ navigation }) {
   const [sort, setSort] = useState('trafnosc');
   const [szukaj, setSzukaj] = useState('');
   const [malaFirma, setMalaFirma] = useState(false); // filtr „dla małej firmy" (R19)
+  const [woj, setWoj] = useState(''); // filtr województwa (kod TERYT; '' = wszystkie)
   // Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free).
   const [zacheta, setZacheta] = useState(null);
   const [upgrading, setUpgrading] = useState(false);
@@ -93,12 +95,16 @@ export default function MatchFeedScreen({ navigation }) {
 
   // Pipeline: próg → tekst → sortowanie. Wszystko po stronie aplikacji na
   // wczytanych dopasowaniach (feed jednego użytkownika jest mały).
+  // Województwa OBECNE w feedzie — filtr pokazujemy tylko, gdy jest z czego wybierać.
+  const regiony = useMemo(() => wojewodztwaObecne(matches), [matches]);
+
   const widoczne = useMemo(() => {
     const poProgu = filtrujPoProgu(matches, prog);
     const poMalej = filtrujMalaFirma(poProgu, malaFirma);
     const poTekscie = filtrujTekst(poMalej, szukaj);
-    return sortujDopasowania(poTekscie, sort);
-  }, [matches, prog, szukaj, sort, malaFirma]);
+    const poWoj = filtrujWojewodztwo(poTekscie, woj);
+    return sortujDopasowania(poWoj, sort);
+  }, [matches, prog, szukaj, sort, malaFirma, woj]);
 
   // Scalony strumień podprogowy — „łatwiejszy start" na górze (reguła w lib/podprogowe.js).
   const podprogoweWidoczne = useMemo(() => sortujPodprogowe(podprogowe), [podprogowe]);
@@ -375,6 +381,33 @@ export default function MatchFeedScreen({ navigation }) {
               {malaFirma ? '✓ ' : ''}Dla małej firmy (bez dużego wadium)
             </Text>
           </Pressable>
+          {/* Filtr województwa — tylko gdy w feedzie SĄ dane regionu (co najmniej 2). */}
+          {regiony.length >= 2 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.wojRzad}>
+              <Pressable
+                onPress={() => setWoj('')}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: !woj }}
+                style={[styles.wojChip, !woj && styles.wojChipOn]}
+              >
+                <Text style={[styles.wojTekst, !woj && styles.wojTekstOn]}>Wszystkie województwa</Text>
+              </Pressable>
+              {regiony.map((kod) => {
+                const on = woj === kod;
+                return (
+                  <Pressable
+                    key={kod}
+                    onPress={() => setWoj(kod)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: on }}
+                    style={[styles.wojChip, on && styles.wojChipOn]}
+                  >
+                    <Text style={[styles.wojTekst, on && styles.wojTekstOn]}>{WOJEWODZTWA[kod]}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : null}
           {/* Licznik wyników (R14) — ile widać po filtrach; z podpowiedzią, gdy filtr zawęża. */}
           {widoczne.length > 0 ? (
             <Text style={styles.licznik}>
@@ -398,7 +431,9 @@ export default function MatchFeedScreen({ navigation }) {
             <Text style={styles.pustyFiltr}>
               {szukaj
                 ? `Brak wyników dla „${szukaj}". Wyczyść szukanie lub zmień frazę.`
-                : `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`}
+                : woj
+                  ? `Brak przetargów z województwa „${WOJEWODZTWA[woj]}" w bieżącym feedzie. Wybierz „Wszystkie województwa".`
+                  : `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`}
             </Text>
           ) : null}
         </View>
@@ -525,6 +560,14 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   malaChipAktywny: { backgroundColor: k.blue, borderColor: k.blue },
   malaTekst: { fontSize: 13, fontWeight: '700', color: k.textMuted },
   malaTekstAktywny: { color: k.surface },
+  wojRzad: { gap: spacing.sm, paddingRight: spacing.xs, marginBottom: spacing.sm },
+  wojChip: {
+    paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999,
+    borderWidth: 1.5, borderColor: k.border, backgroundColor: k.surface,
+  },
+  wojChipOn: { borderColor: k.blue, backgroundColor: k.wyroznienie },
+  wojTekst: { fontSize: 13, fontWeight: '700', color: k.textMuted },
+  wojTekstOn: { color: k.blue },
   licznik: { fontSize: 13, color: k.textMuted, fontWeight: '700', marginBottom: spacing.sm },
   progi: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   progChip: {
