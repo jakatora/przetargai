@@ -34,6 +34,7 @@ export const KATALOG_NARZEDZI = [
       { ekran: 'Konsorcjum', tytul: 'Oświadczenie konsorcjum (art. 117)', opis: 'Kto co wykona' },
       { ekran: 'Tajemnica', tytul: 'Tarcza tajemnicy przedsiębiorstwa', opis: 'Skuteczne zastrzeżenie albo świadome odpuszczenie' },
       { ekran: 'Samooczyszczenie', tytul: 'Kreator samooczyszczenia (art. 110)', opis: 'Druga szansa po karze/zerwanej umowie' },
+      { ekran: 'Kreator118', tytul: 'Pożycz doświadczenie (art. 118)', opis: 'Kreator zobowiązania podmiotu udostępniającego zasoby' },
     ],
   },
   {

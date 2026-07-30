@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import Screen from '../components/Screen';
+import Button from '../components/Button';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { WYJASNIENIE_ART_118 } from '../lib/kreator118Tresc';
@@ -19,7 +20,7 @@ import { WYJASNIENIE_ART_118 } from '../lib/kreator118Tresc';
  * Ekran jest cienki: cała treść i jej niezmienniki żyją w `lib/kreator118Tresc.js`
  * (testowanym bez renderera), a tu tylko ją wyświetlamy.
  */
-export default function Kreator118Screen() {
+export default function Kreator118Screen({ navigation }) {
   const styles = useStyle(tworzStyleKreatora);
   const { naglowek, wprowadzenie, sekcje, kluczowe_zasady, podstawa_prawna } =
     WYJASNIENIE_ART_118;
@@ -28,7 +29,7 @@ export default function Kreator118Screen() {
     <Screen scroll>
       {/* Ramka wprowadzająca — pozytywne „nie odpadasz" (ścieżka ratunkowa). */}
       <View style={styles.hero}>
-        <Text style={styles.heroKrok}>Krok 1 z 4 · Pożycz doświadczenie</Text>
+        <Text style={styles.heroKrok}>Krok 1 z 2 · Pożycz doświadczenie</Text>
         <Text style={styles.heroTytul}>{naglowek}</Text>
         <Text style={styles.heroWstep}>{wprowadzenie}</Text>
       </View>
@@ -72,6 +73,13 @@ export default function Kreator118Screen() {
       </View>
 
       <Text style={styles.podstawa}>Podstawa prawna: {podstawa_prawna}.</Text>
+
+      <Button
+        title="Dalej: uzupełnij dane podmiotu →"
+        onPress={() => navigation.navigate('KrokDanePodmiotu')}
+        style={styles.dalejBtn}
+      />
+
       <Text style={styles.stopka}>
         Materiał informacyjny przygotowany na podstawie przepisów i orzecznictwa —
         nie zastępuje porady prawnej.
@@ -167,6 +175,7 @@ const tworzStyleKreatora = tworzStyle((k) => ({
     marginTop: spacing.md,
     lineHeight: 17,
   },
+  dalejBtn: { marginTop: spacing.lg },
   stopka: {
     fontSize: 12,
     color: k.textMuted,

@@ -285,3 +285,42 @@ export function ustawWartoscPola(obiekt, sciezka, wartosc) {
   }
   return { ...baza, [glowa]: ustawWartoscPola(baza[glowa], ogon, wartosc) };
 }
+
+/**
+ * Składa gotową treść zobowiązania podmiotu (art. 118 ust. 3–4 Pzp) z wypełnionego draftu
+ * (kształt `szablonZobowiazania`). Puste pola zastępuje „…", żeby braki były widoczne.
+ * @returns {{nazwa: string, tresc: string}}
+ */
+export function generujTrescZobowiazania(draft) {
+  const p = (draft && draft.dane_podmiotu) || {};
+  const w = (v) => (niepustyString(v) ? v.trim() : '…');
+  const identyfikacja = [
+    w(p.nazwa),
+    niepustyString(p.identyfikator) ? p.identyfikator.trim() : null,
+    niepustyString(p.adres) ? p.adres.trim() : null,
+  ].filter(Boolean).join(', ');
+  const reprezentant = niepustyString(p.reprezentant) ? `\nreprezentowany przez: ${p.reprezentant.trim()}` : '';
+
+  const tresc = [
+    'ZOBOWIĄZANIE DO UDOSTĘPNIENIA ZASOBÓW',
+    '(art. 118 ust. 3 i 4 ustawy Prawo zamówień publicznych)',
+    '',
+    `Podmiot udostępniający: ${identyfikacja}${reprezentant}`,
+    '',
+    'zobowiązuje się oddać Wykonawcy do dyspozycji niezbędne zasoby na potrzeby realizacji zamówienia, na następujących zasadach:',
+    '',
+    `1. Zakres udostępnianych zasobów (doświadczenia):\n${w(draft?.zakres_doswiadczenia)}`,
+    '',
+    `2. Sposób udostępnienia i wykorzystania zasobów przy realizacji zamówienia:\n${w(draft?.sposob_udostepnienia)}`,
+    '',
+    `3. Okres udostępnienia zasobów:\n${w(draft?.okres_udostepnienia)}`,
+    '',
+    `4. Zakres udziału podmiotu w realizacji zamówienia (roboty/usługi wykonywane przez podmiot):\n${w(draft?.zakres_podwykonawstwa)}`,
+    '',
+    '',
+    '................................                 ................................',
+    '   (miejscowość, data)                        (podpis podmiotu udostępniającego)',
+  ].join('\n');
+
+  return { nazwa: 'Zobowiązanie podmiotu (art. 118)', tresc };
+}

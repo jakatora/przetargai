@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Share } from 'react-native';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -10,6 +10,7 @@ import {
   walidujKompletnoscZobowiazania,
   grupujPolaFormularza,
   ustawWartoscPola,
+  generujTrescZobowiazania,
 } from '../lib/zobowiazaniePodmiotu';
 
 /**
@@ -33,7 +34,7 @@ import {
  * żeby świeży formularz nie był od razu czerwony. Samo generowanie treści
  * zobowiązania to KOLEJNY krok kreatora (osobny ekran).
  */
-export default function KrokDanePodmiotuScreen({ onGotowe }) {
+export default function KrokDanePodmiotuScreen() {
   const styles = useStyle(tworzStyleKroku);
   const sekcje = useMemo(() => grupujPolaFormularza(), []);
   const [draft, setDraft] = useState(szablonZobowiazania);
@@ -52,20 +53,25 @@ export default function KrokDanePodmiotuScreen({ onGotowe }) {
     setDraft((d) => ustawWartoscPola(d, pole.sciezka, tekst));
   };
 
-  function handleDalej() {
+  async function handleDalej() {
     if (!walidacja.kompletne) {
       setProbowanoDalej(true);
       return;
     }
     setZatwierdzono(true);
-    if (typeof onGotowe === 'function') onGotowe(draft);
+    const dok = generujTrescZobowiazania(draft);
+    try {
+      await Share.share({ message: dok.tresc, title: dok.nazwa });
+    } catch {
+      /* użytkownik anulował udostępnianie — nic nie robimy */
+    }
   }
 
   return (
     <Screen scroll>
       {/* Ramka kroku — spójna z krokiem 1 (ten sam licznik „z 4"). */}
       <View style={styles.hero}>
-        <Text style={styles.heroKrok}>Krok 2 z 4 · Pożycz doświadczenie</Text>
+        <Text style={styles.heroKrok}>Krok 2 z 2 · Pożycz doświadczenie</Text>
         <Text style={styles.heroTytul}>Dane podmiotu i zakres udostępnienia</Text>
         <Text style={styles.heroWstep}>
           Uzupełnij, kto użycza doświadczenia i na jakich zasadach. Cztery elementy
@@ -125,15 +131,14 @@ export default function KrokDanePodmiotuScreen({ onGotowe }) {
         </View>
       )}
 
-      <Button title="Dalej" onPress={handleDalej} />
+      <Button title="Wygeneruj zobowiązanie (udostępnij)" onPress={handleDalej} />
       {!walidacja.kompletne ? (
         <Text style={styles.stopkaHint}>
-          Uzupełnij wszystkie wymagane pola — „Dalej" przeniesie Cię do kolejnego
-          kroku dopiero, gdy zobowiązanie będzie kompletne.
+          Uzupełnij wszystkie wymagane pola — zobowiązanie wygenerujesz dopiero, gdy będzie kompletne.
         </Text>
       ) : zatwierdzono ? (
         <Text style={styles.stopkaOk}>
-          Dane kompletne — w kolejnym kroku przygotujemy z nich zobowiązanie podmiotu.
+          Gotowe — zobowiązanie złożone do udostępnienia. Musi je PODPISAĆ sam podmiot udostępniający zasoby.
         </Text>
       ) : null}
     </Screen>
