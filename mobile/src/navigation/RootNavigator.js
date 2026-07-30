@@ -48,11 +48,12 @@ import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 import NarzedziaScreen from '../screens/NarzedziaScreen';
 import PrzewodnikStartuScreen from '../screens/PrzewodnikStartuScreen';
 import BezpieczenstwoKontaScreen from '../screens/BezpieczenstwoKontaScreen';
+import WitajScreen from '../screens/WitajScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-  const { user, restoring } = useAuth();
+  const { user, restoring, pokazOnboarding } = useAuth();
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleNawigatora);
 
@@ -89,9 +90,17 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer ref={navigationRef} theme={navTheme}>
-      <Stack.Navigator screenOptions={screenOptions}>
+      <Stack.Navigator
+        screenOptions={screenOptions}
+        initialRouteName={user && pokazOnboarding ? 'Witaj' : undefined}
+      >
         {user ? (
           <>
+            <Stack.Screen
+              name="Witaj"
+              component={WitajScreen}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="MatchFeed"
               component={MatchFeedScreen}

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { getItem, setItem, deleteItem } from '../lib/storage';
 import { api, setAuthToken, onSesjaWygasla } from '../api/client';
 import { registerForPushNotifications } from '../services/push';
+import { czyPokazacOnboarding, KLUCZ_ONBOARDING_POMINIETY } from '../lib/onboarding';
 
 const TOKEN_KEY = 'przetargai_token';
 const USER_KEY = 'przetargai_user';
@@ -10,10 +11,19 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [restoring, setRestoring] = useState(true);
+  // Czy użytkownik pominął ekran powitalny (first-run). Wczytywane w tym samym
+  // cyklu co sesja, żeby nawigator znał trasę startową bez migotania.
+  const [onboardingPominiety, setOnboardingPominiety] = useState(false);
 
   // Odtworzenie sesji przy starcie aplikacji.
   useEffect(() => {
     (async () => {
+      // Flaga „pominięto onboarding" — czytamy niezależnie od sesji, best-effort.
+      try {
+        const pom = await getItem(KLUCZ_ONBOARDING_POMINIETY);
+        if (pom === '1') setOnboardingPominiety(true);
+      } catch { /* brak dostępu do storage — traktujemy jak niepominięty */ }
+
       let token = null;
       try {
         token = await getItem(TOKEN_KEY);
@@ -148,9 +158,20 @@ export function AuthProvider({ children }) {
     return data;
   }, [zapiszUsera]);
 
+  /** Użytkownik świadomie pomija ekran powitalny — zapamiętujemy, by nie nękać. */
+  const pominOnboarding = useCallback(() => {
+    setOnboardingPominiety(true);
+    setItem(KLUCZ_ONBOARDING_POMINIETY, '1').catch(() => {});
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, restoring, signIn, signUp, signOut, forgotPassword, resetPassword, refreshUser, zmienHaslo, zmienEmail, setUser: zapiszUsera, zarejestrujPush }}
+      value={{
+        user, restoring, signIn, signUp, signOut, forgotPassword, resetPassword,
+        refreshUser, zmienHaslo, zmienEmail, setUser: zapiszUsera, zarejestrujPush,
+        pokazOnboarding: czyPokazacOnboarding(user, onboardingPominiety),
+        pominOnboarding,
+      }}
     >
       {children}
     </AuthContext.Provider>
