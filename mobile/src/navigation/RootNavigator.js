@@ -40,6 +40,7 @@ import KalkulatorCenyScreen from '../screens/KalkulatorCenyScreen';
 import SymulatorPunktacjiScreen from '../screens/SymulatorPunktacjiScreen';
 import KaryUmowneScreen from '../screens/KaryUmowneScreen';
 import KalkulatorOdsetekScreen from '../screens/KalkulatorOdsetekScreen';
+import KartaDecyzjiScreen from '../screens/KartaDecyzjiScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -238,6 +239,11 @@ export default function RootNavigator() {
               name="KalkulatorOdsetek"
               component={KalkulatorOdsetekScreen}
               options={{ title: 'Odsetki za opóźnienie' }}
+            />
+            <Stack.Screen
+              name="KartaDecyzji"
+              component={KartaDecyzjiScreen}
+              options={{ title: 'Startować czy odpuścić?' }}
             />
             <Stack.Screen
               name="Saved"

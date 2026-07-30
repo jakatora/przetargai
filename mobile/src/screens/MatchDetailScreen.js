@@ -277,6 +277,18 @@ export default function MatchDetailScreen({ route, navigation }) {
       </View>
 
       <Pressable
+        style={styles.decyzjaCta}
+        onPress={() => navigation.navigate('KartaDecyzji', { match })}
+        accessibilityRole="button"
+      >
+        <Text style={styles.decyzjaCtaTytul}>⚖️ Startować czy odpuścić?</Text>
+        <Text style={styles.decyzjaCtaOpis}>
+          Szybki werdykt GO / ROZWAŻ / ODPUŚĆ z czerwonymi flagami — zanim włożysz pracę w ofertę.
+        </Text>
+        <Text style={styles.decyzjaCtaLink}>Oceń ten przetarg →</Text>
+      </Pressable>
+
+      <Pressable
         style={styles.sciezkaCta}
         onPress={() => navigation.navigate('SciezkaDoOferty', { match })}
         accessibilityRole="button"
@@ -752,6 +764,10 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   strKropka: { fontSize: 15, color: k.blue, lineHeight: 22 },
   strPunkt: { flex: 1, fontSize: 15, color: k.text, lineHeight: 22 },
   gap: { marginTop: spacing.lg },
+  decyzjaCta: { backgroundColor: k.wyroznienie, borderRadius: radius.lg, borderWidth: 1.5, borderColor: k.blue, padding: spacing.md, marginTop: spacing.md },
+  decyzjaCtaTytul: { fontSize: 16, fontWeight: '800', color: k.text },
+  decyzjaCtaOpis: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: 4 },
+  decyzjaCtaLink: { fontSize: 14, fontWeight: '800', color: k.blue, marginTop: 8 },
   sciezkaCta: { backgroundColor: k.blue, borderRadius: radius.lg, padding: spacing.md, marginTop: spacing.md },
   sciezkaCtaTytul: { fontSize: 16, fontWeight: '800', color: k.white },
   sciezkaCtaOpis: { fontSize: 13, color: k.white, opacity: 0.92, lineHeight: 18, marginTop: 4 },
