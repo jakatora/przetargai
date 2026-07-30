@@ -352,6 +352,12 @@ export default function AccountScreen({ navigation }) {
         onPress={() => navigation.navigate('KaryUmowne')}
         style={styles.gap}
       />
+      <Button
+        title="Odsetki za opóźnienie + rekompensata"
+        variant="ghost"
+        onPress={() => navigation.navigate('KalkulatorOdsetek')}
+        style={styles.gap}
+      />
 
       <CpvPicker
         widoczny={sciagaOtwarta}

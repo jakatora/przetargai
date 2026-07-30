@@ -39,6 +39,7 @@ import SciezkaDoOfertyScreen from '../screens/SciezkaDoOfertyScreen';
 import KalkulatorCenyScreen from '../screens/KalkulatorCenyScreen';
 import SymulatorPunktacjiScreen from '../screens/SymulatorPunktacjiScreen';
 import KaryUmowneScreen from '../screens/KaryUmowneScreen';
+import KalkulatorOdsetekScreen from '../screens/KalkulatorOdsetekScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -232,6 +233,11 @@ export default function RootNavigator() {
               name="KaryUmowne"
               component={KaryUmowneScreen}
               options={{ title: 'Kary umowne' }}
+            />
+            <Stack.Screen
+              name="KalkulatorOdsetek"
+              component={KalkulatorOdsetekScreen}
+              options={{ title: 'Odsetki za opóźnienie' }}
             />
             <Stack.Screen
               name="Saved"
