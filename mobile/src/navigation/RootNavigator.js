@@ -43,6 +43,7 @@ import KalkulatorOdsetekScreen from '../screens/KalkulatorOdsetekScreen';
 import KartaDecyzjiScreen from '../screens/KartaDecyzjiScreen';
 import PulpitScreen from '../screens/PulpitScreen';
 import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
+import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -256,6 +257,11 @@ export default function RootNavigator() {
               name="KontrolaOferty"
               component={KontrolaOfertyScreen}
               options={{ title: 'Kontrola przed wysłaniem' }}
+            />
+            <Stack.Screen
+              name="SprawdzarkaCeny"
+              component={SprawdzarkaCenyScreen}
+              options={{ title: 'Sprawdzarka cenowa' }}
             />
             <Stack.Screen
               name="Saved"

@@ -341,6 +341,12 @@ export default function AccountScreen({ navigation }) {
         style={styles.gap}
       />
       <Button
+        title="Sprawdzarka formularza cenowego"
+        variant="ghost"
+        onPress={() => navigation.navigate('SprawdzarkaCeny')}
+        style={styles.gap}
+      />
+      <Button
         title="Symulator punktacji oferty"
         variant="ghost"
         onPress={() => navigation.navigate('SymulatorPunktacji')}

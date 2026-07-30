@@ -389,6 +389,12 @@ export default function MatchDetailScreen({ route, navigation }) {
           style={styles.gap}
         />
         <Button
+          title="Sprawdzarka formularza cenowego"
+          onPress={() => navigation.navigate('SprawdzarkaCeny', { nazwa: tender.title })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
           title="Kalkulator punktów (cena punktu)"
           onPress={() => navigation.navigate('KalkulatorPunktow', { nazwa: tender.title })}
           variant="ghost"
