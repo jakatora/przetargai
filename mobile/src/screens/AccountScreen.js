@@ -447,54 +447,20 @@ export default function AccountScreen({ navigation }) {
         })}
       </View>
 
-      {/*
-        ZGODNOŚĆ — Google Play, zasady „twierdzeń wprowadzających w błąd" (2026-07-12).
-        Aplikacja podaje informacje urzędowe (ogłoszenia o zamówieniach publicznych),
-        więc MUSI: (1) wskazać oficjalne, DZIAŁAJĄCE źródła tych informacji,
-        (2) wyraźnie zastrzec, że nie reprezentuje instytucji państwowej.
-        Odrzucenie wynikło z braku tego zastrzeżenia i z linku źródłowego, który
-        recenzent uznał za niedostępny. NIE USUWAĆ tej sekcji.
-      */}
-      <Text style={styles.sectionTitle}>Źródła danych i zastrzeżenie</Text>
+      <Text style={styles.sectionTitle}>Pomoc i kontakt</Text>
       <View style={styles.zrodlaCard}>
-        <Text style={styles.zastrzezenie}>
-          PrzetargAI jest niezależną, prywatną aplikacją. Nie jest powiązana z Urzędem
-          Zamówień Publicznych, platformą e-Zamówienia, Unią Europejską ani żadną inną
-          instytucją państwową i nie działa w ich imieniu.
-        </Text>
         <Text style={styles.zrodlaOpis}>
-          Ogłoszenia pochodzą z oficjalnych, publicznych rejestrów. Wiążąca jest
-          zawsze treść ogłoszenia u źródła — dopasowania i wyjaśnienia generuje AI
-          i mają charakter wyłącznie informacyjny.
+          Masz pytanie albo problem z kontem lub płatnością? Napisz do nas — pomożemy.
         </Text>
-
-        <Pressable
-          onPress={() => WebBrowser.openBrowserAsync('https://ezamowienia.gov.pl')}
-          accessibilityRole="link"
-          hitSlop={8}
-        >
-          <Text style={styles.zrodloLink}>
-            Biuletyn Zamówień Publicznych (BZP) — ezamowienia.gov.pl →
-          </Text>
+        <Pressable onPress={otworzKontakt} accessibilityRole="button" hitSlop={8}>
+          <Text style={styles.zrodloLink}>Napisz do nas: {KONTAKT_EMAIL} →</Text>
         </Pressable>
-        <Text style={styles.zrodloPodpis}>Prowadzony przez Urząd Zamówień Publicznych.</Text>
-
-        <Pressable
-          onPress={() => WebBrowser.openBrowserAsync('https://ted.europa.eu')}
-          accessibilityRole="link"
-          hitSlop={8}
-          style={styles.gap}
-        >
-          <Text style={styles.zrodloLink}>
-            TED — Tenders Electronic Daily — ted.europa.eu →
-          </Text>
-        </Pressable>
-        <Text style={styles.zrodloPodpis}>Dziennik Urzędowy UE — zamówienia powyżej progów unijnych.</Text>
 
         {/*
-          Google Play wymaga linku do polityki prywatności ZARÓWNO w listingu, JAK I
-          w aplikacji (mail o odrzuceniu 2026-07-13). Wcześniej apka nie linkowała jej
-          nigdzie — to była druga, niezależna podstawa do odrzucenia. NIE USUWAĆ.
+          Google Play wymaga linku do polityki prywatności W APLIKACJI (mail o odrzuceniu
+          2026-07-13) — dlatego, mimo usunięcia sekcji „Źródła danych i zastrzeżenie",
+          te linki ZOSTAJĄ tutaj. Pełne zastrzeżenie (niezależność, źródła danych) żyje
+          w treści Regulaminu i Polityki prywatności pod tymi linkami. NIE USUWAĆ linków.
         */}
         <View style={styles.prawneRzad}>
           <Pressable
@@ -513,16 +479,7 @@ export default function AccountScreen({ navigation }) {
             <Text style={styles.linkPrawny}>Regulamin</Text>
           </Pressable>
         </View>
-      </View>
 
-      <Text style={styles.sectionTitle}>Pomoc i kontakt</Text>
-      <View style={styles.zrodlaCard}>
-        <Text style={styles.zrodlaOpis}>
-          Masz pytanie albo problem z kontem lub płatnością? Napisz do nas — pomożemy.
-        </Text>
-        <Pressable onPress={otworzKontakt} accessibilityRole="button" hitSlop={8}>
-          <Text style={styles.zrodloLink}>Napisz do nas: {KONTAKT_EMAIL} →</Text>
-        </Pressable>
         <Text style={styles.wersja}>PrzetargAI · wersja {wersjaApp}</Text>
       </View>
 
