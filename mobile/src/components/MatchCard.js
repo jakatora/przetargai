@@ -45,8 +45,8 @@ export function ScoreBadge({ score, size = 'md' }) {
   );
 }
 
-/** Karta dopasowanego przetargu na liście. */
-export default function MatchCard({ match, onPress }) {
+/** Karta dopasowanego przetargu na liście. `nowe` = dodany po ostatniej wizycie. */
+export default function MatchCard({ match, onPress, nowe = false }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKarty);
   const tender = match.tender;
@@ -81,6 +81,7 @@ export default function MatchCard({ match, onPress }) {
             Termin składania ofert: {formatDate(tender.deadline)}
           </Text>
           <View style={styles.znacznikiRzad}>
+            {nowe ? <Text style={styles.noweChip}>NOWE</Text> : null}
             <Text
               style={[
                 styles.znacznik,
@@ -111,6 +112,17 @@ const tworzStyleKarty = tworzStyle((k) => ({
   },
   znacznikPilny: { color: k.ostrzezenieTekst },
   znacznikMiniony: { color: k.danger },
+  noweChip: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: k.white,
+    backgroundColor: k.blue,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    overflow: 'hidden',
+    letterSpacing: 0.5,
+  },
   znacznikiRzad: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
   wadiumChip: { fontSize: 11, fontWeight: '800', paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, overflow: 'hidden' },
   wadiumChipWymaga: { backgroundColor: k.ostrzezenieTlo ?? '#fef3c7', color: k.ostrzezenieTekst },

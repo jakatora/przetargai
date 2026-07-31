@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import {
-  FlatList,
+  SectionList,
   ScrollView,
   View,
   Text,
@@ -19,8 +19,12 @@ import { PROGI, KLUCZ_PROGU, filtrujPoProgu, normalizujProg } from '../lib/filtr
 import { SORTOWANIA, KLUCZ_SORT, sortujDopasowania, filtrujTekst, normalizujSort, filtrujMalaFirma } from '../lib/feedSort';
 import { sortujPodprogowe, etykietaZrodla, flagiPodprogowe, etykietaWartosciNetto } from '../lib/podprogowe';
 import { filtrujWojewodztwo, wojewodztwaObecne, WOJEWODZTWA } from '../lib/wojewodztwa';
+import { grupujPoDniach, policzNowe, czyNowe } from '../lib/grupowanieDni';
 import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
+
+// Znacznik ostatniej wizyty na feedzie — do wykrywania „nowych" przetargów.
+const KLUCZ_OSTATNIA_WIZYTA = 'przetargai.feed_ostatnia_wizyta';
 
 /**
  * Kafelek scalonego strumienia podprogowego w bandzie „łatwiejszy start"
@@ -105,6 +109,28 @@ export default function MatchFeedScreen({ navigation }) {
     const poWoj = filtrujWojewodztwo(poTekscie, woj);
     return sortujDopasowania(poWoj, sort);
   }, [matches, prog, szukaj, sort, malaFirma, woj]);
+
+  // „Nowe od ostatniej wizyty" — bazę (poprzednią wizytę) łapiemy RAZ na wejście do
+  // apki i od razu zapisujemy nowy znacznik, żeby kolejne otwarcie wyzerowało badge.
+  const [wizytaBazowa, setWizytaBazowa] = useState(0);
+  useEffect(() => {
+    let aktywny = true;
+    storage.getItem(KLUCZ_OSTATNIA_WIZYTA)
+      .then((v) => {
+        const ms = Number(v);
+        if (aktywny) setWizytaBazowa(Number.isFinite(ms) ? ms : 0);
+        storage.setItem(KLUCZ_OSTATNIA_WIZYTA, String(Date.now())).catch(() => {});
+      })
+      .catch(() => {});
+    return () => { aktywny = false; };
+  }, []);
+
+  // Grupowanie po dniu DODANIA do aplikacji (created_at) — sekcje od najnowszego dnia.
+  const sekcje = useMemo(
+    () => grupujPoDniach(widoczne, Date.now(), wizytaBazowa),
+    [widoczne, wizytaBazowa],
+  );
+  const noweLacznie = useMemo(() => policzNowe(widoczne, wizytaBazowa), [widoczne, wizytaBazowa]);
 
   // Scalony strumień podprogowy — „łatwiejszy start" na górze (reguła w lib/podprogowe.js).
   const podprogoweWidoczne = useMemo(() => sortujPodprogowe(podprogowe), [podprogowe]);
@@ -234,12 +260,33 @@ export default function MatchFeedScreen({ navigation }) {
   }
 
   return (
-    <FlatList
-      data={widoczne}
+    <SectionList
+      sections={sekcje}
       keyExtractor={(item) => item.id}
+      stickySectionHeadersEnabled={false}
       contentContainerStyle={widoczne.length ? styles.list : styles.listEmpty}
+      renderSectionHeader={({ section }) => (
+        <View style={styles.sekcjaNaglowek}>
+          <Text style={styles.sekcjaTytul}>{section.tytul}</Text>
+          {section.nowe > 0 ? (
+            <Text style={styles.sekcjaNowe}>{section.nowe} nowe</Text>
+          ) : null}
+        </View>
+      )}
       ListHeaderComponent={
         <View>
+          {/* Baner „nowe od ostatniej wizyty" — to jest „powiadomienie" wewnątrz apki. */}
+          {noweLacznie > 0 ? (
+            <View style={styles.noweBaner}>
+              <Text style={styles.noweBanerKropka}>●</Text>
+              <Text style={styles.noweBanerTekst}>
+                {noweLacznie === 1
+                  ? '1 nowy przetarg od ostatniej wizyty'
+                  : `${noweLacznie} nowych przetargów od ostatniej wizyty`}
+              </Text>
+            </View>
+          ) : null}
+
           {/* Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free). */}
           {zacheta?.pokaz ? (
             <Pressable style={styles.fomo} onPress={przejdzNaStandard} disabled={upgrading} accessibilityRole="button">
@@ -435,6 +482,7 @@ export default function MatchFeedScreen({ navigation }) {
       renderItem={({ item }) => (
         <MatchCard
           match={item}
+          nowe={czyNowe(item, wizytaBazowa)}
           onPress={() => navigation.navigate('MatchDetail', { match: item })}
         />
       )}
@@ -467,6 +515,40 @@ export default function MatchFeedScreen({ navigation }) {
 }
 
 const tworzStyleFeedu = tworzStyle((k) => ({
+  noweBaner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: k.wyroznienie,
+    borderWidth: 1,
+    borderColor: k.blue,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  noweBanerKropka: { color: k.blue, fontSize: 12 },
+  noweBanerTekst: { flex: 1, color: k.blue, fontSize: 14, fontWeight: '800' },
+  sekcjaNaglowek: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: k.bg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  sekcjaTytul: { fontSize: 15, fontWeight: '800', color: k.text },
+  sekcjaNowe: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: k.white,
+    backgroundColor: k.blue,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
   fomo: {
     backgroundColor: k.blue,
     borderRadius: radius.lg,
