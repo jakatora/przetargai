@@ -23,6 +23,8 @@ import { pobierzDokument } from '../services/dokumenty';
 import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio';
 import * as storage from '../lib/storage';
 import { opisWadium } from '../lib/wadium';
+import { orientacyjnaWartosc, ZRODLO_BENCHMARKU } from '../lib/wartosciBenchmark';
+import { nazwaWojewodztwa } from '../lib/wojewodztwa';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { opisWyniki } from '../lib/wyniki';
 
@@ -30,6 +32,14 @@ import { opisWyniki } from '../lib/wyniki';
 function etykietaEtapuKontroli(status) {
   const wpis = STATUSY_KONTROLI.find((s) => s.wartosc === status) ?? STATUSY_KONTROLI[0];
   return wpis.etykieta;
+}
+
+/** Zwięzła kwota do benchmarku: „203 tys." / „1,47 mln" (bez groszy — to widełki orientacyjne). */
+function kwotaZwiezle(n) {
+  if (!Number.isFinite(n)) return '—';
+  if (n >= 1e6) return `${(n / 1e6).toFixed(2).replace('.', ',')} mln`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)} tys.`;
+  return String(Math.round(n));
 }
 
 function Row({ styles, label, value, last }) {
@@ -104,6 +114,8 @@ export default function MatchDetailScreen({ route, navigation }) {
   const budget = formatBudget(tender.budget, tender.currency);
   const cpv = opisCpv(tender.cpv);
   const wadium = opisWadium(tender);
+  // Orientacyjna wartość z historycznych kwot kontraktów (BZP nie podaje wartości przy ogłoszeniu).
+  const wartoscOrient = orientacyjnaWartosc(tender.cpv, tender.wojewodztwo);
   const kryterium = opisKryterium(tender);
   const czesci = opisCzesci(tender);
   // Jedno źródło prawdy o terminie — wcześniej `daysUntil` nie odróżniał
@@ -290,6 +302,28 @@ export default function MatchDetailScreen({ route, navigation }) {
         {budget ? <Row styles={styles} label="Szacowana wartość" value={budget} /> : null}
         <Row styles={styles} label={cpv.etykieta} value={cpv.wartosc} last />
       </View>
+
+      {/* Orientacyjna wartość — statystyczny benchmark z historycznych kwot kontraktów.
+          Pokazujemy, gdy przetarg NIE ma twardej wartości (typowe dla BZP). Świadomie widełki
+          + etykieta „orientacyjnie", nie „wartość tego przetargu" (reguła: nie zaniżaj). */}
+      {!budget && wartoscOrient ? (
+        <View style={styles.benchmarkKarta}>
+          <Text style={styles.benchmarkTytul}>Orientacyjna wartość</Text>
+          <Text style={styles.benchmarkKwoty}>
+            {kwotaZwiezle(wartoscOrient.p25)} –{' '}
+            <Text style={styles.benchmarkMediana}>{kwotaZwiezle(wartoscOrient.mediana)}</Text> –{' '}
+            {kwotaZwiezle(wartoscOrient.p75)} zł
+          </Text>
+          <Text style={styles.benchmarkOpis}>
+            Tak zwykle kształtowały się kwoty podobnych zamówień
+            {wartoscOrient.poziom === 'wojewodztwo' && nazwaWojewodztwa(tender.wojewodztwo)
+              ? ` w woj. ${nazwaWojewodztwa(tender.wojewodztwo).toLowerCase()}`
+              : ' w kraju'}{' '}
+            (dział CPV, dane 2024–25). Orientacyjnie — to NIE jest wartość tego przetargu.
+          </Text>
+          <Text style={styles.benchmarkZrodlo}>Źródło: {ZRODLO_BENCHMARKU}</Text>
+        </View>
+      ) : null}
 
       <Pressable
         style={styles.decyzjaCta}
@@ -797,6 +831,15 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   strKropka: { fontSize: 15, color: k.blue, lineHeight: 22 },
   strPunkt: { flex: 1, fontSize: 15, color: k.text, lineHeight: 22 },
   gap: { marginTop: spacing.lg },
+  benchmarkKarta: {
+    backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border,
+    padding: spacing.md, marginTop: spacing.md,
+  },
+  benchmarkTytul: { fontSize: 13, fontWeight: '800', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  benchmarkKwoty: { fontSize: 20, fontWeight: '700', color: k.text, marginTop: 6, fontVariant: ['tabular-nums'] },
+  benchmarkMediana: { color: k.blue, fontWeight: '800' },
+  benchmarkOpis: { fontSize: 12, color: k.textMuted, lineHeight: 17, marginTop: 6 },
+  benchmarkZrodlo: { fontSize: 11, color: k.textMuted, marginTop: 6, fontStyle: 'italic' },
   decyzjaCta: { backgroundColor: k.wyroznienie, borderRadius: radius.lg, borderWidth: 1.5, borderColor: k.blue, padding: spacing.md, marginTop: spacing.md },
   decyzjaCtaTytul: { fontSize: 16, fontWeight: '800', color: k.text },
   decyzjaCtaOpis: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: 4 },
