@@ -42,8 +42,12 @@ const schema = z.object({
   FAKTUROWNIA_DOMAIN: z.string().default(''),
 
   RESEND_API_KEY: z.string().default(''),
-  EMAIL_FROM: z.string().default('PrzetargAI <noreply@przetargai.pl>'),
-  EMAIL_REPLY_TO: z.string().default('support@przetargai.pl'),
+  // Nadawca MUSI być z domeny ZWERYFIKOWANEJ w Resend, inaczej każda wysyłka wraca
+  // 403 „domain is not verified" i ŻADEN mail nie dochodzi (reset hasła, powitalny,
+  // aktywacja, digest). Domena `przetargai.pl` wygasła (2026-07) — używamy `przetarg-ai.pl`
+  // (aktywna, DNS w OVH). Reply-to = realna skrzynka właściciela, żeby odpowiedzi docierały.
+  EMAIL_FROM: z.string().default('PrzetargAI <noreply@przetarg-ai.pl>'),
+  EMAIL_REPLY_TO: z.string().default('jakatora68@gmail.com'),
 
   ADMIN_API_KEY: z.string().default(''),
 
