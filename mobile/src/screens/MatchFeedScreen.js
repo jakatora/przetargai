@@ -20,6 +20,10 @@ import { SORTOWANIA, KLUCZ_SORT, sortujDopasowania, filtrujTekst, normalizujSort
 import { sortujPodprogowe, etykietaZrodla, flagiPodprogowe, etykietaWartosciNetto } from '../lib/podprogowe';
 import { filtrujWojewodztwo, wojewodztwaObecne, WOJEWODZTWA } from '../lib/wojewodztwa';
 import { grupujPoDniach, policzNowe, czyNowe } from '../lib/grupowanieDni';
+import {
+  STATUSY_TERMINU, STATUS_TERMINU_DOMYSLNY, KLUCZ_STATUS_TERMINU,
+  normalizujStatusTerminu, filtrujStatusTerminu, policzPoTerminie,
+} from '../lib/filtrTerminu';
 import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
 
@@ -70,6 +74,7 @@ export default function MatchFeedScreen({ navigation }) {
   const [szukaj, setSzukaj] = useState('');
   const [malaFirma, setMalaFirma] = useState(false); // filtr „dla małej firmy" (R19)
   const [woj, setWoj] = useState(''); // filtr województwa (kod TERYT; '' = wszystkie)
+  const [statusTerminu, setStatusTerminu] = useState(STATUS_TERMINU_DOMYSLNY); // Aktywne / Po terminie
   // Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free).
   const [zacheta, setZacheta] = useState(null);
   const [upgrading, setUpgrading] = useState(false);
@@ -81,8 +86,13 @@ export default function MatchFeedScreen({ navigation }) {
   // Próg filtra i sortowanie przeżywają restart aplikacji.
   useEffect(() => {
     let aktywny = true;
-    Promise.all([storage.getItem(KLUCZ_PROGU), storage.getItem(KLUCZ_SORT)])
-      .then(([p, s]) => { if (aktywny) { setProg(normalizujProg(p)); setSort(normalizujSort(s)); } })
+    Promise.all([storage.getItem(KLUCZ_PROGU), storage.getItem(KLUCZ_SORT), storage.getItem(KLUCZ_STATUS_TERMINU)])
+      .then(([p, s, st]) => {
+        if (!aktywny) return;
+        setProg(normalizujProg(p));
+        setSort(normalizujSort(s));
+        setStatusTerminu(normalizujStatusTerminu(st));
+      })
       .catch(() => {});
     return () => { aktywny = false; };
   }, []);
@@ -97,18 +107,29 @@ export default function MatchFeedScreen({ navigation }) {
     storage.setItem(KLUCZ_SORT, nowy).catch(() => {});
   }, []);
 
+  const zmienStatusTerminu = useCallback((nowy) => {
+    setStatusTerminu(nowy);
+    storage.setItem(KLUCZ_STATUS_TERMINU, nowy).catch(() => {});
+  }, []);
+
   // Pipeline: próg → tekst → sortowanie. Wszystko po stronie aplikacji na
   // wczytanych dopasowaniach (feed jednego użytkownika jest mały).
   // Województwa OBECNE w feedzie — filtr pokazujemy tylko, gdy jest z czego wybierać.
   const regiony = useMemo(() => wojewodztwaObecne(matches), [matches]);
 
   const widoczne = useMemo(() => {
-    const poProgu = filtrujPoProgu(matches, prog);
+    // Najpierw status terminu (Aktywne domyślnie chowa przeterminowane) — reszta filtrów
+    // i grupowanie działają już na wybranej „zakładce".
+    const poStatusie = filtrujStatusTerminu(matches, statusTerminu);
+    const poProgu = filtrujPoProgu(poStatusie, prog);
     const poMalej = filtrujMalaFirma(poProgu, malaFirma);
     const poTekscie = filtrujTekst(poMalej, szukaj);
     const poWoj = filtrujWojewodztwo(poTekscie, woj);
     return sortujDopasowania(poWoj, sort);
-  }, [matches, prog, szukaj, sort, malaFirma, woj]);
+  }, [matches, prog, szukaj, sort, malaFirma, woj, statusTerminu]);
+
+  // Licznik przeterminowanych (z pełnej listy) — pokazujemy na zakładce „Po terminie".
+  const liczbaPoTerminie = useMemo(() => policzPoTerminie(matches), [matches]);
 
   // „Nowe od ostatniej wizyty" — bazę (poprzednią wizytę) łapiemy RAZ na wejście do
   // apki i od razu zapisujemy nowy znacznik, żeby kolejne otwarcie wyzerowało badge.
@@ -366,6 +387,27 @@ export default function MatchFeedScreen({ navigation }) {
             ) : null}
           </View>
 
+          {/* Zakładka statusu terminu: Aktywne (domyślnie) / Po terminie. Odchudza feed z przeterminowanych. */}
+          <View style={styles.progi} accessibilityRole="radiogroup">
+            {STATUSY_TERMINU.map((opcja) => {
+              const aktywny = statusTerminu === opcja.wartosc;
+              const licznik = opcja.wartosc === 'poterminie' && liczbaPoTerminie > 0 ? ` (${liczbaPoTerminie})` : '';
+              return (
+                <Pressable
+                  key={opcja.wartosc}
+                  onPress={() => zmienStatusTerminu(opcja.wartosc)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: aktywny }}
+                  style={[styles.progChip, aktywny && styles.progChipAktywny]}
+                >
+                  <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>
+                    {opcja.etykieta}{licznik}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           {/* Sortowanie — trwały wybór (D-051). */}
           <View style={styles.progi} accessibilityRole="radiogroup">
             {SORTOWANIA.map((opcja) => {
@@ -462,11 +504,15 @@ export default function MatchFeedScreen({ navigation }) {
           ) : null}
           {matches.length > 0 && widoczne.length === 0 ? (
             <Text style={styles.pustyFiltr}>
-              {szukaj
-                ? `Brak wyników dla „${szukaj}". Wyczyść szukanie lub zmień frazę.`
-                : woj
-                  ? `Brak przetargów z województwa „${WOJEWODZTWA[woj]}" w bieżącym feedzie. Wybierz „Wszystkie województwa".`
-                  : `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`}
+              {statusTerminu === 'poterminie' && liczbaPoTerminie === 0
+                ? 'Brak przetargów po terminie. Wróć do „Aktywne".'
+                : szukaj
+                  ? `Brak wyników dla „${szukaj}". Wyczyść szukanie lub zmień frazę.`
+                  : woj
+                    ? `Brak przetargów z województwa „${WOJEWODZTWA[woj]}" w bieżącym feedzie. Wybierz „Wszystkie województwa".`
+                    : statusTerminu === 'aktywne'
+                      ? `Wszystkie ${matches.length} dopasowań ma już po terminie — zajrzyj do zakładki „Po terminie".`
+                      : `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`}
             </Text>
           ) : null}
         </View>
