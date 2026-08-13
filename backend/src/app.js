@@ -25,6 +25,7 @@ import czarnaSkrzynkaRouter from './routes/czarnaSkrzynka.js';
 import symulatorPlynnosciRouter from './routes/symulatorPlynnosci.js';
 import radarPlanowRouter from './routes/radarPlanow.js';
 import zabezpieczenieZwrotRouter from './routes/zabezpieczenieZwrot.js';
+import smartspizarkaPricesRouter from './routes/smartspizarkaPrices.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -120,6 +121,12 @@ export function createApp() {
   // JSON (1 MB) wystarcza. Endpointy BEZSTANOWE (czyste liby liczące, bez DB i płatnego AI),
   // pod limiterem API jak reszta tras.
   app.use('/api/przetarg/zabezpieczenie', apiLimiter, zabezpieczenieZwrotRouter);
+  // SmartSpiżarka — publiczny endpoint cen produktów (GET ?productId=<ingredientName>).
+  // Tylko odczyt statycznego, ręcznie zweryfikowanego katalogu (mirror seed_prices.json):
+  // BEZSTANOWY, bez DB, bez płatnego AI. Reguła money-path: brak potwierdzonego źródła
+  // lub terminu → pola ceny null (nigdy nie fabrykuj). Małe payloady → globalny parser
+  // JSON (1 MB) wystarcza; pod wspólnym limiterem API (120/min/IP) jak reszta tras.
+  app.use('/api/smartspizarka/prices', apiLimiter, smartspizarkaPricesRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   app.use(notFoundHandler);

@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 2,
+  "source": "mirror smartspizarka/assets/data/seed_prices.json (ceny z kart produktow zakupy.biedronka.pl)",
+  "prices": {
+    "Mleko": {
+      "store": "Biedronka",
+      "unit": "l",
+      "price": 4.49,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/mlekovita-mlekovita-mleko-uht-32-tluszczu-wypasione-1-l-0000000036.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Jajko": {
+      "store": "Biedronka",
+      "unit": "szt",
+      "price": 1.4,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/moja-kurka-moja-kurka-jaja-wolny-wybieg-l-10-szt.-0000007510.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Mąka pszenna": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 1.79,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/plony-natury-plony-natury-maka-pszenna-t-450-tortowa-1-kg-0000000072.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Cukier": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 1.99,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/diamant-diamant-cukier-bialy-1-kg-0000004986.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Masło": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 29.95,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/mlekovita-mlekovita-maslo-polskie-ekstra-82-tl.-200-g-0000004370.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Ryż": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 10.98,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/plony-natury-plony-natury-ryz-bialy-dlugoziarnisty-z-europejskich-upraw-4-x-125-g-0000004902.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Płatki owsiane": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 4.99,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/vitanella-vitanella-platki-owsiane-gorskie-1-kg-0000017476.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Makaron spaghetti": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 11.49,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/barilla-barilla-makaron-z-pszenicy-durum-spaghetti-1000-g-0000003650.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Mięso mielone": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 33.98,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/dolina-dobra-dolina-dobra-mieso-mielone-z-szynki-wieprzowej-400-g-0000006058.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Filet z kurczaka": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 25.49,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/kraina-mies-kraina-mies-filet-z-piersi-kurczaka-0000000247.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Boczek": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 58.5,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/kraina-wedlin-kraina-wedlin-boczek-surowy-wedzony-plastry-100-g-0000004111.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Ser żółty": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 37.48,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/wloszczowa-wloszczowa-ser-gouda-plastry-400-g--0000007925.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Oliwa": {
+      "store": "Biedronka",
+      "unit": "l",
+      "price": 49.98,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/ektos-ektos-oliwa-z-oliwek-najwyzszej-jakosci-pierwszego-tloczenia-chania-kritis-500-ml-0000016572.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Olej": {
+      "store": "Biedronka",
+      "unit": "l",
+      "price": 7.99,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/wyborny-wyborny-olej-slonecznikowy-1-l-0000000841.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Śmietana": {
+      "store": "Biedronka",
+      "unit": "l",
+      "price": 19.98,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/laciata-laciata-smietanka-30-500-ml-0001152410.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Cebula": {
+      "store": null,
+      "unit": "szt",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Biedronka online sprzedaje cebulę na wagę (kg); przepisy wyrażają ją w szt — brak bezpośredniego URL potwierdzającego cenę za sztukę."
+    },
+    "Marchew": {
+      "store": null,
+      "unit": "szt",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Marchew niedostępna z ceną w sklepie online (sprzedaż na wagę); przepisy w szt — brak potwierdzonej ceny za sztukę."
+    },
+    "Pomidory z puszki": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 15.73,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/mutti-mutti-polpa-pomidory-drobno-krojone-bez-skorek-400-g-0000006098.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Koncentrat pomidorowy": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 26.26,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/pudliszki-pudliszki-koncentrat-pomidorowy-190-g--0000012511.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Feta": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 43.06,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/kortos-kortos-ser-salatkowy-typu-greckiego-160-g-0000010645.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Seler naciowy": {
+      "store": "Biedronka",
+      "unit": "szt",
+      "price": 5.99,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/biedronka-seler-naciowy-1-szt.-0000010289.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Wino czerwone": {
+      "store": null,
+      "unit": "l",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Biedronka nie sprzedaje alkoholu w sklepie online — brak bezpośredniego URL potwierdzającego cenę wina."
+    },
+    "Wino białe": {
+      "store": null,
+      "unit": "l",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Biedronka nie sprzedaje alkoholu w sklepie online — brak bezpośredniego URL potwierdzającego cenę wina."
+    },
+    "Bulion": {
+      "store": null,
+      "unit": "l",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Dostępny wyłącznie jako kostki rosołowe (za gramaturę); przepisy używają bulionu w litrach — wymiar nieprzeliczalny, brak ceny za litr."
+    },
+    "Parmezan": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 80.95,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/biedronka-biedronka-grana-padano-200-g-0000005195.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Pomidory": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 12.99,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/biedronka-pomidor-malinowy-polski-0000010131.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Miód": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 19.99,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/huzar-huzar-miod-wielokwiatowy-nektarowy-1-kg--0000002045.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Ogórek": {
+      "store": null,
+      "unit": "szt",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Ogórek szklarniowy sprzedawany na wagę (kg); przepisy w szt — brak potwierdzonej ceny za sztukę."
+    },
+    "Cebula czerwona": {
+      "store": null,
+      "unit": "szt",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Sprzedaż na wagę (kg); przepisy w szt — brak bezpośredniego URL potwierdzającego cenę za sztukę."
+    },
+    "Oliwki": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 11.74,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/el-toro-rojo-el-toro-rojo-oliwki-czarne-drylowane-340-g-0000000829.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Tortilla": {
+      "store": null,
+      "unit": "szt",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Sprzedawana za gramaturę opakowania bez podanej liczby sztuk; przepisy w szt — brak potwierdzonej ceny za sztukę."
+    },
+    "Czosnek": {
+      "store": null,
+      "unit": "szt",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Dostępny w opakowaniu za gramaturę (250 g); przepisy w szt — brak bezpośredniego URL potwierdzającego cenę za sztukę."
+    },
+    "Cukinia": {
+      "store": "Biedronka",
+      "unit": "kg",
+      "price": 5.99,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": "https://zakupy.biedronka.pl/biedronka-cukinia-0000010418.html",
+      "priceKnown": true,
+      "note": null
+    },
+    "Papryka czerwona": {
+      "store": null,
+      "unit": "szt",
+      "price": null,
+      "checkedAt": "2026-08-13",
+      "validUntil": null,
+      "sourceUrl": null,
+      "priceKnown": false,
+      "note": "Papryka czerwona sprzedawana na wagę (kg); przepisy w szt — brak potwierdzonej ceny za sztukę."
+    }
+  }
+}
