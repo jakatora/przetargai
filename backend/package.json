@@ -9,7 +9,7 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "start": "node --disable-warning=ExperimentalWarning src/index.js",
+    "start": "node --disable-warning=ExperimentalWarning scripts/prestart-cleanup.js && node --disable-warning=ExperimentalWarning src/index.js",
     "dev": "node --disable-warning=ExperimentalWarning --watch src/index.js",
     "migrate": "node --disable-warning=ExperimentalWarning src/db/migrate.js",
     "seed": "node --disable-warning=ExperimentalWarning src/db/seed.js",
