@@ -17,40 +17,40 @@
       "unit": "szt",
       "price": 1.4,
       "checkedAt": "2026-08-13",
-      "validUntil": null,
+      "validUntil": "2026-09-30",
       "sourceUrl": "https://zakupy.biedronka.pl/moja-kurka-moja-kurka-jaja-wolny-wybieg-l-10-szt.-0000007510.html",
       "priceKnown": true,
-      "note": null
+      "note": "Cena za sztukę z opakowania 10 szt. (13,99 zł/opak → 1,40 zł/szt). Potwierdzona na karcie produktu 2026-08-13; validUntil = horyzont ufności ~7 tyg., nie scrapowana data promocji."
     },
     "Mąka pszenna": {
       "store": "Biedronka",
       "unit": "kg",
       "price": 1.79,
       "checkedAt": "2026-08-13",
-      "validUntil": null,
+      "validUntil": "2026-09-30",
       "sourceUrl": "https://zakupy.biedronka.pl/plony-natury-plony-natury-maka-pszenna-t-450-tortowa-1-kg-0000000072.html",
       "priceKnown": true,
-      "note": null
+      "note": "Cena katalogowa potwierdzona na karcie produktu 2026-08-13 (1,79 zł/kg). validUntil = horyzont ufności ~7 tyg., nie scrapowana data promocji."
     },
     "Cukier": {
       "store": "Biedronka",
       "unit": "kg",
       "price": 1.99,
       "checkedAt": "2026-08-13",
-      "validUntil": null,
+      "validUntil": "2026-09-30",
       "sourceUrl": "https://zakupy.biedronka.pl/diamant-diamant-cukier-bialy-1-kg-0000004986.html",
       "priceKnown": true,
-      "note": null
+      "note": "Cena katalogowa potwierdzona na karcie produktu 2026-08-13 (1,99 zł/kg). validUntil = horyzont ufności ~7 tyg., nie scrapowana data promocji."
     },
     "Masło": {
       "store": "Biedronka",
       "unit": "kg",
       "price": 29.95,
       "checkedAt": "2026-08-13",
-      "validUntil": null,
+      "validUntil": "2026-09-30",
       "sourceUrl": "https://zakupy.biedronka.pl/mlekovita-mlekovita-maslo-polskie-ekstra-82-tl.-200-g-0000004370.html",
       "priceKnown": true,
-      "note": null
+      "note": "Cena za kg z opakowania 200 g (5,99 zł/200 g → 29,95 zł/kg). Potwierdzona na karcie produktu 2026-08-13; validUntil = horyzont ufności ~7 tyg., nie scrapowana data promocji."
     },
     "Ryż": {
       "store": "Biedronka",
