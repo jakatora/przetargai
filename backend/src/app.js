@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { Sentry, sentryEnabled } from './lib/sentry.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import healthRouter from './routes/health.js';
+import atlasMostRouter from './routes/atlasMost.js';
 import authRouter from './routes/auth.js';
 import matchesRouter from './routes/matches.js';
 import upgradeRouter from './routes/upgrade.js';
@@ -75,6 +76,11 @@ export function createApp() {
   );
 
   app.use('/health', healthRouter);
+  // MOST ATLAS-a (2026-08-13) — przekaźnik telefon ↔ komputer właściciela, żeby apka działała
+  // spoza domu bez otwierania portu na routerze. Świadomie BEZ limitera: ATLAS wisi tu na
+  // długim odpytywaniu, a telefon odświeża raport co kilkanaście sekund — limiter ubijałby
+  // własny most właściciela. Ruchu pilnuje sekret + limit kolejki w samym routerze.
+  app.use('/api/atlas', atlasMostRouter);
   app.use('/auth', authLimiter, authRouter);
   app.use('/matches', apiLimiter, matchesRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
