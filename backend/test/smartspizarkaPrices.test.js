@@ -66,6 +66,8 @@ test('(a) poprawna oferta: wszystkie pola zmapowane, sourceUrl konkretny, validU
     store: 'Biedronka',
     unit: 'l',
     price: 4.49,
+    currency: 'PLN',
+    quantity: 1,
     checkedAt: '2026-08-13',
     sourceUrl:
       'https://zakupy.biedronka.pl/mlekovita-mlekovita-mleko-uht-32-tluszczu-wypasione-1-l-0000000036.html',
@@ -77,6 +79,9 @@ test('(a) poprawna oferta: wszystkie pola zmapowane, sourceUrl konkretny, validU
   assert.equal(oferta.store, 'Biedronka');
   assert.equal(oferta.unit, 'l');
   assert.equal(oferta.price, 4.49);
+  // currency (obsługiwana) i quantity (baza ilościowa) — nowe pola kontraktu
+  assert.equal(oferta.currency, 'PLN');
+  assert.equal(oferta.quantity, 1);
   assert.equal(oferta.checkedAt, '2026-08-13');
   // sourceUrl wskazuje KONKRETNĄ stronę oferty (nie generyczny host)
   assert.equal(
@@ -86,10 +91,12 @@ test('(a) poprawna oferta: wszystkie pola zmapowane, sourceUrl konkretny, validU
   assert.match(oferta.sourceUrl, /^https:\/\/zakupy\.biedronka\.pl\/.+\.html$/);
   // validUntil REALNY — echo terminu z rekordu, nie zmyślona data
   assert.equal(oferta.validUntil, '2026-12-31');
-  // kompletny kontrakt: dokładnie 6 pól klienta
+  // kompletny kontrakt: dokładnie 8 pól klienta (z currency i quantity)
   assert.deepEqual(Object.keys(oferta).sort(), [
     'checkedAt',
+    'currency',
     'price',
+    'quantity',
     'sourceUrl',
     'store',
     'unit',
@@ -103,6 +110,8 @@ test('(a-kontrola) oferta WYGASŁA → pola ceny null (guard terminu działa, ni
     store: 'Biedronka',
     unit: 'l',
     price: 4.49,
+    currency: 'PLN', // poprawna waluta i ilość — jedyną wadą jest wygasły termin
+    quantity: 1,
     checkedAt: '2026-08-13',
     sourceUrl: 'https://zakupy.biedronka.pl/x-0000000036.html',
     validUntil: '2020-01-01', // przeszła → wygasła
@@ -110,7 +119,10 @@ test('(a-kontrola) oferta WYGASŁA → pola ceny null (guard terminu działa, ni
 
   const oferta = zbudujOfertePubliczna(rekord, teraz);
 
+  // cała piątka money null (guard terminu zeruje ofertę mimo poprawnej waluty/ilości)
   assert.equal(oferta.price, null);
+  assert.equal(oferta.currency, null);
+  assert.equal(oferta.quantity, null);
   assert.equal(oferta.sourceUrl, null);
   assert.equal(oferta.validUntil, null);
   // pola informacyjne zostają
@@ -142,8 +154,10 @@ test('(b-kontrola) brak/pusty productId → 400', async () => {
 test('(c1) oferta bez sourceUrl (Cebula, priceKnown=false) → pola ceny null, nie zmyślone', async () => {
   const { status, body } = await pobierz('Cebula');
   assert.equal(status, 200);
-  // money-path: cena/źródło/termin NIEZNANE
+  // money-path: piątka money NIEZNANA (cena/waluta/ilość/źródło/termin)
   assert.equal(body.price, null);
+  assert.equal(body.currency, null);
+  assert.equal(body.quantity, null);
   assert.equal(body.sourceUrl, null);
   assert.equal(body.validUntil, null);
   // pola informacyjne obecne w kontrakcie
@@ -154,18 +168,22 @@ test('(c1) oferta bez sourceUrl (Cebula, priceKnown=false) → pola ceny null, n
 test('(c2) oferta bez validUntil (Mleko, ma sourceUrl w źródle) → pola ceny null, store/unit/checkedAt zostają', async () => {
   const { status, body } = await pobierz('Mleko');
   assert.equal(status, 200);
-  // brak potwierdzonego terminu → NIE fabrykujemy: price/sourceUrl/validUntil null
+  // brak potwierdzonego terminu → NIE fabrykujemy: cała piątka money null
   assert.equal(body.price, null);
+  assert.equal(body.currency, null);
+  assert.equal(body.quantity, null);
   assert.equal(body.sourceUrl, null);
   assert.equal(body.validUntil, null);
   // reszta pól informacyjnie zachowana
   assert.equal(body.store, 'Biedronka');
   assert.equal(body.unit, 'l');
   assert.equal(body.checkedAt, '2026-08-13');
-  // pełny kontrakt 6 pól
+  // pełny kontrakt 8 pól (z currency i quantity)
   assert.deepEqual(Object.keys(body).sort(), [
     'checkedAt',
+    'currency',
     'price',
+    'quantity',
     'sourceUrl',
     'store',
     'unit',

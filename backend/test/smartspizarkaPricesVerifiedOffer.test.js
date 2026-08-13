@@ -5,40 +5,42 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 /*
- * SmartSpiżarka — publiczny endpoint cen. TEST KONTRAKTU dla PIERWSZYCH
- * ZWERYFIKOWANYCH, AKTUALNYCH ofert (ulepszenie „Dodać pierwsze zweryfikowane,
- * aktualne ceny", podzadanie 3/4).
+ * SmartSpiżarka — publiczny endpoint cen. TEST KONTRAKTU dla ZWERYFIKOWANYCH,
+ * AKTUALNYCH ofert po ROZSZERZENIU kontraktu o WALUTĘ i ILOŚĆ (ulepszenie
+ * „Uzupełnienie kontraktu cen o walutę i ilość", podzadanie 5/6).
  *
- * Kontekst: podzadanie 2/4 dodało do produkcyjnego katalogu
- * `src/data/smartspizarka_prices.json` cztery oferty POTWIERDZONE na kartach
- * zakupy.biedronka.pl (2026-08-13) z realnym `sourceUrl` i przyszłym
- * `validUntil` (2026-09-30): "Mąka pszenna", "Cukier", "Masło", "Jajko".
- * Istniejący `smartspizarkaPrices.test.js` weryfikował pełną ofertę na
- * SYNTETYCZNYM rekordzie (bo wcześniej ŻADEN rekord produkcyjny nie miał
- * potwierdzonego terminu). Ten plik domyka lukę: dowodzi, że REALNE dane seeda
- * przechodzą guard prawdomówności i endpoint zwraca dla nich niepustą cenę.
+ * Kontekst: krok 2/6 dopisał do KAŻDEGO rekordu produkcyjnego katalogu
+ * `src/data/smartspizarka_prices.json` pola `currency:"PLN"` i `quantity`
+ * (ilość, za którą podana jest `price` — 1 dla ceny znormalizowanej per 1 kg /
+ * 1 l / 1 szt.). Krok 3/6 zaostrzył guard `zbudujOfertePubliczna`: oferta jest
+ * WIARYGODNA (publikujemy kwotę) WYŁĄCZNIE gdy jednocześnie
+ *   `price > 0` && `quantity > 0` && `currency ∈ {PLN}` && `unit` niepuste &&
+ *   realny `sourceUrl` && `validUntil` w przyszłości.
+ * Inaczej cała PIĄTKA money — `price`, `currency`, `quantity`, `sourceUrl`,
+ * `validUntil` — = null (cena nieznana); `store`/`unit`/`checkedAt` zostają
+ * informacyjnie.
  *
- * Dwa przypadki wprost z podzadania:
- *   (a) znany productId z ważnym sourceUrl i validUntil w przyszłości → 200 +
- *       NIEPUSTE price/unit/store/sourceUrl/validUntil.
- *   (b) productId z validUntil=null LUB bez sourceUrl → 200 + price/sourceUrl/
- *       validUntil = null (store/unit/checkedAt informacyjnie zostają).
+ * Dwa przypadki wprost z podzadania 5/6:
+ *   (a) KOMPLETNY rekord (ważny sourceUrl + przyszły validUntil + dodatnie
+ *       price/quantity + obsługiwana waluta + niepuste unit) → 200 + NIEPUSTE
+ *       price/currency/quantity/unit/store/sourceUrl/validUntil.
+ *   (b) rekord z brakiem quantity/currency albo quantity<=0 / waluta
+ *       nieobsługiwana → cena NIEZNANA (piątka money = null) MIMO poprawnego
+ *       sourceUrl i przyszłego validUntil.
  *
  * DYSCYPLINA MONEY-PATH / brak pułapki czasowej: „niepustą cenę" dowodzimy na
  * REALNYM rekordzie przez wyeksportowany budowniczy `zbudujOfertePubliczna(rekord,
  * teraz)` z INIEKCJĄ ZEGARA w oknie ważności (deterministycznie, ten sam kod, który
  * odpala handler: `res.json(zbudujOfertePubliczna(rekord))`). Żywą ścieżkę HTTP
  * sprawdzamy na status 200 + WIERNOŚĆ (body === budowniczy(rekord)) — to nie
- * zależy od realnej daty. Kontrola adwersaryjna (ten sam rekord + zegar PO
- * validUntil → null) broni przed „zawsze niepuste".
+ * zależy od realnej daty. Kontrole adwersaryjne (ten sam rekord + zegar PO
+ * validUntil → null; kompletny rekord z zepsutym quantity/currency → null)
+ * bronią przed „zawsze niepuste".
  *
- * UWAGA o kontrakcie pól: schemat mirrora to store/unit/price/checkedAt +
- * sourceUrl/validUntil (dokładnie to, czego oczekuje klient `PriceApiDto`).
- * `currency` NIE jest polem — waluta jest dorozumiana PLN. `quantity` NIE jest
- * polem — ilość jest dorozumiana przez `unit` (cena za 1 jednostkę bazową, np.
- * 1,79 zł / 1 kg). Dlatego asertujemy dokładnie ten 6-polowy kontrakt, a nie
- * nieistniejące `currency`/`quantity` (inaczej byłaby to fałszywa zieleń na
- * `undefined`).
+ * KONTRAKT PÓL (8): store/unit/price/currency/quantity/checkedAt/sourceUrl/
+ * validUntil — dokładnie to, czego oczekuje klient `PriceApiDto.fromJson`.
+ * `currency` (kod ISO, na start tylko PLN) i `quantity` (baza ilościowa ceny) są
+ * teraz JAWNYMI polami; asertujemy dokładnie ten 8-polowy kontrakt.
  */
 
 import { createApp } from '../src/app.js';
@@ -50,15 +52,19 @@ const KATALOG = JSON.parse(
 );
 const CENY = KATALOG.prices ?? {};
 
-// Zegar w OKNIE ważności ofert 2/4 (validUntil = 2026-09-30) — data checkedAt.
+// Zegar w OKNIE ważności ofert (validUntil = 2026-09-30) — data checkedAt.
 const TERAZ_W_OKNIE = new Date('2026-08-13T00:00:00Z');
 // Zegar PO wygaśnięciu — kontrola adwersaryjna „nie zawsze niepuste".
 const TERAZ_PO_WYGASNIECIU = new Date('2026-12-31T00:00:00Z');
 
-// Oferty potwierdzone w seedzie 2/4 (realny sourceUrl + przyszły validUntil).
+// Oferty potwierdzone w seedzie (realny sourceUrl + przyszły validUntil).
 const ZWERYFIKOWANE = ['Mąka pszenna', 'Cukier', 'Masło', 'Jajko'];
 
-const PELNY_KONTRAKT = ['checkedAt', 'price', 'sourceUrl', 'store', 'unit', 'validUntil'];
+// Kontrakt 8-polowy (posortowane klucze) — z currency i quantity.
+const PELNY_KONTRAKT = [
+  'checkedAt', 'currency', 'price', 'quantity',
+  'sourceUrl', 'store', 'unit', 'validUntil',
+];
 
 let server;
 let base;
@@ -87,7 +93,7 @@ async function pobierz(productId) {
   return { status: res.status, body };
 }
 
-// ── (a) ZNANY productId z ważnym źródłem i przyszłym validUntil → niepusta cena ──
+// ── (a) KOMPLETNY rekord → niepusta cena + waluta + ilość ─────────────────────
 
 test('(a1) REALNY rekord "Mąka pszenna" + zegar w oknie → wszystkie pola NIEPUSTE i poprawne', () => {
   const rekord = CENY['Mąka pszenna'];
@@ -99,6 +105,12 @@ test('(a1) REALNY rekord "Mąka pszenna" + zegar w oknie → wszystkie pola NIEP
   assert.equal(typeof oferta.price, 'number');
   assert.ok(Number.isFinite(oferta.price) && oferta.price > 0);
   assert.equal(oferta.price, 1.79);
+  // currency: niepusta, obsługiwana (PLN)
+  assert.equal(oferta.currency, 'PLN');
+  // quantity: niepusta, dodatnia (baza ilościowa ceny)
+  assert.equal(typeof oferta.quantity, 'number');
+  assert.ok(Number.isFinite(oferta.quantity) && oferta.quantity > 0);
+  assert.equal(oferta.quantity, 1);
   // unit / store: niepuste
   assert.equal(oferta.unit, 'kg');
   assert.equal(oferta.store, 'Biedronka');
@@ -110,24 +122,29 @@ test('(a1) REALNY rekord "Mąka pszenna" + zegar w oknie → wszystkie pola NIEP
   assert.equal(typeof oferta.validUntil, 'string');
   assert.ok(new Date(oferta.validUntil).getTime() > TERAZ_W_OKNIE.getTime());
   assert.equal(oferta.validUntil, '2026-09-30');
-  // dokładnie 6-polowy kontrakt (currency/quantity NIE są polami — patrz nagłówek)
+  // dokładnie 8-polowy kontrakt (z currency/quantity)
   assert.deepEqual(Object.keys(oferta).sort(), PELNY_KONTRAKT);
 });
 
-test('(a1-adw) TEN SAM realny rekord + zegar PO validUntil → pola ceny null (guard, nie „zawsze niepuste")', () => {
+test('(a1-adw) TEN SAM realny rekord + zegar PO validUntil → piątka money null (guard, nie „zawsze niepuste")', () => {
   const rekord = CENY['Mąka pszenna'];
   const oferta = zbudujOfertePubliczna(rekord, TERAZ_PO_WYGASNIECIU);
 
+  // cała piątka money nieznana
   assert.equal(oferta.price, null);
+  assert.equal(oferta.currency, null);
+  assert.equal(oferta.quantity, null);
   assert.equal(oferta.sourceUrl, null);
   assert.equal(oferta.validUntil, null);
   // pola informacyjne zostają
   assert.equal(oferta.store, 'Biedronka');
   assert.equal(oferta.unit, 'kg');
   assert.equal(oferta.checkedAt, '2026-08-13');
+  // kontrakt pól niezmienny nawet przy cenie nieznanej
+  assert.deepEqual(Object.keys(oferta).sort(), PELNY_KONTRAKT);
 });
 
-test('(a2) WSZYSTKIE zweryfikowane oferty 2/4 + zegar w oknie → niepusta cena + źródło + termin', () => {
+test('(a2) WSZYSTKIE zweryfikowane oferty + zegar w oknie → niepusta cena + waluta + ilość + źródło + termin', () => {
   for (const id of ZWERYFIKOWANE) {
     const rekord = CENY[id];
     assert.ok(rekord, `rekord "${id}" musi istnieć w katalogu`);
@@ -137,6 +154,11 @@ test('(a2) WSZYSTKIE zweryfikowane oferty 2/4 + zegar w oknie → niepusta cena 
     assert.ok(
       Number.isFinite(oferta.price) && oferta.price > 0,
       `${id}: price musi być niepusta i dodatnia (było ${oferta.price})`,
+    );
+    assert.equal(oferta.currency, 'PLN', `${id}: currency musi być PLN`);
+    assert.ok(
+      Number.isFinite(oferta.quantity) && oferta.quantity > 0,
+      `${id}: quantity musi być niepusta i dodatnia (było ${oferta.quantity})`,
     );
     assert.ok(oferta.sourceUrl && oferta.sourceUrl.startsWith('https://'), `${id}: sourceUrl`);
     assert.ok(oferta.validUntil, `${id}: validUntil`);
@@ -150,7 +172,7 @@ test('(a2) WSZYSTKIE zweryfikowane oferty 2/4 + zegar w oknie → niepusta cena 
   }
 });
 
-test('(a3) ŻYWY HTTP GET "Mąka pszenna" → 200 + body WIERNIE = budowniczy(rekord)', async () => {
+test('(a3) ŻYWY HTTP GET "Mąka pszenna" → 200 + body WIERNIE = budowniczy(rekord), niepuste currency/quantity', async () => {
   const { status, body } = await pobierz('Mąka pszenna');
 
   assert.equal(status, 200);
@@ -159,21 +181,84 @@ test('(a3) ŻYWY HTTP GET "Mąka pszenna" → 200 + body WIERNIE = budowniczy(re
   // domyślnym: deterministyczne niezależnie od realnej daty, bez pułapki czasowej.
   const oczekiwane = zbudujOfertePubliczna(CENY['Mąka pszenna']);
   assert.deepEqual(body, oczekiwane);
-  // pełny 6-polowy kontrakt na żywej odpowiedzi
+  // na żywej odpowiedzi: waluta i ilość NIEPUSTE (nowy kontrakt) + pełne 8 pól
+  assert.equal(body.currency, 'PLN');
+  assert.ok(Number.isFinite(body.quantity) && body.quantity > 0);
   assert.deepEqual(Object.keys(body).sort(), PELNY_KONTRAKT);
 });
 
-// ── (b) validUntil=null LUB brak sourceUrl → 200 + price/sourceUrl/validUntil null ──
+// ── (b) niekompletna oferta (quantity/currency) → piątka money null ───────────
 
-test('(b1) validUntil=null ("Mleko", MA sourceUrl w seedzie) → 200 + pola ceny null, reszta zostaje', async () => {
+test('(b0) KOMPLETNY rekord z zepsutym quantity/currency → piątka money null MIMO ważnego sourceUrl i przyszłego validUntil', () => {
+  // Rekord bazowy: wszystko poprawne i w oknie ważności → kontrola POZYTYWNA.
+  const bazowy = () => ({
+    store: 'Biedronka',
+    unit: 'kg',
+    price: 1.79,
+    currency: 'PLN',
+    quantity: 1,
+    checkedAt: '2026-08-13',
+    sourceUrl: 'https://zakupy.biedronka.pl/produkt-0000000072.html',
+    validUntil: '2026-09-30', // przyszły względem TERAZ_W_OKNIE
+  });
+
+  // KONTROLA POZYTYWNA: nieruszony rekord bazowy → cena znana (dowodzi, że to
+  // zepsucie quantity/currency, a nie sam guard terminu/źródła, zeruje ofertę).
+  const ok = zbudujOfertePubliczna(bazowy(), TERAZ_W_OKNIE);
+  assert.equal(ok.price, 1.79);
+  assert.equal(ok.currency, 'PLN');
+  assert.equal(ok.quantity, 1);
+  assert.ok(ok.sourceUrl && ok.validUntil, 'kontrola pozytywna: źródło i termin obecne');
+
+  // Każda mutacja psuje WYŁĄCZNIE quantity lub currency — sourceUrl i validUntil
+  // pozostają POPRAWNE, więc dowodzimy, że to nowy warunek guarda zeruje ofertę.
+  const NIEKOMPLETNE = [
+    ['brak quantity', (r) => { delete r.quantity; }],
+    ['quantity = 0', (r) => { r.quantity = 0; }],
+    ['quantity < 0', (r) => { r.quantity = -1; }],
+    ['quantity nieliczbowe', (r) => { r.quantity = '1'; }],
+    ['brak currency', (r) => { delete r.currency; }],
+    ['currency nieobsługiwana (USD)', (r) => { r.currency = 'USD'; }],
+    ['currency nieobsługiwana (EUR)', (r) => { r.currency = 'EUR'; }],
+    ['currency pusta', (r) => { r.currency = '  '; }],
+  ];
+
+  for (const [opis, zepsuj] of NIEKOMPLETNE) {
+    const rekord = bazowy();
+    // Sanity: przed zepsuciem źródło i termin są poprawne (izolujemy przyczynę).
+    assert.ok(rekord.sourceUrl, `${opis}: rekord bazowy MA sourceUrl`);
+    assert.ok(rekord.validUntil, `${opis}: rekord bazowy MA validUntil`);
+    zepsuj(rekord);
+
+    const oferta = zbudujOfertePubliczna(rekord, TERAZ_W_OKNIE);
+
+    // money-path: cała piątka money = null (cena nieznana), mimo ważnego źródła/terminu
+    assert.equal(oferta.price, null, `${opis}: price null`);
+    assert.equal(oferta.currency, null, `${opis}: currency null`);
+    assert.equal(oferta.quantity, null, `${opis}: quantity null`);
+    assert.equal(oferta.sourceUrl, null, `${opis}: sourceUrl null (nie fabrykujemy przy niekompletnej ofercie)`);
+    assert.equal(oferta.validUntil, null, `${opis}: validUntil null`);
+    // pola informacyjne zostają
+    assert.equal(oferta.store, 'Biedronka', `${opis}: store informacyjnie`);
+    assert.equal(oferta.unit, 'kg', `${opis}: unit informacyjnie`);
+    assert.equal(oferta.checkedAt, '2026-08-13', `${opis}: checkedAt informacyjnie`);
+    assert.deepEqual(Object.keys(oferta).sort(), PELNY_KONTRAKT, `${opis}: kontrakt 8 pól`);
+  }
+});
+
+// ── (b) brak validUntil / brak sourceUrl → 200 + piątka money null (HTTP) ─────
+
+test('(b1) validUntil=null ("Mleko", MA sourceUrl w seedzie) → 200 + piątka money null, reszta zostaje', async () => {
   // Kontrola danych: Mleko ma źródło, ale brak potwierdzonego terminu.
   assert.equal(CENY['Mleko'].validUntil, null);
   assert.ok(CENY['Mleko'].sourceUrl, 'Mleko ma sourceUrl w seedzie (izolujemy brak validUntil)');
 
   const { status, body } = await pobierz('Mleko');
   assert.equal(status, 200);
-  // money-path: bez potwierdzonego terminu NIE fabrykujemy ceny/źródła/terminu
+  // money-path: bez potwierdzonego terminu NIE fabrykujemy piątki money
   assert.equal(body.price, null);
+  assert.equal(body.currency, null);
+  assert.equal(body.quantity, null);
   assert.equal(body.sourceUrl, null);
   assert.equal(body.validUntil, null);
   // pola informacyjne zachowane
@@ -183,13 +268,15 @@ test('(b1) validUntil=null ("Mleko", MA sourceUrl w seedzie) → 200 + pola ceny
   assert.deepEqual(Object.keys(body).sort(), PELNY_KONTRAKT);
 });
 
-test('(b2) brak sourceUrl ("Cebula") → 200 + pola ceny null', async () => {
+test('(b2) brak sourceUrl ("Cebula") → 200 + piątka money null', async () => {
   // Kontrola danych: Cebula bez źródła i bez terminu.
   assert.equal(CENY['Cebula'].sourceUrl, null);
 
   const { status, body } = await pobierz('Cebula');
   assert.equal(status, 200);
   assert.equal(body.price, null);
+  assert.equal(body.currency, null);
+  assert.equal(body.quantity, null);
   assert.equal(body.sourceUrl, null);
   assert.equal(body.validUntil, null);
   // pola informacyjne obecne w kontrakcie
