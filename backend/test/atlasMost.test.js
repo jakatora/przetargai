@@ -85,7 +85,10 @@ test('ATLAS wisi na long pollu — żądanie telefonu dostaje natychmiast, z nie
   });
 
   const zadanie = await (await atlasCzeka).json();
-  assert.equal(zadanie.sciezka, '/api/pilot/raport');
+  // ŚCIEŻKA Z PARAMETRAMI, nie samo `/api/pilot/raport`. Do 2026-08-31 ten test sprawdzał
+  // ścieżkę uciętą i przez to UTRWALAŁ usterkę: wzorzec trasy łapie tylko część przed „?",
+  // więc ATLAS dostawał żądania bez parametrów i odpowiadał wartościami domyślnymi.
+  assert.equal(zadanie.sciezka, '/api/pilot/raport?limit=5');
   assert.equal(zadanie.metoda, 'GET');
   // Rura jest GŁUPIA: token telefonu przechodzi bez tknięcia, sprawdza go bramka w ATLAS-ie.
   assert.equal(zadanie.autoryzacja, 'Bearer token-telefonu');
@@ -96,6 +99,42 @@ test('ATLAS wisi na long pollu — żądanie telefonu dostaje natychmiast, z nie
   const odp = await telefon;
   assert.equal(odp.status, 200);
   assert.deepEqual(await odp.json(), { raport: 'ok' });
+});
+
+test('parametry adresu docierają do ATLAS-a — bez nich odpowiada nie o tę apkę', async () => {
+  // USTERKA Z POLA (2026-08-31): kokpit na telefonie pytał `/api/cel?apka=kalio`, przekaźnik
+  // gubił wszystko po „?", ATLAS dostawał gołe `/api/cel` i wpadał w domyślne `apka=meble_ai`.
+  // Skutek: KAŻDA aplikacja pokazywała na telefonie cel MebleAI, a zapis „nie działał", bo
+  // odświeżenie natychmiast wracało do celu domyślnego. Na komputerze wszystko było w porządku.
+  //
+  // Dotyczy 10 adresów kokpitu — w tym `/api/glos` i `/api/wzrok/podglad`.
+  const atlasCzeka = jakoAtlas('/pobierz');
+  await new Promise((r) => setTimeout(r, 100));
+
+  const telefon = fetch(`${base}/api/atlas/p/api/cel?apka=kalio&pusty=&znak=%C5%82`, {
+    headers: { Authorization: 'Bearer token-telefonu' },
+  });
+
+  const zadanie = await (await atlasCzeka).json();
+  assert.equal(zadanie.sciezka, '/api/cel?apka=kalio&pusty=&znak=%C5%82');
+
+  await odeslij({ id: zadanie.id, status: 200, body: JSON.stringify({ apka: 'kalio' }) });
+  assert.deepEqual(await (await telefon).json(), { apka: 'kalio' });
+});
+
+test('adres bez parametrów nie dostaje osieroconego znaku zapytania', async () => {
+  const atlasCzeka = jakoAtlas('/pobierz');
+  await new Promise((r) => setTimeout(r, 100));
+
+  const telefon = fetch(`${base}/api/atlas/p/api/puls`, {
+    headers: { Authorization: 'Bearer token-telefonu' },
+  });
+
+  const zadanie = await (await atlasCzeka).json();
+  assert.equal(zadanie.sciezka, '/api/puls');
+
+  await odeslij({ id: zadanie.id, status: 200, body: '{}' });
+  await telefon;
 });
 
 test('telefon pierwszy — żądanie czeka w kolejce na ATLAS-a', async () => {
