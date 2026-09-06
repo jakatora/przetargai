@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { policzCene, formatujPLN, STAWKI_VAT } from '../src/lib/kalkulatorCeny.js';
+import { policzCene, walidujCene, formatujPLN, STAWKI_VAT } from '../src/lib/kalkulatorCeny.js';
 
 test('prosty przypadek: sam koszt + VAT 23%', () => {
   const w = policzCene({ material: 1000, vatProc: 23 });
@@ -50,6 +50,54 @@ test('policzCene() bez argumentów nie wywraca funkcji', () => {
   const w = policzCene();
   assert.equal(w.brutto, 0);
   assert.equal(w.maDane, false);
+});
+
+test('walidujCene: poprawne dane → brak błędów', () => {
+  const w = walidujCene({ material: '1 200,00', robocizna: '300', inne: '0', narzutProc: '10', zyskProc: '20' });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujCene: puste pola → brak błędów (stan pusty, nie błąd)', () => {
+  const w = walidujCene({ material: '', robocizna: '   ', inne: undefined, narzutProc: '', zyskProc: null });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujCene: same przecinki/spacje po oczysc → komunikat o liczbie', () => {
+  const w = walidujCene({ material: ',,', narzutProc: '10' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.material, 'Podaj kwotę jako liczbę, np. 1200,00');
+});
+
+test('walidujCene: kwota ujemna → komunikat o wartości ujemnej', () => {
+  const w = walidujCene({ material: -50 });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.material, 'Kwota nie może być ujemna');
+});
+
+test('walidujCene: narzut poza zakresem 0–1000% → komunikat o narzucie', () => {
+  const zaDuzy = walidujCene({ material: '1000', narzutProc: '1500' });
+  assert.equal(zaDuzy.bledy.narzutProc, 'Narzut spoza zakresu 0–1000%');
+  const ujemny = walidujCene({ material: '1000', narzutProc: '-5' });
+  assert.equal(ujemny.bledy.narzutProc, 'Narzut spoza zakresu 0–1000%');
+});
+
+test('walidujCene: zysk poza zakresem 0–1000% → komunikat o zysku', () => {
+  const w = walidujCene({ material: '1000', zyskProc: '2000' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.zyskProc, 'Zysk spoza zakresu 0–1000%');
+});
+
+test('walidujCene: procent nienumeryczny → komunikat o liczbie', () => {
+  const w = walidujCene({ material: '1000', narzutProc: ',' });
+  assert.equal(w.bledy.narzutProc, 'Podaj procent jako liczbę, np. 10');
+});
+
+test('walidujCene: bez argumentów nie wywraca funkcji', () => {
+  const w = walidujCene();
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
 });
 
 test('formatujPLN: polski format z groszami i separatorem tysięcy', () => {
