@@ -6,6 +6,7 @@ import { Sentry, sentryEnabled } from './lib/sentry.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import healthRouter from './routes/health.js';
 import atlasMostRouter from './routes/atlasMost.js';
+import atlasPilotRouter from './routes/atlasPilot.js';
 import authRouter from './routes/auth.js';
 import matchesRouter from './routes/matches.js';
 import upgradeRouter from './routes/upgrade.js';
@@ -81,6 +82,9 @@ export function createApp() {
   // długim odpytywaniu, a telefon odświeża raport co kilkanaście sekund — limiter ubijałby
   // własny most właściciela. Ruchu pilnuje sekret + limit kolejki w samym routerze.
   app.use('/api/atlas', atlasMostRouter);
+  // ATLAS PILOT nowego ATLAS-a (2026-09-13) — pytania komputera do telefonu i odpowiedzi z powrotem.
+  // Osobny od /api/atlas starego ATLAS-a; limitery i uwierzytelnianie są w samym routerze.
+  app.use('/api/atlas-pilot', atlasPilotRouter);
   app.use('/auth', authLimiter, authRouter);
   app.use('/matches', apiLimiter, matchesRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
