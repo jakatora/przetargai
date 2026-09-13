@@ -56,6 +56,10 @@ function ensureTables() {
       desktop_id TEXT NOT NULL, answer_id TEXT NOT NULL, device_id TEXT NOT NULL, question_key TEXT NOT NULL,
       payload TEXT, payload_hash TEXT NOT NULL, outcome TEXT, error TEXT, created_at TEXT NOT NULL, acked_at TEXT,
       PRIMARY KEY(desktop_id, answer_id));
+    CREATE TABLE IF NOT EXISTS atlas_pilot_commands(
+      desktop_id TEXT NOT NULL, command_id TEXT NOT NULL, device_id TEXT NOT NULL, text TEXT NOT NULL,
+      text_hash TEXT NOT NULL, outcome TEXT, error TEXT, created_at TEXT NOT NULL, acked_at TEXT,
+      PRIMARY KEY(desktop_id, command_id));
   `);
   ready = true;
 }
@@ -245,6 +249,53 @@ router.post('/device/answers', asDevice, (req, res) => {
 router.get('/device/answers/:answerId', asDevice, (req, res) => {
   const row = db.prepare('SELECT outcome, error, acked_at FROM atlas_pilot_answers WHERE desktop_id=? AND answer_id=?')
     .get(req.device.desktop_id, req.params.answerId);
+  if (!row) return res.status(404).json({ error: 'not found' });
+  return res.json({ outcome: row.outcome, error: row.error, acked_at: row.acked_at });
+});
+
+/**
+ * Polecenia z telefonu (np. „poczekaj”). Komputer sam decyduje, które wykona — tutaj tylko
+ * przyjęcie raz na identyfikator, dostarczenie do właściwego komputera i wynik dla telefonu.
+ */
+router.post('/device/commands', asDevice, (req, res) => {
+  const { command_id: commandId, text } = req.body || {};
+  if (typeof commandId !== 'string' || !ID.test(commandId) || typeof text !== 'string' || !text.trim() || text.length > 200) {
+    return res.status(400).json({ error: 'invalid command' });
+  }
+  const desktopId = req.device.desktop_id;
+  const hash = sha(text.trim());
+  const existing = db.prepare('SELECT text_hash FROM atlas_pilot_commands WHERE desktop_id=? AND command_id=?').get(desktopId, commandId);
+  if (existing) {
+    return existing.text_hash === hash
+      ? res.status(202).json({ status: 'duplicate' })
+      : res.status(409).json({ error: 'command id reused with different text' });
+  }
+  db.prepare('INSERT INTO atlas_pilot_commands(desktop_id,command_id,device_id,text,text_hash,created_at) VALUES (?,?,?,?,?,?)')
+    .run(desktopId, commandId, req.device.id, text.trim(), hash, now());
+  return res.status(202).json({ status: 'accepted' });
+});
+
+router.get('/desktop/commands', asDesktop, (req, res) => {
+  const commands = db.prepare('SELECT command_id, device_id, text, created_at FROM atlas_pilot_commands '
+    + 'WHERE desktop_id=? AND acked_at IS NULL ORDER BY created_at').all(req.desktop.id);
+  return res.json({ commands });
+});
+
+router.post('/desktop/commands/ack', asDesktop, (req, res) => {
+  const results = req.body?.results;
+  if (!Array.isArray(results)) return res.status(400).json({ error: 'invalid results' });
+  const update = db.prepare('UPDATE atlas_pilot_commands SET outcome=?, error=?, acked_at=? '
+    + 'WHERE desktop_id=? AND command_id=? AND acked_at IS NULL');
+  for (const r of results) {
+    if (!r || typeof r.command_id !== 'string' || typeof r.outcome !== 'string') continue;
+    update.run(r.outcome.slice(0, 40), typeof r.error === 'string' ? r.error.slice(0, 500) : null, now(), req.desktop.id, r.command_id);
+  }
+  return res.json({ ok: true });
+});
+
+router.get('/device/commands/:commandId', asDevice, (req, res) => {
+  const row = db.prepare('SELECT outcome, error, acked_at FROM atlas_pilot_commands WHERE desktop_id=? AND command_id=?')
+    .get(req.device.desktop_id, req.params.commandId);
   if (!row) return res.status(404).json({ error: 'not found' });
   return res.json({ outcome: row.outcome, error: row.error, acked_at: row.acked_at });
 });

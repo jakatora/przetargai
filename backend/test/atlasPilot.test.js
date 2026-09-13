@@ -162,3 +162,21 @@ test('walidacja: zbyt wiele pytań i zły identyfikator odpowiedzi są odrzucane
     body: { answer_id: 'zły id', question_key: QUESTION.key, payload: { answer: 'yes' } } });
   assert.equal(bad.status, 400);
 });
+
+test('polecenie z telefonu jest przyjęte raz, trafia tylko do jego komputera i wraca z wynikiem', async () => {
+  const auth = await desktop();
+  const device = await phone(auth);
+  const other = await desktop('Inny');
+  const command = { command_id: 'c-1', text: 'poczekaj' };
+  assert.equal((await call('POST', '/device/commands', { auth: device, body: command })).status, 202);
+  const again = await call('POST', '/device/commands', { auth: device, body: command });
+  assert.equal(again.body.status, 'duplicate');
+  assert.equal((await call('POST', '/device/commands', { auth: device, body: { ...command, text: 'wznów' } })).status, 409);
+  assert.equal((await call('POST', '/device/commands', { auth: device, body: { command_id: 'zły id', text: 'x' } })).status, 400);
+  assert.equal((await call('GET', '/desktop/commands', { auth: other })).body.commands.length, 0);
+  const pending = await call('GET', '/desktop/commands', { auth });
+  assert.deepEqual(pending.body.commands.map((c) => [c.command_id, c.text]), [['c-1', 'poczekaj']]);
+  await call('POST', '/desktop/commands/ack', { auth, body: { results: [{ command_id: 'c-1', outcome: 'applied' }] } });
+  assert.equal((await call('GET', '/desktop/commands', { auth })).body.commands.length, 0);
+  assert.equal((await call('GET', '/device/commands/c-1', { auth: device })).body.outcome, 'applied');
+});
