@@ -4,7 +4,7 @@ import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { policzOdsetki, formatujPLN } from '../lib/odsetkiOpoznienie';
+import { policzOdsetki, walidujOdsetki, formatujPLN } from '../lib/odsetkiOpoznienie';
 
 /**
  * „ODSETKI ZA OPÓŹNIENIE + REKOMPENSATA". Gdy zamawiający płaci po terminie, liczy należne
@@ -35,6 +35,9 @@ export default function KalkulatorOdsetekScreen({ route }) {
   const [stawka, setStawka] = useState('');
 
   const w = policzOdsetki({ kwota, terminPlatnosci: termin, dataZaplaty: zaplata, stawkaRoczna: stawka });
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  // Daty walidowane osobno przez w.bladDaty; tu tylko kwota i stawka.
+  const { bledy, maBledy } = walidujOdsetki({ kwota, stawkaRoczna: stawka });
 
   return (
     <Screen scroll>
@@ -46,18 +49,18 @@ export default function KalkulatorOdsetekScreen({ route }) {
 
       <View style={styles.card}>
         <TextField label="Kwota należności brutto (zł)" value={kwota} onChangeText={(t) => setKwota(oczyscKwote(t))}
-          placeholder="0,00" keyboardType="decimal-pad" hint="Kwota z faktury, której dotyczy opóźnienie." />
+          placeholder="0,00" keyboardType="decimal-pad" hint="Kwota z faktury, której dotyczy opóźnienie." error={bledy.kwota} />
         <TextField label="Termin płatności (RRRR-MM-DD)" value={termin} onChangeText={setTermin}
           placeholder="2026-05-01" autoCapitalize="none" hint="Data wymagalności z faktury/umowy." />
         <TextField label="Data zapłaty (RRRR-MM-DD)" value={zaplata} onChangeText={setZaplata}
           placeholder="2026-06-10" autoCapitalize="none" hint="Kiedy pieniądze faktycznie wpłynęły (lub dziś, jeśli wciąż nie zapłacił)." />
         <TextField label="Stawka odsetek (% w skali roku)" value={stawka} onChangeText={(t) => setStawka(oczyscKwote(t))}
-          placeholder="np. 11,5" keyboardType="decimal-pad" hint="Odsetki za opóźnienie w transakcjach handlowych — sprawdź aktualną stawkę (obwieszczenie MRPiT)." />
+          placeholder="np. 11,5" keyboardType="decimal-pad" hint="Odsetki za opóźnienie w transakcjach handlowych — sprawdź aktualną stawkę (obwieszczenie MRPiT)." error={bledy.stawkaRoczna} />
       </View>
 
       {w.bladDaty ? (
         <Text style={styles.podpowiedz}>Sprawdź format dat — użyj RRRR-MM-DD (np. 2026-05-01).</Text>
-      ) : w.maDane ? (
+      ) : maBledy ? null : w.maDane ? (
         <>
           <View style={styles.hero}>
             <Text style={styles.heroEt}>Odsetki za opóźnienie</Text>

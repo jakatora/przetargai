@@ -99,9 +99,18 @@ router.all(/^\/p\/(.*)$/, (req, res) => {
   }
 
   const id = nowyId();
+  // PARAMETRY ADRESU. Wzorzec trasy dopasowuje się do samej ŚCIEŻKI, więc `req.params[0]` nie
+  // zawiera niczego po „?" — a rura ma przekazywać żądanie 1:1. Zanim to doszlusowaliśmy
+  // (2026-08-31), kokpit na telefonie pytał `/api/cel?apka=kalio`, ATLAS dostawał gołe
+  // `/api/cel` i odpowiadał wartością domyślną: KAŻDA aplikacja pokazywała cel MebleAI,
+  // a zapis „nie działał", bo odświeżenie natychmiast wracało do domyślnej. Dotyczyło to
+  // 10 adresów kokpitu — w tym głosu i podglądu ekranu.
+  const iZnak = req.originalUrl.indexOf('?');
+  const zapytanie = iZnak === -1 ? '' : req.originalUrl.slice(iZnak);
+
   const zadanie = {
     id,
-    sciezka: '/' + (req.params[0] || ''),
+    sciezka: '/' + (req.params[0] || '') + zapytanie,
     metoda: req.method,
     // NIETKNIĘTY token telefonu — tu go nie sprawdzamy, to robi bramka w ATLAS-ie.
     autoryzacja: req.get('authorization') || '',

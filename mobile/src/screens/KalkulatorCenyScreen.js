@@ -4,7 +4,7 @@ import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { policzCene, formatujPLN, STAWKI_VAT } from '../lib/kalkulatorCeny';
+import { policzCene, walidujCene, formatujPLN, STAWKI_VAT } from '../lib/kalkulatorCeny';
 
 /**
  * „KALKULATOR CENY OFERTOWEJ". Buduje cenę od kosztów (bezpośrednie → narzut kosztów
@@ -43,6 +43,8 @@ export default function KalkulatorCenyScreen({ route }) {
   const [vat, setVat] = useState(23);
 
   const w = policzCene({ material, robocizna, inne, narzutProc: narzut, zyskProc: zysk, vatProc: vat });
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  const { bledy, maBledy } = walidujCene({ material, robocizna, inne, narzutProc: narzut, zyskProc: zysk });
 
   return (
     <Screen scroll>
@@ -55,19 +57,19 @@ export default function KalkulatorCenyScreen({ route }) {
       <Text style={styles.sekcja}>Koszty bezpośrednie</Text>
       <View style={styles.card}>
         <TextField label="Materiał / dostawy (zł)" value={material} onChangeText={(t) => setMaterial(oczysc(t))}
-          placeholder="0,00" keyboardType="decimal-pad" />
+          placeholder="0,00" keyboardType="decimal-pad" error={bledy.material} />
         <TextField label="Robocizna (zł)" value={robocizna} onChangeText={(t) => setRobocizna(oczysc(t))}
-          placeholder="0,00" keyboardType="decimal-pad" />
+          placeholder="0,00" keyboardType="decimal-pad" error={bledy.robocizna} />
         <TextField label="Sprzęt / podwykonawcy (zł)" value={inne} onChangeText={(t) => setInne(oczysc(t))}
-          placeholder="0,00" keyboardType="decimal-pad" />
+          placeholder="0,00" keyboardType="decimal-pad" error={bledy.inne} />
       </View>
 
       <Text style={styles.sekcja}>Narzut i zysk</Text>
       <View style={styles.card}>
         <TextField label="Narzut kosztów pośrednich (%)" value={narzut} onChangeText={(t) => setNarzut(oczysc(t))}
-          placeholder="np. 10" keyboardType="decimal-pad" hint="Koszty ogólne firmy: biuro, zarząd, ubezpieczenia." />
+          placeholder="np. 10" keyboardType="decimal-pad" hint="Koszty ogólne firmy: biuro, zarząd, ubezpieczenia." error={bledy.narzutProc} />
         <TextField label="Zysk (%)" value={zysk} onChangeText={(t) => setZysk(oczysc(t))}
-          placeholder="np. 15" keyboardType="decimal-pad" hint="Marża liczona od kosztu wytworzenia." />
+          placeholder="np. 15" keyboardType="decimal-pad" hint="Marża liczona od kosztu wytworzenia." error={bledy.zyskProc} />
 
         <Text style={styles.podEtykieta}>Stawka VAT</Text>
         <View style={styles.vatRzad}>
@@ -84,7 +86,7 @@ export default function KalkulatorCenyScreen({ route }) {
         </View>
       </View>
 
-      {w.maDane ? (
+      {w.maDane && !maBledy ? (
         <>
           {/* HERO — cena brutto */}
           <View style={styles.hero}>
@@ -112,7 +114,7 @@ export default function KalkulatorCenyScreen({ route }) {
             </Text>
           </View>
         </>
-      ) : (
+      ) : maBledy ? null : (
         <Text style={styles.podpowiedz}>
           Wpisz przynajmniej jeden koszt bezpośredni, a policzymy cenę netto i brutto z pełnym rozbiciem.
         </Text>

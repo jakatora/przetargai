@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { policzOdsetki, rekompensataEUR } from '../src/lib/odsetkiOpoznienie.js';
+import { policzOdsetki, rekompensataEUR, walidujOdsetki } from '../src/lib/odsetkiOpoznienie.js';
 
 test('odsetki = kwota × stawka% × dni/365', () => {
   // 100 000 zł, 11,5%/rok, 40 dni → 100000 × 0,115 × 40/365 = 1260,27
@@ -48,4 +48,43 @@ test('bez danych → zera, maDane false', () => {
   assert.equal(w.maDane, false);
   assert.equal(w.odsetki, 0);
   assert.equal(w.dniOpoznienia, 0);
+});
+
+test('walidujOdsetki: poprawne dane → brak błędów', () => {
+  const w = walidujOdsetki({ kwota: '100 000,00', stawkaRoczna: '11,5' });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujOdsetki: puste pola → brak błędów (stan pusty, nie błąd)', () => {
+  const w = walidujOdsetki({ kwota: '', stawkaRoczna: '   ' });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+  const puste = walidujOdsetki();
+  assert.equal(puste.maBledy, false);
+  assert.deepEqual(puste.bledy, {});
+});
+
+test('walidujOdsetki: kwota nienumeryczna po oczysc → komunikat o liczbie', () => {
+  const w = walidujOdsetki({ kwota: ',,' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.kwota, 'Podaj kwotę jako liczbę, np. 1200,00');
+});
+
+test('walidujOdsetki: kwota ujemna → komunikat o wartości ujemnej', () => {
+  const w = walidujOdsetki({ kwota: -500 });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.kwota, 'Kwota nie może być ujemna');
+});
+
+test('walidujOdsetki: stawka poza zakresem 0–100% → komunikat o stawce', () => {
+  const zaDuza = walidujOdsetki({ kwota: '1000', stawkaRoczna: '150' });
+  assert.equal(zaDuza.bledy.stawkaRoczna, 'Stawka spoza zakresu 0–100%');
+  const ujemna = walidujOdsetki({ kwota: '1000', stawkaRoczna: '-3' });
+  assert.equal(ujemna.bledy.stawkaRoczna, 'Stawka spoza zakresu 0–100%');
+});
+
+test('walidujOdsetki: stawka nienumeryczna → komunikat o liczbie', () => {
+  const w = walidujOdsetki({ stawkaRoczna: ',' });
+  assert.equal(w.bledy.stawkaRoczna, 'Podaj procent jako liczbę, np. 10');
 });
