@@ -1,4 +1,5 @@
 import { getFirestore, FieldValue, FieldPath } from 'firebase-admin/firestore';
+import { env } from '../config.js';
 import { newId, nowIso, startOfTodayIso } from '../lib/ids.js';
 import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
 
@@ -289,6 +290,39 @@ function zapiszPuleWCache(limit, pula) {
   cachePuli = { limit, pula, wygasa: Date.now() + CACHE_PULI_TTL_MS };
 }
 
+/**
+ * Statystyki ostatniego POBRANIA puli (nie odczytu z cache).
+ *
+ * Bez nich sufit puli był niewidoczny: audyt 2026-09-23 musiał go wyliczyć
+ * z zewnątrz, zestawiając `otwarte_przetargi` z zaszytą stałą w kodzie.
+ */
+let statystykiOstatniejPuli = { stan: 'brak_pobrania' };
+
+/**
+ * Czyta zapytanie STRONAMI, aż wyczerpie wyniki albo dobije do sufitu.
+ *
+ * Firestore nie ma „daj wszystko" — jest kursor. Jedno `limit(n)` ucinało pulę
+ * po n najbliższych terminach, więc reszta rynku była niewidoczna (P0-5).
+ */
+async function stronicuj(zapytanie, sufit, rozmiarStrony) {
+  const docs = [];
+  let kursor = null;
+  let zapytan = 0;
+
+  while (docs.length < sufit) {
+    const ile = Math.min(rozmiarStrony, sufit - docs.length);
+    const strona = kursor ? zapytanie.startAfter(kursor) : zapytanie;
+    const snap = await strona.limit(ile).get();
+    zapytan += 1;
+    docs.push(...snap.docs);
+    // Krótsza strona niż zamówiona = koniec wyników; kolejne zapytanie byłoby puste.
+    if (snap.docs.length < ile) break;
+    kursor = snap.docs[snap.docs.length - 1];
+  }
+
+  return { docs, zapytan, osiagnietoSufit: docs.length >= sufit };
+}
+
 export const tenders = {
   /** Wstawia przetarg, jeśli jeszcze go nie ma. Zwraca { tender, created }. */
   async upsert(t) {
@@ -410,7 +444,7 @@ export const tenders = {
    *    Firestore nie egzekwuje indeksów złożonych — testy tego nie wykrywały.**
    *    Kolejność w tej gałęzi i tak nie ma znaczenia: pulę rankuje heurystyka.
    */
-  async openPool(limit = 2000, { swiezaKopia = false } = {}) {
+  async openPool({ swiezaKopia = false, limit = env.PULA_MAKS, rozmiarStrony = env.PULA_ROZMIAR_STRONY } = {}) {
     if (!swiezaKopia) {
       const zCache = pulaZCache(limit);
       if (zCache) return zCache;
@@ -418,12 +452,37 @@ export const tenders = {
 
     const col = db().collection('tenders');
     const [zTerminem, bezTerminu] = await Promise.all([
-      col.where('deadline', '>', nowIso()).orderBy('deadline').limit(limit).get(),
-      col.where('deadline', '==', null).limit(limit).get(),
+      stronicuj(col.where('deadline', '>', nowIso()).orderBy('deadline'), limit, rozmiarStrony),
+      /*
+       * Gałąź bez terminu zostaje BEZ `orderBy` — jawne sortowanie po innym polu
+       * wymagałoby indeksu złożonego, którego brak wywrócił kiedyś cały silnik
+       * (patrz komentarz niżej i test/indeksyFirestore.test.js). Kursor działa
+       * i tak: `startAfter(snapshot)` korzysta z domyślnego porządku po nazwie
+       * dokumentu, który Firestore stosuje przy samej równości.
+       */
+      stronicuj(col.where('deadline', '==', null), limit, rozmiarStrony),
     ]);
+
     const pula = [...zTerminem.docs, ...bezTerminu.docs].map(userSnap);
+    statystykiOstatniejPuli = {
+      pobrane: pula.length,
+      zTerminem: zTerminem.docs.length,
+      bezTerminu: bezTerminu.docs.length,
+      zapytan: zTerminem.zapytan + bezTerminu.zapytan,
+      sufit: limit,
+      osiagnietoSufit: zTerminem.osiagnietoSufit || bezTerminu.osiagnietoSufit,
+      pobrane_o: nowIso(),
+    };
     zapiszPuleWCache(limit, pula);
     return pula;
+  },
+
+  /**
+   * Jak wyglądało ostatnie pobranie puli — dla `/health` i logu cyklu.
+   * `osiagnietoSufit: true` znaczy, że część rynku mogła nie wejść do dopasowań.
+   */
+  statystykiPuli() {
+    return { ...statystykiOstatniejPuli };
   },
 
   /** Unieważnia cache — woła cron po pobraniu nowych ogłoszeń z BZP. */

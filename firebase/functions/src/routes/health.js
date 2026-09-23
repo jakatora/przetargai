@@ -99,6 +99,14 @@ router.get('/', async (_req, res) => {
     // Mianownik dla pytania „czy widzimy cały rynek" (§3.4 audytu).
     otwarte_przetargi: otwartePrzetargi,
     /*
+     * Licznik do TEGO mianownika (P0-5): ile przetargów realnie weszło do puli
+     * dopasowań w ostatnim pobraniu. Dopóki `osiagnietoSufit` jest false,
+     * `pobrane` powinno nadążać za `otwarte_przetargi` — rozjazd znaczy, że
+     * część rynku wypada z dopasowań. Dawniej trzeba to było wyliczać z zewnątrz,
+     * zestawiając `otwarte_przetargi` ze stałą 2000 zaszytą w kodzie.
+     */
+    pula: tenders.statystykiPuli(),
+    /*
      * Stan domykania okna BZP (P0-2). `doby_niedomkniete > 0` znaczy, że w oknie
      * `BZP_LOOKBACK_DAYS` są doby, których jeszcze nie pobraliśmy w całości —
      * to jedyny zewnętrzny sygnał niekompletności danych źródłowych.

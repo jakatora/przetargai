@@ -78,6 +78,21 @@ const schema = z.object({
   MOST_EMAIL_DOMENA: z.string().default('most.przetarg-ai.pl'),
   MOST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
 
+  /*
+   * Pula dopasowań (P0-5). Do 2026-09-24 `openPool` brało JEDNO zapytanie
+   * `limit(2000)` posortowane po terminie — przy 7249 otwartych przetargach
+   * (pomiar produkcji 2026-09-23) silnik widział 28 % rynku, a ogłoszenia
+   * z dalszym terminem nie trafiały do feedu nigdy i bez śladu w logach.
+   *
+   * Teraz pula jest stronicowana do wyczerpania wyników. `PULA_MAKS` zostaje
+   * jako BEZPIECZNIK KOSZTOWY (odczyty Firestore), nie jako reguła biznesowa:
+   * 20000 to ~2,7× dzisiejszy rynek, czyli zapas na lata, a jego osiągnięcie
+   * jest raportowane (`statystykiPuli().osiagnietoSufit`) zamiast milczeć.
+   * Pula czytana jest RAZ na cykl i cache'owana, więc koszt to ułamek centa.
+   */
+  PULA_MAKS: z.coerce.number().int().positive().default(20_000),
+  PULA_ROZMIAR_STRONY: z.coerce.number().int().positive().default(1_000),
+
   MATCH_CONFIDENCE_THRESHOLD: z.coerce.number().int().min(0).max(100).default(60),
   FREE_TIER_DAILY_MATCH_LIMIT: z.coerce.number().int().positive().default(5),
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(10),
