@@ -49,6 +49,10 @@ function sekretyFunkcjiApi() {
  */
 const PRZELACZNIKI_Z_WLACZAJACYM_DOMYSLNYM = {
   TED_ENABLED: /TED_ENABLED:\s*z\.enum\(\['true',\s*'false'\]\)\.default\('true'\)/,
+  // Most do modułów na Railway (P0-4): default WŁĄCZAJĄCY, bo bez mostu sześć
+  // modułów w aplikacji ze sklepów zwraca 404. Brak dostarczenia zmiennej
+  // zostawia most włączony — czyli w stanie, który jest poprawny dla produktu.
+  MOST_ENABLED: /MOST_ENABLED:\s*z\.enum\(\['true',\s*'false'\]\)\.default\('true'\)/,
   // Fakturowanie: default WYŁĄCZAJĄCY jest tu ŚWIADOMYM stanem produktu
   // (decyzja usera 2026-07-10, D-048) — brak dostarczenia zmiennej realizuje
   // decyzję, niczego nie psuje po cichu. Wzorzec pilnuje, by wyjątek wygasł,

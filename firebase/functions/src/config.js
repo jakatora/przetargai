@@ -62,6 +62,22 @@ const schema = z.object({
   TED_API_BASE_URL: z.string().url().default('https://api.ted.europa.eu'),
   TED_LOOKBACK_DAYS: z.coerce.number().int().positive().default(7),
 
+  /*
+   * MOST do backendu Railway (P0-4, audyt 2026-09-23 §3.1).
+   *
+   * Sześć dowiezionych modułów (Sejf, Radar SWZ, Radar podprogowy, Czarna
+   * skrzynka, Symulator płynności, Radar planów) i 42 wywołania `/api/przetarg/*`
+   * żyją WYŁĄCZNIE na Railway, a aplikacja ze sklepów mówi do Cloud Functions —
+   * więc na produkcji wszystkie zwracały 404. Most przekazuje te trasy dalej,
+   * tłumacząc tożsamość. `MOST_ENABLED=false` wyłącza go bez wdrożenia kodu.
+   */
+  MOST_ENABLED: z.enum(['true', 'false']).default('true'),
+  MOST_RAILWAY_URL: z.string().url().default('https://backend-production-a43e3.up.railway.app'),
+  // Konta pomostowe zakładamy na WŁASNEJ domenie technicznej, nigdy na adresie
+  // użytkownika — inaczej powitalny e-mail z Railway trafiłby do jego skrzynki.
+  MOST_EMAIL_DOMENA: z.string().default('most.przetarg-ai.pl'),
+  MOST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+
   MATCH_CONFIDENCE_THRESHOLD: z.coerce.number().int().min(0).max(100).default(60),
   FREE_TIER_DAILY_MATCH_LIMIT: z.coerce.number().int().positive().default(5),
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(10),
@@ -84,6 +100,7 @@ export const features = {
   email: Boolean(env.RESEND_API_KEY),
   invoicing: env.FAKTUROWANIE_ENABLED === 'true' && Boolean(env.FAKTUROWNIA_API_KEY && env.FAKTUROWNIA_DOMAIN),
   ted: env.TED_ENABLED === 'true',
+  most: env.MOST_ENABLED === 'true',
 };
 
 /*

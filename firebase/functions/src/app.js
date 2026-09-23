@@ -14,6 +14,7 @@ import adminRouter from './routes/admin.js';
 import legalRouter from './routes/legal.js';
 import demoRouter from './routes/demo.js';
 import statsRouter from './routes/stats.js';
+import mostRouter from './routes/most.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -29,10 +30,6 @@ export function createApp() {
   app.use(helmet());
   app.use(cors());
 
-  // W Functions surowe body jest dostępne jako `req.rawBody` niezależnie od
-  // parsera, więc webhook Stripe nie wymaga montowania przed express.json().
-  app.use(express.json({ limit: '1mb' }));
-
   /*
    * UWAGA o skali: liczniki express-rate-limit żyją w pamięci INSTANCJI. Przy
    * maxInstances=10 realny limit jest do 10× wyższy niż deklarowany. To świadomy
@@ -43,6 +40,23 @@ export function createApp() {
   const wspolne = { standardHeaders: true, legacyHeaders: false, keyGenerator: kluczKlienta };
 
   const apiLimiter = rateLimit({ windowMs: 60_000, max: 120, ...wspolne });
+
+  /*
+   * MOST do modułów przetargowych na Railway (P0-4) — montowany PRZED globalnym
+   * parserem JSON, z własnym parserem BAJTOWYM. Dwa powody:
+   *  • aplikacja wysyła do Sejfu pliki jako base64 w JSON-ie, a Railway montuje
+   *    te trasy z limitem 10 MB — globalny 1 MB odrzucałby upload,
+   *  • most ma przekazywać bajty bez interpretacji, żeby nie zmieniać kontraktu
+   *    aplikacji (nie parsujemy i nie serializujemy ciała po drodze).
+   * Limiter zostaje ten sam co dla reszty API.
+   */
+  const mostLimiter = rateLimit({ windowMs: 60_000, max: 120, ...wspolne });
+  app.use('/api/przetarg', express.raw({ type: () => true, limit: '12mb' }), mostLimiter, mostRouter);
+
+  // W Functions surowe body jest dostępne jako `req.rawBody` niezależnie od
+  // parsera, więc webhook Stripe nie wymaga montowania przed express.json().
+  app.use(express.json({ limit: '1mb' }));
+
 
   // Wyłącznie trasy, na których zgadywanie ma sens: logowanie i zakładanie konta.
   // Audyt 2026-07-09: dawniej limiter obejmował CAŁE /auth, więc `GET /auth/me`

@@ -115,6 +115,17 @@ export const users = {
     return this.findById(id);
   },
 
+  /**
+   * Zapamiętuje identyfikator konta pomostowego na Railway (P0-4, most).
+   * Bez tego most zakładałby nowe konto przy każdym żądaniu.
+   */
+  async ustawMostRailway(id, idRailway) {
+    await db().collection('users').doc(id).update({
+      most_railway_user_id: idRailway,
+      updated_at: nowIso(),
+    });
+  },
+
   async setPushToken(id, token) {
     await db().collection('users').doc(id).update({ push_token: token, updated_at: nowIso() });
   },
