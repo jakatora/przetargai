@@ -63,9 +63,23 @@ router.get('/', async (_req, res) => {
 
   const wynik = ostatniCykl?.wynik ?? null;
   const zBledem = zrodlaZBledem(wynik);
-  // `ok !== false` zamiast `ok === true`: ślady sprzed tej zmiany nie mają pola
-  // `ok` i nie wolno ich zinterpretować jako awarii.
-  const pobieranieOk = wynik === null || (wynik.ok !== false && zBledem.length === 0);
+
+  /*
+   * Ślady zapisane PRZED naprawą lepkiego merge'a (2026-09-24) niosą pola `error`,
+   * których stary kod nie potrafił skasować — na produkcji siedział tam błąd sprzed
+   * dwóch miesięcy, mimo w pełni udanych przebiegów. Liczenie ich jako awarii
+   * zapaliłoby monitoring na czerwono przy pierwszym wdrożeniu tej naprawy i nauczyło
+   * operatora ignorować alarm. Rozpoznajemy je po braku historii per źródło (pole
+   * `zrodla` na dokumencie), którą zapisuje wyłącznie nowy kod. Pierwszy przebieg
+   * po wdrożeniu nadpisuje ślad i alarm zaczyna działać w pełni.
+   *
+   * `ok: false` alarmuje ZAWSZE — to twarda awaria, nie residuum.
+   */
+  const sladSprzedNaprawa = ostatniCykl !== null && ostatniCykl.zrodla === undefined;
+  // `ok !== false` zamiast `ok === true`: najstarsze ślady nie mają pola `ok`
+  // i nie wolno ich zinterpretować jako awarii.
+  const pobieranieOk = wynik === null
+    || (wynik.ok !== false && (sladSprzedNaprawa || zBledem.length === 0));
 
   /*
    * Brak śladu cyklu NIE daje 503: świeżo wdrożony projekt czeka na pierwszy przebieg
@@ -106,6 +120,9 @@ router.get('/', async (_req, res) => {
       // Awaria źródła jest osobnym sygnałem niż milczący cron — mylenie ich
       // kosztowało tygodnie niezauważonej niekompletności danych.
       zrodla_z_bledem: zBledem,
+      // true = ślad pochodzi z kodu sprzed naprawy lepkiego merge'a, więc pola
+      // `error` mogą być residuum sprzed tygodni i NIE zapalają alarmu.
+      slad_sprzed_naprawy: sladSprzedNaprawa,
       // Trwała historia: kiedy źródło ostatnio DZIAŁAŁO i kiedy ostatnio padło.
       zrodla: ostatniCykl?.zrodla ?? {},
       ostatni_wynik: wynik,

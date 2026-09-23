@@ -124,3 +124,45 @@ test('/health zwraca licznik OTWARTYCH przetargów (mianownik dla wszystkich pom
   assert.ok(cialo.otwarte_przetargi >= 1,
     'bez tej liczby nie da się zweryfikować hipotezy o pułapie puli dopasowań');
 });
+
+/*
+ * Ślady zapisane PRZED naprawą lepkiego merge'a (commit 1/5) niosą pola `error`,
+ * których stary kod nie potrafił skasować — na produkcji siedział tam błąd sprzed
+ * dwóch miesięcy. Gdyby `/health` liczył je jako awarię, pierwsze wdrożenie tej
+ * naprawy zapaliłoby monitoring na czerwono bez powodu i nauczyło operatora
+ * ignorować alarm. Rozpoznajemy je po tym, że nie mają historii per źródło
+ * (pole `zrodla` na dokumencie), którą zapisuje wyłącznie nowy kod.
+ */
+
+test('ślad SPRZED naprawy: lepkie `error` nie zapala alarmu, ale jest widoczne', async () => {
+  await wyczyscSlad();
+  // Zapis „po staremu": tylko `wynik`, bez historii per źródło.
+  await getFirestore().collection('_health').doc('daily_cycle').set({
+    zakonczony_o: new Date().toISOString(),
+    wynik: {
+      ok: true,
+      fetched: 3083,
+      newTenders: 467,
+      zrodla: {
+        bzp: { fetched: 1330, newTenders: 188, error: 'The operation was aborted due to timeout' },
+        ted: { fetched: 1753, newTenders: 279, error: 'TED API odpowiedziało 429' },
+      },
+    },
+  });
+
+  const { status, cialo } = await zapytajHealth();
+  assert.equal(status, 200, 'residuum po starym kodzie to nie jest dzisiejsza awaria');
+  assert.equal(cialo.cron.slad_sprzed_naprawy, true, 'operator musi wiedzieć, dlaczego błędy nie alarmują');
+  assert.deepEqual(cialo.cron.zrodla_z_bledem, ['bzp', 'ted'], 'ale sama treść śladu nie jest ukrywana');
+});
+
+test('ślad sprzed naprawy z ok:false NADAL daje 503 (to twarda awaria, nie residuum)', async () => {
+  await wyczyscSlad();
+  await getFirestore().collection('_health').doc('daily_cycle').set({
+    zakonczony_o: new Date().toISOString(),
+    wynik: { ok: false, error: 'padly wszystkie zrodla', zrodla: {} },
+  });
+
+  const { status } = await zapytajHealth();
+  assert.equal(status, 503);
+});
