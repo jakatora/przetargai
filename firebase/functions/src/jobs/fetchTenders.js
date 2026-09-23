@@ -49,6 +49,22 @@ export function pozostalyBudzetMs(zuzyteMs, calosc = BUDZET_PRZEBIEGU_MS) {
 }
 
 /**
+ * Zapisuje ślad przebiegu dla `/health` i oddaje ten sam wynik wołającemu.
+ *
+ * Ślad musi powstać przy KAŻDYM zakończeniu cyklu, także przy pełnej awarii.
+ * Do 2026-09-24 pełna awaria wracała wcześniej i śladu nie zapisywała wcale —
+ * `/health` pokazywał wtedy ostatni UDANY przebieg, więc padnięte pobieranie
+ * wyglądało z zewnątrz jak wczorajszy sukces i nie budziło monitoringu (P0-3).
+ * Awaria samego zapisu śladu nie może wywrócić cyklu — logujemy i jedziemy dalej.
+ */
+async function zapiszSlad(wynik) {
+  await cykl.zapiszPrzebieg(wynik).catch((err) =>
+    logger.error({ err: err.message }, 'Nie udało się zapisać śladu cyklu'));
+  logger.info(wynik, 'fetchTenders: zakończono');
+  return wynik;
+}
+
+/**
  * Pobiera ogłoszenia ze wszystkich źródeł, zapisuje nowe i generuje dopasowania.
  * @param {{zrodla?: Array<{nazwa: string, pobierz: () => Promise<object[]>}>}} opts
  *   `zrodla` — wstrzykiwane w testach; produkcja używa rejestru domyślnego.
@@ -101,7 +117,10 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
     && Object.values(statystyki).every((s) => s.error);
   if (wszystkiePadly) {
     const bledy = Object.entries(statystyki).map(([n, s]) => `${n}: ${s.error}`).join('; ');
-    return { ok: false, error: bledy, fetched: 0, newTenders: 0, matchesCreated: 0, zrodla: statystyki };
+    return zapiszSlad({
+      ok: false, error: bledy, fetched: 0, newTenders: 0, skipped: pominiete,
+      matchesCreated: 0, durationMs: Date.now() - startedAt, zrodla: statystyki,
+    });
   }
 
   // Nowe ogłoszenia są w bazie — cache puli w tej instancji jest już nieaktualny.
@@ -118,22 +137,15 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
     matchesCreated = await generateMatchesForAllUsers({ budzetCzasuMs });
   } catch (err) {
     logger.error({ err: err.message }, 'fetchTenders: cykl dopasowań nie powiódł się');
-    return {
+    return zapiszSlad({
       ok: false, error: err.message, fetched, newTenders: noweTenders,
-      skipped: pominiete, matchesCreated: 0, zrodla: statystyki,
-    };
+      skipped: pominiete, matchesCreated: 0, durationMs: Date.now() - startedAt,
+      zrodla: statystyki,
+    });
   }
 
-  const durationMs = Date.now() - startedAt;
-  const wynik = {
+  return zapiszSlad({
     ok: true, fetched, newTenders: noweTenders, skipped: pominiete,
-    matchesCreated, durationMs, zrodla: statystyki,
-  };
-
-  // Ślad dla /health — inaczej „martwy cron" jest niewykrywalny z zewnątrz.
-  await cykl.zapiszPrzebieg(wynik).catch((err) =>
-    logger.error({ err: err.message }, 'Nie udało się zapisać śladu cyklu'));
-
-  logger.info(wynik, 'fetchTenders: zakończono');
-  return wynik;
+    matchesCreated, durationMs: Date.now() - startedAt, zrodla: statystyki,
+  });
 }

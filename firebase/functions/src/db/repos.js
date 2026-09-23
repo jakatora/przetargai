@@ -1031,8 +1031,39 @@ export const aiUsage = {
 const CYKL_REF = () => db().collection('_health').doc('daily_cycle');
 
 export const cykl = {
+  /**
+   * Zapisuje ślad JEDNEGO przebiegu — nadpisując poprzedni wynik w całości.
+   *
+   * 🚨 NIE WOLNO tu wrócić do `{ merge: true }`. Firestore scala mapy GŁĘBOKO,
+   * więc pole `zrodla.bzp.error` z przebiegu sprzed tygodni PRZEŻYWAŁO każdy
+   * kolejny, w pełni udany przebieg: nadpisywały się tylko `fetched`
+   * i `newTenders`, a błąd zostawał przyklejony na zawsze. Produkcja pokazywała
+   * przez to `ok: true` RAZEM z błędem obu źródeł, a audyt 2026-09-23 uznał ten
+   * kształt za dowód, że wdrożony kod nie pochodzi z tego repozytorium (P0-1).
+   * Regresja: test/sladCyklu.test.js.
+   *
+   * Historia per źródło (kiedy ostatnio działało, kiedy ostatnio padło) jest
+   * świadomie TRWAŁA i trzymana osobno, w polu `zrodla` — bieżący wynik opisuje
+   * wyłącznie ostatni przebieg, historia przeżywa dzień, w którym źródło było
+   * wyłączone (np. `TED_ENABLED=false`).
+   */
   async zapiszPrzebieg(wynik) {
-    await CYKL_REF().set({ zakonczony_o: nowIso(), wynik }, { merge: true });
+    const teraz = nowIso();
+    const poprzedni = await CYKL_REF().get();
+    const zrodla = poprzedni.exists ? { ...(poprzedni.data().zrodla ?? {}) } : {};
+
+    for (const [nazwa, stat] of Object.entries(wynik?.zrodla ?? {})) {
+      const bylo = zrodla[nazwa] ?? {};
+      // Sukces nie kasuje historii błędu (i odwrotnie) — operator musi widzieć
+      // OBA znaczniki, żeby odróżnić „padło dziś" od „padło raz w lipcu".
+      zrodla[nazwa] = {
+        ostatni_sukces_o: stat?.error ? (bylo.ostatni_sukces_o ?? null) : teraz,
+        ostatni_blad_o: stat?.error ? teraz : (bylo.ostatni_blad_o ?? null),
+        ostatni_blad: stat?.error ? String(stat.error) : (bylo.ostatni_blad ?? null),
+      };
+    }
+
+    await CYKL_REF().set({ zakonczony_o: teraz, wynik, zrodla });
   },
 
   async ostatniPrzebieg() {
