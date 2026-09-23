@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders } from '../db/repos.js';
+import { cykl, tenders, oknoBzp } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 
 const router = Router();
@@ -38,11 +38,12 @@ router.get('/', async (_req, res) => {
   let dbOk = false;
   let ostatniCykl = null;
   let otwartePrzetargi = null;
+  let stanOkna = null;
 
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    ostatniCykl = await cykl.ostatniPrzebieg();
+    [ostatniCykl, stanOkna] = await Promise.all([cykl.ostatniPrzebieg(), oknoBzp.wczytaj()]);
   } catch { /* zgłoszone w polu db */ }
 
   if (dbOk) {
@@ -83,6 +84,21 @@ router.get('/', async (_req, res) => {
     wersja: process.env.K_REVISION ?? 'nieznana',
     // Mianownik dla pytania „czy widzimy cały rynek" (§3.4 audytu).
     otwarte_przetargi: otwartePrzetargi,
+    /*
+     * Stan domykania okna BZP (P0-2). `doby_niedomkniete > 0` znaczy, że w oknie
+     * `BZP_LOOKBACK_DAYS` są doby, których jeszcze nie pobraliśmy w całości —
+     * to jedyny zewnętrzny sygnał niekompletności danych źródłowych.
+     */
+    bzp_okno: stanOkna?.ostatni_przebieg
+      ? {
+        zakonczony_o: stanOkna.ostatni_przebieg.zakonczony_o ?? null,
+        doby_okna: stanOkna.ostatni_przebieg.doby_okna ?? null,
+        doby_niedomkniete: stanOkna.ostatni_przebieg.doby_niedomkniete ?? null,
+        fetched: stanOkna.ostatni_przebieg.fetched ?? null,
+        newTenders: stanOkna.ostatni_przebieg.newTenders ?? null,
+        error: stanOkna.ostatni_przebieg.error ?? null,
+      }
+      : null,
     cron: {
       ok: cronOk,
       ostatni_przebieg: ostatniCykl?.zakonczony_o ?? null,

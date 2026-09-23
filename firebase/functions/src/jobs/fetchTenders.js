@@ -1,7 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { features } from '../config.js';
-import { pobierzOgloszeniaBzp } from '../services/bzp.js';
 import { pobierzOgloszeniaTed } from '../services/ted.js';
+import { pobierzBzpZWznowieniem } from './oknoBzp.js';
 import { generateMatchesForAllUsers } from '../services/matching.js';
 import { tenders, cykl } from '../db/repos.js';
 import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
@@ -21,7 +21,7 @@ import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
  */
 function domyslneZrodla() {
   const zrodla = [
-    { nazwa: 'bzp', pobierz: (licznik) => pobierzOgloszeniaBzp({ licznik }) },
+    { nazwa: 'bzp', pobierz: (licznik, opcje) => pobierzBzpZWznowieniem(licznik, opcje) },
   ];
   if (features.ted) {
     zrodla.push({ nazwa: 'ted', pobierz: (licznik) => pobierzOgloszeniaTed({ licznik }) });
@@ -36,6 +36,15 @@ function domyslneZrodla() {
  * w połowie pętli. Zostawiamy 60 s zapasu na zapis śladu cyklu i raport.
  */
 export const BUDZET_PRZEBIEGU_MS = 480_000;
+
+/**
+ * Ile z budżetu przebiegu wolno zużyć na POBIERANIE ze wszystkich źródeł.
+ *
+ * Reszta (co najmniej 180 s) zostaje dopasowaniom. Bez tego podziału pobieranie
+ * potrafiło zjeść cały budżet i funkcja ginęła w połowie dopasowań — po cichu,
+ * bo ślad cyklu zapisuje się dopiero na końcu (audyt 2026-09-23, P0-2).
+ */
+export const BUDZET_POBIERANIA_MS = 300_000;
 
 /**
  * Ile czasu zostało dla cyklu dopasowań po pobraniu ogłoszeń.
@@ -89,7 +98,10 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
     const licznik = pustyLicznik();
     let notices;
     try {
-      notices = await zrodlo.pobierz(licznik);
+      // Każde źródło dostaje to, co ZOSTAŁO z budżetu pobierania — pierwsze
+      // źródło nie może zagłodzić kolejnych.
+      const budzetZrodlaMs = Math.max(0, BUDZET_POBIERANIA_MS - (Date.now() - startedAt));
+      notices = await zrodlo.pobierz(licznik, { budzetMs: budzetZrodlaMs });
     } catch (err) {
       logger.error({ err: err.message, zrodlo: zrodlo.nazwa, ...licznik },
         'fetchTenders: pobieranie ze źródła nie powiodło się');
@@ -131,6 +143,12 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
       zduplikowane: zliczDuplikaty(licznik, notices.length),
       zapytania: licznik.zapytania,
       pominiete: pominieteZrodla,
+      // Stan okna (BZP): ile dób zostało do domknięcia. 0 = okno kompletne.
+      ...(licznik.dobyOkna === undefined ? {} : {
+        doby_okna: licznik.dobyOkna,
+        doby_niedomkniete: licznik.dobyNiedomkniete ?? 0,
+        doby: licznik.dni ?? [],
+      }),
     };
     fetched += notices.length;
     noweTenders += nowe;

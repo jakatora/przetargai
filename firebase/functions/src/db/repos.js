@@ -1060,6 +1060,39 @@ export const aiUsage = {
  */
 const CYKL_REF = () => db().collection('_health').doc('daily_cycle');
 
+/**
+ * Checkpoint okna pobierania BZP (P0-2).
+ *
+ * Trzyma stan per doba (`kompletny`, `pobrano`, `blad`), żeby kolejny przebieg
+ * wznowił pobieranie od tego, czego jeszcze nie domknął, zamiast zaczynać od
+ * najstarszej doby i ginąć zawsze na tych samych dniach. Logika wyboru dób jest
+ * CZYSTA i mieszka w jobs/oknoBzp.js — tutaj wyłącznie odczyt i zapis.
+ */
+const OKNO_BZP_REF = () => db().collection('_health').doc('bzp_okno');
+
+export const oknoBzp = {
+  async wczytaj() {
+    const doc = await OKNO_BZP_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /** Zapis stanu dób (bez merge) — doby poza oknem mają znikać, nie zalegać. */
+  async zapisz(stan) {
+    await OKNO_BZP_REF().set({ dni: stan.dni ?? {} }, { mergeFields: ['dni'] });
+  },
+
+  /**
+   * Ślad ostatniego przebiegu domykania okna.
+   *
+   * `mergeFields` podmienia WSKAZANE pole w całości — w przeciwieństwie do
+   * `set(..., { merge: true })`, które scala mapy głęboko i zostawiało błędy
+   * sprzed tygodni (ta sama pułapka co w `cykl.zapiszPrzebieg`).
+   */
+  async zapiszPrzebieg(wynik) {
+    await OKNO_BZP_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
 export const cykl = {
   /**
    * Zapisuje ślad JEDNEGO przebiegu — nadpisując poprzedni wynik w całości.

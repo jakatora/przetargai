@@ -131,10 +131,56 @@ function extractList(data) {
   return data?.content ?? data?.items ?? data?.notices ?? data?.results ?? data?.data ?? [];
 }
 
-/** Kody, przy których ponawianie ma sens: przeciążenie i awarie po stronie BZP. */
-const PONAWIALNE = new Set([429, 500, 502, 503, 504]);
+/**
+ * Kody, przy których ponawianie ma sens.
+ *
+ * 🚨 `403` to NIE jest „nasza wina". BZP dławi ruch: audyt 2026-09-23 zmierzył
+ * ~9 szybkich zapytań → HTTP 403. Dawniej 403 wpadało do gałęzi „4xx nie ponawiamy",
+ * więc jedno dławienie zabierało CAŁĄ dobę ogłoszeń — po cichu, bo błąd dnia był
+ * tylko logowany. To najtańsze wytłumaczenie, dlaczego okno 7-dniowe kończyło się
+ * na 1 330 ogłoszeniach zamiast ~5 000 (P0-2).
+ */
+const PONAWIALNE = new Set([403, 429, 500, 502, 503, 504]);
 const PROBY = 3;
 const ODSTEP_BAZOWY_MS = 1500;
+
+/**
+ * Tempo ruchu do BZP.
+ *
+ * Pomiar 2026-09-24 na żywym API: doba 2026-09-22 = 1 011 ogłoszeń w 17 zapytaniach
+ * w ~14 s, bez jednego 403. Sztywne 3,5 s odstępu (bezpieczna wartość z audytu)
+ * kosztowałoby 7 × 17 × 3,5 s ≈ 416 s i samo w sobie wywracało budżet funkcji.
+ * Dlatego odstęp jest ADAPTACYJNY: jedziemy szybko, a po pierwszym 403 zwalniamy
+ * na resztę okna. Lepiej stracić minutę niż dobę ogłoszeń.
+ *
+ * `spij` i `teraz` są wstrzykiwane w testach — inaczej zestaw testów spałby minutami.
+ */
+export const TEMPO_DOMYSLNE = {
+  odstepMs: 250,
+  backoff403Ms: 20_000,
+  mnoznikPo403: 8,
+  maksOdstepMs: 4_000,
+  spij: (ms) => new Promise((r) => setTimeout(r, ms)),
+  teraz: () => Date.now(),
+};
+
+/** Stan tempa dla JEDNEGO okna — rośnie po trafieniu w throttling. */
+function stanTempa(tempo) {
+  const t = { ...TEMPO_DOMYSLNE, ...tempo };
+  return {
+    ...t,
+    biezacyOdstepMs: t.odstepMs,
+    wykonane: 0,
+    /** Odstęp PRZED kolejnym zapytaniem — pierwsze w oknie idzie od razu. */
+    async przedZapytaniem() {
+      if (this.wykonane > 0 && this.biezacyOdstepMs > 0) await this.spij(this.biezacyOdstepMs);
+      this.wykonane += 1;
+    },
+    zwolnij() {
+      this.biezacyOdstepMs = Math.min(this.maksOdstepMs, Math.max(1, this.biezacyOdstepMs) * this.mnoznikPo403);
+    },
+  };
+}
 
 /**
  * Pobiera stronę z BZP z ponowieniem i rosnącym odstępem.
@@ -143,9 +189,10 @@ const ODSTEP_BAZOWY_MS = 1500;
  * oznaczała, że użytkownicy nie dostają TEGO DNIA żadnych nowych przetargów —
  * cykl uruchamia się raz na dobę (audyt 2026-07-10).
  *
- * Odstępy (1,5 s → 3 s) mieszczą się w budżecie czasu funkcji z zapasem.
+ * Dławienie (403/429) ma WŁASNY, dłuższy backoff i trwale zwalnia tempo okna:
+ * ponawianie co 1,5 s wchodzi drugi raz na tę samą minę.
  */
-async function pobierzZPonowieniem(url) {
+async function pobierzZPonowieniem(url, tempo) {
   let ostatniBlad = null;
 
   for (let proba = 1; proba <= PROBY; proba++) {
@@ -154,15 +201,20 @@ async function pobierzZPonowieniem(url) {
         headers: { Accept: 'application/json', 'User-Agent': 'PrzetargAI/0.1' },
         signal: AbortSignal.timeout(25_000),
       });
-      // Błąd 4xx (poza 429) to nasza wina — ponawianie niczego nie zmieni.
       if (res.ok || !PONAWIALNE.has(res.status) || proba === PROBY) return res;
-      logger.warn({ status: res.status, proba }, 'BZP: odpowiedź do ponowienia');
+
+      const dlawienie = res.status === 403 || res.status === 429;
+      if (dlawienie) tempo.zwolnij();
+      logger.warn({ status: res.status, proba, dlawienie, odstepMs: tempo.biezacyOdstepMs },
+        'BZP: odpowiedź do ponowienia');
+      await tempo.spij(dlawienie ? tempo.backoff403Ms : ODSTEP_BAZOWY_MS * proba);
+      continue;
     } catch (err) {
       ostatniBlad = err;
       if (proba === PROBY) break;
       logger.warn({ err: err.message, proba }, 'BZP: błąd sieci, ponawiam');
     }
-    await new Promise((r) => setTimeout(r, ODSTEP_BAZOWY_MS * proba));
+    await tempo.spij(ODSTEP_BAZOWY_MS * proba);
   }
 
   throw ostatniBlad ?? new Error('BZP: pobieranie nie powiodło się po ponowieniach');
@@ -174,7 +226,7 @@ async function pobierzZPonowieniem(url) {
  *   page — numeracja od 0 (przeliczana na PageNumber API od 1).
  * @returns {Promise<Array>} znormalizowane ogłoszenia
  */
-export async function searchNotices({ publishedFrom, publishedTo, page = 0, size = 50, province, licznik } = {}) {
+export async function searchNotices({ publishedFrom, publishedTo, page = 0, size = 50, province, licznik, tempo } = {}) {
   const to = publishedTo ?? dateOnly(Date.now());
   const from = publishedFrom
     ?? dateOnly(Date.now() - env.BZP_LOOKBACK_DAYS * 86_400_000);
@@ -189,7 +241,7 @@ export async function searchNotices({ publishedFrom, publishedTo, page = 0, size
   if (province) url.searchParams.set('OrganizationProvince', province);
 
   logger.info({ from, to, page: page + 1, size, province }, 'BZP: pobieranie ogłoszeń');
-  const res = await pobierzZPonowieniem(url);
+  const res = await pobierzZPonowieniem(url, tempo ?? stanTempa());
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`BZP API odpowiedziało ${res.status} ${res.statusText} — ${body.slice(0, 200)}`);
@@ -239,10 +291,19 @@ function oknoDoby(dzien) {
  * ogłoszenia, których API nie odda), docina ją po 16 województwach — to jedyny
  * filtr, który BZP honoruje, a `PageNumber` jest ignorowany, więc paginacja odpada.
  */
-async function pobierzDzien(dzien, licznik) {
+async function pobierzDzien(dzien, licznik, tempo) {
   const okno = oknoDoby(dzien);
-  const zDnia = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA, licznik });
-  if (zDnia.length < SUFIT_ZAPYTANIA) return zDnia;
+  let zapytania = 0;
+  const zapytaj = async (dodatkowe = {}) => {
+    await tempo.przedZapytaniem();
+    zapytania += 1;
+    return searchNotices({ ...okno, size: SUFIT_ZAPYTANIA, licznik, tempo, ...dodatkowe });
+  };
+
+  const zDnia = await zapytaj();
+  if (zDnia.length < SUFIT_ZAPYTANIA) {
+    return { ogloszenia: zDnia, ucietySufit: false, zapytania, wojewodztwaBezDanych: 0 };
+  }
 
   logger.warn({ dzien, pobrane: zDnia.length },
     'BZP: doba trafiła sufit zapytania — docinam po województwach, inaczej zgubilibyśmy resztę dnia');
@@ -252,9 +313,10 @@ async function pobierzDzien(dzien, licznik) {
   // zwróci żadne z 16 zapytań `OrganizationProvince` — przepadałyby na dniu z sufitem
   // (audyt 2026-07-17). Dedup po externalId i tak scala nakładki.
   const wynik = new Map(zDnia.map((n) => [n.externalId, n]));
+  let wojewodztwaBezDanych = 0;
   for (const woj of WOJEWODZTWA_TERYT) {
     try {
-      const zWoj = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA, province: woj, licznik });
+      const zWoj = await zapytaj({ province: woj });
       for (const n of zWoj) wynik.set(n.externalId, n);
       if (zWoj.length >= SUFIT_ZAPYTANIA) {
         // Pojedyncze województwo na sufitie = nie mamy już czym ciąć (BZP nie ma
@@ -263,11 +325,14 @@ async function pobierzDzien(dzien, licznik) {
           'BZP: województwo też trafiło sufit — część ogłoszeń tej doby jest NIEOSIĄGALNA tym filtrem');
       }
     } catch (err) {
-      // Awaria jednego województwa nie może zabrać reszty doby.
+      // Awaria jednego województwa nie może zabrać reszty doby, ale MUSI być policzona:
+      // doba z brakującym województwem jest niekompletna i nie wolno jej zamknąć
+      // w checkpoincie jako gotowej (P0-2).
+      wojewodztwaBezDanych += 1;
       logger.error({ err: err.message, dzien, woj }, 'BZP: województwo pominięte');
     }
   }
-  return [...wynik.values()];
+  return { ogloszenia: [...wynik.values()], ucietySufit: true, zapytania, wojewodztwaBezDanych };
 }
 
 /**
@@ -281,24 +346,66 @@ async function pobierzDzien(dzien, licznik) {
  *   `BZP_LOOKBACK_DAYS` dni; `licznik` to akumulator pomiarów (lib/licznikZrodla.js)
  * @returns {Promise<object[]>} znormalizowane ogłoszenia, zdeduplikowane po `externalId`
  */
-export async function pobierzOgloszeniaBzp({ from, to, licznik } = {}) {
-  const doDnia = to ?? dateOnly(Date.now());
-  const odDnia = from ?? dateOnly(Date.now() - env.BZP_LOOKBACK_DAYS * 86_400_000);
-  const dni = dniWZakresie(odDnia, doDnia);
+export async function pobierzOgloszeniaBzp({
+  from, to, licznik, dni: dniWejscie, budzetMs = Infinity, tempo: tempoWejscie,
+} = {}) {
+  const tempo = stanTempa(tempoWejscie);
+  const doDnia = to ?? dateOnly(tempo.teraz());
+  const odDnia = from ?? dateOnly(tempo.teraz() - env.BZP_LOOKBACK_DAYS * 86_400_000);
+  const dni = dniWejscie ?? dniWZakresie(odDnia, doDnia);
 
+  const start = tempo.teraz();
   const wszystkie = new Map();
-  let bledneDni = 0;
-  for (const dzien of dni) {
+  const raport = [];
+  const pominieteDni = [];
+
+  for (const [i, dzien] of dni.entries()) {
+    /*
+     * Budżet czasu. `dailyTenderFetch` ma twardy limit 540 s — przekroczenie go
+     * oznacza, że platforma zabija funkcję w połowie pętli: ślad cyklu się nie
+     * zapisuje, dopasowania się nie liczą, a następny przebieg zaczyna od zera.
+     * Lepiej oddać 4 doby i JAWNIE powiedzieć, że 3 zostały, niż zginąć po cichu.
+     */
+    if (tempo.teraz() - start >= budzetMs) {
+      pominieteDni.push(...dni.slice(i));
+      logger.warn({ pominieteDni: pominieteDni.length, budzetMs },
+        'BZP: budżet czasu wyczerpany — reszta okna zostaje na następny przebieg');
+      break;
+    }
+
     try {
-      for (const n of await pobierzDzien(dzien, licznik)) wszystkie.set(n.externalId, n);
+      const doba = await pobierzDzien(dzien, licznik, tempo);
+      for (const n of doba.ogloszenia) wszystkie.set(n.externalId, n);
+      raport.push({
+        dzien,
+        pobrano: doba.ogloszenia.length,
+        ucietySufit: doba.ucietySufit,
+        zapytania: doba.zapytania,
+        wojewodztwaBezDanych: doba.wojewodztwaBezDanych,
+      });
     } catch (err) {
-      bledneDni++;
+      // Awaria doby nie przerywa okna, ale MUSI wyjść na wierzch. Do 2026-09-24
+      // była wyłącznie logowana, więc ślad cyklu pokazywał sukces przy oknie,
+      // w którym brakowało kilku tysięcy ogłoszeń (P0-2).
+      raport.push({
+        dzien, pobrano: 0, ucietySufit: false, zapytania: 1, wojewodztwaBezDanych: 0, blad: err.message,
+      });
       logger.error({ err: err.message, dzien }, 'BZP: dzień pominięty — reszta okna leci dalej');
     }
   }
 
-  logger.info({ dni: dni.length, bledneDni, ogloszenia: wszystkie.size },
-    'BZP: zakończono pobieranie dzień po dniu');
+  if (licznik) {
+    licznik.dni = raport;
+    licznik.pominieteDni = pominieteDni;
+  }
+
+  logger.info({
+    dni: dni.length,
+    przetworzone: raport.length,
+    bledneDni: raport.filter((d) => d.blad).length,
+    pominieteDni: pominieteDni.length,
+    ogloszenia: wszystkie.size,
+  }, 'BZP: zakończono pobieranie dzień po dniu');
   return [...wszystkie.values()];
 }
 
@@ -319,7 +426,7 @@ async function zapytanieSurowe({ noticeType, from, to, size = SUFIT_ZAPYTANIA, p
   url.searchParams.set('PageSize', String(size));
   if (province) url.searchParams.set('OrganizationProvince', province);
 
-  const res = await pobierzZPonowieniem(url);
+  const res = await pobierzZPonowieniem(url, stanTempa());
   if (!res.ok) throw new Error(`BZP ${noticeType} odpowiedziało ${res.status}`);
   return extractList(await res.json());
 }

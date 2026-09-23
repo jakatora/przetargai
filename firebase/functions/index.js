@@ -107,6 +107,39 @@ export const dailyTenderFetch = onSchedule(
 );
 
 /**
+ * Domykanie okna BZP co 3 godziny (P0-2).
+ *
+ * DLACZEGO OSOBNA FUNKCJA: pełne okno 7 dni to do 119 zapytań, a zmierzony czas
+ * na żywym API (2026-09-24) to 389 s przy 87 zapytaniach. `dailyTenderFetch` ma
+ * twardy limit 540 s i musi jeszcze policzyć dopasowania — pobieranie po prostu
+ * się tam nie mieści i było cicho ucinane (audyt 2026-09-23: 1 330 ogłoszeń
+ * zamiast ~3 000 unikalnych w oknie).
+ *
+ * Ta funkcja robi JEDNO: dopobiera doby, których checkpoint jeszcze nie domknął.
+ * Bez dopasowań, bez AI, bez kosztów poza odczytem publicznego API BZP.
+ * Idempotencja: docId przetargu = identyfikator z BZP, więc powtórki są nieszkodliwe.
+ */
+export const bzpOknoFetch = onSchedule(
+  {
+    schedule: '20 */3 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 1800,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runBzpOkno } = await import('./src/jobs/oknoBzp.js');
+    const wynik = await runBzpOkno();
+
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'bzpOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`bzpOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'bzpOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Przypomnienia o terminach składania ofert dla ZAPISANYCH przetargów (D-050).
  * Co 6 godzin — częściej niż cykl dobowy, bo terminy „za kilka godzin" muszą
  * zdążyć. Push idzie tylko do użytkowników z tokenem; wpis oznaczany jako
