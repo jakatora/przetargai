@@ -291,6 +291,23 @@ function zapiszPuleWCache(limit, pula) {
 }
 
 /**
+ * Pola, których potrzebuje silnik dopasowań — i TYLKO one.
+ *
+ * Suma trzech odbiorców: heurystyki (`title`, `cpv_main`), promptu AI
+ * (+ `organization`, `budget`, `currency`) i denormalizacji feedu w `matches.create`.
+ *
+ * Bez projekcji pula wciąga CAŁE dokumenty, w tym `raw_data` przycinane dopiero
+ * przy 700 KB. Przy dawnym sufircie 2000 nikt tego nie policzył; przy pełnym rynku
+ * (7249 i rosnąco) surowe odpowiedzi BZP w pamięci to OOM w środku cyklu, który
+ * ma 512 MiB. Odczyt Firestore kosztuje tyle samo — oszczędzamy pamięć i transfer.
+ */
+const POLA_PULI = [
+  'title', 'organization', 'budget', 'currency', 'deadline', 'url', 'cpv_main',
+  'source', 'wojewodztwo', 'wadium_wymagane', 'wadium_kwota', 'wadium_wiele_czesci',
+  'kryterium_oceny', 'liczba_czesci',
+];
+
+/**
  * Statystyki ostatniego POBRANIA puli (nie odczytu z cache).
  *
  * Bez nich sufit puli był niewidoczny: audyt 2026-09-23 musiał go wyliczyć
@@ -452,7 +469,7 @@ export const tenders = {
 
     const col = db().collection('tenders');
     const [zTerminem, bezTerminu] = await Promise.all([
-      stronicuj(col.where('deadline', '>', nowIso()).orderBy('deadline'), limit, rozmiarStrony),
+      stronicuj(col.where('deadline', '>', nowIso()).orderBy('deadline').select(...POLA_PULI), limit, rozmiarStrony),
       /*
        * Gałąź bez terminu zostaje BEZ `orderBy` — jawne sortowanie po innym polu
        * wymagałoby indeksu złożonego, którego brak wywrócił kiedyś cały silnik
@@ -460,7 +477,7 @@ export const tenders = {
        * i tak: `startAfter(snapshot)` korzysta z domyślnego porządku po nazwie
        * dokumentu, który Firestore stosuje przy samej równości.
        */
-      stronicuj(col.where('deadline', '==', null), limit, rozmiarStrony),
+      stronicuj(col.where('deadline', '==', null).select(...POLA_PULI), limit, rozmiarStrony),
     ]);
 
     const pula = [...zTerminem.docs, ...bezTerminu.docs].map(userSnap);
