@@ -260,6 +260,15 @@ const MAKS_RAW_DATA_BAJTOW = 700 * 1024;
 const CACHE_PULI_TTL_MS = 10 * 60_000;
 let cachePuli = null; // { limit, wygasa, pula }
 
+/**
+ * Cache licznika otwartych przetargów dla `/health`.
+ *
+ * Monitoring zewnętrzny puka co kilka minut; bez cache każde pukniecie płaciłoby
+ * za zapytanie agregujące po całej kolekcji `tenders`.
+ */
+const CACHE_OTWARTYCH_TTL_MS = 5 * 60_000;
+let cacheOtwartych = null; // { ile, wygasa }
+
 function pulaZCache(limit) {
   if (!cachePuli || cachePuli.limit !== limit || Date.now() > cachePuli.wygasa) return null;
   return cachePuli.pula;
@@ -409,6 +418,27 @@ export const tenders = {
   /** Unieważnia cache — woła cron po pobraniu nowych ogłoszeń z BZP. */
   odswiezPule() {
     cachePuli = null;
+    cacheOtwartych = null;
+  },
+
+  /**
+   * Ile przetargów ma JESZCZE otwarty termin składania.
+   *
+   * To mianownik wszystkich pomiarów kompletności: bez niego nie da się
+   * odpowiedzieć, czy pula dopasowań (`openPool`) obejmuje cały rynek, czy
+   * tylko ogon przy samym terminie (audyt 2026-09-23 §3.4 — hipoteza, której
+   * nie dało się zweryfikować bez tej liczby).
+   *
+   * Zapytanie agregujące (`count()`) nie czyta dokumentów, ale nie jest darmowe,
+   * a `/health` odpytuje monitoring co kilka minut — stąd krótki cache w pamięci
+   * instancji, unieważniany razem z pulą po każdym cyklu.
+   */
+  async policzOtwarte() {
+    if (cacheOtwartych && Date.now() < cacheOtwartych.wygasa) return cacheOtwartych.ile;
+    const agg = await db().collection('tenders').where('deadline', '>', nowIso()).count().get();
+    const ile = agg.data().count;
+    cacheOtwartych = { ile, wygasa: Date.now() + CACHE_OTWARTYCH_TTL_MS };
+    return ile;
   },
 
   async count() {

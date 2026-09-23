@@ -75,3 +75,62 @@ test('brak source w ogłoszeniu = bzp (zgodność wsteczna z istniejącymi danym
   const zapisany = await tenders.findById(tenderDocId(przetarg.externalId));
   assert.equal(zapisany.source, 'bzp');
 });
+
+/*
+ * Liczniki kompletności (audyt 2026-09-23 §4.5): cykl musi nieść nie tylko „ile
+ * zapisano", ale też ile źródło REALNIE oddało, ile odpadło na normalizacji
+ * i ile scaliła deduplikacja. Bez tych trzech liczb nie da się porównać bazy
+ * z liczbą po stronie BZP/TED dla tego samego okna.
+ */
+
+test('statystyki per źródło niosą liczniki adaptera (surowe/odrzucone/zduplikowane)', async () => {
+  const wynik = await runTenderFetch({
+    zrodla: [{
+      nazwa: 'bzp',
+      pobierz: async (licznik) => {
+        licznik.zapytania = 17;
+        licznik.surowe = 40;
+        licznik.odrzucone = 3;
+        return [ogloszenie('bzp'), ogloszenie('bzp')];
+      },
+    }],
+  });
+
+  const bzp = wynik.zrodla.bzp;
+  assert.equal(bzp.fetched, 2, 'unikalne, znormalizowane ogłoszenia');
+  assert.equal(bzp.surowe, 40);
+  assert.equal(bzp.odrzucone, 3);
+  assert.equal(bzp.zapytania, 17);
+  assert.equal(bzp.zduplikowane, 35, '40 − 3 − 2');
+  assert.equal(bzp.pominiete, 0);
+});
+
+test('źródło zwracające samą TABLICĘ nadal działa (zgodność wsteczna)', async () => {
+  const wynik = await runTenderFetch({
+    zrodla: [{ nazwa: 'ted', pobierz: async () => [ogloszenie('ted')] }],
+  });
+  assert.equal(wynik.zrodla.ted.fetched, 1);
+  assert.equal(wynik.zrodla.ted.surowe, 0, 'adapter bez licznika raportuje zera, nie śmieci');
+  assert.equal(wynik.zrodla.ted.zduplikowane, 0);
+});
+
+test('awaria w POŁOWIE okna zachowuje to, co zdążył zmierzyć licznik', async () => {
+  const wynik = await runTenderFetch({
+    zrodla: [
+      {
+        nazwa: 'bzp',
+        pobierz: async (licznik) => {
+          licznik.zapytania = 5;
+          licznik.surowe = 1330;
+          throw new Error('The operation was aborted due to timeout');
+        },
+      },
+      { nazwa: 'ted', pobierz: async () => [ogloszenie('ted')] },
+    ],
+  });
+
+  assert.equal(wynik.zrodla.bzp.error, 'The operation was aborted due to timeout');
+  assert.equal(wynik.zrodla.bzp.surowe, 1330,
+    'wiedza „doszło do 1330 ogłoszeń i padło" jest warta więcej niż samo `error`');
+  assert.equal(wynik.zrodla.bzp.fetched, 0, 'nic nie trafiło do zapisu');
+});

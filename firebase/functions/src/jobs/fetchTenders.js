@@ -4,6 +4,7 @@ import { pobierzOgloszeniaBzp } from '../services/bzp.js';
 import { pobierzOgloszeniaTed } from '../services/ted.js';
 import { generateMatchesForAllUsers } from '../services/matching.js';
 import { tenders, cykl } from '../db/repos.js';
+import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
 
 /**
  * Rejestr źródeł ogłoszeń (D-039). Każde źródło zwraca ZNORMALIZOWANE przetargi
@@ -20,10 +21,10 @@ import { tenders, cykl } from '../db/repos.js';
  */
 function domyslneZrodla() {
   const zrodla = [
-    { nazwa: 'bzp', pobierz: () => pobierzOgloszeniaBzp() },
+    { nazwa: 'bzp', pobierz: (licznik) => pobierzOgloszeniaBzp({ licznik }) },
   ];
   if (features.ted) {
-    zrodla.push({ nazwa: 'ted', pobierz: () => pobierzOgloszeniaTed() });
+    zrodla.push({ nazwa: 'ted', pobierz: (licznik) => pobierzOgloszeniaTed({ licznik }) });
   }
   return zrodla;
 }
@@ -79,13 +80,24 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
   let pominiete = 0;
 
   for (const zrodlo of zrodla) {
+    /*
+     * Akumulator pomiarów okna (lib/licznikZrodla.js). Adapter dopisuje do niego
+     * surowe fakty, więc licznik niesie sensowne liczby TAKŻE wtedy, gdy źródło
+     * padnie w połowie — bez tego awaria kasowała całą wiedzę o tym, jak daleko
+     * doszło pobieranie (audyt 2026-09-23 §4.5).
+     */
+    const licznik = pustyLicznik();
     let notices;
     try {
-      notices = await zrodlo.pobierz();
+      notices = await zrodlo.pobierz(licznik);
     } catch (err) {
-      logger.error({ err: err.message, zrodlo: zrodlo.nazwa },
+      logger.error({ err: err.message, zrodlo: zrodlo.nazwa, ...licznik },
         'fetchTenders: pobieranie ze źródła nie powiodło się');
-      statystyki[zrodlo.nazwa] = { fetched: 0, newTenders: 0, error: err.message };
+      statystyki[zrodlo.nazwa] = {
+        fetched: 0, newTenders: 0, zduplikowane: 0, pominiete: 0,
+        surowe: licznik.surowe, odrzucone: licznik.odrzucone, zapytania: licznik.zapytania,
+        error: err.message,
+      };
       continue;
     }
 
@@ -96,18 +108,30 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
      * przerywał zapis CAŁEJ partii i pozostałe 499 przetargów nie trafiało do bazy.
      */
     let nowe = 0;
+    let pominieteZrodla = 0;
     for (const notice of notices) {
       try {
         const { created } = await tenders.upsert(notice);
         if (created) nowe++;
       } catch (err) {
-        pominiete++;
+        pominieteZrodla++;
         logger.error({ err: err.message, externalId: notice?.externalId, zrodlo: zrodlo.nazwa },
           'fetchTenders: pominięto ogłoszenie, którego nie dało się zapisać');
       }
     }
+    pominiete += pominieteZrodla;
 
-    statystyki[zrodlo.nazwa] = { fetched: notices.length, newTenders: nowe };
+    statystyki[zrodlo.nazwa] = {
+      // `fetched` = unikalne ogłoszenia oddane do zapisu (znaczenie historyczne).
+      fetched: notices.length,
+      // `newTenders` = zapisane jako NOWE; reszta to aktualizacje istniejących.
+      newTenders: nowe,
+      surowe: licznik.surowe,
+      odrzucone: licznik.odrzucone,
+      zduplikowane: zliczDuplikaty(licznik, notices.length),
+      zapytania: licznik.zapytania,
+      pominiete: pominieteZrodla,
+    };
     fetched += notices.length;
     noweTenders += nowe;
   }

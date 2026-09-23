@@ -174,7 +174,7 @@ async function pobierzZPonowieniem(url) {
  *   page — numeracja od 0 (przeliczana na PageNumber API od 1).
  * @returns {Promise<Array>} znormalizowane ogłoszenia
  */
-export async function searchNotices({ publishedFrom, publishedTo, page = 0, size = 50, province } = {}) {
+export async function searchNotices({ publishedFrom, publishedTo, page = 0, size = 50, province, licznik } = {}) {
   const to = publishedTo ?? dateOnly(Date.now());
   const from = publishedFrom
     ?? dateOnly(Date.now() - env.BZP_LOOKBACK_DAYS * 86_400_000);
@@ -198,6 +198,14 @@ export async function searchNotices({ publishedFrom, publishedTo, page = 0, size
   const data = await res.json();
   const surowe = extractList(data);
   const notices = surowe.map(normalizeNotice).filter(Boolean);
+
+  // Akumulator pomiarów okna (lib/licznikZrodla.js) — bez niego nie da się
+  // zrekonsyliować liczby w bazie z liczbą po stronie BZP.
+  if (licznik) {
+    licznik.zapytania += 1;
+    licznik.surowe += surowe.length;
+    licznik.odrzucone += surowe.length - notices.length;
+  }
 
   /*
    * Wczesne ostrzeżenie o zmianie schematu BZP. `normalizeNotice` jest wyrozumiały:
@@ -231,9 +239,9 @@ function oknoDoby(dzien) {
  * ogłoszenia, których API nie odda), docina ją po 16 województwach — to jedyny
  * filtr, który BZP honoruje, a `PageNumber` jest ignorowany, więc paginacja odpada.
  */
-async function pobierzDzien(dzien) {
+async function pobierzDzien(dzien, licznik) {
   const okno = oknoDoby(dzien);
-  const zDnia = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA });
+  const zDnia = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA, licznik });
   if (zDnia.length < SUFIT_ZAPYTANIA) return zDnia;
 
   logger.warn({ dzien, pobrane: zDnia.length },
@@ -246,7 +254,7 @@ async function pobierzDzien(dzien) {
   const wynik = new Map(zDnia.map((n) => [n.externalId, n]));
   for (const woj of WOJEWODZTWA_TERYT) {
     try {
-      const zWoj = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA, province: woj });
+      const zWoj = await searchNotices({ ...okno, size: SUFIT_ZAPYTANIA, province: woj, licznik });
       for (const n of zWoj) wynik.set(n.externalId, n);
       if (zWoj.length >= SUFIT_ZAPYTANIA) {
         // Pojedyncze województwo na sufitie = nie mamy już czym ciąć (BZP nie ma
@@ -269,10 +277,11 @@ async function pobierzDzien(dzien) {
  *
  * Awaria pojedynczego dnia nie przerywa całości — lepiej oddać 6 dni z 7 niż nic.
  *
- * @param {{from?: string, to?: string}} [opts] domyślnie ostatnie `BZP_LOOKBACK_DAYS` dni
+ * @param {{from?: string, to?: string, licznik?: object}} [opts] domyślnie ostatnie
+ *   `BZP_LOOKBACK_DAYS` dni; `licznik` to akumulator pomiarów (lib/licznikZrodla.js)
  * @returns {Promise<object[]>} znormalizowane ogłoszenia, zdeduplikowane po `externalId`
  */
-export async function pobierzOgloszeniaBzp({ from, to } = {}) {
+export async function pobierzOgloszeniaBzp({ from, to, licznik } = {}) {
   const doDnia = to ?? dateOnly(Date.now());
   const odDnia = from ?? dateOnly(Date.now() - env.BZP_LOOKBACK_DAYS * 86_400_000);
   const dni = dniWZakresie(odDnia, doDnia);
@@ -281,7 +290,7 @@ export async function pobierzOgloszeniaBzp({ from, to } = {}) {
   let bledneDni = 0;
   for (const dzien of dni) {
     try {
-      for (const n of await pobierzDzien(dzien)) wszystkie.set(n.externalId, n);
+      for (const n of await pobierzDzien(dzien, licznik)) wszystkie.set(n.externalId, n);
     } catch (err) {
       bledneDni++;
       logger.error({ err: err.message, dzien }, 'BZP: dzień pominięty — reszta okna leci dalej');

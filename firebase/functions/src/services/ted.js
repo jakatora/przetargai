@@ -95,6 +95,7 @@ export async function pobierzOgloszeniaTed({
   lookbackDays = env.TED_LOOKBACK_DAYS,
   rozmiarStrony = 250,
   maksStron = 10,
+  licznik,
 } = {}) {
   /*
    * `SORT BY publication-date DESC` — KLUCZOWE dla świeżości feedu.
@@ -127,6 +128,13 @@ export async function pobierzOgloszeniaTed({
     total = dane.totalNoticeCount ?? 0;
 
     const strona = (dane.notices ?? []).map(mapujOgloszenieTed).filter(Boolean);
+    // Akumulator pomiarów okna (lib/licznikZrodla.js) — do rekonsyliacji
+    // „ile TED opublikował" vs „ile weszło do bazy".
+    if (licznik) {
+      licznik.zapytania += 1;
+      licznik.surowe += (dane.notices ?? []).length;
+      licznik.odrzucone += (dane.notices ?? []).length - strona.length;
+    }
     zebrane.push(...strona);
     if ((dane.notices ?? []).length === 0) break; // pusta strona = koniec, nie pętla
   }
