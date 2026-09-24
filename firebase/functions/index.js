@@ -196,6 +196,54 @@ export const remindDeadlines = onSchedule(
 );
 
 /**
+ * MONITORING ZAPISANYCH WYSZUKIWAŃ (etap 5) — co 2 godziny.
+ *
+ * DLACZEGO CO 2 GODZINY, a nie rzadziej: obietnica produktu brzmi „zmiana terminu
+ * jest u Ciebie w ciągu 6 godzin". Budżet tej obietnicy dzieli się na dwa etapy,
+ * które składają się szeregowo:
+ *
+ *   wykrycie      — okna źródeł chodzą co 3 h (`bzpOknoFetch` :20, `bkOknoFetch` :50),
+ *                   więc zmiana jest w bazie najpóźniej ~3 h po publikacji,
+ *   powiadomienie — ten job, co 2 h.
+ *
+ * Najgorszy przypadek to 3 h + 2 h = 5 h, czyli godzina zapasu na opóźnienie
+ * harmonogramu i ponowienie. Przy przebiegu co 6 h najgorszy przypadek wynosiłby
+ * 9 h i obietnica byłaby nieprawdziwa.
+ *
+ * Minuta :35 rozdziela ten job od obu okien pobierania, żeby trzy zadania nie biły
+ * się o ten sam budżet instancji.
+ *
+ * Bez płatnego AI (strażnik w test/monitorWyszukiwan.test.js czyta źródło joba),
+ * więc częstotliwość nie przekłada się na koszt modelu. RESEND_API_KEY jest potrzebny
+ * do e-maili dla kont bez tokenu push; bez niego job działa w trybie degradacji.
+ */
+export const monitorWyszukiwan = onSchedule(
+  {
+    schedule: '35 */2 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET, RESEND_API_KEY],
+  },
+  async () => {
+    const { runMonitorWyszukiwan } = await import('./src/jobs/monitorWyszukiwan.js');
+    const wynik = await runMonitorWyszukiwan();
+
+    if (!wynik.ok) {
+      /*
+       * Rzucamy, żeby Cloud Scheduler odnotował NIEPOWODZENIE i ponowił przebieg.
+       * Ponowienie jest bezpieczne: alert ma deterministyczny klucz (docId), więc
+       * nie wyśle się drugi raz, a obserwacje obsłużone przed błędem mają już
+       * przesunięty checkpoint.
+       */
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'monitorWyszukiwan: część obserwacji padła', ...wynik }));
+      throw new Error(`monitorWyszukiwan: ${wynik.bledy} obserwacji zakończyło się błędem`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'monitorWyszukiwan zakończony', ...wynik }));
+  },
+);
+
+/**
  * Cotygodniowy przegląd e-mail (roadmap #10, D-057). Poniedziałek 8:00 czasu
  * polskiego — początek tygodnia, gdy firmy planują, w co startować. Wysyłamy tylko
  * do kont z ≥1 nowym dopasowaniem w minionym tygodniu (bez spamu). RESEND_API_KEY

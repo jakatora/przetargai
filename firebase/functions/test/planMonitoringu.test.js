@@ -206,3 +206,25 @@ test('okno odczytu zmian sięga do NAJSTARSZEGO sprawdzenia w partii, ale nie w 
   // Same pierwsze przebiegi — nie ma po co czytać historii w ogóle.
   assert.equal(oknoOdczytuZmian([{ ostatnio_sprawdzone_o: null }], '2026-09-24T12:00:00.000Z'), null);
 });
+
+test('pelna strona skanu daje „co najmniej N", a nie zmyslona dokladna liczbe', () => {
+  /*
+   * Przebieg oglada sufit ogloszen na jedno wyszukiwanie. Gdy strona wyjdzie pelna,
+   * znalezione N nie jest liczba nowosci na rynku — jest liczba, ktora zdazylismy
+   * policzyc. Podanie jej jako dokladnej byloby falszywym pomiarem rynku, dokladnie
+   * tym samym bledem, ktory katalog naprawil etykieta licznika.
+   */
+  const pozycje = Array.from({ length: 50 }, (_, i) => tender(`t${i}`));
+
+  const dokladny = zbudujAlertNowych({ wyszukiwanie: WYSZUKIWANIE, pozycje, conajmniej: false });
+  const przyciety = zbudujAlertNowych({ wyszukiwanie: WYSZUKIWANIE, pozycje, conajmniej: true });
+
+  assert.equal(dokladny.conajmniej, false);
+  assert.equal(przyciety.conajmniej, true);
+  assert.match(przyciety.tytul.pl, /co najmniej/i);
+  assert.match(przyciety.tresc.en, /at least/i);
+  assert.doesNotMatch(dokladny.tytul.pl, /co najmniej/i);
+
+  // Ta sama partia trafien = ten sam klucz, niezaleznie od tego, czy byla przycieta.
+  assert.equal(dokladny.klucz, przyciety.klucz);
+});

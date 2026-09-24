@@ -139,24 +139,39 @@ function skrot(t) {
   };
 }
 
-export function zbudujAlertNowych({ wyszukiwanie, pozycje }) {
+/**
+ * @param {{wyszukiwanie: object, pozycje: object[], conajmniej?: boolean}} we
+ *   `conajmniej` = przebieg wyczerpał sufit skanu, więc `pozycje` to tyle, ile
+ *   zdążyliśmy policzyć, a nie tyle, ile pojawiło się na rynku
+ */
+export function zbudujAlertNowych({ wyszukiwanie, pozycje, conajmniej = false }) {
   const ile = pozycje.length;
+  /*
+   * „Co najmniej N" zamiast „N" przy wyczerpanym sufircie skanu. Ta sama zasada, którą
+   * katalog stosuje w liczniku nad listą: liczba pobranych pozycji NIE jest liczbą
+   * przetargów na rynku, a udawanie, że jest, byłoby fałszywym pomiarem rynku.
+   */
+  const przedrostekPl = conajmniej ? 'co najmniej ' : '';
+  const przedrostekEn = conajmniej ? 'at least ' : '';
+
   return {
+    // Klucz liczymy z SAMYCH trafień — przycięcie skanu nie zmienia tożsamości partii.
     klucz: klucz('nowe', wyszukiwanie.id, pozycje.map((t) => t.id)),
     typ: 'nowe_trafienia',
     wyszukiwanie_id: wyszukiwanie.id,
     ton: 'neutral',
     tytul: {
-      pl: `${wyszukiwanie.nazwa}: ${ile} ${odmienPrzetargi(ile)}`,
-      en: `${wyszukiwanie.nazwa}: ${ile} new tender${ile === 1 ? '' : 's'}`,
+      pl: `${wyszukiwanie.nazwa}: ${przedrostekPl}${ile} ${odmienPrzetargi(ile)}`,
+      en: `${wyszukiwanie.nazwa}: ${przedrostekEn}${ile} new tender${ile === 1 ? '' : 's'}`,
     },
     tresc: {
-      pl: `W obserwowanym wyszukiwaniu pojawiło się ${ile} ${odmienPrzetargi(ile)}.`,
-      en: `${ile} new tender${ile === 1 ? '' : 's'} appeared in your saved search.`,
+      pl: `W obserwowanym wyszukiwaniu pojawiło się ${przedrostekPl}${ile} ${odmienPrzetargi(ile)}.`,
+      en: `${przedrostekEn}${ile} new tender${ile === 1 ? '' : 's'} appeared in your saved search.`,
     },
     // Wymieniamy kilka, ale LICZBA jest pełna — inaczej „5 nowych" przy dwunastu
     // byłoby fałszywym pomiarem rynku.
     liczba: ile,
+    conajmniej,
     pozycje: pozycje.slice(0, MAKS_TRAFIEN_W_ALERCIE).map(skrot),
   };
 }
