@@ -305,6 +305,14 @@ const POLA_PULI = [
   'title', 'organization', 'budget', 'currency', 'deadline', 'url', 'cpv_main',
   'source', 'wojewodztwo', 'wadium_wymagane', 'wadium_kwota', 'wadium_wiele_czesci',
   'kryterium_oceny', 'liczba_czesci',
+  /*
+   * Znacznik anulowania (etap 3, Baza Konkurencyjności). Odsiew robimy W PAMIĘCI,
+   * a nie zapytaniem `where('anulowany','!=',true)`: nierówność na innym polu niż
+   * `deadline` wymagałaby indeksu ZŁOŻONEGO, a jego brak wywrócił kiedyś całą pulę
+   * i razem z nią codzienny cron (patrz komentarz przy `openPool`). Anulowanych są
+   * jednostki, więc filtr po odczycie nic nie kosztuje.
+   */
+  'anulowany',
 ];
 
 /**
@@ -415,6 +423,67 @@ export const tenders = {
     }
   },
 
+  /**
+   * Aktualizuje ISTNIEJĄCE ogłoszenie danymi z kolejnej wersji w rejestrze źródłowym.
+   *
+   * `upsert` jest create-only i to jest świadome: ogłoszenie BZP po publikacji się
+   * nie zmienia. Baza Konkurencyjności działa INACZEJ — wydaje kolejne WERSJE tego
+   * samego ogłoszenia, a najczęstsza zmiana to PRZESUNIĘCIE TERMINU składania ofert
+   * (druga co do częstości: odpowiedzi na pytania doklejane do treści). Bez tej
+   * metody pokazywalibyśmy wykonawcy termin, który już nie obowiązuje — czyli
+   * dokładnie tę informację, po którą przyszedł.
+   *
+   * Cisza w nowej wersji NIE jest usunięciem: pola `null`/`undefined` zostawiają
+   * dotychczasową wartość. Inaczej oszczędniejsza kolejna wersja BK wyczyściłaby
+   * budżet i CPV, a z nimi całą zdolność heurystyki do dopasowania.
+   *
+   * @returns {Promise<{zmienione: boolean}>} `false`, gdy dokumentu nie ma
+   *   (to normalne: zmiana mogła dotyczyć ogłoszenia, którego jeszcze nie pobraliśmy)
+   */
+  async zaktualizujZeZrodla(t) {
+    const ref = db().collection('tenders').doc(tenderDocId(t.externalId));
+    const snap = await ref.get();
+    if (!snap.exists) return { zmienione: false };
+
+    const zmiany = { zaktualizowany_o: nowIso() };
+    const ustaw = (pole, wartosc) => {
+      if (wartosc !== undefined && wartosc !== null && wartosc !== '') zmiany[pole] = wartosc;
+    };
+    ustaw('title', t.title);
+    ustaw('organization', t.organization);
+    ustaw('cpv_main', t.cpvMain);
+    ustaw('budget', t.budget);
+    ustaw('currency', t.currency);
+    ustaw('deadline', t.deadline);
+    ustaw('url', t.url);
+    ustaw('published_at', t.publishedAt);
+    ustaw('wojewodztwo', t.wojewodztwo);
+    ustaw('rodzaj', t.rodzaj);
+    ustaw('liczba_czesci', t.liczba_czesci);
+    ustaw('numer', t.numer);
+
+    await ref.update(zmiany);
+    return { zmienione: true };
+  },
+
+  /**
+   * Znakuje ogłoszenie jako anulowane przez zamawiającego.
+   *
+   * NIE kasujemy dokumentu: ktoś mógł je zapisać do „Zapisanych", ma je w swoich
+   * dopasowaniach i w historii ocen. Usunięcie zabrałoby mu tę historię i zostawiło
+   * martwe odwołania. Zamiast tego wpis wypada z PULI dopasowań (`openPool`), więc
+   * przestaje kosztować płatne wywołania AI i przestaje wracać do feedu.
+   *
+   * @returns {Promise<boolean>} `false`, gdy ogłoszenia nie ma w bazie
+   */
+  async oznaczAnulowany(externalId, { powod = null } = {}) {
+    const ref = db().collection('tenders').doc(tenderDocId(externalId));
+    const snap = await ref.get();
+    if (!snap.exists) return false;
+    await ref.update({ anulowany: true, anulowany_o: nowIso(), anulowany_powod: powod });
+    return true;
+  },
+
   async findById(id) {
     return userSnap(await db().collection('tenders').doc(id).get());
   },
@@ -480,9 +549,14 @@ export const tenders = {
       stronicuj(col.where('deadline', '==', null).select(...POLA_PULI), limit, rozmiarStrony),
     ]);
 
-    const pula = [...zTerminem.docs, ...bezTerminu.docs].map(userSnap);
+    const wszystkie = [...zTerminem.docs, ...bezTerminu.docs].map(userSnap);
+    // Anulowane ogłoszenie ma wciąż otwarty termin, więc zapytanie je zwraca.
+    // Zostawienie go w puli kosztowałoby płatne wywołanie AI i wprowadzało
+    // użytkownika w błąd — postępowanie już nie istnieje.
+    const pula = wszystkie.filter((t) => t.anulowany !== true);
     statystykiOstatniejPuli = {
       pobrane: pula.length,
+      anulowane_odsiane: wszystkie.length - pula.length,
       zTerminem: zTerminem.docs.length,
       bezTerminu: bezTerminu.docs.length,
       zapytan: zTerminem.zapytan + bezTerminu.zapytan,
@@ -1177,6 +1251,42 @@ export const oknoBzp = {
    */
   async zapiszPrzebieg(wynik) {
     await OKNO_BZP_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
+/**
+ * Checkpoint okna Bazy Konkurencyjności (etap 3).
+ *
+ * Trzyma ODCISK każdego widzianego ogłoszenia (`{ odcisk, publication_date,
+ * pobrane_o }`), żeby kolejny przebieg pobierał SZCZEGÓŁY wyłącznie dla ogłoszeń
+ * nowych i zmienionych. Bez niego każdy przebieg ciągnąłby 1 135 szczegółów —
+ * ponad 1 100 zapytań po dane, które się nie ruszyły.
+ *
+ * Logika wyboru i przycinania jest CZYSTA i mieszka w jobs/oknoBk.js — tutaj
+ * wyłącznie odczyt i zapis.
+ */
+const OKNO_BK_REF = () => db().collection('_health').doc('bk_okno');
+
+export const oknoBk = {
+  async wczytaj() {
+    const doc = await OKNO_BK_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /**
+   * Zapis mapy ogłoszeń — `mergeFields` PODMIENIA wskazane pole w całości.
+   *
+   * 🚨 NIE WOLNO tu `{ merge: true }`: Firestore scala mapy GŁĘBOKO, więc ogłoszenia
+   * usunięte z okna zostawałyby w checkpoincie na zawsze, a dokument rósłby aż do
+   * limitu 1 MiB (ta sama pułapka co w `cykl.zapiszPrzebieg` i `oknoBzp.zapisz`).
+   */
+  async zapisz(stan) {
+    await OKNO_BK_REF().set({ ogloszenia: stan.ogloszenia ?? {} }, { mergeFields: ['ogloszenia'] });
+  },
+
+  /** Ślad ostatniego przebiegu — osobne pole, nie dotyka mapy ogłoszeń. */
+  async zapiszPrzebieg(wynik) {
+    await OKNO_BK_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
   },
 };
 
