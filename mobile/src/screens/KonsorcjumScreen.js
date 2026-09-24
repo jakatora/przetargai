@@ -63,7 +63,7 @@ export default function KonsorcjumScreen({ route }) {
           <View key={w.id} style={[styles.card, blad && { borderColor: kolory.danger, borderWidth: 2 }]}>
             <View style={styles.glowa}>
               <Text style={styles.numer}>Warunek {i + 1}</Text>
-              <Pressable onPress={() => usun(w.id)} hitSlop={8} accessibilityLabel="Usuń warunek">
+              <Pressable accessibilityRole="button" onPress={() => usun(w.id)} hitSlop={8} accessibilityLabel="Usuń warunek">
                 <Text style={styles.usun}>Usuń</Text>
               </Pressable>
             </View>

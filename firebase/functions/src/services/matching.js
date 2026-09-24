@@ -234,7 +234,14 @@ const BUDŻET_CZASU_CYKLU_MS = 440_000;
 export async function generateMatchesForAllUsers({ budzetCzasuMs = BUDŻET_CZASU_CYKLU_MS } = {}) {
   const start = Date.now();
   // Cron liczy na ŚWIEŻEJ puli — cache w pamięci instancji pomijamy jawnie.
-  const pool = await tenders.openPool(2000, { swiezaKopia: true });
+  const pool = await tenders.openPool({ swiezaKopia: true });
+  const statyPuli = tenders.statystykiPuli();
+  if (statyPuli.osiagnietoSufit) {
+    logger.warn(statyPuli,
+      'Pula dopasowań dobiła do sufitu PULA_MAKS — część otwartych przetargów NIE weszła do cyklu');
+  } else {
+    logger.info(statyPuli, 'Pula dopasowań pobrana w całości');
+  }
   const wszyscy = await users.all();
 
   // Najpierw ci, którzy najdłużej czekali (brak znacznika = nigdy nie obsłużeni).

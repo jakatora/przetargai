@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
+import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { KATALOG_NARZEDZI } from '../lib/narzedziaKatalog';
 
@@ -27,12 +28,25 @@ export default function NarzedziaScreen({ navigation }) {
       .filter((k) => k.narzedzia.length),
     [szukaj],
   );
+  /*
+   * Tłumaczymy CHROME ekranu, a nie katalog narzędzi — i to jest decyzja, nie
+   * zaniechanie. Te narzędzia generują polskie pisma z Pzp (wezwania, odwołania,
+   * zastrzeżenia tajemnicy). Angielska etykieta nad generatorem, który wypluwa
+   * polski dokument prawny, wprowadzałaby w błąd mocniej, niż pomaga.
+   */
+  const { t } = useJezyk();
+
 
   const liczba = KATALOG_NARZEDZI.reduce((s, k) => s + k.narzedzia.length, 0);
 
   return (
     <Screen scroll>
-      <Text style={styles.wstep}>{liczba} narzędzi do prowadzenia przetargów — od decyzji „startować?" po odzyskanie zapłaty.</Text>
+      <Text style={styles.wstep}>
+        {t(
+          `${liczba} narzędzi do prowadzenia przetargów — od decyzji „startować?" po odzyskanie zapłaty.`,
+          `${liczba} tools for running tenders — from „should I bid?" to getting paid. The tools themselves work in Polish.`,
+        )}
+      </Text>
 
       <View style={styles.szukajRzad}>
         <Text style={styles.szukajIkona}>🔍</Text>
@@ -40,20 +54,20 @@ export default function NarzedziaScreen({ navigation }) {
           style={styles.szukajPole}
           value={szukaj}
           onChangeText={setSzukaj}
-          placeholder="Szukaj narzędzia (np. wadium, termin, cena)"
+          placeholder={t('Szukaj narzędzia (np. wadium, termin, cena)', 'Search tools (e.g. bid bond, deadline, price)')}
           placeholderTextColor={kolory.textMuted}
           autoCorrect={false}
-          accessibilityLabel="Szukaj narzędzia"
+          accessibilityLabel={t('Szukaj narzędzia', 'Search tools')}
         />
         {szukaj ? (
-          <Pressable onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel="Wyczyść">
+          <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel={t('Wyczyść', 'Clear')}>
             <Text style={styles.szukajX}>✕</Text>
           </Pressable>
         ) : null}
       </View>
 
       {kategorie.length === 0 ? (
-        <Text style={styles.pusto}>Brak narzędzia dla „{szukaj}". Zmień frazę.</Text>
+        <Text style={styles.pusto}>{t(`Brak narzędzia dla „${szukaj}". Zmień frazę.`, `No tool matches „${szukaj}". Try another phrase.`)}</Text>
       ) : (
         kategorie.map((k) => (
           <View key={k.kategoria} style={styles.kategoria}>

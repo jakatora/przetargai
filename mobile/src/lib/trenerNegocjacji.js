@@ -309,3 +309,23 @@ export function porownajOfertaDodatkowa(we = {}) {
       : 'Oferta dodatkowa nie jest gorsza w żadnym kryterium — można ją wysłać.',
   });
 }
+
+// ─────────────────────────── (f) wejście z ekranu ─────────────────────────────
+
+/**
+ * Liczba z pola tekstowego w polskim zapisie: „1 050 000,50 zł" → 1050000.5,
+ * „36 mies." → 36. Spacje (też twarde) to separatory tysięcy, przecinek to
+ * separator dziesiętny. Pusty/nieliczbowy tekst → null (pole nieporównywalne).
+ *
+ * 🚨 Bez tego `Number("1 050 000,50")` daje NaN, porównanie POMIJA pole jako
+ * nieporównywalne — i gorsza cena przechodzi bez blokady.
+ */
+export function normalizujLiczbe(tekst) {
+  if (tekst === null || tekst === undefined) return null;
+  if (typeof tekst === 'number') return Number.isFinite(tekst) ? tekst : null;
+  const s = String(tekst).replace(/[\s ]/g, '').replace(',', '.');
+  const m = /-?\d+(?:\.\d+)?/.exec(s);
+  if (!m) return null;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : null;
+}

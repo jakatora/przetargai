@@ -1,6 +1,12 @@
 import { getFirestore, FieldValue, FieldPath } from 'firebase-admin/firestore';
+import { env } from '../config.js';
 import { newId, nowIso, startOfTodayIso } from '../lib/ids.js';
 import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
+import {
+  planZapytania, pasujeDoFiltrow, rozmiarPobrania, SKAN_STRONA, SKAN_MAKS,
+} from '../lib/katalogPrzetargow.js';
+import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
+import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
 /*
  * Warstwa dostępu do danych — Firestore (port z node:sqlite, D-024).
@@ -105,14 +111,36 @@ export const users = {
     return q.docs.map(userSnap);
   },
 
-  async updateProfile(id, { companyName, keywords, cpvCodes }) {
+  /**
+   * Zapisuje profil firmy.
+   *
+   * `regiony` i `wartoscMax` NIE wchodzą do scoringu (silnik dopasowań liczy
+   * wyłącznie słowa i CPV) — służą wyjaśnieniu dopasowania i podpowiedzi przy
+   * pustym feedzie. Trzymamy je mimo to przy profilu, bo to deklaracja firmy,
+   * a nie ustawienie widoku.
+   */
+  async updateProfile(id, { companyName, keywords, cpvCodes, regiony, wartoscMax }) {
     await db().collection('users').doc(id).update({
       company_name: companyName ?? null,
       keywords,
       cpv_codes: cpvCodes,
+      regiony: regiony ?? [],
+      // `null` jest tu WARTOŚCIĄ („nie deklaruję"), nie brakiem pola — dlatego ?? null.
+      wartosc_max: wartoscMax ?? null,
       updated_at: nowIso(),
     });
     return this.findById(id);
+  },
+
+  /**
+   * Zapamiętuje identyfikator konta pomostowego na Railway (P0-4, most).
+   * Bez tego most zakładałby nowe konto przy każdym żądaniu.
+   */
+  async ustawMostRailway(id, idRailway) {
+    await db().collection('users').doc(id).update({
+      most_railway_user_id: idRailway,
+      updated_at: nowIso(),
+    });
   },
 
   async setPushToken(id, token) {
@@ -260,6 +288,15 @@ const MAKS_RAW_DATA_BAJTOW = 700 * 1024;
 const CACHE_PULI_TTL_MS = 10 * 60_000;
 let cachePuli = null; // { limit, wygasa, pula }
 
+/**
+ * Cache licznika otwartych przetargów dla `/health`.
+ *
+ * Monitoring zewnętrzny puka co kilka minut; bez cache każde pukniecie płaciłoby
+ * za zapytanie agregujące po całej kolekcji `tenders`.
+ */
+const CACHE_OTWARTYCH_TTL_MS = 5 * 60_000;
+let cacheOtwartych = null; // { ile, wygasa }
+
 function pulaZCache(limit) {
   if (!cachePuli || cachePuli.limit !== limit || Date.now() > cachePuli.wygasa) return null;
   return cachePuli.pula;
@@ -267,6 +304,94 @@ function pulaZCache(limit) {
 
 function zapiszPuleWCache(limit, pula) {
   cachePuli = { limit, pula, wygasa: Date.now() + CACHE_PULI_TTL_MS };
+}
+
+/**
+ * Pola, których potrzebuje silnik dopasowań — i TYLKO one.
+ *
+ * Suma trzech odbiorców: heurystyki (`title`, `cpv_main`), promptu AI
+ * (+ `organization`, `budget`, `currency`) i denormalizacji feedu w `matches.create`.
+ *
+ * Bez projekcji pula wciąga CAŁE dokumenty, w tym `raw_data` przycinane dopiero
+ * przy 700 KB. Przy dawnym sufircie 2000 nikt tego nie policzył; przy pełnym rynku
+ * (7249 i rosnąco) surowe odpowiedzi BZP w pamięci to OOM w środku cyklu, który
+ * ma 512 MiB. Odczyt Firestore kosztuje tyle samo — oszczędzamy pamięć i transfer.
+ */
+const POLA_PULI = [
+  'title', 'organization', 'budget', 'currency', 'deadline', 'url', 'cpv_main',
+  'source', 'wojewodztwo', 'wadium_wymagane', 'wadium_kwota', 'wadium_wiele_czesci',
+  'kryterium_oceny', 'liczba_czesci',
+  /*
+   * Znacznik anulowania (etap 3, Baza Konkurencyjności). Odsiew robimy W PAMIĘCI,
+   * a nie zapytaniem `where('anulowany','!=',true)`: nierówność na innym polu niż
+   * `deadline` wymagałaby indeksu ZŁOŻONEGO, a jego brak wywrócił kiedyś całą pulę
+   * i razem z nią codzienny cron (patrz komentarz przy `openPool`). Anulowanych są
+   * jednostki, więc filtr po odczycie nic nie kosztuje.
+   */
+  'anulowany',
+];
+
+/**
+ * Pola czytane przez katalog „Wszystkie przetargi". Szersze niż POLA_PULI, bo
+ * karta katalogu pokazuje źródło pierwotne, link do oryginału i datę publikacji —
+ * czyli dokładnie to, czego silnik dopasowań nie potrzebuje. Poza projekcją
+ * zostaje `raw_data` (bywa setkami kilobajtów) i `ai_summary`.
+ */
+const POLA_KATALOGU = [
+  ...POLA_PULI,
+  'published_at', 'fetched_at', 'numer', 'zrodla_alternatywne', 'zaktualizowany_o',
+];
+
+/**
+ * Statystyki ostatniego POBRANIA puli (nie odczytu z cache).
+ *
+ * Bez nich sufit puli był niewidoczny: audyt 2026-09-23 musiał go wyliczyć
+ * z zewnątrz, zestawiając `otwarte_przetargi` z zaszytą stałą w kodzie.
+ */
+let statystykiOstatniejPuli = { stan: 'brak_pobrania' };
+
+/**
+ * Czyta zapytanie STRONAMI, aż wyczerpie wyniki albo dobije do sufitu.
+ *
+ * Firestore nie ma „daj wszystko" — jest kursor. Jedno `limit(n)` ucinało pulę
+ * po n najbliższych terminach, więc reszta rynku była niewidoczna (P0-5).
+ */
+async function stronicuj(zapytanie, sufit, rozmiarStrony) {
+  const docs = [];
+  let kursor = null;
+  let zapytan = 0;
+
+  while (docs.length < sufit) {
+    const ile = Math.min(rozmiarStrony, sufit - docs.length);
+    const strona = kursor ? zapytanie.startAfter(kursor) : zapytanie;
+    const snap = await strona.limit(ile).get();
+    zapytan += 1;
+    docs.push(...snap.docs);
+    // Krótsza strona niż zamówiona = koniec wyników; kolejne zapytanie byłoby puste.
+    if (snap.docs.length < ile) break;
+    kursor = snap.docs[snap.docs.length - 1];
+  }
+
+  return { docs, zapytan, osiagnietoSufit: docs.length >= sufit };
+}
+
+/**
+ * Dopisuje wykryte zmiany do historii ogłoszenia — NAJWYŻEJ best-effort.
+ *
+ * Nieudany zapis historii NIE MOŻE wywrócić aktualizacji ogłoszenia: świeży termin
+ * w bazie jest ważniejszy od wpisu w dzienniku zmian, a okno pobierania i tak
+ * zobaczy to ogłoszenie ponownie. Zapis jest idempotentny (docId = klucz przejścia),
+ * więc powtórka niczego nie zdubluje.
+ */
+async function zapiszHistorieBezpiecznie(tenderId, zmiany) {
+  if (!zmiany?.length) return;
+  try {
+    await historiaZmian.zapisz(tenderId, zmiany);
+  } catch (err) {
+    console.error(JSON.stringify({
+      severity: 'ERROR', message: 'Nie udało się zapisać historii zmian ogłoszenia', tenderId, err: err.message,
+    }));
+  }
 }
 
 export const tenders = {
@@ -306,6 +431,25 @@ export const tenders = {
       // Wymiary do statystyk wyników (R17).
       rodzaj: t.rodzaj ?? null,
       wojewodztwo: t.wojewodztwo ?? null,
+      /*
+       * Linki do TEGO SAMEGO postępowania w innych rejestrach (etap 3). Zamawiający
+       * współfinansowany z UE ogłasza je i w BZP, i w Bazie Konkurencyjności, a ofertę
+       * składa się tam, gdzie wskazuje ogłoszenie — wykonawca musi widzieć oba adresy.
+       * Scalanie robi lib/dedupZrodel.js jeszcze przed zapisem, więc drugi dokument
+       * w ogóle nie powstaje.
+       */
+      zrodla_alternatywne: t.zrodla_alternatywne ?? null,
+      // Numer sprawy w rejestrze źródłowym (BK: „2026-4203-292028").
+      numer: t.numer ?? null,
+      /*
+       * Identyfikator POSTĘPOWANIA — klucz złączenia z ogłoszeniem o WYNIKU (etap 6).
+       * BZP: `tenderId` (ocds-…). TED: `procedure-identifier` (BT-04).
+       * Ogłoszenie o wyniku ma INNY numer publikacji niż ogłoszenie o zamówieniu,
+       * więc bez tego pola rozstrzygnięcie nie ma po czym trafić do przetargu.
+       */
+      postepowanie_id: t.postepowanie_id ?? null,
+      // NIP zamawiającego — klucz benchmarku per zamawiający (etap 6).
+      zamawiajacy_nip: t.zamawiajacy_nip ? String(t.zamawiajacy_nip) : null,
       raw_data: raw,
       published_at: t.publishedAt ?? null,
       fetched_at: nowIso(),
@@ -324,6 +468,30 @@ export const tenders = {
          * Backfill robimy TYLKO gdy pole nigdy nie było zapisane (undefined), więc to
          * jednorazowy zapis na stary dokument, nie codzienna nadpiska.
          */
+        /*
+         * Powiązanie z drugim rejestrem bywa znane DOPIERO później: BZP publikuje
+         * ogłoszenie w poniedziałek, BK to samo w środę. Gdyby zostało przy
+         * create-only, link do rejestru pobocznego nie pojawiłby się nigdy.
+         * Dopisujemy go raz — gdy dokument jeszcze go nie ma.
+         */
+        if (t.zrodla_alternatywne && !dane.zrodla_alternatywne) {
+          await ref.update({ zrodla_alternatywne: t.zrodla_alternatywne });
+          return { tender: { id, ...dane, zrodla_alternatywne: t.zrodla_alternatywne }, created: false };
+        }
+        /*
+         * Przetargi zapisane PRZED etapem 6 nie mają identyfikatora postępowania,
+         * a dzienne pobieranie re-ściąga ostatnie dni — dopisujemy go raz, gdy
+         * dokument jeszcze go nie ma. Bez tego rozstrzygnięcia tych postępowań
+         * nigdy by się z nimi nie spięły.
+         */
+        if ((t.postepowanie_id && !dane.postepowanie_id)
+            || (t.zamawiajacy_nip && !dane.zamawiajacy_nip)) {
+          const klucze = {};
+          if (t.postepowanie_id && !dane.postepowanie_id) klucze.postepowanie_id = t.postepowanie_id;
+          if (t.zamawiajacy_nip && !dane.zamawiajacy_nip) klucze.zamawiajacy_nip = String(t.zamawiajacy_nip);
+          await ref.update(klucze);
+          return { tender: { id, ...dane, ...klucze }, created: false };
+        }
         if (dane.wadium_wymagane === undefined && dane.kryterium_oceny === undefined
             && dane.liczba_czesci === undefined) {
           const meta = {
@@ -344,8 +512,123 @@ export const tenders = {
     }
   },
 
+  /**
+   * Aktualizuje ISTNIEJĄCE ogłoszenie danymi z kolejnej wersji w rejestrze źródłowym.
+   *
+   * `upsert` jest create-only i to jest świadome: ogłoszenie BZP po publikacji się
+   * nie zmienia. Baza Konkurencyjności działa INACZEJ — wydaje kolejne WERSJE tego
+   * samego ogłoszenia, a najczęstsza zmiana to PRZESUNIĘCIE TERMINU składania ofert
+   * (druga co do częstości: odpowiedzi na pytania doklejane do treści). Bez tej
+   * metody pokazywalibyśmy wykonawcy termin, który już nie obowiązuje — czyli
+   * dokładnie tę informację, po którą przyszedł.
+   *
+   * Cisza w nowej wersji NIE jest usunięciem: pola `null`/`undefined` zostawiają
+   * dotychczasową wartość. Inaczej oszczędniejsza kolejna wersja BK wyczyściłaby
+   * budżet i CPV, a z nimi całą zdolność heurystyki do dopasowania.
+   *
+   * @returns {Promise<{zmienione: boolean}>} `false`, gdy dokumentu nie ma
+   *   (to normalne: zmiana mogła dotyczyć ogłoszenia, którego jeszcze nie pobraliśmy)
+   */
+  async zaktualizujZeZrodla(t) {
+    const id = tenderDocId(t.externalId);
+    const ref = db().collection('tenders').doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) return { zmienione: false, zmiany: [] };
+
+    const przed = snap.data();
+
+    const pola = { zaktualizowany_o: nowIso() };
+    const ustaw = (pole, wartosc) => {
+      if (wartosc !== undefined && wartosc !== null && wartosc !== '') pola[pole] = wartosc;
+    };
+    ustaw('title', t.title);
+    ustaw('organization', t.organization);
+    ustaw('cpv_main', t.cpvMain);
+    ustaw('budget', t.budget);
+    ustaw('currency', t.currency);
+    ustaw('deadline', t.deadline);
+    ustaw('url', t.url);
+    ustaw('published_at', t.publishedAt);
+    ustaw('wojewodztwo', t.wojewodztwo);
+    ustaw('rodzaj', t.rodzaj);
+    ustaw('liczba_czesci', t.liczba_czesci);
+    ustaw('numer', t.numer);
+    /*
+     * Sygnały ZMIANY, nie dane ogłoszenia (etap 5):
+     *  • `zrodlo_odcisk` — odcisk pozycji z listy rejestru (termin + tytuł + treść).
+     *    Jego zmiana znaczy „zamawiający ruszył treść", co w Bazie Konkurencyjności
+     *    najczęściej oznacza doklejone odpowiedzi na pytania albo nowy załącznik.
+     *  • `status_zrodla` — etykieta statusu w rejestrze źródłowym.
+     *  • `umowa_zmieniona_o` — odnotowana przez rejestr zmiana umowy (o ile ją podaje).
+     */
+    ustaw('zrodlo_odcisk', t.zrodlo_odcisk);
+    ustaw('status_zrodla', t.status_zrodla);
+    ustaw('umowa_zmieniona_o', t.umowa_zmieniona_o);
+    ustaw('umowa_zmiana_opis', t.umowa_zmiana_opis);
+
+    /*
+     * Porównujemy stan PRZED z tym, co realnie zapiszemy — nie z surowym wejściem.
+     * Różnica jest istotna: `ustaw` pomija pola puste (cisza rejestru nie kasuje
+     * danych), więc porównanie z wejściem widziałoby „budżet zniknął" przy każdej
+     * oszczędniejszej wersji ogłoszenia i zalewało historię fałszywymi zmianami.
+     */
+    const zmiany = wykryjZmiany(przed, { ...przed, ...pola });
+
+    await ref.update(pola);
+    await zapiszHistorieBezpiecznie(id, zmiany);
+
+    return { zmienione: true, zmiany };
+  },
+
+  /**
+   * Znakuje ogłoszenie jako anulowane przez zamawiającego.
+   *
+   * NIE kasujemy dokumentu: ktoś mógł je zapisać do „Zapisanych", ma je w swoich
+   * dopasowaniach i w historii ocen. Usunięcie zabrałoby mu tę historię i zostawiło
+   * martwe odwołania. Zamiast tego wpis wypada z PULI dopasowań (`openPool`), więc
+   * przestaje kosztować płatne wywołania AI i przestaje wracać do feedu.
+   *
+   * @returns {Promise<boolean>} `false`, gdy ogłoszenia nie ma w bazie
+   */
+  async oznaczAnulowany(externalId, { powod = null } = {}) {
+    const id = tenderDocId(externalId);
+    const ref = db().collection('tenders').doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) return false;
+
+    const przed = snap.data();
+    const pola = { anulowany: true, anulowany_o: nowIso(), anulowany_powod: powod };
+
+    /*
+     * Anulowanie bywa potwierdzane w kolejnych przebiegach (ogłoszenie znika z listy,
+     * weryfikacja szczegółem powtarza się). Porównanie stanów daje pustą listę przy
+     * powtórce, więc historia dostaje JEDEN wpis — ten z chwili pierwszego wykrycia.
+     */
+    const zmiany = wykryjZmiany(przed, { ...przed, ...pola });
+
+    await ref.update(pola);
+    await zapiszHistorieBezpiecznie(id, zmiany);
+    return true;
+  },
+
   async findById(id) {
     return userSnap(await db().collection('tenders').doc(id).get());
+  },
+
+  /**
+   * Ogłoszenia jednego zamawiającego (po NIP-ie) — Radar planów sprawdza, czy plan
+   * zamienił się już w przetarg. Samo porównanie równościowe, BEZ orderBy: mieści
+   * się w indeksie automatycznym (sortowanie po stronie wołającego — kandydatów
+   * jednego zamawiającego jest kilkadziesiąt, nie tysiące).
+   */
+  async poNipieZamawiajacego(nip, { limit = 50 } = {}) {
+    if (!nip) return [];
+    const snap = await db().collection('tenders')
+      .where('zamawiajacy_nip', '==', String(nip))
+      .select('title', 'cpv_main', 'budget', 'published_at', 'deadline', 'url', 'source')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
   /**
@@ -390,7 +673,7 @@ export const tenders = {
    *    Firestore nie egzekwuje indeksów złożonych — testy tego nie wykrywały.**
    *    Kolejność w tej gałęzi i tak nie ma znaczenia: pulę rankuje heurystyka.
    */
-  async openPool(limit = 2000, { swiezaKopia = false } = {}) {
+  async openPool({ swiezaKopia = false, limit = env.PULA_MAKS, rozmiarStrony = env.PULA_ROZMIAR_STRONY } = {}) {
     if (!swiezaKopia) {
       const zCache = pulaZCache(limit);
       if (zCache) return zCache;
@@ -398,17 +681,162 @@ export const tenders = {
 
     const col = db().collection('tenders');
     const [zTerminem, bezTerminu] = await Promise.all([
-      col.where('deadline', '>', nowIso()).orderBy('deadline').limit(limit).get(),
-      col.where('deadline', '==', null).limit(limit).get(),
+      stronicuj(col.where('deadline', '>', nowIso()).orderBy('deadline').select(...POLA_PULI), limit, rozmiarStrony),
+      /*
+       * Gałąź bez terminu zostaje BEZ `orderBy` — jawne sortowanie po innym polu
+       * wymagałoby indeksu złożonego, którego brak wywrócił kiedyś cały silnik
+       * (patrz komentarz niżej i test/indeksyFirestore.test.js). Kursor działa
+       * i tak: `startAfter(snapshot)` korzysta z domyślnego porządku po nazwie
+       * dokumentu, który Firestore stosuje przy samej równości.
+       */
+      stronicuj(col.where('deadline', '==', null).select(...POLA_PULI), limit, rozmiarStrony),
     ]);
-    const pula = [...zTerminem.docs, ...bezTerminu.docs].map(userSnap);
+
+    const wszystkie = [...zTerminem.docs, ...bezTerminu.docs].map(userSnap);
+    // Anulowane ogłoszenie ma wciąż otwarty termin, więc zapytanie je zwraca.
+    // Zostawienie go w puli kosztowałoby płatne wywołanie AI i wprowadzało
+    // użytkownika w błąd — postępowanie już nie istnieje.
+    const pula = wszystkie.filter((t) => t.anulowany !== true);
+    statystykiOstatniejPuli = {
+      pobrane: pula.length,
+      anulowane_odsiane: wszystkie.length - pula.length,
+      zTerminem: zTerminem.docs.length,
+      bezTerminu: bezTerminu.docs.length,
+      zapytan: zTerminem.zapytan + bezTerminu.zapytan,
+      sufit: limit,
+      osiagnietoSufit: zTerminem.osiagnietoSufit || bezTerminu.osiagnietoSufit,
+      pobrane_o: nowIso(),
+    };
     zapiszPuleWCache(limit, pula);
     return pula;
+  },
+
+  /**
+   * Jak wyglądało ostatnie pobranie puli — dla `/health` i logu cyklu.
+   * `osiagnietoSufit: true` znaczy, że część rynku mogła nie wejść do dopasowań.
+   */
+  statystykiPuli() {
+    return { ...statystykiOstatniejPuli };
   },
 
   /** Unieważnia cache — woła cron po pobraniu nowych ogłoszeń z BZP. */
   odswiezPule() {
     cachePuli = null;
+    cacheOtwartych = null;
+  },
+
+  /**
+   * Ile przetargów ma JESZCZE otwarty termin składania.
+   *
+   * To mianownik wszystkich pomiarów kompletności: bez niego nie da się
+   * odpowiedzieć, czy pula dopasowań (`openPool`) obejmuje cały rynek, czy
+   * tylko ogon przy samym terminie (audyt 2026-09-23 §3.4 — hipoteza, której
+   * nie dało się zweryfikować bez tej liczby).
+   *
+   * Zapytanie agregujące (`count()`) nie czyta dokumentów, ale nie jest darmowe,
+   * a `/health` odpytuje monitoring co kilka minut — stąd krótki cache w pamięci
+   * instancji, unieważniany razem z pulą po każdym cyklu.
+   */
+  async policzOtwarte() {
+    if (cacheOtwartych && Date.now() < cacheOtwartych.wygasa) return cacheOtwartych.ile;
+    const agg = await db().collection('tenders').where('deadline', '>', nowIso()).count().get();
+    const ile = agg.data().count;
+    cacheOtwartych = { ile, wygasa: Date.now() + CACHE_OTWARTYCH_TTL_MS };
+    return ile;
+  },
+
+  /**
+   * Katalog „Wszystkie przetargi" (P1-1) — strona rynku, NIE feed użytkownika.
+   *
+   * Świadomie nie dotyka ani profilu, ani `matches`, ani `openPool`: pula ma
+   * sufit i cache, bo służy silnikowi dopasowań, a katalog ma pokazać wszystko.
+   *
+   * Dlaczego skan, a nie samo `limit(n)`: większość filtrów (region, CPV, tekst,
+   * kwota) nie da się spytać Firestore'a — `wojewodztwo` trzymamy w formacie
+   * źródła („PL12" vs „małopolskie"), a `cpv_main` to sklejony łańcuch kodów.
+   * Czytamy więc porcjami w porządku zapytania i odsiewamy w pamięci, aż strona
+   * się zapełni albo skończą się dane, albo dobijemy do sufitu odczytów.
+   *
+   * Sufit NIE gubi rekordów: kursor wskazuje pozycję w porządku Firestore, więc
+   * kolejne żądanie rusza dokładnie tam, gdzie poprzednie stanęło. Odpowiedź
+   * mówi wprost (`wyczerpano`), czy to już koniec listy, czy tylko koniec budżetu.
+   */
+  async katalog({
+    filtry,
+    teraz = nowIso(),
+    kursor = null,
+    rozmiarStrony = SKAN_STRONA,
+    skanMaks = SKAN_MAKS,
+  }) {
+    const plan = planZapytania(filtry, teraz);
+
+    let zapytanie = db().collection('tenders');
+    for (const [pole, wartosc] of plan.rowne) zapytanie = zapytanie.where(pole, '==', wartosc);
+    for (const [pole, op, wartosc] of plan.zakres) zapytanie = zapytanie.where(pole, op, wartosc);
+    /*
+     * Jawny `orderBy` po identyfikatorze dokumentu jest tu rozstrzygaczem remisów.
+     * Bez niego dwa ogłoszenia z tym samym `fetched_at` (a pobieranie zapisuje
+     * setki naraz) mogłyby się przy stronicowaniu powtórzyć albo zniknąć.
+     * Kierunek musi być ten sam co pola sortowania — inaczej indeks nie pasuje.
+     */
+    zapytanie = zapytanie
+      .orderBy(plan.sort.pole, plan.sort.kierunek)
+      .orderBy(FieldPath.documentId(), plan.sort.kierunek)
+      .select(...POLA_KATALOGU);
+
+    const wiersze = [];
+    let ostatni = kursor;
+    let przeskanowano = 0;
+    let zapytan = 0;
+    let wyczerpano = false;
+
+    while (wiersze.length < filtry.limit && przeskanowano < skanMaks) {
+      // Porcja rośnie dopiero wtedy, gdy filtr okazuje się rzadki — żądanie
+      // o trzy pozycje nie ma prawa kosztować pełnej strony odczytów.
+      const ile = Math.min(
+        rozmiarPobrania({
+          potrzeba: filtry.limit - wiersze.length,
+          przeskanowano,
+          znalezione: wiersze.length,
+          maks: rozmiarStrony,
+        }),
+        skanMaks - przeskanowano,
+      );
+      const strona = ostatni ? zapytanie.startAfter(ostatni.wartosc, ostatni.id) : zapytanie;
+      const snap = await strona.limit(ile).get();
+      zapytan += 1;
+      przeskanowano += snap.docs.length;
+
+      let obejrzane = 0;
+      for (const doc of snap.docs) {
+        obejrzane += 1;
+        const t = { id: doc.id, ...doc.data() };
+        // Kursor przesuwamy na KAŻDYM obejrzanym dokumencie, także odrzuconym —
+        // inaczej kolejna strona zaczynałaby od nowa na tym samym odsianym ogonie.
+        ostatni = { wartosc: t[plan.sort.pole] ?? null, id: doc.id };
+        if (pasujeDoFiltrow(t, filtry, teraz)) {
+          wiersze.push(t);
+          if (wiersze.length >= filtry.limit) break;
+        }
+      }
+
+      /*
+       * „Krótsza strona niż zamówiona" znaczy koniec danych WYŁĄCZNIE wtedy, gdy
+       * obejrzeliśmy ją w całości. Przerwanie w połowie (bo strona wyników się
+       * zapełniła) zostawia w tej samej porcji dokumenty jeszcze nieobejrzane —
+       * ogłoszenie bez kursora byłoby wtedy nieosiągalne, choć leży tuż obok.
+       */
+      if (obejrzane === snap.docs.length && snap.docs.length < ile) { wyczerpano = true; break; }
+      if (wiersze.length >= filtry.limit) break;
+    }
+
+    return {
+      wiersze,
+      ostatni: wyczerpano ? null : ostatni,
+      przeskanowano,
+      zapytan,
+      wyczerpano,
+    };
   },
 
   async count() {
@@ -944,6 +1372,214 @@ export const wynikiStats = {
   },
 };
 
+// ============================ rozstrzygnięcia (etap 6) ============================
+
+/*
+ * Rozstrzygnięcia postępowań — surowe, per część, z OBU rejestrów.
+ *
+ * Czym się różni od `wyniki_stats`: tamto trzyma gotowy AGREGAT (mediana ceny
+ * w kubełku dział|rodzaj|województwo) i nie pamięta, z czego powstał. Do
+ * benchmarku „u TEGO zamawiającego" i do karty „czy warto startować" potrzebne
+ * są pojedyncze rozstrzygnięcia: kto wygrał, ile firm startowało, czy część
+ * unieważniono. Agregat liczy się Z TEJ kolekcji, a nie z ponownego pobierania
+ * rejestru — 30-dniowe okno BZP to ~390 s samego ruchu sieciowego.
+ *
+ * Idempotencja: docId = identyfikator ogłoszenia o wyniku, więc ponowne
+ * pobranie tej samej doby niczego nie duplikuje.
+ */
+export const rozstrzygniecia = {
+  /**
+   * Zapisuje partię rozstrzygnięć. Nadpisuje istniejące — rejestr potrafi
+   * skorygować ogłoszenie, a my chcemy stan aktualny, nie pierwszy widziany.
+   * @returns {{zapisane: number, czesci: number}}
+   */
+  async zapiszWiele(lista) {
+    const wpisy = (lista ?? []).filter((w) => w?.externalId);
+    let czesci = 0;
+    // Batch po 400 (limit 500 operacji, zapas na bezpieczeństwo).
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const wynik of wpisy.slice(i, i + 400)) {
+        czesci += (wynik.czesci ?? []).length;
+        batch.set(db().collection('rozstrzygniecia').doc(tenderDocId(wynik.externalId)), {
+          ...wynik,
+          // Denormalizacja pod zapytania: te pola filtrują benchmark.
+          postepowanie_id: wynik.tenderId ?? null,
+          zamawiajacy_nip: wynik.zamawiajacyNip ?? null,
+          updated_at: nowIso(),
+        });
+      }
+      await batch.commit();
+    }
+    return { zapisane: wpisy.length, czesci };
+  },
+
+  /** Rozstrzygnięcie konkretnego POSTĘPOWANIA (klucz złączenia z przetargiem). */
+  async poPostepowaniu(postepowanieId) {
+    if (!postepowanieId) return null;
+    const snap = await db().collection('rozstrzygniecia')
+      .where('postepowanie_id', '==', String(postepowanieId)).limit(1).get();
+    return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+  },
+
+  /**
+   * Rozstrzygnięcia jednego zamawiającego (po NIP-ie), od najnowszych.
+   *
+   * NIP, a nie nazwa: ta sama jednostka pisze się w BZP raz „SĄD REJONOWY
+   * W RZESZOWIE", raz „Sąd Rejonowy w Rzeszowie". Grupowanie po nazwie
+   * rozbiłoby jednego zamawiającego na kilku i zaniżyło każdą próbkę.
+   */
+  async dlaZamawiajacego(nip, { limit = 200 } = {}) {
+    if (!nip) return [];
+    const snap = await db().collection('rozstrzygniecia')
+      .where('zamawiajacy_nip', '==', String(nip))
+      .orderBy('opublikowano', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /**
+   * Strona rozstrzygnięć od najnowszych — wejście agregacji benchmarku.
+   *
+   * 🚨 Kursor MUSI być parą (data, docId), a nie samą datą. BZP publikuje setki
+   * rozstrzygnięć dziennie, więc `opublikowano` nie jest unikalne: `startAfter`
+   * po samej dacie przeskakuje WSZYSTKIE dokumenty z tego dnia i benchmark liczy
+   * się z ułamka rynku — po cichu, bo strona wraca pełna i bez błędu.
+   * Stąd drugi klucz sortowania po identyfikatorze dokumentu.
+   */
+  async strona({ od = null, limit = 500, kursor = null } = {}) {
+    let q = db().collection('rozstrzygniecia');
+    if (od) q = q.where('opublikowano', '>=', od);
+    q = q.orderBy('opublikowano', 'desc').orderBy(FieldPath.documentId(), 'desc');
+    if (kursor?.opublikowano) q = q.startAfter(kursor.opublikowano, kursor.id);
+    const snap = await q.limit(limit).get();
+    const ostatni = snap.docs[snap.docs.length - 1] ?? null;
+    return {
+      pozycje: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+      kursor: ostatni ? { opublikowano: ostatni.get('opublikowano'), id: ostatni.id } : null,
+      koniec: snap.docs.length < limit,
+    };
+  },
+};
+
+/*
+ * Benchmark rynku (etap 6) — gotowe kubełki liczone w jobie, nie na żądanie.
+ *
+ * Dlaczego agregat, a nie zapytanie na żywo: karta „czy warto startować" ma się
+ * otwierać przy KAŻDYM ogłoszeniu i być darmowa w odczycie, tak jak katalog.
+ * Liczenie mediany z setek rozstrzygnięć per wejście na ekran byłoby i wolne,
+ * i kosztowne w odczytach Firestore.
+ */
+export const benchmarkRynku = {
+  /** Nadpisuje kubełki — benchmark liczymy od nowa z bieżącego okna. */
+  async zapisz(kubelki) {
+    const wpisy = Object.entries(kubelki ?? {});
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const [klucz, kubelek] of wpisy.slice(i, i + 400)) {
+        batch.set(db().collection('benchmark').doc(benchmarkDocId(klucz)),
+          { ...kubelek, klucz, updated_at: nowIso() });
+      }
+      await batch.commit();
+    }
+    return wpisy.length;
+  },
+
+  /** Jeden kubełek albo null. */
+  async pobierz(klucz) {
+    if (!klucz) return null;
+    const doc = await db().collection('benchmark').doc(benchmarkDocId(klucz)).get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /**
+   * Kilka kubełków jednym odczytem wsadowym.
+   *
+   * Karta decyzji potrzebuje zwykle trzech (zamawiający, dział w regionie, dział
+   * w kraju) — trzy osobne `get()` to trzy round-tripy na każde wejście na ekran.
+   */
+  async pobierzWiele(klucze) {
+    const unikalne = [...new Set((klucze ?? []).filter(Boolean))];
+    if (!unikalne.length) return {};
+    const refy = unikalne.map((k) => db().collection('benchmark').doc(benchmarkDocId(k)));
+    const snapy = await db().getAll(...refy);
+    const wynik = {};
+    snapy.forEach((snap, i) => { if (snap.exists) wynik[unikalne[i]] = snap.data(); });
+    return wynik;
+  },
+};
+
+/** Klucze kubełków niosą `|` i `:` — w docId dozwolone, ale `/` już nie. */
+const benchmarkDocId = (klucz) => String(klucz).replaceAll('/', '_');
+
+/*
+ * Zmiany umów po rozstrzygnięciu (etap 6, TED `cont-modif`).
+ *
+ * Po co osobna kolekcja, a nie pole w rozstrzygnięciu: zmiana umowy dotyczy
+ * postępowania, które ZOSTAŁO już rozstrzygnięte — bywa publikowana rok później
+ * i wiele razy. Doklejanie jej do dokumentu rozstrzygnięcia znaczyłoby nadpisywanie
+ * stanu, który ma zostać historią.
+ *
+ * Co to mówi wykonawcy: że u tego zamawiającego zakres i wynagrodzenie bywają
+ * renegocjowane po podpisaniu — czyli że wycena „na styk" jest tu mniej ryzykowna,
+ * niż wygląda. To sygnał o rynku, nie o konkretnej ofercie.
+ */
+export const modyfikacjeUmow = {
+  /** Zapisuje partię zmian. docId = numer publikacji — powtórki nieszkodliwe. */
+  async zapiszWiele(lista) {
+    const wpisy = (lista ?? []).filter((m) => m?.externalId);
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const zmiana of wpisy.slice(i, i + 400)) {
+        batch.set(db().collection('modyfikacje_umow').doc(tenderDocId(zmiana.externalId)), {
+          ...zmiana,
+          postepowanie_id: zmiana.tenderId ?? null,
+          updated_at: nowIso(),
+        });
+      }
+      await batch.commit();
+    }
+    return wpisy.length;
+  },
+
+  /** Zmiany umów dla POSTĘPOWANIA — od najnowszej. */
+  async dlaPostepowania(postepowanieId, { limit = 20 } = {}) {
+    if (!postepowanieId) return [];
+    const snap = await db().collection('modyfikacje_umow')
+      .where('postepowanie_id', '==', String(postepowanieId))
+      .limit(limit)
+      .get();
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => String(b.opublikowano ?? '').localeCompare(String(a.opublikowano ?? '')));
+  },
+};
+
+/**
+ * Checkpoint okna rozstrzygnięć (etap 6).
+ *
+ * Ta sama konstrukcja, co okno BZP: doby domykane pojedynczo, od najświeższej,
+ * żeby przebieg, któremu zabrakło czasu, nie ginął wiecznie na tym samym dniu.
+ */
+const OKNO_WYNIKOW_REF = () => db().collection('_health').doc('wyniki_okno');
+
+export const oknoWynikow = {
+  async wczytaj() {
+    const doc = await OKNO_WYNIKOW_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /** 🚨 `mergeFields` PODMIENIA pole w całości — `{ merge: true }` scalałby mapy głęboko. */
+  async zapisz(stan) {
+    await OKNO_WYNIKOW_REF().set({ dni: stan.dni ?? {} }, { mergeFields: ['dni'] });
+  },
+
+  async zapiszPrzebieg(wynik) {
+    await OKNO_WYNIKOW_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
 // ============================ feedback ============================
 
 export const feedback = {
@@ -1030,9 +1666,109 @@ export const aiUsage = {
  */
 const CYKL_REF = () => db().collection('_health').doc('daily_cycle');
 
-export const cykl = {
+/**
+ * Checkpoint okna pobierania BZP (P0-2).
+ *
+ * Trzyma stan per doba (`kompletny`, `pobrano`, `blad`), żeby kolejny przebieg
+ * wznowił pobieranie od tego, czego jeszcze nie domknął, zamiast zaczynać od
+ * najstarszej doby i ginąć zawsze na tych samych dniach. Logika wyboru dób jest
+ * CZYSTA i mieszka w jobs/oknoBzp.js — tutaj wyłącznie odczyt i zapis.
+ */
+const OKNO_BZP_REF = () => db().collection('_health').doc('bzp_okno');
+
+export const oknoBzp = {
+  async wczytaj() {
+    const doc = await OKNO_BZP_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /** Zapis stanu dób (bez merge) — doby poza oknem mają znikać, nie zalegać. */
+  async zapisz(stan) {
+    await OKNO_BZP_REF().set({ dni: stan.dni ?? {} }, { mergeFields: ['dni'] });
+  },
+
+  /**
+   * Ślad ostatniego przebiegu domykania okna.
+   *
+   * `mergeFields` podmienia WSKAZANE pole w całości — w przeciwieństwie do
+   * `set(..., { merge: true })`, które scala mapy głęboko i zostawiało błędy
+   * sprzed tygodni (ta sama pułapka co w `cykl.zapiszPrzebieg`).
+   */
   async zapiszPrzebieg(wynik) {
-    await CYKL_REF().set({ zakonczony_o: nowIso(), wynik }, { merge: true });
+    await OKNO_BZP_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
+/**
+ * Checkpoint okna Bazy Konkurencyjności (etap 3).
+ *
+ * Trzyma ODCISK każdego widzianego ogłoszenia (`{ odcisk, publication_date,
+ * pobrane_o }`), żeby kolejny przebieg pobierał SZCZEGÓŁY wyłącznie dla ogłoszeń
+ * nowych i zmienionych. Bez niego każdy przebieg ciągnąłby 1 135 szczegółów —
+ * ponad 1 100 zapytań po dane, które się nie ruszyły.
+ *
+ * Logika wyboru i przycinania jest CZYSTA i mieszka w jobs/oknoBk.js — tutaj
+ * wyłącznie odczyt i zapis.
+ */
+const OKNO_BK_REF = () => db().collection('_health').doc('bk_okno');
+
+export const oknoBk = {
+  async wczytaj() {
+    const doc = await OKNO_BK_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /**
+   * Zapis mapy ogłoszeń — `mergeFields` PODMIENIA wskazane pole w całości.
+   *
+   * 🚨 NIE WOLNO tu `{ merge: true }`: Firestore scala mapy GŁĘBOKO, więc ogłoszenia
+   * usunięte z okna zostawałyby w checkpoincie na zawsze, a dokument rósłby aż do
+   * limitu 1 MiB (ta sama pułapka co w `cykl.zapiszPrzebieg` i `oknoBzp.zapisz`).
+   */
+  async zapisz(stan) {
+    await OKNO_BK_REF().set({ ogloszenia: stan.ogloszenia ?? {} }, { mergeFields: ['ogloszenia'] });
+  },
+
+  /** Ślad ostatniego przebiegu — osobne pole, nie dotyka mapy ogłoszeń. */
+  async zapiszPrzebieg(wynik) {
+    await OKNO_BK_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
+export const cykl = {
+  /**
+   * Zapisuje ślad JEDNEGO przebiegu — nadpisując poprzedni wynik w całości.
+   *
+   * 🚨 NIE WOLNO tu wrócić do `{ merge: true }`. Firestore scala mapy GŁĘBOKO,
+   * więc pole `zrodla.bzp.error` z przebiegu sprzed tygodni PRZEŻYWAŁO każdy
+   * kolejny, w pełni udany przebieg: nadpisywały się tylko `fetched`
+   * i `newTenders`, a błąd zostawał przyklejony na zawsze. Produkcja pokazywała
+   * przez to `ok: true` RAZEM z błędem obu źródeł, a audyt 2026-09-23 uznał ten
+   * kształt za dowód, że wdrożony kod nie pochodzi z tego repozytorium (P0-1).
+   * Regresja: test/sladCyklu.test.js.
+   *
+   * Historia per źródło (kiedy ostatnio działało, kiedy ostatnio padło) jest
+   * świadomie TRWAŁA i trzymana osobno, w polu `zrodla` — bieżący wynik opisuje
+   * wyłącznie ostatni przebieg, historia przeżywa dzień, w którym źródło było
+   * wyłączone (np. `TED_ENABLED=false`).
+   */
+  async zapiszPrzebieg(wynik) {
+    const teraz = nowIso();
+    const poprzedni = await CYKL_REF().get();
+    const zrodla = poprzedni.exists ? { ...(poprzedni.data().zrodla ?? {}) } : {};
+
+    for (const [nazwa, stat] of Object.entries(wynik?.zrodla ?? {})) {
+      const bylo = zrodla[nazwa] ?? {};
+      // Sukces nie kasuje historii błędu (i odwrotnie) — operator musi widzieć
+      // OBA znaczniki, żeby odróżnić „padło dziś" od „padło raz w lipcu".
+      zrodla[nazwa] = {
+        ostatni_sukces_o: stat?.error ? (bylo.ostatni_sukces_o ?? null) : teraz,
+        ostatni_blad_o: stat?.error ? teraz : (bylo.ostatni_blad_o ?? null),
+        ostatni_blad: stat?.error ? String(stat.error) : (bylo.ostatni_blad ?? null),
+      };
+    }
+
+    await CYKL_REF().set({ zakonczony_o: teraz, wynik, zrodla });
   },
 
   async ostatniPrzebieg() {
@@ -1189,6 +1925,423 @@ export const magicLinks = {
       if (expectedUserId !== undefined && link.user_id !== expectedUserId) return null;
       tx.update(ref, { used_at: nowIso() });
       return link.user_id;
+    });
+  },
+};
+
+// ============================ zapisane wyszukiwania ============================
+
+/**
+ * Zapisane wyszukiwania trybu „Wszystkie" (etap 5).
+ *
+ * Subkolekcja użytkownika — tak samo jak `saved` i `matches`. Powód jest ten sam:
+ * cudzego wyszukiwania nie da się nawet ZAADRESOWAĆ, więc pomyłka w kontroli
+ * dostępu na trasie nie może odsłonić czyichś kryteriów (a kryteria wyszukiwania
+ * to informacja handlowa — mówią, o jakie kontrakty firma się stara).
+ *
+ * Normalizacja i limity są CZYSTE i mieszkają w lib/zapisaneWyszukiwania.js —
+ * tutaj wyłącznie odczyt i zapis.
+ */
+const wyszukiwaniaCol = (userId) => db().collection('users').doc(userId).collection('wyszukiwania');
+
+export const wyszukiwania = {
+  async create(userId, { nazwa, filtry, alert_wlaczony = true, czestotliwosc = 'dzienna', odcisk }) {
+    const id = newId();
+    const rekord = {
+      nazwa,
+      filtry: filtry ?? {},
+      alert_wlaczony,
+      czestotliwosc,
+      odcisk,
+      /*
+       * Świeże wyszukiwanie NIE było sprawdzane. `null` (a nie „teraz") jest tu
+       * istotny: pierwszy przebieg ma je od razu objąć, a nie odczekać pełny odstęp.
+       */
+      ostatnio_sprawdzone_o: null,
+      ostatnio_trafien: null,
+      // Kursor z ostatniego przebiegu: od którego miejsca strumienia ruszyć dalej.
+      kursor: null,
+      utworzone_o: nowIso(),
+      zaktualizowane_o: nowIso(),
+    };
+    await wyszukiwaniaCol(userId).doc(id).create(rekord);
+    return { id, ...rekord };
+  },
+
+  async get(userId, id) {
+    return userSnap(await wyszukiwaniaCol(userId).doc(id).get());
+  },
+
+  /** Lista właściciela, najnowsze pierwsze. Bez paginacji — limit to 20 wpisów. */
+  async list(userId) {
+    const snap = await wyszukiwaniaCol(userId).orderBy('utworzone_o', 'desc').get();
+    return snap.docs.map(userSnap);
+  },
+
+  /** @returns {Promise<object|null>} null = nie ma takiego wpisu u TEGO użytkownika */
+  async update(userId, id, zmiany) {
+    const ref = wyszukiwaniaCol(userId).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    await ref.update({ ...zmiany, zaktualizowane_o: nowIso() });
+    return userSnap(await ref.get());
+  },
+
+  /** @returns {Promise<boolean>} false = nie było czego usuwać (powtórka nie jest błędem) */
+  async remove(userId, id) {
+    const ref = wyszukiwaniaCol(userId).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    await ref.delete();
+    return true;
+  },
+
+  /**
+   * Zamyka przebieg: czas sprawdzenia + kursor, od którego ruszy następny.
+   *
+   * Zapis JEST osobną operacją od wysyłki powiadomienia i następuje PO niej —
+   * gdyby przebieg padł między jednym a drugim, powtórka wyśle ten sam alert,
+   * a ten zostanie odsiany po kluczu idempotencji w `alerty.dodaj`. Odwrotna
+   * kolejność gubiłaby trafienia bez śladu.
+   */
+  async oznaczSprawdzone(userId, id, { teraz, kursor = null, trafien = 0 }) {
+    const ref = wyszukiwaniaCol(userId).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    await ref.update({
+      ostatnio_sprawdzone_o: teraz,
+      kursor,
+      ostatnio_trafien: trafien,
+    });
+    return true;
+  },
+
+  /**
+   * Wszystkie WŁĄCZONE wyszukiwania, ze wszystkich kont — wejście harmonogramu.
+   *
+   * Filtr `alert_wlaczony == true` jest po stronie bazy celowo: wyłączona
+   * obserwacja nie może kosztować odczytu w każdym przebiegu. Hamulec
+   * częstotliwości działa DOPIERO na wyniku, bo zależy od czasu i jest czysty.
+   *
+   * Bez `orderBy` — collectionGroup z sortowaniem wymagałby indeksu złożonego,
+   * a kolejność sprawdzania nie ma tu znaczenia.
+   */
+  async zAlertem() {
+    const snap = await db().collectionGroup('wyszukiwania').where('alert_wlaczony', '==', true).get();
+    return snap.docs.map((d) => ({ userId: d.ref.parent.parent.id, id: d.id, ...d.data() }));
+  },
+};
+
+// ============================ historia zmian ogłoszeń ============================
+
+/**
+ * Historia zmian pojedynczego ogłoszenia: tenders/{tenderId}/zmiany/{kluczZmiany}.
+ *
+ * docId = deterministyczny klucz przejścia (lib/zmianyOgloszenia.kluczZmiany), więc
+ * IDEMPOTENCJA jest własnością modelu, a nie ostrożności wołającego: ten sam przebieg
+ * powtórzony po awarii nie dokłada ani jednego wpisu. To jest ważne, bo okna
+ * pobierania wznawiają się po przerwaniu i rutynowo widzą te same ogłoszenia
+ * drugi raz.
+ */
+const zmianyCol = (tenderId) => db().collection('tenders').doc(tenderId).collection('zmiany');
+
+export const historiaZmian = {
+  /**
+   * Zapisuje partię zmian. Wpis, który już istnieje, NIE jest nadpisywany — chcemy
+   * czas PIERWSZEGO wykrycia, bo to on mówi, ile czasu wykonawca realnie miał.
+   * @returns {Promise<{zapisane: number, pominiete: number}>}
+   */
+  async zapisz(tenderId, zmiany, { wykryto_o = nowIso() } = {}) {
+    let zapisane = 0;
+    let pominiete = 0;
+
+    for (const zmiana of zmiany ?? []) {
+      const id = kluczZmiany(tenderId, zmiana);
+      try {
+        await zmianyCol(tenderId).doc(id).create({ ...zmiana, tender_id: tenderId, wykryto_o });
+        zapisane += 1;
+      } catch (err) {
+        if (err.code === 6 /* ALREADY_EXISTS */) { pominiete += 1; continue; }
+        throw err;
+      }
+    }
+    return { zapisane, pominiete };
+  },
+
+  /** Historia jednego ogłoszenia, od najnowszej zmiany. */
+  async lista(tenderId, limit = 50) {
+    const snap = await zmianyCol(tenderId).orderBy('wykryto_o', 'desc').limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, tenderId, ...d.data() }));
+  },
+
+  /**
+   * Zmiany wykryte OD podanej chwili, ze wszystkich ogłoszeń — wejście harmonogramu
+   * alertów. Nierówność i `orderBy` są na TYM SAMYM polu, więc zapytanie mieści się
+   * w indeksie grupy zadeklarowanym w firestore.indexes.json.
+   */
+  async odCzasu(od, limit = 500) {
+    const snap = await db().collectionGroup('zmiany')
+      .where('wykryto_o', '>=', od)
+      .orderBy('wykryto_o', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => ({ id: d.id, tenderId: d.ref.parent.parent.id, ...d.data() }));
+  },
+};
+
+// ============================ centrum alertów ============================
+
+/** Ile dni trzymamy alert w centrum — potem kasuje go polityka TTL Firestore. */
+const ALERTY_DNI = 90;
+
+const alertyCol = (userId) => db().collection('users').doc(userId).collection('alerty');
+
+export const alerty = {
+  /**
+   * Dokłada alert. docId = `klucz` wyliczony przez wołającego, więc ten sam alert
+   * wysłany dwa razy zostaje JEDNYM wpisem — to jest cała idempotencja powiadomień.
+   * @returns {Promise<{id: string, nowy: boolean}>}
+   */
+  async dodaj(userId, alert, teraz = nowIso()) {
+    const id = String(alert.klucz);
+    const rekord = {
+      typ: alert.typ,
+      wyszukiwanie_id: alert.wyszukiwanie_id ?? null,
+      tender_id: alert.tender_id ?? null,
+      tytul: alert.tytul ?? null,
+      tresc: alert.tresc ?? null,
+      pozycje: alert.pozycje ?? [],
+      ton: alert.ton ?? 'neutral',
+      przeczytany: false,
+      utworzone_o: teraz,
+      // Pole typu Timestamp — TYLKO takie honoruje polityka TTL Firestore.
+      ttl: new Date(Date.parse(teraz) + ALERTY_DNI * 86_400_000),
+    };
+    try {
+      await alertyCol(userId).doc(id).create(rekord);
+      return { id, nowy: true };
+    } catch (err) {
+      if (err.code === 6 /* ALREADY_EXISTS */) return { id, nowy: false };
+      throw err;
+    }
+  },
+
+  /** Centrum alertów: od najnowszego. */
+  async lista(userId, limit = 100) {
+    const snap = await alertyCol(userId).orderBy('utworzone_o', 'desc').limit(limit).get();
+    return snap.docs.map(userSnap);
+  },
+
+  /** Licznik na plakietce. Zapytanie równościowe — mieści się w indeksie automatycznym. */
+  async nieprzeczytane(userId) {
+    const wynik = await alertyCol(userId).where('przeczytany', '==', false).count().get();
+    return wynik.data().count;
+  },
+
+  async oznaczPrzeczytany(userId, id) {
+    const ref = alertyCol(userId).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    await ref.update({ przeczytany: true, przeczytany_o: nowIso() });
+    return true;
+  },
+
+  async oznaczWszystkiePrzeczytane(userId) {
+    const snap = await alertyCol(userId).where('przeczytany', '==', false).get();
+    if (snap.empty) return 0;
+    const batch = db().batch();
+    for (const d of snap.docs) batch.update(d.ref, { przeczytany: true, przeczytany_o: nowIso() });
+    await batch.commit();
+    return snap.size;
+  },
+};
+
+// ============================ radar planów (TED planning) ============================
+
+/*
+ * Plany postępowań — wstępne ogłoszenia informacyjne z TED (`services/tedPlany.js`).
+ *
+ *  • `plany/{numer publikacji}` — źródło prawdy, pełna pozycja (z opisem i linkiem).
+ *    Zapis przez set(): ogłoszenie planowania jest niemutowalne, powtórka tego samego
+ *    numeru to ta sama treść, więc nadpisanie jest nieszkodliwe.
+ *  • `radar_planow/czesc_N` — ZWARTY indeks aktywnych pozycji (`lib/indeksPlanow.js`).
+ *    Ranking pod profil musi przejrzeć każdą pozycję (dopasowanie słów), a skan
+ *    kolekcji przy każdym wejściu na ekran to ~2 500 odczytów na użytkownika. Indeks
+ *    to kilka odczytów, a do tego pamięć podręczna instancji.
+ */
+const planyCol = () => db().collection('plany');
+const indeksPlanowCol = () => db().collection('radar_planow');
+const OKNO_PLANOW_REF = () => db().collection('_health').doc('plany_okno');
+
+/** Pamięć podręczna indeksu w instancji — indeks zmienia się raz na dobę. */
+const INDEKS_TTL_MS = 10 * 60_000;
+let indeksWPamieci = null;
+
+export const planyPostepowan = {
+  /** Zapisuje partię pozycji planu z wyliczonym `wygasa_o`. Zwraca liczbę zapisanych. */
+  async zapiszWiele(pozycje) {
+    const wpisy = (pozycje ?? []).filter((p) => p?.id);
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const p of wpisy.slice(i, i + 400)) {
+        batch.set(planyCol().doc(tenderDocId(p.id)), { ...p, wygasa_o: wygasaO(p), updated_at: nowIso() });
+      }
+      await batch.commit();
+    }
+    return wpisy.length;
+  },
+
+  async pobierz(id) {
+    if (!id) return null;
+    const doc = await planyCol().doc(tenderDocId(id)).get();
+    return doc.exists ? { ...doc.data(), id: doc.data().id ?? doc.id } : null;
+  },
+
+  /**
+   * Przebudowuje indeks z aktywnych pozycji (`wygasa_o >= dzisiaj`). Stare części
+   * ponad nową liczbę są kasowane — inaczej wygasłe pozycje zostałyby w indeksie.
+   * Części zapisujemy PRZED kasowaniem nadmiarowych, więc czytelnik w trakcie
+   * przebudowy widzi najwyżej duplikat, nigdy dziury.
+   */
+  async przebudujIndeks({ dzisiaj }) {
+    const snap = await planyCol().where('wygasa_o', '>=', dzisiaj).get();
+    const wpisy = snap.docs
+      .map((d) => wpisIndeksu(d.data()))
+      .sort((a, b) => String(b.opublikowano ?? '').localeCompare(String(a.opublikowano ?? '')));
+    const czesci = podzielNaCzesci(wpisy);
+    const zbudowano = nowIso();
+
+    for (let i = 0; i < czesci.length; i++) {
+      await indeksPlanowCol().doc(`czesc_${i}`).set({
+        numer: i, wpisy: czesci[i], zbudowano_o: zbudowano, czesci_lacznie: czesci.length,
+      });
+    }
+    const istniejace = await indeksPlanowCol().get();
+    const nadmiarowe = istniejace.docs.filter((d) => Number(d.data().numer) >= czesci.length);
+    if (nadmiarowe.length) {
+      const batch = db().batch();
+      for (const d of nadmiarowe) batch.delete(d.ref);
+      await batch.commit();
+    }
+    indeksWPamieci = null;
+    return { aktywnych: wpisy.length, czesci: czesci.length, zbudowano_o: zbudowano };
+  },
+
+  /** Cały indeks aktywnych pozycji: `{wpisy, zbudowano_o}`. Z pamięci instancji, gdy świeży. */
+  async indeks({ swiezy = false } = {}) {
+    if (!swiezy && indeksWPamieci && Date.now() - indeksWPamieci.wczytano < INDEKS_TTL_MS) {
+      return indeksWPamieci.dane;
+    }
+    const snap = await indeksPlanowCol().get();
+    const czesci = snap.docs.map((d) => d.data()).sort((a, b) => a.numer - b.numer);
+    const widziane = new Set();
+    const wpisy = [];
+    for (const c of czesci) {
+      for (const w of c.wpisy ?? []) {
+        if (widziane.has(w.id)) continue; // duplikat z przebudowy w toku
+        widziane.add(w.id);
+        wpisy.push(w);
+      }
+    }
+    const dane = { wpisy, zbudowano_o: czesci[0]?.zbudowano_o ?? null };
+    indeksWPamieci = { dane, wczytano: Date.now() };
+    return dane;
+  },
+
+  /** Tylko dla testów — pamięć instancji przeżywa między testami w jednym procesie. */
+  _wyczyscPamiec() { indeksWPamieci = null; },
+};
+
+export const oknoPlanow = {
+  async wczytaj() {
+    const doc = await OKNO_PLANOW_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /** 🚨 `mergeFields`, nie `{merge:true}` — głębokie scalanie trzymałoby stary `error`. */
+  async zapiszPrzebieg(wynik) {
+    await OKNO_PLANOW_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
+/*
+ * Obserwowane pozycje planu: users/{uid}/obserwowane_plany/{planDocId}.
+ * Subkolekcja, jak dopasowania: cudzej obserwacji nie da się nawet zaadresować.
+ * Monitoring czyta aktywne jednym zapytaniem collection-group (indeks w
+ * firestore.indexes.json, fieldOverrides: obserwowane_plany.aktywna).
+ */
+const obserwowaneCol = (userId) => db().collection('users').doc(userId).collection('obserwowane_plany');
+
+export const obserwacjePlanow = {
+  /**
+   * Dodaje obserwację. Powtórka tego samego planu zwraca istniejącą (idempotencja
+   * podwójnego kliknięcia), limit liczy się tylko przy NOWEJ.
+   * @returns {Promise<{obserwacja: object|null, nowa: boolean, limit?: boolean}>}
+   */
+  async dodaj(userId, wpis, limit) {
+    const ref = obserwowaneCol(userId).doc(tenderDocId(wpis.plan_id));
+    const istnieje = await ref.get();
+    if (istnieje.exists) return { obserwacja: { id: ref.id, ...istnieje.data() }, nowa: false };
+    const ile = (await obserwowaneCol(userId).where('aktywna', '==', true).count().get()).data().count;
+    if (ile >= limit) return { obserwacja: null, nowa: false, limit: true };
+    await ref.set(wpis);
+    return { obserwacja: { id: ref.id, ...wpis }, nowa: true };
+  },
+
+  async usun(userId, planId) {
+    const ref = obserwowaneCol(userId).doc(tenderDocId(planId));
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    await ref.delete();
+    return true;
+  },
+
+  async czyObserwowany(userId, planId) {
+    return (await obserwowaneCol(userId).doc(tenderDocId(planId)).get()).exists;
+  },
+
+  async lista(userId) {
+    const snap = await obserwowaneCol(userId).get();
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => String(b.utworzone_o ?? '').localeCompare(String(a.utworzone_o ?? '')));
+  },
+
+  /** Wszystkie AKTYWNE obserwacje wszystkich kont — wejście przebiegu monitoringu. */
+  async aktywne() {
+    const snap = await db().collectionGroup('obserwowane_plany').where('aktywna', '==', true).get();
+    return snap.docs.map((d) => ({ userId: d.ref.parent.parent.id, id: d.id, ...d.data() }));
+  },
+
+  async zapiszSprawdzenie(userId, id, { aktywna, zakonczenie, znalezione, teraz }) {
+    await obserwowaneCol(userId).doc(id).update({
+      aktywna,
+      zakonczenie: zakonczenie ?? null,
+      znalezione: znalezione ?? null,
+      ostatnio_sprawdzone_o: teraz,
+    });
+  },
+};
+
+// ============================ limit wysyłki eksportu (P2-3) ============================
+
+/*
+ * Ile razy dziennie konto może wysłać sobie eksport CSV e-mailem. To wysyłka do
+ * WŁASNEGO adresu, ale każda idzie przez płatnego dostawcę poczty i nosi załącznik —
+ * sufit chroni przed pętlą w kliencie i przed nadużyciem konta.
+ */
+const eksportLimitDoc = (userId, dzien) =>
+  db().collection('users').doc(userId).collection('limity').doc(`eksport_${dzien}`);
+
+export const limitEksportu = {
+  async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
+    const ref = eksportLimitDoc(userId, dzien);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const wyslane = doc.exists ? (doc.data().wyslane ?? 0) : 0;
+      if (wyslane >= limit) return false;
+      tx.set(ref, { wyslane: wyslane + 1, updated_at: nowIso() }, { merge: true });
+      return true;
     });
   },
 };

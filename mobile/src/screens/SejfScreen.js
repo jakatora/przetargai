@@ -326,7 +326,7 @@ export default function SejfScreen() {
                     <Text style={styles.dokLink}>{dok.online.nazwa} →</Text>
                   </Pressable>
                 ) : null}
-                <Pressable
+                <Pressable accessibilityRole="button"
                   onPress={() => potwierdzUsuniecie(dok)}
                   disabled={usuwaneId === dok.id}
                   hitSlop={10}

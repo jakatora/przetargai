@@ -1,6 +1,7 @@
 import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
+import { wyciagnijNip } from '../lib/nip.js';
 
 /*
  * TED (Tenders Electronic Daily) — dziennik zamówień publicznych UE.
@@ -17,8 +18,15 @@ import { doUtcIso } from '../lib/daty.js';
 
 const POLA = [
   'publication-number',
+  // BT-04: identyfikator POSTEPOWANIA, wspolny dla ogloszenia o zamowieniu
+  // i o wyniku (etap 6). Zmierzone: obecny w 250/250 ogloszen konkursowych;
+  // zapytanie `procedure-identifier = "…"` zwraca obie publikacje.
+  'procedure-identifier',
   'title-proc',
   'buyer-name',
+  // Wolny tekst „NIP: …, REGON: …" — klucz złączenia plan → ogłoszenie (Radar planów)
+  // i benchmarku per zamawiający. Zmierzone: poprawny NIP w 199/250 ogłoszeń.
+  'buyer-identifier',
   'classification-cpv',
   'publication-date',
   'deadline-receipt-tender-date-lot',
@@ -72,9 +80,17 @@ export function mapujOgloszenieTed(notice) {
     publishedAt: znacznikTed(notice['publication-date']),
     url: linki.POL ?? Object.values(linki)[0] ?? null,
     source: 'ted',
+    postepowanie_id: pierwszaWartosc(notice['procedure-identifier']),
+    zamawiajacy_nip: wyciagnijNip(notice['buyer-identifier']),
     // Zapisujemy tylko pobrane pola (nie pełny XML) — raw służy podglądowi.
     raw: notice,
   };
+}
+
+/** Pierwsza wartosc pola TED, ktore bywa tablica albo skalarem. */
+function pierwszaWartosc(pole) {
+  const wartosc = Array.isArray(pole) ? pole[0] : pole;
+  return wartosc ? String(wartosc) : null;
 }
 
 function dataOdDni(dni) {
@@ -95,6 +111,7 @@ export async function pobierzOgloszeniaTed({
   lookbackDays = env.TED_LOOKBACK_DAYS,
   rozmiarStrony = 250,
   maksStron = 10,
+  licznik,
 } = {}) {
   /*
    * `SORT BY publication-date DESC` — KLUCZOWE dla świeżości feedu.
@@ -127,6 +144,13 @@ export async function pobierzOgloszeniaTed({
     total = dane.totalNoticeCount ?? 0;
 
     const strona = (dane.notices ?? []).map(mapujOgloszenieTed).filter(Boolean);
+    // Akumulator pomiarów okna (lib/licznikZrodla.js) — do rekonsyliacji
+    // „ile TED opublikował" vs „ile weszło do bazy".
+    if (licznik) {
+      licznik.zapytania += 1;
+      licznik.surowe += (dane.notices ?? []).length;
+      licznik.odrzucone += (dane.notices ?? []).length - strona.length;
+    }
     zebrane.push(...strona);
     if ((dane.notices ?? []).length === 0) break; // pusta strona = koniec, nie pętla
   }

@@ -4,9 +4,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
+import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
-import { zbudujPulpit } from '../lib/pulpit';
+import { zbudujPulpit, stanPulpitu } from '../lib/pulpit';
 
 /**
  * „MOJE POSTĘPOWANIA" (pulpit) — widok ETAPOWY zapisanych przetargów. Domyka triadę
@@ -15,15 +16,20 @@ import { zbudujPulpit } from '../lib/pulpit';
 export default function PulpitScreen({ navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStylePulpitu);
+  // Pulpit to widok zbiorczy zapisanych postępowań — chrome dwujęzyczne (P1-5).
+  const { t } = useJezyk();
   const [saved, setSaved] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [blad, setBlad] = useState(false);
 
   const wczytaj = useCallback(async () => {
     try {
       const d = await api.getSaved();
       setSaved(d.saved || []);
+      setBlad(false);
     } catch {
-      /* offline — zostaje ostatnia lista */
+      // Offline — zostaje ostatnia lista; bez niej pokazujemy BŁĄD, nie „brak postępowań" (P1-8).
+      setBlad(true);
     } finally {
       setLoading(false);
     }
@@ -42,19 +48,49 @@ export default function PulpitScreen({ navigation }) {
   };
   const kolorCzasu = (p) => (p.minal ? kolory.danger : p.pilny ? kolory.ostrzezenieTekst : kolory.textMuted);
 
-  if (loading) {
+  const stan = stanPulpitu({ ladowanie: loading, blad, lacznie });
+
+  if (stan === 'ladowanie') {
     return <View style={styles.center}><ActivityIndicator size="large" color={kolory.blue} /></View>;
   }
 
-  if (!lacznie) {
+  if (stan === 'blad') {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyIcon}>📡</Text>
+        <Text style={styles.emptyTitle}>{t('Nie udało się wczytać', 'Could not load')}</Text>
+        <Text style={styles.emptyText}>
+          {t('Sprawdź połączenie z internetem i spróbuj ponownie.', 'Check your internet connection and try again.')}
+        </Text>
+        <Pressable
+          style={styles.akcjaBtn}
+          onPress={() => { setLoading(true); wczytaj(); }}
+          accessibilityRole="button"
+        >
+          <Text style={styles.akcjaBtnTekst}>{t('Spróbuj ponownie', 'Try again')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (stan === 'pusty') {
     return (
       <View style={styles.center}>
         <Text style={styles.emptyIcon}>📋</Text>
-        <Text style={styles.emptyTitle}>Brak prowadzonych postępowań</Text>
+        <Text style={styles.emptyTitle}>{t('Brak prowadzonych postępowań', 'No procedures in progress')}</Text>
         <Text style={styles.emptyText}>
-          Zapisz przetargi gwiazdką i ustaw etap („Rozważam", „Przygotowuję"…), a zbierzemy je
-          tu w jeden widok — ile masz na jakim etapie i co pilne.
+          {t(
+            'Zapisz przetargi gwiazdką i ustaw etap („Rozważam", „Przygotowuję"…), a zbierzemy je tu w jeden widok — ile masz na jakim etapie i co pilne.',
+            'Save tenders with the star and set a stage („Considering", „Preparing"…) — we will gather them here in one view: how many are at each stage and what is urgent.',
+          )}
         </Text>
+        <Pressable
+          style={styles.akcjaBtn}
+          onPress={() => navigation.navigate('MatchFeed')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.akcjaBtnTekst}>{t('Przeglądaj przetargi', 'Browse tenders')}</Text>
+        </Pressable>
       </View>
     );
   }
@@ -62,11 +98,13 @@ export default function PulpitScreen({ navigation }) {
   return (
     <Screen scroll>
       <View style={[styles.podsumowanie, wymagaUwagi > 0 && { borderColor: kolory.ostrzezenieTekst }]}>
-        <Text style={styles.podsumLiczba}>{lacznie} {lacznie === 1 ? 'postępowanie' : 'postępowań'}</Text>
+        <Text style={styles.podsumLiczba}>
+          {t(`${lacznie} ${lacznie === 1 ? 'postępowanie' : 'postępowań'}`, `${lacznie} ${lacznie === 1 ? 'procedure' : 'procedures'}`)}
+        </Text>
         <Text style={[styles.podsumUwaga, { color: wymagaUwagi > 0 ? kolory.ostrzezenieTekst : kolory.textMuted }]}>
           {wymagaUwagi > 0
-            ? `${wymagaUwagi} ${wymagaUwagi === 1 ? 'wymaga' : 'wymaga'} uwagi — pilny termin`
-            : 'Nic pilnego na dziś'}
+            ? t(`${wymagaUwagi} wymaga uwagi — pilny termin`, `${wymagaUwagi} need attention — deadline close`)
+            : t('Nic pilnego na dziś', 'Nothing urgent today')}
         </Text>
       </View>
 
@@ -89,7 +127,7 @@ export default function PulpitScreen({ navigation }) {
               <Text style={styles.tytul} numberOfLines={2}>{p.tytul}</Text>
               {p.organizacja ? <Text style={styles.org} numberOfLines={1}>{p.organizacja}</Text> : null}
               <View style={styles.stopkaKarty}>
-                <Text style={styles.data}>{p.maTermin ? formatDate(p.deadline) : 'Bez terminu'}</Text>
+                <Text style={styles.data}>{p.maTermin ? formatDate(p.deadline) : t('Bez terminu', 'No deadline')}</Text>
                 <Text style={[styles.czas, { color: kolorCzasu(p) }]}>{p.etykietaCzasu}</Text>
               </View>
             </Pressable>
@@ -98,8 +136,10 @@ export default function PulpitScreen({ navigation }) {
       ))}
 
       <Text style={styles.stopka}>
-        Etap ustawiasz w szczegółach przetargu albo w „Zapisanych". Pilne = termin składania w
-        ciągu 7 dni na otwartym etapie (Rozważam / Przygotowuję / Złożona).
+        {t(
+          'Etap ustawiasz w szczegółach przetargu albo w „Zapisanych". Pilne = termin składania w ciągu 7 dni na otwartym etapie (Rozważam / Przygotowuję / Złożona).',
+          'You set the stage in a tender’s details or under „Saved". Urgent = submission deadline within 7 days at an open stage (Considering / Preparing / Submitted).',
+        )}
       </Text>
     </Screen>
   );
@@ -131,4 +171,12 @@ const tworzStylePulpitu = tworzStyle((k) => ({
   emptyIcon: { fontSize: 48, marginBottom: spacing.sm },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: k.text, textAlign: 'center' },
   emptyText: { fontSize: 14, color: k.textMuted, textAlign: 'center', marginTop: spacing.sm, lineHeight: 21 },
+  akcjaBtn: {
+    marginTop: spacing.lg,
+    backgroundColor: k.blue,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.md,
+  },
+  akcjaBtnTekst: { color: k.white, fontSize: 15, fontWeight: '700' },
 }));

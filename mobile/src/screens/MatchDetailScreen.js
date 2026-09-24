@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Alert, Linking, Pressable, Switch, ActivityIndicator, TextInput, Share } from 'react-native';
+import { View, Text, Alert, Pressable, Switch, ActivityIndicator, TextInput, Share } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -27,6 +27,10 @@ import { orientacyjnaWartosc, ZRODLO_BENCHMARKU } from '../lib/wartosciBenchmark
 import { nazwaWojewodztwa } from '../lib/wojewodztwa';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { opisWyniki } from '../lib/wyniki';
+import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
+import Wyjasnienie from '../components/Wyjasnienie';
+import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
+import { useJezyk } from '../context/JezykContext';
 
 /** Etykieta etapu kontroli (STATUSY_KONTROLI); brak kontroli → pierwszy etap „Nowa". */
 function etykietaEtapuKontroli(status) {
@@ -54,6 +58,7 @@ function Row({ styles, label, value, last }) {
 export default function MatchDetailScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleSzczegolow);
+  const { t } = useJezyk();
   const { isSaved, toggle } = useSaved();
   const { match } = route?.params ?? {};
   const tender = match?.tender;
@@ -255,17 +260,6 @@ export default function MatchDetailScreen({ route, navigation }) {
     }
   }
 
-  async function openInBzp() {
-    if (!tender.url) return;
-    try {
-      const canOpen = await Linking.canOpenURL(tender.url);
-      if (canOpen) await Linking.openURL(tender.url);
-      else Alert.alert('Nie można otworzyć linku', tender.url);
-    } catch {
-      Alert.alert('Nie można otworzyć linku', tender.url);
-    }
-  }
-
   return (
     <Screen scroll>
       <View style={styles.headerRow}>
@@ -390,6 +384,30 @@ export default function MatchDetailScreen({ route, navigation }) {
             trackColor={{ true: kolory.blue }}
           />
         </View>
+      </View>
+
+      {/*
+        Karta decyzji stoi PRZED symulatorem płynności świadomie: najpierw pytanie
+        „czy w tym w ogóle wygrasz", potem „czy udźwigniesz kontrakt". Odwrotna
+        kolejność każe liczyć finansowanie przetargu, który trzeba odpuścić.
+      */}
+      <Text style={styles.sectionTitle}>Czy warto tu startować</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
+          Ile firm zwykle startuje u tego zamawiającego, jaka cena tam wygrywa i jak często
+          postępowania kończą się unieważnieniem. Liczby z rozstrzygnięć BZP i TED — bez
+          obietnicy „procentu szans", bo o wyniku decyduje treść Twojej oferty.
+        </Text>
+        <Button
+          title="Sprawdź, czy warto startować"
+          onPress={() => navigation.navigate('CzyWarto', {
+            matchId: match.id,
+            tenderId: tender?.id ?? match.tender_id ?? null,
+            tytul: tender?.title,
+          })}
+          variant="primary"
+          style={styles.gap}
+        />
       </View>
 
       <Text style={styles.sectionTitle}>Zanim wystartujesz — policz płynność</Text>
@@ -706,14 +724,23 @@ export default function MatchDetailScreen({ route, navigation }) {
         </View>
       </View>
 
-      {tender.url ? (
-        <Button
-          // Od D-039 ogłoszenia płyną z wielu źródeł — etykieta mówi, DOKĄD prowadzi link.
-          title={`Otwórz ogłoszenie w ${tender.source === 'ted' ? 'TED (UE)' : 'BZP'}`}
-          onPress={openInBzp}
-          style={styles.gap}
-        />
-      ) : null}
+      {/*
+        Wyjaśnienie dopasowania (P1-4): cztery sygnały z konkretami zamiast jednego
+        zdania. Liczone z profilu i ogłoszenia — bez wywołania AI.
+      */}
+      <Wyjasnienie wyjasnienie={match.wyjasnienie} />
+
+      {/*
+        Źródło pierwotne, czas ostatniej synchronizacji i link do ORYGINAŁU (P1-3).
+        Ofertę składa się w rejestrze, nie w tej aplikacji — adres oryginału jest
+        więc najważniejszym wyjściem z tego ekranu.
+      */}
+      <View style={styles.zrodloBox}>
+        <Text style={styles.zrodloNazwaRejestru}>{t(pelnaNazwaZrodla(tender.zrodlo?.kod ?? tender.source))}</Text>
+        <PodpisZrodla zrodlo={tender.zrodlo ?? { kod: tender.source }} />
+        <PrzyciskOryginalu tender={tender} />
+      </View>
+      <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />
 
       <Button
         title="Udostępnij przetarg"
@@ -752,6 +779,15 @@ export default function MatchDetailScreen({ route, navigation }) {
 }
 
 const tworzStyleSzczegolow = tworzStyle((k) => ({
+  zrodloBox: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    backgroundColor: k.surface,
+  },
+  zrodloNazwaRejestru: { fontSize: 14, fontWeight: '800', color: k.text },
   akcjeCard: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,

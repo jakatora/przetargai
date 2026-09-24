@@ -54,3 +54,7 @@ landing/PrzetargAI.apk
 
 # artefakt deployu hostingu (kopiowany z landing/ przy publikacji)
 firebase/hosting/
+
+# probka surowych ogloszen BZP do sond etapu 6 (4+ MB htmlBody) — odtwarzalna
+# skryptem firebase/functions/skrypty/pobierz-probke-wynikow.mjs
+firebase/functions/probka-wyniki.json

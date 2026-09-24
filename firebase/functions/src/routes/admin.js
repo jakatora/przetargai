@@ -3,6 +3,11 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { ah } from '../lib/asyncHandler.js';
 import { adminRequired } from '../middleware/adminAuth.js';
 import { runTenderFetch } from '../jobs/fetchTenders.js';
+import { runBkOkno } from '../jobs/oknoBk.js';
+import { runOknoWynikow } from '../jobs/oknoWynikow.js';
+import { runBenchmarkRynku } from '../jobs/benchmarkRynku.js';
+import { runOknoPlanow } from '../jobs/oknoPlanow.js';
+import { runWynikiAggregation } from '../jobs/aggregateResults.js';
 import { backfillUser } from '../services/matching.js';
 import { tenders, users } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
@@ -19,6 +24,95 @@ router.use(adminRequired);
 router.post('/fetch-tenders', ah(async (req, res) => {
   const result = await runTenderFetch();
   res.json(result);
+}));
+
+/**
+ * Ręczne domknięcie okna Bazy Konkurencyjności — BEZ dopasowań i BEZ AI.
+ *
+ * DLACZEGO OSOBNO OD `/fetch-tenders`: tamten uruchamia pełny cykl razem z
+ * dopasowaniami, czyli PŁATNE wywołania Claude. Operator, który chce tylko
+ * sprawdzić, czy import ze źródła działa (albo domknąć zaległość po awarii),
+ * nie powinien za to płacić. Ten przebieg kosztuje wyłącznie odczyty publicznego
+ * API BK i zapisy do Firestore.
+ *
+ * Idempotentny: docId przetargu = `bk:<id>`, a checkpoint pilnuje, żeby szczegóły
+ * pobierały się tylko dla ogłoszeń nowych i zmienionych.
+ */
+router.post('/okno-bk', ah(async (req, res) => {
+  const wynik = await runBkOkno();
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
+/**
+ * Ręczne domknięcie okna ROZSTRZYGNIĘĆ (etap 6) — BEZ dopasowań i BEZ AI.
+ *
+ * Ta sama zasada, co przy `/okno-bk`: operator ma móc domknąć zaległość albo
+ * sprawdzić źródło, nie płacąc za wywołania modelu. Koszt to odczyty publicznych
+ * API BZP i TED oraz zapisy do Firestore.
+ *
+ * Idempotentny: docId rozstrzygnięcia = identyfikator ogłoszenia o wyniku.
+ */
+/*
+ * 🚨 BUDŻET: ten przebieg biegnie w funkcji `api`, która ma 300 s (harmonogramowy
+ * `wynikiOknoFetch` ma 1800 s). Bez własnego, krótszego budżetu platforma ubiłaby
+ * żądanie w połowie i checkpoint — zapisywany na końcu przebiegu — nie zanotowałby
+ * ŻADNEJ domkniętej doby. Dane rozstrzygnięć zapisują się co dobę, więc nic by nie
+ * przepadło, ale operator wołałby w kółko te same dni. 240 s zostawia zapas na
+ * zapis checkpointu i odpowiedź.
+ */
+const BUDZET_WYZWALACZA_MS = 240_000;
+
+router.post('/okno-wynikow', ah(async (req, res) => {
+  const { dniBzp, dniTed, budzetMs } = req.body ?? {};
+  const wynik = await runOknoWynikow({
+    ...(Number.isFinite(dniBzp) ? { dniBzp } : {}),
+    ...(Number.isFinite(dniTed) ? { dniTed } : {}),
+    budzetMs: Number.isFinite(budzetMs) ? budzetMs : BUDZET_WYZWALACZA_MS,
+  });
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
+/**
+ * Ręczny import planów postępowań z TED (Radar planów) — BEZ dopasowań i BEZ AI.
+ *
+ * `dni` pozwala zrobić pierwsze zasilenie: WOI obowiązuje do 12 miesięcy, więc
+ * roczny import (`dni: 365`, ~2 500 ogłoszeń, kilkanaście zapytań) wypełnia radar
+ * od razu, zamiast czekać rok na harmonogram. Idempotentny: docId = numer publikacji.
+ */
+router.post('/okno-planow', ah(async (req, res) => {
+  const dni = Number(req.body?.dni);
+  const wynik = await runOknoPlanow(Number.isInteger(dni) && dni >= 1 && dni <= 400 ? { dni } : {});
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
+/**
+ * Ręczne przeliczenie benchmarku rynku z ZAPISANYCH rozstrzygnięć (etap 6).
+ *
+ * Nie dotyka rejestrów zewnętrznych — liczy od nowa z tego, co już w bazie.
+ * To jest właściwa reakcja na poprawkę parsera albo zmianę progów próbki.
+ */
+router.post('/benchmark', ah(async (req, res) => {
+  const wynik = await runBenchmarkRynku();
+  res.json(wynik);
+}));
+
+/**
+ * Ręczne przeliczenie STATYSTYK WYNIKÓW (`wyniki_stats`) — tych, które karmią
+ * `GET /matches/:id/wyniki`.
+ *
+ * 🚨 Po co osobny wyzwalacz, skoro jest cron: `aggregateResults` chodzi RAZ
+ * W TYGODNIU (niedziela 4:00). Gdy naprawia się to, co ten job liczy — a etap 6
+ * naprawił samo pobieranie wyników z BZP, martwe od rundy 16 — czekanie do
+ * niedzieli znaczy „nie wiem, czy naprawa działa". Operator ma móc to sprawdzić
+ * od razu, a po naprawie parsera przeliczyć bez ruszania rejestru.
+ *
+ * Bez płatnego AI: job liczy z zapisanych rozstrzygnięć, a po rejestr sięga tylko
+ * wtedy, gdy w bazie jest ich za mało.
+ */
+router.post('/agreguj-wyniki', ah(async (req, res) => {
+  const { dni } = req.body ?? {};
+  const wynik = await runWynikiAggregation(Number.isFinite(dni) ? { dni } : {});
+  res.json(wynik);
 }));
 
 /** Podstawowe statystyki systemu. */

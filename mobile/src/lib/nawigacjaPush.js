@@ -9,6 +9,8 @@
  * i jobs/remindDeadlines.js):
  *  • `new_matches`      → nowe dopasowane przetargi → lista „Twoje przetargi" (MatchFeed).
  *  • `deadline_reminder`→ zbliża się termin zapisanego przetargu → „Zapisane" (Saved).
+ *  • `nowe_trafienia`   → nowe przetargi w obserwowanym wyszukiwaniu → centrum alertów.
+ *  • `zmiany`           → zmiana terminu/wartości/statusu obserwowanego ogłoszenia → centrum alertów.
  *
  * Push „deadline_reminder" niesie `tender_id`, ale NIE cały obiekt dopasowania —
  * ekran szczegółów wymaga pełnego `match` (z tenderem), więc kierujemy na listę
@@ -30,6 +32,20 @@ export function celPush(data) {
       return {
         ekran: 'Saved',
         params: data.tender_id ? { podswietlTenderId: String(data.tender_id) } : {},
+      };
+    /*
+     * Monitoring (etap 5). Oba typy prowadzą do CENTRUM ALERTÓW, a nie wprost do
+     * ogłoszenia: jeden alert potrafi dotyczyć kilku przetargów naraz („zmiany
+     * w 4 obserwowanych ogłoszeniach"), więc skok do jednego z nich ukrywałby resztę.
+     * `klucz` pozwala centrum podświetlić właściwy wpis.
+     */
+    case 'nowe_trafienia':
+    case 'zmiany':
+    // Radar planów: „przetarg z obserwowanego planu ogłoszono".
+    case 'plan_ogloszony':
+      return {
+        ekran: 'CentrumAlertow',
+        params: data.klucz ? { podswietlKlucz: String(data.klucz) } : {},
       };
     default:
       return null;

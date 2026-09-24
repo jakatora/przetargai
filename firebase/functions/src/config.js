@@ -62,6 +62,73 @@ const schema = z.object({
   TED_API_BASE_URL: z.string().url().default('https://api.ted.europa.eu'),
   TED_LOOKBACK_DAYS: z.coerce.number().int().positive().default(7),
 
+  /*
+   * BAZA KONKURENCYJNOŚCI — zamówienia z FUNDUSZY EUROPEJSKICH (etap 3).
+   *
+   * Trzeci rejestr obok BZP (Pzp) i TED (powyżej progów UE). Ogłoszeń beneficjentów
+   * dotacji nie ma w żadnym z tamtych — obowiązuje ich „zasada konkurencyjności",
+   * nie Pzp. API publiczne, JSON, bez klucza; pomiar 2026-09-24: 1 135 ogłoszeń
+   * otwartych, 636 opublikowanych w ostatnich 7 dniach.
+   * 'false' wyłącza źródło bez wdrożenia kodu — tak samo jak TED.
+   */
+  BK_ENABLED: z.enum(['true', 'false']).default('true'),
+  BK_API_BASE_URL: z.string().url().default('https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl/api'),
+  BK_PUBLIC_BASE_URL: z.string().url().default('https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl'),
+  /*
+   * Okno czasu jest CZYSTO KLIENCKIE: BK ignoruje wszystkie sprawdzone parametry
+   * dat (publication_date_from, publicationDateFrom, date_from, publication_date[from]
+   * — `meta.total` nie drgnął). Listę bierzemy w całości i tniemy ją u siebie.
+   */
+  BK_LOOKBACK_DAYS: z.coerce.number().int().positive().default(30),
+  BK_LIMIT_STRONY: z.coerce.number().int().positive().default(500),
+  // Sufit offsetu po stronie BK to ~10 000 (page=21 przy limit=500 → HTTP 500).
+  BK_MAKS_STRON: z.coerce.number().int().positive().default(20),
+  /*
+   * Ile razy powtórzyć CAŁE przejście stron, gdy pokrycie się nie domknęło.
+   * BK oddaje wyniki w niestabilnej kolejności — jeden przebieg dał w pomiarze
+   * 921/1135, drugi 1012/1135, trzeci 1135/1135. Bez powtórek gubimy do 19 % rynku.
+   */
+  BK_MAKS_PRZEBIEGOW: z.coerce.number().int().positive().default(4),
+  /*
+   * Ile SZCZEGÓŁÓW wolno pobrać w jednym przebiegu. Wartość zamówienia i CPV są
+   * wyłącznie w szczegółach (N+1), więc to główny koszt czasu. 171 nowych ogłoszeń
+   * na dobę mieści się w kilku przebiegach co 3 h, a checkpoint pilnuje reszty.
+   */
+  BK_MAKS_SZCZEGOLOW: z.coerce.number().int().nonnegative().default(150),
+  /** Ile zniknięć z listy wolno zweryfikować szczegółem w jednym przebiegu. */
+  BK_MAKS_WERYFIKACJI: z.coerce.number().int().nonnegative().default(40),
+
+  /*
+   * MOST do backendu Railway (P0-4, audyt 2026-09-23 §3.1).
+   *
+   * Sześć dowiezionych modułów (Sejf, Radar SWZ, Radar podprogowy, Czarna
+   * skrzynka, Symulator płynności, Radar planów) i 42 wywołania `/api/przetarg/*`
+   * żyją WYŁĄCZNIE na Railway, a aplikacja ze sklepów mówi do Cloud Functions —
+   * więc na produkcji wszystkie zwracały 404. Most przekazuje te trasy dalej,
+   * tłumacząc tożsamość. `MOST_ENABLED=false` wyłącza go bez wdrożenia kodu.
+   */
+  MOST_ENABLED: z.enum(['true', 'false']).default('true'),
+  MOST_RAILWAY_URL: z.string().url().default('https://backend-production-a43e3.up.railway.app'),
+  // Konta pomostowe zakładamy na WŁASNEJ domenie technicznej, nigdy na adresie
+  // użytkownika — inaczej powitalny e-mail z Railway trafiłby do jego skrzynki.
+  MOST_EMAIL_DOMENA: z.string().default('most.przetarg-ai.pl'),
+  MOST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+
+  /*
+   * Pula dopasowań (P0-5). Do 2026-09-24 `openPool` brało JEDNO zapytanie
+   * `limit(2000)` posortowane po terminie — przy 7249 otwartych przetargach
+   * (pomiar produkcji 2026-09-23) silnik widział 28 % rynku, a ogłoszenia
+   * z dalszym terminem nie trafiały do feedu nigdy i bez śladu w logach.
+   *
+   * Teraz pula jest stronicowana do wyczerpania wyników. `PULA_MAKS` zostaje
+   * jako BEZPIECZNIK KOSZTOWY (odczyty Firestore), nie jako reguła biznesowa:
+   * 20000 to ~2,7× dzisiejszy rynek, czyli zapas na lata, a jego osiągnięcie
+   * jest raportowane (`statystykiPuli().osiagnietoSufit`) zamiast milczeć.
+   * Pula czytana jest RAZ na cykl i cache'owana, więc koszt to ułamek centa.
+   */
+  PULA_MAKS: z.coerce.number().int().positive().default(20_000),
+  PULA_ROZMIAR_STRONY: z.coerce.number().int().positive().default(1_000),
+
   MATCH_CONFIDENCE_THRESHOLD: z.coerce.number().int().min(0).max(100).default(60),
   FREE_TIER_DAILY_MATCH_LIMIT: z.coerce.number().int().positive().default(5),
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(10),
@@ -84,6 +151,8 @@ export const features = {
   email: Boolean(env.RESEND_API_KEY),
   invoicing: env.FAKTUROWANIE_ENABLED === 'true' && Boolean(env.FAKTUROWNIA_API_KEY && env.FAKTUROWNIA_DOMAIN),
   ted: env.TED_ENABLED === 'true',
+  bk: env.BK_ENABLED === 'true',
+  most: env.MOST_ENABLED === 'true',
 };
 
 /*

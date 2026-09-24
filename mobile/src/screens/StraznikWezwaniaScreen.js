@@ -145,7 +145,7 @@ export default function StraznikWezwaniaScreen({ route }) {
                     {podp ? <Text style={styles.dokPodp}>{podp}</Text> : null}
                   </View>
                 </Pressable>
-                <Pressable onPress={() => usun(d.id)} hitSlop={8} accessibilityLabel="Usuń pozycję">
+                <Pressable accessibilityRole="button" onPress={() => usun(d.id)} hitSlop={8} accessibilityLabel="Usuń pozycję">
                   <Text style={styles.usun}>Usuń</Text>
                 </Pressable>
               </View>

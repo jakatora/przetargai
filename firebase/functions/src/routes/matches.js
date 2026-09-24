@@ -6,7 +6,10 @@ import { matches, feedback, saved, tenders, streszczenieQuota, wynikiStats } fro
 import { kluczWyniku } from '../lib/wynikiAgregacja.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
-import { publicMatch, publicSaved } from '../lib/serialize.js';
+import { publicMatch, publicSaved, przetargZDopasowania } from '../lib/serialize.js';
+import { wyjasnijDopasowanie, nastepnyKrokProfilu } from '../lib/wyjasnienieDopasowania.js';
+import { pobierzZnacznikiZrodel } from '../services/zakresZrodel.js';
+import { zbudujKarteStartu } from '../services/kartaStartu.js';
 import { summarizeTender } from '../services/ai.js';
 import { normalizujStatus, oczyscNotatke, STATUSY } from '../lib/statusPrzetargu.js';
 import { zbudujZachete, POCZATEK_TYGODNIA_MS } from '../lib/potencjal.js';
@@ -35,12 +38,38 @@ router.get('/', ah(async (req, res) => {
 
   // Dokumenty niosą zdenormalizowane pola przetargu (bez JOIN-a); publicMatch
   // składa z nich identyczny kształt odpowiedzi jak wersja SQLite.
-  const rows = await matches.listForUser(req.user.id, limit, przed);
+  const [rows, znaczniki] = await Promise.all([
+    matches.listForUser(req.user.id, limit, przed),
+    pobierzZnacznikiZrodel(),
+  ]);
   audit({ userId: req.user.id, action: 'list_matches', ip: req.ip });
 
   // Pełna strona ⇒ prawdopodobnie jest kolejna. Krótsza ⇒ to koniec.
   const nastepny = rows.length === limit ? matches.kursorZ(rows[rows.length - 1]) : null;
-  res.json({ matches: rows.map(publicMatch), count: rows.length, limit, next_before: nastepny });
+
+  /*
+   * Wyjaśnienie liczy się TU, z profilu i zdenormalizowanych pól przetargu —
+   * bez zapytania do bazy i bez wywołania AI. Karta ma powiedzieć, który sygnał
+   * zadziałał, zamiast jednego zdania „Trafione słowa kluczowe: …".
+   */
+  const wyjasnione = rows.map((row) => ({
+    ...publicMatch(row, znaczniki),
+    wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
+  }));
+
+  /*
+   * Podpowiedź dotyczy PUSTEGO FEEDU, nie końca listy — dlatego tylko na
+   * pierwszej stronie. Doczepiona do ostatniej strony wyglądałaby jak zarzut,
+   * że profil jest zły, choć feed po prostu się skończył.
+   */
+  const pierwszaStrona = !przed;
+  const podpowiedz = pierwszaStrona
+    ? nastepnyKrokProfilu(req.user, { liczbaDopasowan: rows.length })
+    : null;
+
+  res.json({
+    matches: wyjasnione, count: rows.length, limit, next_before: nastepny, podpowiedz,
+  });
 }));
 
 /**
@@ -48,8 +77,13 @@ router.get('/', ah(async (req, res) => {
  * MUSI stać PRZED `GET /:id`, inaczej Express dopasowałby /saved jako id="saved".
  */
 router.get('/saved', ah(async (req, res) => {
-  const rows = await saved.list(req.user.id);
-  res.json({ saved: rows.map(publicSaved), count: rows.length });
+  const [rows, znaczniki] = await Promise.all([saved.list(req.user.id), pobierzZnacznikiZrodel()]);
+  // Ten sam komponent karty co w feedzie => ten sam kształt wyjaśnienia.
+  const wyjasnione = rows.map((row) => ({
+    ...publicSaved(row, znaczniki),
+    wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
+  }));
+  res.json({ saved: wyjasnione, count: rows.length });
 }));
 
 /** Same identyfikatory zapisanych — do zaznaczania ikony zakładki w feedzie. */
@@ -204,6 +238,26 @@ router.get('/:id/wyniki', ah(async (req, res) => {
   res.json({ wyniki: stat ?? null, powod: stat ? undefined : 'brak_danych' });
 }));
 
+/**
+ * Karta „Czy warto startować?" dla dopasowania (etap 6). MUSI stać przed `GET /:id`.
+ *
+ * Bez płatnego AI: czyta gotowe kubełki benchmarku, liczone w jobie.
+ */
+router.get('/:id/czy-warto', ah(async (req, res) => {
+  const row = await matches.detail(req.user.id, req.params.id);
+  if (!row) throw notFound('Dopasowanie nie zostało znalezione');
+
+  const tender = await tenders.findById(row.tender_id);
+  if (!tender) throw notFound('Przetarg nie został znaleziony');
+
+  const karta = await zbudujKarteStartu({
+    tender,
+    profil: { wartosc_max: req.user.wartosc_max ?? null },
+    teraz: Date.now(),
+  });
+  res.json({ karta });
+}));
+
 /** Szczegóły pojedynczego dopasowania. */
 router.get('/:id', ah(async (req, res) => {
   // Firestore: detail(userId, matchId) — kolejność (userId, matchId), a cudzych
@@ -212,7 +266,12 @@ router.get('/:id', ah(async (req, res) => {
   const row = await matches.detail(req.user.id, req.params.id);
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
   audit({ userId: req.user.id, action: 'view_match', detail: { matchId: row.id }, ip: req.ip });
-  res.json({ match: publicMatch(row) });
+  res.json({
+    match: {
+      ...publicMatch(row, await pobierzZnacznikiZrodel()),
+      wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
+    },
+  });
 }));
 
 /** Feedback użytkownika do dopasowania (przydatne / nieprzydatne). */

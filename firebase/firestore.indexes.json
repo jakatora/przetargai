@@ -1,11 +1,71 @@
 {
   "indexes": [
     {
+      "collectionGroup": "tenders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "source",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fetched_at",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tenders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "source",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "saved",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "reminder_enabled", "order": "ASCENDING" },
-        { "fieldPath": "remind_at", "order": "ASCENDING" }
+        {
+          "fieldPath": "reminder_enabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "remind_at",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "rozstrzygniecia",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "zamawiajacy_nip",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "opublikowano",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],
@@ -14,9 +74,18 @@
       "collectionGroup": "matches",
       "fieldPath": "created_at",
       "indexes": [
-        { "order": "ASCENDING", "queryScope": "COLLECTION" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
       ]
     },
     {
@@ -42,6 +111,54 @@
       "fieldPath": "ttl",
       "ttl": true,
       "indexes": []
+    },
+    {
+      "collectionGroup": "wyszukiwania",
+      "fieldPath": "alert_wlaczony",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "zmiany",
+      "fieldPath": "wykryto_o",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "alerty",
+      "fieldPath": "ttl",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "obserwowane_plany",
+      "fieldPath": "aktywna",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
     }
   ]
 }

@@ -26,3 +26,30 @@ export function isValidNip(raw) {
   if (checksum === 10) return false;
   return checksum === digits[9];
 }
+
+/**
+ * NIP z wolnego tekstu (TED `buyer-identifier`: „NIP: …, REGON: …", grupy z
+ * myślnikami). Bierze pierwszy ciąg
+ * 10 cyfr (z dozwolonymi myślnikami/spacjami między grupami) o POPRAWNEJ sumie
+ * kontrolnej. Sam REGON (9 cyfr) i śmieci dają null — NIP służy do złączenia planu
+ * z późniejszym ogłoszeniem tego samego zamawiającego, więc zgadywanie jest gorsze
+ * niż brak.
+ * @param {string|string[]|null|undefined} identyfikatory
+ * @returns {string|null}
+ */
+export function wyciagnijNip(identyfikatory) {
+  const teksty = (Array.isArray(identyfikatory) ? identyfikatory : [identyfikatory])
+    .filter((t) => t != null)
+    .map(String);
+  for (const tekst of teksty) {
+    // Ciągi cyfr z pojedynczymi separatorami: „842-00-06-338", „821 000 65 10".
+    for (const ciag of tekst.match(/\d(?:[\s-]?\d)*/g) ?? []) {
+      const kandydaci = [ciag, ...ciag.split(/\s+/)];
+      for (const k of kandydaci) {
+        const cyfry = k.replace(/\D/g, '');
+        if (cyfry.length === 10 && isValidNip(cyfry)) return cyfry;
+      }
+    }
+  }
+  return null;
+}

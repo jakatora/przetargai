@@ -4,6 +4,107 @@ Dziennik prac. Najnowsze wpisy na górze.
 
 ---
 
+## 2026-09-24 — Etap 4: rynek widoczny bez profilu, uczciwe źródło, wyjaśnienie bez AI
+
+### Wykonane
+- **`GET /tenders` — druga lista obok feedu (P1-1).** Feed dopasowań z definicji pokazuje
+  wycinek: przycięty profilem, progiem i dziennym limitem planu Free. Nowy użytkownik
+  z pustym profilem widział pustkę i nie miał jak sprawdzić, czy aplikacja ma dane.
+  Katalog nie czyta profilu, dopasowań ani puli — potwierdzone na produkcji kontem
+  z pustym profilem: `/matches` → 0, `/tenders` → pełna lista.
+- **Paginacja kursorowa z odciskiem filtrów.** Kursor niesie wartość pola sortowania
+  + identyfikator dokumentu + odcisk zestawu filtrów. Podanie go przy innych filtrach
+  kończy się 400, a nie cichym wymieszaniem stron.
+- **Źródło pierwotne + czas synchronizacji + link do oryginału (P1-3)** na karcie feedu,
+  na karcie katalogu i w obu ekranach szczegółów. Plus `zrodla_alternatywne` — to samo
+  postępowanie bywa ogłoszone w dwóch rejestrach, a ofertę składa się tam, gdzie
+  wskazuje ogłoszenie.
+- **Ekran „Zakres danych" (P1-4)** z Konta: stan per rejestr, pokrycie okna i lista
+  rzeczy NIEOBJĘTYCH (BIP-y, platformy bez publicznego API, zamówienia prywatne, plany
+  postępowań) + zastrzeżenie, które jawnie nie obiecuje wszystkich przetargów w Polsce.
+- **Wyjaśnienie dopasowania z konkretów, bez AI.** Cztery sygnały: CPV (z numerami kodów),
+  słowa (z listą trafień), region i skala zamówienia. Dwa ostatnie oznaczone jako
+  `informacja`, bo NIE wchodzą do wyniku silnika. Pusty feed dostaje jeden konkretny
+  następny krok zamiast „zajrzyj później".
+- **PL/EN przez `tr({pl,en})`** w nowych ekranach + przełącznik języka w Koncie.
+  Backend oddaje teksty parami, więc zmiana języka nie wymaga wydania aplikacji.
+
+### Co zmierzyliśmy, a nie założyli
+- **Żądanie o 3 pozycje czytało 300 dokumentów.** Pierwsze wdrożenie (`api-00029-gap`)
+  brało w pętli skanu zawsze pełną stronę. Testy tego nie łapały: emulator
+  z kilkudziesięcioma dokumentami oddaje wszystko za pierwszym razem. Po naprawie — 20.
+- **Wszystkie trzy źródła pokazywały „brak śladu pobrania"**, choć okna BZP i BK domknęły
+  się tej samej nocy. Patrzyliśmy tylko na ślad cyklu dobowego (sprzed naprawy lepkiego
+  merge'a, bez historii per źródło), a checkpointy okien leżały obok nieużyte.
+- **Filtr województwa chował całe źródło BK.** BZP zapisuje region kodem TERYT („PL12"),
+  Baza Konkurencyjności nazwą („małopolskie"). Normalizator rozpoznający wyłącznie cyfry
+  zwracał dla BK `null` — bez błędu, bez logu, po prostu mniej wyników. Naprawione
+  po obu stronach i potwierdzone na żywo: `zrodlo=baza_konkurencyjnosci&region=PL12`
+  zwraca 5 ogłoszeń, wszystkie małopolskie.
+
+### Czego świadomie NIE zrobiliśmy
+- **Nie ruszyliśmy scoringu.** `regiony` i `wartosc_max` to deklaracje kontekstu, nie
+  kryteria wyszukiwania. Zmiana kryteriów unieważnia oceny i wywołuje ponowne
+  dopasowania — to osobna decyzja i osobne ryzyko.
+- **Nie przebudowaliśmy UI.** Mechanizm `tr` obejmuje nowe ekrany; stare zostają polskie.
+  Stary ekran z polskim literałem działa bez zmian, bo `tr('Zapisane')` oddaje go nietknięty.
+- **Nie zmierzyliśmy wyjaśnienia na żywym koncie** — każdy profil z wypełnionymi słowami
+  uruchamia ponowne dopasowanie, czyli płatne AI. Zostaje pokrycie testami (29 asercji).
+
+### Stan
+Backend wdrożony (`api-00031-nij`), testy 606/606 backend i 711/711 mobile, esbuild zielony.
+Aplikacja gotowa w gałęzi do builda — bez wdrożenia, zgodnie z poleceniem etapu.
+
+---
+## 2026-09-24 — Etap 3: Baza Konkurencyjności jako trzecie źródło pipeline'u
+
+### Wykonane
+- **Trzecie źródło ogłoszeń w Cloud Functions** — zamówienia beneficjentów dotacji UE
+  (zasada konkurencyjności, nie Pzp). Nie ma ich ani w BZP, ani w TED.
+  Wdrożone i **zweryfikowane na produkcji**: 1 135 ogłoszeń zapisanych,
+  `otwarte_przetargi` 7 249 → 8 384, zaległość 0, pokrycie 1135/1135.
+- `lib/tempoZapytan.js` — tempo, ponawianie i backoff wyciągnięte z `services/bzp.js`
+  do wspólnej biblioteki. Wiedza „403 to dławienie, nie trwały błąd" kosztowała audyt
+  całą dobę ogłoszeń; nie wolno jej było zostawić prywatną w jednym adapterze.
+- `services/bazaKonkurencyjnosci.js` + `jobs/oknoBk.js` — adapter, okno czasu,
+  checkpoint/resume, statusy aktywne/zmienione/anulowane.
+- `lib/dedupZrodel.js` — deduplikacja MIĘDZY rejestrami (BZP > TED > BK) z linkiem
+  do źródła pierwotnego i uzupełnianiem pustych pól z rejestru pobocznego.
+- `bkOknoFetch` w harmonogramie (co 3 h, +50 min względem BZP), sekcja `bk_okno`
+  w `/health`, rekonsyliacja pobrane/zapisane/odrzucone/duplikaty w śladzie cyklu.
+- `POST /admin/okno-bk` — wyzwalacz importu BEZ dopasowań i BEZ płatnego AI.
+
+### Co zmierzyliśmy, a nie założyli
+- **Kolejność wyników BK jest niestabilna**: jedno przejście stron dało kolejno
+  921/1135, 1012/1135 i 1135/1135. Pojedynczy przebieg gubi do 19 % rynku bez
+  żadnego błędu. „Kolejny przebieg nic nie dodał" NIE jest warunkiem stopu —
+  przebieg 2 dołożył 0 rekordów, przebieg 3 dołożył 214.
+- **`GET /announcements/{id}` zwraca WERSJĘ, nie ogłoszenie**: własne `id` i status
+  zawsze `PUBLISHED`. Prawdziwy status (w tym `CANCELLED`) i identyfikator z linku
+  siedzą w `data.advertisement.advertisement`. Fixture anulowanego ogłoszenia
+  broni tej pułapki w testach.
+- **Filtry dat są ignorowane** (4 sprawdzone warianty nazw) — okno czasu musi być
+  klienckie. Dlatego okno USTAWIA KOLEJNOŚĆ, a nie odsiewa: ogłoszenie sprzed pół
+  roku, wciąż otwarte, to często największy kontrakt.
+- **Pod ciągłym ruchem BK spowalnia**: w kontrolowanym drenażu 3 z 7 przebiegów
+  padły po ~80 s (3 × 25 s limitu czasu). Naprawione — awaria strony przy już
+  zebranych danych kończy listowanie z jawnie niepełnym pokryciem zamiast kasować
+  cały przebieg.
+
+### Środowisko (odblokowane przy okazji)
+Emulator Firestore nie wstawał na tej maszynie. Przyczyną NIE była wersja JDK:
+`Selector.open()` padał, bo domyślny katalog gniazd AF_UNIX to ścieżka w notacji 8.3.
+Fix: portable Temurin 21 + `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\jtmp`.
+Baseline przed etapem: 422/422. Po etapie: **513/513**.
+
+### Następne kroki
+TED `form-type = planning` (208 polskich ogłoszeń / 30 dni) — jedyne źródło, które
+zasili gotowy i przetestowany Radar planów postępowań, dziś pozbawiony danych.
+Szczegóły i odrzucone warianty: `implementation-status.json`.
+
+---
+
+
 ## 2026-05-23 — Backend LIVE na Railway + Stripe webhook
 
 ### Wykonane

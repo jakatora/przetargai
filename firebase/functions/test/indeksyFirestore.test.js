@@ -50,26 +50,69 @@ function wszystkieZrodla(katalog) {
 const PLIKI = wszystkieZrodla(SRC);
 const kod = PLIKI.map((p) => bezKomentarzy(fs.readFileSync(p, 'utf8'))).join('\n');
 
-test('KRYTYCZNE: żadne zapytanie nie łączy where(==) z orderBy po INNYM polu', () => {
-  // Dopasowuje np. .where('deadline','==',null).orderBy('fetched_at','desc')
-  const wzorzec = /\.where\(\s*['"]([\w.]+)['"]\s*,\s*['"]==['"][^)]*\)\s*\.orderBy\(\s*['"]([\w.]+)['"]/g;
-  const naruszenia = [];
-  for (const m of kod.matchAll(wzorzec)) {
-    const [, poleFiltru, poleSortowania] = m;
-    if (poleFiltru !== poleSortowania) naruszenia.push(`where('${poleFiltru}','==') + orderBy('${poleSortowania}')`);
+/**
+ * Zapytania widziane w kodzie: filtr + pierwsze sortowanie po NIM NASTĘPUJĄCE.
+ *
+ * Wzorzec regexowy „where(...) zaraz .orderBy(...)" miał LUKĘ: `[^)]*` zatrzymywał
+ * się na pierwszym nawiasie zamykającym, więc `where('nip', '==', String(nip))`
+ * w ogóle nie był dopasowany — a to dokładnie ten kształt wymaga indeksu
+ * złożonego. Strażnik, który nie widzi zapytania, nie chroni przed niczym.
+ * Dlatego szukamy `.where(` i przeglądamy OKNO kodu aż do wykonania zapytania.
+ */
+function zapytaniaZKodu() {
+  const znalezione = [];
+  for (const m of kod.matchAll(/\.where\(\s*['"]([\w.]+)['"]\s*,\s*['"]([^'"]+)['"]/g)) {
+    const [, pole, operator] = m;
+    const reszta = kod.slice(m.index, m.index + 400);
+    const koniec = reszta.search(/\.(?:get|stream|count)\(/);
+    const okno = koniec > 0 ? reszta.slice(0, koniec) : reszta;
+    const sortowania = [...okno.matchAll(/\.orderBy\(\s*['"]([\w.]+)['"]/g)].map((s) => s[1]);
+    if (sortowania.length) znalezione.push({ pole, operator, sortowania });
   }
-  assert.deepEqual(naruszenia, [], 'takie zapytanie wymaga indeksu złożonego — dodaj go do firestore.indexes.json albo uprość zapytanie');
+  return znalezione;
+}
+
+/** Czy firestore.indexes.json deklaruje indeks obsługujący ten filtr i sortowanie. */
+function indeksIstnieje({ pole, sortowanie }) {
+  const konfiguracja = JSON.parse(fs.readFileSync(INDEXES, 'utf8'));
+  return (konfiguracja.indexes ?? []).some((i) => {
+    const pola = (i.fields ?? []).map((f) => f.fieldPath);
+    return pola.includes(pole) && pola.includes(sortowanie);
+  });
+}
+
+test('KRYTYCZNE: where(==) z orderBy po INNYM polu ma zadeklarowany indeks złożony', () => {
+  const naruszenia = [];
+  for (const { pole, operator, sortowania } of zapytaniaZKodu()) {
+    if (operator !== '==') continue;
+    const sortowanie = sortowania.find((s) => s !== pole && s !== '__name__');
+    if (!sortowanie) continue;
+    if (!indeksIstnieje({ pole, sortowanie })) {
+      naruszenia.push(`where('${pole}','==') + orderBy('${sortowanie}')`);
+    }
+  }
+  assert.deepEqual(naruszenia, [],
+    'takie zapytanie wymaga indeksu złożonego — dodaj go do firestore.indexes.json albo uprość zapytanie');
 });
 
-test('KRYTYCZNE: nierówność i orderBy dotyczą TEGO SAMEGO pola', () => {
+test('KRYTYCZNE: nierówność i PIERWSZE orderBy dotyczą TEGO SAMEGO pola', () => {
   // Firestore wymaga, by pierwsze orderBy było na polu z nierównością.
-  const wzorzec = /\.where\(\s*['"]([\w.]+)['"]\s*,\s*['"](?:<|<=|>|>=|!=)['"][^)]*\)\s*\.orderBy\(\s*['"]([\w.]+)['"]/g;
   const naruszenia = [];
-  for (const m of kod.matchAll(wzorzec)) {
-    const [, poleFiltru, poleSortowania] = m;
-    if (poleFiltru !== poleSortowania) naruszenia.push(`where('${poleFiltru}', nierówność) + orderBy('${poleSortowania}')`);
+  for (const { pole, operator, sortowania } of zapytaniaZKodu()) {
+    if (!['<', '<=', '>', '>=', '!='].includes(operator)) continue;
+    if (sortowania[0] !== pole) naruszenia.push(`where('${pole}','${operator}') + orderBy('${sortowania[0]}')`);
   }
   assert.deepEqual(naruszenia, [], 'pierwsze orderBy musi być na polu nierówności');
+});
+
+test('strażnik WIDZI zapytanie z wywołaniem funkcji w wartości filtru', () => {
+  /*
+   * Asercja na samego strażnika: poprzednia wersja gubiła `where('x','==',String(v))`,
+   * czyli kształt, którym etap 6 czyta rozstrzygnięcia zamawiającego. Test, który
+   * nie widzi zapytania, przechodzi na zielono i niczego nie pilnuje.
+   */
+  const widziane = zapytaniaZKodu().some((z) => z.pole === 'zamawiajacy_nip');
+  assert.ok(widziane, 'strażnik nie dostrzegł filtru po NIP-ie zamawiającego z wywołaniem String()');
 });
 
 test('collectionGroup ma zadeklarowany indeks w firestore.indexes.json', () => {

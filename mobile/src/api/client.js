@@ -95,6 +95,63 @@ export const api = {
     return request(`/matches?${params.toString()}`);
   },
   getMatch: (id) => request(`/matches/${id}`),
+
+  // ----- Katalog „Wszystkie przetargi" (P1-1) -----
+  // DRUGA lista w aplikacji, obok feedu dopasowań. Nie zależy od profilu ani od
+  // dziennego limitu planu — pokazuje rynek. Stronicowanie kursorem: `kursor` to
+  // `next_kursor` z poprzedniej odpowiedzi, związany z ZESTAWEM filtrów (podanie
+  // go po zmianie filtrów kończy się błędem 400, nie wymieszaniem stron).
+  /**
+   * @param {object} opcje filtry z lib/katalogPrzetargow.parametryZapytania
+   *   + `limit` i `kursor`
+   */
+  getTenders: ({ kursor, limit = 20, ...filtry } = {}) => {
+    const params = new URLSearchParams({ limit: String(limit) });
+    for (const [klucz, wartosc] of Object.entries(filtry)) {
+      if (wartosc !== undefined && wartosc !== null && wartosc !== '') params.set(klucz, String(wartosc));
+    }
+    if (kursor) params.set('kursor', kursor);
+    return request(`/tenders?${params.toString()}`);
+  },
+  /** Słowniki filtrów (źródła, województwa, sortowania) z etykietami PL/EN. */
+  getTenderFiltry: () => request('/tenders/filtry'),
+  /** Zakres danych: obsługiwane rejestry, ostatni sukces/błąd per źródło, czego NIE obejmujemy. */
+  getZakresDanych: () => request('/tenders/zakres-danych'),
+
+  // ----- Monitoring: zapisane wyszukiwania, alerty, kalendarz (etap 5) -----
+  // Zapisane wyszukiwanie zamienia jedno spojrzenie na katalog w stałą obserwację.
+  // Filtry idą TYM SAMYM kształtem co do `/tenders` (lib/katalogPrzetargow), więc
+  // alert obejmuje dokładnie ten zbiór, z którego został zapisany. Bez płatnego AI.
+  /** Lista własnych obserwacji + wykorzystanie limitów. */
+  getWyszukiwania: () => request('/wyszukiwania'),
+  /** Słownik częstotliwości i limitów (etykiety PL/EN) — aplikacja nie wymyśla własnych. */
+  getCzestotliwosci: () => request('/wyszukiwania/czestotliwosci'),
+  /** Zapis: { nazwa, filtry, alert_wlaczony?, czestotliwosc? }. 409 = duplikat albo limit. */
+  zapiszWyszukiwanie: (payload) => request('/wyszukiwania', { method: 'POST', body: payload }),
+  /** Edycja CZĄSTKOWA — pole nieprzekazane zachowuje dotychczasową wartość. */
+  edytujWyszukiwanie: (id, payload) => request(`/wyszukiwania/${id}`, { method: 'PATCH', body: payload }),
+  usunWyszukiwanie: (id) => request(`/wyszukiwania/${id}`, { method: 'DELETE', body: {} }),
+  /** Podgląd „co teraz pasuje" — NIE konsumuje okna monitoringu. */
+  podgladWyszukiwania: (id, limit = 20) => request(`/wyszukiwania/${id}/podglad?limit=${limit}`),
+
+  /** Centrum alertów: lista + licznik nieprzeczytanych + słownik typów zmian. */
+  getAlerty: (limit = 50) => request(`/alerty?limit=${limit}`),
+  oznaczAlertPrzeczytany: (id) => request(`/alerty/${id}/przeczytany`, { method: 'POST', body: {} }),
+  oznaczAlertyPrzeczytane: () => request('/alerty/przeczytane', { method: 'POST', body: {} }),
+  /** Pełna historia zmian JEDNEGO ogłoszenia — także zmiany nieistotne dla alertu. */
+  getHistorieZmian: (tenderId, limit = 50) => request(`/alerty/zmiany/${tenderId}?limit=${limit}`),
+
+  /** Kalendarz: trzy terminy każdego zapisanego przetargu + karta następnego kroku. */
+  getKalendarz: () => request('/kalendarz'),
+  /** Kalendarz JEDNEGO ogłoszenia — do sekcji na ekranie szczegółów. */
+  getKalendarzPrzetargu: (tenderId) => request(`/kalendarz/${tenderId}`),
+  /**
+   * Adres pliku ICS. Zwracamy ADRES, a nie treść: pobranie idzie przez `fetch`
+   * z nagłówkiem autoryzacji w ekranie, który od razu oddaje plik systemowemu
+   * udostępnianiu. To świadomie NIE jest adres subskrypcji kalendarza — ten
+   * wymagałby długożyciowego tokenu w samym URL-u.
+   */
+  urlKalendarzaIcs: () => `${API_URL}/kalendarz/ics`,
   /**
    * Wyjaśnienie AI ogłoszenia (D-052). Odpowiedź: { streszczenie, cached } gdy się
    * udało, albo { streszczenie: null, powod, komunikat } przy limicie/niedostępności.
@@ -280,4 +337,63 @@ export const api = {
   /** { kwota, termin, dzisiaj?, stopaRoczna?, numerUmowy?, zamawiajacy?, ... } → { wezwanie } (gotowe pismo). */
   zabezpieczenieWezwanie: (payload) =>
     request('/api/przetarg/zabezpieczenie/wezwanie', { method: 'POST', body: payload }),
+
+  // ----- Wygrywalność (etap 6): „czy warto startować", benchmark, checklista -----
+  // Liczone z ROZSTRZYGNIĘĆ obu rejestrów (BZP + TED), BEZ płatnego AI — karta ma
+  // się otwierać przy każdym ogłoszeniu, tak jak katalog. Trasy w Cloud Functions
+  // (prefiks `/wygrywalnosc`), nie w moście `/api/przetarg/*`.
+  /**
+   * Karta decyzji dla przetargu z katalogu.
+   * → `{ stan: 'otwarte', karta }` albo `{ stan: 'rozstrzygniete', rozstrzygniecie }`.
+   * `karta.werdykt` to KATEGORIA (sprawdz/uwazaj/trudny/brak_danych/po_terminie) —
+   * backend świadomie nie oddaje „procentu szans".
+   */
+  czyWartoStartowac: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}`),
+  /** Karta decyzji dla pozycji z feedu dopasowań → `{ karta }`. */
+  czyWartoDlaDopasowania: (matchId) => request(`/matches/${matchId}/czy-warto`),
+  /** Surowe kubełki benchmarku (zamawiający / dział w regionie / dział w kraju). */
+  benchmarkPrzetargu: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}/benchmark`),
+  /**
+   * Checklista „co musisz mieć na dzień składania". BEZSTANOWA: wymagania
+   * z Radaru SWZ i stan Sejfu podaje KLIENT, backend dokłada dzień składania
+   * z kalendarza postępowania. → `{ checklista, kalendarz }`.
+   */
+  checklistaOferty: (tenderId, { wymagania = [], dokumenty = [] } = {}) =>
+    request(`/wygrywalnosc/tender/${tenderId}/checklista`, {
+      method: 'POST',
+      body: { wymagania, dokumenty },
+    }),
+
+  // ----- Radar planów postępowań (P2-4) -----
+  // Wstępne ogłoszenia informacyjne z TED, ranking pod profil i plan przygotowań.
+  // BEZ płatnego AI — trasy w Cloud Functions (prefiks `/radar-planow`).
+  /**
+   * Lista radaru. `tryb`: 'dla_mnie' (ranking) | 'wszystkie' (rynek planów).
+   * → `{ tryb, pozycje, lacznie_aktywnych, dopasowanych, podpowiedz, zbudowano_o, zrodlo }`.
+   * Pusty profil dostaje `tryb: 'wszystkie'` i `podpowiedz.kod = 'uzupelnij_profil'`.
+   */
+  radarPlanow: ({ tryb = 'dla_mnie', region } = {}) => {
+    const qs = new URLSearchParams({ tryb });
+    if (region) qs.set('region', region);
+    return request(`/radar-planow?${qs.toString()}`);
+  },
+  /**
+   * Szczegół pozycji planu → `{ pozycja, dopasowanie, przygotowania, ogloszenie,
+   * ogloszenie_sprawdzone, ostrzezenia }`. `ogloszenie.alarm` = „to jest to, na co czekałeś".
+   */
+  radarPlanu: (id) => request(`/radar-planow/${encodeURIComponent(id)}`),
+  /** Obserwuj plan: alert, gdy zamawiający ogłosi pasujący przetarg. → `{ obserwacja, ostrzezenie }`. */
+  obserwujPlan: (id) => request(`/radar-planow/${encodeURIComponent(id)}/obserwuj`, { method: 'POST', body: {} }),
+  przestanObserwowacPlan: (id) => request(`/radar-planow/${encodeURIComponent(id)}/obserwuj`, { method: 'DELETE' }),
+  /** Obserwowane plany konta → `{ obserwowane, limit }`. */
+  obserwowanePlany: () => request('/radar-planow/obserwowane'),
+
+  // ----- Eksport CSV (P2-3) -----
+  /**
+   * Wysyła plik CSV jako załącznik na e-mail WŁAŚCICIELA konta (adres z konta,
+   * nie z żądania). `rodzaj`: 'zapisane' | 'katalog' | 'kalendarz' (plik .ics); `filtry` jak w getTenders.
+   * → `{ wyslano, tryb_degradacji, do, plik, wierszy, obciety }`. 429 = dzienny limit.
+   */
+  eksportWyslij: ({ rodzaj, filtry } = {}) =>
+    request('/eksport/wyslij', { method: 'POST', body: { rodzaj, ...(filtry ? { filtry } : {}) } }),
 };

@@ -69,7 +69,17 @@ const schema = z.object({
   DATABASE_PATH: z.string().default('./data/data.db'),
   BACKUP_DIR: z.string().default(''),
   BACKUP_CRON: z.string().default('0 3 * * *'),
-  BACKUP_RETENTION: z.coerce.number().int().positive().default(14),
+  /*
+   * Ile kopii trzymamy na wolumenie. Domyślne 14 było NIEREALIZOWALNE: przy bazie
+   * ~50 MB kopia waży ~47 MB, więc 14 × 47 ≈ 660 MB na wolumenie 500 MB. Retencja,
+   * której nośnik nigdy nie mógł pomieścić, zapełniła dysk i zakleszczyła backupy
+   * na 17 dni (produkcja 2026-09-07…23).
+   *
+   * 7 kopii ≈ 330 MB mieści się obok bazy (54 MB) i zapasu na przebieg (~63 MB)
+   * nawet na 500 MB, a na docelowym 2 GB zostawia szeroki margines. Niezależnie od
+   * tej liczby `przytnijKopie` przycina głębiej, gdy realnie brakuje miejsca.
+   */
+  BACKUP_RETENTION: z.coerce.number().int().positive().default(7),
 
   // Codzienne pobieranie przetargów o 12:00 czasu polskiego (SCHEDULER_TZ).
   TENDER_FETCH_CRON: z.string().default('0 12 * * *'),

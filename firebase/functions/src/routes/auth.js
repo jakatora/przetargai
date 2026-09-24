@@ -7,6 +7,7 @@ import { authRequired, signToken } from '../middleware/auth.js';
 import { users, profilQuota, passwordResets } from '../db/repos.js';
 import { zaproponujProfil } from '../services/ai.js';
 import { isValidNip, normalizeNip } from '../lib/nip.js';
+import { kodWojewodztwa } from '../lib/wojewodztwa.js';
 import { badRequest, conflict, unauthorized, forbidden, serviceUnavailable } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicUser } from '../lib/serialize.js';
@@ -207,6 +208,14 @@ const profileSchema = z.object({
   company_name: z.string().min(2).max(200).optional(),
   keywords: z.array(z.string().min(1).max(60)).max(30).optional(),
   cpv_codes: z.array(z.string().min(1).max(20)).max(30).optional(),
+  /*
+   * Deklaracje kontekstu (P1-4). NIE wchodzą do scoringu — zmiana silnika
+   * dopasowań to inna decyzja i inne ryzyko. Wyjaśnienie dopasowania używa ich,
+   * żeby powiedzieć „to poza Twoim terenem" / „to ponad Twoją skalę", zamiast
+   * milczeć. Przyjmujemy kody TERYT i nazwy województw; nierozpoznane odpadają.
+   */
+  regiony: z.array(z.string().min(1).max(40)).max(16).optional(),
+  wartosc_max: z.number().positive().max(1e12).nullable().optional(),
 });
 
 /**
@@ -237,10 +246,18 @@ router.post('/suggest-profile', authRequired, ah(async (req, res) => {
 
 router.patch('/me', authRequired, ah(async (req, res) => {
   const data = parseBody(profileSchema, req.body);
+  // Nierozpoznane województwo nie ma prawa wylądować w bazie — filtr po nim
+  // po cichu nic by nie dopasował, a użytkownik widziałby je jako zapisane.
+  const regiony = data.regiony
+    ? [...new Set(data.regiony.map(kodWojewodztwa).filter(Boolean))]
+    : (req.user.regiony ?? []);
   const updated = await users.updateProfile(req.user.id, {
     companyName: data.company_name ?? req.user.company_name,
     keywords: data.keywords ?? req.user.keywords,
     cpvCodes: data.cpv_codes ?? req.user.cpv_codes,
+    regiony,
+    // `null` w żądaniu znaczy „wycofuję deklarację", brak klucza — „nie zmieniam".
+    wartoscMax: data.wartosc_max === undefined ? (req.user.wartosc_max ?? null) : data.wartosc_max,
   });
   audit({ userId: req.user.id, action: 'update_profile', ip: req.ip });
 

@@ -1,0 +1,658 @@
+[
+ {
+  "title-proc": {
+   "pol": "II Dostawa pojazdu o dopuszczalnej masie całkowitej do 7,5 Mg z windą."
+  },
+  "notice-type": "can-standard",
+  "publication-number": "659329-2026",
+  "estimated-value-lot": [
+   "265953"
+  ],
+  "non-award-justification": [
+   "no-rece"
+  ],
+  "contract-nature-main-lot": [
+   "supplies"
+  ],
+  "result-lot-identifier": [
+   "LOT-0001"
+  ],
+  "procedure-identifier": "a1191f45-8c82-460b-a429-4604dd786f14",
+  "buyer-country-sub": [
+   "PL426"
+  ],
+  "received-submissions-type-val": [
+   "0",
+   "0",
+   "0"
+  ],
+  "classification-cpv": [
+   "34144510",
+   "34144510"
+  ],
+  "buyer-name": {
+   "pol": [
+    "Przedsiębiorstwo Gospodarki Komunalnej Spółka z o.o. w Koszalinie"
+   ]
+  },
+  "publication-date": "2026-09-24+02:00",
+  "received-submissions-type-code": [
+   "t-oth-eea",
+   "t-esubm",
+   "t-sme"
+  ],
+  "links": {
+   "xml": {
+    "MUL": "https://ted.europa.eu/en/notice/659329-2026/xml"
+   },
+   "pdf": {
+    "BUL": "https://ted.europa.eu/bg/notice/659329-2026/pdf",
+    "SPA": "https://ted.europa.eu/es/notice/659329-2026/pdf",
+    "CES": "https://ted.europa.eu/cs/notice/659329-2026/pdf",
+    "DAN": "https://ted.europa.eu/da/notice/659329-2026/pdf",
+    "DEU": "https://ted.europa.eu/de/notice/659329-2026/pdf",
+    "EST": "https://ted.europa.eu/et/notice/659329-2026/pdf",
+    "ELL": "https://ted.europa.eu/el/notice/659329-2026/pdf",
+    "ENG": "https://ted.europa.eu/en/notice/659329-2026/pdf",
+    "FRA": "https://ted.europa.eu/fr/notice/659329-2026/pdf",
+    "GLE": "https://ted.europa.eu/ga/notice/659329-2026/pdf",
+    "HRV": "https://ted.europa.eu/hr/notice/659329-2026/pdf",
+    "ITA": "https://ted.europa.eu/it/notice/659329-2026/pdf",
+    "LAV": "https://ted.europa.eu/lv/notice/659329-2026/pdf",
+    "LIT": "https://ted.europa.eu/lt/notice/659329-2026/pdf",
+    "HUN": "https://ted.europa.eu/hu/notice/659329-2026/pdf",
+    "MLT": "https://ted.europa.eu/mt/notice/659329-2026/pdf",
+    "NLD": "https://ted.europa.eu/nl/notice/659329-2026/pdf",
+    "POL": "https://ted.europa.eu/pl/notice/659329-2026/pdf",
+    "POR": "https://ted.europa.eu/pt/notice/659329-2026/pdf",
+    "RON": "https://ted.europa.eu/ro/notice/659329-2026/pdf",
+    "SLK": "https://ted.europa.eu/sk/notice/659329-2026/pdf",
+    "SLV": "https://ted.europa.eu/sl/notice/659329-2026/pdf",
+    "FIN": "https://ted.europa.eu/fi/notice/659329-2026/pdf",
+    "SWE": "https://ted.europa.eu/sv/notice/659329-2026/pdf"
+   },
+   "pdfs": {
+    "POL": "https://ted.europa.eu/pl/notice/659329-2026/pdfs"
+   },
+   "html": {
+    "BUL": "https://ted.europa.eu/bg/notice/-/detail/659329-2026",
+    "SPA": "https://ted.europa.eu/es/notice/-/detail/659329-2026",
+    "CES": "https://ted.europa.eu/cs/notice/-/detail/659329-2026",
+    "DAN": "https://ted.europa.eu/da/notice/-/detail/659329-2026",
+    "DEU": "https://ted.europa.eu/de/notice/-/detail/659329-2026",
+    "EST": "https://ted.europa.eu/et/notice/-/detail/659329-2026",
+    "ELL": "https://ted.europa.eu/el/notice/-/detail/659329-2026",
+    "ENG": "https://ted.europa.eu/en/notice/-/detail/659329-2026",
+    "FRA": "https://ted.europa.eu/fr/notice/-/detail/659329-2026",
+    "GLE": "https://ted.europa.eu/ga/notice/-/detail/659329-2026",
+    "HRV": "https://ted.europa.eu/hr/notice/-/detail/659329-2026",
+    "ITA": "https://ted.europa.eu/it/notice/-/detail/659329-2026",
+    "LAV": "https://ted.europa.eu/lv/notice/-/detail/659329-2026",
+    "LIT": "https://ted.europa.eu/lt/notice/-/detail/659329-2026",
+    "HUN": "https://ted.europa.eu/hu/notice/-/detail/659329-2026",
+    "MLT": "https://ted.europa.eu/mt/notice/-/detail/659329-2026",
+    "NLD": "https://ted.europa.eu/nl/notice/-/detail/659329-2026",
+    "POL": "https://ted.europa.eu/pl/notice/-/detail/659329-2026",
+    "POR": "https://ted.europa.eu/pt/notice/-/detail/659329-2026",
+    "RON": "https://ted.europa.eu/ro/notice/-/detail/659329-2026",
+    "SLK": "https://ted.europa.eu/sk/notice/-/detail/659329-2026",
+    "SLV": "https://ted.europa.eu/sl/notice/-/detail/659329-2026",
+    "FIN": "https://ted.europa.eu/fi/notice/-/detail/659329-2026",
+    "SWE": "https://ted.europa.eu/sv/notice/-/detail/659329-2026"
+   },
+   "htmlDirect": {
+    "BUL": "https://ted.europa.eu/bg/notice/659329-2026/html",
+    "SPA": "https://ted.europa.eu/es/notice/659329-2026/html",
+    "CES": "https://ted.europa.eu/cs/notice/659329-2026/html",
+    "DAN": "https://ted.europa.eu/da/notice/659329-2026/html",
+    "DEU": "https://ted.europa.eu/de/notice/659329-2026/html",
+    "EST": "https://ted.europa.eu/et/notice/659329-2026/html",
+    "ELL": "https://ted.europa.eu/el/notice/659329-2026/html",
+    "ENG": "https://ted.europa.eu/en/notice/659329-2026/html",
+    "FRA": "https://ted.europa.eu/fr/notice/659329-2026/html",
+    "GLE": "https://ted.europa.eu/ga/notice/659329-2026/html",
+    "HRV": "https://ted.europa.eu/hr/notice/659329-2026/html",
+    "ITA": "https://ted.europa.eu/it/notice/659329-2026/html",
+    "LAV": "https://ted.europa.eu/lv/notice/659329-2026/html",
+    "LIT": "https://ted.europa.eu/lt/notice/659329-2026/html",
+    "HUN": "https://ted.europa.eu/hu/notice/659329-2026/html",
+    "MLT": "https://ted.europa.eu/mt/notice/659329-2026/html",
+    "NLD": "https://ted.europa.eu/nl/notice/659329-2026/html",
+    "POL": "https://ted.europa.eu/pl/notice/659329-2026/html",
+    "POR": "https://ted.europa.eu/pt/notice/659329-2026/html",
+    "RON": "https://ted.europa.eu/ro/notice/659329-2026/html",
+    "SLK": "https://ted.europa.eu/sk/notice/659329-2026/html",
+    "SLV": "https://ted.europa.eu/sl/notice/659329-2026/html",
+    "FIN": "https://ted.europa.eu/fi/notice/659329-2026/html",
+    "SWE": "https://ted.europa.eu/sv/notice/659329-2026/html"
+   }
+  }
+ },
+ {
+  "title-proc": {
+   "pol": "Modernizacja pomieszczeń na potrzeby oddziału szpitalnego w lokalizacji Ceglana"
+  },
+  "notice-type": "can-standard",
+  "publication-number": "659388-2026",
+  "contract-conclusion-date": [
+   "2026-08-25+02:00"
+  ],
+  "result-value-notice": "2890000",
+  "contract-nature-main-lot": [
+   "works"
+  ],
+  "result-lot-identifier": [
+   "LOT-0001"
+  ],
+  "procedure-identifier": "bffcf30b-2d35-4cb6-b512-86471c258632",
+  "buyer-country-sub": [
+   "PL22A"
+  ],
+  "winner-size": [
+   "medium"
+  ],
+  "received-submissions-type-val": [
+   "5",
+   "5",
+   "5",
+   "0",
+   "0"
+  ],
+  "tender-value-cur": [
+   "PLN"
+  ],
+  "tender-value": [
+   "2890000"
+  ],
+  "classification-cpv": [
+   "45215140",
+   "71000000",
+   "45000000",
+   "45215140",
+   "71000000",
+   "45000000"
+  ],
+  "buyer-name": {
+   "pol": [
+    "Uniwersyteckie Centrum Kliniczne im. prof. K. Gibińskiego Śląskiego Uniwersytetu Medycznego w Katowicach"
+   ]
+  },
+  "publication-date": "2026-09-24+02:00",
+  "received-submissions-type-code": [
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea"
+  ],
+  "winner-decision-date": [
+   "2026-08-12+02:00"
+  ],
+  "links": {
+   "xml": {
+    "MUL": "https://ted.europa.eu/en/notice/659388-2026/xml"
+   },
+   "pdf": {
+    "BUL": "https://ted.europa.eu/bg/notice/659388-2026/pdf",
+    "SPA": "https://ted.europa.eu/es/notice/659388-2026/pdf",
+    "CES": "https://ted.europa.eu/cs/notice/659388-2026/pdf",
+    "DAN": "https://ted.europa.eu/da/notice/659388-2026/pdf",
+    "DEU": "https://ted.europa.eu/de/notice/659388-2026/pdf",
+    "EST": "https://ted.europa.eu/et/notice/659388-2026/pdf",
+    "ELL": "https://ted.europa.eu/el/notice/659388-2026/pdf",
+    "ENG": "https://ted.europa.eu/en/notice/659388-2026/pdf",
+    "FRA": "https://ted.europa.eu/fr/notice/659388-2026/pdf",
+    "GLE": "https://ted.europa.eu/ga/notice/659388-2026/pdf",
+    "HRV": "https://ted.europa.eu/hr/notice/659388-2026/pdf",
+    "ITA": "https://ted.europa.eu/it/notice/659388-2026/pdf",
+    "LAV": "https://ted.europa.eu/lv/notice/659388-2026/pdf",
+    "LIT": "https://ted.europa.eu/lt/notice/659388-2026/pdf",
+    "HUN": "https://ted.europa.eu/hu/notice/659388-2026/pdf",
+    "MLT": "https://ted.europa.eu/mt/notice/659388-2026/pdf",
+    "NLD": "https://ted.europa.eu/nl/notice/659388-2026/pdf",
+    "POL": "https://ted.europa.eu/pl/notice/659388-2026/pdf",
+    "POR": "https://ted.europa.eu/pt/notice/659388-2026/pdf",
+    "RON": "https://ted.europa.eu/ro/notice/659388-2026/pdf",
+    "SLK": "https://ted.europa.eu/sk/notice/659388-2026/pdf",
+    "SLV": "https://ted.europa.eu/sl/notice/659388-2026/pdf",
+    "FIN": "https://ted.europa.eu/fi/notice/659388-2026/pdf",
+    "SWE": "https://ted.europa.eu/sv/notice/659388-2026/pdf"
+   },
+   "pdfs": {
+    "POL": "https://ted.europa.eu/pl/notice/659388-2026/pdfs"
+   },
+   "html": {
+    "BUL": "https://ted.europa.eu/bg/notice/-/detail/659388-2026",
+    "SPA": "https://ted.europa.eu/es/notice/-/detail/659388-2026",
+    "CES": "https://ted.europa.eu/cs/notice/-/detail/659388-2026",
+    "DAN": "https://ted.europa.eu/da/notice/-/detail/659388-2026",
+    "DEU": "https://ted.europa.eu/de/notice/-/detail/659388-2026",
+    "EST": "https://ted.europa.eu/et/notice/-/detail/659388-2026",
+    "ELL": "https://ted.europa.eu/el/notice/-/detail/659388-2026",
+    "ENG": "https://ted.europa.eu/en/notice/-/detail/659388-2026",
+    "FRA": "https://ted.europa.eu/fr/notice/-/detail/659388-2026",
+    "GLE": "https://ted.europa.eu/ga/notice/-/detail/659388-2026",
+    "HRV": "https://ted.europa.eu/hr/notice/-/detail/659388-2026",
+    "ITA": "https://ted.europa.eu/it/notice/-/detail/659388-2026",
+    "LAV": "https://ted.europa.eu/lv/notice/-/detail/659388-2026",
+    "LIT": "https://ted.europa.eu/lt/notice/-/detail/659388-2026",
+    "HUN": "https://ted.europa.eu/hu/notice/-/detail/659388-2026",
+    "MLT": "https://ted.europa.eu/mt/notice/-/detail/659388-2026",
+    "NLD": "https://ted.europa.eu/nl/notice/-/detail/659388-2026",
+    "POL": "https://ted.europa.eu/pl/notice/-/detail/659388-2026",
+    "POR": "https://ted.europa.eu/pt/notice/-/detail/659388-2026",
+    "RON": "https://ted.europa.eu/ro/notice/-/detail/659388-2026",
+    "SLK": "https://ted.europa.eu/sk/notice/-/detail/659388-2026",
+    "SLV": "https://ted.europa.eu/sl/notice/-/detail/659388-2026",
+    "FIN": "https://ted.europa.eu/fi/notice/-/detail/659388-2026",
+    "SWE": "https://ted.europa.eu/sv/notice/-/detail/659388-2026"
+   },
+   "htmlDirect": {
+    "BUL": "https://ted.europa.eu/bg/notice/659388-2026/html",
+    "SPA": "https://ted.europa.eu/es/notice/659388-2026/html",
+    "CES": "https://ted.europa.eu/cs/notice/659388-2026/html",
+    "DAN": "https://ted.europa.eu/da/notice/659388-2026/html",
+    "DEU": "https://ted.europa.eu/de/notice/659388-2026/html",
+    "EST": "https://ted.europa.eu/et/notice/659388-2026/html",
+    "ELL": "https://ted.europa.eu/el/notice/659388-2026/html",
+    "ENG": "https://ted.europa.eu/en/notice/659388-2026/html",
+    "FRA": "https://ted.europa.eu/fr/notice/659388-2026/html",
+    "GLE": "https://ted.europa.eu/ga/notice/659388-2026/html",
+    "HRV": "https://ted.europa.eu/hr/notice/659388-2026/html",
+    "ITA": "https://ted.europa.eu/it/notice/659388-2026/html",
+    "LAV": "https://ted.europa.eu/lv/notice/659388-2026/html",
+    "LIT": "https://ted.europa.eu/lt/notice/659388-2026/html",
+    "HUN": "https://ted.europa.eu/hu/notice/659388-2026/html",
+    "MLT": "https://ted.europa.eu/mt/notice/659388-2026/html",
+    "NLD": "https://ted.europa.eu/nl/notice/659388-2026/html",
+    "POL": "https://ted.europa.eu/pl/notice/659388-2026/html",
+    "POR": "https://ted.europa.eu/pt/notice/659388-2026/html",
+    "RON": "https://ted.europa.eu/ro/notice/659388-2026/html",
+    "SLK": "https://ted.europa.eu/sk/notice/659388-2026/html",
+    "SLV": "https://ted.europa.eu/sl/notice/659388-2026/html",
+    "FIN": "https://ted.europa.eu/fi/notice/659388-2026/html",
+    "SWE": "https://ted.europa.eu/sv/notice/659388-2026/html"
+   }
+  },
+  "winner-name": {
+   "pol": [
+    "Przedsiębiorstwo Budowlane Fraktal"
+   ]
+  }
+ },
+ {
+  "title-proc": {
+   "pol": "Zakup i dostawa leków onkologicznych dla Apteki Szpitalnej Świętokrzyskiego Centrum Onkologii w Kielcach."
+  },
+  "notice-type": "can-standard",
+  "publication-number": "659988-2026",
+  "contract-conclusion-date": [
+   "2026-09-09+02:00",
+   "2026-09-15+02:00",
+   "2026-09-15+02:00",
+   "2026-09-09+02:00",
+   "2026-09-15+02:00",
+   "2026-09-09+02:00",
+   "2026-09-15+02:00",
+   "2026-09-15+02:00",
+   "2026-09-15+02:00",
+   "2026-09-09+02:00",
+   "2026-09-15+02:00",
+   "2026-09-09+02:00",
+   "2026-09-09+02:00",
+   "2026-09-09+02:00"
+  ],
+  "result-value-notice": "8325915.36",
+  "contract-nature-main-lot": [
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies",
+   "supplies"
+  ],
+  "result-lot-identifier": [
+   "LOT-0001",
+   "LOT-0002",
+   "LOT-0003",
+   "LOT-0004",
+   "LOT-0005",
+   "LOT-0006",
+   "LOT-0007",
+   "LOT-0008",
+   "LOT-0009",
+   "LOT-0010",
+   "LOT-0011",
+   "LOT-0012",
+   "LOT-0013",
+   "LOT-0014"
+  ],
+  "procedure-identifier": "b4a8c522-bf0e-49f6-a456-3693d3733c0e",
+  "buyer-country-sub": [
+   "PL721"
+  ],
+  "winner-size": [
+   "large",
+   "large",
+   "large",
+   "large",
+   "medium",
+   "large",
+   "medium"
+  ],
+  "received-submissions-type-val": [
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "5",
+   "5",
+   "1",
+   "0",
+   "0",
+   "2",
+   "2",
+   "0",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "3",
+   "3",
+   "0",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "2",
+   "2",
+   "0",
+   "0",
+   "0",
+   "3",
+   "3",
+   "0",
+   "0",
+   "0",
+   "3",
+   "3",
+   "1",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "2",
+   "2",
+   "0",
+   "0",
+   "0",
+   "1",
+   "1",
+   "1",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0"
+  ],
+  "tender-value-cur": [
+   "PLN"
+  ],
+  "tender-value": [
+   "3545876.25",
+   "22896.43",
+   "53920.08",
+   "139436.64",
+   "166139.1",
+   "109038.96",
+   "59849.28",
+   "81567",
+   "332097.41",
+   "642232.8",
+   "22266.9",
+   "12798",
+   "557999.93",
+   "3245869.81"
+  ],
+  "classification-cpv": [
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000"
+  ],
+  "buyer-name": {
+   "pol": [
+    "Świętokrzyskie Centrum Onkologii Samodzielny Publiczny Zakład Opieki Zdrowotnej w Kielcach"
+   ]
+  },
+  "publication-date": "2026-09-24+02:00",
+  "received-submissions-type-code": [
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea"
+  ],
+  "winner-decision-date": [
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00"
+  ],
+  "links": {
+   "xml": {
+    "MUL": "https://ted.europa.eu/en/notice/659988-2026/xml"
+   },
+   "pdf": {
+    "BUL": "https://ted.europa.eu/bg/notice/659988-2026/pdf",
+    "SPA": "https://ted.europa.eu/es/notice/659988-2026/pdf",
+    "CES": "https://ted.europa.eu/cs/notice/659988-2026/pdf",
+    "DAN": "https://ted.europa.eu/da/notice/659988-2026/pdf",
+    "DEU": "https://ted.europa.eu/de/notice/659988-2026/pdf",
+    "EST": "https://ted.europa.eu/et/notice/659988-2026/pdf",
+    "ELL": "https://ted.europa.eu/el/notice/659988-2026/pdf",
+    "ENG": "https://ted.europa.eu/en/notice/659988-2026/pdf",
+    "FRA": "https://ted.europa.eu/fr/notice/659988-2026/pdf",
+    "GLE": "https://ted.europa.eu/ga/notice/659988-2026/pdf",
+    "HRV": "https://ted.europa.eu/hr/notice/659988-2026/pdf",
+    "ITA": "https://ted.europa.eu/it/notice/659988-2026/pdf",
+    "LAV": "https://ted.europa.eu/lv/notice/659988-2026/pdf",
+    "LIT": "https://ted.europa.eu/lt/notice/659988-2026/pdf",
+    "HUN": "https://ted.europa.eu/hu/notice/659988-2026/pdf",
+    "MLT": "https://ted.europa.eu/mt/notice/659988-2026/pdf",
+    "NLD": "https://ted.europa.eu/nl/notice/659988-2026/pdf",
+    "POL": "https://ted.europa.eu/pl/notice/659988-2026/pdf",
+    "POR": "https://ted.europa.eu/pt/notice/659988-2026/pdf",
+    "RON": "https://ted.europa.eu/ro/notice/659988-2026/pdf",
+    "SLK": "https://ted.europa.eu/sk/notice/659988-2026/pdf",
+    "SLV": "https://ted.europa.eu/sl/notice/659988-2026/pdf",
+    "FIN": "https://ted.europa.eu/fi/notice/659988-2026/pdf",
+    "SWE": "https://ted.europa.eu/sv/notice/659988-2026/pdf"
+   },
+   "pdfs": {
+    "POL": "https://ted.europa.eu/pl/notice/659988-2026/pdfs"
+   },
+   "html": {
+    "BUL": "https://ted.europa.eu/bg/notice/-/detail/659988-2026",
+    "SPA": "https://ted.europa.eu/es/notice/-/detail/659988-2026",
+    "CES": "https://ted.europa.eu/cs/notice/-/detail/659988-2026",
+    "DAN": "https://ted.europa.eu/da/notice/-/detail/659988-2026",
+    "DEU": "https://ted.europa.eu/de/notice/-/detail/659988-2026",
+    "EST": "https://ted.europa.eu/et/notice/-/detail/659988-2026",
+    "ELL": "https://ted.europa.eu/el/notice/-/detail/659988-2026",
+    "ENG": "https://ted.europa.eu/en/notice/-/detail/659988-2026",
+    "FRA": "https://ted.europa.eu/fr/notice/-/detail/659988-2026",
+    "GLE": "https://ted.europa.eu/ga/notice/-/detail/659988-2026",
+    "HRV": "https://ted.europa.eu/hr/notice/-/detail/659988-2026",
+    "ITA": "https://ted.europa.eu/it/notice/-/detail/659988-2026",
+    "LAV": "https://ted.europa.eu/lv/notice/-/detail/659988-2026",
+    "LIT": "https://ted.europa.eu/lt/notice/-/detail/659988-2026",
+    "HUN": "https://ted.europa.eu/hu/notice/-/detail/659988-2026",
+    "MLT": "https://ted.europa.eu/mt/notice/-/detail/659988-2026",
+    "NLD": "https://ted.europa.eu/nl/notice/-/detail/659988-2026",
+    "POL": "https://ted.europa.eu/pl/notice/-/detail/659988-2026",
+    "POR": "https://ted.europa.eu/pt/notice/-/detail/659988-2026",
+    "RON": "https://ted.europa.eu/ro/notice/-/detail/659988-2026",
+    "SLK": "https://ted.europa.eu/sk/notice/-/detail/659988-2026",
+    "SLV": "https://ted.europa.eu/sl/notice/-/detail/659988-2026",
+    "FIN": "https://ted.europa.eu/fi/notice/-/detail/659988-2026",
+    "SWE": "https://ted.europa.eu/sv/notice/-/detail/659988-2026"
+   },
+   "htmlDirect": {
+    "BUL": "https://ted.europa.eu/bg/notice/659988-2026/html",
+    "SPA": "https://ted.europa.eu/es/notice/659988-2026/html",
+    "CES": "https://ted.europa.eu/cs/notice/659988-2026/html",
+    "DAN": "https://ted.europa.eu/da/notice/659988-2026/html",
+    "DEU": "https://ted.europa.eu/de/notice/659988-2026/html",
+    "EST": "https://ted.europa.eu/et/notice/659988-2026/html",
+    "ELL": "https://ted.europa.eu/el/notice/659988-2026/html",
+    "ENG": "https://ted.europa.eu/en/notice/659988-2026/html",
+    "FRA": "https://ted.europa.eu/fr/notice/659988-2026/html",
+    "GLE": "https://ted.europa.eu/ga/notice/659988-2026/html",
+    "HRV": "https://ted.europa.eu/hr/notice/659988-2026/html",
+    "ITA": "https://ted.europa.eu/it/notice/659988-2026/html",
+    "LAV": "https://ted.europa.eu/lv/notice/659988-2026/html",
+    "LIT": "https://ted.europa.eu/lt/notice/659988-2026/html",
+    "HUN": "https://ted.europa.eu/hu/notice/659988-2026/html",
+    "MLT": "https://ted.europa.eu/mt/notice/659988-2026/html",
+    "NLD": "https://ted.europa.eu/nl/notice/659988-2026/html",
+    "POL": "https://ted.europa.eu/pl/notice/659988-2026/html",
+    "POR": "https://ted.europa.eu/pt/notice/659988-2026/html",
+    "RON": "https://ted.europa.eu/ro/notice/659988-2026/html",
+    "SLK": "https://ted.europa.eu/sk/notice/659988-2026/html",
+    "SLV": "https://ted.europa.eu/sl/notice/659988-2026/html",
+    "FIN": "https://ted.europa.eu/fi/notice/659988-2026/html",
+    "SWE": "https://ted.europa.eu/sv/notice/659988-2026/html"
+   }
+  },
+  "winner-name": {
+   "pol": [
+    "ASCLEPIOS S.A.",
+    "Urtica sp. z o.o.",
+    "ASCLEPIOS S.A.",
+    "ASCLEPIOS S.A.",
+    "ASCLEPIOS S.A.",
+    "Sanofi Sp. z o.o.",
+    "ASCLEPIOS S.A.",
+    "ASCLEPIOS S.A.",
+    "Tramco Sp. z o. o.",
+    "ASCLEPIOS S.A.",
+    "Salus International Sp. z o.o.",
+    "InPharm Sp. z o.o.",
+    "Amgen Sp. z o.o.",
+    "Urtica sp. z o.o."
+   ]
+  }
+ }
+]

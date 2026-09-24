@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { zbudujPulpit } from '../src/lib/pulpit.js';
+import { zbudujPulpit, stanPulpitu } from '../src/lib/pulpit.js';
 import { STATUSY } from '../src/lib/statusPrzetargu.js';
 
 const TERAZ = Date.parse('2026-06-15T09:00:00Z');
@@ -49,4 +49,28 @@ test('puste/niepoprawne wejście → zerowy pulpit', () => {
   assert.deepEqual(zbudujPulpit([], TERAZ), { grupy: [], lacznie: 0, wymagaUwagi: 0 });
   assert.deepEqual(zbudujPulpit(null, TERAZ), { grupy: [], lacznie: 0, wymagaUwagi: 0 });
   assert.equal(STATUSY.length, 5);
+});
+
+// P1-8: błąd wczytania NIE może udawać pustego pulpitu („Brak prowadzonych postępowań"
+// przy braku sieci to fałszywa informacja — użytkownik myśli, że stracił zapisane).
+test('stanPulpitu: ładowanie → błąd bez danych → pusty → lista', () => {
+  assert.equal(stanPulpitu({ ladowanie: true, blad: false, lacznie: 0 }), 'ladowanie');
+  assert.equal(stanPulpitu({ ladowanie: false, blad: true, lacznie: 0 }), 'blad');
+  assert.equal(stanPulpitu({ ladowanie: false, blad: false, lacznie: 0 }), 'pusty');
+  assert.equal(stanPulpitu({ ladowanie: false, blad: false, lacznie: 3 }), 'lista');
+});
+
+test('stanPulpitu: błąd odświeżenia przy znanej liście → zostaje lista (ostatni stan)', () => {
+  assert.equal(stanPulpitu({ ladowanie: false, blad: true, lacznie: 2 }), 'lista');
+  assert.equal(stanPulpitu({ ladowanie: true, blad: false, lacznie: 2 }), 'lista',
+    'ponowne wczytanie nie chowa już pokazanej listy za spinnerem');
+});
+
+test('ekran Pulpitu rozróżnia błąd od pustki (strażnik źródła)', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const zrodlo = await readFile(new URL('../src/screens/PulpitScreen.js', import.meta.url), 'utf8');
+  assert.match(zrodlo, /stanPulpitu\(/, 'ekran liczy stan z czystej funkcji');
+  assert.match(zrodlo, /setBlad\(true\)/, 'catch wczytania ustawia błąd, nie milczy');
+  assert.match(zrodlo, /Spróbuj ponownie/, 'stan błędu ma przycisk następnego kroku');
+  assert.match(zrodlo, /navigate\('MatchFeed'\)/, 'pusty stan prowadzi do przetargów');
 });

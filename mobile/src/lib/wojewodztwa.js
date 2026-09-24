@@ -14,13 +14,30 @@ export const WOJEWODZTWA = {
   '26': 'Świętokrzyskie', '28': 'Warmińsko-mazurskie', '30': 'Wielkopolskie', '32': 'Zachodniopomorskie',
 };
 
-/** Normalizuje wartość województwa („PL02" / „02" / „2") do 2-cyfrowego kodu TERYT albo null. */
+/** Nazwa sprowadzona do porównywalnej postaci: małe litery, bez diakrytyków i separatorów. */
+const rdzenNazwy = (tekst) => String(tekst)
+  .toLowerCase()
+  .replace(/[ąćęłńóśźż]/g, (ch) => ({ ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z' }[ch]))
+  .replace(/[^a-z]/g, '');
+
+const PO_NAZWIE = new Map(Object.entries(WOJEWODZTWA).map(([kod, nazwa]) => [rdzenNazwy(nazwa), kod]));
+
+/**
+ * Normalizuje wartość województwa do 2-cyfrowego kodu TERYT albo null.
+ *
+ * Przyjmuje OBIE postacie, bo każdy rejestr zapisuje region inaczej: BZP daje
+ * kod TERYT („PL02"), a Baza Konkurencyjności nazwę („małopolskie"). Wersja
+ * rozpoznająca wyłącznie cyfry zwracała dla BK null, więc filtr województwa
+ * chował całe źródło — bez błędu i bez śladu, po prostu mniej wyników.
+ */
 export function kodWojewodztwa(w) {
   if (!w) return null;
   const cyfry = String(w).replace(/\D/g, '');
-  if (!cyfry) return null;
-  const kod = cyfry.slice(-2).padStart(2, '0');
-  return WOJEWODZTWA[kod] ? kod : null;
+  if (cyfry) {
+    const kod = cyfry.slice(-2).padStart(2, '0');
+    return WOJEWODZTWA[kod] ? kod : null;
+  }
+  return PO_NAZWIE.get(rdzenNazwy(w)) ?? null;
 }
 
 /** Nazwa województwa z wartości surowej (albo null, gdy nierozpoznane). */

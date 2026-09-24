@@ -28,18 +28,25 @@ PrzetargAI
 
 **Podtytuł (max 30):**
 ```
-Monitoring przetargów z BZP
+Przetargi i terminy dla firm
 ```
+28 znaków. Poprzedni podtytuł („Monitoring przetargów z BZP") od etapu 3 był NIEPRAWDZIWY —
+aplikacja pokazuje też zamówienia powyżej progów unijnych i ogłoszenia z bazy
+konkurencyjności. Podtytuł zawężający produkt do jednego rejestru kosztuje i w recenzji,
+i w wyszukiwaniu.
 
 **Tekst promocyjny (max 170):**
 ```
-Nie przegap żadnego przetargu. AI codziennie analizuje BZP i powiadamia Cię o ogłoszeniach dopasowanych do profilu Twojej firmy.
+Nowość: karta "czy warto tu startować" - ilu zwykle startuje, jaka cena wygrywa i jak często postępowanie kończy się unieważnieniem. Plus checklista na dzień składania.
 ```
+168 znaków. Pole zmienialne BEZ recenzji — najlepsze miejsce na nowość z bieżącego wydania.
 
-**Słowa kluczowe (max 100, po przecinku):**
+**Słowa kluczowe (max 100, po przecinku, BEZ spacji — spacja marnuje limit):**
 ```
-przetargi,zamówienia publiczne,BZP,przetarg,budowlane,oferty,monitoring,biznes,zamówienia
+przetarg,ogłoszenia,BZP,SWZ,wadium,wykonawca,budowlane,usługi,dostawy,konkurs,rynek,unijne,kalendarz
 ```
+100 znaków. Apple łączy Name + Subtitle + Keywords w JEDEN indeks, więc powtórzenie słowa
+z podtytułu marnuje limit — stąd brak „przetargi" (jest w podtytule), „terminy" i „firm".
 
 **Opis:**
 ```
@@ -53,10 +60,22 @@ i krótkie uzasadnienie.
 
 FUNKCJE:
 • Dopasowanie przetargów przez AI na podstawie profilu firmy
-• Codzienna analiza ogłoszeń z BZP
+• Katalog „Wszystkie przetargi" — cały rynek, niezależnie od Twojego profilu
+• Czy warto startować — ilu wykonawców zwykle staje do takiego postępowania,
+  jaka cena tam wygrywa, jak często kończy się unieważnieniem; przy każdej
+  liczbie podana wielkość próbki, z której powstała
+• Co musisz mieć do dnia składania — dokumenty w trzech koszykach, z ważnością
+  liczoną na dzień złożenia oferty, a nie na dziś
+• Kalendarz postępowania — pytania do dokumentacji, składanie ofert i koniec
+  związania ofertą, z podstawą prawną przy datach wyliczonych
+• Zapisane wyszukiwania z alertami o nowych pasujących ogłoszeniach
 • Powiadomienia push o nowych, trafnych przetargach (plan Standard)
-• Szczegóły ogłoszenia: zamawiający, termin, wartość, kod CPV
-• Link do pełnego ogłoszenia w BZP
+• Zakres danych — ekran mówiący wprost, czego NIE obejmujemy
+• Link do pełnego ogłoszenia u źródła
+
+Aplikacja NIE podaje „prawdopodobieństwa wygranej". Statystyki opisują to, co
+działo się na rynku w podobnych postępowaniach — o wyniku decyduje treść Twojej
+oferty.
 
 PLANY:
 • Free — 5 dopasowanych przetargów dziennie, bezpłatnie
@@ -77,8 +96,9 @@ PrzetargAI
 
 **Krótki opis (max 80):**
 ```
-AI monitoruje przetargi z BZP i powiadamia o ogłoszeniach dla Twojej firmy.
+Przetargi dla Twojej firmy, plany zamówień i terminy pod kontrolą.
 ```
+66 znaków. (Wcześniej „…i ocena szans" — sprzeczne z zasadą niżej: aplikacja nie podaje szans wygranej.) W Google Play krótki opis JEST indeksowany (inaczej niż opis w Apple).
 
 **Pełny opis (max 4000):**
 ```
@@ -102,12 +122,27 @@ JAK TO DZIAŁA
 
 FUNKCJE
 • Dopasowanie przetargów przez AI z oceną trafności i uzasadnieniem
+• Katalog wszystkich przetargów — cały rynek niezależnie od Twojego profilu,
+  z filtrami po regionie, branży, wartości i terminie
+• Czy warto startować — ilu wykonawców zwykle staje do takiego postępowania,
+  jaka cena tam wygrywa, jak często kończy się ono unieważnieniem i czy
+  wygrywają małe firmy; przy każdej liczbie podajemy wielkość próbki
+• Co musisz mieć do dnia składania — dokumenty w trzech koszykach: masz,
+  straci ważność przed złożeniem, brakuje
+• Kalendarz postępowania — pytania do dokumentacji, składanie ofert i koniec
+  związania ofertą
+• Zapisane wyszukiwania z alertami o nowych pasujących ogłoszeniach
 • Codzienna, automatyczna analiza nowych ogłoszeń
 • Powiadomienia push o nowych, trafnych przetargach (plan Standard)
 • Wyjaśnienie ogłoszenia przez AI prostym językiem
 • Szczegóły ogłoszenia: zamawiający, termin składania ofert, wartość, CPV
 • Zapisywanie przetargów i przypomnienia o terminie składania ofert
+• Zakres danych — ekran mówiący wprost, które rejestry obserwujemy i czego
+  NIE obejmujemy
 • Bezpośredni link do pełnego ogłoszenia u źródła
+
+PrzetargAI NIE podaje „prawdopodobieństwa wygranej". Statystyki opisują to, co
+działo się na rynku w podobnych postępowaniach — o wyniku decyduje treść oferty.
 
 PLANY
 • Free — 5 dopasowanych przetargów dziennie, bezpłatnie i bezterminowo
@@ -125,6 +160,10 @@ prowadzonych przez instytucje publiczne:
 2) TED (Tenders Electronic Daily) — Dziennik Urzędowy Unii Europejskiej,
    zamówienia powyżej progów unijnych:
    https://ted.europa.eu
+
+3) Baza Konkurencyjności — portal ogłoszeń beneficjentów funduszy europejskich,
+   prowadzony w ramach portalu Funduszy Europejskich:
+   https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl
 
 PrzetargAI wyłącznie prezentuje i porządkuje informacje z tych publicznych
 źródeł. Wiążąca jest zawsze treść ogłoszenia opublikowana u źródła — oceny
@@ -192,6 +231,10 @@ by public institutions:
 2) TED (Tenders Electronic Daily) - Supplement to the Official Journal of the
    European Union, for tenders above EU thresholds:
    https://ted.europa.eu
+
+3) Baza Konkurencyjnosci - the notice portal for beneficiaries of European funds,
+   run as part of the European Funds portal:
+   https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl
 
 PrzetargAI only presents and organises information from these public sources.
 The notice published at the official source is always binding. Match scores and

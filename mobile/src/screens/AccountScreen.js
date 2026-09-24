@@ -17,14 +17,25 @@ function parseList(text) {
 }
 
 // Ten sam adres, co w Polityce prywatności i Regulaminie (docs/*.html) — spójny kanał kontaktu.
+import { useJezyk } from '../context/JezykContext';
+import { WOJEWODZTWA } from '../lib/wojewodztwa';
+
 const KONTAKT_EMAIL = 'jakatora68@gmail.com';
 
 export default function AccountScreen({ navigation }) {
   const { user, signOut, refreshUser, setUser, zarejestrujPush } = useAuth();
   const { preferencja, ustawPreferencje } = useTheme();
+  const { t, jezyk, jezyki, etykiety: etykietyJezykow, ustawJezyk } = useJezyk();
   const styles = useStyle(tworzStyleKonta);
   const [keywords, setKeywords] = useState((user.keywords || []).join(', '));
   const [cpv, setCpv] = useState((user.cpv_codes || []).join(', '));
+  /*
+   * Region i największy obsługiwany kontrakt (P1-4). Te dwa pola NIE wchodzą do
+   * silnika dopasowań — służą wyjaśnieniu („to poza Twoim terenem", „to ponad
+   * Twoją skalę, rozważ konsorcjum") i podpowiedzi przy pustym feedzie.
+   */
+  const [regiony, setRegiony] = useState(user.regiony || []);
+  const [wartoscMax, setWartoscMax] = useState(user.wartosc_max ? String(user.wartosc_max) : '');
   const [saving, setSaving] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
   const [rezygnacja, setRezygnacja] = useState(false);
@@ -82,6 +93,9 @@ export default function AccountScreen({ navigation }) {
       const data = await api.updateProfile({
         keywords: parseList(keywords),
         cpv_codes: parseList(cpv),
+        regiony,
+        // Puste pole znaczy „wycofuję deklarację", a nie „zostaw jak było".
+        wartosc_max: wartoscMax.trim() ? Number(wartoscMax.replace(/[^\d]/g, '')) : null,
       });
       setUser(data.user);
       Alert.alert('Zapisano', 'Profil firmy został zaktualizowany.');
@@ -362,6 +376,43 @@ export default function AccountScreen({ navigation }) {
       <Pressable onPress={() => setSciagaOtwarta(true)} hitSlop={8} accessibilityRole="button">
         <Text style={styles.linkSciagi}>Nie znasz kodów? Otwórz ściągę CPV →</Text>
       </Pressable>
+
+      <Text style={styles.sectionTitle}>{t('Gdzie pracujesz', 'Where you work')}</Text>
+      <Text style={styles.sectionHint}>
+        {t(
+          'Zaznacz województwa, w których realnie startujesz. Nie zawężają one dopasowań — pokazujemy dzięki nim, czy ogłoszenie jest na Twoim terenie.',
+          'Pick the voivodeships you actually bid in. They do not narrow your matches — they let us show whether a notice is in your area.',
+        )}
+      </Text>
+      <View style={styles.regionRzad} accessibilityRole="list">
+        {Object.entries(WOJEWODZTWA).map(([kod, nazwa]) => {
+          const wybrane = regiony.includes(kod);
+          return (
+            <Pressable
+              key={kod}
+              onPress={() => setRegiony((p) => (wybrane ? p.filter((r) => r !== kod) : [...p, kod]))}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: wybrane }}
+              accessibilityLabel={nazwa}
+              style={[styles.regionChip, wybrane && styles.regionChipOn]}
+            >
+              <Text style={[styles.regionTekst, wybrane && styles.regionTekstOn]}>
+                {wybrane ? '\u2713 ' : ''}{nazwa}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <TextField
+        label={t('Największy kontrakt, jaki udźwigniesz (zł)', 'Largest contract you can handle (PLN)')}
+        value={wartoscMax}
+        onChangeText={setWartoscMax}
+        placeholder="2000000"
+        hint={t('Zostaw puste, jeśli nie chcesz deklarować', 'Leave empty if you prefer not to declare')}
+        keyboardType="number-pad"
+      />
+
       <Button title="Zapisz profil" onPress={handleSave} loading={saving} />
 
       <Text style={styles.sectionTitle}>Narzędzia firmy</Text>
@@ -423,6 +474,38 @@ export default function AccountScreen({ navigation }) {
         wartosc={cpv}
         onChange={setCpv}
       />
+
+      <Text style={styles.sectionTitle}>{t('Zakres danych', 'Data coverage')}</Text>
+      <Text style={styles.sectionHint}>
+        {t(
+          'Które rejestry monitorujemy, kiedy każdy z nich ostatnio odpowiedział i czego aplikacja NIE obejmuje automatycznie.',
+          'Which registers we monitor, when each last responded, and what the app does NOT cover automatically.',
+        )}
+      </Text>
+      <Button
+        title={t('Zobacz zakres danych', 'View data coverage')}
+        variant="ghost"
+        onPress={() => navigation.navigate('ZakresDanych')}
+        style={styles.gap}
+      />
+
+      <Text style={styles.sectionTitle}>{t('Język', 'Language')}</Text>
+      <View style={styles.motywy} accessibilityRole="radiogroup">
+        {jezyki.map((kod) => {
+          const aktywny = jezyk === kod;
+          return (
+            <Pressable
+              key={kod}
+              onPress={() => ustawJezyk(kod)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: aktywny }}
+              style={[styles.motyw, aktywny && styles.motywAktywny]}
+            >
+              <Text style={[styles.motywTekst, aktywny && styles.motywTekstAktywny]}>{etykietyJezykow[kod]}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <Text style={styles.sectionTitle}>Wygląd</Text>
       <Text style={styles.sectionHint}>
@@ -524,6 +607,18 @@ export default function AccountScreen({ navigation }) {
 }
 
 const tworzStyleKonta = tworzStyle((k) => ({
+  regionRzad: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  regionChip: {
+    borderWidth: 1,
+    borderColor: k.border,
+    backgroundColor: k.surface,
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+  },
+  regionChipOn: { backgroundColor: k.blue, borderColor: k.blue },
+  regionTekst: { fontSize: 13, color: k.text, fontWeight: '600' },
+  regionTekstOn: { color: k.white, fontWeight: '800' },
   strefaNiebezpieczna: {
     marginTop: spacing.xl,
     paddingTop: spacing.lg,

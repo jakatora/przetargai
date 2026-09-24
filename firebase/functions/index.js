@@ -107,6 +107,74 @@ export const dailyTenderFetch = onSchedule(
 );
 
 /**
+ * Domykanie okna BZP co 3 godziny (P0-2).
+ *
+ * DLACZEGO OSOBNA FUNKCJA: pełne okno 7 dni to do 119 zapytań, a zmierzony czas
+ * na żywym API (2026-09-24) to 389 s przy 87 zapytaniach. `dailyTenderFetch` ma
+ * twardy limit 540 s i musi jeszcze policzyć dopasowania — pobieranie po prostu
+ * się tam nie mieści i było cicho ucinane (audyt 2026-09-23: 1 330 ogłoszeń
+ * zamiast ~3 000 unikalnych w oknie).
+ *
+ * Ta funkcja robi JEDNO: dopobiera doby, których checkpoint jeszcze nie domknął.
+ * Bez dopasowań, bez AI, bez kosztów poza odczytem publicznego API BZP.
+ * Idempotencja: docId przetargu = identyfikator z BZP, więc powtórki są nieszkodliwe.
+ */
+export const bzpOknoFetch = onSchedule(
+  {
+    schedule: '20 */3 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 1800,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runBzpOkno } = await import('./src/jobs/oknoBzp.js');
+    const wynik = await runBzpOkno();
+
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'bzpOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`bzpOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'bzpOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
+ * Domykanie okna Bazy Konkurencyjności co 3 godziny, w przeplocie z BZP (etap 3).
+ *
+ * DLACZEGO OSOBNA FUNKCJA: wartość zamówienia i CPV są WYŁĄCZNIE w szczegółach
+ * (`GET /announcements/{id}`), więc pełny import to N+1 — przy 1 135 aktywnych
+ * ogłoszeniach i 171 nowych dziennie (pomiar 2026-09-24) nie ma szans zmieścić się
+ * w `dailyTenderFetch`, który musi jeszcze policzyć dopasowania. Checkpoint pobiera
+ * szczegóły tylko dla ogłoszeń nowych i zmienionych, więc przebieg jest krótki.
+ *
+ * Harmonogram przesunięty o 50 minut względem `bzpOknoFetch`, żeby dwa importy nie
+ * konkurowały o ten sam budżet instancji i o łącze.
+ *
+ * Bez dopasowań, bez AI, bez kosztów poza odczytem publicznego API BK.
+ * Idempotencja: docId przetargu = `bk:<id>`, więc powtórki są nieszkodliwe.
+ */
+export const bkOknoFetch = onSchedule(
+  {
+    schedule: '50 */3 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 900,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runBkOkno } = await import('./src/jobs/oknoBk.js');
+    const wynik = await runBkOkno();
+
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'bkOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`bkOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'bkOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Przypomnienia o terminach składania ofert dla ZAPISANYCH przetargów (D-050).
  * Co 6 godzin — częściej niż cykl dobowy, bo terminy „za kilka godzin" muszą
  * zdążyć. Push idzie tylko do użytkowników z tokenem; wpis oznaczany jako
@@ -128,6 +196,63 @@ export const remindDeadlines = onSchedule(
 );
 
 /**
+ * MONITORING ZAPISANYCH WYSZUKIWAŃ (etap 5) — co 2 godziny.
+ *
+ * DLACZEGO CO 2 GODZINY, a nie rzadziej: obietnica produktu brzmi „zmiana terminu
+ * jest u Ciebie w ciągu 6 godzin". Budżet tej obietnicy dzieli się na dwa etapy,
+ * które składają się szeregowo:
+ *
+ *   wykrycie      — okna źródeł chodzą co 3 h (`bzpOknoFetch` :20, `bkOknoFetch` :50),
+ *                   więc zmiana jest w bazie najpóźniej ~3 h po publikacji,
+ *   powiadomienie — ten job, co 2 h.
+ *
+ * Najgorszy przypadek to 3 h + 2 h = 5 h, czyli godzina zapasu na opóźnienie
+ * harmonogramu i ponowienie. Przy przebiegu co 6 h najgorszy przypadek wynosiłby
+ * 9 h i obietnica byłaby nieprawdziwa.
+ *
+ * Minuta :35 rozdziela ten job od obu okien pobierania, żeby trzy zadania nie biły
+ * się o ten sam budżet instancji.
+ *
+ * Bez płatnego AI (strażnik w test/monitorWyszukiwan.test.js czyta źródło joba),
+ * więc częstotliwość nie przekłada się na koszt modelu. RESEND_API_KEY jest potrzebny
+ * do e-maili dla kont bez tokenu push; bez niego job działa w trybie degradacji.
+ */
+export const monitorWyszukiwan = onSchedule(
+  {
+    schedule: '35 */2 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET, RESEND_API_KEY],
+  },
+  async () => {
+    const { runMonitorWyszukiwan } = await import('./src/jobs/monitorWyszukiwan.js');
+    const wynik = await runMonitorWyszukiwan();
+
+    // Obserwowane plany (Radar planów) — ta sama kadencja, osobny rachunek błędów.
+    // Awaria jednego monitoringu nie może zatrzymać drugiego.
+    const { runMonitorPlanow } = await import('./src/jobs/monitorPlanow.js');
+    const plany = await runMonitorPlanow().catch((err) => ({ ok: false, bledy: 1, error: err.message }));
+    console.log(JSON.stringify({ severity: plany.ok ? 'INFO' : 'ERROR', message: 'monitorPlanow zakończony', ...plany }));
+    if (!plany.ok && wynik.ok) {
+      throw new Error(`monitorPlanow: ${plany.bledy} obserwacji planów zakończyło się błędem`);
+    }
+
+    if (!wynik.ok) {
+      /*
+       * Rzucamy, żeby Cloud Scheduler odnotował NIEPOWODZENIE i ponowił przebieg.
+       * Ponowienie jest bezpieczne: alert ma deterministyczny klucz (docId), więc
+       * nie wyśle się drugi raz, a obserwacje obsłużone przed błędem mają już
+       * przesunięty checkpoint.
+       */
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'monitorWyszukiwan: część obserwacji padła', ...wynik }));
+      throw new Error(`monitorWyszukiwan: ${wynik.bledy} obserwacji zakończyło się błędem`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'monitorWyszukiwan zakończony', ...wynik }));
+  },
+);
+
+/**
  * Cotygodniowy przegląd e-mail (roadmap #10, D-057). Poniedziałek 8:00 czasu
  * polskiego — początek tygodnia, gdy firmy planują, w co startować. Wysyłamy tylko
  * do kont z ≥1 nowym dopasowaniem w minionym tygodniu (bez spamu). RESEND_API_KEY
@@ -145,6 +270,89 @@ export const weeklyDigest = onSchedule(
     const { runWeeklyDigest } = await import('./src/jobs/weeklyDigest.js');
     const wynik = await runWeeklyDigest();
     console.log(JSON.stringify({ severity: 'INFO', message: 'weeklyDigest zakończony', ...wynik }));
+  },
+);
+
+/**
+ * Domykanie okna ROZSTRZYGNIĘĆ co 6 godzin (etap 6).
+ *
+ * DLACZEGO OSOBNA FUNKCJA: `aggregateResults` pobierał 30 dni BZP, liczył agregat
+ * i WYRZUCAŁ dane źródłowe — pojedyncze rozstrzygnięcie nie zostawało nigdzie,
+ * więc benchmark „u TEGO zamawiającego" nie miał z czego powstać, a każde
+ * przeliczenie wymagało ponownego przemielenia rejestru (~390 s samego ruchu).
+ * Tu rozstrzygnięcia z BZP i TED lądują w bazie, a agregat liczy się z nich.
+ *
+ * Minuta :05 i co 6 h rozdziela ten job od okien ogłoszeń (`bzpOknoFetch` :20,
+ * `bkOknoFetch` :50) i od monitoringu (:35), żeby nie biły się o budżet instancji.
+ *
+ * Bez dopasowań, bez AI — koszt to odczyty publicznych API i zapisy do Firestore.
+ */
+export const wynikiOknoFetch = onSchedule(
+  {
+    schedule: '5 */6 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 1800,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runOknoWynikow } = await import('./src/jobs/oknoWynikow.js');
+    const wynik = await runOknoWynikow();
+
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'wynikiOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`wynikiOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'wynikiOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
+ * Import PLANÓW POSTĘPOWAŃ z TED (Radar planów) — codziennie o 6:15.
+ *
+ * TED publikuje w dni robocze rano; okno 3 dni daje potrójne pokrycie każdej
+ * publikacji. Kilkadziesiąt zapisów dziennie, bez dopasowań i bez AI. Minuta :15
+ * nie koliduje z oknami ogłoszeń (:20, :50), wyników (:05) ani monitoringiem (:35).
+ */
+export const planyOknoFetch = onSchedule(
+  {
+    schedule: '15 6 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runOknoPlanow } = await import('./src/jobs/oknoPlanow.js');
+    const wynik = await runOknoPlanow();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'planyOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`planyOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'planyOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
+ * Przeliczenie BENCHMARKU rynku (etap 6) — codziennie o 3:40.
+ *
+ * Czyta wyłącznie zapisane rozstrzygnięcia, więc nie dotyka rejestrów i nie woła
+ * AI. Dzięki temu benchmark da się odświeżyć po każdej poprawce parsera bez
+ * ponownego mielenia BZP. Codziennie, bo `wynikiOknoFetch` dokłada dane co 6 h,
+ * a mediana z wczoraj nie boli — byle metryczka `probka` mówiła prawdę.
+ */
+export const benchmarkPrzelicz = onSchedule(
+  {
+    schedule: '40 3 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 1800,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runBenchmarkRynku } = await import('./src/jobs/benchmarkRynku.js');
+    const wynik = await runBenchmarkRynku();
+    console.log(JSON.stringify({ severity: 'INFO', message: 'benchmarkPrzelicz zakończony', ...wynik }));
   },
 );
 

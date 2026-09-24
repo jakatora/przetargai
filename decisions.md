@@ -4,6 +4,631 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-079 — Pliki (CSV, ICS) do telefonu jadą e-mailem, nie przez moduły natywne
+**Data:** 2026-09-24 | P2-3 + domknięcie etapu 5
+
+**Problem.** Eksport CSV i plik kalendarza ICS były gotowe po stronie serwera, ale aplikacja
+nie ma `expo-file-system` ani `expo-sharing` — nie ma gdzie zapisać pliku. Dodanie modułów
+natywnych to nowy build, ryzyko w podpisie iOS i kod, którego nie da się sprawdzić bez
+urządzenia.
+
+**Decyzja.** `POST /eksport/wyslij {rodzaj: zapisane|katalog|kalendarz}` wysyła plik jako
+ZAŁĄCZNIK na adres WŁAŚCICIELA konta (adres z konta, nigdy z żądania — trasy nie da się użyć
+do wysyłki do obcych), limit 10 wysyłek na dobę (429). Uzasadnienie produktowe: firma otwiera
+eksport na komputerze w Excelu, a załącznik `.ics` poczta w telefonie otwiera w kalendarzu
+jednym dotknięciem. `GET *.csv` zostaje dla przeglądarki i integracji.
+
+**Webhook z P2-3 świadomie NIE** — wymaga ekranu konfiguracji, podpisu HMAC, ponawiania
+i klienta, który go potrzebuje.
+
+---
+
+## D-078 — CSV dla polskiego Excela i z ochroną przed wstrzyknięciem formuł
+**Data:** 2026-09-24 | P2-3
+
+Separator średnik i przecinek dziesiętny (polski Excel otwiera dwuklikiem wg ustawień
+regionalnych), BOM UTF-8 (bez niego „Łódź" staje się krzakami), terminy w czasie polskim.
+**Tytuł ogłoszenia pisze obca osoba w rejestrze publicznym** — komórkę zaczynającą się od
+`=`, `+`, `-`, `@`, tabulatora poprzedzamy apostrofem (OWASP CSV Injection). Liczby ujemne
+jako liczby nie są cytowane. Sufit eksportu katalogu: 500 wierszy, z nagłówkiem `X-Obciety`.
+
+---
+
+## D-077 — Alert „to jest to, na co czekałeś" wyłącznie przy dopasowaniu „pewne"
+**Data:** 2026-09-24 | P2-4 (Radar planów)
+
+Obserwacja planu sprawdza w monitoringu (co 2 h) ogłoszenia TEGO zamawiającego po NIP-ie,
+opublikowane PO planie. Alert tylko przy etykiecie „pewne" z `dopasujOgloszenie` (próg 70,
+nieosiągalny bez zgodnego CPV); „prawdopodobne" widać w szczególe planu, ale nie budzi
+użytkownika. Fałszywy alarm kosztuje zaufanie do całego radaru. Obserwacja zamyka się po
+znalezieniu albo po wygaśnięciu planu; klucz alertu deterministyczny = jedno powiadomienie
+przy ponowieniu przebiegu. Limit 50 obserwacji na konto (jedno zapytanie na NIP w przebiegu).
+
+---
+
+## D-076 — Radar czyta ZWARTY INDEKS, a nie kolekcję planów
+**Data:** 2026-09-24 | P2-4
+
+Ranking pod profil musi przejrzeć każdą aktywną pozycję (dopasowanie słów kluczowych,
+Firestore nie ma pełnotekstu). Skan kolekcji `plany` przy każdym wejściu na ekran to
+~1 700–2 500 odczytów na użytkownika. Job przebudowuje raz na dobę `radar_planow/czesc_N`
+(400 wpisów na część, bez opisu i linku) — odczyt to kilka dokumentów plus pamięć instancji
+10 min. Pozycja wisi w radarze do przewidywanej daty + 60 dni, a bez daty do publikacji
++ 365 dni (WOI obowiązuje do 12 miesięcy). Kolejność listy: nadchodzące → bez daty →
+minione (zmierzone na produkcji: sortowanie rosnące po terminie wynosiło na górę plany
+sprzed dwóch miesięcy).
+
+---
+
+## D-075 — Źródłem planów są wstępne ogłoszenia informacyjne TED; logika radaru przenosi się z Railway do Cloud Functions
+**Data:** 2026-09-24 | P2-4
+
+**Dlaczego TED.** API BZP przyjmuje wyłącznie ContractNotice i TenderResultNotice — plany
+z art. 23 Pzp są niedostępne bez omijania regulaminu. TED `form-type=planning` to publiczne
+API bez klucza, już zintegrowane. **Zmierzone (2026-09-24):** 2 041 polskich planów / rok,
+0 odrzuceń, przewidywana data ogłoszenia w ~49 %, wartość w ~5 %, 74 % to `pin-rtl`
+(zamawiający może SKRÓCIĆ termin składania ofert — pokazujemy to jako ostrzeżenie).
+
+**NIP zamawiającego to wolny tekst** („NIP: …, REGON: …", sam REGON, grupy z myślnikami).
+Ekstraktor z sumą kontrolną: 175/208 planów i 199/250 ogłoszeń konkursowych TED (naiwne
+„10 cyfr" — 114/208). NIP łączy plan z późniejszym ogłoszeniem i przy okazji daje TED
+klucz benchmarku per zamawiający z etapu 6.
+
+**Dlaczego port, a nie Railway.** Moduły radaru (`radarPlanow`, `przygotowaniaPlanu`,
+`zmianyPlanu`) są czyste i przetestowane, ale Railway jest zablokowany (pełny wolumen,
+brak push do GitHuba), a aplikacja mówi do Cloud Functions. Skopiowane 1:1 z testami;
+jedyna zmiana: region profilu CF to kody TERYT (`regiony`), porównywane przez wspólny
+normalizator województw.
+
+---
+
+## D-074 — Filtr województwa w BZP ignoruje górną granicę okna; dobę odsiewamy po dacie
+**Data:** 2026-09-24 | Etap 6, zmierzone na PRODUKCJI
+
+**Jak to wyszło.** Przebieg okna zaraportował `bzp_ogloszen: 3601`, a benchmark policzony
+zaraz potem przeczytał z bazy **2427** rozstrzygnięć. Pierwsza hipoteza („gubimy zapisy")
+była błędna — pomiar pokazał coś innego.
+
+**Pomiar (2026-09-24, żywe API).** Zapytanie o dobę `2026-09-23`:
+
+| wariant zapytania | n | rozkład `publicationDate` |
+|---|---|---|
+| samo okno doby | 500 (sufit) | 2026-09-23 = 500 |
+| okno doby + `OrganizationProvince=PL14` | 127 | 2026-09-23 = 116, **2026-09-24 = 11** |
+| pełna doba po docięciu 16 województw | 668 | 2026-09-23 = 564, **2026-09-24 = 104** |
+
+Z 667 ogłoszeń „doby 23 września" **564 pojawiło się także w zapytaniu o 22 września**.
+
+**Wniosek: `OrganizationProvince` honoruje DOLNĄ granicę okna, a górną IGNORUJE.**
+Docinanie po województwach — jedyny sposób na dobę przekraczającą sufit 500 — wciąga
+więc ogłoszenia z kolejnych dni.
+
+**Decyzja.** Po złożeniu doby odsiewamy ogłoszenia, których `publicationDate` nie należy
+do żądanej doby. Nic przez to nie ginie: ogłoszenie spoza doby zostanie pobrane przy
+SWOJEJ dobie (dzisiejsza nigdy nie jest domykana w checkpoincie, a doby zamknięte były
+pobrane w całości). Ogłoszenie BEZ daty publikacji zostaje — lepiej zapisać je raz za
+dużo niż stracić.
+
+**Co to naprawia.** Licznik przebiegu przestaje kłamać o połowę w górę (doba 22.09:
+1154 → 590 ogłoszeń naprawdę z tej doby) i znika mniej więcej połowa zapisów do
+Firestore, które i tak nadpisywały te same dokumenty.
+
+**Czego NIE zmieniono.** Ta sama pułapka dotyczy ścieżki pobierania OGŁOSZEŃ
+(`pobierzDzien` używa tego samego docinania), ale tam dedup po `externalId` i
+create-only `tenders.upsert` czynią ją nieszkodliwą dla danych — kosztuje tylko
+odczyty. Zmiana tamtej ścieżki nie należy do tego etapu i wymaga własnego pomiaru.
+
+---
+
+## D-073 — Adres zapytania o wyniki BZP niósł `undefined`; funkcja nie działała od rundy 16
+**Data:** 2026-09-24 | Etap 6, znalezione na PRODUKCJI
+
+**Co się stało.** Pierwszy prawdziwy import rozstrzygnięć zwrócił `bzp_ogloszen: 0`
+i `doby_bledne: 3` przy `ok: true`. Powtórzenie zapytania ręcznie dało odpowiedź,
+której nie da się zinterpretować inaczej:
+
+```
+HTTP 500 {"error":"The string 'undefined' was not recognized as a valid DateTime."}
+```
+
+**Przyczyna.** `oknoDoby(dzien)` oddaje `{ publishedFrom, publishedTo }` — te same nazwy
+przyjmuje `searchNotices`, którym idzie pobieranie OGŁOSZEŃ i dlatego ono działa.
+`zapytanieSurowe`, czyli ścieżka WYNIKÓW, przyjmowało `{ from, to }`. Wołający robił
+`zapytanieSurowe({ ...oknoDoby(dzien) })`, więc `from` i `to` były `undefined`
+i do adresu trafiało dosłowne `PublicationDateFrom=undefined`.
+
+**Skutek: pobieranie wyników postępowań z BZP nie zadziałało ANI RAZU od rundy 16.**
+`aggregateResults` biegał co tydzień, łapał błąd per doba, agregował pustą listę,
+zapisywał zero kubełków i kończył się `ok: true`. `GET /matches/:id/wyniki` zwracał
+`{ wyniki: null, powod: 'brak_danych' }` — co wygląda identycznie jak „w tej branży
+nie ma jeszcze rozstrzygnięć". Nikt nie miał jak tego zobaczyć.
+
+**Dlaczego testy tego nie złapały.** Wszystkie wstrzykiwały własny pobieracz doby
+(`pobierzDzien`), więc prawdziwy adres nie był sprawdzany przez nikogo. Test, który
+zastępuje jedyne miejsce, gdzie mieszka błąd, potwierdza wyłącznie sam siebie.
+
+**Naprawa.** `zbudujUrlWynikow` jest WYEKSPORTOWANY i przyjmuje dokładnie te nazwy pól,
+które oddaje `oknoDoby`; brak okna czasu RZUCA, zamiast skleić string. Osobny plik
+testów sprawdza ADRES: że niesie prawdziwe daty, że nie zawiera „undefined" i — asercją
+na źródle — że obie funkcje nadal mówią tym samym słownikiem.
+
+**Druga naprawa, z tej samej lekcji.** Przebieg okna uznawał się za udany, gdy przeszedł
+CHOCIAŻ jeden rejestr. Awaria wszystkich podjętych dób BZP dawała `ok: true`, bo TED
+przeszedł. Teraz awaria całego rejestru = przebieg nieudany, czyli ponowienie
+w Cloud Scheduler; pojedyncza zła doba nadal nie wywraca przebiegu i zostaje otwarta
+w checkpoincie.
+
+**Zasada na przyszłość:** integracja, której nikt nie wywołał ani razu po prawdziwym
+adresie, nie jest zintegrowana — niezależnie od liczby zielonych testów. Pierwszy
+import na produkcji jest częścią wdrożenia, nie „weryfikacją po fakcie".
+
+---
+
+## D-072 — Checklista oferty jest BEZSTANOWA i liczy ważność na DZIEŃ SKŁADANIA
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** „Czy mam komplet dokumentów" to pytanie o PRZYSZŁOŚĆ, nie o dziś.
+Zaświadczenie z ZUS ma 3 miesiące, KRK pół roku — przy terminie za siedem tygodni
+„mam to" potrafi znaczyć „będę musiał wystąpić o to jeszcze raz, a urząd ma 7 dni".
+Checklista porównująca ważność z DZISIAJ mówi firmie, że jest gotowa — i jest gorsza
+niż brak checklisty, bo brak checklisty nie usypia.
+
+**Decyzja.** Punktem odniesienia jest `dzienZlozenia` = termin składania minus dzień
+zapasu, brany z kalendarza postępowania (etap 5). Dokument ważny dziś, a nieważny wtedy,
+ląduje w osobnym koszyku „straci ważność przed złożeniem" wraz z liczbą brakujących dni.
+
+**Moduł jest bezstanowy.** Wymagania (Radar SWZ) i stan Sejfu mieszkają w osobnej
+usłudze — endpoint w Cloud Functions przyjmuje je w żądaniu i dokłada jedyną rzecz,
+której tamta usługa nie zna: dzień składania z katalogu przetargów. Dzięki tej granicy
+checklista działa także wtedy, gdy Radar albo Sejf są chwilowo nieosiągalne, a pole
+`stanWiedzy` mówi WPROST, czego nie wiemy. Bez niego „brak wymagań" wyglądałby
+identycznie jak „checklista spełniona" — a znaczy coś przeciwnego.
+
+**Czytniki pól są tolerancyjne z konieczności.** Dokument z Sejfu nazywa się
+`{ typ_dokumentu, nazwaTypu, dataWaznosci }`, nie `{ kod, wazny_do }`. Gdyby czytnik
+chybił, dopasowanie zwróciłoby zero trafień i firma z kompletem dokumentów zobaczyłaby
+„brakuje wszystkiego" — błąd wyglądający jak prawdziwa odpowiedź. Strzeże tego osobny
+test na realnym kształcie.
+
+---
+
+## D-071 — Karta „Czy warto startować?" NIE oddaje procentu szans
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** Mając rozstrzygnięcia całego rynku, łatwo policzyć liczbę i nazwać ją
+„szansą na wygraną". Byłby to fałszywy pomiar: rozstrzygnięcia mówią, co stało się
+na rynku (ilu startowało, ile płacono, jak często unieważniano), a nie jak wypadnie
+TA oferta — o tym decyduje jej treść, której nie znamy. Firma odpuściłaby przetarg,
+który mogła wygrać, albo włożyła tydzień w taki, w którym nie miała szans — w obu
+przypadkach z naszą liczbą jako uzasadnieniem.
+
+**Decyzja.** Werdykt jest KATEGORIĄ (`sprawdz` / `uwazaj` / `trudny` / `brak_danych` /
+`po_terminie`), a treścią karty są CZYNNIKI: każdy z tonem zielony/żółty/czerwony,
+z liczbą, z której powstał, i z wielkością próbki. Do każdej karty dołączone jest
+zastrzeżenie, że to opis rynku, nie prognoza oferty.
+
+`brak_danych` jest stanem RÓWNOPRAWNYM, nie awarią: czynnik bez danych ma ton
+`nieznany`, a nie czerwony — „nie wiemy" to nie to samo co „źle".
+
+Zakaz obowiązuje też warstwę prezentacji: mobilna biblioteka nie liczy sobie
+wskaźnika z tonów (pilnuje tego test czytający źródło). Inaczej decyzja podjęta
+po stronie danych zostałaby obejściem w UI.
+
+**Kolejność kubełków benchmarku** jest od najwęższego: zamawiający → dział CPV
+w województwie → dział CPV w kraju. Im węższy, tym trafniejszy, ale tym łatwiej mu
+o zbyt małą próbkę — schodzimy niżej dopiero wtedy, gdy węższy nie ma z czego mówić.
+
+---
+
+## D-070 — Rozstrzygnięcia zapisujemy jako DANE ŹRÓDŁOWE; agregat liczy się z bazy
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** `aggregateResults` pobierał 30 dni ogłoszeń o wyniku z BZP, liczył
+medianę i WYRZUCAŁ dane źródłowe. Pojedyncze rozstrzygnięcie — kto wygrał, ilu
+startowało, czy część unieważniono — nie zostawało nigdzie. Benchmark „u TEGO
+zamawiającego" nie miał z czego powstać, a każde przeliczenie wymagało ponownego
+przemielenia rejestru (~390 s samego ruchu sieciowego).
+
+**Decyzja.** Nowa kolekcja `rozstrzygniecia` trzyma znormalizowane rozstrzygnięcia
+z OBU rejestrów, per część. Okno (`wynikiOknoFetch`, co 6 h) je uzupełnia z
+checkpointem dobowym jak okna ogłoszeń; benchmark (`benchmarkPrzelicz`, codziennie)
+liczy się WYŁĄCZNIE z bazy, więc poprawka parsera nie wymaga ruszania rejestru.
+
+**BZP i TED świadomie NIE są deduplikowane.** Polskie postępowanie idzie albo do BZP
+(poniżej progów unijnych), albo do TED (powyżej) — nie do obu. Identyfikatory
+postępowań obu rejestrów są rozłączne (`ocds-148610-…` vs UUID), więc nie ma po czym
+scalać uczciwie, a scalanie po nazwie zamawiającego łączyłoby RÓŻNE postępowania.
+
+**Próg próbki jest twardy.** Poniżej pięciu części kubełek nie oddaje żadnej mediany —
+tylko `wystarczajacaProbka: false` i powód. Kubełek mimo to ISTNIEJE, żeby ekran mógł
+napisać „za mało danych" zamiast pokazać pustkę, którą czyta się jako „nikt tu nie startuje".
+
+---
+
+## D-069 — TED: zipujemy wyłącznie tablice wyrównane do liczby części; NUTS to nie TERYT
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** TED oddaje każde pole jako osobną tablicę i NIE gwarantuje, że dwie
+tablice mają tę samą długość. Pomiar na 250 polskich ogłoszeniach o wyniku
+(2026-09-24): długość równą liczbie części (`result-lot-identifier`) mają
+`winner-name` 162/250, `winner-size` 113/250, `tender-value` 168/250,
+`contract-conclusion-date` 166/250. Ogłoszenie 659988-2026 ma 14 części, 14 nazw
+zwycięzców i 7 rozmiarów firm.
+
+**Decyzja.** Zipujemy TYLKO tablice o długości równej liczbie części; reszta jest
+pomijana, a nie dopasowywana kształtem. Dane, o których nie wiadomo, do kogo należą,
+są gorsze niż ich brak — przypisany cudzy rozmiar firmy to fałszywy sygnał
+„u tego zamawiającego wygrywają mali". Na żywej próbce 500 ogłoszeń straż odcina
+rozmiar firmy w 1569 z 1895 części i to jest jej CEL, nie skutek uboczny.
+
+`received-submissions-type-code` ma ZMIENNĄ kolejność kodów między ogłoszeniami,
+więc czytanie po pozycji daje losowe liczby; pary `code[i]`↔`val[i]` są spójne
+w 250/250. Kody powtarzają się blokiem per część, ale dzielą się równo tylko
+w 208/250 — tam, gdzie nie, liczba ofert zostaje `null`.
+
+`buyer-country-sub` to NUTS, nie TERYT. Wspólny normalizator województw bierze dwie
+ostatnie cyfry, więc `PL426` (Koszalin) dawał „26" = świętokrzyskie — błąd CICHY.
+Osobny słownik `lib/nuts.js`; kodowania NIE da się rozstrzygnąć po samym ciągu
+(`PL12` to poprawny TERYT i zarazem nieaktualny NUTS 2013), więc wybiera je WOŁAJĄCY.
+
+**Rodzaj zamówienia mapujemy na słownik BZP** (`works`→`Works`, `supplies`→`Delivery`,
+`services`→`Services`). Bez tego TED i BZP wpadłyby do rozłącznych kubełków statystyki
+i benchmark liczyłby dwa rynki zamiast jednego.
+
+---
+
+## D-068 — „Rabat do kosztorysu" wolno liczyć TYLKO tam, gdzie obie liczby są w tej samej bazie
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** Naturalny wskaźnik „o ile taniej niż kosztorys" to cena wybranej oferty
+podzielona przez wartość szacowaną. W BZP obie liczby są, ale w RÓŻNYCH bazach:
+wartość zamówienia (art. 28 Pzp) jest z definicji NETTO, a cena w formularzu oferty
+podawana jest zwykle BRUTTO.
+
+**Pomiar (46 jednoczęściowych ogłoszeń z umową, 2026-09-22):** mediana ilorazu
+`6.4 / 4.3` = **1,0489**, 29 z 46 „powyżej kosztorysu", widoczne skupiska dokładnie
+na **1,23** i **1,17** — czyli stawki VAT. Stawki nie da się odgadnąć z ogłoszenia.
+
+**Decyzja.** Rabat względem wartości szacowanej liczymy WYŁĄCZNIE dla TED, gdzie obie
+liczby pochodzą z eForms i obie są netto. Dla BZP oddajemy zamiast tego `pozycjaCeny` —
+gdzie w widełkach konkursu (6.2/6.3/6.4, wszystkie z tego samego formularza) wylądowała
+cena zwycięzcy: 0 = najtaniej, 1 = najdrożej. Mediana blisko zera znaczy „tu wygrywa cena".
+
+Licząc rabat wprost z 4.3 pokazalibyśmy firmie, że w jej branży przetargi idą DROŻEJ
+niż kosztorys — czyli dokładnie odwrotnie niż jest.
+
+---
+
+## D-067 — BZP: „wynik" to JEDEN typ ogłoszenia, a części indeksuje NUMER, nie kolejność bloku
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** Etap zakładał trzy typy ogłoszeń (udzielenie / unieważnienie / zmiana).
+Sonda brute-force na żywym API (swagger 404, API odrzuca nieznane typy przez 400)
+pokazała, że działają dokładnie trzy: `ContractNotice`, `TenderResultNotice`,
+`ConcessionNotice`. `ContractAwardNotice`, `CancellationNotice`,
+`ContractModificationNotice` i 15 innych wariantów NIE ISTNIEJĄ.
+
+**Wniosek:** doprowadzenie źródła do kompletności to nie dodanie typów, tylko
+przestanie gubić to, co ten JEDEN typ już niesie. Parser R16 czytał z niego mniej
+niż połowę.
+
+**Decyzja (pomiar na 200 ogłoszeniach z 2026-09-22):**
+
+- Częścią jest wyłącznie blok SEKCJI V niosący `5.1.)`. Pierwszy blok bywa WIDMEM
+  (sam nagłówek przed „Część 1"), przez co numer był przesunięty o 1. Reguła zgadza się
+  z `procedureResult` w **200/200** ogłoszeń; warianty „zawiera SEKCJA VI" (170/200)
+  i „liczba nagłówków" (164/200) gubiły części unieważnione.
+- `procedureResult` i `contractors[]` indeksuje **NUMER CZĘŚCI** z nagłówka
+  `(dla części N)`, a nie kolejność bloku HTML. Część nierozstrzygnięta ma wpis PUSTY
+  i nie ma bloku, więc zipowanie po kolejności przypisuje firmie cudzą część.
+  Po indeksowaniu numerem: **545/545** bloków ma niepuste rozstrzygnięcie,
+  **395/395** nazw zwycięzcy zgadza się z HTML, **0** unieważnionych części z wykonawcą.
+- Unieważnienia przestają być niewidoczne: **150 z 545 części (27,5 %)** dostaje własny
+  stan zamiast wypadać jako „brak danych".
+- Kwota nie wymaga już groszy (`9840 PLN`) — wraca **39 z 404** cen wybranych (9,6 %).
+- Klucz złączenia „wynik → przetarg" to identyfikator POSTĘPOWANIA (`tenderId`, ocds),
+  a nie numer ogłoszenia: numer wyniku jest INNY niż numer ogłoszenia o zamówieniu.
+  Zmierzone pokrycie: 200/200 wyników i 3974/3974 ogłoszeń o zamówieniu.
+
+---
+
+## D-066 — Kalendarz: reguły ustawowe wybieramy po REJESTRZE, ICS jako plik
+**Data:** 2026-09-24 | Etap 5 (P1-7)
+
+**Problem.** Zapisany przetarg to trzy daty, nie jedna: termin PYTAŃ do SWZ (po nim
+zamawiający nie ma obowiązku odpowiedzieć), termin SKŁADANIA i koniec ZWIĄZANIA OFERTĄ
+(po nim oferta podlega odrzuceniu, art. 226 ust. 1 pkt 4). Dwie skrajne nie były
+pokazywane nigdzie. Obie trzeba WYLICZYĆ z przepisu, a długość terminu zależy od tego,
+czy postępowanie jest powyżej progów unijnych.
+
+**Decyzja.** Wariant przepisu wybieramy po REJESTRZE, nie po kwocie. `budget` jest pusty
+w większości ogłoszeń (BZP podaje rzadko, Baza Konkurencyjności zostawia puste pole
+w ok. 80% przypadków), więc zgadywanie z kwoty dawałoby błędny termin dokładnie tam,
+gdzie danych brakuje — czyli najczęściej. Rejestr jest znany dla KAŻDEGO ogłoszenia bez
+wyjątku: postępowania od progów unijnych publikuje się w Dz.U. UE (TED), poniżej — w BZP.
+
+- BZP → pytania na 4 dni przed terminem (art. 284 ust. 2 Pzp), związanie do 30 dni
+  (art. 220 ust. 1 pkt 1),
+- TED → pytania na 14 dni (art. 135 ust. 2), związanie do 90 dni (art. 220 ust. 1 pkt 2),
+- Baza Konkurencyjności → **nie podlega Pzp**, więc nie podstawiamy nieobowiązującego
+  przepisu; mówimy wprost, że ustawowego terminu tu nie ma.
+
+Daty wyliczone są jawnie oznaczone (`zrodloDaty: 'wyliczony'` vs `'ogloszenie'`) razem
+z podstawą prawną. To nie kosmetyka: wyliczona jest MAKSIMUM ustawowym, a ogłoszenie
+może podać termin krótszy. Pokazanie jej jako „termin z ogłoszenia" byłoby fałszywym
+pomiarem.
+
+**ICS oddajemy jako PLIK, nie jako adres subskrypcji.** Kalendarz Google/Apple odpytujący
+URL cyklicznie nie wysyła nagłówka `Authorization`, więc subskrypcja wymagałaby
+długożyciowego tokenu w samym adresie — a adresy kalendarzy lądują w historii przeglądarki,
+w logach serwera i w udostępnianych linkach. UID zdarzenia jest stabilny, więc powtórny
+import AKTUALIZUJE wpis zamiast go dublować.
+
+**Ograniczenie, świadome.** Zapis pliku `.ics` z poziomu aplikacji wymaga
+`expo-file-system` + `expo-sharing`, których w projekcie nie ma. Endpoint jest gotowy
+i przetestowany; dołożenie tych zależności to osobna decyzja (nowy build, weryfikacja
+na urządzeniu), nieobjęta tym etapem.
+
+---
+## D-065 — Obietnica „6 godzin" jest własnością KADENCJI, nie deklaracją
+**Data:** 2026-09-24 | Etap 5 (P1-2)
+
+**Problem.** Wymaganie brzmi: zmiana terminu ma zaktualizować dane i wygenerować alert
+w ≤ 6 h. To opóźnienie nie powstaje w jednym miejscu — składa się SZEREGOWO z dwóch
+niezależnych harmonogramów i żadnego z nich nie widać w kodzie, który alert wysyła.
+
+**Decyzja.** Budżet rozpisany jawnie:
+
+| Etap | Nośnik | Najgorszy przypadek |
+|---|---|---|
+| wykrycie zmiany | `bzpOknoFetch` (`20 */3`), `bkOknoFetch` (`50 */3`) | 3 h |
+| powiadomienie | `monitorWyszukiwan` (`35 */2`) | 2 h |
+| **razem** | | **5 h** (1 h zapasu) |
+
+Minuta `:35` rozdziela monitoring od obu okien pobierania, żeby trzy zadania nie biły się
+o ten sam budżet instancji.
+
+**Strażnik w teście czyta crony z `index.js` i liczy tę sumę.** Zweryfikowany na żywo:
+po zmianie kadencji monitoringu na `*/6` test pada komunikatem „najgorszy przypadek to
+3 h wykrycia + 6 h powiadomienia = 9 h, a obiecujemy 6 h". Bez niego rozluźnienie kadency
+„bo taniej" unieważniłoby obietnicę bez jednego czerwonego testu.
+
+---
+## D-064 — Historia zmian mieszka w warstwie DANYCH, klucz liczony z PRZEJŚCIA
+**Data:** 2026-09-24 | Etap 5 (P1-2)
+
+**Problem.** W kodzie siedziało założenie „ogłoszenie po publikacji się nie zmienia".
+Dla BZP jest prawie prawdziwe, dla Bazy Konkurencyjności nieprawdziwe codziennie (kolejne
+WERSJE tego samego ogłoszenia, najczęściej z przesuniętym terminem). Skutek jest ten sam
+niezależnie od rejestru: wykonawca przygotowuje ofertę na danych, które już nie obowiązują.
+
+**Decyzja 1 — wykrywanie w repozytorium, nie w jobie.** `tenders.zaktualizujZeZrodla`
+i `tenders.oznaczAnulowany` to JEDYNE dwa miejsca, przez które ogłoszenie w bazie może się
+zmienić. Zapis historii po ich stronie znaczy, że żaden przyszły job nie może o niej
+zapomnieć, a BZP i TED dostają ją bez powtarzania kodu.
+
+**Decyzja 2 — porównujemy stan PRZED z tym, co REALNIE zapiszemy**, a nie z surowym
+wejściem z rejestru. `ustaw()` pomija pola puste (cisza rejestru nie kasuje danych), więc
+porównanie z wejściem widziałoby „budżet zniknął" przy każdej oszczędniejszej wersji BK
+i zalewało historię fałszywymi zmianami.
+
+**Decyzja 3 — docId = klucz PRZEJŚCIA (przed → po), nie nowej wartości.** Idempotencja
+staje się własnością modelu, a nie ostrożności wołającego: powtórzony po awarii przebieg
+nie dokłada ani jednego wpisu. Termin przesunięty tam i z powrotem to nadal dwa różne
+zdarzenia i wykonawca musi zobaczyć oba. Historia zachowuje czas PIERWSZEGO wykrycia — to
+on mówi, ile czasu wykonawca realnie miał.
+
+**Rozróżnienia, które łatwo zrobić źle.**
+- Skrócenie terminu ma ton `danger`, przesunięcie w przód tylko `ostrzezenie` — tylko
+  skrócenie zabiera czas już rozplanowany.
+- Cofnięcie anulowania to WZNOWIENIE (typ `status`), nie anulowanie; inaczej alarm
+  „postępowanie anulowane" szedłby w chwili powrotu postępowania do gry.
+- PIERWSZE zapamiętanie `status_zrodla` i `zrodlo_odcisk` NIE jest zmianą — pola doszły
+  w tym etapie, więc bez tego wyjątku jeden deploy wygenerowałby alert dla całej bazy.
+- Poprawka tytułu trafia do historii, ale NIE budzi nikogo powiadomieniem.
+
+---
+## D-063 — Pierwszy przebieg obserwacji NIE powiadamia
+**Data:** 2026-09-24 | Etap 5
+
+**Problem.** Zapisane wyszukiwanie z szerokim filtrem obejmuje kilka tysięcy otwartych
+ogłoszeń (pula to dziś 10 084). Naturalna implementacja — „wyślij wszystko, co pasuje,
+czego jeszcze nie wysłałem" — wysłałaby w sekundę powiadomienie „masz 10 000 nowych
+przetargów".
+
+**Decyzja.** Pierwszy przebieg USTAWIA PUNKT ODNIESIENIA i nie wysyła nic. Zapisanie
+wyszukiwania znaczy „od tej chwili obserwuję", i to jest jedyna uczciwa interpretacja.
+
+**Dlaczego to jest ważniejsze, niż wygląda.** Konsekwencją zalania powiadomieniami nie
+jest „użytkownik je zignoruje", tylko „użytkownik wyłączy push dla CAŁEJ aplikacji" —
+i straci przy okazji przypomnienia o terminach składania ofert, czyli funkcję, która
+realnie ratuje kontrakty.
+
+**Reszta hamulców.** Minimalny odstęp z częstotliwości (godzinowa/dzienna/tygodniowa),
+limit 20 obserwacji i osobny limit 10 WŁĄCZONYCH alertów (to inny koszt: miejsce w bazie
+vs powiadomienia i odczyty w każdym przebiegu), odrzucanie duplikatu filtrów kodem 409,
+najwyżej 5 pozycji wymienionych z nazwy w jednym powiadomieniu. Pełna strona skanu daje
+„co najmniej N", a nie zmyśloną dokładną liczbę.
+
+---
+## D-062 — Zapisane wyszukiwania: JEDEN normalizator filtrów, wspólny z katalogiem
+**Data:** 2026-09-24 | Etap 5
+
+**Problem.** Obserwacja rynku musi obejmować DOKŁADNIE ten zbiór, z którego została
+zapisana. Własny normalizator filtrów po stronie monitoringu rozjechałby się z katalogiem
+przy pierwszej zmianie — a użytkownik nie miałby jak tej rozbieżności zobaczyć: lista
+pokazywałaby jedno, alert dotyczyłby czegoś innego.
+
+**Decyzja.** Normalizacja jest DELEGOWANA do `katalogPrzetargow.normalizujFiltry`, a nie
+powtórzona. Filtry przychodzą z ekranu katalogu (przycisk „Zapisz to wyszukiwanie"
+w panelu filtrów) i nie są edytowane na nowo w ekranie obserwacji — druga, równoległa
+lista filtrów byłaby tym samym rozjazdem, tyle że w UI.
+
+**Odcisk obserwacji jest WĘŻSZY niż odcisk kursora katalogu** — pomija sortowanie.
+Kursor odpowiada na pytanie „czy to ta sama STRONA tej samej listy" i musi znać porządek.
+Tu pytanie brzmi „czy to ta sama OBSERWACJA", a dwie obserwacje różniące się wyłącznie
+kolejnością wyników przysyłałyby te same trafienia dwa razy.
+
+**Filtry normalizujemy TAKŻE przy odczycie.** `pasujeDoFiltrow` rozróżnia `null` (brak
+filtra) od `undefined`, więc wpis zapisany PRZED dodaniem nowego pola filtra po cichu
+odrzucałby wszystko. Jedno wywołanie na wyszukiwanie kupuje zgodność wsteczną.
+
+**Bezpieczeństwo.** Wyszukiwania i alerty to subkolekcje użytkownika — cudzego wpisu nie
+da się nawet ZAADRESOWAĆ. Trasy zwracają 404, nie 403: 403 potwierdzałoby istnienie wpisu
+o danym identyfikatorze, a lista kryteriów, po jakich firma szuka kontraktów, jest
+informacją handlową.
+
+---
+## D-061 — Wyjaśnienie dopasowania liczone z danych, nie z AI
+**Data:** 2026-09-24 | Etap 4 (P1-4)
+
+**Problem.** Karta niosła jedno zdanie z `match_reasoning`: albo tekst z płatnego AI,
+albo ogólnik „Trafione słowa kluczowe: …". Użytkownik nie miał jak sprawdzić, KTÓRY
+sygnał zadziałał ani co zmienić w profilu — a profil to jedyna dźwignia, jaką ma nad
+wynikami.
+
+**Decyzja.** `lib/wyjasnienieDopasowania.js` liczy cztery sygnały z danych, które JUŻ
+mamy (profil + zdenormalizowane pola dopasowania). Zero wywołań AI, zero dodatkowych
+odczytów bazy — inaczej jedno przewinięcie listy kosztowałoby 50 odczytów Firestore.
+
+**Region i skala zamówienia są oznaczone jako `informacja`, nie jako ocena.** One NIE
+wchodzą do wyniku silnika (scoring liczy wyłącznie słowa i CPV), a udawanie, że wchodzą,
+byłoby kłamstwem o działaniu produktu. Dwa nowe pola profilu (`regiony`, `wartosc_max`)
+służą wyłącznie temu wyjaśnieniu; scoringu świadomie nie ruszamy — to inna decyzja
+i inne ryzyko (zmiana kryteriów unieważnia oceny i wywołuje ponowne dopasowania).
+
+**Pusty feed dostaje JEDEN konkretny krok** zamiast „zajrzyj później", w kolejności siły
+sygnału: uzupełnij profil → dodaj CPV → dopisz słowa → zaznacz województwa → obejrzyj
+zakładkę „Wszystkie". Podpowiedź pojawia się TYLKO na pierwszej stronie: doczepiona do
+końca listy wyglądałaby jak zarzut, że profil jest zły, choć feed po prostu się skończył.
+
+---
+## D-060 — „Zakres danych": produkt mówi wprost, czego NIE widzi
+**Data:** 2026-09-24 | Etap 4 (P1-4)
+
+**Problem.** Produkt zbierający ogłoszenia z trzech rejestrów czyta się jako
+„wszystkie przetargi w Polsce". To nieprawda i nie da się tego naprawić kodem:
+BIP-y zamawiających, platformy zakupowe bez publicznego API (Platforma Zakupowa,
+eb2b, Logintrade, SmartPZP) i zamówienia prywatne nie mają feedu, z którego dałoby
+się je legalnie pobrać. Wykonawca, który uwierzy w komplet, przegapi postępowanie
+i obwini aplikację — słusznie.
+
+**Decyzja.** Osobny ekran „Zakres danych" (wejście z Konta) + `GET /tenders/zakres-danych`.
+Pokazuje trzy rzeczy, każda z innego powodu:
+
+1. **stan per rejestr z czasem ostatniego sukcesu** — bez tego „brak nowych
+   przetargów" jest nieodróżnialne od „pobieranie padło trzy dni temu", a to są
+   przeciwne decyzje: raz czekasz, raz sprawdzasz rejestr sam;
+2. **pokrycie okna** — jedyny zewnętrzny sygnał niekompletności BK, która przy
+   niepełnym przejściu po prostu oddaje mniej, bez żadnego błędu;
+3. **lista rzeczy NIEOBJĘTYCH** + zastrzeżenie, które jawnie nie obiecuje kompletu.
+
+**Ślad źródła składamy z DWÓCH zapisów.** Historia per źródło (`_health/cykl.zrodla`)
+pochodzi z cyklu dobowego, ale BZP i BK mają własne okna co 3 h z osobnym
+checkpointem. Pomiar na produkcji 2026-09-24: patrząc tylko na cykl, wszystkie trzy
+źródła pokazywały „brak śladu pobrania" — choć oba okna domknęły się tej samej nocy
+(01:27 i 01:50 UTC). Bierzemy więc nowszy znacznik z obu, osobno dla sukcesu i błędu.
+
+**Co to kosztuje.** Jeden odczyt Firestore na 60 s (cache w pamięci instancji),
+wspólny dla `/tenders`, `/matches` i ekranu zakresu. Awaria tego odczytu NIE wywraca
+listy — karta po prostu nie pokaże czasu synchronizacji.
+
+---
+
+## D-059 — Tryb „Wszystkie" jako druga lista: rynek obok feedu
+**Data:** 2026-09-24 | Etap 4 (P1-1, P1-3)
+
+**Problem.** `GET /matches` z definicji pokazuje WYCINEK: przycięty profilem,
+progiem dopasowania i dziennym limitem planu Free. Nowy użytkownik z pustym
+profilem widział pustkę i nie miał jak sprawdzić, czy aplikacja w ogóle ma dane.
+Produkt, który po instalacji wygląda na pusty, nie dostaje drugiej szansy.
+
+**Decyzja.** `GET /tenders` — druga, niezależna lista. Reguła nienegocjowalna:
+ani jedno zapytanie w tym routerze nie czyta profilu, dopasowań ani puli
+(`openPool` ma sufit i cache, bo służy silnikowi dopasowań — nie wolno go tu użyć).
+
+**Podział pracy Firestore / pamięć wymusiły DANE, nie wygoda:**
+
+- `wojewodztwo` trzymamy w formacie, jaki dał rejestr — „PL12" z BZP i „małopolskie"
+  z BK. Równość na tym polu chowałaby całe źródło, bez błędu i bez śladu w logach.
+  (Ta sama pułapka siedziała w aplikacji: `kodWojewodztwa` rozpoznawał wyłącznie cyfry.)
+- `cpv_main` to sklejony łańcuch wielu kodów, a Firestore nie ma filtra po prefiksie
+  ani wyszukiwania pełnotekstowego.
+
+Na Firestore idzie więc tylko równość na `source` i zakres na polu sortowania;
+reszta filtruje się w pamięci podczas skanu stronami.
+
+**Skan NIE gubi rekordów.** Kursor wskazuje pozycję w porządku Firestore (wartość
+pola sortowania + identyfikator dokumentu), więc kolejne żądanie rusza dokładnie tam,
+gdzie poprzednie stanęło — także wtedy, gdy przerwał je sufit odczytów. Odpowiedź
+mówi wprost przez `wyczerpano`, czy to koniec listy, czy koniec budżetu na to żądanie.
+
+**Trzy pułapki złapane testem i pomiarem:**
+
+1. „Krótsza strona = koniec danych" jest prawdą TYLKO gdy obejrzało się ją w całości.
+   Przerwanie w połowie (strona wyników pełna) zostawia dokumenty nieosiągalne bez
+   kursora — realny błąd pierwszej wersji.
+2. Kursor niesie odcisk zestawu filtrów. Bez tego strona z jednego zestawu dałaby się
+   doczepić do innego i wyglądałaby jak losowa dziura w wynikach. Dziś: HTTP 400.
+3. Pomiar na produkcji: żądanie o 3 pozycje czytało 300 dokumentów, bo pętla brała
+   zawsze pełną stronę. Po naprawie (`rozmiarPobrania` z potrzeby i zmierzonej
+   trafności filtra) to samo żądanie czyta **20**.
+
+**Indeksy złożone są zadeklarowane i pilnowane testem** — emulator Firestore ich nie
+egzekwuje, więc brak indeksu byłby niewidoczny aż do produkcji (ta sama pułapka co P-4
+w `openPool`).
+
+**Szczegóły ogłoszenia z katalogu to OSOBNY ekran** niż szczegóły dopasowania. Tamten
+adresuje wszystko identyfikatorem dopasowania (zapisz, przypomnienie, streszczenie AI,
+statystyki wyników). Ogłoszenie z rynku żadnego dopasowania nie ma, więc te akcje
+kończyłyby się błędem 404 na ekranie, który wygląda na sprawny.
+
+---
+
+## D-058 — Baza Konkurencyjności trzecim źródłem; deduplikacja między rejestrami
+**Data:** 2026-09-24 | Etap 3
+
+**Po co.** BZP zna zamówienia wg Pzp, TED te powyżej progów UE. Zakupów
+BENEFICJENTÓW dotacji unijnych (firmy, fundacje, uczelnie, szpitale) nie ma
+w żadnym z nich — obowiązuje je „zasada konkurencyjności", nie Pzp. Dla małego
+wykonawcy to często łatwiejszy rynek: zamawiającym bywa firma, nie urząd.
+Zmierzone: 1 135 ogłoszeń otwartych, 171 nowych na dobę.
+
+**Zakres danych.** Wyłącznie publiczne API JSON, bez klucza i logowania. Żadnego
+scrapingu HTML, żadnego omijania limitów, zero płatnego AI.
+
+**Trzy decyzje, które nie są oczywiste i mają testy:**
+
+1. **Powtarzanie całego przejścia stron.** BK listuje w NIESTABILNEJ kolejności —
+   trzy pomiary tego samego zestawu dały 921, 1012 i 1135 z 1135. Warunkiem stopu
+   jest domknięcie `meta.total`, a NIE „przebieg nic nie dodał" (zmierzony przebieg
+   2/3 dołożył zero, a 3/3 dołożył 214). Niepełne pokrycie jest raportowane
+   (`/health → bk_okno.pokrycie_kompletne`), bo API nie zgłasza go błędem.
+
+2. **Okno czasu ustawia KOLEJNOŚĆ, nie odsiewa.** BK ignoruje wszystkie parametry
+   dat, więc okno musi być klienckie — a twarde odcięcie po dacie publikacji
+   ukryłoby ogłoszenia otwarte od miesięcy, czyli najwięcej warte kontrakty.
+   Świeże idą pierwsze, zaległe domykają się przez checkpoint.
+
+3. **Zniknięcie z listy NIE jest anulowaniem.** Wymagamy pełnego pokrycia (inaczej
+   „anulowalibyśmy" 19 % rynku), pomijamy ogłoszenia po terminie (wygasły naturalnie)
+   i zawsze potwierdzamy statusem ze szczegółu. Anulowane ogłoszenie ZOSTAJE
+   w bazie — ktoś je zapisał i ma w dopasowaniach — ale wypada z puli dopasowań.
+
+**Deduplikacja między rejestrami.** Ten sam przetarg bywa w BZP i w BK naraz,
+z zupełnie różnymi identyfikatorami. Klucz = doba terminu + rdzeń zamawiającego
++ rdzeń tytułu; wąski świadomie, bo zgubiony przetarg kosztuje kontrakt, a duplikat
+jedno przewinięcie listy. Wygrywa rejestr PIERWOTNY (BZP > TED > BK) — tam idą
+odwołania i zmiany SWZ; wpis z rejestru pobocznego zostaje jako link obok
+(`zrodla_alternatywne`) i uzupełnia puste pola (np. wartość, której BZP nie podaje).
+
+**Odrzucone.** Nie kopiujemy adaptera z `backend/src/services/adaptery/` — czyta
+płytkie `a.id` ze szczegółu, czyli identyfikator WERSJI zamiast ogłoszenia, co daje
+zły link i zły docId. Nie robimy jednego zapytania `limit=2000` (działa, ale ciągnie
+0,76 MB naraz i nie ma wtedy żadnego sygnału o niepełnym pokryciu).
+
+---
+
 ## D-055 — FOMO na Free + potencjał (bodziec konwersji)
 **Data:** 2026-07-14 | User: „co dodać, żeby przyciągało klienta" → wybór „FOMO na Free + potencjał"
 

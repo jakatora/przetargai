@@ -49,7 +49,7 @@ export default function TajemnicaScreen({ route }) {
           <View key={d.id} style={styles.card}>
             <View style={styles.glowa}>
               <Text style={styles.numer}>Dokument {i + 1}</Text>
-              <Pressable onPress={() => usun(d.id)} hitSlop={8} accessibilityLabel="Usuń dokument">
+              <Pressable accessibilityRole="button" onPress={() => usun(d.id)} hitSlop={8} accessibilityLabel="Usuń dokument">
                 <Text style={styles.usun}>Usuń</Text>
               </Pressable>
             </View>

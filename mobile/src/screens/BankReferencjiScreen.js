@@ -126,7 +126,7 @@ export default function BankReferencjiScreen() {
           {RODZAJE_LISTA.map((r) => {
             const aktywny = rodzaj === r;
             return (
-              <Pressable
+              <Pressable accessibilityRole="radio" accessibilityState={{ checked: aktywny }}
                 key={r}
                 onPress={() => setRodzaj(r)}
                 style={[styles.chip, aktywny && { backgroundColor: kolory.blue, borderColor: kolory.blue }]}
@@ -198,7 +198,7 @@ export default function BankReferencjiScreen() {
                 Zakończono {formatDate(r.dataZakonczenia)}
                 {ocena.dataWaznosci ? ` · liczy się do ${formatDate(new Date(ocena.dataWaznosci).toISOString())}` : ''}
               </Text>
-              <Pressable onPress={() => usun(r.id)} hitSlop={8} accessibilityLabel="Usuń referencję">
+              <Pressable accessibilityRole="button" onPress={() => usun(r.id)} hitSlop={8} accessibilityLabel="Usuń referencję">
                 <Text style={styles.usun}>Usuń</Text>
               </Pressable>
             </View>

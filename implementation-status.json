@@ -1,0 +1,642 @@
+{
+  "projekt": "PrzetargAI",
+  "zaktualizowano": "2026-09-24 (po etapie 6: audyt P1/P2 domkniety, radar planow wdrozony)",
+  "galaz": "codex/przetargai-complete",
+  "drzewo_robocze": "D:/wt/przetargai-complete",
+  "uwaga": "Repozytorium D:/projekty/przetarg-ai jest BRUDNE (cudzy WIP) — nie dotykać.",
+  "produkcja": {
+    "platforma": "Firebase Cloud Functions v2 (europe-central2, projekt przetargai)",
+    "wersja_api": "api — 4 redeploye po api-00038-gip (2026-09-24, ~08:45–11:00 UTC); numeru rewizji nie odczytano (brak gcloud na maszynie)",
+    "wdrozone_z": "lokalnego kodu przez `firebase deploy` (NIE z GitHuba — to odróżnia Functions od Railway)",
+    "health": "https://europe-central2-przetargai.cloudfunctions.net/api/health",
+    "funkcje": [
+      "api",
+      "dailyTenderFetch",
+      "bzpOknoFetch",
+      "bkOknoFetch",
+      "wynikiOknoFetch",
+      "benchmarkPrzelicz",
+      "remindDeadlines",
+      "weeklyDigest",
+      "aggregateResults",
+      "monitorWyszukiwan",
+      "planyOknoFetch"
+    ],
+    "otwarte_przetargi": 9673,
+    "otwarte_przetargi_przed_etapem_3": 7249,
+    "wersja_api_poprzednia_w_tym_pliku": "api-00034-jot (stan po etapie 5)",
+    "otwarte_przetargi_po_imporcie_bk": 8384,
+    "przyrost_po_imporcie_bk": "z 8 384 na 10 084 — przyrost 1 700 pochodzi z okna BZP domknietego 2026-09-24T01:27:04Z (newTenders 1700), nie z BK",
+    "funkcje_potwierdzone_live": "firebase deploy: 11 funkcji v2; planyOknoFetch \"Successful create operation\"; firestore:indexes (obserwowane_plany.aktywna) wdrozone",
+    "wdrozenia_w_etapie_5": [
+      "api-00032-qec - etap 5 (monitorWyszukiwan utworzony)",
+      "api-00033-xac - naprawa cichej awarii sortowania w harmonogramie",
+      "api-00034-jot - przypomnienie o terminie wlaczane z kalendarza"
+    ],
+    "wdrozenia_w_etapie_6": [
+      "api-00035-xic - etap 6 (wynikiOknoFetch i benchmarkPrzelicz utworzone)",
+      "api-00036-tum - koszt: okno TED 2 dni, benchmark utrwala tylko kubelki z wnioskiem, sufit odczytu",
+      "api-00037-* - naprawa adresu zapytania o wyniki BZP + awaria calego rejestru = przebieg nieudany",
+      "api-00038-gip - odsiewanie ogloszen spoza doby (filtr wojewodztwa ignoruje gorna granice okna)"
+    ],
+    "wdrozenia_po_etapie_6": [
+      "deploy calosci functions — planyOknoFetch utworzona, api z /radar-planow",
+      "api — kolejnosc radaru (nadchodzace → bez daty → minione) + komunikat bez ujemnych miesiecy",
+      "firestore:indexes + api + monitorWyszukiwan — obserwacja planow i runMonitorPlanow",
+      "api — /eksport (CSV) i /eksport/wyslij (CSV + ICS na e-mail wlasciciela)"
+    ]
+  },
+  "testy": {
+    "polecenie": "cd firebase/functions && npm test",
+    "wynik": "1095/1095",
+    "baseline_przed_etapem_3": "422/422",
+    "wymagane_srodowisko": {
+      "powod": "emulator Firestore nie wstaje na tej maszynie bez tych dwóch rzeczy",
+      "JAVA_HOME": "C:/Users/Startklaar/.jdks/jdk-21.0.12.1+1 (portable Temurin 21; JDK 25 NIE działa)",
+      "JAVA_TOOL_OPTIONS": "-Djdk.net.unixdomain.tmpdir=C:\\jtmp",
+      "dlaczego": "domyślny java.io.tmpdir to ścieżka w notacji 8.3 (C:\\Users\\STARTK~1\\...), której connect() AF_UNIX na Windows odrzuca z EINVAL — Selector.open() pada i emulator nie startuje"
+    },
+    "kiedy_wykonane": "2026-09-24, po kazdym kroku i pelny przebieg z emulatorem przed kazdym wdrozeniem",
+    "status_w_audycie": "wykonane w tej sesji",
+    "baseline_przed_etapem_4": "513/513",
+    "mobile": {
+      "polecenie": "cd mobile && npm test",
+      "wynik": "800/800",
+      "baseline_przed_etapem_4": "663/663",
+      "statyczna_kontrola": "npm run check (esbuild) — zielony",
+      "baseline_przed_etapem_5": "711/711",
+      "baseline_przed_etapem_6": "739/739",
+      "baseline_po_etapie_6": "774/774"
+    },
+    "baseline_przed_etapem_5": "606/606",
+    "baseline_przed_etapem_6": "744/744",
+    "baseline_po_etapie_6": "946/946"
+  },
+  "etapy": {
+    "etap_1_p0": {
+      "stan": "wdrozone",
+      "zakres": "ślad cyklu przestaje być lepki, /health widzi awarię źródła, most /api/przetarg/* w Cloud Functions",
+      "commity": [
+        "4e08f80",
+        "04072ca",
+        "1c43aac",
+        "c8978f2",
+        "83d3dff"
+      ]
+    },
+    "etap_2_p0": {
+      "stan": "wdrozone",
+      "zakres": "backup bez zakleszczenia na pełnym dysku, pula dopasowań bez sufitu 2000, projekcje pól",
+      "commity": [
+        "dc1e88b",
+        "36d680b",
+        "516b088"
+      ],
+      "blokady_na_czlowieka": [
+        "Railway: Live Resize wolumenu 500 MB → 2 GB (dotyczy backendu Railway, NIE Cloud Functions)",
+        "GitHub: brak uprawnienia `Contents: write` — commity są lokalne, a Railway wdraża się z GitHuba"
+      ]
+    },
+    "etap_3_baza_konkurencyjnosci": {
+      "stan": "dowiezione i zweryfikowane na produkcji",
+      "data": "2026-09-24",
+      "cel": "Baza Konkurencyjności jako PEŁNOPRAWNE trzecie źródło głównego pipeline Cloud Functions",
+      "commity": [
+        "0fd1704 — tempo i ponawianie zapytań jako wspólna biblioteka źródeł",
+        "f7e5f06 — adapter BK (kontrakt na utrwalonych fixture'ach)",
+        "4fcd78d — deduplikacja MIĘDZY rejestrami + link do źródła pierwotnego",
+        "e0bbd6a — okno BK z checkpointem: aktywne/zmienione/anulowane",
+        "4fb47a9 — BK w głównym pipeline: harmonogram, /health, rekonsyliacja",
+        "(6/7) — bezpłatny wyzwalacz /admin/okno-bk dla operatora",
+        "(7/7) — awaria strony listy nie kasuje całego przebiegu"
+      ],
+      "pliki": {
+        "adapter": "firebase/functions/src/services/bazaKonkurencyjnosci.js",
+        "okno_i_checkpoint": "firebase/functions/src/jobs/oknoBk.js",
+        "dedup_miedzy_zrodlami": "firebase/functions/src/lib/dedupZrodel.js",
+        "wspolne_tempo_http": "firebase/functions/src/lib/tempoZapytan.js",
+        "rejestr_zrodel": "firebase/functions/src/jobs/fetchTenders.js (domyslneZrodla)",
+        "checkpoint_firestore": "_health/bk_okno",
+        "harmonogram": "firebase/functions/index.js (bkOknoFetch, cron '50 */3 * * *')",
+        "fixtury_kontraktowe": "firebase/functions/test/fixtures/bk-*.json"
+      },
+      "testy_dodane": {
+        "tempoZapytan": 9,
+        "bazaKonkurencyjnosci": 22,
+        "dedupZrodel": 16,
+        "oknoBkCheckpoint": 21,
+        "bkRepo": 9,
+        "bkPipeline": 8,
+        "zdrowieBk": 5,
+        "adminOknoBk": 2,
+        "razem": 92
+      },
+      "weryfikacja_live": {
+        "data": "2026-09-24",
+        "pomiar_read_only_api": {
+          "aktywnych_ogloszen": 1135,
+          "opublikowane_ostatnia_doba": 171,
+          "opublikowane_ostatnie_7_dni": 636,
+          "opublikowane_ostatnie_30_dni": 1102,
+          "zapytan_na_pelne_listowanie": "5-10 (2-3 przebiegi)",
+          "czas_listowania_s": 5.4
+        },
+        "import_produkcyjny": {
+          "uruchomiony_przez": "POST /admin/okno-bk (BEZ AI, bez dopasowań)",
+          "przebiegow": 11,
+          "zapisanych_przetargow": 1135,
+          "odrzuconych": 0,
+          "pominietych": 0,
+          "zaleglosc_koncowa": 0,
+          "pokrycie_koncowe": "1135/1135 (kompletne)",
+          "drugi_przebieg_po_domknieciu": "0 zapytań o szczegóły — checkpoint działa"
+        }
+      },
+      "zmierzone_wlasciwosci_api_bk": [
+        "status[0] jest WYMAGANY — jego brak to HTTP 500",
+        "paginacja DZIAŁA (inaczej niż w BZP), ale offset ma sufit ~10 000",
+        "filtry dat są IGNOROWANE (sprawdzone 4 warianty nazw) — okno czasu musi być klienckie",
+        "KOLEJNOŚĆ WYNIKÓW JEST NIESTABILNA: jedno przejście stron dało 921/1135, 1012/1135, 1135/1135",
+        "„kolejny przebieg nic nie dodał” NIE jest poprawnym warunkiem stopu (przebieg 2 dołożył 0, przebieg 3 dołożył 214)",
+        "GET /announcements/{id} zwraca WERSJĘ ogłoszenia: własne id i status zawsze PUBLISHED; prawdziwy status i id są w data.advertisement.advertisement",
+        "wartość zamówienia i CPV są WYŁĄCZNIE w szczegółach (N+1) i wartość bywa null w ~80% przypadków",
+        "pod długim, ciągłym ruchem BK spowalnia i strona listy potrafi przekroczyć 25 s limitu (3/7 przebiegów drenażu)"
+      ],
+      "zgodnosc": "wyłącznie publiczne API JSON, bez klucza i logowania; zero scrapingu HTML, zero omijania limitów, zero płatnego AI"
+    },
+    "etap_4_katalog_i_zrodla": {
+      "stan": "backend wdrozony i zweryfikowany na produkcji; mobile gotowe w galezi do builda",
+      "data": "2026-09-24",
+      "cel": "P1-1 + P1-3 + P1-4: rynek widoczny niezaleznie od profilu, uczciwe zrodlo i zakres danych, wyjasnienie dopasowania bez AI",
+      "commity": [
+        "3e89bc2 — wspolny normalizator wojewodztw (BZP „PL12\" vs BK „malopolskie\")",
+        "d2cff69 — czysta logika katalogu: filtry, plan zapytania, kursor, indeksy",
+        "f0c5a7b — czysty opis zakresu danych (co widzimy i czego NIE)",
+        "f55048c — GET /tenders: katalog rynku, kursor, filtry, /filtry, /zakres-danych",
+        "9b2d8b9 — wyjasnienie dopasowania z konkretnych sygnalow, bez AI",
+        "87021ca — wyjasnienie na karcie i w szczegolach + regiony/wartosc_max w profilu",
+        "a05bdc3 — dwie naprawy z pomiaru na zywo (koszt odczytu, slad z okien)",
+        "049e8e9 — mobilna warstwa czysta: jezyk PL/EN, katalog, zrodla, wyjasnienie",
+        "0ba92cc — UI: przelacznik „Dla mnie / Wszystkie\", zrodlo na karcie, ekran zakresu danych",
+        "0c75ea5 — stan wdrozenia, dziennik i decyzje D-059..D-061"
+      ],
+      "pliki": {
+        "backend_katalog": "firebase/functions/src/lib/katalogPrzetargow.js + routes/tenders.js + db/repos.js (tenders.katalog)",
+        "backend_zakres": "firebase/functions/src/lib/zakresDanych.js + services/zakresZrodel.js",
+        "backend_wyjasnienie": "firebase/functions/src/lib/wyjasnienieDopasowania.js",
+        "backend_regiony": "firebase/functions/src/lib/wojewodztwa.js",
+        "indeksy": "firebase/firestore.indexes.json (2 nowe indeksy zlozone na kolekcji tenders)",
+        "mobile_logika": "mobile/src/lib/{katalogPrzetargow,zrodlaDanych,wyjasnienieDopasowania,jezyk,wojewodztwa}.js",
+        "mobile_ui": "mobile/src/components/{KatalogWszystkich,PodpisZrodla,Wyjasnienie}.js + screens/{KatalogDetailScreen,ZakresDanychScreen}.js",
+        "mobile_zmienione": "mobile/src/screens/{MatchFeedScreen,MatchDetailScreen,AccountScreen}.js + components/MatchCard.js + context/JezykContext.js"
+      },
+      "endpointy": [
+        "GET /tenders — katalog rynku (kursor, filtry: zrodlo/region/CPV/tekst/daty/termin/wartosc)",
+        "GET /tenders/filtry — slowniki filtrow z etykietami PL/EN",
+        "GET /tenders/zakres-danych — stan per rejestr + czego NIE obejmujemy",
+        "GET /matches — dodane `wyjasnienie` per pozycja i `podpowiedz` przy pustym feedzie",
+        "GET /matches/:id, GET /matches/saved — dodane `wyjasnienie` i metryczka zrodla",
+        "PATCH /auth/me — dodane pola `regiony` i `wartosc_max` (NIE wchodza do scoringu)"
+      ],
+      "testy_dodane": {
+        "wojewodztwa_backend": 6,
+        "katalogFiltry": 27,
+        "zakresDanych": 14,
+        "katalogRoute": 15,
+        "wyjasnienieDopasowania_backend": 19,
+        "wyjasnienieRoute": 12,
+        "razem_backend": 93,
+        "mobile_jezyk": 10,
+        "mobile_katalogPrzetargow": 13,
+        "mobile_zrodlaDanych": 12,
+        "mobile_wyjasnienieDopasowania": 10,
+        "mobile_wojewodztwa": 3,
+        "razem_mobile": 48
+      },
+      "weryfikacja_live": {
+        "data": "2026-09-24",
+        "konto_sondujace": "zalozone BEZ slow kluczowych i BEZ CPV (zero wywolan platnego AI), po pomiarach USUNIETE (DELETE /auth/me → 200, kontrolnie GET /auth/me → 401)",
+        "katalog_niezalezny_od_profilu": "konto z pustym profilem: /matches count=0, /tenders count=3",
+        "podpowiedz_pustego_feedu": "kod „uzupelnij_profil\", tytul PL/EN",
+        "kursor": "strona 1 i 2 po 5 pozycji, zero powtorzen; kursor z innego zestawu filtrow → 400; kursor uszkodzony → 400",
+        "metryczka_zrodla_na_karcie": "kod=bzp, stan=ok, zsynchronizowano_o=2026-09-24T01:27:04.561Z, rejestr=https://ezamowienia.gov.pl",
+        "filtry": {
+          "brak filtrow (limit=3)": "count=3, przeskanowano=20",
+          "zrodlo=baza_konkurencyjnosci": "count=5, przeskanowano=20",
+          "zrodlo=baza_konkurencyjnosci&region=PL12": "count=5 (wszystkie Malopolskie), przeskanowano=320",
+          "cpv=45": "count=5, przeskanowano=20",
+          "q=droga": "count=5, przeskanowano=791",
+          "sort=termin": "count=5 (BZP i BK wymieszane), przeskanowano=20"
+        },
+        "zakres_danych": {
+          "bzp": "stan ok, sukces 1,7 h temu, okno 8 dob domkniete w calosci",
+          "ted": "stan brak_danych — TED nie ma wlasnego okna, slad pojawi sie po dailyTenderFetch (cron 0 12 * * *)",
+          "baza_konkurencyjnosci": "stan ok, sukces 1,3 h temu, pobrano komplet 1135 z 1135",
+          "nieobjete": [
+            "bip",
+            "platformy_bez_api",
+            "prywatne",
+            "plany_postepowan"
+          ],
+          "zastrzezenie": "jawnie NIE obiecuje wszystkich przetargow w Polsce"
+        },
+        "profil": "PATCH regiony [\"PL14\",\"malopolskie\",\"Berlin\"] → zapisane [\"14\",\"12\"] (Berlin odrzucony); wartosc_max 1500000 trwale"
+      },
+      "naprawy_z_pomiaru_na_zywo": [
+        "Koszt odczytu: zadanie o 3 pozycje czytalo 300 dokumentow (petla brala zawsze pelna strone) → po naprawie 20. Emulator tego nie lapal, bo przy kilkudziesieciu dokumentach oddawal wszystko za pierwszym razem.",
+        "Czas synchronizacji: karta pokazywala „brak sladu pobrania\" dla wszystkich zrodel, bo patrzylismy tylko na slad cyklu dobowego (sprzed naprawy lepkiego merge'a, bez historii per zrodlo). Checkpointy okien BZP i BK — swiezsze — leza teraz w tym samym rachunku.",
+        "Filtr regionu chowal cale zrodlo BK, bo normalizator rozpoznawal wylacznie cyfry, a BK zapisuje wojewodztwo nazwa. Naprawione po obu stronach (backend i aplikacja)."
+      ],
+      "czego_nie_zmierzono": "Wyjasnienia dopasowania na zywym koncie — kazde konto z wypelnionym profilem uruchamia ponowne dopasowanie, czyli PLATNE AI. Polecenie etapu tego zabrania; wyjasnienie pokrywaja 29 asercji (19 na czystej funkcji + 10 przez realny serwer HTTP).",
+      "zgodnosc": "zero platnego AI, zero Stripe, zero scrapingu — wylacznie wlasne API i dane juz w bazie"
+    },
+    "etap_5_monitoring": {
+      "stan": "backend wdrozony i zweryfikowany na produkcji; mobile gotowe w galezi do builda",
+      "data": "2026-09-24",
+      "cel": "Monitoring szans i terminow bez platnego AI: zapisane wyszukiwania z alertami, historia zmian BZP/TED/BK, kalendarz trzech terminow (P1-2 + P1-7)",
+      "commity": [
+        "f6fbeac - zapisane wyszukiwania: czysta logika (normalizacja, hamulec, limity)",
+        "96a9a59 - wykrywanie zmian ogloszenia + rozroznienie istotnosci",
+        "d88ea37 - kalendarz przetargu: trzy terminy, Europe/Warsaw, ICS",
+        "cde80b0 - warstwa danych: wyszukiwania, historia zmian, centrum alertow + indeksy",
+        "276306b - trasy CRUD /wyszukiwania i /alerty",
+        "f5e7f17 - historia zmian zapisywana w sciezce pobierania (BZP/TED/BK)",
+        "166a8b6 - plan przebiegu monitoringu (czysta logika decyzji o powiadomieniu)",
+        "11b700e - harmonogram monitorWyszukiwan co 2 h + push/e-mail",
+        "e5e7b2e - trasy kalendarza + eksport ICS",
+        "7c561b2 - mobilna warstwa czysta + metody klienta API",
+        "6d6dfc8 - trzy ekrany: obserwacje, centrum alertow, kalendarz",
+        "db9b051 - push z monitoringu prowadzi do centrum alertow",
+        "3649abc - decyzje D-062..D-066",
+        "702e9b8 - przypomnienie o terminie wlaczane z kalendarza"
+      ],
+      "pliki": {
+        "backend_logika_czysta": "firebase/functions/src/lib/{zapisaneWyszukiwania,zmianyOgloszenia,planMonitoringu,kalendarzPrzetargu}.js",
+        "backend_dane": "firebase/functions/src/db/repos.js (wyszukiwania, historiaZmian, alerty + wykrywanie zmian w zaktualizujZeZrodla/oznaczAnulowany)",
+        "backend_trasy": "firebase/functions/src/routes/{wyszukiwania,alerty,kalendarz}.js",
+        "backend_harmonogram": "firebase/functions/src/jobs/monitorWyszukiwan.js + index.js (monitorWyszukiwan, cron 35 */2)",
+        "backend_sygnaly_bk": "firebase/functions/src/jobs/oknoBk.js (sygnalyZmiany: zrodlo_odcisk + status_zrodla)",
+        "indeksy": "firebase/firestore.indexes.json (fieldOverrides: wyszukiwania.alert_wlaczony i zmiany.wykryto_o w zakresie COLLECTION_GROUP, TTL 90 dni na alerty)",
+        "mobile_logika": "mobile/src/lib/{zapisaneWyszukiwania,centrumAlertow,kalendarzPrzetargu}.js",
+        "mobile_ui": "mobile/src/screens/{ZapisaneWyszukiwaniaScreen,CentrumAlertowScreen,KalendarzTerminowScreen}.js",
+        "mobile_zmienione": "mobile/src/components/KatalogWszystkich.js (przycisk \"Zapisz to wyszukiwanie\"), lib/nawigacjaPush.js, lib/narzedziaKatalog.js, api/client.js, navigation/RootNavigator.js"
+      },
+      "endpointy": [
+        "GET/POST /wyszukiwania - lista i zapis obserwacji (409 na duplikat i na limit)",
+        "GET/PATCH/DELETE /wyszukiwania/:id - odczyt, edycja CZASTKOWA, usuniecie (404 na cudze)",
+        "GET /wyszukiwania/czestotliwosci - slownik czestotliwosci i limitow PL/EN",
+        "GET /wyszukiwania/:id/podglad - co teraz pasuje; NIE konsumuje okna monitoringu",
+        "GET /alerty - centrum alertow + licznik nieprzeczytanych + slownik typow zmian",
+        "POST /alerty/:id/przeczytany, POST /alerty/przeczytane",
+        "GET /alerty/zmiany/:tenderId - pelna historia zmian ogloszenia",
+        "GET /kalendarz - trzy terminy kazdego zapisanego przetargu + karta nastepnego kroku",
+        "GET /kalendarz/:tenderId - kalendarz jednego ogloszenia",
+        "GET /kalendarz/ics - eksport pliku ICS (text/calendar, stabilne UID, VALARM 24 h)",
+        "GET /kalendarz i /kalendarz/:id - dodane pole `przypomnienie` (mozliwe/wlaczone/remind_at/etap)"
+      ],
+      "gwarancja_6h": {
+        "wykrycie": "okna zrodel co 3 h (bzpOknoFetch 20 */3, bkOknoFetch 50 */3)",
+        "powiadomienie": "monitorWyszukiwan co 2 h (35 */2)",
+        "najgorszy_przypadek": "5 h (1 h zapasu)",
+        "straznik": "test/monitorWyszukiwan.test.js czyta crony z index.js i liczy sume; zweryfikowany celowym zepsuciem kadencji na */6 -> test pada"
+      },
+      "bez_platnego_ai": "straznik w test/monitorWyszukiwan.test.js czyta zrodlo joba (po wycieciu komentarzy) i pilnuje, ze nie ma drogi do services/ai.js",
+      "blad_znaleziony_po_wdrozeniu": {
+        "opis": "harmonogram przepuszczal do zapytania `sort` zapisany przez uzytkownika; przy sortowaniu \"termin najblizej\" nowe ogloszenie z odleglym terminem nie miescilo sie na stronie skanu i obserwacja MILCZALA bez bledu",
+        "pomiar": "emulator, 52 ogloszenia z terminem 01.2027 + 1 nowe z terminem 2099, sufit 50: SORT=termin -> czyJestNOWY=0, SORT=najnowsze -> czyJestNOWY=1",
+        "naprawa": "harmonogram nadpisuje sort na \"najnowsze\" (spojne z tym, ze odcisk obserwacji od poczatku pomija sortowanie)",
+        "pulapka_testu": "pierwsza wersja testu regresyjnego PRZECHODZILA mimo bledu - punkt odniesienia brał Date.now()-1000, a zapis wypelniacza trwa dluzej niz sekunde"
+      },
+      "swiadomie_niedowiezione": [
+        "zapis pliku .ics z poziomu aplikacji - wymaga expo-file-system + expo-sharing, ktorych w projekcie nie ma; endpoint gotowy i zweryfikowany na produkcji (D-066)",
+        "pomiar pierwszego realnego przebiegu monitorWyszukiwan - funkcja wdrozona, cron 35 */2 nie odpalił sie w oknie sesji; przebieg OCZEKUJACY na harmonogram, nie zmierzony"
+      ]
+    },
+    "etap_6_wygrywalnosc": {
+      "stan": "backend wdrozony i zweryfikowany na produkcji; mobile gotowe w galezi do builda",
+      "data": "2026-09-24",
+      "cel": "Przejscie od \"co jest ogloszone\" do \"czy w tym wygrasz i co masz zrobic, zeby zlozyc oferte na czas\" — na danych z ROZSTRZYGNIEC, bez platnego AI i bez obiecywania prawdopodobienstwa wygranej",
+      "commity": [
+        "0610b73 - parser wynikow BZP czyta cale ogloszenie, nie polowe",
+        "de39b0c - TED jako drugie zrodlo rozstrzygniec + klucz zlaczenia wynik->przetarg",
+        "897dbb5 - rozstrzygniecia jako dane zrodlowe + benchmark liczony z bazy",
+        "92b3dc3 - karta Czy warto startowac, checklista oferty i panel mobilny",
+        "(5/5) - naprawa pobierania wynikow BZP + koszt policzony przed wdrozeniem"
+      ],
+      "pliki": {
+        "parser_bzp": "firebase/functions/src/lib/wynikiParser.js",
+        "adapter_ted": "firebase/functions/src/services/tedWyniki.js + src/lib/nuts.js",
+        "dane": "firebase/functions/src/db/repos.js (rozstrzygniecia, modyfikacjeUmow, benchmarkRynku, oknoWynikow, postepowanie_id i zamawiajacy_nip na przetargu)",
+        "joby": "firebase/functions/src/jobs/{oknoWynikow,benchmarkRynku,aggregateResults}.js",
+        "benchmark": "firebase/functions/src/lib/benchmark.js",
+        "karta": "firebase/functions/src/lib/czyWartoStartowac.js + services/kartaStartu.js",
+        "checklista": "firebase/functions/src/lib/checklistaOferty.js",
+        "trasy": "firebase/functions/src/routes/wygrywalnosc.js (+ /matches/:id/czy-warto, /health.wyniki_okno, /admin/okno-wynikow, /admin/benchmark)",
+        "indeksy": "firebase/firestore.indexes.json (rozstrzygniecia: zamawiajacy_nip + opublikowano DESC)",
+        "mobile_logika": "mobile/src/lib/wygrywalnosc.js",
+        "mobile_ui": "mobile/src/screens/{CzyWartoScreen,ChecklistaOfertyScreen}.js",
+        "mobile_zmienione": "mobile/src/screens/{MatchDetailScreen,KatalogDetailScreen}.js + api/client.js + navigation/RootNavigator.js",
+        "sondy": "firebase/functions/skrypty/{pobierz-probke-wynikow,pomiar-wynikow,sonda-ted-wyniki,sonda-ted-powiazanie,sonda-ted-ingest,sonda-ted-modyfikacje}.mjs"
+      },
+      "endpointy": [
+        "GET /wygrywalnosc/tender/:id — karta decyzji albo rozstrzygniecie, gdy juz zapadlo",
+        "GET /wygrywalnosc/tender/:id/benchmark — surowe kubelki (zamawiajacy / dzial+region / dzial+kraj)",
+        "POST /wygrywalnosc/tender/:id/checklista — BEZSTANOWA: wymagania i sejf w zadaniu, dzien skladania z kalendarza",
+        "GET /matches/:id/czy-warto — karta dla pozycji z feedu",
+        "POST /admin/okno-wynikow — domkniecie okna rozstrzygniec (wlasny budzet 240 s)",
+        "POST /admin/benchmark — przeliczenie kubelkow z bazy"
+      ],
+      "harmonogram": {
+        "wynikiOknoFetch": "cron '5 */6 * * *', timeout 1800 s",
+        "benchmarkPrzelicz": "cron '40 3 * * *', timeout 1800 s"
+      },
+      "testy_dodane": {
+        "wynikiParserR2": 27,
+        "tedWyniki": 29,
+        "postepowanieId": 7,
+        "oknoWynikow": 18,
+        "benchmark": 28,
+        "benchmarkRynku": 7,
+        "czyWartoStartowac": 35,
+        "checklistaOferty": 24,
+        "wygrywalnoscRoute": 11,
+        "adminWygrywalnosc": 5,
+        "bzpWynikiUrl": 9,
+        "aggregateResults": 3,
+        "indeksyFirestore": 1,
+        "razem_backend": 204,
+        "mobile_wygrywalnosc": 25
+      },
+      "pomiary_zrodel": {
+        "bzp_probka": "200 ogloszen z 2026-09-22 (skrypty/pomiar-wynikow.mjs)",
+        "regula_czesci_5_1": "200/200 ogloszen zgodnych z procedureResult",
+        "indeksowanie_numerem_czesci": "545/545 blokow z niepustym rozstrzygnieciem, 395/395 nazw zwyciezcy zgodnych, 0 uniewaznionych z wykonawca",
+        "uniewaznienia": "150 z 545 czesci (27,5 %) — wczesniej niewidoczne",
+        "ceny_bez_groszy": "+39 z 404 cen wybranych (9,6 %)",
+        "klucz_zlaczenia": "tenderId (ocds) w 200/200 wynikow i 3974/3974 ogloszen o zamowieniu",
+        "vat_a_rabat": "mediana 6.4/4.3 = 1,0489 na 46 ogloszeniach, skupiska na 1,23 i 1,17 — rabat z BZP ZAKAZANY",
+        "ted_wyrownanie_tablic": "winner-name 162/250, winner-size 113/250, tender-value 168/250 — zipujemy tylko wyrownane",
+        "ted_pary_ofert": "code.length === val.length w 250/250; podzielnosc przez liczbe czesci 208/250",
+        "ted_nuts": "buyer-country-sub w postaci NUTS 250/250; kodWojewodztwa(\"PL426\") dawal swietokrzyskie zamiast zachodniopomorskiego",
+        "ted_ingest_dymna": "500 ogloszen: 0 odrzuconych, 1895 czesci, 922 z cena, 151 uniewaznionych, 895 ze zwyciezca, 1918 z rodzajem w slowniku BZP",
+        "koszt_zapisow": "200 ogloszen jednego dnia = 178 ROZNYCH zamawiajacych — stad utrwalanie wylacznie kubelkow z wnioskiem"
+      },
+      "bledy_znalezione_przez_testy": [
+        "Kursor stronicowania rozstrzygniec byl sama DATA, a opublikowano nie jest unikalne — startAfter przeskakiwal wszystkie dokumenty z danego dnia i benchmark liczyl sie z ulamka rynku, po cichu. Kursor to para (data, docId).",
+        "Straznik indeksow Firestore nie widzial where(x, \"==\", String(v)) — czyli ksztaltu wymagajacego indeksu zlozonego. Czyta teraz okno kodu do wykonania zapytania i sprawdza deklaracje indeksu."
+      ],
+      "decyzje_produktowe": [
+        "Karta NIE podaje prawdopodobienstwa wygranej — werdykt to kategoria, tresc to czynniki z liczba i wielkoscia probki (D-071).",
+        "Rabat wzgledem kosztorysu wylacznie z TED — w BZP 4.3 netto vs 6.4 brutto (D-068).",
+        "BZP i TED nie sa deduplikowane — identyfikatory postepowan sa rozlaczne, a scalanie po nazwie laczyloby rozne postepowania (D-070).",
+        "Checklista liczy waznosc na DZIEN SKLADANIA i jest bezstanowa — dziala takze przy niedostepnym Radarze SWZ i Sejfie (D-072)."
+      ],
+      "weryfikacja_live": {
+        "data": "2026-09-24",
+        "konto_sondujace": "zalozone BEZ slow kluczowych i BEZ CPV (zero wywolan platnego AI), po pomiarach USUNIETE (DELETE /auth/me -> 200, kontrolnie GET /auth/me -> 401)",
+        "trasy_bez_tokenu": "/wygrywalnosc/tender/:id, /tender/:id/benchmark, /matches/:id/czy-warto -> 401; kontrolnie nieistniejaca trasa -> 404",
+        "okno_rozstrzygniec": {
+          "domkniete": "14/14 dob, doby_niedomkniete 0",
+          "bzp": "2948 ogloszen / 5250 czesci w przebiegu domykajacym",
+          "ted": "401 ogloszen / 1550 czesci",
+          "zmiany_umow": 10,
+          "budzet_wyzwalacza": "przebieg 14 dob przekroczyl 240 s i zostawil 3 doby OTWARTE; kolejne wywolanie domknelo je w 76 s (checkpoint dziala)"
+        },
+        "benchmark": {
+          "rozstrzygniec_przeczytanych": 5805,
+          "stron": 12,
+          "kubelkow_policzonych": 3488,
+          "kubelkow_utrwalonych": 932,
+          "kubelkow_bez_wniosku": 2556,
+          "uciety_sufit": false
+        },
+        "karta_na_zywych_ogloszeniach": [
+          "2026/BZP 00453651 (zywnosc): werdykt sprawdz, zrodlo dzial_region, probka 67 czesci; 93% wygrywaja mali, 1% uniewaznien",
+          "2026/BZP 00453649 (odpady): werdykt sprawdz, zrodlo dzial_region, probka 18 czesci; zwykle 1 oferta",
+          "2026/BZP 00453647 (przepusty): werdykt sprawdz, zrodlo ZAMAWIAJACY, probka 16 czesci; 6% uniewaznien"
+        ],
+        "checklista_na_zywo": "dzien zlozenia liczony z terminu (np. 2026-10-05 przy terminie 2026-10-06); dokument wazny jeszcze 5 dni trafia do koszyka przeterminuje_sie, nastepny krok = ZUS",
+        "health": "wyniki_okno obecne: doby_okna 14, doby_niedomkniete 0, error null"
+      },
+      "zgodnosc": "wylacznie publiczne API BZP i TED, zero scrapingu, zero platnego AI, zero Stripe"
+    },
+    "p1_5_sciezka_wejscia_pl_en": {
+      "stan": "dowiezione w galezi (mobile — do builda)",
+      "data": "2026-09-24",
+      "cel": "Sciezka WEJSCIA do aplikacji dwujezyczna — bo JezykProvider wykrywa locale urzadzenia przy pierwszym starcie, a przelacznik jezyka mieszka w „Koncie\", czyli ZA logowaniem",
+      "ekrany": [
+        "LoginScreen",
+        "RegisterScreen",
+        "ForgotPasswordScreen",
+        "ResetPasswordScreen",
+        "WitajScreen",
+        "SavedScreen",
+        "PulpitScreen",
+        "NarzedziaScreen (chrome)"
+      ],
+      "czego_NIE_tlumaczono": "katalog narzedzi w NarzedziaScreen — te narzedzia generuja POLSKIE pisma z Pzp (wezwania, odwolania, zastrzezenia tajemnicy). Angielska etykieta nad generatorem, ktory wypluwa polski dokument prawny, wprowadza w blad mocniej niz pomaga.",
+      "straznik": "mobile/test/sciezkaWejsciaPlEn.test.js czyta ZRODLO ekranow i wylapuje goly polski literal w title/placeholder/label/hint oraz miedzy znacznikami. Sprawdzone, ze straznik naprawde cos mierzy: na nieprzetlumaczonych ekranach znajduje naruszenia (SejfScreen 4, KartaDecyzjiScreen 1), na sciezce wejscia zero.",
+      "pozostalo": "~39 ekranow narzedziowych zostaje polskich — swiadomie, patrz wyzej"
+    },
+    "po_etapie_6_audyt_p1_p2": {
+      "stan": "backend wdrozony i zweryfikowany na produkcji; mobile gotowe w galezi do builda",
+      "data": "2026-09-24",
+      "zrodlo_listy_brakow": "D:/koordynacja/przetargai-audit-2026-09-23/audit-report.md §7 (P1-1..P1-8, P2-1..P2-7) wobec stanu po etapach 1-6",
+      "audyt": {
+        "juz_domkniete_wczesniej": {
+          "P1-1 zrodlo i synchronizacja na karcie": "etap 4",
+          "P1-2 alerty o zmianach": "etap 5",
+          "P1-3 tryb Wszystkie": "etap 4",
+          "P1-4 wyjasnienie dopasowania": "etap 4",
+          "P1-6 Baza Konkurencyjnosci": "etap 3",
+          "P1-7 kalendarz z danych": "etap 5",
+          "P2-1 dedup miedzy zrodlami": "etap 3 (lib/dedupZrodel.js, celowo waski klucz tytul+dzien terminu+zamawiajacy)",
+          "P2-2 konkurencja i wygrywalnosc": "etap 6"
+        },
+        "domkniete_teraz": [
+          "P1-8",
+          "P2-3 (CSV; bez webhooka)",
+          "P2-4",
+          "P2-5",
+          "P2-6",
+          "zapis .ics z etapu 5"
+        ],
+        "niewykonalne_bez_czlowieka_lub_swiadomie_nie": {
+          "P1-5 profil jako filtr po stronie zapytania": "zmienia sciezke PLATNEGO AI (zestaw kandydatow do rerankingu) i odcina przetargi trafione slowem, a nie CPV — decyzja produktowa wlasciciela (asymetria ryzyka: zgubiony przetarg = stracony kontrakt) i pomiar wymagajacy platnych wywolan, ktore polecenie wyklucza",
+          "P2-3 webhook do CRM": "wymaga ekranu konfiguracji, podpisu HMAC, ponawiania i klienta, ktory go potrzebuje (D-079)",
+          "P2-7 rozmowy z operatorami platform": "czlowiek",
+          "plany BZP (art. 23)": "API BZP ich nie udostepnia — tylko TED (D-075)"
+        }
+      },
+      "commity": [
+        "de26dfb - P1-8 pulpit nie udaje pustki przy bledzie sieci",
+        "50b7ffe - Radar 1/N czysta logika radaru przeniesiona z Railway do CF",
+        "1883c1d - Radar 2/N adapter ogloszen planowania TED",
+        "9a4b81e - Radar 3/N import planow, indeks radaru, harmonogram",
+        "8b31aee - Radar 4/N GET /radar-planow + szczegol z planem przygotowan",
+        "eaba0db - Radar 5/N ekrany mobilne",
+        "09e9068 - P2-5 ekran trenera negocjacji",
+        "fad804f - Radar 6/N wdrozenie + dwie naprawy z pomiaru na zywo",
+        "08debe8 - Radar 7/N obserwacja planu i alert",
+        "8660091 - P2-3 eksport CSV",
+        "f7cd9d5 - teksty wydania 1.0.9",
+        "a039ebb - kalendarz .ics przez e-mail",
+        "d7cb7cc - P2-6 dostepnosc + straznik"
+      ],
+      "radar_planow": {
+        "zrodlo": "TED form-type=planning (wstepne ogloszenia informacyjne), publiczne API bez klucza",
+        "pliki_backend": "src/services/tedPlany.js, src/lib/{radarPlanow,przygotowaniaPlanu,zmianyPlanu,indeksPlanow,widokRadaru,obserwacjePlanow,rodzajePlanu,nip}.js, src/jobs/{oknoPlanow,monitorPlanow}.js, src/routes/radarPlanow.js",
+        "pliki_mobile": "src/lib/radarPlanow.js, src/screens/{RadarPlanowScreen,RadarPlanuScreen}.js",
+        "dane": "plany/{numer} (zrodlo prawdy), radar_planow/czesc_N (zwarty indeks), users/{uid}/obserwowane_plany/{plan}, _health/plany_okno",
+        "harmonogram": {
+          "planyOknoFetch": "cron '15 6 * * *' Europe/Warsaw, okno 3 dni",
+          "runMonitorPlanow": "w funkcji monitorWyszukiwan, cron '35 */2 * * *'"
+        },
+        "endpointy": [
+          "GET /radar-planow?tryb=dla_mnie|wszystkie&region=&limit=",
+          "GET /radar-planow/:id — plan przygotowan, ostrzezenia, czy juz ogloszono, flaga obserwowany",
+          "GET /radar-planow/obserwowane, POST|DELETE /radar-planow/:id/obserwuj",
+          "POST /admin/okno-planow {dni} — bez AI",
+          "/health.plany_okno (informacyjne, nie zapala 503)"
+        ],
+        "pomiary_zrodla": {
+          "30_dni": "208 planow, future-notice 102/208, wartosc 11/208 (PLN), region 208/208, NIP 175/208 (naiwnie 114/208)",
+          "rok_import_produkcyjny": "2041 planow, 0 odrzucen, 1660 aktywnych w indeksie, 5 czesci, 9 zapytan, 24,7 s",
+          "rodzaje_30_dni": {
+            "pin-rtl": 154,
+            "pin-only": 19,
+            "pin-buyer": 10,
+            "pin-tran": 25
+          },
+          "nip_w_ogloszeniach_konkursowych_ted": "199/250 — dodany do adaptera TED (zasila tez benchmark per zamawiajacy)"
+        },
+        "naprawy_z_pomiaru_na_zywo": [
+          "lista \"Wszystkie\" zaczynala sie od planow z data sprzed 2 miesiecy (pozycja wisi 60 dni po dacie) — kolejnosc nadchodzace → bez daty → minione",
+          "komunikat planu przygotowan \"zostalo ok. -2 mies.\" / \"0 mies.\" — \"minal ok. N mies. temu — sprawdz\" i \"w tym miesiacu\""
+        ],
+        "czego_nie_zmierzono": "pierwszego przebiegu runMonitorPlanow na produkcji (czeka na cron 35 */2) i rankingu \"dla mnie\" na zywym koncie — konto z CPV/slowami uruchamia ponowne dopasowanie, czyli platne AI; pokryte testami (widok 14, trasa 9, monitor 5)"
+      },
+      "eksport": {
+        "endpointy": [
+          "GET /eksport/zapisane.csv",
+          "GET /eksport/katalog.csv (filtry jak /tenders, sufit 500)",
+          "POST /eksport/wyslij {rodzaj: zapisane|katalog|kalendarz} — zalacznik na e-mail wlasciciela konta, limit 10/dobe"
+        ],
+        "weryfikacja_live": "katalog.csv region=PL12&cpv=45 -> 200, BOM, 205 wierszy; zapisane.csv pustego konta -> sam naglowek. POST /wyslij swiadomie nie wywolany na produkcji (prawdziwy e-mail) — testy na emulatorze"
+      },
+      "dostepnosc": "24/104 przyciski bez accessibilityRole -> 0; test/dostepnosc.test.js skanuje cale src (rola, etykieta przyciskow-ikon, stan chipow), zweryfikowany celowym zepsuciem",
+      "konta_sondujace": "cztery, wszystkie BEZ slow kluczowych i CPV (zero AI), wszystkie usuniete (DELETE /auth/me z haslem -> 200, kontrolnie 401). Pulapka: bez hasla w tresci DELETE daje 400 i konto zostaje",
+      "zgodnosc": "zero platnego AI, zero Stripe, zero scrapingu — wylacznie publiczne API TED i dane w bazie"
+    }
+  },
+  "nastepne_zrodlo": {
+    "rekomendacja": "TED — ogłoszenia PLANOWANIA (form-type = planning)",
+    "dlaczego_to": [
+      "odbiorca JUŻ ISTNIEJE i jest przetestowany, a nie ma danych: Radar planów postępowań (backend/src/services/radarPlanow.js, przygotowaniaPlanu.js, zmianyPlanu.js) jest całkowicie bezstanowy i przyjmuje `pozycjePlanow` z zewnątrz — dziś nikt mu ich nie dostarcza",
+      "źródło oficjalne, API publiczne, JUŻ zintegrowane i autoryzowane (services/ted.js) — koszt to zapytanie i normalizacja, nie nowy transport",
+      "zmierzona objętość (read-only, 2026-09-24): 208 polskich ogłoszeń planowania / 30 dni",
+      "wartość produktowa: plan wyprzedza ogłoszenie o miesiące — to jedyne źródło przewagi czasowej, jakiego nie da się kupić szybszym pollingiem"
+    ],
+    "odrzucone_i_dlaczego": {
+      "BZP plany postępowań (art. 23 Pzp)": "API mo-board przyjmuje WYŁĄCZNIE NoticeType=ContractNotice i TenderResultNotice (zweryfikowane: 14 innych wartości → HTTP 400 'zakres wartości nie obejmuje'); ścieżek /plan, /plans, /procurementPlan(s), /noticeTypes nie ma (404). Bez omijania regulaminu nie da się tego pobrać",
+      "dane.gov.pl (portal otwartych danych)": "zbiory UZP to raporty DOC/HTML, brak zasobu maszynowego z ogłoszeniami — nie jest to feed",
+      "platformy komercyjne (Platforma Zakupowa, eb2b, Logintrade, SmartPZP)": "brak publicznego API; pobranie wymagałoby scrapingu HTML wbrew regulaminom — wykluczone regułą etapu"
+    },
+    "kolejne_w_macierzy": [
+      "TED form-type = result (4 297 polskich ogłoszeń / 30 dni) — zasila statystyki cen i konkurencji (jobs/aggregateResults.js), dziś liczone wyłącznie z BZP",
+      "TED form-type = cont-modif (219 / 30 dni) — zmiany umów, sygnał o rynku wykonawców"
+    ],
+    "uwaga_po_etapie_4": "Rekomendacja bez zmian (TED planning). Etap 4 nie dodal zrodla — dodal WIDOCZNOSC tego, co juz mamy, i uczciwy opis granic.",
+    "stan": "ZREALIZOWANE 2026-09-24 — TED planning zasila Radar planow w Cloud Functions (D-075)"
+  },
+  "otwarte_blokady": [
+    {
+      "blokada": "GitHub: commity tej galezi zostaja lokalnie",
+      "zmierzone_w_audycie": "git push --dry-run konczy sie na 'could not read Username for https://github.com' (sesja nieinteraktywna, brak poswiadczen); gh auth status: niezalogowany; git ls-remote widzi anonimowo tylko refs/heads/main",
+      "skutek": "Cloud Functions to NIE blokuje (deploy idzie z lokalnego kodu i produkcja jest aktualna). Railway blokuje, bo wdraza sie z GitHuba",
+      "kto_odblokuje": "czlowiek — poswiadczenia git/`gh auth login` plus uprawnienie Contents: write",
+      "sciezka_alternatywna": "serwer MCP github jest w tej sesji uwierzytelniony jako jakatora (get_me OK) — zapisu nie probowano, bo audyt jest read-only",
+      "zmierzone_ponownie": "2026-09-24: git push --dry-run -> could not read Username for 'https://github.com'; nie obchodzone (MCP github nie uzyty do zapisu, zgodnie z poleceniem)"
+    },
+    {
+      "blokada": "Railway: wolumen 500 MB pelny, Live Resize do 2 GB",
+      "zmierzone_w_audycie": "MCP railway: 'Not authenticated / Unauthorized' — stanu wolumenu nie da sie dzis odczytac z tej sesji",
+      "skutek": "dotyczy backendu Railway, NIE Cloud Functions",
+      "kto_odblokuje": "czlowiek — Live Resize w panelu Railway"
+    },
+    {
+      "blokada": "Screenshoty App Store 1.0.9 i build przez Codemagic",
+      "skutek": "aplikacja z nowymi ekranami nie trafi do uzytkownikow bez buildu; teksty sklepowe gotowe (store/whats-new-1.0.9.md)",
+      "kto_odblokuje": "czlowiek — uruchomienie workflow Codemagic i zrzuty z urzadzenia (1284x2778)"
+    }
+  ],
+  "audyt_koncowy": {
+    "data": "2026-09-24T01:45:39Z",
+    "zakres": "wylacznie szybkie odczyty read-only (timeout 30 s); bez importow i bez pelnych testow",
+    "git": {
+      "galaz": "codex/przetargai-complete",
+      "drzewo_robocze": "czyste (git status pusty)",
+      "head": "1cf351d — Etap 3: stan wdrozenia, dziennik i decyzja D-058",
+      "commity_etapu_3_do_ad4c2a8": [
+        "1cf351d — stan wdrozenia, dziennik, decyzja D-058",
+        "31e4cb5 — 7/7 awaria strony listy BK nie kasuje calego przebiegu",
+        "ad4c2a8 — 6/6 bezplatny wyzwalacz okna BK dla operatora",
+        "4fb47a9 — 5/6 BK w glownym pipeline: harmonogram, /health, rekonsyliacja",
+        "e0bbd6a — 4/6 okno BK z checkpointem: aktywne/zmienione/anulowane",
+        "4fcd78d — 3/6 deduplikacja MIEDZY rejestrami + link do zrodla pierwotnego",
+        "f7e5f06 — 2/6 adapter BK na fixture ach kontraktowych",
+        "0fd1704 — 1/6 tempo i ponawianie zapytan jako wspolna biblioteka"
+      ],
+      "lokalnie_przed_zdalnym_main": "16 commitow (origin ma wylacznie main @ 05c2f3d; galaz codex/* nie istnieje zdalnie)"
+    },
+    "health_live": {
+      "url": "https://europe-central2-przetargai.cloudfunctions.net/api/health",
+      "http": "200 w 0,21 s",
+      "status": "ok, db: true",
+      "bk_okno": {
+        "zakonczony_o": "2026-09-24T01:38:20.868Z",
+        "aktywne_w_zrodle": 1135,
+        "aktywne_pobrane": 1135,
+        "pokrycie_kompletne": true,
+        "zaleglosc": 0,
+        "fetched": 0,
+        "newTenders": 0,
+        "error": null,
+        "odczyt": "checkpoint dziala — kolejne okno nie odpytalo o zaden szczegol i nic nie dolozylo"
+      },
+      "bzp_okno": {
+        "zakonczony_o": "2026-09-24T01:27:04.561Z",
+        "doby_okna": 8,
+        "doby_niedomkniete": 0,
+        "fetched": 2512,
+        "newTenders": 1700,
+        "error": null
+      },
+      "pula": "stan 'brak_pobrania' — licznik w pamieci instancji funkcji api (repos.js:324), zeruje sie przy zimnym starcie; NIE jest to awaria"
+    },
+    "slady_bk_potwierdzone": {
+      "firestore_checkpoint": "_health/bk_okno — widoczny przez /health, pokrycie 1135/1135, zaleglosc 0, error null",
+      "endpointy": "POST i GET /admin/okno-bk -> HTTP 403 (istnieje, chroniony kluczem admina; 403 a nie 404 = wdrozony). Kontrolnie /admin/okno-bzp -> 403",
+      "pliki_w_drzewie": "services/bazaKonkurencyjnosci.js, jobs/oknoBk.js, lib/dedupZrodel.js, lib/tempoZapytan.js — obecne; 4 fixtury kontraktowe bk-*.json",
+      "harmonogram": "bkOknoFetch cron '50 */3 * * *' — funkcja wdrozona i przebieg z 01:38 UTC potwierdza, ze wyzwala sie planowo"
+    },
+    "oczekuje_na_harmonogram": {
+      "co": "pelny przebieg glownego pipeline (dailyTenderFetch — pobranie wszystkich zrodel + dopasowania AI)",
+      "dlaczego": "slad w /health pochodzi z 2026-09-23T10:04:27Z (15,7 h temu) i jest oznaczony 'slad_sprzed_naprawy: true'; ostatni wynik mial bledy zrodel bzp (timeout) i ted (HTTP 429)",
+      "kiedy": "najblizszy slot cron '0 12 * * *' = 2026-09-24 12:00 UTC (14:00 CEST)",
+      "status": "OCZEKUJACY — nie czekalismy na wynik, zgodnie z poleceniem",
+      "uwaga": "okna 3-godzinne (bzpOknoFetch, bkOknoFetch) dzialaja niezaleznie i oba domknely sie dzis czysto (error: null) — to one, a nie dailyTenderFetch, potwierdzaja zywotnosc zrodla BK"
+    },
+    "sprzatanie": "brak plikow .probe w drzewie (szukane rekurencyjnie) — nie bylo czego usuwac; firebase-debug.log (gitignored, 239 B) rowniez juz nie istnieje"
+  },
+  "nastepny_etap_p1": {
+    "rekomendacja": "build 1.0.9 przez Codemagic i screenshoty (radar planow jako pierwsze ujecie) — caly kod z etapow 4-6 i tej rundy czeka w galezi na build",
+    "uwaga": "odbiorca radaru przeniesiony do Cloud Functions — Railway nie jest juz do niego potrzebny",
+    "kolejne": [
+      "P1-5 (profil jako filtr zapytania) — decyzja wlasciciela + pomiar z platnym AI",
+      "webhook do CRM (reszta P2-3) — gdy pojawi sie klient z CRM-em",
+      "pomiar pierwszych przebiegow runMonitorPlanow i monitorWyszukiwan w logach Cloud Functions",
+      "TED form-type=result w aggregateResults (dzis agregat z BZP; rozstrzygniecia TED juz sa w bazie od etapu 6)"
+    ]
+  }
+}

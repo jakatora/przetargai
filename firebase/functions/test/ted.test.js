@@ -148,3 +148,18 @@ test('pobieranie: HTTP 500 rzuca czytelnym błędem (izoluje go rejestr źróde�
   globalThis.fetch = async () => ({ ok: false, status: 500, text: async () => 'awaria TED' });
   await assert.rejects(() => pobierzOgloszeniaTed({ lookbackDays: 3 }), /TED/);
 });
+
+// Radar planów: plan (WOI) i późniejsze ogłoszenie łączy NIP zamawiającego — TED
+// podaje go w `buyer-identifier` jako wolny tekst (zmierzone: 199/250 ogłoszeń
+// konkursowych daje poprawny NIP). Zasila też benchmark per zamawiający (etap 6).
+test('mapowanie: NIP zamawiającego z buyer-identifier, z sumą kontrolną', () => {
+  assert.equal(mapujOgloszenieTed({ ...NOTICE, 'buyer-identifier': ['NIP: 5930005678', 'REGON: 191675273'] }).zamawiajacy_nip, '5930005678');
+  assert.equal(mapujOgloszenieTed({ ...NOTICE, 'buyer-identifier': ['590019152'] }).zamawiajacy_nip, null, 'sam REGON');
+  assert.equal(mapujOgloszenieTed(NOTICE).zamawiajacy_nip, null);
+});
+
+test('zapytanie TED prosi o buyer-identifier', async () => {
+  const { readFileSync } = await import('node:fs');
+  const kod = readFileSync(new URL('../src/services/ted.js', import.meta.url), 'utf8');
+  assert.match(kod.slice(0, kod.indexOf('];')), /'buyer-identifier'/);
+});

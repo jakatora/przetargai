@@ -9,7 +9,7 @@ const resend = features.email ? new Resend(env.RESEND_API_KEY) : null;
  * Wysyła email transakcyjny przez Resend.
  * Bez RESEND_API_KEY działa w trybie degradacji (loguje treść, nie wysyła).
  */
-export async function sendEmail({ to, subject, html, text }) {
+export async function sendEmail({ to, subject, html, text, attachments }) {
   if (!resend) {
     logger.warn({ to, subject }, 'Email pominięty — brak RESEND_API_KEY (tryb degradacji)');
     return { sent: false, degraded: true };
@@ -22,6 +22,8 @@ export async function sendEmail({ to, subject, html, text }) {
       subject,
       html,
       text,
+      // Załączniki (eksport CSV, P2-3): [{ filename, content: Buffer }].
+      ...(attachments?.length ? { attachments } : {}),
     });
     if (error) {
       logger.error({ error }, 'Resend zwrócił błąd');

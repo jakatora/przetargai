@@ -8,6 +8,7 @@ import {
   ZELAZNA_ZASADA,
   KRYTERIA_DOMYSLNE,
   porownajOfertaDodatkowa,
+  normalizujLiczbe,
 } from '../src/lib/trenerNegocjacji.js';
 
 /*
@@ -240,4 +241,39 @@ test('porównanie nie rzuca na pustym wejściu', () => {
   const wynik = porownajOfertaDodatkowa();
   assert.deepEqual(wynik.pozycje, []);
   assert.equal(wynik.blokujWyslanie, false);
+});
+
+// ─── (f) wejście z ekranu: kwoty wpisywane po polsku ────────────────────────
+// Ekran trenera (P2-5) zbiera pola jako tekst. „1 050 000,50 zł" przez Number()
+// to NaN — porównanie pominęłoby pole i PRZEPUŚCIŁO gorszą ofertę bez blokady.
+test('normalizujLiczbe: polski zapis kwot i liczb', () => {
+  assert.equal(normalizujLiczbe('1 050 000,50 zł'), 1050000.5);
+  assert.equal(normalizujLiczbe('1 050 000'), 1050000);
+  assert.equal(normalizujLiczbe('36 mies.'), 36);
+  assert.equal(normalizujLiczbe('120'), 120);
+  assert.equal(normalizujLiczbe('12.5'), 12.5);
+  assert.equal(normalizujLiczbe(''), null);
+  assert.equal(normalizujLiczbe('abc'), null);
+  assert.equal(normalizujLiczbe(null), null);
+  assert.equal(normalizujLiczbe(42), 42);
+});
+
+test('porównanie z tekstowych pól ekranu blokuje wyższą cenę', () => {
+  const pola = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, normalizujLiczbe(v)]));
+  const wynik = porownajOfertaDodatkowa({
+    pierwotna: pola({ cena: '1 000 000,00 zł', termin: '90', gwarancja: '36' }),
+    dodatkowa: pola({ cena: '1 000 000,01 zł', termin: '90', gwarancja: '48' }),
+  });
+  assert.equal(wynik.blokujWyslanie, true);
+  assert.equal(wynik.mniejKorzystne[0].klucz, 'cena');
+});
+
+test('ekran trenera: blokada w kolorze danger i porównanie z czystej funkcji (strażnik źródła)', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const kod = await readFile(new URL('../src/screens/TrenerNegocjacjiScreen.js', import.meta.url), 'utf8');
+  assert.match(kod, /porownajOfertaDodatkowa\(/);
+  assert.match(kod, /normalizujLiczbe/);
+  assert.match(kod, /ZELAZNA_ZASADA/);
+  assert.match(kod, /kolory\.danger/, 'blokada art. 296 ust. 3 w kolorze danger');
+  assert.ok(!/#[0-9a-fA-F]{6}/.test(kod), 'kolory tylko z motywu');
 });

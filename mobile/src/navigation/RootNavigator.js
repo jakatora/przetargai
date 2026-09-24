@@ -14,7 +14,11 @@ import WynikKontroliScreen from '../screens/WynikKontroliScreen';
 import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
 import RadarSwzScreen from '../screens/RadarSwzScreen';
 import SejfScreen from '../screens/SejfScreen';
+import KatalogDetailScreen from '../screens/KatalogDetailScreen';
+import ZakresDanychScreen from '../screens/ZakresDanychScreen';
 import RejestratorOfertyScreen from '../screens/RejestratorOfertyScreen';
+import CzyWartoScreen from '../screens/CzyWartoScreen';
+import ChecklistaOfertyScreen from '../screens/ChecklistaOfertyScreen';
 import SymulatorPlynnosciScreen from '../screens/SymulatorPlynnosciScreen';
 import ZabezpieczenieZwrotScreen from '../screens/ZabezpieczenieZwrotScreen';
 import PodprogoweDetailScreen from '../screens/PodprogoweDetailScreen';
@@ -36,6 +40,8 @@ import TajemnicaScreen from '../screens/TajemnicaScreen';
 import SamooczyszczenieScreen from '../screens/SamooczyszczenieScreen';
 import KalkulatorTerminowScreen from '../screens/KalkulatorTerminowScreen';
 import KalendarzTerminowScreen from '../screens/KalendarzTerminowScreen';
+import ZapisaneWyszukiwaniaScreen from '../screens/ZapisaneWyszukiwaniaScreen';
+import CentrumAlertowScreen from '../screens/CentrumAlertowScreen';
 import SciezkaDoOfertyScreen from '../screens/SciezkaDoOfertyScreen';
 import KalkulatorCenyScreen from '../screens/KalkulatorCenyScreen';
 import SymulatorPunktacjiScreen from '../screens/SymulatorPunktacjiScreen';
@@ -43,6 +49,9 @@ import KaryUmowneScreen from '../screens/KaryUmowneScreen';
 import KalkulatorOdsetekScreen from '../screens/KalkulatorOdsetekScreen';
 import KartaDecyzjiScreen from '../screens/KartaDecyzjiScreen';
 import PulpitScreen from '../screens/PulpitScreen';
+import RadarPlanowScreen from '../screens/RadarPlanowScreen';
+import RadarPlanuScreen from '../screens/RadarPlanuScreen';
+import TrenerNegocjacjiScreen from '../screens/TrenerNegocjacjiScreen';
 import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
 import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 import NarzedziaScreen from '../screens/NarzedziaScreen';
@@ -132,9 +141,29 @@ export default function RootNavigator() {
               options={{ title: 'Sejf dokumentów' }}
             />
             <Stack.Screen
+              name="KatalogDetail"
+              component={KatalogDetailScreen}
+              options={{ title: 'Ogłoszenie' }}
+            />
+            <Stack.Screen
+              name="ZakresDanych"
+              component={ZakresDanychScreen}
+              options={{ title: 'Zakres danych' }}
+            />
+            <Stack.Screen
               name="RejestratorOferty"
               component={RejestratorOfertyScreen}
               options={{ title: 'Rejestrator oferty' }}
+            />
+            <Stack.Screen
+              name="CzyWarto"
+              component={CzyWartoScreen}
+              options={{ title: 'Czy warto startować?' }}
+            />
+            <Stack.Screen
+              name="ChecklistaOferty"
+              component={ChecklistaOfertyScreen}
+              options={{ title: 'Do dnia składania' }}
             />
             <Stack.Screen
               name="SymulatorPlynnosci"
@@ -231,6 +260,17 @@ export default function RootNavigator() {
               component={KalendarzTerminowScreen}
               options={{ title: 'Kalendarz terminów' }}
             />
+            {/* Monitoring szans i terminów (etap 5) — obserwacje rynku i ich alerty. */}
+            <Stack.Screen
+              name="ZapisaneWyszukiwania"
+              component={ZapisaneWyszukiwaniaScreen}
+              options={{ title: 'Zapisane wyszukiwania' }}
+            />
+            <Stack.Screen
+              name="CentrumAlertow"
+              component={CentrumAlertowScreen}
+              options={{ title: 'Alerty i zmiany' }}
+            />
             <Stack.Screen
               name="SciezkaDoOferty"
               component={SciezkaDoOfertyScreen}
@@ -265,6 +305,21 @@ export default function RootNavigator() {
               name="Pulpit"
               component={PulpitScreen}
               options={{ title: 'Moje postępowania' }}
+            />
+            <Stack.Screen
+              name="RadarPlanow"
+              component={RadarPlanowScreen}
+              options={{ title: 'Radar planów' }}
+            />
+            <Stack.Screen
+              name="RadarPlanu"
+              component={RadarPlanuScreen}
+              options={{ title: 'Plan zamówienia' }}
+            />
+            <Stack.Screen
+              name="TrenerNegocjacji"
+              component={TrenerNegocjacjiScreen}
+              options={{ title: 'Trener negocjacji' }}
             />
             <Stack.Screen
               name="KontrolaOferty"

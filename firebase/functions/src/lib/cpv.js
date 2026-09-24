@@ -60,14 +60,25 @@ function pairAffinity(companyCode, tenderCode) {
  * @returns {number} 0..1
  */
 export function cpvAffinity(companyCodes, tenderCodes) {
+  return bestPair(companyCodes, tenderCodes).affinity;
+}
+
+/**
+ * Najlepsza para (kod firmy, kod przetargu) wraz ze stopniem zgodności.
+ *
+ * `cpvAffinity` oddaje samą liczbę, a wyjaśnienie dopasowania musi powiedzieć
+ * użytkownikowi, KTÓRY jego kod trafił i w co — „zgodność CPV" bez numerów nie
+ * pozwala sprawdzić ani poprawić profilu.
+ */
+export function bestPair(companyCodes, tenderCodes) {
   const mine = parseCpvCodes(companyCodes);
   const theirs = parseCpvCodes(tenderCodes);
-  let best = 0;
+  let best = { affinity: 0, companyCode: null, tenderCode: null };
   for (const a of mine) {
     for (const b of theirs) {
       const score = pairAffinity(a, b);
-      if (score > best) best = score;
-      if (best === 1) return 1;
+      if (score > best.affinity) best = { affinity: score, companyCode: a, tenderCode: b };
+      if (best.affinity === 1) return best;
     }
   }
   return best;

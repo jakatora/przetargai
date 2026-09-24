@@ -76,7 +76,7 @@ export default function KalkulatorPunktowScreen({ route }) {
           <View key={k.id} style={styles.kryt}>
             <View style={styles.krytGlowa}>
               <TextField label={null} value={k.nazwa} onChangeText={(v) => ustawKryt(k.id, 'nazwa', v)} placeholder="Nazwa kryterium" style={styles.krytNazwa} />
-              <Pressable onPress={() => usunKryt(k.id)} hitSlop={8} accessibilityLabel="Usuń kryterium">
+              <Pressable accessibilityRole="button" onPress={() => usunKryt(k.id)} hitSlop={8} accessibilityLabel="Usuń kryterium">
                 <Text style={styles.usun}>Usuń</Text>
               </Pressable>
             </View>
@@ -84,7 +84,7 @@ export default function KalkulatorPunktowScreen({ route }) {
               {[['max', 'Większe lepiej'], ['min', 'Mniejsze lepiej']].map(([v, et]) => {
                 const akt = k.kierunek === v;
                 return (
-                  <Pressable key={v} onPress={() => ustawKryt(k.id, 'kierunek', v)} style={[styles.chip, akt && { backgroundColor: kolory.blue, borderColor: kolory.blue }]}>
+                  <Pressable accessibilityRole="radio" accessibilityState={{ checked: akt }} key={v} onPress={() => ustawKryt(k.id, 'kierunek', v)} style={[styles.chip, akt && { backgroundColor: kolory.blue, borderColor: kolory.blue }]}>
                     <Text style={[styles.chipText, akt && { color: kolory.white }]}>{et}</Text>
                   </Pressable>
                 );
