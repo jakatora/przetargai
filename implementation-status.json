@@ -142,15 +142,16 @@
       "data": "2026-09-24",
       "cel": "P1-1 + P1-3 + P1-4: rynek widoczny niezaleznie od profilu, uczciwe zrodlo i zakres danych, wyjasnienie dopasowania bez AI",
       "commity": [
-        "1136dca — wspolny normalizator wojewodztw (BZP „PL12\" vs BK „malopolskie\")",
+        "3e89bc2 — wspolny normalizator wojewodztw (BZP „PL12\" vs BK „malopolskie\")",
         "d2cff69 — czysta logika katalogu: filtry, plan zapytania, kursor, indeksy",
         "f0c5a7b — czysty opis zakresu danych (co widzimy i czego NIE)",
         "f55048c — GET /tenders: katalog rynku, kursor, filtry, /filtry, /zakres-danych",
         "9b2d8b9 — wyjasnienie dopasowania z konkretnych sygnalow, bez AI",
         "87021ca — wyjasnienie na karcie i w szczegolach + regiony/wartosc_max w profilu",
         "a05bdc3 — dwie naprawy z pomiaru na zywo (koszt odczytu, slad z okien)",
-        "869cd89 — mobilna warstwa czysta: jezyk PL/EN, katalog, zrodla, wyjasnienie",
-        "0ba92cc — UI: przelacznik „Dla mnie / Wszystkie\", zrodlo na karcie, ekran zakresu danych"
+        "049e8e9 — mobilna warstwa czysta: jezyk PL/EN, katalog, zrodla, wyjasnienie",
+        "0ba92cc — UI: przelacznik „Dla mnie / Wszystkie\", zrodlo na karcie, ekran zakresu danych",
+        "0c75ea5 — stan wdrozenia, dziennik i decyzje D-059..D-061"
       ],
       "pliki": {
         "backend_katalog": "firebase/functions/src/lib/katalogPrzetargow.js + routes/tenders.js + db/repos.js (tenders.katalog)",
