@@ -113,8 +113,15 @@ export function przetargZDopasowania(row) {
   };
 }
 
-/** Dopasowanie wraz z danymi przetargu (wiersz z JOIN-a w repos.matches). */
-export function publicMatch(row) {
+/**
+ * Dopasowanie wraz z danymi przetargu (wiersz z JOIN-a w repos.matches).
+ *
+ * `znaczniki` (stan i czas synchronizacji per rejestr) są opcjonalne: bez nich
+ * karta pokaże samo źródło, bez świeżości. Nie wolno jednak pominąć ich na
+ * stałe — „brak nowych przetargów" i „pobieranie padło trzy dni temu" wyglądają
+ * wtedy identycznie, a prowadzą do przeciwnych decyzji.
+ */
+export function publicMatch(row, znaczniki = {}) {
   if (!row) return null;
   return {
     id: row.id,
@@ -132,6 +139,7 @@ export function publicMatch(row) {
       url: row.tender_url,
       cpv: row.tender_cpv,
       source: row.tender_source ?? 'bzp',
+      zrodlo: metryczkaZrodla(row.tender_source, znaczniki),
       wojewodztwo: row.tender_wojewodztwo ?? null,
       // Wadium (D-056) — wymagane: null=nieznane, false=nie, true=tak.
       wadium_wymagane: row.tender_wadium_wymagane ?? null,
@@ -149,7 +157,7 @@ export function publicMatch(row) {
  * renderuje listę zapisanych tym samym komponentem karty i otwiera ten sam
  * ekran szczegółów. `saved_at` zamiast `created_at`.
  */
-export function publicSaved(row) {
+export function publicSaved(row, znaczniki = {}) {
   if (!row) return null;
   return {
     id: row.id,
@@ -172,6 +180,7 @@ export function publicSaved(row) {
       url: row.tender_url,
       cpv: row.tender_cpv,
       source: row.tender_source ?? 'bzp',
+      zrodlo: metryczkaZrodla(row.tender_source, znaczniki),
       wojewodztwo: row.tender_wojewodztwo ?? null,
       // Wadium (D-056) — wymagane: null=nieznane, false=nie, true=tak.
       wadium_wymagane: row.tender_wadium_wymagane ?? null,

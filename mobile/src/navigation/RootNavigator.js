@@ -14,6 +14,8 @@ import WynikKontroliScreen from '../screens/WynikKontroliScreen';
 import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
 import RadarSwzScreen from '../screens/RadarSwzScreen';
 import SejfScreen from '../screens/SejfScreen';
+import KatalogDetailScreen from '../screens/KatalogDetailScreen';
+import ZakresDanychScreen from '../screens/ZakresDanychScreen';
 import RejestratorOfertyScreen from '../screens/RejestratorOfertyScreen';
 import SymulatorPlynnosciScreen from '../screens/SymulatorPlynnosciScreen';
 import ZabezpieczenieZwrotScreen from '../screens/ZabezpieczenieZwrotScreen';
@@ -130,6 +132,16 @@ export default function RootNavigator() {
               name="Sejf"
               component={SejfScreen}
               options={{ title: 'Sejf dokumentów' }}
+            />
+            <Stack.Screen
+              name="KatalogDetail"
+              component={KatalogDetailScreen}
+              options={{ title: 'Ogłoszenie' }}
+            />
+            <Stack.Screen
+              name="ZakresDanych"
+              component={ZakresDanychScreen}
+              options={{ title: 'Zakres danych' }}
             />
             <Stack.Screen
               name="RejestratorOferty"

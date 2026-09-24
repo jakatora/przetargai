@@ -8,6 +8,7 @@ import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicMatch, publicSaved, przetargZDopasowania } from '../lib/serialize.js';
 import { wyjasnijDopasowanie, nastepnyKrokProfilu } from '../lib/wyjasnienieDopasowania.js';
+import { pobierzZnacznikiZrodel } from '../services/zakresZrodel.js';
 import { summarizeTender } from '../services/ai.js';
 import { normalizujStatus, oczyscNotatke, STATUSY } from '../lib/statusPrzetargu.js';
 import { zbudujZachete, POCZATEK_TYGODNIA_MS } from '../lib/potencjal.js';
@@ -36,7 +37,10 @@ router.get('/', ah(async (req, res) => {
 
   // Dokumenty niosą zdenormalizowane pola przetargu (bez JOIN-a); publicMatch
   // składa z nich identyczny kształt odpowiedzi jak wersja SQLite.
-  const rows = await matches.listForUser(req.user.id, limit, przed);
+  const [rows, znaczniki] = await Promise.all([
+    matches.listForUser(req.user.id, limit, przed),
+    pobierzZnacznikiZrodel(),
+  ]);
   audit({ userId: req.user.id, action: 'list_matches', ip: req.ip });
 
   // Pełna strona ⇒ prawdopodobnie jest kolejna. Krótsza ⇒ to koniec.
@@ -48,7 +52,7 @@ router.get('/', ah(async (req, res) => {
    * zadziałał, zamiast jednego zdania „Trafione słowa kluczowe: …".
    */
   const wyjasnione = rows.map((row) => ({
-    ...publicMatch(row),
+    ...publicMatch(row, znaczniki),
     wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
   }));
 
@@ -72,10 +76,10 @@ router.get('/', ah(async (req, res) => {
  * MUSI stać PRZED `GET /:id`, inaczej Express dopasowałby /saved jako id="saved".
  */
 router.get('/saved', ah(async (req, res) => {
-  const rows = await saved.list(req.user.id);
+  const [rows, znaczniki] = await Promise.all([saved.list(req.user.id), pobierzZnacznikiZrodel()]);
   // Ten sam komponent karty co w feedzie => ten sam kształt wyjaśnienia.
   const wyjasnione = rows.map((row) => ({
-    ...publicSaved(row),
+    ...publicSaved(row, znaczniki),
     wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
   }));
   res.json({ saved: wyjasnione, count: rows.length });
@@ -243,7 +247,7 @@ router.get('/:id', ah(async (req, res) => {
   audit({ userId: req.user.id, action: 'view_match', detail: { matchId: row.id }, ip: req.ip });
   res.json({
     match: {
-      ...publicMatch(row),
+      ...publicMatch(row, await pobierzZnacznikiZrodel()),
       wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
     },
   });

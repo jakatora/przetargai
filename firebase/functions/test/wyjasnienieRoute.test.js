@@ -180,3 +180,18 @@ test('zapisane przetargi też niosą wyjaśnienie — to ta sama karta', async (
   assert.ok(wpis, 'przetarg musi być na liście zapisanych');
   assert.equal(wpis.wyjasnienie.sygnaly.length, 4);
 });
+
+test('KRYTYCZNE: karta feedu zna zrodlo pierwotne i czas synchronizacji', async () => {
+  const token = await konto({ keywords: ['droga'], cpv: ['45233000'] });
+  await dopasowanie(token);
+
+  const dane = await (await fetch(`${BAZA}/matches?limit=50`, { headers: auth(token) })).json();
+  const wpis = dane.matches.find((m) => m.tender.title.startsWith(ZNAK));
+  assert.equal(wpis.tender.zrodlo.kod, 'bzp');
+  assert.ok(wpis.tender.zrodlo.etykieta.pl && wpis.tender.zrodlo.etykieta.en);
+  assert.ok(
+    Object.hasOwn(wpis.tender.zrodlo, 'zsynchronizowano_o'),
+    'bez czasu synchronizacji "brak nowych przetargow" jest nieodroznialne od awarii pobierania',
+  );
+  assert.ok(wpis.tender.zrodlo.rejestr, 'karta musi wiedziec, dokad prowadzi wyjscie awaryjne');
+});

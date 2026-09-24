@@ -5,6 +5,8 @@ import { useSaved } from '../context/SavedContext';
 import { formatDate } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { opisWadium } from '../lib/wadium';
+import PodpisZrodla from './PodpisZrodla';
+import { ZnacznikiWyjasnienia } from './Wyjasnienie';
 
 /** Przycisk zakładki — ★ zapisany (brand), ☆ do zapisania. Nie nawiguje. */
 export function SaveStar({ tenderId, styles, kolory }) {
@@ -97,6 +99,17 @@ export default function MatchCard({ match, onPress, nowe = false }) {
               </Text>
             ) : null}
           </View>
+          {/*
+            Dlaczego widzisz ten przetarg (P1-4) — najwyżej dwa znaczniki i tylko
+            te sygnały, które zadziałały. Liczone bez AI, z profilu i ogłoszenia.
+          */}
+          <ZnacznikiWyjasnienia wyjasnienie={match.wyjasnienie} />
+          {/*
+            Źródło pierwotne + czas ostatniej synchronizacji (P1-3). Bez drugiej
+            informacji cichy feed wygląda tak samo przy spokojnym tygodniu
+            i przy padniętym pobieraniu.
+          */}
+          <PodpisZrodla zrodlo={tender.zrodlo} kompakt />
         </View>
       </View>
     </Pressable>

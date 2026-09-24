@@ -26,6 +26,10 @@ import {
 } from '../lib/filtrTerminu';
 import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
+import { useJezyk } from '../context/JezykContext';
+import KatalogWszystkich from '../components/KatalogWszystkich';
+import { NastepnyKrok } from '../components/Wyjasnienie';
+import { TRYBY, TRYB_DOMYSLNY, KLUCZ_TRYBU, normalizujTryb } from '../lib/katalogPrzetargow';
 
 // Znacznik ostatniej wizyty na feedzie — do wykrywania „nowych" przetargów.
 const KLUCZ_OSTATNIA_WIZYTA = 'przetargai.feed_ostatnia_wizyta';
@@ -63,6 +67,15 @@ function KartaPodprogowa({ ogloszenie, onPress, styles }) {
 export default function MatchFeedScreen({ navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleFeedu);
+  const { t } = useJezyk();
+  /*
+   * Dwa tryby jednej listy (P1-3). „Dla mnie" to feed dopasowań — z definicji
+   * wycinek rynku. „Wszystkie" pokazuje rynek bez filtra profilu i bez limitu
+   * planu. Wybór jest trwały: to preferencja pracy, a nie decyzja na jedno wejście.
+   */
+  const [tryb, setTryb] = useState(TRYB_DOMYSLNY);
+  // Konkretny następny krok, gdy feed jest pusty (P1-4) — z backendu, bez AI.
+  const [podpowiedz, setPodpowiedz] = useState(null);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -95,6 +108,20 @@ export default function MatchFeedScreen({ navigation }) {
       })
       .catch(() => {});
     return () => { aktywny = false; };
+  }, []);
+
+  // Tryb listy przeżywa restart aplikacji.
+  useEffect(() => {
+    let aktywny = true;
+    storage.getItem(KLUCZ_TRYBU)
+      .then((zapis) => { if (aktywny) setTryb(normalizujTryb(zapis)); })
+      .catch(() => {});
+    return () => { aktywny = false; };
+  }, []);
+
+  const zmienTryb = useCallback((nowy) => {
+    setTryb(nowy);
+    storage.setItem(KLUCZ_TRYBU, nowy).catch(() => {});
   }, []);
 
   const zmienProg = useCallback((nowy) => {
@@ -172,6 +199,7 @@ export default function MatchFeedScreen({ navigation }) {
       const data = await api.getMatches({ limit: 50 });
       setMatches(data.matches || []);
       setKursor(data.next_before ?? null);
+      setPodpowiedz(data.podpowiedz ?? null);
       setError(null);
       // Statystyki poboczne — nie mogą wywalić feedu, gdy padną.
       api.getStatystyki().then((s) => setZacheta(s.zacheta)).catch(() => {});
@@ -256,311 +284,382 @@ export default function MatchFeedScreen({ navigation }) {
     });
   }, [navigation, styles]);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={kolory.blue} />
-      </View>
-    );
-  }
+  /**
+   * Feed dopasowań („Dla mnie"). Wydzielony do funkcji, bo ekran renderuje
+   * teraz JEDEN z dwóch trybów, a przełącznik musi zostać widoczny także
+   * w stanie ładowania i błędu — inaczej użytkownik z pustym feedem nie ma
+   * jak przejść na „Wszystkie", czyli dokładnie tam, gdzie są dane.
+   */
+  function renderFeed() {
+    if (loading) {
+      return (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={kolory.blue} />
+        </View>
+      );
+    }
 
-  // Pełnoekranowy błąd TYLKO wtedy, gdy nie mamy nic do pokazania.
-  if (error && !matches.length) {
+    // Pełnoekranowy błąd TYLKO wtedy, gdy nie mamy nic do pokazania.
+    if (error && !matches.length) {
+      return (
+        <View style={styles.center}>
+          <Text style={styles.title}>Nie udało się wczytać przetargów</Text>
+          <Text style={styles.text}>{error}</Text>
+          <Button
+            title="Spróbuj ponownie"
+            variant="ghost"
+            onPress={() => { setLoading(true); load(); }}
+            style={styles.retry}
+          />
+        </View>
+      );
+    }
+
     return (
-      <View style={styles.center}>
-        <Text style={styles.title}>Nie udało się wczytać przetargów</Text>
-        <Text style={styles.text}>{error}</Text>
-        <Button
-          title="Spróbuj ponownie"
-          variant="ghost"
-          onPress={() => { setLoading(true); load(); }}
-          style={styles.retry}
-        />
-      </View>
+      <SectionList
+        sections={sekcje}
+        keyExtractor={(item) => item.id}
+        stickySectionHeadersEnabled={false}
+        contentContainerStyle={widoczne.length ? styles.list : styles.listEmpty}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sekcjaNaglowek}>
+            <Text style={styles.sekcjaTytul}>{section.tytul}</Text>
+            {section.nowe > 0 ? (
+              <Text style={styles.sekcjaNowe}>{section.nowe} nowe</Text>
+            ) : null}
+          </View>
+        )}
+        ListHeaderComponent={
+          <View>
+            {/* Baner „nowe od ostatniej wizyty" — to jest „powiadomienie" wewnątrz apki. */}
+            {noweLacznie > 0 ? (
+              <View style={styles.noweBaner}>
+                <Text style={styles.noweBanerKropka}>●</Text>
+                <Text style={styles.noweBanerTekst}>
+                  {noweLacznie === 1
+                    ? '1 nowy przetarg od ostatniej wizyty'
+                    : `${noweLacznie} nowych przetargów od ostatniej wizyty`}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free). */}
+            {zacheta?.pokaz ? (
+              <Pressable style={styles.fomo} onPress={przejdzNaStandard} disabled={upgrading} accessibilityRole="button">
+                <Text style={styles.fomoTytul}>{zacheta.tytul}</Text>
+                <Text style={styles.fomoOpis}>{zacheta.opis}</Text>
+                <Text style={styles.fomoCta}>{upgrading ? 'Otwieram…' : 'Przejdź na Standard — 49 zł/mc →'}</Text>
+              </Pressable>
+            ) : null}
+
+            {/* ── Radar zamówień podprogowych (panel 7/7): „łatwiejszy start" OBOK dużych
+                przetargów — zakupy poniżej progu Pzp z platform/BIP-ów/Bazy Konkurencyjności. ── */}
+            {podprogowePrefs !== null ? (
+              <View style={styles.ppBand}>
+                <View style={styles.ppNaglowek}>
+                  <Text style={styles.ppTytulSekcji}>Łatwiejszy start</Text>
+                  <Pressable
+                    onPress={() => navigation.navigate('PodprogoweUstawienia')}
+                    hitSlop={10}
+                    accessibilityLabel="Ustawienia radaru podprogowego"
+                  >
+                    <Text style={styles.ppUstaw}>{podprogowePrefs.length ? 'Ustawienia' : 'Ustaw'}</Text>
+                  </Pressable>
+                </View>
+
+                {podprogowePrefs.length === 0 ? (
+                  <Pressable
+                    style={styles.ppZaproszenie}
+                    onPress={() => navigation.navigate('PodprogoweUstawienia')}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.ppZaproszenieTytul}>Włącz radar zamówień podprogowych</Text>
+                    <Text style={styles.ppZaproszenieOpis}>
+                      Ustaw branżę i region, a pokażemy tu zakupy poniżej progu Pzp — zwykle bez
+                      wadium i bez KIO, z prostszą procedurą. Idealne na łatwiejszy start.
+                    </Text>
+                  </Pressable>
+                ) : podprogoweWidoczne.length === 0 ? (
+                  <Text style={styles.ppPusto}>
+                    Brak nowych zamówień podprogowych dla Twojego obszaru. Zajrzyj później albo
+                    odśwież w ustawieniach.
+                  </Text>
+                ) : (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.ppLista}
+                  >
+                    {podprogoweWidoczne.map((o) => (
+                      <KartaPodprogowa
+                        key={o.id}
+                        ogloszenie={o}
+                        styles={styles}
+                        onPress={() => navigation.navigate('PodprogoweDetail', { ogloszenie: o })}
+                      />
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            ) : null}
+
+            {/* Wyszukiwarka — po tytule i zamawiającym, z tolerancją odmian (D-051). */}
+            <View style={styles.szukajRzad}>
+              <Text style={styles.szukajIkona}>🔍</Text>
+              <TextInput
+                style={styles.szukajPole}
+                value={szukaj}
+                onChangeText={setSzukaj}
+                placeholder="Szukaj po nazwie lub zamawiającym"
+                placeholderTextColor={kolory.textMuted}
+                autoCorrect={false}
+                accessibilityLabel="Szukaj w przetargach"
+              />
+              {szukaj ? (
+                <Pressable onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel="Wyczyść szukanie">
+                  <Text style={styles.szukajX}>✕</Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            {/* Zakładka statusu terminu: Aktywne (domyślnie) / Po terminie. Odchudza feed z przeterminowanych. */}
+            <View style={styles.progi} accessibilityRole="radiogroup">
+              {STATUSY_TERMINU.map((opcja) => {
+                const aktywny = statusTerminu === opcja.wartosc;
+                const licznik = opcja.wartosc === 'poterminie' && liczbaPoTerminie > 0 ? ` (${liczbaPoTerminie})` : '';
+                return (
+                  <Pressable
+                    key={opcja.wartosc}
+                    onPress={() => zmienStatusTerminu(opcja.wartosc)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: aktywny }}
+                    style={[styles.progChip, aktywny && styles.progChipAktywny]}
+                  >
+                    <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>
+                      {opcja.etykieta}{licznik}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Sortowanie — trwały wybór (D-051). */}
+            <View style={styles.progi} accessibilityRole="radiogroup">
+              {SORTOWANIA.map((opcja) => {
+                const aktywny = sort === opcja.wartosc;
+                return (
+                  <Pressable
+                    key={opcja.wartosc}
+                    onPress={() => zmienSort(opcja.wartosc)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: aktywny }}
+                    style={[styles.progChip, aktywny && styles.progChipAktywny]}
+                  >
+                    <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>{opcja.etykieta}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Filtr minimalnego dopasowania — trwały wybór usera (D-047). */}
+            <View style={styles.progi} accessibilityRole="radiogroup">
+              {PROGI.map((opcja) => {
+                const aktywny = prog === opcja.wartosc;
+                return (
+                  <Pressable
+                    key={opcja.wartosc}
+                    onPress={() => zmienProg(opcja.wartosc)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: aktywny }}
+                    style={[styles.progChip, aktywny && styles.progChipAktywny]}
+                  >
+                    <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>
+                      {opcja.etykieta}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {/* Filtr „dla małej firmy" (R19) — chowa przetargi z dużym wadium. */}
+            <Pressable
+              onPress={() => setMalaFirma((v) => !v)}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: malaFirma }}
+              style={[styles.malaChip, malaFirma && styles.malaChipAktywny]}
+            >
+              <Text style={[styles.malaTekst, malaFirma && styles.malaTekstAktywny]}>
+                {malaFirma ? '✓ ' : ''}Dla małej firmy (bez dużego wadium)
+              </Text>
+            </Pressable>
+            {/* Filtr województwa — tylko gdy w feedzie SĄ dane regionu (co najmniej 2). */}
+            {regiony.length >= 2 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.wojRzad}>
+                <Pressable
+                  onPress={() => setWoj('')}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: !woj }}
+                  style={[styles.wojChip, !woj && styles.wojChipOn]}
+                >
+                  <Text style={[styles.wojTekst, !woj && styles.wojTekstOn]}>Wszystkie województwa</Text>
+                </Pressable>
+                {regiony.map((kod) => {
+                  const on = woj === kod;
+                  return (
+                    <Pressable
+                      key={kod}
+                      onPress={() => setWoj(kod)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: on }}
+                      style={[styles.wojChip, on && styles.wojChipOn]}
+                    >
+                      <Text style={[styles.wojTekst, on && styles.wojTekstOn]}>{WOJEWODZTWA[kod]}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            ) : null}
+            {/* Licznik wyników (R14) — ile widać po filtrach; z podpowiedzią, gdy filtr zawęża. */}
+            {widoczne.length > 0 ? (
+              <Text style={styles.licznik}>
+                {widoczne.length === matches.length
+                  ? `${widoczne.length} ${widoczne.length === 1 ? 'przetarg' : 'przetargów'}`
+                  : `${widoczne.length} z ${matches.length} przetargów`}
+              </Text>
+            ) : null}
+            {/*
+              Mamy starsze dane, ale odświeżenie się nie powiodło — mówimy o tym
+              wprost, zamiast udawać, że lista jest aktualna.
+            */}
+            {error ? (
+              <Pressable style={styles.pasekBledu} onPress={() => load('refresh')}>
+                <Text style={styles.pasekBleduTekst}>
+                  Nie udało się odświeżyć. Pokazujemy ostatnio pobrane przetargi. Dotknij, aby spróbować ponownie.
+                </Text>
+              </Pressable>
+            ) : null}
+            {matches.length > 0 && widoczne.length === 0 ? (
+              <Text style={styles.pustyFiltr}>
+                {statusTerminu === 'poterminie' && liczbaPoTerminie === 0
+                  ? 'Brak przetargów po terminie. Wróć do „Aktywne".'
+                  : szukaj
+                    ? `Brak wyników dla „${szukaj}". Wyczyść szukanie lub zmień frazę.`
+                    : woj
+                      ? `Brak przetargów z województwa „${WOJEWODZTWA[woj]}" w bieżącym feedzie. Wybierz „Wszystkie województwa".`
+                      : statusTerminu === 'aktywne'
+                        ? `Wszystkie ${matches.length} dopasowań ma już po terminie — zajrzyj do zakładki „Po terminie".`
+                        : `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`}
+              </Text>
+            ) : null}
+          </View>
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => load('refresh')}
+            tintColor={kolory.blue}
+            colors={[kolory.blue]}
+          />
+        }
+        renderItem={({ item }) => (
+          <MatchCard
+            match={item}
+            nowe={czyNowe(item, wizytaBazowa)}
+            onPress={() => navigation.navigate('MatchDetail', { match: item })}
+          />
+        )}
+        onEndReached={dociagnijWiecej}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          dociaganie ? (
+            <View style={styles.stopka}>
+              <ActivityIndicator color={kolory.blue} />
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          // Pustka od FILTRA ma własny komunikat w nagłówku — ten ekran jest
+          // wyłącznie dla faktycznie pustego konta.
+          matches.length === 0 ? (
+            <View style={styles.center}>
+              <Text style={styles.emptyIcon}>📭</Text>
+              <Text style={styles.title}>{t('Brak dopasowanych przetargów', 'No matched tenders')}</Text>
+              {/*
+                Pustka z KONKRETNYM następnym krokiem (P1-4). „Zajrzyj później" było
+                ślepą uliczką: nie mówiło ani dlaczego jest pusto, ani co zrobić.
+                Podpowiedź liczy backend z profilu — bez AI.
+              */}
+              <NastepnyKrok
+                podpowiedz={podpowiedz}
+                onPress={() => (podpowiedz?.kod === 'obejrzyj_wszystkie'
+                  ? zmienTryb('wszystkie')
+                  : navigation.navigate('Account'))}
+              />
+              <Text style={styles.text}>
+                {t(
+                  'Możesz też przejrzeć cały rynek — zakładka „Wszystkie" na górze pokazuje przetargi niezależnie od Twojego profilu.',
+                  'You can also browse the whole market — the "All" tab above shows tenders regardless of your profile.',
+                )}
+              </Text>
+            </View>
+          ) : null
+        }
+      />
     );
   }
 
   return (
-    <SectionList
-      sections={sekcje}
-      keyExtractor={(item) => item.id}
-      stickySectionHeadersEnabled={false}
-      contentContainerStyle={widoczne.length ? styles.list : styles.listEmpty}
-      renderSectionHeader={({ section }) => (
-        <View style={styles.sekcjaNaglowek}>
-          <Text style={styles.sekcjaTytul}>{section.tytul}</Text>
-          {section.nowe > 0 ? (
-            <Text style={styles.sekcjaNowe}>{section.nowe} nowe</Text>
-          ) : null}
-        </View>
-      )}
-      ListHeaderComponent={
-        <View>
-          {/* Baner „nowe od ostatniej wizyty" — to jest „powiadomienie" wewnątrz apki. */}
-          {noweLacznie > 0 ? (
-            <View style={styles.noweBaner}>
-              <Text style={styles.noweBanerKropka}>●</Text>
-              <Text style={styles.noweBanerTekst}>
-                {noweLacznie === 1
-                  ? '1 nowy przetarg od ostatniej wizyty'
-                  : `${noweLacznie} nowych przetargów od ostatniej wizyty`}
-              </Text>
-            </View>
-          ) : null}
-
-          {/* Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free). */}
-          {zacheta?.pokaz ? (
-            <Pressable style={styles.fomo} onPress={przejdzNaStandard} disabled={upgrading} accessibilityRole="button">
-              <Text style={styles.fomoTytul}>{zacheta.tytul}</Text>
-              <Text style={styles.fomoOpis}>{zacheta.opis}</Text>
-              <Text style={styles.fomoCta}>{upgrading ? 'Otwieram…' : 'Przejdź na Standard — 49 zł/mc →'}</Text>
+    <View style={styles.ekran}>
+      <View style={styles.trybRzad} accessibilityRole="tablist">
+        {TRYBY.map((opcja) => {
+          const aktywny = tryb === opcja.wartosc;
+          return (
+            <Pressable
+              key={opcja.wartosc}
+              onPress={() => zmienTryb(opcja.wartosc)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: aktywny }}
+              style={[styles.trybChip, aktywny && styles.trybChipOn]}
+            >
+              <Text style={[styles.trybTekst, aktywny && styles.trybTekstOn]}>{t(opcja.etykieta)}</Text>
             </Pressable>
-          ) : null}
-
-          {/* ── Radar zamówień podprogowych (panel 7/7): „łatwiejszy start" OBOK dużych
-              przetargów — zakupy poniżej progu Pzp z platform/BIP-ów/Bazy Konkurencyjności. ── */}
-          {podprogowePrefs !== null ? (
-            <View style={styles.ppBand}>
-              <View style={styles.ppNaglowek}>
-                <Text style={styles.ppTytulSekcji}>Łatwiejszy start</Text>
-                <Pressable
-                  onPress={() => navigation.navigate('PodprogoweUstawienia')}
-                  hitSlop={10}
-                  accessibilityLabel="Ustawienia radaru podprogowego"
-                >
-                  <Text style={styles.ppUstaw}>{podprogowePrefs.length ? 'Ustawienia' : 'Ustaw'}</Text>
-                </Pressable>
-              </View>
-
-              {podprogowePrefs.length === 0 ? (
-                <Pressable
-                  style={styles.ppZaproszenie}
-                  onPress={() => navigation.navigate('PodprogoweUstawienia')}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.ppZaproszenieTytul}>Włącz radar zamówień podprogowych</Text>
-                  <Text style={styles.ppZaproszenieOpis}>
-                    Ustaw branżę i region, a pokażemy tu zakupy poniżej progu Pzp — zwykle bez
-                    wadium i bez KIO, z prostszą procedurą. Idealne na łatwiejszy start.
-                  </Text>
-                </Pressable>
-              ) : podprogoweWidoczne.length === 0 ? (
-                <Text style={styles.ppPusto}>
-                  Brak nowych zamówień podprogowych dla Twojego obszaru. Zajrzyj później albo
-                  odśwież w ustawieniach.
-                </Text>
-              ) : (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.ppLista}
-                >
-                  {podprogoweWidoczne.map((o) => (
-                    <KartaPodprogowa
-                      key={o.id}
-                      ogloszenie={o}
-                      styles={styles}
-                      onPress={() => navigation.navigate('PodprogoweDetail', { ogloszenie: o })}
-                    />
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-          ) : null}
-
-          {/* Wyszukiwarka — po tytule i zamawiającym, z tolerancją odmian (D-051). */}
-          <View style={styles.szukajRzad}>
-            <Text style={styles.szukajIkona}>🔍</Text>
-            <TextInput
-              style={styles.szukajPole}
-              value={szukaj}
-              onChangeText={setSzukaj}
-              placeholder="Szukaj po nazwie lub zamawiającym"
-              placeholderTextColor={kolory.textMuted}
-              autoCorrect={false}
-              accessibilityLabel="Szukaj w przetargach"
-            />
-            {szukaj ? (
-              <Pressable onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel="Wyczyść szukanie">
-                <Text style={styles.szukajX}>✕</Text>
-              </Pressable>
-            ) : null}
-          </View>
-
-          {/* Zakładka statusu terminu: Aktywne (domyślnie) / Po terminie. Odchudza feed z przeterminowanych. */}
-          <View style={styles.progi} accessibilityRole="radiogroup">
-            {STATUSY_TERMINU.map((opcja) => {
-              const aktywny = statusTerminu === opcja.wartosc;
-              const licznik = opcja.wartosc === 'poterminie' && liczbaPoTerminie > 0 ? ` (${liczbaPoTerminie})` : '';
-              return (
-                <Pressable
-                  key={opcja.wartosc}
-                  onPress={() => zmienStatusTerminu(opcja.wartosc)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: aktywny }}
-                  style={[styles.progChip, aktywny && styles.progChipAktywny]}
-                >
-                  <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>
-                    {opcja.etykieta}{licznik}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Sortowanie — trwały wybór (D-051). */}
-          <View style={styles.progi} accessibilityRole="radiogroup">
-            {SORTOWANIA.map((opcja) => {
-              const aktywny = sort === opcja.wartosc;
-              return (
-                <Pressable
-                  key={opcja.wartosc}
-                  onPress={() => zmienSort(opcja.wartosc)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: aktywny }}
-                  style={[styles.progChip, aktywny && styles.progChipAktywny]}
-                >
-                  <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>{opcja.etykieta}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {/* Filtr minimalnego dopasowania — trwały wybór usera (D-047). */}
-          <View style={styles.progi} accessibilityRole="radiogroup">
-            {PROGI.map((opcja) => {
-              const aktywny = prog === opcja.wartosc;
-              return (
-                <Pressable
-                  key={opcja.wartosc}
-                  onPress={() => zmienProg(opcja.wartosc)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: aktywny }}
-                  style={[styles.progChip, aktywny && styles.progChipAktywny]}
-                >
-                  <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>
-                    {opcja.etykieta}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          {/* Filtr „dla małej firmy" (R19) — chowa przetargi z dużym wadium. */}
-          <Pressable
-            onPress={() => setMalaFirma((v) => !v)}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: malaFirma }}
-            style={[styles.malaChip, malaFirma && styles.malaChipAktywny]}
-          >
-            <Text style={[styles.malaTekst, malaFirma && styles.malaTekstAktywny]}>
-              {malaFirma ? '✓ ' : ''}Dla małej firmy (bez dużego wadium)
-            </Text>
-          </Pressable>
-          {/* Filtr województwa — tylko gdy w feedzie SĄ dane regionu (co najmniej 2). */}
-          {regiony.length >= 2 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.wojRzad}>
-              <Pressable
-                onPress={() => setWoj('')}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: !woj }}
-                style={[styles.wojChip, !woj && styles.wojChipOn]}
-              >
-                <Text style={[styles.wojTekst, !woj && styles.wojTekstOn]}>Wszystkie województwa</Text>
-              </Pressable>
-              {regiony.map((kod) => {
-                const on = woj === kod;
-                return (
-                  <Pressable
-                    key={kod}
-                    onPress={() => setWoj(kod)}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: on }}
-                    style={[styles.wojChip, on && styles.wojChipOn]}
-                  >
-                    <Text style={[styles.wojTekst, on && styles.wojTekstOn]}>{WOJEWODZTWA[kod]}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          ) : null}
-          {/* Licznik wyników (R14) — ile widać po filtrach; z podpowiedzią, gdy filtr zawęża. */}
-          {widoczne.length > 0 ? (
-            <Text style={styles.licznik}>
-              {widoczne.length === matches.length
-                ? `${widoczne.length} ${widoczne.length === 1 ? 'przetarg' : 'przetargów'}`
-                : `${widoczne.length} z ${matches.length} przetargów`}
-            </Text>
-          ) : null}
-          {/*
-            Mamy starsze dane, ale odświeżenie się nie powiodło — mówimy o tym
-            wprost, zamiast udawać, że lista jest aktualna.
-          */}
-          {error ? (
-            <Pressable style={styles.pasekBledu} onPress={() => load('refresh')}>
-              <Text style={styles.pasekBleduTekst}>
-                Nie udało się odświeżyć. Pokazujemy ostatnio pobrane przetargi. Dotknij, aby spróbować ponownie.
-              </Text>
-            </Pressable>
-          ) : null}
-          {matches.length > 0 && widoczne.length === 0 ? (
-            <Text style={styles.pustyFiltr}>
-              {statusTerminu === 'poterminie' && liczbaPoTerminie === 0
-                ? 'Brak przetargów po terminie. Wróć do „Aktywne".'
-                : szukaj
-                  ? `Brak wyników dla „${szukaj}". Wyczyść szukanie lub zmień frazę.`
-                  : woj
-                    ? `Brak przetargów z województwa „${WOJEWODZTWA[woj]}" w bieżącym feedzie. Wybierz „Wszystkie województwa".`
-                    : statusTerminu === 'aktywne'
-                      ? `Wszystkie ${matches.length} dopasowań ma już po terminie — zajrzyj do zakładki „Po terminie".`
-                      : `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`}
-            </Text>
-          ) : null}
-        </View>
-      }
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => load('refresh')}
-          tintColor={kolory.blue}
-          colors={[kolory.blue]}
-        />
-      }
-      renderItem={({ item }) => (
-        <MatchCard
-          match={item}
-          nowe={czyNowe(item, wizytaBazowa)}
-          onPress={() => navigation.navigate('MatchDetail', { match: item })}
-        />
-      )}
-      onEndReached={dociagnijWiecej}
-      onEndReachedThreshold={0.4}
-      ListFooterComponent={
-        dociaganie ? (
-          <View style={styles.stopka}>
-            <ActivityIndicator color={kolory.blue} />
-          </View>
-        ) : null
-      }
-      ListEmptyComponent={
-        // Pustka od FILTRA ma własny komunikat w nagłówku — ten ekran jest
-        // wyłącznie dla faktycznie pustego konta.
-        matches.length === 0 ? (
-          <View style={styles.center}>
-            <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.title}>Brak dopasowanych przetargów</Text>
-            <Text style={styles.text}>
-              Gdy pojawią się nowe przetargi pasujące do profilu Twojej firmy,
-              zobaczysz je tutaj. Sprawdź w zakładce „Konto”, czy profil ma
-              ustawione słowa kluczowe.
-            </Text>
-          </View>
-        ) : null
-      }
-    />
+          );
+        })}
+      </View>
+      {tryb === 'wszystkie'
+        ? <KatalogWszystkich navigation={navigation} />
+        : renderFeed()}
+    </View>
   );
 }
 
 const tworzStyleFeedu = tworzStyle((k) => ({
+  ekran: { flex: 1, backgroundColor: k.bg },
+  /*
+   * Przełącznik trybu listy. Stoi NAD listą, poza nią, żeby był widoczny także
+   * przy ładowaniu i przy błędzie — moment, w którym przydaje się najbardziej,
+   * to właśnie pusty albo niedziałający feed.
+   */
+  trybRzad: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+    backgroundColor: k.bg,
+  },
+  trybChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: k.border,
+    backgroundColor: k.surface,
+  },
+  trybChipOn: { backgroundColor: k.blue, borderColor: k.blue },
+  trybTekst: { fontSize: 15, fontWeight: '700', color: k.text },
+  trybTekstOn: { color: k.white, fontWeight: '800' },
+
   noweBaner: {
     flexDirection: 'row',
     alignItems: 'center',

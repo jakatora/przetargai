@@ -95,6 +95,28 @@ export const api = {
     return request(`/matches?${params.toString()}`);
   },
   getMatch: (id) => request(`/matches/${id}`),
+
+  // ----- Katalog „Wszystkie przetargi" (P1-1) -----
+  // DRUGA lista w aplikacji, obok feedu dopasowań. Nie zależy od profilu ani od
+  // dziennego limitu planu — pokazuje rynek. Stronicowanie kursorem: `kursor` to
+  // `next_kursor` z poprzedniej odpowiedzi, związany z ZESTAWEM filtrów (podanie
+  // go po zmianie filtrów kończy się błędem 400, nie wymieszaniem stron).
+  /**
+   * @param {object} opcje filtry z lib/katalogPrzetargow.parametryZapytania
+   *   + `limit` i `kursor`
+   */
+  getTenders: ({ kursor, limit = 20, ...filtry } = {}) => {
+    const params = new URLSearchParams({ limit: String(limit) });
+    for (const [klucz, wartosc] of Object.entries(filtry)) {
+      if (wartosc !== undefined && wartosc !== null && wartosc !== '') params.set(klucz, String(wartosc));
+    }
+    if (kursor) params.set('kursor', kursor);
+    return request(`/tenders?${params.toString()}`);
+  },
+  /** Słowniki filtrów (źródła, województwa, sortowania) z etykietami PL/EN. */
+  getTenderFiltry: () => request('/tenders/filtry'),
+  /** Zakres danych: obsługiwane rejestry, ostatni sukces/błąd per źródło, czego NIE obejmujemy. */
+  getZakresDanych: () => request('/tenders/zakres-danych'),
   /**
    * Wyjaśnienie AI ogłoszenia (D-052). Odpowiedź: { streszczenie, cached } gdy się
    * udało, albo { streszczenie: null, powod, komunikat } przy limicie/niedostępności.
