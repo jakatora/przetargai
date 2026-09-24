@@ -4,6 +4,55 @@ Dziennik prac. Najnowsze wpisy na górze.
 
 ---
 
+## 2026-09-24 — Etap 3: Baza Konkurencyjności jako trzecie źródło pipeline'u
+
+### Wykonane
+- **Trzecie źródło ogłoszeń w Cloud Functions** — zamówienia beneficjentów dotacji UE
+  (zasada konkurencyjności, nie Pzp). Nie ma ich ani w BZP, ani w TED.
+  Wdrożone i **zweryfikowane na produkcji**: 1 135 ogłoszeń zapisanych,
+  `otwarte_przetargi` 7 249 → 8 384, zaległość 0, pokrycie 1135/1135.
+- `lib/tempoZapytan.js` — tempo, ponawianie i backoff wyciągnięte z `services/bzp.js`
+  do wspólnej biblioteki. Wiedza „403 to dławienie, nie trwały błąd" kosztowała audyt
+  całą dobę ogłoszeń; nie wolno jej było zostawić prywatną w jednym adapterze.
+- `services/bazaKonkurencyjnosci.js` + `jobs/oknoBk.js` — adapter, okno czasu,
+  checkpoint/resume, statusy aktywne/zmienione/anulowane.
+- `lib/dedupZrodel.js` — deduplikacja MIĘDZY rejestrami (BZP > TED > BK) z linkiem
+  do źródła pierwotnego i uzupełnianiem pustych pól z rejestru pobocznego.
+- `bkOknoFetch` w harmonogramie (co 3 h, +50 min względem BZP), sekcja `bk_okno`
+  w `/health`, rekonsyliacja pobrane/zapisane/odrzucone/duplikaty w śladzie cyklu.
+- `POST /admin/okno-bk` — wyzwalacz importu BEZ dopasowań i BEZ płatnego AI.
+
+### Co zmierzyliśmy, a nie założyli
+- **Kolejność wyników BK jest niestabilna**: jedno przejście stron dało kolejno
+  921/1135, 1012/1135 i 1135/1135. Pojedynczy przebieg gubi do 19 % rynku bez
+  żadnego błędu. „Kolejny przebieg nic nie dodał" NIE jest warunkiem stopu —
+  przebieg 2 dołożył 0 rekordów, przebieg 3 dołożył 214.
+- **`GET /announcements/{id}` zwraca WERSJĘ, nie ogłoszenie**: własne `id` i status
+  zawsze `PUBLISHED`. Prawdziwy status (w tym `CANCELLED`) i identyfikator z linku
+  siedzą w `data.advertisement.advertisement`. Fixture anulowanego ogłoszenia
+  broni tej pułapki w testach.
+- **Filtry dat są ignorowane** (4 sprawdzone warianty nazw) — okno czasu musi być
+  klienckie. Dlatego okno USTAWIA KOLEJNOŚĆ, a nie odsiewa: ogłoszenie sprzed pół
+  roku, wciąż otwarte, to często największy kontrakt.
+- **Pod ciągłym ruchem BK spowalnia**: w kontrolowanym drenażu 3 z 7 przebiegów
+  padły po ~80 s (3 × 25 s limitu czasu). Naprawione — awaria strony przy już
+  zebranych danych kończy listowanie z jawnie niepełnym pokryciem zamiast kasować
+  cały przebieg.
+
+### Środowisko (odblokowane przy okazji)
+Emulator Firestore nie wstawał na tej maszynie. Przyczyną NIE była wersja JDK:
+`Selector.open()` padał, bo domyślny katalog gniazd AF_UNIX to ścieżka w notacji 8.3.
+Fix: portable Temurin 21 + `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\jtmp`.
+Baseline przed etapem: 422/422. Po etapie: **513/513**.
+
+### Następne kroki
+TED `form-type = planning` (208 polskich ogłoszeń / 30 dni) — jedyne źródło, które
+zasili gotowy i przetestowany Radar planów postępowań, dziś pozbawiony danych.
+Szczegóły i odrzucone warianty: `implementation-status.json`.
+
+---
+
+
 ## 2026-05-23 — Backend LIVE na Railway + Stripe webhook
 
 ### Wykonane

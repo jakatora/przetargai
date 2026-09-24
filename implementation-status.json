@@ -1,0 +1,140 @@
+{
+  "projekt": "PrzetargAI",
+  "zaktualizowano": "2026-09-24",
+  "galaz": "codex/przetargai-complete",
+  "drzewo_robocze": "D:/wt/przetargai-complete",
+  "uwaga": "Repozytorium D:/projekty/przetarg-ai jest BRUDNE (cudzy WIP) — nie dotykać.",
+
+  "produkcja": {
+    "platforma": "Firebase Cloud Functions v2 (europe-central2, projekt przetargai)",
+    "wersja_api": "api-00027-nez",
+    "wdrozone_z": "lokalnego kodu przez `firebase deploy` (NIE z GitHuba — to odróżnia Functions od Railway)",
+    "health": "https://europe-central2-przetargai.cloudfunctions.net/api/health",
+    "funkcje": [
+      "api", "dailyTenderFetch", "bzpOknoFetch", "bkOknoFetch", "remindDeadlines",
+      "weeklyDigest", "aggregateResults"
+    ],
+    "otwarte_przetargi": 8384,
+    "otwarte_przetargi_przed_etapem_3": 7249
+  },
+
+  "testy": {
+    "polecenie": "cd firebase/functions && npm test",
+    "wynik": "513/513",
+    "baseline_przed_etapem_3": "422/422",
+    "wymagane_srodowisko": {
+      "powod": "emulator Firestore nie wstaje na tej maszynie bez tych dwóch rzeczy",
+      "JAVA_HOME": "C:/Users/Startklaar/.jdks/jdk-21.0.12.1+1 (portable Temurin 21; JDK 25 NIE działa)",
+      "JAVA_TOOL_OPTIONS": "-Djdk.net.unixdomain.tmpdir=C:\\jtmp",
+      "dlaczego": "domyślny java.io.tmpdir to ścieżka w notacji 8.3 (C:\\Users\\STARTK~1\\...), której connect() AF_UNIX na Windows odrzuca z EINVAL — Selector.open() pada i emulator nie startuje"
+    }
+  },
+
+  "etapy": {
+    "etap_1_p0": {
+      "stan": "wdrozone",
+      "zakres": "ślad cyklu przestaje być lepki, /health widzi awarię źródła, most /api/przetarg/* w Cloud Functions",
+      "commity": ["4e08f80", "04072ca", "1c43aac", "c8978f2", "83d3dff"]
+    },
+    "etap_2_p0": {
+      "stan": "wdrozone",
+      "zakres": "backup bez zakleszczenia na pełnym dysku, pula dopasowań bez sufitu 2000, projekcje pól",
+      "commity": ["dc1e88b", "36d680b", "516b088"],
+      "blokady_na_czlowieka": [
+        "Railway: Live Resize wolumenu 500 MB → 2 GB (dotyczy backendu Railway, NIE Cloud Functions)",
+        "GitHub: brak uprawnienia `Contents: write` — commity są lokalne, a Railway wdraża się z GitHuba"
+      ]
+    },
+    "etap_3_baza_konkurencyjnosci": {
+      "stan": "dowiezione i zweryfikowane na produkcji",
+      "data": "2026-09-24",
+      "cel": "Baza Konkurencyjności jako PEŁNOPRAWNE trzecie źródło głównego pipeline Cloud Functions",
+      "commity": [
+        "0fd1704 — tempo i ponawianie zapytań jako wspólna biblioteka źródeł",
+        "f7e5f06 — adapter BK (kontrakt na utrwalonych fixture'ach)",
+        "4fcd78d — deduplikacja MIĘDZY rejestrami + link do źródła pierwotnego",
+        "e0bbd6a — okno BK z checkpointem: aktywne/zmienione/anulowane",
+        "4fb47a9 — BK w głównym pipeline: harmonogram, /health, rekonsyliacja",
+        "(6/7) — bezpłatny wyzwalacz /admin/okno-bk dla operatora",
+        "(7/7) — awaria strony listy nie kasuje całego przebiegu"
+      ],
+      "pliki": {
+        "adapter": "firebase/functions/src/services/bazaKonkurencyjnosci.js",
+        "okno_i_checkpoint": "firebase/functions/src/jobs/oknoBk.js",
+        "dedup_miedzy_zrodlami": "firebase/functions/src/lib/dedupZrodel.js",
+        "wspolne_tempo_http": "firebase/functions/src/lib/tempoZapytan.js",
+        "rejestr_zrodel": "firebase/functions/src/jobs/fetchTenders.js (domyslneZrodla)",
+        "checkpoint_firestore": "_health/bk_okno",
+        "harmonogram": "firebase/functions/index.js (bkOknoFetch, cron '50 */3 * * *')",
+        "fixtury_kontraktowe": "firebase/functions/test/fixtures/bk-*.json"
+      },
+      "testy_dodane": {
+        "tempoZapytan": 9,
+        "bazaKonkurencyjnosci": 22,
+        "dedupZrodel": 16,
+        "oknoBkCheckpoint": 21,
+        "bkRepo": 9,
+        "bkPipeline": 8,
+        "zdrowieBk": 5,
+        "adminOknoBk": 2,
+        "razem": 92
+      },
+      "weryfikacja_live": {
+        "data": "2026-09-24",
+        "pomiar_read_only_api": {
+          "aktywnych_ogloszen": 1135,
+          "opublikowane_ostatnia_doba": 171,
+          "opublikowane_ostatnie_7_dni": 636,
+          "opublikowane_ostatnie_30_dni": 1102,
+          "zapytan_na_pelne_listowanie": "5-10 (2-3 przebiegi)",
+          "czas_listowania_s": 5.4
+        },
+        "import_produkcyjny": {
+          "uruchomiony_przez": "POST /admin/okno-bk (BEZ AI, bez dopasowań)",
+          "przebiegow": 11,
+          "zapisanych_przetargow": 1135,
+          "odrzuconych": 0,
+          "pominietych": 0,
+          "zaleglosc_koncowa": 0,
+          "pokrycie_koncowe": "1135/1135 (kompletne)",
+          "drugi_przebieg_po_domknieciu": "0 zapytań o szczegóły — checkpoint działa"
+        }
+      },
+      "zmierzone_wlasciwosci_api_bk": [
+        "status[0] jest WYMAGANY — jego brak to HTTP 500",
+        "paginacja DZIAŁA (inaczej niż w BZP), ale offset ma sufit ~10 000",
+        "filtry dat są IGNOROWANE (sprawdzone 4 warianty nazw) — okno czasu musi być klienckie",
+        "KOLEJNOŚĆ WYNIKÓW JEST NIESTABILNA: jedno przejście stron dało 921/1135, 1012/1135, 1135/1135",
+        "„kolejny przebieg nic nie dodał” NIE jest poprawnym warunkiem stopu (przebieg 2 dołożył 0, przebieg 3 dołożył 214)",
+        "GET /announcements/{id} zwraca WERSJĘ ogłoszenia: własne id i status zawsze PUBLISHED; prawdziwy status i id są w data.advertisement.advertisement",
+        "wartość zamówienia i CPV są WYŁĄCZNIE w szczegółach (N+1) i wartość bywa null w ~80% przypadków",
+        "pod długim, ciągłym ruchem BK spowalnia i strona listy potrafi przekroczyć 25 s limitu (3/7 przebiegów drenażu)"
+      ],
+      "zgodnosc": "wyłącznie publiczne API JSON, bez klucza i logowania; zero scrapingu HTML, zero omijania limitów, zero płatnego AI"
+    }
+  },
+
+  "nastepne_zrodlo": {
+    "rekomendacja": "TED — ogłoszenia PLANOWANIA (form-type = planning)",
+    "dlaczego_to": [
+      "odbiorca JUŻ ISTNIEJE i jest przetestowany, a nie ma danych: Radar planów postępowań (backend/src/services/radarPlanow.js, przygotowaniaPlanu.js, zmianyPlanu.js) jest całkowicie bezstanowy i przyjmuje `pozycjePlanow` z zewnątrz — dziś nikt mu ich nie dostarcza",
+      "źródło oficjalne, API publiczne, JUŻ zintegrowane i autoryzowane (services/ted.js) — koszt to zapytanie i normalizacja, nie nowy transport",
+      "zmierzona objętość (read-only, 2026-09-24): 208 polskich ogłoszeń planowania / 30 dni",
+      "wartość produktowa: plan wyprzedza ogłoszenie o miesiące — to jedyne źródło przewagi czasowej, jakiego nie da się kupić szybszym pollingiem"
+    ],
+    "odrzucone_i_dlaczego": {
+      "BZP plany postępowań (art. 23 Pzp)": "API mo-board przyjmuje WYŁĄCZNIE NoticeType=ContractNotice i TenderResultNotice (zweryfikowane: 14 innych wartości → HTTP 400 'zakres wartości nie obejmuje'); ścieżek /plan, /plans, /procurementPlan(s), /noticeTypes nie ma (404). Bez omijania regulaminu nie da się tego pobrać",
+      "dane.gov.pl (portal otwartych danych)": "zbiory UZP to raporty DOC/HTML, brak zasobu maszynowego z ogłoszeniami — nie jest to feed",
+      "platformy komercyjne (Platforma Zakupowa, eb2b, Logintrade, SmartPZP)": "brak publicznego API; pobranie wymagałoby scrapingu HTML wbrew regulaminom — wykluczone regułą etapu"
+    },
+    "kolejne_w_macierzy": [
+      "TED form-type = result (4 297 polskich ogłoszeń / 30 dni) — zasila statystyki cen i konkurencji (jobs/aggregateResults.js), dziś liczone wyłącznie z BZP",
+      "TED form-type = cont-modif (219 / 30 dni) — zmiany umów, sygnał o rynku wykonawców"
+    ]
+  },
+
+  "otwarte_blokady": [
+    "Railway: wolumen 500 MB pełny — Live Resize do 2 GB wymaga człowieka (dotyczy backendu Railway, NIE Cloud Functions)",
+    "GitHub: brak `Contents: write` — commity tej gałęzi są lokalne; Cloud Functions to NIE blokuje (deploy idzie z lokalnego kodu), ale Railway tak"
+  ]
+}

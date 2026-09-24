@@ -4,6 +4,50 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-058 — Baza Konkurencyjności trzecim źródłem; deduplikacja między rejestrami
+**Data:** 2026-09-24 | Etap 3
+
+**Po co.** BZP zna zamówienia wg Pzp, TED te powyżej progów UE. Zakupów
+BENEFICJENTÓW dotacji unijnych (firmy, fundacje, uczelnie, szpitale) nie ma
+w żadnym z nich — obowiązuje je „zasada konkurencyjności", nie Pzp. Dla małego
+wykonawcy to często łatwiejszy rynek: zamawiającym bywa firma, nie urząd.
+Zmierzone: 1 135 ogłoszeń otwartych, 171 nowych na dobę.
+
+**Zakres danych.** Wyłącznie publiczne API JSON, bez klucza i logowania. Żadnego
+scrapingu HTML, żadnego omijania limitów, zero płatnego AI.
+
+**Trzy decyzje, które nie są oczywiste i mają testy:**
+
+1. **Powtarzanie całego przejścia stron.** BK listuje w NIESTABILNEJ kolejności —
+   trzy pomiary tego samego zestawu dały 921, 1012 i 1135 z 1135. Warunkiem stopu
+   jest domknięcie `meta.total`, a NIE „przebieg nic nie dodał" (zmierzony przebieg
+   2/3 dołożył zero, a 3/3 dołożył 214). Niepełne pokrycie jest raportowane
+   (`/health → bk_okno.pokrycie_kompletne`), bo API nie zgłasza go błędem.
+
+2. **Okno czasu ustawia KOLEJNOŚĆ, nie odsiewa.** BK ignoruje wszystkie parametry
+   dat, więc okno musi być klienckie — a twarde odcięcie po dacie publikacji
+   ukryłoby ogłoszenia otwarte od miesięcy, czyli najwięcej warte kontrakty.
+   Świeże idą pierwsze, zaległe domykają się przez checkpoint.
+
+3. **Zniknięcie z listy NIE jest anulowaniem.** Wymagamy pełnego pokrycia (inaczej
+   „anulowalibyśmy" 19 % rynku), pomijamy ogłoszenia po terminie (wygasły naturalnie)
+   i zawsze potwierdzamy statusem ze szczegółu. Anulowane ogłoszenie ZOSTAJE
+   w bazie — ktoś je zapisał i ma w dopasowaniach — ale wypada z puli dopasowań.
+
+**Deduplikacja między rejestrami.** Ten sam przetarg bywa w BZP i w BK naraz,
+z zupełnie różnymi identyfikatorami. Klucz = doba terminu + rdzeń zamawiającego
++ rdzeń tytułu; wąski świadomie, bo zgubiony przetarg kosztuje kontrakt, a duplikat
+jedno przewinięcie listy. Wygrywa rejestr PIERWOTNY (BZP > TED > BK) — tam idą
+odwołania i zmiany SWZ; wpis z rejestru pobocznego zostaje jako link obok
+(`zrodla_alternatywne`) i uzupełnia puste pola (np. wartość, której BZP nie podaje).
+
+**Odrzucone.** Nie kopiujemy adaptera z `backend/src/services/adaptery/` — czyta
+płytkie `a.id` ze szczegółu, czyli identyfikator WERSJI zamiast ogłoszenia, co daje
+zły link i zły docId. Nie robimy jednego zapytania `limit=2000` (działa, ale ciągnie
+0,76 MB naraz i nie ma wtedy żadnego sygnału o niepełnym pokryciu).
+
+---
+
 ## D-055 — FOMO na Free + potencjał (bodziec konwersji)
 **Data:** 2026-07-14 | User: „co dodać, żeby przyciągało klienta" → wybór „FOMO na Free + potencjał"
 
