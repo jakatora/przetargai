@@ -18,6 +18,7 @@ import statsRouter from './routes/stats.js';
 import mostRouter from './routes/most.js';
 import wyszukiwaniaRouter from './routes/wyszukiwania.js';
 import alertyRouter from './routes/alerty.js';
+import kalendarzRouter from './routes/kalendarz.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -97,6 +98,7 @@ export function createApp() {
    */
   app.use('/wyszukiwania', apiLimiter, wyszukiwaniaRouter);
   app.use('/alerty', apiLimiter, alertyRouter);
+  app.use('/kalendarz', apiLimiter, kalendarzRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminLimiter, adminRouter);
 
