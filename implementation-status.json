@@ -1,12 +1,12 @@
 {
   "projekt": "PrzetargAI",
-  "zaktualizowano": "2026-09-24 (etap 5 wdrozony, api-00032-qec)",
+  "zaktualizowano": "2026-09-24 (etap 5 wdrozony, api-00034-jot)",
   "galaz": "codex/przetargai-complete",
   "drzewo_robocze": "D:/wt/przetargai-complete",
   "uwaga": "Repozytorium D:/projekty/przetarg-ai jest BRUDNE (cudzy WIP) — nie dotykać.",
   "produkcja": {
     "platforma": "Firebase Cloud Functions v2 (europe-central2, projekt przetargai)",
-    "wersja_api": "api-00032-qec",
+    "wersja_api": "api-00034-jot",
     "wdrozone_z": "lokalnego kodu przez `firebase deploy` (NIE z GitHuba — to odróżnia Functions od Railway)",
     "health": "https://europe-central2-przetargai.cloudfunctions.net/api/health",
     "funkcje": [
@@ -24,11 +24,16 @@
     "wersja_api_poprzednia_w_tym_pliku": "api-00031-nij (stan po etapie 4)",
     "otwarte_przetargi_po_imporcie_bk": 8384,
     "przyrost_po_imporcie_bk": "z 8 384 na 10 084 — przyrost 1 700 pochodzi z okna BZP domknietego 2026-09-24T01:27:04Z (newTenders 1700), nie z BK",
-    "funkcje_potwierdzone_live": "firebase deploy: 7/7 zaktualizowanych + monitorWyszukiwan \"Successful create operation\" = 8 funkcji v2, nodejs22, europe-central2"
+    "funkcje_potwierdzone_live": "firebase deploy: 7/7 zaktualizowanych + monitorWyszukiwan \"Successful create operation\" = 8 funkcji v2, nodejs22, europe-central2",
+    "wdrozenia_w_etapie_5": [
+      "api-00032-qec - etap 5 (monitorWyszukiwan utworzony)",
+      "api-00033-xac - naprawa cichej awarii sortowania w harmonogramie",
+      "api-00034-jot - przypomnienie o terminie wlaczane z kalendarza"
+    ]
   },
   "testy": {
     "polecenie": "cd firebase/functions && npm test",
-    "wynik": "606/606",
+    "wynik": "744/744",
     "baseline_przed_etapem_3": "422/422",
     "wymagane_srodowisko": {
       "powod": "emulator Firestore nie wstaje na tej maszynie bez tych dwóch rzeczy",
@@ -41,7 +46,7 @@
     "baseline_przed_etapem_4": "513/513",
     "mobile": {
       "polecenie": "cd mobile && npm test",
-      "wynik": "711/711",
+      "wynik": "739/739",
       "baseline_przed_etapem_4": "663/663",
       "statyczna_kontrola": "npm run check (esbuild) — zielony",
       "baseline_przed_etapem_5": "711/711"
@@ -243,7 +248,8 @@
         "7c561b2 - mobilna warstwa czysta + metody klienta API",
         "6d6dfc8 - trzy ekrany: obserwacje, centrum alertow, kalendarz",
         "db9b051 - push z monitoringu prowadzi do centrum alertow",
-        "3649abc - decyzje D-062..D-066"
+        "3649abc - decyzje D-062..D-066",
+        "702e9b8 - przypomnienie o terminie wlaczane z kalendarza"
       ],
       "pliki": {
         "backend_logika_czysta": "firebase/functions/src/lib/{zapisaneWyszukiwania,zmianyOgloszenia,planMonitoringu,kalendarzPrzetargu}.js",
@@ -266,7 +272,8 @@
         "GET /alerty/zmiany/:tenderId - pelna historia zmian ogloszenia",
         "GET /kalendarz - trzy terminy kazdego zapisanego przetargu + karta nastepnego kroku",
         "GET /kalendarz/:tenderId - kalendarz jednego ogloszenia",
-        "GET /kalendarz/ics - eksport pliku ICS (text/calendar, stabilne UID, VALARM 24 h)"
+        "GET /kalendarz/ics - eksport pliku ICS (text/calendar, stabilne UID, VALARM 24 h)",
+        "GET /kalendarz i /kalendarz/:id - dodane pole `przypomnienie` (mozliwe/wlaczone/remind_at/etap)"
       ],
       "gwarancja_6h": {
         "wykrycie": "okna zrodel co 3 h (bzpOknoFetch 20 */3, bkOknoFetch 50 */3)",

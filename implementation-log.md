@@ -13,8 +13,11 @@ Najnowsze wpisy na górze.
 
 ## 2026-09-24 — Etap 5: monitoring szans i terminów (obserwacje, alerty, kalendarz)
 
-Wdrożone na Cloud Functions, rewizja **`api-00032-qec`** (wcześniej `api-00031-nij`).
-Funkcji jest **8** — doszła `monitorWyszukiwan` (`Successful create operation`).
+Wdrożone na Cloud Functions, rewizja końcowa **`api-00034-jot`** (wcześniej `api-00031-nij`).
+Funkcji jest **8** — doszła `monitorWyszukiwan` (`Successful create operation` w `api-00032-qec`).
+Trzy wdrożenia w tej sesji, każde z powodu: `api-00032-qec` (etap), `api-00033-xac`
+(naprawa cichej awarii sortowania — opis niżej), `api-00034-jot` (przypomnienie
+włączane z kalendarza).
 Mierzone na żywo kontem sondującym, które po pomiarach **usunięto** (`DELETE /auth/me`
 → 200, kontrolne `GET /auth/me` → 401). Konto zakładane BEZ słów kluczowych i BEZ kodów
 CPV — dzięki temu ani jedno wywołanie płatnego AI nie padło.
@@ -63,7 +66,7 @@ zwiazanie  znany=False  →  (jak wyżej)
 Czyli dokładnie to, o co chodziło w D-066: zamiast podstawić nieobowiązujący przepis,
 produkt mówi wprost, czego nie wie i dlaczego.
 
-### Błąd znaleziony i naprawiony PO pierwszym wdrożeniu (rewizja `api-00032-qec`)
+### Błąd znaleziony i naprawiony PO pierwszym wdrożeniu (naprawa w `api-00033-xac`)
 
 Podczas samodzielnego przeglądu kodu po deployu: harmonogram przepuszczał do zapytania
 `sort` zapisany przez użytkownika. Wykrywanie nowości opiera się na `fetched_at`, więc
@@ -105,8 +108,8 @@ Zweryfikowany przez celowe zepsucie: przy kadencji `*/6` test pada komunikatem
 
 | Zestaw | Przed etapem 5 | Po |
 |---|---|---|
-| backend (`firebase/functions`) | 606/606 | **741/741** |
-| mobile | 711/711 | **737/737** + `npm run check` (esbuild) zielony |
+| backend (`firebase/functions`) | 606/606 | **744/744** |
+| mobile | 711/711 | **739/739** + `npm run check` (esbuild) zielony |
 
 ### Czego świadomie NIE dowieziono
 
@@ -115,6 +118,14 @@ przetestowany i zweryfikowany na produkcji, ale zapisanie pliku na urządzeniu w
 `expo-file-system` + `expo-sharing`, których w projekcie nie ma. Dołożenie zależności
 to nowy build i weryfikacja na urządzeniu — osobna decyzja, poza tym etapem (D-066).
 `Linking.openURL` nie jest tu rozwiązaniem: trasa wymaga nagłówka `Authorization`.
+
+**Domknięcie kalendarza o przypomnienia (`api-00034-jot`).** Ekran pokazywał „zostały
+3 dni", ale push o zbliżającym się terminie włączało się wyłącznie z ekranu „Zapisane".
+`GET /kalendarz` niesie teraz stan przypomnienia w TRZECH stanach — `mozliwe` /
+`wlaczone` / wyłączone — bo „przetarg niezapisany" to nie to samo co „przypomnienie
+wyłączone", a przełącznik, który nic nie robi, jest gorszy niż jego brak. Zweryfikowane
+na produkcji drugim kontem sondującym (również usuniętym): dla ogłoszenia niezapisanego
+`{mozliwe: false, wlaczone: false, remind_at: null}`.
 
 **Pomiar pierwszego realnego przebiegu `monitorWyszukiwan`.** Funkcja jest wdrożona,
 ale jej cron (`35 */2`) nie odpalił się jeszcze w oknie tej sesji; nie było też konta
