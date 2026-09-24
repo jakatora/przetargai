@@ -200,7 +200,8 @@ export const users = {
 
     // Wpisy `audit_logs` i `ai_usage` celowo zostają: to dane rozliczeniowe
     // i dowody bezpieczeństwa, przechowywane na innej podstawie prawnej
-    // (art. 6 ust. 1 lit. c i f RODO). Nie zawierają treści profilu.
+    // (art. 6 ust. 1 lit. c i f RODO). Nie zawierają treści profilu i obie
+    // kolekcje mają TTL 90 dni — nie żyją dłużej, niż wymaga ich cel.
   },
   async setPassword(id, passwordHash) {
     // `token_version++` unieważnia WSZYSTKIE wcześniej wydane tokeny JWT (patrz
@@ -1620,6 +1621,13 @@ export const auditLogs = {
 
 // ============================ ai_usage ============================
 
+/*
+ * Pojedyncze wpisy niosą `user_id` (do wykrycia, czyje konto pali budżet) i przeżywają
+ * usunięcie konta — więc jak dziennik audytu nie mogą żyć wiecznie (audyt 2026-09-24).
+ * Budżet liczy się z agregatu miesięcznego BEZ danych osobowych, który zostaje.
+ */
+const AI_USAGE_DNI = 90;
+
 export const aiUsage = {
   /**
    * Wpis + agregat miesięczny w jednym batchu — budżet czyta się 1 odczytem.
@@ -1634,6 +1642,8 @@ export const aiUsage = {
     batch.create(db().collection('ai_usage').doc(newId()), {
       operation, model, input_tokens: inputTokens, output_tokens: outputTokens,
       cost_usd: costUsd, user_id: userId, created_at: nowIso(),
+      // Pole typu Timestamp — TYLKO takie honoruje polityka TTL Firestore.
+      ttl: new Date(Date.now() + AI_USAGE_DNI * 86_400_000),
     });
     batch.set(db().collection('ai_usage_monthly').doc(month), {
       cost_usd: FieldValue.increment(costUsd),

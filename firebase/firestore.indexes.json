@@ -101,6 +101,12 @@
       "indexes": []
     },
     {
+      "collectionGroup": "ai_usage",
+      "fieldPath": "ttl",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "stripe_events",
       "fieldPath": "ttl",
       "ttl": true,

@@ -20,7 +20,7 @@ process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 
-const { magicLinks, auditLogs, stripeEvents, faktury } = await import('../src/db/repos.js');
+const { magicLinks, auditLogs, stripeEvents, faktury, aiUsage } = await import('../src/db/repos.js');
 const { getFirestore, Timestamp } = await import('firebase-admin/firestore');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -63,6 +63,21 @@ test('invoices: rezerwacja faktury dostaje ttl', async () => {
   assert.ok(ttl instanceof Timestamp);
 });
 
+test('ai_usage: wpis z user_id dostaje ttl, agregat miesięczny (bez user_id) — nie', async () => {
+  // Audyt 2026-09-24: wpisy z user_id rosły bez końca i przeżywały usunięcie konta,
+  // choć ta sama logika co przy audit_logs (uzasadniony interes ≠ wieczność) każe je sprzątać.
+  const operacja = `ttl-test-${process.pid}`;
+  await aiUsage.record({ operation: operacja, model: 'claude-haiku-4-5', userId: 'u1' });
+  const snap = await getFirestore().collection('ai_usage').where('operation', '==', operacja).limit(1).get();
+  assert.equal(snap.empty, false);
+  const ttl = snap.docs[0].data().ttl;
+  assert.ok(ttl instanceof Timestamp, 'wpis ai_usage z user_id bez TTL rośnie w nieskończoność');
+  assert.ok(ttl.toDate() > new Date(Date.now() + 80 * 86_400_000), 'ok. 90 dni — tyle co dziennik audytu');
+
+  const miesiac = await getFirestore().collection('ai_usage_monthly').doc(new Date().toISOString().slice(0, 7)).get();
+  assert.equal(miesiac.data().ttl, undefined, 'agregat budżetu nie ma danych osobowych i musi przetrwać');
+});
+
 test('KRYTYCZNE: każda kolekcja z polem ttl ma zadeklarowaną politykę w firestore.indexes.json', () => {
   // Bez wpisu w konfiguracji pole `ttl` jest zwykłym polem — nic się nie kasuje.
   const zadeklarowane = new Set(
@@ -71,7 +86,7 @@ test('KRYTYCZNE: każda kolekcja z polem ttl ma zadeklarowaną politykę w fires
       .map((f) => f.collectionGroup),
   );
 
-  for (const kolekcja of ['magic_links', 'audit_logs', 'stripe_events', 'invoices']) {
+  for (const kolekcja of ['magic_links', 'audit_logs', 'stripe_events', 'invoices', 'ai_usage']) {
     assert.ok(zadeklarowane.has(kolekcja),
       `kolekcja ${kolekcja} zapisuje pole ttl, ale nie ma polityki TTL w firestore.indexes.json`);
   }
