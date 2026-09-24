@@ -200,7 +200,14 @@ function zmianaWartosci(przed, po) {
 function zmianaStatusu(przed, po) {
   const a = przed?.status_zrodla ?? null;
   const b = po?.status_zrodla ?? null;
-  if (a === b || (pusty(a) && pusty(b))) return null;
+  if (a === b || pusty(b)) return null;
+  /*
+   * PIERWSZE zapamiętanie statusu nie jest jego zmianą. Pole doszło w etapie 5, więc
+   * każde ogłoszenie zapisane wcześniej dostaje je przy najbliższej aktualizacji —
+   * bez tego warunku jedna zmiana w kodzie wygenerowałaby alert „zmiana statusu"
+   * dla całej bazy naraz. Ta sama zasada co przy odcisku treści.
+   */
+  if (pusty(a)) return null;
 
   return {
     typ: 'status', pole: 'status_zrodla', przed: a, po: b, kierunek: 'zmieniony',

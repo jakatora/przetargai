@@ -108,6 +108,10 @@ test('zmiana statusu w rejestrze źródłowym jest istotna i cytuje obie wartoś
   assert.equal(z.po, 'SUSPENDED');
 });
 
+test('PIERWSZE zapamiętanie statusu nie jest zmianą — inaczej jeden deploy alarmuje całą bazę', () => {
+  assert.deepEqual(wykryjZmiany({ title: 'x' }, { title: 'x', status_zrodla: 'PUBLISHED' }), []);
+});
+
 test('zmiana treści/załączników u źródła to sygnał „są nowe dokumenty albo odpowiedzi"', () => {
   const [z] = wykryjZmiany({ zrodlo_odcisk: 'aaa' }, { zrodlo_odcisk: 'bbb' });
   assert.equal(z.typ, 'dokumenty');

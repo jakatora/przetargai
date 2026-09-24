@@ -23,8 +23,10 @@ import assert from 'node:assert/strict';
 
 process.env.ANTHROPIC_API_KEY = '';
 
-const { odciskOgloszenia, wybierzDoPobrania, wykryjZnikniecia, zaktualizujCheckpointBk, MAKS_WPISOW_CHECKPOINTU } =
-  await import('../src/jobs/oknoBk.js');
+const {
+  odciskOgloszenia, wybierzDoPobrania, wykryjZnikniecia, zaktualizujCheckpointBk,
+  sygnalyZmiany, MAKS_WPISOW_CHECKPOINTU,
+} = await import('../src/jobs/oknoBk.js');
 
 const TERAZ = '2026-09-24T06:00:00.000Z';
 const OKNO_OD = '2026-08-25'; // 30 dni wstecz
@@ -253,4 +255,39 @@ test('checkpoint ma twardy sufit wpisów — przy przepełnieniu zostają NAJŚW
     klucze.every((k) => !k.startsWith('stare-')),
     'przy przepełnieniu tracimy najstarsze publikacje, a nie losowe wpisy',
   );
+});
+
+/*
+ * SYGNAŁY ZMIANY (etap 5) — to, co przebieg dokłada do aktualizacji ogłoszenia,
+ * żeby warstwa danych mogła w ogóle ZOBACZYĆ zmianę treści i statusu.
+ *
+ * Bez odcisku doklejona przez zamawiającego odpowiedź na pytanie jest dla nas
+ * niewidzialna: pola znormalizowane (tytuł, termin, budżet) się nie ruszają,
+ * a to właśnie treść niesie nowe dokumenty.
+ */
+
+test('sygnały zmiany niosą odcisk pozycji z listy i status ze szczegółu', () => {
+  const [, poz] = pozycja(101, { submission_deadline: '2026-10-30 10:00' });
+  const sygnaly = sygnalyZmiany({
+    poz,
+    json: { data: { advertisement: { advertisement: { status: { label: 'PUBLISHED' } } } } },
+  });
+
+  assert.equal(sygnaly.zrodlo_odcisk, odciskOgloszenia(poz));
+  assert.equal(sygnaly.status_zrodla, 'PUBLISHED');
+});
+
+test('odcisk liczony jest z TREŚCI, więc doklejona odpowiedź na pytanie go zmienia', () => {
+  const [, przed] = pozycja(102, { content: 'Opis zamówienia' });
+  const [, po] = pozycja(102, { content: 'Opis zamówienia => 24.09.2026 Zamawiający udzielił odpowiedzi' });
+
+  assert.notEqual(
+    sygnalyZmiany({ poz: przed, json: {} }).zrodlo_odcisk,
+    sygnalyZmiany({ poz: po, json: {} }).zrodlo_odcisk,
+  );
+});
+
+test('brak pozycji na liście nie wymyśla odcisku — null zamiast zgadywania', () => {
+  const sygnaly = sygnalyZmiany({ poz: undefined, json: {} });
+  assert.equal(sygnaly.zrodlo_odcisk, null);
 });

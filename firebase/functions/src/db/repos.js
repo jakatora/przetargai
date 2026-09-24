@@ -5,7 +5,7 @@ import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
 import {
   planZapytania, pasujeDoFiltrow, rozmiarPobrania, SKAN_STRONA, SKAN_MAKS,
 } from '../lib/katalogPrzetargow.js';
-import { kluczZmiany } from '../lib/zmianyOgloszenia.js';
+import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
 
 /*
  * Warstwa dostępu do danych — Firestore (port z node:sqlite, D-024).
@@ -374,6 +374,25 @@ async function stronicuj(zapytanie, sufit, rozmiarStrony) {
   return { docs, zapytan, osiagnietoSufit: docs.length >= sufit };
 }
 
+/**
+ * Dopisuje wykryte zmiany do historii ogłoszenia — NAJWYŻEJ best-effort.
+ *
+ * Nieudany zapis historii NIE MOŻE wywrócić aktualizacji ogłoszenia: świeży termin
+ * w bazie jest ważniejszy od wpisu w dzienniku zmian, a okno pobierania i tak
+ * zobaczy to ogłoszenie ponownie. Zapis jest idempotentny (docId = klucz przejścia),
+ * więc powtórka niczego nie zdubluje.
+ */
+async function zapiszHistorieBezpiecznie(tenderId, zmiany) {
+  if (!zmiany?.length) return;
+  try {
+    await historiaZmian.zapisz(tenderId, zmiany);
+  } catch (err) {
+    console.error(JSON.stringify({
+      severity: 'ERROR', message: 'Nie udało się zapisać historii zmian ogłoszenia', tenderId, err: err.message,
+    }));
+  }
+}
+
 export const tenders = {
   /** Wstawia przetarg, jeśli jeszcze go nie ma. Zwraca { tender, created }. */
   async upsert(t) {
@@ -487,13 +506,16 @@ export const tenders = {
    *   (to normalne: zmiana mogła dotyczyć ogłoszenia, którego jeszcze nie pobraliśmy)
    */
   async zaktualizujZeZrodla(t) {
-    const ref = db().collection('tenders').doc(tenderDocId(t.externalId));
+    const id = tenderDocId(t.externalId);
+    const ref = db().collection('tenders').doc(id);
     const snap = await ref.get();
-    if (!snap.exists) return { zmienione: false };
+    if (!snap.exists) return { zmienione: false, zmiany: [] };
 
-    const zmiany = { zaktualizowany_o: nowIso() };
+    const przed = snap.data();
+
+    const pola = { zaktualizowany_o: nowIso() };
     const ustaw = (pole, wartosc) => {
-      if (wartosc !== undefined && wartosc !== null && wartosc !== '') zmiany[pole] = wartosc;
+      if (wartosc !== undefined && wartosc !== null && wartosc !== '') pola[pole] = wartosc;
     };
     ustaw('title', t.title);
     ustaw('organization', t.organization);
@@ -507,9 +529,31 @@ export const tenders = {
     ustaw('rodzaj', t.rodzaj);
     ustaw('liczba_czesci', t.liczba_czesci);
     ustaw('numer', t.numer);
+    /*
+     * Sygnały ZMIANY, nie dane ogłoszenia (etap 5):
+     *  • `zrodlo_odcisk` — odcisk pozycji z listy rejestru (termin + tytuł + treść).
+     *    Jego zmiana znaczy „zamawiający ruszył treść", co w Bazie Konkurencyjności
+     *    najczęściej oznacza doklejone odpowiedzi na pytania albo nowy załącznik.
+     *  • `status_zrodla` — etykieta statusu w rejestrze źródłowym.
+     *  • `umowa_zmieniona_o` — odnotowana przez rejestr zmiana umowy (o ile ją podaje).
+     */
+    ustaw('zrodlo_odcisk', t.zrodlo_odcisk);
+    ustaw('status_zrodla', t.status_zrodla);
+    ustaw('umowa_zmieniona_o', t.umowa_zmieniona_o);
+    ustaw('umowa_zmiana_opis', t.umowa_zmiana_opis);
 
-    await ref.update(zmiany);
-    return { zmienione: true };
+    /*
+     * Porównujemy stan PRZED z tym, co realnie zapiszemy — nie z surowym wejściem.
+     * Różnica jest istotna: `ustaw` pomija pola puste (cisza rejestru nie kasuje
+     * danych), więc porównanie z wejściem widziałoby „budżet zniknął" przy każdej
+     * oszczędniejszej wersji ogłoszenia i zalewało historię fałszywymi zmianami.
+     */
+    const zmiany = wykryjZmiany(przed, { ...przed, ...pola });
+
+    await ref.update(pola);
+    await zapiszHistorieBezpiecznie(id, zmiany);
+
+    return { zmienione: true, zmiany };
   },
 
   /**
@@ -523,10 +567,23 @@ export const tenders = {
    * @returns {Promise<boolean>} `false`, gdy ogłoszenia nie ma w bazie
    */
   async oznaczAnulowany(externalId, { powod = null } = {}) {
-    const ref = db().collection('tenders').doc(tenderDocId(externalId));
+    const id = tenderDocId(externalId);
+    const ref = db().collection('tenders').doc(id);
     const snap = await ref.get();
     if (!snap.exists) return false;
-    await ref.update({ anulowany: true, anulowany_o: nowIso(), anulowany_powod: powod });
+
+    const przed = snap.data();
+    const pola = { anulowany: true, anulowany_o: nowIso(), anulowany_powod: powod };
+
+    /*
+     * Anulowanie bywa potwierdzane w kolejnych przebiegach (ogłoszenie znika z listy,
+     * weryfikacja szczegółem powtarza się). Porównanie stanów daje pustą listę przy
+     * powtórce, więc historia dostaje JEDEN wpis — ten z chwili pierwszego wykrycia.
+     */
+    const zmiany = wykryjZmiany(przed, { ...przed, ...pola });
+
+    await ref.update(pola);
+    await zapiszHistorieBezpiecznie(id, zmiany);
     return true;
   },
 

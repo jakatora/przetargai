@@ -45,6 +45,25 @@ export function odciskOgloszenia(poz) {
 }
 
 /**
+ * Sygnały ZMIANY dokładane do aktualizacji ogłoszenia (etap 5).
+ *
+ * Pola znormalizowane (tytuł, termin, budżet) nie wystarczą, żeby zobaczyć, że
+ * zamawiający DOKLEIŁ odpowiedź na pytanie albo nowy załącznik — te siedzą w treści
+ * ogłoszenia, a treści nie zapisujemy (limit dokumentu Firestore). Odcisk z pozycji
+ * listy jest ich zastępczym, tanim śladem: ten sam, którym przebieg rozstrzyga, czy
+ * w ogóle warto dociągać szczegół, więc nie kosztuje ani jednego zapytania więcej.
+ *
+ * @returns {{zrodlo_odcisk: string|null, status_zrodla: string|null}}
+ */
+export function sygnalyZmiany({ poz, json }) {
+  return {
+    // Brak pozycji na liście (ogłoszenie znane tylko ze szczegółu) — nie zgadujemy.
+    zrodlo_odcisk: poz ? odciskOgloszenia(poz) : null,
+    status_zrodla: statusOgloszenia(json) ?? null,
+  };
+}
+
+/**
  * Które ogłoszenia wymagają pobrania szczegółu w tym przebiegu i w jakiej kolejności.
  *
  * Okno czasu (`oknoOd`) USTAWIA KOLEJNOŚĆ, a nie odsiewa. Twarde odcięcie po dacie
@@ -260,7 +279,8 @@ export async function pobierzBkZWznowieniem(licznik, { budzetMs = Infinity, tera
     // Aktualizacja idzie PRZED zapisem wołającego: dla ogłoszenia, którego jeszcze
     // nie ma w bazie, jest nieszkodliwym no-op, a dla istniejącego dowozi nowy termin.
     if (checkpoint?.ogloszenia?.[String(id)]) {
-      const { zmienione } = await tenders.zaktualizujZeZrodla(t)
+      const { zmienione } = await tenders
+        .zaktualizujZeZrodla({ ...t, ...sygnalyZmiany({ poz: aktywne.get(String(id)), json }) })
         .catch((err) => { logger.error({ err: err.message, id }, 'BK: aktualizacja nie powiodła się'); return { zmienione: false }; });
       if (zmienione) zaktualizowane += 1;
     }
