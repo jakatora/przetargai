@@ -6,6 +6,7 @@ import {
   planZapytania, pasujeDoFiltrow, rozmiarPobrania, SKAN_STRONA, SKAN_MAKS,
 } from '../lib/katalogPrzetargow.js';
 import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
+import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
 /*
  * Warstwa dostępu do danych — Firestore (port z node:sqlite, D-024).
@@ -2136,5 +2137,113 @@ export const alerty = {
     for (const d of snap.docs) batch.update(d.ref, { przeczytany: true, przeczytany_o: nowIso() });
     await batch.commit();
     return snap.size;
+  },
+};
+
+// ============================ radar planów (TED planning) ============================
+
+/*
+ * Plany postępowań — wstępne ogłoszenia informacyjne z TED (`services/tedPlany.js`).
+ *
+ *  • `plany/{numer publikacji}` — źródło prawdy, pełna pozycja (z opisem i linkiem).
+ *    Zapis przez set(): ogłoszenie planowania jest niemutowalne, powtórka tego samego
+ *    numeru to ta sama treść, więc nadpisanie jest nieszkodliwe.
+ *  • `radar_planow/czesc_N` — ZWARTY indeks aktywnych pozycji (`lib/indeksPlanow.js`).
+ *    Ranking pod profil musi przejrzeć każdą pozycję (dopasowanie słów), a skan
+ *    kolekcji przy każdym wejściu na ekran to ~2 500 odczytów na użytkownika. Indeks
+ *    to kilka odczytów, a do tego pamięć podręczna instancji.
+ */
+const planyCol = () => db().collection('plany');
+const indeksPlanowCol = () => db().collection('radar_planow');
+const OKNO_PLANOW_REF = () => db().collection('_health').doc('plany_okno');
+
+/** Pamięć podręczna indeksu w instancji — indeks zmienia się raz na dobę. */
+const INDEKS_TTL_MS = 10 * 60_000;
+let indeksWPamieci = null;
+
+export const planyPostepowan = {
+  /** Zapisuje partię pozycji planu z wyliczonym `wygasa_o`. Zwraca liczbę zapisanych. */
+  async zapiszWiele(pozycje) {
+    const wpisy = (pozycje ?? []).filter((p) => p?.id);
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const p of wpisy.slice(i, i + 400)) {
+        batch.set(planyCol().doc(tenderDocId(p.id)), { ...p, wygasa_o: wygasaO(p), updated_at: nowIso() });
+      }
+      await batch.commit();
+    }
+    return wpisy.length;
+  },
+
+  async pobierz(id) {
+    if (!id) return null;
+    const doc = await planyCol().doc(tenderDocId(id)).get();
+    return doc.exists ? { ...doc.data(), id: doc.data().id ?? doc.id } : null;
+  },
+
+  /**
+   * Przebudowuje indeks z aktywnych pozycji (`wygasa_o >= dzisiaj`). Stare części
+   * ponad nową liczbę są kasowane — inaczej wygasłe pozycje zostałyby w indeksie.
+   * Części zapisujemy PRZED kasowaniem nadmiarowych, więc czytelnik w trakcie
+   * przebudowy widzi najwyżej duplikat, nigdy dziury.
+   */
+  async przebudujIndeks({ dzisiaj }) {
+    const snap = await planyCol().where('wygasa_o', '>=', dzisiaj).get();
+    const wpisy = snap.docs
+      .map((d) => wpisIndeksu(d.data()))
+      .sort((a, b) => String(b.opublikowano ?? '').localeCompare(String(a.opublikowano ?? '')));
+    const czesci = podzielNaCzesci(wpisy);
+    const zbudowano = nowIso();
+
+    for (let i = 0; i < czesci.length; i++) {
+      await indeksPlanowCol().doc(`czesc_${i}`).set({
+        numer: i, wpisy: czesci[i], zbudowano_o: zbudowano, czesci_lacznie: czesci.length,
+      });
+    }
+    const istniejace = await indeksPlanowCol().get();
+    const nadmiarowe = istniejace.docs.filter((d) => Number(d.data().numer) >= czesci.length);
+    if (nadmiarowe.length) {
+      const batch = db().batch();
+      for (const d of nadmiarowe) batch.delete(d.ref);
+      await batch.commit();
+    }
+    indeksWPamieci = null;
+    return { aktywnych: wpisy.length, czesci: czesci.length, zbudowano_o: zbudowano };
+  },
+
+  /** Cały indeks aktywnych pozycji: `{wpisy, zbudowano_o}`. Z pamięci instancji, gdy świeży. */
+  async indeks({ swiezy = false } = {}) {
+    if (!swiezy && indeksWPamieci && Date.now() - indeksWPamieci.wczytano < INDEKS_TTL_MS) {
+      return indeksWPamieci.dane;
+    }
+    const snap = await indeksPlanowCol().get();
+    const czesci = snap.docs.map((d) => d.data()).sort((a, b) => a.numer - b.numer);
+    const widziane = new Set();
+    const wpisy = [];
+    for (const c of czesci) {
+      for (const w of c.wpisy ?? []) {
+        if (widziane.has(w.id)) continue; // duplikat z przebudowy w toku
+        widziane.add(w.id);
+        wpisy.push(w);
+      }
+    }
+    const dane = { wpisy, zbudowano_o: czesci[0]?.zbudowano_o ?? null };
+    indeksWPamieci = { dane, wczytano: Date.now() };
+    return dane;
+  },
+
+  /** Tylko dla testów — pamięć instancji przeżywa między testami w jednym procesie. */
+  _wyczyscPamiec() { indeksWPamieci = null; },
+};
+
+export const oknoPlanow = {
+  async wczytaj() {
+    const doc = await OKNO_PLANOW_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /** 🚨 `mergeFields`, nie `{merge:true}` — głębokie scalanie trzymałoby stary `error`. */
+  async zapiszPrzebieg(wynik) {
+    await OKNO_PLANOW_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
   },
 };

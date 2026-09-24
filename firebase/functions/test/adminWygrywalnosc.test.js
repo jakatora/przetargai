@@ -107,3 +107,22 @@ describe('/admin/agreguj-wyniki — statystyki wyników bez czekania na niedziel
     assert.match(blokEndpointu('/agreguj-wyniki'), /dni/);
   });
 });
+
+describe('/admin/okno-planow — import planów TED do radaru', () => {
+  test('wymaga klucza administratora', async () => {
+    assert.equal((await zapytaj('/admin/okno-planow')).status, 403);
+  });
+
+  test('woła WYŁĄCZNIE import planów — bez dopasowań i bez AI', () => {
+    const blok = blokEndpointu('/okno-planow');
+    assert.ok(blok.includes('runOknoPlanow'));
+    assert.ok(!blok.includes('runTenderFetch'), 'cykl dopasowań = płatne wywołania Claude');
+    assert.ok(!blok.includes('backfillUser'));
+  });
+
+  test('job importu nie ma drogi do services/ai.js', () => {
+    const kod = readFileSync(new URL('../src/jobs/oknoPlanow.js', import.meta.url), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    assert.ok(!/services\/ai\.js|services\/matching\.js/.test(kod));
+  });
+});

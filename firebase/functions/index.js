@@ -299,6 +299,32 @@ export const wynikiOknoFetch = onSchedule(
 );
 
 /**
+ * Import PLANÓW POSTĘPOWAŃ z TED (Radar planów) — codziennie o 6:15.
+ *
+ * TED publikuje w dni robocze rano; okno 3 dni daje potrójne pokrycie każdej
+ * publikacji. Kilkadziesiąt zapisów dziennie, bez dopasowań i bez AI. Minuta :15
+ * nie koliduje z oknami ogłoszeń (:20, :50), wyników (:05) ani monitoringiem (:35).
+ */
+export const planyOknoFetch = onSchedule(
+  {
+    schedule: '15 6 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runOknoPlanow } = await import('./src/jobs/oknoPlanow.js');
+    const wynik = await runOknoPlanow();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'planyOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`planyOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'planyOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Przeliczenie BENCHMARKU rynku (etap 6) — codziennie o 3:40.
  *
  * Czyta wyłącznie zapisane rozstrzygnięcia, więc nie dotyka rejestrów i nie woła

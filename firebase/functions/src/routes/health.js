@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow } from '../db/repos.js';
+import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 
 const router = Router();
@@ -41,12 +41,14 @@ router.get('/', async (_req, res) => {
   let stanOkna = null;
   let stanOknaBk = null;
   let stanOknaWynikow = null;
+  let stanOknaPlanow = null;
 
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow] = await Promise.all([
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow] = await Promise.all([
       cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
+      oknoPlanow.wczytaj(),
     ]);
   } catch { /* zgłoszone w polu db */ }
 
@@ -165,6 +167,20 @@ router.get('/', async (_req, res) => {
         ted_ogloszen: stanOknaWynikow.ostatni_przebieg.ted_ogloszen ?? null,
         ted_czesci: stanOknaWynikow.ostatni_przebieg.ted_czesci ?? null,
         error: stanOknaWynikow.ostatni_przebieg.error ?? null,
+      }
+      : null,
+    /*
+     * Import planów postępowań (TED planning) do Radaru planów. Informacyjne —
+     * awaria nie zapala 503, bo radar pokazuje wtedy wczorajszy indeks, a feed
+     * ogłoszeń działa bez niego.
+     */
+    plany_okno: stanOknaPlanow?.ostatni_przebieg
+      ? {
+        zakonczony_o: stanOknaPlanow.ostatni_przebieg.zakonczony_o ?? null,
+        dni: stanOknaPlanow.ostatni_przebieg.dni ?? null,
+        pobrane: stanOknaPlanow.ostatni_przebieg.pobrane ?? null,
+        aktywnych_w_indeksie: stanOknaPlanow.ostatni_przebieg.aktywnych_w_indeksie ?? null,
+        error: stanOknaPlanow.ostatni_przebieg.error ?? null,
       }
       : null,
     cron: {

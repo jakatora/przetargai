@@ -6,6 +6,7 @@ import { runTenderFetch } from '../jobs/fetchTenders.js';
 import { runBkOkno } from '../jobs/oknoBk.js';
 import { runOknoWynikow } from '../jobs/oknoWynikow.js';
 import { runBenchmarkRynku } from '../jobs/benchmarkRynku.js';
+import { runOknoPlanow } from '../jobs/oknoPlanow.js';
 import { runWynikiAggregation } from '../jobs/aggregateResults.js';
 import { backfillUser } from '../services/matching.js';
 import { tenders, users } from '../db/repos.js';
@@ -68,6 +69,19 @@ router.post('/okno-wynikow', ah(async (req, res) => {
     ...(Number.isFinite(dniTed) ? { dniTed } : {}),
     budzetMs: Number.isFinite(budzetMs) ? budzetMs : BUDZET_WYZWALACZA_MS,
   });
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
+/**
+ * Ręczny import planów postępowań z TED (Radar planów) — BEZ dopasowań i BEZ AI.
+ *
+ * `dni` pozwala zrobić pierwsze zasilenie: WOI obowiązuje do 12 miesięcy, więc
+ * roczny import (`dni: 365`, ~2 500 ogłoszeń, kilkanaście zapytań) wypełnia radar
+ * od razu, zamiast czekać rok na harmonogram. Idempotentny: docId = numer publikacji.
+ */
+router.post('/okno-planow', ah(async (req, res) => {
+  const dni = Number(req.body?.dni);
+  const wynik = await runOknoPlanow(Number.isInteger(dni) && dni >= 1 && dni <= 400 ? { dni } : {});
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
