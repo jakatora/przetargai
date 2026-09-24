@@ -1,6 +1,6 @@
-# PrzetargAI — teksty wydania 1.0.9 (App Store + Google Play)
+# PrzetargAI — teksty wydania 1.1.1 (App Store + Google Play)
 
-Wersja: **1.0.9** · Data przygotowania: 2026-09-24
+Wersja: **1.1.1** (App Store ma 1.1.0 z 2026-08-03 — wersja marketingowa musi rosnąć, błąd 90062) · Data przygotowania: 2026-09-24
 
 Zasady (obowiązują każde wydanie):
 - BEZ emoji w Promotional Text / What's New / Description / Keywords (bullet `•` OK).

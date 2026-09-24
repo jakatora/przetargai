@@ -566,7 +566,7 @@
     },
     {
       "blokada": "Screenshoty App Store 1.0.9 i build przez Codemagic",
-      "skutek": "aplikacja z nowymi ekranami nie trafi do uzytkownikow bez buildu; teksty sklepowe gotowe (store/whats-new-1.0.9.md)",
+      "skutek": "aplikacja z nowymi ekranami nie trafi do uzytkownikow bez buildu; teksty sklepowe gotowe (store/whats-new-1.1.1.md)",
       "kto_odblokuje": "czlowiek — uruchomienie workflow Codemagic i zrzuty z urzadzenia (1284x2778)"
     }
   ],
