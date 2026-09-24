@@ -33,3 +33,24 @@ test('pusty/niepoprawny ładunek → brak celu (nie wywraca)', () => {
   assert.equal(celPush('string'), null);
   assert.equal(celPush({}), null);
 });
+
+test('push z monitoringu prowadzi do centrum alertow, nie w pustke', () => {
+  /*
+   * Etap 5 dokłada dwa typy pushu: `nowe_trafienia` i `zmiany`. Bez wpisu w tej
+   * mapie dotkniecie powiadomienia o skroconym terminie po prostu zamykaloby
+   * powiadomienie — czyli najwazniejszy alert w aplikacji nie prowadzilby nigdzie.
+   */
+  assert.deepEqual(celPush({ type: 'nowe_trafienia', wyszukiwanie_id: 'w1', klucz: 'nowe:w1:abc' }), {
+    ekran: 'CentrumAlertow',
+    params: { podswietlKlucz: 'nowe:w1:abc' },
+  });
+
+  assert.deepEqual(celPush({ type: 'zmiany', wyszukiwanie_id: 'w1', klucz: 'zmiany:w1:xyz' }), {
+    ekran: 'CentrumAlertow',
+    params: { podswietlKlucz: 'zmiany:w1:xyz' },
+  });
+
+  // Push bez klucza nadal ma prowadzic na ekran — brak jednego pola to nie powod,
+  // zeby zgubic cel nawigacji.
+  assert.deepEqual(celPush({ type: 'zmiany' }), { ekran: 'CentrumAlertow', params: {} });
+});
