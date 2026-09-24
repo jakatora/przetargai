@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, oknoBzp, oknoBk } from '../db/repos.js';
+import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 
 const router = Router();
@@ -40,12 +40,13 @@ router.get('/', async (_req, res) => {
   let otwartePrzetargi = null;
   let stanOkna = null;
   let stanOknaBk = null;
+  let stanOknaWynikow = null;
 
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk] = await Promise.all([
-      cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(),
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow] = await Promise.all([
+      cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
     ]);
   } catch { /* zgłoszone w polu db */ }
 
@@ -146,6 +147,24 @@ router.get('/', async (_req, res) => {
         zaktualizowane: stanOknaBk.ostatni_przebieg.zaktualizowane ?? null,
         anulowane: stanOknaBk.ostatni_przebieg.anulowane ?? null,
         error: stanOknaBk.ostatni_przebieg.error ?? null,
+      }
+      : null,
+    /*
+     * Stan domykania okna ROZSTRZYGNIĘĆ (etap 6). Benchmark i karta „czy warto
+     * startować" liczą się z tej kolekcji, więc `doby_niedomkniete > 0` znaczy,
+     * że część rynku nie weszła do statystyki — a statystyka i tak pokaże liczbę.
+     * Bez tego pola niekompletność byłaby niewidoczna.
+     */
+    wyniki_okno: stanOknaWynikow?.ostatni_przebieg
+      ? {
+        zakonczony_o: stanOknaWynikow.ostatni_przebieg.zakonczony_o ?? null,
+        doby_okna: stanOknaWynikow.ostatni_przebieg.doby_okna ?? null,
+        doby_niedomkniete: stanOknaWynikow.ostatni_przebieg.doby_niedomkniete ?? null,
+        bzp_ogloszen: stanOknaWynikow.ostatni_przebieg.bzp_ogloszen ?? null,
+        bzp_czesci: stanOknaWynikow.ostatni_przebieg.bzp_czesci ?? null,
+        ted_ogloszen: stanOknaWynikow.ostatni_przebieg.ted_ogloszen ?? null,
+        ted_czesci: stanOknaWynikow.ostatni_przebieg.ted_czesci ?? null,
+        error: stanOknaWynikow.ostatni_przebieg.error ?? null,
       }
       : null,
     cron: {

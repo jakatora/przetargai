@@ -265,6 +265,63 @@ export const weeklyDigest = onSchedule(
 );
 
 /**
+ * Domykanie okna ROZSTRZYGNIĘĆ co 6 godzin (etap 6).
+ *
+ * DLACZEGO OSOBNA FUNKCJA: `aggregateResults` pobierał 30 dni BZP, liczył agregat
+ * i WYRZUCAŁ dane źródłowe — pojedyncze rozstrzygnięcie nie zostawało nigdzie,
+ * więc benchmark „u TEGO zamawiającego" nie miał z czego powstać, a każde
+ * przeliczenie wymagało ponownego przemielenia rejestru (~390 s samego ruchu).
+ * Tu rozstrzygnięcia z BZP i TED lądują w bazie, a agregat liczy się z nich.
+ *
+ * Minuta :05 i co 6 h rozdziela ten job od okien ogłoszeń (`bzpOknoFetch` :20,
+ * `bkOknoFetch` :50) i od monitoringu (:35), żeby nie biły się o budżet instancji.
+ *
+ * Bez dopasowań, bez AI — koszt to odczyty publicznych API i zapisy do Firestore.
+ */
+export const wynikiOknoFetch = onSchedule(
+  {
+    schedule: '5 */6 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 1800,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runOknoWynikow } = await import('./src/jobs/oknoWynikow.js');
+    const wynik = await runOknoWynikow();
+
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'wynikiOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`wynikiOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'wynikiOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
+ * Przeliczenie BENCHMARKU rynku (etap 6) — codziennie o 3:40.
+ *
+ * Czyta wyłącznie zapisane rozstrzygnięcia, więc nie dotyka rejestrów i nie woła
+ * AI. Dzięki temu benchmark da się odświeżyć po każdej poprawce parsera bez
+ * ponownego mielenia BZP. Codziennie, bo `wynikiOknoFetch` dokłada dane co 6 h,
+ * a mediana z wczoraj nie boli — byle metryczka `probka` mówiła prawdę.
+ */
+export const benchmarkPrzelicz = onSchedule(
+  {
+    schedule: '40 3 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 1800,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runBenchmarkRynku } = await import('./src/jobs/benchmarkRynku.js');
+    const wynik = await runBenchmarkRynku();
+    console.log(JSON.stringify({ severity: 'INFO', message: 'benchmarkPrzelicz zakończony', ...wynik }));
+  },
+);
+
+/**
  * Agregacja wyników postępowań (runda 16). Statystyki cen/konkurencji zmieniają się
  * wolno — liczymy je raz w tygodniu (niedziela 4:00) z szerokiego okna 30 dni.
  * Osobno od dziennego matchingu, bo pobiera inny typ ogłoszeń (TenderResultNotice).

@@ -447,6 +447,8 @@ export const tenders = {
        * więc bez tego pola rozstrzygnięcie nie ma po czym trafić do przetargu.
        */
       postepowanie_id: t.postepowanie_id ?? null,
+      // NIP zamawiającego — klucz benchmarku per zamawiający (etap 6).
+      zamawiajacy_nip: t.zamawiajacy_nip ? String(t.zamawiajacy_nip) : null,
       raw_data: raw,
       published_at: t.publishedAt ?? null,
       fetched_at: nowIso(),
@@ -481,9 +483,13 @@ export const tenders = {
          * dokument jeszcze go nie ma. Bez tego rozstrzygnięcia tych postępowań
          * nigdy by się z nimi nie spięły.
          */
-        if (t.postepowanie_id && !dane.postepowanie_id) {
-          await ref.update({ postepowanie_id: t.postepowanie_id });
-          return { tender: { id, ...dane, postepowanie_id: t.postepowanie_id }, created: false };
+        if ((t.postepowanie_id && !dane.postepowanie_id)
+            || (t.zamawiajacy_nip && !dane.zamawiajacy_nip)) {
+          const klucze = {};
+          if (t.postepowanie_id && !dane.postepowanie_id) klucze.postepowanie_id = t.postepowanie_id;
+          if (t.zamawiajacy_nip && !dane.zamawiajacy_nip) klucze.zamawiajacy_nip = String(t.zamawiajacy_nip);
+          await ref.update(klucze);
+          return { tender: { id, ...dane, ...klucze }, created: false };
         }
         if (dane.wadium_wymagane === undefined && dane.kryterium_oceny === undefined
             && dane.liczba_czesci === undefined) {
@@ -1346,6 +1352,171 @@ export const wynikiStats = {
   async pobierz(klucz) {
     const doc = await db().collection('wyniki_stats').doc(statDocId(klucz)).get();
     return doc.exists ? doc.data() : null;
+  },
+};
+
+// ============================ rozstrzygnięcia (etap 6) ============================
+
+/*
+ * Rozstrzygnięcia postępowań — surowe, per część, z OBU rejestrów.
+ *
+ * Czym się różni od `wyniki_stats`: tamto trzyma gotowy AGREGAT (mediana ceny
+ * w kubełku dział|rodzaj|województwo) i nie pamięta, z czego powstał. Do
+ * benchmarku „u TEGO zamawiającego" i do karty „czy warto startować" potrzebne
+ * są pojedyncze rozstrzygnięcia: kto wygrał, ile firm startowało, czy część
+ * unieważniono. Agregat liczy się Z TEJ kolekcji, a nie z ponownego pobierania
+ * rejestru — 30-dniowe okno BZP to ~390 s samego ruchu sieciowego.
+ *
+ * Idempotencja: docId = identyfikator ogłoszenia o wyniku, więc ponowne
+ * pobranie tej samej doby niczego nie duplikuje.
+ */
+export const rozstrzygniecia = {
+  /**
+   * Zapisuje partię rozstrzygnięć. Nadpisuje istniejące — rejestr potrafi
+   * skorygować ogłoszenie, a my chcemy stan aktualny, nie pierwszy widziany.
+   * @returns {{zapisane: number, czesci: number}}
+   */
+  async zapiszWiele(lista) {
+    const wpisy = (lista ?? []).filter((w) => w?.externalId);
+    let czesci = 0;
+    // Batch po 400 (limit 500 operacji, zapas na bezpieczeństwo).
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const wynik of wpisy.slice(i, i + 400)) {
+        czesci += (wynik.czesci ?? []).length;
+        batch.set(db().collection('rozstrzygniecia').doc(tenderDocId(wynik.externalId)), {
+          ...wynik,
+          // Denormalizacja pod zapytania: te pola filtrują benchmark.
+          postepowanie_id: wynik.tenderId ?? null,
+          zamawiajacy_nip: wynik.zamawiajacyNip ?? null,
+          updated_at: nowIso(),
+        });
+      }
+      await batch.commit();
+    }
+    return { zapisane: wpisy.length, czesci };
+  },
+
+  /** Rozstrzygnięcie konkretnego POSTĘPOWANIA (klucz złączenia z przetargiem). */
+  async poPostepowaniu(postepowanieId) {
+    if (!postepowanieId) return null;
+    const snap = await db().collection('rozstrzygniecia')
+      .where('postepowanie_id', '==', String(postepowanieId)).limit(1).get();
+    return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+  },
+
+  /**
+   * Rozstrzygnięcia jednego zamawiającego (po NIP-ie), od najnowszych.
+   *
+   * NIP, a nie nazwa: ta sama jednostka pisze się w BZP raz „SĄD REJONOWY
+   * W RZESZOWIE", raz „Sąd Rejonowy w Rzeszowie". Grupowanie po nazwie
+   * rozbiłoby jednego zamawiającego na kilku i zaniżyło każdą próbkę.
+   */
+  async dlaZamawiajacego(nip, { limit = 200 } = {}) {
+    if (!nip) return [];
+    const snap = await db().collection('rozstrzygniecia')
+      .where('zamawiajacy_nip', '==', String(nip))
+      .orderBy('opublikowano', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /**
+   * Strona rozstrzygnięć od najnowszych — wejście agregacji benchmarku.
+   *
+   * 🚨 Kursor MUSI być parą (data, docId), a nie samą datą. BZP publikuje setki
+   * rozstrzygnięć dziennie, więc `opublikowano` nie jest unikalne: `startAfter`
+   * po samej dacie przeskakuje WSZYSTKIE dokumenty z tego dnia i benchmark liczy
+   * się z ułamka rynku — po cichu, bo strona wraca pełna i bez błędu.
+   * Stąd drugi klucz sortowania po identyfikatorze dokumentu.
+   */
+  async strona({ od = null, limit = 500, kursor = null } = {}) {
+    let q = db().collection('rozstrzygniecia');
+    if (od) q = q.where('opublikowano', '>=', od);
+    q = q.orderBy('opublikowano', 'desc').orderBy(FieldPath.documentId(), 'desc');
+    if (kursor?.opublikowano) q = q.startAfter(kursor.opublikowano, kursor.id);
+    const snap = await q.limit(limit).get();
+    const ostatni = snap.docs[snap.docs.length - 1] ?? null;
+    return {
+      pozycje: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+      kursor: ostatni ? { opublikowano: ostatni.get('opublikowano'), id: ostatni.id } : null,
+      koniec: snap.docs.length < limit,
+    };
+  },
+};
+
+/*
+ * Benchmark rynku (etap 6) — gotowe kubełki liczone w jobie, nie na żądanie.
+ *
+ * Dlaczego agregat, a nie zapytanie na żywo: karta „czy warto startować" ma się
+ * otwierać przy KAŻDYM ogłoszeniu i być darmowa w odczycie, tak jak katalog.
+ * Liczenie mediany z setek rozstrzygnięć per wejście na ekran byłoby i wolne,
+ * i kosztowne w odczytach Firestore.
+ */
+export const benchmarkRynku = {
+  /** Nadpisuje kubełki — benchmark liczymy od nowa z bieżącego okna. */
+  async zapisz(kubelki) {
+    const wpisy = Object.entries(kubelki ?? {});
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const [klucz, kubelek] of wpisy.slice(i, i + 400)) {
+        batch.set(db().collection('benchmark').doc(benchmarkDocId(klucz)),
+          { ...kubelek, klucz, updated_at: nowIso() });
+      }
+      await batch.commit();
+    }
+    return wpisy.length;
+  },
+
+  /** Jeden kubełek albo null. */
+  async pobierz(klucz) {
+    if (!klucz) return null;
+    const doc = await db().collection('benchmark').doc(benchmarkDocId(klucz)).get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /**
+   * Kilka kubełków jednym odczytem wsadowym.
+   *
+   * Karta decyzji potrzebuje zwykle trzech (zamawiający, dział w regionie, dział
+   * w kraju) — trzy osobne `get()` to trzy round-tripy na każde wejście na ekran.
+   */
+  async pobierzWiele(klucze) {
+    const unikalne = [...new Set((klucze ?? []).filter(Boolean))];
+    if (!unikalne.length) return {};
+    const refy = unikalne.map((k) => db().collection('benchmark').doc(benchmarkDocId(k)));
+    const snapy = await db().getAll(...refy);
+    const wynik = {};
+    snapy.forEach((snap, i) => { if (snap.exists) wynik[unikalne[i]] = snap.data(); });
+    return wynik;
+  },
+};
+
+/** Klucze kubełków niosą `|` i `:` — w docId dozwolone, ale `/` już nie. */
+const benchmarkDocId = (klucz) => String(klucz).replaceAll('/', '_');
+
+/**
+ * Checkpoint okna rozstrzygnięć (etap 6).
+ *
+ * Ta sama konstrukcja, co okno BZP: doby domykane pojedynczo, od najświeższej,
+ * żeby przebieg, któremu zabrakło czasu, nie ginął wiecznie na tym samym dniu.
+ */
+const OKNO_WYNIKOW_REF = () => db().collection('_health').doc('wyniki_okno');
+
+export const oknoWynikow = {
+  async wczytaj() {
+    const doc = await OKNO_WYNIKOW_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+
+  /** 🚨 `mergeFields` PODMIENIA pole w całości — `{ merge: true }` scalałby mapy głęboko. */
+  async zapisz(stan) {
+    await OKNO_WYNIKOW_REF().set({ dni: stan.dni ?? {} }, { mergeFields: ['dni'] });
+  },
+
+  async zapiszPrzebieg(wynik) {
+    await OKNO_WYNIKOW_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
   },
 };
 

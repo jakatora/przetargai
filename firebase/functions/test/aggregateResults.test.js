@@ -20,7 +20,11 @@ const surowe = (id, woj, cena, ofert) => ({
   bzpNumber: id, orderObject: 'Remont drogi', organizationName: 'Gmina',
   cpvCode: '45233000-9 (Roboty)', organizationProvince: woj, orderType: 'Works',
   publicationDate: '2026-07-10',
-  htmlBody: `SEKCJA V 6.1.) Liczba ofert: ${ofert} 6.4.) Cena oferty: <span class="normal">${cena},00 PLN</span> 8.2.) Wartość umowy: <span class="normal">${cena},00 PLN</span>`,
+  procedureResult: 'zawarcieUmowy',
+  // `5.1.)` jest OBOWIĄZKOWE: od etapu 6 blok SEKCJI V bez tej etykiety to
+  // nagłówek-widmo, a nie część postępowania (reguła zgodna z żywym BZP
+  // w 200/200 ogłoszeń — patrz src/lib/wynikiParser.js).
+  htmlBody: `SEKCJA V 5.1.) Postępowanie zakończyło się: zawarciem umowy 6.1.) Liczba ofert: ${ofert} 6.4.) Cena oferty: <span class="normal">${cena},00 PLN</span> 8.2.) Wartość umowy: <span class="normal">${cena},00 PLN</span>`,
 });
 
 test('agreguje wyniki z wielu dni i zapisuje bucket odczytywalny per klucz', async () => {

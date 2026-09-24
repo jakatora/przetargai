@@ -4,6 +4,8 @@ import { ah } from '../lib/asyncHandler.js';
 import { adminRequired } from '../middleware/adminAuth.js';
 import { runTenderFetch } from '../jobs/fetchTenders.js';
 import { runBkOkno } from '../jobs/oknoBk.js';
+import { runOknoWynikow } from '../jobs/oknoWynikow.js';
+import { runBenchmarkRynku } from '../jobs/benchmarkRynku.js';
 import { backfillUser } from '../services/matching.js';
 import { tenders, users } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
@@ -37,6 +39,31 @@ router.post('/fetch-tenders', ah(async (req, res) => {
 router.post('/okno-bk', ah(async (req, res) => {
   const wynik = await runBkOkno();
   res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
+/**
+ * Ręczne domknięcie okna ROZSTRZYGNIĘĆ (etap 6) — BEZ dopasowań i BEZ AI.
+ *
+ * Ta sama zasada, co przy `/okno-bk`: operator ma móc domknąć zaległość albo
+ * sprawdzić źródło, nie płacąc za wywołania modelu. Koszt to odczyty publicznych
+ * API BZP i TED oraz zapisy do Firestore.
+ *
+ * Idempotentny: docId rozstrzygnięcia = identyfikator ogłoszenia o wyniku.
+ */
+router.post('/okno-wynikow', ah(async (req, res) => {
+  const wynik = await runOknoWynikow();
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
+/**
+ * Ręczne przeliczenie benchmarku rynku z ZAPISANYCH rozstrzygnięć (etap 6).
+ *
+ * Nie dotyka rejestrów zewnętrznych — liczy od nowa z tego, co już w bazie.
+ * To jest właściwa reakcja na poprawkę parsera albo zmianę progów próbki.
+ */
+router.post('/benchmark', ah(async (req, res) => {
+  const wynik = await runBenchmarkRynku();
+  res.json(wynik);
 }));
 
 /** Podstawowe statystyki systemu. */

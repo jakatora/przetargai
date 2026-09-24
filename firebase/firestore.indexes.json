@@ -49,6 +49,24 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "rozstrzygniecia",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "zamawiajacy_nip",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "opublikowano",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

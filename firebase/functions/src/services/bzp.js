@@ -124,6 +124,13 @@ export function normalizeNotice(raw) {
     rodzaj: firstOf(raw, ['orderType']),
     wojewodztwo: firstOf(raw, ['organizationProvince']),
     /*
+     * NIP zamawiajacego — klucz benchmarku „u TEGO urzedu" (etap 6). Nazwa nie
+     * nadaje sie na klucz: ta sama jednostka pisze sie raz „SAD REJONOWY
+     * W RZESZOWIE", raz „Sad Rejonowy w Rzeszowie", wiec grupowanie po nazwie
+     * rozbija jednego zamawiajacego na kilku i zaniza kazda probke.
+     */
+    zamawiajacy_nip: firstOf(raw, ['organizationNationalId']),
+    /*
      * Identyfikator POSTEPOWANIA (ocds-…) — ten sam w ogloszeniu o zamowieniu
      * i w ogloszeniu o WYNIKU (etap 6). Bez niego rozstrzygniecie nie ma po czym
      * trafic do przetargu w bazie: numer BZP wyniku jest INNY niz numer ogloszenia
