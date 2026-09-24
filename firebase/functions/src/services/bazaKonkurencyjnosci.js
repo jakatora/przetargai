@@ -264,6 +264,7 @@ export async function pobierzAktywne({
   let surowe = 0;
   let przebiegi = 0;
   let budzetWyczerpany = false;
+  let bladStrony = null;
 
   for (let przebieg = 1; przebieg <= maksPrzebiegow; przebieg++) {
     przebiegi = przebieg;
@@ -276,12 +277,33 @@ export async function pobierzAktywne({
       }
 
       await tempo.przedZapytaniem();
-      const json = await jsonLubBlad(
-        await pobierzZPonowieniem(urlListy({ strona, limit: limitStrony }), tempo, {
-          zrodlo: 'BK', naglowki: NAGLOWKI,
-        }),
-        'lista',
-      );
+      let json;
+      try {
+        json = await jsonLubBlad(
+          await pobierzZPonowieniem(urlListy({ strona, limit: limitStrony }), tempo, {
+            zrodlo: 'BK', naglowki: NAGLOWKI,
+          }),
+          'lista',
+        );
+      } catch (err) {
+        /*
+         * 🚨 ZMIERZONE NA PRODUKCJI 2026-09-24: przy siedmiu przebiegach pod rząd
+         * trzy padły w całości, każdy po ~80 s — czyli 3 × 25 s limitu czasu plus
+         * odstępy ponowień. BK spowolniło pod naszym ruchem i jedna strona przestała
+         * odpowiadać. Skutek był nieproporcjonalny: przebieg miał już zebrane setki
+         * pozycji z wcześniejszych stron i wyrzucał je razem z wyjątkiem.
+         *
+         * Gdy COKOLWIEK mamy — kończymy listowanie z jawnie niepełnym pokryciem,
+         * a checkpoint dopobierze resztę w kolejnym przebiegu. Gdy nie mamy NICZEGO,
+         * rzucamy dalej: źródło jest realnie niedostępne i `/health` musi to pokazać
+         * jako błąd, a nie jako „dziś BK miało zero ogłoszeń".
+         */
+        if (aktywne.size === 0) throw err;
+        bladStrony = err;
+        logger.warn({ err: err.message, strona, zebrane: aktywne.size },
+          'BK: strona listy padła — zostawiam to, co zebrane, z niepełnym pokryciem');
+        break;
+      }
       zapytania += 1;
 
       const lista = wyodrebnijListe(json);
@@ -296,12 +318,12 @@ export async function pobierzAktywne({
       if (lista.length === 0 || aktywne.size >= total) break;
     }
 
-    if (budzetWyczerpany || aktywne.size >= total) break;
+    if (budzetWyczerpany || bladStrony || aktywne.size >= total) break;
     logger.warn({ przebieg, zebrane: aktywne.size, total },
       'BK: przebieg nie domknął zestawu (niestabilna kolejność) — powtarzam');
   }
 
-  const pokrycieKompletne = !budzetWyczerpany && total > 0 && aktywne.size >= total;
+  const pokrycieKompletne = !budzetWyczerpany && !bladStrony && total > 0 && aktywne.size >= total;
   if (licznik) {
     licznik.zapytania += zapytania;
     licznik.surowe += surowe;
@@ -312,8 +334,8 @@ export async function pobierzAktywne({
     licznik.aktywneWZrodle = total;
   }
 
-  logger.info({ zebrane: aktywne.size, total, przebiegi, zapytania, pokrycieKompletne },
-    'BK: zakończono listowanie aktywnych ogłoszeń');
+  logger.info({ zebrane: aktywne.size, total, przebiegi, zapytania, pokrycieKompletne,
+    bladStrony: bladStrony?.message ?? null }, 'BK: zakończono listowanie aktywnych ogłoszeń');
   return { aktywne, total, przebiegi, zapytania, pokrycieKompletne };
 }
 

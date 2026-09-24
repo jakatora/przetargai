@@ -261,3 +261,43 @@ test('pobierzSzczegolBk oddaje kopertę wprost z API (mapowanie jest osobną dec
   const json = await pobierzSzczegolBk(292028, { tempo: tempoTestowe() });
   assert.equal(wyodrebnijOgloszenie(json).id, 292028);
 });
+
+/*
+ * ODPORNOŚĆ LISTOWANIA — zmierzone na PRODUKCJI 2026-09-24.
+ *
+ * Podczas kontrolowanego drenażu zaległości (7 przebiegów pod rząd) trzy przebiegi
+ * padły w całości. Każdy trwał ~80 s, czyli dokładnie 3 × 25 s limitu czasu plus
+ * odstępy ponowień: BK spowolniło pod naszym ruchem i jedna strona listy przestała
+ * odpowiadać. Skutek był nieproporcjonalny do przyczyny — przebieg miał już pobrane
+ * setki pozycji z wcześniejszych stron i wyrzucał je wszystkie razem z wyjątkiem.
+ *
+ * Reguła: awaria strony, gdy MAMY JUŻ DANE, kończy listowanie z jawnie niepełnym
+ * pokryciem (checkpoint dopobierze resztę). Awaria, gdy nie mamy NICZEGO, nadal
+ * rzuca — bo wtedy źródło jest realnie niedostępne i `/health` musi to pokazać.
+ */
+
+test('awaria strony po zebraniu części listy NIE kasuje całego przebiegu', async () => {
+  let zapytania = 0;
+  globalThis.fetch = async (url) => {
+    zapytania += 1;
+    const strona = Number(new URL(url).searchParams.get('page'));
+    if (strona >= 2) throw new Error('The operation was aborted due to timeout');
+    return odpowiedz({ data: { advertisements: [{ id: 1 }, { id: 2 }], meta: { total: 9 } } });
+  };
+
+  const licznik = pustyLicznik();
+  const wynik = await pobierzAktywne({ licznik, limitStrony: 2, maksPrzebiegow: 1, tempo: tempoTestowe() });
+
+  assert.equal(wynik.aktywne.size, 2, 'to, co już zebrane, zostaje — 985 ogłoszeń zaległości to za drogo, by je wyrzucać');
+  assert.equal(wynik.pokrycieKompletne, false, 'ale przebieg MUSI się przyznać, że nie domknął listy');
+  assert.equal(licznik.pokrycieKompletne, false);
+});
+
+test('awaria PIERWSZEJ strony (zero danych) nadal rzuca — źródło jest niedostępne', async () => {
+  globalThis.fetch = async () => { throw new Error('The operation was aborted due to timeout'); };
+  await assert.rejects(
+    () => pobierzAktywne({ maksPrzebiegow: 1, tempo: tempoTestowe() }),
+    /timeout/,
+    'cisza zamiast błędu ukryłaby padnięte źródło przed /health',
+  );
+});
