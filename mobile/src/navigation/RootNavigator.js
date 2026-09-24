@@ -51,6 +51,7 @@ import KartaDecyzjiScreen from '../screens/KartaDecyzjiScreen';
 import PulpitScreen from '../screens/PulpitScreen';
 import RadarPlanowScreen from '../screens/RadarPlanowScreen';
 import RadarPlanuScreen from '../screens/RadarPlanuScreen';
+import TrenerNegocjacjiScreen from '../screens/TrenerNegocjacjiScreen';
 import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
 import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 import NarzedziaScreen from '../screens/NarzedziaScreen';
@@ -314,6 +315,11 @@ export default function RootNavigator() {
               name="RadarPlanu"
               component={RadarPlanuScreen}
               options={{ title: 'Plan zamówienia' }}
+            />
+            <Stack.Screen
+              name="TrenerNegocjacji"
+              component={TrenerNegocjacjiScreen}
+              options={{ title: 'Trener negocjacji' }}
             />
             <Stack.Screen
               name="KontrolaOferty"

@@ -58,6 +58,7 @@ export const KATALOG_NARZEDZI = [
     narzedzia: [
       { ekran: 'KontrolaOferty', tytul: 'Kontrola przed wysłaniem', opis: 'Lista formalnych pułapek, przez które oferty odpadają' },
       { ekran: 'RejestratorOferty', tytul: 'Rejestrator oferty', opis: 'Utrwal dowody na wypadek awarii platformy' },
+      { ekran: 'TrenerNegocjacji', tytul: 'Trener negocjacji i oferty dodatkowej', opis: 'Tryb podstawowy w2/w3 — oferta dodatkowa bez odrzucenia (art. 296)' },
       { ekran: 'RadarSwz', tytul: 'Radar SWZ', opis: 'Pytania do SWZ i zmiany specyfikacji' },
       { ekran: 'PrzeswietlenieUmowy', tytul: 'Prześwietlenie umowy', opis: 'Pułapki i kary przed podpisem' },
     ],
