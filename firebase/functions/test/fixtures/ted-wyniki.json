@@ -1,0 +1,393 @@
+[
+ {
+  "title-proc": {
+   "pol": "II Dostawa pojazdu o dopuszczalnej masie całkowitej do 7,5 Mg z windą."
+  },
+  "notice-type": "can-standard",
+  "publication-number": "659329-2026",
+  "estimated-value-lot": [
+   "265953"
+  ],
+  "non-award-justification": [
+   "no-rece"
+  ],
+  "estimated-value-cur-lot": [
+   "PLN"
+  ],
+  "result-lot-identifier": [
+   "LOT-0001"
+  ],
+  "buyer-country-sub": [
+   "PL426"
+  ],
+  "received-submissions-type-val": [
+   "0",
+   "0",
+   "0"
+  ],
+  "classification-cpv": [
+   "34144510",
+   "34144510"
+  ],
+  "publication-date": "2026-09-24+02:00",
+  "received-submissions-type-code": [
+   "t-oth-eea",
+   "t-esubm",
+   "t-sme"
+  ],
+  "buyer-name": {
+   "pol": [
+    "Przedsiębiorstwo Gospodarki Komunalnej Spółka z o.o. w Koszalinie"
+   ]
+  },
+  "links": {
+   "html": {
+    "POL": "https://ted.europa.eu/pl/notice/-/detail/659329-2026"
+   }
+  }
+ },
+ {
+  "title-proc": {
+   "pol": "Modernizacja pomieszczeń na potrzeby oddziału szpitalnego w lokalizacji Ceglana"
+  },
+  "notice-type": "can-standard",
+  "publication-number": "659388-2026",
+  "contract-conclusion-date": [
+   "2026-08-25+02:00"
+  ],
+  "result-value-notice": "2890000",
+  "result-lot-identifier": [
+   "LOT-0001"
+  ],
+  "buyer-country-sub": [
+   "PL22A"
+  ],
+  "winner-size": [
+   "medium"
+  ],
+  "received-submissions-type-val": [
+   "5",
+   "5",
+   "5",
+   "0",
+   "0"
+  ],
+  "tender-value-cur": [
+   "PLN"
+  ],
+  "tender-value": [
+   "2890000"
+  ],
+  "classification-cpv": [
+   "45215140",
+   "71000000",
+   "45000000",
+   "45215140",
+   "71000000",
+   "45000000"
+  ],
+  "publication-date": "2026-09-24+02:00",
+  "received-submissions-type-code": [
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea"
+  ],
+  "buyer-name": {
+   "pol": [
+    "Uniwersyteckie Centrum Kliniczne im. prof. K. Gibińskiego Śląskiego Uniwersytetu Medycznego w Katowicach"
+   ]
+  },
+  "winner-decision-date": [
+   "2026-08-12+02:00"
+  ],
+  "winner-name": {
+   "pol": [
+    "Przedsiębiorstwo Budowlane Fraktal"
+   ]
+  },
+  "links": {
+   "html": {
+    "POL": "https://ted.europa.eu/pl/notice/-/detail/659388-2026"
+   }
+  }
+ },
+ {
+  "title-proc": {
+   "pol": "Zakup i dostawa leków onkologicznych dla Apteki Szpitalnej Świętokrzyskiego Centrum Onkologii w Kielcach."
+  },
+  "notice-type": "can-standard",
+  "publication-number": "659988-2026",
+  "contract-conclusion-date": [
+   "2026-09-09+02:00",
+   "2026-09-15+02:00",
+   "2026-09-15+02:00",
+   "2026-09-09+02:00",
+   "2026-09-15+02:00",
+   "2026-09-09+02:00",
+   "2026-09-15+02:00",
+   "2026-09-15+02:00",
+   "2026-09-15+02:00",
+   "2026-09-09+02:00",
+   "2026-09-15+02:00",
+   "2026-09-09+02:00",
+   "2026-09-09+02:00",
+   "2026-09-09+02:00"
+  ],
+  "result-value-notice": "8325915.36",
+  "result-lot-identifier": [
+   "LOT-0001",
+   "LOT-0002",
+   "LOT-0003",
+   "LOT-0004",
+   "LOT-0005",
+   "LOT-0006",
+   "LOT-0007",
+   "LOT-0008",
+   "LOT-0009",
+   "LOT-0010",
+   "LOT-0011",
+   "LOT-0012",
+   "LOT-0013",
+   "LOT-0014"
+  ],
+  "buyer-country-sub": [
+   "PL721"
+  ],
+  "winner-size": [
+   "large",
+   "large",
+   "large",
+   "large",
+   "medium",
+   "large",
+   "medium"
+  ],
+  "received-submissions-type-val": [
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "5",
+   "5",
+   "1",
+   "0",
+   "0",
+   "2",
+   "2",
+   "0",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "3",
+   "3",
+   "0",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "2",
+   "2",
+   "0",
+   "0",
+   "0",
+   "3",
+   "3",
+   "0",
+   "0",
+   "0",
+   "3",
+   "3",
+   "1",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "2",
+   "2",
+   "0",
+   "0",
+   "0",
+   "1",
+   "1",
+   "1",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0",
+   "1",
+   "1",
+   "0",
+   "0",
+   "0"
+  ],
+  "tender-value-cur": [
+   "PLN"
+  ],
+  "tender-value": [
+   "3545876.25",
+   "22896.43",
+   "53920.08",
+   "139436.64",
+   "166139.1",
+   "109038.96",
+   "59849.28",
+   "81567",
+   "332097.41",
+   "642232.8",
+   "22266.9",
+   "12798",
+   "557999.93",
+   "3245869.81"
+  ],
+  "classification-cpv": [
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000",
+   "33600000"
+  ],
+  "publication-date": "2026-09-24+02:00",
+  "received-submissions-type-code": [
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea",
+   "tenders",
+   "t-esubm",
+   "t-sme",
+   "t-oth-eea",
+   "t-no-eea"
+  ],
+  "buyer-name": {
+   "pol": [
+    "Świętokrzyskie Centrum Onkologii Samodzielny Publiczny Zakład Opieki Zdrowotnej w Kielcach"
+   ]
+  },
+  "winner-decision-date": [
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00",
+   "2026-09-03+02:00"
+  ],
+  "winner-name": {
+   "pol": [
+    "ASCLEPIOS S.A.",
+    "Urtica sp. z o.o.",
+    "ASCLEPIOS S.A.",
+    "ASCLEPIOS S.A.",
+    "ASCLEPIOS S.A.",
+    "Sanofi Sp. z o.o.",
+    "ASCLEPIOS S.A.",
+    "ASCLEPIOS S.A.",
+    "Tramco Sp. z o. o.",
+    "ASCLEPIOS S.A.",
+    "Salus International Sp. z o.o.",
+    "InPharm Sp. z o.o.",
+    "Amgen Sp. z o.o.",
+    "Urtica sp. z o.o."
+   ]
+  },
+  "links": {
+   "html": {
+    "POL": "https://ted.europa.eu/pl/notice/-/detail/659988-2026"
+   }
+  }
+ }
+]

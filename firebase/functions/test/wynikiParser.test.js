@@ -97,7 +97,10 @@ describe('parser wyników postępowań (htmlBody z BZP)', () => {
     const czesc = (nadpisania) =>
       parsujWynik({
         bzpNumber: '2026/BZP 00000001',
+        // `5.1.)` jest OBOWIĄZKOWE: od etapu 6 blok bez tej etykiety to nagłówek-widmo,
+        // a nie część postępowania (zmierzone: reguła zgodna z BZP w 200/200 ogłoszeń).
         htmlBody: `<h3>SEKCJA V WYNIK</h3>
+          <h3>5.1.) Postępowanie zakończyło się zawarciem umowy albo unieważnieniem postępowania: <span>Postępowanie/cześć postępowania zakończyła się zawarciem umowy</span></h3>
           <h3>6.1.) Liczba otrzymanych ofert lub wniosków: <span>3</span></h3>
           <h3>6.2.) Cena lub koszt oferty z najniższą ceną lub kosztem: <span>${nadpisania.min} PLN</span></h3>
           <h3>6.3.) Cena lub koszt oferty z najwyższą ceną lub kosztem: <span>${nadpisania.max} PLN</span></h3>
