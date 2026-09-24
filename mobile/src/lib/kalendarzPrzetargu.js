@@ -168,3 +168,57 @@ export function opisPozycji(pozycja, jezyk = 'pl') {
     brak: pozycja?.znany ? null : tr(pozycja?.brak, jezyk),
   };
 }
+
+/**
+ * Stan przypomnienia push o terminie składania (D-050) w słowach.
+ *
+ * TRZY stany, nie dwa. „Niemożliwe" (przetarg nie jest zapisany) to nie to samo co
+ * „wyłączone": w pierwszym przypadku nie ma czego przełączać, a przełącznik, który
+ * nic nie robi, jest gorszy niż jego brak.
+ *
+ * Etapy przypomnień to 7 / 3 / 1 dzień przed terminem (`ETAPY_DNI` po stronie
+ * backendu); `etap` mówi, który z nich pójdzie jako najbliższy.
+ */
+export function opisPrzypomnienia(przypomnienie, jezyk = 'pl') {
+  const p = przypomnienie ?? {};
+  if (p.mozliwe === false) {
+    return {
+      mozliwe: false,
+      wlaczone: false,
+      ton: 'neutral',
+      opis: tr({
+        pl: 'Zapisz przetarg gwiazdką, żeby włączyć przypomnienie o terminie.',
+        en: 'Save the tender with the star to enable a deadline reminder.',
+      }, jezyk),
+    };
+  }
+
+  if (!p.wlaczone) {
+    return {
+      mozliwe: true,
+      wlaczone: false,
+      ton: 'neutral',
+      opis: tr({
+        pl: 'Przypomnienie wyłączone — nie wyślemy powiadomienia przed terminem.',
+        en: 'Reminder off — we will not notify you before the deadline.',
+      }, jezyk),
+    };
+  }
+
+  // Brak etapu (np. termin bardzo blisko) NIE może wyprodukować „za null dni".
+  const etap = Number.isFinite(p.etap) && p.etap > 0 ? p.etap : null;
+  return {
+    mozliwe: true,
+    wlaczone: true,
+    ton: 'sukces',
+    opis: etap === null
+      ? tr({
+        pl: 'Przypomnienie włączone — powiadomimy Cię przed terminem składania.',
+        en: 'Reminder on — we will notify you before the submission deadline.',
+      }, jezyk)
+      : tr({
+        pl: `Przypomnienie włączone — najbliższe na ${etap} ${odmianaDni(etap)} przed terminem.`,
+        en: `Reminder on — next one ${etap} day${etap === 1 ? '' : 's'} before the deadline.`,
+      }, jezyk),
+  };
+}

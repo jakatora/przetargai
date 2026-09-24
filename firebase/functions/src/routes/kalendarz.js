@@ -43,6 +43,24 @@ function zeZapisanego(wpis, anulowany) {
   };
 }
 
+/**
+ * Stan przypomnienia push o terminie składania (D-050) w kształcie dla kalendarza.
+ *
+ * Ekran, który mówi „zostały 3 dni" i NIE pozwala włączyć przypomnienia, każe
+ * użytkownikowi pamiętać o powrocie tutaj — czyli robi dokładnie to, czemu ma
+ * zapobiegać. `mozliwe: false` dla ogłoszenia niezapisanego: przypomnienie wisi
+ * na wpisie „Zapisanych", więc bez zapisu nie ma czego przypominać.
+ */
+function stanPrzypomnienia(wpis) {
+  if (!wpis) return { mozliwe: false, wlaczone: false, remind_at: null, etap: null };
+  return {
+    mozliwe: true,
+    wlaczone: wpis.reminder_enabled === true,
+    remind_at: wpis.reminder_enabled === true ? (wpis.remind_at ?? null) : null,
+    etap: wpis.reminder_enabled === true ? (wpis.remind_etap ?? null) : null,
+  };
+}
+
 /** Kalendarze wszystkich zapisanych przetargów użytkownika. */
 async function kalendarzeUzytkownika(userId, teraz) {
   const zapisane = await saved.list(userId);
@@ -57,10 +75,10 @@ async function kalendarzeUzytkownika(userId, teraz) {
     zapisane.map((w) => tenders.findById(w.tender_id ?? w.id).catch(() => null)),
   );
 
-  return zapisane.map((wpis, i) => zbudujKalendarz(
-    zeZapisanego(wpis, dokumenty[i]?.anulowany === true),
-    { teraz },
-  ));
+  return zapisane.map((wpis, i) => ({
+    ...zbudujKalendarz(zeZapisanego(wpis, dokumenty[i]?.anulowany === true), { teraz }),
+    przypomnienie: stanPrzypomnienia(wpis),
+  }));
 }
 
 /**
@@ -111,8 +129,15 @@ router.get('/:tenderId', ah(async (req, res) => {
   const tender = await tenders.findById(req.params.tenderId);
   if (!tender) throw notFound('Nie ma takiego ogłoszenia.');
 
+  // Wpis „Zapisanych" TEGO użytkownika — stąd wiadomo, czy przypomnienie da się
+  // w ogóle włączyć i czy już jest włączone.
+  const wpis = (await saved.list(req.user.id)).find((z) => (z.tender_id ?? z.id) === req.params.tenderId);
+
   res.json({
-    kalendarz: zbudujKalendarz(tender, { teraz: nowIso() }),
+    kalendarz: {
+      ...zbudujKalendarz(tender, { teraz: nowIso() }),
+      przypomnienie: stanPrzypomnienia(wpis),
+    },
     strefa: STREFA,
   });
 }));

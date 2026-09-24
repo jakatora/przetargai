@@ -11,6 +11,7 @@ import {
 } from '../src/lib/centrumAlertow.js';
 import {
   GRUPY_KALENDARZA, ulozKalendarz, kartaNastepnegoKroku, opisPozycji, tonPozycji,
+  opisPrzypomnienia,
 } from '../src/lib/kalendarzPrzetargu.js';
 
 /*
@@ -250,4 +251,29 @@ test('nieznana data pokazuje POWÓD zamiast pustego miejsca', () => {
 
   assert.equal(o.kiedy, null);
   assert.match(o.brak, /Baza Konkurencyjności/);
+});
+
+test('opis przypomnienia rozroznia trzy stany: wlaczone, wylaczone, niemozliwe', () => {
+  const wlaczone = opisPrzypomnienia(
+    { mozliwe: true, wlaczone: true, remind_at: '2026-10-28T08:00:00.000Z', etap: 3 },
+    JEZYK,
+  );
+  assert.equal(wlaczone.wlaczone, true);
+  assert.match(wlaczone.opis, /3/, 'etap przypomnienia mowi, ile dni przed terminem przyjdzie push');
+  assert.equal(wlaczone.ton, 'sukces');
+
+  const wylaczone = opisPrzypomnienia({ mozliwe: true, wlaczone: false }, JEZYK);
+  assert.equal(wylaczone.wlaczone, false);
+  assert.equal(wylaczone.ton, 'neutral');
+  assert.ok(wylaczone.opis.length > 0);
+
+  // Brak mozliwosci to NIE to samo co wylaczone: nie ma czego przelaczac.
+  const niemozliwe = opisPrzypomnienia({ mozliwe: false }, JEZYK);
+  assert.equal(niemozliwe.mozliwe, false);
+});
+
+test('przypomnienie bez etapu nie wymysla liczby dni', () => {
+  const o = opisPrzypomnienia({ mozliwe: true, wlaczone: true, remind_at: null, etap: null }, JEZYK);
+  assert.equal(o.wlaczone, true);
+  assert.doesNotMatch(o.opis, /null|undefined|NaN/);
 });

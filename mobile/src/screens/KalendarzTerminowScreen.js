@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, RefreshControl, ScrollView, Switch } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import Button from '../components/Button';
@@ -7,7 +7,9 @@ import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
-import { ulozKalendarz, kartaNastepnegoKroku, opisPozycji } from '../lib/kalendarzPrzetargu';
+import {
+  ulozKalendarz, kartaNastepnegoKroku, opisPozycji, opisPrzypomnienia,
+} from '../lib/kalendarzPrzetargu';
 
 /*
  * KALENDARZ TERMINÓW (etap 5, P1-7).
@@ -53,6 +55,22 @@ export default function KalendarzTerminowScreen({ navigation }) {
   }, []);
 
   useFocusEffect(useCallback(() => { wczytaj(); }, [wczytaj]));
+
+  /**
+   * Przełącznik przypomnienia push o terminie składania.
+   *
+   * Stoi TU, a nie tylko na ekranie „Zapisane", bo to tutaj użytkownik widzi
+   * „zostały 3 dni". Ekran, który mówi, ile zostało, i każe iść gdzie indziej, żeby
+   * włączyć powiadomienie, robi dokładnie to, czemu ma zapobiegać.
+   */
+  const przelaczPrzypomnienie = useCallback(async (tenderId, wlacz) => {
+    try {
+      await api.setReminder(tenderId, wlacz);
+      await wczytaj();
+    } catch (err) {
+      setBlad(err.message);
+    }
+  }, [wczytaj]);
 
   if (ladowanie && !dane && !blad) {
     return (
@@ -102,6 +120,37 @@ export default function KalendarzTerminowScreen({ navigation }) {
           </Text>
         ) : null}
       </View>
+
+      {/*
+        PRZYPOMNIENIA per przetarg. Osobna sekcja, a nie przełącznik przy każdym
+        z trzech terminów: push dotyczy terminu SKŁADANIA (etapy 7/3/1 dnia przed),
+        więc trzy przełączniki sugerowałyby trzy niezależne powiadomienia.
+      */}
+      {(dane?.przetargi ?? []).filter((k) => !k.anulowany).length ? (
+        <View style={styles.sekcjaPrzypomnien}>
+          <Text style={styles.grupaTytul}>{t('Przypomnienia o terminie', 'Deadline reminders')}</Text>
+          {(dane?.przetargi ?? []).filter((k) => !k.anulowany).map((k) => {
+            const p = opisPrzypomnienia(k.przypomnienie, jezyk);
+            return (
+              <View key={`prz-${k.tenderId}`} style={styles.karta}>
+                <View style={styles.wierszPrzypomnienia}>
+                  <Text style={styles.przetarg} numberOfLines={2}>{k.tytul}</Text>
+                  <Switch
+                    value={p.wlaczone}
+                    disabled={!p.mozliwe}
+                    onValueChange={(v) => przelaczPrzypomnienie(k.tenderId, v)}
+                    accessibilityLabel={t(
+                      `Przypomnienie o terminie dla ${k.tytul}`,
+                      `Deadline reminder for ${k.tytul}`,
+                    )}
+                  />
+                </View>
+                <Text style={[styles.przypomnienieOpis, { color: kolorTonu(kolory, p.ton) }]}>{p.opis}</Text>
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
 
       {!razem && !grupy.length ? (
         <View style={styles.pustka}>
@@ -217,6 +266,9 @@ const tworzStyleKalendarza = tworzStyle((k) => ({
   },
 
   grupa: { marginTop: spacing.lg },
+  sekcjaPrzypomnien: { marginTop: spacing.lg },
+  wierszPrzypomnienia: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  przypomnienieOpis: { fontSize: 12, lineHeight: 18, fontWeight: '600' },
   grupaTytul: { fontSize: 13, fontWeight: '800', color: k.textMuted, textTransform: 'uppercase' },
 
   karta: {

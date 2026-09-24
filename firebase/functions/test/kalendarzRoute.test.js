@@ -166,3 +166,47 @@ test('kalendarz pokazuje WYŁĄCZNIE własne zapisane przetargi', async () => {
   const cudzy = await (await fetch(`${BAZA}/kalendarz`, { headers: auth(b.token) })).json();
   assert.deepEqual(cudzy.przetargi, []);
 });
+
+test('kalendarz niesie STAN PRZYPOMNIENIA, zeby dalo sie je wlaczyc bez opuszczania ekranu', async () => {
+  /*
+   * Kalendarz pokazuje TRZY terminy, ale push o zblizajacym sie terminie dotyczy
+   * skladania ofert i wlacza sie go dzis wylacznie z ekranu „Zapisane". Ekran, ktory
+   * mowi „zostaly 3 dni" i nie pozwala wlaczyc przypomnienia, kaze uzytkownikowi
+   * pamietac o zajrzeniu tu jeszcze raz — czyli robi dokladnie to, czemu ma zapobiegac.
+   */
+  const { token, userId } = await konto();
+  const t = await zapiszPrzetarg(userId);
+
+  const przed = await (await fetch(`${BAZA}/kalendarz`, { headers: auth(token) })).json();
+  assert.equal(przed.przetargi[0].przypomnienie.wlaczone, false);
+  assert.equal(przed.przetargi[0].przypomnienie.remind_at, null);
+
+  await fetch(`${BAZA}/matches/${t.id}/reminder`, {
+    method: 'PUT', headers: auth(token), body: JSON.stringify({ enabled: true }),
+  });
+
+  const po = await (await fetch(`${BAZA}/kalendarz`, { headers: auth(token) })).json();
+  assert.equal(po.przetargi[0].przypomnienie.wlaczone, true);
+  assert.ok(po.przetargi[0].przypomnienie.remind_at, 'wlaczone przypomnienie ma znany moment wysylki');
+  assert.equal(typeof po.przetargi[0].przypomnienie.etap, 'number');
+});
+
+test('kalendarz JEDNEGO ogloszenia tez mowi, czy przypomnienie jest wlaczone', async () => {
+  const { token, userId } = await konto();
+  const t = await zapiszPrzetarg(userId);
+
+  const body = await (await fetch(`${BAZA}/kalendarz/${t.id}`, { headers: auth(token) })).json();
+  assert.equal(body.kalendarz.przypomnienie.wlaczone, false);
+});
+
+test('ogloszenie NIEZAPISANE nie udaje, ze ma przypomnienie', async () => {
+  const { token, userId } = await konto();
+  // Przetarg istnieje w bazie, ale ten uzytkownik go nie zapisal.
+  const inny = await konto();
+  const t = await zapiszPrzetarg(inny.userId);
+  void userId;
+
+  const body = await (await fetch(`${BAZA}/kalendarz/${t.id}`, { headers: auth(token) })).json();
+  assert.equal(body.kalendarz.przypomnienie.wlaczone, false);
+  assert.equal(body.kalendarz.przypomnienie.mozliwe, false, 'bez zapisania nie ma czego przypominac');
+});
