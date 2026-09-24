@@ -140,7 +140,25 @@ export async function runMonitorWyszukiwan({
 
   for (const w of wymagalne) {
     try {
-      const filtry = { ...normalizujFiltry(w.filtry ?? {}), limit: MAKS_TRAFIEN_NA_PRZEBIEG };
+      /*
+       * SORTOWANIE NADPISUJEMY NA „najnowsze" — świadomie, wbrew temu, co zapisał
+       * użytkownik.
+       *
+       * Sortowanie jest preferencją WYŚWIETLANIA, nie częścią obserwowanego zbioru
+       * (dlatego odcisk obserwacji je pomija). Wykrywanie nowości opiera się na
+       * `fetched_at`, więc zapytanie MUSI iść w tym porządku. Przepuszczenie
+       * `sort: 'termin'` dawało stronę ogłoszeń o najbliższym terminie — a świeżo
+       * pobranego zwykle wśród nich nie ma, bo jego termin jest odległy. Zmierzone
+       * na emulatorze: przy 52 ogłoszeniach z bliskim terminem nowe ogłoszenie
+       * z terminem w 2099 NIE pojawiało się na stronie skanu w ogóle.
+       *
+       * Awaria była CICHA: obserwacja po prostu milczała, nie zgłaszając błędu.
+       */
+      const filtry = {
+        ...normalizujFiltry(w.filtry ?? {}),
+        sort: 'najnowsze',
+        limit: MAKS_TRAFIEN_NA_PRZEBIEG,
+      };
       const katalog = await tenders.katalog({ filtry, teraz, kursor: null });
 
       const nowe = noweTrafienia({ tenders: katalog.wiersze, kursor: w.kursor, teraz });

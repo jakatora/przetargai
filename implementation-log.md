@@ -11,6 +11,117 @@ Najnowsze wpisy na górze.
 
 ---
 
+## 2026-09-24 — Etap 5: monitoring szans i terminów (obserwacje, alerty, kalendarz)
+
+Wdrożone na Cloud Functions, rewizja **`api-00032-qec`** (wcześniej `api-00031-nij`).
+Funkcji jest **8** — doszła `monitorWyszukiwan` (`Successful create operation`).
+Mierzone na żywo kontem sondującym, które po pomiarach **usunięto** (`DELETE /auth/me`
+→ 200, kontrolne `GET /auth/me` → 401). Konto zakładane BEZ słów kluczowych i BEZ kodów
+CPV — dzięki temu ani jedno wywołanie płatnego AI nie padło.
+
+### Co potwierdzone na produkcji
+
+| Sprawdzenie | Odczyt |
+|---|---|
+| `GET /wyszukiwania`, `/alerty`, `/kalendarz`, `/kalendarz/ics` bez tokenu | **401** (kontrolnie nieistniejąca trasa → **404**) |
+| Słownik częstotliwości | `godzinowa / dzienna / tygodniowa`, etykiety PL **i** EN obecne dla każdej |
+| Limity oddane aplikacji | `{wyszukiwan: 20, alertow: 10, dlugosc_nazwy: 60}` |
+| Normalizacja przy zapisie | `"  Roboty  drogowe BZP "` → `"Roboty drogowe BZP"`; `cpv: "45-000-000"` → `"45000000"`; `limit` wypada ze zbioru filtrów |
+| Świeża obserwacja | `ostatnio_sprawdzone_o: null` — pierwszy przebieg ustawi punkt odniesienia |
+| Duplikat DOKŁADNIE tych samych filtrów | **409**, `kod: "duplikat"`, `istniejaceId` wskazuje pierwszy wpis |
+| Zapis bez nazwy | **400**, `kod: "brak_nazwy"` + gotowa propozycja: PL i EN `„TED · CPV 45000000"` |
+| Limit włączonych alertów | 10 zapisanych z alertem → 11. odrzucony **409** `limit_alertow`; **ten sam zapis bez alertu → 201** |
+| Edycja samej nazwy | **200** — filtry (`cpv: 39999999`) i częstotliwość nietknięte, brak fałszywego duplikatu |
+| Usunięcie / powtórka | **200**, potem **404** |
+| `GET /wyszukiwania/:id/podglad` | `count: 1`; po podglądzie `ostatnio_sprawdzone_o` nadal **null** — podgląd NIE konsumuje okna monitoringu |
+| Centrum alertów (świeże konto) | `alerty: []`, `nieprzeczytane: 0`, słownik 7 typów zmian, 6 oznaczonych jako istotne |
+| `GET /kalendarz/ics` | `content-type: text/calendar; charset=utf-8`, `content-disposition: attachment; filename="przetargai-terminy.ics"`, treść zaczyna się `BEGIN:VCALENDAR` |
+
+### Kalendarz na ŻYWYM ogłoszeniu BZP (`2026~BZP_00446450`)
+
+```
+pytania    znany=True  zrodloDaty=wyliczony   1 października 2026, 10:00  | art. 284 ust. 2 Pzp
+oferty     znany=True  zrodloDaty=ogloszenie  5 października 2026, 10:00  | (z rejestru)
+zwiazanie  znany=True  zrodloDaty=wyliczony   4 listopada 2026, 09:00     | art. 220 ust. 1 pkt 1 Pzp
+nastepny krok: pytania, za 7 dni
+```
+
+**Godzina 09:00 przy związaniu ofertą NIE jest błędem — to dowód, że strefa działa.**
+Termin składania upływa 5 października o 10:00 czasu polskiego (czas letni, UTC+2).
+Trzydzieści dni później jest już po zmianie czasu, więc ta sama chwila UTC to 09:00
+czasu polskiego. Konwersja pilnuje CHWILI, nie napisu na zegarze.
+
+### Kalendarz na żywym ogłoszeniu Bazy Konkurencyjności (`bk:261637`)
+
+```
+pytania    znany=False  →  „To postępowanie nie jest prowadzone na podstawie Prawa
+                            zamówień publicznych, więc nie ma dla niego ustawowego…"
+oferty     znany=True   →  15 października 2026, 09:00
+zwiazanie  znany=False  →  (jak wyżej)
+```
+
+Czyli dokładnie to, o co chodziło w D-066: zamiast podstawić nieobowiązujący przepis,
+produkt mówi wprost, czego nie wie i dlaczego.
+
+### Błąd znaleziony i naprawiony PO pierwszym wdrożeniu (rewizja `api-00032-qec`)
+
+Podczas samodzielnego przeglądu kodu po deployu: harmonogram przepuszczał do zapytania
+`sort` zapisany przez użytkownika. Wykrywanie nowości opiera się na `fetched_at`, więc
+obserwacja z sortowaniem **„termin najbliżej"** dostawała stronę ogłoszeń o najbliższym
+terminie — a świeżo pobranego wśród nich zwykle nie ma, bo jego termin jest odległy.
+
+Zmierzone na emulatorze (52 ogłoszenia z terminem w styczniu 2027 + 1 nowe z terminem
+w 2099, sufit skanu 50):
+
+```
+SORT=termin      wierszy=50  czyJestNOWY=0
+SORT=najnowsze   wierszy=50  czyJestNOWY=1
+```
+
+**Awaria była CICHA** — obserwacja po prostu milczała, nie zgłaszając żadnego błędu.
+Naprawa: harmonogram nadpisuje sortowanie na `najnowsze`. Jest to spójne z tym, że odcisk
+obserwacji od początku pomija sortowanie (sortowanie to preferencja wyświetlania, nie
+część obserwowanego zbioru).
+
+**Pułapka w samym teście, warta zapamiętania.** Pierwsza wersja testu regresyjnego
+PRZECHODZIŁA mimo obecności błędu: punkt odniesienia brał `Date.now() - 1000`, a zapis
+52 ogłoszeń wypełniacza trwa dłużej niż sekundę — część wypełniacza wpadała więc do okna
+nowości i test zieleniał z zupełnie innego powodu, niż mierzył. Dopiero ustawienie punktu
+odniesienia PO wypełniaczu (bez cofania zegara) pokazało czerwień.
+
+### Obietnica „alert w ≤ 6 h" — jak jest zabezpieczona
+
+| Etap | Nośnik | Najgorszy przypadek |
+|---|---|---|
+| wykrycie zmiany | `bzpOknoFetch` (`20 */3`), `bkOknoFetch` (`50 */3`) | 3 h |
+| powiadomienie | `monitorWyszukiwan` (`35 */2`) | 2 h |
+| **razem** | | **5 h** |
+
+Strażnik w `test/monitorWyszukiwan.test.js` czyta crony z `index.js` i liczy tę sumę.
+Zweryfikowany przez celowe zepsucie: przy kadencji `*/6` test pada komunikatem
+„najgorszy przypadek to 3 h wykrycia + 6 h powiadomienia = 9 h, a obiecujemy 6 h".
+
+### Testy
+
+| Zestaw | Przed etapem 5 | Po |
+|---|---|---|
+| backend (`firebase/functions`) | 606/606 | **741/741** |
+| mobile | 711/711 | **737/737** + `npm run check` (esbuild) zielony |
+
+### Czego świadomie NIE dowieziono
+
+**Zapis pliku `.ics` z poziomu aplikacji.** Endpoint `GET /kalendarz/ics` jest gotowy,
+przetestowany i zweryfikowany na produkcji, ale zapisanie pliku na urządzeniu wymaga
+`expo-file-system` + `expo-sharing`, których w projekcie nie ma. Dołożenie zależności
+to nowy build i weryfikacja na urządzeniu — osobna decyzja, poza tym etapem (D-066).
+`Linking.openURL` nie jest tu rozwiązaniem: trasa wymaga nagłówka `Authorization`.
+
+**Pomiar pierwszego realnego przebiegu `monitorWyszukiwan`.** Funkcja jest wdrożona,
+ale jej cron (`35 */2`) nie odpalił się jeszcze w oknie tej sesji; nie było też konta
+z obserwacją starszą niż odstęp częstotliwości (konto sondujące skasowano). Pierwszy
+przebieg jest **oczekujący na harmonogram**, nie zmierzony.
+
+---
 ## 2026-09-24 — Etap 4: katalog „Wszystkie", źródło na karcie, zakres danych, wyjaśnienie
 
 Wdrożone na Cloud Functions, rewizja **`api-00031-nij`** (wcześniej `api-00028-xup`).

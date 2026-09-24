@@ -333,3 +333,51 @@ test('OBIETNICA 6 GODZIN jest poparta kadencją harmonogramów, nie deklaracją'
     `najgorszy przypadek to ${wykrycie} h wykrycia + ${powiadomienie} h powiadomienia = `
     + `${wykrycie + powiadomienie} h, a obiecujemy 6 h`);
 });
+
+test('obserwacja z sortowaniem po TERMINIE nadal wykrywa nowe ogloszenia', async () => {
+  /*
+   * Sortowanie jest preferencja WYSWIETLANIA, nie czescia obserwowanego zbioru —
+   * dlatego odcisk wyszukiwania je pomija. Harmonogram musi to uszanowac: wykrywanie
+   * nowosci opiera sie na `fetched_at`, wiec zapytanie do katalogu MUSI isc
+   * posortowane po dacie pobrania. Przepuszczenie `sort: 'termin'` dawaloby 50
+   * ogloszen o najblizszym terminie — wsrod ktorych swiezo pobranego zwykle nie ma,
+   * bo jego termin jest odlegly. Obserwacja milczalaby, nie zglaszajac bledu.
+   */
+  const cpv = unikalneCpv();
+  const u = await konto();
+  const w = await wyszukiwania.create(u, {
+    nazwa: 'Po terminie', filtry: { cpv, sort: 'termin' }, odcisk: `o-${nast()}`,
+  });
+  await wyszukiwania.oznaczSprawdzone(u, w.id, {
+    teraz: dwaDniTemu(), kursor: { fetched_at: dwaDniTemu() },
+  });
+
+  /*
+   * Wypelniacz: 52 ogloszenia z BLISKIMI terminami. Przy sortowaniu po terminie
+   * zajmuja cala pierwsza strone skanu (sufit to 50 pozycji na przebieg), wiec
+   * ogloszenie z odleglym terminem wypada POZA nia. Bez tego tla test przechodzilby
+   * niezaleznie od sortowania i nie mierzylby niczego.
+   */
+  for (let i = 0; i < 52; i += 1) {
+    await przetarg(cpv, { deadline: `2027-01-${String((i % 28) + 1).padStart(2, '0')}T10:00:00.000Z` });
+  }
+
+  /*
+   * Punkt odniesienia USTAWIAMY PO wypelniaczu i BEZ cofania zegara. Wczesniejsza
+   * wersja tego testu brala `Date.now() - 1000`, a zapis 52 ogloszen trwa dluzej niz
+   * sekunde — czesc wypelniacza wpadala wiec do okna nowosci i test przechodzil
+   * z zupelnie innego powodu, niz mierzyl.
+   */
+  const granica = new Date().toISOString();
+  await wyszukiwania.oznaczSprawdzone(u, w.id, { teraz: dwaDniTemu(), kursor: { fetched_at: granica } });
+
+  // Ogloszenie z BARDZO odleglym terminem: przy sortowaniu po terminie wypada
+  // daleko poza pierwsza strone, przy sortowaniu po dacie pobrania jest pierwsze.
+  await przetarg(cpv, { deadline: '2099-12-31T10:00:00.000Z' });
+
+  const z = zbierak();
+  const wynik = await runMonitorWyszukiwan({ teraz: zaChwile(), ...z });
+
+  assert.ok(wynik.noweTrafienia >= 1, 'nowe ogloszenie nie zostalo wykryte');
+  assert.equal((await alerty.lista(u)).length, 1);
+});

@@ -1,12 +1,12 @@
 {
   "projekt": "PrzetargAI",
-  "zaktualizowano": "2026-09-24 (etap 4 wdrozony, api-00031-nij)",
+  "zaktualizowano": "2026-09-24 (etap 5 wdrozony, api-00032-qec)",
   "galaz": "codex/przetargai-complete",
   "drzewo_robocze": "D:/wt/przetargai-complete",
   "uwaga": "Repozytorium D:/projekty/przetarg-ai jest BRUDNE (cudzy WIP) — nie dotykać.",
   "produkcja": {
     "platforma": "Firebase Cloud Functions v2 (europe-central2, projekt przetargai)",
-    "wersja_api": "api-00031-nij",
+    "wersja_api": "api-00032-qec",
     "wdrozone_z": "lokalnego kodu przez `firebase deploy` (NIE z GitHuba — to odróżnia Functions od Railway)",
     "health": "https://europe-central2-przetargai.cloudfunctions.net/api/health",
     "funkcje": [
@@ -16,14 +16,15 @@
       "bkOknoFetch",
       "remindDeadlines",
       "weeklyDigest",
-      "aggregateResults"
+      "aggregateResults",
+      "monitorWyszukiwan"
     ],
     "otwarte_przetargi": 10084,
     "otwarte_przetargi_przed_etapem_3": 7249,
-    "wersja_api_poprzednia_w_tym_pliku": "api-00028-xup (stan po etapie 3)",
+    "wersja_api_poprzednia_w_tym_pliku": "api-00031-nij (stan po etapie 4)",
     "otwarte_przetargi_po_imporcie_bk": 8384,
     "przyrost_po_imporcie_bk": "z 8 384 na 10 084 — przyrost 1 700 pochodzi z okna BZP domknietego 2026-09-24T01:27:04Z (newTenders 1700), nie z BK",
-    "funkcje_potwierdzone_live": "firebase functions:list — 7/7 wdrozonych, v2, nodejs22, europe-central2 (aggregateResults, api, bkOknoFetch, bzpOknoFetch, dailyTenderFetch, remindDeadlines, weeklyDigest)"
+    "funkcje_potwierdzone_live": "firebase deploy: 7/7 zaktualizowanych + monitorWyszukiwan \"Successful create operation\" = 8 funkcji v2, nodejs22, europe-central2"
   },
   "testy": {
     "polecenie": "cd firebase/functions && npm test",
@@ -35,15 +36,17 @@
       "JAVA_TOOL_OPTIONS": "-Djdk.net.unixdomain.tmpdir=C:\\jtmp",
       "dlaczego": "domyślny java.io.tmpdir to ścieżka w notacji 8.3 (C:\\Users\\STARTK~1\\...), której connect() AF_UNIX na Windows odrzuca z EINVAL — Selector.open() pada i emulator nie startuje"
     },
-    "kiedy_wykonane": "2026-09-24, przed wdrozeniem etapu 4 (pelny przebieg z emulatorem)",
+    "kiedy_wykonane": "2026-09-24, przed i po wdrozeniu etapu 5 (pelny przebieg z emulatorem)",
     "status_w_audycie": "wykonane w tej sesji",
     "baseline_przed_etapem_4": "513/513",
     "mobile": {
       "polecenie": "cd mobile && npm test",
       "wynik": "711/711",
       "baseline_przed_etapem_4": "663/663",
-      "statyczna_kontrola": "npm run check (esbuild) — zielony"
-    }
+      "statyczna_kontrola": "npm run check (esbuild) — zielony",
+      "baseline_przed_etapem_5": "711/711"
+    },
+    "baseline_przed_etapem_5": "606/606"
   },
   "etapy": {
     "etap_1_p0": {
@@ -222,6 +225,66 @@
       ],
       "czego_nie_zmierzono": "Wyjasnienia dopasowania na zywym koncie — kazde konto z wypelnionym profilem uruchamia ponowne dopasowanie, czyli PLATNE AI. Polecenie etapu tego zabrania; wyjasnienie pokrywaja 29 asercji (19 na czystej funkcji + 10 przez realny serwer HTTP).",
       "zgodnosc": "zero platnego AI, zero Stripe, zero scrapingu — wylacznie wlasne API i dane juz w bazie"
+    },
+    "etap_5_monitoring": {
+      "stan": "backend wdrozony i zweryfikowany na produkcji; mobile gotowe w galezi do builda",
+      "data": "2026-09-24",
+      "cel": "Monitoring szans i terminow bez platnego AI: zapisane wyszukiwania z alertami, historia zmian BZP/TED/BK, kalendarz trzech terminow (P1-2 + P1-7)",
+      "commity": [
+        "f6fbeac - zapisane wyszukiwania: czysta logika (normalizacja, hamulec, limity)",
+        "96a9a59 - wykrywanie zmian ogloszenia + rozroznienie istotnosci",
+        "d88ea37 - kalendarz przetargu: trzy terminy, Europe/Warsaw, ICS",
+        "cde80b0 - warstwa danych: wyszukiwania, historia zmian, centrum alertow + indeksy",
+        "276306b - trasy CRUD /wyszukiwania i /alerty",
+        "f5e7f17 - historia zmian zapisywana w sciezce pobierania (BZP/TED/BK)",
+        "166a8b6 - plan przebiegu monitoringu (czysta logika decyzji o powiadomieniu)",
+        "11b700e - harmonogram monitorWyszukiwan co 2 h + push/e-mail",
+        "e5e7b2e - trasy kalendarza + eksport ICS",
+        "7c561b2 - mobilna warstwa czysta + metody klienta API",
+        "6d6dfc8 - trzy ekrany: obserwacje, centrum alertow, kalendarz",
+        "db9b051 - push z monitoringu prowadzi do centrum alertow",
+        "3649abc - decyzje D-062..D-066"
+      ],
+      "pliki": {
+        "backend_logika_czysta": "firebase/functions/src/lib/{zapisaneWyszukiwania,zmianyOgloszenia,planMonitoringu,kalendarzPrzetargu}.js",
+        "backend_dane": "firebase/functions/src/db/repos.js (wyszukiwania, historiaZmian, alerty + wykrywanie zmian w zaktualizujZeZrodla/oznaczAnulowany)",
+        "backend_trasy": "firebase/functions/src/routes/{wyszukiwania,alerty,kalendarz}.js",
+        "backend_harmonogram": "firebase/functions/src/jobs/monitorWyszukiwan.js + index.js (monitorWyszukiwan, cron 35 */2)",
+        "backend_sygnaly_bk": "firebase/functions/src/jobs/oknoBk.js (sygnalyZmiany: zrodlo_odcisk + status_zrodla)",
+        "indeksy": "firebase/firestore.indexes.json (fieldOverrides: wyszukiwania.alert_wlaczony i zmiany.wykryto_o w zakresie COLLECTION_GROUP, TTL 90 dni na alerty)",
+        "mobile_logika": "mobile/src/lib/{zapisaneWyszukiwania,centrumAlertow,kalendarzPrzetargu}.js",
+        "mobile_ui": "mobile/src/screens/{ZapisaneWyszukiwaniaScreen,CentrumAlertowScreen,KalendarzTerminowScreen}.js",
+        "mobile_zmienione": "mobile/src/components/KatalogWszystkich.js (przycisk \"Zapisz to wyszukiwanie\"), lib/nawigacjaPush.js, lib/narzedziaKatalog.js, api/client.js, navigation/RootNavigator.js"
+      },
+      "endpointy": [
+        "GET/POST /wyszukiwania - lista i zapis obserwacji (409 na duplikat i na limit)",
+        "GET/PATCH/DELETE /wyszukiwania/:id - odczyt, edycja CZASTKOWA, usuniecie (404 na cudze)",
+        "GET /wyszukiwania/czestotliwosci - slownik czestotliwosci i limitow PL/EN",
+        "GET /wyszukiwania/:id/podglad - co teraz pasuje; NIE konsumuje okna monitoringu",
+        "GET /alerty - centrum alertow + licznik nieprzeczytanych + slownik typow zmian",
+        "POST /alerty/:id/przeczytany, POST /alerty/przeczytane",
+        "GET /alerty/zmiany/:tenderId - pelna historia zmian ogloszenia",
+        "GET /kalendarz - trzy terminy kazdego zapisanego przetargu + karta nastepnego kroku",
+        "GET /kalendarz/:tenderId - kalendarz jednego ogloszenia",
+        "GET /kalendarz/ics - eksport pliku ICS (text/calendar, stabilne UID, VALARM 24 h)"
+      ],
+      "gwarancja_6h": {
+        "wykrycie": "okna zrodel co 3 h (bzpOknoFetch 20 */3, bkOknoFetch 50 */3)",
+        "powiadomienie": "monitorWyszukiwan co 2 h (35 */2)",
+        "najgorszy_przypadek": "5 h (1 h zapasu)",
+        "straznik": "test/monitorWyszukiwan.test.js czyta crony z index.js i liczy sume; zweryfikowany celowym zepsuciem kadencji na */6 -> test pada"
+      },
+      "bez_platnego_ai": "straznik w test/monitorWyszukiwan.test.js czyta zrodlo joba (po wycieciu komentarzy) i pilnuje, ze nie ma drogi do services/ai.js",
+      "blad_znaleziony_po_wdrozeniu": {
+        "opis": "harmonogram przepuszczal do zapytania `sort` zapisany przez uzytkownika; przy sortowaniu \"termin najblizej\" nowe ogloszenie z odleglym terminem nie miescilo sie na stronie skanu i obserwacja MILCZALA bez bledu",
+        "pomiar": "emulator, 52 ogloszenia z terminem 01.2027 + 1 nowe z terminem 2099, sufit 50: SORT=termin -> czyJestNOWY=0, SORT=najnowsze -> czyJestNOWY=1",
+        "naprawa": "harmonogram nadpisuje sort na \"najnowsze\" (spojne z tym, ze odcisk obserwacji od poczatku pomija sortowanie)",
+        "pulapka_testu": "pierwsza wersja testu regresyjnego PRZECHODZILA mimo bledu - punkt odniesienia brał Date.now()-1000, a zapis wypelniacza trwa dluzej niz sekunde"
+      },
+      "swiadomie_niedowiezione": [
+        "zapis pliku .ics z poziomu aplikacji - wymaga expo-file-system + expo-sharing, ktorych w projekcie nie ma; endpoint gotowy i zweryfikowany na produkcji (D-066)",
+        "pomiar pierwszego realnego przebiegu monitorWyszukiwan - funkcja wdrozona, cron 35 */2 nie odpalił sie w oknie sesji; przebieg OCZEKUJACY na harmonogram, nie zmierzony"
+      ]
     }
   },
   "nastepne_zrodlo": {
@@ -318,16 +381,31 @@
     "sprzatanie": "brak plikow .probe w drzewie (szukane rekurencyjnie) — nie bylo czego usuwac; firebase-debug.log (gitignored, 239 B) rowniez juz nie istnieje"
   },
   "nastepny_etap_p1": {
-    "rekomendacja": "P1-2 — zapisane wyszukiwania w trybie „Wszystkie\" + powiadomienie o nowym trafieniu",
-    "dlaczego_to": [
-      "Katalog dziala, ale kazde wejscie zaczyna sie od ustawiania tych samych filtrow — a wykonawca ma 2-3 stale obszary (branza + wojewodztwo + widelki), nie jeden.",
-      "Caly transport juz istnieje: filtry sa znormalizowane i serializowalne (lib/katalogPrzetargow.normalizujFiltry), a powiadomienia push dzialaja od D-050.",
-      "To jedyna droga, zeby tryb „Wszystkie\" przestal byc przegladarka, a stal sie drugim kanalem dostarczania — dzis rynek widzi tylko ten, kto sam wejdzie i poklika.",
-      "Zero nowego kosztu AI: dopasowanie zapisanego wyszukiwania to ten sam predykat `pasujeDoFiltrow`, ktory juz dziala."
+    "rekomendacja": "ETAP 6 — Wygrywalnosc i przygotowanie oferty na danych z ROZSTRZYGNIEC (nie na deklaracjach)",
+    "zdanie_dla_uzytkownika": "Zanim wlozysz tydzien w oferte: ile firm zwykle startuje u TEGO zamawiajacego, jaka cena tam wygrywa i czego konkretnie brakuje Ci w dokumentach.",
+    "dlaczego_to_teraz": [
+      "Etapy 1-5 domknely DOSTARCZANIE: rynek jest widoczny (katalog), obserwowany (zapisane wyszukiwania) i pilnowany w czasie (historia zmian, kalendarz trzech terminow). Kolejnym waskim gardlem nie jest juz \"czy zobacze przetarg\", tylko \"czy warto w niego wchodzic i czy zdazę sie przygotowac\".",
+      "Dane wynikowe JUZ SA ZBIERANE i nikt ich nie uzywa do decyzji: jobs/aggregateResults.js liczy statystyki rozstrzygniec co tydzien, a GET /matches/:id/wyniki je oddaje — ale zadne narzedzie oferty z nich nie korzysta.",
+      "Odbiorcy istnieja i sa przetestowani, brakuje im WEJSCIA: mobile/src/lib/{ocenaSzans,kalkulatorCeny,sprawdzarkaCeny,symulatorPunktacji,kartaDecyzji,sciezkaDoOferty}.js licza dzis na liczbach wpisanych recznie przez uzytkownika. Podlaczenie ich do realnych rozstrzygniec to zmiana wejscia, nie budowa od zera.",
+      "Sejf dokumentow (etap wczesniejszy) zna WAZNOSC dokumentow, a Radar SWZ zna WYMAGANIA postepowania — brakuje jednego zlaczenia: \"czego brakuje Ci na dzien skladania w TYM przetargu\". Kalendarz z etapu 5 dowozi do tego brakujacy element: przewidywany dzien zlozenia."
     ],
+    "zakres": {
+      "1_zrodlo_wynikow": "TED form-type=result jako uzupelnienie BZP (zmierzone read-only 2026-09-24: 4 297 polskich ogloszen / 30 dni). Dzis statystyki licza sie WYLACZNIE z BZP, wiec caly rynek unijny — czyli najwieksze kontrakty — jest w nich niewidoczny.",
+      "2_benchmark": "Benchmark per zamawiajacy i per dzial CPV: mediana liczby ofert, rozrzut cen zwyciezkich wzgledem wartosci szacunkowej, udzial postepowan uniewaznionych, udzial kryterium \"tylko cena\". Agregat liczony w jobie, nie na zadanie.",
+      "3_ocena_szans": "Karta \"twoje szanse\" na ekranie przetargu: ile firm zwykle startuje, jaka cena wygrywa, czy ten zamawiajacy rozstrzyga sama cena. BEZ platnego AI — to statystyka, nie generowanie tekstu.",
+      "4_przygotowanie": "Checklista \"co musisz miec do dnia skladania\": zlaczenie wymagan z Radaru SWZ, stanu Sejfu dokumentow i PRZEWIDYWANEGO dnia zlozenia z kalendarza etapu 5. Trzy koszyki jak w dopasowaniu sejfu: masz / przeterminuje sie / brakuje.",
+      "5_mobile": "Podlaczenie istniejacych narzedzi oferty do realnych danych zamiast recznych wpisow + karta szans w MatchDetail i KatalogDetail."
+    },
+    "czego_NIE_robic": [
+      "Nie obiecywac \"prawdopodobienstwa wygranej\" jako liczby z modelu. Rozstrzygniecia mowia, co sie stalo na rynku, a nie jak wypadnie TWOJA oferta — kazda liczba udajaca to drugie bylaby falszywym pomiarem.",
+      "Nie wpuszczac platnego AI do sciezki, ktora ma dzialac dla kazdego ogloszenia: benchmark to agregat liczbowy i musi byc darmowy w odczycie, tak jak katalog i monitoring."
+    ],
+    "mierzalny_efekt": "Wykonawca odrzuca przetarg, w ktorym nie ma szans, PRZED wlozeniem w niego pracy — i wie, czego mu brakuje w tym, w ktorym szanse ma.",
     "kolejne_w_kolejce": [
-      "TED planning jako czwarte zrodlo (zasila Radar planow postepowan — odbiorca istnieje i jest przetestowany, brakuje mu wylacznie danych)",
-      "P1-5 — pelne PL/EN w starszych ekranach (dzis mechanizm `tr` obejmuje nowe ekrany; reszta zostaje polska, co jest swiadome, nie przeoczone)"
+      "TED form-type=planning jako czwarte zrodlo (zasila Radar planow postepowan — odbiorca istnieje i jest przetestowany, brakuje mu wylacznie danych)",
+      "TED form-type=cont-modif (219 / 30 dni) — zmiany umow; etap 5 ma juz typ zmiany \"umowa\", ale dzis nikt go nie zasila",
+      "P1-5 — pelne PL/EN w starszych ekranach (dzis mechanizm `tr` obejmuje nowe ekrany; reszta zostaje polska, co jest swiadome, nie przeoczone)",
+      "Zapis pliku .ics w aplikacji (wymaga expo-file-system + expo-sharing — nowy build)"
     ]
   }
 }
