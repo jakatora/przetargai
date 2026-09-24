@@ -16,6 +16,8 @@ import legalRouter from './routes/legal.js';
 import demoRouter from './routes/demo.js';
 import statsRouter from './routes/stats.js';
 import mostRouter from './routes/most.js';
+import wyszukiwaniaRouter from './routes/wyszukiwania.js';
+import alertyRouter from './routes/alerty.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -88,6 +90,13 @@ export function createApp() {
    * /matches, bo /matches z definicji pokazuje WYCINEK przyciety profilem i planem.
    */
   app.use('/tenders', apiLimiter, tendersRouter);
+  /*
+   * Monitoring szans i terminow (etap 5). Osobno od /tenders, bo katalog jest
+   * BEZSTANOWY (odczyt rynku), a te trasy prowadza stan uzytkownika: co obserwuje
+   * i co juz zobaczyl. Oba routery lacza sie tylko przez normalizacje filtrow.
+   */
+  app.use('/wyszukiwania', apiLimiter, wyszukiwaniaRouter);
+  app.use('/alerty', apiLimiter, alertyRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminLimiter, adminRouter);
 
