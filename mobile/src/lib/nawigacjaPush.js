@@ -41,6 +41,8 @@ export function celPush(data) {
      */
     case 'nowe_trafienia':
     case 'zmiany':
+    // Radar planów: „przetarg z obserwowanego planu ogłoszono".
+    case 'plan_ogloszony':
       return {
         ekran: 'CentrumAlertow',
         params: data.klucz ? { podswietlKlucz: String(data.klucz) } : {},

@@ -54,3 +54,10 @@ test('push z monitoringu prowadzi do centrum alertow, nie w pustke', () => {
   // zeby zgubic cel nawigacji.
   assert.deepEqual(celPush({ type: 'zmiany' }), { ekran: 'CentrumAlertow', params: {} });
 });
+
+test('radar planów: „przetarg z planu ogłoszono" prowadzi do centrum alertów', () => {
+  assert.deepEqual(celPush({ type: 'plan_ogloszony', klucz: 'plan_657219-2026_ted~1' }), {
+    ekran: 'CentrumAlertow',
+    params: { podswietlKlucz: 'plan_657219-2026_ted~1' },
+  });
+});

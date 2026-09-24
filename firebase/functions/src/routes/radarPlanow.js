@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { users, tenders, planyPostepowan } from '../db/repos.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { users, tenders, planyPostepowan, obserwacjePlanow } from '../db/repos.js';
+import { badRequest, notFound, conflict } from '../lib/errors.js';
 import { zbudujRadar, zbudujSzczegolPlanu } from '../lib/widokRadaru.js';
+import { wpisObserwacji, LIMIT_OBSERWOWANYCH } from '../lib/obserwacjePlanow.js';
 
 /*
  * RADAR PLANÓW POSTĘPOWAŃ — „wiedz o przetargu tygodnie przed ogłoszeniem".
@@ -50,15 +51,60 @@ router.get('/', ah(async (req, res) => {
   });
 }));
 
+/**
+ * Obserwowane plany konta. Trasa PRZED `/:id` — inaczej Express wziąłby
+ * „obserwowane" za numer publikacji.
+ */
+router.get('/obserwowane', ah(async (req, res) => {
+  const lista = await obserwacjePlanow.lista(req.user.id);
+  res.json({ obserwowane: lista, limit: LIMIT_OBSERWOWANYCH });
+}));
+
+/**
+ * Włącza obserwację: monitoring (co 2 h) wyśle alert, gdy zamawiający ogłosi
+ * przetarg pasujący do planu z pewnością „pewne". Idempotentne — drugi klik
+ * zwraca tę samą obserwację (200 zamiast 201).
+ */
+router.post('/:id/obserwuj', ah(async (req, res) => {
+  const pozycja = await planyPostepowan.pobierz(req.params.id);
+  if (!pozycja) throw notFound('Pozycja planu nie została znaleziona');
+  const wynik = await obserwacjePlanow.dodaj(
+    req.user.id, wpisObserwacji(pozycja, new Date().toISOString()), LIMIT_OBSERWOWANYCH,
+  );
+  if (wynik.limit) {
+    throw conflict(`Możesz obserwować najwyżej ${LIMIT_OBSERWOWANYCH} planów — usuń któryś, żeby dodać nowy.`,
+      { kod: 'limit_obserwacji', limit: LIMIT_OBSERWOWANYCH });
+  }
+  res.status(wynik.nowa ? 201 : 200).json({
+    obserwacja: wynik.obserwacja,
+    // Bez NIP-u monitoring nie ma po czym złączyć planu z ogłoszeniem — mówimy to od razu.
+    ostrzezenie: pozycja.zamawiajacy_nip ? null : {
+      kod: 'brak_nip',
+      pl: 'Plan nie podaje NIP-u zamawiającego, więc alert może nie przyjść. Sprawdzaj radar ręcznie.',
+      en: 'The plan does not state the buyer tax ID, so the alert may not arrive. Check the radar manually.',
+    },
+  });
+}));
+
+router.delete('/:id/obserwuj', ah(async (req, res) => {
+  const usunieta = await obserwacjePlanow.usun(req.user.id, req.params.id);
+  if (!usunieta) throw notFound('Ten plan nie jest obserwowany');
+  res.json({ ok: true });
+}));
+
 router.get('/:id', ah(async (req, res) => {
   const pozycja = await planyPostepowan.pobierz(req.params.id);
   if (!pozycja) throw notFound('Pozycja planu nie została znaleziona');
 
-  const [user, przetargi] = await Promise.all([
+  const [user, przetargi, obserwowany] = await Promise.all([
     users.findById(req.user.id),
     tenders.poNipieZamawiajacego(pozycja.zamawiajacy_nip),
+    obserwacjePlanow.czyObserwowany(req.user.id, pozycja.id),
   ]);
-  res.json(zbudujSzczegolPlanu({ pozycja, uzytkownik: user, dzisiaj: dzisiajUtc(), przetargi }));
+  res.json({
+    ...zbudujSzczegolPlanu({ pozycja, uzytkownik: user, dzisiaj: dzisiajUtc(), przetargi }),
+    obserwowany,
+  });
 }));
 
 export default router;

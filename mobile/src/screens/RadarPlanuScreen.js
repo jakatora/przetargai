@@ -44,11 +44,15 @@ export default function RadarPlanuScreen({ route, navigation }) {
   const [dane, setDane] = useState(null);
   const [blad, setBlad] = useState(null);
   const [ladowanie, setLadowanie] = useState(true);
+  const [obserwowany, setObserwowany] = useState(false);
+  const [zapisObserwacji, setZapisObserwacji] = useState(false);
 
   const wczytaj = useCallback(async () => {
     setLadowanie(true);
     try {
-      setDane(await api.radarPlanu(id));
+      const odp = await api.radarPlanu(id);
+      setDane(odp);
+      setObserwowany(Boolean(odp?.obserwowany));
       setBlad(null);
     } catch (err) {
       setBlad(err.message);
@@ -58,6 +62,24 @@ export default function RadarPlanuScreen({ route, navigation }) {
   }, [id]);
 
   useEffect(() => { wczytaj(); }, [wczytaj]);
+
+  const przelaczObserwacje = async () => {
+    setZapisObserwacji(true);
+    try {
+      if (obserwowany) {
+        await api.przestanObserwowacPlan(id);
+        setObserwowany(false);
+      } else {
+        const odp = await api.obserwujPlan(id);
+        setObserwowany(true);
+        if (odp?.ostrzezenie) Alert.alert(t('Obserwujesz ten plan', 'You follow this plan'), t(odp.ostrzezenie.pl, odp.ostrzezenie.en));
+      }
+    } catch (err) {
+      Alert.alert(t('Nie udało się zapisać', 'Could not save'), err.message);
+    } finally {
+      setZapisObserwacji(false);
+    }
+  };
 
   if (ladowanie && !dane) {
     return <Screen><View style={styles.srodek}><ActivityIndicator size="large" color={kolory.blue} /></View></Screen>;
@@ -89,6 +111,19 @@ export default function RadarPlanuScreen({ route, navigation }) {
         <Text style={styles.podtytul}>
           {pozycja.zamawiajacy}{pozycja.region_nazwa ? ` · ${pozycja.region_nazwa}` : ''}
         </Text>
+      ) : null}
+
+      {/* Obserwacja zamyka pętlę: bez niej trzeba co kilka dni zaglądać samemu. */}
+      {!ogloszenie ? (
+        <Button
+          title={obserwowany
+            ? t('Obserwujesz — przestań obserwować', 'Following — stop following')
+            : t('Obserwuj — powiadom, gdy ogłoszą', 'Follow — notify me when published')}
+          variant={obserwowany ? 'ghost' : 'primary'}
+          onPress={przelaczObserwacje}
+          loading={zapisObserwacji}
+          style={styles.gapMaly}
+        />
       ) : null}
 
       {/* Najważniejsze na górze: czy przetarg już jest. */}

@@ -382,4 +382,9 @@ export const api = {
    * ogloszenie_sprawdzone, ostrzezenia }`. `ogloszenie.alarm` = „to jest to, na co czekałeś".
    */
   radarPlanu: (id) => request(`/radar-planow/${encodeURIComponent(id)}`),
+  /** Obserwuj plan: alert, gdy zamawiający ogłosi pasujący przetarg. → `{ obserwacja, ostrzezenie }`. */
+  obserwujPlan: (id) => request(`/radar-planow/${encodeURIComponent(id)}/obserwuj`, { method: 'POST', body: {} }),
+  przestanObserwowacPlan: (id) => request(`/radar-planow/${encodeURIComponent(id)}/obserwuj`, { method: 'DELETE' }),
+  /** Obserwowane plany konta → `{ obserwowane, limit }`. */
+  obserwowanePlany: () => request('/radar-planow/obserwowane'),
 };

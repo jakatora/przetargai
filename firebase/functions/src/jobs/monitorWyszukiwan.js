@@ -65,7 +65,7 @@ async function wczytajTenderyZmian(zmiany) {
  * powiadomienia nie dowiedziałoby się o niczym, a właśnie takie konta najczęściej
  * zakłada się „na próbę" i porzuca.
  */
-async function dostarcz({ user, alert, wyslijPush, wyslijEmail }) {
+export async function dostarcz({ user, alert, wyslijPush, wyslijEmail }) {
   const tresc = trescPush(alert);
 
   if (user?.push_token) {

@@ -229,6 +229,15 @@ export const monitorWyszukiwan = onSchedule(
     const { runMonitorWyszukiwan } = await import('./src/jobs/monitorWyszukiwan.js');
     const wynik = await runMonitorWyszukiwan();
 
+    // Obserwowane plany (Radar planów) — ta sama kadencja, osobny rachunek błędów.
+    // Awaria jednego monitoringu nie może zatrzymać drugiego.
+    const { runMonitorPlanow } = await import('./src/jobs/monitorPlanow.js');
+    const plany = await runMonitorPlanow().catch((err) => ({ ok: false, bledy: 1, error: err.message }));
+    console.log(JSON.stringify({ severity: plany.ok ? 'INFO' : 'ERROR', message: 'monitorPlanow zakończony', ...plany }));
+    if (!plany.ok && wynik.ok) {
+      throw new Error(`monitorPlanow: ${plany.bledy} obserwacji planów zakończyło się błędem`);
+    }
+
     if (!wynik.ok) {
       /*
        * Rzucamy, żeby Cloud Scheduler odnotował NIEPOWODZENIE i ponowił przebieg.

@@ -2263,3 +2263,62 @@ export const oknoPlanow = {
     await OKNO_PLANOW_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
   },
 };
+
+/*
+ * Obserwowane pozycje planu: users/{uid}/obserwowane_plany/{planDocId}.
+ * Subkolekcja, jak dopasowania: cudzej obserwacji nie da się nawet zaadresować.
+ * Monitoring czyta aktywne jednym zapytaniem collection-group (indeks w
+ * firestore.indexes.json, fieldOverrides: obserwowane_plany.aktywna).
+ */
+const obserwowaneCol = (userId) => db().collection('users').doc(userId).collection('obserwowane_plany');
+
+export const obserwacjePlanow = {
+  /**
+   * Dodaje obserwację. Powtórka tego samego planu zwraca istniejącą (idempotencja
+   * podwójnego kliknięcia), limit liczy się tylko przy NOWEJ.
+   * @returns {Promise<{obserwacja: object|null, nowa: boolean, limit?: boolean}>}
+   */
+  async dodaj(userId, wpis, limit) {
+    const ref = obserwowaneCol(userId).doc(tenderDocId(wpis.plan_id));
+    const istnieje = await ref.get();
+    if (istnieje.exists) return { obserwacja: { id: ref.id, ...istnieje.data() }, nowa: false };
+    const ile = (await obserwowaneCol(userId).where('aktywna', '==', true).count().get()).data().count;
+    if (ile >= limit) return { obserwacja: null, nowa: false, limit: true };
+    await ref.set(wpis);
+    return { obserwacja: { id: ref.id, ...wpis }, nowa: true };
+  },
+
+  async usun(userId, planId) {
+    const ref = obserwowaneCol(userId).doc(tenderDocId(planId));
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    await ref.delete();
+    return true;
+  },
+
+  async czyObserwowany(userId, planId) {
+    return (await obserwowaneCol(userId).doc(tenderDocId(planId)).get()).exists;
+  },
+
+  async lista(userId) {
+    const snap = await obserwowaneCol(userId).get();
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => String(b.utworzone_o ?? '').localeCompare(String(a.utworzone_o ?? '')));
+  },
+
+  /** Wszystkie AKTYWNE obserwacje wszystkich kont — wejście przebiegu monitoringu. */
+  async aktywne() {
+    const snap = await db().collectionGroup('obserwowane_plany').where('aktywna', '==', true).get();
+    return snap.docs.map((d) => ({ userId: d.ref.parent.parent.id, id: d.id, ...d.data() }));
+  },
+
+  async zapiszSprawdzenie(userId, id, { aktywna, zakonczenie, znalezione, teraz }) {
+    await obserwowaneCol(userId).doc(id).update({
+      aktywna,
+      zakonczenie: zakonczenie ?? null,
+      znalezione: znalezione ?? null,
+      ostatnio_sprawdzone_o: teraz,
+    });
+  },
+};

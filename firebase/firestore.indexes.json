@@ -145,6 +145,20 @@
       "fieldPath": "ttl",
       "ttl": true,
       "indexes": []
+    },
+    {
+      "collectionGroup": "obserwowane_plany",
+      "fieldPath": "aktywna",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
     }
   ]
 }
