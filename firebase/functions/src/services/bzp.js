@@ -3,6 +3,7 @@ import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
 import { parsujWadium } from '../lib/wadium.js';
 import { parsujKryterium, parsujCzesci } from '../lib/ogloszenieMeta.js';
+import { stanTempa, pobierzZPonowieniem, TEMPO_DOMYSLNE } from '../lib/tempoZapytan.js';
 
 /*
  * Klient publicznego API Biuletynu Zamówień Publicznych (e-Zamówienia).
@@ -131,94 +132,13 @@ function extractList(data) {
   return data?.content ?? data?.items ?? data?.notices ?? data?.results ?? data?.data ?? [];
 }
 
-/**
- * Kody, przy których ponawianie ma sens.
- *
- * 🚨 `403` to NIE jest „nasza wina". BZP dławi ruch: audyt 2026-09-23 zmierzył
- * ~9 szybkich zapytań → HTTP 403. Dawniej 403 wpadało do gałęzi „4xx nie ponawiamy",
- * więc jedno dławienie zabierało CAŁĄ dobę ogłoszeń — po cichu, bo błąd dnia był
- * tylko logowany. To najtańsze wytłumaczenie, dlaczego okno 7-dniowe kończyło się
- * na 1 330 ogłoszeniach zamiast ~5 000 (P0-2).
+/*
+ * Tempo, ponawianie i backoff mieszkają we WSPÓLNEJ bibliotece lib/tempoZapytan.js —
+ * ta sama wiedza (m.in. „403 to dławienie, nie trwały błąd") obowiązuje każde źródło.
+ * Re-eksport zostaje, bo testy odporności BZP celują w tę nazwę, a strategia
+ * docinania doby jest specyficzna dla BZP i musi móc podmienić tempo.
  */
-const PONAWIALNE = new Set([403, 429, 500, 502, 503, 504]);
-const PROBY = 3;
-const ODSTEP_BAZOWY_MS = 1500;
-
-/**
- * Tempo ruchu do BZP.
- *
- * Pomiar 2026-09-24 na żywym API: doba 2026-09-22 = 1 011 ogłoszeń w 17 zapytaniach
- * w ~14 s, bez jednego 403. Sztywne 3,5 s odstępu (bezpieczna wartość z audytu)
- * kosztowałoby 7 × 17 × 3,5 s ≈ 416 s i samo w sobie wywracało budżet funkcji.
- * Dlatego odstęp jest ADAPTACYJNY: jedziemy szybko, a po pierwszym 403 zwalniamy
- * na resztę okna. Lepiej stracić minutę niż dobę ogłoszeń.
- *
- * `spij` i `teraz` są wstrzykiwane w testach — inaczej zestaw testów spałby minutami.
- */
-export const TEMPO_DOMYSLNE = {
-  odstepMs: 250,
-  backoff403Ms: 20_000,
-  mnoznikPo403: 8,
-  maksOdstepMs: 4_000,
-  spij: (ms) => new Promise((r) => setTimeout(r, ms)),
-  teraz: () => Date.now(),
-};
-
-/** Stan tempa dla JEDNEGO okna — rośnie po trafieniu w throttling. */
-function stanTempa(tempo) {
-  const t = { ...TEMPO_DOMYSLNE, ...tempo };
-  return {
-    ...t,
-    biezacyOdstepMs: t.odstepMs,
-    wykonane: 0,
-    /** Odstęp PRZED kolejnym zapytaniem — pierwsze w oknie idzie od razu. */
-    async przedZapytaniem() {
-      if (this.wykonane > 0 && this.biezacyOdstepMs > 0) await this.spij(this.biezacyOdstepMs);
-      this.wykonane += 1;
-    },
-    zwolnij() {
-      this.biezacyOdstepMs = Math.min(this.maksOdstepMs, Math.max(1, this.biezacyOdstepMs) * this.mnoznikPo403);
-    },
-  };
-}
-
-/**
- * Pobiera stronę z BZP z ponowieniem i rosnącym odstępem.
- *
- * BZP bywa niedostępne przez chwilę. Bez ponowienia jednorazowa usterka sieci
- * oznaczała, że użytkownicy nie dostają TEGO DNIA żadnych nowych przetargów —
- * cykl uruchamia się raz na dobę (audyt 2026-07-10).
- *
- * Dławienie (403/429) ma WŁASNY, dłuższy backoff i trwale zwalnia tempo okna:
- * ponawianie co 1,5 s wchodzi drugi raz na tę samą minę.
- */
-async function pobierzZPonowieniem(url, tempo) {
-  let ostatniBlad = null;
-
-  for (let proba = 1; proba <= PROBY; proba++) {
-    try {
-      const res = await fetch(url, {
-        headers: { Accept: 'application/json', 'User-Agent': 'PrzetargAI/0.1' },
-        signal: AbortSignal.timeout(25_000),
-      });
-      if (res.ok || !PONAWIALNE.has(res.status) || proba === PROBY) return res;
-
-      const dlawienie = res.status === 403 || res.status === 429;
-      if (dlawienie) tempo.zwolnij();
-      logger.warn({ status: res.status, proba, dlawienie, odstepMs: tempo.biezacyOdstepMs },
-        'BZP: odpowiedź do ponowienia');
-      await tempo.spij(dlawienie ? tempo.backoff403Ms : ODSTEP_BAZOWY_MS * proba);
-      continue;
-    } catch (err) {
-      ostatniBlad = err;
-      if (proba === PROBY) break;
-      logger.warn({ err: err.message, proba }, 'BZP: błąd sieci, ponawiam');
-    }
-    await tempo.spij(ODSTEP_BAZOWY_MS * proba);
-  }
-
-  throw ostatniBlad ?? new Error('BZP: pobieranie nie powiodło się po ponowieniach');
-}
+export { TEMPO_DOMYSLNE };
 
 /**
  * Pobiera ogłoszenia o przetargach z publicznego API BZP.
@@ -241,7 +161,7 @@ export async function searchNotices({ publishedFrom, publishedTo, page = 0, size
   if (province) url.searchParams.set('OrganizationProvince', province);
 
   logger.info({ from, to, page: page + 1, size, province }, 'BZP: pobieranie ogłoszeń');
-  const res = await pobierzZPonowieniem(url, tempo ?? stanTempa());
+  const res = await pobierzZPonowieniem(url, tempo ?? stanTempa(), { zrodlo: 'BZP' });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`BZP API odpowiedziało ${res.status} ${res.statusText} — ${body.slice(0, 200)}`);
@@ -426,7 +346,7 @@ async function zapytanieSurowe({ noticeType, from, to, size = SUFIT_ZAPYTANIA, p
   url.searchParams.set('PageSize', String(size));
   if (province) url.searchParams.set('OrganizationProvince', province);
 
-  const res = await pobierzZPonowieniem(url, stanTempa());
+  const res = await pobierzZPonowieniem(url, stanTempa(), { zrodlo: 'BZP' });
   if (!res.ok) throw new Error(`BZP ${noticeType} odpowiedziało ${res.status}`);
   return extractList(await res.json());
 }
