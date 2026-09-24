@@ -16,13 +16,16 @@ import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
 import { uruchomSciezkeOdwolania } from '../lib/orkiestratorOdwolania';
 import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio';
 import * as storage from '../lib/storage';
+import { useAuth } from '../context/AuthContext';
+import { eksportujNaEmail } from '../services/eksportCsv';
 
 export default function SavedScreen({ navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleZapisanych);
   // Zakładki to drugi najczęściej otwierany ekran — dwujęzyczny jak feed (P1-5).
-  const { t } = useJezyk();
+  const { t, jezyk } = useJezyk();
   const { toggle } = useSaved();
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [blad, setBlad] = useState(false);
@@ -158,6 +161,13 @@ export default function SavedScreen({ navigation }) {
           </Pressable>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('KalendarzTerminow')} accessibilityRole="button">
             <Text style={styles.widokBtnTekst}>📅  {t('Kalendarz', 'Calendar')}</Text>
+          </Pressable>
+          <Pressable
+            style={styles.widokBtn}
+            onPress={() => eksportujNaEmail({ rodzaj: 'zapisane', email: user?.email, jezyk })}
+            accessibilityRole="button"
+          >
+            <Text style={styles.widokBtnTekst}>📤  {t('Excel', 'Excel')}</Text>
           </Pressable>
         </View>
       ) : null}

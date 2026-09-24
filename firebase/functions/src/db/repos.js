@@ -2322,3 +2322,26 @@ export const obserwacjePlanow = {
     });
   },
 };
+
+// ============================ limit wysyłki eksportu (P2-3) ============================
+
+/*
+ * Ile razy dziennie konto może wysłać sobie eksport CSV e-mailem. To wysyłka do
+ * WŁASNEGO adresu, ale każda idzie przez płatnego dostawcę poczty i nosi załącznik —
+ * sufit chroni przed pętlą w kliencie i przed nadużyciem konta.
+ */
+const eksportLimitDoc = (userId, dzien) =>
+  db().collection('users').doc(userId).collection('limity').doc(`eksport_${dzien}`);
+
+export const limitEksportu = {
+  async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
+    const ref = eksportLimitDoc(userId, dzien);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const wyslane = doc.exists ? (doc.data().wyslane ?? 0) : 0;
+      if (wyslane >= limit) return false;
+      tx.set(ref, { wyslane: wyslane + 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+};

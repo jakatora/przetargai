@@ -387,4 +387,13 @@ export const api = {
   przestanObserwowacPlan: (id) => request(`/radar-planow/${encodeURIComponent(id)}/obserwuj`, { method: 'DELETE' }),
   /** Obserwowane plany konta → `{ obserwowane, limit }`. */
   obserwowanePlany: () => request('/radar-planow/obserwowane'),
+
+  // ----- Eksport CSV (P2-3) -----
+  /**
+   * Wysyła plik CSV jako załącznik na e-mail WŁAŚCICIELA konta (adres z konta,
+   * nie z żądania). `rodzaj`: 'zapisane' | 'katalog'; `filtry` jak w getTenders.
+   * → `{ wyslano, tryb_degradacji, do, plik, wierszy, obciety }`. 429 = dzienny limit.
+   */
+  eksportWyslij: ({ rodzaj, filtry } = {}) =>
+    request('/eksport/wyslij', { method: 'POST', body: { rodzaj, ...(filtry ? { filtry } : {}) } }),
 };

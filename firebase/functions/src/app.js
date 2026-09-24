@@ -21,6 +21,7 @@ import alertyRouter from './routes/alerty.js';
 import kalendarzRouter from './routes/kalendarz.js';
 import wygrywalnoscRouter from './routes/wygrywalnosc.js';
 import radarPlanowRouter from './routes/radarPlanow.js';
+import eksportRouter from './routes/eksport.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -111,6 +112,8 @@ export function createApp() {
    * w odczycie: zwarty indeks planow TED + czyste moduly, bez AI.
    */
   app.use('/radar-planow', apiLimiter, radarPlanowRouter);
+  // Eksport CSV (P2-3): „Zapisane" i katalog do Excela / CRM-u.
+  app.use('/eksport', apiLimiter, eksportRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminLimiter, adminRouter);
 

@@ -18,6 +18,8 @@ import {
   opisPustki, etykietaLicznika, czyResetowacKursor,
 } from '../lib/katalogPrzetargow';
 import { etykietaZrodla } from '../lib/zrodlaDanych';
+import { useAuth } from '../context/AuthContext';
+import { eksportujNaEmail } from '../services/eksportCsv';
 
 /*
  * Tryb „Wszystkie" na głównej liście (P1-3).
@@ -92,7 +94,8 @@ function KartaPrzetargu({ tender, onPress, styles, t }) {
 export default function KatalogWszystkich({ navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKatalogu);
-  const { t } = useJezyk();
+  const { t, jezyk } = useJezyk();
+  const { user } = useAuth();
 
   const [filtry, setFiltry] = useState(FILTRY_DOMYSLNE);
   const [panelOtwarty, setPanelOtwarty] = useState(false);
@@ -340,6 +343,12 @@ export default function KatalogWszystkich({ navigation }) {
             title={t('Zapisz to wyszukiwanie', 'Save this search')}
             variant="ghost"
             onPress={() => navigation.navigate('ZapisaneWyszukiwania', { filtry })}
+            style={styles.wyczysc}
+          />
+          <Button
+            title={t('Wyślij listę do Excela (e-mail)', 'Send the list to Excel (e-mail)')}
+            variant="ghost"
+            onPress={() => eksportujNaEmail({ rodzaj: 'katalog', filtry: parametry, email: user?.email, jezyk })}
             style={styles.wyczysc}
           />
 
