@@ -55,3 +55,17 @@ export function zbudujPulpit(zapisane, teraz = Date.now()) {
 
   return { grupy, lacznie: items.length, wymagaUwagi };
 }
+
+/**
+ * Który stan pokazać na ekranie pulpitu (P1-8). Błąd wczytania bez żadnych danych to
+ * OSOBNY stan — nie wolno go pokazać jako „brak postępowań", bo to fałszywa informacja.
+ * Gdy lista jest już znana, błąd/odświeżanie jej nie chowa (zostaje ostatni stan).
+ * @param {{ladowanie: boolean, blad: boolean, lacznie: number}} s
+ * @returns {'ladowanie'|'blad'|'pusty'|'lista'}
+ */
+export function stanPulpitu({ ladowanie, blad, lacznie }) {
+  if (lacznie > 0) return 'lista';
+  if (ladowanie) return 'ladowanie';
+  if (blad) return 'blad';
+  return 'pusty';
+}

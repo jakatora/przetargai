@@ -7,7 +7,7 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
-import { zbudujPulpit } from '../lib/pulpit';
+import { zbudujPulpit, stanPulpitu } from '../lib/pulpit';
 
 /**
  * „MOJE POSTĘPOWANIA" (pulpit) — widok ETAPOWY zapisanych przetargów. Domyka triadę
@@ -20,13 +20,16 @@ export default function PulpitScreen({ navigation }) {
   const { t } = useJezyk();
   const [saved, setSaved] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [blad, setBlad] = useState(false);
 
   const wczytaj = useCallback(async () => {
     try {
       const d = await api.getSaved();
       setSaved(d.saved || []);
+      setBlad(false);
     } catch {
-      /* offline — zostaje ostatnia lista */
+      // Offline — zostaje ostatnia lista; bez niej pokazujemy BŁĄD, nie „brak postępowań" (P1-8).
+      setBlad(true);
     } finally {
       setLoading(false);
     }
@@ -45,11 +48,32 @@ export default function PulpitScreen({ navigation }) {
   };
   const kolorCzasu = (p) => (p.minal ? kolory.danger : p.pilny ? kolory.ostrzezenieTekst : kolory.textMuted);
 
-  if (loading) {
+  const stan = stanPulpitu({ ladowanie: loading, blad, lacznie });
+
+  if (stan === 'ladowanie') {
     return <View style={styles.center}><ActivityIndicator size="large" color={kolory.blue} /></View>;
   }
 
-  if (!lacznie) {
+  if (stan === 'blad') {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyIcon}>📡</Text>
+        <Text style={styles.emptyTitle}>{t('Nie udało się wczytać', 'Could not load')}</Text>
+        <Text style={styles.emptyText}>
+          {t('Sprawdź połączenie z internetem i spróbuj ponownie.', 'Check your internet connection and try again.')}
+        </Text>
+        <Pressable
+          style={styles.akcjaBtn}
+          onPress={() => { setLoading(true); wczytaj(); }}
+          accessibilityRole="button"
+        >
+          <Text style={styles.akcjaBtnTekst}>{t('Spróbuj ponownie', 'Try again')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (stan === 'pusty') {
     return (
       <View style={styles.center}>
         <Text style={styles.emptyIcon}>📋</Text>
@@ -60,6 +84,13 @@ export default function PulpitScreen({ navigation }) {
             'Save tenders with the star and set a stage („Considering", „Preparing"…) — we will gather them here in one view: how many are at each stage and what is urgent.',
           )}
         </Text>
+        <Pressable
+          style={styles.akcjaBtn}
+          onPress={() => navigation.navigate('MatchFeed')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.akcjaBtnTekst}>{t('Przeglądaj przetargi', 'Browse tenders')}</Text>
+        </Pressable>
       </View>
     );
   }
@@ -140,4 +171,12 @@ const tworzStylePulpitu = tworzStyle((k) => ({
   emptyIcon: { fontSize: 48, marginBottom: spacing.sm },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: k.text, textAlign: 'center' },
   emptyText: { fontSize: 14, color: k.textMuted, textAlign: 'center', marginTop: spacing.sm, lineHeight: 21 },
+  akcjaBtn: {
+    marginTop: spacing.lg,
+    backgroundColor: k.blue,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.md,
+  },
+  akcjaBtnTekst: { color: k.white, fontSize: 15, fontWeight: '700' },
 }));
