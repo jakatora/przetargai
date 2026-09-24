@@ -11,6 +11,173 @@ Najnowsze wpisy na górze.
 
 ---
 
+## 2026-09-24 — Etap 6: wygrywalność i przygotowanie oferty na danych z rozstrzygnięć
+
+Wdrożone na Cloud Functions. Funkcji jest **10** — doszły `wynikiOknoFetch`
+(okno rozstrzygnięć co 6 h) i `benchmarkPrzelicz` (przeliczenie benchmarku codziennie),
+obie z `Successful create operation`.
+
+Etap zaczął się od SONDY, nie od kodu — i to ją trzeba opisać najpierw, bo **trzy z czterech
+założeń planu okazały się błędne**.
+
+### Co obaliła sonda, zanim powstała pierwsza linijka
+
+| Założenie | Co jest naprawdę |
+|---|---|
+| BZP ma osobne typy ogłoszeń dla udzielenia, unieważnienia i zmiany umowy | Działają dokładnie trzy typy: `ContractNotice`, `TenderResultNotice`, `ConcessionNotice`. Pozostałych 18 sprawdzonych wariantów → HTTP 400. Rozstrzygnięcie to JEDEN typ, a rozróżnia je pole `procedureResult` |
+| Rabat względem kosztorysu da się policzyć z BZP | 4.3 jest NETTO (art. 28 Pzp), 6.4 zwykle BRUTTO. Mediana ilorazu na 46 ogłoszeniach = **1,0489**, skupiska dokładnie na 1,23 i 1,17 — to VAT, nie drożyzna rynku |
+| `contractors[]` można zipować z blokami HTML po kolejności | Indeksem jest NUMER CZĘŚCI. Część nierozstrzygnięta ma wpis pusty i nie ma bloku, więc zipowanie po kolejności przypisuje firmie cudzą część |
+| Tablice pól w TED są wzajemnie wyrównane | NIE są. `winner-size` ma długość równą liczbie części w 113/250 ogłoszeń |
+
+### Co zmierzone na próbce 200 ogłoszeń BZP (2026-09-22)
+
+| Fakt | Pomiar |
+|---|---|
+| Reguła „częścią jest blok z `5.1.)`" zgodna z `procedureResult` | **200/200** ogłoszeń (warianty „zawiera SEKCJA VI" 170/200, „liczba nagłówków" 164/200) |
+| Bloki z niepustym `procedureResult[numer-1]` po indeksowaniu NUMEREM | **545/545** |
+| Nazwa zwycięzcy z HTML zgodna z `contractors[numer-1]` | **395/395** (rozjazdów: 0) |
+| Unieważnienia — dotąd niewidoczne w statystykach | **150 z 545 części (27,5 %)** |
+| Ceny odzyskane po zdjęciu wymogu groszy | **+39 z 404 (9,6 %)** |
+| Identyfikator postępowania (`tenderId`) — klucz złączenia wynik→przetarg | 200/200 wyników i **3974/3974** ogłoszeń o zamówieniu |
+
+### Co zmierzone na żywym TED (250 i 500 ogłoszeń, 2026-09-24)
+
+| Fakt | Pomiar |
+|---|---|
+| `winner-name` wyrównane do liczby części | 162/250 |
+| `winner-size` wyrównane | **113/250** — reszta odcięta przez straż, i o to chodzi |
+| `tender-value` wyrównane | 168/250 |
+| `code.length === val.length` (pary ofert) | **250/250** |
+| kody ofert podzielne przez liczbę części | 208/250 — reszta dostaje `null` zamiast liczby z cudzej części |
+| `buyer-country-sub` w postaci NUTS | 250/250 (a `kodWojewodztwa('PL426')` dawał świętokrzyskie zamiast zachodniopomorskiego) |
+| `procedure-identifier` obecny po obu stronach | 100/100 wyników i 250/250 ogłoszeń konkursowych; zapytanie po nim zwraca obie publikacje |
+| Sonda dymna ingestu: 500 ogłoszeń | 0 odrzuconych, 1895 części, 922 z ceną, 151 unieważnionych, 895 ze zwycięzcą, 1918 z rodzajem w słowniku BZP |
+
+### Dwa błędy znalezione przez TESTY, nie przez przegląd
+
+1. **Kursor stronicowania rozstrzygnięć był samą DATĄ.** `opublikowano` nie jest unikalne
+   (BZP publikuje setki dziennie), więc `startAfter` przeskakiwał WSZYSTKIE dokumenty z danego
+   dnia i benchmark liczył się z ułamka rynku — po cichu, bo strona wracała pełna i bez błędu.
+   Kursor to teraz para (data, docId).
+2. **Strażnik indeksów Firestore miał lukę.** Wzorzec `[^)]*` zatrzymywał się na pierwszym
+   nawiasie, więc `where('nip','==',String(nip))` w ogóle nie był dopasowany — czyli dokładnie
+   ten kształt, który wymaga indeksu złożonego. Strażnik czyta teraz OKNO kodu do wykonania
+   zapytania i sprawdza, czy indeks jest zadeklarowany, zamiast zakazywać wzorca w ogóle.
+
+### Czego produkt NIE obiecuje
+
+Karta „Czy warto startować?" **nie podaje prawdopodobieństwa wygranej** i nie poda.
+Rozstrzygnięcia opisują rynek, nie konkretną ofertę. Werdykt jest kategorią, a treścią karty
+są czynniki — każdy z liczbą i z wielkością próbki, z której powstała. Zakaz obowiązuje też
+warstwę prezentacji: test czyta ŹRÓDŁO mobilnej biblioteki i pilnuje, żeby nie policzyła sobie
+wskaźnika z tonów.
+
+### Koszt policzony PRZED wdrożeniem, nie po rachunku
+
+Dwie rzeczy skalowałyby się liniowo i przekroczyłyby darmowe limity Firestore, a job
+kończyłby się przy tym sukcesem — czyli nikt by tego nie zauważył poza fakturą:
+
+1. **Okno TED nadpisywało cały swój zakres przy każdym przebiegu.** BZP ma checkpoint
+   dobowy, więc domknięta doba nie wraca; TED pytamy zakresem dat, nie dobami. Przy oknie
+   7 dni i przebiegu co 6 h dawało to ~3 400 × 4 = **13 600 zapisów na dobę** z jednego
+   zadania (limit darmowy: 20 000). Okno skrócone do 2 dni — przy czterech przebiegach
+   dziennie każda publikacja i tak jest pokryta ośmiokrotnie.
+2. **Benchmark utrwalał każdy kubełek, także bez wniosku.** Pomiar: 200 ogłoszeń jednego
+   dnia to **178 RÓŻNYCH zamawiających**, więc w rocznym oknie uzbiera się ich dziesiątki
+   tysięcy — a typowy urząd prowadzi kilka postępowań rocznie i nigdy nie przekroczy progu
+   próbki. Utrwalamy wyłącznie kubełki z wnioskiem; odpowiedź się nie zmienia, bo
+   `wybierzBenchmark` i tak pomija resztę, a karta mówi wtedy „za mało danych".
+   Dodatkowo twardy sufit odczytu (30 000 rozstrzygnięć) ze ZGŁOSZENIEM ucięcia.
+
+### Najważniejsze znalezisko etapu — na PRODUKCJI, nie w testach
+
+Pierwszy prawdziwy import rozstrzygnięć oddał `bzp_ogloszen: 0` i `doby_bledne: 3`
+przy `ok: true`. Powtórzenie zapytania ręcznie dało odpowiedź, której nie da się
+zinterpretować inaczej:
+
+```
+HTTP 500 {"error":"The string 'undefined' was not recognized as a valid DateTime."}
+```
+
+`oknoDoby(dzien)` oddaje `{ publishedFrom, publishedTo }` — te same nazwy przyjmuje
+`searchNotices`, którym idzie pobieranie OGŁOSZEŃ i dlatego ono działa. Ścieżka WYNIKÓW
+(`zapytanieSurowe`) przyjmowała `{ from, to }`, a wołający robił
+`zapytanieSurowe({ ...oknoDoby(dzien) })` — więc do adresu trafiało dosłowne
+`PublicationDateFrom=undefined`.
+
+**Pobieranie wyników postępowań z BZP nie zadziałało ANI RAZU od rundy 16.**
+`aggregateResults` biegał co tydzień, łapał błąd per doba, agregował pustą listę
+i kończył się `ok: true`. `GET /matches/:id/wyniki` zwracał `powod: 'brak_danych'` —
+nieodróżnialne od „w tej branży nie ma jeszcze rozstrzygnięć".
+
+Testy tego nie złapały, bo **wszystkie wstrzykiwały własny pobieracz doby**. Test, który
+zastępuje jedyne miejsce, gdzie mieszka błąd, potwierdza wyłącznie sam siebie.
+Naprawa: `zbudujUrlWynikow` wyeksportowany, rzuca przy braku okna czasu, a osobny plik
+testów sprawdza ADRES — że niesie prawdziwe daty i nie zawiera „undefined".
+
+Po naprawie, zmierzone na żywo: doba `2026-09-23` = **659 ogłoszeń w 13,1 s, 1404 części**,
+0,9 MB po sparsowaniu, RSS 190 MB (limit instancji 512 MiB).
+
+Druga naprawa z tej samej lekcji: przebieg uznawał się za udany, gdy przeszedł CHOCIAŻ
+jeden rejestr — więc pełna awaria BZP dawała `ok: true`, bo TED przeszedł. Teraz awaria
+całego rejestru = przebieg nieudany (ponowienie w Cloud Scheduler); pojedyncza zła doba
+nadal go nie wywraca i zostaje otwarta w checkpoincie.
+
+### Drugie znalezisko: filtr województwa ignoruje górną granicę okna
+
+Przebieg okna zaraportował `bzp_ogloszen: 3601`, a benchmark policzony zaraz potem
+przeczytał z bazy **2427** rozstrzygnięć. Pierwsza hipoteza („gubimy zapisy") była błędna.
+
+Pomiar na żywym API, doba `2026-09-23`:
+
+| wariant zapytania | n | rozkład `publicationDate` |
+|---|---|---|
+| samo okno doby | 500 (sufit) | 2026-09-23 = 500 |
+| okno doby + `OrganizationProvince=PL14` | 127 | 2026-09-23 = 116, **2026-09-24 = 11** |
+| pełna doba po docięciu 16 województw | 668 | 2026-09-23 = 564, **2026-09-24 = 104** |
+
+Z 667 ogłoszeń „doby 23 września" **564 pojawiło się także w zapytaniu o 22 września**.
+`OrganizationProvince` honoruje DOLNĄ granicę okna, a górną ignoruje — a docinanie po
+województwach jest jedynym sposobem na dobę przekraczającą sufit 500.
+
+Po odsianiu: doba 22.09 = 590 ogłoszeń (było 1154), doba 23.09 = 564 (było 667),
+**0 ogłoszeń spoza doby**. Znika mniej więcej połowa zapisów do Firestore, które i tak
+nadpisywały te same dokumenty, a licznik przebiegu zaczyna znaczyć to, co mówi.
+
+### Co potwierdzone na produkcji (`api-00038-gip`)
+
+| Sprawdzenie | Odczyt |
+|---|---|
+| `GET /wygrywalnosc/tender/:id`, `/benchmark`, `/matches/:id/czy-warto` bez tokenu | **401** (kontrolnie nieistniejąca trasa → **404**) |
+| Okno rozstrzygnięć, przebieg domykający | 14/14 dób, **zaległość 0**, 2948 ogłoszeń BZP / 5250 części, 401 TED / 1550 części, 10 zmian umów |
+| Budżet wyzwalacza operatora | przebieg 14 dób przekroczył 240 s i zostawił **3 doby OTWARTE**; kolejne wywołanie domknęło je w 76 s — checkpoint działa |
+| Benchmark | 5 805 rozstrzygnięć, 12 stron, **3 488 kubełków policzonych, 932 utrwalone, 2 556 bez wniosku** (nieutrwalone) |
+| `/health` | `wyniki_okno`: `doby_okna 14`, `doby_niedomkniete 0`, `error null` |
+
+Karta na trzech ŻYWYCH ogłoszeniach z katalogu (konto sondujące bez słów kluczowych
+i bez CPV, czyli zero wywołań płatnego AI; po pomiarach usunięte — `DELETE /auth/me` → 200,
+kontrolnie `GET /auth/me` → 401):
+
+| Ogłoszenie | Werdykt | Kubełek | Próbka | Co powiedziała karta |
+|---|---|---|---|---|
+| 2026/BZP 00453651 (żywność) | sprawdź | dział + region | 67 części | 93 % wygrywają mali, 1 % unieważnień, typowa cena 31 722 zł |
+| 2026/BZP 00453649 (odpady) | sprawdź | dział + region | 18 części | zwykle **1 oferta**, 0 % unieważnień |
+| 2026/BZP 00453647 (przepusty) | sprawdź | **zamawiający** | 16 części | 6 % unieważnień, typowa cena 121 770 zł |
+
+Zejście z kubełka zamawiającego do działu w regionie zadziałało dokładnie tam, gdzie
+zamawiający nie uzbierał progu próbki — czyli w dwóch przypadkach na trzy.
+
+Checklista na żywo: dzień złożenia liczony z terminu (np. `2026-10-05` przy terminie
+6 października), dokument ważny jeszcze 5 dni trafia do koszyka „straci ważność przed
+złożeniem", następny krok = ZUS.
+
+**Pułapka przy sprzątaniu:** `DELETE /auth/me` WYMAGA hasła w ciele żądania. Puste `{}`
+daje 400 i zostawia konto sierotę — zdarzyło się przy pierwszym przebiegu i zostało
+naprawione ręcznie (`/admin/users` → logowanie → DELETE z hasłem → 200, kontrolnie 401).
+Skrypt `skrypty/weryfikacja-wygrywalnosci.mjs` ma to już poprawione.
+
+---
+
 ## 2026-09-24 — Etap 5: monitoring szans i terminów (obserwacje, alerty, kalendarz)
 
 Wdrożone na Cloud Functions, rewizja końcowa **`api-00034-jot`** (wcześniej `api-00031-nij`).

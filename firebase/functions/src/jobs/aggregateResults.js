@@ -2,7 +2,7 @@ import { logger } from '../lib/logger.js';
 import { parsujWynik } from '../lib/wynikiParser.js';
 import { agregujWyniki } from '../lib/wynikiAgregacja.js';
 import { pobierzSuroweWynikiDnia } from '../services/bzp.js';
-import { wynikiStats } from '../db/repos.js';
+import { wynikiStats, rozstrzygniecia } from '../db/repos.js';
 import { dniWZakresie } from '../services/bzp.js';
 
 /**
@@ -28,16 +28,59 @@ import { dniWZakresie } from '../services/bzp.js';
  */
 const BUDZET_POBIERANIA_MS = 420_000;
 
+/**
+ * Ile rozstrzygnięć musi być już w bazie, żeby liczyć z niej zamiast z rejestru.
+ *
+ * Od etapu 6 okno `wynikiOknoFetch` zapisuje rozstrzygnięcia do kolekcji, więc
+ * ponowne ciągnięcie 30 dni z BZP jest zdublowaną pracą (~390 s ruchu). Próg
+ * chroni przed regresją pierwszego dnia: dopóki kolekcja jest pusta albo prawie
+ * pusta, statystyki liczą się po staremu, a `/matches/:id/wyniki` nie gaśnie.
+ */
+export const MIN_ROZSTRZYGNIEC_Z_BAZY = 50;
+
+/** Czyta rozstrzygnięcia z bazy stronami. Zwraca null, gdy jest ich za mało. */
+async function zBazy(od, { strona = 500 } = {}) {
+  const zebrane = [];
+  let kursor = null;
+  for (;;) {
+    const wynik = await rozstrzygniecia.strona({ od, limit: strona, kursor });
+    zebrane.push(...wynik.pozycje);
+    kursor = wynik.kursor;
+    if (wynik.koniec || !kursor) break;
+  }
+  return zebrane.length >= MIN_ROZSTRZYGNIEC_Z_BAZY ? zebrane : null;
+}
+
 export async function runWynikiAggregation({
   dni = 30,
   pobierzDzien = pobierzSuroweWynikiDnia,
   teraz = Date.now(),
   budzetMs = BUDZET_POBIERANIA_MS,
+  zrodloBazy = zBazy,
 } = {}) {
   const start = Date.now();
   const od = new Date(teraz - (dni - 1) * 86_400_000).toISOString().slice(0, 10);
   const do_ = new Date(teraz).toISOString().slice(0, 10);
   const listaDni = dniWZakresie(od, do_);
+
+  /*
+   * Ścieżka preferowana: kolekcja `rozstrzygniecia`. Nie dotyka rejestru, więc
+   * nie ma tu ani limitu czasu, ani ryzyka dławienia po stronie BZP.
+   */
+  const zapisane = await zrodloBazy(od).catch((err) => {
+    logger.error({ err: err.message }, 'Agregacja wyników: odczyt z bazy nieudany — wracam do rejestru');
+    return null;
+  });
+  if (zapisane) {
+    const bucketyZBazy = agregujWyniki(zapisane);
+    const zapisanychBucketow = await wynikiStats.zapisz(bucketyZBazy);
+    const wynikZBazy = {
+      ok: true, zrodlo: 'baza', dni: listaDni.length, bledneDni: 0, pominietychDni: 0,
+      ogloszen: zapisane.length, bucketow: zapisanychBucketow, durationMs: Date.now() - start,
+    };
+    logger.info(wynikZBazy, 'runWynikiAggregation: zakończono (z zapisanych rozstrzygnięć)');
+    return wynikZBazy;
+  }
 
   const sparsowane = [];
   let bledneDni = 0;
@@ -63,11 +106,11 @@ export async function runWynikiAggregation({
   }
 
   const buckety = agregujWyniki(sparsowane);
-  const zapisane = await wynikiStats.zapisz(buckety);
+  const zapisaneBuckety = await wynikiStats.zapisz(buckety);
 
   const wynik = {
-    ok: true, dni: listaDni.length, bledneDni, pominietychDni,
-    ogloszen: sparsowane.length, bucketow: zapisane, durationMs: Date.now() - start,
+    ok: true, zrodlo: 'rejestr', dni: listaDni.length, bledneDni, pominietychDni,
+    ogloszen: sparsowane.length, bucketow: zapisaneBuckety, durationMs: Date.now() - start,
   };
   logger.info(wynik, 'runWynikiAggregation: zakończono');
   return wynik;

@@ -36,6 +36,10 @@ test('agreguje wyniki z wielu dni i zapisuje bucket odczytywalny per klucz', asy
   const wynik = await runWynikiAggregation({
     dni: 3,
     teraz: new Date('2026-07-10T12:00:00Z').getTime(),
+    // Wymuszamy ścieżkę REJESTRU: emulator ma wspólną bazę na cały przebieg, więc
+    // rozstrzygnięcia zapisane przez inne pliki testowe przełączyłyby job na bazę
+    // i ten test mierzyłby coś innego, niż mówi jego nazwa.
+    zrodloBazy: async () => null,
     pobierzDzien: async (d) => dane[d] ?? [],
   });
 
@@ -55,6 +59,7 @@ test('budżet czasu: przerywa pobieranie i AGREGUJE to, co zebrane (nie ginie mi
   const wynik = await runWynikiAggregation({
     dni: 30,
     teraz: new Date('2026-07-30T12:00:00Z').getTime(),
+    zrodloBazy: async () => null,
     budzetMs: -1, // gwarantuje przerwanie na pierwszej iteracji (0 > -1)
     pobierzDzien: async () => {
       wywolan++;
@@ -71,6 +76,7 @@ test('awaria jednego dnia nie przerywa agregacji reszty', async () => {
   const wynik = await runWynikiAggregation({
     dni: 2,
     teraz: new Date('2026-07-10T12:00:00Z').getTime(),
+    zrodloBazy: async () => null,
     pobierzDzien: async (d) => {
       if (d === '2026-07-09') throw new Error('BZP padło');
       return [surowe('B-1', 'PL24', '90000', 3), surowe('B-2', 'PL24', '90000', 3),
@@ -79,4 +85,55 @@ test('awaria jednego dnia nie przerywa agregacji reszty', async () => {
   });
   assert.equal(wynik.bledneDni, 1);
   assert.ok((await wynikiStats.pobierz('45|Works|24')), 'dobry dzień i tak dał bucket');
+});
+
+/*
+ * Od etapu 6 rozstrzygnięcia leżą w bazie (`wynikiOknoFetch`), więc ponowne
+ * ciągnięcie 30 dni z BZP było zdublowaną pracą (~390 s ruchu sieciowego).
+ * Job liczy z bazy, gdy jest z czego — a gdy nie ma, wraca do rejestru, żeby
+ * `/matches/:id/wyniki` nie zgasło pierwszego dnia po wdrożeniu.
+ */
+test('liczy z ZAPISANYCH rozstrzygnięć, nie dotykając rejestru', async () => {
+  let siegnietoPoRejestr = false;
+  const zBazy = [{
+    cpv: ['45233000-9'], rodzaj: 'Works', wojewodztwo: '14',
+    czesci: [1, 2, 3].map((n) => ({ liczbaOfert: n, cenaWybrana: n * 1000, spojne: true })),
+  }];
+
+  const wynik = await runWynikiAggregation({
+    dni: 30,
+    teraz: new Date('2026-07-10T12:00:00Z').getTime(),
+    zrodloBazy: async () => zBazy,
+    pobierzDzien: async () => { siegnietoPoRejestr = true; return []; },
+  });
+
+  assert.equal(wynik.zrodlo, 'baza');
+  assert.equal(siegnietoPoRejestr, false, 'job poszedł po dane do BZP mimo danych w bazie');
+  assert.ok(wynik.bucketow >= 1);
+});
+
+test('za mało danych w bazie = powrót do rejestru, a nie puste statystyki', async () => {
+  let siegnietoPoRejestr = false;
+  const wynik = await runWynikiAggregation({
+    dni: 2,
+    teraz: new Date('2026-07-10T12:00:00Z').getTime(),
+    zrodloBazy: async () => null, // próg MIN_ROZSTRZYGNIEC_Z_BAZY niespełniony
+    pobierzDzien: async () => {
+      siegnietoPoRejestr = true;
+      return [surowe('B-1', 'PL14', '100000', 4)];
+    },
+  });
+  assert.equal(wynik.zrodlo, 'rejestr');
+  assert.equal(siegnietoPoRejestr, true);
+});
+
+test('awaria odczytu bazy NIE gasi statystyk — job wraca do rejestru', async () => {
+  const wynik = await runWynikiAggregation({
+    dni: 2,
+    teraz: new Date('2026-07-10T12:00:00Z').getTime(),
+    zrodloBazy: async () => { throw new Error('Firestore niedostępny'); },
+    pobierzDzien: async () => [surowe('C-1', 'PL14', '100000', 4)],
+  });
+  assert.equal(wynik.ok, true);
+  assert.equal(wynik.zrodlo, 'rejestr');
 });

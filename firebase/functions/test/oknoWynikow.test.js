@@ -10,7 +10,7 @@ await polaczZEmulatorem();
 const {
   runOknoWynikow, wybierzDniWynikow, zaktualizujCheckpointWynikow, dobyNiedomknieteWynikow,
 } = await import('../src/jobs/oknoWynikow.js');
-const { rozstrzygniecia, oknoWynikow } = await import('../src/db/repos.js');
+const { rozstrzygniecia, modyfikacjeUmow, oknoWynikow } = await import('../src/db/repos.js');
 
 const KATALOG = dirname(fileURLToPath(import.meta.url));
 const fixture = (nazwa) =>
@@ -78,6 +78,7 @@ describe('okno rozstrzygnięć — przebieg', () => {
     const wynik = await runOknoWynikow({
       dniBzp: 2, dniTed: 2, teraz: DZIS,
       pobierzDzienBzp: async (dzien) => (dzien === '2026-09-23' ? [wynikBzp] : []),
+      pobierzModyfikacje: async () => [],
       pobierzTed: async () => {
         const { mapujWynikTed } = await import('../src/services/tedWyniki.js');
         return wynikiTed.map(mapujWynikTed);
@@ -95,7 +96,7 @@ describe('okno rozstrzygnięć — przebieg', () => {
     await runOknoWynikow({
       dniBzp: 1, dniTed: 1, teraz: DZIS,
       pobierzDzienBzp: async () => [wynikBzp],
-      pobierzTed: async () => [],
+      pobierzTed: async () => [], pobierzModyfikacje: async () => [],
     });
     const znalezione = await rozstrzygniecia.poPostepowaniu(wynikBzp.tenderId);
     assert.ok(znalezione, 'rozstrzygnięcia nie da się znaleźć po postępowaniu');
@@ -107,7 +108,7 @@ describe('okno rozstrzygnięć — przebieg', () => {
     const opcje = {
       dniBzp: 1, dniTed: 1, teraz: DZIS,
       pobierzDzienBzp: async () => [wynikBzp],
-      pobierzTed: async () => [],
+      pobierzTed: async () => [], pobierzModyfikacje: async () => [],
     };
     await runOknoWynikow(opcje);
     await runOknoWynikow(opcje);
@@ -120,11 +121,43 @@ describe('okno rozstrzygnięć — przebieg', () => {
     const wynik = await runOknoWynikow({
       dniBzp: 1, dniTed: 1, teraz: DZIS,
       pobierzDzienBzp: async () => [wynikBzp],
+      pobierzModyfikacje: async () => [],
       pobierzTed: async () => { throw new Error('TED result odpowiedziało 429'); },
     });
     assert.equal(wynik.bzp_ogloszen, 1);
-    assert.match(wynik.error, /429/);
+    assert.match(wynik.error_ted, /429/);
     assert.equal(wynik.ted_ogloszen, 0);
+    assert.equal(wynik.ok, false, 'awaria całego rejestru musi być nieudanym przebiegiem');
+  });
+
+  test('CAŁY rejestr BZP w błędzie = przebieg NIEUDANY, choćby TED przeszedł', async () => {
+    /*
+     * Pierwsza wersja uznawała przebieg za udany, gdy przeszedł chociaż jeden
+     * rejestr. Na produkcji BZP padło na wszystkich dobach, TED przeszedł —
+     * i przebieg zaraportował sukces z zerem ogłoszeń z połowy rynku.
+     */
+    const wynik = await runOknoWynikow({
+      dniBzp: 2, dniTed: 1, teraz: Date.UTC(2026, 5, 24),
+      pobierzDzienBzp: async () => { throw new Error('BZP TenderResultNotice odpowiedziało 500'); },
+      pobierzTed: async () => [], pobierzModyfikacje: async () => [],
+    });
+    assert.equal(wynik.ok, false);
+    assert.match(wynik.error_bzp, /500/);
+    assert.equal(wynik.error_ted, null);
+  });
+
+  test('POJEDYNCZA zła doba nie wywraca przebiegu — zostaje otwarta w checkpoincie', async () => {
+    const wynik = await runOknoWynikow({
+      dniBzp: 3, dniTed: 1, teraz: Date.UTC(2026, 5, 24),
+      pobierzDzienBzp: async (dzien) => {
+        if (dzien === '2026-06-23') throw new Error('BZP 503');
+        return [];
+      },
+      pobierzTed: async () => [], pobierzModyfikacje: async () => [],
+    });
+    assert.equal(wynik.ok, true);
+    assert.equal(wynik.doby_bledne, 1);
+    assert.ok(wynik.doby_niedomkniete >= 1);
   });
 
   test('awaria doby BZP nie zatrzymuje pozostałych dób', async () => {
@@ -134,7 +167,7 @@ describe('okno rozstrzygnięć — przebieg', () => {
         if (dzien === '2026-09-23') throw new Error('BZP 503');
         return [];
       },
-      pobierzTed: async () => [],
+      pobierzTed: async () => [], pobierzModyfikacje: async () => [],
     });
     assert.equal(wynik.doby_bledne, 1);
     assert.equal(wynik.doby_pobrane, 3);
@@ -143,7 +176,7 @@ describe('okno rozstrzygnięć — przebieg', () => {
   test('ślad przebiegu ląduje w /health razem z zaległością okna', async () => {
     await runOknoWynikow({
       dniBzp: 3, dniTed: 1, teraz: DZIS,
-      pobierzDzienBzp: async () => [], pobierzTed: async () => [],
+      pobierzDzienBzp: async () => [], pobierzTed: async () => [], pobierzModyfikacje: async () => [],
     });
     const stan = await oknoWynikow.wczytaj();
     assert.ok(stan.ostatni_przebieg.zakonczony_o);
@@ -155,10 +188,70 @@ describe('okno rozstrzygnięć — przebieg', () => {
     // domknąłby część dób i test mierzyłby cudzy stan zamiast budżetu.
     const wynik = await runOknoWynikow({
       dniBzp: 5, dniTed: 1, teraz: Date.UTC(2026, 6, 24), budzetMs: -1,
-      pobierzDzienBzp: async () => [], pobierzTed: async () => [],
+      pobierzDzienBzp: async () => [], pobierzTed: async () => [], pobierzModyfikacje: async () => [],
     });
     assert.equal(wynik.doby_pobrane, 0);
     assert.equal(wynik.doby_pominiete, 5);
     assert.ok(wynik.doby_niedomkniete >= 4);
+  });
+});
+
+describe('okno rozstrzygnięć — zmiany umów (TED cont-modif)', () => {
+  const ZNAK = `mod-${process.pid}`;
+  const zmiana = (numer, postepowanie, dzien) => ({
+    externalId: `ted:${ZNAK}-${numer}`,
+    tenderId: postepowanie,
+    zrodlo: 'ted',
+    typ: 'modyfikacja_umowy',
+    zamawiajacy: 'SZPITAL',
+    opublikowano: dzien,
+    ogloszeniePierwotne: '418625-2025',
+    umowy: ['Umowa nr 6470'],
+    wartoscPoZmianie: 55_437_548.63,
+    uzasadnienie: 'Roboty dodatkowe — usunięcie kolizji instalacji.',
+  });
+
+  test('zapisuje zmiany umów do OSOBNEJ kolekcji, nie do rozstrzygnięć', async () => {
+    const postepowanie = `ocds-${ZNAK}-a`;
+    const wynik = await runOknoWynikow({
+      dniBzp: 1, dniTed: 1, teraz: DZIS,
+      pobierzDzienBzp: async () => [],
+      pobierzTed: async () => [],
+      pobierzModyfikacje: async () => [zmiana(1, postepowanie, '2026-09-20')],
+    });
+    assert.equal(wynik.modyfikacji_umow, 1);
+
+    const znalezione = await modyfikacjeUmow.dlaPostepowania(postepowanie);
+    assert.equal(znalezione.length, 1);
+    assert.equal(znalezione[0].typ, 'modyfikacja_umowy');
+    assert.equal(await rozstrzygniecia.poPostepowaniu(postepowanie), null,
+      'zmiana umowy wylądowała wśród rozstrzygnięć');
+  });
+
+  test('wiele zmian tej samej umowy zostaje HISTORIĄ, a nie nadpisuje się', async () => {
+    const postepowanie = `ocds-${ZNAK}-b`;
+    await runOknoWynikow({
+      dniBzp: 1, dniTed: 1, teraz: DZIS,
+      pobierzDzienBzp: async () => [], pobierzTed: async () => [],
+      pobierzModyfikacje: async () => [
+        zmiana(10, postepowanie, '2026-05-10'),
+        zmiana(11, postepowanie, '2026-09-10'),
+      ],
+    });
+    const historia = await modyfikacjeUmow.dlaPostepowania(postepowanie);
+    assert.equal(historia.length, 2);
+    assert.equal(historia[0].opublikowano, '2026-09-10', 'najnowsza zmiana ma być pierwsza');
+  });
+
+  test('awaria zmian umów NIE kasuje zapisanych rozstrzygnięć', async () => {
+    const wynik = await runOknoWynikow({
+      dniBzp: 1, dniTed: 1, teraz: DZIS,
+      pobierzDzienBzp: async () => [fixture('wynik-czesci-mieszane')],
+      pobierzTed: async () => [],
+      pobierzModyfikacje: async () => { throw new Error('TED cont-modif 429'); },
+    });
+    assert.equal(wynik.bzp_ogloszen, 1);
+    assert.match(wynik.error_modyfikacji, /429/);
+    assert.equal(wynik.modyfikacji_umow, 0);
   });
 });

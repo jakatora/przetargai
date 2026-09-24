@@ -25,6 +25,18 @@ export const DNI_BENCHMARKU = 365;
 const STRONA = 500;
 
 /**
+ * Twardy sufit liczby odczytanych rozstrzygnięć.
+ *
+ * Firestore liczy KAŻDY odczytany dokument. Rok rynku to docelowo ponad sto tysięcy
+ * rozstrzygnięć, więc codzienne przemielenie całego okna rosłoby liniowo, aż
+ * przekroczyłoby limit odczytów — i to bez żadnego ostrzeżenia, bo job nadal
+ * kończyłby się sukcesem. Sufit zatrzymuje odczyt świadomie i ZGŁASZA ucięcie
+ * (`ucietySufit`), żeby dało się je zobaczyć, zamiast domyślać się z rachunku.
+ * Czytamy od najnowszych, więc ucięcie traci najstarsze obserwacje.
+ */
+export const MAKS_ROZSTRZYGNIEC = 30_000;
+
+/**
  * Ile czasu wolno zużyć na czytanie kolekcji, zanim przejdziemy do zapisu.
  *
  * 🚨 Ta sama lekcja, co w `aggregateResults`: praca ucięta przez timeout platformy
@@ -50,6 +62,7 @@ export async function runBenchmarkRynku({
   let przeczytane = 0;
   let stronPrzeczytanych = 0;
   let budzetWyczerpany = false;
+  let ucietySufit = false;
 
   // Czytamy stronami i od razu odkładamy do pamięci TYLKO to, co potrzebne
   // agregacji (rozstrzygnięcie bez `raw`), a strony odrzucamy.
@@ -74,6 +87,11 @@ export async function runBenchmarkRynku({
       });
     }
     kursor = nastepny;
+    if (przeczytane >= MAKS_ROZSTRZYGNIEC) {
+      ucietySufit = true;
+      logger.warn({ przeczytane }, 'benchmark: sufit odczytów osiągnięty — liczę z najnowszych');
+      break;
+    }
     if (koniec || !nastepny) break;
   }
 
@@ -81,7 +99,21 @@ export async function runBenchmarkRynku({
     ...benchmarkZamawiajacych(partie),
     ...benchmarkDzialowCpv(partie),
   };
-  const zapisane = await repoBenchmark.zapisz(kubelki);
+
+  /*
+   * 🚨 UTRWALAMY WYŁĄCZNIE KUBEŁKI Z WNIOSKIEM. Zmierzone na żywej próbce BZP:
+   * 200 ogłoszeń jednego dnia to 178 RÓŻNYCH zamawiających, więc w rocznym oknie
+   * uzbiera się ich dziesiątki tysięcy — a typowy urząd prowadzi kilka postępowań
+   * rocznie, czyli nigdy nie przekroczy progu próbki. Zapisywanie ich wszystkich
+   * co dobę przekraczałoby darmowy limit zapisów Firestore samym tym zadaniem,
+   * nie zmieniając ani jednej odpowiedzi: `wybierzBenchmark` i tak pomija kubełki
+   * bez wniosku. Kubełek bez próbki = BRAK dokumentu, a karta mówi wtedy „za mało
+   * danych" — ta sama treść, zero kosztu.
+   */
+  const zWnioskiem = Object.fromEntries(
+    Object.entries(kubelki).filter(([, k]) => k.wystarczajacaProbka),
+  );
+  const zapisane = await repoBenchmark.zapisz(zWnioskiem);
 
   const wynik = {
     ok: true,
@@ -89,8 +121,12 @@ export async function runBenchmarkRynku({
     rozstrzygniec: przeczytane,
     stron: stronPrzeczytanych,
     kubelkow: zapisane,
-    kubelkow_z_wnioskiem: Object.values(kubelki).filter((k) => k.wystarczajacaProbka).length,
+    // Ile kubełków policzono, a ile pominięto jako zbyt małą próbkę — bez tej
+    // liczby „mało kubełków" wygląda identycznie jak „mało danych w rejestrze".
+    kubelkow_policzonych: Object.keys(kubelki).length,
+    kubelkow_bez_wniosku: Object.keys(kubelki).length - zapisane,
     budzet_wyczerpany: budzetWyczerpany,
+    uciety_sufit: ucietySufit,
     durationMs: Date.now() - start,
     zakonczony_o: new Date().toISOString(),
   };

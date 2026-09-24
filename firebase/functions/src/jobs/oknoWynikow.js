@@ -1,8 +1,8 @@
 import { logger } from '../lib/logger.js';
 import { parsujWynik } from '../lib/wynikiParser.js';
 import { pobierzSuroweWynikiDnia, dniWZakresie } from '../services/bzp.js';
-import { pobierzWynikiTed } from '../services/tedWyniki.js';
-import { rozstrzygniecia, oknoWynikow as repoOkna } from '../db/repos.js';
+import { pobierzWynikiTed, pobierzModyfikacjeTed } from '../services/tedWyniki.js';
+import { rozstrzygniecia, modyfikacjeUmow, oknoWynikow as repoOkna } from '../db/repos.js';
 
 /*
  * OKNO ROZSTRZYGNIĘĆ (etap 6) — kompletne źródło „co się w tych przetargach stało".
@@ -31,8 +31,18 @@ import { rozstrzygniecia, oknoWynikow as repoOkna } from '../db/repos.js';
 /** Ile dni wstecz trzymamy otwarte okno rozstrzygnięć BZP. */
 export const DNI_OKNA_BZP = 14;
 
-/** Ile dni wstecz pytamy TED w jednym przebiegu. */
-export const DNI_OKNA_TED = 7;
+/**
+ * Ile dni wstecz pytamy TED w jednym przebiegu.
+ *
+ * 🚨 To jest decyzja o KOSZCIE ZAPISÓW, nie o świeżości. BZP ma checkpoint dobowy,
+ * więc domknięta doba nie jest pobierana ponownie — TED takiego checkpointu nie ma
+ * (pytamy zakresem dat, nie dobami), więc KAŻDY przebieg nadpisuje cały swój zakres.
+ * Przy oknie 7 dni i przebiegu co 6 h dawało to ~3 400 × 4 = 13 600 zapisów na dobę,
+ * czyli powyżej darmowego limitu Firestore (20 000/dobę) tylko z tego jednego zadania.
+ * Okno 2 dni przy czterech przebiegach dziennie nadal daje ośmiokrotne pokrycie każdej
+ * publikacji — awaria jednego przebiegu niczego nie gubi.
+ */
+export const DNI_OKNA_TED = 2;
 
 /**
  * Ile czasu wolno zużyć na JEDEN przebieg.
@@ -102,6 +112,7 @@ export async function runOknoWynikow({
   teraz = Date.now(),
   pobierzDzienBzp = pobierzSuroweWynikiDnia,
   pobierzTed = pobierzWynikiTed,
+  pobierzModyfikacje = pobierzModyfikacjeTed,
 } = {}) {
   const start = Date.now();
   const dzisiaj = new Date(teraz).toISOString().slice(0, 10);
@@ -157,6 +168,21 @@ export async function runOknoWynikow({
     logger.error({ err: err.message }, 'okno wyników: TED pominięty');
   }
 
+  /*
+   * Zmiany umów (`cont-modif`) — osobny typ formularza i osobna kolekcja.
+   * Wolumen jest mały (zmierzone: 39 ogłoszeń w tygodniu), więc jedno zapytanie
+   * wystarcza; awaria nie może ruszyć tego, co zapisały rozstrzygnięcia.
+   */
+  let zapisaneModyfikacje = 0;
+  let bladModyfikacji = null;
+  try {
+    const odTed = new Date(teraz - (dniTed - 1) * 86_400_000).toISOString().slice(0, 10);
+    zapisaneModyfikacje = await modyfikacjeUmow.zapiszWiele(await pobierzModyfikacje({ odDnia: odTed }));
+  } catch (err) {
+    bladModyfikacji = err.message;
+    logger.error({ err: err.message }, 'okno wyników: zmiany umów pominięte');
+  }
+
   const nowyStan = zaktualizujCheckpointWynikow({
     checkpoint, raport, pominieteDni, dni: dniOkna, dzisiaj,
     teraz: new Date().toISOString(),
@@ -165,11 +191,26 @@ export async function runOknoWynikow({
     logger.error({ err: err.message }, 'okno wyników: nie udało się zapisać checkpointu'));
 
   const bledneDni = raport.filter((w) => w.blad).length;
+  /*
+   * 🚨 CAŁY REJESTR NIE MOŻE PAŚĆ W CISZY.
+   *
+   * Pierwsza wersja uznawała przebieg za udany, gdy przeszedł CHOCIAŻ jeden rejestr.
+   * Na produkcji BZP padło na wszystkich trzech dobach (adres niósł `undefined`
+   * zamiast dat), TED przeszedł — i przebieg zaraportował `ok: true`. Gdyby nie
+   * `bzp_ogloszen: 0` w odpowiedzi, nikt by się nie dowiedział, że połowa rynku
+   * nie weszła. Teraz: awaria WSZYSTKICH podjętych dób jednego rejestru albo awaria
+   * drugiego = przebieg nieudany, czyli ponowienie w Cloud Scheduler.
+   *
+   * Pojedyncza zła doba nadal nie wywraca przebiegu — zostaje otwarta w checkpoincie
+   * i widoczna w `/health` jako `doby_niedomkniete`.
+   */
+  const bzpPadl = raport.length > 0 && bledneDni === raport.length;
+  const bladBzp = bzpPadl ? (raport.find((w) => w.blad)?.blad ?? 'BZP: wszystkie doby nieudane') : null;
   const wynik = {
-    // Przebieg jest OK, gdy przeszedł chociaż jeden rejestr — inaczej awaria TED
-    // (HTTP 429 zdarza się regularnie) wywracałaby zapisane już wyniki BZP.
-    ok: bledneDni < raport.length || bladTed === null,
-    error: bladTed,
+    ok: !bzpPadl && bladTed === null,
+    error: bladBzp ?? bladTed,
+    error_bzp: bladBzp,
+    error_ted: bladTed,
     doby_okna: dniOkna.length,
     doby_pobrane: raport.length,
     doby_bledne: bledneDni,
@@ -179,6 +220,8 @@ export async function runOknoWynikow({
     bzp_czesci: czesciBzp,
     ted_ogloszen: zapisaneTed,
     ted_czesci: czesciTed,
+    modyfikacji_umow: zapisaneModyfikacje,
+    error_modyfikacji: bladModyfikacji,
     durationMs: Date.now() - start,
     zakonczony_o: new Date().toISOString(),
   };

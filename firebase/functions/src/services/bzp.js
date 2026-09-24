@@ -353,14 +353,38 @@ export async function pobierzOgloszeniaBzp({
  * strategii zaktualizować OBA miejsca.
  */
 
-async function zapytanieSurowe({ noticeType, from, to, size = SUFIT_ZAPYTANIA, province }) {
+/*
+ * 🚨 NAZWY PÓL OKNA: `publishedFrom` / `publishedTo` — te same, co oddaje `oknoDoby`
+ * i przyjmuje `searchNotices`.
+ *
+ * Wcześniej ta funkcja nazywała je `from` / `to`, a wołający robił
+ * `zapytanieSurowe({ ...oknoDoby(dzien) })` — czyli przekazywał `publishedFrom`
+ * i `publishedTo` do parametrów, których tu nie było. Do URL-a trafiało dosłowne
+ * `PublicationDateFrom=undefined`, a BZP odpowiadało HTTP 500 z komunikatem
+ * „The string 'undefined' was not recognized as a valid DateTime".
+ *
+ * Skutek: pobieranie WYNIKÓW postępowań z BZP nie działało ANI RAZU od rundy 16.
+ * Nie było tego widać, bo job agregacji łapie błąd per doba, liczy statystyki
+ * z pustej listy i kończy się `ok: true` — czyli „sukces" z zerem danych.
+ * Test jednostkowy tego nie łapał, bo wstrzykiwał własny pobieracz doby.
+ * Stąd `zbudujUrlWynikow` jest WYEKSPORTOWANY i pilnowany osobnym testem: adres
+ * musi nieść prawdziwe daty, a nie cokolwiek, co da się skleić w string.
+ */
+export function zbudujUrlWynikow({ noticeType, publishedFrom, publishedTo, size = SUFIT_ZAPYTANIA, province }) {
+  if (!publishedFrom || !publishedTo) {
+    throw new Error(`BZP ${noticeType}: brak okna czasu (publishedFrom/publishedTo)`);
+  }
   const url = new URL(BASE + SEARCH_PATH);
   url.searchParams.set('NoticeType', noticeType);
-  url.searchParams.set('PublicationDateFrom', from);
-  url.searchParams.set('PublicationDateTo', to);
+  url.searchParams.set('PublicationDateFrom', publishedFrom);
+  url.searchParams.set('PublicationDateTo', publishedTo);
   url.searchParams.set('PageSize', String(size));
   if (province) url.searchParams.set('OrganizationProvince', province);
+  return url;
+}
 
+async function zapytanieSurowe({ noticeType, publishedFrom, publishedTo, size = SUFIT_ZAPYTANIA, province }) {
+  const url = zbudujUrlWynikow({ noticeType, publishedFrom, publishedTo, size, province });
   const res = await pobierzZPonowieniem(url, stanTempa(), { zrodlo: 'BZP' });
   if (!res.ok) throw new Error(`BZP ${noticeType} odpowiedziało ${res.status}`);
   return extractList(await res.json());
@@ -368,11 +392,31 @@ async function zapytanieSurowe({ noticeType, from, to, size = SUFIT_ZAPYTANIA, p
 
 const idSurowego = (n) => String(n?.bzpNumber ?? n?.noticeNumber ?? n?.objectId ?? '');
 
+/**
+ * Czy ogłoszenie należy do żądanej doby.
+ *
+ * 🚨 ZMIERZONE NA ŻYWO (2026-09-24): filtr `OrganizationProvince` IGNORUJE górną
+ * granicę okna czasu. Zapytanie o dobę 2026-09-23 z `province=PL14` oddało 127
+ * ogłoszeń, z czego **11 opublikowano 2026-09-24**; na całej dobie było to 104 na 668.
+ * Bez odsiania doba „23 września" niosła 564 ogłoszenia z 23-go i 104 z 24-go, więc
+ * kolejna doba zapisywała te same dokumenty po raz drugi: licznik przebiegu kłamał
+ * o połowę w górę, a rachunek za zapisy rósł o tyle samo.
+ *
+ * Odsiewanie niczego nie gubi: ogłoszenie spoza doby zostanie pobrane przy SWOJEJ
+ * dobie (dzisiejsza nigdy nie jest domykana, a doby zamknięte były pobrane w całości).
+ * Ogłoszenie bez daty publikacji zostaje — lepiej zapisać je raz za dużo niż stracić.
+ */
+export function czyZDoby(notice, dzien) {
+  const data = notice?.publicationDate;
+  if (!data) return true;
+  return String(data).slice(0, 10) === dzien;
+}
+
 /** Jedna doba surowych ogłoszeń o wyniku, z docinaniem po województwach na suficie. */
 export async function pobierzSuroweWynikiDnia(dzien) {
   const okno = oknoDoby(dzien);
   const zDnia = await zapytanieSurowe({ noticeType: 'TenderResultNotice', ...okno });
-  if (zDnia.length < SUFIT_ZAPYTANIA) return zDnia;
+  if (zDnia.length < SUFIT_ZAPYTANIA) return zDnia.filter((n) => czyZDoby(n, dzien));
 
   const mapa = new Map(zDnia.map((n) => [idSurowego(n), n]));
   for (const woj of WOJEWODZTWA_TERYT) {
@@ -383,5 +427,11 @@ export async function pobierzSuroweWynikiDnia(dzien) {
       logger.error({ err: err.message, dzien, woj }, 'BZP wyniki: województwo pominięte');
     }
   }
-  return [...mapa.values()];
+  const zebrane = [...mapa.values()];
+  const wDobie = zebrane.filter((n) => czyZDoby(n, dzien));
+  if (wDobie.length !== zebrane.length) {
+    logger.info({ dzien, zebrane: zebrane.length, wDobie: wDobie.length },
+      'BZP wyniki: odsiano ogłoszenia spoza doby (filtr województwa ignoruje górną granicę okna)');
+  }
+  return wDobie;
 }

@@ -1496,6 +1496,49 @@ export const benchmarkRynku = {
 /** Klucze kubełków niosą `|` i `:` — w docId dozwolone, ale `/` już nie. */
 const benchmarkDocId = (klucz) => String(klucz).replaceAll('/', '_');
 
+/*
+ * Zmiany umów po rozstrzygnięciu (etap 6, TED `cont-modif`).
+ *
+ * Po co osobna kolekcja, a nie pole w rozstrzygnięciu: zmiana umowy dotyczy
+ * postępowania, które ZOSTAŁO już rozstrzygnięte — bywa publikowana rok później
+ * i wiele razy. Doklejanie jej do dokumentu rozstrzygnięcia znaczyłoby nadpisywanie
+ * stanu, który ma zostać historią.
+ *
+ * Co to mówi wykonawcy: że u tego zamawiającego zakres i wynagrodzenie bywają
+ * renegocjowane po podpisaniu — czyli że wycena „na styk" jest tu mniej ryzykowna,
+ * niż wygląda. To sygnał o rynku, nie o konkretnej ofercie.
+ */
+export const modyfikacjeUmow = {
+  /** Zapisuje partię zmian. docId = numer publikacji — powtórki nieszkodliwe. */
+  async zapiszWiele(lista) {
+    const wpisy = (lista ?? []).filter((m) => m?.externalId);
+    for (let i = 0; i < wpisy.length; i += 400) {
+      const batch = db().batch();
+      for (const zmiana of wpisy.slice(i, i + 400)) {
+        batch.set(db().collection('modyfikacje_umow').doc(tenderDocId(zmiana.externalId)), {
+          ...zmiana,
+          postepowanie_id: zmiana.tenderId ?? null,
+          updated_at: nowIso(),
+        });
+      }
+      await batch.commit();
+    }
+    return wpisy.length;
+  },
+
+  /** Zmiany umów dla POSTĘPOWANIA — od najnowszej. */
+  async dlaPostepowania(postepowanieId, { limit = 20 } = {}) {
+    if (!postepowanieId) return [];
+    const snap = await db().collection('modyfikacje_umow')
+      .where('postepowanie_id', '==', String(postepowanieId))
+      .limit(limit)
+      .get();
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => String(b.opublikowano ?? '').localeCompare(String(a.opublikowano ?? '')));
+  },
+};
+
 /**
  * Checkpoint okna rozstrzygnięć (etap 6).
  *

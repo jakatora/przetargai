@@ -85,9 +85,29 @@ describe('przeliczenie benchmarku z zapisanych rozstrzygnięć', () => {
     assert.equal(kubelek.probka.czesci, 7, 'paginacja zgubiła część rozstrzygnięć');
   });
 
-  test('raport mówi, ile kubełków ma dość danych na wniosek', async () => {
+  test('UTRWALA tylko kubełki z wnioskiem — reszta nie kosztuje zapisu', async () => {
+    /*
+     * Zmierzone na żywej próbce BZP: 200 ogłoszeń jednego dnia to 178 RÓŻNYCH
+     * zamawiających. W rocznym oknie uzbiera się ich dziesiątki tysięcy, a typowy
+     * urząd nigdy nie przekroczy progu próbki — zapisywanie ich co dobę zjadłoby
+     * darmowy limit Firestore, nie zmieniając ani jednej odpowiedzi.
+     */
+    await rozstrzygniecia.zapiszWiele([
+      rozstrzygniecie('drobny', { nip: '5550004444', czesci: [czesc({ liczbaOfert: 2 })] }),
+    ]);
     const wynik = await runBenchmarkRynku({ dni: 365, teraz: DZIS });
-    assert.ok(wynik.kubelkow_z_wnioskiem <= wynik.kubelkow);
-    assert.ok(wynik.kubelkow_z_wnioskiem >= 1);
+
+    assert.ok(wynik.kubelkow_bez_wniosku >= 1, 'próbka testowa nie ma kubełka bez wniosku');
+    assert.equal(wynik.kubelkow + wynik.kubelkow_bez_wniosku, wynik.kubelkow_policzonych);
+    assert.equal(await benchmarkRynku.pobierz('nip:5550004444'), null,
+      'kubełek bez wniosku został zapisany mimo braku próbki');
+    assert.ok(await benchmarkRynku.pobierz('nip:5550001111'), 'kubełek z wnioskiem musi zostać');
+  });
+
+  test('sufit odczytów jest ZGŁASZANY, a nie zgadywany z rachunku', async () => {
+    const wynik = await runBenchmarkRynku({ dni: 365, teraz: DZIS });
+    assert.equal(wynik.uciety_sufit, false, 'próbka testowa nie ma prawa dobić do sufitu');
+    const { MAKS_ROZSTRZYGNIEC } = await import('../src/jobs/benchmarkRynku.js');
+    assert.ok(MAKS_ROZSTRZYGNIEC > 0);
   });
 });

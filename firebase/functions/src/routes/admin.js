@@ -50,8 +50,23 @@ router.post('/okno-bk', ah(async (req, res) => {
  *
  * Idempotentny: docId rozstrzygnięcia = identyfikator ogłoszenia o wyniku.
  */
+/*
+ * 🚨 BUDŻET: ten przebieg biegnie w funkcji `api`, która ma 300 s (harmonogramowy
+ * `wynikiOknoFetch` ma 1800 s). Bez własnego, krótszego budżetu platforma ubiłaby
+ * żądanie w połowie i checkpoint — zapisywany na końcu przebiegu — nie zanotowałby
+ * ŻADNEJ domkniętej doby. Dane rozstrzygnięć zapisują się co dobę, więc nic by nie
+ * przepadło, ale operator wołałby w kółko te same dni. 240 s zostawia zapas na
+ * zapis checkpointu i odpowiedź.
+ */
+const BUDZET_WYZWALACZA_MS = 240_000;
+
 router.post('/okno-wynikow', ah(async (req, res) => {
-  const wynik = await runOknoWynikow();
+  const { dniBzp, dniTed, budzetMs } = req.body ?? {};
+  const wynik = await runOknoWynikow({
+    ...(Number.isFinite(dniBzp) ? { dniBzp } : {}),
+    ...(Number.isFinite(dniTed) ? { dniTed } : {}),
+    budzetMs: Number.isFinite(budzetMs) ? budzetMs : BUDZET_WYZWALACZA_MS,
+  });
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 

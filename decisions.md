@@ -4,6 +4,256 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-074 — Filtr województwa w BZP ignoruje górną granicę okna; dobę odsiewamy po dacie
+**Data:** 2026-09-24 | Etap 6, zmierzone na PRODUKCJI
+
+**Jak to wyszło.** Przebieg okna zaraportował `bzp_ogloszen: 3601`, a benchmark policzony
+zaraz potem przeczytał z bazy **2427** rozstrzygnięć. Pierwsza hipoteza („gubimy zapisy")
+była błędna — pomiar pokazał coś innego.
+
+**Pomiar (2026-09-24, żywe API).** Zapytanie o dobę `2026-09-23`:
+
+| wariant zapytania | n | rozkład `publicationDate` |
+|---|---|---|
+| samo okno doby | 500 (sufit) | 2026-09-23 = 500 |
+| okno doby + `OrganizationProvince=PL14` | 127 | 2026-09-23 = 116, **2026-09-24 = 11** |
+| pełna doba po docięciu 16 województw | 668 | 2026-09-23 = 564, **2026-09-24 = 104** |
+
+Z 667 ogłoszeń „doby 23 września" **564 pojawiło się także w zapytaniu o 22 września**.
+
+**Wniosek: `OrganizationProvince` honoruje DOLNĄ granicę okna, a górną IGNORUJE.**
+Docinanie po województwach — jedyny sposób na dobę przekraczającą sufit 500 — wciąga
+więc ogłoszenia z kolejnych dni.
+
+**Decyzja.** Po złożeniu doby odsiewamy ogłoszenia, których `publicationDate` nie należy
+do żądanej doby. Nic przez to nie ginie: ogłoszenie spoza doby zostanie pobrane przy
+SWOJEJ dobie (dzisiejsza nigdy nie jest domykana w checkpoincie, a doby zamknięte były
+pobrane w całości). Ogłoszenie BEZ daty publikacji zostaje — lepiej zapisać je raz za
+dużo niż stracić.
+
+**Co to naprawia.** Licznik przebiegu przestaje kłamać o połowę w górę (doba 22.09:
+1154 → 590 ogłoszeń naprawdę z tej doby) i znika mniej więcej połowa zapisów do
+Firestore, które i tak nadpisywały te same dokumenty.
+
+**Czego NIE zmieniono.** Ta sama pułapka dotyczy ścieżki pobierania OGŁOSZEŃ
+(`pobierzDzien` używa tego samego docinania), ale tam dedup po `externalId` i
+create-only `tenders.upsert` czynią ją nieszkodliwą dla danych — kosztuje tylko
+odczyty. Zmiana tamtej ścieżki nie należy do tego etapu i wymaga własnego pomiaru.
+
+---
+
+## D-073 — Adres zapytania o wyniki BZP niósł `undefined`; funkcja nie działała od rundy 16
+**Data:** 2026-09-24 | Etap 6, znalezione na PRODUKCJI
+
+**Co się stało.** Pierwszy prawdziwy import rozstrzygnięć zwrócił `bzp_ogloszen: 0`
+i `doby_bledne: 3` przy `ok: true`. Powtórzenie zapytania ręcznie dało odpowiedź,
+której nie da się zinterpretować inaczej:
+
+```
+HTTP 500 {"error":"The string 'undefined' was not recognized as a valid DateTime."}
+```
+
+**Przyczyna.** `oknoDoby(dzien)` oddaje `{ publishedFrom, publishedTo }` — te same nazwy
+przyjmuje `searchNotices`, którym idzie pobieranie OGŁOSZEŃ i dlatego ono działa.
+`zapytanieSurowe`, czyli ścieżka WYNIKÓW, przyjmowało `{ from, to }`. Wołający robił
+`zapytanieSurowe({ ...oknoDoby(dzien) })`, więc `from` i `to` były `undefined`
+i do adresu trafiało dosłowne `PublicationDateFrom=undefined`.
+
+**Skutek: pobieranie wyników postępowań z BZP nie zadziałało ANI RAZU od rundy 16.**
+`aggregateResults` biegał co tydzień, łapał błąd per doba, agregował pustą listę,
+zapisywał zero kubełków i kończył się `ok: true`. `GET /matches/:id/wyniki` zwracał
+`{ wyniki: null, powod: 'brak_danych' }` — co wygląda identycznie jak „w tej branży
+nie ma jeszcze rozstrzygnięć". Nikt nie miał jak tego zobaczyć.
+
+**Dlaczego testy tego nie złapały.** Wszystkie wstrzykiwały własny pobieracz doby
+(`pobierzDzien`), więc prawdziwy adres nie był sprawdzany przez nikogo. Test, który
+zastępuje jedyne miejsce, gdzie mieszka błąd, potwierdza wyłącznie sam siebie.
+
+**Naprawa.** `zbudujUrlWynikow` jest WYEKSPORTOWANY i przyjmuje dokładnie te nazwy pól,
+które oddaje `oknoDoby`; brak okna czasu RZUCA, zamiast skleić string. Osobny plik
+testów sprawdza ADRES: że niesie prawdziwe daty, że nie zawiera „undefined" i — asercją
+na źródle — że obie funkcje nadal mówią tym samym słownikiem.
+
+**Druga naprawa, z tej samej lekcji.** Przebieg okna uznawał się za udany, gdy przeszedł
+CHOCIAŻ jeden rejestr. Awaria wszystkich podjętych dób BZP dawała `ok: true`, bo TED
+przeszedł. Teraz awaria całego rejestru = przebieg nieudany, czyli ponowienie
+w Cloud Scheduler; pojedyncza zła doba nadal nie wywraca przebiegu i zostaje otwarta
+w checkpoincie.
+
+**Zasada na przyszłość:** integracja, której nikt nie wywołał ani razu po prawdziwym
+adresie, nie jest zintegrowana — niezależnie od liczby zielonych testów. Pierwszy
+import na produkcji jest częścią wdrożenia, nie „weryfikacją po fakcie".
+
+---
+
+## D-072 — Checklista oferty jest BEZSTANOWA i liczy ważność na DZIEŃ SKŁADANIA
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** „Czy mam komplet dokumentów" to pytanie o PRZYSZŁOŚĆ, nie o dziś.
+Zaświadczenie z ZUS ma 3 miesiące, KRK pół roku — przy terminie za siedem tygodni
+„mam to" potrafi znaczyć „będę musiał wystąpić o to jeszcze raz, a urząd ma 7 dni".
+Checklista porównująca ważność z DZISIAJ mówi firmie, że jest gotowa — i jest gorsza
+niż brak checklisty, bo brak checklisty nie usypia.
+
+**Decyzja.** Punktem odniesienia jest `dzienZlozenia` = termin składania minus dzień
+zapasu, brany z kalendarza postępowania (etap 5). Dokument ważny dziś, a nieważny wtedy,
+ląduje w osobnym koszyku „straci ważność przed złożeniem" wraz z liczbą brakujących dni.
+
+**Moduł jest bezstanowy.** Wymagania (Radar SWZ) i stan Sejfu mieszkają w osobnej
+usłudze — endpoint w Cloud Functions przyjmuje je w żądaniu i dokłada jedyną rzecz,
+której tamta usługa nie zna: dzień składania z katalogu przetargów. Dzięki tej granicy
+checklista działa także wtedy, gdy Radar albo Sejf są chwilowo nieosiągalne, a pole
+`stanWiedzy` mówi WPROST, czego nie wiemy. Bez niego „brak wymagań" wyglądałby
+identycznie jak „checklista spełniona" — a znaczy coś przeciwnego.
+
+**Czytniki pól są tolerancyjne z konieczności.** Dokument z Sejfu nazywa się
+`{ typ_dokumentu, nazwaTypu, dataWaznosci }`, nie `{ kod, wazny_do }`. Gdyby czytnik
+chybił, dopasowanie zwróciłoby zero trafień i firma z kompletem dokumentów zobaczyłaby
+„brakuje wszystkiego" — błąd wyglądający jak prawdziwa odpowiedź. Strzeże tego osobny
+test na realnym kształcie.
+
+---
+
+## D-071 — Karta „Czy warto startować?" NIE oddaje procentu szans
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** Mając rozstrzygnięcia całego rynku, łatwo policzyć liczbę i nazwać ją
+„szansą na wygraną". Byłby to fałszywy pomiar: rozstrzygnięcia mówią, co stało się
+na rynku (ilu startowało, ile płacono, jak często unieważniano), a nie jak wypadnie
+TA oferta — o tym decyduje jej treść, której nie znamy. Firma odpuściłaby przetarg,
+który mogła wygrać, albo włożyła tydzień w taki, w którym nie miała szans — w obu
+przypadkach z naszą liczbą jako uzasadnieniem.
+
+**Decyzja.** Werdykt jest KATEGORIĄ (`sprawdz` / `uwazaj` / `trudny` / `brak_danych` /
+`po_terminie`), a treścią karty są CZYNNIKI: każdy z tonem zielony/żółty/czerwony,
+z liczbą, z której powstał, i z wielkością próbki. Do każdej karty dołączone jest
+zastrzeżenie, że to opis rynku, nie prognoza oferty.
+
+`brak_danych` jest stanem RÓWNOPRAWNYM, nie awarią: czynnik bez danych ma ton
+`nieznany`, a nie czerwony — „nie wiemy" to nie to samo co „źle".
+
+Zakaz obowiązuje też warstwę prezentacji: mobilna biblioteka nie liczy sobie
+wskaźnika z tonów (pilnuje tego test czytający źródło). Inaczej decyzja podjęta
+po stronie danych zostałaby obejściem w UI.
+
+**Kolejność kubełków benchmarku** jest od najwęższego: zamawiający → dział CPV
+w województwie → dział CPV w kraju. Im węższy, tym trafniejszy, ale tym łatwiej mu
+o zbyt małą próbkę — schodzimy niżej dopiero wtedy, gdy węższy nie ma z czego mówić.
+
+---
+
+## D-070 — Rozstrzygnięcia zapisujemy jako DANE ŹRÓDŁOWE; agregat liczy się z bazy
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** `aggregateResults` pobierał 30 dni ogłoszeń o wyniku z BZP, liczył
+medianę i WYRZUCAŁ dane źródłowe. Pojedyncze rozstrzygnięcie — kto wygrał, ilu
+startowało, czy część unieważniono — nie zostawało nigdzie. Benchmark „u TEGO
+zamawiającego" nie miał z czego powstać, a każde przeliczenie wymagało ponownego
+przemielenia rejestru (~390 s samego ruchu sieciowego).
+
+**Decyzja.** Nowa kolekcja `rozstrzygniecia` trzyma znormalizowane rozstrzygnięcia
+z OBU rejestrów, per część. Okno (`wynikiOknoFetch`, co 6 h) je uzupełnia z
+checkpointem dobowym jak okna ogłoszeń; benchmark (`benchmarkPrzelicz`, codziennie)
+liczy się WYŁĄCZNIE z bazy, więc poprawka parsera nie wymaga ruszania rejestru.
+
+**BZP i TED świadomie NIE są deduplikowane.** Polskie postępowanie idzie albo do BZP
+(poniżej progów unijnych), albo do TED (powyżej) — nie do obu. Identyfikatory
+postępowań obu rejestrów są rozłączne (`ocds-148610-…` vs UUID), więc nie ma po czym
+scalać uczciwie, a scalanie po nazwie zamawiającego łączyłoby RÓŻNE postępowania.
+
+**Próg próbki jest twardy.** Poniżej pięciu części kubełek nie oddaje żadnej mediany —
+tylko `wystarczajacaProbka: false` i powód. Kubełek mimo to ISTNIEJE, żeby ekran mógł
+napisać „za mało danych" zamiast pokazać pustkę, którą czyta się jako „nikt tu nie startuje".
+
+---
+
+## D-069 — TED: zipujemy wyłącznie tablice wyrównane do liczby części; NUTS to nie TERYT
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** TED oddaje każde pole jako osobną tablicę i NIE gwarantuje, że dwie
+tablice mają tę samą długość. Pomiar na 250 polskich ogłoszeniach o wyniku
+(2026-09-24): długość równą liczbie części (`result-lot-identifier`) mają
+`winner-name` 162/250, `winner-size` 113/250, `tender-value` 168/250,
+`contract-conclusion-date` 166/250. Ogłoszenie 659988-2026 ma 14 części, 14 nazw
+zwycięzców i 7 rozmiarów firm.
+
+**Decyzja.** Zipujemy TYLKO tablice o długości równej liczbie części; reszta jest
+pomijana, a nie dopasowywana kształtem. Dane, o których nie wiadomo, do kogo należą,
+są gorsze niż ich brak — przypisany cudzy rozmiar firmy to fałszywy sygnał
+„u tego zamawiającego wygrywają mali". Na żywej próbce 500 ogłoszeń straż odcina
+rozmiar firmy w 1569 z 1895 części i to jest jej CEL, nie skutek uboczny.
+
+`received-submissions-type-code` ma ZMIENNĄ kolejność kodów między ogłoszeniami,
+więc czytanie po pozycji daje losowe liczby; pary `code[i]`↔`val[i]` są spójne
+w 250/250. Kody powtarzają się blokiem per część, ale dzielą się równo tylko
+w 208/250 — tam, gdzie nie, liczba ofert zostaje `null`.
+
+`buyer-country-sub` to NUTS, nie TERYT. Wspólny normalizator województw bierze dwie
+ostatnie cyfry, więc `PL426` (Koszalin) dawał „26" = świętokrzyskie — błąd CICHY.
+Osobny słownik `lib/nuts.js`; kodowania NIE da się rozstrzygnąć po samym ciągu
+(`PL12` to poprawny TERYT i zarazem nieaktualny NUTS 2013), więc wybiera je WOŁAJĄCY.
+
+**Rodzaj zamówienia mapujemy na słownik BZP** (`works`→`Works`, `supplies`→`Delivery`,
+`services`→`Services`). Bez tego TED i BZP wpadłyby do rozłącznych kubełków statystyki
+i benchmark liczyłby dwa rynki zamiast jednego.
+
+---
+
+## D-068 — „Rabat do kosztorysu" wolno liczyć TYLKO tam, gdzie obie liczby są w tej samej bazie
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** Naturalny wskaźnik „o ile taniej niż kosztorys" to cena wybranej oferty
+podzielona przez wartość szacowaną. W BZP obie liczby są, ale w RÓŻNYCH bazach:
+wartość zamówienia (art. 28 Pzp) jest z definicji NETTO, a cena w formularzu oferty
+podawana jest zwykle BRUTTO.
+
+**Pomiar (46 jednoczęściowych ogłoszeń z umową, 2026-09-22):** mediana ilorazu
+`6.4 / 4.3` = **1,0489**, 29 z 46 „powyżej kosztorysu", widoczne skupiska dokładnie
+na **1,23** i **1,17** — czyli stawki VAT. Stawki nie da się odgadnąć z ogłoszenia.
+
+**Decyzja.** Rabat względem wartości szacowanej liczymy WYŁĄCZNIE dla TED, gdzie obie
+liczby pochodzą z eForms i obie są netto. Dla BZP oddajemy zamiast tego `pozycjaCeny` —
+gdzie w widełkach konkursu (6.2/6.3/6.4, wszystkie z tego samego formularza) wylądowała
+cena zwycięzcy: 0 = najtaniej, 1 = najdrożej. Mediana blisko zera znaczy „tu wygrywa cena".
+
+Licząc rabat wprost z 4.3 pokazalibyśmy firmie, że w jej branży przetargi idą DROŻEJ
+niż kosztorys — czyli dokładnie odwrotnie niż jest.
+
+---
+
+## D-067 — BZP: „wynik" to JEDEN typ ogłoszenia, a części indeksuje NUMER, nie kolejność bloku
+**Data:** 2026-09-24 | Etap 6
+
+**Problem.** Etap zakładał trzy typy ogłoszeń (udzielenie / unieważnienie / zmiana).
+Sonda brute-force na żywym API (swagger 404, API odrzuca nieznane typy przez 400)
+pokazała, że działają dokładnie trzy: `ContractNotice`, `TenderResultNotice`,
+`ConcessionNotice`. `ContractAwardNotice`, `CancellationNotice`,
+`ContractModificationNotice` i 15 innych wariantów NIE ISTNIEJĄ.
+
+**Wniosek:** doprowadzenie źródła do kompletności to nie dodanie typów, tylko
+przestanie gubić to, co ten JEDEN typ już niesie. Parser R16 czytał z niego mniej
+niż połowę.
+
+**Decyzja (pomiar na 200 ogłoszeniach z 2026-09-22):**
+
+- Częścią jest wyłącznie blok SEKCJI V niosący `5.1.)`. Pierwszy blok bywa WIDMEM
+  (sam nagłówek przed „Część 1"), przez co numer był przesunięty o 1. Reguła zgadza się
+  z `procedureResult` w **200/200** ogłoszeń; warianty „zawiera SEKCJA VI" (170/200)
+  i „liczba nagłówków" (164/200) gubiły części unieważnione.
+- `procedureResult` i `contractors[]` indeksuje **NUMER CZĘŚCI** z nagłówka
+  `(dla części N)`, a nie kolejność bloku HTML. Część nierozstrzygnięta ma wpis PUSTY
+  i nie ma bloku, więc zipowanie po kolejności przypisuje firmie cudzą część.
+  Po indeksowaniu numerem: **545/545** bloków ma niepuste rozstrzygnięcie,
+  **395/395** nazw zwycięzcy zgadza się z HTML, **0** unieważnionych części z wykonawcą.
+- Unieważnienia przestają być niewidoczne: **150 z 545 części (27,5 %)** dostaje własny
+  stan zamiast wypadać jako „brak danych".
+- Kwota nie wymaga już groszy (`9840 PLN`) — wraca **39 z 404** cen wybranych (9,6 %).
+- Klucz złączenia „wynik → przetarg" to identyfikator POSTĘPOWANIA (`tenderId`, ocds),
+  a nie numer ogłoszenia: numer wyniku jest INNY niż numer ogłoszenia o zamówieniu.
+  Zmierzone pokrycie: 200/200 wyników i 3974/3974 ogłoszeń o zamówieniu.
+
+---
+
 ## D-066 — Kalendarz: reguły ustawowe wybieramy po REJESTRZE, ICS jako plik
 **Data:** 2026-09-24 | Etap 5 (P1-7)
 

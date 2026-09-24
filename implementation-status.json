@@ -1,12 +1,12 @@
 {
   "projekt": "PrzetargAI",
-  "zaktualizowano": "2026-09-24 (etap 5 wdrozony, api-00034-jot)",
+  "zaktualizowano": "2026-09-24 (etap 6 wdrozony, api-00038-gip)",
   "galaz": "codex/przetargai-complete",
   "drzewo_robocze": "D:/wt/przetargai-complete",
   "uwaga": "Repozytorium D:/projekty/przetarg-ai jest BRUDNE (cudzy WIP) — nie dotykać.",
   "produkcja": {
     "platforma": "Firebase Cloud Functions v2 (europe-central2, projekt przetargai)",
-    "wersja_api": "api-00034-jot",
+    "wersja_api": "api-00038-gip",
     "wdrozone_z": "lokalnego kodu przez `firebase deploy` (NIE z GitHuba — to odróżnia Functions od Railway)",
     "health": "https://europe-central2-przetargai.cloudfunctions.net/api/health",
     "funkcje": [
@@ -14,26 +14,34 @@
       "dailyTenderFetch",
       "bzpOknoFetch",
       "bkOknoFetch",
+      "wynikiOknoFetch",
+      "benchmarkPrzelicz",
       "remindDeadlines",
       "weeklyDigest",
       "aggregateResults",
       "monitorWyszukiwan"
     ],
-    "otwarte_przetargi": 10084,
+    "otwarte_przetargi": 9945,
     "otwarte_przetargi_przed_etapem_3": 7249,
-    "wersja_api_poprzednia_w_tym_pliku": "api-00031-nij (stan po etapie 4)",
+    "wersja_api_poprzednia_w_tym_pliku": "api-00034-jot (stan po etapie 5)",
     "otwarte_przetargi_po_imporcie_bk": 8384,
     "przyrost_po_imporcie_bk": "z 8 384 na 10 084 — przyrost 1 700 pochodzi z okna BZP domknietego 2026-09-24T01:27:04Z (newTenders 1700), nie z BK",
-    "funkcje_potwierdzone_live": "firebase deploy: 7/7 zaktualizowanych + monitorWyszukiwan \"Successful create operation\" = 8 funkcji v2, nodejs22, europe-central2",
+    "funkcje_potwierdzone_live": "firebase functions:list: 10 funkcji v2, nodejs22, europe-central2; wynikiOknoFetch i benchmarkPrzelicz z \"Successful create operation\"",
     "wdrozenia_w_etapie_5": [
       "api-00032-qec - etap 5 (monitorWyszukiwan utworzony)",
       "api-00033-xac - naprawa cichej awarii sortowania w harmonogramie",
       "api-00034-jot - przypomnienie o terminie wlaczane z kalendarza"
+    ],
+    "wdrozenia_w_etapie_6": [
+      "api-00035-xic - etap 6 (wynikiOknoFetch i benchmarkPrzelicz utworzone)",
+      "api-00036-tum - koszt: okno TED 2 dni, benchmark utrwala tylko kubelki z wnioskiem, sufit odczytu",
+      "api-00037-* - naprawa adresu zapytania o wyniki BZP + awaria calego rejestru = przebieg nieudany",
+      "api-00038-gip - odsiewanie ogloszen spoza doby (filtr wojewodztwa ignoruje gorna granice okna)"
     ]
   },
   "testy": {
     "polecenie": "cd firebase/functions && npm test",
-    "wynik": "744/744",
+    "wynik": "946/946",
     "baseline_przed_etapem_3": "422/422",
     "wymagane_srodowisko": {
       "powod": "emulator Firestore nie wstaje na tej maszynie bez tych dwóch rzeczy",
@@ -41,17 +49,19 @@
       "JAVA_TOOL_OPTIONS": "-Djdk.net.unixdomain.tmpdir=C:\\jtmp",
       "dlaczego": "domyślny java.io.tmpdir to ścieżka w notacji 8.3 (C:\\Users\\STARTK~1\\...), której connect() AF_UNIX na Windows odrzuca z EINVAL — Selector.open() pada i emulator nie startuje"
     },
-    "kiedy_wykonane": "2026-09-24, przed i po wdrozeniu etapu 5 (pelny przebieg z emulatorem)",
+    "kiedy_wykonane": "2026-09-24, przed i po wdrozeniu etapu 6 (pelny przebieg z emulatorem)",
     "status_w_audycie": "wykonane w tej sesji",
     "baseline_przed_etapem_4": "513/513",
     "mobile": {
       "polecenie": "cd mobile && npm test",
-      "wynik": "739/739",
+      "wynik": "764/764",
       "baseline_przed_etapem_4": "663/663",
       "statyczna_kontrola": "npm run check (esbuild) — zielony",
-      "baseline_przed_etapem_5": "711/711"
+      "baseline_przed_etapem_5": "711/711",
+      "baseline_przed_etapem_6": "739/739"
     },
-    "baseline_przed_etapem_5": "606/606"
+    "baseline_przed_etapem_5": "606/606",
+    "baseline_przed_etapem_6": "744/744"
   },
   "etapy": {
     "etap_1_p0": {
@@ -292,6 +302,114 @@
         "zapis pliku .ics z poziomu aplikacji - wymaga expo-file-system + expo-sharing, ktorych w projekcie nie ma; endpoint gotowy i zweryfikowany na produkcji (D-066)",
         "pomiar pierwszego realnego przebiegu monitorWyszukiwan - funkcja wdrozona, cron 35 */2 nie odpalił sie w oknie sesji; przebieg OCZEKUJACY na harmonogram, nie zmierzony"
       ]
+    },
+    "etap_6_wygrywalnosc": {
+      "stan": "backend wdrozony i zweryfikowany na produkcji; mobile gotowe w galezi do builda",
+      "data": "2026-09-24",
+      "cel": "Przejscie od \"co jest ogloszone\" do \"czy w tym wygrasz i co masz zrobic, zeby zlozyc oferte na czas\" — na danych z ROZSTRZYGNIEC, bez platnego AI i bez obiecywania prawdopodobienstwa wygranej",
+      "commity": [
+        "0610b73 - parser wynikow BZP czyta cale ogloszenie, nie polowe",
+        "de39b0c - TED jako drugie zrodlo rozstrzygniec + klucz zlaczenia wynik->przetarg",
+        "897dbb5 - rozstrzygniecia jako dane zrodlowe + benchmark liczony z bazy",
+        "92b3dc3 - karta Czy warto startowac, checklista oferty i panel mobilny",
+        "(5/5) - naprawa pobierania wynikow BZP + koszt policzony przed wdrozeniem"
+      ],
+      "pliki": {
+        "parser_bzp": "firebase/functions/src/lib/wynikiParser.js",
+        "adapter_ted": "firebase/functions/src/services/tedWyniki.js + src/lib/nuts.js",
+        "dane": "firebase/functions/src/db/repos.js (rozstrzygniecia, modyfikacjeUmow, benchmarkRynku, oknoWynikow, postepowanie_id i zamawiajacy_nip na przetargu)",
+        "joby": "firebase/functions/src/jobs/{oknoWynikow,benchmarkRynku,aggregateResults}.js",
+        "benchmark": "firebase/functions/src/lib/benchmark.js",
+        "karta": "firebase/functions/src/lib/czyWartoStartowac.js + services/kartaStartu.js",
+        "checklista": "firebase/functions/src/lib/checklistaOferty.js",
+        "trasy": "firebase/functions/src/routes/wygrywalnosc.js (+ /matches/:id/czy-warto, /health.wyniki_okno, /admin/okno-wynikow, /admin/benchmark)",
+        "indeksy": "firebase/firestore.indexes.json (rozstrzygniecia: zamawiajacy_nip + opublikowano DESC)",
+        "mobile_logika": "mobile/src/lib/wygrywalnosc.js",
+        "mobile_ui": "mobile/src/screens/{CzyWartoScreen,ChecklistaOfertyScreen}.js",
+        "mobile_zmienione": "mobile/src/screens/{MatchDetailScreen,KatalogDetailScreen}.js + api/client.js + navigation/RootNavigator.js",
+        "sondy": "firebase/functions/skrypty/{pobierz-probke-wynikow,pomiar-wynikow,sonda-ted-wyniki,sonda-ted-powiazanie,sonda-ted-ingest,sonda-ted-modyfikacje}.mjs"
+      },
+      "endpointy": [
+        "GET /wygrywalnosc/tender/:id — karta decyzji albo rozstrzygniecie, gdy juz zapadlo",
+        "GET /wygrywalnosc/tender/:id/benchmark — surowe kubelki (zamawiajacy / dzial+region / dzial+kraj)",
+        "POST /wygrywalnosc/tender/:id/checklista — BEZSTANOWA: wymagania i sejf w zadaniu, dzien skladania z kalendarza",
+        "GET /matches/:id/czy-warto — karta dla pozycji z feedu",
+        "POST /admin/okno-wynikow — domkniecie okna rozstrzygniec (wlasny budzet 240 s)",
+        "POST /admin/benchmark — przeliczenie kubelkow z bazy"
+      ],
+      "harmonogram": {
+        "wynikiOknoFetch": "cron '5 */6 * * *', timeout 1800 s",
+        "benchmarkPrzelicz": "cron '40 3 * * *', timeout 1800 s"
+      },
+      "testy_dodane": {
+        "wynikiParserR2": 27,
+        "tedWyniki": 29,
+        "postepowanieId": 7,
+        "oknoWynikow": 18,
+        "benchmark": 28,
+        "benchmarkRynku": 7,
+        "czyWartoStartowac": 35,
+        "checklistaOferty": 24,
+        "wygrywalnoscRoute": 11,
+        "adminWygrywalnosc": 5,
+        "bzpWynikiUrl": 9,
+        "aggregateResults": 3,
+        "indeksyFirestore": 1,
+        "razem_backend": 204,
+        "mobile_wygrywalnosc": 25
+      },
+      "pomiary_zrodel": {
+        "bzp_probka": "200 ogloszen z 2026-09-22 (skrypty/pomiar-wynikow.mjs)",
+        "regula_czesci_5_1": "200/200 ogloszen zgodnych z procedureResult",
+        "indeksowanie_numerem_czesci": "545/545 blokow z niepustym rozstrzygnieciem, 395/395 nazw zwyciezcy zgodnych, 0 uniewaznionych z wykonawca",
+        "uniewaznienia": "150 z 545 czesci (27,5 %) — wczesniej niewidoczne",
+        "ceny_bez_groszy": "+39 z 404 cen wybranych (9,6 %)",
+        "klucz_zlaczenia": "tenderId (ocds) w 200/200 wynikow i 3974/3974 ogloszen o zamowieniu",
+        "vat_a_rabat": "mediana 6.4/4.3 = 1,0489 na 46 ogloszeniach, skupiska na 1,23 i 1,17 — rabat z BZP ZAKAZANY",
+        "ted_wyrownanie_tablic": "winner-name 162/250, winner-size 113/250, tender-value 168/250 — zipujemy tylko wyrownane",
+        "ted_pary_ofert": "code.length === val.length w 250/250; podzielnosc przez liczbe czesci 208/250",
+        "ted_nuts": "buyer-country-sub w postaci NUTS 250/250; kodWojewodztwa(\"PL426\") dawal swietokrzyskie zamiast zachodniopomorskiego",
+        "ted_ingest_dymna": "500 ogloszen: 0 odrzuconych, 1895 czesci, 922 z cena, 151 uniewaznionych, 895 ze zwyciezca, 1918 z rodzajem w slowniku BZP",
+        "koszt_zapisow": "200 ogloszen jednego dnia = 178 ROZNYCH zamawiajacych — stad utrwalanie wylacznie kubelkow z wnioskiem"
+      },
+      "bledy_znalezione_przez_testy": [
+        "Kursor stronicowania rozstrzygniec byl sama DATA, a opublikowano nie jest unikalne — startAfter przeskakiwal wszystkie dokumenty z danego dnia i benchmark liczyl sie z ulamka rynku, po cichu. Kursor to para (data, docId).",
+        "Straznik indeksow Firestore nie widzial where(x, \"==\", String(v)) — czyli ksztaltu wymagajacego indeksu zlozonego. Czyta teraz okno kodu do wykonania zapytania i sprawdza deklaracje indeksu."
+      ],
+      "decyzje_produktowe": [
+        "Karta NIE podaje prawdopodobienstwa wygranej — werdykt to kategoria, tresc to czynniki z liczba i wielkoscia probki (D-071).",
+        "Rabat wzgledem kosztorysu wylacznie z TED — w BZP 4.3 netto vs 6.4 brutto (D-068).",
+        "BZP i TED nie sa deduplikowane — identyfikatory postepowan sa rozlaczne, a scalanie po nazwie laczyloby rozne postepowania (D-070).",
+        "Checklista liczy waznosc na DZIEN SKLADANIA i jest bezstanowa — dziala takze przy niedostepnym Radarze SWZ i Sejfie (D-072)."
+      ],
+      "weryfikacja_live": {
+        "data": "2026-09-24",
+        "konto_sondujace": "zalozone BEZ slow kluczowych i BEZ CPV (zero wywolan platnego AI), po pomiarach USUNIETE (DELETE /auth/me -> 200, kontrolnie GET /auth/me -> 401)",
+        "trasy_bez_tokenu": "/wygrywalnosc/tender/:id, /tender/:id/benchmark, /matches/:id/czy-warto -> 401; kontrolnie nieistniejaca trasa -> 404",
+        "okno_rozstrzygniec": {
+          "domkniete": "14/14 dob, doby_niedomkniete 0",
+          "bzp": "2948 ogloszen / 5250 czesci w przebiegu domykajacym",
+          "ted": "401 ogloszen / 1550 czesci",
+          "zmiany_umow": 10,
+          "budzet_wyzwalacza": "przebieg 14 dob przekroczyl 240 s i zostawil 3 doby OTWARTE; kolejne wywolanie domknelo je w 76 s (checkpoint dziala)"
+        },
+        "benchmark": {
+          "rozstrzygniec_przeczytanych": 5805,
+          "stron": 12,
+          "kubelkow_policzonych": 3488,
+          "kubelkow_utrwalonych": 932,
+          "kubelkow_bez_wniosku": 2556,
+          "uciety_sufit": false
+        },
+        "karta_na_zywych_ogloszeniach": [
+          "2026/BZP 00453651 (zywnosc): werdykt sprawdz, zrodlo dzial_region, probka 67 czesci; 93% wygrywaja mali, 1% uniewaznien",
+          "2026/BZP 00453649 (odpady): werdykt sprawdz, zrodlo dzial_region, probka 18 czesci; zwykle 1 oferta",
+          "2026/BZP 00453647 (przepusty): werdykt sprawdz, zrodlo ZAMAWIAJACY, probka 16 czesci; 6% uniewaznien"
+        ],
+        "checklista_na_zywo": "dzien zlozenia liczony z terminu (np. 2026-10-05 przy terminie 2026-10-06); dokument wazny jeszcze 5 dni trafia do koszyka przeterminuje_sie, nastepny krok = ZUS",
+        "health": "wyniki_okno obecne: doby_okna 14, doby_niedomkniete 0, error null"
+      },
+      "zgodnosc": "wylacznie publiczne API BZP i TED, zero scrapingu, zero platnego AI, zero Stripe"
     }
   },
   "nastepne_zrodlo": {
@@ -388,31 +506,12 @@
     "sprzatanie": "brak plikow .probe w drzewie (szukane rekurencyjnie) — nie bylo czego usuwac; firebase-debug.log (gitignored, 239 B) rowniez juz nie istnieje"
   },
   "nastepny_etap_p1": {
-    "rekomendacja": "ETAP 6 — Wygrywalnosc i przygotowanie oferty na danych z ROZSTRZYGNIEC (nie na deklaracjach)",
-    "zdanie_dla_uzytkownika": "Zanim wlozysz tydzien w oferte: ile firm zwykle startuje u TEGO zamawiajacego, jaka cena tam wygrywa i czego konkretnie brakuje Ci w dokumentach.",
-    "dlaczego_to_teraz": [
-      "Etapy 1-5 domknely DOSTARCZANIE: rynek jest widoczny (katalog), obserwowany (zapisane wyszukiwania) i pilnowany w czasie (historia zmian, kalendarz trzech terminow). Kolejnym waskim gardlem nie jest juz \"czy zobacze przetarg\", tylko \"czy warto w niego wchodzic i czy zdazę sie przygotowac\".",
-      "Dane wynikowe JUZ SA ZBIERANE i nikt ich nie uzywa do decyzji: jobs/aggregateResults.js liczy statystyki rozstrzygniec co tydzien, a GET /matches/:id/wyniki je oddaje — ale zadne narzedzie oferty z nich nie korzysta.",
-      "Odbiorcy istnieja i sa przetestowani, brakuje im WEJSCIA: mobile/src/lib/{ocenaSzans,kalkulatorCeny,sprawdzarkaCeny,symulatorPunktacji,kartaDecyzji,sciezkaDoOferty}.js licza dzis na liczbach wpisanych recznie przez uzytkownika. Podlaczenie ich do realnych rozstrzygniec to zmiana wejscia, nie budowa od zera.",
-      "Sejf dokumentow (etap wczesniejszy) zna WAZNOSC dokumentow, a Radar SWZ zna WYMAGANIA postepowania — brakuje jednego zlaczenia: \"czego brakuje Ci na dzien skladania w TYM przetargu\". Kalendarz z etapu 5 dowozi do tego brakujacy element: przewidywany dzien zlozenia."
-    ],
-    "zakres": {
-      "1_zrodlo_wynikow": "TED form-type=result jako uzupelnienie BZP (zmierzone read-only 2026-09-24: 4 297 polskich ogloszen / 30 dni). Dzis statystyki licza sie WYLACZNIE z BZP, wiec caly rynek unijny — czyli najwieksze kontrakty — jest w nich niewidoczny.",
-      "2_benchmark": "Benchmark per zamawiajacy i per dzial CPV: mediana liczby ofert, rozrzut cen zwyciezkich wzgledem wartosci szacunkowej, udzial postepowan uniewaznionych, udzial kryterium \"tylko cena\". Agregat liczony w jobie, nie na zadanie.",
-      "3_ocena_szans": "Karta \"twoje szanse\" na ekranie przetargu: ile firm zwykle startuje, jaka cena wygrywa, czy ten zamawiajacy rozstrzyga sama cena. BEZ platnego AI — to statystyka, nie generowanie tekstu.",
-      "4_przygotowanie": "Checklista \"co musisz miec do dnia skladania\": zlaczenie wymagan z Radaru SWZ, stanu Sejfu dokumentow i PRZEWIDYWANEGO dnia zlozenia z kalendarza etapu 5. Trzy koszyki jak w dopasowaniu sejfu: masz / przeterminuje sie / brakuje.",
-      "5_mobile": "Podlaczenie istniejacych narzedzi oferty do realnych danych zamiast recznych wpisow + karta szans w MatchDetail i KatalogDetail."
-    },
-    "czego_NIE_robic": [
-      "Nie obiecywac \"prawdopodobienstwa wygranej\" jako liczby z modelu. Rozstrzygniecia mowia, co sie stalo na rynku, a nie jak wypadnie TWOJA oferta — kazda liczba udajaca to drugie bylaby falszywym pomiarem.",
-      "Nie wpuszczac platnego AI do sciezki, ktora ma dzialac dla kazdego ogloszenia: benchmark to agregat liczbowy i musi byc darmowy w odczycie, tak jak katalog i monitoring."
-    ],
-    "mierzalny_efekt": "Wykonawca odrzuca przetarg, w ktorym nie ma szans, PRZED wlozeniem w niego pracy — i wie, czego mu brakuje w tym, w ktorym szanse ma.",
-    "kolejne_w_kolejce": [
-      "TED form-type=planning jako czwarte zrodlo (zasila Radar planow postepowan — odbiorca istnieje i jest przetestowany, brakuje mu wylacznie danych)",
-      "TED form-type=cont-modif (219 / 30 dni) — zmiany umow; etap 5 ma juz typ zmiany \"umowa\", ale dzis nikt go nie zasila",
-      "P1-5 — pelne PL/EN w starszych ekranach (dzis mechanizm `tr` obejmuje nowe ekrany; reszta zostaje polska, co jest swiadome, nie przeoczone)",
-      "Zapis pliku .ics w aplikacji (wymaga expo-file-system + expo-sharing — nowy build)"
+    "rekomendacja": "TED form-type=planning jako czwarte zrodlo — Radar planow postepowan jest gotowy i przetestowany, brakuje mu wylacznie danych",
+    "uwaga": "odbiorca (backend/src/services/radarPlanow.js) mieszka na Railway, ktore jest zablokowane wolumenem — do rozwazenia port routera do Cloud Functions albo odblokowanie Railway",
+    "kolejne": [
+      "P1-5 — pelne PL/EN w starszych ekranach (mechanizm tr obejmuje nowe ekrany)",
+      "Zapis pliku .ics w aplikacji (wymaga expo-file-system + expo-sharing — nowy build)",
+      "Screenshoty App Store dla 1.0.9 (teksty gotowe w store/whats-new-1.0.9.md)"
     ]
   }
 }
