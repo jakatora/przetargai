@@ -5,6 +5,9 @@
 # z devowym emulatorem na 5001. Nadpisywalny przez SMOKE_BASE.
 B="${SMOKE_BASE:-http://127.0.0.1:5002/przetargai/europe-central2/api}"
 fail=0
+# Zrzuty odpowiedzi (JWT, dane kont testowych) idą do katalogu tymczasowego,
+# nie do firebase/functions — stamtąd trafiały do publicznego repo (2026-09-24).
+WORK=$(mktemp -d); trap 'rm -rf "$WORK"' EXIT; cd "$WORK" || exit 1
 chk() { # nazwa, oczekiwany_kod, faktyczny_kod
   if [ "$2" = "$3" ]; then echo "  OK   $1 ($3)"; else echo "  FAIL $1: oczekiwano $2, jest $3"; fail=$((fail+1)); fi
 }
