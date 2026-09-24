@@ -1,6 +1,7 @@
 import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
+import { wyciagnijNip } from '../lib/nip.js';
 
 /*
  * TED (Tenders Electronic Daily) — dziennik zamówień publicznych UE.
@@ -23,6 +24,9 @@ const POLA = [
   'procedure-identifier',
   'title-proc',
   'buyer-name',
+  // Wolny tekst „NIP: …, REGON: …" — klucz złączenia plan → ogłoszenie (Radar planów)
+  // i benchmarku per zamawiający. Zmierzone: poprawny NIP w 199/250 ogłoszeń.
+  'buyer-identifier',
   'classification-cpv',
   'publication-date',
   'deadline-receipt-tender-date-lot',
@@ -77,6 +81,7 @@ export function mapujOgloszenieTed(notice) {
     url: linki.POL ?? Object.values(linki)[0] ?? null,
     source: 'ted',
     postepowanie_id: pierwszaWartosc(notice['procedure-identifier']),
+    zamawiajacy_nip: wyciagnijNip(notice['buyer-identifier']),
     // Zapisujemy tylko pobrane pola (nie pełny XML) — raw służy podglądowi.
     raw: notice,
   };

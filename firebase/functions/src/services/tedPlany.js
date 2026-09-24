@@ -2,7 +2,13 @@ import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { parseCpvCodes, cpvDivisions } from '../lib/cpv.js';
 import { kodWojewodztwaZNuts } from '../lib/nuts.js';
-import { isValidNip } from '../lib/nip.js';
+import { wyciagnijNip } from '../lib/nip.js';
+import { RODZAJE_PLANU, RODZAJ_NIEZNANY } from '../lib/rodzajePlanu.js';
+
+export { RODZAJE_PLANU };
+
+// Ekstraktor żyje w lib/nip.js (wspólny z ogłoszeniami TED); re-eksport dla testów kontraktu.
+export { wyciagnijNip };
 
 /*
  * TED — ogłoszenia PLANOWANIA (`form-type = planning`): wstępne ogłoszenia
@@ -42,45 +48,6 @@ const POLA = [
 /** Maks. długość opisu w pozycji — pozycja ląduje w indeksie radaru, nie cały dokument. */
 const MAKS_OPIS = 500;
 
-/**
- * Rodzaje ogłoszeń planowania eForms. `skracaTermin` — WOI, które pozwala
- * zamawiającemu SKRÓCIĆ termin składania ofert (art. 138 / 155 Pzp): na samo
- * ogłoszenie trzeba być gotowym wcześniej, bo czasu będzie mniej niż zwykle.
- */
-export const RODZAJE_PLANU = Object.freeze({
-  'pin-rtl': {
-    pl: 'Wstępne ogłoszenie informacyjne — zamawiający może skrócić termin składania ofert',
-    en: 'Prior information notice — the buyer may shorten the tender deadline',
-    skracaTermin: true,
-  },
-  'pin-only': {
-    pl: 'Wstępne ogłoszenie informacyjne',
-    en: 'Prior information notice',
-    skracaTermin: false,
-  },
-  'pin-buyer': {
-    pl: 'Wstępne ogłoszenie informacyjne na profilu nabywcy',
-    en: 'Prior information notice on the buyer profile',
-    skracaTermin: false,
-  },
-  'pin-tran': {
-    pl: 'Zamiar zawarcia umowy o transport publiczny (rozp. 1370/2007)',
-    en: 'Intended public transport service contract (Reg. 1370/2007)',
-    skracaTermin: false,
-  },
-  'pin-cfc-standard': {
-    pl: 'Wstępne ogłoszenie informacyjne jako zaproszenie do ubiegania się',
-    en: 'Prior information notice as a call for competition',
-    skracaTermin: false,
-  },
-  'pin-cfc-social': {
-    pl: 'Wstępne ogłoszenie informacyjne (usługi społeczne) jako zaproszenie',
-    en: 'Prior information notice (social services) as a call for competition',
-    skracaTermin: false,
-  },
-});
-
-const RODZAJ_NIEZNANY = { pl: 'Ogłoszenie planowania', en: 'Planning notice', skracaTermin: false };
 
 /** Pierwsza wartość z obiektu wielojęzycznego TED — polski przed innymi. */
 function poPolsku(wielojezyczne) {
@@ -99,32 +66,6 @@ function pierwsza(pole) {
 function samaData(surowa) {
   const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(surowa ?? ''));
   return m ? m[1] : null;
-}
-
-/**
- * NIP zamawiającego z wolnego tekstu `buyer-identifier`. Bierze pierwszy ciąg
- * 10 cyfr (z dozwolonymi myślnikami/spacjami między grupami) o POPRAWNEJ sumie
- * kontrolnej. Sam REGON (9 cyfr) i śmieci dają null — NIP służy do złączenia planu
- * z późniejszym ogłoszeniem tego samego zamawiającego, więc zgadywanie jest gorsze
- * niż brak.
- * @param {string|string[]|null|undefined} identyfikatory
- * @returns {string|null}
- */
-export function wyciagnijNip(identyfikatory) {
-  const teksty = (Array.isArray(identyfikatory) ? identyfikatory : [identyfikatory])
-    .filter((t) => t != null)
-    .map(String);
-  for (const tekst of teksty) {
-    // Ciągi cyfr z pojedynczymi separatorami: „842-00-06-338", „821 000 65 10".
-    for (const ciag of tekst.match(/\d(?:[\s-]?\d)*/g) ?? []) {
-      const kandydaci = [ciag, ...ciag.split(/\s+/)];
-      for (const k of kandydaci) {
-        const cyfry = k.replace(/\D/g, '');
-        if (cyfry.length === 10 && isValidNip(cyfry)) return cyfry;
-      }
-    }
-  }
-  return null;
 }
 
 function liczba(surowa) {

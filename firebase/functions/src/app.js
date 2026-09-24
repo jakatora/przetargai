@@ -20,6 +20,7 @@ import wyszukiwaniaRouter from './routes/wyszukiwania.js';
 import alertyRouter from './routes/alerty.js';
 import kalendarzRouter from './routes/kalendarz.js';
 import wygrywalnoscRouter from './routes/wygrywalnosc.js';
+import radarPlanowRouter from './routes/radarPlanow.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -105,6 +106,11 @@ export function createApp() {
    * a karta „czy warto startowac" czyta (maksymalna wartosc kontraktu).
    */
   app.use('/wygrywalnosc', apiLimiter, wygrywalnoscRouter);
+  /*
+   * Radar planow postepowan (P2-4). Czyta profil (ranking), ale jest darmowy
+   * w odczycie: zwarty indeks planow TED + czyste moduly, bez AI.
+   */
+  app.use('/radar-planow', apiLimiter, radarPlanowRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminLimiter, adminRouter);
 

@@ -616,6 +616,22 @@ export const tenders = {
   },
 
   /**
+   * Ogłoszenia jednego zamawiającego (po NIP-ie) — Radar planów sprawdza, czy plan
+   * zamienił się już w przetarg. Samo porównanie równościowe, BEZ orderBy: mieści
+   * się w indeksie automatycznym (sortowanie po stronie wołającego — kandydatów
+   * jednego zamawiającego jest kilkadziesiąt, nie tysiące).
+   */
+  async poNipieZamawiajacego(nip, { limit = 50 } = {}) {
+    if (!nip) return [];
+    const snap = await db().collection('tenders')
+      .where('zamawiajacy_nip', '==', String(nip))
+      .select('title', 'cpv_main', 'budget', 'published_at', 'deadline', 'url', 'source')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /**
    * Wyjaśnienie AI ogłoszenia jest CACHE'OWANE na dokumencie przetargu (D-052) —
    * przetarg jest niemutowalny co do danych źródłowych, ale wyjaśnienie to pole
    * pochodne, wspólne dla wszystkich oglądających. Pierwszy oglądający płaci za
