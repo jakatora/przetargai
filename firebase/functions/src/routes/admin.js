@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { ah } from '../lib/asyncHandler.js';
 import { adminRequired } from '../middleware/adminAuth.js';
 import { runTenderFetch } from '../jobs/fetchTenders.js';
+import { runBkOkno } from '../jobs/oknoBk.js';
 import { backfillUser } from '../services/matching.js';
 import { tenders, users } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
@@ -19,6 +20,23 @@ router.use(adminRequired);
 router.post('/fetch-tenders', ah(async (req, res) => {
   const result = await runTenderFetch();
   res.json(result);
+}));
+
+/**
+ * Ręczne domknięcie okna Bazy Konkurencyjności — BEZ dopasowań i BEZ AI.
+ *
+ * DLACZEGO OSOBNO OD `/fetch-tenders`: tamten uruchamia pełny cykl razem z
+ * dopasowaniami, czyli PŁATNE wywołania Claude. Operator, który chce tylko
+ * sprawdzić, czy import ze źródła działa (albo domknąć zaległość po awarii),
+ * nie powinien za to płacić. Ten przebieg kosztuje wyłącznie odczyty publicznego
+ * API BK i zapisy do Firestore.
+ *
+ * Idempotentny: docId przetargu = `bk:<id>`, a checkpoint pilnuje, żeby szczegóły
+ * pobierały się tylko dla ogłoszeń nowych i zmienionych.
+ */
+router.post('/okno-bk', ah(async (req, res) => {
+  const wynik = await runBkOkno();
+  res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
 /** Podstawowe statystyki systemu. */
