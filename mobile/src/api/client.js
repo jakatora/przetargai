@@ -337,4 +337,30 @@ export const api = {
   /** { kwota, termin, dzisiaj?, stopaRoczna?, numerUmowy?, zamawiajacy?, ... } → { wezwanie } (gotowe pismo). */
   zabezpieczenieWezwanie: (payload) =>
     request('/api/przetarg/zabezpieczenie/wezwanie', { method: 'POST', body: payload }),
+
+  // ----- Wygrywalność (etap 6): „czy warto startować", benchmark, checklista -----
+  // Liczone z ROZSTRZYGNIĘĆ obu rejestrów (BZP + TED), BEZ płatnego AI — karta ma
+  // się otwierać przy każdym ogłoszeniu, tak jak katalog. Trasy w Cloud Functions
+  // (prefiks `/wygrywalnosc`), nie w moście `/api/przetarg/*`.
+  /**
+   * Karta decyzji dla przetargu z katalogu.
+   * → `{ stan: 'otwarte', karta }` albo `{ stan: 'rozstrzygniete', rozstrzygniecie }`.
+   * `karta.werdykt` to KATEGORIA (sprawdz/uwazaj/trudny/brak_danych/po_terminie) —
+   * backend świadomie nie oddaje „procentu szans".
+   */
+  czyWartoStartowac: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}`),
+  /** Karta decyzji dla pozycji z feedu dopasowań → `{ karta }`. */
+  czyWartoDlaDopasowania: (matchId) => request(`/matches/${matchId}/czy-warto`),
+  /** Surowe kubełki benchmarku (zamawiający / dział w regionie / dział w kraju). */
+  benchmarkPrzetargu: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}/benchmark`),
+  /**
+   * Checklista „co musisz mieć na dzień składania". BEZSTANOWA: wymagania
+   * z Radaru SWZ i stan Sejfu podaje KLIENT, backend dokłada dzień składania
+   * z kalendarza postępowania. → `{ checklista, kalendarz }`.
+   */
+  checklistaOferty: (tenderId, { wymagania = [], dokumenty = [] } = {}) =>
+    request(`/wygrywalnosc/tender/${tenderId}/checklista`, {
+      method: 'POST',
+      body: { wymagania, dokumenty },
+    }),
 };

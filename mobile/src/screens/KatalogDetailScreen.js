@@ -99,6 +99,17 @@ export default function KatalogDetailScreen({ route, navigation }) {
         procentowego ani zakładek. Zamiast udawać, że są, pokazujemy drogę do
         tego, żeby takie ogłoszenia trafiały do feedu same.
       */}
+      {/*
+        Katalog pokazuje rynek, a nie dopasowania — tym bardziej potrzebuje pytania
+        „czy warto". Bez niego to jest lista ogłoszeń bez żadnej podpowiedzi,
+        w które z nich w ogóle wchodzić.
+      */}
+      <Button
+        title={t('Czy warto tu startować?', 'Is this one worth bidding on?')}
+        onPress={() => navigation.navigate('CzyWarto', { tenderId: tender.id, tytul: tender.title })}
+        style={styles.notkaPrzycisk}
+      />
+
       <View style={styles.notka}>
         <Text style={styles.notkaTekst}>
           {t(

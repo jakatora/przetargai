@@ -386,6 +386,30 @@ export default function MatchDetailScreen({ route, navigation }) {
         </View>
       </View>
 
+      {/*
+        Karta decyzji stoi PRZED symulatorem płynności świadomie: najpierw pytanie
+        „czy w tym w ogóle wygrasz", potem „czy udźwigniesz kontrakt". Odwrotna
+        kolejność każe liczyć finansowanie przetargu, który trzeba odpuścić.
+      */}
+      <Text style={styles.sectionTitle}>Czy warto tu startować</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
+          Ile firm zwykle startuje u tego zamawiającego, jaka cena tam wygrywa i jak często
+          postępowania kończą się unieważnieniem. Liczby z rozstrzygnięć BZP i TED — bez
+          obietnicy „procentu szans", bo o wyniku decyduje treść Twojej oferty.
+        </Text>
+        <Button
+          title="Sprawdź, czy warto startować"
+          onPress={() => navigation.navigate('CzyWarto', {
+            matchId: match.id,
+            tenderId: tender?.id ?? match.tender_id ?? null,
+            tytul: tender?.title,
+          })}
+          variant="primary"
+          style={styles.gap}
+        />
+      </View>
+
       <Text style={styles.sectionTitle}>Zanim wystartujesz — policz płynność</Text>
       <View style={styles.card}>
         <Text style={styles.strPodtytul}>

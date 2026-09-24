@@ -19,6 +19,7 @@ import mostRouter from './routes/most.js';
 import wyszukiwaniaRouter from './routes/wyszukiwania.js';
 import alertyRouter from './routes/alerty.js';
 import kalendarzRouter from './routes/kalendarz.js';
+import wygrywalnoscRouter from './routes/wygrywalnosc.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -99,6 +100,11 @@ export function createApp() {
   app.use('/wyszukiwania', apiLimiter, wyszukiwaniaRouter);
   app.use('/alerty', apiLimiter, alertyRouter);
   app.use('/kalendarz', apiLimiter, kalendarzRouter);
+  /*
+   * Wygrywalnosc (etap 6). Osobno od /tenders, bo katalog NIE czyta profilu,
+   * a karta „czy warto startowac" czyta (maksymalna wartosc kontraktu).
+   */
+  app.use('/wygrywalnosc', apiLimiter, wygrywalnoscRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminLimiter, adminRouter);
 

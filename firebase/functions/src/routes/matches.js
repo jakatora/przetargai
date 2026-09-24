@@ -9,6 +9,7 @@ import { audit } from '../lib/audit.js';
 import { publicMatch, publicSaved, przetargZDopasowania } from '../lib/serialize.js';
 import { wyjasnijDopasowanie, nastepnyKrokProfilu } from '../lib/wyjasnienieDopasowania.js';
 import { pobierzZnacznikiZrodel } from '../services/zakresZrodel.js';
+import { zbudujKarteStartu } from '../services/kartaStartu.js';
 import { summarizeTender } from '../services/ai.js';
 import { normalizujStatus, oczyscNotatke, STATUSY } from '../lib/statusPrzetargu.js';
 import { zbudujZachete, POCZATEK_TYGODNIA_MS } from '../lib/potencjal.js';
@@ -235,6 +236,26 @@ router.get('/:id/wyniki', ah(async (req, res) => {
 
   const stat = await wynikiStats.pobierz(klucz);
   res.json({ wyniki: stat ?? null, powod: stat ? undefined : 'brak_danych' });
+}));
+
+/**
+ * Karta „Czy warto startować?" dla dopasowania (etap 6). MUSI stać przed `GET /:id`.
+ *
+ * Bez płatnego AI: czyta gotowe kubełki benchmarku, liczone w jobie.
+ */
+router.get('/:id/czy-warto', ah(async (req, res) => {
+  const row = await matches.detail(req.user.id, req.params.id);
+  if (!row) throw notFound('Dopasowanie nie zostało znalezione');
+
+  const tender = await tenders.findById(row.tender_id);
+  if (!tender) throw notFound('Przetarg nie został znaleziony');
+
+  const karta = await zbudujKarteStartu({
+    tender,
+    profil: { wartosc_max: req.user.wartosc_max ?? null },
+    teraz: Date.now(),
+  });
+  res.json({ karta });
 }));
 
 /** Szczegóły pojedynczego dopasowania. */

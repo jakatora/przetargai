@@ -17,6 +17,8 @@ import SejfScreen from '../screens/SejfScreen';
 import KatalogDetailScreen from '../screens/KatalogDetailScreen';
 import ZakresDanychScreen from '../screens/ZakresDanychScreen';
 import RejestratorOfertyScreen from '../screens/RejestratorOfertyScreen';
+import CzyWartoScreen from '../screens/CzyWartoScreen';
+import ChecklistaOfertyScreen from '../screens/ChecklistaOfertyScreen';
 import SymulatorPlynnosciScreen from '../screens/SymulatorPlynnosciScreen';
 import ZabezpieczenieZwrotScreen from '../screens/ZabezpieczenieZwrotScreen';
 import PodprogoweDetailScreen from '../screens/PodprogoweDetailScreen';
@@ -149,6 +151,16 @@ export default function RootNavigator() {
               name="RejestratorOferty"
               component={RejestratorOfertyScreen}
               options={{ title: 'Rejestrator oferty' }}
+            />
+            <Stack.Screen
+              name="CzyWarto"
+              component={CzyWartoScreen}
+              options={{ title: 'Czy warto startować?' }}
+            />
+            <Stack.Screen
+              name="ChecklistaOferty"
+              component={ChecklistaOfertyScreen}
+              options={{ title: 'Do dnia składania' }}
             />
             <Stack.Screen
               name="SymulatorPlynnosci"
