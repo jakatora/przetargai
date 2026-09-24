@@ -29,6 +29,8 @@ const SCIEZKA_WEJSCIA = [
   'SavedScreen',
   'PulpitScreen',
   'NarzedziaScreen',
+  'RadarPlanowScreen',
+  'RadarPlanuScreen',
 ];
 
 /** Kod bez komentarzy i bez bloków stylów — tam polskie słowa są nazwami pól. */

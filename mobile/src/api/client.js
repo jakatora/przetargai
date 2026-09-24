@@ -363,4 +363,23 @@ export const api = {
       method: 'POST',
       body: { wymagania, dokumenty },
     }),
+
+  // ----- Radar planów postępowań (P2-4) -----
+  // Wstępne ogłoszenia informacyjne z TED, ranking pod profil i plan przygotowań.
+  // BEZ płatnego AI — trasy w Cloud Functions (prefiks `/radar-planow`).
+  /**
+   * Lista radaru. `tryb`: 'dla_mnie' (ranking) | 'wszystkie' (rynek planów).
+   * → `{ tryb, pozycje, lacznie_aktywnych, dopasowanych, podpowiedz, zbudowano_o, zrodlo }`.
+   * Pusty profil dostaje `tryb: 'wszystkie'` i `podpowiedz.kod = 'uzupelnij_profil'`.
+   */
+  radarPlanow: ({ tryb = 'dla_mnie', region } = {}) => {
+    const qs = new URLSearchParams({ tryb });
+    if (region) qs.set('region', region);
+    return request(`/radar-planow?${qs.toString()}`);
+  },
+  /**
+   * Szczegół pozycji planu → `{ pozycja, dopasowanie, przygotowania, ogloszenie,
+   * ogloszenie_sprawdzone, ostrzezenia }`. `ogloszenie.alarm` = „to jest to, na co czekałeś".
+   */
+  radarPlanu: (id) => request(`/radar-planow/${encodeURIComponent(id)}`),
 };

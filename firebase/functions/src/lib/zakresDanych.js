@@ -61,8 +61,8 @@ const NIEOBJETE = [
       en: 'Procurement plans (art. 23 of the Polish PPL)',
     },
     opis: {
-      pl: 'API Biuletynu Zamówień Publicznych przyjmuje wyłącznie ogłoszenia o zamówieniu i o wyniku — planów nie da się z niego pobrać.',
-      en: 'The BZP API accepts contract and result notices only — plans cannot be retrieved from it.',
+      pl: 'API Biuletynu Zamówień Publicznych przyjmuje wyłącznie ogłoszenia o zamówieniu i o wyniku — planów nie da się z niego pobrać. Radar planów widzi za to wstępne ogłoszenia informacyjne z TED (zamówienia powyżej progów unijnych).',
+      en: 'The BZP API accepts contract and result notices only — plans cannot be retrieved from it. The plan radar does see prior information notices from TED (contracts above EU thresholds).',
     },
   },
 ];

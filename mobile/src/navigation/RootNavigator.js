@@ -49,6 +49,8 @@ import KaryUmowneScreen from '../screens/KaryUmowneScreen';
 import KalkulatorOdsetekScreen from '../screens/KalkulatorOdsetekScreen';
 import KartaDecyzjiScreen from '../screens/KartaDecyzjiScreen';
 import PulpitScreen from '../screens/PulpitScreen';
+import RadarPlanowScreen from '../screens/RadarPlanowScreen';
+import RadarPlanuScreen from '../screens/RadarPlanuScreen';
 import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
 import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 import NarzedziaScreen from '../screens/NarzedziaScreen';
@@ -302,6 +304,16 @@ export default function RootNavigator() {
               name="Pulpit"
               component={PulpitScreen}
               options={{ title: 'Moje postępowania' }}
+            />
+            <Stack.Screen
+              name="RadarPlanow"
+              component={RadarPlanowScreen}
+              options={{ title: 'Radar planów' }}
+            />
+            <Stack.Screen
+              name="RadarPlanu"
+              component={RadarPlanuScreen}
+              options={{ title: 'Plan zamówienia' }}
             />
             <Stack.Screen
               name="KontrolaOferty"

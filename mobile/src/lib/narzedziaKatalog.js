@@ -5,6 +5,12 @@
  */
 export const KATALOG_NARZEDZI = [
   {
+    kategoria: 'Zanim ogłoszą',
+    narzedzia: [
+      { ekran: 'RadarPlanow', tytul: 'Radar planów zamówień', opis: 'Przetargi zapowiedziane w TED — przygotuj się, zanim wyjdą' },
+    ],
+  },
+  {
     kategoria: 'Decyzja: startować?',
     narzedzia: [
       { ekran: 'KartaDecyzji', tytul: 'Startować czy odpuścić?', opis: 'Werdykt GO / ROZWAŻ / ODPUŚĆ z czerwonymi flagami' },
