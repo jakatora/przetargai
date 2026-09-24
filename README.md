@@ -1,26 +1,30 @@
 # PrzetargAI
 
-Monitoring przetargów publicznych dla polskich firm budowlanych i IT.
-AI dopasowuje ogłoszenia z Biuletynu Zamówień Publicznych (BZP) do profilu firmy
-i wysyła powiadomienia o nowych, trafnych przetargach.
+Monitoring przetargów publicznych dla polskich firm. AI dopasowuje ogłoszenia
+z BZP, TED (zamówienia unijne) i Bazy Konkurencyjności do profilu firmy, a ~35 narzędzi
+prowadzi wykonawcę od decyzji „startować czy nie" do złożenia oferty.
+
+Aplikacja: [Google Play](https://play.google.com/store/apps/details?id=pl.przetargai.app) ·
+[App Store](https://apps.apple.com/pl/app/id6773018962) · strona: https://przetargai.web.app
 
 ## Model produktu
 
 | Plan | Cena | Limity |
 |------|------|--------|
-| Free | 0 zł | 5 dopasowań / dobę, bez powiadomień push |
-| Standard | 199 zł / mc | nielimitowane dopasowania + powiadomienia push |
+| Free | 0 zł | 5 dopasowań / dobę |
+| Standard | 49 zł / mc (brutto) | nielimitowane dopasowania |
 
-Plan **Pro (399 zł)** jest świadomie poza zakresem MVP.
+Wiążąca treść: regulamin (`/regulamin`, `firebase/functions/src/routes/legal.js`).
 
 ## Architektura (monorepo)
 
 ```
 przetarg-ai/
-├── backend/      Node.js + SQLite — API REST na Railway (dziś produkcja; docelowo rollback)
-├── firebase/     Cloud Functions v2 + Firestore — DOCELOWY backend (migracja D-024)
-├── mobile/       React Native + Expo (iOS + Android) (GOTOWE)
-├── landing/      Strona + Stripe Checkout (Vercel) (GOTOWE)
+├── backend/      Node.js + SQLite na Railway — moduły /api/przetarg/* (przez most z Cloud Functions) i inne projekty
+├── firebase/     Cloud Functions v2 + Firestore — PRODUKCJA PrzetargAI (europe-central2)
+├── mobile/       React Native + Expo (iOS + Android)
+├── desktop/      Wersja na Windows: eksport webowy aplikacji w Electronie
+├── landing/      Strona (wersje robocze; żywa strona = firebase/hosting)
 ├── plans/        Dokumenty zakresu / planu MVP
 ├── runbooks/     Procedury operacyjne i awaryjne
 ├── agent_log.md  Dziennik prac
