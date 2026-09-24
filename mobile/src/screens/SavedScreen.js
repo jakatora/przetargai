@@ -5,6 +5,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
+import { useJezyk } from '../context/JezykContext';
 import { useSaved } from '../context/SavedContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
@@ -19,6 +20,8 @@ import * as storage from '../lib/storage';
 export default function SavedScreen({ navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleZapisanych);
+  // Zakładki to drugi najczęściej otwierany ekran — dwujęzyczny jak feed (P1-5).
+  const { t } = useJezyk();
   const { toggle } = useSaved();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,30 +107,32 @@ export default function SavedScreen({ navigation }) {
           <View style={styles.body}>
             <Text style={styles.title} numberOfLines={2}>{tender.title}</Text>
             {tender.organization ? <Text style={styles.org} numberOfLines={1}>{tender.organization}</Text> : null}
-            <Text style={styles.deadline}>Termin: {formatDate(tender.deadline)}</Text>
+            <Text style={styles.deadline}>{t('Termin', 'Deadline')}: {formatDate(tender.deadline)}</Text>
             <Text style={[styles.znacznik, termin.minal && styles.miniony, termin.pilny && styles.pilny]}>
               {termin.etykieta}
             </Text>
           </View>
-          <Pressable onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel="Usuń z zapisanych" style={styles.gwiazdka}>
+          <Pressable onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
             <Text style={[styles.gwiazdkaZnak, { color: kolory.blue }]}>★</Text>
           </Pressable>
         </Pressable>
 
         <View style={styles.etapBlok}>
-          <Text style={styles.etapEtykieta}>Etap</Text>
+          <Text style={styles.etapEtykieta}>{t('Etap', 'Stage')}</Text>
           <StatusPicker wartosc={item.status || STATUS_DOMYSLNY} onChange={(v) => zmienStatus(item, v)} />
         </View>
 
         <View style={styles.przypomnienie}>
           <View style={styles.przypInfo}>
-            <Text style={styles.przypTytul}>Przypomnij przed terminem</Text>
+            <Text style={styles.przypTytul}>{t('Przypomnij przed terminem', 'Remind me before the deadline')}</Text>
             <Text style={styles.przypOpis}>
               {maTermin
                 ? (item.reminder_enabled
-                  ? 'Powiadomimy Cię na 7, 3 i 1 dzień przed terminem składania ofert.'
-                  : 'Push, żebyś nie przegapił terminu.')
-                : 'Ten przetarg nie ma terminu, o którym można przypomnieć.'}
+                  ? t('Powiadomimy Cię na 7, 3 i 1 dzień przed terminem składania ofert.',
+                    'We will notify you 7, 3 and 1 day before the bid submission deadline.')
+                  : t('Push, żebyś nie przegapił terminu.', 'A push so you do not miss the deadline.'))
+                : t('Ten przetarg nie ma terminu, o którym można przypomnieć.',
+                  'This tender has no deadline to remind you about.')}
             </Text>
           </View>
           <Switch
@@ -149,10 +154,10 @@ export default function SavedScreen({ navigation }) {
       ListHeaderComponent={items.length ? (
         <View style={styles.widokiRzad}>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('Pulpit')} accessibilityRole="button">
-            <Text style={styles.widokBtnTekst}>📋  Pulpit</Text>
+            <Text style={styles.widokBtnTekst}>📋  {t('Pulpit', 'Dashboard')}</Text>
           </Pressable>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('KalendarzTerminow')} accessibilityRole="button">
-            <Text style={styles.widokBtnTekst}>📅  Kalendarz</Text>
+            <Text style={styles.widokBtnTekst}>📅  {t('Kalendarz', 'Calendar')}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -160,25 +165,27 @@ export default function SavedScreen({ navigation }) {
       ListEmptyComponent={blad ? (
         <View style={styles.center}>
           <Text style={styles.emptyIcon}>📡</Text>
-          <Text style={styles.emptyTitle}>Nie udało się wczytać</Text>
+          <Text style={styles.emptyTitle}>{t('Nie udało się wczytać', 'Could not load')}</Text>
           <Text style={styles.emptyText}>
-            Sprawdź połączenie z internetem i spróbuj ponownie.
+            {t('Sprawdź połączenie z internetem i spróbuj ponownie.', 'Check your internet connection and try again.')}
           </Text>
           <Pressable
             style={styles.ponowBtn}
             onPress={() => { setLoading(true); wczytaj(); }}
             accessibilityRole="button"
           >
-            <Text style={styles.ponowBtnTekst}>Spróbuj ponownie</Text>
+            <Text style={styles.ponowBtnTekst}>{t('Spróbuj ponownie', 'Try again')}</Text>
           </Pressable>
         </View>
       ) : (
         <View style={styles.center}>
           <Text style={styles.emptyIcon}>☆</Text>
-          <Text style={styles.emptyTitle}>Brak zapisanych przetargów</Text>
+          <Text style={styles.emptyTitle}>{t('Brak zapisanych przetargów', 'No saved tenders')}</Text>
           <Text style={styles.emptyText}>
-            Dotknij gwiazdki przy przetargu, aby zapisać go tutaj — ustawisz etap pracy,
-            dopiszesz notatki i włączysz przypomnienie o terminie.
+            {t(
+              'Dotknij gwiazdki przy przetargu, aby zapisać go tutaj — ustawisz etap pracy, dopiszesz notatki i włączysz przypomnienie o terminie.',
+              'Tap the star on a tender to save it here — you can set your stage, add notes and turn on a deadline reminder.',
+            )}
           </Text>
         </View>
       )}

@@ -54,7 +54,7 @@
     "baseline_przed_etapem_4": "513/513",
     "mobile": {
       "polecenie": "cd mobile && npm test",
-      "wynik": "764/764",
+      "wynik": "774/774",
       "baseline_przed_etapem_4": "663/663",
       "statyczna_kontrola": "npm run check (esbuild) — zielony",
       "baseline_przed_etapem_5": "711/711",
@@ -410,6 +410,24 @@
         "health": "wyniki_okno obecne: doby_okna 14, doby_niedomkniete 0, error null"
       },
       "zgodnosc": "wylacznie publiczne API BZP i TED, zero scrapingu, zero platnego AI, zero Stripe"
+    },
+    "p1_5_sciezka_wejscia_pl_en": {
+      "stan": "dowiezione w galezi (mobile — do builda)",
+      "data": "2026-09-24",
+      "cel": "Sciezka WEJSCIA do aplikacji dwujezyczna — bo JezykProvider wykrywa locale urzadzenia przy pierwszym starcie, a przelacznik jezyka mieszka w „Koncie\", czyli ZA logowaniem",
+      "ekrany": [
+        "LoginScreen",
+        "RegisterScreen",
+        "ForgotPasswordScreen",
+        "ResetPasswordScreen",
+        "WitajScreen",
+        "SavedScreen",
+        "PulpitScreen",
+        "NarzedziaScreen (chrome)"
+      ],
+      "czego_NIE_tlumaczono": "katalog narzedzi w NarzedziaScreen — te narzedzia generuja POLSKIE pisma z Pzp (wezwania, odwolania, zastrzezenia tajemnicy). Angielska etykieta nad generatorem, ktory wypluwa polski dokument prawny, wprowadza w blad mocniej niz pomaga.",
+      "straznik": "mobile/test/sciezkaWejsciaPlEn.test.js czyta ZRODLO ekranow i wylapuje goly polski literal w title/placeholder/label/hint oraz miedzy znacznikami. Sprawdzone, ze straznik naprawde cos mierzy: na nieprzetlumaczonych ekranach znajduje naruszenia (SejfScreen 4, KartaDecyzjiScreen 1), na sciezce wejscia zero.",
+      "pozostalo": "~39 ekranow narzedziowych zostaje polskich — swiadomie, patrz wyzej"
     }
   },
   "nastepne_zrodlo": {

@@ -6,6 +6,7 @@ import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
+import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 
 /**
@@ -29,6 +30,13 @@ function parseList(text) {
 export default function WitajScreen({ navigation }) {
   const { user, setUser, pominOnboarding } = useAuth();
   const styles = useStyle(tworzStyleWitaj);
+  /*
+   * Ekran powitalny to PIERWSZE, co widzi nowe konto — także takie z angielskim
+   * systemem, bo `JezykProvider` wykrywa locale urządzenia przy pierwszym starcie.
+   * Dopóki ten ekran był wyłącznie polski, obietnica dwujęzyczności pękała
+   * dokładnie tam, gdzie zaczyna się korzystanie z aplikacji (P1-5).
+   */
+  const { t } = useJezyk();
 
   const [opis, setOpis] = useState('');
   const [keywords, setKeywords] = useState((user?.keywords || []).join(', '));
@@ -48,7 +56,7 @@ export default function WitajScreen({ navigation }) {
     try {
       const s = await api.suggestProfile(opis.trim());
       if (!s.keywords) {
-        setInfo(s.komunikat || 'Nie udało się teraz dobrać podpowiedzi. Możesz wpisać słowa ręcznie.');
+        setInfo(s.komunikat || t('Nie udało się teraz dobrać podpowiedzi. Możesz wpisać słowa ręcznie.', 'Could not fetch suggestions right now. You can type the words in yourself.'));
         return;
       }
       // Scalamy z tym, co user już wpisał (bez duplikatów), cap 30 = limit backendu.
@@ -58,7 +66,8 @@ export default function WitajScreen({ navigation }) {
       };
       if (s.keywords.length) setKeywords((b) => scal(b, s.keywords));
       if (s.cpv.length) setCpv((b) => scal(b, s.cpv));
-      setInfo(`Dobrano ${s.keywords.length} słów i ${s.cpv.length} kodów CPV. Sprawdź i zapisz.`);
+      setInfo(t(`Dobrano ${s.keywords.length} słów i ${s.cpv.length} kodów CPV. Sprawdź i zapisz.`,
+        `Picked ${s.keywords.length} keywords and ${s.cpv.length} CPV codes. Review and save.`));
     } catch (err) {
       setInfo(err.message);
     } finally {
@@ -70,7 +79,8 @@ export default function WitajScreen({ navigation }) {
     const kw = parseList(keywords);
     const cp = parseList(cpv);
     if (kw.length === 0 && cp.length === 0) {
-      setInfo('Dodaj przynajmniej jedno słowo kluczowe albo kod CPV — na tej podstawie dobieramy przetargi.');
+      setInfo(t('Dodaj przynajmniej jedno słowo kluczowe albo kod CPV — na tej podstawie dobieramy przetargi.',
+        'Add at least one keyword or CPV code — that is what we match tenders against.'));
       return;
     }
     setZapis(true);
@@ -94,22 +104,24 @@ export default function WitajScreen({ navigation }) {
     <Screen scroll>
       <View style={styles.hero}>
         <Text style={styles.emoji}>🎯</Text>
-        <Text style={styles.tytul}>Witaj w PrzetargAI</Text>
+        <Text style={styles.tytul}>{t('Witaj w PrzetargAI', 'Welcome to PrzetargAI')}</Text>
         <Text style={styles.wstep}>
-          Dopasujemy przetargi publiczne do Twojej firmy. Powiedz nam, czym się
-          zajmujesz — na tej podstawie codziennie znajdziemy pasujące ogłoszenia.
+          {t(
+            'Dopasujemy przetargi publiczne do Twojej firmy. Powiedz nam, czym się zajmujesz — na tej podstawie codziennie znajdziemy pasujące ogłoszenia.',
+            'We match public tenders to your company. Tell us what you do and we will find fitting notices for you every day.',
+          )}
         </Text>
       </View>
 
-      <Text style={styles.krok}>Krok 1 — opisz firmę jednym zdaniem</Text>
+      <Text style={styles.krok}>{t('Krok 1 — opisz firmę jednym zdaniem', 'Step 1 — describe your company in one sentence')}</Text>
       <TextField
         value={opis}
         onChangeText={setOpis}
-        placeholder="np. Kładę kostkę brukową i buduję ogrodzenia"
+        placeholder={t('np. Kładę kostkę brukową i buduję ogrodzenia', 'e.g. I lay paving stones and build fences')}
         multiline
       />
       <Button
-        title="Dobierz słowa kluczowe i CPV"
+        title={t('Dobierz słowa kluczowe i CPV', 'Suggest keywords and CPV codes')}
         onPress={dobierz}
         loading={dobieranie}
         variant="ghost"
@@ -117,28 +129,31 @@ export default function WitajScreen({ navigation }) {
       />
       {info ? <Text style={styles.info}>{info}</Text> : null}
 
-      <Text style={styles.krok}>Krok 2 — sprawdź i popraw</Text>
+      <Text style={styles.krok}>{t('Krok 2 — sprawdź i popraw', 'Step 2 — review and adjust')}</Text>
       <TextField
-        label="Słowa kluczowe"
+        label={t('Słowa kluczowe', 'Keywords')}
         value={keywords}
         onChangeText={setKeywords}
-        placeholder="remont, budowa drogi, instalacje"
-        hint="Po przecinku"
+        placeholder={t('remont, budowa drogi, instalacje', 'renovation, road construction, installations')}
+        hint={t('Po przecinku', 'Comma-separated')}
         multiline
       />
       <TextField
-        label="Kody CPV"
+        label={t('Kody CPV', 'CPV codes')}
         value={cpv}
         onChangeText={setCpv}
         placeholder="45000000, 45300000"
-        hint="Po przecinku — jeśli nie znasz, zostaw AI powyżej"
+        hint={t('Po przecinku — jeśli nie znasz, zostaw AI powyżej', 'Comma-separated — if you do not know them, use the suggestion above')}
         style={styles.polCpv}
       />
 
-      <Button title="Zapisz i zacznij" onPress={zapiszIStart} loading={zapis} style={styles.gap} />
-      <Button title="Pomiń na razie" onPress={pomin} variant="ghost" style={styles.gapMaly} />
+      <Button title={t('Zapisz i zacznij', 'Save and start')} onPress={zapiszIStart} loading={zapis} style={styles.gap} />
+      <Button title={t('Pomiń na razie', 'Skip for now')} onPress={pomin} variant="ghost" style={styles.gapMaly} />
       <Text style={styles.stopka}>
-        Bez uzupełnionego profilu feed będzie pusty — możesz wrócić do tego w każdej chwili w „Koncie".
+        {t(
+          'Bez uzupełnionego profilu feed będzie pusty — możesz wrócić do tego w każdej chwili w „Koncie".',
+          'Without a profile your feed stays empty — you can come back to this any time under „Account".',
+        )}
       </Text>
     </Screen>
   );

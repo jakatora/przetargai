@@ -6,6 +6,7 @@ import TextField from '../components/TextField';
 import Button from '../components/Button';
 import CpvPicker from '../components/CpvPicker';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
+import { useJezyk } from '../context/JezykContext';
 import { spacing } from '../theme';
 
 function parseList(text) {
@@ -18,6 +19,8 @@ function parseList(text) {
 export default function RegisterScreen() {
   const { signUp } = useAuth();
   const styles = useStyle(tworzStyleRejestracji);
+  // Rejestracja jest bramą do produktu — po angielsku tak samo jak po polsku (P1-5).
+  const { t } = useJezyk();
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -34,15 +37,15 @@ export default function RegisterScreen() {
   async function handleRegister() {
     setError(null);
     if (!form.email.trim() || !form.password) {
-      setError('Uzupełnij email i hasło.');
+      setError(t('Uzupełnij email i hasło.', 'Fill in your email and password.'));
       return;
     }
     if (form.password.length < 8) {
-      setError('Hasło musi mieć co najmniej 8 znaków.');
+      setError(t('Hasło musi mieć co najmniej 8 znaków.', 'The password needs at least 8 characters.'));
       return;
     }
     if (form.password !== form.password_confirm) {
-      setError('Hasła się różnią — wpisz dwa razy to samo hasło.');
+      setError(t('Hasła się różnią — wpisz dwa razy to samo hasło.', 'The passwords differ — type the same one twice.'));
       return;
     }
     setLoading(true);
@@ -62,56 +65,58 @@ export default function RegisterScreen() {
   return (
     <Screen scroll>
       <Text style={styles.intro}>
-        Załóż konto. Słowa kluczowe pozwalają AI dopasować przetargi do tego,
-        czym się zajmujesz — możesz je zmienić w każdej chwili.
+        {t(
+          'Załóż konto. Słowa kluczowe pozwalają AI dopasować przetargi do tego, czym się zajmujesz — możesz je zmienić w każdej chwili.',
+          'Create an account. Keywords let the AI match tenders to what you actually do — you can change them any time.',
+        )}
       </Text>
 
       <TextField
-        label="Email"
+        label={t('Email', 'Email')}
         value={form.email}
         onChangeText={set('email')}
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType="email-address"
-        placeholder="twoj@email.pl"
+        placeholder={t('twoj@email.pl', 'you@email.com')}
       />
       <TextField
-        label="Hasło"
+        label={t('Hasło', 'Password')}
         value={form.password}
         onChangeText={set('password')}
         secureTextEntry
         placeholder="••••••••"
-        hint="Minimum 8 znaków"
+        hint={t('Minimum 8 znaków', 'At least 8 characters')}
       />
       <TextField
-        label="Powtórz hasło"
+        label={t('Powtórz hasło', 'Repeat password')}
         value={form.password_confirm}
         onChangeText={set('password_confirm')}
         secureTextEntry
         placeholder="••••••••"
-        hint="Wpisz to samo hasło jeszcze raz"
+        hint={t('Wpisz to samo hasło jeszcze raz', 'Type the same password again')}
       />
       <TextField
-        label="Słowa kluczowe"
+        label={t('Słowa kluczowe', 'Keywords')}
         value={form.keywords}
         onChangeText={set('keywords')}
-        placeholder="remont, budowa drogi, instalacje"
-        hint="Po przecinku — czym się zajmujesz"
+        placeholder={t('remont, budowa drogi, instalacje', 'renovation, road construction, installations')}
+        hint={t('Po przecinku — czym się zajmujesz', 'Comma-separated — what you do')}
       />
       <TextField
-        label="Kody CPV (opcjonalnie)"
+        label={t('Kody CPV (opcjonalnie)', 'CPV codes (optional)')}
         value={form.cpv_codes}
         onChangeText={set('cpv_codes')}
         placeholder="45000000, 45300000"
-        hint="Po przecinku — jeśli je znasz; nie są wymagane"
+        hint={t('Po przecinku — jeśli je znasz; nie są wymagane', 'Comma-separated — if you know them; not required')}
         style={styles.poleCpv}
       />
       <Pressable onPress={() => setSciagaOtwarta(true)} hitSlop={8} accessibilityRole="button">
-        <Text style={styles.linkSciagi}>Nie znasz kodów? Otwórz ściągę CPV →</Text>
+        <Text style={styles.linkSciagi}>{t('Nie znasz kodów? Otwórz ściągę CPV →', 'Do not know the codes? Open the CPV cheat sheet →')}</Text>
       </Pressable>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button title="Załóż konto" onPress={handleRegister} loading={loading} />
+      <Button title={t('Załóż konto', 'Create account')} onPress={handleRegister} loading={loading} />
 
       <CpvPicker
         widoczny={sciagaOtwarta}

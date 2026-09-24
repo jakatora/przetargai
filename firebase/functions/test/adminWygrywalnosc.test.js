@@ -85,3 +85,25 @@ describe('/admin/benchmark — przeliczenie z bazy', () => {
     assert.ok(!blok.includes('runTenderFetch'));
   });
 });
+
+describe('/admin/agreguj-wyniki — statystyki wyników bez czekania na niedzielę', () => {
+  test('wymaga klucza administratora', async () => {
+    assert.equal((await zapytaj('/admin/agreguj-wyniki')).status, 403);
+  });
+
+  test('woła WYŁĄCZNIE agregację, bez cyklu dopasowań i bez backfillu', () => {
+    const blok = blokEndpointu('/agreguj-wyniki');
+    assert.ok(blok.includes('runWynikiAggregation'));
+    assert.ok(!blok.includes('runTenderFetch'), 'cykl dopasowań = płatne wywołania Claude');
+    assert.ok(!blok.includes('backfillUser'));
+  });
+
+  test('istnieje, bo cron liczy to RAZ W TYGODNIU', () => {
+    /*
+     * `aggregateResults` chodzi w niedzielę o 4:00. Etap 6 naprawił pobieranie
+     * wyników z BZP, martwe od rundy 16 — bez tego wyzwalacza „czy naprawa działa"
+     * dałoby się sprawdzić dopiero po kilku dniach.
+     */
+    assert.match(blokEndpointu('/agreguj-wyniki'), /dni/);
+  });
+});

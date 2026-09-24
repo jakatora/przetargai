@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
+import { useJezyk } from '../context/JezykContext';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -15,6 +16,7 @@ import { spacing } from '../theme';
 export default function ForgotPasswordScreen({ navigation, route }) {
   const { forgotPassword } = useAuth();
   const styles = useStyle(tworzStyleForgot);
+  const { t } = useJezyk(); // ścieżka odzyskiwania konta też musi być dwujęzyczna (P1-5)
   const [email, setEmail] = useState(route?.params?.email ?? '');
   const [wyslano, setWyslano] = useState(false);
   const [error, setError] = useState(null);
@@ -22,7 +24,7 @@ export default function ForgotPasswordScreen({ navigation, route }) {
 
   async function wyslij() {
     setError(null);
-    if (!email.trim()) { setError('Podaj adres e-mail konta.'); return; }
+    if (!email.trim()) { setError(t('Podaj adres e-mail konta.', 'Enter the account email address.')); return; }
     setLoading(true);
     try {
       await forgotPassword(email.trim());
@@ -36,20 +38,22 @@ export default function ForgotPasswordScreen({ navigation, route }) {
 
   return (
     <Screen scroll contentStyle={styles.content}>
-      <Text style={styles.heading}>Odzyskaj hasło</Text>
+      <Text style={styles.heading}>{t('Odzyskaj hasło', 'Recover your password')}</Text>
       <Text style={styles.opis}>
-        Podaj adres e-mail konta. Jeśli takie konto istnieje, wyślemy na nie jednorazowy kod do
-        ustawienia nowego hasła (ważny 1 godzinę).
+        {t(
+          'Podaj adres e-mail konta. Jeśli takie konto istnieje, wyślemy na nie jednorazowy kod do ustawienia nowego hasła (ważny 1 godzinę).',
+          'Enter the account email address. If such an account exists, we will send it a one-time code to set a new password (valid for 1 hour).',
+        )}
       </Text>
 
       <TextField
-        label="Email"
+        label={t('Email', 'Email')}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType="email-address"
-        placeholder="twoj@email.pl"
+        placeholder={t('twoj@email.pl', 'you@email.com')}
         editable={!wyslano}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -58,22 +62,24 @@ export default function ForgotPasswordScreen({ navigation, route }) {
         <>
           <View style={styles.info}>
             <Text style={styles.infoText}>
-              Jeśli konto o tym adresie istnieje, wysłaliśmy na nie kod. Sprawdź skrzynkę (także
-              spam) i wpisz kod na kolejnym ekranie.
+              {t(
+                'Jeśli konto o tym adresie istnieje, wysłaliśmy na nie kod. Sprawdź skrzynkę (także spam) i wpisz kod na kolejnym ekranie.',
+                'If an account with this address exists, we have sent it a code. Check your inbox (and spam) and enter the code on the next screen.',
+              )}
             </Text>
           </View>
           <Button
-            title="Mam kod — ustaw nowe hasło"
+            title={t('Mam kod — ustaw nowe hasło', 'I have the code — set a new password')}
             onPress={() => navigation.navigate('ResetPassword', { email: email.trim() })}
           />
-          <Text style={styles.link} onPress={wyslij} accessibilityRole="link">Wyślij kod ponownie</Text>
+          <Text style={styles.link} onPress={wyslij} accessibilityRole="link">{t('Wyślij kod ponownie', 'Send the code again')}</Text>
         </>
       ) : (
-        <Button title="Wyślij kod resetu" onPress={wyslij} loading={loading} />
+        <Button title={t('Wyślij kod resetu', 'Send reset code')} onPress={wyslij} loading={loading} />
       )}
 
       <Text style={styles.link} onPress={() => navigation.goBack()} accessibilityRole="link">
-        Wróć do logowania
+        {t('Wróć do logowania', 'Back to sign in')}
       </Text>
     </Screen>
   );

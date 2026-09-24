@@ -6,6 +6,7 @@ import { runTenderFetch } from '../jobs/fetchTenders.js';
 import { runBkOkno } from '../jobs/oknoBk.js';
 import { runOknoWynikow } from '../jobs/oknoWynikow.js';
 import { runBenchmarkRynku } from '../jobs/benchmarkRynku.js';
+import { runWynikiAggregation } from '../jobs/aggregateResults.js';
 import { backfillUser } from '../services/matching.js';
 import { tenders, users } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
@@ -78,6 +79,25 @@ router.post('/okno-wynikow', ah(async (req, res) => {
  */
 router.post('/benchmark', ah(async (req, res) => {
   const wynik = await runBenchmarkRynku();
+  res.json(wynik);
+}));
+
+/**
+ * Ręczne przeliczenie STATYSTYK WYNIKÓW (`wyniki_stats`) — tych, które karmią
+ * `GET /matches/:id/wyniki`.
+ *
+ * 🚨 Po co osobny wyzwalacz, skoro jest cron: `aggregateResults` chodzi RAZ
+ * W TYGODNIU (niedziela 4:00). Gdy naprawia się to, co ten job liczy — a etap 6
+ * naprawił samo pobieranie wyników z BZP, martwe od rundy 16 — czekanie do
+ * niedzieli znaczy „nie wiem, czy naprawa działa". Operator ma móc to sprawdzić
+ * od razu, a po naprawie parsera przeliczyć bez ruszania rejestru.
+ *
+ * Bez płatnego AI: job liczy z zapisanych rozstrzygnięć, a po rejestr sięga tylko
+ * wtedy, gdy w bazie jest ich za mało.
+ */
+router.post('/agreguj-wyniki', ah(async (req, res) => {
+  const { dni } = req.body ?? {};
+  const wynik = await runWynikiAggregation(Number.isFinite(dni) ? { dni } : {});
   res.json(wynik);
 }));
 
