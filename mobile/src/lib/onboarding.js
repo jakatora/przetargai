@@ -31,3 +31,16 @@ export function czyPokazacOnboarding(user, pominiety) {
   if (pominiety) return false;
   return profilPusty(user);
 }
+
+/**
+ * Pierwszy ekran nawigatora. ZAWSZE nazwana trasa — przy `undefined` React Navigation
+ * bierze pierwszy zarejestrowany ekran, a pierwszym ekranem zalogowanego jest Witaj
+ * (tak było do 2026-09-24: każdy start aplikacji kończył się na ekranie powitalnym).
+ *
+ * @param {object|null} user profil z AuthContext
+ * @param {boolean} pokazOnboarding wynik `czyPokazacOnboarding`
+ */
+export function trasaStartowa(user, pokazOnboarding) {
+  if (!user) return 'Login';
+  return pokazOnboarding ? 'Witaj' : 'MatchFeed';
+}

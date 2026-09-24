@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { navigationRef } from './nawigacjaRef';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
+import { trasaStartowa } from '../lib/onboarding';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
@@ -101,7 +102,7 @@ export default function RootNavigator() {
     <NavigationContainer ref={navigationRef} theme={navTheme}>
       <Stack.Navigator
         screenOptions={screenOptions}
-        initialRouteName={user && pokazOnboarding ? 'Witaj' : undefined}
+        initialRouteName={trasaStartowa(user, pokazOnboarding)}
       >
         {user ? (
           <>
