@@ -1,0 +1,43 @@
+{
+ "status": "OK",
+ "data": {
+  "advertisements": [
+   {
+    "id": 292028,
+    "title": "Wynajem lokalu wraz z usługą cateringu na konferencji Life Science Open Space w Krakowie w dniach 26-27 listopada 2026 r.",
+    "content": "1) Przedmiotem zamówienia jest wynajem lokalu wraz z usługą cateringową podczas konferencji Life Science Open Space, organizowanej w Krakowie w dniach 26-27 listopada 2026 r.\n\n2) Zamówienie dotyczy planowanego w ramach P",
+    "advertiser_name": "Fundacja Klaster LifeScience Kraków",
+    "is_mine": false,
+    "publication_date": "2026-09-17",
+    "submission_deadline": "2026-09-25 23:59:59",
+    "fulfillment_place": "Kraków, małopolskie",
+    "favorite": null
+   },
+   {
+    "id": 292045,
+    "title": "ZAPYTANIE OFERTOWE nr 12/2026/M/JARVIS",
+    "content": "Sodium hydroxide reagent grade, ≥98%, pellets (anhydrous)\n(Preferowany produkt Merck nr kat. S5881-1KG lub równoważny)",
+    "advertiser_name": "Celon Pharma S.A.",
+    "is_mine": false,
+    "publication_date": "2026-09-17",
+    "submission_deadline": "2026-09-24 23:59:59",
+    "fulfillment_place": "Kazuń Nowy, mazowieckie",
+    "favorite": null
+   },
+   {
+    "id": 292236,
+    "title": "Prowadzenie warsztatów i grup terapeutycznych dla dzieci i dorosłych",
+    "content": "Część 1 – Prowadzący warsztaty rozwojowe dla dzieci,\n1.\tRealizacja usługi oraz podstawy prawne:\n1)\tZamawiający wymaga, aby każda część zamówienia – z wyjątkiem części 7 – była realizowana przez dwuosobowy zespół składają",
+    "advertiser_name": "Stowarzyszenie Pomocy Dzieciom i Rodzinie ARKA im. ks. J. Żołnierkiewicza",
+    "is_mine": false,
+    "publication_date": "2026-09-18",
+    "submission_deadline": "2026-09-28 17:00:00",
+    "fulfillment_place": "Olsztyn, warmińsko-mazurskie",
+    "favorite": null
+   }
+  ],
+  "meta": {
+   "total": 1012
+  }
+ }
+}

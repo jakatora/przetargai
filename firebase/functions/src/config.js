@@ -63,6 +63,42 @@ const schema = z.object({
   TED_LOOKBACK_DAYS: z.coerce.number().int().positive().default(7),
 
   /*
+   * BAZA KONKURENCYJNOŚCI — zamówienia z FUNDUSZY EUROPEJSKICH (etap 3).
+   *
+   * Trzeci rejestr obok BZP (Pzp) i TED (powyżej progów UE). Ogłoszeń beneficjentów
+   * dotacji nie ma w żadnym z tamtych — obowiązuje ich „zasada konkurencyjności",
+   * nie Pzp. API publiczne, JSON, bez klucza; pomiar 2026-09-24: 1 135 ogłoszeń
+   * otwartych, 636 opublikowanych w ostatnich 7 dniach.
+   * 'false' wyłącza źródło bez wdrożenia kodu — tak samo jak TED.
+   */
+  BK_ENABLED: z.enum(['true', 'false']).default('true'),
+  BK_API_BASE_URL: z.string().url().default('https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl/api'),
+  BK_PUBLIC_BASE_URL: z.string().url().default('https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl'),
+  /*
+   * Okno czasu jest CZYSTO KLIENCKIE: BK ignoruje wszystkie sprawdzone parametry
+   * dat (publication_date_from, publicationDateFrom, date_from, publication_date[from]
+   * — `meta.total` nie drgnął). Listę bierzemy w całości i tniemy ją u siebie.
+   */
+  BK_LOOKBACK_DAYS: z.coerce.number().int().positive().default(30),
+  BK_LIMIT_STRONY: z.coerce.number().int().positive().default(500),
+  // Sufit offsetu po stronie BK to ~10 000 (page=21 przy limit=500 → HTTP 500).
+  BK_MAKS_STRON: z.coerce.number().int().positive().default(20),
+  /*
+   * Ile razy powtórzyć CAŁE przejście stron, gdy pokrycie się nie domknęło.
+   * BK oddaje wyniki w niestabilnej kolejności — jeden przebieg dał w pomiarze
+   * 921/1135, drugi 1012/1135, trzeci 1135/1135. Bez powtórek gubimy do 19 % rynku.
+   */
+  BK_MAKS_PRZEBIEGOW: z.coerce.number().int().positive().default(4),
+  /*
+   * Ile SZCZEGÓŁÓW wolno pobrać w jednym przebiegu. Wartość zamówienia i CPV są
+   * wyłącznie w szczegółach (N+1), więc to główny koszt czasu. 171 nowych ogłoszeń
+   * na dobę mieści się w kilku przebiegach co 3 h, a checkpoint pilnuje reszty.
+   */
+  BK_MAKS_SZCZEGOLOW: z.coerce.number().int().nonnegative().default(150),
+  /** Ile zniknięć z listy wolno zweryfikować szczegółem w jednym przebiegu. */
+  BK_MAKS_WERYFIKACJI: z.coerce.number().int().nonnegative().default(40),
+
+  /*
    * MOST do backendu Railway (P0-4, audyt 2026-09-23 §3.1).
    *
    * Sześć dowiezionych modułów (Sejf, Radar SWZ, Radar podprogowy, Czarna
@@ -115,6 +151,7 @@ export const features = {
   email: Boolean(env.RESEND_API_KEY),
   invoicing: env.FAKTUROWANIE_ENABLED === 'true' && Boolean(env.FAKTUROWNIA_API_KEY && env.FAKTUROWNIA_DOMAIN),
   ted: env.TED_ENABLED === 'true',
+  bk: env.BK_ENABLED === 'true',
   most: env.MOST_ENABLED === 'true',
 };
 
