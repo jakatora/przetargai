@@ -266,17 +266,17 @@ export default function MatchFeedScreen({ navigation }) {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerAkcje}>
-          <Pressable
+          <Pressable accessibilityRole="button"
             onPress={() => navigation.navigate('Narzedzia')}
             hitSlop={12}
             accessibilityLabel="Wszystkie narzędzia"
           >
             <Text style={styles.headerBtn}>Narzędzia</Text>
           </Pressable>
-          <Pressable onPress={() => navigation.navigate('Saved')} hitSlop={12} accessibilityLabel="Zapisane przetargi">
+          <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Saved')} hitSlop={12} accessibilityLabel="Zapisane przetargi">
             <Text style={styles.headerGwiazdka}>★</Text>
           </Pressable>
-          <Pressable onPress={() => navigation.navigate('Account')} hitSlop={12}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Konto" onPress={() => navigation.navigate('Account')} hitSlop={12}>
             <Text style={styles.headerBtn}>Konto</Text>
           </Pressable>
         </View>
@@ -358,7 +358,7 @@ export default function MatchFeedScreen({ navigation }) {
               <View style={styles.ppBand}>
                 <View style={styles.ppNaglowek}>
                   <Text style={styles.ppTytulSekcji}>Łatwiejszy start</Text>
-                  <Pressable
+                  <Pressable accessibilityRole="button"
                     onPress={() => navigation.navigate('PodprogoweUstawienia')}
                     hitSlop={10}
                     accessibilityLabel="Ustawienia radaru podprogowego"
@@ -416,7 +416,7 @@ export default function MatchFeedScreen({ navigation }) {
                 accessibilityLabel="Szukaj w przetargach"
               />
               {szukaj ? (
-                <Pressable onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel="Wyczyść szukanie">
+                <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel="Wyczyść szukanie">
                   <Text style={styles.szukajX}>✕</Text>
                 </Pressable>
               ) : null}
@@ -531,7 +531,7 @@ export default function MatchFeedScreen({ navigation }) {
               wprost, zamiast udawać, że lista jest aktualna.
             */}
             {error ? (
-              <Pressable style={styles.pasekBledu} onPress={() => load('refresh')}>
+              <Pressable accessibilityRole="button" style={styles.pasekBledu} onPress={() => load('refresh')}>
                 <Text style={styles.pasekBleduTekst}>
                   Nie udało się odświeżyć. Pokazujemy ostatnio pobrane przetargi. Dotknij, aby spróbować ponownie.
                 </Text>

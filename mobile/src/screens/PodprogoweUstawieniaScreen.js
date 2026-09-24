@@ -164,7 +164,7 @@ export default function PodprogoweUstawieniaScreen() {
                 Próg: {etykietaWartosciNetto(p.prog_netto) ?? 'domyślny'}
               </Text>
             </View>
-            <Pressable
+            <Pressable accessibilityRole="button"
               onPress={() => usun(p.id)}
               disabled={usuwaneId === p.id}
               hitSlop={10}

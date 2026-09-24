@@ -91,7 +91,7 @@ export default function SprawdzarkaCenyScreen({ route }) {
                 accessibilityLabel="Nazwa pozycji"
               />
               {wiersze.length > 1 ? (
-                <Pressable onPress={() => usun(w.id)} hitSlop={10} accessibilityLabel="Usuń pozycję">
+                <Pressable accessibilityRole="button" onPress={() => usun(w.id)} hitSlop={10} accessibilityLabel="Usuń pozycję">
                   <Text style={styles.usun}>✕</Text>
                 </Pressable>
               ) : null}

@@ -60,7 +60,7 @@ export default function NarzedziaScreen({ navigation }) {
           accessibilityLabel={t('Szukaj narzędzia', 'Search tools')}
         />
         {szukaj ? (
-          <Pressable onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel={t('Wyczyść', 'Clear')}>
+          <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel={t('Wyczyść', 'Clear')}>
             <Text style={styles.szukajX}>✕</Text>
           </Pressable>
         ) : null}

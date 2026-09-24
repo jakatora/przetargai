@@ -212,7 +212,7 @@ export default function KatalogWszystkich({ navigation }) {
           accessibilityLabel={t('Szukaj w całym rynku', 'Search the whole market')}
         />
         {filtry.q ? (
-          <Pressable onPress={() => zmienFiltr('q', '')} hitSlop={10} accessibilityLabel={t('Wyczyść szukanie', 'Clear search')}>
+          <Pressable accessibilityRole="button" onPress={() => zmienFiltr('q', '')} hitSlop={10} accessibilityLabel={t('Wyczyść szukanie', 'Clear search')}>
             <Text style={styles.szukajX}>✕</Text>
           </Pressable>
         ) : null}

@@ -300,7 +300,7 @@ export default function RadarSwzScreen() {
             const o = odliczaniePytan(p.termin_pytania);
             const akcent = akcentOdliczania(o.stan, kolory);
             return (
-              <Pressable key={p.id} onPress={() => otworz(p.id)} style={styles.kafelek}>
+              <Pressable accessibilityRole="button" key={p.id} onPress={() => otworz(p.id)} style={styles.kafelek}>
                 <Text style={styles.kafelekNazwa}>{p.nazwa}</Text>
                 <View style={[styles.chip, { borderColor: akcent }]}>
                   <Text style={[styles.chipText, { color: akcent }]}>{o.etykieta}</Text>
@@ -329,7 +329,7 @@ export default function RadarSwzScreen() {
   if (bladDetal && !detal) {
     return (
       <Screen scroll>
-        <Pressable onPress={wroc} hitSlop={8}><Text style={styles.powrot}>← Wszystkie postępowania</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={wroc} hitSlop={8}><Text style={styles.powrot}>← Wszystkie postępowania</Text></Pressable>
         <View style={styles.bladCard}><Text style={styles.bladText}>{bladDetal}</Text></View>
         <Button title="Spróbuj ponownie" variant="ghost" onPress={() => wczytajDetal(wybraneId)} />
       </Screen>
@@ -346,7 +346,7 @@ export default function RadarSwzScreen() {
 
   return (
     <Screen scroll>
-      <Pressable onPress={wroc} hitSlop={8}><Text style={styles.powrot}>← Wszystkie postępowania</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={wroc} hitSlop={8}><Text style={styles.powrot}>← Wszystkie postępowania</Text></Pressable>
       <Text style={styles.tytul}>{postepowanie.nazwa}</Text>
       <Text style={styles.podtytul}>
         Termin składania ofert: {postepowanie.termin_skladania_ofert ? formatDate(postepowanie.termin_skladania_ofert) : 'nieznany'}
@@ -435,7 +435,7 @@ export default function RadarSwzScreen() {
                 </View>
               ) : null}
 
-              <Pressable onPress={() => przelacz(z)} disabled={busy} style={styles.przelacznik}>
+              <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: Boolean(z.uwzglednione), busy }} onPress={() => przelacz(z)} disabled={busy} style={styles.przelacznik}>
                 {busy ? (
                   <ActivityIndicator color={kolory.blue} />
                 ) : (

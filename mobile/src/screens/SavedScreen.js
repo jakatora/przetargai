@@ -115,7 +115,7 @@ export default function SavedScreen({ navigation }) {
               {termin.etykieta}
             </Text>
           </View>
-          <Pressable onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
+          <Pressable accessibilityRole="button" onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
             <Text style={[styles.gwiazdkaZnak, { color: kolory.blue }]}>★</Text>
           </Pressable>
         </Pressable>

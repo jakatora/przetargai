@@ -89,7 +89,7 @@ export default function SymulatorPunktacjiScreen({ route }) {
                 accessibilityLabel="Nazwa kryterium"
               />
               {kryteria.length > 1 ? (
-                <Pressable onPress={() => usun(k.id)} hitSlop={10} accessibilityLabel="Usuń kryterium">
+                <Pressable accessibilityRole="button" onPress={() => usun(k.id)} hitSlop={10} accessibilityLabel="Usuń kryterium">
                   <Text style={styles.usun}>✕</Text>
                 </Pressable>
               ) : null}
