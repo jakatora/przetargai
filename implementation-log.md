@@ -1,0 +1,125 @@
+# Dziennik wdrożeń — PrzetargAI
+
+Dziennik **weryfikacji stanu wdrożonego**: co zostało zmierzone na żywo, kiedy i czym.
+Uzupełnia dwa istniejące pliki, nie powiela ich:
+
+- `agent_log.md` — narracja prac (co i dlaczego zrobiono),
+- `decisions.md` — decyzje projektowe (D-0xx),
+- `implementation-status.json` — ten sam stan w formie maszynowej.
+
+Najnowsze wpisy na górze.
+
+---
+
+## 2026-09-24 01:45 UTC — Audyt końcowy etapu 3 (Baza Konkurencyjności)
+
+Zakres: **wyłącznie szybkie odczyty read-only z limitem 30 s**. Bez importów, bez pełnych testów.
+
+### Git — potwierdzone
+
+| Co | Odczyt |
+|---|---|
+| Gałąź | `codex/przetargai-complete` |
+| Drzewo robocze | czyste (`git status` pusty) |
+| HEAD | `1cf351d` — *Etap 3: stan wdrozenia, dziennik i decyzja D-058* |
+| Commitów lokalnie przed zdalnym `main` | **16** |
+| Zdalne gałęzie | tylko `refs/heads/main` @ `05c2f3d` — gałęzi `codex/*` na GitHubie **nie ma** |
+
+Commity etapu 3 (od `ad4c2a8` w dół oraz dwa powyżej — wszystkie obecne w historii):
+
+```
+1cf351d  stan wdrozenia, dziennik, decyzja D-058
+31e4cb5  7/7  awaria strony listy BK nie kasuje calego przebiegu
+ad4c2a8  6/6  bezplatny wyzwalacz okna BK dla operatora
+4fb47a9  5/6  BK w glownym pipeline: harmonogram, /health, rekonsyliacja
+e0bbd6a  4/6  okno BK z checkpointem: aktywne/zmienione/anulowane
+4fcd78d  3/6  deduplikacja MIEDZY rejestrami + link do zrodla pierwotnego
+f7e5f06  2/6  adapter BK na fixture'ach kontraktowych
+0fd1704  1/6  tempo i ponawianie zapytan jako wspolna biblioteka
+```
+
+### Produkcja — `/health` odpowiedział 200 w 0,21 s
+
+```
+status ok · db true · wersja api-00028-xup · otwarte_przetargi 10 084
+```
+
+Dwie rzeczy **rozjechały się** ze stanem zapisanym o 01:27 UTC — obie wyjaśnione, żadna nie jest usterką:
+
+- **rewizja `api-00027-nez` → `api-00028-xup`** — po ostatnim wdrożeniu z lokalnego kodu,
+- **8 384 → 10 084 otwartych przetargów** — przyrost 1 700 pochodzi z **okna BZP**
+  domkniętego 01:27:04 UTC (`fetched 2512`, `newTenders 1700`, 8 dób okna, 0 dób niedomkniętych,
+  `error: null`), a **nie** z BK.
+
+`pula: {stan: "brak_pobrania"}` to licznik trzymany w pamięci instancji funkcji `api`
+(`src/db/repos.js:324`) — zeruje się przy zimnym starcie. **Nie jest to awaria.**
+
+### Ślady BK — cztery niezależne potwierdzenia
+
+1. **Checkpoint w Firestore** `_health/bk_okno`, widoczny przez `/health`:
+   zakończony 2026-09-24T01:38:20.868Z, `aktywne_w_zrodle 1135`, `aktywne_pobrane 1135`,
+   `pokrycie_kompletne true`, `zaleglosc 0`, `error null`.
+   Kluczowe: `fetched 0` / `newTenders 0` — **kolejne okno nie odpytało o żaden szczegół
+   i nic nie dołożyło**, czyli checkpoint faktycznie działa, a nie tylko się zapisuje.
+2. **Endpointy** — `POST` i `GET /admin/okno-bk` → **HTTP 403**, nie 404.
+   403 znaczy „istnieje i jest chroniony kluczem administratora". Kontrolnie `/admin/okno-bzp` → 403.
+3. **Funkcje** — `firebase functions:list`: **7/7 wdrożonych** (v2, nodejs22, europe-central2),
+   w tym `bkOknoFetch`. Harmonogram `'50 */3 * * *'`, a przebieg z 01:38 UTC dowodzi,
+   że wyzwala się planowo.
+4. **Pliki w drzewie** — `services/bazaKonkurencyjnosci.js`, `jobs/oknoBk.js`,
+   `lib/dedupZrodel.js`, `lib/tempoZapytan.js` + 4 fixtury kontraktowe `bk-*.json`.
+
+Przy okazji sprawdzony most do Railway: `POST /api/api/przetarg/radar-planow/radar` → **401**
+(a nie 404), czyli most żyje. Uwaga na ścieżkę — funkcja `api` serwuje `/health` bez prefiksu,
+ale most montuje się pod `/api/przetarg`, więc pełny URL ma `api` **dwa razy**.
+Pierwsza próba pod `/przetarg/...` dała 404 i była po prostu złym adresem.
+
+### Testy — przyjęte z poprzedniej sesji, NIE powtórzone
+
+**513/513** (`cd firebase/functions && npm test`), baseline przed etapem 3: 422/422.
+Wykonane przez poprzednią sesję 2026-09-24. W tym audycie **nie uruchamiane** — zgodnie z poleceniem.
+Etap dołożył 92 testy (tempoZapytan 9, bazaKonkurencyjnosci 22, dedupZrodel 16,
+oknoBkCheckpoint 21, bkRepo 9, bkPipeline 8, zdrowieBk 5, adminOknoBk 2).
+
+Środowisko wymagane do uruchomienia emulatora (inaczej testy nie wstaną):
+`JAVA_HOME=C:/Users/Startklaar/.jdks/jdk-21.0.12.1+1` oraz
+`JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\jtmp`.
+
+### OCZEKUJĄCE — pełny przebieg głównego pipeline
+
+`dailyTenderFetch` (wszystkie źródła + dopasowania AI) **nie ma świeżego wyniku**:
+
+- ślad w `/health` pochodzi z 2026-09-23T10:04:27Z (15,7 h temu) i niesie flagę
+  `slad_sprzed_naprawy: true`,
+- ostatni wynik miał błędy źródeł: `bzp` — timeout, `ted` — HTTP 429,
+- najbliższy slot: cron `'0 12 * * *'` → **2026-09-24 12:00 UTC (14:00 CEST)**.
+
+Status: **oczekujący na harmonogram**. Nie czekaliśmy na wynik.
+
+Warto rozdzielić dwie rzeczy: to okna 3-godzinne (`bzpOknoFetch`, `bkOknoFetch`) —
+oba domknięte dziś czysto z `error: null` — potwierdzają żywotność źródła BK.
+Stary ślad `dailyTenderFetch` nic o BK nie mówi, bo jest sprzed etapu.
+
+### Blokady — zmierzone, nie założone
+
+**1. GitHub — 16 commitów zostaje lokalnie.**
+`git push --dry-run` kończy się na `could not read Username for 'https://github.com'`
+(sesja nieinteraktywna, brak poświadczeń), `gh auth status` → niezalogowany,
+`git ls-remote` widzi anonimowo tylko `main`.
+Skutek: **Cloud Functions to nie blokuje** — wdrożenie idzie z lokalnego kodu i produkcja jest
+aktualna. **Railway blokuje**, bo wdraża się z GitHuba.
+Do odblokowania przez człowieka: poświadczenia git / `gh auth login` + uprawnienie `Contents: write`.
+Ścieżka alternatywna: serwer MCP `github` jest w tej sesji uwierzytelniony jako `jakatora`
+(`get_me` OK) — zapisu nie próbowano, bo audyt był read-only.
+
+**2. Railway — wolumen 500 MB pełny, Live Resize do 2 GB.**
+MCP `railway` zwraca `Not authenticated / Unauthorized`, więc **stanu wolumenu nie da się dziś
+odczytać z tej sesji**. Blokada stoi niezmieniona, dotyczy backendu Railway, nie Cloud Functions.
+Do odblokowania przez człowieka: Live Resize w panelu Railway.
+
+### Sprzątanie
+
+Brak plików `.probe` w drzewie (szukane rekurencyjnie) — nie było czego usuwać.
+`firebase-debug.log` (gitignored, 239 B) również już nie istnieje.
+
+---
