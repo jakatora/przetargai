@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -196,5 +197,38 @@ test('runMigrations — ignoruje pliki, które nie są migracjami .sql', () => {
     'notatka.txt': 'ani to',
   });
   assert.deepEqual(runMigrations(db, dir).applied, ['001_ok']);
+  db.close();
+});
+
+// Regresja 2026-09-24: wdrożenie z checkoutu na Windowsie (git core.autocrlf=true, pliki z CRLF)
+// padło na produkcji — „suma kontrolna migracji 001 się zmieniła", choć treść była identyczna.
+// Końce linii to artefakt checkoutu, nie edycja migracji: suma ma od nich nie zależeć.
+test('runMigrations — ta sama migracja z CRLF zamiast LF NIE jest traktowana jak edycja', () => {
+  const db = freshDb();
+  const lf = 'CREATE TABLE a (id INTEGER);\nCREATE TABLE b (id INTEGER);\n';
+  runMigrations(db, migrationsDir({ '001_a.sql': lf }));
+  const crlf = lf.replace(/\n/g, '\r\n');
+  assert.doesNotThrow(() => runMigrations(db, migrationsDir({ '001_a.sql': crlf })));
+  db.close();
+});
+
+test('runMigrations — realna zmiana treści nadal jest wykrywana', () => {
+  const db = freshDb();
+  runMigrations(db, migrationsDir({ '001_a.sql': 'CREATE TABLE a (id INTEGER);\n' }));
+  assert.throws(
+    () => runMigrations(db, migrationsDir({ '001_a.sql': 'CREATE TABLE a (id INTEGER, x TEXT);\n' })),
+    /suma kontrolna się zmieniła/,
+  );
+  db.close();
+});
+
+test('runMigrations — suma zapisana kiedyś z checkoutu CRLF też jest rozpoznawana', () => {
+  const db = freshDb();
+  const lf = 'CREATE TABLE a (id INTEGER);\n';
+  runMigrations(db, migrationsDir({ '001_a.sql': lf }));
+  // Symulacja historycznego wpisu policzonego z wersji CRLF (sprzed normalizacji).
+  const sumaCrlf = crypto.createHash('sha256').update(lf.replace(/\n/g, '\r\n'), 'utf8').digest('hex').slice(0, 16);
+  db.prepare('UPDATE schema_migrations SET checksum = ? WHERE id = ?').run(sumaCrlf, '001_a');
+  assert.doesNotThrow(() => runMigrations(db, migrationsDir({ '001_a.sql': lf })));
   db.close();
 });

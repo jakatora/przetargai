@@ -38,8 +38,22 @@ export function appliedMigrations(db) {
   return db.prepare('SELECT id FROM schema_migrations ORDER BY applied_at, id').all().map((r) => r.id);
 }
 
+const skrot = (tekst) => crypto.createHash('sha256').update(tekst, 'utf8').digest('hex').slice(0, 16);
+
+/*
+ * Końce linii to artefakt checkoutu, nie edycja migracji. Checkout na Windowsie
+ * (git core.autocrlf=true) daje CRLF i niezmieniona migracja wyglądała na edytowaną —
+ * wdrożenie z 2026-09-24 padło na starcie właśnie na tym. Nowe wpisy liczymy z LF,
+ * a przy porównaniu przyjmujemy sumę wersji LF ALBO CRLF tej samej treści, bo nie wiadomo,
+ * z jakiego checkoutu wykonano każdą historyczną migrację na produkcji.
+ */
 function checksum(sql) {
-  return crypto.createHash('sha256').update(sql, 'utf8').digest('hex').slice(0, 16);
+  return skrot(sql.replace(/\r\n/g, '\n'));
+}
+
+function sumyDopuszczalne(sql) {
+  const lf = sql.replace(/\r\n/g, '\n');
+  return new Set([skrot(lf), skrot(lf.replace(/\n/g, '\r\n'))]);
 }
 
 /** Pliki migracji posortowane po numerze (nie alfabetycznie: 010 > 002). */
@@ -76,7 +90,7 @@ export function runMigrations(db, dir) {
     const previous = known.get(migration.id);
 
     if (previous !== undefined) {
-      if (previous !== sum) {
+      if (!sumyDopuszczalne(migration.sql).has(previous)) {
         throw new Error(
           `Migracja ${migration.id} została już zastosowana, ale jej suma kontrolna się zmieniła. ` +
           'Nie edytuj wykonanych migracji — dopisz nową.',
