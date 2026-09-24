@@ -7,6 +7,8 @@
  * dziesiętny (polski format) i puste/niepoprawne pola (→ 0). Całość testowalna.
  */
 
+import { bladKwoty, bladProcentu, zbierzBledy } from './walidacjaLiczb.js';
+
 /** Dozwolone stawki VAT w zamówieniach publicznych (procenty). */
 export const STAWKI_VAT = [23, 8, 5, 0];
 
@@ -47,24 +49,6 @@ export function policzCene({ material, robocizna, inne, narzutProc, zyskProc, va
   };
 }
 
-/** Komunikaty walidacji — jawne, po polsku, zamiast cichego zerowania błędnego wejścia. */
-const KOMUNIKAT_KWOTA_NIE_LICZBA = 'Podaj kwotę jako liczbę, np. 1200,00';
-const KOMUNIKAT_KWOTA_UJEMNA = 'Kwota nie może być ujemna';
-const KOMUNIKAT_PROCENT_NIE_LICZBA = 'Podaj procent jako liczbę, np. 10';
-
-/**
- * Klasyfikuje pojedyncze pole liczbowe po wstępnym oczyszczeniu (jak `oczysc`
- * w ekranie: tylko cyfry/przecinek/kropka/spacja, tu dodatkowo minus dla ujemnych).
- * @returns {{pusty: boolean, liczba: number|null}} liczba=null gdy tekst nie jest liczbą.
- */
-function analizujPole(x) {
-  const oczyszczone = String(x ?? '').replace(/[^0-9.,\- ]/g, '');
-  const bezSpacji = oczyszczone.replace(/\s/g, '').replace(/,/g, '.');
-  if (bezSpacji === '') return { pusty: true, liczba: null };
-  const n = Number(bezSpacji);
-  return { pusty: false, liczba: Number.isFinite(n) ? n : null };
-}
-
 /**
  * Waliduje wejście kalkulatora ceny — zamiast cicho zerować błędne pola,
  * zwraca jawne komunikaty PL pod każde pole. Puste pole = brak błędu (stan pusty).
@@ -72,29 +56,13 @@ function analizujPole(x) {
  * @returns {{bledy: {[pole:string]: string}, maBledy: boolean}}
  */
 export function walidujCene({ material, robocizna, inne, narzutProc, zyskProc } = {}) {
-  const bledy = {};
-
-  const sprawdzKwote = (pole, wartosc) => {
-    const { pusty, liczba: n } = analizujPole(wartosc);
-    if (pusty) return;
-    if (n === null) bledy[pole] = KOMUNIKAT_KWOTA_NIE_LICZBA;
-    else if (n < 0) bledy[pole] = KOMUNIKAT_KWOTA_UJEMNA;
-  };
-
-  const sprawdzProcent = (pole, wartosc, etykieta) => {
-    const { pusty, liczba: n } = analizujPole(wartosc);
-    if (pusty) return;
-    if (n === null) bledy[pole] = KOMUNIKAT_PROCENT_NIE_LICZBA;
-    else if (n < 0 || n > 1000) bledy[pole] = `${etykieta} spoza zakresu 0–1000%`;
-  };
-
-  sprawdzKwote('material', material);
-  sprawdzKwote('robocizna', robocizna);
-  sprawdzKwote('inne', inne);
-  sprawdzProcent('narzutProc', narzutProc, 'Narzut');
-  sprawdzProcent('zyskProc', zyskProc, 'Zysk');
-
-  return { bledy, maBledy: Object.keys(bledy).length > 0 };
+  return zbierzBledy({
+    material: bladKwoty(material),
+    robocizna: bladKwoty(robocizna),
+    inne: bladKwoty(inne),
+    narzutProc: bladProcentu(narzutProc, { max: 1000, etykieta: 'Narzut' }),
+    zyskProc: bladProcentu(zyskProc, { max: 1000, etykieta: 'Zysk' }),
+  });
 }
 
 /** Formatuje kwotę PLN po polsku bez Intl (Hermes bywa okrojony): „12 345,67 zł". */
