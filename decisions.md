@@ -4,6 +4,84 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-079 — Pliki (CSV, ICS) do telefonu jadą e-mailem, nie przez moduły natywne
+**Data:** 2026-09-24 | P2-3 + domknięcie etapu 5
+
+**Problem.** Eksport CSV i plik kalendarza ICS były gotowe po stronie serwera, ale aplikacja
+nie ma `expo-file-system` ani `expo-sharing` — nie ma gdzie zapisać pliku. Dodanie modułów
+natywnych to nowy build, ryzyko w podpisie iOS i kod, którego nie da się sprawdzić bez
+urządzenia.
+
+**Decyzja.** `POST /eksport/wyslij {rodzaj: zapisane|katalog|kalendarz}` wysyła plik jako
+ZAŁĄCZNIK na adres WŁAŚCICIELA konta (adres z konta, nigdy z żądania — trasy nie da się użyć
+do wysyłki do obcych), limit 10 wysyłek na dobę (429). Uzasadnienie produktowe: firma otwiera
+eksport na komputerze w Excelu, a załącznik `.ics` poczta w telefonie otwiera w kalendarzu
+jednym dotknięciem. `GET *.csv` zostaje dla przeglądarki i integracji.
+
+**Webhook z P2-3 świadomie NIE** — wymaga ekranu konfiguracji, podpisu HMAC, ponawiania
+i klienta, który go potrzebuje.
+
+---
+
+## D-078 — CSV dla polskiego Excela i z ochroną przed wstrzyknięciem formuł
+**Data:** 2026-09-24 | P2-3
+
+Separator średnik i przecinek dziesiętny (polski Excel otwiera dwuklikiem wg ustawień
+regionalnych), BOM UTF-8 (bez niego „Łódź" staje się krzakami), terminy w czasie polskim.
+**Tytuł ogłoszenia pisze obca osoba w rejestrze publicznym** — komórkę zaczynającą się od
+`=`, `+`, `-`, `@`, tabulatora poprzedzamy apostrofem (OWASP CSV Injection). Liczby ujemne
+jako liczby nie są cytowane. Sufit eksportu katalogu: 500 wierszy, z nagłówkiem `X-Obciety`.
+
+---
+
+## D-077 — Alert „to jest to, na co czekałeś" wyłącznie przy dopasowaniu „pewne"
+**Data:** 2026-09-24 | P2-4 (Radar planów)
+
+Obserwacja planu sprawdza w monitoringu (co 2 h) ogłoszenia TEGO zamawiającego po NIP-ie,
+opublikowane PO planie. Alert tylko przy etykiecie „pewne" z `dopasujOgloszenie` (próg 70,
+nieosiągalny bez zgodnego CPV); „prawdopodobne" widać w szczególe planu, ale nie budzi
+użytkownika. Fałszywy alarm kosztuje zaufanie do całego radaru. Obserwacja zamyka się po
+znalezieniu albo po wygaśnięciu planu; klucz alertu deterministyczny = jedno powiadomienie
+przy ponowieniu przebiegu. Limit 50 obserwacji na konto (jedno zapytanie na NIP w przebiegu).
+
+---
+
+## D-076 — Radar czyta ZWARTY INDEKS, a nie kolekcję planów
+**Data:** 2026-09-24 | P2-4
+
+Ranking pod profil musi przejrzeć każdą aktywną pozycję (dopasowanie słów kluczowych,
+Firestore nie ma pełnotekstu). Skan kolekcji `plany` przy każdym wejściu na ekran to
+~1 700–2 500 odczytów na użytkownika. Job przebudowuje raz na dobę `radar_planow/czesc_N`
+(400 wpisów na część, bez opisu i linku) — odczyt to kilka dokumentów plus pamięć instancji
+10 min. Pozycja wisi w radarze do przewidywanej daty + 60 dni, a bez daty do publikacji
++ 365 dni (WOI obowiązuje do 12 miesięcy). Kolejność listy: nadchodzące → bez daty →
+minione (zmierzone na produkcji: sortowanie rosnące po terminie wynosiło na górę plany
+sprzed dwóch miesięcy).
+
+---
+
+## D-075 — Źródłem planów są wstępne ogłoszenia informacyjne TED; logika radaru przenosi się z Railway do Cloud Functions
+**Data:** 2026-09-24 | P2-4
+
+**Dlaczego TED.** API BZP przyjmuje wyłącznie ContractNotice i TenderResultNotice — plany
+z art. 23 Pzp są niedostępne bez omijania regulaminu. TED `form-type=planning` to publiczne
+API bez klucza, już zintegrowane. **Zmierzone (2026-09-24):** 2 041 polskich planów / rok,
+0 odrzuceń, przewidywana data ogłoszenia w ~49 %, wartość w ~5 %, 74 % to `pin-rtl`
+(zamawiający może SKRÓCIĆ termin składania ofert — pokazujemy to jako ostrzeżenie).
+
+**NIP zamawiającego to wolny tekst** („NIP: …, REGON: …", sam REGON, grupy z myślnikami).
+Ekstraktor z sumą kontrolną: 175/208 planów i 199/250 ogłoszeń konkursowych TED (naiwne
+„10 cyfr" — 114/208). NIP łączy plan z późniejszym ogłoszeniem i przy okazji daje TED
+klucz benchmarku per zamawiający z etapu 6.
+
+**Dlaczego port, a nie Railway.** Moduły radaru (`radarPlanow`, `przygotowaniaPlanu`,
+`zmianyPlanu`) są czyste i przetestowane, ale Railway jest zablokowany (pełny wolumen,
+brak push do GitHuba), a aplikacja mówi do Cloud Functions. Skopiowane 1:1 z testami;
+jedyna zmiana: region profilu CF to kody TERYT (`regiony`), porównywane przez wspólny
+normalizator województw.
+
+---
+
 ## D-074 — Filtr województwa w BZP ignoruje górną granicę okna; dobę odsiewamy po dacie
 **Data:** 2026-09-24 | Etap 6, zmierzone na PRODUKCJI
 

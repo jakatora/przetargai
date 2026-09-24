@@ -11,6 +11,53 @@ Najnowsze wpisy na górze.
 
 ---
 
+## 2026-09-24 — Po etapie 6: audyt braków P1/P2 i sześć domkniętych pozycji
+
+Audyt pozostałych braków z `D:\koordynacja\przetargai-audit-2026-09-23\audit-report.md` §7
+wobec stanu po etapach 1–6. Otwarte i wykonalne bez zewnętrznego dostępu były: P1-8, P2-3,
+P2-4, P2-5, P2-6 oraz zapis `.ics` z etapu 5. Wszystkie domknięte; backend wdrożony na
+Cloud Functions (**11 funkcji**, nowa `planyOknoFetch`), aplikacja gotowa w gałęzi do builda.
+
+### Radar planów zamówień (P2-4) — zmierzone na produkcji
+- **Pierwsze zasilenie** `POST /admin/okno-planow {dni:365}` (bez AI): **2 041 planów
+  z roku, 0 odrzuceń, 1 660 aktywnych w indeksie (5 części), 9 zapytań do TED, 24,7 s.**
+- `/health.plany_okno`: `pobrane 2041, aktywnych_w_indeksie 1660, error null`.
+- Konto sondujące bez profilu (zero AI): `/radar-planow` → tryb „wszystkie" + podpowiedź
+  `uzupelnij_profil`; filtr `region=PL12` → same małopolskie; szczegół z planem
+  przygotowań; 404 i 400 poprawne. Konto usunięte (200 → kontrolnie 401).
+- **Dwie naprawy z pomiaru** (redeploy `api`): lista zaczynała się od planów z datą sprzed
+  dwóch miesięcy (kolejność: nadchodzące → bez daty → minione) i komunikat „zostało ok.
+  -2 mies.". Po redeployu: pierwsza setka = same nadchodzące.
+- Obserwacja planu na żywo: 201 → powtórka 200 → lista → flaga w szczególe → usunięcie 200.
+  Konto usunięte. **Pierwszy przebieg `runMonitorPlanow` czeka na harmonogram** (`35 */2`).
+- Pułapka konta sondującego: `DELETE /auth/me` wymaga hasła w treści — bez niego 400
+  i konto ZOSTAJE. Znalezione przez `/admin/users` i usunięte poprawnie.
+
+### Eksport CSV (P2-3) — zmierzone na produkcji
+- `GET /eksport/katalog.csv?region=PL12&cpv=45` → 200, `text/csv`, BOM, nagłówki PL,
+  **205 wierszy**, wieloliniowe tytuły poprawnie w cudzysłowie; `zapisane.csv` pustego
+  konta = sam nagłówek. Konto usunięte.
+- `POST /eksport/wyslij` **świadomie NIE wywołany na produkcji** — wysłałby prawdziwy
+  e-mail na adres sondy. Pokryty testami na emulatorze (tryb degradacji Resend, limit 429).
+
+### Tylko w gałęzi (mobile, do builda)
+- Pulpit: błąd sieci nie udaje „braku postępowań" (P1-8).
+- Ekrany radaru (lista + szczegół + „Obserwuj"), trener negocjacji (P2-5), przyciski
+  eksportu w „Zapisanych", katalogu i kalendarzu.
+- Dostępność (P2-6): 24 ze 104 przycisków bez roli dla czytnika ekranu — naprawione,
+  strażnik skanuje całe `src` i jest zweryfikowany celowym zepsuciem.
+- Teksty wydania 1.0.9: nowe funkcje; usunięta obietnica „ocena szans / win odds"
+  z krótkiego opisu Google Play (sprzeczna z zasadą, że aplikacja nie podaje szans wygranej).
+
+### Testy
+Backend **1095/1095** (z 946), mobile **800/800** (z 774), esbuild zielony.
+
+### Blokady bez zmian
+`git push` → `could not read Username for 'https://github.com'` — commity zostają lokalnie
+(Cloud Functions to nie blokuje). Railway (wolumen) — bez zmian, nie dotykany.
+
+---
+
 ## 2026-09-24 — Etap 6: wygrywalność i przygotowanie oferty na danych z rozstrzygnięć
 
 Wdrożone na Cloud Functions. Funkcji jest **10** — doszły `wynikiOknoFetch`

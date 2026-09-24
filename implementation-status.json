@@ -1,12 +1,12 @@
 {
   "projekt": "PrzetargAI",
-  "zaktualizowano": "2026-09-24 (etap 6 wdrozony, api-00038-gip)",
+  "zaktualizowano": "2026-09-24 (po etapie 6: audyt P1/P2 domkniety, radar planow wdrozony)",
   "galaz": "codex/przetargai-complete",
   "drzewo_robocze": "D:/wt/przetargai-complete",
   "uwaga": "Repozytorium D:/projekty/przetarg-ai jest BRUDNE (cudzy WIP) — nie dotykać.",
   "produkcja": {
     "platforma": "Firebase Cloud Functions v2 (europe-central2, projekt przetargai)",
-    "wersja_api": "api-00038-gip",
+    "wersja_api": "api — 4 redeploye po api-00038-gip (2026-09-24, ~08:45–11:00 UTC); numeru rewizji nie odczytano (brak gcloud na maszynie)",
     "wdrozone_z": "lokalnego kodu przez `firebase deploy` (NIE z GitHuba — to odróżnia Functions od Railway)",
     "health": "https://europe-central2-przetargai.cloudfunctions.net/api/health",
     "funkcje": [
@@ -19,14 +19,15 @@
       "remindDeadlines",
       "weeklyDigest",
       "aggregateResults",
-      "monitorWyszukiwan"
+      "monitorWyszukiwan",
+      "planyOknoFetch"
     ],
-    "otwarte_przetargi": 9945,
+    "otwarte_przetargi": 9673,
     "otwarte_przetargi_przed_etapem_3": 7249,
     "wersja_api_poprzednia_w_tym_pliku": "api-00034-jot (stan po etapie 5)",
     "otwarte_przetargi_po_imporcie_bk": 8384,
     "przyrost_po_imporcie_bk": "z 8 384 na 10 084 — przyrost 1 700 pochodzi z okna BZP domknietego 2026-09-24T01:27:04Z (newTenders 1700), nie z BK",
-    "funkcje_potwierdzone_live": "firebase functions:list: 10 funkcji v2, nodejs22, europe-central2; wynikiOknoFetch i benchmarkPrzelicz z \"Successful create operation\"",
+    "funkcje_potwierdzone_live": "firebase deploy: 11 funkcji v2; planyOknoFetch \"Successful create operation\"; firestore:indexes (obserwowane_plany.aktywna) wdrozone",
     "wdrozenia_w_etapie_5": [
       "api-00032-qec - etap 5 (monitorWyszukiwan utworzony)",
       "api-00033-xac - naprawa cichej awarii sortowania w harmonogramie",
@@ -37,11 +38,17 @@
       "api-00036-tum - koszt: okno TED 2 dni, benchmark utrwala tylko kubelki z wnioskiem, sufit odczytu",
       "api-00037-* - naprawa adresu zapytania o wyniki BZP + awaria calego rejestru = przebieg nieudany",
       "api-00038-gip - odsiewanie ogloszen spoza doby (filtr wojewodztwa ignoruje gorna granice okna)"
+    ],
+    "wdrozenia_po_etapie_6": [
+      "deploy calosci functions — planyOknoFetch utworzona, api z /radar-planow",
+      "api — kolejnosc radaru (nadchodzace → bez daty → minione) + komunikat bez ujemnych miesiecy",
+      "firestore:indexes + api + monitorWyszukiwan — obserwacja planow i runMonitorPlanow",
+      "api — /eksport (CSV) i /eksport/wyslij (CSV + ICS na e-mail wlasciciela)"
     ]
   },
   "testy": {
     "polecenie": "cd firebase/functions && npm test",
-    "wynik": "946/946",
+    "wynik": "1095/1095",
     "baseline_przed_etapem_3": "422/422",
     "wymagane_srodowisko": {
       "powod": "emulator Firestore nie wstaje na tej maszynie bez tych dwóch rzeczy",
@@ -49,19 +56,21 @@
       "JAVA_TOOL_OPTIONS": "-Djdk.net.unixdomain.tmpdir=C:\\jtmp",
       "dlaczego": "domyślny java.io.tmpdir to ścieżka w notacji 8.3 (C:\\Users\\STARTK~1\\...), której connect() AF_UNIX na Windows odrzuca z EINVAL — Selector.open() pada i emulator nie startuje"
     },
-    "kiedy_wykonane": "2026-09-24, przed i po wdrozeniu etapu 6 (pelny przebieg z emulatorem)",
+    "kiedy_wykonane": "2026-09-24, po kazdym kroku i pelny przebieg z emulatorem przed kazdym wdrozeniem",
     "status_w_audycie": "wykonane w tej sesji",
     "baseline_przed_etapem_4": "513/513",
     "mobile": {
       "polecenie": "cd mobile && npm test",
-      "wynik": "774/774",
+      "wynik": "800/800",
       "baseline_przed_etapem_4": "663/663",
       "statyczna_kontrola": "npm run check (esbuild) — zielony",
       "baseline_przed_etapem_5": "711/711",
-      "baseline_przed_etapem_6": "739/739"
+      "baseline_przed_etapem_6": "739/739",
+      "baseline_po_etapie_6": "774/774"
     },
     "baseline_przed_etapem_5": "606/606",
-    "baseline_przed_etapem_6": "744/744"
+    "baseline_przed_etapem_6": "744/744",
+    "baseline_po_etapie_6": "946/946"
   },
   "etapy": {
     "etap_1_p0": {
@@ -428,6 +437,96 @@
       "czego_NIE_tlumaczono": "katalog narzedzi w NarzedziaScreen — te narzedzia generuja POLSKIE pisma z Pzp (wezwania, odwolania, zastrzezenia tajemnicy). Angielska etykieta nad generatorem, ktory wypluwa polski dokument prawny, wprowadza w blad mocniej niz pomaga.",
       "straznik": "mobile/test/sciezkaWejsciaPlEn.test.js czyta ZRODLO ekranow i wylapuje goly polski literal w title/placeholder/label/hint oraz miedzy znacznikami. Sprawdzone, ze straznik naprawde cos mierzy: na nieprzetlumaczonych ekranach znajduje naruszenia (SejfScreen 4, KartaDecyzjiScreen 1), na sciezce wejscia zero.",
       "pozostalo": "~39 ekranow narzedziowych zostaje polskich — swiadomie, patrz wyzej"
+    },
+    "po_etapie_6_audyt_p1_p2": {
+      "stan": "backend wdrozony i zweryfikowany na produkcji; mobile gotowe w galezi do builda",
+      "data": "2026-09-24",
+      "zrodlo_listy_brakow": "D:/koordynacja/przetargai-audit-2026-09-23/audit-report.md §7 (P1-1..P1-8, P2-1..P2-7) wobec stanu po etapach 1-6",
+      "audyt": {
+        "juz_domkniete_wczesniej": {
+          "P1-1 zrodlo i synchronizacja na karcie": "etap 4",
+          "P1-2 alerty o zmianach": "etap 5",
+          "P1-3 tryb Wszystkie": "etap 4",
+          "P1-4 wyjasnienie dopasowania": "etap 4",
+          "P1-6 Baza Konkurencyjnosci": "etap 3",
+          "P1-7 kalendarz z danych": "etap 5",
+          "P2-1 dedup miedzy zrodlami": "etap 3 (lib/dedupZrodel.js, celowo waski klucz tytul+dzien terminu+zamawiajacy)",
+          "P2-2 konkurencja i wygrywalnosc": "etap 6"
+        },
+        "domkniete_teraz": [
+          "P1-8",
+          "P2-3 (CSV; bez webhooka)",
+          "P2-4",
+          "P2-5",
+          "P2-6",
+          "zapis .ics z etapu 5"
+        ],
+        "niewykonalne_bez_czlowieka_lub_swiadomie_nie": {
+          "P1-5 profil jako filtr po stronie zapytania": "zmienia sciezke PLATNEGO AI (zestaw kandydatow do rerankingu) i odcina przetargi trafione slowem, a nie CPV — decyzja produktowa wlasciciela (asymetria ryzyka: zgubiony przetarg = stracony kontrakt) i pomiar wymagajacy platnych wywolan, ktore polecenie wyklucza",
+          "P2-3 webhook do CRM": "wymaga ekranu konfiguracji, podpisu HMAC, ponawiania i klienta, ktory go potrzebuje (D-079)",
+          "P2-7 rozmowy z operatorami platform": "czlowiek",
+          "plany BZP (art. 23)": "API BZP ich nie udostepnia — tylko TED (D-075)"
+        }
+      },
+      "commity": [
+        "de26dfb - P1-8 pulpit nie udaje pustki przy bledzie sieci",
+        "50b7ffe - Radar 1/N czysta logika radaru przeniesiona z Railway do CF",
+        "1883c1d - Radar 2/N adapter ogloszen planowania TED",
+        "9a4b81e - Radar 3/N import planow, indeks radaru, harmonogram",
+        "8b31aee - Radar 4/N GET /radar-planow + szczegol z planem przygotowan",
+        "eaba0db - Radar 5/N ekrany mobilne",
+        "09e9068 - P2-5 ekran trenera negocjacji",
+        "fad804f - Radar 6/N wdrozenie + dwie naprawy z pomiaru na zywo",
+        "08debe8 - Radar 7/N obserwacja planu i alert",
+        "8660091 - P2-3 eksport CSV",
+        "f7cd9d5 - teksty wydania 1.0.9",
+        "a039ebb - kalendarz .ics przez e-mail",
+        "d7cb7cc - P2-6 dostepnosc + straznik"
+      ],
+      "radar_planow": {
+        "zrodlo": "TED form-type=planning (wstepne ogloszenia informacyjne), publiczne API bez klucza",
+        "pliki_backend": "src/services/tedPlany.js, src/lib/{radarPlanow,przygotowaniaPlanu,zmianyPlanu,indeksPlanow,widokRadaru,obserwacjePlanow,rodzajePlanu,nip}.js, src/jobs/{oknoPlanow,monitorPlanow}.js, src/routes/radarPlanow.js",
+        "pliki_mobile": "src/lib/radarPlanow.js, src/screens/{RadarPlanowScreen,RadarPlanuScreen}.js",
+        "dane": "plany/{numer} (zrodlo prawdy), radar_planow/czesc_N (zwarty indeks), users/{uid}/obserwowane_plany/{plan}, _health/plany_okno",
+        "harmonogram": {
+          "planyOknoFetch": "cron '15 6 * * *' Europe/Warsaw, okno 3 dni",
+          "runMonitorPlanow": "w funkcji monitorWyszukiwan, cron '35 */2 * * *'"
+        },
+        "endpointy": [
+          "GET /radar-planow?tryb=dla_mnie|wszystkie&region=&limit=",
+          "GET /radar-planow/:id — plan przygotowan, ostrzezenia, czy juz ogloszono, flaga obserwowany",
+          "GET /radar-planow/obserwowane, POST|DELETE /radar-planow/:id/obserwuj",
+          "POST /admin/okno-planow {dni} — bez AI",
+          "/health.plany_okno (informacyjne, nie zapala 503)"
+        ],
+        "pomiary_zrodla": {
+          "30_dni": "208 planow, future-notice 102/208, wartosc 11/208 (PLN), region 208/208, NIP 175/208 (naiwnie 114/208)",
+          "rok_import_produkcyjny": "2041 planow, 0 odrzucen, 1660 aktywnych w indeksie, 5 czesci, 9 zapytan, 24,7 s",
+          "rodzaje_30_dni": {
+            "pin-rtl": 154,
+            "pin-only": 19,
+            "pin-buyer": 10,
+            "pin-tran": 25
+          },
+          "nip_w_ogloszeniach_konkursowych_ted": "199/250 — dodany do adaptera TED (zasila tez benchmark per zamawiajacy)"
+        },
+        "naprawy_z_pomiaru_na_zywo": [
+          "lista \"Wszystkie\" zaczynala sie od planow z data sprzed 2 miesiecy (pozycja wisi 60 dni po dacie) — kolejnosc nadchodzace → bez daty → minione",
+          "komunikat planu przygotowan \"zostalo ok. -2 mies.\" / \"0 mies.\" — \"minal ok. N mies. temu — sprawdz\" i \"w tym miesiacu\""
+        ],
+        "czego_nie_zmierzono": "pierwszego przebiegu runMonitorPlanow na produkcji (czeka na cron 35 */2) i rankingu \"dla mnie\" na zywym koncie — konto z CPV/slowami uruchamia ponowne dopasowanie, czyli platne AI; pokryte testami (widok 14, trasa 9, monitor 5)"
+      },
+      "eksport": {
+        "endpointy": [
+          "GET /eksport/zapisane.csv",
+          "GET /eksport/katalog.csv (filtry jak /tenders, sufit 500)",
+          "POST /eksport/wyslij {rodzaj: zapisane|katalog|kalendarz} — zalacznik na e-mail wlasciciela konta, limit 10/dobe"
+        ],
+        "weryfikacja_live": "katalog.csv region=PL12&cpv=45 -> 200, BOM, 205 wierszy; zapisane.csv pustego konta -> sam naglowek. POST /wyslij swiadomie nie wywolany na produkcji (prawdziwy e-mail) — testy na emulatorze"
+      },
+      "dostepnosc": "24/104 przyciski bez accessibilityRole -> 0; test/dostepnosc.test.js skanuje cale src (rola, etykieta przyciskow-ikon, stan chipow), zweryfikowany celowym zepsuciem",
+      "konta_sondujace": "cztery, wszystkie BEZ slow kluczowych i CPV (zero AI), wszystkie usuniete (DELETE /auth/me z haslem -> 200, kontrolnie 401). Pulapka: bez hasla w tresci DELETE daje 400 i konto zostaje",
+      "zgodnosc": "zero platnego AI, zero Stripe, zero scrapingu — wylacznie publiczne API TED i dane w bazie"
     }
   },
   "nastepne_zrodlo": {
@@ -447,21 +546,28 @@
       "TED form-type = result (4 297 polskich ogłoszeń / 30 dni) — zasila statystyki cen i konkurencji (jobs/aggregateResults.js), dziś liczone wyłącznie z BZP",
       "TED form-type = cont-modif (219 / 30 dni) — zmiany umów, sygnał o rynku wykonawców"
     ],
-    "uwaga_po_etapie_4": "Rekomendacja bez zmian (TED planning). Etap 4 nie dodal zrodla — dodal WIDOCZNOSC tego, co juz mamy, i uczciwy opis granic."
+    "uwaga_po_etapie_4": "Rekomendacja bez zmian (TED planning). Etap 4 nie dodal zrodla — dodal WIDOCZNOSC tego, co juz mamy, i uczciwy opis granic.",
+    "stan": "ZREALIZOWANE 2026-09-24 — TED planning zasila Radar planow w Cloud Functions (D-075)"
   },
   "otwarte_blokady": [
     {
-      "blokada": "GitHub: 16 commitow tej galezi zostaje lokalnie",
+      "blokada": "GitHub: commity tej galezi zostaja lokalnie",
       "zmierzone_w_audycie": "git push --dry-run konczy sie na 'could not read Username for https://github.com' (sesja nieinteraktywna, brak poswiadczen); gh auth status: niezalogowany; git ls-remote widzi anonimowo tylko refs/heads/main",
       "skutek": "Cloud Functions to NIE blokuje (deploy idzie z lokalnego kodu i produkcja jest aktualna). Railway blokuje, bo wdraza sie z GitHuba",
       "kto_odblokuje": "czlowiek — poswiadczenia git/`gh auth login` plus uprawnienie Contents: write",
-      "sciezka_alternatywna": "serwer MCP github jest w tej sesji uwierzytelniony jako jakatora (get_me OK) — zapisu nie probowano, bo audyt jest read-only"
+      "sciezka_alternatywna": "serwer MCP github jest w tej sesji uwierzytelniony jako jakatora (get_me OK) — zapisu nie probowano, bo audyt jest read-only",
+      "zmierzone_ponownie": "2026-09-24: git push --dry-run -> could not read Username for 'https://github.com'; nie obchodzone (MCP github nie uzyty do zapisu, zgodnie z poleceniem)"
     },
     {
       "blokada": "Railway: wolumen 500 MB pelny, Live Resize do 2 GB",
       "zmierzone_w_audycie": "MCP railway: 'Not authenticated / Unauthorized' — stanu wolumenu nie da sie dzis odczytac z tej sesji",
       "skutek": "dotyczy backendu Railway, NIE Cloud Functions",
       "kto_odblokuje": "czlowiek — Live Resize w panelu Railway"
+    },
+    {
+      "blokada": "Screenshoty App Store 1.0.9 i build przez Codemagic",
+      "skutek": "aplikacja z nowymi ekranami nie trafi do uzytkownikow bez buildu; teksty sklepowe gotowe (store/whats-new-1.0.9.md)",
+      "kto_odblokuje": "czlowiek — uruchomienie workflow Codemagic i zrzuty z urzadzenia (1284x2778)"
     }
   ],
   "audyt_koncowy": {
@@ -524,12 +630,13 @@
     "sprzatanie": "brak plikow .probe w drzewie (szukane rekurencyjnie) — nie bylo czego usuwac; firebase-debug.log (gitignored, 239 B) rowniez juz nie istnieje"
   },
   "nastepny_etap_p1": {
-    "rekomendacja": "TED form-type=planning jako czwarte zrodlo — Radar planow postepowan jest gotowy i przetestowany, brakuje mu wylacznie danych",
-    "uwaga": "odbiorca (backend/src/services/radarPlanow.js) mieszka na Railway, ktore jest zablokowane wolumenem — do rozwazenia port routera do Cloud Functions albo odblokowanie Railway",
+    "rekomendacja": "build 1.0.9 przez Codemagic i screenshoty (radar planow jako pierwsze ujecie) — caly kod z etapow 4-6 i tej rundy czeka w galezi na build",
+    "uwaga": "odbiorca radaru przeniesiony do Cloud Functions — Railway nie jest juz do niego potrzebny",
     "kolejne": [
-      "P1-5 — pelne PL/EN w starszych ekranach (mechanizm tr obejmuje nowe ekrany)",
-      "Zapis pliku .ics w aplikacji (wymaga expo-file-system + expo-sharing — nowy build)",
-      "Screenshoty App Store dla 1.0.9 (teksty gotowe w store/whats-new-1.0.9.md)"
+      "P1-5 (profil jako filtr zapytania) — decyzja wlasciciela + pomiar z platnym AI",
+      "webhook do CRM (reszta P2-3) — gdy pojawi sie klient z CRM-em",
+      "pomiar pierwszych przebiegow runMonitorPlanow i monitorWyszukiwan w logach Cloud Functions",
+      "TED form-type=result w aggregateResults (dzis agregat z BZP; rozstrzygniecia TED juz sa w bazie od etapu 6)"
     ]
   }
 }
