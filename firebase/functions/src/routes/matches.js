@@ -6,7 +6,8 @@ import { matches, feedback, saved, tenders, streszczenieQuota, wynikiStats } fro
 import { kluczWyniku } from '../lib/wynikiAgregacja.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
-import { publicMatch, publicSaved } from '../lib/serialize.js';
+import { publicMatch, publicSaved, przetargZDopasowania } from '../lib/serialize.js';
+import { wyjasnijDopasowanie, nastepnyKrokProfilu } from '../lib/wyjasnienieDopasowania.js';
 import { summarizeTender } from '../services/ai.js';
 import { normalizujStatus, oczyscNotatke, STATUSY } from '../lib/statusPrzetargu.js';
 import { zbudujZachete, POCZATEK_TYGODNIA_MS } from '../lib/potencjal.js';
@@ -40,7 +41,30 @@ router.get('/', ah(async (req, res) => {
 
   // Pełna strona ⇒ prawdopodobnie jest kolejna. Krótsza ⇒ to koniec.
   const nastepny = rows.length === limit ? matches.kursorZ(rows[rows.length - 1]) : null;
-  res.json({ matches: rows.map(publicMatch), count: rows.length, limit, next_before: nastepny });
+
+  /*
+   * Wyjaśnienie liczy się TU, z profilu i zdenormalizowanych pól przetargu —
+   * bez zapytania do bazy i bez wywołania AI. Karta ma powiedzieć, który sygnał
+   * zadziałał, zamiast jednego zdania „Trafione słowa kluczowe: …".
+   */
+  const wyjasnione = rows.map((row) => ({
+    ...publicMatch(row),
+    wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
+  }));
+
+  /*
+   * Podpowiedź dotyczy PUSTEGO FEEDU, nie końca listy — dlatego tylko na
+   * pierwszej stronie. Doczepiona do ostatniej strony wyglądałaby jak zarzut,
+   * że profil jest zły, choć feed po prostu się skończył.
+   */
+  const pierwszaStrona = !przed;
+  const podpowiedz = pierwszaStrona
+    ? nastepnyKrokProfilu(req.user, { liczbaDopasowan: rows.length })
+    : null;
+
+  res.json({
+    matches: wyjasnione, count: rows.length, limit, next_before: nastepny, podpowiedz,
+  });
 }));
 
 /**
@@ -212,7 +236,12 @@ router.get('/:id', ah(async (req, res) => {
   const row = await matches.detail(req.user.id, req.params.id);
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
   audit({ userId: req.user.id, action: 'view_match', detail: { matchId: row.id }, ip: req.ip });
-  res.json({ match: publicMatch(row) });
+  res.json({
+    match: {
+      ...publicMatch(row),
+      wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
+    },
+  });
 }));
 
 /** Feedback użytkownika do dopasowania (przydatne / nieprzydatne). */

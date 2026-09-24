@@ -83,7 +83,33 @@ export function publicUser(user) {
     premium_tier: user.premium_tier,
     keywords: user.keywords,
     cpv_codes: user.cpv_codes,
+    /*
+     * Deklaracje, które NIE wchodzą do scoringu — opisują kontekst decyzji
+     * („czy to mój teren", „czy to mój rozmiar"), a nie kryteria wyszukiwania.
+     * Starsze konta nie mają tych pól: pusta tablica i null zamiast undefined,
+     * żeby aplikacja nie musiała znać historii schematu.
+     */
+    regiony: user.regiony ?? [],
+    wartosc_max: user.wartosc_max ?? null,
     created_at: user.created_at,
+  };
+}
+
+/**
+ * Pola przetargu wyłuskane ze ZDENORMALIZOWANEGO wiersza dopasowania.
+ *
+ * Dokument dopasowania niesie kopię przetargu z prefiksem `tender_`, a moduł
+ * wyjaśnienia operuje na kształcie ogłoszenia. Bez tego mostu policzenie
+ * sygnałów dla karty feedu wymagałoby odczytu pełnego przetargu na KAŻDY
+ * element listy — czyli 50 dodatkowych odczytów Firestore na jedno przewinięcie.
+ */
+export function przetargZDopasowania(row) {
+  return {
+    title: row?.tender_title ?? null,
+    cpv_main: row?.tender_cpv ?? null,
+    wojewodztwo: row?.tender_wojewodztwo ?? null,
+    budget: row?.tender_budget ?? null,
+    wadium_kwota: row?.tender_wadium_kwota ?? null,
   };
 }
 

@@ -107,11 +107,22 @@ export const users = {
     return q.docs.map(userSnap);
   },
 
-  async updateProfile(id, { companyName, keywords, cpvCodes }) {
+  /**
+   * Zapisuje profil firmy.
+   *
+   * `regiony` i `wartoscMax` NIE wchodzą do scoringu (silnik dopasowań liczy
+   * wyłącznie słowa i CPV) — służą wyjaśnieniu dopasowania i podpowiedzi przy
+   * pustym feedzie. Trzymamy je mimo to przy profilu, bo to deklaracja firmy,
+   * a nie ustawienie widoku.
+   */
+  async updateProfile(id, { companyName, keywords, cpvCodes, regiony, wartoscMax }) {
     await db().collection('users').doc(id).update({
       company_name: companyName ?? null,
       keywords,
       cpv_codes: cpvCodes,
+      regiony: regiony ?? [],
+      // `null` jest tu WARTOŚCIĄ („nie deklaruję"), nie brakiem pola — dlatego ?? null.
+      wartosc_max: wartoscMax ?? null,
       updated_at: nowIso(),
     });
     return this.findById(id);
