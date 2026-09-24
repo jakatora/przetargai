@@ -2,7 +2,9 @@ import { getFirestore, FieldValue, FieldPath } from 'firebase-admin/firestore';
 import { env } from '../config.js';
 import { newId, nowIso, startOfTodayIso } from '../lib/ids.js';
 import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
-import { planZapytania, pasujeDoFiltrow, SKAN_STRONA, SKAN_MAKS } from '../lib/katalogPrzetargow.js';
+import {
+  planZapytania, pasujeDoFiltrow, rozmiarPobrania, SKAN_STRONA, SKAN_MAKS,
+} from '../lib/katalogPrzetargow.js';
 
 /*
  * Warstwa dostępu do danych — Firestore (port z node:sqlite, D-024).
@@ -691,7 +693,17 @@ export const tenders = {
     let wyczerpano = false;
 
     while (wiersze.length < filtry.limit && przeskanowano < skanMaks) {
-      const ile = Math.min(rozmiarStrony, skanMaks - przeskanowano);
+      // Porcja rośnie dopiero wtedy, gdy filtr okazuje się rzadki — żądanie
+      // o trzy pozycje nie ma prawa kosztować pełnej strony odczytów.
+      const ile = Math.min(
+        rozmiarPobrania({
+          potrzeba: filtry.limit - wiersze.length,
+          przeskanowano,
+          znalezione: wiersze.length,
+          maks: rozmiarStrony,
+        }),
+        skanMaks - przeskanowano,
+      );
       const strona = ostatni ? zapytanie.startAfter(ostatni.wartosc, ostatni.id) : zapytanie;
       const snap = await strona.limit(ile).get();
       zapytan += 1;

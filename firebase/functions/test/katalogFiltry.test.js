@@ -198,3 +198,39 @@ test('rejestr źródeł opisuje każdy kod po polsku i po angielsku', () => {
     assert.ok(z.etykieta.pl && z.etykieta.en, `${z.kod} bez etykiety PL/EN`);
   }
 });
+
+// -- rozmiar pobrania ---------------------------------------------------------
+
+/*
+ * Pomiar na produkcji (2026-09-24): żądanie o 3 pozycje przeczytało 300
+ * dokumentów, bo pętla skanu brała zawsze pełną stronę. Koszt odczytów musi
+ * zależeć od tego, ILE wyników zamówiono, a nie od stałej w kodzie.
+ */
+
+test('pierwsze pobranie jest proporcjonalne do zamówionej strony, nie stałe', () => {
+  const male = K.rozmiarPobrania({ potrzeba: 3, przeskanowano: 0, znalezione: 0 });
+  assert.ok(male < K.SKAN_STRONA, `pierwsze pobranie ${male} nie może być pełną stroną`);
+  assert.ok(male >= 3, 'musi wystarczyć na zamówioną liczbę wyników');
+
+  const duze = K.rozmiarPobrania({ potrzeba: 50, przeskanowano: 0, znalezione: 0 });
+  assert.ok(duze > male, 'większa strona wyników => większe pobranie');
+});
+
+test('rozmiar pobrania nigdy nie przekracza sufitu strony', () => {
+  assert.equal(K.rozmiarPobrania({ potrzeba: 50, przeskanowano: 0, znalezione: 0, maks: 40 }), 40);
+});
+
+test('kiepska trafność filtra rozszerza kolejne pobranie', () => {
+  // 2 trafienia na 100 dokumentów: żeby zebrać 20, trzeba sięgnąć znacznie dalej.
+  const szerokie = K.rozmiarPobrania({ potrzeba: 18, przeskanowano: 100, znalezione: 2 });
+  assert.equal(szerokie, K.SKAN_STRONA);
+});
+
+test('ZERO trafień do tej pory => pobieramy maksymalną stronę, zamiast dreptać', () => {
+  assert.equal(K.rozmiarPobrania({ potrzeba: 20, przeskanowano: 300, znalezione: 0 }), K.SKAN_STRONA);
+});
+
+test('dobra trafność utrzymuje pobrania małe', () => {
+  const ile = K.rozmiarPobrania({ potrzeba: 10, przeskanowano: 20, znalezione: 18 });
+  assert.ok(ile <= 30, `przy trafności 90% wystarczy ~13 dokumentów, jest ${ile}`);
+});

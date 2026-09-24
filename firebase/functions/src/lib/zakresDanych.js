@@ -126,6 +126,44 @@ function opisStanu(stan, { godzin, blad }) {
   }
 }
 
+/** Nowszy z dwóch znaczników ISO (null traktujemy jak „nie było"). */
+function nowszy(a, b) {
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return a > b ? a : b;
+}
+
+/**
+ * Ślad źródła złożony z DWÓCH niezależnych zapisów.
+ *
+ * Historia per źródło (`_health/cykl.zrodla`) pochodzi z dobowego cyklu, ale
+ * BZP i Baza Konkurencyjności mają WŁASNE okna co 3 h z osobnym checkpointem —
+ * świeższe i niezależne od tego, czy cykl dobowy zdążył się wykonać. Produkcja
+ * 2026-09-24 pokazała, do czego prowadzi patrzenie tylko na cykl: karty mówiły
+ * „brak śladu pobrania", choć oba okna domknęły się czysto tej samej nocy.
+ *
+ * Bierzemy nowszy znacznik z obu, osobno dla sukcesu i dla błędu — który z nich
+ * wygra, rozstrzyga potem `ustalStan`.
+ */
+function sladZrodla(zCyklu, okno) {
+  const slad = {
+    ostatni_sukces_o: zCyklu?.ostatni_sukces_o ?? null,
+    ostatni_blad_o: zCyklu?.ostatni_blad_o ?? null,
+    ostatni_blad: zCyklu?.ostatni_blad ?? null,
+  };
+  if (!okno?.zakonczony_o) return slad;
+
+  if (okno.error) {
+    if (nowszy(slad.ostatni_blad_o, okno.zakonczony_o) === okno.zakonczony_o) {
+      slad.ostatni_blad = String(okno.error);
+    }
+    slad.ostatni_blad_o = nowszy(slad.ostatni_blad_o, okno.zakonczony_o);
+  } else {
+    slad.ostatni_sukces_o = nowszy(slad.ostatni_sukces_o, okno.zakonczony_o);
+  }
+  return slad;
+}
+
 /** Pokrycie okna BZP: ile dób z okna zostało jeszcze niedomkniętych. */
 function pokrycieBzp(okno) {
   if (!okno?.zakonczony_o) return null;
@@ -186,8 +224,10 @@ function pokrycieBk(okno) {
  * @param {object|null} [wejscie.oknoBk] ostatni przebieg okna Bazy Konkurencyjności
  */
 export function zbudujZakresDanych({ teraz, wlaczone = {}, zrodlaCyklu = {}, oknoBzp = null, oknoBk = null }) {
+  const okna = { bzp: oknoBzp, baza_konkurencyjnosci: oknoBk };
+
   const zrodla = ZRODLA.map((z) => {
-    const slad = zrodlaCyklu?.[z.kod] ?? {};
+    const slad = sladZrodla(zrodlaCyklu?.[z.kod], okna[z.kod]);
     const sukces = slad.ostatni_sukces_o ?? null;
     const bladO = slad.ostatni_blad_o ?? null;
     const godzin = godzinOd(sukces, teraz);

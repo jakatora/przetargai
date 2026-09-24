@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { JezykProvider } from './src/context/JezykContext';
 import { SavedProvider } from './src/context/SavedContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import GranicaBledu from './src/components/GranicaBledu';
@@ -57,11 +58,13 @@ export default function App() {
       <StatusBar style="light" />
       <GranicaBledu>
         <ThemeProvider>
-          <AuthProvider>
-            <SavedProvider>
-              <RootNavigator />
-            </SavedProvider>
-          </AuthProvider>
+          <JezykProvider>
+            <AuthProvider>
+              <SavedProvider>
+                <RootNavigator />
+              </SavedProvider>
+            </AuthProvider>
+          </JezykProvider>
         </ThemeProvider>
       </GranicaBledu>
     </SafeAreaProvider>

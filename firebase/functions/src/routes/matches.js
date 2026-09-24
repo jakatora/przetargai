@@ -73,7 +73,12 @@ router.get('/', ah(async (req, res) => {
  */
 router.get('/saved', ah(async (req, res) => {
   const rows = await saved.list(req.user.id);
-  res.json({ saved: rows.map(publicSaved), count: rows.length });
+  // Ten sam komponent karty co w feedzie => ten sam kształt wyjaśnienia.
+  const wyjasnione = rows.map((row) => ({
+    ...publicSaved(row),
+    wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
+  }));
+  res.json({ saved: wyjasnione, count: rows.length });
 }));
 
 /** Same identyfikatory zapisanych — do zaznaczania ikony zakładki w feedzie. */

@@ -169,3 +169,14 @@ test('zadeklarowana skala firmy oznacza zamówienie ponad możliwości', async (
   assert.equal(wartosc.sila, 'brak');
   assert.match(wartosc.szczegol.pl, /powyżej/i);
 });
+
+test('zapisane przetargi też niosą wyjaśnienie — to ta sama karta', async () => {
+  const token = await konto({ keywords: ['droga'], cpv: ['45233000'] });
+  const tender = await dopasowanie(token);
+  await fetch(`${BAZA}/matches/${tender.id}/save`, { method: 'PUT', headers: auth(token), body: '{}' });
+
+  const dane = await (await fetch(`${BAZA}/matches/saved`, { headers: auth(token) })).json();
+  const wpis = dane.saved.find((s) => s.tender.id === tender.id);
+  assert.ok(wpis, 'przetarg musi być na liście zapisanych');
+  assert.equal(wpis.wyjasnienie.sygnaly.length, 4);
+});

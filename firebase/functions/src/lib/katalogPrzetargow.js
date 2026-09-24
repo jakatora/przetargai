@@ -91,8 +91,37 @@ export const LIMIT_DOMYSLNY = 20;
 export const LIMIT_MAKS = 50;
 export const MAKS_DLUGOSC_TEKSTU = 120;
 
-/** Ile dokumentów pobieramy z Firestore w jednym kroku skanu. */
+/** Największa porcja dokumentów pobierana z Firestore w jednym kroku skanu. */
 export const SKAN_STRONA = 300;
+
+/** Najmniejsza sensowna porcja — poniżej tego narzut round-tripu przeważa nad oszczędnością. */
+export const SKAN_STRONA_MIN = 20;
+
+/**
+ * Ile dokumentów pobrać w NASTĘPNYM kroku skanu.
+ *
+ * Pomiar na produkcji (2026-09-24): żądanie o 3 pozycje przeczytało 300
+ * dokumentów, bo pętla brała zawsze pełną stronę. Koszt odczytów musi zależeć
+ * od tego, ile wyników zamówiono i jak dobrze filtr trafia, a nie od stałej.
+ *
+ * Trafność szacujemy z tego, co już przeczytaliśmy w TYM żądaniu. Zero trafień
+ * na dotychczasowym skanie znaczy, że wyniki są rzadkie (np. „po terminie"
+ * posortowane po dacie pobrania) — wtedy drobne kroki tylko mnożą round-tripy.
+ */
+export function rozmiarPobrania({
+  potrzeba, przeskanowano = 0, znalezione = 0, maks = SKAN_STRONA, min = SKAN_STRONA_MIN,
+}) {
+  const przytnij = (n) => Math.max(Math.min(Math.round(n), maks), Math.min(min, maks));
+
+  // Pierwszy krok: brak pomiaru, więc zakładamy, że filtr przepuszcza ~co czwarty.
+  if (przeskanowano <= 0) return przytnij(potrzeba * 4);
+
+  const trafnosc = znalezione / przeskanowano;
+  if (trafnosc <= 0) return maks;
+
+  // +30% zapasu, żeby typowy przypadek zamknął się w jednym dodatkowym zapytaniu.
+  return przytnij((potrzeba / trafnosc) * 1.3);
+}
 /**
  * Sufit dokumentów przeczytanych na JEDNO żądanie. To bezpiecznik kosztu odczytów,
  * nie granica wyników: po jego osiągnięciu oddajemy kursor i klient dociąga dalej.

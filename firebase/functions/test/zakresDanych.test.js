@@ -138,3 +138,47 @@ test('KRYTYCZNE: zastrzeżenie NIE obiecuje wszystkich przetargów w Polsce', ()
   assert.match(z.zastrzezenie.pl, /nie\s|bez /i);
   assert.match(z.zastrzezenie.en, /not|no /i);
 });
+
+/*
+ * Pomiar na produkcji (2026-09-24): karta ogłoszenia pokazywała „brak śladu
+ * pobrania" dla WSZYSTKICH źródeł, choć okna BZP i BK domknęły się tej samej
+ * nocy. Ślad dobowego cyklu pochodził sprzed naprawy lepkiego merge'a i nie
+ * miał historii per źródło — a checkpointy okien, świeższe i pewniejsze, leżały
+ * obok nieużyte. Okno 3-godzinne jest bliżej prawdy niż cykl dobowy.
+ */
+
+test('KRYTYCZNE: checkpoint okna zastępuje brakujący ślad cyklu', () => {
+  const z = zbudujZakresDanych(wejscie({
+    zrodlaCyklu: {},
+    oknoBzp: { zakonczony_o: godzinTemu(1), doby_okna: 8, doby_niedomkniete: 0, error: null },
+    oknoBk: { zakonczony_o: godzinTemu(2), aktywne_w_zrodle: 10, aktywne_pobrane: 10, pokrycie_kompletne: true, error: null },
+  }));
+  const bzp = z.zrodla.find((s) => s.kod === 'bzp');
+  assert.equal(bzp.stan, 'ok');
+  assert.equal(bzp.ostatni_sukces_o, godzinTemu(1));
+
+  const bk = z.zrodla.find((s) => s.kod === 'baza_konkurencyjnosci');
+  assert.equal(bk.stan, 'ok');
+  assert.equal(bk.ostatni_sukces_o, godzinTemu(2));
+
+  // TED nie ma własnego okna — dla niego brak śladu cyklu nadal znaczy brak danych.
+  assert.equal(z.zrodla.find((s) => s.kod === 'ted').stan, 'brak_danych');
+});
+
+test('błąd w oknie liczy się jak awaria źródła', () => {
+  const z = zbudujZakresDanych(wejscie({
+    zrodlaCyklu: {},
+    oknoBk: { zakonczony_o: godzinTemu(1), error: 'HTTP 503 z listy BK' },
+  }));
+  const bk = z.zrodla.find((s) => s.kod === 'baza_konkurencyjnosci');
+  assert.equal(bk.stan, 'awaria');
+  assert.match(bk.stan_opis.pl, /503/);
+});
+
+test('nowszy sukces wygrywa — bierzemy świeższy z dwóch śladów', () => {
+  const z = zbudujZakresDanych(wejscie({
+    oknoBzp: { zakonczony_o: godzinTemu(20), doby_niedomkniete: 0, error: null },
+  }));
+  // W `wejscie()` cykl BZP ma sukces 2 h temu — świeższy niż okno sprzed 20 h.
+  assert.equal(z.zrodla.find((s) => s.kod === 'bzp').godzin_od_sukcesu, 2);
+});
