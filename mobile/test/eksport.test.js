@@ -25,3 +25,11 @@ test('błąd: limit (429) pokazuje komunikat serwera, sieć — prośbę o ponow
   assert.match(komunikatBledu({ status: 0, message: 'x' }, 'pl'), /Brak połączenia/);
   assert.match(komunikatBledu({ status: 503, message: 'Nie udało się wysłać' }, 'pl'), /Nie udało się wysłać/);
 });
+
+test('kalendarz: potwierdzenie i wynik mówią o terminach, nie o Excelu', () => {
+  assert.match(potwierdzenieEksportu('kalendarz', 'a@b.pl', 'pl'), /terminy zapisanych przetargów.*kalendarza.*a@b\.pl/s);
+  const wynik = komunikatWyniku({ wyslano: true, do: 'a@b.pl', wierszy: 2, obciety: false, rodzaj: 'kalendarz' }, 'pl');
+  assert.match(wynik, /Dotknij załącznika/);
+  assert.doesNotMatch(wynik, /Excel/);
+  assert.match(komunikatWyniku({ wyslano: true, do: 'a@b.pl', wierszy: 2, rodzaj: 'kalendarz' }, 'en'), /Tap the attachment/);
+});

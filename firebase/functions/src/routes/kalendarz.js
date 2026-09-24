@@ -62,7 +62,7 @@ function stanPrzypomnienia(wpis) {
 }
 
 /** Kalendarze wszystkich zapisanych przetargów użytkownika. */
-async function kalendarzeUzytkownika(userId, teraz) {
+export async function kalendarzeUzytkownika(userId, teraz) {
   const zapisane = await saved.list(userId);
   if (!zapisane.length) return [];
 

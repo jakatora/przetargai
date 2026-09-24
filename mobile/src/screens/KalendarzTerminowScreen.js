@@ -6,6 +6,8 @@ import Button from '../components/Button';
 import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
+import { useAuth } from '../context/AuthContext';
+import { eksportujNaEmail } from '../services/eksportCsv';
 import { spacing, radius } from '../theme';
 import {
   ulozKalendarz, kartaNastepnegoKroku, opisPozycji, opisPrzypomnienia,
@@ -35,6 +37,7 @@ export default function KalendarzTerminowScreen({ navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKalendarza);
   const { t, jezyk } = useJezyk();
+  const { user } = useAuth();
 
   const [dane, setDane] = useState(null);
   const [ladowanie, setLadowanie] = useState(true);
@@ -221,6 +224,18 @@ export default function KalendarzTerminowScreen({ navigation }) {
         <Pressable style={styles.pasekBledu} onPress={() => wczytaj()} accessibilityRole="button">
           <Text style={styles.pasekBleduTekst}>{blad} · {t('dotknij, aby ponowić', 'tap to retry')}</Text>
         </Pressable>
+      ) : null}
+
+      {/*
+        Plik .ics bez modułów natywnych: idzie jako załącznik na e-mail właściciela
+        konta, a poczta w telefonie otwiera go w kalendarzu jednym dotknięciem.
+      */}
+      {(dane?.przetargi ?? []).some((k) => !k.anulowany) ? (
+        <Button
+          title={t('Dodaj terminy do kalendarza telefonu (e-mail)', 'Add deadlines to your phone calendar (e-mail)')}
+          onPress={() => eksportujNaEmail({ rodzaj: 'kalendarz', email: user?.email, jezyk })}
+          style={styles.gap}
+        />
       ) : null}
 
       <Button

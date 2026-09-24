@@ -11,6 +11,8 @@ import {
   nazwaPliku, MAKS_WIERSZY_KATALOGU,
 } from '../lib/eksportCsv.js';
 import { sendEmail } from '../services/email.js';
+import { doIcs } from '../lib/kalendarzPrzetargu.js';
+import { kalendarzeUzytkownika } from './kalendarz.js';
 
 /*
  * EKSPORT CSV (P2-3) — „Zapisane" i katalog rynku do Excela / CRM-u.
@@ -51,6 +53,17 @@ async function eksportKatalogu(query, teraz) {
   return { nazwa: nazwaPliku('katalog', teraz), csv: doCsv(wiersze, KOLUMNY_KATALOGU), wierszy: wiersze.length, obciety };
 }
 
+/**
+ * Terminy zapisanych przetargów jako plik ICS (etap 5 zostawił go bez drogi do
+ * telefonu: aplikacja nie ma modułów do zapisu pliku). Załącznik .ics w poczcie
+ * na telefonie otwiera się w kalendarzu jednym dotknięciem.
+ */
+async function eksportKalendarza(userId, teraz) {
+  const kalendarze = await kalendarzeUzytkownika(userId, teraz);
+  const wierszy = kalendarze.filter((k) => !k.anulowany).length;
+  return { nazwa: `przetargai-terminy-${teraz.slice(0, 10)}.ics`, csv: doIcs(kalendarze, { teraz }), wierszy, obciety: false };
+}
+
 function wyslijPlik(res, { nazwa, csv, wierszy, obciety }) {
   res.set('Content-Type', 'text/csv; charset=utf-8');
   res.set('Content-Disposition', `attachment; filename="${nazwa}"`);
@@ -68,7 +81,7 @@ router.get('/katalog.csv', ah(async (req, res) => {
 }));
 
 const wysylkaSchema = z.object({
-  rodzaj: z.enum(['zapisane', 'katalog']),
+  rodzaj: z.enum(['zapisane', 'katalog', 'kalendarz']),
   filtry: z.record(z.string(), z.union([z.string(), z.number()])).optional(),
 });
 
@@ -86,18 +99,28 @@ router.post('/wyslij', ah(async (req, res) => {
   }
 
   const teraz = nowIso();
-  const plik = parsed.data.rodzaj === 'zapisane'
-    ? await eksportZapisanych(req.user.id, teraz)
-    : await eksportKatalogu(parsed.data.filtry ?? {}, teraz);
+  const { rodzaj } = parsed.data;
+  let plik;
+  if (rodzaj === 'zapisane') plik = await eksportZapisanych(req.user.id, teraz);
+  else if (rodzaj === 'katalog') plik = await eksportKatalogu(parsed.data.filtry ?? {}, teraz);
+  else plik = await eksportKalendarza(req.user.id, teraz);
 
-  const opis = parsed.data.rodzaj === 'zapisane' ? 'zapisanych przetargów' : 'przetargów z katalogu';
+  const tresc = rodzaj === 'kalendarz'
+    ? {
+      subject: `Terminy Twoich przetargów — ${plik.wierszy} postępowań`,
+      text: `W załączniku plik kalendarza (${plik.nazwa}) z terminami ${plik.wierszy} zapisanych postępowań: pytania do SWZ, składanie ofert i koniec związania ofertą. Dotknij załącznika, żeby dodać terminy do kalendarza.`,
+      html: `<p>W załączniku plik kalendarza <b>${plik.nazwa}</b> z terminami ${plik.wierszy} zapisanych postępowań: pytania do SWZ, składanie ofert i koniec związania ofertą.</p><p>Dotknij załącznika, żeby dodać terminy do kalendarza.</p>`,
+    }
+    : {
+      subject: `Eksport ${rodzaj === 'zapisane' ? 'zapisanych przetargów' : 'przetargów z katalogu'} — ${plik.wierszy} pozycji`,
+      text: `W załączniku plik CSV (${plik.nazwa}) z ${plik.wierszy} pozycjami. Otwórz go w Excelu dwuklikiem.`
+        + (plik.obciety ? ` Eksport obcięto do ${MAKS_WIERSZY_KATALOGU} pozycji — zawęź filtry, żeby dostać resztę.` : ''),
+      html: `<p>W załączniku plik CSV <b>${plik.nazwa}</b> z ${plik.wierszy} pozycjami. Otwórz go w Excelu dwuklikiem.</p>`
+        + (plik.obciety ? `<p>Eksport obcięto do ${MAKS_WIERSZY_KATALOGU} pozycji — zawęź filtry, żeby dostać resztę.</p>` : ''),
+    };
   const wynik = await sendEmail({
     to: req.user.email,
-    subject: `Eksport ${opis} — ${plik.wierszy} pozycji`,
-    text: `W załączniku plik CSV (${plik.nazwa}) z ${plik.wierszy} pozycjami. Otwórz go w Excelu dwuklikiem.`
-      + (plik.obciety ? ` Eksport obcięto do ${MAKS_WIERSZY_KATALOGU} pozycji — zawęź filtry, żeby dostać resztę.` : ''),
-    html: `<p>W załączniku plik CSV <b>${plik.nazwa}</b> z ${plik.wierszy} pozycjami. Otwórz go w Excelu dwuklikiem.</p>`
-      + (plik.obciety ? `<p>Eksport obcięto do ${MAKS_WIERSZY_KATALOGU} pozycji — zawęź filtry, żeby dostać resztę.</p>` : ''),
+    ...tresc,
     attachments: [{ filename: plik.nazwa, content: Buffer.from(plik.csv, 'utf8') }],
   });
   if (!wynik.sent && !wynik.degraded) throw serviceUnavailable('Nie udało się wysłać e-maila — spróbuj za chwilę.');

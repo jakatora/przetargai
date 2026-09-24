@@ -391,7 +391,7 @@ export const api = {
   // ----- Eksport CSV (P2-3) -----
   /**
    * Wysyła plik CSV jako załącznik na e-mail WŁAŚCICIELA konta (adres z konta,
-   * nie z żądania). `rodzaj`: 'zapisane' | 'katalog'; `filtry` jak w getTenders.
+   * nie z żądania). `rodzaj`: 'zapisane' | 'katalog' | 'kalendarz' (plik .ics); `filtry` jak w getTenders.
    * → `{ wyslano, tryb_degradacji, do, plik, wierszy, obciety }`. 429 = dzienny limit.
    */
   eksportWyslij: ({ rodzaj, filtry } = {}) =>

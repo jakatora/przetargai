@@ -7,13 +7,13 @@ import { potwierdzenieEksportu, komunikatWyniku, komunikatBledu } from '../lib/e
  * Eksport CSV na e-mail właściciela konta (P2-3): potwierdzenie → wysyłka → wynik.
  * Wspólne dla „Zapisanych" i katalogu, żeby oba miejsca mówiły to samo.
  *
- * @param {{rodzaj: 'zapisane'|'katalog', filtry?: object, email?: string, jezyk?: string}} opcje
+ * @param {{rodzaj: 'zapisane'|'katalog'|'kalendarz', filtry?: object, email?: string, jezyk?: string}} opcje
  *   `filtry` = parametry zapytania katalogu (lib/katalogPrzetargow.parametryZapytania)
  */
 export function eksportujNaEmail({ rodzaj, filtry, email, jezyk = 'pl' }) {
   const t = (pl, en) => tr({ pl, en }, jezyk);
   Alert.alert(
-    t('Eksport do Excela', 'Export to Excel'),
+    rodzaj === 'kalendarz' ? t('Terminy do kalendarza', 'Deadlines to calendar') : t('Eksport do Excela', 'Export to Excel'),
     potwierdzenieEksportu(rodzaj, email, jezyk),
     [
       { text: t('Anuluj', 'Cancel'), style: 'cancel' },
@@ -22,7 +22,7 @@ export function eksportujNaEmail({ rodzaj, filtry, email, jezyk = 'pl' }) {
         onPress: async () => {
           try {
             const odp = await api.eksportWyslij({ rodzaj, filtry });
-            Alert.alert(t('Eksport', 'Export'), komunikatWyniku(odp, jezyk));
+            Alert.alert(t('Wysłano', 'Sent'), komunikatWyniku({ ...odp, rodzaj }, jezyk));
           } catch (err) {
             Alert.alert(t('Nie udało się', 'Failed'), komunikatBledu(err, jezyk));
           }

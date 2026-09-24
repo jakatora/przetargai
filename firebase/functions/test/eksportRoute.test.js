@@ -115,3 +115,19 @@ describe('POST /eksport/wyslij', () => {
     assert.equal(ponad.status, 429);
   });
 });
+
+describe('POST /eksport/wyslij — kalendarz ICS', () => {
+  test('rodzaj kalendarz → plik .ics z terminami zapisanych', async () => {
+    const { token, userId } = await konto();
+    await saved.add(userId, {
+      tender_id: `${ZNAK}-ICS`, tender_title: 'Przetarg z terminem',
+      tender_deadline: new Date(Date.now() + 20 * 86_400_000).toISOString(), tender_source: 'bzp',
+    });
+    const odp = await fetch(`${BAZA}/eksport/wyslij`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ rodzaj: 'kalendarz' }) });
+    assert.equal(odp.status, 200);
+    const dane = await odp.json();
+    assert.match(dane.plik, /^przetargai-terminy-\d{4}-\d{2}-\d{2}\.ics$/);
+    assert.equal(dane.wierszy, 1);
+  });
+});
+
