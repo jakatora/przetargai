@@ -24,6 +24,26 @@ test('analizujPole: „1.200,50" (kropka tysięcy + przecinek) NIE jest liczbą 
   assert.equal(analizujPole('1,2,3').liczba, null);
 });
 
+// Klawiatura liczbowa Androida ma kropkę. „1.200" wpisane jako 1200 zł liczyło się jako 1,20 zł.
+test('analizujPole: kropka z dokładnie trzema cyframi („1.200", „12.500") jest NIEJEDNOZNACZNA', () => {
+  assert.deepEqual(analizujPole('1.200'), { pusty: false, liczba: null, niejednoznaczny: true });
+  assert.equal(analizujPole('12.500').niejednoznaczny, true);
+  assert.equal(analizujPole('1.200.000').niejednoznaczny, true);
+});
+
+test('analizujPole: zwykły ułamek z kropką zostaje liczbą („1.5", „0.500", „2.25")', () => {
+  assert.equal(analizujPole('1.5').liczba, 1.5);
+  assert.equal(analizujPole('0.500').liczba, 0.5);
+  assert.equal(analizujPole('2.25').liczba, 2.25);
+  assert.equal(analizujPole('1200').niejednoznaczny, false);
+});
+
+test('bladKwoty/bladProcentu/bladLiczby: przy niejednoznacznym zapisie podpowiadają oba odczyty', () => {
+  assert.equal(bladKwoty('1.200'), 'Niejednoznaczny zapis „1.200" — wpisz 1200 (bez kropki) albo 1,2 (z przecinkiem)');
+  assert.equal(bladProcentu('12.500', { max: 1000 }), 'Niejednoznaczny zapis „12.500" — wpisz 12500 (bez kropki) albo 12,5 (z przecinkiem)');
+  assert.equal(bladLiczby('1.200.000', {}), 'Niejednoznaczny zapis „1.200.000" — wpisz 1200000 (bez kropek)');
+});
+
 test('bladKwoty: pusta = brak błędu, liczba = brak, śmieci i minus = komunikat', () => {
   assert.equal(bladKwoty(''), null);
   assert.equal(bladKwoty('1200,00'), null);
