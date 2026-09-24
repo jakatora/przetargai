@@ -1,5 +1,6 @@
 import { API_URL } from '../config';
 import { bladOdpowiedzi, bladSieci } from './errors';
+import { wyslijZLimitem, parametryDlaMetody } from '../lib/zapytanieSieciowe';
 
 let authToken = null;
 let naWygasnieciesesji = null;
@@ -24,11 +25,13 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
 
   let res;
   try {
-    res = await fetch(API_URL + path, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    // Limit czasu + jedno ponowienie odczytu — zawieszone łącze kończy się błędem
+    // sieci z „Spróbuj ponownie", a nie wiecznym spinnerem.
+    res = await wyslijZLimitem(
+      API_URL + path,
+      { method, headers, body: body ? JSON.stringify(body) : undefined },
+      parametryDlaMetody(method),
+    );
   } catch {
     throw bladSieci();
   }
