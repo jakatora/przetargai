@@ -96,9 +96,9 @@ PrzetargAI
 
 **Krótki opis (max 80):**
 ```
-Przetargi dopasowane do Twojej firmy, terminy pod kontrolą i ocena szans.
+Przetargi dla Twojej firmy, plany zamówień i terminy pod kontrolą.
 ```
-73 znaki. W Google Play krótki opis JEST indeksowany (inaczej niż opis w Apple).
+66 znaków. (Wcześniej „…i ocena szans" — sprzeczne z zasadą niżej: aplikacja nie podaje szans wygranej.) W Google Play krótki opis JEST indeksowany (inaczej niż opis w Apple).
 
 **Pełny opis (max 4000):**
 ```
