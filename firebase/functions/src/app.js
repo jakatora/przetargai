@@ -8,6 +8,7 @@ import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
 import matchesRouter from './routes/matches.js';
+import tendersRouter from './routes/tenders.js';
 import upgradeRouter from './routes/upgrade.js';
 import webhooksRouter from './routes/webhooks.js';
 import adminRouter from './routes/admin.js';
@@ -82,6 +83,11 @@ export function createApp() {
   app.use('/auth', apiLimiter, authRouter);
 
   app.use('/matches', apiLimiter, matchesRouter);
+  /*
+   * Katalog calego rynku (P1-1) — tryb „Wszystkie" na glownej liscie. Osobny od
+   * /matches, bo /matches z definicji pokazuje WYCINEK przyciety profilem i planem.
+   */
+  app.use('/tenders', apiLimiter, tendersRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminLimiter, adminRouter);
 

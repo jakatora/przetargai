@@ -2,6 +2,7 @@ import { getFirestore, FieldValue, FieldPath } from 'firebase-admin/firestore';
 import { env } from '../config.js';
 import { newId, nowIso, startOfTodayIso } from '../lib/ids.js';
 import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
+import { planZapytania, pasujeDoFiltrow, SKAN_STRONA, SKAN_MAKS } from '../lib/katalogPrzetargow.js';
 
 /*
  * Warstwa dostępu do danych — Firestore (port z node:sqlite, D-024).
@@ -316,6 +317,17 @@ const POLA_PULI = [
 ];
 
 /**
+ * Pola czytane przez katalog „Wszystkie przetargi". Szersze niż POLA_PULI, bo
+ * karta katalogu pokazuje źródło pierwotne, link do oryginału i datę publikacji —
+ * czyli dokładnie to, czego silnik dopasowań nie potrzebuje. Poza projekcją
+ * zostaje `raw_data` (bywa setkami kilobajtów) i `ai_summary`.
+ */
+const POLA_KATALOGU = [
+  ...POLA_PULI,
+  'published_at', 'fetched_at', 'numer', 'zrodla_alternatywne', 'zaktualizowany_o',
+];
+
+/**
  * Statystyki ostatniego POBRANIA puli (nie odczytu z cache).
  *
  * Bez nich sufit puli był niewidoczny: audyt 2026-09-23 musiał go wyliczyć
@@ -620,6 +632,90 @@ export const tenders = {
     const ile = agg.data().count;
     cacheOtwartych = { ile, wygasa: Date.now() + CACHE_OTWARTYCH_TTL_MS };
     return ile;
+  },
+
+  /**
+   * Katalog „Wszystkie przetargi" (P1-1) — strona rynku, NIE feed użytkownika.
+   *
+   * Świadomie nie dotyka ani profilu, ani `matches`, ani `openPool`: pula ma
+   * sufit i cache, bo służy silnikowi dopasowań, a katalog ma pokazać wszystko.
+   *
+   * Dlaczego skan, a nie samo `limit(n)`: większość filtrów (region, CPV, tekst,
+   * kwota) nie da się spytać Firestore'a — `wojewodztwo` trzymamy w formacie
+   * źródła („PL12" vs „małopolskie"), a `cpv_main` to sklejony łańcuch kodów.
+   * Czytamy więc porcjami w porządku zapytania i odsiewamy w pamięci, aż strona
+   * się zapełni albo skończą się dane, albo dobijemy do sufitu odczytów.
+   *
+   * Sufit NIE gubi rekordów: kursor wskazuje pozycję w porządku Firestore, więc
+   * kolejne żądanie rusza dokładnie tam, gdzie poprzednie stanęło. Odpowiedź
+   * mówi wprost (`wyczerpano`), czy to już koniec listy, czy tylko koniec budżetu.
+   */
+  async katalog({
+    filtry,
+    teraz = nowIso(),
+    kursor = null,
+    rozmiarStrony = SKAN_STRONA,
+    skanMaks = SKAN_MAKS,
+  }) {
+    const plan = planZapytania(filtry, teraz);
+
+    let zapytanie = db().collection('tenders');
+    for (const [pole, wartosc] of plan.rowne) zapytanie = zapytanie.where(pole, '==', wartosc);
+    for (const [pole, op, wartosc] of plan.zakres) zapytanie = zapytanie.where(pole, op, wartosc);
+    /*
+     * Jawny `orderBy` po identyfikatorze dokumentu jest tu rozstrzygaczem remisów.
+     * Bez niego dwa ogłoszenia z tym samym `fetched_at` (a pobieranie zapisuje
+     * setki naraz) mogłyby się przy stronicowaniu powtórzyć albo zniknąć.
+     * Kierunek musi być ten sam co pola sortowania — inaczej indeks nie pasuje.
+     */
+    zapytanie = zapytanie
+      .orderBy(plan.sort.pole, plan.sort.kierunek)
+      .orderBy(FieldPath.documentId(), plan.sort.kierunek)
+      .select(...POLA_KATALOGU);
+
+    const wiersze = [];
+    let ostatni = kursor;
+    let przeskanowano = 0;
+    let zapytan = 0;
+    let wyczerpano = false;
+
+    while (wiersze.length < filtry.limit && przeskanowano < skanMaks) {
+      const ile = Math.min(rozmiarStrony, skanMaks - przeskanowano);
+      const strona = ostatni ? zapytanie.startAfter(ostatni.wartosc, ostatni.id) : zapytanie;
+      const snap = await strona.limit(ile).get();
+      zapytan += 1;
+      przeskanowano += snap.docs.length;
+
+      let obejrzane = 0;
+      for (const doc of snap.docs) {
+        obejrzane += 1;
+        const t = { id: doc.id, ...doc.data() };
+        // Kursor przesuwamy na KAŻDYM obejrzanym dokumencie, także odrzuconym —
+        // inaczej kolejna strona zaczynałaby od nowa na tym samym odsianym ogonie.
+        ostatni = { wartosc: t[plan.sort.pole] ?? null, id: doc.id };
+        if (pasujeDoFiltrow(t, filtry, teraz)) {
+          wiersze.push(t);
+          if (wiersze.length >= filtry.limit) break;
+        }
+      }
+
+      /*
+       * „Krótsza strona niż zamówiona" znaczy koniec danych WYŁĄCZNIE wtedy, gdy
+       * obejrzeliśmy ją w całości. Przerwanie w połowie (bo strona wyników się
+       * zapełniła) zostawia w tej samej porcji dokumenty jeszcze nieobejrzane —
+       * ogłoszenie bez kursora byłoby wtedy nieosiągalne, choć leży tuż obok.
+       */
+      if (obejrzane === snap.docs.length && snap.docs.length < ile) { wyczerpano = true; break; }
+      if (wiersze.length >= filtry.limit) break;
+    }
+
+    return {
+      wiersze,
+      ostatni: wyczerpano ? null : ostatni,
+      przeskanowano,
+      zapytan,
+      wyczerpano,
+    };
   },
 
   async count() {
