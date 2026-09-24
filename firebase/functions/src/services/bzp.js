@@ -123,6 +123,14 @@ export function normalizeNotice(raw) {
     // Wymiary do statystyk wyników (R17): rodzaj + województwo (PL+TERYT).
     rodzaj: firstOf(raw, ['orderType']),
     wojewodztwo: firstOf(raw, ['organizationProvince']),
+    /*
+     * Identyfikator POSTEPOWANIA (ocds-…) — ten sam w ogloszeniu o zamowieniu
+     * i w ogloszeniu o WYNIKU (etap 6). Bez niego rozstrzygniecie nie ma po czym
+     * trafic do przetargu w bazie: numer BZP wyniku jest INNY niz numer ogloszenia
+     * o zamowieniu. Zmierzone: pole obecne w 3974/3974 ogloszen o zamowieniu
+     * i 200/200 wynikow.
+     */
+    postepowanie_id: tenderId ? String(tenderId) : null,
     raw: rawLite,
   };
 }

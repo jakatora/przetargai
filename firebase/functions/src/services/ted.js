@@ -17,6 +17,10 @@ import { doUtcIso } from '../lib/daty.js';
 
 const POLA = [
   'publication-number',
+  // BT-04: identyfikator POSTEPOWANIA, wspolny dla ogloszenia o zamowieniu
+  // i o wyniku (etap 6). Zmierzone: obecny w 250/250 ogloszen konkursowych;
+  // zapytanie `procedure-identifier = "…"` zwraca obie publikacje.
+  'procedure-identifier',
   'title-proc',
   'buyer-name',
   'classification-cpv',
@@ -72,9 +76,16 @@ export function mapujOgloszenieTed(notice) {
     publishedAt: znacznikTed(notice['publication-date']),
     url: linki.POL ?? Object.values(linki)[0] ?? null,
     source: 'ted',
+    postepowanie_id: pierwszaWartosc(notice['procedure-identifier']),
     // Zapisujemy tylko pobrane pola (nie pełny XML) — raw służy podglądowi.
     raw: notice,
   };
+}
+
+/** Pierwsza wartosc pola TED, ktore bywa tablica albo skalarem. */
+function pierwszaWartosc(pole) {
+  const wartosc = Array.isArray(pole) ? pole[0] : pole;
+  return wartosc ? String(wartosc) : null;
 }
 
 function dataOdDni(dni) {

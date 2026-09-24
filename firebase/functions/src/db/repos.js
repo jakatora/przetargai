@@ -440,6 +440,13 @@ export const tenders = {
       zrodla_alternatywne: t.zrodla_alternatywne ?? null,
       // Numer sprawy w rejestrze źródłowym (BK: „2026-4203-292028").
       numer: t.numer ?? null,
+      /*
+       * Identyfikator POSTĘPOWANIA — klucz złączenia z ogłoszeniem o WYNIKU (etap 6).
+       * BZP: `tenderId` (ocds-…). TED: `procedure-identifier` (BT-04).
+       * Ogłoszenie o wyniku ma INNY numer publikacji niż ogłoszenie o zamówieniu,
+       * więc bez tego pola rozstrzygnięcie nie ma po czym trafić do przetargu.
+       */
+      postepowanie_id: t.postepowanie_id ?? null,
       raw_data: raw,
       published_at: t.publishedAt ?? null,
       fetched_at: nowIso(),
@@ -467,6 +474,16 @@ export const tenders = {
         if (t.zrodla_alternatywne && !dane.zrodla_alternatywne) {
           await ref.update({ zrodla_alternatywne: t.zrodla_alternatywne });
           return { tender: { id, ...dane, zrodla_alternatywne: t.zrodla_alternatywne }, created: false };
+        }
+        /*
+         * Przetargi zapisane PRZED etapem 6 nie mają identyfikatora postępowania,
+         * a dzienne pobieranie re-ściąga ostatnie dni — dopisujemy go raz, gdy
+         * dokument jeszcze go nie ma. Bez tego rozstrzygnięcia tych postępowań
+         * nigdy by się z nimi nie spięły.
+         */
+        if (t.postepowanie_id && !dane.postepowanie_id) {
+          await ref.update({ postepowanie_id: t.postepowanie_id });
+          return { tender: { id, ...dane, postepowanie_id: t.postepowanie_id }, created: false };
         }
         if (dane.wadium_wymagane === undefined && dane.kryterium_oceny === undefined
             && dane.liczba_czesci === undefined) {
