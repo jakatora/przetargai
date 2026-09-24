@@ -4,6 +4,153 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-066 — Kalendarz: reguły ustawowe wybieramy po REJESTRZE, ICS jako plik
+**Data:** 2026-09-24 | Etap 5 (P1-7)
+
+**Problem.** Zapisany przetarg to trzy daty, nie jedna: termin PYTAŃ do SWZ (po nim
+zamawiający nie ma obowiązku odpowiedzieć), termin SKŁADANIA i koniec ZWIĄZANIA OFERTĄ
+(po nim oferta podlega odrzuceniu, art. 226 ust. 1 pkt 4). Dwie skrajne nie były
+pokazywane nigdzie. Obie trzeba WYLICZYĆ z przepisu, a długość terminu zależy od tego,
+czy postępowanie jest powyżej progów unijnych.
+
+**Decyzja.** Wariant przepisu wybieramy po REJESTRZE, nie po kwocie. `budget` jest pusty
+w większości ogłoszeń (BZP podaje rzadko, Baza Konkurencyjności zostawia puste pole
+w ok. 80% przypadków), więc zgadywanie z kwoty dawałoby błędny termin dokładnie tam,
+gdzie danych brakuje — czyli najczęściej. Rejestr jest znany dla KAŻDEGO ogłoszenia bez
+wyjątku: postępowania od progów unijnych publikuje się w Dz.U. UE (TED), poniżej — w BZP.
+
+- BZP → pytania na 4 dni przed terminem (art. 284 ust. 2 Pzp), związanie do 30 dni
+  (art. 220 ust. 1 pkt 1),
+- TED → pytania na 14 dni (art. 135 ust. 2), związanie do 90 dni (art. 220 ust. 1 pkt 2),
+- Baza Konkurencyjności → **nie podlega Pzp**, więc nie podstawiamy nieobowiązującego
+  przepisu; mówimy wprost, że ustawowego terminu tu nie ma.
+
+Daty wyliczone są jawnie oznaczone (`zrodloDaty: 'wyliczony'` vs `'ogloszenie'`) razem
+z podstawą prawną. To nie kosmetyka: wyliczona jest MAKSIMUM ustawowym, a ogłoszenie
+może podać termin krótszy. Pokazanie jej jako „termin z ogłoszenia" byłoby fałszywym
+pomiarem.
+
+**ICS oddajemy jako PLIK, nie jako adres subskrypcji.** Kalendarz Google/Apple odpytujący
+URL cyklicznie nie wysyła nagłówka `Authorization`, więc subskrypcja wymagałaby
+długożyciowego tokenu w samym adresie — a adresy kalendarzy lądują w historii przeglądarki,
+w logach serwera i w udostępnianych linkach. UID zdarzenia jest stabilny, więc powtórny
+import AKTUALIZUJE wpis zamiast go dublować.
+
+**Ograniczenie, świadome.** Zapis pliku `.ics` z poziomu aplikacji wymaga
+`expo-file-system` + `expo-sharing`, których w projekcie nie ma. Endpoint jest gotowy
+i przetestowany; dołożenie tych zależności to osobna decyzja (nowy build, weryfikacja
+na urządzeniu), nieobjęta tym etapem.
+
+---
+## D-065 — Obietnica „6 godzin" jest własnością KADENCJI, nie deklaracją
+**Data:** 2026-09-24 | Etap 5 (P1-2)
+
+**Problem.** Wymaganie brzmi: zmiana terminu ma zaktualizować dane i wygenerować alert
+w ≤ 6 h. To opóźnienie nie powstaje w jednym miejscu — składa się SZEREGOWO z dwóch
+niezależnych harmonogramów i żadnego z nich nie widać w kodzie, który alert wysyła.
+
+**Decyzja.** Budżet rozpisany jawnie:
+
+| Etap | Nośnik | Najgorszy przypadek |
+|---|---|---|
+| wykrycie zmiany | `bzpOknoFetch` (`20 */3`), `bkOknoFetch` (`50 */3`) | 3 h |
+| powiadomienie | `monitorWyszukiwan` (`35 */2`) | 2 h |
+| **razem** | | **5 h** (1 h zapasu) |
+
+Minuta `:35` rozdziela monitoring od obu okien pobierania, żeby trzy zadania nie biły się
+o ten sam budżet instancji.
+
+**Strażnik w teście czyta crony z `index.js` i liczy tę sumę.** Zweryfikowany na żywo:
+po zmianie kadencji monitoringu na `*/6` test pada komunikatem „najgorszy przypadek to
+3 h wykrycia + 6 h powiadomienia = 9 h, a obiecujemy 6 h". Bez niego rozluźnienie kadency
+„bo taniej" unieważniłoby obietnicę bez jednego czerwonego testu.
+
+---
+## D-064 — Historia zmian mieszka w warstwie DANYCH, klucz liczony z PRZEJŚCIA
+**Data:** 2026-09-24 | Etap 5 (P1-2)
+
+**Problem.** W kodzie siedziało założenie „ogłoszenie po publikacji się nie zmienia".
+Dla BZP jest prawie prawdziwe, dla Bazy Konkurencyjności nieprawdziwe codziennie (kolejne
+WERSJE tego samego ogłoszenia, najczęściej z przesuniętym terminem). Skutek jest ten sam
+niezależnie od rejestru: wykonawca przygotowuje ofertę na danych, które już nie obowiązują.
+
+**Decyzja 1 — wykrywanie w repozytorium, nie w jobie.** `tenders.zaktualizujZeZrodla`
+i `tenders.oznaczAnulowany` to JEDYNE dwa miejsca, przez które ogłoszenie w bazie może się
+zmienić. Zapis historii po ich stronie znaczy, że żaden przyszły job nie może o niej
+zapomnieć, a BZP i TED dostają ją bez powtarzania kodu.
+
+**Decyzja 2 — porównujemy stan PRZED z tym, co REALNIE zapiszemy**, a nie z surowym
+wejściem z rejestru. `ustaw()` pomija pola puste (cisza rejestru nie kasuje danych), więc
+porównanie z wejściem widziałoby „budżet zniknął" przy każdej oszczędniejszej wersji BK
+i zalewało historię fałszywymi zmianami.
+
+**Decyzja 3 — docId = klucz PRZEJŚCIA (przed → po), nie nowej wartości.** Idempotencja
+staje się własnością modelu, a nie ostrożności wołającego: powtórzony po awarii przebieg
+nie dokłada ani jednego wpisu. Termin przesunięty tam i z powrotem to nadal dwa różne
+zdarzenia i wykonawca musi zobaczyć oba. Historia zachowuje czas PIERWSZEGO wykrycia — to
+on mówi, ile czasu wykonawca realnie miał.
+
+**Rozróżnienia, które łatwo zrobić źle.**
+- Skrócenie terminu ma ton `danger`, przesunięcie w przód tylko `ostrzezenie` — tylko
+  skrócenie zabiera czas już rozplanowany.
+- Cofnięcie anulowania to WZNOWIENIE (typ `status`), nie anulowanie; inaczej alarm
+  „postępowanie anulowane" szedłby w chwili powrotu postępowania do gry.
+- PIERWSZE zapamiętanie `status_zrodla` i `zrodlo_odcisk` NIE jest zmianą — pola doszły
+  w tym etapie, więc bez tego wyjątku jeden deploy wygenerowałby alert dla całej bazy.
+- Poprawka tytułu trafia do historii, ale NIE budzi nikogo powiadomieniem.
+
+---
+## D-063 — Pierwszy przebieg obserwacji NIE powiadamia
+**Data:** 2026-09-24 | Etap 5
+
+**Problem.** Zapisane wyszukiwanie z szerokim filtrem obejmuje kilka tysięcy otwartych
+ogłoszeń (pula to dziś 10 084). Naturalna implementacja — „wyślij wszystko, co pasuje,
+czego jeszcze nie wysłałem" — wysłałaby w sekundę powiadomienie „masz 10 000 nowych
+przetargów".
+
+**Decyzja.** Pierwszy przebieg USTAWIA PUNKT ODNIESIENIA i nie wysyła nic. Zapisanie
+wyszukiwania znaczy „od tej chwili obserwuję", i to jest jedyna uczciwa interpretacja.
+
+**Dlaczego to jest ważniejsze, niż wygląda.** Konsekwencją zalania powiadomieniami nie
+jest „użytkownik je zignoruje", tylko „użytkownik wyłączy push dla CAŁEJ aplikacji" —
+i straci przy okazji przypomnienia o terminach składania ofert, czyli funkcję, która
+realnie ratuje kontrakty.
+
+**Reszta hamulców.** Minimalny odstęp z częstotliwości (godzinowa/dzienna/tygodniowa),
+limit 20 obserwacji i osobny limit 10 WŁĄCZONYCH alertów (to inny koszt: miejsce w bazie
+vs powiadomienia i odczyty w każdym przebiegu), odrzucanie duplikatu filtrów kodem 409,
+najwyżej 5 pozycji wymienionych z nazwy w jednym powiadomieniu. Pełna strona skanu daje
+„co najmniej N", a nie zmyśloną dokładną liczbę.
+
+---
+## D-062 — Zapisane wyszukiwania: JEDEN normalizator filtrów, wspólny z katalogiem
+**Data:** 2026-09-24 | Etap 5
+
+**Problem.** Obserwacja rynku musi obejmować DOKŁADNIE ten zbiór, z którego została
+zapisana. Własny normalizator filtrów po stronie monitoringu rozjechałby się z katalogiem
+przy pierwszej zmianie — a użytkownik nie miałby jak tej rozbieżności zobaczyć: lista
+pokazywałaby jedno, alert dotyczyłby czegoś innego.
+
+**Decyzja.** Normalizacja jest DELEGOWANA do `katalogPrzetargow.normalizujFiltry`, a nie
+powtórzona. Filtry przychodzą z ekranu katalogu (przycisk „Zapisz to wyszukiwanie"
+w panelu filtrów) i nie są edytowane na nowo w ekranie obserwacji — druga, równoległa
+lista filtrów byłaby tym samym rozjazdem, tyle że w UI.
+
+**Odcisk obserwacji jest WĘŻSZY niż odcisk kursora katalogu** — pomija sortowanie.
+Kursor odpowiada na pytanie „czy to ta sama STRONA tej samej listy" i musi znać porządek.
+Tu pytanie brzmi „czy to ta sama OBSERWACJA", a dwie obserwacje różniące się wyłącznie
+kolejnością wyników przysyłałyby te same trafienia dwa razy.
+
+**Filtry normalizujemy TAKŻE przy odczycie.** `pasujeDoFiltrow` rozróżnia `null` (brak
+filtra) od `undefined`, więc wpis zapisany PRZED dodaniem nowego pola filtra po cichu
+odrzucałby wszystko. Jedno wywołanie na wyszukiwanie kupuje zgodność wsteczną.
+
+**Bezpieczeństwo.** Wyszukiwania i alerty to subkolekcje użytkownika — cudzego wpisu nie
+da się nawet ZAADRESOWAĆ. Trasy zwracają 404, nie 403: 403 potwierdzałoby istnienie wpisu
+o danym identyfikatorze, a lista kryteriów, po jakich firma szuka kontraktów, jest
+informacją handlową.
+
+---
 ## D-061 — Wyjaśnienie dopasowania liczone z danych, nie z AI
 **Data:** 2026-09-24 | Etap 4 (P1-4)
 
