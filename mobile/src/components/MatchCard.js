@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, View, Text } from 'react-native';
 import { radius, spacing } from '../theme';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
@@ -47,8 +48,13 @@ export function ScoreBadge({ score, size = 'md' }) {
   );
 }
 
-/** Karta dopasowanego przetargu na liście. `nowe` = dodany po ostatniej wizycie. */
-export default function MatchCard({ match, onPress, nowe = false }) {
+/**
+ * Karta dopasowanego przetargu na liście. `nowe` = dodany po ostatniej wizycie.
+ * `onOtworz(match)` zamiast `onPress` — rodzic podaje JEDNĄ stabilną funkcję, więc
+ * `memo` naprawdę pomija karty, których dane się nie zmieniły (wpisywanie w
+ * wyszukiwarkę, zmiana filtra, gwiazdka jednego przetargu nie renderują całej listy).
+ */
+function MatchCard({ match, onOtworz, nowe = false }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKarty);
   const tender = match.tender;
@@ -62,7 +68,7 @@ export default function MatchCard({ match, onPress, nowe = false }) {
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => onOtworz(match)}
       style={({ pressed }) => [styles.card, pressed && styles.pressed, termin.minal && styles.kartaMiniona]}
       accessibilityRole="button"
       accessibilityLabel={`${tender.title}. Dopasowanie ${match.confidence_score} procent. ${termin.etykieta}.`}
@@ -115,6 +121,8 @@ export default function MatchCard({ match, onPress, nowe = false }) {
     </Pressable>
   );
 }
+
+export default memo(MatchCard);
 
 const tworzStyleKarty = tworzStyle((k) => ({
   kartaMiniona: { opacity: 0.55 },

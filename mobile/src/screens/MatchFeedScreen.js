@@ -144,16 +144,30 @@ export default function MatchFeedScreen({ navigation }) {
   // Województwa OBECNE w feedzie — filtr pokazujemy tylko, gdy jest z czego wybierać.
   const regiony = useMemo(() => wojewodztwaObecne(matches), [matches]);
 
+  // Pole reaguje od razu, a lista filtruje się dopiero po krótkiej pauzie w pisaniu —
+  // jak w katalogu „Wszystkie" — zamiast przebudowywać feed przy każdym znaku.
+  const [szukajFiltr, setSzukajFiltr] = useState('');
+  useEffect(() => {
+    const id = setTimeout(() => setSzukajFiltr(szukaj), 250);
+    return () => clearTimeout(id);
+  }, [szukaj]);
+
   const widoczne = useMemo(() => {
     // Najpierw status terminu (Aktywne domyślnie chowa przeterminowane) — reszta filtrów
     // i grupowanie działają już na wybranej „zakładce".
     const poStatusie = filtrujStatusTerminu(matches, statusTerminu);
     const poProgu = filtrujPoProgu(poStatusie, prog);
     const poMalej = filtrujMalaFirma(poProgu, malaFirma);
-    const poTekscie = filtrujTekst(poMalej, szukaj);
+    const poTekscie = filtrujTekst(poMalej, szukajFiltr);
     const poWoj = filtrujWojewodztwo(poTekscie, woj);
     return sortujDopasowania(poWoj, sort);
-  }, [matches, prog, szukaj, sort, malaFirma, woj, statusTerminu]);
+  }, [matches, prog, szukajFiltr, sort, malaFirma, woj, statusTerminu]);
+
+  // Jedna stabilna funkcja dla wszystkich kart — warunek, żeby memo(MatchCard) działało.
+  const otworzPrzetarg = useCallback(
+    (m) => navigation.navigate('MatchDetail', { match: m }),
+    [navigation],
+  );
 
   // Licznik przeterminowanych (z pełnej listy) — pokazujemy na zakładce „Po terminie".
   const liczbaPoTerminie = useMemo(() => policzPoTerminie(matches), [matches]);
@@ -541,8 +555,8 @@ export default function MatchFeedScreen({ navigation }) {
               <Text style={styles.pustyFiltr}>
                 {statusTerminu === 'poterminie' && liczbaPoTerminie === 0
                   ? 'Brak przetargów po terminie. Wróć do „Aktywne".'
-                  : szukaj
-                    ? `Brak wyników dla „${szukaj}". Wyczyść szukanie lub zmień frazę.`
+                  : szukajFiltr
+                    ? `Brak wyników dla „${szukajFiltr}". Wyczyść szukanie lub zmień frazę.`
                     : woj
                       ? `Brak przetargów z województwa „${WOJEWODZTWA[woj]}" w bieżącym feedzie. Wybierz „Wszystkie województwa".`
                       : statusTerminu === 'aktywne'
@@ -564,7 +578,7 @@ export default function MatchFeedScreen({ navigation }) {
           <MatchCard
             match={item}
             nowe={czyNowe(item, wizytaBazowa)}
-            onPress={() => navigation.navigate('MatchDetail', { match: item })}
+            onOtworz={otworzPrzetarg}
           />
         )}
         onEndReached={dociagnijWiecej}
