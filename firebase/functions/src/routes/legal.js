@@ -65,15 +65,16 @@ NIP ${COMPANY.nip}, e-mail: <a href="mailto:${COMPANY.email}">${COMPANY.email}</
 <li>Fakturownia — wystawianie faktur VAT;</li>
 <li>Resend — wysyłka wiadomości transakcyjnych e-mail;</li>
 <li>Anthropic (Claude) — analiza dopasowania przetargów przez AI;</li>
-<li>Sentry — monitorowanie błędów technicznych.</li>
+<li>Expo (650 Industries) — dostarczanie powiadomień push na telefon.</li>
 </ul>
 <h2>5. Przekazywanie danych poza EOG</h2>
 <p>Dane konta i dopasowań przechowujemy w Unii Europejskiej (Google Cloud, region Warszawa).
-Część dostawców (Anthropic, Sentry, Stripe) może przetwarzać dane poza Europejskim
+Część dostawców (Anthropic, Expo, Stripe) może przetwarzać dane poza Europejskim
 Obszarem Gospodarczym, na podstawie standardowych klauzul umownych zatwierdzonych przez Komisję Europejską.</p>
 <h2>6. Okres przechowywania</h2>
 <p>Dane konta — przez czas korzystania z usługi oraz po jej zakończeniu w zakresie niezbędnym do rozliczeń.
-Dane rozliczeniowe — 5 lat od końca roku, w którym wystawiono fakturę.</p>
+Dane rozliczeniowe — 5 lat od końca roku, w którym wystawiono fakturę.
+Dziennik bezpieczeństwa i zapis zużycia AI (z identyfikatorem konta) — 90 dni.</p>
 <h2>7. Twoje prawa</h2>
 <ul>
 <li>dostęp do danych i otrzymanie kopii;</li>
