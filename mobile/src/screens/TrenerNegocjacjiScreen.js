@@ -12,6 +12,7 @@ import {
   KRYTERIA_DOMYSLNE,
   porownajOfertaDodatkowa,
   normalizujLiczbe,
+  walidujOferty,
 } from '../lib/trenerNegocjacji';
 
 /*
@@ -64,6 +65,9 @@ export default function TrenerNegocjacjiScreen({ route }) {
     return porownajOfertaDodatkowa({ pierwotna: liczby(pierwotna), dodatkowa: liczby(dodatkowa) });
   }, [pierwotna, dodatkowa]);
   const tonWyniku = tokenyTonu(porownanie.pozycje.length ? porownanie.ton : 'neutral', kolory);
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  // Przy błędzie NIE pokazujemy werdyktu: „1.200,50" czytane jako 1,2 mogłoby przepuścić gorszą ofertę.
+  const { bledy, maBledy } = walidujOferty({ pierwotna, dodatkowa });
 
   const sprawdz = () => {
     setWariantRecznie(null);
@@ -137,6 +141,7 @@ export default function TrenerNegocjacjiScreen({ route }) {
             onChangeText={(v) => setPierwotna((o) => ({ ...o, [k.klucz]: v }))}
             keyboardType="decimal-pad"
             placeholder={k.jednostka}
+            error={bledy[`pierwotna_${k.klucz}`]}
           />
           <TextField
             style={styles.kolumna}
@@ -145,11 +150,16 @@ export default function TrenerNegocjacjiScreen({ route }) {
             onChangeText={(v) => setDodatkowa((o) => ({ ...o, [k.klucz]: v }))}
             keyboardType="decimal-pad"
             placeholder={k.jednostka}
+            error={bledy[`dodatkowa_${k.klucz}`]}
           />
         </View>
       ))}
 
-      {porownanie.pozycje.length ? (
+      {maBledy ? (
+        <Text style={[styles.uwaga, { color: kolory.danger }]}>
+          Popraw pola oznaczone na czerwono — dopiero wtedy porównamy oferty.
+        </Text>
+      ) : porownanie.pozycje.length ? (
         <View
           style={[styles.wynik, { backgroundColor: tonWyniku.tlo, borderColor: tonWyniku.tekst }]}
           accessibilityLiveRegion="polite"

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { punktKryterium, analizaPunktow } from '../src/lib/kalkulatorPunktow.js';
+import { punktKryterium, analizaPunktow, walidujPunkty, poleKryterium } from '../src/lib/kalkulatorPunktow.js';
 
 test('punktKryterium: „większe lepiej" — pełne punkty dla najlepszej wartości', () => {
   assert.equal(punktKryterium(60, 36, 40, 'max'), 40);       // 40 × 60/60
@@ -63,4 +63,57 @@ test('analizaPunktow: odporność na śmieci (NaN/puste) nie wywala', () => {
   assert.equal(w.mojePkt, 0);
   assert.equal(w.konkPkt, 0);
   assert.equal(w.wygrywam, true); // 0 ≥ 0
+});
+
+test('poleKryterium: klucz błędu pola kryterium to „kryteria.<indeks>.<pole>"', () => {
+  assert.equal(poleKryterium(1, 'waga'), 'kryteria.1.waga');
+});
+
+test('walidujPunkty: puste pola → brak błędów (stan pusty, nie błąd)', () => {
+  const w = walidujPunkty({
+    mojaCena: '', konkurencyjnaCena: '   ', wagaCeny: '',
+    kryteria: [{ waga: '', moje: '', konkurent: undefined }],
+  });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujPunkty: poprawne liczby (też „520 000,50") → brak błędów', () => {
+  const w = walidujPunkty({
+    mojaCena: '520 000,50', konkurencyjnaCena: '500000', wagaCeny: '60',
+    kryteria: [{ waga: '40', moje: '60', konkurent: '36,5' }],
+  });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujPunkty: „1.200,50" (kropka tysięcy) → komunikat zamiast cichego 0', () => {
+  const w = walidujPunkty({
+    mojaCena: '1.200,50', konkurencyjnaCena: '500000', wagaCeny: '60',
+    kryteria: [{ waga: '40', moje: '60', konkurent: '1.200,50' }],
+  });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.mojaCena, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(w.bledy['kryteria.0.konkurent'], 'Podaj liczbę, np. 10');
+});
+
+test('walidujPunkty: waga ceny i waga kryterium poza 0–100 pkt, ujemna wartość → komunikat', () => {
+  const w = walidujPunkty({
+    mojaCena: '520000', konkurencyjnaCena: '-5', wagaCeny: '120',
+    kryteria: [
+      { waga: '40', moje: '60', konkurent: '36' },
+      { waga: '150', moje: '-3', konkurent: '30' },
+    ],
+  });
+  assert.equal(w.bledy.konkurencyjnaCena, 'Kwota nie może być ujemna');
+  assert.equal(w.bledy.wagaCeny, 'Wartość nie może przekraczać 100');
+  assert.equal(w.bledy['kryteria.1.waga'], 'Wartość nie może przekraczać 100');
+  assert.equal(w.bledy['kryteria.1.moje'], 'Wartość musi wynosić co najmniej 0');
+  assert.equal(w.bledy['kryteria.0.waga'], undefined);
+});
+
+test('walidujPunkty: bez argumentów nie wywraca funkcji', () => {
+  const w = walidujPunkty();
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
 });

@@ -5,7 +5,7 @@ import TextField from '../components/TextField';
 import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { symuluj, KIERUNKI } from '../lib/symulatorPunktacji';
+import { symuluj, walidujKryteria, maBladKryterium, KIERUNKI } from '../lib/symulatorPunktacji';
 
 /**
  * „SYMULATOR PUNKTACJI OFERTY". Liczy punkty w każdym kryterium i łącznie wg wzoru
@@ -15,13 +15,13 @@ import { symuluj, KIERUNKI } from '../lib/symulatorPunktacji';
 
 const oczysc = (t) => t.replace(/[^0-9., ]/g, '');
 
-/** Kompaktowe, etykietowane pole liczbowe (trójka w rzędzie). */
-function Pole({ styles, kolory, etykieta, value, onChangeText }) {
+/** Kompaktowe, etykietowane pole liczbowe (trójka w rzędzie) z komunikatem błędu jak w TextField. */
+function Pole({ styles, kolory, etykieta, value, onChangeText, error }) {
   return (
     <View style={styles.pole}>
       <Text style={styles.poleLabel}>{etykieta}</Text>
       <TextInput
-        style={styles.poleInput}
+        style={[styles.poleInput, error && styles.poleInputBlad]}
         value={value}
         onChangeText={(t) => onChangeText(oczysc(t))}
         placeholder="0"
@@ -29,6 +29,7 @@ function Pole({ styles, kolory, etykieta, value, onChangeText }) {
         keyboardType="decimal-pad"
         accessibilityLabel={etykieta}
       />
+      {error ? <Text style={styles.poleBlad}>{error}</Text> : null}
     </View>
   );
 }
@@ -52,6 +53,9 @@ export default function SymulatorPunktacjiScreen({ route }) {
     setKryteria((prev) => (prev.length > 1 ? prev.filter((k) => k.id !== id) : prev));
 
   const wynik = symuluj(kryteria);
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  // Klucze błędów per kryterium: `${pole}_${indeks}` (lista jest dynamiczna).
+  const { bledy, maBledy } = walidujKryteria(kryteria);
 
   return (
     <Screen scroll>
@@ -61,20 +65,25 @@ export default function SymulatorPunktacjiScreen({ route }) {
       </Text>
       {nazwa ? <Text style={styles.postepowanie}>{nazwa}</Text> : null}
 
-      {/* Wynik — hero */}
-      <View style={styles.hero}>
-        <Text style={styles.heroEt}>Twój wynik</Text>
-        <Text style={styles.heroKwota}>
-          {String(wynik.sumaPkt).replace('.', ',')} / {String(wynik.sumaWag).replace('.', ',')} pkt
-        </Text>
-        <View style={styles.heroPasekTlo}>
-          <View style={[styles.heroPasek, { width: `${Math.min(100, wynik.procent)}%` }]} />
+      {/* Wynik — hero (przy błędnych polach nie pokazujemy sumy liczonej z niepełnych danych) */}
+      {maBledy ? (
+        <Text style={styles.bladInfo}>Popraw pola oznaczone na czerwono — wtedy policzymy Twój wynik.</Text>
+      ) : (
+        <View style={styles.hero}>
+          <Text style={styles.heroEt}>Twój wynik</Text>
+          <Text style={styles.heroKwota}>
+            {String(wynik.sumaPkt).replace('.', ',')} / {String(wynik.sumaWag).replace('.', ',')} pkt
+          </Text>
+          <View style={styles.heroPasekTlo}>
+            <View style={[styles.heroPasek, { width: `${Math.min(100, wynik.procent)}%` }]} />
+          </View>
+          <Text style={styles.heroPod}>{String(wynik.procent).replace('.', ',')}% możliwych punktów</Text>
         </View>
-        <Text style={styles.heroPod}>{String(wynik.procent).replace('.', ',')}% możliwych punktów</Text>
-      </View>
+      )}
 
       {kryteria.map((k, i) => {
-        const poz = wynik.pozycje[i];
+        const bladKryterium = maBladKryterium(bledy, i);
+        const poz = bladKryterium ? null : wynik.pozycje[i];
         const maks = Number(String(k.waga).replace(',', '.')) || 0;
         const udzial = poz?.pkt != null && maks > 0 ? Math.min(100, (poz.pkt / maks) * 100) : 0;
         return (
@@ -114,9 +123,9 @@ export default function SymulatorPunktacjiScreen({ route }) {
             </View>
 
             <View style={styles.polaRzad}>
-              <Pole styles={styles} kolory={kolory} etykieta="Waga (pkt)" value={k.waga} onChangeText={(v) => ustaw(k.id, 'waga', v)} />
-              <Pole styles={styles} kolory={kolory} etykieta="Twoja" value={k.twoja} onChangeText={(v) => ustaw(k.id, 'twoja', v)} />
-              <Pole styles={styles} kolory={kolory} etykieta="Najlepsza" value={k.najlepsza} onChangeText={(v) => ustaw(k.id, 'najlepsza', v)} />
+              <Pole styles={styles} kolory={kolory} etykieta="Waga (pkt)" value={k.waga} onChangeText={(v) => ustaw(k.id, 'waga', v)} error={bledy[`waga_${i}`]} />
+              <Pole styles={styles} kolory={kolory} etykieta="Twoja" value={k.twoja} onChangeText={(v) => ustaw(k.id, 'twoja', v)} error={bledy[`twoja_${i}`]} />
+              <Pole styles={styles} kolory={kolory} etykieta="Najlepsza" value={k.najlepsza} onChangeText={(v) => ustaw(k.id, 'najlepsza', v)} error={bledy[`najlepsza_${i}`]} />
             </View>
 
             <View style={styles.wynikRzad}>
@@ -124,7 +133,9 @@ export default function SymulatorPunktacjiScreen({ route }) {
                 <View style={[styles.pasek, { width: `${udzial}%` }]} />
               </View>
               <Text style={styles.pktTekst}>
-                {poz?.pkt != null ? `${String(poz.pkt).replace('.', ',')} / ${String(maks).replace('.', ',')} pkt` : '— uzupełnij dane'}
+                {poz?.pkt != null
+                  ? `${String(poz.pkt).replace('.', ',')} / ${String(maks).replace('.', ',')} pkt`
+                  : bladKryterium ? '— popraw dane' : '— uzupełnij dane'}
               </Text>
             </View>
           </View>
@@ -155,6 +166,7 @@ const tworzStyleSymulatora = tworzStyle((k) => ({
   heroPasekTlo: { alignSelf: 'stretch', height: 10, borderRadius: 999, backgroundColor: k.neutralneTlo, overflow: 'hidden', marginTop: spacing.md },
   heroPasek: { height: 10, borderRadius: 999, backgroundColor: k.blue },
   heroPod: { fontSize: 13, color: k.textMuted, marginTop: 8, fontVariant: ['tabular-nums'] },
+  bladInfo: { fontSize: 14, color: k.danger, fontWeight: '700', lineHeight: 20, marginBottom: spacing.lg },
 
   krytCard: { backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, padding: spacing.md, marginBottom: spacing.md },
   krytGora: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -175,6 +187,8 @@ const tworzStyleSymulatora = tworzStyle((k) => ({
     borderWidth: 1.5, borderColor: k.border, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 10,
     fontSize: 15, color: k.text, backgroundColor: k.surface, fontVariant: ['tabular-nums'],
   },
+  poleInputBlad: { borderColor: k.danger },
+  poleBlad: { fontSize: 11, color: k.danger, marginTop: 3, lineHeight: 14 },
 
   wynikRzad: { marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   pasekTlo: { flex: 1, height: 8, borderRadius: 999, backgroundColor: k.neutralneTlo, overflow: 'hidden' },

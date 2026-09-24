@@ -11,6 +11,8 @@
  * sam; liczymy tylko arytmetykę oszczędności czasu/kosztu. Deterministyczne, odporne na braki.
  */
 
+import { bladKwoty, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
+
 function liczba(x) {
   const n = Number(x);
   return Number.isFinite(n) && n >= 0 ? n : 0;
@@ -54,5 +56,22 @@ export function analizaCertyfikatu(we = {}) {
     progStartow,
     godzinyObecnie: Math.round(godzinyObecnie * 10) / 10,
     godzinyZCertyfikatem: Math.round(godzinyZCertyfikatem * 10) / 10,
+  });
+}
+
+/**
+ * Waliduje wejście kalkulatora certyfikatu — zamiast cicho zerować błędne pola, zwraca jawne
+ * komunikaty PL pod każde pole. Puste pole = brak błędu (stan pusty).
+ * Przetargi rocznie: liczba całkowita 0–1000; godziny na komplet dokumentów (1 start): 0–200;
+ * stawka godzinowa i roczny koszt certyfikatu: kwoty ≥ 0.
+ * @param {{startowRocznie?, godzinNaStart?, stawkaGodzinowa?, kosztCertyfikatuRocznie?}} we
+ * @returns {{bledy: {[pole:string]: string}, maBledy: boolean}}
+ */
+export function walidujCertyfikat({ startowRocznie, godzinNaStart, stawkaGodzinowa, kosztCertyfikatuRocznie } = {}) {
+  return zbierzBledy({
+    startowRocznie: bladLiczby(startowRocznie, { min: 0, max: 1000, calkowita: true }),
+    godzinNaStart: bladLiczby(godzinNaStart, { min: 0, max: 200 }),
+    stawkaGodzinowa: bladKwoty(stawkaGodzinowa),
+    kosztCertyfikatuRocznie: bladKwoty(kosztCertyfikatuRocznie),
   });
 }

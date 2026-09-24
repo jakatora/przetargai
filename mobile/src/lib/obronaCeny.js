@@ -18,6 +18,11 @@
  * minimum i przypilnuj, żeby KAŻDY istotny składnik miał dowód. Bez dowodu = odrzucenie.
  */
 
+import { bladKwoty, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
+
+/** Górna granica sensownej minimalnej stawki godzinowej (zł/h) — łapie np. „3050" zamiast „30,50". */
+const MAX_MIN_STAWKA_GODZ = 1000;
+
 function liczba(x) {
   const n = Number(x);
   return Number.isFinite(n) ? n : 0;
@@ -86,6 +91,24 @@ export function analizaObrony(we = {}) {
     problemy,
     gotowa,
     ton,
+  });
+}
+
+/**
+ * Waliduje wejście asystenta obrony ceny — zamiast cicho zerować błędne pola, zwraca jawne
+ * komunikaty PL pod każde pole. Puste pole = brak błędu (stan pusty).
+ * Cena i składniki to kwoty ≥ 0 (błąd składnika pod jego `klucz` z SKLADNIKI, np. `bledy.zysk`);
+ * roboczogodziny to liczba ≥ 0; min. stawka to kwota zł/h do MAX_MIN_STAWKA_GODZ.
+ * @param {{cena?, roboczogodziny?, minStawkaGodz?, skladniki?: object}} we
+ * @returns {{bledy: {[pole:string]: string}, maBledy: boolean}}
+ */
+export function walidujObrone({ cena, roboczogodziny, minStawkaGodz, skladniki } = {}) {
+  const s = skladniki || {};
+  return zbierzBledy({
+    cena: bladKwoty(cena),
+    roboczogodziny: bladLiczby(roboczogodziny, { min: 0 }),
+    minStawkaGodz: bladKwoty(minStawkaGodz) || bladLiczby(minStawkaGodz, { max: MAX_MIN_STAWKA_GODZ }),
+    ...Object.fromEntries(SKLADNIKI.map((sk) => [sk.klucz, bladKwoty(s[sk.klucz])])),
   });
 }
 

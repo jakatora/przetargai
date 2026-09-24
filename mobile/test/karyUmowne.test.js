@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { policzKary } from '../src/lib/karyUmowne.js';
+import { policzKary, walidujKary } from '../src/lib/karyUmowne.js';
 
 const BAZA = { wartosc: 1000000, stawkaZwlokiProc: 0.2, odstapienieProc: 10, limitProc: 20 };
 
@@ -47,4 +47,47 @@ test('bez wartości umowy → maDane false, zera', () => {
   assert.equal(w.maDane, false);
   assert.equal(w.suma, 0);
   assert.equal(w.doZaplaty, 0);
+});
+
+// ---------------- walidujKary: jawne błędy zamiast cichego zera ----------------
+
+test('walidujKary: puste pola → brak błędów (stan pusty, nie błąd)', () => {
+  const w = walidujKary({ wartosc: '', stawkaZwlokiProc: '   ', dniZwloki: undefined, odstapienieProc: null, limitProc: '' });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujKary: poprawne dane (także „1 200 000,50" i „0,2") → brak błędów', () => {
+  const w = walidujKary({ wartosc: '1 200 000,50', stawkaZwlokiProc: '0,2', dniZwloki: '14', odstapienieProc: '10', limitProc: '20' });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujKary: „1.200,50" (kropka tysięcy) → komunikat zamiast cichego 0', () => {
+  const w = walidujKary({ wartosc: '1.200,50' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.wartosc, 'Podaj kwotę jako liczbę, np. 1200,00');
+});
+
+test('walidujKary: stawka zwłoki spoza 0–10% dziennie (np. „20" zamiast „0,20") → komunikat', () => {
+  const w = walidujKary({ wartosc: '100000', stawkaZwlokiProc: '20' });
+  assert.equal(w.bledy.stawkaZwlokiProc, 'Kara za zwłokę spoza zakresu 0–10%');
+  assert.equal(walidujKary({ stawkaZwlokiProc: '1.200,5' }).bledy.stawkaZwlokiProc, 'Podaj procent jako liczbę, np. 10');
+});
+
+test('walidujKary: dni zwłoki — całkowite, 0–3650', () => {
+  assert.equal(walidujKary({ dniZwloki: '2,5' }).bledy.dniZwloki, 'Podaj liczbę całkowitą');
+  assert.equal(walidujKary({ dniZwloki: '4000' }).bledy.dniZwloki, 'Wartość nie może przekraczać 3650');
+  assert.equal(walidujKary({ dniZwloki: '0' }).maBledy, false);
+});
+
+test('walidujKary: odstąpienie i limit kar spoza 0–100% → komunikat z etykietą', () => {
+  const w = walidujKary({ odstapienieProc: '150', limitProc: '120' });
+  assert.equal(w.bledy.odstapienieProc, 'Kara za odstąpienie spoza zakresu 0–100%');
+  assert.equal(w.bledy.limitProc, 'Limit kar spoza zakresu 0–100%');
+});
+
+test('walidujKary: wartość ujemna → komunikat; bez argumentów nie wywraca funkcji', () => {
+  assert.equal(walidujKary({ wartosc: -5 }).bledy.wartosc, 'Kwota nie może być ujemna');
+  assert.deepEqual(walidujKary(), { bledy: {}, maBledy: false });
 });

@@ -9,6 +9,8 @@ import { spacing, radius } from '../theme';
 import {
   podsumujHarmonogram,
   podsumujPorownanie,
+  walidujZabezpieczenie,
+  walidujPorownanie,
 } from '../lib/zabezpieczenieZwrot';
 
 /**
@@ -89,13 +91,20 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
   const [porLiczy, setPorLiczy] = useState(false);
   const [porBlad, setPorBlad] = useState(null);
 
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  // Przy błędach: komunikaty pod polami, przycisk nieaktywny, wynik ukryty (jak w kalkulatorze ceny).
+  const { bledy, maBledy } = walidujZabezpieczenie({ kwota, procentZatrzymany, stopaRoczna: stopa });
+  const { bledy: porBledy, maBledy: porMaBledy } = walidujPorownanie({
+    kwota: porKwota, lata: porLata, prowizjaGwarancjiRocznaProc: porProwizja, kosztKapitaluRocznyProc: porKapital,
+  });
+
   /** „Dzisiaj" z zegara urządzenia (UI, nie logika) — wstrzykiwane do bezstanowego backendu. */
   function dzisiajISO() {
     return new Date().toISOString().slice(0, 10);
   }
 
   async function policz() {
-    if (liczy) return;
+    if (liczy || maBledy) return; // błędne pola nie idą do backendu (np. stopa → cicho domyślna)
     const k = naLiczbe(kwota);
     if (k == null || k <= 0) {
       setBlad('Podaj kwotę zabezpieczenia (np. 5% ceny kontraktu).');
@@ -130,7 +139,7 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
   }
 
   async function generujWezwanie(i) {
-    if (wezwanieLiczy != null) return;
+    if (wezwanieLiczy != null || maBledy) return;
     const transza = wynik?.harmonogram?.transze?.[i];
     if (!transza) return;
     setWezwanieLiczy(i);
@@ -154,7 +163,7 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
   }
 
   async function policzPorownanie() {
-    if (porLiczy) return;
+    if (porLiczy || porMaBledy) return;
     const k = naLiczbe(porKwota);
     const lata = naLiczbe(porLata);
     if (k == null || k <= 0) { setPorBlad('Podaj kwotę zabezpieczenia do porównania.'); return; }
@@ -222,6 +231,7 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
           placeholder="np. 50000"
           keyboardType="numeric"
           hint="Zwykle 5% ceny kontraktu (brutto)."
+          error={bledy.kwota}
         />
         <TextField
           label="Zatrzymane na rękojmię (%)"
@@ -230,6 +240,7 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
           placeholder="np. 30"
           keyboardType="numeric"
           hint="Ile zamawiający zatrzymuje do końca rękojmi/gwarancji (max 30%, art. 453 ust. 2 Pzp)."
+          error={bledy.procentZatrzymany}
         />
         <TextField
           label="Uznanie za należycie wykonane (data)"
@@ -254,16 +265,17 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
           placeholder="opcjonalnie, np. 11,25"
           keyboardType="numeric"
           hint="Do naliczenia odsetek przy przeterminowaniu. Brak → stawka domyślna."
+          error={bledy.stopaRoczna}
         />
 
-        <Button title="Policz harmonogram zwrotu" onPress={policz} loading={liczy} style={styles.gap} />
+        <Button title="Policz harmonogram zwrotu" onPress={policz} loading={liczy} disabled={maBledy} style={styles.gap} />
       </View>
 
-      {blad ? (
+      {blad && !maBledy ? (
         <View style={styles.bladCard}><Text style={styles.bladText}>{blad}</Text></View>
       ) : null}
 
-      {pods ? (
+      {pods && !maBledy ? (
         <>
           {/* ── Alarm wymagalności ── */}
           <View style={[styles.alarmCard, { borderColor: tonAlarm.tekst }]}>
@@ -333,6 +345,7 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
           onChangeText={setPorKwota}
           placeholder="np. 100000"
           keyboardType="numeric"
+          error={porBledy.kwota}
         />
         <TextField
           label="Na ile lat zamrożone"
@@ -341,6 +354,7 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
           placeholder="np. 5"
           keyboardType="numeric"
           hint="Zwykle realizacja + okres rękojmi/gwarancji."
+          error={porBledy.lata}
         />
         <TextField
           label="Prowizja gwarancji (%/rok)"
@@ -348,6 +362,7 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
           onChangeText={setPorProwizja}
           placeholder="opcjonalnie, np. 1,5"
           keyboardType="numeric"
+          error={porBledy.prowizjaGwarancjiRocznaProc}
         />
         <TextField
           label="Koszt kapitału (%/rok)"
@@ -356,15 +371,16 @@ export default function ZabezpieczenieZwrotScreen({ route }) {
           placeholder="opcjonalnie, np. 8"
           keyboardType="numeric"
           hint="Ile realnie kosztuje Cię zamrożona gotówka (kredyt obrotowy / utracony zwrot)."
+          error={porBledy.kosztKapitaluRocznyProc}
         />
-        <Button title="Porównaj koszt" onPress={policzPorownanie} loading={porLiczy} style={styles.gap} />
+        <Button title="Porównaj koszt" onPress={policzPorownanie} loading={porLiczy} disabled={porMaBledy} style={styles.gap} />
       </View>
 
-      {porBlad ? (
+      {porBlad && !porMaBledy ? (
         <View style={styles.bladCard}><Text style={styles.bladText}>{porBlad}</Text></View>
       ) : null}
 
-      {podsPor ? (
+      {podsPor && !porMaBledy ? (
         <View style={styles.card}>
           <View style={styles.porRzad}>
             <View style={styles.porKom}>

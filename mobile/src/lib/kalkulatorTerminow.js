@@ -16,6 +16,7 @@
  */
 
 import { naDzienUTC, formatujDate, czyDzienWolny, MS_DZIEN } from './terminKio.js';
+import { bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 export const TRYBY = [
   { wartosc: 'kalendarzowe', etykieta: 'Dni kalendarzowe' },
@@ -76,4 +77,21 @@ export function obliczTermin({ dataZdarzenia, dni, tryb = 'kalendarzowe' } = {})
     przesuniety: dniPrzesuniecia > 0,
     dniPrzesuniecia,
   };
+}
+
+/**
+ * Górna granica liczby dni (≈10 lat) — pokrywa terminy Pzp z zapasem (KIO, związanie
+ * ofertą, realizacja, gwarancja). Powyżej daty wychodzą poza zakres Date („NaN-NaN-NaN"),
+ * a tryb roboczy liczy dzień po dniu i przy milionach dni blokuje ekran.
+ */
+export const DNI_MAX = 3650;
+
+/**
+ * Waliduje pole „Liczba dni": liczba całkowita 1–DNI_MAX. Puste pole = brak błędu
+ * (stan pusty ekranu — podpowiedź pod formularzem mówi, czego brakuje).
+ * @param {string|number} dni
+ * @returns {{bledy: {dni?: string}, maBledy: boolean}}
+ */
+export function walidujDni(dni) {
+  return zbierzBledy({ dni: bladLiczby(dni, { min: 1, max: DNI_MAX, calkowita: true }) });
 }

@@ -21,7 +21,11 @@
  *    nie udawały gotówki ani nie wywracały ekranu.
  *  • Formatowanie liczb spójne z backendem (services/rekomendacjePlynnosci.js `formatujZl`):
  *    zaokrąglenie do pełnych złotych, spacja jako separator tysięcy.
+ *  • walidujSymulator — jawne komunikaty PL pod polami ręcznej korekty zamiast cichego
+ *    pomijania pola w payloadzie (np. poduszka „120.000,00" → pesymistycznie 0 zł).
  */
+
+import { bladKwoty, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 /** Trzy statusy decyzji zwracane przez backend — w kolejności rosnącego ryzyka płynności. */
 export const STATUSY = Object.freeze(['udzwigniesz', 'napiete', 'luka_krytyczna']);
@@ -255,5 +259,24 @@ export function przygotujWykresSalda(miesiace) {
     punkty: Object.freeze(punkty),
     maksAmplituda: maks,
     pusta: punkty.length === 0,
+  });
+}
+
+// ─────────────────────────── walidacja ręcznej korekty (wejście ekranu) ──────
+
+/**
+ * Waliduje pola ręcznej korekty ekranu PRZED wysłaniem do backendu — wyłącznie wejście apki,
+ * kontrakt API bez zmian. Wszystkie pola są opcjonalne: puste = brak błędu.
+ * Zakresy: kwoty ≥ 0 (jak `nonnegative()` w backendzie), czas trwania w pełnych miesiącach
+ * 1–120 (backend i tak liczy pełne miesiące, a oś salda rysuje wiersz na każdy miesiąc).
+ * @param {{kosztyMiesieczne?, czasTrwaniaMies?, poduszkaGotowki?}} we teksty z pól
+ *   (klucze = pola payloadu `/symulator-plynnosci/analiza`).
+ * @returns {{bledy: {[pole:string]: string}, maBledy: boolean}}
+ */
+export function walidujSymulator({ kosztyMiesieczne, czasTrwaniaMies, poduszkaGotowki } = {}) {
+  return zbierzBledy({
+    kosztyMiesieczne: bladKwoty(kosztyMiesieczne),
+    czasTrwaniaMies: bladLiczby(czasTrwaniaMies, { min: 1, max: 120, calkowita: true }),
+    poduszkaGotowki: bladKwoty(poduszkaGotowki),
   });
 }

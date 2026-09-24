@@ -4,7 +4,7 @@ import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { obliczTermin, TRYBY, SZABLONY } from '../lib/kalkulatorTerminow';
+import { obliczTermin, walidujDni, TRYBY, SZABLONY } from '../lib/kalkulatorTerminow';
 
 /**
  * Panel „KALKULATOR TERMINÓW Pzp". Liczy datę graniczną „N dni od zdarzenia" z polskimi
@@ -20,7 +20,10 @@ export default function KalkulatorTerminowScreen({ route }) {
   const [dni, setDni] = useState('');
   const [tryb, setTryb] = useState('kalendarzowe');
 
-  const wynik = obliczTermin({ dataZdarzenia: data, dni, tryb });
+  // Walidacja pola „Liczba dni" — komunikat PL z lib. Przy błędzie NIE liczymy: ogromna liczba
+  // dni daje datę „NaN-NaN-NaN", a w trybie roboczym blokowałaby ekran pętlą dzień po dniu.
+  const { bledy, maBledy } = walidujDni(dni);
+  const wynik = maBledy ? null : obliczTermin({ dataZdarzenia: data, dni, tryb });
 
   function zastosujSzablon(s) {
     setDni(String(s.dni));
@@ -51,6 +54,7 @@ export default function KalkulatorTerminowScreen({ route }) {
           onChangeText={(t) => setDni(t.replace(/[^0-9]/g, ''))}
           placeholder="5"
           keyboardType="number-pad"
+          error={bledy.dni}
         />
 
         <Text style={styles.etykieta}>Sposób liczenia</Text>
@@ -72,7 +76,7 @@ export default function KalkulatorTerminowScreen({ route }) {
         </View>
       </View>
 
-      {wynik.ok ? (
+      {maBledy ? null : wynik.ok ? (
         <View style={[styles.wynikCard, { borderColor: kolory.blue }]}>
           <Text style={styles.wynikEtykieta}>Termin upływa</Text>
           <Text style={[styles.wynikData, { color: kolory.blue }]}>{wynik.data}</Text>

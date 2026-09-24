@@ -7,6 +7,9 @@ import {
   flagiPodprogowe,
   etykietaWartosciNetto,
   sortujPodprogowe,
+  walidujProgNetto,
+  progNettoZPola,
+  PROG_NETTO_MAX,
 } from '../src/lib/podprogowe.js';
 
 /*
@@ -116,4 +119,33 @@ test('sortujPodprogowe: brak danych → pusta tablica', () => {
   assert.deepEqual(sortujPodprogowe([], now), []);
   assert.deepEqual(sortujPodprogowe(undefined, now), []);
   assert.deepEqual(sortujPodprogowe(null, now), []);
+});
+
+// ---------------- pole „Górny próg wartości netto" (ustawienia radaru) ----------------
+// Dotąd ekran robił Number(prog): „150 000" (zapis jak w podpowiedzi) → NaN → pole po
+// cichu pomijane i backend brał domyślne 170 000 zł zamiast wpisanego progu.
+
+test('walidujProgNetto: puste = brak błędu; poprawna kwota (także „1 200,50", „150 000") = brak', () => {
+  assert.deepEqual(walidujProgNetto(''), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujProgNetto(undefined), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujProgNetto('1 200,50'), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujProgNetto('150 000'), { bledy: {}, maBledy: false });
+});
+
+test('walidujProgNetto: „1.200,50", 0, ujemny i ponad limit backendu = błąd', () => {
+  assert.equal(PROG_NETTO_MAX, 100_000_000);
+  assert.equal(walidujProgNetto('1.200,50').bledy.prog, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(walidujProgNetto('0').bledy.prog, 'Próg musi być większy od 0 zł');
+  assert.equal(walidujProgNetto('-5').bledy.prog, 'Kwota nie może być ujemna');
+  assert.equal(walidujProgNetto('200 000 000').bledy.prog, 'Próg nie może przekraczać 100 000 000 zł');
+  assert.equal(walidujProgNetto('100 000 000').maBledy, false);
+});
+
+test('progNettoZPola: polski zapis → liczba dla payloadu; puste/błędne → null (pole pomijane)', () => {
+  assert.equal(progNettoZPola('150 000'), 150000);
+  assert.equal(progNettoZPola('120000,50'), 120000.5);
+  assert.equal(progNettoZPola(''), null);
+  assert.equal(progNettoZPola('1.200,50'), null);
+  assert.equal(progNettoZPola('0'), null);
+  assert.equal(progNettoZPola('200 000 000'), null);
 });

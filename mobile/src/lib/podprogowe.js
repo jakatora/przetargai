@@ -13,6 +13,7 @@
  */
 
 import { formatBudget } from './format.js';
+import { analizujPole, bladKwoty, zbierzBledy } from './walidacjaLiczb.js';
 
 // ── Źródła ogłoszeń ───────────────────────────────────────────────────────────
 
@@ -113,4 +114,42 @@ export function sortujPodprogowe(lista, nowIso = new Date().toISOString()) {
     const pb = String(b.data_publikacji ?? b.created_at ?? '');
     return pb.localeCompare(pa); // najnowsze pierwsze
   });
+}
+
+// ── Próg netto w ustawieniach radaru ──────────────────────────────────────────
+
+/** Górny limit progu — ten sam co walidacja backendu (`prog_netto` ≤ 100 000 000). */
+export const PROG_NETTO_MAX = 100_000_000;
+
+/** Błąd pola progu: kwota > 0 i ≤ PROG_NETTO_MAX. Puste = brak błędu (próg domyślny). */
+function bladProguNetto(prog) {
+  const blad = bladKwoty(prog);
+  if (blad) return blad;
+  const { liczba } = analizujPole(prog);
+  if (liczba === null) return null; // puste pole
+  if (liczba <= 0) return 'Próg musi być większy od 0 zł';
+  if (liczba > PROG_NETTO_MAX) return 'Próg nie może przekraczać 100 000 000 zł';
+  return null;
+}
+
+/**
+ * Waliduje pole „Górny próg wartości netto". Dotąd ekran robił `Number(prog)`, więc
+ * „150 000" (zapis jak w podpowiedzi) dawało NaN, pole znikało z żądania i backend po
+ * cichu brał domyślne 170 000 zł. Teraz błędny zapis dostaje jawny komunikat PL.
+ * @param {string} prog tekst z pola
+ * @returns {{bledy: {prog?: string}, maBledy: boolean}}
+ */
+export function walidujProgNetto(prog) {
+  return zbierzBledy({ prog: bladProguNetto(prog) });
+}
+
+/**
+ * Próg z pola → liczba do `prog_netto` (polski zapis: spacje tysięcy, przecinek
+ * dziesiętny). Puste albo błędne pole → null — wtedy pole pomijamy (próg domyślny).
+ * @param {string} prog
+ * @returns {number|null}
+ */
+export function progNettoZPola(prog) {
+  if (bladProguNetto(prog)) return null;
+  return analizujPole(prog).liczba;
 }

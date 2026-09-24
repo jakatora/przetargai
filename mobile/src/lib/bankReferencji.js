@@ -21,6 +21,7 @@
  */
 
 import { naDzienUTC, dodajLata, roznicaDni, dzisiajUTC, odmianaDni } from './dataUtc.js';
+import { bladKwoty, zbierzBledy } from './walidacjaLiczb.js';
 
 /** Rodzaje doświadczenia i długość okna liczenia (lata). */
 export const RODZAJE = Object.freeze({
@@ -141,4 +142,15 @@ export function sprawdzWarunek(referencje, warunek = {}, teraz = Date.now()) {
     return s === 'wazna' || s === 'wygasa'; // aktualne (także tuż przed końcem okna)
   }).length;
   return { spelnia: maja >= potrzeba, maja, potrzeba, brakuje: Math.max(0, potrzeba - maja) };
+}
+
+/**
+ * Waliduje pole „Wartość (zł)" formularza dodania referencji. Dotąd „1.200,50" po cichu
+ * zapisywało się jako brak wartości — a taka referencja przepada w {@link sprawdzWarunek}
+ * przy progu `minWartosc`. Puste pole = brak błędu (wartość jest opcjonalna).
+ * @param {{wartosc?: string}} we
+ * @returns {{bledy: {wartosc?: string}, maBledy: boolean}}
+ */
+export function walidujReferencje({ wartosc } = {}) {
+  return zbierzBledy({ wartosc: bladKwoty(wartosc) });
 }

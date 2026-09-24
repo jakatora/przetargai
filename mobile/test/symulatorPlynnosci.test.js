@@ -10,6 +10,7 @@ import {
   uporzadkujRuchy,
   podsumowanieRekomendacji,
   przygotujWykresSalda,
+  walidujSymulator,
 } from '../src/lib/symulatorPlynnosci.js';
 
 /*
@@ -289,4 +290,34 @@ test('przygotujWykresSalda: nie mutuje wejścia i zwraca zamrożone punkty', () 
   const { punkty } = przygotujWykresSalda(MIESIACE);
   assert.deepEqual(MIESIACE, kopia, 'wejście bez zmian');
   assert.ok(punkty.every((p) => Object.isFrozen(p)));
+});
+
+// ---------------- walidujSymulator: ręczna korekta (wejście apki, nie kontrakt API) ----------------
+// Ekran dotąd robił naLiczbe(): „1.200,50" → undefined → pole po cichu pomijane w payloadzie
+// (poduszka → pesymistycznie 0 zł). Teraz każde pole liczbowe ma jawny komunikat PL.
+
+test('walidujSymulator: puste pola → brak błędów (pola są opcjonalne)', () => {
+  assert.deepEqual(walidujSymulator({ kosztyMiesieczne: '', czasTrwaniaMies: ' ', poduszkaGotowki: undefined }),
+    { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujSymulator(), { bledy: {}, maBledy: false });
+});
+
+test('walidujSymulator: poprawne dane (także „60 000,50") → brak błędów', () => {
+  const w = walidujSymulator({ kosztyMiesieczne: '60 000,50', czasTrwaniaMies: '4', poduszkaGotowki: '120000' });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujSymulator: „1.200,50" w kwotach → komunikat zamiast cichego pominięcia', () => {
+  const w = walidujSymulator({ kosztyMiesieczne: '1.200,50', poduszkaGotowki: '120.000,00' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.kosztyMiesieczne, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(w.bledy.poduszkaGotowki, 'Podaj kwotę jako liczbę, np. 1200,00');
+});
+
+test('walidujSymulator: czas trwania — całkowite miesiące 1–120', () => {
+  assert.equal(walidujSymulator({ czasTrwaniaMies: '0' }).bledy.czasTrwaniaMies, 'Wartość musi wynosić co najmniej 1');
+  assert.equal(walidujSymulator({ czasTrwaniaMies: '200' }).bledy.czasTrwaniaMies, 'Wartość nie może przekraczać 120');
+  assert.equal(walidujSymulator({ czasTrwaniaMies: '2,5' }).bledy.czasTrwaniaMies, 'Podaj liczbę całkowitą');
+  assert.equal(walidujSymulator({ kosztyMiesieczne: '-100' }).bledy.kosztyMiesieczne, 'Kwota nie może być ujemna');
 });

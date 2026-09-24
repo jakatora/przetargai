@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { analizaCertyfikatu } from '../src/lib/certyfikatWykonawcy.js';
+import { analizaCertyfikatu, walidujCertyfikat } from '../src/lib/certyfikatWykonawcy.js';
 
 test('analizaCertyfikatu: częsty wystawca → opłaca się, liczy oszczędność i break-even', () => {
   const w = analizaCertyfikatu({
@@ -45,4 +45,39 @@ test('analizaCertyfikatu: same zera nie wywalają, break-even null', () => {
   assert.equal(w.kosztObecny, 0);
   assert.equal(w.oplacaSie, false);
   assert.equal(w.progStartow, null);
+});
+
+test('walidujCertyfikat: puste pola → brak błędów (stan pusty, nie błąd)', () => {
+  const w = walidujCertyfikat({ startowRocznie: '', godzinNaStart: '  ', stawkaGodzinowa: '', kosztCertyfikatuRocznie: undefined });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujCertyfikat: poprawne liczby (też „3 000,50") → brak błędów', () => {
+  const w = walidujCertyfikat({ startowRocznie: '20', godzinNaStart: '7,5', stawkaGodzinowa: '100', kosztCertyfikatuRocznie: '3 000,50' });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujCertyfikat: „1.200,50" w stawce i koszcie → komunikat zamiast cichego 0', () => {
+  const w = walidujCertyfikat({ stawkaGodzinowa: '1.200,50', kosztCertyfikatuRocznie: '1.200,50' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.stawkaGodzinowa, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(w.bledy.kosztCertyfikatuRocznie, 'Podaj kwotę jako liczbę, np. 1200,00');
+});
+
+test('walidujCertyfikat: przetargi rocznie — liczba całkowita w zakresie 0–1000', () => {
+  assert.equal(walidujCertyfikat({ startowRocznie: '2,5' }).bledy.startowRocznie, 'Podaj liczbę całkowitą');
+  assert.equal(walidujCertyfikat({ startowRocznie: '5000' }).bledy.startowRocznie, 'Wartość nie może przekraczać 1000');
+});
+
+test('walidujCertyfikat: godziny na start w zakresie 0–200', () => {
+  assert.equal(walidujCertyfikat({ godzinNaStart: '500' }).bledy.godzinNaStart, 'Wartość nie może przekraczać 200');
+  assert.equal(walidujCertyfikat({ godzinNaStart: '-1' }).bledy.godzinNaStart, 'Wartość musi wynosić co najmniej 0');
+});
+
+test('walidujCertyfikat: bez argumentów nie wywraca funkcji', () => {
+  const w = walidujCertyfikat();
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
 });

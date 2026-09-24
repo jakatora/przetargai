@@ -6,6 +6,7 @@
  */
 
 import { formatujPLN } from './kalkulatorCeny.js';
+import { bladKwoty, bladProcentu, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 export { formatujPLN };
 
@@ -47,4 +48,34 @@ export function sprawdzFormularz(wiersze) {
     .filter((p) => p.bladWartosci)
     .map((p) => ({ indeks: p.indeks, nazwa: p.nazwa, podana: p.podana, obliczona: p.obliczona }));
   return { pozycje, sumaNetto, sumaVat, sumaBrutto, liczbaBledow: bledy.length, aktywnych: aktywne.length, bledy };
+}
+
+/** Najwyższa stawka VAT w Polsce (%) — wyższa wartość w formularzu to na pewno pomyłka. */
+export const VAT_MAX = 23;
+
+/** Pola liczbowe pozycji walidowane jawnie (klucze błędów: `${pole}_${indeks}`). */
+const POLA_POZYCJI = ['ilosc', 'cenaJedn', 'vat', 'wartoscPodana'];
+
+/**
+ * Waliduje pola liczbowe pozycji formularza — zamiast cicho zerować błędne pole (np.
+ * „1.200,50" w wartości z formularza → fałszywe „masz 0,00 zł"), zwraca komunikat PL
+ * pod każde pole. Puste pole = brak błędu (stan pusty ekranu).
+ * Uwaga: to błędy PÓL; niezgodności rachunkowe zwraca {@link sprawdzFormularz} (`bledy`).
+ * @param {Array<{ilosc?, cenaJedn?, vat?, wartoscPodana?}>} wiersze
+ * @returns {{bledy: {[klucz:string]: string}, maBledy: boolean}} klucze `ilosc_0`, `vat_1`…
+ */
+export function walidujFormularz(wiersze) {
+  const mapa = {};
+  (Array.isArray(wiersze) ? wiersze : []).forEach((w, i) => {
+    mapa[`ilosc_${i}`] = bladLiczby(w?.ilosc, { min: 0 });
+    mapa[`cenaJedn_${i}`] = bladKwoty(w?.cenaJedn);
+    mapa[`vat_${i}`] = bladProcentu(w?.vat, { max: VAT_MAX, etykieta: 'Stawka VAT' });
+    mapa[`wartoscPodana_${i}`] = bladKwoty(w?.wartoscPodana);
+  });
+  return zbierzBledy(mapa);
+}
+
+/** Czy pozycja o indeksie `i` ma choć jeden błąd pola (wynik z {@link walidujFormularz}). */
+export function maBladPozycji(bledy, i) {
+  return POLA_POZYCJI.some((pole) => Boolean(bledy?.[`${pole}_${i}`]));
 }

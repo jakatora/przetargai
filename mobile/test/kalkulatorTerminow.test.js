@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { obliczTermin } from '../src/lib/kalkulatorTerminow.js';
+import { obliczTermin, walidujDni, DNI_MAX } from '../src/lib/kalkulatorTerminow.js';
 import { oblicz_termin_kio, czyDzienWolny, naDzienUTC } from '../src/lib/terminKio.js';
 
 /*
@@ -84,4 +84,23 @@ test('błędne wejście: zła liczba dni → ok:false zla_liczba', () => {
   for (const dni of [0, -3, 2.5, 'abc', null, undefined]) {
     assert.equal(obliczTermin({ dataZdarzenia: '2026-05-10', dni }).powod, 'zla_liczba', `dni=${dni}`);
   }
+});
+
+// ---- walidacja pola „Liczba dni" (jawny komunikat pod polem) ----
+// Dotąd 99999999 dni dawało ok:true z datą „NaN-NaN-NaN", a milion dni roboczych
+// mielił pętlę ~1 s na każde naciśnięcie klawisza — bez żadnego ostrzeżenia.
+test('walidujDni: puste = brak błędu; poprawna liczba (także „1 200") = brak', () => {
+  assert.deepEqual(walidujDni(''), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujDni(undefined), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujDni('30'), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujDni('1 200'), { bledy: {}, maBledy: false });
+});
+
+test('walidujDni: „1.200,50", 0, ułamek i wartość ponad maksimum = błąd', () => {
+  assert.equal(DNI_MAX, 3650);
+  assert.equal(walidujDni('1.200,50').bledy.dni, 'Podaj liczbę, np. 10');
+  assert.equal(walidujDni('0').bledy.dni, 'Wartość musi wynosić co najmniej 1');
+  assert.equal(walidujDni('2,5').bledy.dni, 'Podaj liczbę całkowitą');
+  assert.equal(walidujDni('99999999').bledy.dni, 'Wartość nie może przekraczać 3650');
+  assert.equal(walidujDni('3650').maBledy, false, '10 lat to jeszcze poprawny zakres');
 });

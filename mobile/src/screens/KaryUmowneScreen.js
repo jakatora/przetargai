@@ -4,7 +4,7 @@ import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { policzKary, formatujPLN } from '../lib/karyUmowne';
+import { policzKary, walidujKary, formatujPLN } from '../lib/karyUmowne';
 
 /**
  * „KALKULATOR KAR UMOWNYCH". Liczy karę za zwłokę i odstąpienie, łączny limit kar i po ilu
@@ -38,6 +38,10 @@ export default function KaryUmowneScreen({ route }) {
   const w = policzKary({
     wartosc, stawkaZwlokiProc: stawka, dniZwloki: dni, odstapienieProc: odstapienie, limitProc: limit,
   });
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  const { bledy, maBledy } = walidujKary({
+    wartosc, stawkaZwlokiProc: stawka, dniZwloki: dni, odstapienieProc: odstapienie, limitProc: limit,
+  });
 
   return (
     <Screen scroll>
@@ -50,18 +54,20 @@ export default function KaryUmowneScreen({ route }) {
       <Text style={styles.sekcja}>Umowa i kary z projektu umowy</Text>
       <View style={styles.card}>
         <TextField label="Wartość umowy (zł)" value={wartosc} onChangeText={(t) => setWartosc(oczysc(t))}
-          placeholder="0,00" keyboardType="decimal-pad" hint="Podstawa naliczania kar wg umowy (netto lub brutto — sprawdź w SWZ)." />
+          placeholder="0,00" keyboardType="decimal-pad" hint="Podstawa naliczania kar wg umowy (netto lub brutto — sprawdź w SWZ)."
+          error={bledy.wartosc} />
         <TextField label="Kara za zwłokę (% za każdy dzień)" value={stawka} onChangeText={(t) => setStawka(oczysc(t))}
-          placeholder="np. 0,2" keyboardType="decimal-pad" />
+          placeholder="np. 0,2" keyboardType="decimal-pad" error={bledy.stawkaZwlokiProc} />
         <TextField label="Liczba dni zwłoki (scenariusz)" value={dni} onChangeText={(t) => setDni(oczysc(t))}
-          placeholder="np. 14" keyboardType="decimal-pad" />
+          placeholder="np. 14" keyboardType="decimal-pad" error={bledy.dniZwloki} />
         <TextField label="Kara za odstąpienie (% wartości)" value={odstapienie} onChangeText={(t) => setOdstapienie(oczysc(t))}
-          placeholder="np. 10" keyboardType="decimal-pad" />
+          placeholder="np. 10" keyboardType="decimal-pad" error={bledy.odstapienieProc} />
         <TextField label="Łączny limit kar (% wartości)" value={limit} onChangeText={(t) => setLimit(oczysc(t))}
-          placeholder="np. 20" keyboardType="decimal-pad" hint="Górna granica sumy wszystkich kar. Puste = brak limitu w umowie." />
+          placeholder="np. 20" keyboardType="decimal-pad" hint="Górna granica sumy wszystkich kar. Puste = brak limitu w umowie."
+          error={bledy.limitProc} />
       </View>
 
-      {w.maDane ? (
+      {w.maDane && !maBledy ? (
         <>
           <View style={[styles.hero, w.przekroczono && styles.heroAlarm]}>
             <Text style={[styles.heroEt, w.przekroczono && styles.heroEtAlarm]}>Maksymalna kara do zapłaty</Text>
@@ -90,7 +96,7 @@ export default function KaryUmowneScreen({ route }) {
             </View>
           ) : null}
         </>
-      ) : (
+      ) : maBledy ? null : (
         <Text style={styles.podpowiedz}>
           Wpisz wartość umowy i stawki kar z projektu umowy, a policzymy maksymalne ryzyko.
         </Text>

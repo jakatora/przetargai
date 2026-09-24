@@ -1,7 +1,8 @@
 /**
  * „Trener negocjacji i oferty dodatkowej" — czysta logika (testowalna node:test).
- * ZERO importów, ZERO sieci, ZERO zegara — ekran renderuje i dokłada kolor z
- * motyw.js na podstawie semantycznego `ton`.
+ * ZERO React Native, ZERO sieci, ZERO zegara (jedyny import to czysta, wspólna
+ * walidacja pól liczbowych) — ekran renderuje i dokłada kolor z motyw.js na
+ * podstawie semantycznego `ton`.
  *
  * PROBLEM: w trybie podstawowym w wariancie 2 lub 3 (art. 275 pkt 2-3 Pzp) po
  * otwarciu ofert wykonawca może dostać zaproszenie do negocjacji i złożyć OFERTĘ
@@ -21,6 +22,8 @@
  *    która NIE MOŻE być mniej korzystna w żadnym z kryteriów niż oferta pierwotna;
  *    ofertę dodatkową mniej korzystną odrzuca się.
  */
+
+import { bladKwoty, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 // Znak litery Z polskimi diakrytykami — `\w` (ASCII) nie obejmuje ą/ć/ę/ł/ń/ó/ś/ź/ż.
 const L = '[\\wąćęłńóśźżĄĆĘŁŃÓŚŹŻ]';
@@ -328,4 +331,34 @@ export function normalizujLiczbe(tekst) {
   if (!m) return null;
   const n = Number(m[0]);
   return Number.isFinite(n) ? n : null;
+}
+
+// ─────────────────────────── (g) walidacja pól ekranu ─────────────────────────
+
+const KOMUNIKAT_BEZ_CYFR = 'Podaj liczbę — pole bez cyfr nie zostanie porównane';
+
+/** Błąd jednego pola oferty: cena = kwota ≥ 0, termin/gwarancja = liczba ≥ 0. */
+function bladPolaOferty(klucz, wartosc) {
+  const tekst = String(wartosc ?? '');
+  // Tekst bez cyfr („milion") to NIE puste pole — porównanie by go po cichu pominęło.
+  if (tekst.trim() !== '' && normalizujLiczbe(tekst) === null) return KOMUNIKAT_BEZ_CYFR;
+  return klucz === 'cena' ? bladKwoty(tekst) : bladLiczby(tekst, { min: 0 });
+}
+
+/**
+ * Waliduje pola obu ofert przed porównaniem. {@link normalizujLiczbe} jest celowo
+ * tolerancyjny („36 mies." → 36), ale „1.200,50" czyta jako 1,2 — dodatkowa cena
+ * wyglądałaby na niższą i przeszła bez blokady. Zamiast tego pole dostaje jawny
+ * komunikat PL (wspólny z kalkulatorami). Puste pole = brak błędu (nie jest porównywane).
+ * @param {{pierwotna?: object, dodatkowa?: object}} we pola tekstowe ekranu
+ * @returns {{bledy: {[klucz:string]: string}, maBledy: boolean}} klucze `pierwotna_cena`, `dodatkowa_termin`…
+ */
+export function walidujOferty({ pierwotna = {}, dodatkowa = {} } = {}) {
+  const mapa = {};
+  for (const [strona, oferta] of [['pierwotna', pierwotna], ['dodatkowa', dodatkowa]]) {
+    for (const k of KRYTERIA_DOMYSLNE) {
+      mapa[`${strona}_${k.klucz}`] = bladPolaOferty(k.klucz, oferta?.[k.klucz]);
+    }
+  }
+  return zbierzBledy(mapa);
 }

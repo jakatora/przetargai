@@ -15,6 +15,8 @@
  * Wszystko deterministyczne; braki liczymy ostrożnie (NaN/≤0 → 0 pkt).
  */
 
+import { bladKwoty, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
+
 function liczba(x) {
   const n = Number(x);
   return Number.isFinite(n) ? n : 0;
@@ -102,4 +104,34 @@ export function analizaPunktow(we = {}) {
 
 function round2(x) {
   return Math.round(liczba(x) * 100) / 100;
+}
+
+/** Klucz błędu pola kryterium pozacenowego w `bledy`, np. „kryteria.1.waga". */
+export function poleKryterium(indeks, pole) {
+  return `kryteria.${indeks}.${pole}`;
+}
+
+/**
+ * Waliduje wejście kalkulatora punktów — zamiast cicho zerować błędne pola, zwraca jawne
+ * komunikaty PL pod każde pole. Puste pole = brak błędu (stan pusty).
+ * Ceny to kwoty ≥ 0; wagi (ceny i kryteriów) to punkty 0–100 (typowa skala SWZ);
+ * wartości kryteriów (gwarancja w mies., termin w dniach) to liczby ≥ 0.
+ * Błędy kryteriów są pod kluczami z `poleKryterium(indeks, pole)`.
+ * @param {{mojaCena?, konkurencyjnaCena?, wagaCeny?,
+ *   kryteria?: Array<{waga?, moje?, konkurent?}>}} we
+ * @returns {{bledy: {[pole:string]: string}, maBledy: boolean}}
+ */
+export function walidujPunkty({ mojaCena, konkurencyjnaCena, wagaCeny, kryteria } = {}) {
+  const mapa = {
+    mojaCena: bladKwoty(mojaCena),
+    konkurencyjnaCena: bladKwoty(konkurencyjnaCena),
+    wagaCeny: bladLiczby(wagaCeny, { min: 0, max: 100 }),
+  };
+  (Array.isArray(kryteria) ? kryteria : []).forEach((kr, i) => {
+    const k = kr || {};
+    mapa[poleKryterium(i, 'waga')] = bladLiczby(k.waga, { min: 0, max: 100 });
+    mapa[poleKryterium(i, 'moje')] = bladLiczby(k.moje, { min: 0 });
+    mapa[poleKryterium(i, 'konkurent')] = bladLiczby(k.konkurent, { min: 0 });
+  });
+  return zbierzBledy(mapa);
 }

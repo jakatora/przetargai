@@ -6,6 +6,8 @@ import {
   opisWymagalnosci,
   podsumujHarmonogram,
   podsumujPorownanie,
+  walidujZabezpieczenie,
+  walidujPorownanie,
 } from '../src/lib/zabezpieczenieZwrot.js';
 
 /*
@@ -124,4 +126,51 @@ test('podsumujPorownanie: opcje porównywalne → neutralna rekomendacja', () =>
   });
   assert.equal(p.tanszaOpcja, 'porownywalne');
   assert.match(p.rekomendacja, /porównywaln/i);
+});
+
+// ─────────────────────── walidacja wejścia (zamiast cichego pomijania) ──────
+// Ekran dotąd robił naLiczbe(): „1.200,50" → undefined → pole po cichu pomijane w payloadzie
+// (np. stopa → stawka domyślna). Teraz każde pole liczbowe ma jawny komunikat PL.
+
+test('walidujZabezpieczenie: puste pola → brak błędów (stan pusty, nie błąd)', () => {
+  const w = walidujZabezpieczenie({ kwota: '', procentZatrzymany: '  ', stopaRoczna: undefined });
+  assert.deepEqual(w, { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujZabezpieczenie(), { bledy: {}, maBledy: false });
+});
+
+test('walidujZabezpieczenie: poprawne dane (także „50 000,00 zł" i „11,25") → brak błędów', () => {
+  const w = walidujZabezpieczenie({ kwota: '50 000,00 zł', procentZatrzymany: '30', stopaRoczna: '11,25' });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujZabezpieczenie: „1.200,50" → komunikat zamiast cichego pominięcia', () => {
+  const w = walidujZabezpieczenie({ kwota: '1.200,50', stopaRoczna: '11.250,5' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.kwota, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(w.bledy.stopaRoczna, 'Podaj procent jako liczbę, np. 10');
+});
+
+test('walidujZabezpieczenie: zatrzymanie > 30% (art. 453 ust. 2 Pzp) i stopa > 100% → komunikat', () => {
+  const w = walidujZabezpieczenie({ kwota: '50000', procentZatrzymany: '40', stopaRoczna: '150' });
+  assert.equal(w.bledy.procentZatrzymany, 'Zatrzymanie na rękojmię spoza zakresu 0–30%');
+  assert.equal(w.bledy.stopaRoczna, 'Stopa odsetek spoza zakresu 0–100%');
+  assert.equal(walidujZabezpieczenie({ kwota: '-5' }).bledy.kwota, 'Kwota nie może być ujemna');
+});
+
+test('walidujPorownanie: puste → brak błędów; poprawne (także „2,5" roku) → brak błędów', () => {
+  assert.deepEqual(walidujPorownanie({ kwota: '', lata: '', prowizjaGwarancjiRocznaProc: '', kosztKapitaluRocznyProc: '' }),
+    { bledy: {}, maBledy: false });
+  const w = walidujPorownanie({ kwota: '100 000', lata: '2,5', prowizjaGwarancjiRocznaProc: '1,5', kosztKapitaluRocznyProc: '8' });
+  assert.equal(w.maBledy, false);
+});
+
+test('walidujPorownanie: „1.200,50" i wartości spoza zakresu → konkretne komunikaty', () => {
+  const w = walidujPorownanie({ kwota: '1.200,50', lata: '40', prowizjaGwarancjiRocznaProc: '25', kosztKapitaluRocznyProc: '120' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.kwota, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(w.bledy.lata, 'Wartość nie może przekraczać 30');
+  assert.equal(w.bledy.prowizjaGwarancjiRocznaProc, 'Prowizja gwarancji spoza zakresu 0–20%');
+  assert.equal(w.bledy.kosztKapitaluRocznyProc, 'Koszt kapitału spoza zakresu 0–100%');
+  assert.equal(walidujPorownanie({ lata: '5,x,' }).bledy.lata, 'Podaj liczbę, np. 10');
 });

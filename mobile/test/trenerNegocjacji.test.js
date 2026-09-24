@@ -9,6 +9,7 @@ import {
   KRYTERIA_DOMYSLNE,
   porownajOfertaDodatkowa,
   normalizujLiczbe,
+  walidujOferty,
 } from '../src/lib/trenerNegocjacji.js';
 
 /*
@@ -266,6 +267,45 @@ test('porównanie z tekstowych pól ekranu blokuje wyższą cenę', () => {
   });
   assert.equal(wynik.blokujWyslanie, true);
   assert.equal(wynik.mniejKorzystne[0].klucz, 'cena');
+});
+
+// ─── (g) jawna walidacja pól ekranu ─────────────────────────────────────────
+// normalizujLiczbe('1.200,50') bierze pierwszy fragment liczby → 1.2, więc dodatkowa
+// cena „1.200,50" wyglądała na NIŻSZĄ od „1 100" i przechodziła bez blokady.
+// Takie pole musi dostać jawny błąd zamiast cichego porównania.
+
+test('walidujOferty: puste pola = brak błędów (stan pusty ekranu)', () => {
+  assert.deepEqual(walidujOferty({ pierwotna: { cena: '', termin: '', gwarancja: '' }, dodatkowa: {} }), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujOferty(), { bledy: {}, maBledy: false });
+});
+
+test('walidujOferty: poprawny polski zapis („1 200,50", „1 050 000,50 zł", „36 mies.") = brak błędów', () => {
+  const w = walidujOferty({
+    pierwotna: { cena: '1 200,50', termin: '90', gwarancja: '36 mies.' },
+    dodatkowa: { cena: '1 050 000,50 zł', termin: '60', gwarancja: '48' },
+  });
+  assert.deepEqual(w, { bledy: {}, maBledy: false });
+});
+
+test('walidujOferty: „1.200,50" = błąd przy konkretnej ofercie i kryterium (klucz oferta_kryterium)', () => {
+  assert.equal(normalizujLiczbe('1.200,50'), 1.2, 'dokumentuje ciche przekłamanie parsera');
+  const { bledy, maBledy } = walidujOferty({ pierwotna: { cena: '1 100' }, dodatkowa: { cena: '1.200,50' } });
+  assert.equal(maBledy, true);
+  assert.equal(bledy.dodatkowa_cena, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(bledy.pierwotna_cena, undefined);
+});
+
+test('walidujOferty: wartości ujemne = błąd (cena, termin, gwarancja)', () => {
+  const { bledy } = walidujOferty({ dodatkowa: { cena: '-5', termin: '-10', gwarancja: '-1' } });
+  assert.equal(bledy.dodatkowa_cena, 'Kwota nie może być ujemna');
+  assert.equal(bledy.dodatkowa_termin, 'Wartość musi wynosić co najmniej 0');
+  assert.equal(bledy.dodatkowa_gwarancja, 'Wartość musi wynosić co najmniej 0');
+});
+
+test('walidujOferty: tekst bez cyfr nie jest „pustym polem" — dostaje błąd zamiast cichego pominięcia', () => {
+  const { bledy } = walidujOferty({ pierwotna: { cena: 'milion', termin: '   ' } });
+  assert.equal(bledy.pierwotna_cena, 'Podaj liczbę — pole bez cyfr nie zostanie porównane');
+  assert.equal(bledy.pierwotna_termin, undefined, 'same spacje = puste pole');
 });
 
 test('ekran trenera: blokada w kolorze danger i porównanie z czystej funkcji (strażnik źródła)', async () => {

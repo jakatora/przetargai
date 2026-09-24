@@ -8,6 +8,7 @@
  */
 
 import { formatujPLN } from './kalkulatorCeny.js';
+import { bladKwoty, bladProcentu, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 export { formatujPLN };
 
@@ -46,4 +47,23 @@ export function policzKary({ wartosc, stawkaZwlokiProc, dniZwloki, odstapieniePr
     dniDoLimitu,
     maDane: w > 0,
   };
+}
+
+/**
+ * Waliduje wejście kalkulatora kar — zamiast cicho zerować błędne pola (np. „1.200,50"),
+ * zwraca jawne komunikaty PL pod każde pole. Puste pole = brak błędu (stan pusty).
+ * Zakresy: kara za zwłokę 0–10% DZIENNIE (typowo 0,01–1%; „20" zamiast „0,20" to literówka,
+ * która wyczerpałaby limit w kilka dni), dni zwłoki całkowite 0–3650 (10 lat),
+ * odstąpienie i limit kar 0–100% wartości umowy.
+ * @param {{wartosc?, stawkaZwlokiProc?, dniZwloki?, odstapienieProc?, limitProc?}} we
+ * @returns {{bledy: {[pole:string]: string}, maBledy: boolean}}
+ */
+export function walidujKary({ wartosc, stawkaZwlokiProc, dniZwloki, odstapienieProc, limitProc } = {}) {
+  return zbierzBledy({
+    wartosc: bladKwoty(wartosc),
+    stawkaZwlokiProc: bladProcentu(stawkaZwlokiProc, { max: 10, etykieta: 'Kara za zwłokę' }),
+    dniZwloki: bladLiczby(dniZwloki, { min: 0, max: 3650, calkowita: true }),
+    odstapienieProc: bladProcentu(odstapienieProc, { max: 100, etykieta: 'Kara za odstąpienie' }),
+    limitProc: bladProcentu(limitProc, { max: 100, etykieta: 'Limit kar' }),
+  });
 }

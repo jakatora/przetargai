@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SKLADNIKI, analizaObrony, werdyktObrony } from '../src/lib/obronaCeny.js';
+import { SKLADNIKI, analizaObrony, werdyktObrony, walidujObrone } from '../src/lib/obronaCeny.js';
 
 // Komplet dowodów dla wszystkich składników.
 const WSZYSTKIE_DOWODY = Object.fromEntries(SKLADNIKI.map((s) => [s.klucz, true]));
@@ -82,4 +82,45 @@ test('analizaObrony: bez roboczogodzin nie liczymy stawki (nie blokuje)', () => 
 test('werdyktObrony: komunikat zależny od stanu', () => {
   assert.match(werdyktObrony({ gotowa: true }), /kompletne/i);
   assert.match(werdyktObrony({ gotowa: false, ton: 'danger' }), /odrzuceni/i);
+});
+
+test('walidujObrone: puste pola → brak błędów (stan pusty, nie błąd)', () => {
+  const w = walidujObrone({ cena: '', roboczogodziny: '  ', minStawkaGodz: '', skladniki: { robocizna: '' } });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujObrone: poprawne liczby (też „200 000,50" i „30.50") → brak błędów', () => {
+  const w = walidujObrone({
+    cena: '200 000,50', roboczogodziny: '2500', minStawkaGodz: '30.50',
+    skladniki: { robocizna: '100 000', materialy: '60000,50', sprzet: '0', posrednie: '12000', zysk: '8000' },
+  });
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
+});
+
+test('walidujObrone: „1.200,50" w cenie i składniku → komunikat zamiast cichego 0', () => {
+  const w = walidujObrone({ cena: '1.200,50', skladniki: { materialy: '1.200,50' } });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.cena, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(w.bledy.materialy, 'Podaj kwotę jako liczbę, np. 1200,00');
+});
+
+test('walidujObrone: ujemny składnik i ujemne roboczogodziny → komunikat', () => {
+  const w = walidujObrone({ cena: '200000', roboczogodziny: '-10', skladniki: { zysk: '-500' } });
+  assert.equal(w.bledy.zysk, 'Kwota nie może być ujemna');
+  assert.equal(w.bledy.roboczogodziny, 'Wartość musi wynosić co najmniej 0');
+});
+
+test('walidujObrone: min. stawka ponad 1000 zł/h (np. „3050" zamiast „30,50") → komunikat', () => {
+  const w = walidujObrone({ minStawkaGodz: '3050' });
+  assert.equal(w.maBledy, true);
+  assert.equal(w.bledy.minStawkaGodz, 'Wartość nie może przekraczać 1000');
+  assert.equal(walidujObrone({ minStawkaGodz: '-30' }).bledy.minStawkaGodz, 'Kwota nie może być ujemna');
+});
+
+test('walidujObrone: bez argumentów nie wywraca funkcji', () => {
+  const w = walidujObrone();
+  assert.equal(w.maBledy, false);
+  assert.deepEqual(w.bledy, {});
 });

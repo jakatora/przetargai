@@ -5,7 +5,7 @@ import TextField from '../components/TextField';
 import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { sprawdzFormularz, formatujPLN } from '../lib/sprawdzarkaCeny';
+import { sprawdzFormularz, walidujFormularz, maBladPozycji, formatujPLN } from '../lib/sprawdzarkaCeny';
 
 /**
  * „SPRAWDZARKA FORMULARZA CENOWEGO". Liczy każdą pozycję poprawnie (ilość × cena, VAT, brutto)
@@ -15,12 +15,13 @@ import { sprawdzFormularz, formatujPLN } from '../lib/sprawdzarkaCeny';
 
 const oczysc = (t) => t.replace(/[^0-9., ]/g, '');
 
-function Pole({ styles, kolory, etykieta, value, onChangeText, flex }) {
+/** Kompaktowe pole liczbowe z komunikatem błędu jak w TextField. */
+function Pole({ styles, kolory, etykieta, value, onChangeText, flex, error }) {
   return (
     <View style={[styles.pole, flex ? { flex } : null]}>
       <Text style={styles.poleLabel}>{etykieta}</Text>
       <TextInput
-        style={styles.poleInput}
+        style={[styles.poleInput, error && styles.poleInputBlad]}
         value={value}
         onChangeText={(t) => onChangeText(oczysc(t))}
         placeholder="0"
@@ -28,6 +29,7 @@ function Pole({ styles, kolory, etykieta, value, onChangeText, flex }) {
         keyboardType="decimal-pad"
         accessibilityLabel={etykieta}
       />
+      {error ? <Text style={styles.poleBlad}>{error}</Text> : null}
     </View>
   );
 }
@@ -47,6 +49,9 @@ export default function SprawdzarkaCenyScreen({ route }) {
   const usun = (id) => setWiersze((prev) => (prev.length > 1 ? prev.filter((w) => w.id !== id) : prev));
 
   const wynik = sprawdzFormularz(wiersze);
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  // Klucze błędów per pozycja: `${pole}_${indeks}`; `wynik.bledy` to osobno niezgodności rachunkowe.
+  const { bledy: bledyPol, maBledy } = walidujFormularz(wiersze);
 
   return (
     <Screen scroll>
@@ -56,7 +61,10 @@ export default function SprawdzarkaCenyScreen({ route }) {
       </Text>
       {nazwa ? <Text style={styles.postepowanie}>{nazwa}</Text> : null}
 
-      {wynik.aktywnych > 0 ? (
+      {/* Przy błędnych polach nie pokazujemy sum — liczyłyby się z wyzerowanych wartości. */}
+      {maBledy ? (
+        <Text style={styles.bladInfo}>Popraw pola oznaczone na czerwono — wtedy policzymy sumy formularza.</Text>
+      ) : wynik.aktywnych > 0 ? (
         <View style={[styles.hero, wynik.liczbaBledow > 0 && { backgroundColor: kolory.dangerTlo, borderColor: kolory.danger }]}>
           <View style={styles.heroRzad}>
             <Text style={styles.heroLab}>Suma netto</Text><Text style={styles.heroVal}>{formatujPLN(wynik.sumaNetto)}</Text>
@@ -79,8 +87,9 @@ export default function SprawdzarkaCenyScreen({ route }) {
 
       {wynik.pozycje.map((p, i) => {
         const w = wiersze[i];
+        const bladPozycji = maBladPozycji(bledyPol, i);
         return (
-          <View key={w.id} style={[styles.wiersz, p.bladWartosci && { borderColor: kolory.danger }]}>
+          <View key={w.id} style={[styles.wiersz, (p.bladWartosci || bladPozycji) && { borderColor: kolory.danger }]}>
             <View style={styles.wierszGora}>
               <TextInput
                 style={styles.wierszNazwa}
@@ -98,14 +107,14 @@ export default function SprawdzarkaCenyScreen({ route }) {
             </View>
 
             <View style={styles.polaRzad}>
-              <Pole styles={styles} kolory={kolory} etykieta="Ilość" value={w.ilosc} onChangeText={(v) => ustaw(w.id, 'ilosc', v)} flex={1} />
-              <Pole styles={styles} kolory={kolory} etykieta="Cena jedn. netto" value={w.cenaJedn} onChangeText={(v) => ustaw(w.id, 'cenaJedn', v)} flex={1.3} />
-              <Pole styles={styles} kolory={kolory} etykieta="VAT %" value={w.vat} onChangeText={(v) => ustaw(w.id, 'vat', v)} flex={0.8} />
+              <Pole styles={styles} kolory={kolory} etykieta="Ilość" value={w.ilosc} onChangeText={(v) => ustaw(w.id, 'ilosc', v)} flex={1} error={bledyPol[`ilosc_${i}`]} />
+              <Pole styles={styles} kolory={kolory} etykieta="Cena jedn. netto" value={w.cenaJedn} onChangeText={(v) => ustaw(w.id, 'cenaJedn', v)} flex={1.3} error={bledyPol[`cenaJedn_${i}`]} />
+              <Pole styles={styles} kolory={kolory} etykieta="VAT %" value={w.vat} onChangeText={(v) => ustaw(w.id, 'vat', v)} flex={0.8} error={bledyPol[`vat_${i}`]} />
             </View>
 
-            <Pole styles={styles} kolory={kolory} etykieta="Wartość netto z Twojego formularza (opcjonalnie)" value={w.wartoscPodana} onChangeText={(v) => ustaw(w.id, 'wartoscPodana', v)} />
+            <Pole styles={styles} kolory={kolory} etykieta="Wartość netto z Twojego formularza (opcjonalnie)" value={w.wartoscPodana} onChangeText={(v) => ustaw(w.id, 'wartoscPodana', v)} error={bledyPol[`wartoscPodana_${i}`]} />
 
-            {p.maDane ? (
+            {p.maDane && !bladPozycji ? (
               <View style={styles.wynikWiersza}>
                 <Text style={styles.wynikTekst}>
                   = {formatujPLN(p.obliczona)} netto · VAT {formatujPLN(p.vatKwota)} · brutto {formatujPLN(p.brutto)}
@@ -146,6 +155,7 @@ const tworzStyleSprawdzarki = tworzStyle((k) => ({
   heroValFinal: { fontSize: 18, fontWeight: '900', color: k.blue, fontVariant: ['tabular-nums'] },
   alarm: { fontSize: 13, fontWeight: '800', color: k.danger, marginTop: spacing.sm, lineHeight: 18 },
   zgodne: { fontSize: 13, fontWeight: '700', color: k.sukcesAkcent, marginTop: spacing.sm },
+  bladInfo: { fontSize: 14, color: k.danger, fontWeight: '700', lineHeight: 20, marginBottom: spacing.lg },
 
   wiersz: { backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, padding: spacing.md, marginBottom: spacing.md },
   wierszGora: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -159,6 +169,8 @@ const tworzStyleSprawdzarki = tworzStyle((k) => ({
     borderWidth: 1.5, borderColor: k.border, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 10,
     fontSize: 15, color: k.text, backgroundColor: k.surface, fontVariant: ['tabular-nums'],
   },
+  poleInputBlad: { borderColor: k.danger },
+  poleBlad: { fontSize: 11, color: k.danger, marginTop: 3, lineHeight: 14 },
 
   wynikWiersza: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: k.border },
   wynikTekst: { fontSize: 13, color: k.text, fontWeight: '600', fontVariant: ['tabular-nums'], lineHeight: 18 },

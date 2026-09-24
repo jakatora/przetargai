@@ -12,6 +12,7 @@ import {
   statusReferencji,
   etykietaWaznosci,
   sortujReferencje,
+  walidujReferencje,
 } from '../lib/bankReferencji';
 
 /**
@@ -59,6 +60,8 @@ export default function BankReferencjiScreen() {
   const [zamawiajacy, setZamawiajacy] = useState('');
   const [dataZakonczenia, setDataZakonczenia] = useState('');
   const [blad, setBlad] = useState(null);
+  // Walidacja pola „Wartość (zł)" — komunikat PL z lib; błędnej kwoty nie zapisujemy po cichu jako „brak".
+  const { bledy, maBledy } = walidujReferencje({ wartosc });
 
   useEffect(() => {
     storage.getItem(KLUCZ).then((s) => {
@@ -78,6 +81,7 @@ export default function BankReferencjiScreen() {
   }, []);
 
   function dodaj() {
+    if (maBledy) return; // przycisk jest wtedy wyłączony, a błąd widać pod polem
     const p = przedmiot.trim();
     if (!p) { setBlad('Podaj przedmiot kontraktu (co zostało wykonane).'); return; }
     if (statusReferencji({ dataZakonczenia, rodzaj }).status === 'nieznana') {
@@ -146,6 +150,7 @@ export default function BankReferencjiScreen() {
           placeholder="np. 850000"
           keyboardType="numeric"
           hint="Opcjonalnie — potrzebne, gdy warunek udziału wymaga minimalnej wartości."
+          error={bledy.wartosc}
         />
         <TextField
           label="Zamawiający"
@@ -161,7 +166,7 @@ export default function BankReferencjiScreen() {
           autoCapitalize="none"
           hint="Od tej daty liczymy okno 5 lat (roboty) lub 3 lat (dostawy/usługi)."
         />
-        <Button title="Dodaj do banku" onPress={dodaj} style={styles.gap} />
+        <Button title="Dodaj do banku" onPress={dodaj} disabled={maBledy} style={styles.gap} />
       </View>
 
       {blad ? (

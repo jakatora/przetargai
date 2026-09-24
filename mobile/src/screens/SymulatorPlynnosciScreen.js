@@ -9,6 +9,7 @@ import { spacing, radius } from '../theme';
 import {
   podsumowanieRekomendacji,
   przygotujWykresSalda,
+  walidujSymulator,
 } from '../lib/symulatorPlynnosci';
 
 /**
@@ -79,8 +80,15 @@ export default function SymulatorPlynnosciScreen({ route }) {
   const [liczy, setLiczy] = useState(false);
   const [blad, setBlad] = useState(null);
 
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  // Tylko wejście apki (kontrakt API bez zmian). Przy błędach: komunikaty pod polami, przycisk
+  // nieaktywny, wynik ukryty (jak w kalkulatorze ceny).
+  const { bledy, maBledy } = walidujSymulator({
+    kosztyMiesieczne: koszty, czasTrwaniaMies: czas, poduszkaGotowki: poduszka,
+  });
+
   async function policz() {
-    if (liczy) return;
+    if (liczy || maBledy) return; // błędne pola nie idą do backendu (np. poduszka → cicho 0 zł)
     const swzT = swz.trim();
     const umowaT = umowa.trim();
     if (!swzT && !umowaT) {
@@ -162,6 +170,7 @@ export default function SymulatorPlynnosciScreen({ route }) {
           placeholder="np. 60000"
           keyboardType="numeric"
           hint="Ile realnie wydajesz z własnej kieszeni w miesiącu realizacji."
+          error={bledy.kosztyMiesieczne}
         />
         <TextField
           label="Czas trwania kontraktu (miesiące)"
@@ -170,6 +179,7 @@ export default function SymulatorPlynnosciScreen({ route }) {
           placeholder="np. 4"
           keyboardType="numeric"
           hint="Opcjonalnie — bez tego liczymy jeden miesiąc realizacji."
+          error={bledy.czasTrwaniaMies}
         />
         <TextField
           label="Twoja poduszka gotówki"
@@ -178,16 +188,17 @@ export default function SymulatorPlynnosciScreen({ route }) {
           placeholder="np. 120000"
           keyboardType="numeric"
           hint="Wolne środki, które możesz zamrozić na pomost. Brak → liczymy pesymistycznie (0 zł)."
+          error={bledy.poduszkaGotowki}
         />
 
-        <Button title="Policz płynność" onPress={policz} loading={liczy} style={styles.gap} />
+        <Button title="Policz płynność" onPress={policz} loading={liczy} disabled={maBledy} style={styles.gap} />
       </View>
 
-      {blad ? (
+      {blad && !maBledy ? (
         <View style={styles.bladCard}><Text style={styles.bladText}>{blad}</Text></View>
       ) : null}
 
-      {pods ? (
+      {pods && !maBledy ? (
         <>
           {/* ── Wyraźny BOX luki finansowania ── */}
           <View style={[styles.lukaCard, { borderColor: tonLuki.tekst }]}>

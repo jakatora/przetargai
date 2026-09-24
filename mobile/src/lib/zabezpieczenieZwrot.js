@@ -17,7 +17,11 @@
  *    w jednym miejscu, a ta lib jest bez kolorów,
  *  • PESYMISTYCZNIE dla pieniędzy: null/NaN/ujemne kwoty formatujemy jako „0,00 zł",
  *    żeby braki nie udawały gotówki ani nie wywracały ekranu.
+ *  • WALIDACJA WEJŚCIA ekranu (walidujZabezpieczenie / walidujPorownanie) — jawne komunikaty
+ *    PL pod polami zamiast cichego pomijania pola w payloadzie (np. „1.200,50" → stawka domyślna).
  */
+
+import { bladKwoty, bladProcentu, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 /** Skończona liczba albo 0 (null/undefined/NaN/ujemne → 0 — pesymistycznie dla kwot). */
 function liczba(v) {
@@ -162,5 +166,40 @@ export function podsumujPorownanie(porownanie) {
     rekomendacja,
     zalozeniaTekst: `Założenia: prowizja gwarancji ${liczbaPL(liczba(z.prowizjaGwarancjiRocznaProc))}%/rok, `
       + `koszt kapitału ${liczbaPL(liczba(z.kosztKapitaluRocznyProc))}%/rok.`,
+  });
+}
+
+// ─────────────────────── walidacja wejścia ekranu ────────────────────────────
+
+/**
+ * Waliduje formularz „Zabezpieczenie z Twojej umowy" (przed wywołaniem /harmonogram).
+ * Puste pole = brak błędu (wymagalność kwoty i dat sprawdza ekran przy „Policz").
+ * Zakresy: zatrzymanie na rękojmię 0–30% (art. 453 ust. 2 Pzp — ten sam limit co backend),
+ * stopa odsetek za opóźnienie 0–100%/rok (jak w kalkulatorze odsetek).
+ * @param {{kwota?, procentZatrzymany?, stopaRoczna?}} we teksty z pól (klucze = pola payloadu).
+ * @returns {{bledy: {[pole:string]: string}, maBledy: boolean}}
+ */
+export function walidujZabezpieczenie({ kwota, procentZatrzymany, stopaRoczna } = {}) {
+  return zbierzBledy({
+    kwota: bladKwoty(kwota),
+    procentZatrzymany: bladProcentu(procentZatrzymany, { max: 30, etykieta: 'Zatrzymanie na rękojmię' }),
+    stopaRoczna: bladProcentu(stopaRoczna, { max: 100, etykieta: 'Stopa odsetek' }),
+  });
+}
+
+/**
+ * Waliduje formularz „Przed podpisem: gotówka czy gwarancja?" (przed wywołaniem /porownaj).
+ * Zakresy: lata zamrożenia 0–30 (ułamek dozwolony, np. 2,5 — backend też go przyjmuje;
+ * wymagalność „> 0" sprawdza ekran), prowizja gwarancji 0–20%/rok (typowo 0,5–5%;
+ * „15" zamiast „1,5" to literówka), koszt kapitału 0–100%/rok.
+ * @param {{kwota?, lata?, prowizjaGwarancjiRocznaProc?, kosztKapitaluRocznyProc?}} we
+ * @returns {{bledy: {[pole:string]: string}, maBledy: boolean}}
+ */
+export function walidujPorownanie({ kwota, lata, prowizjaGwarancjiRocznaProc, kosztKapitaluRocznyProc } = {}) {
+  return zbierzBledy({
+    kwota: bladKwoty(kwota),
+    lata: bladLiczby(lata, { min: 0, max: 30 }),
+    prowizjaGwarancjiRocznaProc: bladProcentu(prowizjaGwarancjiRocznaProc, { max: 20, etykieta: 'Prowizja gwarancji' }),
+    kosztKapitaluRocznyProc: bladProcentu(kosztKapitaluRocznyProc, { max: 100, etykieta: 'Koszt kapitału' }),
   });
 }

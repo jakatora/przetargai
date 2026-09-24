@@ -6,7 +6,7 @@ import TextField from '../components/TextField';
 import { formatBudget } from '../lib/format';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { analizaPunktow } from '../lib/kalkulatorPunktow';
+import { analizaPunktow, walidujPunkty, poleKryterium } from '../lib/kalkulatorPunktow';
 
 /**
  * Panel „KALKULATOR PUNKTÓW — wygraj kryteriami, nie najniższą ceną".
@@ -40,7 +40,9 @@ export default function KalkulatorPunktowScreen({ route }) {
   function dodajKryt() { setKryteria((l) => [...l, KRYT_START()]); }
   function usunKryt(id) { setKryteria((l) => l.filter((k) => k.id !== id)); }
 
-  const gotowe = naLiczbe(mojaCena) > 0 && naLiczbe(konkCena) > 0;
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  const { bledy, maBledy } = walidujPunkty({ mojaCena, konkurencyjnaCena: konkCena, wagaCeny, kryteria });
+  const gotowe = !maBledy && naLiczbe(mojaCena) > 0 && naLiczbe(konkCena) > 0;
   const wynik = gotowe
     ? analizaPunktow({
         mojaCena: naLiczbe(mojaCena),
@@ -65,14 +67,14 @@ export default function KalkulatorPunktowScreen({ route }) {
 
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>Ceny i waga ceny</Text>
-        <TextField label="Twoja cena (zł)" value={mojaCena} onChangeText={setMojaCena} placeholder="np. 520000" keyboardType="numeric" />
-        <TextField label="Cena konkurenta (zł)" value={konkCena} onChangeText={setKonkCena} placeholder="np. 500000" keyboardType="numeric" hint="Z otwarcia ofert albo szacunek — sprawdź, jak agresywnie gra konkurencja." />
-        <TextField label="Waga ceny (pkt)" value={wagaCeny} onChangeText={setWagaCeny} placeholder="np. 60" keyboardType="numeric" hint="Ile punktów daje kryterium ceny (z SWZ), np. 60 na 100." />
+        <TextField label="Twoja cena (zł)" value={mojaCena} onChangeText={setMojaCena} placeholder="np. 520000" keyboardType="numeric" error={bledy.mojaCena} />
+        <TextField label="Cena konkurenta (zł)" value={konkCena} onChangeText={setKonkCena} placeholder="np. 500000" keyboardType="numeric" hint="Z otwarcia ofert albo szacunek — sprawdź, jak agresywnie gra konkurencja." error={bledy.konkurencyjnaCena} />
+        <TextField label="Waga ceny (pkt)" value={wagaCeny} onChangeText={setWagaCeny} placeholder="np. 60" keyboardType="numeric" hint="Ile punktów daje kryterium ceny (z SWZ), np. 60 na 100." error={bledy.wagaCeny} />
       </View>
 
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>Kryteria pozacenowe</Text>
-        {kryteria.map((k) => (
+        {kryteria.map((k, i) => (
           <View key={k.id} style={styles.kryt}>
             <View style={styles.krytGlowa}>
               <TextField label={null} value={k.nazwa} onChangeText={(v) => ustawKryt(k.id, 'nazwa', v)} placeholder="Nazwa kryterium" style={styles.krytNazwa} />
@@ -91,9 +93,9 @@ export default function KalkulatorPunktowScreen({ route }) {
               })}
             </View>
             <View style={styles.krytRzad}>
-              <TextField label="Waga (pkt)" value={k.waga} onChangeText={(v) => ustawKryt(k.id, 'waga', v)} placeholder="40" keyboardType="numeric" style={styles.krytPole} />
-              <TextField label="Twoje" value={k.moje} onChangeText={(v) => ustawKryt(k.id, 'moje', v)} placeholder="60" keyboardType="numeric" style={styles.krytPole} />
-              <TextField label="Konkurent" value={k.konkurent} onChangeText={(v) => ustawKryt(k.id, 'konkurent', v)} placeholder="36" keyboardType="numeric" style={styles.krytPole} />
+              <TextField label="Waga (pkt)" value={k.waga} onChangeText={(v) => ustawKryt(k.id, 'waga', v)} placeholder="40" keyboardType="numeric" style={styles.krytPole} error={bledy[poleKryterium(i, 'waga')]} />
+              <TextField label="Twoje" value={k.moje} onChangeText={(v) => ustawKryt(k.id, 'moje', v)} placeholder="60" keyboardType="numeric" style={styles.krytPole} error={bledy[poleKryterium(i, 'moje')]} />
+              <TextField label="Konkurent" value={k.konkurent} onChangeText={(v) => ustawKryt(k.id, 'konkurent', v)} placeholder="36" keyboardType="numeric" style={styles.krytPole} error={bledy[poleKryterium(i, 'konkurent')]} />
             </View>
           </View>
         ))}
@@ -166,7 +168,7 @@ export default function KalkulatorPunktowScreen({ route }) {
             </View>
           ) : null}
         </View>
-      ) : (
+      ) : maBledy ? null : (
         <Text style={styles.pusto}>Wpisz obie ceny, żeby zobaczyć wynik i „cenę punktu".</Text>
       )}
 

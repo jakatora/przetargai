@@ -7,7 +7,7 @@ import Button from '../components/Button';
 import { api } from '../api/client';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { etykietaWartosciNetto } from '../lib/podprogowe';
+import { etykietaWartosciNetto, walidujProgNetto, progNettoZPola } from '../lib/podprogowe';
 
 /**
  * Ustawienia radaru zamówień podprogowych (ulepszenie „Radar zamówień podprogowych",
@@ -38,6 +38,10 @@ export default function PodprogoweUstawieniaScreen() {
   const [odswiezam, setOdswiezam] = useState(false);
   const [odswiezWynik, setOdswiezWynik] = useState(null);
 
+  // Walidacja progu — komunikat PL z lib. Dotąd „150 000" dawało NaN i po cichu próg domyślny.
+  const { bledy, maBledy } = walidujProgNetto(prog);
+  const brakObszaru = !branza.trim() && !region.trim();
+
   const wczytaj = useCallback(async () => {
     setBlad(null);
     try {
@@ -52,7 +56,7 @@ export default function PodprogoweUstawieniaScreen() {
   useFocusEffect(useCallback(() => { wczytaj(); }, [wczytaj]));
 
   async function zapisz() {
-    if ((!branza.trim() && !region.trim()) || zapisuje) return;
+    if (brakObszaru || maBledy || zapisuje) return;
     setZapisuje(true);
     setBlad(null);
     setOdswiezWynik(null);
@@ -60,8 +64,8 @@ export default function PodprogoweUstawieniaScreen() {
       const payload = {};
       if (branza.trim()) payload.branza = branza.trim();
       if (region.trim()) payload.region = region.trim();
-      const p = Number(prog);
-      if (prog.trim() && Number.isFinite(p) && p > 0) payload.prog_netto = p;
+      const p = progNettoZPola(prog); // polski zapis („150 000"); puste → null → próg domyślny
+      if (p !== null) payload.prog_netto = p;
       await api.podprogoweZapiszPreferencje(payload);
       setBranza('');
       setRegion('');
@@ -135,12 +139,13 @@ export default function PodprogoweUstawieniaScreen() {
           placeholder={PROG_DOMYSLNY}
           keyboardType="numeric"
           hint="Domyślnie 170 000 zł (stan od 1.01.2026). Podaj co najmniej branżę lub region."
+          error={bledy.prog}
         />
         <Button
           title="Zapisz obszar"
           onPress={zapisz}
           loading={zapisuje}
-          disabled={!branza.trim() && !region.trim()}
+          disabled={brakObszaru || maBledy}
         />
       </View>
 

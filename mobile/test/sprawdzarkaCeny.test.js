@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sprawdzWiersz, sprawdzFormularz } from '../src/lib/sprawdzarkaCeny.js';
+import {
+  sprawdzWiersz,
+  sprawdzFormularz,
+  walidujFormularz,
+  maBladPozycji,
+  VAT_MAX,
+} from '../src/lib/sprawdzarkaCeny.js';
 
 test('wiersz: wartość netto = ilość × cena; VAT i brutto poprawnie', () => {
   const w = sprawdzWiersz({ ilosc: 10, cenaJedn: 25.5, vat: 23 });
@@ -57,4 +63,51 @@ test('puste/niepoprawne wejście → zera, bez wywrotki', () => {
   assert.equal(w.sumaBrutto, 0);
   assert.equal(w.liczbaBledow, 0);
   assert.deepEqual(sprawdzFormularz(null).pozycje, []);
+});
+
+// ─── walidacja pól (pozycje dynamiczne → błędy per pozycja, klucz pole_indeks) ─
+// Dotąd „1.200,50" w wartości z formularza dawało po cichu 0 → fałszywe
+// „W formularzu masz 0,00 zł", a VAT 230 liczył się bez ostrzeżenia.
+
+test('walidujFormularz: puste pola i pusta lista = brak błędów (stan pusty ekranu)', () => {
+  assert.deepEqual(walidujFormularz([{ ilosc: '', cenaJedn: '', vat: '', wartoscPodana: '' }]), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujFormularz([]), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujFormularz(undefined), { bledy: {}, maBledy: false });
+});
+
+test('walidujFormularz: poprawne liczby, także „1 200,50" = brak błędów', () => {
+  const w = walidujFormularz([
+    { ilosc: '2,5', cenaJedn: '1 200,50', vat: '23', wartoscPodana: '3 001,25' },
+    { ilosc: '10', cenaJedn: '100', vat: '0', wartoscPodana: '' },
+  ]);
+  assert.deepEqual(w, { bledy: {}, maBledy: false });
+});
+
+test('walidujFormularz: „1.200,50" = błąd przy konkretnej pozycji i polu', () => {
+  const { bledy, maBledy } = walidujFormularz([
+    { ilosc: '1', cenaJedn: '100', vat: '23', wartoscPodana: '100' },
+    { ilosc: '1.200,50', cenaJedn: '1.200,50', vat: '23', wartoscPodana: '1.200,50' },
+  ]);
+  assert.equal(maBledy, true);
+  assert.equal(bledy.ilosc_1, 'Podaj liczbę, np. 10');
+  assert.equal(bledy.cenaJedn_1, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(bledy.wartoscPodana_1, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(bledy.cenaJedn_0, undefined, 'poprawna pozycja bez błędu');
+});
+
+test('walidujFormularz: stawka VAT spoza zakresu 0–23% i ujemne kwoty = błąd', () => {
+  assert.equal(VAT_MAX, 23);
+  assert.equal(walidujFormularz([{ vat: '230' }]).bledy.vat_0, 'Stawka VAT spoza zakresu 0–23%');
+  assert.equal(walidujFormularz([{ vat: '23' }]).maBledy, false);
+  assert.equal(walidujFormularz([{ cenaJedn: '-5' }]).bledy.cenaJedn_0, 'Kwota nie może być ujemna');
+  assert.equal(walidujFormularz([{ ilosc: '-1' }]).bledy.ilosc_0, 'Wartość musi wynosić co najmniej 0');
+});
+
+test('maBladPozycji: wskazuje tylko pozycję z błędem (indeks 1 ≠ 11)', () => {
+  const lista = Array.from({ length: 12 }, () => ({ ilosc: '1', cenaJedn: '1', vat: '23' }));
+  lista[11] = { ilosc: '1', cenaJedn: '1', vat: '99' };
+  const { bledy } = walidujFormularz(lista);
+  assert.equal(maBladPozycji(bledy, 11), true);
+  assert.equal(maBladPozycji(bledy, 1), false);
+  assert.equal(maBladPozycji(undefined, 0), false);
 });

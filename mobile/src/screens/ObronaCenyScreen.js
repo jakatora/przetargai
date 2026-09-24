@@ -5,7 +5,7 @@ import TextField from '../components/TextField';
 import { formatBudget } from '../lib/format';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { SKLADNIKI, analizaObrony, werdyktObrony } from '../lib/obronaCeny';
+import { SKLADNIKI, analizaObrony, werdyktObrony, walidujObrone } from '../lib/obronaCeny';
 
 /**
  * Panel „ASYSTENT OBRONY CENY (rażąco niska cena)".
@@ -43,14 +43,17 @@ export default function ObronaCenyScreen({ route }) {
   function ustawSkl(klucz, v) { setSkladniki((s) => ({ ...s, [klucz]: v })); }
   function przelaczDowod(klucz) { setDowody((d) => ({ ...d, [klucz]: !d[klucz] })); }
 
-  const wynik = analizaObrony({
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  // Przy błędach nie pokazujemy ocen (werdykt, stawka, suma, problemy) liczonych z wyzerowanych pól.
+  const { bledy, maBledy } = walidujObrone({ cena, roboczogodziny, minStawkaGodz: minStawka, skladniki });
+  const wynik = maBledy ? null : analizaObrony({
     cena: naLiczbe(cena),
     roboczogodziny: naLiczbe(roboczogodziny),
     minStawkaGodz: naLiczbe(minStawka),
     skladniki: Object.fromEntries(SKLADNIKI.map((s) => [s.klucz, naLiczbe(skladniki[s.klucz])])),
     dowody,
   });
-  const t = tonNaTokeny(wynik.ton, kolory);
+  const t = wynik ? tonNaTokeny(wynik.ton, kolory) : null;
 
   return (
     <Screen scroll>
@@ -62,19 +65,21 @@ export default function ObronaCenyScreen({ route }) {
       {nazwa ? <Text style={styles.postepowanie}>{nazwa}</Text> : null}
 
       {/* ── Werdykt ── */}
-      <View style={[styles.werdykt, { backgroundColor: t.tlo, borderColor: t.tekst }]}>
-        <Text style={[styles.werdyktText, { color: t.tekst }]}>{werdyktObrony(wynik)}</Text>
-      </View>
+      {wynik ? (
+        <View style={[styles.werdykt, { backgroundColor: t.tlo, borderColor: t.tekst }]}>
+          <Text style={[styles.werdyktText, { color: t.tekst }]}>{werdyktObrony(wynik)}</Text>
+        </View>
+      ) : null}
 
       {/* ── Cena i praca ── */}
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>Cena i koszty pracy</Text>
-        <TextField label="Cena oferty (zł)" value={cena} onChangeText={setCena} placeholder="np. 200000" keyboardType="numeric" />
+        <TextField label="Cena oferty (zł)" value={cena} onChangeText={setCena} placeholder="np. 200000" keyboardType="numeric" error={bledy.cena} />
         <View style={styles.rzad}>
-          <TextField label="Roboczogodziny (łącznie)" value={roboczogodziny} onChangeText={setRoboczogodziny} placeholder="np. 2500" keyboardType="numeric" style={styles.pole} />
-          <TextField label="Min. stawka (zł/h)" value={minStawka} onChangeText={setMinStawka} placeholder="30.50" keyboardType="numeric" style={styles.pole} />
+          <TextField label="Roboczogodziny (łącznie)" value={roboczogodziny} onChangeText={setRoboczogodziny} placeholder="np. 2500" keyboardType="numeric" style={styles.pole} error={bledy.roboczogodziny} />
+          <TextField label="Min. stawka (zł/h)" value={minStawka} onChangeText={setMinStawka} placeholder="30.50" keyboardType="numeric" style={styles.pole} error={bledy.minStawkaGodz} />
         </View>
-        {wynik.stawkaGodz !== null ? (
+        {wynik && wynik.stawkaGodz !== null ? (
           <Text style={[styles.stawka, wynik.ponizejMinimum && { color: kolory.danger, fontWeight: '800' }]}>
             Twoja stawka pracy: {wynik.stawkaGodz} zł/h
             {wynik.ponizejMinimum ? ' — PONIŻEJ minimum!' : ' — powyżej minimum ✓'}
@@ -86,11 +91,13 @@ export default function ObronaCenyScreen({ route }) {
       <View style={styles.card}>
         <View style={styles.postepGlowa}>
           <Text style={styles.kartaTytul}>Rozbicie ceny i dowody</Text>
-          <Text style={styles.suma}>
-            Σ {formatBudget(wynik.suma)}
-          </Text>
+          {wynik ? (
+            <Text style={styles.suma}>
+              Σ {formatBudget(wynik.suma)}
+            </Text>
+          ) : null}
         </View>
-        {!wynik.zgodna && naLiczbe(cena) > 0 ? (
+        {wynik && !wynik.zgodna && naLiczbe(cena) > 0 ? (
           <Text style={styles.niezgodne}>
             Składniki nie sumują się do ceny (różnica {formatBudget(Math.abs(wynik.roznicaDoCeny))}).
           </Text>
@@ -108,6 +115,7 @@ export default function ObronaCenyScreen({ route }) {
                 onChangeText={(v) => ustawSkl(sk.klucz, v)}
                 placeholder="0"
                 keyboardType="numeric"
+                error={bledy[sk.klucz]}
               />
               <Pressable
                 onPress={() => przelaczDowod(sk.klucz)}
@@ -130,7 +138,7 @@ export default function ObronaCenyScreen({ route }) {
       </View>
 
       {/* ── Problemy ── */}
-      {wynik.problemy.length > 0 ? (
+      {wynik && wynik.problemy.length > 0 ? (
         <View style={styles.problemy}>
           {wynik.problemy.map((p, i) => {
             const tp = tonNaTokeny(p.ton, kolory);

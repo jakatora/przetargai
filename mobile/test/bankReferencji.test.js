@@ -9,6 +9,7 @@ import {
   etykietaWaznosci,
   sortujReferencje,
   sprawdzWarunek,
+  walidujReferencje,
 } from '../src/lib/bankReferencji.js';
 
 // Kotwica czasu: 15 stycznia 2026 (czas wstrzykiwany — test deterministyczny).
@@ -92,4 +93,19 @@ test('sprawdzWarunek: liczy tylko aktualne doświadczenie właściwego rodzaju i
   assert.equal(w.potrzeba, 2);
   assert.equal(w.brakuje, 1);
   assert.equal(w.spelnia, false);
+});
+
+// Pole „Wartość (zł)": dotąd „1.200,50" po cichu zapisywało się jako brak wartości,
+// a taka referencja przepadała w sprawdzWarunek przy progu minWartosc.
+test('walidujReferencje: puste = brak błędu, poprawna kwota (także „1 200,50", „850 000") = brak', () => {
+  assert.deepEqual(walidujReferencje({ wartosc: '' }), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujReferencje(), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujReferencje({ wartosc: '1 200,50' }), { bledy: {}, maBledy: false });
+  assert.deepEqual(walidujReferencje({ wartosc: '850 000' }), { bledy: {}, maBledy: false });
+});
+
+test('walidujReferencje: „1.200,50" i kwota ujemna = błąd pola wartosc', () => {
+  assert.equal(walidujReferencje({ wartosc: '1.200,50' }).bledy.wartosc, 'Podaj kwotę jako liczbę, np. 1200,00');
+  assert.equal(walidujReferencje({ wartosc: '-5' }).bledy.wartosc, 'Kwota nie może być ujemna');
+  assert.equal(walidujReferencje({ wartosc: '1.200,50' }).maBledy, true);
 });

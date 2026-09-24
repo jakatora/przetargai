@@ -5,7 +5,7 @@ import TextField from '../components/TextField';
 import { formatBudget } from '../lib/format';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { analizaCertyfikatu } from '../lib/certyfikatWykonawcy';
+import { analizaCertyfikatu, walidujCertyfikat } from '../lib/certyfikatWykonawcy';
 
 /**
  * Panel „CERTYFIKAT WYKONAWCY — jedna teczka zamiast stosu dokumentów". Od 12.07.2026 działa
@@ -29,7 +29,11 @@ export default function CertyfikatWykonawcyScreen() {
   const [stawka, setStawka] = useState('');
   const [koszt, setKoszt] = useState('');
 
-  const gotowe = naLiczbe(starty) > 0 && naLiczbe(godziny) > 0 && naLiczbe(stawka) > 0;
+  // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
+  const { bledy, maBledy } = walidujCertyfikat({
+    startowRocznie: starty, godzinNaStart: godziny, stawkaGodzinowa: stawka, kosztCertyfikatuRocznie: koszt,
+  });
+  const gotowe = !maBledy && naLiczbe(starty) > 0 && naLiczbe(godziny) > 0 && naLiczbe(stawka) > 0;
   const w = gotowe
     ? analizaCertyfikatu({
         startowRocznie: naLiczbe(starty),
@@ -50,10 +54,10 @@ export default function CertyfikatWykonawcyScreen() {
 
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>Twoja sytuacja</Text>
-        <TextField label="Ile przetargów rocznie" value={starty} onChangeText={setStarty} placeholder="np. 20" keyboardType="numeric" />
-        <TextField label="Godzin na komplet dokumentów (1 start)" value={godziny} onChangeText={setGodziny} placeholder="np. 8" keyboardType="numeric" hint="Ile czasu zajmuje zebranie ZUS/US/KRK/wykazów na jedno postępowanie." />
-        <TextField label="Koszt godziny Twojej pracy (zł)" value={stawka} onChangeText={setStawka} placeholder="np. 100" keyboardType="numeric" />
-        <TextField label="Roczny koszt certyfikatu (zł)" value={koszt} onChangeText={setKoszt} placeholder="np. 3000" keyboardType="numeric" hint="Podaj realną stawkę jednostki certyfikującej (nowość — sprawdź aktualny cennik)." />
+        <TextField label="Ile przetargów rocznie" value={starty} onChangeText={setStarty} placeholder="np. 20" keyboardType="numeric" error={bledy.startowRocznie} />
+        <TextField label="Godzin na komplet dokumentów (1 start)" value={godziny} onChangeText={setGodziny} placeholder="np. 8" keyboardType="numeric" hint="Ile czasu zajmuje zebranie ZUS/US/KRK/wykazów na jedno postępowanie." error={bledy.godzinNaStart} />
+        <TextField label="Koszt godziny Twojej pracy (zł)" value={stawka} onChangeText={setStawka} placeholder="np. 100" keyboardType="numeric" error={bledy.stawkaGodzinowa} />
+        <TextField label="Roczny koszt certyfikatu (zł)" value={koszt} onChangeText={setKoszt} placeholder="np. 3000" keyboardType="numeric" hint="Podaj realną stawkę jednostki certyfikującej (nowość — sprawdź aktualny cennik)." error={bledy.kosztCertyfikatuRocznie} />
       </View>
 
       {w ? (
@@ -82,7 +86,7 @@ export default function CertyfikatWykonawcyScreen() {
             </Text>
           ) : null}
         </View>
-      ) : (
+      ) : maBledy ? null : (
         <Text style={styles.pusto}>Uzupełnij liczbę przetargów, godziny i stawkę, żeby zobaczyć wynik.</Text>
       )}
 
