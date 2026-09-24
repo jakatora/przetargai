@@ -1,0 +1,49 @@
+{
+  "name": "przetargai-desktop",
+  "productName": "PrzetargAI",
+  "version": "1.1.1",
+  "description": "PrzetargAI na Windows — aplikacja mobilna (eksport webowy Expo) w oknie Electrona",
+  "author": "Jakatora",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "web": "node skrypty/eksportWeb.js",
+    "start": "electron .",
+    "smoke": "node skrypty/smoke.js",
+    "dist": "npm run web && electron-builder --win nsis portable"
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "pl.przetargai.desktop",
+    "productName": "PrzetargAI",
+    "copyright": "© 2026 Jakatora",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "sciezki.js",
+      "web/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "artifactName": "PrzetargAI-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PrzetargAI",
+      "artifactName": "PrzetargAI-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "PrzetargAI-${version}-przenosna.${ext}"
+    }
+  }
+}
