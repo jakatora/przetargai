@@ -4,6 +4,112 @@ Rejestr decyzji architektonicznych i biznesowych. Najnowsze na górze.
 
 ---
 
+## D-061 — Wyjaśnienie dopasowania liczone z danych, nie z AI
+**Data:** 2026-09-24 | Etap 4 (P1-4)
+
+**Problem.** Karta niosła jedno zdanie z `match_reasoning`: albo tekst z płatnego AI,
+albo ogólnik „Trafione słowa kluczowe: …". Użytkownik nie miał jak sprawdzić, KTÓRY
+sygnał zadziałał ani co zmienić w profilu — a profil to jedyna dźwignia, jaką ma nad
+wynikami.
+
+**Decyzja.** `lib/wyjasnienieDopasowania.js` liczy cztery sygnały z danych, które JUŻ
+mamy (profil + zdenormalizowane pola dopasowania). Zero wywołań AI, zero dodatkowych
+odczytów bazy — inaczej jedno przewinięcie listy kosztowałoby 50 odczytów Firestore.
+
+**Region i skala zamówienia są oznaczone jako `informacja`, nie jako ocena.** One NIE
+wchodzą do wyniku silnika (scoring liczy wyłącznie słowa i CPV), a udawanie, że wchodzą,
+byłoby kłamstwem o działaniu produktu. Dwa nowe pola profilu (`regiony`, `wartosc_max`)
+służą wyłącznie temu wyjaśnieniu; scoringu świadomie nie ruszamy — to inna decyzja
+i inne ryzyko (zmiana kryteriów unieważnia oceny i wywołuje ponowne dopasowania).
+
+**Pusty feed dostaje JEDEN konkretny krok** zamiast „zajrzyj później", w kolejności siły
+sygnału: uzupełnij profil → dodaj CPV → dopisz słowa → zaznacz województwa → obejrzyj
+zakładkę „Wszystkie". Podpowiedź pojawia się TYLKO na pierwszej stronie: doczepiona do
+końca listy wyglądałaby jak zarzut, że profil jest zły, choć feed po prostu się skończył.
+
+---
+## D-060 — „Zakres danych": produkt mówi wprost, czego NIE widzi
+**Data:** 2026-09-24 | Etap 4 (P1-4)
+
+**Problem.** Produkt zbierający ogłoszenia z trzech rejestrów czyta się jako
+„wszystkie przetargi w Polsce". To nieprawda i nie da się tego naprawić kodem:
+BIP-y zamawiających, platformy zakupowe bez publicznego API (Platforma Zakupowa,
+eb2b, Logintrade, SmartPZP) i zamówienia prywatne nie mają feedu, z którego dałoby
+się je legalnie pobrać. Wykonawca, który uwierzy w komplet, przegapi postępowanie
+i obwini aplikację — słusznie.
+
+**Decyzja.** Osobny ekran „Zakres danych" (wejście z Konta) + `GET /tenders/zakres-danych`.
+Pokazuje trzy rzeczy, każda z innego powodu:
+
+1. **stan per rejestr z czasem ostatniego sukcesu** — bez tego „brak nowych
+   przetargów" jest nieodróżnialne od „pobieranie padło trzy dni temu", a to są
+   przeciwne decyzje: raz czekasz, raz sprawdzasz rejestr sam;
+2. **pokrycie okna** — jedyny zewnętrzny sygnał niekompletności BK, która przy
+   niepełnym przejściu po prostu oddaje mniej, bez żadnego błędu;
+3. **lista rzeczy NIEOBJĘTYCH** + zastrzeżenie, które jawnie nie obiecuje kompletu.
+
+**Ślad źródła składamy z DWÓCH zapisów.** Historia per źródło (`_health/cykl.zrodla`)
+pochodzi z cyklu dobowego, ale BZP i BK mają własne okna co 3 h z osobnym
+checkpointem. Pomiar na produkcji 2026-09-24: patrząc tylko na cykl, wszystkie trzy
+źródła pokazywały „brak śladu pobrania" — choć oba okna domknęły się tej samej nocy
+(01:27 i 01:50 UTC). Bierzemy więc nowszy znacznik z obu, osobno dla sukcesu i błędu.
+
+**Co to kosztuje.** Jeden odczyt Firestore na 60 s (cache w pamięci instancji),
+wspólny dla `/tenders`, `/matches` i ekranu zakresu. Awaria tego odczytu NIE wywraca
+listy — karta po prostu nie pokaże czasu synchronizacji.
+
+---
+
+## D-059 — Tryb „Wszystkie" jako druga lista: rynek obok feedu
+**Data:** 2026-09-24 | Etap 4 (P1-1, P1-3)
+
+**Problem.** `GET /matches` z definicji pokazuje WYCINEK: przycięty profilem,
+progiem dopasowania i dziennym limitem planu Free. Nowy użytkownik z pustym
+profilem widział pustkę i nie miał jak sprawdzić, czy aplikacja w ogóle ma dane.
+Produkt, który po instalacji wygląda na pusty, nie dostaje drugiej szansy.
+
+**Decyzja.** `GET /tenders` — druga, niezależna lista. Reguła nienegocjowalna:
+ani jedno zapytanie w tym routerze nie czyta profilu, dopasowań ani puli
+(`openPool` ma sufit i cache, bo służy silnikowi dopasowań — nie wolno go tu użyć).
+
+**Podział pracy Firestore / pamięć wymusiły DANE, nie wygoda:**
+
+- `wojewodztwo` trzymamy w formacie, jaki dał rejestr — „PL12" z BZP i „małopolskie"
+  z BK. Równość na tym polu chowałaby całe źródło, bez błędu i bez śladu w logach.
+  (Ta sama pułapka siedziała w aplikacji: `kodWojewodztwa` rozpoznawał wyłącznie cyfry.)
+- `cpv_main` to sklejony łańcuch wielu kodów, a Firestore nie ma filtra po prefiksie
+  ani wyszukiwania pełnotekstowego.
+
+Na Firestore idzie więc tylko równość na `source` i zakres na polu sortowania;
+reszta filtruje się w pamięci podczas skanu stronami.
+
+**Skan NIE gubi rekordów.** Kursor wskazuje pozycję w porządku Firestore (wartość
+pola sortowania + identyfikator dokumentu), więc kolejne żądanie rusza dokładnie tam,
+gdzie poprzednie stanęło — także wtedy, gdy przerwał je sufit odczytów. Odpowiedź
+mówi wprost przez `wyczerpano`, czy to koniec listy, czy koniec budżetu na to żądanie.
+
+**Trzy pułapki złapane testem i pomiarem:**
+
+1. „Krótsza strona = koniec danych" jest prawdą TYLKO gdy obejrzało się ją w całości.
+   Przerwanie w połowie (strona wyników pełna) zostawia dokumenty nieosiągalne bez
+   kursora — realny błąd pierwszej wersji.
+2. Kursor niesie odcisk zestawu filtrów. Bez tego strona z jednego zestawu dałaby się
+   doczepić do innego i wyglądałaby jak losowa dziura w wynikach. Dziś: HTTP 400.
+3. Pomiar na produkcji: żądanie o 3 pozycje czytało 300 dokumentów, bo pętla brała
+   zawsze pełną stronę. Po naprawie (`rozmiarPobrania` z potrzeby i zmierzonej
+   trafności filtra) to samo żądanie czyta **20**.
+
+**Indeksy złożone są zadeklarowane i pilnowane testem** — emulator Firestore ich nie
+egzekwuje, więc brak indeksu byłby niewidoczny aż do produkcji (ta sama pułapka co P-4
+w `openPool`).
+
+**Szczegóły ogłoszenia z katalogu to OSOBNY ekran** niż szczegóły dopasowania. Tamten
+adresuje wszystko identyfikatorem dopasowania (zapisz, przypomnienie, streszczenie AI,
+statystyki wyników). Ogłoszenie z rynku żadnego dopasowania nie ma, więc te akcje
+kończyłyby się błędem 404 na ekranie, który wygląda na sprawny.
+
+---
+
 ## D-058 — Baza Konkurencyjności trzecim źródłem; deduplikacja między rejestrami
 **Data:** 2026-09-24 | Etap 3
 

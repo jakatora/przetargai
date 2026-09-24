@@ -11,6 +11,89 @@ Najnowsze wpisy na górze.
 
 ---
 
+## 2026-09-24 — Etap 4: katalog „Wszystkie", źródło na karcie, zakres danych, wyjaśnienie
+
+Wdrożone na Cloud Functions, rewizja **`api-00031-nij`** (wcześniej `api-00028-xup`).
+Mierzone na żywo kontem sondującym, które po pomiarach **usunięto** (`DELETE /auth/me`
+→ 200, kontrolne `GET /auth/me` → 401). Konto było zakładane BEZ słów kluczowych
+i BEZ kodów CPV — dzięki temu ani jedno wywołanie płatnego AI nie padło.
+
+### Co potwierdzone na produkcji
+
+| Sprawdzenie | Odczyt |
+|---|---|
+| `GET /tenders` bez tokenu | **401** (kontrolnie nieistniejąca trasa → 404) |
+| `GET /tenders/zakres-danych` bez tokenu | **401** |
+| Konto z PUSTYM profilem: `GET /matches` | `count: 0`, `podpowiedz.kod = "uzupelnij_profil"` |
+| To samo konto: `GET /tenders?limit=3` | `count: 3` — katalog nie zależy od profilu |
+| Metryczka źródła na karcie | `{kod: "bzp", stan: "ok", zsynchronizowano_o: "2026-09-24T01:27:04.561Z", rejestr: "https://ezamowienia.gov.pl"}` |
+| Kursor: strona 1 → strona 2 | 5 + 5 różnych identyfikatorów, zero powtórzeń |
+| Kursor z INNEGO zestawu filtrów | **400** |
+| Kursor uszkodzony | **400** |
+| `PATCH /auth/me` z `regiony: ["PL14","malopolskie","Berlin"]` | zapisane `["14","12"]` — „Berlin" odrzucony |
+| `wartosc_max: 1500000` | zapisane i trwałe (odczyt `GET /auth/me`) |
+
+### Filtry katalogu — pomiar na żywo
+
+| Filtr | Wynik | Przeskanowano |
+|---|---|---|
+| bez filtrów, `limit=3` | 3 | **20** |
+| `zrodlo=baza_konkurencyjnosci` | 5 | 20 |
+| `zrodlo=baza_konkurencyjnosci&region=PL12` | 5 (wszystkie „Małopolskie") | 320 |
+| `cpv=45` | 5 | 20 |
+| `q=droga` | 5 | 791 |
+| `sort=termin` | 5 (BZP i BK wymieszane) | 20 |
+
+Wiersz `zrodlo=baza_konkurencyjnosci&region=PL12` jest tu najważniejszy: BK zapisuje
+region NAZWĄ („małopolskie"), a BZP kodem TERYT („PL12"). Normalizator rozpoznający
+wyłącznie cyfry — taki działał w aplikacji do dziś — zwracał dla BK `null`, więc filtr
+województwa chował **całe źródło**: bez błędu, bez logu, po prostu mniej wyników.
+
+### Dwie naprawy, które wyszły dopiero z pomiaru na żywo
+
+**1. Koszt odczytu zależał od stałej, nie od zamówienia.** Pierwsze wdrożenie
+(`api-00029-gap`) na żądanie o 3 pozycje czytało **300** dokumentów, bo pętla skanu
+brała zawsze pełną stronę. Po naprawie (`rozmiarPobrania`: porcja z potrzeby
+i ZMIERZONEJ trafności filtra w tym żądaniu) to samo żądanie czyta **20** — 15× taniej.
+Testy jednostkowe tego nie mogły złapać: emulator z kilkudziesięcioma dokumentami
+zwracał wszystko za pierwszym razem.
+
+**2. Karta pokazywała „brak śladu pobrania" dla WSZYSTKICH źródeł** — choć okna BZP
+i BK domknęły się tej samej nocy (01:27 i 01:50 UTC). Ślad dobowego cyklu pochodzi
+sprzed naprawy lepkiego merge'a i nie ma historii per źródło, a checkpointy okien —
+świeższe i niezależne — leżały obok nieużyte. Po naprawie:
+
+```
+bzp                    | stan: ok          | sukces 1,7 h temu | Okno 8 dób domknięte w całości.
+ted                    | stan: brak_danych | sukces: null      | (TED nie ma własnego okna)
+baza_konkurencyjnosci  | stan: ok          | sukces 1,3 h temu | Pobrano komplet: 1135 z 1135.
+```
+
+`ted: brak_danych` jest **poprawne i celowe**: TED nie ma własnej funkcji okna, więc
+jego ślad pojawi się dopiero po pełnym przebiegu `dailyTenderFetch` (cron `0 12 * * *`).
+Udawanie, że wiemy, kiedy TED ostatnio odpowiedział, byłoby dokładnie tym rodzajem
+kłamstwa, któremu ten ekran ma zapobiegać.
+
+### Testy
+
+| Zestaw | Wynik | Baseline przed etapem 4 |
+|---|---|---|
+| `firebase/functions` (`npm test`, emulator Firestore) | **606/606** | 513/513 |
+| `mobile` (`npm test`) | **711/711** | 663/663 |
+| `mobile` (`npm run check`, esbuild) | zielony | zielony |
+
+Środowisko emulatora bez zmian: `JAVA_HOME` = portable Temurin 21,
+`JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\jtmp`.
+
+### Czego NIE dało się zmierzyć na produkcji
+
+Wyjaśnienia dopasowania na żywym koncie — każde konto z wypełnionym profilem
+uruchamia przy zapisie ponowne dopasowanie, a to wywołuje **płatne AI**. Polecenie
+etapu tego zabrania, więc wyjaśnienie zostaje pokryte testami (29 asercji: 19
+jednostkowych na czystej funkcji + 10 przez realny serwer HTTP na emulatorze).
+Sama funkcja jest czysta i nie ma gałęzi zależnej od środowiska.
+
+---
 ## 2026-09-24 01:45 UTC — Audyt końcowy etapu 3 (Baza Konkurencyjności)
 
 Zakres: **wyłącznie szybkie odczyty read-only z limitem 30 s**. Bez importów, bez pełnych testów.

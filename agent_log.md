@@ -4,6 +4,58 @@ Dziennik prac. Najnowsze wpisy na górze.
 
 ---
 
+## 2026-09-24 — Etap 4: rynek widoczny bez profilu, uczciwe źródło, wyjaśnienie bez AI
+
+### Wykonane
+- **`GET /tenders` — druga lista obok feedu (P1-1).** Feed dopasowań z definicji pokazuje
+  wycinek: przycięty profilem, progiem i dziennym limitem planu Free. Nowy użytkownik
+  z pustym profilem widział pustkę i nie miał jak sprawdzić, czy aplikacja ma dane.
+  Katalog nie czyta profilu, dopasowań ani puli — potwierdzone na produkcji kontem
+  z pustym profilem: `/matches` → 0, `/tenders` → pełna lista.
+- **Paginacja kursorowa z odciskiem filtrów.** Kursor niesie wartość pola sortowania
+  + identyfikator dokumentu + odcisk zestawu filtrów. Podanie go przy innych filtrach
+  kończy się 400, a nie cichym wymieszaniem stron.
+- **Źródło pierwotne + czas synchronizacji + link do oryginału (P1-3)** na karcie feedu,
+  na karcie katalogu i w obu ekranach szczegółów. Plus `zrodla_alternatywne` — to samo
+  postępowanie bywa ogłoszone w dwóch rejestrach, a ofertę składa się tam, gdzie
+  wskazuje ogłoszenie.
+- **Ekran „Zakres danych" (P1-4)** z Konta: stan per rejestr, pokrycie okna i lista
+  rzeczy NIEOBJĘTYCH (BIP-y, platformy bez publicznego API, zamówienia prywatne, plany
+  postępowań) + zastrzeżenie, które jawnie nie obiecuje wszystkich przetargów w Polsce.
+- **Wyjaśnienie dopasowania z konkretów, bez AI.** Cztery sygnały: CPV (z numerami kodów),
+  słowa (z listą trafień), region i skala zamówienia. Dwa ostatnie oznaczone jako
+  `informacja`, bo NIE wchodzą do wyniku silnika. Pusty feed dostaje jeden konkretny
+  następny krok zamiast „zajrzyj później".
+- **PL/EN przez `tr({pl,en})`** w nowych ekranach + przełącznik języka w Koncie.
+  Backend oddaje teksty parami, więc zmiana języka nie wymaga wydania aplikacji.
+
+### Co zmierzyliśmy, a nie założyli
+- **Żądanie o 3 pozycje czytało 300 dokumentów.** Pierwsze wdrożenie (`api-00029-gap`)
+  brało w pętli skanu zawsze pełną stronę. Testy tego nie łapały: emulator
+  z kilkudziesięcioma dokumentami oddaje wszystko za pierwszym razem. Po naprawie — 20.
+- **Wszystkie trzy źródła pokazywały „brak śladu pobrania"**, choć okna BZP i BK domknęły
+  się tej samej nocy. Patrzyliśmy tylko na ślad cyklu dobowego (sprzed naprawy lepkiego
+  merge'a, bez historii per źródło), a checkpointy okien leżały obok nieużyte.
+- **Filtr województwa chował całe źródło BK.** BZP zapisuje region kodem TERYT („PL12"),
+  Baza Konkurencyjności nazwą („małopolskie"). Normalizator rozpoznający wyłącznie cyfry
+  zwracał dla BK `null` — bez błędu, bez logu, po prostu mniej wyników. Naprawione
+  po obu stronach i potwierdzone na żywo: `zrodlo=baza_konkurencyjnosci&region=PL12`
+  zwraca 5 ogłoszeń, wszystkie małopolskie.
+
+### Czego świadomie NIE zrobiliśmy
+- **Nie ruszyliśmy scoringu.** `regiony` i `wartosc_max` to deklaracje kontekstu, nie
+  kryteria wyszukiwania. Zmiana kryteriów unieważnia oceny i wywołuje ponowne
+  dopasowania — to osobna decyzja i osobne ryzyko.
+- **Nie przebudowaliśmy UI.** Mechanizm `tr` obejmuje nowe ekrany; stare zostają polskie.
+  Stary ekran z polskim literałem działa bez zmian, bo `tr('Zapisane')` oddaje go nietknięty.
+- **Nie zmierzyliśmy wyjaśnienia na żywym koncie** — każdy profil z wypełnionymi słowami
+  uruchamia ponowne dopasowanie, czyli płatne AI. Zostaje pokrycie testami (29 asercji).
+
+### Stan
+Backend wdrożony (`api-00031-nij`), testy 606/606 backend i 711/711 mobile, esbuild zielony.
+Aplikacja gotowa w gałęzi do builda — bez wdrożenia, zgodnie z poleceniem etapu.
+
+---
 ## 2026-09-24 — Etap 3: Baza Konkurencyjności jako trzecie źródło pipeline'u
 
 ### Wykonane

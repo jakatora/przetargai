@@ -1,12 +1,12 @@
 {
   "projekt": "PrzetargAI",
-  "zaktualizowano": "2026-09-24 (audyt koncowy etapu 3, 01:45 UTC)",
+  "zaktualizowano": "2026-09-24 (etap 4 wdrozony, api-00031-nij)",
   "galaz": "codex/przetargai-complete",
   "drzewo_robocze": "D:/wt/przetargai-complete",
   "uwaga": "Repozytorium D:/projekty/przetarg-ai jest BRUDNE (cudzy WIP) — nie dotykać.",
   "produkcja": {
     "platforma": "Firebase Cloud Functions v2 (europe-central2, projekt przetargai)",
-    "wersja_api": "api-00028-xup",
+    "wersja_api": "api-00031-nij",
     "wdrozone_z": "lokalnego kodu przez `firebase deploy` (NIE z GitHuba — to odróżnia Functions od Railway)",
     "health": "https://europe-central2-przetargai.cloudfunctions.net/api/health",
     "funkcje": [
@@ -20,14 +20,14 @@
     ],
     "otwarte_przetargi": 10084,
     "otwarte_przetargi_przed_etapem_3": 7249,
-    "wersja_api_poprzednia_w_tym_pliku": "api-00027-nez (stan z 2026-09-24 01:27 UTC; rewizja przeskoczyla po ostatnim deployu)",
+    "wersja_api_poprzednia_w_tym_pliku": "api-00028-xup (stan po etapie 3)",
     "otwarte_przetargi_po_imporcie_bk": 8384,
     "przyrost_po_imporcie_bk": "z 8 384 na 10 084 — przyrost 1 700 pochodzi z okna BZP domknietego 2026-09-24T01:27:04Z (newTenders 1700), nie z BK",
     "funkcje_potwierdzone_live": "firebase functions:list — 7/7 wdrozonych, v2, nodejs22, europe-central2 (aggregateResults, api, bkOknoFetch, bzpOknoFetch, dailyTenderFetch, remindDeadlines, weeklyDigest)"
   },
   "testy": {
     "polecenie": "cd firebase/functions && npm test",
-    "wynik": "513/513",
+    "wynik": "606/606",
     "baseline_przed_etapem_3": "422/422",
     "wymagane_srodowisko": {
       "powod": "emulator Firestore nie wstaje na tej maszynie bez tych dwóch rzeczy",
@@ -35,8 +35,15 @@
       "JAVA_TOOL_OPTIONS": "-Djdk.net.unixdomain.tmpdir=C:\\jtmp",
       "dlaczego": "domyślny java.io.tmpdir to ścieżka w notacji 8.3 (C:\\Users\\STARTK~1\\...), której connect() AF_UNIX na Windows odrzuca z EINVAL — Selector.open() pada i emulator nie startuje"
     },
-    "kiedy_wykonane": "poprzednia sesja, 2026-09-24 — NIE powtorzone w audycie koncowym (polecenie: bez pelnych testow)",
-    "status_w_audycie": "przyjete z poprzedniej sesji, nieweryfikowane ponownie"
+    "kiedy_wykonane": "2026-09-24, przed wdrozeniem etapu 4 (pelny przebieg z emulatorem)",
+    "status_w_audycie": "wykonane w tej sesji",
+    "baseline_przed_etapem_4": "513/513",
+    "mobile": {
+      "polecenie": "cd mobile && npm test",
+      "wynik": "711/711",
+      "baseline_przed_etapem_4": "663/663",
+      "statyczna_kontrola": "npm run check (esbuild) — zielony"
+    }
   },
   "etapy": {
     "etap_1_p0": {
@@ -129,6 +136,91 @@
         "pod długim, ciągłym ruchem BK spowalnia i strona listy potrafi przekroczyć 25 s limitu (3/7 przebiegów drenażu)"
       ],
       "zgodnosc": "wyłącznie publiczne API JSON, bez klucza i logowania; zero scrapingu HTML, zero omijania limitów, zero płatnego AI"
+    },
+    "etap_4_katalog_i_zrodla": {
+      "stan": "backend wdrozony i zweryfikowany na produkcji; mobile gotowe w galezi do builda",
+      "data": "2026-09-24",
+      "cel": "P1-1 + P1-3 + P1-4: rynek widoczny niezaleznie od profilu, uczciwe zrodlo i zakres danych, wyjasnienie dopasowania bez AI",
+      "commity": [
+        "1136dca — wspolny normalizator wojewodztw (BZP „PL12\" vs BK „malopolskie\")",
+        "d2cff69 — czysta logika katalogu: filtry, plan zapytania, kursor, indeksy",
+        "f0c5a7b — czysty opis zakresu danych (co widzimy i czego NIE)",
+        "f55048c — GET /tenders: katalog rynku, kursor, filtry, /filtry, /zakres-danych",
+        "9b2d8b9 — wyjasnienie dopasowania z konkretnych sygnalow, bez AI",
+        "87021ca — wyjasnienie na karcie i w szczegolach + regiony/wartosc_max w profilu",
+        "a05bdc3 — dwie naprawy z pomiaru na zywo (koszt odczytu, slad z okien)",
+        "869cd89 — mobilna warstwa czysta: jezyk PL/EN, katalog, zrodla, wyjasnienie",
+        "0ba92cc — UI: przelacznik „Dla mnie / Wszystkie\", zrodlo na karcie, ekran zakresu danych"
+      ],
+      "pliki": {
+        "backend_katalog": "firebase/functions/src/lib/katalogPrzetargow.js + routes/tenders.js + db/repos.js (tenders.katalog)",
+        "backend_zakres": "firebase/functions/src/lib/zakresDanych.js + services/zakresZrodel.js",
+        "backend_wyjasnienie": "firebase/functions/src/lib/wyjasnienieDopasowania.js",
+        "backend_regiony": "firebase/functions/src/lib/wojewodztwa.js",
+        "indeksy": "firebase/firestore.indexes.json (2 nowe indeksy zlozone na kolekcji tenders)",
+        "mobile_logika": "mobile/src/lib/{katalogPrzetargow,zrodlaDanych,wyjasnienieDopasowania,jezyk,wojewodztwa}.js",
+        "mobile_ui": "mobile/src/components/{KatalogWszystkich,PodpisZrodla,Wyjasnienie}.js + screens/{KatalogDetailScreen,ZakresDanychScreen}.js",
+        "mobile_zmienione": "mobile/src/screens/{MatchFeedScreen,MatchDetailScreen,AccountScreen}.js + components/MatchCard.js + context/JezykContext.js"
+      },
+      "endpointy": [
+        "GET /tenders — katalog rynku (kursor, filtry: zrodlo/region/CPV/tekst/daty/termin/wartosc)",
+        "GET /tenders/filtry — slowniki filtrow z etykietami PL/EN",
+        "GET /tenders/zakres-danych — stan per rejestr + czego NIE obejmujemy",
+        "GET /matches — dodane `wyjasnienie` per pozycja i `podpowiedz` przy pustym feedzie",
+        "GET /matches/:id, GET /matches/saved — dodane `wyjasnienie` i metryczka zrodla",
+        "PATCH /auth/me — dodane pola `regiony` i `wartosc_max` (NIE wchodza do scoringu)"
+      ],
+      "testy_dodane": {
+        "wojewodztwa_backend": 6,
+        "katalogFiltry": 27,
+        "zakresDanych": 14,
+        "katalogRoute": 15,
+        "wyjasnienieDopasowania_backend": 19,
+        "wyjasnienieRoute": 12,
+        "razem_backend": 93,
+        "mobile_jezyk": 10,
+        "mobile_katalogPrzetargow": 13,
+        "mobile_zrodlaDanych": 12,
+        "mobile_wyjasnienieDopasowania": 10,
+        "mobile_wojewodztwa": 3,
+        "razem_mobile": 48
+      },
+      "weryfikacja_live": {
+        "data": "2026-09-24",
+        "konto_sondujace": "zalozone BEZ slow kluczowych i BEZ CPV (zero wywolan platnego AI), po pomiarach USUNIETE (DELETE /auth/me → 200, kontrolnie GET /auth/me → 401)",
+        "katalog_niezalezny_od_profilu": "konto z pustym profilem: /matches count=0, /tenders count=3",
+        "podpowiedz_pustego_feedu": "kod „uzupelnij_profil\", tytul PL/EN",
+        "kursor": "strona 1 i 2 po 5 pozycji, zero powtorzen; kursor z innego zestawu filtrow → 400; kursor uszkodzony → 400",
+        "metryczka_zrodla_na_karcie": "kod=bzp, stan=ok, zsynchronizowano_o=2026-09-24T01:27:04.561Z, rejestr=https://ezamowienia.gov.pl",
+        "filtry": {
+          "brak filtrow (limit=3)": "count=3, przeskanowano=20",
+          "zrodlo=baza_konkurencyjnosci": "count=5, przeskanowano=20",
+          "zrodlo=baza_konkurencyjnosci&region=PL12": "count=5 (wszystkie Malopolskie), przeskanowano=320",
+          "cpv=45": "count=5, przeskanowano=20",
+          "q=droga": "count=5, przeskanowano=791",
+          "sort=termin": "count=5 (BZP i BK wymieszane), przeskanowano=20"
+        },
+        "zakres_danych": {
+          "bzp": "stan ok, sukces 1,7 h temu, okno 8 dob domkniete w calosci",
+          "ted": "stan brak_danych — TED nie ma wlasnego okna, slad pojawi sie po dailyTenderFetch (cron 0 12 * * *)",
+          "baza_konkurencyjnosci": "stan ok, sukces 1,3 h temu, pobrano komplet 1135 z 1135",
+          "nieobjete": [
+            "bip",
+            "platformy_bez_api",
+            "prywatne",
+            "plany_postepowan"
+          ],
+          "zastrzezenie": "jawnie NIE obiecuje wszystkich przetargow w Polsce"
+        },
+        "profil": "PATCH regiony [\"PL14\",\"malopolskie\",\"Berlin\"] → zapisane [\"14\",\"12\"] (Berlin odrzucony); wartosc_max 1500000 trwale"
+      },
+      "naprawy_z_pomiaru_na_zywo": [
+        "Koszt odczytu: zadanie o 3 pozycje czytalo 300 dokumentow (petla brala zawsze pelna strone) → po naprawie 20. Emulator tego nie lapal, bo przy kilkudziesieciu dokumentach oddawal wszystko za pierwszym razem.",
+        "Czas synchronizacji: karta pokazywala „brak sladu pobrania\" dla wszystkich zrodel, bo patrzylismy tylko na slad cyklu dobowego (sprzed naprawy lepkiego merge'a, bez historii per zrodlo). Checkpointy okien BZP i BK — swiezsze — leza teraz w tym samym rachunku.",
+        "Filtr regionu chowal cale zrodlo BK, bo normalizator rozpoznawal wylacznie cyfry, a BK zapisuje wojewodztwo nazwa. Naprawione po obu stronach (backend i aplikacja)."
+      ],
+      "czego_nie_zmierzono": "Wyjasnienia dopasowania na zywym koncie — kazde konto z wypelnionym profilem uruchamia ponowne dopasowanie, czyli PLATNE AI. Polecenie etapu tego zabrania; wyjasnienie pokrywaja 29 asercji (19 na czystej funkcji + 10 przez realny serwer HTTP).",
+      "zgodnosc": "zero platnego AI, zero Stripe, zero scrapingu — wylacznie wlasne API i dane juz w bazie"
     }
   },
   "nastepne_zrodlo": {
@@ -147,7 +239,8 @@
     "kolejne_w_macierzy": [
       "TED form-type = result (4 297 polskich ogłoszeń / 30 dni) — zasila statystyki cen i konkurencji (jobs/aggregateResults.js), dziś liczone wyłącznie z BZP",
       "TED form-type = cont-modif (219 / 30 dni) — zmiany umów, sygnał o rynku wykonawców"
-    ]
+    ],
+    "uwaga_po_etapie_4": "Rekomendacja bez zmian (TED planning). Etap 4 nie dodal zrodla — dodal WIDOCZNOSC tego, co juz mamy, i uczciwy opis granic."
   },
   "otwarte_blokady": [
     {
@@ -222,5 +315,18 @@
       "uwaga": "okna 3-godzinne (bzpOknoFetch, bkOknoFetch) dzialaja niezaleznie i oba domknely sie dzis czysto (error: null) — to one, a nie dailyTenderFetch, potwierdzaja zywotnosc zrodla BK"
     },
     "sprzatanie": "brak plikow .probe w drzewie (szukane rekurencyjnie) — nie bylo czego usuwac; firebase-debug.log (gitignored, 239 B) rowniez juz nie istnieje"
+  },
+  "nastepny_etap_p1": {
+    "rekomendacja": "P1-2 — zapisane wyszukiwania w trybie „Wszystkie\" + powiadomienie o nowym trafieniu",
+    "dlaczego_to": [
+      "Katalog dziala, ale kazde wejscie zaczyna sie od ustawiania tych samych filtrow — a wykonawca ma 2-3 stale obszary (branza + wojewodztwo + widelki), nie jeden.",
+      "Caly transport juz istnieje: filtry sa znormalizowane i serializowalne (lib/katalogPrzetargow.normalizujFiltry), a powiadomienia push dzialaja od D-050.",
+      "To jedyna droga, zeby tryb „Wszystkie\" przestal byc przegladarka, a stal sie drugim kanalem dostarczania — dzis rynek widzi tylko ten, kto sam wejdzie i poklika.",
+      "Zero nowego kosztu AI: dopasowanie zapisanego wyszukiwania to ten sam predykat `pasujeDoFiltrow`, ktory juz dziala."
+    ],
+    "kolejne_w_kolejce": [
+      "TED planning jako czwarte zrodlo (zasila Radar planow postepowan — odbiorca istnieje i jest przetestowany, brakuje mu wylacznie danych)",
+      "P1-5 — pelne PL/EN w starszych ekranach (dzis mechanizm `tr` obejmuje nowe ekrany; reszta zostaje polska, co jest swiadome, nie przeoczone)"
+    ]
   }
 }
