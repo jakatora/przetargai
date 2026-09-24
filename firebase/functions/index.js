@@ -140,6 +140,41 @@ export const bzpOknoFetch = onSchedule(
 );
 
 /**
+ * Domykanie okna Bazy Konkurencyjności co 3 godziny, w przeplocie z BZP (etap 3).
+ *
+ * DLACZEGO OSOBNA FUNKCJA: wartość zamówienia i CPV są WYŁĄCZNIE w szczegółach
+ * (`GET /announcements/{id}`), więc pełny import to N+1 — przy 1 135 aktywnych
+ * ogłoszeniach i 171 nowych dziennie (pomiar 2026-09-24) nie ma szans zmieścić się
+ * w `dailyTenderFetch`, który musi jeszcze policzyć dopasowania. Checkpoint pobiera
+ * szczegóły tylko dla ogłoszeń nowych i zmienionych, więc przebieg jest krótki.
+ *
+ * Harmonogram przesunięty o 50 minut względem `bzpOknoFetch`, żeby dwa importy nie
+ * konkurowały o ten sam budżet instancji i o łącze.
+ *
+ * Bez dopasowań, bez AI, bez kosztów poza odczytem publicznego API BK.
+ * Idempotencja: docId przetargu = `bk:<id>`, więc powtórki są nieszkodliwe.
+ */
+export const bkOknoFetch = onSchedule(
+  {
+    schedule: '50 */3 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 900,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runBkOkno } = await import('./src/jobs/oknoBk.js');
+    const wynik = await runBkOkno();
+
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'bkOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`bkOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'bkOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Przypomnienia o terminach składania ofert dla ZAPISANYCH przetargów (D-050).
  * Co 6 godzin — częściej niż cykl dobowy, bo terminy „za kilka godzin" muszą
  * zdążyć. Push idzie tylko do użytkowników z tokenem; wpis oznaczany jako

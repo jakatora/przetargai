@@ -385,6 +385,16 @@ export const tenders = {
       // Wymiary do statystyk wyników (R17).
       rodzaj: t.rodzaj ?? null,
       wojewodztwo: t.wojewodztwo ?? null,
+      /*
+       * Linki do TEGO SAMEGO postępowania w innych rejestrach (etap 3). Zamawiający
+       * współfinansowany z UE ogłasza je i w BZP, i w Bazie Konkurencyjności, a ofertę
+       * składa się tam, gdzie wskazuje ogłoszenie — wykonawca musi widzieć oba adresy.
+       * Scalanie robi lib/dedupZrodel.js jeszcze przed zapisem, więc drugi dokument
+       * w ogóle nie powstaje.
+       */
+      zrodla_alternatywne: t.zrodla_alternatywne ?? null,
+      // Numer sprawy w rejestrze źródłowym (BK: „2026-4203-292028").
+      numer: t.numer ?? null,
       raw_data: raw,
       published_at: t.publishedAt ?? null,
       fetched_at: nowIso(),
@@ -403,6 +413,16 @@ export const tenders = {
          * Backfill robimy TYLKO gdy pole nigdy nie było zapisane (undefined), więc to
          * jednorazowy zapis na stary dokument, nie codzienna nadpiska.
          */
+        /*
+         * Powiązanie z drugim rejestrem bywa znane DOPIERO później: BZP publikuje
+         * ogłoszenie w poniedziałek, BK to samo w środę. Gdyby zostało przy
+         * create-only, link do rejestru pobocznego nie pojawiłby się nigdy.
+         * Dopisujemy go raz — gdy dokument jeszcze go nie ma.
+         */
+        if (t.zrodla_alternatywne && !dane.zrodla_alternatywne) {
+          await ref.update({ zrodla_alternatywne: t.zrodla_alternatywne });
+          return { tender: { id, ...dane, zrodla_alternatywne: t.zrodla_alternatywne }, created: false };
+        }
         if (dane.wadium_wymagane === undefined && dane.kryterium_oceny === undefined
             && dane.liczba_czesci === undefined) {
           const meta = {

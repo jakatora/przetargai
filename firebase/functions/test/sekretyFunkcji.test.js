@@ -49,6 +49,11 @@ function sekretyFunkcjiApi() {
  */
 const PRZELACZNIKI_Z_WLACZAJACYM_DOMYSLNYM = {
   TED_ENABLED: /TED_ENABLED:\s*z\.enum\(\['true',\s*'false'\]\)\.default\('true'\)/,
+  // Baza Konkurencyjności (etap 3): default WŁĄCZAJĄCY, tak jak TED. Brak
+  // dostarczenia zmiennej zostawia trzeci rejestr włączony — czyli w stanie
+  // poprawnym dla produktu. Jej wyłączenie ma być świadomą decyzją operatora,
+  // nie skutkiem zapomnianej zmiennej przy wdrożeniu.
+  BK_ENABLED: /BK_ENABLED:\s*z\.enum\(\['true',\s*'false'\]\)\.default\('true'\)/,
   // Most do modułów na Railway (P0-4): default WŁĄCZAJĄCY, bo bez mostu sześć
   // modułów w aplikacji ze sklepów zwraca 404. Brak dostarczenia zmiennej
   // zostawia most włączony — czyli w stanie, który jest poprawny dla produktu.

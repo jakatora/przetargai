@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, oknoBzp } from '../db/repos.js';
+import { cykl, tenders, oknoBzp, oknoBk } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 
 const router = Router();
@@ -39,11 +39,14 @@ router.get('/', async (_req, res) => {
   let ostatniCykl = null;
   let otwartePrzetargi = null;
   let stanOkna = null;
+  let stanOknaBk = null;
 
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna] = await Promise.all([cykl.ostatniPrzebieg(), oknoBzp.wczytaj()]);
+    [ostatniCykl, stanOkna, stanOknaBk] = await Promise.all([
+      cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(),
+    ]);
   } catch { /* zgłoszone w polu db */ }
 
   if (dbOk) {
@@ -119,6 +122,30 @@ router.get('/', async (_req, res) => {
         fetched: stanOkna.ostatni_przebieg.fetched ?? null,
         newTenders: stanOkna.ostatni_przebieg.newTenders ?? null,
         error: stanOkna.ostatni_przebieg.error ?? null,
+      }
+      : null,
+    /*
+     * Stan domykania okna Bazy Konkurencyjności (etap 3). Trzy liczby, których
+     * nie da się wywnioskować z niczego innego:
+     *  • `pokrycie_kompletne: false` — BK listuje w NIESTABILNEJ kolejności i przy
+     *    niepełnym przejściu po prostu oddaje mniej, bez żadnego błędu. To jedyny
+     *    zewnętrzny sygnał, że część rynku nie weszła do przebiegu.
+     *  • `zaleglosc` — ile ogłoszeń czeka na pobranie szczegółu (wartość i CPV są
+     *    tylko tam). Rosnąca zaległość znaczy, że okno się NIE domyka.
+     *  • `anulowane` — ile postępowań wypadło z puli w ostatnim przebiegu.
+     */
+    bk_okno: stanOknaBk?.ostatni_przebieg
+      ? {
+        zakonczony_o: stanOknaBk.ostatni_przebieg.zakonczony_o ?? null,
+        aktywne_w_zrodle: stanOknaBk.ostatni_przebieg.aktywne_w_zrodle ?? null,
+        aktywne_pobrane: stanOknaBk.ostatni_przebieg.aktywne_pobrane ?? null,
+        pokrycie_kompletne: stanOknaBk.ostatni_przebieg.pokrycie_kompletne ?? null,
+        zaleglosc: stanOknaBk.ostatni_przebieg.zaleglosc ?? null,
+        fetched: stanOknaBk.ostatni_przebieg.fetched ?? null,
+        newTenders: stanOknaBk.ostatni_przebieg.newTenders ?? null,
+        zaktualizowane: stanOknaBk.ostatni_przebieg.zaktualizowane ?? null,
+        anulowane: stanOknaBk.ostatni_przebieg.anulowane ?? null,
+        error: stanOknaBk.ostatni_przebieg.error ?? null,
       }
       : null,
     cron: {
