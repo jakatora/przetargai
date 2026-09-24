@@ -117,6 +117,41 @@ export const api = {
   getTenderFiltry: () => request('/tenders/filtry'),
   /** Zakres danych: obsługiwane rejestry, ostatni sukces/błąd per źródło, czego NIE obejmujemy. */
   getZakresDanych: () => request('/tenders/zakres-danych'),
+
+  // ----- Monitoring: zapisane wyszukiwania, alerty, kalendarz (etap 5) -----
+  // Zapisane wyszukiwanie zamienia jedno spojrzenie na katalog w stałą obserwację.
+  // Filtry idą TYM SAMYM kształtem co do `/tenders` (lib/katalogPrzetargow), więc
+  // alert obejmuje dokładnie ten zbiór, z którego został zapisany. Bez płatnego AI.
+  /** Lista własnych obserwacji + wykorzystanie limitów. */
+  getWyszukiwania: () => request('/wyszukiwania'),
+  /** Słownik częstotliwości i limitów (etykiety PL/EN) — aplikacja nie wymyśla własnych. */
+  getCzestotliwosci: () => request('/wyszukiwania/czestotliwosci'),
+  /** Zapis: { nazwa, filtry, alert_wlaczony?, czestotliwosc? }. 409 = duplikat albo limit. */
+  zapiszWyszukiwanie: (payload) => request('/wyszukiwania', { method: 'POST', body: payload }),
+  /** Edycja CZĄSTKOWA — pole nieprzekazane zachowuje dotychczasową wartość. */
+  edytujWyszukiwanie: (id, payload) => request(`/wyszukiwania/${id}`, { method: 'PATCH', body: payload }),
+  usunWyszukiwanie: (id) => request(`/wyszukiwania/${id}`, { method: 'DELETE', body: {} }),
+  /** Podgląd „co teraz pasuje" — NIE konsumuje okna monitoringu. */
+  podgladWyszukiwania: (id, limit = 20) => request(`/wyszukiwania/${id}/podglad?limit=${limit}`),
+
+  /** Centrum alertów: lista + licznik nieprzeczytanych + słownik typów zmian. */
+  getAlerty: (limit = 50) => request(`/alerty?limit=${limit}`),
+  oznaczAlertPrzeczytany: (id) => request(`/alerty/${id}/przeczytany`, { method: 'POST', body: {} }),
+  oznaczAlertyPrzeczytane: () => request('/alerty/przeczytane', { method: 'POST', body: {} }),
+  /** Pełna historia zmian JEDNEGO ogłoszenia — także zmiany nieistotne dla alertu. */
+  getHistorieZmian: (tenderId, limit = 50) => request(`/alerty/zmiany/${tenderId}?limit=${limit}`),
+
+  /** Kalendarz: trzy terminy każdego zapisanego przetargu + karta następnego kroku. */
+  getKalendarz: () => request('/kalendarz'),
+  /** Kalendarz JEDNEGO ogłoszenia — do sekcji na ekranie szczegółów. */
+  getKalendarzPrzetargu: (tenderId) => request(`/kalendarz/${tenderId}`),
+  /**
+   * Adres pliku ICS. Zwracamy ADRES, a nie treść: pobranie idzie przez `fetch`
+   * z nagłówkiem autoryzacji w ekranie, który od razu oddaje plik systemowemu
+   * udostępnianiu. To świadomie NIE jest adres subskrypcji kalendarza — ten
+   * wymagałby długożyciowego tokenu w samym URL-u.
+   */
+  urlKalendarzaIcs: () => `${API_URL}/kalendarz/ics`,
   /**
    * Wyjaśnienie AI ogłoszenia (D-052). Odpowiedź: { streszczenie, cached } gdy się
    * udało, albo { streszczenie: null, powod, komunikat } przy limicie/niedostępności.
