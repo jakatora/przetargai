@@ -41,3 +41,32 @@ test('filtrujWojewodztwo — po kodzie; pusty = wszystkie', () => {
   assert.equal(filtrujWojewodztwo(m, null).length, 3);
   assert.deepEqual(filtrujWojewodztwo(null, '14'), []);
 });
+
+/*
+ * Pomiar etapu 3: Baza Konkurencyjności podaje region NAZWĄ („małopolskie"),
+ * a nie kodem TERYT jak BZP („PL12"). Normalizator rozpoznający wyłącznie cyfry
+ * zwracał dla BK null, więc filtr województwa CHOWAŁ całe źródło — bez błędu,
+ * bez śladu, po prostu mniej wyników.
+ */
+
+test('KRYTYCZNE: nazwa województwa z Bazy Konkurencyjności daje kod TERYT', () => {
+  assert.equal(kodWojewodztwa('małopolskie'), '12');
+  assert.equal(kodWojewodztwa('MAZOWIECKIE'), '14');
+  assert.equal(kodWojewodztwa('Warmińsko-mazurskie'), '28');
+  assert.equal(kodWojewodztwa('warminsko mazurskie'), '28', 'bez diakrytyków też');
+});
+
+test('nierozpoznana nazwa nadal daje null', () => {
+  assert.equal(kodWojewodztwa('Berlin'), null);
+  assert.equal(kodWojewodztwa('dolne'), null);
+});
+
+test('filtr regionu w feedzie obejmuje ogłoszenia BK obok BZP', () => {
+  const feed = [
+    { tender: { wojewodztwo: 'PL12' } },
+    { tender: { wojewodztwo: 'małopolskie' } },
+    { tender: { wojewodztwo: 'PL14' } },
+  ];
+  assert.equal(filtrujWojewodztwo(feed, '12').length, 2, 'BK i BZP w tym samym województwie');
+  assert.deepEqual(wojewodztwaObecne(feed), ['12', '14'].sort((a, b) => WOJEWODZTWA[a].localeCompare(WOJEWODZTWA[b], 'pl')));
+});
