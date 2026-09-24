@@ -4,26 +4,50 @@
       "collectionGroup": "tenders",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "source", "order": "ASCENDING" },
-        { "fieldPath": "fetched_at", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        {
+          "fieldPath": "source",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "fetched_at",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "tenders",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "source", "order": "ASCENDING" },
-        { "fieldPath": "deadline", "order": "ASCENDING" },
-        { "fieldPath": "__name__", "order": "ASCENDING" }
+        {
+          "fieldPath": "source",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "saved",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "reminder_enabled", "order": "ASCENDING" },
-        { "fieldPath": "remind_at", "order": "ASCENDING" }
+        {
+          "fieldPath": "reminder_enabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "remind_at",
+          "order": "ASCENDING"
+        }
       ]
     }
   ],
@@ -32,9 +56,18 @@
       "collectionGroup": "matches",
       "fieldPath": "created_at",
       "indexes": [
-        { "order": "ASCENDING", "queryScope": "COLLECTION" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION" },
-        { "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
       ]
     },
     {
@@ -57,6 +90,40 @@
     },
     {
       "collectionGroup": "invoices",
+      "fieldPath": "ttl",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "wyszukiwania",
+      "fieldPath": "alert_wlaczony",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "zmiany",
+      "fieldPath": "wykryto_o",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "alerty",
       "fieldPath": "ttl",
       "ttl": true,
       "indexes": []

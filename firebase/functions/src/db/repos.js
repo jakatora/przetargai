@@ -5,6 +5,7 @@ import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
 import {
   planZapytania, pasujeDoFiltrow, rozmiarPobrania, SKAN_STRONA, SKAN_MAKS,
 } from '../lib/katalogPrzetargow.js';
+import { kluczZmiany } from '../lib/zmianyOgloszenia.js';
 
 /*
  * Warstwa dostępu do danych — Firestore (port z node:sqlite, D-024).
@@ -1620,5 +1621,232 @@ export const magicLinks = {
       tx.update(ref, { used_at: nowIso() });
       return link.user_id;
     });
+  },
+};
+
+// ============================ zapisane wyszukiwania ============================
+
+/**
+ * Zapisane wyszukiwania trybu „Wszystkie" (etap 5).
+ *
+ * Subkolekcja użytkownika — tak samo jak `saved` i `matches`. Powód jest ten sam:
+ * cudzego wyszukiwania nie da się nawet ZAADRESOWAĆ, więc pomyłka w kontroli
+ * dostępu na trasie nie może odsłonić czyichś kryteriów (a kryteria wyszukiwania
+ * to informacja handlowa — mówią, o jakie kontrakty firma się stara).
+ *
+ * Normalizacja i limity są CZYSTE i mieszkają w lib/zapisaneWyszukiwania.js —
+ * tutaj wyłącznie odczyt i zapis.
+ */
+const wyszukiwaniaCol = (userId) => db().collection('users').doc(userId).collection('wyszukiwania');
+
+export const wyszukiwania = {
+  async create(userId, { nazwa, filtry, alert_wlaczony = true, czestotliwosc = 'dzienna', odcisk }) {
+    const id = newId();
+    const rekord = {
+      nazwa,
+      filtry: filtry ?? {},
+      alert_wlaczony,
+      czestotliwosc,
+      odcisk,
+      /*
+       * Świeże wyszukiwanie NIE było sprawdzane. `null` (a nie „teraz") jest tu
+       * istotny: pierwszy przebieg ma je od razu objąć, a nie odczekać pełny odstęp.
+       */
+      ostatnio_sprawdzone_o: null,
+      ostatnio_trafien: null,
+      // Kursor z ostatniego przebiegu: od którego miejsca strumienia ruszyć dalej.
+      kursor: null,
+      utworzone_o: nowIso(),
+      zaktualizowane_o: nowIso(),
+    };
+    await wyszukiwaniaCol(userId).doc(id).create(rekord);
+    return { id, ...rekord };
+  },
+
+  async get(userId, id) {
+    return userSnap(await wyszukiwaniaCol(userId).doc(id).get());
+  },
+
+  /** Lista właściciela, najnowsze pierwsze. Bez paginacji — limit to 20 wpisów. */
+  async list(userId) {
+    const snap = await wyszukiwaniaCol(userId).orderBy('utworzone_o', 'desc').get();
+    return snap.docs.map(userSnap);
+  },
+
+  /** @returns {Promise<object|null>} null = nie ma takiego wpisu u TEGO użytkownika */
+  async update(userId, id, zmiany) {
+    const ref = wyszukiwaniaCol(userId).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    await ref.update({ ...zmiany, zaktualizowane_o: nowIso() });
+    return userSnap(await ref.get());
+  },
+
+  /** @returns {Promise<boolean>} false = nie było czego usuwać (powtórka nie jest błędem) */
+  async remove(userId, id) {
+    const ref = wyszukiwaniaCol(userId).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    await ref.delete();
+    return true;
+  },
+
+  /**
+   * Zamyka przebieg: czas sprawdzenia + kursor, od którego ruszy następny.
+   *
+   * Zapis JEST osobną operacją od wysyłki powiadomienia i następuje PO niej —
+   * gdyby przebieg padł między jednym a drugim, powtórka wyśle ten sam alert,
+   * a ten zostanie odsiany po kluczu idempotencji w `alerty.dodaj`. Odwrotna
+   * kolejność gubiłaby trafienia bez śladu.
+   */
+  async oznaczSprawdzone(userId, id, { teraz, kursor = null, trafien = 0 }) {
+    const ref = wyszukiwaniaCol(userId).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    await ref.update({
+      ostatnio_sprawdzone_o: teraz,
+      kursor,
+      ostatnio_trafien: trafien,
+    });
+    return true;
+  },
+
+  /**
+   * Wszystkie WŁĄCZONE wyszukiwania, ze wszystkich kont — wejście harmonogramu.
+   *
+   * Filtr `alert_wlaczony == true` jest po stronie bazy celowo: wyłączona
+   * obserwacja nie może kosztować odczytu w każdym przebiegu. Hamulec
+   * częstotliwości działa DOPIERO na wyniku, bo zależy od czasu i jest czysty.
+   *
+   * Bez `orderBy` — collectionGroup z sortowaniem wymagałby indeksu złożonego,
+   * a kolejność sprawdzania nie ma tu znaczenia.
+   */
+  async zAlertem() {
+    const snap = await db().collectionGroup('wyszukiwania').where('alert_wlaczony', '==', true).get();
+    return snap.docs.map((d) => ({ userId: d.ref.parent.parent.id, id: d.id, ...d.data() }));
+  },
+};
+
+// ============================ historia zmian ogłoszeń ============================
+
+/**
+ * Historia zmian pojedynczego ogłoszenia: tenders/{tenderId}/zmiany/{kluczZmiany}.
+ *
+ * docId = deterministyczny klucz przejścia (lib/zmianyOgloszenia.kluczZmiany), więc
+ * IDEMPOTENCJA jest własnością modelu, a nie ostrożności wołającego: ten sam przebieg
+ * powtórzony po awarii nie dokłada ani jednego wpisu. To jest ważne, bo okna
+ * pobierania wznawiają się po przerwaniu i rutynowo widzą te same ogłoszenia
+ * drugi raz.
+ */
+const zmianyCol = (tenderId) => db().collection('tenders').doc(tenderId).collection('zmiany');
+
+export const historiaZmian = {
+  /**
+   * Zapisuje partię zmian. Wpis, który już istnieje, NIE jest nadpisywany — chcemy
+   * czas PIERWSZEGO wykrycia, bo to on mówi, ile czasu wykonawca realnie miał.
+   * @returns {Promise<{zapisane: number, pominiete: number}>}
+   */
+  async zapisz(tenderId, zmiany, { wykryto_o = nowIso() } = {}) {
+    let zapisane = 0;
+    let pominiete = 0;
+
+    for (const zmiana of zmiany ?? []) {
+      const id = kluczZmiany(tenderId, zmiana);
+      try {
+        await zmianyCol(tenderId).doc(id).create({ ...zmiana, tender_id: tenderId, wykryto_o });
+        zapisane += 1;
+      } catch (err) {
+        if (err.code === 6 /* ALREADY_EXISTS */) { pominiete += 1; continue; }
+        throw err;
+      }
+    }
+    return { zapisane, pominiete };
+  },
+
+  /** Historia jednego ogłoszenia, od najnowszej zmiany. */
+  async lista(tenderId, limit = 50) {
+    const snap = await zmianyCol(tenderId).orderBy('wykryto_o', 'desc').limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, tenderId, ...d.data() }));
+  },
+
+  /**
+   * Zmiany wykryte OD podanej chwili, ze wszystkich ogłoszeń — wejście harmonogramu
+   * alertów. Nierówność i `orderBy` są na TYM SAMYM polu, więc zapytanie mieści się
+   * w indeksie grupy zadeklarowanym w firestore.indexes.json.
+   */
+  async odCzasu(od, limit = 500) {
+    const snap = await db().collectionGroup('zmiany')
+      .where('wykryto_o', '>=', od)
+      .orderBy('wykryto_o', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => ({ id: d.id, tenderId: d.ref.parent.parent.id, ...d.data() }));
+  },
+};
+
+// ============================ centrum alertów ============================
+
+/** Ile dni trzymamy alert w centrum — potem kasuje go polityka TTL Firestore. */
+const ALERTY_DNI = 90;
+
+const alertyCol = (userId) => db().collection('users').doc(userId).collection('alerty');
+
+export const alerty = {
+  /**
+   * Dokłada alert. docId = `klucz` wyliczony przez wołającego, więc ten sam alert
+   * wysłany dwa razy zostaje JEDNYM wpisem — to jest cała idempotencja powiadomień.
+   * @returns {Promise<{id: string, nowy: boolean}>}
+   */
+  async dodaj(userId, alert, teraz = nowIso()) {
+    const id = String(alert.klucz);
+    const rekord = {
+      typ: alert.typ,
+      wyszukiwanie_id: alert.wyszukiwanie_id ?? null,
+      tender_id: alert.tender_id ?? null,
+      tytul: alert.tytul ?? null,
+      tresc: alert.tresc ?? null,
+      pozycje: alert.pozycje ?? [],
+      ton: alert.ton ?? 'neutral',
+      przeczytany: false,
+      utworzone_o: teraz,
+      // Pole typu Timestamp — TYLKO takie honoruje polityka TTL Firestore.
+      ttl: new Date(Date.parse(teraz) + ALERTY_DNI * 86_400_000),
+    };
+    try {
+      await alertyCol(userId).doc(id).create(rekord);
+      return { id, nowy: true };
+    } catch (err) {
+      if (err.code === 6 /* ALREADY_EXISTS */) return { id, nowy: false };
+      throw err;
+    }
+  },
+
+  /** Centrum alertów: od najnowszego. */
+  async lista(userId, limit = 100) {
+    const snap = await alertyCol(userId).orderBy('utworzone_o', 'desc').limit(limit).get();
+    return snap.docs.map(userSnap);
+  },
+
+  /** Licznik na plakietce. Zapytanie równościowe — mieści się w indeksie automatycznym. */
+  async nieprzeczytane(userId) {
+    const wynik = await alertyCol(userId).where('przeczytany', '==', false).count().get();
+    return wynik.data().count;
+  },
+
+  async oznaczPrzeczytany(userId, id) {
+    const ref = alertyCol(userId).doc(id);
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    await ref.update({ przeczytany: true, przeczytany_o: nowIso() });
+    return true;
+  },
+
+  async oznaczWszystkiePrzeczytane(userId) {
+    const snap = await alertyCol(userId).where('przeczytany', '==', false).get();
+    if (snap.empty) return 0;
+    const batch = db().batch();
+    for (const d of snap.docs) batch.update(d.ref, { przeczytany: true, przeczytany_o: nowIso() });
+    await batch.commit();
+    return snap.size;
   },
 };
