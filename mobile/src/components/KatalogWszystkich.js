@@ -329,6 +329,20 @@ export default function KatalogWszystkich({ navigation }) {
             )}
           </Text>
 
+          {/*
+            WEJŚCIE DO OBSERWACJI (etap 5). Przycisk stoi TU, a nie na osobnym ekranie,
+            bo filtry są tutaj — i tylko tutaj użytkownik wie, co dokładnie zapisuje.
+            Druga, równoległa lista filtrów w ekranie obserwacji rozjechałaby się
+            z katalogiem przy pierwszej zmianie i alert dotyczyłby innego zbioru
+            niż widziana lista.
+          */}
+          <Button
+            title={t('Zapisz to wyszukiwanie', 'Save this search')}
+            variant="ghost"
+            onPress={() => navigation.navigate('ZapisaneWyszukiwania', { filtry })}
+            style={styles.wyczysc}
+          />
+
           {aktywnych > 0 ? (
             <Button title={t('Wyczyść filtry', 'Clear filters')} variant="ghost" onPress={wyczyscFiltry} style={styles.wyczysc} />
           ) : null}

@@ -41,7 +41,7 @@ export const KATALOG_NARZEDZI = [
     kategoria: 'Terminy',
     narzedzia: [
       { ekran: 'KalkulatorTerminow', tytul: 'Kalkulator terminów Pzp', opis: 'Dni robocze i święta, przesunięcie z dnia wolnego' },
-      { ekran: 'KalendarzTerminow', tytul: 'Kalendarz terminów', opis: 'Oś czasu terminów z zapisanych' },
+      { ekran: 'KalendarzTerminow', tytul: 'Kalendarz terminów', opis: 'Pytania do SWZ, składanie ofert, koniec związania — z kartą następnego kroku' },
       { ekran: 'TerminZwiazania', tytul: 'Strażnik terminu związania', opis: 'Nie wypadnij przez przegapione pismo' },
       { ekran: 'StraznikWezwania', tytul: 'Strażnik wezwania do uzupełnienia', opis: 'Krótki termin, jedna szansa (art. 128)' },
       { ekran: 'WizjaLokalna', tytul: 'Wykrywacz obowiązkowej wizji lokalnej', opis: 'Brak wizji = odrzucenie' },
@@ -62,6 +62,8 @@ export const KATALOG_NARZEDZI = [
       { ekran: 'Pulpit', tytul: 'Pulpit — moje postępowania', opis: 'Widok etapowy prowadzonych ofert' },
       { ekran: 'Saved', tytul: 'Zapisane przetargi', opis: 'Zakładki, etapy i przypomnienia' },
       { ekran: 'PodprogoweUstawienia', tytul: 'Radar zamówień podprogowych', opis: 'Zakupy poniżej progu Pzp — łatwiejszy start' },
+      { ekran: 'ZapisaneWyszukiwania', tytul: 'Zapisane wyszukiwania', opis: 'Obserwuj rynek: alert o nowych przetargach i o zmianach' },
+      { ekran: 'CentrumAlertow', tytul: 'Alerty i zmiany', opis: 'Zmiany terminu, wartości i anulowania w jednym miejscu' },
     ],
   },
   {

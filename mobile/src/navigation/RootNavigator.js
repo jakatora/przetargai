@@ -38,6 +38,8 @@ import TajemnicaScreen from '../screens/TajemnicaScreen';
 import SamooczyszczenieScreen from '../screens/SamooczyszczenieScreen';
 import KalkulatorTerminowScreen from '../screens/KalkulatorTerminowScreen';
 import KalendarzTerminowScreen from '../screens/KalendarzTerminowScreen';
+import ZapisaneWyszukiwaniaScreen from '../screens/ZapisaneWyszukiwaniaScreen';
+import CentrumAlertowScreen from '../screens/CentrumAlertowScreen';
 import SciezkaDoOfertyScreen from '../screens/SciezkaDoOfertyScreen';
 import KalkulatorCenyScreen from '../screens/KalkulatorCenyScreen';
 import SymulatorPunktacjiScreen from '../screens/SymulatorPunktacjiScreen';
@@ -242,6 +244,17 @@ export default function RootNavigator() {
               name="KalendarzTerminow"
               component={KalendarzTerminowScreen}
               options={{ title: 'Kalendarz terminów' }}
+            />
+            {/* Monitoring szans i terminów (etap 5) — obserwacje rynku i ich alerty. */}
+            <Stack.Screen
+              name="ZapisaneWyszukiwania"
+              component={ZapisaneWyszukiwaniaScreen}
+              options={{ title: 'Zapisane wyszukiwania' }}
+            />
+            <Stack.Screen
+              name="CentrumAlertow"
+              component={CentrumAlertowScreen}
+              options={{ title: 'Alerty i zmiany' }}
             />
             <Stack.Screen
               name="SciezkaDoOferty"
