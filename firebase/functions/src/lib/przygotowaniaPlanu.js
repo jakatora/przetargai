@@ -335,6 +335,13 @@ export function generujPlanPrzygotowan({ pozycja, profil, dzisiaj } = {}) {
   let komunikat;
   if (termin == null) {
     komunikat = 'Termin wszczęcia w planie jest nieokreślony — ustaw przypomnienie i monitoruj aktualizacje planu.';
+  } else if (miesiacyDoWszczecia != null && miesiacyDoWszczecia < 0) {
+    // Pozycja wisi w radarze jeszcze 60 dni po dacie (lib/indeksPlanow.js), więc
+    // „minione" plany są normalne — i nie wolno pisać o ujemnych miesiącach.
+    komunikat = `Przewidywany termin wszczęcia minął ok. ${-miesiacyDoWszczecia} mies. temu — `
+      + 'sprawdź, czy przetarg już się ukazał albo czy zamawiający go nie przesunął.';
+  } else if (miesiacyDoWszczecia === 0) {
+    komunikat = 'Wszczęcie spodziewane w tym miesiącu — dokumenty, moce i finansowanie powinny być gotowe już teraz.';
   } else if (dniDoStartu != null && dniDoStartu <= 0) {
     komunikat = `Najwyższy czas na przygotowania — planowy start minął ${-dniDoStartu} dni temu; `
       + `do wszczęcia zostało ok. ${miesiacyDoWszczecia} mies.`;

@@ -199,3 +199,29 @@ test('brak pozycji/profilu → plan bazowy bez wyjątku', () => {
   assert.ok(p.dokumenty.map((d) => d.klucz).includes('oswiadczenie_wykluczenie'));
   assert.equal(p.wszczecieData, null);
 });
+
+// ── Zmierzone na produkcji (2026-09-24, import 2 041 planów TED): plan, którego
+// przewidywana data już minęła, dostawał „do wszczęcia zostało ok. -2 mies.".
+// Plan WOI wisi w radarze 60 dni po dacie, więc takie pozycje są NORMALNE.
+test('komunikat: termin w przeszłości → „minął", nigdy ujemna liczba miesięcy', () => {
+  const plan = generujPlanPrzygotowan({
+    pozycja: { przedmiot: 'x', cpv: '72000000', terminWszczecia: '2026-07-30' },
+    profil: { cpv: ['72000000'] },
+    dzisiaj: '2026-09-24',
+  });
+  assert.equal(plan.miesiacyDoWszczecia, -2);
+  assert.doesNotMatch(plan.komunikat, /-\d/);
+  assert.match(plan.komunikat, /minął ok\. 2 mies\. temu/);
+  assert.match(plan.komunikat, /sprawdź/i);
+});
+
+test('komunikat: ogłoszenie w bieżącym miesiącu → „w tym miesiącu", nie „0 mies."', () => {
+  const plan = generujPlanPrzygotowan({
+    pozycja: { przedmiot: 'x', cpv: '72000000', terminWszczecia: '2026-09-30' },
+    profil: { cpv: ['72000000'] },
+    dzisiaj: '2026-09-24',
+  });
+  assert.equal(plan.miesiacyDoWszczecia, 0);
+  assert.doesNotMatch(plan.komunikat, /0 mies\./);
+  assert.match(plan.komunikat, /w tym miesiącu/);
+});

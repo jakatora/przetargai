@@ -185,3 +185,30 @@ describe('szczegół pozycji planu', () => {
     assert.deepEqual(o, { przedmiot: 'T', cpv: '45233140-2', wartosc: 10, dataPublikacji: '2026-11-25' });
   });
 });
+
+describe('kolejność: nadchodzące → bez daty → minione (pomiar produkcyjny)', () => {
+  /*
+   * Po imporcie 2 041 planów lista „Wszystkie" zaczynała się od planów z datą
+   * sprzed dwóch miesięcy — pozycja wisi w radarze 60 dni po dacie, a sortowanie
+   * rosnące po terminie wynosiło je na samą górę.
+   */
+  const wpisy = [
+    wpis('minal-dawno', { terminWszczecia: '2026-07-30' }),
+    wpis('minal-niedawno', { terminWszczecia: '2026-08-20' }),
+    wpis('bez-daty', { terminWszczecia: null }),
+    wpis('ten-miesiac', { terminWszczecia: '2026-09-30' }),
+    wpis('pozniej', { terminWszczecia: '2026-12-01' }),
+  ];
+
+  test('tryb wszystkie', () => {
+    const w = zbudujRadar({ wpisy, uzytkownik: {}, dzisiaj: DZIS, tryb: 'wszystkie' });
+    assert.deepEqual(w.pozycje.map((p) => p.id),
+      ['ten-miesiac', 'pozniej', 'bez-daty', 'minal-niedawno', 'minal-dawno']);
+  });
+
+  test('tryb dla mnie — ta sama zasada po rankingu', () => {
+    const w = zbudujRadar({ wpisy, uzytkownik: UZYTKOWNIK, dzisiaj: DZIS });
+    assert.deepEqual(w.pozycje.map((p) => p.id),
+      ['ten-miesiac', 'pozniej', 'bez-daty', 'minal-niedawno', 'minal-dawno']);
+  });
+});

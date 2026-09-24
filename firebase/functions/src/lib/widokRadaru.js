@@ -76,9 +76,26 @@ function karta(wpis, dzisiaj, ocena = null) {
   };
 }
 
-function klucz(termin) {
-  return termin ?? '9999-99-99';
+/**
+ * Grupa kolejności: 0 = nadchodzące (od bieżącego miesiąca), 1 = bez daty,
+ * 2 = minione. Pozycja wisi w radarze 60 dni po dacie, więc bez tego podziału
+ * sortowanie rosnące po terminie wynosiło na górę plany sprzed dwóch miesięcy
+ * (zmierzone po imporcie 2 041 planów na produkcji).
+ */
+function grupaKolejnosci(karta) {
+  if (karta.miesiacyDoWszczecia === null || karta.miesiacyDoWszczecia === undefined) return 1;
+  return karta.miesiacyDoWszczecia >= 0 ? 0 : 2;
 }
+
+/** Stabilnie układa karty wg grupy; w grupie minionych — najświeższe najpierw. */
+function ulozKarty(karty, wGrupie) {
+  return karty
+    .map((k, i) => ({ k, i, g: grupaKolejnosci(k) }))
+    .sort((a, b) => (a.g - b.g) || wGrupie(a, b))
+    .map(({ k }) => k);
+}
+
+const poTerminie = (a, b) => String(a.k.terminWszczecia ?? '').localeCompare(String(b.k.terminWszczecia ?? ''));
 
 /**
  * Lista radaru.
@@ -97,15 +114,20 @@ export function zbudujRadar({ wpisy, uzytkownik, dzisiaj, tryb = 'dla_mnie', reg
   if (trybFaktyczny === 'dla_mnie') {
     const trafienia = dopasujPozycjePlanu({ pozycjePlanow: aktywne, profil });
     dopasowanych = trafienia.length;
-    pozycje = trafienia.slice(0, ile).map((t) => karta(t.pozycja, dzisiaj, t));
+    // Radar sortuje rosnąco po terminie (przy remisie wyższy wynik) — tę kolejność
+    // zachowujemy wewnątrz grup, minione odwracamy (najświeższe najpierw).
+    pozycje = ulozKarty(trafienia.map((t) => karta(t.pozycja, dzisiaj, t)),
+      (a, b) => (a.g === 2 ? b.i - a.i : a.i - b.i)).slice(0, ile);
   } else {
     const kodRegionu = region ? kodWojewodztwa(region) : null;
-    pozycje = aktywne
+    const karty = aktywne
       .filter((w) => !kodRegionu || w.region === kodRegionu)
-      .sort((a, b) => klucz(a.terminWszczecia).localeCompare(klucz(b.terminWszczecia))
-        || String(b.opublikowano ?? '').localeCompare(String(a.opublikowano ?? '')))
-      .slice(0, ile)
       .map((w) => karta(w, dzisiaj));
+    pozycje = ulozKarty(karty, (a, b) => {
+      if (a.g === 0) return poTerminie(a, b);
+      if (a.g === 2) return poTerminie(b, a);
+      return String(b.k.opublikowano ?? '').localeCompare(String(a.k.opublikowano ?? ''));
+    }).slice(0, ile);
   }
 
   let podpowiedz = null;
