@@ -384,6 +384,70 @@ async function stronicuj(zapytanie, sufit, rozmiarStrony) {
  * zobaczy to ogłoszenie ponownie. Zapis jest idempotentny (docId = klucz przejścia),
  * więc powtórka niczego nie zdubluje.
  */
+/**
+ * Uzgadnia ZDENORMALIZOWANE kopie przetargu (users/{uid}/saved i users/{uid}/matches)
+ * ze zmianą w źródle (naprawa 2026-09-25).
+ *
+ * `saved.add` i `matches.create` kopiują `tender_deadline`, bo lista renderuje się
+ * bez JOIN-a, a przypomnienia liczą `remind_at` z tej kopii. Dopóki ogłoszenie było
+ * niemutowalne, kopia nie mogła się zestarzeć; Baza Konkurencyjności wydaje jednak
+ * kolejne wersje (najczęściej z NOWYM terminem) i anuluje postępowania. Bez tego
+ * zamawiający skracał termin z +20 do +4 dni, a Zapisane dalej pokazywały +20,
+ * przypomnienie „7 dni przed" wypadało PO nowym terminie.
+ *
+ *  • nowy termin: nadpisujemy kopię; włączone, jeszcze niedokończone przypomnienie
+ *    przeliczamy tą samą regułą etapów co przy włączeniu (`nastepneRemind`),
+ *    z pominięciem etapów już wysłanych,
+ *  • anulowanie: znacznik na kopiach i WYŁĄCZENIE przypomnienia.
+ *
+ * Aktualizujemy tylko kopie, które się różnią — powtórka nic nie zapisuje.
+ * Zapytania `collectionGroup` po `tender_id` mają indeksy w firestore.indexes.json
+ * (fieldOverrides, COLLECTION_GROUP).
+ *
+ * @returns {Promise<number>} ile kopii zaktualizowano
+ */
+async function uzgodnijKopiePrzetargu(tenderId, { deadline = null, anulowany = false }, teraz = nowIso()) {
+  const [zapisane, dopasowania] = await Promise.all([
+    db().collectionGroup('saved').where('tender_id', '==', tenderId).get(),
+    db().collectionGroup('matches').where('tender_id', '==', tenderId).get(),
+  ]);
+
+  const zmiany = [];
+  for (const d of zapisane.docs) {
+    const s = d.data();
+    const pola = {};
+    if (deadline && s.tender_deadline !== deadline) {
+      pola.tender_deadline = deadline;
+      if (s.reminder_enabled === true && s.reminder_notified !== true) {
+        // Wysłane = etapy już doręczone; bieżący `remind_etap` dopiero czekał.
+        const nast = nastepneRemind(deadline, teraz, s.reminded_stages ?? []);
+        if (nast) Object.assign(pola, { remind_at: nast.at, remind_etap: nast.etap });
+        else pola.reminder_notified = true; // nowy termin już minął — nie ma o czym przypominać
+      }
+    }
+    if (anulowany) {
+      if (s.tender_anulowany !== true) pola.tender_anulowany = true;
+      if (s.reminder_enabled === true) pola.reminder_enabled = false;
+    }
+    if (Object.keys(pola).length) zmiany.push([d.ref, pola]);
+  }
+  for (const d of dopasowania.docs) {
+    const m = d.data();
+    const pola = {};
+    if (deadline && m.tender_deadline !== deadline) pola.tender_deadline = deadline;
+    if (anulowany && m.tender_anulowany !== true) pola.tender_anulowany = true;
+    if (Object.keys(pola).length) zmiany.push([d.ref, pola]);
+  }
+
+  // Batch Firestore mieści 500 operacji — popularny przetarg bywa zapisany u wielu kont.
+  for (let i = 0; i < zmiany.length; i += 400) {
+    const batch = db().batch();
+    for (const [ref, pola] of zmiany.slice(i, i + 400)) batch.update(ref, pola);
+    await batch.commit();
+  }
+  return zmiany.length;
+}
+
 async function zapiszHistorieBezpiecznie(tenderId, zmiany) {
   if (!zmiany?.length) return;
   try {
@@ -577,6 +641,14 @@ export const tenders = {
 
     await ref.update(pola);
     await zapiszHistorieBezpiecznie(id, zmiany);
+    /*
+     * Termin z tej wersji ogłoszenia musi dotrzeć też do KOPII w „Zapisanych"
+     * i dopasowaniach (2026-09-25) — patrz `uzgodnijKopiePrzetargu`. Uzgadniamy przy
+     * KAŻDEJ wersji niosącej termin, nie tylko przy wykrytej zmianie: gdy uzgodnienie
+     * padnie, okno BK ponowi aktualizację, a wtedy dokument ma już nowy termin i sama
+     * „wykryta zmiana" nie powtórzyłaby się. Błąd leci do wołającego właśnie po to.
+     */
+    if (pola.deadline) await uzgodnijKopiePrzetargu(id, { deadline: pola.deadline });
 
     return { zmienione: true, zmiany };
   },
@@ -609,6 +681,9 @@ export const tenders = {
 
     await ref.update(pola);
     await zapiszHistorieBezpiecznie(id, zmiany);
+    // Przypomnienie o terminie postępowania, którego już nie ma, to fałszywy alarm
+    // z kalendarza — wyłączamy je na kopiach (2026-09-25).
+    await uzgodnijKopiePrzetargu(id, { anulowany: true });
     return true;
   },
 

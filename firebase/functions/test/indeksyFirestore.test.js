@@ -177,3 +177,27 @@ test('strumień nowych ogłoszeń monitoringu ma indeks jednopolowy tenders.fetc
   const ma = (nadpisanie.indexes ?? []).some((i) => i.queryScope === 'COLLECTION' && i.order === 'ASCENDING');
   assert.ok(ma, 'fieldOverride tenders.fetched_at bez indeksu ASCENDING/COLLECTION wyłącza strumień monitoringu');
 });
+
+test('collectionGroup(X).where(pole) ma indeks COLLECTION_GROUP właśnie na TYM polu', () => {
+  /*
+   * Ogólny strażnik wyżej pyta tylko, czy grupa ma JAKIŚ indeks grupowy. To za mało:
+   * `saved` miała indeks (reminder_enabled, remind_at), więc nowe zapytanie po
+   * `tender_id` (uzgadnianie kopii po zmianie terminu, 2026-09-25) przeszłoby test
+   * i padło na produkcji FAILED_PRECONDITION. Sprawdzamy konkretne pole.
+   */
+  const konfiguracja = JSON.parse(fs.readFileSync(INDEXES, 'utf8'));
+  const naruszenia = [];
+  const widziane = [];
+  for (const m of kod.matchAll(/collectionGroup\(\s*['"](\w+)['"]\s*\)\s*\.where\(\s*['"]([\w.]+)['"]/g)) {
+    const [, grupa, pole] = m;
+    widziane.push(`${grupa}.${pole}`);
+    const zlozony = (konfiguracja.indexes ?? []).some((i) => i.collectionGroup === grupa
+      && i.queryScope === 'COLLECTION_GROUP' && (i.fields ?? []).some((f) => f.fieldPath === pole));
+    const jednopolowy = (konfiguracja.fieldOverrides ?? []).some((o) => o.collectionGroup === grupa
+      && o.fieldPath === pole && (o.indexes ?? []).some((i) => i.queryScope === 'COLLECTION_GROUP'));
+    if (!zlozony && !jednopolowy) naruszenia.push(`collectionGroup('${grupa}').where('${pole}')`);
+  }
+  assert.ok(widziane.includes('saved.tender_id') && widziane.includes('matches.tender_id'),
+    `strażnik nie widzi zapytań po tender_id: ${widziane.join(', ')}`);
+  assert.deepEqual(naruszenia, [], 'zapytanie grupowe bez indeksu grupowego na polu filtra');
+});

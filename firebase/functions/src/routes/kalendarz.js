@@ -33,13 +33,19 @@ const PUSTKA = {
  * kopii, a to informacja, której przemilczenie kosztuje najwięcej — kalendarz
  * kazałby przygotowywać ofertę na postępowanie, którego już nie ma.
  */
-function zeZapisanego(wpis, anulowany) {
+function zeZapisanego(wpis, dokument) {
   return {
     id: wpis.tender_id ?? wpis.id,
     title: wpis.tender_title ?? null,
     source: wpis.tender_source ?? 'bzp',
-    deadline: wpis.tender_deadline ?? null,
-    anulowany,
+    /*
+     * Termin z DOKUMENTU przetargu, kopia tylko awaryjnie (2026-09-25). Baza
+     * Konkurencyjności wydaje kolejne wersje ogłoszenia z nowym terminem, a kopia
+     * na wpisie „Zapisanych" potrafi się zestarzeć — dokument i tak czytamy tu
+     * po znacznik anulowania, więc prawdziwy termin nic nie kosztuje.
+     */
+    deadline: dokument?.deadline ?? wpis.tender_deadline ?? null,
+    anulowany: dokument?.anulowany === true,
   };
 }
 
@@ -76,7 +82,7 @@ export async function kalendarzeUzytkownika(userId, teraz) {
   );
 
   return zapisane.map((wpis, i) => ({
-    ...zbudujKalendarz(zeZapisanego(wpis, dokumenty[i]?.anulowany === true), { teraz }),
+    ...zbudujKalendarz(zeZapisanego(wpis, dokumenty[i]), { teraz }),
     przypomnienie: stanPrzypomnienia(wpis),
   }));
 }
