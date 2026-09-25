@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   naDzienUTC, dodajLata, roznicaDni, dzisiajUTC, odmianaDni, MS_DZIEN,
-  przesuniecieStrefyPL, dzisiajPL, koniecDniaPL, chwilaPL,
+  przesuniecieStrefyPL, dzisiajPL, koniecDniaPL, chwilaPL, chwilaUplywuTerminu,
 } from '../src/lib/dataUtc.js';
 
 const MS_GODZINA = 3_600_000;
@@ -20,6 +20,97 @@ test('naDzienUTC: śmieci i daty niemożliwe → null', () => {
   assert.equal(naDzienUTC(''), null);
   assert.equal(naDzienUTC(null), null);
   assert.equal(naDzienUTC(undefined), null);
+});
+
+/*
+ * Poprawka 2026-09-25: parser przepuszczał `new Date(str)` dla zapisów nie-ISO —
+ * „1.06.2026" → styczeń, „10.06.2026" → 5/6 października, „2026-6-10" → dzień wcześniej.
+ * Teraz TYLKO `YYYY-MM-DD` (opcjonalnie z częścią czasu ISO) i jawnie parsowany `DD.MM.RRRR`.
+ */
+
+test('naDzienUTC: polski zapis DD.MM.RRRR parsowany jawnie (dzień.miesiąc.rok)', () => {
+  assert.equal(naDzienUTC('10.06.2026'), Date.UTC(2026, 5, 10));
+  assert.equal(naDzienUTC('1.06.2026'), Date.UTC(2026, 5, 1));
+  assert.equal(naDzienUTC('01.06.2026'), Date.UTC(2026, 5, 1));
+  assert.equal(naDzienUTC('5.1.2026'), Date.UTC(2026, 0, 5));
+  assert.equal(naDzienUTC(' 10.06.2026 '), Date.UTC(2026, 5, 10));
+});
+
+test('naDzienUTC: polski zapis z nieistniejącym dniem/miesiącem → null', () => {
+  assert.equal(naDzienUTC('31.02.2026'), null);
+  assert.equal(naDzienUTC('29.02.2026'), null); // 2026 nie jest przestępny
+  assert.equal(naDzienUTC('32.01.2026'), null);
+  assert.equal(naDzienUTC('10.13.2026'), null);
+  assert.equal(naDzienUTC('0.06.2026'), null);
+  assert.equal(naDzienUTC('29.02.2028'), Date.UTC(2028, 1, 29)); // przestępny — OK
+});
+
+test('naDzienUTC: ISO z częścią czasu — dzień z zapisu daty', () => {
+  assert.equal(naDzienUTC('2026-06-10T12:00:00.000Z'), Date.UTC(2026, 5, 10));
+  assert.equal(naDzienUTC('2026-06-10T12:00'), Date.UTC(2026, 5, 10));
+  assert.equal(naDzienUTC('2026-06-10 12:00:00'), Date.UTC(2026, 5, 10));
+  assert.equal(naDzienUTC('2026-06-10T23:30:00+02:00'), Date.UTC(2026, 5, 10));
+});
+
+test('naDzienUTC: wszystko poza YYYY-MM-DD i DD.MM.RRRR → null (bez zgadywania przez new Date)', () => {
+  for (const zly of [
+    '2026-6-10', // bez zer wiodących — new Date dawał dzień wcześniej
+    '2026/06/10',
+    '10/06/2026',
+    '06-10-2026',
+    'June 10, 2026',
+    '10 czerwca 2026',
+    '2026-06-10abc',
+    '2026-06-10 jutro',
+    '10.06.26',
+    '10.06.2026 12:00', // polski zapis tylko jako sama data
+    'nie-data',
+  ]) {
+    assert.equal(naDzienUTC(zly), null, zly);
+  }
+  assert.equal(naDzienUTC(1781049600000), null); // liczba to nie data kalendarzowa
+});
+
+test('naDzienUTC: Date bez zmian (dzień UTC), Invalid Date → null', () => {
+  assert.equal(naDzienUTC(new Date(Date.UTC(2026, 5, 10, 12))), Date.UTC(2026, 5, 10));
+  assert.equal(naDzienUTC(new Date('x')), null);
+});
+
+test('chwilaUplywuTerminu: sama data (ISO lub PL) → 24:00 czasu polskiego', () => {
+  assert.deepEqual(chwilaUplywuTerminu('2026-06-10'), { ms: Date.UTC(2026, 5, 10, 22), zGodzina: false });
+  assert.deepEqual(chwilaUplywuTerminu('10.06.2026'), { ms: Date.UTC(2026, 5, 10, 22), zGodzina: false });
+  assert.deepEqual(chwilaUplywuTerminu('15.01.2026'), { ms: Date.UTC(2026, 0, 15, 23), zGodzina: false });
+});
+
+test('chwilaUplywuTerminu: godzina bez strefy = czas polski (niezależnie od strefy telefonu)', () => {
+  const oczek = { ms: Date.UTC(2026, 5, 10, 13), zGodzina: true }; // 15:00 CEST
+  assert.deepEqual(chwilaUplywuTerminu('2026-06-10T15:00'), oczek);
+  assert.deepEqual(chwilaUplywuTerminu('2026-06-10 15:00:00'), oczek);
+  assert.deepEqual(chwilaUplywuTerminu('10.06.2026 15:00'), oczek);
+  assert.deepEqual(chwilaUplywuTerminu('10.06.2026, 15:00'), oczek);
+  assert.deepEqual(chwilaUplywuTerminu('2026-01-20T15:00'), { ms: Date.UTC(2026, 0, 20, 14), zGodzina: true });
+});
+
+test('chwilaUplywuTerminu: jawna strefa jest respektowana', () => {
+  assert.equal(chwilaUplywuTerminu('2026-06-10T15:00:00Z').ms, Date.UTC(2026, 5, 10, 15));
+  assert.equal(chwilaUplywuTerminu('2026-06-10T15:00:00.000Z').ms, Date.UTC(2026, 5, 10, 15));
+  assert.equal(chwilaUplywuTerminu('2026-06-10T15:00:00+02:00').ms, Date.UTC(2026, 5, 10, 13));
+  assert.equal(chwilaUplywuTerminu('2026-06-10T15:00:00+0200').ms, Date.UTC(2026, 5, 10, 13));
+  assert.equal(chwilaUplywuTerminu('2026-06-10T15:00:00-05:00').ms, Date.UTC(2026, 5, 10, 20));
+});
+
+test('chwilaUplywuTerminu: Date przyjmujemy jako chwilę', () => {
+  const ms = Date.UTC(2026, 5, 10, 8, 15);
+  assert.deepEqual(chwilaUplywuTerminu(new Date(ms)), { ms, zGodzina: true });
+});
+
+test('chwilaUplywuTerminu: śmieci i niemożliwe godziny → null', () => {
+  for (const zly of [
+    '', 'nie-data', 'June 10, 2026', '2026-6-10', '2026-06-10T25:00', '2026-06-10T12:61',
+    '31.02.2026 10:00', '10.06.2026 24:30', null, undefined, 123, new Date('x'),
+  ]) {
+    assert.equal(chwilaUplywuTerminu(zly), null, String(zly));
+  }
 });
 
 test('dodajLata: zwykły przypadek', () => {

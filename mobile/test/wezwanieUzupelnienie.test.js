@@ -67,6 +67,30 @@ test('pozostalyCzas: sama data — o 23:00 PL zostaje 1 godzina (nie 2)', () => 
   assert.equal(r.ms, MS_GODZINA);
 });
 
+// Poprawka 2026-09-25: bez `new Date(str)` — „10.06.2026" dawało 6 października.
+test('pozostalyCzas: polski zapis daty = ten sam dzień, koniec dnia PL', () => {
+  const teraz = Date.UTC(2026, 5, 10, 21, 0); // 23:00 PL 10.06
+  const r = pozostalyCzas('10.06.2026', teraz);
+  assert.equal(r.znany, true);
+  assert.equal(r.ms, MS_GODZINA);
+});
+
+test('pozostalyCzas: godzina bez strefy = czas polski (nie strefa telefonu)', () => {
+  // 15:00 CEST = 13:00 UTC; teraz 10:00 UTC → 3 godziny
+  const teraz = Date.UTC(2026, 5, 10, 10, 0);
+  assert.equal(pozostalyCzas('2026-06-10T15:00', teraz).ms, 3 * MS_GODZINA);
+  assert.equal(pozostalyCzas('10.06.2026 15:00', teraz).ms, 3 * MS_GODZINA);
+  assert.equal(pozostalyCzas('2026-06-10T15:00:00Z', teraz).ms, 5 * MS_GODZINA);
+});
+
+test('pozostalyCzas: zapisy nie do odczytania → nieznany (nie zgadujemy)', () => {
+  for (const zly of ['2026-6-10', 'June 10, 2026', '06/10/2026', '2026-06-10T25:00']) {
+    const r = pozostalyCzas(zly, TERAZ);
+    assert.equal(r.znany, false, zly);
+    assert.equal(r.etykieta, 'Podaj termin z wezwania');
+  }
+});
+
 test('pozostalyCzas: sama data — dokładnie 24:00 PL to już po terminie', () => {
   // zima (CET): 24:00 PL 15.01 = 23:00 UTC 15.01
   const r = pozostalyCzas('2026-01-15', Date.UTC(2026, 0, 15, 23, 0));

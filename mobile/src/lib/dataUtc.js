@@ -10,11 +10,47 @@
 
 export const MS_DZIEN = 24 * 60 * 60 * 1000;
 
+/*
+ * Rozpoznawane zapisy daty (poprawka 2026-09-25). Wcześniej wszystko spoza ISO szło do
+ * `new Date(str)`, który zgaduje po amerykańsku albo wg strefy urządzenia: „1.06.2026" →
+ * styczeń, „10.06.2026" → październik, „2026-6-10" → dzień wcześniej. Dla terminu prawnego
+ * wolimy null niż cicho przesuniętą datę, więc przyjmujemy TYLKO:
+ *  - `YYYY-MM-DD`, opcjonalnie z częścią czasu ISO (`T`/spacja, HH:MM[:SS[.ułamek]], strefa),
+ *  - polski zapis `D.M.RRRR` / `DD.MM.RRRR` (dzień.miesiąc.rok), parsowany jawnie;
+ *    z godziną („10.06.2026 15:00") tylko tam, gdzie liczymy CHWILĘ ({@link chwilaUplywuTerminu}).
+ */
+const RE_DATA_ISO =
+  /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,9}))?)?(Z|[+-]\d{2}(?::?\d{2})?)?)?$/i;
+const RE_DATA_PL = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:(?:\s*,\s*|\s+)(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/;
+
 /**
- * Sprowadza wejście (Date lub string ISO/„YYYY-MM-DD") do znacznika UTC północy dnia albo
- * null. Bierze pierwsze 10 znaków stringa, żeby strefa czasowa nie przesuwała dnia, i
- * ODRZUCA daty, które Date.UTC po cichu znormalizował (2026-02-30, 2026-13-01) — dla
- * terminu prawnego wolimy null niż przesuniętą datę.
+ * Rozbiera tekst na części daty (i ewentualnie godziny). Zwraca null dla nieznanego zapisu
+ * albo dnia, którego nie ma w kalendarzu (Date.UTC po cichu „normalizuje" 31.02 → 3.03).
+ */
+function rozbierzZapisDaty(tekst) {
+  const t = tekst.trim();
+  let czesci = null;
+  let m = t.match(RE_DATA_ISO);
+  if (m) {
+    czesci = { rok: +m[1], mies: +m[2], dzien: +m[3], godz: m[4], min: m[5], sek: m[6], ulamek: m[7], strefa: m[8], polski: false };
+  } else if ((m = t.match(RE_DATA_PL))) {
+    czesci = { rok: +m[3], mies: +m[2], dzien: +m[1], godz: m[4], min: m[5], sek: m[6], ulamek: undefined, strefa: undefined, polski: true };
+  } else {
+    return null;
+  }
+  const dzienMs = Date.UTC(czesci.rok, czesci.mies - 1, czesci.dzien);
+  const d = new Date(dzienMs);
+  if (d.getUTCFullYear() !== czesci.rok || d.getUTCMonth() !== czesci.mies - 1 || d.getUTCDate() !== czesci.dzien) {
+    return null;
+  }
+  return { ...czesci, dzienMs };
+}
+
+/**
+ * Sprowadza wejście (Date, `YYYY-MM-DD[czas ISO]` albo `DD.MM.RRRR`) do znacznika UTC
+ * północy dnia kalendarzowego albo null. Dzień bierzemy z ZAPISU daty (część czasu ISO nie
+ * przesuwa dnia przez strefę) i ODRZUCAMY daty nieistniejące (2026-02-30, 31.02.2026) —
+ * dla terminu prawnego wolimy null niż przesuniętą datę. Każdy inny zapis → null.
  * @param {string|Date|null|undefined} wartosc
  * @returns {number|null} ms UTC północy albo null
  */
@@ -23,24 +59,12 @@ export function naDzienUTC(wartosc) {
     if (Number.isNaN(wartosc.getTime())) return null;
     return Date.UTC(wartosc.getUTCFullYear(), wartosc.getUTCMonth(), wartosc.getUTCDate());
   }
-  if (typeof wartosc === 'string') {
-    const m = wartosc.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (!m) {
-      const d = new Date(wartosc);
-      if (Number.isNaN(d.getTime())) return null;
-      return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-    }
-    const rok = Number(m[1]);
-    const mies = Number(m[2]);
-    const dzien = Number(m[3]);
-    const ms = Date.UTC(rok, mies - 1, dzien);
-    const d = new Date(ms);
-    if (d.getUTCFullYear() !== rok || d.getUTCMonth() !== mies - 1 || d.getUTCDate() !== dzien) {
-      return null;
-    }
-    return ms;
-  }
-  return null;
+  if (typeof wartosc !== 'string') return null;
+  const z = rozbierzZapisDaty(wartosc);
+  if (!z) return null;
+  // Polski zapis przyjmujemy tu wyłącznie jako samą datę.
+  if (z.polski && z.godz !== undefined) return null;
+  return z.dzienMs;
 }
 
 /**
@@ -157,6 +181,44 @@ export function chwilaPL(rok, miesiac, dzien, godz = 0, min = 0, sek = 0) {
   const naZegarze = Date.UTC(rok, miesiac - 1, dzien, godz, min, sek);
   // Pierwsze przybliżenie w CET (UTC+1), potem właściwe przesunięcie dla tej chwili.
   return naZegarze - przesuniecieStrefyPL(naZegarze - MS_GODZINA);
+}
+
+/**
+ * Chwila UPŁYWU terminu podanego datą albo datą z godziną (wezwania, terminy składania ofert).
+ *  - sama data (`YYYY-MM-DD` / `DD.MM.RRRR`) → termin trwa do końca dnia: 24:00 czasu polskiego,
+ *  - data z godziną BEZ strefy (`2026-06-10T15:00`, `10.06.2026 15:00`) → godzina polska
+ *    (nie strefa telefonu — polskie systemy zamówień podają czas lokalny),
+ *  - ISO z jawną strefą (`Z`, `+02:00`) → dokładnie ta chwila,
+ *  - `Date` → jego chwila.
+ * Każdy inny zapis (i godziny spoza zakresu) → null — nie zgadujemy przez `new Date(str)`.
+ * @param {string|Date|null|undefined} wartosc
+ * @returns {{ms: number, zGodzina: boolean}|null} `zGodzina: false` = znamy tylko dzień
+ */
+export function chwilaUplywuTerminu(wartosc) {
+  if (wartosc instanceof Date) {
+    const ms = wartosc.getTime();
+    return Number.isNaN(ms) ? null : { ms, zGodzina: true };
+  }
+  if (typeof wartosc !== 'string') return null;
+  const z = rozbierzZapisDaty(wartosc);
+  if (!z) return null;
+  if (z.godz === undefined) return { ms: koniecDniaPL(z.dzienMs), zGodzina: false };
+
+  const godz = Number(z.godz);
+  const min = Number(z.min);
+  const sek = z.sek === undefined ? 0 : Number(z.sek);
+  if (godz > 23 || min > 59 || sek > 59) return null;
+  const ulamekMs = z.ulamek ? Math.floor(Number(`0.${z.ulamek}`) * 1000) : 0;
+
+  if (!z.strefa) return { ms: chwilaPL(z.rok, z.mies, z.dzien, godz, min, sek) + ulamekMs, zGodzina: true };
+
+  let przesuniecieMin = 0;
+  if (z.strefa.toUpperCase() !== 'Z') {
+    const s = z.strefa.match(/^([+-])(\d{2}):?(\d{2})?$/);
+    przesuniecieMin = (s[1] === '-' ? -1 : 1) * (Number(s[2]) * 60 + Number(s[3] ?? 0));
+  }
+  const naZegarze = Date.UTC(z.rok, z.mies - 1, z.dzien, godz, min, sek) + ulamekMs;
+  return { ms: naZegarze - przesuniecieMin * 60 * 1000, zGodzina: true };
 }
 
 /** Odmiana „dzień/dni" — po polsku „dni" zawsze poza dokładnie jednym. */

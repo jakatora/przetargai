@@ -6,7 +6,9 @@ import {
   pozostaly_czas_do,
   TRYBY_KIO,
   TRYB_KIO_DOMYSLNY,
+  naDzienUTC as naDzienKio,
 } from '../src/lib/terminKio.js';
+import { naDzienUTC } from '../src/lib/dataUtc.js';
 
 /*
  * Kalkulator terminu na odwołanie do KIO (podzadanie 3/13). Czysta funkcja daty
@@ -135,6 +137,26 @@ test('niepoprawny Date (Invalid Date) → null', () => {
 test('data o poprawnym kształcie, ale nieistniejąca → null (bez cichej normalizacji)', () => {
   assert.equal(oblicz_termin_kio('2026-13-45', 'unijny'), null); // miesiąc 13
   assert.equal(oblicz_termin_kio('2026-02-30', 'unijny'), null); // 30 lutego
+});
+
+// --- Poprawka 2026-09-25: bez `new Date(str)` dla zapisów nie-ISO ---
+
+test('polski zapis DD.MM.RRRR liczony jak ten sam dzień w ISO (nie jak miesiąc.dzień)', () => {
+  // „10.06.2026" przez new Date dawał 6 października; „1.06.2026" — styczeń.
+  assert.equal(oblicz_termin_kio('10.06.2026', 'krajowy'), oblicz_termin_kio('2026-06-10', 'krajowy'));
+  assert.equal(oblicz_termin_kio('10.06.2026', 'krajowy'), '2026-06-15');
+  assert.equal(oblicz_termin_kio('1.06.2026', 'unijny'), '2026-06-11');
+});
+
+test('zapisy niejednoznaczne/nie-ISO → null zamiast zgadywania', () => {
+  assert.equal(oblicz_termin_kio('2026-6-10', 'krajowy'), null); // new Date → dzień wcześniej
+  assert.equal(oblicz_termin_kio('06/10/2026', 'krajowy'), null);
+  assert.equal(oblicz_termin_kio('31.02.2026', 'krajowy'), null);
+  assert.equal(pozostaly_czas_do('2026-6-10', Date.UTC(2026, 5, 1)), null);
+});
+
+test('naDzienUTC z terminKio to ta sama implementacja co w dataUtc (jedno źródło prawdy)', () => {
+  assert.equal(naDzienKio, naDzienUTC);
 });
 
 /*
