@@ -3,7 +3,7 @@ import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { costUsd } from '../lib/pricing.js';
 import { aiUsage, zmianySwz } from '../db/repos.js';
-import { aiBudgetAllows } from './ai.js';
+import { aiBudgetAllows, zarezerwujLimitAiUzytkownika } from './ai.js';
 import { serviceUnavailable } from '../lib/errors.js';
 import { mapujNaSekcjeOferty } from '../lib/bramkaOferty.js';
 
@@ -369,6 +369,8 @@ export async function opiszSkutekZmiany({ diff = '' } = {}) {
   if (!aiBudgetAllows(OPERACJA)) {
     throw serviceUnavailable('Miesięczny budżet AI wyczerpany — opis zmiany SWZ chwilowo niedostępny.');
   }
+  // Dobowy limit użytkownika (429, 2026-09-25) — ostatnia bramka tuż przed płatnym wywołaniem.
+  zarezerwujLimitAiUzytkownika(OPERACJA);
 
   let resp;
   try {

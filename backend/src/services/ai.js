@@ -2,7 +2,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { costUsd } from '../lib/pricing.js';
-import { aiUsage } from '../db/repos.js';
+import { aiUsage, aiQuotaUzytkownika } from '../db/repos.js';
+import { AppError } from '../lib/errors.js';
+import { biezacyUzytkownikId } from '../lib/kontekstZadania.js';
 
 const client = features.ai ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }) : null;
 
@@ -53,6 +55,34 @@ export function aiBudgetAllows(operation = 'unknown') {
       'Limit miękki budżetu AI przekroczony');
   }
   return true;
+}
+
+/**
+ * Dobowy limit płatnego AI modułów przetargowych NA UŻYTKOWNIKA (2026-09-25) — druga,
+ * węższa bramka obok miesięcznego budżetu. Wołać tuż PRZED `messages.create` w każdej
+ * operacji przetargowej wyzwalanej przez użytkownika (analiza SWZ, opis różnic SWZ,
+ * streszczenie regulaminu); wszystkie dzielą jedną pulę `PRZETARG_AI_DAILY_LIMIT_PER_USER`.
+ *
+ * Użytkownika bierzemy z kontekstu żądania (`authRequired` → lib/kontekstZadania.js),
+ * więc limit działa także tam, gdzie wołający nie zna `userId` (radar podprogowy,
+ * orkiestrator różnic). Poza żądaniem (cron) kontekstu nie ma — limitu per użytkownik
+ * wtedy nie ma, a kosztu pilnuje miesięczna bramka budżetu.
+ *
+ * @param {string} operation nazwa operacji (do logu)
+ * @throws {AppError} 429 `LIMIT_AI_DZIENNY` — wywołania AI NIE wolno wykonać
+ */
+export function zarezerwujLimitAiUzytkownika(operation = 'unknown') {
+  const userId = biezacyUzytkownikId();
+  if (!userId) return;
+  const limit = env.PRZETARG_AI_DAILY_LIMIT_PER_USER;
+  if (!aiQuotaUzytkownika.reserve(userId, limit)) {
+    logger.warn({ operation, userId, limit }, 'Dobowy limit AI użytkownika wyczerpany — wywołanie AI zablokowane');
+    throw new AppError(
+      429,
+      'LIMIT_AI_DZIENNY',
+      `Wykorzystano dzienny limit analiz AI (${limit} na dobę). Spróbuj ponownie jutro.`,
+    );
+  }
 }
 
 function buildUserPrompt(company, tender) {

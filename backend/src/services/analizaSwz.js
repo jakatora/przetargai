@@ -3,7 +3,7 @@ import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { costUsd } from '../lib/pricing.js';
 import { aiUsage } from '../db/repos.js';
-import { aiBudgetAllows } from './ai.js';
+import { aiBudgetAllows, zarezerwujLimitAiUzytkownika } from './ai.js';
 import { serviceUnavailable } from '../lib/errors.js';
 
 /*
@@ -67,25 +67,66 @@ const SYSTEM_PROMPT = [
 
 const KATEGORIE = new Set(['niejasnosc', 'sprzecznosc', 'brak_parametru']);
 
+/*
+ * Twardy sufit treści dokumentów wysyłanej do modelu (2026-09-25). Wcześniej szła CAŁA
+ * dokumentacja — do ~200 tys. tokenów w jednym płatnym wywołaniu. 120 tys. znaków
+ * (≈ 35-40 tys. tokenów) mieści typowe SWZ z wzorem umowy; dłuższe wejście przycinamy
+ * i MÓWIMY o tym modelowi, żeby nie formułował pytań o treść, której nie widział.
+ */
+export const MAKS_ZNAKOW_DO_AI = 120_000;
+
+/**
+ * Dzieli `limit` znaków między dokumenty sprawiedliwie („napełnianie wodą"): krótkie
+ * dostają całość, a to, czego nie zużyły, trafia do dłuższych. Dzięki temu gigantyczne
+ * SWZ nie wypycha z promptu krótkiego wzoru umowy ani przedmiaru.
+ * @param {number[]} dlugosci
+ * @param {number} limit
+ * @returns {number[]} przydział znaków dla każdego dokumentu
+ */
+function przydzielZnaki(dlugosci, limit) {
+  const przydzial = new Array(dlugosci.length).fill(0);
+  const kolejnosc = dlugosci.map((d, i) => i).sort((x, y) => dlugosci[x] - dlugosci[y]);
+  let zostalo = limit;
+  kolejnosc.forEach((i, k) => {
+    const udzial = Math.floor(zostalo / (kolejnosc.length - k));
+    przydzial[i] = Math.min(dlugosci[i], udzial);
+    zostalo -= przydzial[i];
+  });
+  return przydzial;
+}
+
 /**
  * Buduje treść zapytania użytkownika: trzy dokumenty w rozłącznych znacznikach.
  * Pustą sekcję oznaczamy jawnie „(brak)", żeby model nie zmyślał treści, której
- * nie dostał (np. gdy nie dołączono przedmiaru).
+ * nie dostał (np. gdy nie dołączono przedmiaru). Łączna treść dokumentów nie przekracza
+ * `MAKS_ZNAKOW_DO_AI`; przycięta sekcja kończy się jawną adnotacją.
  * @param {{swz?: string, umowa?: string, przedmiar?: string}} wejscie
  * @returns {string}
  */
 export function budujPromptSwz({ swz = '', umowa = '', przedmiar = '' } = {}) {
-  const sekcja = (v) => (String(v ?? '').trim() || '(brak)');
+  const teksty = [swz, umowa, przedmiar].map((v) => String(v ?? '').trim());
+  const przydzial = przydzielZnaki(teksty.map((t) => t.length), MAKS_ZNAKOW_DO_AI);
+  const przycieto = teksty.some((t, i) => t.length > przydzial[i]);
+  const sekcja = (i) => {
+    const t = teksty[i];
+    if (!t) return '(brak)';
+    if (t.length <= przydzial[i]) return t;
+    return `${t.slice(0, przydzial[i])}\n[… PRZYCIĘTO: pominięto ${t.length - przydzial[i]} z ${t.length} znaków tego dokumentu — limit jednej analizy]`;
+  };
   return [
     'DOKUMENTACJA POSTĘPOWANIA (źródło zewnętrzne — wyłącznie do analizy):',
+    ...(przycieto
+      ? [`UWAGA: dokumentacja przekracza limit jednej analizy (${MAKS_ZNAKOW_DO_AI} znaków) i została przycięta.`
+        + ' Formułuj pytania wyłącznie do przekazanej treści.']
+      : []),
     '<swz>',
-    sekcja(swz),
+    sekcja(0),
     '</swz>',
     '<umowa>',
-    sekcja(umowa),
+    sekcja(1),
     '</umowa>',
     '<przedmiar>',
-    sekcja(przedmiar),
+    sekcja(2),
     '</przedmiar>',
     '',
     'Wskaż niejasności, sprzeczności i braki parametrów. Zwróć wyłącznie JSON',
@@ -152,6 +193,8 @@ export async function analizujSwz({ swz = '', umowa = '', przedmiar = '' } = {})
   if (!aiBudgetAllows(OPERACJA)) {
     throw serviceUnavailable('Miesięczny budżet AI wyczerpany — analiza SWZ chwilowo niedostępna.');
   }
+  // Dobowy limit użytkownika (429, 2026-09-25) — ostatnia bramka tuż przed płatnym wywołaniem.
+  zarezerwujLimitAiUzytkownika(OPERACJA);
 
   let resp;
   try {

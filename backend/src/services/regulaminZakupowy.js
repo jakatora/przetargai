@@ -3,7 +3,7 @@ import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 import { costUsd } from '../lib/pricing.js';
 import { aiUsage } from '../db/repos.js';
-import { aiBudgetAllows } from './ai.js';
+import { aiBudgetAllows, zarezerwujLimitAiUzytkownika } from './ai.js';
 import { serviceUnavailable } from '../lib/errors.js';
 import { bezTagow, znorm, absolutnyUrl } from './adaptery/wspolne.js';
 
@@ -171,6 +171,8 @@ export async function streszMiniProcedure({ tresc = '', zamawiajacy = '' } = {})
   if (!aiBudgetAllows(OPERACJA)) {
     throw serviceUnavailable('Miesięczny budżet AI wyczerpany — streszczenie regulaminu chwilowo niedostępne.');
   }
+  // Dobowy limit użytkownika (429, 2026-09-25) — ostatnia bramka tuż przed płatnym wywołaniem.
+  zarezerwujLimitAiUzytkownika(OPERACJA);
 
   let resp;
   try {

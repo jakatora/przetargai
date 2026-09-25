@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { users } from '../db/repos.js';
 import { unauthorized } from '../lib/errors.js';
+import { uruchomJakoUzytkownik } from '../lib/kontekstZadania.js';
 
 /** Podpisuje token JWT dla użytkownika (ważność z JWT_TTL_DAYS). */
 export function signToken(userId) {
@@ -24,5 +25,8 @@ export function authRequired(req, res, next) {
   const user = users.findById(payload.sub);
   if (!user) return next(unauthorized('Konto nie istnieje'));
   req.user = user;
-  next();
+  // Reszta łańcucha żądania biegnie w kontekście użytkownika — warstwa płatnego AI
+  // liczy z niego dobowy limit per użytkownik także tam, gdzie wołający nie przekazuje
+  // `userId` (orkiestratory, radar podprogowy). Patrz lib/kontekstZadania.js (2026-09-25).
+  uruchomJakoUzytkownik(user.id, next);
 }

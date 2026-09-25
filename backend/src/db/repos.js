@@ -583,6 +583,33 @@ export const aiQuotaDevice = {
   },
 };
 
+// ============================ dobowy limit AI na użytkownika ============================
+
+/**
+ * Dobowy limit płatnych wywołań AI modułów przetargowych na UŻYTKOWNIKA (2026-09-25).
+ *
+ * Ten sam mechanizm i ta sama tabela co limit urządzeń Fittera (`ai_quota_device`) —
+ * bez nowej migracji. Klucz ma prefiks `user:`, a operacja to jedna wspólna pula
+ * (`przetarg_ai`), więc nie miesza się z licznikami Fittera (`fitter_scan`/`fitter_chat`),
+ * nawet gdyby `device_id` Fittera wyglądał jak nasz klucz.
+ */
+export const aiQuotaUzytkownika = {
+  OPERACJA: 'przetarg_ai',
+
+  klucz(userId) {
+    return `user:${userId}`;
+  },
+
+  used(userId) {
+    return aiQuotaDevice.used(this.klucz(userId), this.OPERACJA);
+  },
+
+  /** Rezerwuje jedno wywołanie. Zwraca false, gdy dobowy limit wyczerpany. */
+  reserve(userId, limit) {
+    return aiQuotaDevice.reserve(this.klucz(userId), this.OPERACJA, limit);
+  },
+};
+
 // ============================ umowa_monitorowana ============================
 // Umowa (kontrakt) wzięta pod monitoring waloryzacji. W chwili podpisania
 // zapisujemy branżę kontraktu (po niej dobierany jest wskaźnik cen GUS) oraz
@@ -850,7 +877,7 @@ export const zmianySwz = {
 };
 
 export const repos = {
-  users, tenders, matches, feedback, magicLinks, aiUsage, stripeEvents, aiQuotaDevice,
+  users, tenders, matches, feedback, magicLinks, aiUsage, stripeEvents, aiQuotaDevice, aiQuotaUzytkownika,
   fitterPremium, fitterChat, fitterJobs, umowyMonitorowane,
   postepowaniaSwz, swzWersje, pytaniaSwz, zmianySwz,
 };
