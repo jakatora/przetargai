@@ -105,17 +105,27 @@ export function createPakietDowodowy(db, { skrzynka = createCzarnaSkrzynka(db), 
     if (!sesja) throw new Error('Sesja nie istnieje albo należy do innego użytkownika');
     const zdarzenia = skrzynka.zdarzenia(userId, sesjaId) || [];
 
+    // `plik_sha256` / `sha256` (2026-09-25, wersja 2 pakietu): suma pliku utrwalona w logu W
+    // CHWILI ZAPISU — bez niej zrzut był tylko nazwą pliku, którą dało się podmienić bez śladu.
     const przebieg = zdarzenia.map((z) => ({
       pozycja: z.id,
       typ: z.typ,
       opis: z.opis ?? null,
       plik_url: z.plik_url ?? null,
+      plik_sha256: z.plik_sha256 ?? null,
       czas_serwera: z.czas_serwera,
       strefa_czasowa: z.strefa_czasowa,
     }));
     const zrzuty = przebieg
       .filter((e) => e.typ === 'zrzut')
-      .map((e) => ({ pozycja: e.pozycja, opis: e.opis, plik_url: e.plik_url, czas_serwera: e.czas_serwera, strefa_czasowa: e.strefa_czasowa }));
+      .map((e) => ({
+        pozycja: e.pozycja,
+        opis: e.opis,
+        plik_url: e.plik_url,
+        sha256: e.plik_sha256,
+        czas_serwera: e.czas_serwera,
+        strefa_czasowa: e.strefa_czasowa,
+      }));
     const dostepnosc = zdarzenia
       .filter((z) => z.typ === 'ping')
       .map((z) => ({ pozycja: z.id, opis: z.opis ?? null, czas_serwera: z.czas_serwera, dostepna: !PING_NIEDOSTEPNA.test(String(z.opis ?? '')) }));
@@ -123,7 +133,7 @@ export function createPakietDowodowy(db, { skrzynka = createCzarnaSkrzynka(db), 
     // Treść dowodowa pakietu (BEZ sumy kontrolnej — to ona ją domyka). Stała kolejność kluczy
     // => kanoniczna serializacja => deterministyczna suma kontrolna.
     const tresc = {
-      wersja: 1,
+      wersja: 2, // 2 = sumy SHA-256 plików w manifeście (2026-09-25)
       sesjaId: sesja.id,
       userId: sesja.user_id,
       postepowanieId: sesja.postepowanie_id ?? null,

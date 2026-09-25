@@ -24,10 +24,10 @@
  */
 
 import crypto from 'node:crypto';
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { newId, nowIso } from '../lib/ids.js';
+import { katalogWolumenu, nazwaPliku as nazwaPublicznaPliku, utworzMagazynNaDysku } from '../lib/magazynPlikow.js';
 
 // ─────────────────────────── Suma kontrolna (SHA-256) ───────────────────────
 
@@ -81,24 +81,25 @@ function dekodujBase64(dane) {
 
 /**
  * Domyślny magazyn na dysku: zapisuje SUROWE bajty oryginału bez modyfikacji.
- * Katalog z `CZARNA_SKRZYNKA_STORAGE_DIR` (czytany lokalnie z process.env, żeby to
- * podzadanie nie mieszało się z niezależnym WIP w config/env.js), domyślnie
- * `data/czarna-skrzynka`.
+ * Katalog z `CZARNA_SKRZYNKA_STORAGE_DIR`, domyślnie `<katalog bazy>/czarna-skrzynka` —
+ * na TRWAŁYM wolumenie (2026-09-25: wcześniej `process.cwd()/data/...` = nietrwałe `/app`
+ * na Railway; dowody awarii znikały przy każdym deployu). Szczegóły w lib/magazynPlikow.js.
  */
 export function magazynNaDysku(
-  katalog = process.env.CZARNA_SKRZYNKA_STORAGE_DIR || path.join(process.cwd(), 'data', 'czarna-skrzynka'),
+  katalog = process.env.CZARNA_SKRZYNKA_STORAGE_DIR || path.join(katalogWolumenu(), 'czarna-skrzynka'),
 ) {
-  return {
-    async zapisz(id, format, bajty) {
-      fs.mkdirSync(katalog, { recursive: true });
-      const sciezka = path.join(katalog, `${id}.${format}`);
-      fs.writeFileSync(sciezka, naBufor(bajty)); // oryginał 1:1, bez żadnej obróbki
-      return sciezka;
-    },
-    async czytaj(id, format) {
-      return fs.readFileSync(path.join(katalog, `${id}.${format}`));
-    },
-  };
+  return utworzMagazynNaDysku(katalog);
+}
+
+/*
+ * Publiczna postać wierszy (2026-09-25): klient dostaje NAZWĘ pliku, nigdy ścieżkę na
+ * serwerze. Surowe wiersze (z kluczem magazynu) zostają wewnątrz usługi.
+ */
+function publicznaSesja(row) {
+  return row ? { ...row, plik_oferty_url: nazwaPublicznaPliku(row.plik_oferty_url) } : row;
+}
+function publiczneZdarzenie(row) {
+  return row ? { ...row, plik_url: nazwaPublicznaPliku(row.plik_url) } : row;
 }
 
 // ─────────────────────────── Zegar serwera (wstrzykiwalny) ───────────────────
@@ -138,8 +139,8 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
        SET hash_oferty = ?, plik_oferty_url = ?, updated_at = ?
      WHERE id = ? AND user_id = ?`);
   const _insertZdarzenie = lazy(db, `
-    INSERT INTO czarna_skrzynka_zdarzenie (sesja_id, typ, opis, plik_url, czas_serwera, strefa_czasowa)
-    VALUES (?, ?, ?, ?, ?, ?)`);
+    INSERT INTO czarna_skrzynka_zdarzenie (sesja_id, typ, opis, plik_url, plik_sha256, czas_serwera, strefa_czasowa)
+    VALUES (?, ?, ?, ?, ?, ?, ?)`);
   const _zdarzenieById = lazy(db, `SELECT * FROM czarna_skrzynka_zdarzenie WHERE id = ?`);
   const _zdarzeniaBySesja = lazy(db, `
     SELECT * FROM czarna_skrzynka_zdarzenie WHERE sesja_id = ? ORDER BY id ASC`);
@@ -167,24 +168,28 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
     return sesja(userId, id);
   }
 
-  /** Sesja właściciela (wzbogacona), albo null gdy nie jego / nie istnieje. */
+  /** Sesja właściciela (postać publiczna — bez ścieżki serwera), albo null gdy nie jego / nie istnieje. */
   function sesja(userId, sesjaId) {
-    return wierszSesji(userId, sesjaId);
+    return publicznaSesja(wierszSesji(userId, sesjaId));
   }
 
   /** Append-only taśma sesji w kolejności dopisywania; null gdy sesja nie jest jego. */
   function zdarzenia(userId, sesjaId) {
     if (!wierszSesji(userId, sesjaId)) return null;
-    return _zdarzeniaBySesja().all(sesjaId);
+    return _zdarzeniaBySesja().all(sesjaId).map(publiczneZdarzenie);
   }
 
-  /** Wstawia wpis do append-only logu i zwraca utrwalony wiersz. */
-  function wstawZdarzenie(sesjaId, { typ, opis = null, plikUrl = null }) {
-    const info = _insertZdarzenie().run(sesjaId, typ, opis, plikUrl, zegar.teraz(), zegar.strefa());
+  /**
+   * Wstawia wpis do append-only logu i zwraca utrwalony wiersz (postać publiczna).
+   * `plikSha256` — suma pliku policzona W CHWILI ZAPISU (2026-09-25): bez niej zrzut w
+   * pakiecie był tylko nazwą pliku, którą dało się podmienić bez śladu.
+   */
+  function wstawZdarzenie(sesjaId, { typ, opis = null, plikUrl = null, plikSha256 = null }) {
+    const info = _insertZdarzenie().run(sesjaId, typ, opis, plikUrl, plikSha256, zegar.teraz(), zegar.strefa());
     const rowid = typeof info.lastInsertRowid === 'bigint'
       ? Number(info.lastInsertRowid)
       : info.lastInsertRowid;
-    return _zdarzenieById().get(rowid);
+    return publiczneZdarzenie(_zdarzenieById().get(rowid));
   }
 
   /**
@@ -207,7 +212,7 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
     const { buf, mime } = dekodujBase64(plikBase64);
     const format = MIME_NA_FORMAT[mime] || 'png';
     const plikUrl = await magazynPlikow.zapisz(newId(), format, buf); // oryginał 1:1
-    return wstawZdarzenie(sesjaId, { typ: 'zrzut', opis, plikUrl });
+    return wstawZdarzenie(sesjaId, { typ: 'zrzut', opis, plikUrl, plikSha256: hashPliku(buf) });
   }
 
   /**
@@ -224,8 +229,10 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
         : String(nazwaPliku).toLowerCase().endsWith('.pdf') ? 'pdf' : 'bin');
     const plikUrl = await magazynPlikow.zapisz(newId(), format, buf); // oryginał 1:1
     _updateOferta().run(hash, plikUrl, zegar.teraz(), sesjaId, userId);
-    wstawZdarzenie(sesjaId, { typ: 'hash_oferty', opis: `SHA-256 oferty: ${hash}` });
-    return { hash, plikUrl, sesja: sesja(userId, sesjaId) };
+    // Wpis na taśmie wskazuje KONKRETNY oryginał i jego sumę: przy ponownym wgraniu oferty
+    // poprzednia wersja zostaje w logu razem ze swoim plikiem (dowodu nie nadpisujemy).
+    wstawZdarzenie(sesjaId, { typ: 'hash_oferty', opis: `SHA-256 oferty: ${hash}`, plikUrl, plikSha256: hash });
+    return { hash, plikUrl: nazwaPublicznaPliku(plikUrl), sesja: sesja(userId, sesjaId) };
   }
 
   /**

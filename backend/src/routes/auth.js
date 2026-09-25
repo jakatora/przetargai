@@ -12,6 +12,8 @@ import { publicUser } from '../lib/serialize.js';
 import { createUpgradeLink } from '../services/magicLink.js';
 import { sendEmail, welcomeEmail, resetPasswordEmail } from '../services/email.js';
 import { backfillUser } from '../services/matching.js';
+import { zbierzPlikiKonta, usunPlikiKonta } from '../services/plikiKonta.js';
+import { db } from '../db/index.js';
 import { logger } from '../lib/logger.js';
 
 /** Ważność kodu resetu hasła (1 h) — krótko, bo to klucz do konta. */
@@ -249,8 +251,12 @@ router.delete('/me', authRequired, ah(async (req, res) => {
 
   // Audyt PRZED usunięciem: potem nie ma już do czego się odwołać.
   audit({ userId: req.user.id, action: 'delete_account', ip: req.ip });
+  // Pliki na wolumenie (sejf, czarna skrzynka) kaskada SQLite omija — klucze zbieramy
+  // PRZED usunięciem wierszy, kasujemy PO nim (2026-09-25, patrz services/plikiKonta.js).
+  const pliki = zbierzPlikiKonta(db, req.user.id);
   users.usunKonto(req.user.id);
-  logger.info({ userId: req.user.id }, 'Konto usunięte na żądanie użytkownika');
+  const plikiUsuniete = usunPlikiKonta(pliki);
+  logger.info({ userId: req.user.id, plikiUsuniete }, 'Konto usunięte na żądanie użytkownika');
 
   res.json({ ok: true, message: 'Konto i wszystkie dane zostały trwale usunięte' });
 }));

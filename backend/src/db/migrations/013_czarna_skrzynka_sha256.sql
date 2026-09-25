@@ -1,0 +1,12 @@
+-- Czarna skrzynka: SHA-256 pliku we wpisie logu (2026-09-25).
+--
+-- Zrzut ekranu w pakiecie dowodowym był dotąd tylko NAZWĄ pliku — plik dało się podmienić
+-- na dysku bez śladu, a pakiet i tak „się zgadzał". Suma liczona W CHWILI ZAPISU i utrwalona
+-- w append-only logu wiąże wpis z konkretną treścią pliku (zrzut, oryginał oferty); pakiet
+-- dowodowy niesie ją dalej, więc podmiana pliku jest wykrywalna.
+--
+-- Wyłącznie ADD COLUMN (bezpieczny na działającej bazie). Świeże bazy dostają kolumnę
+-- ze schema.sql, a ta migracja jest dla nich tylko stemplowana.
+--
+-- ROLLBACK (down): ALTER TABLE czarna_skrzynka_zdarzenie DROP COLUMN plik_sha256;
+ALTER TABLE czarna_skrzynka_zdarzenie ADD COLUMN plik_sha256 TEXT;

@@ -18,10 +18,11 @@
  * rozszerzenie bywa mylące, a plik od e-KRK/PUE ZUS/e-US to konkretny format.
  */
 
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { newId, nowIso } from '../lib/ids.js';
+import { katalogWolumenu, nazwaPliku as nazwaPublicznaPliku, utworzMagazynNaDysku } from '../lib/magazynPlikow.js';
+import { logger } from '../lib/logger.js';
 import {
   typDokumentu,
   jestZnanymTypem,
@@ -174,6 +175,10 @@ export function opiszDokument(row, { dzienOdniesienia } = {}) {
 
   return {
     ...row,
+    // Klientowi NIGDY ścieżka serwera (2026-09-25): sama nazwa pliku + jawna flaga.
+    // Pole `plik_url` zostaje, bo mobile (SejfScreen) czyta je jako „jest plik".
+    plik_url: nazwaPublicznaPliku(row.plik_url),
+    ma_plik: Boolean(row.plik_url),
     flaga_podpis_elektroniczny: !!row.flaga_podpis_elektroniczny,
     okresWaznosciDni: okres,
     czasOczekiwaniaUrzadDni: czasUrzedu,
@@ -190,23 +195,24 @@ export function opiszDokument(row, { dzienOdniesienia } = {}) {
 
 /**
  * Domyślny magazyn na dysku: zapisuje SUROWE bajty oryginału bez modyfikacji.
- * Katalog z `SEJF_STORAGE_DIR` (czytany lokalnie z process.env, żeby to podzadanie
- * nie mieszało się z niezależnym WIP w config/env.js), domyślnie `data/sejf`.
+ * Katalog z `SEJF_STORAGE_DIR`, domyślnie `<katalog bazy>/sejf` — na TRWAŁYM wolumenie
+ * (2026-09-25: wcześniej `process.cwd()/data/sejf` = nietrwałe `/app` na Railway, pliki
+ * znikały przy każdym deployu). Szczegóły w lib/magazynPlikow.js.
  */
 export function magazynNaDysku(
-  katalog = process.env.SEJF_STORAGE_DIR || path.join(process.cwd(), 'data', 'sejf'),
+  katalog = process.env.SEJF_STORAGE_DIR || path.join(katalogWolumenu(), 'sejf'),
 ) {
-  return {
-    async zapisz(id, format, bajty) {
-      fs.mkdirSync(katalog, { recursive: true });
-      const sciezka = path.join(katalog, `${id}.${format}`);
-      fs.writeFileSync(sciezka, naBufor(bajty)); // oryginał 1:1, bez żadnej obróbki
-      return sciezka;
-    },
-    async czytaj(id, format) {
-      return fs.readFileSync(path.join(katalog, `${id}.${format}`));
-    },
-  };
+  return utworzMagazynNaDysku(katalog);
+}
+
+/** Kasuje plik z magazynu, nie przerywając operacji na bazie (fail-open, log). */
+function usunPlikZMagazynu(magazynPlikow, klucz) {
+  if (!klucz || typeof magazynPlikow.usun !== 'function') return;
+  try {
+    magazynPlikow.usun(klucz);
+  } catch (err) {
+    logger.warn({ plik: nazwaPublicznaPliku(klucz), err: err.message }, 'sejfDokumentow: nie usunięto pliku z dysku');
+  }
 }
 
 // ─────────────────────────── Warstwa danych (fabryka) ───────────────────────
@@ -227,8 +233,9 @@ const POLA_EDYTOWALNE = {
 /**
  * Tworzy usługę sejfu dokumentów na podanym połączeniu SQLite.
  * @param {import('node:sqlite').DatabaseSync} db
- * @param {{magazynPlikow?: {zapisz: Function, czytaj?: Function}}} [opts]
+ * @param {{magazynPlikow?: {zapisz: Function, czytaj?: Function, usun?: Function}}} [opts]
  *   magazynPlikow — wstrzykiwalny magazyn oryginałów (test bez dysku); domyślnie dysk.
+ *   `usun(klucz)` opcjonalne — bez niego pliki nie są kasowane (magazyn testowy w pamięci).
  */
 export function createSejfDokumentow(db, { magazynPlikow = magazynNaDysku() } = {}) {
   const _insert = lazy(db, `
@@ -307,7 +314,12 @@ export function createSejfDokumentow(db, { magazynPlikow = magazynNaDysku() } = 
   }
 
   function usun(userId, id) {
-    return _delete().run(id, userId).changes > 0;
+    const row = wierszWlasciciela(userId, id);
+    const usunieto = _delete().run(id, userId).changes > 0;
+    // Plik kasujemy PO rekordzie: gdy DELETE się nie uda, dokument zostaje z plikiem.
+    // Wcześniej oryginał zostawał na dysku na zawsze (2026-09-25).
+    if (usunieto && row) usunPlikZMagazynu(magazynPlikow, row.plik_url);
+    return usunieto;
   }
 
   function lista(userId, opts = {}) {
@@ -356,6 +368,11 @@ export function createSejfDokumentow(db, { magazynPlikow = magazynNaDysku() } = 
       id,
       userId,
     );
+    // Nadpisanie innym formatem (np. XML → PDF) zostawiało stary oryginał jako sierotę na
+    // dysku (2026-09-25). Ten sam format nadpisał plik w miejscu — wtedy nic do kasowania.
+    if (row.plik_url && nazwaPublicznaPliku(row.plik_url) !== nazwaPublicznaPliku(plikUrl)) {
+      usunPlikZMagazynu(magazynPlikow, row.plik_url);
+    }
 
     let ostrzezenie = null;
     if (!detekcja.podpisElektroniczny) {
