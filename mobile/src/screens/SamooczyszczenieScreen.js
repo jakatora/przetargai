@@ -3,12 +3,14 @@ import { View, Text, Pressable } from 'react-native';
 import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { ELEMENTY, ocenaSamooczyszczenia } from '../lib/samooczyszczenie';
+import { ELEMENTY, ocenaSamooczyszczenia, WSTEP, UWAGA_ZALEGLOSCI } from '../lib/samooczyszczenie';
 
 /**
  * Panel „KREATOR SAMOOCZYSZCZENIA (art. 110 ust. 2 Pzp)". Wykonawca z „skazą" (rozwiązana umowa,
- * kary, zaległości, wcześniejsze wykluczenie) może NIE podlegać wykluczeniu, jeśli wykaże trzy
+ * kary, poważne naruszenie obowiązków zawodowych) może NIE podlegać wykluczeniu, jeśli wykaże trzy
  * elementy łącznie. Ekran to checklista; ocena kompletności w testowanym `lib/samooczyszczenie.js`.
+ * Zaległości ZUS/US NIE są objęte art. 110 ust. 2 (2026-09-25) — ekran mówi to wprost
+ * (`UWAGA_ZALEGLOSCI`), a teksty prawne trzyma lib, żeby pilnowały ich testy.
  */
 
 function tonNaTokeny(ton, k) {
@@ -31,11 +33,11 @@ export default function SamooczyszczenieScreen({ route }) {
 
   return (
     <Screen scroll>
-      <Text style={styles.wstep}>
-        Masz w historii firmy skazę — rozwiązaną umowę, kary umowne, zaległości ZUS/US albo
-        wcześniejsze wykluczenie? To nie musi kończyć startów. Art. 110 ust. 2 Pzp daje procedurę
-        naprawczą: udowodnij trzy rzeczy łącznie, a zamawiający może odstąpić od wykluczenia.
-      </Text>
+      <Text style={styles.wstep}>{WSTEP}</Text>
+      <View style={[styles.uwaga, { backgroundColor: kolory.ostrzezenieTlo }]}>
+        <Text style={[styles.uwagaTytul, { color: kolory.ostrzezenieTekst }]}>Zaległości ZUS/US — inna droga</Text>
+        <Text style={[styles.uwagaTekst, { color: kolory.ostrzezenieTekst }]}>{UWAGA_ZALEGLOSCI}</Text>
+      </View>
       {nazwa ? <Text style={styles.postepowanie}>{nazwa}</Text> : null}
 
       <View style={[styles.werdykt, { backgroundColor: t.tlo, borderColor: t.tekst }]}>
@@ -68,6 +70,9 @@ export default function SamooczyszczenieScreen({ route }) {
 
 const tworzStyleSamo = tworzStyle((k) => ({
   wstep: { fontSize: 14, color: k.textMuted, lineHeight: 21, marginBottom: spacing.md },
+  uwaga: { borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md },
+  uwagaTytul: { fontSize: 13, fontWeight: '800', marginBottom: 4 },
+  uwagaTekst: { fontSize: 13, lineHeight: 19 },
   postepowanie: { fontSize: 15, fontWeight: '800', color: k.text, marginBottom: spacing.sm, lineHeight: 20 },
   stopka: { fontSize: 12, color: k.textMuted, lineHeight: 17, marginTop: spacing.lg, fontStyle: 'italic' },
 
