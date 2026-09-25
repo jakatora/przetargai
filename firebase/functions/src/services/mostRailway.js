@@ -55,6 +55,17 @@ export function hasloMostu(uidAplikacji) {
 }
 
 /**
+ * Podpis konta pomostowego: HMAC-SHA256(JWT_SECRET, email) w hex, małe litery
+ * (2026-09-25). `/auth/register` na Railway jest publiczne, a schemat adresu
+ * (most.<uid>@MOST_EMAIL_DOMENA) jest przewidywalny — bez podpisu dało się
+ * założyć konto na cudzy uid, zanim zrobił to most, i przejąć jego dane w modułach.
+ * Railway wymaga nagłówka `X-Most-Podpis` dla adresów z tej domeny.
+ */
+export function podpisMostu(email) {
+  return crypto.createHmac('sha256', env.JWT_SECRET).update(String(email)).digest('hex');
+}
+
+/**
  * Token dla Railway.
  *
  * Railway sprawdza wyłącznie podpis i istnienie konta (nie ma pola `tv`), więc
@@ -78,7 +89,9 @@ async function zapytajRailway(sciezka, opcje) {
 export async function zalozKontoPomostowe(uidAplikacji) {
   const email = emailMostu(uidAplikacji);
   const password = hasloMostu(uidAplikacji);
-  const naglowki = { 'Content-Type': 'application/json' };
+  // Podpis przy rejestracji (i logowaniu — nie szkodzi): Railway wymaga go dla
+  // adresów z MOST_EMAIL_DOMENA, żeby nikt nie założył konta na cudzy uid.
+  const naglowki = { 'Content-Type': 'application/json', 'X-Most-Podpis': podpisMostu(email) };
 
   const rejestracja = await zapytajRailway('/auth/register', {
     method: 'POST',
