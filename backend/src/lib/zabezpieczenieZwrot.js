@@ -38,13 +38,18 @@ export const DNI_ZWROT_PO_ODBIORZE = 30;
 /** Zwrot transzy „po rękojmi" — nie później niż w 15. dniu po upływie rękojmi/gwarancji (art. 453 ust. 3 Pzp). */
 export const DNI_ZWROT_PO_REKOJMI = 15;
 
-/**
- * Domyślna roczna stopa odsetek za opóźnienie (odsetki ustawowe za opóźnienie,
- * art. 481 § 2 KC). To ZAŁOŻENIE — realna stawka zmienia się wraz ze stopą
- * referencyjną NBP, więc wywołujący powinien podać aktualną (`stopaRoczna`), a
- * wynik zawsze niesie użytą stawkę, żeby nic nie było ukryte przy liczeniu pieniędzy.
+/*
+ * BRAK DOMYŚLNEJ STOPY ODSETEK (2026-09-25). Było `STOPA_ODSETEK_DOMYSLNA = 11.25` —
+ * stawka z 2025 r., nieaktualna po zmianach stopy referencyjnej NBP, a pismo podawało ją
+ * jako fakt. Odsetki ustawowe za opóźnienie (art. 481 § 2 KC) zmieniają się w czasie, więc
+ * bez stopy podanej przez użytkownika NIE zgadujemy: kwota odsetek = null (nieznana), a
+ * wezwanie żąda „odsetek ustawowych za opóźnienie" opisowo, bez liczby.
  */
-export const STOPA_ODSETEK_DOMYSLNA = 11.25;
+
+/** Poprawna stopa roczna (liczba ≥ 0) albo null. */
+function stopaPodana(stopaRoczna) {
+  return Number.isFinite(stopaRoczna) && stopaRoczna >= 0 ? stopaRoczna : null;
+}
 
 /** Typowa roczna prowizja banku za gwarancję należytego wykonania (założenie, ~1–2%/rok). */
 export const PROWIZJA_GWARANCJI_DOMYSLNA = 1.5;
@@ -160,15 +165,18 @@ export function statusZwrotu({ termin, dzisiaj } = {}) {
 /**
  * Odsetki za opóźnienie w zwrocie (proste, art. 481 KC). Liczone od dnia PO terminie;
  * przed/w terminie → 0. Nieparsowalne daty → 0 (konserwatywnie, bez zmyślania).
- * @returns {{dni:number, stopaRoczna:number, odsetki:number}}
+ * Bez podanej stopy przy zwłoce → `odsetki: null` (kwota nieznana, NIE 0 — należą się,
+ * tylko nie zgadujemy stawki; patrz komentarz przy `stopaPodana`).
+ * @returns {{dni:number, stopaRoczna:number|null, odsetki:number|null}}
  */
 export function naliczOdsetki({ kwota, termin, dzisiaj, stopaRoczna } = {}) {
-  const stopa = Number.isFinite(stopaRoczna) && stopaRoczna >= 0 ? stopaRoczna : STOPA_ODSETEK_DOMYSLNA;
+  const stopa = stopaPodana(stopaRoczna);
   const { status, dni } = statusZwrotu({ termin, dzisiaj });
   const kwotaOk = Number(kwota);
   if (status !== 'przeterminowane' || !(Number.isFinite(kwotaOk) && kwotaOk > 0)) {
     return { dni: 0, stopaRoczna: stopa, odsetki: 0 };
   }
+  if (stopa === null) return { dni, stopaRoczna: null, odsetki: null };
   return { dni, stopaRoczna: stopa, odsetki: grosze(kwotaOk * (stopa / 100) * (dni / 365)) };
 }
 

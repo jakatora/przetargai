@@ -6,8 +6,8 @@ import {
   naliczOdsetki,
   porownajKoszt,
   PROCENT_ZATRZYMANY_MAX,
-  STOPA_ODSETEK_DOMYSLNA,
 } from '../src/lib/zabezpieczenieZwrot.js';
+import * as zwrot from '../src/lib/zabezpieczenieZwrot.js';
 
 /*
  * ODZYSKIWACZ ZABEZPIECZENIA — rdzeń liczbowy (ulepszenie „pilnuj zwrotu swoich
@@ -136,10 +136,25 @@ test('odsetki: proste, liczone od dnia po terminie wg stopy rocznej', () => {
   assert.equal(o.odsetki, 3_650);
 });
 
-test('odsetki: bez podanej stopy używa udokumentowanej stawki domyślnej', () => {
+// 2026-09-25: domyślna stopa 11,25% była nieaktualna (z 2025) — odsetki ustawowe zmieniają
+// się ze stopą referencyjną NBP. Bez podanej stopy NIE zgadujemy liczby: kwota odsetek
+// = null (nieznana), a pismo żąda odsetek ustawowych bez podawania stawki.
+test('odsetki: bez podanej stopy — ŻADNEJ zgadywanej stawki, kwota odsetek nieznana (null)', () => {
   const o = naliczOdsetki({ kwota: 10_000, termin: '2027-01-01', dzisiaj: '2027-02-01' });
-  assert.equal(o.stopaRoczna, STOPA_ODSETEK_DOMYSLNA);
-  assert.ok(o.odsetki > 0, 'zwłoka 31 dni → odsetki > 0');
+  assert.equal(o.dni, 31, 'zwłoka nadal policzona');
+  assert.equal(o.stopaRoczna, null);
+  assert.equal(o.odsetki, null, 'bez stopy nie ma kwoty — nie 0 i nie zmyślona liczba');
+  assert.equal(zwrot.STOPA_ODSETEK_DOMYSLNA, undefined, 'stała z nieaktualną stawką usunięta');
+});
+
+test('odsetki: bez stopy, ale przed terminem => 0 zł (nic nie jest należne)', () => {
+  const o = naliczOdsetki({ kwota: 10_000, termin: '2027-01-01', dzisiaj: '2026-12-01' });
+  assert.equal(o.odsetki, 0);
+});
+
+test('odsetki: stopa niepoprawna (ujemna / NaN) traktowana jak brak stopy', () => {
+  assert.equal(naliczOdsetki({ kwota: 10_000, termin: '2027-01-01', dzisiaj: '2027-02-01', stopaRoczna: -1 }).odsetki, null);
+  assert.equal(naliczOdsetki({ kwota: 10_000, termin: '2027-01-01', dzisiaj: '2027-02-01', stopaRoczna: Number.NaN }).odsetki, null);
 });
 
 // ─────────────────────── Porównanie kosztu: gotówka vs gwarancja ──────────────
