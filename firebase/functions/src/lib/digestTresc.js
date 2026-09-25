@@ -4,14 +4,9 @@
  * Job `weeklyDigest.js` liczy dane, a `email.js` opakowuje to w wysyłkę.
  */
 
-/** Ucieczka znaków HTML — tytuły przetargów pochodzą z zewnętrznych rejestrów. */
-function esc(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+// Ucieczka znaków HTML — tytuły przetargów pochodzą z zewnętrznych rejestrów,
+// nazwa firmy od użytkownika. Wspólny helper (2026-09-25, dokłada apostrof).
+import { esc } from './html.js';
 
 /** Poprawna polska odmiana: 1 przetarg / 2–4 przetargi / 5+ przetargów. */
 export function odmienPrzetargi(n) {

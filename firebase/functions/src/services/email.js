@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import { env, features } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { budujDigest } from '../lib/digestTresc.js';
+import { esc } from '../lib/html.js';
 
 const resend = features.email ? new Resend(env.RESEND_API_KEY) : null;
 
@@ -40,8 +41,10 @@ export async function sendEmail({ to, subject, html, text, attachments }) {
 
 // Nazwa firmy jest opcjonalna (rejestracja bez NIP-u i nazwy — migracja 001),
 // więc szablony muszą brzmieć naturalnie także bez niej.
+// KAŻDE pole w HTML przez esc() (2026-09-25): nazwa firmy `<a href="...">` renderowała
+// się jako działający link w mailu z naszej domeny. Wersja `text` to nie HTML — bez encji.
 export function welcomeEmail(companyName) {
-  const dlaKogo = companyName ? `dla <b>${companyName}</b> ` : '';
+  const dlaKogo = companyName ? `dla <b>${esc(companyName)}</b> ` : '';
   return {
     subject: 'Witamy w PrzetargAI',
     text: `Twoje konto ${companyName ? `dla ${companyName} ` : ''}zostało utworzone. Monitorujemy przetargi publiczne dopasowane do Twojego profilu.`,
@@ -53,7 +56,7 @@ przetargi publiczne (BZP) dopasowane do Twojego profilu.</p>
 }
 
 export function subscriptionActiveEmail(companyName) {
-  const dlaKogo = companyName ? ` dla <b>${companyName}</b>` : '';
+  const dlaKogo = companyName ? ` dla <b>${esc(companyName)}</b>` : '';
   return {
     subject: 'Subskrypcja PrzetargAI Standard jest aktywna',
     text: `Subskrypcja Standard${companyName ? ` dla ${companyName}` : ''} jest aktywna: nielimitowane dopasowania i powiadomienia push.`,
@@ -78,7 +81,7 @@ export function resetPasswordEmail(token) {
       + `zignoruj tę wiadomość, nic się nie zmieni.`,
     html: `<p>Dzień dobry,</p>
 <p>Aby ustawić nowe hasło, wpisz w aplikacji ten kod:</p>
-<p style="font-size:15px;font-weight:bold;background:#f2f4f7;padding:12px;border-radius:8px;word-break:break-all;font-family:monospace">${token}</p>
+<p style="font-size:15px;font-weight:bold;background:#f2f4f7;padding:12px;border-radius:8px;word-break:break-all;font-family:monospace">${esc(token)}</p>
 <p>Kod jest ważny <b>1 godzinę</b> i można go użyć raz. Jeśli to nie Ty prosiłeś o reset —
 zignoruj tę wiadomość, nic się nie zmieni.</p>
 <p>Zespół PrzetargAI</p>`,
