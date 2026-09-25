@@ -1,0 +1,12 @@
+-- Czarna skrzynka: termin składania ofert na sesji (2026-09-25).
+--
+-- Sesja bez wgranej oferty była „otwarta" na zawsze — monitor dostępności pingował ją
+-- co 15 minut bez końca. Teraz okno pingowania kończy się po 48 h od utworzenia albo
+-- po terminie składania ofert, jeśli jest znany (co nastąpi wcześniej). Termin podaje
+-- klient przy starcie sesji albo bierzemy go z postępowania Radaru SWZ.
+--
+-- Wyłącznie ADD COLUMN (bezpieczny na działającej bazie); świeże bazy mają kolumnę
+-- ze schema.sql, a ta migracja jest dla nich tylko stemplowana.
+--
+-- ROLLBACK (down): ALTER TABLE czarna_skrzynka_sesja DROP COLUMN termin_skladania;
+ALTER TABLE czarna_skrzynka_sesja ADD COLUMN termin_skladania TEXT;

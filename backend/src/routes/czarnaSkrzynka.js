@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { badRequest, notFound, tooMany } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { db } from '../db/index.js';
+import { postepowaniaSwz } from '../db/repos.js';
 import { createCzarnaSkrzynka } from '../services/czarnaSkrzynka.js';
 import { createPakietDowodowy } from '../services/pakietDowodowy.js';
 import { generujPismoOPrzedluzenie } from '../services/pismoOPrzedluzenie.js';
@@ -44,6 +45,8 @@ const pakiety = createPakietDowodowy(db, { skrzynka });
 
 const startSchema = z.object({
   postepowanie_id: z.string().max(200).optional(),
+  // Termin składania ofert (ISO 8601) — koniec okna pingowania (2026-09-25).
+  termin_skladania: z.string().max(40).optional(),
 });
 
 const zdarzenieSchema = z.object({
@@ -92,8 +95,27 @@ function wymagajSesji(req) {
 
 router.post('/sesje', authRequired, ah(async (req, res) => {
   const parsed = startSchema.safeParse(req.body ?? {});
-  if (!parsed.success) throw badRequest('Niepoprawne dane sesji (opcjonalne: "postepowanie_id").');
-  const sesja = skrzynka.rozpocznijSesje(req.user.id, { postepowanieId: parsed.data.postepowanie_id ?? null });
+  if (!parsed.success) throw badRequest('Niepoprawne dane sesji (opcjonalne: "postepowanie_id", "termin_skladania").');
+  const { postepowanie_id: postepowanieId = null, termin_skladania: terminRaw } = parsed.data;
+
+  // Termin składania kończy okno pingowania (TTL, 2026-09-25): z body, a gdy go brak —
+  // z postępowania Radaru SWZ użytkownika (luźne odniesienie; cudze/nieznane = brak).
+  let terminSkladania = null;
+  if (terminRaw !== undefined && terminRaw.trim() !== '') {
+    const ms = Date.parse(terminRaw);
+    if (!Number.isFinite(ms)) throw badRequest('"termin_skladania" musi być poprawną datą (ISO 8601).');
+    terminSkladania = new Date(ms).toISOString();
+  } else if (postepowanieId) {
+    terminSkladania = postepowaniaSwz.findByIdForUser(postepowanieId, req.user.id)?.termin_skladania_ofert ?? null;
+  }
+
+  let sesja;
+  try {
+    sesja = skrzynka.rozpocznijSesje(req.user.id, { postepowanieId, terminSkladania });
+  } catch (e) {
+    if (e.code === 'LIMIT_SESJI') throw tooMany(e.message);
+    throw e;
+  }
   res.status(201).json({ sesja });
 }));
 

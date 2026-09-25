@@ -83,6 +83,8 @@ async function pakietZAwaria(d) {
   await cs.zapiszZrzut('u1', s.id, `data:image/png;base64,${png.toString('base64')}`, { opis: 'Ekran 11:58 z zegarem' });
   await cs.zapiszZrzut('u1', s.id, `data:image/png;base64,${png.toString('base64')}`, { opis: 'Ekran 11:59 z zegarem' });
 
+  // Dwa KOLEJNE nieudane pingi — od 2026-09-25 dopiero seria (nie pojedynczy zanik) to awaria.
+  cs.zapiszPing(s.id, { url: 'https://ezamowienia.gov.pl', kodHttp: null, czasMs: 9000, dostepna: false });
   cs.zapiszPing(s.id, { url: 'https://ezamowienia.gov.pl', kodHttp: null, czasMs: 9000, dostepna: false });
 
   const oferta = Buffer.from('<Oferta><Cena>123456.78</Cena></Oferta>', 'utf8');

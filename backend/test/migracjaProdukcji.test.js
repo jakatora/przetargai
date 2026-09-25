@@ -84,6 +84,7 @@ test('migracja: na istniejącej bazie wykonują się WSZYSTKIE migracje po kolei
     '011_czarna_skrzynka',
     '012_password_resets',
     '013_czarna_skrzynka_sha256',
+    '014_czarna_skrzynka_termin',
   ]);
 });
 
@@ -221,8 +222,13 @@ test('migracja 013: kolumna SHA-256 pliku we wpisie czarnej skrzynki na zmigrowa
   assert.ok(kolumny.includes('plik_sha256'), 'migracja 013 dokłada plik_sha256');
 });
 
+test('migracja 014: termin składania na sesji czarnej skrzynki na zmigrowanej produkcji', () => {
+  const kolumny = db.prepare('PRAGMA table_info(czarna_skrzynka_sesja)').all().map((c) => c.name);
+  assert.ok(kolumny.includes('termin_skladania'), 'migracja 014 dokłada termin_skladania');
+});
+
 test('migracja: ponowne uruchomienie niczego nie zmienia (idempotencja)', () => {
   const drugie = migrate();
   assert.deepEqual(drugie.applied, []);
-  assert.equal(drugie.skipped, 13); // 13 migracji (001–013) — wszystkie już zastosowane
+  assert.equal(drugie.skipped, 14); // 14 migracji (001–014) — wszystkie już zastosowane
 });

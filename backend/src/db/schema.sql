@@ -393,9 +393,10 @@ CREATE TABLE IF NOT EXISTS czarna_skrzynka_sesja (
   postepowanie_id  TEXT,                         -- luźne odniesienie do postępowania (BZP/SWZ/podprogowe) — bez FK
   strefa_czasowa   TEXT NOT NULL,                -- strefa zegara serwera w chwili startu (IANA, np. 'Europe/Warsaw')
   hash_oferty      TEXT,                         -- SHA-256 pliku oferty (gdy wgrany) — dowód integralności
-  plik_oferty_url  TEXT,                         -- URL/ścieżka ORYGINAŁU oferty zapisanego bez modyfikacji
+  plik_oferty_url  TEXT,                         -- nazwa pliku ORYGINAŁU oferty w magazynie (bez modyfikacji)
   created_at       TEXT NOT NULL,
-  updated_at       TEXT NOT NULL
+  updated_at       TEXT NOT NULL,
+  termin_skladania TEXT                          -- ISO 8601 — termin składania ofert (migracja 014); koniec okna pingowania
 );
 CREATE INDEX IF NOT EXISTS idx_czarna_skrzynka_sesja_user
   ON czarna_skrzynka_sesja(user_id, postepowanie_id);

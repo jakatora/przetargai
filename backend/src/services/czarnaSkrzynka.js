@@ -115,6 +115,34 @@ function domyslnaStrefa() {
 
 const ZEGAR_DOMYSLNY = { teraz: nowIso, strefa: domyslnaStrefa };
 
+// ─────────────────────────── Okno życia sesji (TTL) ─────────────────────────
+
+/*
+ * 2026-09-25: sesja bez wgranej oferty była „otwarta" NA ZAWSZE — monitor dostępności
+ * pingował ją co 15 min bez końca (log rósł w nieskończoność), a użytkownik mógł otworzyć
+ * dowolnie wiele sesji. Okno pingowania kończy się po 48 h od utworzenia albo z terminem
+ * składania ofert (jeśli znany), co nastąpi wcześniej — po terminie pomiar niczego już nie
+ * dowodzi. Wygasłej sesji NIE kasujemy (to dowód), tylko przestajemy ją pingować i liczyć.
+ */
+
+/** Maks. czas pingowania sesji od jej utworzenia. */
+export const TTL_SESJI_MS = 48 * 60 * 60 * 1000;
+
+/** Ile jednocześnie otwartych (niewygasłych, bez oferty) sesji może mieć użytkownik. */
+export const LIMIT_OTWARTYCH_SESJI = 5;
+
+/** Koniec okna pingowania sesji (ms epoki): min(utworzenie + 48 h, termin składania). */
+export function koniecOknaSesji(row) {
+  const odUtworzenia = Date.parse(row.created_at) + TTL_SESJI_MS;
+  const termin = row.termin_skladania ? Date.parse(row.termin_skladania) : NaN;
+  return Number.isFinite(termin) ? Math.min(odUtworzenia, termin) : odUtworzenia;
+}
+
+/** Sesja w toku: oferta niezłożona i okno pingowania jeszcze trwa. */
+function sesjaOtwarta(row, terazMs) {
+  return !row.hash_oferty && terazMs < koniecOknaSesji(row);
+}
+
 // ─────────────────────────── Warstwa danych (fabryka) ───────────────────────
 
 function lazy(db, sql) {
@@ -131,8 +159,8 @@ function lazy(db, sql) {
 export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zegar = ZEGAR_DOMYSLNY } = {}) {
   const _insertSesja = lazy(db, `
     INSERT INTO czarna_skrzynka_sesja
-      (id, user_id, postepowanie_id, strefa_czasowa, hash_oferty, plik_oferty_url, created_at, updated_at)
-    VALUES (?, ?, ?, ?, NULL, NULL, ?, ?)`);
+      (id, user_id, postepowanie_id, strefa_czasowa, hash_oferty, plik_oferty_url, created_at, updated_at, termin_skladania)
+    VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?)`);
   const _sesjaById = lazy(db, `SELECT * FROM czarna_skrzynka_sesja WHERE id = ?`);
   const _updateOferta = lazy(db, `
     UPDATE czarna_skrzynka_sesja
@@ -144,8 +172,21 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
   const _zdarzenieById = lazy(db, `SELECT * FROM czarna_skrzynka_zdarzenie WHERE id = ?`);
   const _zdarzeniaBySesja = lazy(db, `
     SELECT * FROM czarna_skrzynka_zdarzenie WHERE sesja_id = ? ORDER BY id ASC`);
+  // Kandydaci z ostatnich 48 h (ISO 8601 porównuje się leksykograficznie); termin składania
+  // dofiltrowujemy w JS (`sesjaOtwarta`), żeby reguła okna była w jednym miejscu.
   const _sesjeOtwarte = lazy(db, `
-    SELECT * FROM czarna_skrzynka_sesja WHERE hash_oferty IS NULL ORDER BY created_at ASC, id ASC`);
+    SELECT * FROM czarna_skrzynka_sesja
+     WHERE hash_oferty IS NULL AND created_at > ?
+     ORDER BY created_at ASC, id ASC`);
+  const _sesjeOtwarteUsera = lazy(db, `
+    SELECT * FROM czarna_skrzynka_sesja
+     WHERE user_id = ? AND hash_oferty IS NULL AND created_at > ?`);
+
+  /** Chwila „teraz" z zegara serwera (ms) i granica 48 h wstecz (ISO). */
+  function terazIGranica() {
+    const terazMs = Date.parse(zegar.teraz());
+    return { terazMs, granica: new Date(terazMs - TTL_SESJI_MS).toISOString() };
+  }
 
   /** Surowy wiersz sesji przypisany do właściciela (albo null). */
   function wierszSesji(userId, sesjaId) {
@@ -160,11 +201,27 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
     return row;
   }
 
-  /** Rozpoczyna sesję rejestratora lotu dla jednej próby złożenia oferty. */
-  function rozpocznijSesje(userId, { postepowanieId = null } = {}) {
+  /**
+   * Rozpoczyna sesję rejestratora lotu dla jednej próby złożenia oferty.
+   * @param {string} userId
+   * @param {{postepowanieId?: string|null, terminSkladania?: string|null}} [opts]
+   *   terminSkladania — ISO 8601; skraca okno pingowania (patrz `koniecOknaSesji`).
+   * @throws {Error & {code: 'LIMIT_SESJI'}} gdy użytkownik ma już LIMIT_OTWARTYCH_SESJI otwartych
+   */
+  function rozpocznijSesje(userId, { postepowanieId = null, terminSkladania = null } = {}) {
+    const { terazMs, granica } = terazIGranica();
+    const otwarte = _sesjeOtwarteUsera().all(userId, granica).filter((r) => sesjaOtwarta(r, terazMs));
+    if (otwarte.length >= LIMIT_OTWARTYCH_SESJI) {
+      const err = new Error(
+        `Masz już ${LIMIT_OTWARTYCH_SESJI} otwartych sesji rejestratora — wgraj ofertę w jednej z nich `
+        + 'albo poczekaj, aż wygaśnie (48 h od rozpoczęcia lub termin składania ofert).',
+      );
+      err.code = 'LIMIT_SESJI';
+      throw err;
+    }
     const id = newId();
     const ts = zegar.teraz();
-    _insertSesja().run(id, userId, postepowanieId ?? null, zegar.strefa(), ts, ts);
+    _insertSesja().run(id, userId, postepowanieId ?? null, zegar.strefa(), ts, ts, terminSkladania ?? null);
     return sesja(userId, id);
   }
 
@@ -237,12 +294,14 @@ export function createCzarnaSkrzynka(db, { magazynPlikow = magazynNaDysku(), zeg
 
   /**
    * Otwarte sesje WSZYSTKICH użytkowników — próby złożenia oferty jeszcze w toku
-   * (oferta niezłożona: `hash_oferty IS NULL`). To one są w oknie „przed terminem",
-   * więc monitor dostępności platformy (job 2/7) utrwala w nich wynik pingu. Zapytanie
-   * systemowe (bez izolacji po user_id) — wołane wyłącznie przez scheduler, nie z żądania.
+   * (oferta niezłożona: `hash_oferty IS NULL`) i wciąż w oknie pingowania (TTL 48 h /
+   * termin składania — 2026-09-25). Tylko w nich monitor dostępności platformy (job 2/7)
+   * utrwala wynik pingu. Zapytanie systemowe (bez izolacji po user_id) — wołane wyłącznie
+   * przez scheduler, nie z żądania.
    */
   function sesjeOtwarte() {
-    return _sesjeOtwarte().all();
+    const { terazMs, granica } = terazIGranica();
+    return _sesjeOtwarte().all(granica).filter((r) => sesjaOtwarta(r, terazMs));
   }
 
   /**

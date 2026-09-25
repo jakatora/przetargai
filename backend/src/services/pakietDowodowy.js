@@ -66,9 +66,11 @@ function zdarzeniaZ(sesja) {
  *   `typy` — unikalne, posortowane typy awarii; `powody` — każde zdarzenie-dowód w kolejności logu.
  */
 export function wykryjAwarie(sesja) {
+  const zdarzenia = zdarzeniaZ(sesja);
+  const pingiWSerii = nieudanePingiWSeriach(zdarzenia);
   const powody = [];
-  for (const z of zdarzeniaZ(sesja)) {
-    const typAwarii = TYP_ZDARZENIA_NA_AWARIE[z.typ] || (pingNiedostepny(z) ? 'niedostepnosc' : null);
+  for (const z of zdarzenia) {
+    const typAwarii = TYP_ZDARZENIA_NA_AWARIE[z.typ] || (pingiWSerii.has(z) ? 'niedostepnosc' : null);
     if (!typAwarii) continue;
     powody.push({
       typ: typAwarii,
@@ -79,6 +81,36 @@ export function wykryjAwarie(sesja) {
   }
   const typy = [...new Set(powody.map((p) => p.typ))].sort();
   return { awaria: powody.length > 0, typy, powody };
+}
+
+/**
+ * Ile KOLEJNYCH nieudanych pingów monitora uznajemy za niedostępność platformy (2026-09-25).
+ * Wcześniej JEDEN nieudany ping w dowolnym momencie sesji = `awaria=true` — a pojedynczy
+ * zanik to zwykle timeout / chwilowa sieć po NASZEJ stronie, nie awaria platformy; pismo
+ * o przedłużenie terminu oparte na jednym pomiarze nie obroni się przed KIO.
+ */
+export const MIN_NIEUDANYCH_PINGOW_Z_RZEDU = 2;
+
+/**
+ * Nieudane pingi należące do serii ≥ MIN_NIEUDANYCH_PINGOW_Z_RZEDU. „Kolejne" liczymy w
+ * sekwencji samych pingów: udany ping przerywa serię, wpis innego typu (krok, zrzut) — nie.
+ * Jawne wpisy wykonawcy ('niedostepnosc') liczą się osobno i od razu — to relacja, nie pomiar.
+ * @returns {Set<object>} zdarzenia-pingi, które są dowodem niedostępności
+ */
+function nieudanePingiWSeriach(zdarzenia) {
+  const wynik = new Set();
+  let seria = [];
+  const domknij = () => {
+    if (seria.length >= MIN_NIEUDANYCH_PINGOW_Z_RZEDU) for (const p of seria) wynik.add(p);
+    seria = [];
+  };
+  for (const z of zdarzenia) {
+    if (z.typ !== 'ping') continue;
+    if (pingNiedostepny(z)) seria.push(z);
+    else domknij();
+  }
+  domknij();
+  return wynik;
 }
 
 // ─────────────────────────── Budowa pakietu dowodowego ──────────────────────

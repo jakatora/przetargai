@@ -87,19 +87,50 @@ test('wykryjAwarie — wykrywa NIEDOSTĘPNOŚĆ z jawnego wpisu logu', () => {
   assert.deepEqual(w.typy, ['niedostepnosc']);
 });
 
-test('wykryjAwarie — wykrywa NIEDOSTĘPNOŚĆ z wyniku pingu monitora (real zapiszPing)', () => {
+test('wykryjAwarie — wykrywa NIEDOSTĘPNOŚĆ z wyników pingu monitora (2 kolejne, real zapiszPing)', () => {
   const d = freshDb();
   const cs = fabrykaSkrzynki(d);
   const s = cs.rozpocznijSesje('u1', { postepowanieId: 'p1' });
   // Ping producenta z kroku 2/7 zapisuje wynik jako tekst — detektor musi go rozumieć.
   cs.zapiszPing(s.id, { url: 'https://ezamowienia.gov.pl', kodHttp: null, czasMs: 8000, dostepna: false });
+  cs.zapiszPing(s.id, { url: 'https://ezamowienia.gov.pl', kodHttp: 503, czasMs: 900, dostepna: false });
 
   const w = wykryjAwarie({ zdarzenia: cs.zdarzenia('u1', s.id) });
   assert.equal(w.awaria, true);
   assert.deepEqual(w.typy, ['niedostepnosc']);
+  assert.equal(w.powody.length, 2, 'oba pingi serii są dowodem');
   assert.equal(w.powody[0].typ, 'niedostepnosc');
   assert.match(w.powody[0].opis, /NIEDOST/i);
   d.close();
+});
+
+// 2026-09-25: pojedynczy nieudany ping (chwilowy zanik sieci po NASZEJ stronie, timeout)
+// to nie awaria platformy — pakiet ogłaszał „awaria” po jednym pomiarze w dowolnym
+// momencie sesji. Awaria z pingu = co najmniej 2 KOLEJNE nieudane pingi.
+const ping = (ok, i) => zd('ping', `Ping https://ezamowienia.gov.pl: ${ok ? 'HTTP 200' : 'brak odpowiedzi'}, czas odpowiedzi 1 ms — platforma ${ok ? 'dostępna' : 'NIEDOSTĘPNA'}`, i);
+
+test('wykryjAwarie — pojedynczy nieudany ping => brak awarii', () => {
+  const w = wykryjAwarie({ zdarzenia: [ping(true, 1), ping(false, 2), ping(true, 3)] });
+  assert.equal(w.awaria, false);
+  assert.deepEqual(w.powody, []);
+});
+
+test('wykryjAwarie — nieudane pingi przedzielone udanym nie tworzą serii', () => {
+  const w = wykryjAwarie({ zdarzenia: [ping(false, 1), ping(true, 2), ping(false, 3), ping(true, 4)] });
+  assert.equal(w.awaria, false);
+});
+
+test('wykryjAwarie — seria nieudanych pingów przerwana wpisem innego typu nadal jest serią', () => {
+  const w = wykryjAwarie({ zdarzenia: [ping(false, 1), zd('krok', 'Odświeżono stronę', 2), ping(false, 3)] });
+  assert.equal(w.awaria, true);
+  assert.equal(w.powody.length, 2);
+});
+
+test('wykryjAwarie — jawny wpis niedostępności liczy się od razu (to relacja wykonawcy, nie pomiar)', () => {
+  const w = wykryjAwarie({ zdarzenia: [ping(false, 1), zd('niedostepnosc', 'Strona nie ładuje się', 2)] });
+  assert.equal(w.awaria, true);
+  assert.equal(w.powody.length, 1, 'pojedynczy ping nie trafia do powodów, jawny wpis — tak');
+  assert.equal(w.powody[0].opis, 'Strona nie ładuje się');
 });
 
 test('wykryjAwarie — łączy wiele typów naraz, typy są unikalne i posortowane', () => {
@@ -153,6 +184,7 @@ async function sesjaZDowodami(d) {
 
   cs.zapiszPing(s.id, { url: 'https://ezamowienia.gov.pl', kodHttp: 200, czasMs: 100, dostepna: true });
   cs.zapiszPing(s.id, { url: 'https://ezamowienia.gov.pl', kodHttp: null, czasMs: 9000, dostepna: false });
+  cs.zapiszPing(s.id, { url: 'https://ezamowienia.gov.pl', kodHttp: null, czasMs: 9000, dostepna: false });
 
   const oferta = Buffer.from('<Oferta><Cena>123456.78</Cena></Oferta>', 'utf8');
   await cs.zapiszOferte('u1', s.id, oferta.toString('base64'), { nazwaPliku: 'oferta.xml' });
@@ -184,22 +216,22 @@ test('zbudujPakiet — manifest spina WSZYSTKIE dowody (zrzuty, przebieg, ping, 
   assert.equal(pakiet.manifest.zrzuty.length, 2);
   for (const z of pakiet.manifest.zrzuty) assert.ok(z.plik_url, 'zrzut ma lokalizację pliku');
 
-  // Wyniki dostępności — oba pingi, z rozpoznanym stanem dostępna/niedostępna.
-  assert.equal(pakiet.manifest.dostepnosc.length, 2);
-  assert.equal(pakiet.manifest.dostepnosc.filter((p) => p.dostepna === false).length, 1);
+  // Wyniki dostępności — wszystkie pingi, z rozpoznanym stanem dostępna/niedostępna.
+  assert.equal(pakiet.manifest.dostepnosc.length, 3);
+  assert.equal(pakiet.manifest.dostepnosc.filter((p) => p.dostepna === false).length, 2);
   assert.equal(pakiet.manifest.dostepnosc.filter((p) => p.dostepna === true).length, 1);
 
-  // Pełny przebieg sesji — wszystkie zdarzenia w kolejności (krok, 2×zrzut, 2×ping, hash_oferty, blad_wysylki).
+  // Pełny przebieg sesji — wszystkie zdarzenia w kolejności (krok, 2×zrzut, 3×ping, hash_oferty, blad_wysylki).
   const wszystkie = cs.zdarzenia('u1', sesjaId);
   assert.equal(pakiet.manifest.przebieg.length, wszystkie.length);
   assert.deepEqual(pakiet.manifest.przebieg.map((e) => e.typ), wszystkie.map((e) => e.typ));
 
   // Liczby w manifeście spójne z zawartością.
   assert.equal(pakiet.manifest.liczby.zrzuty, 2);
-  assert.equal(pakiet.manifest.liczby.pingi, 2);
+  assert.equal(pakiet.manifest.liczby.pingi, 3);
   assert.equal(pakiet.manifest.liczby.zdarzenia, wszystkie.length);
 
-  // Detekcja awarii wbudowana w pakiet (błąd wysyłki + niedostępny ping).
+  // Detekcja awarii wbudowana w pakiet (błąd wysyłki + 2 kolejne niedostępne pingi).
   assert.equal(pakiet.awaria.awaria, true);
   assert.deepEqual(pakiet.awaria.typy, ['blad_wysylki', 'niedostepnosc']);
   d.close();
