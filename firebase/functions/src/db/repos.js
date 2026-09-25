@@ -1241,6 +1241,39 @@ export const saved = {
   },
 };
 
+// ============================ znacznik cotygodniowego przeglądu ============================
+
+/*
+ * `users/{id}/meta/digest_<rok>-W<tydzień ISO>` — przegląd tygodnia idzie do konta
+ * NAJWYŻEJ RAZ (2026-09-25, P2). Bez znacznika podwójne wyzwolenie Cloud Schedulera
+ * albo ponowienie po błędzie wysyłało każdemu drugi e-mail. Podkolekcja `meta`
+ * znika razem z kontem (`usunKonto` → recursiveDelete).
+ */
+const digestRef = (userId, tydzien) =>
+  db().collection('users').doc(userId).collection('meta').doc(`digest_${tydzien}`);
+
+export const znacznikDigestu = {
+  /** @returns {Promise<boolean>} true = wolno wysłać (znacznik właśnie powstał) */
+  async zarezerwuj(userId, tydzien) {
+    try {
+      await digestRef(userId, tydzien).create({ stan: 'wysylanie', zarezerwowano_o: nowIso() });
+      return true;
+    } catch (err) {
+      if (err.code === 6 /* ALREADY_EXISTS */) return false;
+      throw err;
+    }
+  },
+
+  async potwierdz(userId, tydzien, { emailId = null } = {}) {
+    await digestRef(userId, tydzien).set({ stan: 'wyslany', wyslano_o: nowIso(), email_id: emailId }, { merge: true });
+  },
+
+  /** Nieudana wysyłka — zwalniamy znacznik, żeby ponowienie mogło dosłać przegląd. */
+  async zwolnij(userId, tydzien) {
+    await digestRef(userId, tydzien).delete();
+  },
+};
+
 // ============================ evaluations ============================
 
 const evalCol = (userId) => db().collection('users').doc(userId).collection('evaluations');
