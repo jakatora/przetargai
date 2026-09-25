@@ -122,6 +122,43 @@ export async function idRailwayDlaUzytkownika(uzytkownik, { wymusOdnowienie = fa
   return id;
 }
 
+/**
+ * Usuwa konto pomostowe RAZEM z danymi na Railway (RODO art. 17, 2026-09-25).
+ *
+ * Na koncie pomostowym leżą Sejf dokumentów (zaświadczenia KRK, ZUS, US), Czarna
+ * skrzynka i Radar SWZ — a `DELETE /auth/me` w Functions kasował tylko Firestore
+ * i odpowiadał „wszystkie dane usunięte". Railway kasuje kaskadowo (FK ON DELETE
+ * CASCADE), wystarczy jego własne `DELETE /auth/me` z tokenem i hasłem konta.
+ *
+ * „Konto nie istnieje" (401 z tożsamością, która przepadła, albo 404 z tym samym
+ * komunikatem) to SUKCES — ponowiona próba po częściowej awarii musi przejść.
+ * Samo 404 bez tego komunikatu to brak trasy, a nie brak danych: rzucamy.
+ *
+ * @param {{id: string, most_railway_user_id?: string}} uzytkownik
+ * @returns {Promise<'brak_mostu'|'usuniete'|'nie_istnialo'>}
+ * @throws {Error} gdy nie ma pewności, że dane na Railway zniknęły
+ */
+export async function usunKontoPomostowe(uzytkownik) {
+  const idRailway = uzytkownik?.most_railway_user_id;
+  if (!idRailway) return 'brak_mostu';
+
+  const odpowiedz = await zapytajRailway('/auth/me', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${tokenRailway(idRailway)}`,
+    },
+    body: JSON.stringify({ password: hasloMostu(uzytkownik.id) }),
+  });
+  if (odpowiedz.ok) return 'usuniete';
+
+  const cialo = await odpowiedz.text().catch(() => '');
+  const kontaNieMa = String(cialo).includes('Konto nie istnieje');
+  if ((odpowiedz.status === 401 || odpowiedz.status === 404) && kontaNieMa) return 'nie_istnialo';
+
+  throw new Error(`Most: Railway nie usunął konta pomostowego (${odpowiedz.status})`);
+}
+
 /** Nagłówki, których NIE wolno przepisywać dalej (hop-by-hop albo nasze własne). */
 const NAGLOWKI_POMIJANE = new Set([
   'host', 'connection', 'keep-alive', 'transfer-encoding', 'upgrade',

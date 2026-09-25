@@ -15,6 +15,7 @@ import { createUpgradeLink } from '../services/magicLink.js';
 import { anulujSubskrypcje } from '../services/stripe.js';
 import { sendEmail, welcomeEmail, resetPasswordEmail } from '../services/email.js';
 import { backfillUser } from '../services/matching.js';
+import { usunKontoPomostowe } from '../services/mostRailway.js';
 import { logger } from '../lib/logger.js';
 
 /** Ważność kodu resetu hasła (1 h). Token w bazie tylko jako hash — wyciek nie przejmie konta. */
@@ -426,6 +427,25 @@ router.delete('/me', authRequired, ah(async (req, res) => {
     await users.setTier(req.user.id, 'free').catch((err) =>
       logger.error({ err: err.message, userId: req.user.id }, 'Nie udało się zdjąć planu przed usunięciem'));
     await users.setStripeSubscription(req.user.id, null).catch(() => {});
+  }
+
+  /*
+   * Dane na Railway (konto pomostowe mostu: Sejf z zaświadczeniami KRK/ZUS/US,
+   * Czarna skrzynka, Radar SWZ) — 2026-09-25. Do tej pory zostawały na zawsze,
+   * a użytkownik czytał „wszystkie dane usunięte". Kolejność jak przy Stripe:
+   * najpierw to, co może się nie udać i wolno powtórzyć, na końcu nieodwracalne
+   * kasowanie Firestore. Bez pewności, że Railway skasował dane — 503.
+   */
+  try {
+    const wynik = await usunKontoPomostowe(req.user);
+    if (wynik !== 'brak_mostu') {
+      logger.info({ userId: req.user.id, wynik }, 'Konto pomostowe na Railway usunięte przed usunięciem konta');
+    }
+  } catch (err) {
+    logger.error({ err: err.message, userId: req.user.id }, 'Nie udało się usunąć danych na Railway');
+    throw serviceUnavailable(
+      'Nie udało się usunąć danych modułów (Sejf, Czarna skrzynka). Spróbuj ponownie za chwilę — konto nie zostało usunięte.',
+    );
   }
 
   // Audyt PRZED usunięciem: po nim nie ma już do czego się odwołać.
