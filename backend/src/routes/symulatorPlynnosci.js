@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { badRequest } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
+import { trescDokumentu, bladLimituTresci } from '../lib/limityTresci.js';
 import { wyciagnijParametryFinansowe } from '../services/parametryFinansowe.js';
 import { symulujPlynnosc } from '../services/symulacjaPlynnosci.js';
 import { rekomendujFinansowanie } from '../services/rekomendacjePlynnosci.js';
@@ -37,9 +38,12 @@ const router = Router();
 
 // SWZ + wzór umowy (oba opcjonalne w schemacie); regułę „co najmniej jeden dokument
 // niesie treść" egzekwujemy niżej (maTresc) dla czytelnego 400 — spójnie z /swz i /umowa.
+// Twardy limit znaków/linii każdego dokumentu (lib/limityTresci.js, 2026-09-25) — parser
+// deterministyczny jest liniowy, ale 10 MB parsera trasy to nie powód, by go karmić
+// dowolnie długim wejściem; przekroczenie => 413 z komunikatem PL.
 const trescSchema = z.object({
-  swz: z.string().optional(),
-  umowa: z.string().optional(),
+  swz: trescDokumentu().optional(),
+  umowa: trescDokumentu().optional(),
 });
 
 /** Czy żądanie w ogóle niesie coś do analizy (SWZ lub wzór umowy). */
@@ -78,8 +82,8 @@ const rekomendacjeSchema = z.object({
 });
 
 const analizaSchema = z.object({
-  swz: z.string().optional(),
-  umowa: z.string().optional(),
+  swz: trescDokumentu().optional(),
+  umowa: trescDokumentu().optional(),
   kosztyMiesieczne: z.number().nonnegative().optional(),
   czasTrwaniaMies: z.number().positive().optional(),
   poduszkaGotowki: z.number().nonnegative().optional(),
@@ -90,6 +94,8 @@ const analizaSchema = z.object({
 // Krok 1/6: SWZ + wzór umowy → znormalizowany, ZAMROŻONY model finansowy kontraktu.
 router.post('/parametry', authRequired, ah(async (req, res) => {
   const parsed = trescSchema.safeParse(req.body ?? {});
+  const zaDluga = parsed.success ? null : bladLimituTresci(parsed.error);
+  if (zaDluga) throw zaDluga;
   if (!parsed.success || !maTresc(parsed.data)) {
     throw badRequest('Podaj treść do analizy: "swz" lub "umowa" (co najmniej jedno).');
   }
@@ -122,6 +128,8 @@ router.post('/rekomendacje', authRequired, ah(async (req, res) => {
 // + poduszka). Wynik = ręczne złożenie /parametry → /symulacja → /rekomendacje.
 router.post('/analiza', authRequired, ah(async (req, res) => {
   const parsed = analizaSchema.safeParse(req.body ?? {});
+  const zaDluga = parsed.success ? null : bladLimituTresci(parsed.error);
+  if (zaDluga) throw zaDluga;
   if (!parsed.success || !maTresc(parsed.data)) {
     throw badRequest('Podaj treść ("swz" lub "umowa") oraz opcjonalnie "kosztyMiesieczne", "czasTrwaniaMies" i "poduszkaGotowki".');
   }
