@@ -26,6 +26,12 @@ function hashToken(token) {
 
 const router = Router();
 
+/**
+ * Zależności z efektami ubocznymi podmienialne w testach (moduły ESM są
+ * niemutowalne, a atrapa fetch nie sięga Resend w trybie degradacji).
+ */
+export const zaleznosciAuth = { sendEmail };
+
 /** Waliduje body schematem zod; rzuca AppError 400 z listą pól. */
 function parseBody(schema, body) {
   const result = schema.safeParse(body);
@@ -159,9 +165,21 @@ router.post('/forgot-password', ah(async (req, res) => {
       tokenHash: hashToken(token),
       expiresAt: new Date(Date.now() + RESET_TTL_MS).toISOString(),
     });
-    audit({ userId: user.id, action: 'forgot_password', ip: req.ip });
-    sendEmail({ to: email, ...resetPasswordEmail(token) })
-      .catch((err) => logger.error({ err: err.message }, 'Email resetu hasła nie wysłany'));
+    await audit({ userId: user.id, action: 'forgot_password', ip: req.ip });
+    /*
+     * AWAIT przed odpowiedzią (D-044, 2026-09-25): Functions zamrażają CPU po
+     * response, więc wysyłka w tle dowoziła kod z opóźnieniem albo wcale. Błąd
+     * tylko logujemy — odpowiedź MUSI być identyczna jak dla nieznanego adresu
+     * (anty-enumeracja), a sendEmail w trybie degradacji i tak nie rzuca.
+     */
+    try {
+      const wynik = await zaleznosciAuth.sendEmail({ to: email, ...resetPasswordEmail(token) });
+      if (wynik && wynik.sent === false && !wynik.degraded) {
+        logger.error({ userId: user.id }, 'Email resetu hasła nie wysłany');
+      }
+    } catch (err) {
+      logger.error({ err: err.message, userId: user.id }, 'Email resetu hasła nie wysłany');
+    }
   } else {
     audit({ userId: null, action: 'forgot_password_unknown', ip: req.ip });
   }
@@ -190,7 +208,8 @@ router.post('/reset-password', ah(async (req, res) => {
   const passwordHash = await bcrypt.hash(data.password, 12);
   await users.setPassword(rec.user_id, passwordHash);
   await passwordResets.deleteForUser(rec.user_id);
-  audit({ userId: rec.user_id, action: 'reset_password', ip: req.ip });
+  // Ścieżka krytyczna — audyt CZEKANY (D-044): po odpowiedzi instancja zamarza.
+  await audit({ userId: rec.user_id, action: 'reset_password', ip: req.ip });
 
   // Konto ma już zwiększony token_version (setPassword) — nowy JWT dostaje NOWY `tv`,
   // więc działa dalej, a wszystkie stare sesje właśnie zostały unieważnione.
@@ -328,7 +347,7 @@ router.post('/change-password', authRequired, ah(async (req, res) => {
 
   const passwordHash = await bcrypt.hash(data.nowe_haslo, 12);
   await users.setPassword(req.user.id, passwordHash);
-  audit({ userId: req.user.id, action: 'change_password', ip: req.ip });
+  await audit({ userId: req.user.id, action: 'change_password', ip: req.ip });
 
   const user = await users.findById(req.user.id);
   res.json({
@@ -369,7 +388,7 @@ router.post('/change-email', authRequired, ah(async (req, res) => {
     if (err.code === 'DUPLICATE_EMAIL') throw conflict('Konto z tym adresem e-mail już istnieje');
     throw err;
   }
-  audit({ userId: req.user.id, action: 'change_email', ip: req.ip });
+  await audit({ userId: req.user.id, action: 'change_email', ip: req.ip });
   res.json({ ok: true, user: publicUser(updated), message: 'Adres e-mail został zmieniony.' });
 }));
 
@@ -449,7 +468,7 @@ router.delete('/me', authRequired, ah(async (req, res) => {
   }
 
   // Audyt PRZED usunięciem: po nim nie ma już do czego się odwołać.
-  audit({ userId: req.user.id, action: 'delete_account', ip: req.ip });
+  await audit({ userId: req.user.id, action: 'delete_account', ip: req.ip });
   await users.usunKonto(req.user.id);
   logger.info({ userId: req.user.id }, 'Konto usunięte na żądanie użytkownika');
 
