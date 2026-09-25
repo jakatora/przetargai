@@ -13,7 +13,7 @@ await polaczZEmulatorem();
 
 const { saved, tenders } = await import('../src/db/repos.js');
 const { createApp } = await import('../src/app.js');
-const { LIMIT_WYSYLEK_DZIENNIE } = await import('../src/routes/eksport.js');
+const { LIMIT_WYSYLEK_DZIENNIE, eksportKatalogu, MAKS_SKANU_EKSPORTU } = await import('../src/routes/eksport.js');
 const { BOM } = await import('../src/lib/eksportCsv.js');
 
 const app = await createApp();
@@ -131,3 +131,38 @@ describe('POST /eksport/wyslij — kalendarz ICS', () => {
   });
 });
 
+/*
+ * EKSPORT KATALOGU A SUFIT SKANU (naprawa 2026-09-25).
+ *
+ * Katalog czyta najwyżej 1200 dokumentów na wywołanie. Przy rzadkim filtrze strona
+ * potrafi wrócić PUSTA, choć dane się nie skończyły (`wyczerpano: false`). Eksport
+ * przerywał wtedy pętlę i oddawał plik z `obciety: false` — czyli „to już wszystko",
+ * choć za sufitem skanu leżały pasujące ogłoszenia.
+ */
+test('pusta strona przy NIEWYCZERPANYM skanie nie kończy eksportu — dociąga dalsze trafienia', async () => {
+  const strony = [
+    { wiersze: [], ostatni: { wartosc: 'a', id: '1' }, przeskanowano: 1200, wyczerpano: false },
+    { wiersze: [{ id: 't1', title: 'Rzadkie trafienie' }], ostatni: null, przeskanowano: 300, wyczerpano: true },
+  ];
+  const kursory = [];
+  const plik = await eksportKatalogu({}, '2026-09-25T10:00:00.000Z', {
+    katalog: async ({ kursor }) => { kursory.push(kursor); return strony.shift(); },
+  });
+  assert.equal(plik.wierszy, 1, 'trafienie za pustą stroną musi trafić do pliku');
+  assert.equal(plik.obciety, false, 'skan wyczerpany — plik jest kompletny');
+  assert.deepEqual(kursory[1], { wartosc: 'a', id: '1' }, 'druga strona rusza od kursora pierwszej');
+});
+
+test('eksport przerwany sufitem skanu mówi prawdę: `obciety: true`', async () => {
+  let wywolan = 0;
+  const plik = await eksportKatalogu({}, '2026-09-25T10:00:00.000Z', {
+    katalog: async () => {
+      wywolan += 1;
+      return { wiersze: [], ostatni: { wartosc: String(wywolan), id: String(wywolan) }, przeskanowano: 1200, wyczerpano: false };
+    },
+  });
+  assert.equal(plik.wierszy, 0);
+  assert.equal(plik.obciety, true, 'niewyczerpany skan to NIE jest pełny wynik');
+  assert.ok(wywolan * 1200 >= MAKS_SKANU_EKSPORTU && wywolan * 1200 < MAKS_SKANU_EKSPORTU + 1200,
+    'pętla kończy się na budżecie skanu, nie wcześniej i nie w nieskończoność');
+});
