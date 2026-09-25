@@ -4,7 +4,7 @@ import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { analizaZwiazania, MAKS_TERMINY } from '../lib/terminZwiazania';
+import { analizaZwiazania, MAKS_TERMINY, BIEG_TERMINU_ZWIAZANIA } from '../lib/terminZwiazania';
 
 /**
  * Panel „STRAŻNIK TERMINU ZWIĄZANIA OFERTĄ" (art. 220 Pzp). Odlicza czas do końca terminu
@@ -73,11 +73,13 @@ export default function TerminZwiazaniaScreen({ route }) {
         </View>
       ) : null}
 
-      <Text style={styles.sekcjaTytul}>Ile najwyżej może trwać (art. 220 ust. 1)</Text>
+      {/* 2026-09-25: podstawa przy każdym limicie — 30 dni to art. 307 ust. 1, nie art. 220. */}
+      <Text style={styles.sekcjaTytul}>Ile najwyżej może trwać (art. 220 ust. 1 i art. 307 ust. 1 Pzp)</Text>
       <View style={styles.card}>
         {MAKS_TERMINY.map((m) => (
-          <Text key={m.klucz} style={styles.maks}>• {m.etykieta}</Text>
+          <Text key={m.klucz} style={styles.maks}>• {m.etykieta} ({m.podstawa})</Text>
         ))}
+        <Text style={styles.maksOpis}>{BIEG_TERMINU_ZWIAZANIA}</Text>
         <Text style={styles.maksOpis}>
           Jeśli SWZ wskazuje dłuższy termin niż dopuszczalny dla wartości — to wada postępowania,
           którą można podnieść.

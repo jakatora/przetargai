@@ -6,9 +6,15 @@
  * = wypadnięcie z gry (oferta odrzucona, bo jej termin związania upłynął).
  *
  * PODSTAWA PRAWNA:
- *  - art. 220 Pzp — wykonawca jest związany ofertą do wskazanej w SWZ daty; maksymalna długość
- *    terminu zależy od wartości (30 / 90 / 120 dni). Zamawiający może raz zwrócić się o zgodę
- *    na przedłużenie o oznaczony okres (z jednoczesnym przedłużeniem wadium).
+ *  - art. 220 ust. 2 Pzp — zamawiający określa termin związania ofertą DATĄ w dokumentach
+ *    zamówienia; wykonawca jest nim związany do tej daty.
+ *  - maksymalna długość: 90 / 120 dni (art. 220 ust. 1 pkt 1 / pkt 2), w trybie podstawowym
+ *    30 dni (art. 307 ust. 1) — liczone od dnia upływu terminu składania ofert, przy czym TEN
+ *    dzień jest pierwszym dniem terminu (reguła szczególna wobec art. 111 § 2 KC, gdzie dnia
+ *    zdarzenia się nie liczy). Poprawka 2026-09-25: wcześniej całość podpisana „art. 220 ust. 1",
+ *    także 30 dni z trybu podstawowego.
+ *  - art. 220 ust. 3 — zamawiający może JEDNOKROTNIE zwrócić się o zgodę na przedłużenie
+ *    (w trybie podstawowym analogicznie art. 307), z jednoczesnym przedłużeniem wadium.
  *  - art. 226 ust. 1 pkt 4 — oferta z upływem terminu związania podlega odrzuceniu.
  *  - wadium musi zabezpieczać ofertę przez CAŁY termin związania (i jego przedłużenie).
  *
@@ -17,12 +23,21 @@
 
 import { naDzienUTC, roznicaDni, dzisiajPL, odmianaDni } from './dataUtc.js';
 
-/** Maksymalne długości terminu związania wg wartości (art. 220 ust. 1) — do podpowiedzi. */
+/**
+ * Maksymalne długości terminu związania — do podpowiedzi, każda z własną podstawą prawną.
+ * Kod NIE wylicza końca terminu związania (bierze datę z SWZ), więc reguła „pierwszym dniem
+ * jest dzień upływu terminu składania ofert" trafia tylko do opisu {@link BIEG_TERMINU_ZWIAZANIA}.
+ */
 export const MAKS_TERMINY = Object.freeze([
-  { klucz: 'krajowy', dni: 30, etykieta: 'Poniżej progów unijnych — maks. 30 dni' },
-  { klucz: 'unijny', dni: 90, etykieta: 'Od progów unijnych — maks. 90 dni' },
-  { klucz: 'najwyzszy', dni: 120, etykieta: 'Najwyższe wartości — maks. 120 dni' },
+  { klucz: 'krajowy', dni: 30, podstawa: 'art. 307 ust. 1 Pzp', etykieta: 'Tryb podstawowy (poniżej progów unijnych) — maks. 30 dni' },
+  { klucz: 'unijny', dni: 90, podstawa: 'art. 220 ust. 1 pkt 1 Pzp', etykieta: 'Od progów unijnych — maks. 90 dni' },
+  { klucz: 'najwyzszy', dni: 120, podstawa: 'art. 220 ust. 1 pkt 2 Pzp', etykieta: 'Roboty budowlane od 20 mln euro, dostawy i usługi od 10 mln euro — maks. 120 dni' },
 ]);
+
+/** Jak biegnie termin związania — reguła z art. 220 ust. 1 i art. 307 ust. 1 Pzp, z przykładem. */
+export const BIEG_TERMINU_ZWIAZANIA =
+  'Pierwszym dniem terminu związania jest dzień upływu terminu składania ofert — np. 30 dni '
+  + 'przy terminie składania ofert 10.03 kończy się 08.04 (nie 09.04).';
 
 /**
  * Analiza terminu związania i pokrycia wadium.
