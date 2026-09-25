@@ -1,7 +1,7 @@
 {
   "name": "przetargai-desktop",
   "productName": "PrzetargAI",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "PrzetargAI na Windows — aplikacja mobilna (eksport webowy Expo) w oknie Electrona",
   "author": "Jakatora",
   "private": true,
