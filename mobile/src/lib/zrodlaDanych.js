@@ -10,21 +10,49 @@
  * Kolory należą do motywu (lib/motyw.js) i tylko ekran je przypisuje.
  */
 
-/** Nazwy rejestrów. Kod = wartość pola `source` z backendu. */
+/**
+ * Nazwy rejestrów. Kod = wartość pola `source` z backendu. `rejestr` = strona
+ * główna rejestru, ta sama co w backendzie (functions/src/lib/katalogPrzetargow.js
+ * ZRODLA) — wyjście awaryjne przycisku „Otwórz oryginał", gdy nie ma linku do
+ * konkretnego ogłoszenia.
+ */
 const NAZWY = {
   bzp: {
     etykieta: { pl: 'BZP', en: 'BZP' },
     pelna: { pl: 'Biuletyn Zamówień Publicznych', en: 'Polish Public Procurement Bulletin' },
+    rejestr: 'https://ezamowienia.gov.pl',
   },
   ted: {
     etykieta: { pl: 'TED', en: 'TED' },
     pelna: { pl: 'Dziennik Urzędowy UE (TED)', en: 'EU Official Journal (TED)' },
+    rejestr: 'https://ted.europa.eu',
   },
   baza_konkurencyjnosci: {
     etykieta: { pl: 'Baza Konkurencyjności', en: 'Baza Konkurencyjności' },
     pelna: { pl: 'Baza Konkurencyjności (fundusze UE)', en: 'Baza Konkurencyjności (EU funds)' },
+    rejestr: 'https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl',
   },
 };
+
+/**
+ * Metryczka źródła z SAMEGO kodu — w kształcie, jaki katalog dostaje z backendu
+ * (`serialize.metryczkaZrodla`), ale bez znacznika synchronizacji, którego ekran
+ * spoza katalogu nie zna. Kalendarz i alerty podają tylko kod (`'ted'`), a ekran
+ * ogłoszenia czyta `zrodlo.kod` — bez tej zamiany TED pokazywał się jako „BZP"
+ * (2026-09-25). Brak kodu → null (nie zgadujemy rejestru).
+ */
+export function metryczkaZrodla(kod) {
+  if (typeof kod !== 'string' || !kod) return null;
+  const opis = NAZWY[kod] ?? null;
+  return {
+    kod,
+    etykieta: opis?.etykieta ?? { pl: kod, en: kod },
+    nazwa: opis?.pelna ?? { pl: kod, en: kod },
+    rejestr: opis?.rejestr ?? null,
+    stan: null,
+    zsynchronizowano_o: null,
+  };
+}
 
 /**
  * Po tylu dobach od ostatniej synchronizacji ostrzegamy, a po tylu alarmujemy.
@@ -151,6 +179,17 @@ export function linkDoOryginalu(tender) {
 export function etykietaOtwarcia(zrodlo) {
   const e = etykietaZrodla(zrodlo?.kod);
   return { pl: `Otwórz oryginał w ${e.pl}`, en: `Open the original in ${e.en}` };
+}
+
+/**
+ * Etykieta przycisku dla CAŁEGO ogłoszenia. Ogłoszenie oznaczone jako
+ * `zrodloNieznane` (lib/skrotOgloszenia — np. z radaru planów, gdzie backend nie
+ * podaje rejestru) dostaje neutralny napis: „Otwórz oryginał w BZP" przy
+ * ogłoszeniu z TED byłoby fałszywą atrybucją (2026-09-25).
+ */
+export function etykietaOtwarciaOgloszenia(tender) {
+  if (tender?.zrodloNieznane) return { pl: 'Otwórz oryginał ogłoszenia', en: 'Open the original notice' };
+  return etykietaOtwarcia(tender?.zrodlo);
 }
 
 /**

@@ -71,6 +71,12 @@ export const api = {
   suggestProfile: (opis) => request('/auth/suggest-profile', { method: 'POST', body: { opis } }),
   setPushToken: (pushToken) =>
     request('/auth/me/push-token', { method: 'PUT', body: { push_token: pushToken } }),
+  /**
+   * Wyrejestrowanie tokenu push przy wylogowaniu → `{ ok: true }`. Bez tego telefon
+   * dalej dostawał powiadomienia konta, z którego się wylogowano (2026-09-25).
+   * `body: {}` celowo — bezcielesny DELETE dostaje 411 od frontu Google.
+   */
+  usunPushToken: () => request('/auth/me/push-token', { method: 'DELETE', body: {} }),
   createUpgradeLink: () => request('/auth/upgrade-link', { method: 'POST' }),
   /** Rezygnacja z subskrypcji na koniec opłaconego okresu (Standard działa do końca miesiąca). */
   anulujSubskrypcje: () => request('/upgrade/cancel', { method: 'POST', body: {} }),

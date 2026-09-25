@@ -35,3 +35,19 @@ export async function registerForPushNotifications() {
     return null;
   }
 }
+
+/**
+ * Sprząta powiadomienia KONTA z urządzenia przy wylogowaniu / zmianie konta
+ * (2026-09-25). Jedyne lokalnie planowane powiadomienia to terminy KIO konkretnej
+ * firmy (services/powiadomieniaKio) — po wylogowaniu odpaliłyby się następnemu
+ * użytkownikowi telefonu. Zdejmujemy też już wyświetlone (tytuły przetargów
+ * poprzedniej firmy w szufladzie). Best-effort: na web moduł bywa niedostępny.
+ */
+export async function anulujPowiadomieniaKonta() {
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch { /* brak modułu (web) — nie ma czego anulować */ }
+  try {
+    await Notifications.dismissAllNotificationsAsync();
+  } catch { /* j.w. */ }
+}

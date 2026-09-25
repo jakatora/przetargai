@@ -1,8 +1,10 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import * as storage from '../lib/storage';
 import { getItem, setItem, deleteItem } from '../lib/storage';
 import { api, setAuthToken, onSesjaWygasla } from '../api/client';
-import { registerForPushNotifications } from '../services/push';
+import { registerForPushNotifications, anulujPowiadomieniaKonta } from '../services/push';
 import { czyPokazacOnboarding, KLUCZ_ONBOARDING_POMINIETY } from '../lib/onboarding';
+import { przeprowadzWylogowanie, zwiazDaneZKontem } from '../lib/daneLokalne';
 
 const TOKEN_KEY = 'przetargai_token';
 const USER_KEY = 'przetargai_user';
@@ -30,6 +32,20 @@ export function AuthProvider({ children }) {
         if (token) {
           setAuthToken(token);
           const data = await api.getMe();
+          // Dane lokalne należą do konta (2026-09-25). Brak znacznika właściciela =
+          // aktualizacja apki u zalogowanego użytkownika — jego dane przejmuje jego
+          // konto; obcy właściciel = dane znikają (sesja zostaje). Błąd magazynu nie
+          // może wywrócić odtworzenia sesji.
+          if (data.user?.id !== undefined && data.user?.id !== null) {
+            const { wyczyszczono } = await zwiazDaneZKontem(storage, data.user.id, {
+              przyjmijNieznane: true,
+              zachowaj: [TOKEN_KEY, USER_KEY],
+            }).catch(() => ({ wyczyszczono: false }));
+            if (wyczyszczono) {
+              setOnboardingPominiety(false);
+              anulujPowiadomieniaKonta();
+            }
+          }
           setUser(data.user);
           await setItem(USER_KEY, JSON.stringify(data.user)).catch(() => {});
         }
@@ -76,6 +92,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   const persistSession = useCallback(async (token, userData) => {
+    // Logowanie INNEGO konta niż właściciel danych na telefonie (albo nieznanego —
+    // np. po wylogowaniu w starszej wersji, która nic nie kasowała) → dane
+    // poprzedniej firmy znikają PRZED zapisem nowej sesji (audyt 2026-09-25).
+    // Czyszczenie łapie błędy per klucz, więc `catch` tu łapie co najwyżej zapis
+    // znacznika właściciela — dane są już wtedy skasowane.
+    try {
+      const { wyczyszczono } = await zwiazDaneZKontem(storage, userData?.id);
+      if (wyczyszczono) {
+        setOnboardingPominiety(false);
+        anulujPowiadomieniaKonta();
+      }
+    } catch { /* patrz wyżej */ }
     await setItem(TOKEN_KEY, token);
     await setItem(USER_KEY, JSON.stringify(userData)).catch(() => {});
     setAuthToken(token);
@@ -103,20 +131,57 @@ export function AuthProvider({ children }) {
     await persistSession(data.token, data.user);
   }, [persistSession]);
 
-  const signOut = useCallback(async () => {
-    await deleteItem(TOKEN_KEY).catch(() => {});
-    // Zapisany profil znika razem z tokenem — inaczej na urządzeniu zostałyby dane
-    // poprzedniego użytkownika (e-mail, NIP), a kolejne konto zobaczyłoby je offline.
-    await deleteItem(USER_KEY).catch(() => {});
-    setAuthToken(null);
-    setUser(null);
+  // Trwające wylogowanie. Wyrejestrowanie push idzie z tokenem — gdy serwer odpowie
+  // 401, klient API zawoła `onSesjaWygasla` → `signOut` drugi raz. Zamiast drugiego
+  // przebiegu (albo pętli) oddajemy ten, który już trwa.
+  const wylogowanieWToku = useRef(null);
+
+  /**
+   * Wylogowanie.
+   *
+   * Audyt 2026-09-25 (P0): kasowało tylko token i profil — rejestr kontraktów,
+   * checklisty ofert i ścieżki odwołań zostawały następnej firmie na wspólnym
+   * telefonie, a token push dalej dostawał powiadomienia konta. Teraz:
+   * wyrejestrowanie push (best-effort, z limitem czasu) → lokalne powiadomienia →
+   * wszystkie dane konta (lib/daneLokalne). Preferencje telefonu zostają.
+   *
+   * @param {{ wyrejestrujPush?: boolean, sesjaWygasla?: boolean }} [opcje]
+   *   `wyrejestrujPush: false` — usunięte konto (backend skasował rekord z tokenem);
+   *   `sesjaWygasla: true` — serwer odrzucił token: znika tylko sesja, dane zostają
+   *   przypisane do konta (lib/daneLokalne `zwiazDaneZKontem` skasuje je, jeśli
+   *   zaloguje się ktoś inny). Wygaśnięcie co 30 dni nie może kasować ręcznie
+   *   prowadzonego banku referencji.
+   */
+  const signOut = useCallback((opcje) => {
+    if (wylogowanieWToku.current) return wylogowanieWToku.current;
+    const przebieg = (async () => {
+      if (opcje?.sesjaWygasla === true) {
+        await deleteItem(TOKEN_KEY).catch(() => {});
+        // Zapisany profil znika razem z tokenem — inaczej na urządzeniu zostałyby dane
+        // poprzedniego użytkownika (e-mail, NIP), a kolejne konto zobaczyłoby je offline.
+        await deleteItem(USER_KEY).catch(() => {});
+      } else {
+        await przeprowadzWylogowanie({
+          storage,
+          // PRZED skasowaniem tokenu sesji — DELETE wymaga autoryzacji. Błąd sieci,
+          // 404 (backend bez trasy) czy zawieszone łącze nie blokują wylogowania.
+          usunPushToken: opcje?.wyrejestrujPush === false ? undefined : () => api.usunPushToken(),
+          anulujPowiadomienia: anulujPowiadomieniaKonta,
+        }).catch(() => {});
+        setOnboardingPominiety(false);
+      }
+      setAuthToken(null);
+      setUser(null);
+    })().finally(() => { wylogowanieWToku.current = null; });
+    wylogowanieWToku.current = przebieg;
+    return przebieg;
   }, []);
 
   // Serwer odrzucił token w trakcie sesji (wygasł, zmieniono hasło) — wylogowujemy
   // z dowolnego ekranu. Bez tego apka zostawała na ekranie błędu, z którego nie
   // było wyjścia poza reinstalacją (audyt 2026-07-09).
   useEffect(() => {
-    onSesjaWygasla(() => { signOut(); });
+    onSesjaWygasla(() => { signOut({ sesjaWygasla: true }); });
     return () => onSesjaWygasla(null);
   }, [signOut]);
 

@@ -14,6 +14,7 @@
  */
 
 import { pozostaly_czas_do } from './terminKio.js';
+import { zarejestrujKlucz } from './daneLokalne.js';
 
 /** Etapy pracy nad kontrolą. Enum jak w `statusPrzetargu.js` ({ wartosc, etykieta }). */
 export const STATUSY_KONTROLI = [
@@ -144,10 +145,21 @@ export class PoprzetargowaKontrola {
   }
 }
 
-const kluczKontroli = (postepowanieId) => `kontrola:${postepowanieId}`;
+/**
+ * Klucz magazynu per postępowanie.
+ *
+ * 2026-09-25: był `kontrola:<id>` — dwukropek (a w id BZP także „/") odrzuca
+ * SecureStore („Invalid key"), więc na telefonie kontrola NIGDY się nie zapisywała;
+ * działało tylko na web (localStorage). Teraz prefiks aplikacji + id oczyszczone
+ * jak w kontrolaOferty/sciezkaDoOferty. Migracji nie ma czego robić: na natywnym
+ * pod starym kluczem nic nie mogło powstać.
+ */
+export function kluczKontroliPoprzetargowej(postepowanieId) {
+  return `przetargai.kontrola-poprzetargowa.${String(postepowanieId).replace(/[^A-Za-z0-9._-]/g, '_')}`;
+}
 
 /**
- * Zapis kontroli. `magazyn` = obiekt z `setItem(key, value)` (np. `../lib/storage`).
+ * Zapis kontroli. `magazyn` = obiekt z `getItem`/`setItem` (np. `../lib/storage`).
  * @returns {Promise<PoprzetargowaKontrola>} znormalizowany model
  */
 export async function zapiszKontrole(magazyn, kontrola) {
@@ -157,7 +169,10 @@ export async function zapiszKontrole(magazyn, kontrola) {
   if (!model.postepowanieId) {
     throw new Error('PoprzetargowaKontrola: brak postepowanieId — nie ma jak powiązać z postępowaniem.');
   }
-  await magazyn.setItem(kluczKontroli(model.postepowanieId), JSON.stringify(model.toJSON()));
+  // Klucz per postępowanie → do indeksu konta, żeby wylogowanie go skasowało (2026-09-25).
+  const klucz = kluczKontroliPoprzetargowej(model.postepowanieId);
+  await zarejestrujKlucz(magazyn, klucz);
+  await magazyn.setItem(klucz, JSON.stringify(model.toJSON()));
   return model;
 }
 
@@ -168,7 +183,7 @@ export async function zapiszKontrole(magazyn, kontrola) {
 export async function wczytajKontrole(magazyn, postepowanieId) {
   const id = idAlboNull(postepowanieId);
   if (!id) return null;
-  const surowe = await magazyn.getItem(kluczKontroli(id));
+  const surowe = await magazyn.getItem(kluczKontroliPoprzetargowej(id));
   if (!surowe) return null;
   try {
     return PoprzetargowaKontrola.fromJSON(JSON.parse(surowe));
