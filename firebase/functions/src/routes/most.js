@@ -2,7 +2,9 @@ import { Router } from 'express';
 import { env, features } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { authRequired } from '../middleware/auth.js';
-import { idRailwayDlaUzytkownika, przekaz, tozsamoscPrzepadla } from '../services/mostRailway.js';
+import {
+  idRailwayDlaUzytkownika, przekaz, tozsamoscPrzepadla, sciezkaMostu,
+} from '../services/mostRailway.js';
 
 /*
  * MOST `/api/przetarg/*` → Railway (P0-4).
@@ -27,6 +29,18 @@ router.use(async (req, res, next) => {
   if (!features.most) {
     return res.status(503).json({
       error: { code: 'MOST_WYLACZONY', message: 'Most do modułów przetargowych jest chwilowo wyłączony' },
+    });
+  }
+
+  /*
+   * Path traversal (P2, 2026-09-25): `fetch()` normalizuje `%2e%2e` jako `..`, więc
+   * surowe `req.url` potrafiło wyjść poza /api/przetarg/ (np. do /api/fitter/me)
+   * z tokenem konta pomostowego. Sprawdzamy PRZED jakimkolwiek ruchem do Railway —
+   * także przed założeniem konta pomostowego.
+   */
+  if (!sciezkaMostu(req.url)) {
+    return res.status(400).json({
+      error: { code: 'BAD_REQUEST', message: 'Nieprawidłowa ścieżka modułu przetargowego' },
     });
   }
 

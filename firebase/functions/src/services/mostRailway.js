@@ -55,6 +55,17 @@ export function hasloMostu(uidAplikacji) {
 }
 
 /**
+ * Podpis konta pomostowego: HMAC-SHA256(JWT_SECRET, email) w hex, małe litery
+ * (2026-09-25). `/auth/register` na Railway jest publiczne, a schemat adresu
+ * (most.<uid>@MOST_EMAIL_DOMENA) jest przewidywalny — bez podpisu dało się
+ * założyć konto na cudzy uid, zanim zrobił to most, i przejąć jego dane w modułach.
+ * Railway wymaga nagłówka `X-Most-Podpis` dla adresów z tej domeny.
+ */
+export function podpisMostu(email) {
+  return crypto.createHmac('sha256', env.JWT_SECRET).update(String(email)).digest('hex');
+}
+
+/**
  * Token dla Railway.
  *
  * Railway sprawdza wyłącznie podpis i istnienie konta (nie ma pola `tv`), więc
@@ -78,7 +89,9 @@ async function zapytajRailway(sciezka, opcje) {
 export async function zalozKontoPomostowe(uidAplikacji) {
   const email = emailMostu(uidAplikacji);
   const password = hasloMostu(uidAplikacji);
-  const naglowki = { 'Content-Type': 'application/json' };
+  // Podpis przy rejestracji (i logowaniu — nie szkodzi): Railway wymaga go dla
+  // adresów z MOST_EMAIL_DOMENA, żeby nikt nie założył konta na cudzy uid.
+  const naglowki = { 'Content-Type': 'application/json', 'X-Most-Podpis': podpisMostu(email) };
 
   const rejestracja = await zapytajRailway('/auth/register', {
     method: 'POST',
@@ -122,29 +135,112 @@ export async function idRailwayDlaUzytkownika(uzytkownik, { wymusOdnowienie = fa
   return id;
 }
 
-/** Nagłówki, których NIE wolno przepisywać dalej (hop-by-hop albo nasze własne). */
+/**
+ * Usuwa konto pomostowe RAZEM z danymi na Railway (RODO art. 17, 2026-09-25).
+ *
+ * Na koncie pomostowym leżą Sejf dokumentów (zaświadczenia KRK, ZUS, US), Czarna
+ * skrzynka i Radar SWZ — a `DELETE /auth/me` w Functions kasował tylko Firestore
+ * i odpowiadał „wszystkie dane usunięte". Railway kasuje kaskadowo (FK ON DELETE
+ * CASCADE), wystarczy jego własne `DELETE /auth/me` z tokenem i hasłem konta.
+ *
+ * „Konto nie istnieje" (401 z tożsamością, która przepadła, albo 404 z tym samym
+ * komunikatem) to SUKCES — ponowiona próba po częściowej awarii musi przejść.
+ * Samo 404 bez tego komunikatu to brak trasy, a nie brak danych: rzucamy.
+ *
+ * @param {{id: string, most_railway_user_id?: string}} uzytkownik
+ * @returns {Promise<'brak_mostu'|'usuniete'|'nie_istnialo'>}
+ * @throws {Error} gdy nie ma pewności, że dane na Railway zniknęły
+ */
+export async function usunKontoPomostowe(uzytkownik) {
+  const idRailway = uzytkownik?.most_railway_user_id;
+  if (!idRailway) return 'brak_mostu';
+
+  const odpowiedz = await zapytajRailway('/auth/me', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${tokenRailway(idRailway)}`,
+    },
+    body: JSON.stringify({ password: hasloMostu(uzytkownik.id) }),
+  });
+  if (odpowiedz.ok) return 'usuniete';
+
+  const cialo = await odpowiedz.text().catch(() => '');
+  const kontaNieMa = String(cialo).includes('Konto nie istnieje');
+  if ((odpowiedz.status === 401 || odpowiedz.status === 404) && kontaNieMa) return 'nie_istnialo';
+
+  throw new Error(`Most: Railway nie usunął konta pomostowego (${odpowiedz.status})`);
+}
+
+/**
+ * Nagłówki, których NIE wolno przepisywać dalej (hop-by-hop albo nasze własne).
+ * `x-forwarded-*`/`forwarded`/`x-real-ip` od klienta pozwalałyby podszyć się pod
+ * dowolny adres IP w limiterze Railway; `x-most-podpis` to podpis MOSTU, nie
+ * klienta (2026-09-25).
+ */
 const NAGLOWKI_POMIJANE = new Set([
   'host', 'connection', 'keep-alive', 'transfer-encoding', 'upgrade',
   'proxy-authorization', 'proxy-authenticate', 'te', 'trailer',
   'authorization', 'content-length', 'accept-encoding',
+  'forwarded', 'x-real-ip', 'x-most-podpis',
 ]);
+
+const PREFIKS_MOSTU = '/api/przetarg';
+
+/**
+ * Bezpieczna ścieżka docelowa na Railway albo `null` (P2, 2026-09-25).
+ *
+ * Most przekazywał surowe `req.url`, a `fetch()` normalizuje ścieżkę — także
+ * `%2e%2e` jako `..` — więc `/api/przetarg/%2e%2e/%2e%2e/api/fitter/me` docierał
+ * do Railway jako `/api/fitter/me` z tokenem konta pomostowego. Odrzucamy w części
+ * ŚCIEŻKI zakodowane kropki i ukośniki, segmenty `.`/`..` i odwrotny ukośnik,
+ * a po normalizacji przez `URL` wymagamy prefiksu `/api/przetarg/`. Query nie
+ * jest sprawdzane — `%2F` w wartości parametru jest legalne.
+ *
+ * @param {string} surowyUrl `req.url` względem montażu mostu (np. `/sejf/dokumenty?x=1`)
+ * @returns {string|null} ścieżka z query, np. `/api/przetarg/sejf/dokumenty?x=1`
+ */
+export function sciezkaMostu(surowyUrl) {
+  const url = String(surowyUrl ?? '');
+  const sciezka = url.split('?')[0];
+  if (!sciezka.startsWith('/')) return null;
+  if (/%2e|%2f|%5c/i.test(sciezka) || sciezka.includes('\\')) return null;
+  if (sciezka.split('/').some((segment) => segment === '.' || segment === '..')) return null;
+
+  const baza = new URL(env.MOST_RAILWAY_URL);
+  const docelowy = new URL(`${PREFIKS_MOSTU}${url}`, baza);
+  if (docelowy.origin !== baza.origin) return null;
+  if (!docelowy.pathname.startsWith(`${PREFIKS_MOSTU}/`)) return null;
+  return `${docelowy.pathname}${docelowy.search}`;
+}
 
 /**
  * Przekazuje pojedyncze żądanie do Railway.
  *
  * @param {{metoda: string, sciezka: string, naglowki: object, cialo?: Buffer, idRailway: string}} zadanie
+ *   `sciezka` = `req.url` względem montażu mostu; walidowana przez `sciezkaMostu`
  * @returns {Promise<{status: number, naglowki: Headers, cialo: Buffer}>}
+ * @throws {Error} err.code === 'MOST_ZLA_SCIEZKA' gdy ścieżka wychodzi poza prefiks
  */
 export async function przekaz({ metoda, sciezka, naglowki, cialo, idRailway }) {
+  // Druga linia obrony — trasa sprawdza to samo przed wywołaniem (400).
+  const cel = sciezkaMostu(sciezka);
+  if (!cel) {
+    const blad = new Error('Most: ścieżka poza /api/przetarg/');
+    blad.code = 'MOST_ZLA_SCIEZKA';
+    throw blad;
+  }
+
   const doWyslania = { Authorization: `Bearer ${tokenRailway(idRailway)}` };
   for (const [klucz, wartosc] of Object.entries(naglowki ?? {})) {
-    if (!NAGLOWKI_POMIJANE.has(klucz.toLowerCase()) && typeof wartosc === 'string') {
+    const nazwa = klucz.toLowerCase();
+    if (!NAGLOWKI_POMIJANE.has(nazwa) && !nazwa.startsWith('x-forwarded-') && typeof wartosc === 'string') {
       doWyslania[klucz] = wartosc;
     }
   }
 
   const bezCiala = metoda === 'GET' || metoda === 'HEAD';
-  const odpowiedz = await zapytajRailway(`/api/przetarg${sciezka}`, {
+  const odpowiedz = await zapytajRailway(cel, {
     method: metoda,
     headers: doWyslania,
     body: bezCiala || !cialo?.length ? undefined : cialo,

@@ -143,8 +143,58 @@ export const users = {
     });
   },
 
+  /**
+   * Przypisuje token push do konta — i ZDEJMUJE go z każdego innego konta.
+   *
+   * Token Expo należy do TELEFONU, nie do konta (P0, 2026-09-25). Gdy na tym samym
+   * telefonie loguje się konto B, rejestruje ono ten sam token; bez zdjęcia go
+   * z konta A właściciel A dostawałby alerty (tytuły przetargów, terminy) na
+   * telefon B. Transakcja, żeby dwie równoległe rejestracje nie zostawiły tokenu
+   * na dwóch kontach naraz. Zapytanie po jednym polu obsługuje indeks automatyczny.
+   */
   async setPushToken(id, token) {
-    await db().collection('users').doc(id).update({ push_token: token, updated_at: nowIso() });
+    const firestore = db();
+    const ts = nowIso();
+    await firestore.runTransaction(async (tx) => {
+      const zTymTokenem = await tx.get(
+        firestore.collection('users').where('push_token', '==', token),
+      );
+      for (const d of zTymTokenem.docs) {
+        if (d.id !== id) tx.update(d.ref, { push_token: null, updated_at: ts });
+      }
+      tx.update(firestore.collection('users').doc(id), { push_token: token, updated_at: ts });
+    });
+  },
+
+  /**
+   * Zeruje token push konta (wylogowanie z telefonu). Idempotentne — konto bez
+   * tokenu to nie błąd, bo mobile woła to przy KAŻDYM wylogowaniu.
+   */
+  async usunPushToken(id) {
+    await db().collection('users').doc(id).update({ push_token: null, updated_at: nowIso() });
+  },
+
+  /**
+   * Zdejmuje MARTWE tokeny push (Expo: DeviceNotRegistered) z każdego konta, które
+   * je ma (2026-09-25). Bez tego odinstalowana aplikacja zostawiała token na zawsze:
+   * każdy cykl wysyłał w próżnię. Operator `in` przyjmuje najwyżej 30 wartości.
+   * @param {string[]} tokeny
+   * @returns {Promise<number>} ile kont wyczyszczono
+   */
+  async zdejmijPushTokeny(tokeny) {
+    const unikalne = [...new Set((tokeny ?? []).filter((t) => typeof t === 'string' && t))];
+    let wyczyszczone = 0;
+    for (let i = 0; i < unikalne.length; i += 30) {
+      const snap = await db().collection('users')
+        .where('push_token', 'in', unikalne.slice(i, i + 30)).get();
+      if (snap.empty) continue;
+      const batch = db().batch();
+      const ts = nowIso();
+      for (const d of snap.docs) batch.update(d.ref, { push_token: null, updated_at: ts });
+      await batch.commit();
+      wyczyszczone += snap.size;
+    }
+    return wyczyszczone;
   },
 
   async setTier(id, tier) {

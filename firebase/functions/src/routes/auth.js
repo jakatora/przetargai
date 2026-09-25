@@ -15,6 +15,7 @@ import { createUpgradeLink } from '../services/magicLink.js';
 import { anulujSubskrypcje } from '../services/stripe.js';
 import { sendEmail, welcomeEmail, resetPasswordEmail } from '../services/email.js';
 import { backfillUser } from '../services/matching.js';
+import { usunKontoPomostowe } from '../services/mostRailway.js';
 import { logger } from '../lib/logger.js';
 
 /** Ważność kodu resetu hasła (1 h). Token w bazie tylko jako hash — wyciek nie przejmie konta. */
@@ -24,6 +25,12 @@ function hashToken(token) {
 }
 
 const router = Router();
+
+/**
+ * Zależności z efektami ubocznymi podmienialne w testach (moduły ESM są
+ * niemutowalne, a atrapa fetch nie sięga Resend w trybie degradacji).
+ */
+export const zaleznosciAuth = { sendEmail };
 
 /** Waliduje body schematem zod; rzuca AppError 400 z listą pól. */
 function parseBody(schema, body) {
@@ -158,9 +165,21 @@ router.post('/forgot-password', ah(async (req, res) => {
       tokenHash: hashToken(token),
       expiresAt: new Date(Date.now() + RESET_TTL_MS).toISOString(),
     });
-    audit({ userId: user.id, action: 'forgot_password', ip: req.ip });
-    sendEmail({ to: email, ...resetPasswordEmail(token) })
-      .catch((err) => logger.error({ err: err.message }, 'Email resetu hasła nie wysłany'));
+    await audit({ userId: user.id, action: 'forgot_password', ip: req.ip });
+    /*
+     * AWAIT przed odpowiedzią (D-044, 2026-09-25): Functions zamrażają CPU po
+     * response, więc wysyłka w tle dowoziła kod z opóźnieniem albo wcale. Błąd
+     * tylko logujemy — odpowiedź MUSI być identyczna jak dla nieznanego adresu
+     * (anty-enumeracja), a sendEmail w trybie degradacji i tak nie rzuca.
+     */
+    try {
+      const wynik = await zaleznosciAuth.sendEmail({ to: email, ...resetPasswordEmail(token) });
+      if (wynik && wynik.sent === false && !wynik.degraded) {
+        logger.error({ userId: user.id }, 'Email resetu hasła nie wysłany');
+      }
+    } catch (err) {
+      logger.error({ err: err.message, userId: user.id }, 'Email resetu hasła nie wysłany');
+    }
   } else {
     audit({ userId: null, action: 'forgot_password_unknown', ip: req.ip });
   }
@@ -189,7 +208,8 @@ router.post('/reset-password', ah(async (req, res) => {
   const passwordHash = await bcrypt.hash(data.password, 12);
   await users.setPassword(rec.user_id, passwordHash);
   await passwordResets.deleteForUser(rec.user_id);
-  audit({ userId: rec.user_id, action: 'reset_password', ip: req.ip });
+  // Ścieżka krytyczna — audyt CZEKANY (D-044): po odpowiedzi instancja zamarza.
+  await audit({ userId: rec.user_id, action: 'reset_password', ip: req.ip });
 
   // Konto ma już zwiększony token_version (setPassword) — nowy JWT dostaje NOWY `tv`,
   // więc działa dalej, a wszystkie stare sesje właśnie zostały unieważnione.
@@ -287,7 +307,19 @@ const pushTokenSchema = z.object({ push_token: z.string().min(1).max(300) });
 
 router.put('/me/push-token', authRequired, ah(async (req, res) => {
   const data = parseBody(pushTokenSchema, req.body);
+  // Repo zdejmuje ten sam token z innych kont (ten sam telefon, inne konto).
   await users.setPushToken(req.user.id, data.push_token);
+  res.json({ ok: true });
+}));
+
+/*
+ * Wylogowanie z telefonu (P0, 2026-09-25). Bez tej trasy token zostawał na koncie
+ * i telefon po wylogowaniu dalej dostawał powiadomienia o przetargach konta, które
+ * już na nim nie jest zalogowane. Idempotentne — mobile woła to przy każdym
+ * wylogowaniu, także gdy tokenu nigdy nie było (brak zgody na powiadomienia).
+ */
+router.delete('/me/push-token', authRequired, ah(async (req, res) => {
+  await users.usunPushToken(req.user.id);
   res.json({ ok: true });
 }));
 
@@ -315,7 +347,7 @@ router.post('/change-password', authRequired, ah(async (req, res) => {
 
   const passwordHash = await bcrypt.hash(data.nowe_haslo, 12);
   await users.setPassword(req.user.id, passwordHash);
-  audit({ userId: req.user.id, action: 'change_password', ip: req.ip });
+  await audit({ userId: req.user.id, action: 'change_password', ip: req.ip });
 
   const user = await users.findById(req.user.id);
   res.json({
@@ -356,7 +388,7 @@ router.post('/change-email', authRequired, ah(async (req, res) => {
     if (err.code === 'DUPLICATE_EMAIL') throw conflict('Konto z tym adresem e-mail już istnieje');
     throw err;
   }
-  audit({ userId: req.user.id, action: 'change_email', ip: req.ip });
+  await audit({ userId: req.user.id, action: 'change_email', ip: req.ip });
   res.json({ ok: true, user: publicUser(updated), message: 'Adres e-mail został zmieniony.' });
 }));
 
@@ -416,8 +448,27 @@ router.delete('/me', authRequired, ah(async (req, res) => {
     await users.setStripeSubscription(req.user.id, null).catch(() => {});
   }
 
+  /*
+   * Dane na Railway (konto pomostowe mostu: Sejf z zaświadczeniami KRK/ZUS/US,
+   * Czarna skrzynka, Radar SWZ) — 2026-09-25. Do tej pory zostawały na zawsze,
+   * a użytkownik czytał „wszystkie dane usunięte". Kolejność jak przy Stripe:
+   * najpierw to, co może się nie udać i wolno powtórzyć, na końcu nieodwracalne
+   * kasowanie Firestore. Bez pewności, że Railway skasował dane — 503.
+   */
+  try {
+    const wynik = await usunKontoPomostowe(req.user);
+    if (wynik !== 'brak_mostu') {
+      logger.info({ userId: req.user.id, wynik }, 'Konto pomostowe na Railway usunięte przed usunięciem konta');
+    }
+  } catch (err) {
+    logger.error({ err: err.message, userId: req.user.id }, 'Nie udało się usunąć danych na Railway');
+    throw serviceUnavailable(
+      'Nie udało się usunąć danych modułów (Sejf, Czarna skrzynka). Spróbuj ponownie za chwilę — konto nie zostało usunięte.',
+    );
+  }
+
   // Audyt PRZED usunięciem: po nim nie ma już do czego się odwołać.
-  audit({ userId: req.user.id, action: 'delete_account', ip: req.ip });
+  await audit({ userId: req.user.id, action: 'delete_account', ip: req.ip });
   await users.usunKonto(req.user.id);
   logger.info({ userId: req.user.id }, 'Konto usunięte na żądanie użytkownika');
 

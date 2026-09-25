@@ -54,7 +54,9 @@ const zaChwile = () => new Date(Date.now() + 60_000).toISOString();
  */
 const dwaDniTemu = () => new Date(Date.now() - 2 * 86_400_000).toISOString();
 
-async function konto({ push = 'ExponentPushToken[xxx]' } = {}) {
+// Token UNIKALNY na konto: od 2026-09-25 jeden token = jedno konto (ten sam telefon
+// zalogowany na B zdejmuje token z A), więc wspólny token „kradłby" powiadomienia.
+async function konto({ push = `ExponentPushToken[mon-${process.pid}-${nast()}]` } = {}) {
   const u = await users.create({
     email: `mon-${process.pid}-${nast()}-${Date.now()}@t.pl`,
     passwordHash: 'x',

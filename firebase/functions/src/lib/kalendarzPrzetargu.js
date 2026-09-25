@@ -245,13 +245,46 @@ export function nastepnyKrok(pozycje, teraz) {
 
 /* ============================ eksport ICS ============================ */
 
-/** RFC 5545: przecinek, średnik, odwrotny ukośnik i nowa linia muszą być poprzedzone ukośnikiem. */
+/**
+ * RFC 5545: przecinek, średnik, odwrotny ukośnik i nowa linia muszą być poprzedzone
+ * ukośnikiem. CR też (2026-09-25): goły `\r` z tytułu łamał właściwość w pół —
+ * CRLF i samotne CR zamieniamy na `\n` przed escapem.
+ */
 function escIcs(tekst) {
   return String(tekst ?? '')
     .replaceAll('\\', '\\\\')
     .replaceAll(';', '\\;')
     .replaceAll(',', '\\,')
+    .replaceAll('\r\n', '\n')
+    .replaceAll('\r', '\n')
     .replaceAll('\n', '\\n');
+}
+
+/**
+ * Zawijanie linii do 75 OKTETÓW (RFC 5545 §3.1): kontynuacja zaczyna się spacją.
+ * Liczymy bajty UTF-8, nie znaki — polski tytuł z „ąęś" przekraczał limit wcześniej,
+ * niż wskazywała długość napisu. Tniemy tylko na granicy znaku (bez rozcinania
+ * sekwencji wielobajtowej), więc treść po rozwinięciu jest nienaruszona.
+ */
+function zawin(linia) {
+  if (Buffer.byteLength(linia, 'utf8') <= 75) return linia;
+  const czesci = [];
+  let biezaca = '';
+  let bajty = 0;
+  let limit = 75;
+  for (const znak of linia) {
+    const dl = Buffer.byteLength(znak, 'utf8');
+    if (bajty + dl > limit) {
+      czesci.push(biezaca);
+      biezaca = '';
+      bajty = 0;
+      limit = 74; // spacja rozpoczynająca kontynuację to 1 oktet
+    }
+    biezaca += znak;
+    bajty += dl;
+  }
+  czesci.push(biezaca);
+  return czesci.join('\r\n ');
 }
 
 function znacznikIcs(iso) {
@@ -268,6 +301,11 @@ function znacznikIcs(iso) {
  * Zdarzenia są chwilowe (DTSTART = DTEND), bo termin to moment, nie przedział.
  * VALARM daje przypomnienie 24 h wcześniej — po to człowiek wrzuca terminy do
  * swojego kalendarza.
+ *
+ * ANULOWANE (2026-09-25): wcześniej eksportowały się jak żywe — 3 VEVENT i 3 VALARM
+ * o terminach, które już nie istnieją. Teraz te same UID-y z STATUS:CANCELLED,
+ * wyższym SEQUENCE i bez VALARM: ponowny import ODWOŁUJE wcześniej zaimportowane
+ * zdarzenia zamiast je zostawiać.
  */
 export function doIcs(kalendarze, { teraz, domena = 'przetargai.pl' } = {}) {
   const linie = [
@@ -283,29 +321,38 @@ export function doIcs(kalendarze, { teraz, domena = 'przetargai.pl' } = {}) {
   const stempel = Number.isFinite(Date.parse(teraz ?? '')) ? znacznikIcs(teraz) : znacznikIcs(new Date(0).toISOString());
 
   for (const k of kalendarze ?? []) {
+    const anulowany = k?.anulowany === true;
     for (const p of k?.pozycje ?? []) {
       if (!p.znany) continue;
       const tytul = `${p.etykieta.pl}: ${k.tytul ?? 'przetarg'}`;
       linie.push(
         'BEGIN:VEVENT',
         `UID:${k.tenderId}-${p.kod}@${domena}`,
+        // Żywe = 0, odwołanie = 1: klient przyjmuje zmianę tylko z wyższym SEQUENCE.
+        `SEQUENCE:${anulowany ? 1 : 0}`,
         `DTSTAMP:${stempel}`,
         `DTSTART:${znacznikIcs(p.at)}`,
         `DTEND:${znacznikIcs(p.at)}`,
-        `SUMMARY:${escIcs(tytul)}`,
+        `SUMMARY:${escIcs(anulowany ? `ANULOWANE — ${tytul}` : tytul)}`,
         `DESCRIPTION:${escIcs(p.opis.pl)}`,
-        'BEGIN:VALARM',
-        'TRIGGER:-PT24H',
-        'ACTION:DISPLAY',
-        `DESCRIPTION:${escIcs(tytul)}`,
-        'END:VALARM',
-        'END:VEVENT',
       );
+      if (anulowany) {
+        linie.push('STATUS:CANCELLED');
+      } else {
+        linie.push(
+          'BEGIN:VALARM',
+          'TRIGGER:-PT24H',
+          'ACTION:DISPLAY',
+          `DESCRIPTION:${escIcs(tytul)}`,
+          'END:VALARM',
+        );
+      }
+      linie.push('END:VEVENT');
     }
   }
 
   linie.push('END:VCALENDAR');
   // Zakończenie KAŻDEJ linii przez CRLF jest wymagane przez RFC 5545 — część
   // klientów kalendarza odrzuca plik z samym LF bez żadnego komunikatu.
-  return `${linie.join('\r\n')}\r\n`;
+  return `${linie.map(zawin).join('\r\n')}\r\n`;
 }
