@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { View, Text, Pressable, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
@@ -8,6 +8,7 @@ import { spacing, radius } from '../theme';
 import {
   TRYBY_RADARU, etykietaTerminu, tonPoziomu, opisPoziomu, formatujWartoscPlanu, podsumowanieRadaru,
 } from '../lib/radarPlanow';
+import { utworzLicznikZadan } from '../lib/licznikZadan';
 
 /*
  * RADAR PLANÓW POSTĘPOWAŃ (P2-4) — „wiedz o przetargu, zanim go ogłoszą".
@@ -73,24 +74,36 @@ export default function RadarPlanowScreen({ navigation }) {
   const [odswiezanie, setOdswiezanie] = useState(false);
   const [blad, setBlad] = useState(false);
 
+  // Tylko najnowsze żądanie ma prawo zmienić ekran. Przy szybkim przełączeniu
+  // zakładki spóźniona odpowiedź POPRZEDNIEGO trybu nadpisywała listę nowego —
+  // „Dla mnie" pokazywało cały rynek albo odwrotnie (audyt 2026-09-25).
+  const licznikZadan = useRef(utworzLicznikZadan()).current;
+
   const wczytaj = useCallback(async (wybranyTryb) => {
+    const nr = licznikZadan.nowe();
     try {
       const odp = await api.radarPlanow({ tryb: wybranyTryb });
+      if (!licznikZadan.czyAktualne(nr)) return;
       setDane(odp);
       setBlad(false);
     } catch {
       // Znana lista zostaje; bez niej pokazujemy BŁĄD, nie „brak planów" (P1-8).
-      setBlad(true);
+      if (licznikZadan.czyAktualne(nr)) setBlad(true);
     } finally {
-      setLadowanie(false);
-      setOdswiezanie(false);
+      // Wskaźniki zdejmuje najnowsze żądanie — stare nie może zgasić spinnera nowego.
+      if (licznikZadan.czyAktualne(nr)) {
+        setLadowanie(false);
+        setOdswiezanie(false);
+      }
     }
-  }, []);
+  }, [licznikZadan]);
 
   useFocusEffect(useCallback(() => { wczytaj(tryb); }, [wczytaj, tryb]));
 
   const zmienTryb = (nowy) => {
     if (nowy === tryb) return;
+    // Unieważnij żądanie starego trybu od razu — nie dopiero, gdy efekt wyśle nowe.
+    licznikZadan.nowe();
     setLadowanie(true);
     setDane(null);
     setTryb(nowy);

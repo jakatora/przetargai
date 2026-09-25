@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList, ScrollView, View, Text, TextInput, Pressable, RefreshControl, ActivityIndicator,
 } from 'react-native';
@@ -20,6 +20,7 @@ import {
 import { etykietaZrodla } from '../lib/zrodlaDanych';
 import { useAuth } from '../context/AuthContext';
 import { eksportujNaEmail } from '../services/eksportCsv';
+import { utworzLicznikZadan } from '../lib/licznikZadan';
 
 /*
  * Tryb „Wszystkie" na głównej liście (P1-3).
@@ -145,22 +146,32 @@ export default function KatalogWszystkich({ navigation }) {
   const parametry = useMemo(() => parametryZapytania(filtry), [filtry]);
   const aktywnych = useMemo(() => liczbaAktywnychFiltrow(filtry), [filtry]);
 
+  // Tylko najnowsze żądanie ma prawo zmienić listę. Przy szybkiej zmianie filtra
+  // spóźniona odpowiedź STAREGO filtra nadpisywała wyniki nowego, a dociągnięta
+  // strona starego filtra doklejała się do nowej listy (audyt 2026-09-25).
+  const licznikZadan = useRef(utworzLicznikZadan()).current;
+
   /** Pierwsza strona (albo odświeżenie). Błąd NIE kasuje tego, co już widać. */
   const wczytaj = useCallback(async (tryb) => {
+    const nr = licznikZadan.nowe(); // unieważnia wszystko, co jeszcze leci (także dociąganie)
     if (tryb === 'odswiez') setOdswiezanie(true);
     try {
       const dane = await api.getTenders({ ...parametry, limit: 20 });
+      if (!licznikZadan.czyAktualne(nr)) return;
       setPozycje(dane.tenders ?? []);
       setKursor(dane.next_kursor ?? null);
       setWyczerpano(dane.wyczerpano !== false);
       setBlad(null);
     } catch (err) {
-      setBlad(err.message);
+      if (licznikZadan.czyAktualne(nr)) setBlad(err.message);
     } finally {
-      setLadowanie(false);
-      setOdswiezanie(false);
+      // Wskaźniki zdejmuje najnowsze żądanie — ono zawsze kończy się tym `finally`.
+      if (licznikZadan.czyAktualne(nr)) {
+        setLadowanie(false);
+        setOdswiezanie(false);
+      }
     }
-  }, [parametry]);
+  }, [parametry, licznikZadan]);
 
   /*
    * Zmiana filtrów przeładowuje pierwszą stronę — ale dopiero po chwili ciszy.
@@ -180,20 +191,26 @@ export default function KatalogWszystkich({ navigation }) {
    */
   const dociagnij = useCallback(async () => {
     if (!kursor || dociaganie || odswiezanie || ladowanie) return;
+    // Dociąganie należy do BIEŻĄCEJ listy — nie zakłada nowej generacji, ale traci
+    // ważność, gdy w międzyczasie filtr się zmienił (strona starego filtra i jego
+    // kursor nie mogą trafić do nowej listy).
+    const nr = licznikZadan.biezace();
     setDociaganie(true);
     try {
       const dane = await api.getTenders({ ...parametry, limit: 20, kursor });
+      if (!licznikZadan.czyAktualne(nr)) return;
       setPozycje((poprzednie) => scalStrone(poprzednie, dane.tenders ?? []));
       setKursor(dane.next_kursor ?? null);
       setWyczerpano(dane.wyczerpano !== false);
       setBlad(null);
     } catch (err) {
       // Błąd dociągania nie może skasować listy — pokazujemy pasek nad stopką.
-      setBlad(err.message);
+      if (licznikZadan.czyAktualne(nr)) setBlad(err.message);
     } finally {
+      // Zawsze — inaczej unieważnione dociąganie zablokowałoby kolejne na stałe.
       setDociaganie(false);
     }
-  }, [kursor, dociaganie, odswiezanie, ladowanie, parametry]);
+  }, [kursor, dociaganie, odswiezanie, ladowanie, parametry, licznikZadan]);
 
   const licznik = etykietaLicznika({ ile: pozycje.length, wyczerpano });
 
