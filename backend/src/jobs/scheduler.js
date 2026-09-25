@@ -18,13 +18,18 @@ const tasks = [];
  * @param {typeof env} [cfg] konfiguracja (wstrzykiwalna w testach)
  */
 export function schedulerJobs(cfg = env) {
-  return [
-    {
+  // LEGACY pobieranie BZP + matching AI + push (2026-09-25, D-031): domyślnie wycięte —
+  // dublowało Firebase. Monitory modułów mostu poniżej zostają niezależnie od flagi.
+  const legacy = cfg.LEGACY_PRZETARG_ENABLED
+    ? [{
       name: 'tender-fetch',
       expression: cfg.TENDER_FETCH_CRON,
       timezone: cfg.SCHEDULER_TZ,
       run: () => runTenderFetch({ pages: 2 }),
-    },
+    }]
+    : [];
+  return [
+    ...legacy,
     {
       name: 'waloryzacja-monitor',
       expression: cfg.WALORYZACJA_MONITOR_CRON,
@@ -64,28 +69,35 @@ export function schedulerJobs(cfg = env) {
   ];
 }
 
-function schedule({ name, expression, timezone, run }) {
-  const valid = typeof cron.validate === 'function' ? cron.validate(expression) : true;
+function schedule({ name, expression, timezone, run }, cronImpl = cron) {
+  const valid = typeof cronImpl.validate === 'function' ? cronImpl.validate(expression) : true;
   if (!valid) {
     logger.error({ name, expression }, 'Nieprawidłowe wyrażenie cron — zadanie pominięte');
     return;
   }
   tasks.push(
-    cron.schedule(expression, async () => {
+    cronImpl.schedule(expression, async () => {
       logger.info({ name }, 'Scheduler: start zadania');
       try {
         await run();
       } catch (err) {
         logger.error({ name, err: err.message }, 'Scheduler: błąd zadania');
       }
-    }, { timezone }),
+    // noOverlap (2026-09-25): node-cron 4 domyślnie ODPALA kolejny przebieg, gdy poprzedni
+    // jeszcze trwa (np. dostępność co 15 min przy wiszącej platformie, backup na dużej
+    // bazie) — dwa równoległe przebiegi dublowały zapisy i koszty. Nakładający się tick
+    // jest pomijany (node-cron loguje ostrzeżenie), następny rusza normalnie.
+    }, { timezone, name, noOverlap: true }),
   );
   logger.info({ name, expression, timezone }, 'Scheduler: zadanie zarejestrowane');
 }
 
-/** Uruchamia harmonogram: codzienne pobieranie przetargów + kopie zapasowe. */
-export function startScheduler() {
-  for (const job of schedulerJobs()) schedule(job);
+/**
+ * Uruchamia harmonogram (monitory modułów mostu + kopie; legacy PrzetargAI tylko za flagą).
+ * @param {{cfg?: typeof env, cronImpl?: typeof cron}} [deps] wstrzykiwalne w testach
+ */
+export function startScheduler({ cfg = env, cronImpl = cron } = {}) {
+  for (const job of schedulerJobs(cfg)) schedule(job, cronImpl);
 }
 
 /** Zatrzymuje wszystkie zadania (przy zamykaniu serwera). */

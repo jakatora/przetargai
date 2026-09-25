@@ -96,7 +96,8 @@ router.post('/register', ah(async (req, res) => {
   // Onboarding backfill: jeśli user dał keywords/CPV, dopasuj go do istniejących
   // przetargów z otwartym terminem. Fire-and-forget — nie blokuje response.
   // Bez tego feed byłby pusty do następnego cyklu cron (do 24 h).
-  if (user.keywords.length || user.cpv_codes.length) {
+  // Tylko przy LEGACY_PRZETARG_ENABLED (2026-09-25, D-031): matching robi Firebase.
+  if (env.LEGACY_PRZETARG_ENABLED && (user.keywords.length || user.cpv_codes.length)) {
     backfillUser(user)
       .then((r) => logger.info({ userId: user.id, ...r }, 'Onboarding matching zakończony'))
       .catch((err) => logger.error({ err: err.message, userId: user.id }, 'Onboarding matching nieudany'));
@@ -216,7 +217,7 @@ router.patch('/me', authRequired, ah(async (req, res) => {
   const criteriaChanged =
     (data.keywords && JSON.stringify(data.keywords) !== JSON.stringify(req.user.keywords))
     || (data.cpv_codes && JSON.stringify(data.cpv_codes) !== JSON.stringify(req.user.cpv_codes));
-  if (criteriaChanged) {
+  if (criteriaChanged && env.LEGACY_PRZETARG_ENABLED) {
     backfillUser(updated)
       .then((r) => logger.info({ userId: updated.id, ...r }, 'Re-matching po zmianie profilu zakończony'))
       .catch((err) => logger.error({ err: err.message, userId: updated.id }, 'Re-matching po zmianie profilu nieudany'));

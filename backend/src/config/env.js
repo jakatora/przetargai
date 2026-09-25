@@ -107,6 +107,14 @@ const schema = z.object({
    */
   BACKUP_RETENTION: z.coerce.number().int().positive().default(7),
 
+  /*
+   * LEGACY PrzetargAI na Railway (2026-09-25, decyzja D-031): `tender-fetch` + matching AI
+   * (Haiku) + push dublowały pracę Firebase — te same pary oceniane dwa razy, dwa liczniki
+   * budżetu. Żaden moduł mostu (/api/przetarg/*) nie czyta `tenders`/`matches`, więc
+   * domyślnie WYŁĄCZONE: scheduler nie rejestruje `tender-fetch`, a rejestracja / PATCH
+   * /auth/me nie odpalają onboardingowego backfillu. true = zachowanie sprzed zmiany.
+   */
+  LEGACY_PRZETARG_ENABLED: flaga(false),
   // Codzienne pobieranie przetargów o 12:00 czasu polskiego (SCHEDULER_TZ).
   TENDER_FETCH_CRON: z.string().default('0 12 * * *'),
   // Codzienny monitoring waloryzacji o 6:00 czasu polskiego — sprawdza wskaźniki
