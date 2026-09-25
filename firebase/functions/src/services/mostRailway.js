@@ -172,29 +172,75 @@ export async function usunKontoPomostowe(uzytkownik) {
   throw new Error(`Most: Railway nie usunął konta pomostowego (${odpowiedz.status})`);
 }
 
-/** Nagłówki, których NIE wolno przepisywać dalej (hop-by-hop albo nasze własne). */
+/**
+ * Nagłówki, których NIE wolno przepisywać dalej (hop-by-hop albo nasze własne).
+ * `x-forwarded-*`/`forwarded`/`x-real-ip` od klienta pozwalałyby podszyć się pod
+ * dowolny adres IP w limiterze Railway; `x-most-podpis` to podpis MOSTU, nie
+ * klienta (2026-09-25).
+ */
 const NAGLOWKI_POMIJANE = new Set([
   'host', 'connection', 'keep-alive', 'transfer-encoding', 'upgrade',
   'proxy-authorization', 'proxy-authenticate', 'te', 'trailer',
   'authorization', 'content-length', 'accept-encoding',
+  'forwarded', 'x-real-ip', 'x-most-podpis',
 ]);
+
+const PREFIKS_MOSTU = '/api/przetarg';
+
+/**
+ * Bezpieczna ścieżka docelowa na Railway albo `null` (P2, 2026-09-25).
+ *
+ * Most przekazywał surowe `req.url`, a `fetch()` normalizuje ścieżkę — także
+ * `%2e%2e` jako `..` — więc `/api/przetarg/%2e%2e/%2e%2e/api/fitter/me` docierał
+ * do Railway jako `/api/fitter/me` z tokenem konta pomostowego. Odrzucamy w części
+ * ŚCIEŻKI zakodowane kropki i ukośniki, segmenty `.`/`..` i odwrotny ukośnik,
+ * a po normalizacji przez `URL` wymagamy prefiksu `/api/przetarg/`. Query nie
+ * jest sprawdzane — `%2F` w wartości parametru jest legalne.
+ *
+ * @param {string} surowyUrl `req.url` względem montażu mostu (np. `/sejf/dokumenty?x=1`)
+ * @returns {string|null} ścieżka z query, np. `/api/przetarg/sejf/dokumenty?x=1`
+ */
+export function sciezkaMostu(surowyUrl) {
+  const url = String(surowyUrl ?? '');
+  const sciezka = url.split('?')[0];
+  if (!sciezka.startsWith('/')) return null;
+  if (/%2e|%2f|%5c/i.test(sciezka) || sciezka.includes('\\')) return null;
+  if (sciezka.split('/').some((segment) => segment === '.' || segment === '..')) return null;
+
+  const baza = new URL(env.MOST_RAILWAY_URL);
+  const docelowy = new URL(`${PREFIKS_MOSTU}${url}`, baza);
+  if (docelowy.origin !== baza.origin) return null;
+  if (!docelowy.pathname.startsWith(`${PREFIKS_MOSTU}/`)) return null;
+  return `${docelowy.pathname}${docelowy.search}`;
+}
 
 /**
  * Przekazuje pojedyncze żądanie do Railway.
  *
  * @param {{metoda: string, sciezka: string, naglowki: object, cialo?: Buffer, idRailway: string}} zadanie
+ *   `sciezka` = `req.url` względem montażu mostu; walidowana przez `sciezkaMostu`
  * @returns {Promise<{status: number, naglowki: Headers, cialo: Buffer}>}
+ * @throws {Error} err.code === 'MOST_ZLA_SCIEZKA' gdy ścieżka wychodzi poza prefiks
  */
 export async function przekaz({ metoda, sciezka, naglowki, cialo, idRailway }) {
+  // Druga linia obrony — trasa sprawdza to samo przed wywołaniem (400).
+  const cel = sciezkaMostu(sciezka);
+  if (!cel) {
+    const blad = new Error('Most: ścieżka poza /api/przetarg/');
+    blad.code = 'MOST_ZLA_SCIEZKA';
+    throw blad;
+  }
+
   const doWyslania = { Authorization: `Bearer ${tokenRailway(idRailway)}` };
   for (const [klucz, wartosc] of Object.entries(naglowki ?? {})) {
-    if (!NAGLOWKI_POMIJANE.has(klucz.toLowerCase()) && typeof wartosc === 'string') {
+    const nazwa = klucz.toLowerCase();
+    if (!NAGLOWKI_POMIJANE.has(nazwa) && !nazwa.startsWith('x-forwarded-') && typeof wartosc === 'string') {
       doWyslania[klucz] = wartosc;
     }
   }
 
   const bezCiala = metoda === 'GET' || metoda === 'HEAD';
-  const odpowiedz = await zapytajRailway(`/api/przetarg${sciezka}`, {
+  const odpowiedz = await zapytajRailway(cel, {
     method: metoda,
     headers: doWyslania,
     body: bezCiala || !cialo?.length ? undefined : cialo,
