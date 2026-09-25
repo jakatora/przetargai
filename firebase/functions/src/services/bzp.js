@@ -278,11 +278,13 @@ async function pobierzDzien(dzien, licznik, tempo) {
  * Awaria pojedynczego dnia nie przerywa całości — lepiej oddać 6 dni z 7 niż nic.
  *
  * @param {{from?: string, to?: string, licznik?: object}} [opts] domyślnie ostatnie
- *   `BZP_LOOKBACK_DAYS` dni; `licznik` to akumulator pomiarów (lib/licznikZrodla.js)
+ *   `BZP_LOOKBACK_DAYS` dni; `licznik` to akumulator pomiarów (lib/licznikZrodla.js);
+ *   `dobyOgloszen` — opcjonalna mapa externalId → doby, w których ogłoszenie przyszło
+ *   (checkpoint okna zostawia otwarte doby ogłoszeń, których nie udało się zapisać)
  * @returns {Promise<object[]>} znormalizowane ogłoszenia, zdeduplikowane po `externalId`
  */
 export async function pobierzOgloszeniaBzp({
-  from, to, licznik, dni: dniWejscie, budzetMs = Infinity, tempo: tempoWejscie,
+  from, to, licznik, dni: dniWejscie, budzetMs = Infinity, tempo: tempoWejscie, dobyOgloszen = null,
 } = {}) {
   const tempo = stanTempa(tempoWejscie);
   const doDnia = to ?? dateOnly(tempo.teraz());
@@ -310,7 +312,10 @@ export async function pobierzOgloszeniaBzp({
 
     try {
       const doba = await pobierzDzien(dzien, licznik, tempo);
-      for (const n of doba.ogloszenia) wszystkie.set(n.externalId, n);
+      for (const n of doba.ogloszenia) {
+        wszystkie.set(n.externalId, n);
+        if (dobyOgloszen) dobyOgloszen.set(n.externalId, [...(dobyOgloszen.get(n.externalId) ?? []), dzien]);
+      }
       raport.push({
         dzien,
         pobrano: doba.ogloszenia.length,

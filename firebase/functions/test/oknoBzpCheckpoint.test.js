@@ -145,3 +145,15 @@ test('dni pominięte przez budżet zostają otwarte i wrócą w następnym przeb
     ['2026-09-22', '2026-09-21', '2026-09-20', '2026-09-19', '2026-09-18'],
   );
 });
+
+test('zaktualizujCheckpoint: doba z NIEZAPISANYM ogłoszeniem nie zamyka się (2026-09-25)', () => {
+  const stan = zaktualizujCheckpoint({
+    checkpoint: null,
+    dni: OKNO,
+    dzisiaj: DZISIAJ,
+    teraz: '2026-09-22T10:00:00.000Z',
+    raport: [{ dzien: '2026-09-20', pobrano: 400, zapytania: 1, wojewodztwaBezDanych: 0, niezapisane: 1 }],
+  });
+  assert.equal(stan.dni['2026-09-20'].kompletny, false);
+  assert.equal(stan.dni['2026-09-20'].niezapisane, 1);
+});

@@ -291,3 +291,23 @@ test('brak pozycji na liście nie wymyśla odcisku — null zamiast zgadywania',
   const sygnaly = sygnalyZmiany({ poz: undefined, json: {} });
   assert.equal(sygnaly.zrodlo_odcisk, null);
 });
+
+test('KRYTYCZNE: ogłoszenie z NIEUDANYM zapisem nie dostaje odcisku — kolejny przebieg pobierze je ponownie (2026-09-25)', () => {
+  const aktywne = aktywneZ(pozycja(1), pozycja(2));
+  const stan = zaktualizujCheckpointBk({
+    checkpoint: null,
+    aktywne,
+    przetworzone: [
+      { id: '1', termin: null, externalId: 'bk:1' },
+      { id: '2', termin: null, externalId: 'bk:2' },
+    ],
+    nieudane: new Set(['bk:2']),
+    pokrycieKompletne: true,
+    teraz: TERAZ,
+  });
+  assert.ok(stan.ogloszenia['1'], 'zapisane ogłoszenie dostaje odcisk');
+  assert.equal(stan.ogloszenia['2'], undefined, 'niezapisane NIE może udawać, że je mamy');
+
+  const nastepny = wybierzDoPobrania({ aktywne, checkpoint: stan, oknoOd: OKNO_OD, maks: 10 });
+  assert.deepEqual(nastepny.doPobrania, ['2']);
+});

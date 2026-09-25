@@ -13,7 +13,7 @@ process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 
-const { pobierzBzpZWznowieniem } = await import('../src/jobs/oknoBzp.js');
+const { pobierzBzpZWznowieniem, zatwierdzCheckpointBzp, runBzpOkno } = await import('../src/jobs/oknoBzp.js');
 const { oknoBzp, tenders, tenderDocId } = await import('../src/db/repos.js');
 const { pustyLicznik } = await import('../src/lib/licznikZrodla.js');
 const { getFirestore } = await import('firebase-admin/firestore');
@@ -54,7 +54,10 @@ test('KLUCZOWE: drugi przebieg NIE pyta ponownie o doby domknięte w pierwszym',
   await wyczyscCheckpoint();
 
   const pierwsze = podstawFetch();
-  await pobierzBzpZWznowieniem(pustyLicznik(), {});
+  const licznikPierwszego = pustyLicznik();
+  await pobierzBzpZWznowieniem(licznikPierwszego, {});
+  // Checkpoint zamyka się dopiero PO zapisie ogłoszeń (2026-09-25).
+  await zatwierdzCheckpointBzp(licznikPierwszego);
   assert.ok(pierwsze.length >= 2, 'pierwszy przebieg pobiera całe okno');
 
   const drugie = podstawFetch();
@@ -72,6 +75,7 @@ test('doba pominięta przez BUDŻET wraca w kolejnym przebiegu', async () => {
   // Budżet 0 ms: pierwszy przebieg nie zdąży przetworzyć żadnej doby.
   const licznik = pustyLicznik();
   await pobierzBzpZWznowieniem(licznik, { budzetMs: 0 });
+  await zatwierdzCheckpointBzp(licznik);
   assert.equal(licznik.dni.length, 0);
   assert.ok(licznik.pominieteDni.length > 0);
 
@@ -90,6 +94,7 @@ test('licznik niesie stan okna: ile dób i ile zostało do domknięcia', async (
 
   const licznik = pustyLicznik();
   await pobierzBzpZWznowieniem(licznik, {});
+  await zatwierdzCheckpointBzp(licznik);
 
   assert.ok(licznik.dobyOkna >= 7, 'okno domyślne to BZP_LOOKBACK_DAYS + dzisiaj');
   assert.equal(licznik.dobyNiedomkniete, 0,
@@ -111,4 +116,60 @@ test('IDEMPOTENCJA: ponowne pobranie tej samej doby nie duplikuje przetargów', 
 
   const zapisany = await tenders.findById(tenderDocId(probka.externalId));
   assert.equal(zapisany.bzp_external_id, probka.externalId);
+});
+
+/*
+ * CHECKPOINT PO UTRWALENIU (naprawa 2026-09-25).
+ *
+ * Doba była zamykana jako kompletna PRZED zapisem ogłoszeń, a błąd zapisu kończył
+ * się tylko `pominiete++` z `ok: true`. Ogłoszenie, którego nie zapisaliśmy, nie
+ * wracało już nigdy — jego doba była „kompletna".
+ */
+test('bez zatwierdzenia (zapis się nie odbył) checkpoint NIE zamyka żadnej doby', async () => {
+  await wyczyscCheckpoint();
+  podstawFetch();
+  await pobierzBzpZWznowieniem(pustyLicznik(), {});
+  const stan = await oknoBzp.wczytaj();
+  assert.equal(stan, null, 'pobranie bez zapisu nie może niczego zamknąć');
+});
+
+test('KRYTYCZNE: nieudany zapis jednego ogłoszenia zostawia jego dobę otwartą — kolejny przebieg pobiera ją ponownie', async () => {
+  await wyczyscCheckpoint();
+  podstawFetch();
+  const wczoraj = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  const pechowe = `${wczoraj}/BZP 1`;
+
+  const oryginalnyUpsert = tenders.upsert;
+  tenders.upsert = async (o) => {
+    if (o.externalId === pechowe) throw new Error('Firestore: zapis padł');
+    return oryginalnyUpsert.call(tenders, o);
+  };
+  let pierwszy;
+  try {
+    pierwszy = await runBzpOkno({});
+  } finally {
+    tenders.upsert = oryginalnyUpsert;
+  }
+
+  assert.equal(pierwszy.skipped, 1);
+  assert.equal(pierwszy.ok, false, 'utracony zapis to nie jest czysty sukces');
+  assert.match(pierwszy.error, /zapis/i);
+  const stan = await oknoBzp.wczytaj();
+  assert.equal(stan.dni[wczoraj].kompletny, false, 'doba z niezapisanym ogłoszeniem zostaje otwarta');
+  assert.equal(stan.dni[wczoraj].niezapisane, 1);
+
+  const zapisywane = [];
+  tenders.upsert = async (o) => { zapisywane.push(o.externalId); return oryginalnyUpsert.call(tenders, o); };
+  const drugie = podstawFetch();
+  let drugi;
+  try {
+    drugi = await runBzpOkno({});
+  } finally {
+    tenders.upsert = oryginalnyUpsert;
+  }
+
+  assert.ok(drugie.includes(wczoraj), 'kolejny przebieg pyta ponownie o dobę z utraconym zapisem');
+  assert.ok(zapisywane.includes(pechowe), 'i zapisuje brakujące ogłoszenie');
+  assert.equal(drugi.ok, true);
+  assert.equal((await oknoBzp.wczytaj()).dni[wczoraj].kompletny, true);
 });
