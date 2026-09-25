@@ -20,7 +20,11 @@
  *
  * Cała arytmetyka idzie w UTC (Date.UTC / getUTC*), żeby wynik nie zależał od
  * strefy czasowej środowiska (test, telefon) — liczymy dni kalendarzowe, nie chwile.
+ * Wyjątek: CHWILA upływu terminu (odliczanie) to 24:00 czasu polskiego — patrz
+ * {@link ./dataUtc koniecDniaPL}.
  */
+
+import { koniecDniaPL, naDzienUTC } from './dataUtc.js';
 
 export const MS_DZIEN = 24 * 60 * 60 * 1000;
 const MS_GODZINA = 60 * 60 * 1000;
@@ -45,42 +49,29 @@ export const TRYBY_KIO = [
  */
 export const TRYB_KIO_DOMYSLNY = 'krajowy';
 
-function dniDlaTrybu(tryb) {
-  const znaleziony = TRYBY_KIO.find((t) => t.wartosc === tryb);
-  if (znaleziony) return znaleziony.dni;
-  return TRYBY_KIO.find((t) => t.wartosc === TRYB_KIO_DOMYSLNY).dni;
+/**
+ * Wpis z {@link TRYBY_KIO}, którym FAKTYCZNIE liczymy termin: podany tryb albo — gdy
+ * nieznany/pusty — {@link TRYB_KIO_DOMYSLNY}. Eksport (2026-09-25), żeby orkiestrator mógł
+ * zapisać w podstawie terminu prawdziwy tryb, a nie ten, o który go poproszono.
+ * @param {string} [tryb]
+ * @returns {{wartosc: string, dni: number, etykieta: string}}
+ */
+export function trybKio(tryb) {
+  return TRYBY_KIO.find((t) => t.wartosc === tryb)
+    ?? TRYBY_KIO.find((t) => t.wartosc === TRYB_KIO_DOMYSLNY);
 }
 
-/**
- * Sprowadza wejście do znacznika UTC północy dnia kalendarzowego, albo null.
- * Dla stringa ISO bierzemy pierwsze 10 znaków (YYYY-MM-DD) — deterministycznie,
- * bez przesuwania dnia przez strefę czasową (np. „...T23:30:00Z" zostaje tym dniem).
- */
-export function naDzienUTC(wartosc) {
-  if (wartosc instanceof Date) {
-    if (Number.isNaN(wartosc.getTime())) return null;
-    return Date.UTC(wartosc.getUTCFullYear(), wartosc.getUTCMonth(), wartosc.getUTCDate());
-  }
-  if (typeof wartosc === 'string') {
-    const m = wartosc.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (m) {
-      const rok = Number(m[1]);
-      const mies = Number(m[2]);
-      const dzien = Number(m[3]);
-      const ms = Date.UTC(rok, mies - 1, dzien);
-      const d = new Date(ms);
-      // Odrzucamy daty, które Date.UTC po cichu „znormalizował" (np. 2026-13-45,
-      // 2026-02-30) — dla terminu prawnego wolimy null niż przesuniętą datę.
-      if (d.getUTCFullYear() !== rok || d.getUTCMonth() !== mies - 1 || d.getUTCDate() !== dzien) {
-        return null;
-      }
-      return ms;
-    }
-    const d = new Date(wartosc);
-    if (!Number.isNaN(d.getTime())) return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-  }
-  return null;
+function dniDlaTrybu(tryb) {
+  return trybKio(tryb).dni;
 }
+
+/*
+ * `naDzienUTC` — sprowadzenie wejścia do znacznika UTC północy dnia kalendarzowego.
+ * Poprawka 2026-09-25: jedna implementacja w `dataUtc.js` (była tu kopia z furtką
+ * `new Date(str)`, przez którą „10.06.2026" liczyło się jak 6 października). Re-eksport
+ * zostaje, bo importują go stąd kalkulatorTerminow i odsetkiOpoznienie.
+ */
+export { naDzienUTC };
 
 /**
  * Niedziela Wielkanocna dla danego roku (algorytm Gaussa/Meeusa, kalendarz
@@ -161,7 +152,7 @@ export function formatujDate(dniaMs) {
  * to kontrakt wołany przez kolejne podzadania).
  *
  * @param {string|Date} data_ogloszenia_wyniku dzień przekazania informacji o
- *   wyborze najkorzystniejszej oferty (ISO `YYYY-MM-DD`, pełny ISO lub `Date`).
+ *   wyborze najkorzystniejszej oferty (ISO `YYYY-MM-DD`, pełny ISO, `DD.MM.RRRR` lub `Date`).
  * @param {'unijny'|'unijny_pisemny'|'krajowy'|'krajowy_pisemny'} [tryb]
  *   reżim terminu wg art. 515 ust. 1 Pzp; nieznany/pusty → {@link TRYB_KIO_DOMYSLNY}.
  * @returns {string|null} data graniczna jako `YYYY-MM-DD` (ostatni dzień na
@@ -190,17 +181,19 @@ export function oblicz_termin_kio(data_ogloszenia_wyniku, tryb) {
  * ({@link ../lib/poprzetargowaKontrola dolaczPozostalyCzas}).
  *
  * Termin PRAWNY obejmuje CAŁY dzień graniczny — odwołanie do KIO można wnieść aż
- * do końca tej daty. Dlatego moment upływu = KONIEC dnia granicznego = północ
- * dnia następnego (w UTC, jak cała arytmetyka tego pliku — liczymy dni
- * kalendarzowe, nie chwile lokalne). Świadomie inaczej niż {@link ../lib/termin
- * opisTerminu}, gdzie `deadline` niesie konkretną godzinę złożenia oferty.
+ * do końca tej daty. Dlatego moment upływu = KONIEC dnia granicznego = 24:00
+ * czasu POLSKIEGO ({@link ./dataUtc koniecDniaPL}). Poprawka 2026-09-25: wcześniej
+ * brana była północ UTC (01:00/02:00 w Polsce) — o 00:30 PL dnia następnego
+ * odliczanie wciąż pokazywało, że termin trwa. Świadomie inaczej niż
+ * {@link ../lib/termin opisTerminu}, gdzie `deadline` niesie konkretną godzinę
+ * złożenia oferty.
  *
  * `dni`/`godziny` to rozbicie pozostałego czasu w DÓŁ (floor): „zostały co
  * najmniej 3 dni i 5 godz." — bez zawyżania, bo spóźnione odwołanie KIO odrzuca.
  * Po upływie zwracamy `poTerminie: true` z wyzerowanym `dni`/`godziny`
  * (surowy, ujemny dystans jest w `pozostaloMs`, gdyby ekran chciał go pokazać).
  *
- * @param {string|Date} termin data graniczna (ISO `YYYY-MM-DD`, pełny ISO lub `Date`).
+ * @param {string|Date} termin data graniczna (ISO `YYYY-MM-DD`, pełny ISO, `DD.MM.RRRR` lub `Date`).
  * @param {number} [teraz] czas odniesienia w ms (Date.now()) — wstrzykiwany w testach.
  * @returns {{poTerminie: boolean, dni: number, godziny: number, pozostaloMs: number}|null}
  *   `null`, gdy `termin` jest nieczytelny (spójnie z {@link oblicz_termin_kio} —
@@ -210,7 +203,7 @@ export function pozostaly_czas_do(termin, teraz = Date.now()) {
   const dzienMs = naDzienUTC(termin);
   if (dzienMs === null) return null;
 
-  const uplywMs = dzienMs + MS_DZIEN; // koniec dnia granicznego = północ następnego dnia
+  const uplywMs = koniecDniaPL(dzienMs); // koniec dnia granicznego = 24:00 czasu polskiego
   const pozostaloMs = uplywMs - teraz;
 
   if (pozostaloMs <= 0) {

@@ -98,6 +98,21 @@ function normalizujAnalize(v) {
   return v && typeof v === 'object' && !Array.isArray(v) ? v : null;
 }
 
+/**
+ * Podstawa wyliczenia terminu KIO (2026-09-25): od jakiego dnia liczono, ile dni, w jakim
+ * trybie i skąd wzięła się data (`postepowanie` / `podana` / `dzien_oznaczenia`). Ekran wyniku
+ * pokazuje ją pod terminem — wcześniej termin liczył się po cichu od „dziś" w trybie
+ * 5-dniowym. Niepełna/obca struktura → null (nie pokazujemy wymyślonej podstawy).
+ */
+function normalizujPodstawe(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const liczoneOd = tekstAlboNull(v.liczoneOd);
+  const tryb = tekstAlboNull(v.tryb);
+  const dni = v.dni;
+  if (!liczoneOd || !tryb || !Number.isInteger(dni) || dni < 1) return null;
+  return { liczoneOd, dni, tryb, zrodlo: tekstAlboNull(v.zrodlo) };
+}
+
 export class PoprzetargowaKontrola {
   /**
    * @param {{
@@ -106,6 +121,7 @@ export class PoprzetargowaKontrola {
    *   dataOtwarciaOfert?: string|null,
    *   dataOgloszeniaWyniku?: string|null,
    *   terminOdwolaniaKio?: string|null,
+   *   podstawaTerminuKio?: {liczoneOd: string, dni: number, tryb: string, zrodlo: string|null}|null,
    *   status?: 'nowa'|'wniosek_wyslany'|'dokumenty_otrzymane'|'analiza_gotowa',
    *   dokumenty?: { ofertaZwyciezcy?: Array, protokol?: Array },
    *   analiza?: object|null,
@@ -118,6 +134,8 @@ export class PoprzetargowaKontrola {
     this.dataOtwarciaOfert = tekstAlboNull(dane.dataOtwarciaOfert);
     this.dataOgloszeniaWyniku = tekstAlboNull(dane.dataOgloszeniaWyniku);
     this.terminOdwolaniaKio = tekstAlboNull(dane.terminOdwolaniaKio);
+    // Z czego policzono termin KIO (orkiestrator) albo null — np. rekordy sprzed 2026-09-25.
+    this.podstawaTerminuKio = normalizujPodstawe(dane.podstawaTerminuKio);
     this.status = normalizujStatus(dane.status);
     // Wgrane referencje plików (oferta zwycięzcy + protokół) — zawsze pełny kształt.
     this.dokumenty = normalizujDokumenty(dane.dokumenty);
@@ -133,6 +151,7 @@ export class PoprzetargowaKontrola {
       dataOtwarciaOfert: this.dataOtwarciaOfert,
       dataOgloszeniaWyniku: this.dataOgloszeniaWyniku,
       terminOdwolaniaKio: this.terminOdwolaniaKio,
+      podstawaTerminuKio: this.podstawaTerminuKio,
       status: this.status,
       dokumenty: this.dokumenty,
       analiza: this.analiza,

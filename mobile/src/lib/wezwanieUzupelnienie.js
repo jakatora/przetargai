@@ -18,6 +18,8 @@
  * (godziny), bo w ostatniej dobie liczą się godziny, nie dni.
  */
 
+import { chwilaUplywuTerminu } from './dataUtc.js';
+
 const MS_GODZINA = 60 * 60 * 1000;
 const MS_DZIEN = 24 * MS_GODZINA;
 
@@ -32,35 +34,24 @@ function odmianaGodzin(n) {
 
 /**
  * Ile czasu zostało do terminu wezwania (do chwili, nie do dnia).
- * @param {string|Date} termin data/chwila terminu (ISO; „RRRR-MM-DD" traktujemy jak koniec dnia
- *   23:59, bo termin upływa z końcem dnia)
+ * @param {string|Date} termin data/chwila terminu: `RRRR-MM-DD` / `DD.MM.RRRR` (sama data =
+ *   koniec dnia, 24:00 czasu polskiego), data z godziną bez strefy (= godzina polska) albo ISO
+ *   ze strefą — patrz {@link ./dataUtc chwilaUplywuTerminu}
  * @param {number} teraz Date.now()-podobny znacznik (wstrzykiwany)
  * @returns {{znany: boolean, poTerminie: boolean, ms: number, dni: number, godziny: number,
  *   ton: string, etykieta: string}}
  */
 export function pozostalyCzas(termin, teraz = Date.now()) {
-  let cel = null;
-  if (termin instanceof Date) {
-    cel = Number.isNaN(termin.getTime()) ? null : termin.getTime();
-  } else if (typeof termin === 'string') {
-    const t = termin.trim();
-    // Sama data (bez godziny) → termin upływa z końcem dnia (23:59:59 lokalnie? liczymy w tym
-    // samym środowisku dla „teraz", więc bierzemy koniec dnia UTC dla stabilności).
-    const m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (m) {
-      cel = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 23, 59, 59);
-      const d = new Date(cel);
-      if (d.getUTCMonth() !== Number(m[2]) - 1 || d.getUTCDate() !== Number(m[3])) cel = null;
-    } else {
-      const d = new Date(t);
-      cel = Number.isNaN(d.getTime()) ? null : d.getTime();
-    }
-  }
+  // Poprawka 2026-09-25: sama data upływa o 24:00 czasu POLSKIEGO (było 23:59:59 UTC, czyli
+  // 00:59/01:59 następnego dnia w Polsce), a zapisy nie-ISO nie idą już do `new Date(str)`
+  // („10.06.2026" dawało 6 października) — nieczytelny termin = „Podaj termin z wezwania".
+  const cel = chwilaUplywuTerminu(termin)?.ms ?? null;
   if (cel === null) {
     return { znany: false, poTerminie: false, ms: 0, dni: 0, godziny: 0, ton: 'neutral', etykieta: 'Podaj termin z wezwania' };
   }
   const ms = cel - teraz;
-  if (ms < 0) {
+  // Równo w chwili upływu (24:00) termin już minął — spójnie z terminKio.pozostaly_czas_do.
+  if (ms <= 0) {
     return { znany: true, poTerminie: true, ms, dni: 0, godziny: 0, ton: 'danger', etykieta: 'PO TERMINIE' };
   }
   const dni = Math.floor(ms / MS_DZIEN);

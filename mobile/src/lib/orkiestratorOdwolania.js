@@ -24,7 +24,8 @@ import {
   utworzKontrolePoPrzegranej,
   zapiszKontrole,
 } from './poprzetargowaKontrola.js';
-import { oblicz_termin_kio, pozostaly_czas_do } from './terminKio.js';
+import { oblicz_termin_kio, pozostaly_czas_do, formatujDate, trybKio, TRYBY_KIO } from './terminKio.js';
+import { dzisiajPL, naDzienUTC } from './dataUtc.js';
 
 const MS_DZIEN = 24 * 60 * 60 * 1000;
 
@@ -35,14 +36,6 @@ const MS_DZIEN = 24 * 60 * 60 * 1000;
  * samym początku, gdy jest jeszcze dużo czasu.
  */
 export const DOMYSLNY_PROG_PRZYPOMNIENIA_DNI = 2;
-
-/** Znacznik ms → dzień kalendarzowy UTC jako `YYYY-MM-DD` (spójnie z terminKio). */
-function isoDzienUTC(ms) {
-  const d = new Date(ms);
-  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(d.getUTCDate()).padStart(2, '0');
-  return `${d.getUTCFullYear()}-${mm}-${dd}`;
-}
 
 /** `YYYY-MM-DD…` → polski zapis `DD.MM.RRRR` (bez przesuwania dnia przez strefę). */
 function formatujDatePL(iso) {
@@ -55,6 +48,24 @@ function tekstAlboNull(v) {
   return typeof v === 'string' && v.trim() !== '' ? v.trim() : null;
 }
 
+/** Data (ISO lub DD.MM.RRRR) → krótki polski zapis `DD.MM` albo null. */
+function formatujDzienMiesiac(data) {
+  const ms = naDzienUTC(data);
+  if (ms === null) return null;
+  const d = new Date(ms);
+  return `${String(d.getUTCDate()).padStart(2, '0')}.${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Skąd wzięła się data, od której liczono termin KIO (pole `zrodlo` podstawy). */
+export const ZRODLA_DATY_KIO = Object.freeze({
+  postepowanie: 'dzień przekazania informacji o wyniku', // data z danych postępowania
+  podana: 'dzień przekazania informacji o wyniku', // użytkownik podał, kiedy dostał informację
+  dzien_oznaczenia: 'dzień oznaczenia wyniku', // brak daty — liczone od dnia oznaczenia przegranej
+});
+
+const OSTRZEZENIE_WCZESNIEJSZA_INFORMACJA =
+  'Jeśli informację o wyniku otrzymałeś wcześniej — termin biegnie od tamtego dnia i może już być krótszy.';
+
 /**
  * Uruchamia ścieżkę odwołania po wykryciu przegranej. Woła się z miejsca, w
  * którym etap postępowania zmienia się na „przegrana" (zamiast bezpośredniego
@@ -65,18 +76,26 @@ function tekstAlboNull(v) {
  *  2. Jeśli kontrola nie ma jeszcze `terminOdwolaniaKio` — WYLICZA go
  *     {@link ./terminKio.oblicz_termin_kio} i utrwala. Dzień przekazania
  *     informacji o wyniku bierzemy w kolejności: realna data z postępowania →
- *     `opcje.dataOgloszeniaWyniku` → DZIŚ. „Dziś" to bezpieczny proxy, bo
- *     użytkownik oznacza przegraną wtedy, gdy dowiedział się o wyniku.
+ *     `opcje.dataOtrzymaniaInformacji` (albo starsza nazwa `opcje.dataOgloszeniaWyniku`)
+ *     → DZIŚ (w Polsce). „Dziś" to tylko proxy — użytkownik mógł dostać informację
+ *     wcześniej, a wtedy termin jest krótszy.
+ *  3. Razem z terminem utrwala PODSTAWĘ (`podstawaTerminuKio`): od jakiego dnia
+ *     liczono, ile dni, jaki tryb faktycznie przyjęto i skąd była data. Poprawka
+ *     2026-09-25: wcześniej termin liczył się PO CICHU od „dziś" w trybie 5-dniowym
+ *     i ekran nie miał jak tego pokazać ({@link opisPodstawyTerminuKio}).
  *
  * NIE nadpisuje istniejącego terminu (idempotentnie, jak reszta ścieżki) — dzięki
  * temu bezpiecznie domyka też kontrole założone starszą wersją kodu (bez terminu).
  * Best-effort: brak id postępowania → `null` (hook nie może wywrócić UI); błąd
  * samego wyliczenia terminu nie kasuje już założonej kontroli — zwracamy ją.
+ * Nieczytelna PODANA data → brak terminu (nie liczymy po cichu od „dziś").
  *
  * @param {object} magazyn magazyn z `getItem`/`setItem` (np. `../lib/storage`)
  * @param {object} postepowanie tender/postępowanie (jak w utworzKontrolePoPrzegranej)
- * @param {{ teraz?: number, dataOgloszeniaWyniku?: string,
+ * @param {{ teraz?: number, dataOtrzymaniaInformacji?: string, dataOgloszeniaWyniku?: string,
  *   tryb?: 'unijny'|'unijny_pisemny'|'krajowy'|'krajowy_pisemny' }} [opcje]
+ *   `dataOtrzymaniaInformacji` — dzień, w którym przekazano informację o wyniku
+ *   (`YYYY-MM-DD` lub `DD.MM.RRRR`); `tryb` domyślnie {@link ./terminKio.TRYB_KIO_DOMYSLNY}.
  * @returns {Promise<import('./poprzetargowaKontrola.js').PoprzetargowaKontrola|null>}
  */
 export async function uruchomSciezkeOdwolania(magazyn, postepowanie, opcje = {}) {
@@ -86,16 +105,32 @@ export async function uruchomSciezkeOdwolania(magazyn, postepowanie, opcje = {})
   // Termin wyliczamy tylko raz — istniejącego nie ruszamy (idempotentnie).
   if (!kontrola.terminOdwolaniaKio) {
     const teraz = typeof opcje.teraz === 'number' ? opcje.teraz : Date.now();
-    const dataOgloszenia =
-      kontrola.dataOgloszeniaWyniku ??
-      tekstAlboNull(opcje.dataOgloszeniaWyniku) ??
-      isoDzienUTC(teraz);
+    const podana =
+      tekstAlboNull(opcje.dataOtrzymaniaInformacji) ?? tekstAlboNull(opcje.dataOgloszeniaWyniku);
+    let dataOgloszenia;
+    let zrodlo;
+    if (kontrola.dataOgloszeniaWyniku) {
+      dataOgloszenia = kontrola.dataOgloszeniaWyniku;
+      zrodlo = 'postepowanie';
+    } else if (podana) {
+      dataOgloszenia = podana;
+      zrodlo = 'podana';
+    } else {
+      // „Dziś" = dzień kalendarzowy w POLSCE (poprawka 2026-09-25) — wg UTC między 00:00 a
+      // 01:00/02:00 czasu polskiego byłby to jeszcze wczoraj i termin KIO wyszedłby o dzień za wcześnie.
+      dataOgloszenia = formatujDate(dzisiajPL(teraz));
+      zrodlo = 'dzien_oznaczenia';
+    }
 
+    const dzienMs = naDzienUTC(dataOgloszenia);
     const termin = oblicz_termin_kio(dataOgloszenia, opcje.tryb);
-    if (termin) {
+    if (termin && dzienMs !== null) {
+      const tryb = trybKio(opcje.tryb); // tryb, którym FAKTYCZNIE liczono (nieznany → domyślny)
+      const liczoneOd = formatujDate(dzienMs);
       kontrola.terminOdwolaniaKio = termin;
-      // Zapisujemy też, z jakiej daty policzyliśmy termin (jeśli jej nie było).
-      if (!kontrola.dataOgloszeniaWyniku) kontrola.dataOgloszeniaWyniku = dataOgloszenia;
+      // Zapisujemy też, z jakiej daty policzyliśmy termin (jeśli jej nie było) — jako ISO.
+      if (!kontrola.dataOgloszeniaWyniku) kontrola.dataOgloszeniaWyniku = liczoneOd;
+      kontrola.podstawaTerminuKio = { liczoneOd, dni: tryb.dni, tryb: tryb.wartosc, zrodlo };
       await zapiszKontrole(magazyn, kontrola);
     }
   }
@@ -131,7 +166,8 @@ export function powiadomienieOTerminieKio(kontrola, opcje = {}) {
       ? opcje.progDniPrzypomnienia
       : DOMYSLNY_PROG_PRZYPOMNIENIA_DNI;
 
-  const uplywMs = teraz + czas.pozostaloMs; // koniec dnia granicznego (z pozostaly_czas_do)
+  // Koniec dnia granicznego = 24:00 czasu polskiego (z pozostaly_czas_do, poprawka 2026-09-25).
+  const uplywMs = teraz + czas.pozostaloMs;
   const uruchomOMs = Math.max(teraz, uplywMs - progDni * MS_DZIEN);
   const terminPL = formatujDatePL(termin);
 
@@ -145,4 +181,39 @@ export function powiadomienieOTerminieKio(kontrola, opcje = {}) {
     dni: czas.dni,
     pozostaloMs: czas.pozostaloMs,
   };
+}
+
+/**
+ * Czytelny opis PODSTAWY terminu KIO pod licznikiem na ekranie wyniku (2026-09-25):
+ * od jakiego dnia liczono, ile dni i w jakim trybie — plus ostrzeżenie, gdy liczono od
+ * dnia oznaczenia wyniku (użytkownik mógł dostać informację wcześniej, a termin biegnie
+ * od dnia jej przekazania — art. 515 ust. 1 Pzp — więc może być już krótszy).
+ *
+ * Rekord sprzed tej poprawki nie ma `podstawaTerminuKio` — pokazujemy wtedy samą datę,
+ * od której liczono, z ostrzeżeniem (nie wiemy, czy to nie był tylko „dziś").
+ *
+ * @param {{ terminOdwolaniaKio?: string|null, dataOgloszeniaWyniku?: string|null,
+ *   podstawaTerminuKio?: {liczoneOd: string, dni: number, tryb: string, zrodlo: string|null}|null }|null} kontrola
+ * @returns {{ tekst: string, tryb: string|null, ostrzezenie: string|null }|null}
+ *   null, gdy nie ma terminu albo nie wiadomo, od czego go liczono
+ */
+export function opisPodstawyTerminuKio(kontrola) {
+  if (!kontrola || typeof kontrola !== 'object' || !kontrola.terminOdwolaniaKio) return null;
+
+  const p = kontrola.podstawaTerminuKio;
+  const od = p && typeof p === 'object' ? formatujDzienMiesiac(p.liczoneOd) : null;
+  if (od && Number.isInteger(p.dni)) {
+    const zrodlo = ZRODLA_DATY_KIO[p.zrodlo] ?? null;
+    // Ostrzegamy zawsze, gdy data NIE pochodzi z postępowania ani od użytkownika.
+    const znanaData = p.zrodlo === 'postepowanie' || p.zrodlo === 'podana';
+    return {
+      tekst: `Liczone od ${od}${zrodlo ? ` (${zrodlo})` : ''}, ${p.dni} dni.`,
+      tryb: TRYBY_KIO.find((t) => t.wartosc === p.tryb)?.etykieta ?? null,
+      ostrzezenie: znanaData ? null : OSTRZEZENIE_WCZESNIEJSZA_INFORMACJA,
+    };
+  }
+
+  const odStare = formatujDzienMiesiac(kontrola.dataOgloszeniaWyniku);
+  if (!odStare) return null;
+  return { tekst: `Liczone od ${odStare}.`, tryb: null, ostrzezenie: OSTRZEZENIE_WCZESNIEJSZA_INFORMACJA };
 }

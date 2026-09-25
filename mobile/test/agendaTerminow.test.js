@@ -21,7 +21,9 @@ test('grupuje po pilności w stałej kolejności i sortuje chronologicznie', () 
     wpis('przeszly', '2026-06-10T09:00:00Z'), // minął → poTerminie
     wpis('dzis', '2026-06-15T20:00:00Z'), // ~11 godz → dzis
     wpis('tydzien', '2026-06-20T09:00:00Z'), // +5 dni → tydzien
-    wpis('jutro', '2026-06-17T09:00:00Z'), // +2 dni → dzis (grupa „Dziś i jutro")
+    // Jutro (kalendarzowo, 16.06) → grupa „Dziś i jutro". 2026-09-25: wcześniej fikstura
+    // brała 17.06 (+48 h), bo opisTerminu zaokrąglał dni w górę i pojutrze nazywał „jutro".
+    wpis('jutro', '2026-06-16T09:00:00Z'),
     wpis('bezTerminu', null), // brak terminu → pomijamy
   ];
 
