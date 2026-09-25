@@ -9,6 +9,24 @@ export function signToken(userId) {
   return jwt.sign({ sub: userId }, env.JWT_SECRET, { expiresIn: `${env.JWT_TTL_DAYS}d` });
 }
 
+/**
+ * `sub` z tokenu Bearer — WYŁĄCZNIE gdy podpis i ważność się zgadzają; inaczej null.
+ * Nie sięga do bazy (tanie, wołane przez limiter przed routerem). Sfałszować klucza się
+ * nie da bez JWT_SECRET, więc niezweryfikowany token zawsze wraca do kubełka IP.
+ * @param {import('express').Request} req
+ * @returns {string|null}
+ */
+export function zweryfikowanySub(req) {
+  const header = req.headers.authorization || '';
+  if (!header.startsWith('Bearer ')) return null;
+  try {
+    const { sub } = jwt.verify(header.slice(7).trim(), env.JWT_SECRET);
+    return typeof sub === 'string' && sub ? sub : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Middleware: wymaga ważnego tokenu Bearer; dołącza req.user. */
 export function authRequired(req, res, next) {
   const header = req.headers.authorization || '';
