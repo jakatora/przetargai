@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  MAKS_DNI_WSTECZ,
+  MAKS_DNI_WSTECZ, MAKS_DNI_WSTECZ_NOWYCH,
   noweTrafienia, zmianyDlaWyszukiwania, zbudujAlertNowych, zbudujAlertZmian,
-  trescPush, oknoOdczytuZmian,
+  trescPush, oknoOdczytuZmian, oknoOdczytuNowych, kolejnoscObslugi,
 } from '../src/lib/planMonitoringu.js';
 
 /*
@@ -227,4 +227,122 @@ test('pelna strona skanu daje „co najmniej N", a nie zmyslona dokladna liczbe'
 
   // Ta sama partia trafien = ten sam klucz, niezaleznie od tego, czy byla przycieta.
   assert.equal(dokladny.klucz, przyciety.klucz);
+});
+
+/*
+ * STRUMIEŃ NOWYCH OGŁOSZEŃ (naprawa 2026-09-25).
+ *
+ * Dawniej każde wyszukiwanie czytało 50 najnowszych pozycji katalogu, a katalog
+ * kończył skan po 1200 dokumentach. Trafienie przykryte ponad 1200 nowszymi
+ * ogłoszeniami (doba to ~950, tydzień ~5700) nie było widziane NIGDY, a kursor
+ * przeskakiwał na najnowsze trafienie — ponad nie. Teraz job czyta raz na przebieg
+ * wszystkie ogłoszenia nowsze od najstarszego kursora (rosnąco), a kursor staje
+ * dokładnie tam, dokąd strumień realnie przejrzano.
+ */
+
+test('KRYTYCZNE: przerwany strumień — kursor staje na granicy PRZEJRZANEGO, nie na najnowszym trafieniu', () => {
+  const wynik = noweTrafienia({
+    tenders: [
+      tender('t1', { fetched_at: '2026-09-24T10:05:00.000Z' }),
+      // Leży ZA granicą przejrzanego — nie wolno go zgłosić ani przeskoczyć kursorem.
+      tender('za', { fetched_at: '2026-09-24T11:30:00.000Z' }),
+    ],
+    kursor: { fetched_at: '2026-09-24T10:00:00.000Z' },
+    teraz: '2026-09-24T12:00:00.000Z',
+    strumien: { od: '2026-09-24T10:00:00.000Z', przejrzanoDo: '2026-09-24T11:00:00.000Z', wyczerpano: false },
+  });
+
+  assert.deepEqual(wynik.pozycje.map((t) => t.id), ['t1']);
+  assert.equal(wynik.nowyKursor.fetched_at, '2026-09-24T11:00:00.000Z',
+    'ogłoszenia za granicą czekają na następny przebieg, a nie przepadają');
+  assert.equal(wynik.conajmniej, true, 'przerwany strumień = „co najmniej N"');
+});
+
+test('wyczerpany strumień przesuwa kursor na KONIEC przejrzanego — także za ostatnie trafienie', () => {
+  const wynik = noweTrafienia({
+    tenders: [tender('t1', { fetched_at: '2026-09-24T10:05:00.000Z' })],
+    kursor: { fetched_at: '2026-09-24T10:00:00.000Z' },
+    teraz: '2026-09-24T12:00:00.000Z',
+    strumien: { od: '2026-09-24T09:00:00.000Z', przejrzanoDo: '2026-09-24T11:45:00.000Z', wyczerpano: true },
+  });
+
+  assert.deepEqual(wynik.pozycje.map((t) => t.id), ['t1']);
+  // Wszystko do 11:45 obejrzano; niepasujące ogłoszenia nie muszą być czytane ponownie.
+  assert.equal(wynik.nowyKursor.fetched_at, '2026-09-24T11:45:00.000Z');
+  assert.equal(wynik.conajmniej, false);
+});
+
+test('pusty wyczerpany strumień nie rusza kursora', () => {
+  const wynik = noweTrafienia({
+    tenders: [],
+    kursor: { fetched_at: '2026-09-24T10:00:00.000Z' },
+    teraz: '2026-09-24T12:00:00.000Z',
+    strumien: { od: '2026-09-24T10:00:00.000Z', przejrzanoDo: null, wyczerpano: true },
+  });
+  assert.deepEqual(wynik.pozycje, []);
+  assert.equal(wynik.nowyKursor.fetched_at, '2026-09-24T10:00:00.000Z');
+  assert.equal(wynik.nieobjete, false);
+});
+
+test('przerwany strumień, który nie doszedł do kursora, zostawia wyszukiwanie NIETKNIĘTE', () => {
+  const wynik = noweTrafienia({
+    tenders: [],
+    kursor: { fetched_at: '2026-09-24T11:30:00.000Z' },
+    teraz: '2026-09-24T12:00:00.000Z',
+    strumien: { od: '2026-09-24T09:00:00.000Z', przejrzanoDo: '2026-09-24T10:00:00.000Z', wyczerpano: false },
+  });
+  assert.equal(wynik.nieobjete, true, 'nic nowego dla tej obserwacji nie obejrzano — nie ma czego zamykać');
+  assert.equal(wynik.nowyKursor.fetched_at, '2026-09-24T11:30:00.000Z');
+});
+
+test('kursor starszy niż początek strumienia (przycięte okno) daje „co najmniej"', () => {
+  const wynik = noweTrafienia({
+    tenders: [tender('t1', { fetched_at: '2026-09-20T10:00:00.000Z' })],
+    kursor: { fetched_at: '2026-08-01T00:00:00.000Z' },
+    teraz: '2026-09-24T12:00:00.000Z',
+    strumien: { od: '2026-09-14T12:00:00.000Z', przejrzanoDo: '2026-09-24T11:00:00.000Z', wyczerpano: true },
+  });
+  assert.deepEqual(wynik.pozycje.map((t) => t.id), ['t1']);
+  assert.equal(wynik.conajmniej, true, 'odcinka sprzed początku strumienia nie obejrzano');
+  assert.equal(wynik.nowyKursor.fetched_at, '2026-09-24T11:00:00.000Z');
+});
+
+test('pierwszy przebieg ze strumieniem bierze punkt startowy od wołającego (najnowsze ogłoszenie w bazie)', () => {
+  const wynik = noweTrafienia({
+    tenders: [tender('t1', { fetched_at: '2026-09-24T10:05:00.000Z' })],
+    kursor: null,
+    teraz: '2026-09-24T12:00:00.000Z',
+    strumien: { od: '2026-09-24T09:00:00.000Z', przejrzanoDo: '2026-09-24T10:05:00.000Z', wyczerpano: false },
+    kursorStartowy: '2026-09-24T11:59:00.000Z',
+  });
+  assert.equal(wynik.pierwszyPrzebieg, true);
+  assert.deepEqual(wynik.pozycje, []);
+  assert.equal(wynik.nowyKursor.fetched_at, '2026-09-24T11:59:00.000Z');
+});
+
+test('okno odczytu NOWYCH sięga do najstarszego kursora, przycięte do sufitu dni', () => {
+  const teraz = '2026-09-24T12:00:00.000Z';
+  assert.equal(oknoOdczytuNowych([
+    { kursor: { fetched_at: '2026-09-24T10:00:00.000Z' } },
+    { kursor: { fetched_at: '2026-09-23T10:00:00.000Z' } },
+    { kursor: null },
+  ], teraz), '2026-09-23T10:00:00.000Z');
+
+  // Obserwacja porzucona na miesiąc nie może kazać czytać miesiąca rynku przy każdym przebiegu.
+  const granica = new Date(Date.parse(teraz) - MAKS_DNI_WSTECZ_NOWYCH * 86_400_000).toISOString();
+  assert.equal(oknoOdczytuNowych([{ kursor: { fetched_at: '2026-01-01T00:00:00.000Z' } }], teraz), granica);
+  assert.ok(MAKS_DNI_WSTECZ_NOWYCH > 7, 'obserwacja tygodniowa musi mieścić się w oknie bez przycięcia');
+
+  // Same pierwsze przebiegi — strumień niepotrzebny.
+  assert.equal(oknoOdczytuNowych([{ kursor: null }, {}], teraz), null);
+});
+
+test('kolejność obsługi: nigdy nie sprawdzane pierwsze, potem najdawniej sprawdzane', () => {
+  const wpisy = [
+    { id: 'wczoraj', ostatnio_sprawdzone_o: '2026-09-24T10:00:00.000Z' },
+    { id: 'nowe', ostatnio_sprawdzone_o: null },
+    { id: 'tydzien', ostatnio_sprawdzone_o: '2026-09-17T10:00:00.000Z' },
+  ];
+  assert.deepEqual(kolejnoscObslugi(wpisy).map((w) => w.id), ['nowe', 'tydzien', 'wczoraj']);
+  assert.equal(wpisy[0].id, 'wczoraj', 'wejście nie jest mutowane');
 });

@@ -237,7 +237,7 @@ async function pobierzDzien(dzien, licznik, tempo) {
 
   const zDnia = await zapytaj();
   if (zDnia.length < SUFIT_ZAPYTANIA) {
-    return { ogloszenia: zDnia, ucietySufit: false, zapytania, wojewodztwaBezDanych: 0 };
+    return { ogloszenia: zDnia, ucietySufit: false, zapytania, wojewodztwaBezDanych: 0, wojewodztwaNaSuficie: 0 };
   }
 
   logger.warn({ dzien, pobrane: zDnia.length },
@@ -249,6 +249,7 @@ async function pobierzDzien(dzien, licznik, tempo) {
   // (audyt 2026-07-17). Dedup po externalId i tak scala nakładki.
   const wynik = new Map(zDnia.map((n) => [n.externalId, n]));
   let wojewodztwaBezDanych = 0;
+  let wojewodztwaNaSuficie = 0;
   for (const woj of WOJEWODZTWA_TERYT) {
     try {
       const zWoj = await zapytaj({ province: woj });
@@ -256,6 +257,9 @@ async function pobierzDzien(dzien, licznik, tempo) {
       if (zWoj.length >= SUFIT_ZAPYTANIA) {
         // Pojedyncze województwo na sufitie = nie mamy już czym ciąć (BZP nie ma
         // innego działającego filtra). Krzyczymy — to sygnał do cięcia po godzinach.
+        // Od 2026-09-25 także LICZYMY: dawniej był tylko log, a doba zamykała się
+        // w checkpoincie jako kompletna, choć część jej ogłoszeń była nieosiągalna.
+        wojewodztwaNaSuficie += 1;
         logger.error({ dzien, woj, pobrane: zWoj.length },
           'BZP: województwo też trafiło sufit — część ogłoszeń tej doby jest NIEOSIĄGALNA tym filtrem');
       }
@@ -267,7 +271,7 @@ async function pobierzDzien(dzien, licznik, tempo) {
       logger.error({ err: err.message, dzien, woj }, 'BZP: województwo pominięte');
     }
   }
-  return { ogloszenia: [...wynik.values()], ucietySufit: true, zapytania, wojewodztwaBezDanych };
+  return { ogloszenia: [...wynik.values()], ucietySufit: true, zapytania, wojewodztwaBezDanych, wojewodztwaNaSuficie };
 }
 
 /**
@@ -278,11 +282,13 @@ async function pobierzDzien(dzien, licznik, tempo) {
  * Awaria pojedynczego dnia nie przerywa całości — lepiej oddać 6 dni z 7 niż nic.
  *
  * @param {{from?: string, to?: string, licznik?: object}} [opts] domyślnie ostatnie
- *   `BZP_LOOKBACK_DAYS` dni; `licznik` to akumulator pomiarów (lib/licznikZrodla.js)
+ *   `BZP_LOOKBACK_DAYS` dni; `licznik` to akumulator pomiarów (lib/licznikZrodla.js);
+ *   `dobyOgloszen` — opcjonalna mapa externalId → doby, w których ogłoszenie przyszło
+ *   (checkpoint okna zostawia otwarte doby ogłoszeń, których nie udało się zapisać)
  * @returns {Promise<object[]>} znormalizowane ogłoszenia, zdeduplikowane po `externalId`
  */
 export async function pobierzOgloszeniaBzp({
-  from, to, licznik, dni: dniWejscie, budzetMs = Infinity, tempo: tempoWejscie,
+  from, to, licznik, dni: dniWejscie, budzetMs = Infinity, tempo: tempoWejscie, dobyOgloszen = null,
 } = {}) {
   const tempo = stanTempa(tempoWejscie);
   const doDnia = to ?? dateOnly(tempo.teraz());
@@ -310,13 +316,17 @@ export async function pobierzOgloszeniaBzp({
 
     try {
       const doba = await pobierzDzien(dzien, licznik, tempo);
-      for (const n of doba.ogloszenia) wszystkie.set(n.externalId, n);
+      for (const n of doba.ogloszenia) {
+        wszystkie.set(n.externalId, n);
+        if (dobyOgloszen) dobyOgloszen.set(n.externalId, [...(dobyOgloszen.get(n.externalId) ?? []), dzien]);
+      }
       raport.push({
         dzien,
         pobrano: doba.ogloszenia.length,
         ucietySufit: doba.ucietySufit,
         zapytania: doba.zapytania,
         wojewodztwaBezDanych: doba.wojewodztwaBezDanych,
+        wojewodztwaNaSuficie: doba.wojewodztwaNaSuficie,
       });
     } catch (err) {
       // Awaria doby nie przerywa okna, ale MUSI wyjść na wierzch. Do 2026-09-24

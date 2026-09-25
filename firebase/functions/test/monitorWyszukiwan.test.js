@@ -21,7 +21,7 @@ process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 
-const { runMonitorWyszukiwan } = await import('../src/jobs/monitorWyszukiwan.js');
+const { runMonitorWyszukiwan, dostarcz } = await import('../src/jobs/monitorWyszukiwan.js');
 const { wyszukiwania, alerty, tenders, users } = await import('../src/db/repos.js');
 
 let seq = 0;
@@ -382,4 +382,193 @@ test('obserwacja z sortowaniem po TERMINIE nadal wykrywa nowe ogloszenia', async
 
   assert.ok(wynik.noweTrafienia >= 1, 'nowe ogloszenie nie zostalo wykryte');
   assert.equal((await alerty.lista(u)).length, 1);
+});
+
+/*
+ * UTRATA TRAFIEŃ PRZYKRYTYCH NOWSZYMI OGŁOSZENIAMI (naprawa 2026-09-25).
+ *
+ * Dawniej każde wyszukiwanie czytało stronę 50 najnowszych pozycji katalogu, a skan
+ * katalogu kończył się po 1200 dokumentach. Tydzień rynku to ~5700 ogłoszeń, doba
+ * ~950 — trafienie przykryte ponad 1200 nowszymi nie było zgłaszane NIGDY, a kursor
+ * przeskakiwał ponad nie na najnowsze trafienie.
+ */
+
+/**
+ * Wyłącza obserwacje z WCZEŚNIEJSZYCH testów (emulator jest wspólny dla pliku).
+ * Strumień nowych ogłoszeń czyta się od NAJSTARSZEGO kursora w partii, więc test
+ * budżetu odczytów mierzyłby cudze kursory zamiast własnego scenariusza.
+ */
+async function wylaczInneObserwacje() {
+  const { getFirestore } = await import('firebase-admin/firestore');
+  const snap = await getFirestore().collectionGroup('wyszukiwania').where('alert_wlaczony', '==', true).get();
+  await Promise.all(snap.docs.map((d) => d.ref.update({ alert_wlaczony: false })));
+}
+
+test('REGRESJA: trafienie przykryte 1250 nowszymi ogłoszeniami MUSI trafić do alertu', async () => {
+  await wylaczInneObserwacje();
+  const cpv = unikalneCpv();
+  const u = await konto();
+  const w = await wyszukiwania.create(u, {
+    nazwa: 'Tygodniowe', filtry: { cpv }, czestotliwosc: 'tygodniowa', odcisk: `o-${nast()}`,
+  });
+  const osiemDniTemu = new Date(Date.now() - 8 * 86_400_000).toISOString();
+  await wyszukiwania.oznaczSprawdzone(u, w.id, {
+    teraz: osiemDniTemu, kursor: { fetched_at: new Date(Date.now() - 1000).toISOString() },
+  });
+
+  const t1 = await przetarg(cpv); // NOWE trafienie — to ono ma przyjść w alercie
+
+  // Więcej niż dawny sufit skanu katalogu (1200) — na produkcji to niecałe półtorej doby.
+  for (let i = 0; i < 1250; i += 50) {
+    await Promise.all(Array.from({ length: 50 }, () => przetarg('33000000')));
+  }
+
+  const z = zbierak();
+  const wynik = await runMonitorWyszukiwan({ teraz: zaChwile(), ...z });
+  assert.equal(wynik.ok, true);
+
+  const zgloszone = (await alerty.lista(u)).flatMap((a) => a.pozycje.map((p) => p.tender_id));
+  assert.ok(zgloszone.includes(t1.id), 'T1 nie zostało zgłoszone — trafienie przepadło pod nowszymi');
+
+  const po = await wyszukiwania.get(u, w.id);
+  assert.ok(po.kursor.fetched_at >= t1.fetched_at, 'kursor przeszedł za T1 dopiero po jego zgłoszeniu');
+
+  // Kolejny przebieg nie zgłasza T1 drugi raz.
+  const t2 = await przetarg(cpv);
+  await wyszukiwania.oznaczSprawdzone(u, w.id, { teraz: osiemDniTemu, kursor: po.kursor });
+  await runMonitorWyszukiwan({ teraz: zaChwile(), ...zbierak() });
+  const alertyPo = await alerty.lista(u);
+  const zDrugiego = alertyPo.filter((a) => a.pozycje.some((p) => p.tender_id === t2.id));
+  assert.equal(zDrugiego.length, 1, 'T2 zgłoszone w kolejnym przebiegu');
+  assert.equal(zDrugiego[0].pozycje.some((p) => p.tender_id === t1.id), false, 'T1 nie wraca drugi raz');
+});
+
+test('budżet odczytów przerywa strumień: „co najmniej N", kursor na granicy, reszta w następnym przebiegu', async () => {
+  await wylaczInneObserwacje();
+  const cpv = unikalneCpv();
+  const u = await konto();
+  const w = await wyszukiwania.create(u, { nazwa: 'Budżet', filtry: { cpv }, odcisk: `o-${nast()}` });
+  // Kursor = TERAZ, nie „sekundę temu": ogłoszenia poprzedniego testu z tej samej
+  // sekundy zajęłyby budżet 20 odczytów i test mierzyłby cudzy wypełniacz.
+  await wyszukiwania.oznaczSprawdzone(u, w.id, {
+    teraz: dwaDniTemu(), kursor: { fetched_at: new Date().toISOString() },
+  });
+  await new Promise((r) => { setTimeout(r, 5); });
+
+  const t1 = await przetarg(cpv);
+  // Wypełniacz zapisywany PO KOLEI, żeby znaczniki `fetched_at` się różniły.
+  for (let i = 0; i < 30; i += 1) await przetarg('33000000');
+  const t2 = await przetarg(cpv);
+
+  const z = zbierak();
+  const pierwszy = await runMonitorWyszukiwan({ teraz: zaChwile(), budzetOdczytow: 20, ...z });
+  assert.equal(pierwszy.strumien.wyczerpano, false, 'budżet 20 dokumentów nie obejmuje 32 nowych');
+
+  const [alertA] = await alerty.lista(u);
+  assert.deepEqual(alertA.pozycje.map((p) => p.tender_id), [t1.id]);
+  assert.match(alertA.tytul.pl, /co najmniej/, 'przerwany strumień nie udaje dokładnej liczby');
+
+  const po = await wyszukiwania.get(u, w.id);
+  assert.ok(po.kursor.fetched_at >= t1.fetched_at);
+  assert.ok(po.kursor.fetched_at < t2.fetched_at, 'kursor NIE przeskoczył nieobejrzanego T2');
+
+  await wyszukiwania.oznaczSprawdzone(u, w.id, { teraz: dwaDniTemu(), kursor: po.kursor });
+  await runMonitorWyszukiwan({ teraz: zaChwile(), ...zbierak() });
+
+  const lista = await alerty.lista(u);
+  const zgloszone = lista.flatMap((a) => a.pozycje.map((p) => p.tender_id));
+  assert.ok(zgloszone.includes(t2.id), 'T2 dotarło w następnym przebiegu');
+  assert.equal(zgloszone.filter((id) => id === t1.id).length, 1, 'T1 zgłoszone dokładnie raz');
+});
+
+/*
+ * DOSTARCZENIE I BUDŻET PRZEBIEGU (naprawa 2026-09-25).
+ */
+
+test('push, którego Expo NIE przyjęło (sent: 0), przechodzi na e-mail awaryjny', async () => {
+  const maile = [];
+  const kanal = await dostarcz({
+    user: { push_token: 'ExponentPushToken[martwy]', email: 'firma@example.pl' },
+    alert: { tytul: { pl: 'Drogi: 3 przetargi' }, tresc: { pl: 'x' }, typ: 'nowe_trafienia', klucz: 'k' },
+    wyslijPush: async () => ({ sent: 0, failed: 1, bledy: { DeviceNotRegistered: 1 } }),
+    wyslijEmail: async (m) => { maile.push(m); return { sent: true }; },
+  });
+  assert.equal(kanal, 'email', 'martwy token nie może oznaczać „dostarczono"');
+  assert.equal(maile.length, 1);
+  assert.equal(maile[0].to, 'firma@example.pl');
+});
+
+test('push przyjęty przez Expo NIE wysyła dodatkowo e-maila', async () => {
+  const maile = [];
+  const kanal = await dostarcz({
+    user: { push_token: 'ExponentPushToken[ok]', email: 'firma@example.pl' },
+    alert: { tytul: { pl: 'T' }, tresc: { pl: 'x' }, typ: 'nowe_trafienia', klucz: 'k' },
+    wyslijPush: async () => ({ sent: 1, failed: 0 }),
+    wyslijEmail: async (m) => { maile.push(m); return { sent: true }; },
+  });
+  assert.equal(kanal, 'push');
+  assert.equal(maile.length, 0);
+});
+
+test('HTML maila monitoringu escapuje nazwę wyszukiwania i tytuły ogłoszeń', async () => {
+  const maile = [];
+  await dostarcz({
+    user: { email: 'firma@example.pl' },
+    alert: {
+      tytul: { pl: '<img src=x onerror=alert(1)>: 2 przetargi' },
+      tresc: { pl: 'W obserwowanym wyszukiwaniu pojawiły się 2 przetargi.' },
+      typ: 'nowe_trafienia',
+      klucz: 'k',
+      pozycje: [{ tytul: 'Dostawa <b>"cegieł"</b> & zaprawy', organizacja: "Gmina O'Brien" }],
+    },
+    wyslijPush: async () => ({ sent: 1 }),
+    wyslijEmail: async (m) => { maile.push(m); return { sent: true }; },
+  });
+  const { html } = maile[0];
+  assert.equal(/<img|<b>"/.test(html), false, 'surowe znaczniki z nazwy/tytułu trafiły do HTML');
+  assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.match(html, /Dostawa &lt;b&gt;&quot;cegieł&quot;&lt;\/b&gt; &amp; zaprawy/);
+  assert.match(html, /Gmina O&#39;Brien/);
+});
+
+test('budżet czasu: przebieg przerywa się między obserwacjami, a najdłużej czekające idą pierwsze', async () => {
+  await wylaczInneObserwacje();
+  const u = await konto();
+  const cpvA = unikalneCpv();
+  const cpvB = unikalneCpv();
+  const a = await wyszukiwania.create(u, { nazwa: 'Świeższa', filtry: { cpv: cpvA }, odcisk: `o-${nast()}` });
+  const b = await wyszukiwania.create(u, { nazwa: 'Dłużej czeka', filtry: { cpv: cpvB }, odcisk: `o-${nast()}` });
+  const kursor = { fetched_at: new Date().toISOString() };
+  await wyszukiwania.oznaczSprawdzone(u, a.id, { teraz: dwaDniTemu(), kursor });
+  await wyszukiwania.oznaczSprawdzone(u, b.id, {
+    teraz: new Date(Date.now() - 3 * 86_400_000).toISOString(), kursor,
+  });
+  await new Promise((r) => { setTimeout(r, 5); });
+  await przetarg(cpvA);
+  await przetarg(cpvB);
+
+  // Zegar stoi, dopóki nie wyjdzie pierwsza wysyłka — potem „mija" cały budżet.
+  let t = 0;
+  const pushe = [];
+  const wynik = await runMonitorWyszukiwan({
+    teraz: zaChwile(),
+    zegar: () => t,
+    budzetCzasuMs: 1000,
+    wyslijPush: async (token, tresc) => { pushe.push(tresc); t = 10_000; return { sent: 1 }; },
+    wyslijEmail: async () => ({ sent: true }),
+  });
+
+  assert.equal(pushe.length, 1, 'po wyczerpaniu budżetu nie zaczynamy kolejnej obserwacji');
+  assert.match(pushe[0].title, /Dłużej czeka/, 'rotacja: najdawniej sprawdzona obserwacja idzie pierwsza');
+  assert.equal(wynik.przerwano, true);
+  assert.equal(wynik.nieobsluzone, 1);
+  assert.equal(wynik.ok, true, 'niedokończona partia to nie błąd — reszta idzie w następnym przebiegu');
+
+  const poA = await wyszukiwania.get(u, a.id);
+  assert.equal(poA.kursor.fetched_at, kursor.fetched_at, 'nieobsłużona obserwacja zostaje nietknięta');
+
+  // Następny przebieg podejmuje resztę.
+  const z = zbierak();
+  await runMonitorWyszukiwan({ teraz: zaChwile(), ...z });
+  assert.ok(z.pushe.some((p) => /Świeższa/.test(p.tresc.title)));
 });

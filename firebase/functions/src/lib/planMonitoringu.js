@@ -23,6 +23,19 @@ import { MAKS_TRAFIEN_W_ALERCIE } from './zapisaneWyszukiwania.js';
 export const MAKS_DNI_WSTECZ = 7;
 
 /**
+ * Jak daleko wstecz sięga strumień NOWYCH ogłoszeń w jednym przebiegu (2026-09-25).
+ *
+ * Strumień czytamy RAZ na przebieg od najstarszego kursora w partii, więc jedna
+ * obserwacja porzucona na miesiąc (wyłączony alert, potem włączony) kazałaby każdemu
+ * przebiegowi czytać miesiąc rynku (~25 tys. dokumentów) — i zagłodziłaby budżetem
+ * wszystkie pozostałe. Sufit musi objąć obserwację TYGODNIOWĄ z zapasem na spóźniony
+ * harmonogram (7 dni + kilka przebiegów), inaczej zwykły tydzień byłby przycinany.
+ * Obserwacja starsza od sufitu dostaje alert „co najmniej N" — ta sama zasada, co
+ * `MAKS_DNI_WSTECZ` dla historii zmian.
+ */
+export const MAKS_DNI_WSTECZ_NOWYCH = 10;
+
+/**
  * Nowe ogłoszenia od ostatniego sprawdzenia.
  *
  * 🚨 PIERWSZY PRZEBIEG NIE POWIADAMIA. Filtr obejmujący dziesięć tysięcy otwartych
@@ -31,10 +44,25 @@ export const MAKS_DNI_WSTECZ = 7;
  * Zapisany wtedy kursor znaczy „od tej chwili obserwuję", i to jest jedyna uczciwa
  * interpretacja zapisania wyszukiwania.
  *
- * @param {{tenders: object[], kursor: {fetched_at: string}|null, teraz: string}} we
- * @returns {{pozycje: object[], nowyKursor: {fetched_at: string}, pierwszyPrzebieg: boolean}}
+ * 🚨 KURSOR STAJE TYLKO TAM, DOKĄD STRUMIEŃ REALNIE PRZEJRZANO (2026-09-25). Dawniej
+ * przeskakiwał na najnowsze trafienie ze strony 50 pozycji katalogu, a katalog kończył
+ * skan po 1200 dokumentach — trafienie przykryte większą liczbą nowszych ogłoszeń nie
+ * było zgłoszone nigdy, bo kolejny przebieg startował już ZA nim. `strumien` opisuje
+ * obejrzany odcinek `(od, przejrzanoDo]`; wszystko za nim czeka na następny przebieg.
+ *
+ * @param {{tenders: object[], kursor: {fetched_at: string}|null, teraz: string,
+ *   strumien?: {od: string|null, przejrzanoDo: string|null, wyczerpano: boolean},
+ *   kursorStartowy?: string|null}} we
+ *   `tenders` — ogłoszenia już przesiane filtrami TEGO wyszukiwania,
+ *   `strumien` — bez niego lista jest traktowana jako kompletna (tryb dawny),
+ *   `kursorStartowy` — punkt „od teraz" dla pierwszego przebiegu (najnowsze w bazie)
+ * @returns {{pozycje: object[], nowyKursor: {fetched_at: string}, pierwszyPrzebieg: boolean,
+ *   conajmniej: boolean, nieobjete: boolean}}
+ *   `nieobjete` — strumień nie doszedł dalej niż kursor; obserwacji nie wolno zamykać
  */
-export function noweTrafienia({ tenders = [], kursor = null, teraz }) {
+export function noweTrafienia({
+  tenders = [], kursor = null, teraz, strumien = null, kursorStartowy = null,
+}) {
   const odniesienie = kursor?.fetched_at ?? null;
 
   const najnowszy = tenders
@@ -48,20 +76,61 @@ export function noweTrafienia({ tenders = [], kursor = null, teraz }) {
       pozycje: [],
       // Bez trafień punktem odniesienia jest chwila sprawdzenia — inaczej kolejny
       // przebieg uznałby cały zastany rynek za nowość.
-      nowyKursor: { fetched_at: najnowszy ?? teraz },
+      nowyKursor: { fetched_at: kursorStartowy ?? najnowszy ?? teraz },
       pierwszyPrzebieg: true,
+      conajmniej: false,
+      nieobjete: false,
+    };
+  }
+
+  if (!strumien) {
+    const pozycje = tenders
+      .filter((t) => typeof t?.fetched_at === 'string' && t.fetched_at > odniesienie)
+      .sort((a, b) => b.fetched_at.localeCompare(a.fetched_at));
+
+    return {
+      pozycje,
+      // Brak nowości NIE cofa punktu odniesienia.
+      nowyKursor: { fetched_at: pozycje.length ? pozycje[0].fetched_at : odniesienie },
+      pierwszyPrzebieg: false,
+      conajmniej: false,
+      nieobjete: false,
+    };
+  }
+
+  const granica = strumien.przejrzanoDo ?? null;
+  // Strumień nie sięgnął za kursor: nic nowego dla tej obserwacji nie obejrzano.
+  // Przy wyczerpanym strumieniu to zwykłe „brak nowości"; przy przerwanym —
+  // obserwacja czeka nietknięta na przebieg, który do niej dojdzie.
+  if (!granica || granica <= odniesienie) {
+    return {
+      pozycje: [],
+      nowyKursor: { fetched_at: odniesienie },
+      pierwszyPrzebieg: false,
+      conajmniej: false,
+      nieobjete: strumien.wyczerpano !== true,
     };
   }
 
   const pozycje = tenders
-    .filter((t) => typeof t?.fetched_at === 'string' && t.fetched_at > odniesienie)
+    .filter((t) => typeof t?.fetched_at === 'string'
+      && t.fetched_at > odniesienie && t.fetched_at <= granica)
     .sort((a, b) => b.fetched_at.localeCompare(a.fetched_at));
+
+  /*
+   * „Co najmniej N", gdy obejrzany odcinek nie pokrywa całego okna tej obserwacji:
+   * strumień przerwany przez budżet (za granicą może być więcej) albo kursor starszy
+   * niż początek strumienia (odcinek sprzed sufitu dni pominięty świadomie).
+   */
+  const conajmniej = strumien.wyczerpano !== true
+    || (typeof strumien.od === 'string' && odniesienie < strumien.od);
 
   return {
     pozycje,
-    // Brak nowości NIE cofa punktu odniesienia.
-    nowyKursor: { fetched_at: pozycje.length ? pozycje[0].fetched_at : odniesienie },
+    nowyKursor: { fetched_at: granica },
     pierwszyPrzebieg: false,
+    conajmniej,
+    nieobjete: false,
   };
 }
 
@@ -248,5 +317,41 @@ export function oknoOdczytuZmian(wpisy = [], teraz) {
 
   const najstarszy = znaczniki.sort()[0];
   const granica = new Date(Date.parse(teraz) - MAKS_DNI_WSTECZ * 86_400_000).toISOString();
+  return najstarszy < granica ? granica : najstarszy;
+}
+
+/**
+ * Kolejność obsługi obserwacji w przebiegu (2026-09-25): najpierw nigdy nie
+ * sprawdzane, potem najdawniej sprawdzane.
+ *
+ * Przebieg ma budżet czasu i może skończyć się przed końcem partii. Przy kolejności
+ * z bazy (collectionGroup bez `orderBy`) przerwanie trafiałoby zawsze w te same
+ * obserwacje i te same konta nie dostawałyby alertów nigdy. Obserwacja nieobsłużona
+ * zachowuje stary `ostatnio_sprawdzone_o`, więc w następnym przebiegu jest na czele.
+ * Sortujemy w pamięci — sortowanie w zapytaniu wymagałoby indeksu złożonego grupy.
+ */
+export function kolejnoscObslugi(wpisy = []) {
+  const klucz = (w) => (typeof w?.ostatnio_sprawdzone_o === 'string' ? w.ostatnio_sprawdzone_o : '');
+  return [...wpisy].sort((a, b) => klucz(a).localeCompare(klucz(b)));
+}
+
+/**
+ * Od którego `fetched_at` czytać strumień NOWYCH ogłoszeń w tym przebiegu (2026-09-25).
+ *
+ * Jeden odczyt dla CAŁEJ partii — od najstarszego kursora, bo każda obserwacja
+ * potrzebuje odcinka od SWOJEGO kursora, a ogłoszenia są wspólne dla wszystkich.
+ * Czytanie rynku osobno dla każdej obserwacji mnożyłoby koszt przez liczbę kont
+ * (i to właśnie ten koszt wymuszał dawny sufit 50 pozycji, który gubił trafienia).
+ *
+ * @returns {string|null} null = w partii same pierwsze przebiegi, strumień niepotrzebny
+ */
+export function oknoOdczytuNowych(wpisy = [], teraz) {
+  const kursory = wpisy
+    .map((w) => w?.kursor?.fetched_at)
+    .filter((v) => typeof v === 'string' && v);
+  if (!kursory.length) return null;
+
+  const najstarszy = kursory.sort()[0];
+  const granica = new Date(Date.parse(teraz) - MAKS_DNI_WSTECZ_NOWYCH * 86_400_000).toISOString();
   return najstarszy < granica ? granica : najstarszy;
 }

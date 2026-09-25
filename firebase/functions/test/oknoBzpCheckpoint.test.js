@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 
 process.env.ANTHROPIC_API_KEY = '';
 
-const { wybierzDni, zaktualizujCheckpoint } = await import('../src/jobs/oknoBzp.js');
+const { wybierzDni, zaktualizujCheckpoint, dobaKompletna } = await import('../src/jobs/oknoBzp.js');
 
 const OKNO = ['2026-09-18', '2026-09-19', '2026-09-20', '2026-09-21', '2026-09-22'];
 const DZISIAJ = '2026-09-22';
@@ -144,4 +144,32 @@ test('dni pominięte przez budżet zostają otwarte i wrócą w następnym przeb
     wybierzDni({ dni: OKNO, checkpoint: stan, dzisiaj: DZISIAJ }),
     ['2026-09-22', '2026-09-21', '2026-09-20', '2026-09-19', '2026-09-18'],
   );
+});
+
+test('zaktualizujCheckpoint: doba z NIEZAPISANYM ogłoszeniem nie zamyka się (2026-09-25)', () => {
+  const stan = zaktualizujCheckpoint({
+    checkpoint: null,
+    dni: OKNO,
+    dzisiaj: DZISIAJ,
+    teraz: '2026-09-22T10:00:00.000Z',
+    raport: [{ dzien: '2026-09-20', pobrano: 400, zapytania: 1, wojewodztwaBezDanych: 0, niezapisane: 1 }],
+  });
+  assert.equal(stan.dni['2026-09-20'].kompletny, false);
+  assert.equal(stan.dni['2026-09-20'].niezapisane, 1);
+});
+
+test('dobaKompletna: województwo na SUFICIE 500 znaczy, że część doby jest nieosiągalna — doba zostaje otwarta (2026-09-25)', () => {
+  const pelna = { pobrano: 900, wojewodztwaBezDanych: 0, wojewodztwaNaSuficie: 0 };
+  assert.equal(dobaKompletna(pelna, '2026-09-20', DZISIAJ), true);
+  assert.equal(dobaKompletna({ ...pelna, wojewodztwaNaSuficie: 1 }, '2026-09-20', DZISIAJ), false,
+    'dawniej tylko log — doba zamykała się jako kompletna, choć brakowało jej ogłoszeń');
+  assert.equal(dobaKompletna({ ...pelna, niezapisane: 2 }, '2026-09-20', DZISIAJ), false);
+  assert.equal(dobaKompletna(pelna, DZISIAJ, DZISIAJ), false, 'dzisiaj nigdy');
+
+  const stan = zaktualizujCheckpoint({
+    checkpoint: null, dni: OKNO, dzisiaj: DZISIAJ, teraz: '2026-09-22T10:00:00.000Z',
+    raport: [{ dzien: '2026-09-20', pobrano: 7000, ucietySufit: true, zapytania: 17, wojewodztwaBezDanych: 0, wojewodztwaNaSuficie: 2 }],
+  });
+  assert.equal(stan.dni['2026-09-20'].kompletny, false);
+  assert.equal(stan.dni['2026-09-20'].wojewodztwaNaSuficie, 2, 'licznik trafia do checkpointu (widać go w /health)');
 });

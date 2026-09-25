@@ -36,17 +36,47 @@ async function eksportZapisanych(userId, teraz) {
   return { nazwa: nazwaPliku('zapisane', teraz), csv: doCsv(wiersze, KOLUMNY_ZAPISANYCH), wierszy: wiersze.length, obciety: false };
 }
 
-/** Katalog z filtrami jak GET /tenders — strona po stronie, do sufitu wierszy. */
-async function eksportKatalogu(query, teraz) {
+/**
+ * Sufit dokumentów PRZESKANOWANYCH przez jeden eksport katalogu (2026-09-25).
+ *
+ * Rzadki filtr (np. wąskie CPV w jednym województwie) potrafi wymagać przejścia
+ * przez dużą część rynku, zanim zbierze wiersze. 50 tys. odczytów z projekcją
+ * ≈ 0,03 USD i kilkadziesiąt sekund — mieści się w limicie funkcji `api` (300 s).
+ * Po jego osiągnięciu plik mówi uczciwie `obciety: true`.
+ */
+export const MAKS_SKANU_EKSPORTU = 50_000;
+
+/**
+ * Katalog z filtrami jak GET /tenders — strona po stronie, do wyczerpania skanu
+ * albo do sufitu wierszy / skanu.
+ *
+ * 🚨 Pusta strona NIE znaczy „koniec" (naprawa 2026-09-25). `katalog` kończy skan po
+ * 1200 dokumentach; przy rzadkim filtrze zwraca wtedy zero wierszy z `wyczerpano:
+ * false`. Dawniej pętla się tu kończyła, a plik miał `obciety: false` — deklarował
+ * komplet, choć za sufitem skanu leżały pasujące ogłoszenia. Koniec wyznacza
+ * wyłącznie `wyczerpano`.
+ *
+ * @param {{katalog?: Function}} [zaleznosci] wstrzykiwane w testach
+ */
+export async function eksportKatalogu(query, teraz, { katalog = (a) => tenders.katalog(a) } = {}) {
   const filtry = { ...normalizujFiltry(query ?? {}), limit: LIMIT_MAKS };
   const zebrane = [];
   let kursor = null;
+  let przeskanowano = 0;
   let obciety = false;
   for (;;) {
-    const wynik = await tenders.katalog({ filtry, teraz, kursor });
+    const wynik = await katalog({ filtry, teraz, kursor });
     zebrane.push(...wynik.wiersze);
-    if (zebrane.length >= MAKS_WIERSZY_KATALOGU) { obciety = true; break; }
-    if (!wynik.ostatni || wynik.wiersze.length === 0) break;
+    przeskanowano += wynik.przeskanowano ?? 0;
+    if (wynik.wyczerpano || !wynik.ostatni) {
+      obciety = zebrane.length > MAKS_WIERSZY_KATALOGU;
+      break;
+    }
+    // Niewyczerpany skan na suficie wierszy albo odczytów — dalej MOGĄ być trafienia.
+    if (zebrane.length >= MAKS_WIERSZY_KATALOGU || przeskanowano >= MAKS_SKANU_EKSPORTU) {
+      obciety = true;
+      break;
+    }
     kursor = wynik.ostatni;
   }
   const wiersze = zebrane.slice(0, MAKS_WIERSZY_KATALOGU).map(wierszKatalogu);

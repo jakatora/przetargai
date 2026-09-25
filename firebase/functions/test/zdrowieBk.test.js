@@ -16,7 +16,7 @@ process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 
-const { cykl, oknoBk } = await import('../src/db/repos.js');
+const { cykl, oknoBk, oknoBzp } = await import('../src/db/repos.js');
 const { createApp } = await import('../src/app.js');
 const { getFirestore } = await import('firebase-admin/firestore');
 
@@ -90,4 +90,25 @@ test('awaria samego okna BK nie kłamie o sukcesie — błąd zostaje widoczny',
 
   const { cialo } = await zapytajHealth();
   assert.equal(cialo.bk_okno.error, 'BK search odpowiedziało 500');
+});
+
+test('utracone zapisy okien są WIDOCZNE w /health: skipped, ok i zbiorcze zapis_niekompletny (2026-09-25)', async () => {
+  await oknoBk.zapiszPrzebieg({ ...PRZEBIEG_BK, ok: false, skipped: 2, bledy_zapisu: 3, error: 'Nie zapisano 3 zmian ogłoszeń' });
+  await oknoBzp.zapiszPrzebieg({
+    ok: false, fetched: 900, newTenders: 10, skipped: 1, wojewodztwa_na_suficie: 1, error: 'Nie zapisano 1 ogłoszeń', zakonczony_o: new Date().toISOString(),
+  });
+  await cykl.zapiszPrzebieg({
+    ok: true, czesciowy: true, fetched: 30, newTenders: 12, skipped: 4, matchesCreated: 0, durationMs: 1000,
+    zrodla: { bzp: { fetched: 12, newTenders: 6 } },
+  });
+
+  const { cialo } = await zapytajHealth();
+  assert.equal(cialo.bk_okno.skipped, 2);
+  assert.equal(cialo.bk_okno.bledy_zapisu, 3);
+  assert.equal(cialo.bk_okno.ok, false);
+  assert.equal(cialo.bzp_okno.skipped, 1);
+  assert.equal(cialo.bzp_okno.ok, false);
+  assert.equal(cialo.bzp_okno.wojewodztwa_na_suficie, 1, 'doba z województwem na suficie jest niekompletna');
+  assert.deepEqual(cialo.zapis_niekompletny, { cykl: 4, bzp_okno: 1, bk_okno: 3 },
+    'jedno miejsce, w którym dyżurny widzi, że coś pobrano, a nie zapisano');
 });

@@ -1,9 +1,9 @@
 import { logger } from '../lib/logger.js';
 import { features } from '../config.js';
 import { pobierzOgloszeniaTed } from '../services/ted.js';
-import { pobierzBzpZWznowieniem } from './oknoBzp.js';
+import { pobierzBzpZWznowieniem, zatwierdzCheckpointBzp } from './oknoBzp.js';
 import { generateMatchesForAllUsers } from '../services/matching.js';
-import { pobierzBkZWznowieniem } from './oknoBk.js';
+import { pobierzBkZWznowieniem, zatwierdzCheckpointBk } from './oknoBk.js';
 import { tenders, cykl } from '../db/repos.js';
 import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
 import { scalMiedzyZrodlami } from '../lib/dedupZrodel.js';
@@ -23,7 +23,15 @@ import { scalMiedzyZrodlami } from '../lib/dedupZrodel.js';
  */
 function domyslneZrodla() {
   const zrodla = [
-    { nazwa: 'bzp', pobierz: (licznik, opcje) => pobierzBzpZWznowieniem(licznik, opcje) },
+    /*
+     * `zatwierdz` zamyka checkpoint okna PO zapisie (2026-09-25): źródło z checkpointem
+     * dostaje listę ogłoszeń, których zapis padł, i zostawia je do ponowienia.
+     */
+    {
+      nazwa: 'bzp',
+      pobierz: (licznik, opcje) => pobierzBzpZWznowieniem(licznik, opcje),
+      zatwierdz: (licznik, opcje) => zatwierdzCheckpointBzp(licznik, opcje),
+    },
   ];
   if (features.ted) {
     zrodla.push({ nazwa: 'ted', pobierz: (licznik) => pobierzOgloszeniaTed({ licznik }) });
@@ -43,6 +51,7 @@ function domyslneZrodla() {
     zrodla.push({
       nazwa: 'baza_konkurencyjnosci',
       pobierz: (licznik, opcje) => pobierzBkZWznowieniem(licznik, opcje),
+      zatwierdz: (licznik, opcje) => zatwierdzCheckpointBk(licznik, opcje),
     });
   }
   return zrodla;
@@ -135,7 +144,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
       continue;
     }
 
-    zebrane.push({ nazwa: zrodlo.nazwa, notices, licznik });
+    zebrane.push({ nazwa: zrodlo.nazwa, notices, licznik, zatwierdz: zrodlo.zatwierdz });
     statystyki[zrodlo.nazwa] = {
       // `fetched` = ile ogłoszeń oddało ŹRÓDŁO (po jego własnej deduplikacji).
       // Świadomie liczone PRZED scalaniem międzyźródłowym: inaczej nie dałoby się
@@ -199,6 +208,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
    * (`raw_data` z `htmlBody` bywa ogromne) — bez izolacji jeden taki rekord
    * przerywał zapis CAŁEJ partii i pozostałe 499 przetargów nie trafiało do bazy.
    */
+  const nieudane = new Set();
   for (const notice of scalone.ogloszenia) {
     // Atrybucja po ŹRÓDLE POBRANIA, nie po polu `source`: ogłoszenie bez `source`
     // jest zapisywane jako `bzp` (zgodność wsteczna), ale policzyć je trzeba temu,
@@ -213,8 +223,34 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
     } catch (err) {
       pominiete += 1;
       if (statystyki[nazwa]) statystyki[nazwa].pominiete += 1;
+      /*
+       * Niezapisany wpis ciągnie za sobą KOPIE scalone z innych rejestrów — one też
+       * nie trafiły do bazy, więc ich źródła muszą je ponowić (2026-09-25).
+       */
+      nieudane.add(String(notice?.externalId));
+      for (const alt of notice?.zrodla_alternatywne ?? []) {
+        if (alt?.externalId) nieudane.add(String(alt.externalId));
+      }
       logger.error({ err: err.message, externalId: notice?.externalId, zrodlo: nazwa },
         'fetchTenders: pominięto ogłoszenie, którego nie dało się zapisać');
+    }
+  }
+
+  /*
+   * Checkpointy okien zamykamy DOPIERO TERAZ, po zapisie (2026-09-25). Dawniej
+   * źródło zamykało dobę przed upsertami, a nieudany zapis był tylko `pominiete++`
+   * — ogłoszenie nie wracało już nigdy. Awaria zatwierdzenia nie wywraca cyklu:
+   * niezamknięty checkpoint znaczy tylko powtórkę pobrania.
+   */
+  for (const { nazwa, licznik, zatwierdz } of zebrane) {
+    if (typeof zatwierdz !== 'function') continue;
+    try {
+      await zatwierdz(licznik, { nieudane });
+      if (statystyki[nazwa] && licznik.dobyNiedomkniete !== undefined) {
+        statystyki[nazwa].doby_niedomkniete = licznik.dobyNiedomkniete;
+      }
+    } catch (err) {
+      logger.error({ err: err.message, zrodlo: nazwa }, 'fetchTenders: nie udało się zamknąć checkpointu źródła');
     }
   }
 
@@ -253,6 +289,13 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
 
   return zapiszSlad({
     ok: true, fetched, newTenders: noweTenders, skipped: pominiete,
+    /*
+     * Utracone zapisy NIE dają czystego sukcesu (2026-09-25), ale też nie `ok: false`:
+     * to wywróciłoby cały dzienny cykl razem z policzonymi już dopasowaniami, a dane
+     * i tak dociągnie okno źródła, bo jego checkpoint został otwarty. `/health`
+     * pokazuje `czesciowy` i `skipped`.
+     */
+    ...(pominiete > 0 ? { czesciowy: true, ostrzezenie: `Nie zapisano ${pominiete} ogłoszeń — okna źródeł ponowią je` } : {}),
     // Rekonsyliacja: ile ogłoszeń scaliło się MIĘDZY rejestrami. Bez tej liczby
     // różnica `fetched` − `newTenders` wygląda jak zgubione dane, a jest kopią.
     zduplikowane_miedzy_zrodlami: scalone.duplikaty,

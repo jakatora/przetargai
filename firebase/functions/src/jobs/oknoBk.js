@@ -154,17 +154,24 @@ export function wykryjZnikniecia({ aktywne, checkpoint, pokrycieKompletne, teraz
  */
 export function zaktualizujCheckpointBk({
   checkpoint, aktywne, przetworzone = [], anulowane = [], pokrycieKompletne, teraz,
-  maksWpisow = MAKS_WPISOW_CHECKPOINTU,
+  maksWpisow = MAKS_WPISOW_CHECKPOINTU, nieudane = new Set(), zachowaj = new Set(),
 }) {
   const poprzedni = checkpoint?.ogloszenia ?? {};
   const stan = {};
 
   for (const [id, wpis] of Object.entries(poprzedni)) {
-    if (pokrycieKompletne && !aktywne.has(id)) continue;
+    // `zachowaj` — zniknięcia, których NIE rozstrzygnęliśmy (weryfikacja albo zapis
+    // anulowania padły, zabrakło budżetu). Przycięte, nie wróciłyby do weryfikacji.
+    if (pokrycieKompletne && !aktywne.has(id) && !zachowaj.has(id)) continue;
     stan[id] = wpis;
   }
 
-  for (const { id, termin } of przetworzone) {
+  for (const { id, termin, externalId } of przetworzone) {
+    /*
+     * Ogłoszenie, którego wołający NIE ZAPISAŁ, nie dostaje odcisku (2026-09-25).
+     * Z odciskiem wyglądałoby na „bez zmian" i nie wróciłoby nigdy — a w bazie go nie ma.
+     */
+    if (externalId && nieudane.has(String(externalId))) continue;
     const poz = aktywne.get(String(id));
     if (!poz) continue;
     stan[String(id)] = {
@@ -209,6 +216,10 @@ function oknoOdDni(dni, teraz) {
  *    kolejne wersje tego samego ogłoszenia — najczęściej z nowym terminem),
  *  • ANULOWANIA (wpis zostaje w bazie, ale wypada z puli dopasowań).
  *
+ * 🚨 NIE ZAPISUJE CHECKPOINTU (naprawa 2026-09-25): odcisk ogłoszenia oznacza „mamy
+ * je w bazie", więc może powstać dopiero PO zapisie. Checkpoint zamyka
+ * `zatwierdzCheckpointBk`, wołane przez zapisującego z listą nieudanych zapisów.
+ *
  * @param {object} licznik akumulator pomiarów (lib/licznikZrodla.js)
  * @param {{budzetMs?: number, teraz?: () => number}} opts
  */
@@ -244,6 +255,8 @@ export async function pobierzBkZWznowieniem(licznik, { budzetMs = Infinity, tera
   const anulowane = [];
   let zaktualizowane = 0;
   let budzetWyczerpany = false;
+  // Nieudane zapisy WŁASNE (aktualizacja, anulowanie) — przebieg nie może być „czysty".
+  let bledyZapisu = 0;
 
   for (const id of wybor.doPobrania) {
     if (pozostalo() <= 0) {
@@ -279,49 +292,82 @@ export async function pobierzBkZWznowieniem(licznik, { budzetMs = Infinity, tera
     // Aktualizacja idzie PRZED zapisem wołającego: dla ogłoszenia, którego jeszcze
     // nie ma w bazie, jest nieszkodliwym no-op, a dla istniejącego dowozi nowy termin.
     if (checkpoint?.ogloszenia?.[String(id)]) {
-      const { zmienione } = await tenders
-        .zaktualizujZeZrodla({ ...t, ...sygnalyZmiany({ poz: aktywne.get(String(id)), json }) })
-        .catch((err) => { logger.error({ err: err.message, id }, 'BK: aktualizacja nie powiodła się'); return { zmienione: false }; });
-      if (zmienione) zaktualizowane += 1;
+      let aktualizacja;
+      try {
+        aktualizacja = await tenders
+          .zaktualizujZeZrodla({ ...t, ...sygnalyZmiany({ poz: aktywne.get(String(id)), json }) });
+      } catch (err) {
+        /*
+         * Nieudana aktualizacja NIE trafia do `przetworzone` (2026-09-25). Dawniej
+         * trafiała — checkpoint dostawał nowy odcisk i ogłoszenie wyglądało na „bez
+         * zmian", więc nowy termin nie docierał do bazy już nigdy.
+         */
+        bledyZapisu += 1;
+        logger.error({ err: err.message, id }, 'BK: aktualizacja nie powiodła się — ogłoszenie wróci w następnym przebiegu');
+        continue;
+      }
+      if (aktualizacja?.zmienione) zaktualizowane += 1;
     }
 
     ogloszenia.push(t);
-    przetworzone.push({ id: String(id), termin: t.deadline });
+    przetworzone.push({ id: String(id), termin: t.deadline, externalId: t.externalId });
   }
 
   /*
    * Zniknięcia sprawdzamy DOPIERO tu i tylko przy pełnym pokryciu — patrz
    * `wykryjZnikniecia`. Weryfikacja jest zawsze potwierdzana szczegółem: sama
    * nieobecność na liście nigdy nie wystarcza do oznaczenia anulowania.
+   *
+   * Zniknięcia NIEROZSTRZYGNIĘTE (poza limitem weryfikacji, bez budżetu, z błędem
+   * szczegółu albo zapisu) zostają w checkpoincie (2026-09-25). Dawniej przycinanie
+   * do listy aktywnych kasowało je od razu, więc „zostaje na następny przebieg"
+   * było nieprawdą — anulowanie nie było już nigdy sprawdzane.
    */
   let sprawdzoneZnikniecia = 0;
-  if (!budzetWyczerpany) {
-    const podejrzane = wykryjZnikniecia({
-      aktywne, checkpoint, pokrycieKompletne, teraz: new Date(teraz()).toISOString(), maks: env.BK_MAKS_WERYFIKACJI,
-    });
-    for (const id of podejrzane) {
-      if (pozostalo() <= 0) break;
-      sprawdzoneZnikniecia += 1;
-      try {
-        if (statusOgloszenia(await pobierzSzczegolBk(id, { tempo })) === STATUS_ANULOWANY) anulowane.push(String(id));
-      } catch (err) {
-        logger.warn({ err: err.message, id }, 'BK: nie udało się zweryfikować zniknięcia — zostaje na następny przebieg');
-      }
+  const nierozstrzygniete = new Set();
+  const podejrzane = wykryjZnikniecia({
+    aktywne, checkpoint, pokrycieKompletne, teraz: new Date(teraz()).toISOString(), maks: Infinity,
+  });
+  for (const [i, id] of podejrzane.entries()) {
+    if (budzetWyczerpany || i >= env.BK_MAKS_WERYFIKACJI || pozostalo() <= 0) {
+      nierozstrzygniete.add(String(id));
+      continue;
+    }
+    sprawdzoneZnikniecia += 1;
+    try {
+      if (statusOgloszenia(await pobierzSzczegolBk(id, { tempo })) === STATUS_ANULOWANY) anulowane.push(String(id));
+    } catch (err) {
+      nierozstrzygniete.add(String(id));
+      logger.warn({ err: err.message, id }, 'BK: nie udało się zweryfikować zniknięcia — zostaje na następny przebieg');
     }
   }
 
+  const anulowaneRozstrzygniete = [];
   for (const id of anulowane) {
-    await tenders.oznaczAnulowany(`bk:${id}`, { powod: STATUS_ANULOWANY })
-      .catch((err) => logger.error({ err: err.message, id }, 'BK: nie udało się oznaczyć anulowania'));
+    try {
+      await tenders.oznaczAnulowany(`bk:${id}`, { powod: STATUS_ANULOWANY });
+      anulowaneRozstrzygniete.push(id);
+    } catch (err) {
+      bledyZapisu += 1;
+      logger.error({ err: err.message, id }, 'BK: nie udało się oznaczyć anulowania — ponowimy');
+      // Wciąż na liście (wyścig PUBLISHED/CANCELLED): usunięty wpis każe pobrać szczegół
+      // ponownie jako „nowy". Zniknięte z listy: wpis zostaje, żeby wróciło do weryfikacji.
+      if (aktywne.has(String(id))) anulowaneRozstrzygniete.push(id);
+      else nierozstrzygniete.add(String(id));
+    }
   }
 
-  const nowyStan = zaktualizujCheckpointBk({
-    checkpoint, aktywne, przetworzone, anulowane, pokrycieKompletne, teraz: new Date(teraz()).toISOString(),
-  });
-  await repoOkna.zapisz(nowyStan).catch((err) =>
-    logger.error({ err: err.message }, 'BK: nie udało się zapisać checkpointu okna'));
-
   if (licznik) {
+    planyCheckpointuBk.set(licznik, {
+      checkpoint,
+      aktywne,
+      przetworzone,
+      anulowane: anulowaneRozstrzygniete,
+      zachowaj: nierozstrzygniete,
+      pokrycieKompletne,
+      teraz: new Date(teraz()).toISOString(),
+    });
+    licznik.bkBledyZapisu = bledyZapisu;
     licznik.bkAktywne = aktywne.size;
     licznik.bkTotal = total;
     licznik.bkPrzebiegiListy = przebiegi;
@@ -341,6 +387,33 @@ export async function pobierzBkZWznowieniem(licznik, { budzetMs = Infinity, tera
     ogloszenia: ogloszenia.length, zaktualizowane, anulowane: anulowane.length, zaleglosc: wybor.zaleglosc,
   }, 'BK: zakończono przebieg okna');
   return ogloszenia;
+}
+
+/**
+ * Plany checkpointu BK czekające na zapis ogłoszeń — klucz to `licznik` przebiegu
+ * (WeakMap, bo licznik ląduje w logach i w śladzie cyklu, a plan niesie całą listę).
+ */
+const planyCheckpointuBk = new WeakMap();
+
+/**
+ * Zamyka checkpoint okna BK PO zapisie ogłoszeń (2026-09-25).
+ *
+ * Ogłoszenia z `nieudane` nie dostają odcisku, więc kolejny przebieg pobierze ich
+ * szczegół ponownie i ponowi zapis.
+ *
+ * @param {object} licznik ten sam, który dostało `pobierzBkZWznowieniem`
+ * @param {{nieudane?: Set<string>}} opts externalId (`bk:…`) ogłoszeń, których zapis padł
+ * @returns {Promise<boolean>} false = nie było czego zatwierdzać (pobranie padło)
+ */
+export async function zatwierdzCheckpointBk(licznik, { nieudane = new Set() } = {}) {
+  const plan = licznik ? planyCheckpointuBk.get(licznik) : null;
+  if (!plan) return false;
+  planyCheckpointuBk.delete(licznik);
+
+  const nowyStan = zaktualizujCheckpointBk({ ...plan, nieudane });
+  await repoOkna.zapisz(nowyStan).catch((err) =>
+    logger.error({ err: err.message }, 'BK: nie udało się zapisać checkpointu okna'));
+  return true;
 }
 
 /**
@@ -374,24 +447,36 @@ export async function runBkOkno({ budzetMs = BUDZET_OKNA_BK_MS } = {}) {
 
   let nowe = 0;
   let pominiete = 0;
+  const nieudane = new Set();
   for (const ogloszenie of ogloszenia) {
     try {
       const { created } = await tenders.upsert(ogloszenie);
       if (created) nowe += 1;
     } catch (err) {
       pominiete += 1;
+      nieudane.add(String(ogloszenie?.externalId));
       logger.error({ err: err.message, externalId: ogloszenie?.externalId },
         'bkOkno: pominięto ogłoszenie, którego nie dało się zapisać');
     }
   }
   if (nowe > 0 || licznik.bkAnulowane) tenders.odswiezPule();
 
+  // Checkpoint DOPIERO po zapisie — niezapisane ogłoszenia nie dostają odcisku (2026-09-25).
+  await zatwierdzCheckpointBk(licznik, { nieudane });
+
+  // Utracony zapis (upsert, aktualizacja, anulowanie) to nie jest czysty sukces.
+  const bledyZapisu = pominiete + (licznik.bkBledyZapisu ?? 0);
+  const bladZapisu = bledyZapisu > 0
+    ? `Nie zapisano ${bledyZapisu} zmian ogłoszeń — wrócą w następnym przebiegu`
+    : null;
+
   const wynik = {
-    ok: blad === null,
-    error: blad,
+    ok: blad === null && bledyZapisu === 0,
+    error: blad ?? bladZapisu,
     fetched: ogloszenia.length,
     newTenders: nowe,
     skipped: pominiete,
+    bledy_zapisu: bledyZapisu,
     surowe: licznik.surowe,
     odrzucone: licznik.odrzucone,
     zapytania: licznik.zapytania,

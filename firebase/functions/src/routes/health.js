@@ -95,6 +95,20 @@ router.get('/', async (_req, res) => {
    */
   const zdrowy = dbOk && (cronOk || ostatniCykl === null) && pobieranieOk;
 
+  /*
+   * Ogłoszenia POBRANE, a NIEZAPISANE (2026-09-25). Dawniej błąd zapisu kończył się
+   * `pominiete++` przy `ok: true` i nikt tego nie widział. Checkpointy okien zostawiają
+   * takie doby/ogłoszenia otwarte do ponowienia, ale dyżurny musi widzieć, że to się
+   * dzieje — rosnąca liczba znaczy, że ponowienia też padają. Informacyjne: nie zapala
+   * 503 (dane dociągnie następny przebieg okna), `null` = wszystko zapisane.
+   */
+  const niezapisane = {
+    cykl: wynik?.skipped ?? 0,
+    bzp_okno: stanOkna?.ostatni_przebieg?.skipped ?? 0,
+    bk_okno: stanOknaBk?.ostatni_przebieg?.bledy_zapisu ?? stanOknaBk?.ostatni_przebieg?.skipped ?? 0,
+  };
+  const zapisNiekompletny = Object.values(niezapisane).some((n) => n > 0) ? niezapisane : null;
+
   res.status(zdrowy ? 200 : 503).json({
     status: zdrowy ? 'ok' : 'degraded',
     app: env.APP_NAME,
@@ -112,6 +126,7 @@ router.get('/', async (_req, res) => {
      * zestawiając `otwarte_przetargi` ze stałą 2000 zaszytą w kodzie.
      */
     pula: tenders.statystykiPuli(),
+    zapis_niekompletny: zapisNiekompletny,
     /*
      * Stan domykania okna BZP (P0-2). `doby_niedomkniete > 0` znaczy, że w oknie
      * `BZP_LOOKBACK_DAYS` są doby, których jeszcze nie pobraliśmy w całości —
@@ -124,6 +139,10 @@ router.get('/', async (_req, res) => {
         doby_niedomkniete: stanOkna.ostatni_przebieg.doby_niedomkniete ?? null,
         fetched: stanOkna.ostatni_przebieg.fetched ?? null,
         newTenders: stanOkna.ostatni_przebieg.newTenders ?? null,
+        ok: stanOkna.ostatni_przebieg.ok ?? null,
+        skipped: stanOkna.ostatni_przebieg.skipped ?? null,
+        // > 0 = doby z województwem na suficie 500: niekompletne, trzeba ciąć po godzinach.
+        wojewodztwa_na_suficie: stanOkna.ostatni_przebieg.wojewodztwa_na_suficie ?? null,
         error: stanOkna.ostatni_przebieg.error ?? null,
       }
       : null,
@@ -148,6 +167,9 @@ router.get('/', async (_req, res) => {
         newTenders: stanOknaBk.ostatni_przebieg.newTenders ?? null,
         zaktualizowane: stanOknaBk.ostatni_przebieg.zaktualizowane ?? null,
         anulowane: stanOknaBk.ostatni_przebieg.anulowane ?? null,
+        ok: stanOknaBk.ostatni_przebieg.ok ?? null,
+        skipped: stanOknaBk.ostatni_przebieg.skipped ?? null,
+        bledy_zapisu: stanOknaBk.ostatni_przebieg.bledy_zapisu ?? null,
         error: stanOknaBk.ostatni_przebieg.error ?? null,
       }
       : null,

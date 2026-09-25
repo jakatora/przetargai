@@ -30,10 +30,22 @@ import { pustyLicznik } from '../lib/licznikZrodla.js';
  * zamknięcie dzisiejszej doby zamroziłoby feed do jutra. Doba z błędem albo
  * z brakującym województwem też zostaje otwarta — liczby mogą wyglądać ładnie,
  * a i tak brakuje w niej kawałka rynku.
+ *
+ * Tak samo doba, z której choć jednego ogłoszenia NIE ZAPISALIŚMY (2026-09-25):
+ * pobrać to nie znaczy mieć — zamknięta doba nie wraca, więc ogłoszenie przepadłoby.
  */
-function dobaKompletna(wpis, dzien, dzisiaj) {
+export function dobaKompletna(wpis, dzien, dzisiaj) {
   if (dzien >= dzisiaj) return false;
   if (wpis.blad) return false;
+  if ((wpis.niezapisane ?? 0) > 0) return false;
+  /*
+   * Województwo na SUFICIE 500 (2026-09-25): BZP nie ma już filtra, którym dałoby się
+   * dociąć dalej, więc część ogłoszeń tej doby jest nieosiągalna. Dawniej tylko log,
+   * a doba zamykała się jako kompletna. Teraz zostaje otwarta — kolejne przebiegi
+   * próbują ponownie (sufit bywa chwilowy, gdy BZP dosypuje korekty), a licznik
+   * w checkpoincie i w `/health` mówi dyżurnemu, że potrzebne jest cięcie po godzinach.
+   */
+  if ((wpis.wojewodztwaNaSuficie ?? 0) > 0) return false;
   return (wpis.wojewodztwaBezDanych ?? 0) === 0;
 }
 
@@ -77,6 +89,8 @@ export function zaktualizujCheckpoint({ checkpoint, raport = [], pominieteDni = 
       ucietySufit: wpis.ucietySufit ?? false,
       zapytania: wpis.zapytania ?? 0,
       wojewodztwaBezDanych: wpis.wojewodztwaBezDanych ?? 0,
+      wojewodztwaNaSuficie: wpis.wojewodztwaNaSuficie ?? 0,
+      niezapisane: wpis.niezapisane ?? 0,
       blad: wpis.blad ?? null,
       kompletny: dobaKompletna(wpis, wpis.dzien, dzisiaj),
       zaktualizowano_o: teraz,
@@ -98,7 +112,22 @@ export function dobyNiedomkniete({ dni, checkpoint, dzisiaj }) {
 }
 
 /**
+ * Plany checkpointu czekające na zapis ogłoszeń — klucz to `licznik` przebiegu.
+ *
+ * WeakMap zamiast pola na liczniku: licznik trafia w całości do logów i do śladu
+ * cyklu w Firestore, a mapa identyfikatorów okna (tysiące wpisów) nie ma tam czego
+ * szukać. Plan znika razem z licznikiem.
+ */
+const planyCheckpointu = new WeakMap();
+
+/**
  * Pobranie BZP z wznawianiem — wejście dla rejestru źródeł w `fetchTenders`.
+ *
+ * 🚨 NIE ZAPISUJE CHECKPOINTU (naprawa 2026-09-25). Doba była zamykana jako
+ * kompletna PRZED zapisem ogłoszeń, a błąd zapisu kończył się `pominiete++`
+ * — takie ogłoszenie nie wracało już nigdy. Checkpoint zamyka dopiero
+ * `zatwierdzCheckpointBzp`, wołane przez zapisującego PO upsertach, z listą
+ * ogłoszeń, których zapisać się nie udało.
  *
  * @param {object} licznik akumulator pomiarów (lib/licznikZrodla.js)
  * @param {{budzetMs?: number, teraz?: () => number}} opts
@@ -119,26 +148,60 @@ export async function pobierzBzpZWznowieniem(licznik, { budzetMs = Infinity, ter
   logger.info({ dniOkna: dniOkna.length, doPobrania: dni.length, budzetMs },
     'BZP: wybrane doby do pobrania (wznawianie po checkpoincie)');
 
-  const ogloszenia = await pobierzOgloszeniaBzp({ dni, licznik, budzetMs });
+  const dobyOgloszen = new Map();
+  const ogloszenia = await pobierzOgloszeniaBzp({ dni, licznik, budzetMs, dobyOgloszen });
 
-  const nowyStan = zaktualizujCheckpoint({
+  const plan = {
     checkpoint,
     raport: licznik?.dni ?? [],
     pominieteDni: licznik?.pominieteDni ?? [],
     dni: dniOkna,
     dzisiaj,
     teraz: new Date(teraz()).toISOString(),
-  });
-
+    dobyOgloszen,
+  };
   if (licznik) {
+    planyCheckpointu.set(licznik, plan);
     licznik.dobyOkna = dniOkna.length;
-    licznik.dobyNiedomkniete = dobyNiedomkniete({ dni: dniOkna, checkpoint: nowyStan, dzisiaj });
+    // Stan WSTĘPNY (jakby każdy zapis się udał) — `zatwierdzCheckpointBzp` go poprawia.
+    licznik.dobyNiedomkniete = dobyNiedomkniete({ dni: dniOkna, checkpoint: zaktualizujCheckpoint(plan), dzisiaj });
   }
+
+  return ogloszenia;
+}
+
+/**
+ * Zamyka checkpoint okna BZP PO zapisie ogłoszeń (2026-09-25).
+ *
+ * Doba, w której choć jedno ogłoszenie nie zostało zapisane, dostaje `niezapisane`
+ * i zostaje otwarta — następny przebieg pobierze ją ponownie (upsert jest
+ * idempotentny, więc powtórka reszty doby niczego nie dubluje).
+ *
+ * @param {object} licznik ten sam, który dostało `pobierzBzpZWznowieniem`
+ * @param {{nieudane?: Set<string>}} opts externalId ogłoszeń, których zapis padł
+ * @returns {Promise<boolean>} false = nie było czego zatwierdzać (pobranie padło)
+ */
+export async function zatwierdzCheckpointBzp(licznik, { nieudane = new Set() } = {}) {
+  const plan = licznik ? planyCheckpointu.get(licznik) : null;
+  if (!plan) return false;
+  planyCheckpointu.delete(licznik);
+
+  const niezapisaneWDobie = new Map();
+  for (const id of nieudane) {
+    for (const dzien of plan.dobyOgloszen.get(String(id)) ?? []) {
+      niezapisaneWDobie.set(dzien, (niezapisaneWDobie.get(dzien) ?? 0) + 1);
+    }
+  }
+  const raport = plan.raport.map((wpis) => (niezapisaneWDobie.has(wpis.dzien)
+    ? { ...wpis, niezapisane: niezapisaneWDobie.get(wpis.dzien) }
+    : wpis));
+
+  const nowyStan = zaktualizujCheckpoint({ ...plan, raport });
+  licznik.dobyNiedomkniete = dobyNiedomkniete({ dni: plan.dni, checkpoint: nowyStan, dzisiaj: plan.dzisiaj });
 
   await repoOkna.zapisz(nowyStan).catch((err) =>
     logger.error({ err: err.message }, 'BZP: nie udało się zapisać checkpointu okna'));
-
-  return ogloszenia;
+  return true;
 }
 
 /**
@@ -173,21 +236,35 @@ export async function runBzpOkno({ budzetMs = BUDZET_OKNA_MS } = {}) {
 
   let nowe = 0;
   let pominiete = 0;
+  const nieudane = new Set();
   for (const ogloszenie of ogloszenia) {
     try {
       const { created } = await tenders.upsert(ogloszenie);
       if (created) nowe += 1;
     } catch (err) {
       pominiete += 1;
+      nieudane.add(String(ogloszenie?.externalId));
       logger.error({ err: err.message, externalId: ogloszenie?.externalId },
         'bzpOkno: pominięto ogłoszenie, którego nie dało się zapisać');
     }
   }
   if (nowe > 0) tenders.odswiezPule();
 
+  // Checkpoint DOPIERO teraz — doby z nieudanym zapisem zostają otwarte (2026-09-25).
+  await zatwierdzCheckpointBzp(licznik, { nieudane });
+
+  /*
+   * Utracony zapis to NIE jest czysty sukces: `ok: false` każe Schedulerowi ponowić
+   * przebieg, a `/health` pokazuje `skipped`. Dawniej było `ok: true` i tylko
+   * licznik `pominiete`, którego nikt nie czytał.
+   */
+  const bladZapisu = pominiete > 0
+    ? `Nie zapisano ${pominiete} ogłoszeń — ich doby zostają otwarte do ponowienia`
+    : null;
+
   const wynik = {
-    ok: blad === null,
-    error: blad,
+    ok: blad === null && pominiete === 0,
+    error: blad ?? bladZapisu,
     fetched: ogloszenia.length,
     newTenders: nowe,
     skipped: pominiete,
@@ -197,6 +274,8 @@ export async function runBzpOkno({ budzetMs = BUDZET_OKNA_MS } = {}) {
     doby_okna: licznik.dobyOkna ?? null,
     doby_niedomkniete: licznik.dobyNiedomkniete ?? null,
     doby_pominiete: (licznik.pominieteDni ?? []).length,
+    // Województwa na suficie 500 w dobach TEGO przebiegu — takie doby zostają otwarte.
+    wojewodztwa_na_suficie: (licznik.dni ?? []).reduce((suma, d) => suma + (d.wojewodztwaNaSuficie ?? 0), 0),
     durationMs: Date.now() - start,
     zakonczony_o: new Date().toISOString(),
   };

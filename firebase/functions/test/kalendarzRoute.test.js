@@ -17,6 +17,8 @@ await polaczZEmulatorem();
 
 const { createApp } = await import('../src/app.js');
 const { tenders, saved, matches } = await import('../src/db/repos.js');
+const { kalendarzeUzytkownika } = await import('../src/routes/kalendarz.js');
+const { getFirestore } = await import('firebase-admin/firestore');
 
 const app = await createApp();
 const serwer = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
@@ -209,4 +211,58 @@ test('ogloszenie NIEZAPISANE nie udaje, ze ma przypomnienie', async () => {
   const body = await (await fetch(`${BAZA}/kalendarz/${t.id}`, { headers: auth(token) })).json();
   assert.equal(body.kalendarz.przypomnienie.wlaczone, false);
   assert.equal(body.kalendarz.przypomnienie.mozliwe, false, 'bez zapisania nie ma czego przypominac');
+});
+
+/*
+ * ZMIANA W ŹRÓDLE MUSI DOTRZEĆ DO „ZAPISANYCH" (naprawa 2026-09-25).
+ *
+ * `saved.add` kopiuje `tender_deadline`, przypomnienia liczyły się z kopii,
+ * a `zaktualizujZeZrodla` aktualizowało tylko `tenders/`. Zamawiający w BK skraca
+ * termin z +20 do +4 dni → kalendarz dalej pokazywał +20, a przypomnienie
+ * „7 dni przed" wypadało PO nowym terminie.
+ */
+test('REGRESJA: skrócenie terminu w BK dociera do Zapisanych, kalendarza i przypomnienia', async () => {
+  const { userId } = await konto();
+  const stary = new Date(Date.now() + 20 * 86_400_000).toISOString();
+  const nowy = new Date(Date.now() + 4 * 86_400_000).toISOString();
+  const t = await zapiszPrzetarg(userId, { source: 'baza_konkurencyjnosci', deadline: stary });
+  const przed = await saved.setReminder(userId, t.id, true);
+  assert.equal(przed.reminder_enabled, true);
+
+  await tenders.zaktualizujZeZrodla({ externalId: t.bzp_external_id, deadline: nowy });
+
+  const [kal] = await kalendarzeUzytkownika(userId, new Date().toISOString());
+  assert.equal(kal.pozycje.find((p) => p.kod === 'oferty')?.at, nowy, 'kalendarz pokazuje NOWY termin');
+
+  const wpis = (await saved.list(userId)).find((s) => s.id === t.id);
+  assert.equal(wpis.tender_deadline, nowy, 'kopia w Zapisanych nadpisana');
+  assert.equal(wpis.reminder_enabled, true);
+  assert.ok(wpis.remind_at < nowy, 'przypomnienie wypada PRZED nowym terminem');
+  assert.ok(wpis.remind_at > new Date().toISOString(), 'i w przyszłości, nie wstecz');
+
+  const m = await matches.detail(userId, t.id);
+  assert.equal(m.tender_deadline, nowy, 'feed dopasowań też nie trzyma starego terminu');
+});
+
+test('kalendarz bierze termin z DOKUMENTU przetargu, nawet gdy kopia w Zapisanych jest stara', async () => {
+  const { userId } = await konto();
+  const t = await zapiszPrzetarg(userId, { deadline: '2099-10-30T08:00:00.000Z' });
+  await getFirestore().collection('tenders').doc(t.id).update({ deadline: '2099-10-10T08:00:00.000Z' });
+
+  const [kal] = await kalendarzeUzytkownika(userId, new Date().toISOString());
+  assert.equal(kal.pozycje.find((p) => p.kod === 'oferty')?.at, '2099-10-10T08:00:00.000Z');
+});
+
+test('anulowanie w źródle wyłącza przypomnienie zapisanego przetargu i znakuje kopie', async () => {
+  const { userId } = await konto();
+  const t = await zapiszPrzetarg(userId, { source: 'baza_konkurencyjnosci', deadline: new Date(Date.now() + 20 * 86_400_000).toISOString() });
+  await saved.setReminder(userId, t.id, true);
+
+  await tenders.oznaczAnulowany(t.bzp_external_id, { powod: 'CANCELLED' });
+
+  const wpis = (await saved.list(userId)).find((s) => s.id === t.id);
+  assert.equal(wpis.reminder_enabled, false, 'nie przypominamy o postępowaniu, którego już nie ma');
+  assert.equal(wpis.tender_anulowany, true);
+  assert.equal((await saved.dueReminders('2100-01-01T00:00:00.000Z')).some((d) => d.tenderId === t.id), false);
+  assert.equal((await matches.detail(userId, t.id)).tender_anulowany, true);
 });

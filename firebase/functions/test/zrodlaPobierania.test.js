@@ -134,3 +134,36 @@ test('awaria w POŁOWIE okna zachowuje to, co zdążył zmierzyć licznik', asyn
     'wiedza „doszło do 1330 ogłoszeń i padło" jest warta więcej niż samo `error`');
   assert.equal(wynik.zrodla.bzp.fetched, 0, 'nic nie trafiło do zapisu');
 });
+
+test('CHECKPOINT PO ZAPISIE: źródło dostaje listę ogłoszeń, których NIE zapisano (także scalonych z innym rejestrem)', async () => {
+  const pechowe = ogloszenie('bzp');
+  const dobre = ogloszenie('bzp');
+  // Kopia pechowego z BK — scalanie międzyźródłowe dokleja ją do wpisu BZP.
+  const kopiaBk = { ...ogloszenie('baza_konkurencyjnosci'), title: pechowe.title, organization: pechowe.organization, numer: 'X' };
+
+  const zatwierdzone = {};
+  const zrodlo = (nazwa, lista) => ({
+    nazwa,
+    pobierz: async () => lista,
+    zatwierdz: async (_licznik, { nieudane }) => { zatwierdzone[nazwa] = [...nieudane]; },
+  });
+
+  const oryginalnyUpsert = tenders.upsert;
+  tenders.upsert = async (o) => {
+    if (o.externalId === pechowe.externalId) throw new Error('Firestore: zapis padł');
+    return oryginalnyUpsert.call(tenders, o);
+  };
+  let wynik;
+  try {
+    wynik = await runTenderFetch({ zrodla: [zrodlo('bzp', [pechowe, dobre]), zrodlo('baza_konkurencyjnosci', [kopiaBk])] });
+  } finally {
+    tenders.upsert = oryginalnyUpsert;
+  }
+
+  assert.ok(zatwierdzone.bzp.includes(pechowe.externalId), 'źródło musi wiedzieć, czego nie zapisano');
+  assert.equal(zatwierdzone.bzp.includes(dobre.externalId), false);
+  assert.ok(zatwierdzone.baza_konkurencyjnosci.includes(kopiaBk.externalId),
+    'kopia scalona z niezapisanym wpisem też nie trafiła do bazy — BK musi ją ponowić');
+  assert.equal(wynik.skipped, 1);
+  assert.equal(wynik.czesciowy, true, 'utracony zapis nie jest czystym sukcesem');
+});
