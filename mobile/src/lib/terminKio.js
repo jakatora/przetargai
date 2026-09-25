@@ -49,10 +49,20 @@ export const TRYBY_KIO = [
  */
 export const TRYB_KIO_DOMYSLNY = 'krajowy';
 
+/**
+ * Wpis z {@link TRYBY_KIO}, którym FAKTYCZNIE liczymy termin: podany tryb albo — gdy
+ * nieznany/pusty — {@link TRYB_KIO_DOMYSLNY}. Eksport (2026-09-25), żeby orkiestrator mógł
+ * zapisać w podstawie terminu prawdziwy tryb, a nie ten, o który go poproszono.
+ * @param {string} [tryb]
+ * @returns {{wartosc: string, dni: number, etykieta: string}}
+ */
+export function trybKio(tryb) {
+  return TRYBY_KIO.find((t) => t.wartosc === tryb)
+    ?? TRYBY_KIO.find((t) => t.wartosc === TRYB_KIO_DOMYSLNY);
+}
+
 function dniDlaTrybu(tryb) {
-  const znaleziony = TRYBY_KIO.find((t) => t.wartosc === tryb);
-  if (znaleziony) return znaleziony.dni;
-  return TRYBY_KIO.find((t) => t.wartosc === TRYB_KIO_DOMYSLNY).dni;
+  return trybKio(tryb).dni;
 }
 
 /*

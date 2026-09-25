@@ -89,6 +89,23 @@ test('toJSON/fromJSON: pełny round-trip zachowuje pola', () => {
   assert.deepEqual(odtworzona.toJSON(), oryginal.toJSON());
 });
 
+// 2026-09-25: podstawa wyliczenia terminu KIO (od kiedy, ile dni, jaki tryb, skąd data) —
+// utrwalana, żeby ekran wyniku mógł ją pokazać i ostrzec, gdy liczono od dnia oznaczenia wyniku.
+test('podstawaTerminuKio: round-trip przez JSON i domyślnie null', () => {
+  assert.equal(new PoprzetargowaKontrola({ postepowanieId: 'X' }).podstawaTerminuKio, null);
+  const podstawa = { liczoneOd: '2026-07-06', dni: 5, tryb: 'krajowy', zrodlo: 'dzien_oznaczenia' };
+  const k = new PoprzetargowaKontrola({ postepowanieId: 'X', podstawaTerminuKio: podstawa });
+  assert.deepEqual(k.toJSON().podstawaTerminuKio, podstawa);
+  const odtworzona = PoprzetargowaKontrola.fromJSON(JSON.parse(JSON.stringify(k)));
+  assert.deepEqual(odtworzona.podstawaTerminuKio, podstawa);
+});
+
+test('podstawaTerminuKio: śmieci → null (nie pokazujemy wymyślonej podstawy)', () => {
+  for (const zla of ['krajowy', 5, [], { dni: 5 }, { liczoneOd: '2026-07-06', dni: 'pięć', tryb: 'krajowy' }]) {
+    assert.equal(new PoprzetargowaKontrola({ postepowanieId: 'X', podstawaTerminuKio: zla }).podstawaTerminuKio, null);
+  }
+});
+
 test('zapisz + wczytaj: model wraca z magazynu', async () => {
   const magazyn = atrapaMagazynu();
   await zapiszKontrole(magazyn, {

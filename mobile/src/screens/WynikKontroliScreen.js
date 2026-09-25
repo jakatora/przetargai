@@ -5,6 +5,7 @@ import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { pozostaly_czas_do } from '../lib/terminKio';
+import { opisPodstawyTerminuKio } from '../lib/orkiestratorOdwolania';
 import { wygeneruj_wniosek_o_protokol } from '../lib/wniosekProtokol';
 import { wygeneruj_notatki_odwolanie } from '../lib/notatkiOdwolanie';
 import { pobierzDokument } from '../services/dokumenty';
@@ -16,7 +17,9 @@ import { pobierzDokument } from '../services/dokumenty';
  * WYŁĄCZNIE UI spinające ISTNIEJĄCE dane: bierze poprzetargową kontrolę z gotowym
  * wynikiem analizy (podzadanie 11/13) i wyliczonym terminem KIO (3/13) i pokazuje:
  *  - wyróżnioną decyzję końcową „walcz / odpuść" wraz z oceną szans,
- *  - żywy licznik terminu na odwołanie do KIO (countdown, tyka co minutę),
+ *  - żywy licznik terminu na odwołanie do KIO (countdown, tyka co minutę) wraz z
+ *    podstawą wyliczenia (od kiedy, ile dni, tryb) i ostrzeżeniem, gdy liczono od dnia
+ *    oznaczenia wyniku (2026-09-25),
  *  - listę potencjalnych zarzutów z siłą i opisem,
  *  - przyciski pobrania wniosku o protokół i notatek roboczych pod odwołanie.
  *
@@ -60,6 +63,9 @@ export default function WynikKontroliScreen({ route }) {
   // Odliczanie z wyliczonego terminu KIO (czysta funkcja 4/13) — null, gdy termin nieznany.
   const czas = pozostaly_czas_do(kontrola?.terminOdwolaniaKio, teraz);
   const terminPL = formatujDatePL(kontrola?.terminOdwolaniaKio);
+  // Z czego policzono termin (2026-09-25): wcześniej liczył się po cichu od „dziś" w trybie
+  // 5-dniowym — teraz pokazujemy podstawę i ostrzegamy, gdy to był tylko dzień oznaczenia wyniku.
+  const podstawa = opisPodstawyTerminuKio(kontrola);
   // Kolor pilności: po terminie / ostatni dzień → czerwony; ≤2 dni → bursztyn; dalej → niebieski.
   const pilnyKolor = !czas || czas.poTerminie || czas.dni === 0
     ? kolory.danger
@@ -140,6 +146,17 @@ export default function WynikKontroliScreen({ route }) {
             <Text style={styles.terminData}>do {terminPL} włącznie (ostatni dzień)</Text>
           </>
         )}
+        {czas && podstawa ? (
+          <View style={styles.podstawa}>
+            <Text style={styles.podstawaTekst}>{podstawa.tekst}</Text>
+            {podstawa.tryb ? (
+              <Text style={styles.podstawaTekst}>Przyjęty tryb: {podstawa.tryb}.</Text>
+            ) : null}
+            {podstawa.ostrzezenie ? (
+              <Text style={styles.podstawaOstrzezenie}>{podstawa.ostrzezenie}</Text>
+            ) : null}
+          </View>
+        ) : null}
       </View>
 
       {/* Lista zarzutów z siłą */}
@@ -260,6 +277,14 @@ const tworzStyleWyniku = tworzStyle((k) => ({
   },
   countdownLiczba: { fontSize: 34, fontWeight: '800', lineHeight: 38 },
   countdownJednostka: { fontSize: 12, color: k.textMuted, marginTop: 2, fontWeight: '600' },
+  podstawa: {
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: k.border,
+  },
+  podstawaTekst: { fontSize: 13, color: k.textMuted, lineHeight: 18 },
+  podstawaOstrzezenie: { fontSize: 13, color: k.ostrzezenieTekst, lineHeight: 18, marginTop: 4, fontWeight: '600' },
   zarzutCard: { marginBottom: spacing.sm },
   zarzutNaglowek: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   zarzutTytul: { flex: 1, fontSize: 15, fontWeight: '700', color: k.text, lineHeight: 20 },

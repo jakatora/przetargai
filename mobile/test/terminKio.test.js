@@ -7,6 +7,7 @@ import {
   TRYBY_KIO,
   TRYB_KIO_DOMYSLNY,
   naDzienUTC as naDzienKio,
+  trybKio,
 } from '../src/lib/terminKio.js';
 import { naDzienUTC } from '../src/lib/dataUtc.js';
 
@@ -34,6 +35,14 @@ test('TRYBY_KIO: cztery reżimy z długościami 10/15/5/10 dni', () => {
 
 test('TRYB_KIO_DOMYSLNY: najkrótszy (krajowy) — zachowawczo', () => {
   assert.equal(TRYB_KIO_DOMYSLNY, 'krajowy');
+});
+
+test('trybKio: wpis trybu, a nieznany/pusty → tryb domyślny (ten sam, którym liczy oblicz_termin_kio)', () => {
+  assert.equal(trybKio('unijny').dni, 10);
+  assert.equal(trybKio('krajowy_pisemny').wartosc, 'krajowy_pisemny');
+  assert.equal(trybKio(undefined).wartosc, TRYB_KIO_DOMYSLNY);
+  assert.equal(trybKio('kosmiczny').wartosc, TRYB_KIO_DOMYSLNY);
+  assert.equal(trybKio('kosmiczny').dni, 5);
 });
 
 // --- Rdzeń liczenia: art. 111 § 2 KC (dnia zdarzenia nie liczymy) ---
