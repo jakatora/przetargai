@@ -106,7 +106,16 @@ test('zapisz + wczytaj: model wraca z magazynu', async () => {
 test('zapisz: klucz w magazynie jest namespaceowany per postępowanie', async () => {
   const magazyn = atrapaMagazynu();
   await zapiszKontrole(magazyn, { postepowanieId: 'ABC' });
-  assert.ok(magazyn.m.has('kontrola:ABC'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.ABC'));
+});
+
+test('zapisz: klucz przechodzi przez SecureStore także dla id z „/" i „:" (2026-09-25)', async () => {
+  // Stary klucz `kontrola:<id>` SecureStore odrzucał („Invalid key") — na telefonie
+  // kontrola nigdy się nie zapisywała. Dozwolone są tylko [A-Za-z0-9._-].
+  const magazyn = atrapaMagazynu();
+  await zapiszKontrole(magazyn, { postepowanieId: 'ted:2026/OJ S 12-3' });
+  for (const k of magazyn.m.keys()) assert.match(k, /^[\w.-]+$/, `„${k}" odrzuci SecureStore`);
+  assert.equal((await wczytajKontrole(magazyn, 'ted:2026/OJ S 12-3')).postepowanieId, 'ted:2026/OJ S 12-3');
 });
 
 test('zapisz akceptuje instancję i zwraca znormalizowany model', async () => {
@@ -133,7 +142,7 @@ test('wczytaj: brak id → null (bez odpytywania magazynu)', async () => {
 
 test('wczytaj: uszkodzony JSON → null (traktujemy jak brak)', async () => {
   const magazyn = atrapaMagazynu();
-  await magazyn.setItem('kontrola:BAD', '{nie-json');
+  await magazyn.setItem('przetargai.kontrola-poprzetargowa.BAD', '{nie-json');
   assert.equal(await wczytajKontrole(magazyn, 'BAD'), null);
 });
 
@@ -164,7 +173,7 @@ test('przegrana: zakłada kontrolę „nowa" z przepisanymi datami', async () =>
 test('przegrana: kontrola trafia do magazynu pod kluczem postępowania', async () => {
   const magazyn = atrapaMagazynu();
   await utworzKontrolePoPrzegranej(magazyn, tenderPrzegrany());
-  assert.ok(magazyn.m.has('kontrola:BZP-2026/1'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.BZP-2026_1'));
   const wczytana = await wczytajKontrole(magazyn, 'BZP-2026/1');
   assert.equal(wczytana.status, 'nowa');
   assert.equal(wczytana.dataOtwarciaOfert, '2026-07-10T09:00:00Z');
@@ -196,7 +205,7 @@ test('przegrana: numeryczne id postępowania sprowadzone do stringa', async () =
   const magazyn = atrapaMagazynu();
   const k = await utworzKontrolePoPrzegranej(magazyn, { id: 42, organization: 'X' });
   assert.equal(k.postepowanieId, '42');
-  assert.ok(magazyn.m.has('kontrola:42'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.42'));
 });
 
 test('przegrana: brak id → null i nic nie zapisano', async () => {
@@ -265,7 +274,7 @@ test('oznaczWniosekWyslany: brak kontroli w magazynie → tworzy ją ze statusem
   assert.ok(k instanceof PoprzetargowaKontrola);
   assert.equal(k.postepowanieId, 'BZP-NOWY');
   assert.equal(k.status, 'wniosek_wyslany');
-  assert.ok(magazyn.m.has('kontrola:BZP-NOWY'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.BZP-NOWY'));
 });
 
 test('oznaczWniosekWyslany: nie cofa dalszego etapu (dokumenty_otrzymane zostaje)', async () => {
@@ -279,7 +288,7 @@ test('oznaczWniosekWyslany: numeryczne id sprowadzone do stringa', async () => {
   const magazyn = atrapaMagazynu();
   const k = await oznaczWniosekWyslany(magazyn, 7);
   assert.equal(k.postepowanieId, '7');
-  assert.ok(magazyn.m.has('kontrola:7'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.7'));
 });
 
 test('oznaczWniosekWyslany: brak id → null i nic nie zapisano', async () => {
@@ -352,7 +361,7 @@ test('zapiszDokumenty: load-or-create — brak kontroli → zakłada ją z dokum
   assert.ok(k instanceof PoprzetargowaKontrola);
   assert.equal(k.postepowanieId, 'BZP-NOWY');
   assert.equal(k.status, 'dokumenty_otrzymane');
-  assert.ok(magazyn.m.has('kontrola:BZP-NOWY'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.BZP-NOWY'));
 });
 
 test('zapiszDokumenty: kategorie per-kategoria — dogranie protokołu nie kasuje oferty', async () => {
@@ -401,7 +410,7 @@ test('zapiszDokumenty: numeryczne id sprowadzone do stringa, klucz namespaceowan
   const magazyn = atrapaMagazynu();
   const k = await zapiszDokumenty(magazyn, 7, { protokol: [plikProtokolu()] });
   assert.equal(k.postepowanieId, '7');
-  assert.ok(magazyn.m.has('kontrola:7'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.7'));
 });
 
 test('zapiszDokumenty: brak id → null i nic nie zapisano', async () => {
@@ -488,7 +497,7 @@ test('zapiszAnalize: load-or-create — brak kontroli → zakłada ją z analiz�
   assert.ok(k instanceof PoprzetargowaKontrola);
   assert.equal(k.postepowanieId, 'BZP-NOWY');
   assert.equal(k.status, 'analiza_gotowa');
-  assert.ok(magazyn.m.has('kontrola:BZP-NOWY'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.BZP-NOWY'));
 });
 
 test('zapiszAnalize: bez wyniku (null) → nie udaje gotowej analizy (status bez zmian)', async () => {
@@ -513,7 +522,7 @@ test('zapiszAnalize: numeryczne id sprowadzone do stringa, klucz namespaceowany'
   const magazyn = atrapaMagazynu();
   const k = await zapiszAnalize(magazyn, 11, wynikAnalizy());
   assert.equal(k.postepowanieId, '11');
-  assert.ok(magazyn.m.has('kontrola:11'));
+  assert.ok(magazyn.m.has('przetargai.kontrola-poprzetargowa.11'));
 });
 
 test('zapiszAnalize: brak id → null i nic nie zapisano', async () => {

@@ -7,6 +7,8 @@
  * Czysta logika (postęp) + zapis per przetarg (storage wstrzykiwany, klucz czyszczony pod SecureStore).
  */
 
+import { zarejestrujKlucz } from './daneLokalne.js';
+
 export const KONTROLE = [
   { klucz: 'podpis', tytul: 'Podpis elektroniczny',
     opis: 'Właściwy typ (kwalifikowany / zaufany / osobisty wg SWZ), ważny i złożony na WŁAŚCIWYM pliku (całej ofercie, nie tylko formularzu). Zły lub brakujący podpis = odrzucenie — to najczęstszy błąd elektronizacji.' },
@@ -64,5 +66,9 @@ export async function wczytajKontroleOferty(storage, tenderId) {
 
 export async function zapiszKontroleOferty(storage, tenderId, wykonane) {
   const arr = [...(wykonane instanceof Set ? wykonane : new Set(Array.isArray(wykonane) ? wykonane : []))];
-  await storage.setItem(kluczKontroli(tenderId), JSON.stringify(arr));
+  // Klucz per przetarg → do indeksu konta, inaczej wylogowanie go nie znajdzie
+  // (SecureStore nie listuje kluczy) i checklista zostanie następnej firmie (2026-09-25).
+  const klucz = kluczKontroli(tenderId);
+  await zarejestrujKlucz(storage, klucz);
+  await storage.setItem(klucz, JSON.stringify(arr));
 }

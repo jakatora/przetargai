@@ -209,7 +209,8 @@ export default function AccountScreen({ navigation }) {
   function confirmSignOut() {
     Alert.alert('Wylogowanie', 'Czy na pewno chcesz się wylogować?', [
       { text: 'Anuluj', style: 'cancel' },
-      { text: 'Wyloguj', style: 'destructive', onPress: signOut },
+      // Bez przekazywania argumentów przycisku — signOut przyjmuje opcje (2026-09-25).
+      { text: 'Wyloguj', style: 'destructive', onPress: () => signOut() },
     ]);
   }
 
@@ -225,8 +226,11 @@ export default function AccountScreen({ navigation }) {
     setUsuwanie(true);
     try {
       await api.deleteAccount(haslo);
-      // Konto już nie istnieje — czyścimy sesję lokalnie i wracamy do logowania.
-      await signOut();
+      // Konto już nie istnieje — czyścimy sesję ORAZ wszystkie dane konta z telefonu
+      // (bank referencji, checklisty…) i wracamy do logowania. Tokenu push nie
+      // wyrejestrowujemy: backend skasował go razem z kontem, a żądanie ze
+      // skasowanym kontem i tak dostałoby 401 (2026-09-25).
+      await signOut({ wyrejestrujPush: false });
     } catch (err) {
       Alert.alert('Nie udało się usunąć konta', err.message);
     } finally {

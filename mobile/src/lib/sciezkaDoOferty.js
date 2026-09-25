@@ -8,6 +8,8 @@
  * jak w poprzetargowaKontrola. `ekran` = nazwa ekranu z RootNavigatora (skrót do narzędzia).
  */
 
+import { zarejestrujKlucz } from './daneLokalne.js';
+
 /** Fazy w kolejności prezentacji — od rozeznania do rozstrzygnięcia. */
 export const FAZY = [
   'Rozeznanie',
@@ -125,5 +127,8 @@ export async function wczytajSciezke(storage, tenderId) {
 /** Zapisuje zbiór ukończonych kroków. */
 export async function zapiszSciezke(storage, tenderId, wykonane) {
   const arr = [...(wykonane instanceof Set ? wykonane : new Set(Array.isArray(wykonane) ? wykonane : []))];
-  await storage.setItem(kluczSciezki(tenderId), JSON.stringify(arr));
+  // Klucz per przetarg → do indeksu konta, żeby wylogowanie go skasowało (2026-09-25).
+  const klucz = kluczSciezki(tenderId);
+  await zarejestrujKlucz(storage, klucz);
+  await storage.setItem(klucz, JSON.stringify(arr));
 }
