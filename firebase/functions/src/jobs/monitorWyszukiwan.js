@@ -9,7 +9,7 @@ import { czyNalezySprawdzic } from '../lib/zapisaneWyszukiwania.js';
 import { normalizujFiltry, pasujeDoFiltrow } from '../lib/katalogPrzetargow.js';
 import {
   noweTrafienia, zmianyDlaWyszukiwania, zbudujAlertNowych, zbudujAlertZmian,
-  trescPush, oknoOdczytuZmian, oknoOdczytuNowych,
+  trescPush, oknoOdczytuZmian, oknoOdczytuNowych, kolejnoscObslugi,
 } from '../lib/planMonitoringu.js';
 
 /*
@@ -83,19 +83,48 @@ export async function dostarcz({ user, alert, wyslijPush, wyslijEmail }) {
   const tresc = trescPush(alert);
 
   if (user?.push_token) {
-    await wyslijPush(user.push_token, tresc);
-    return 'push';
+    const wynikPush = await wyslijPush(user.push_token, tresc);
+    /*
+     * `sent: 0` = Expo NIE przyjęło biletu (martwy token, brak klucza FCM). Dawniej
+     * wynik był ignorowany i alert liczył się jako „dostarczony pushem", choć nikt
+     * go nie dostał (2026-09-25). Wtedy — jak przy braku tokenu — idzie e-mail.
+     * Brak liczby (starszy kontrakt wysyłki) traktujemy jak doręczenie.
+     */
+    if (wynikPush?.sent !== 0) return 'push';
+    logger.warn({ userId: user.id ?? null, bledy: wynikPush?.bledy ?? null },
+      'Monitoring: push nie dotarł — wysyłam e-mail awaryjny');
   }
   if (user?.email) {
+    const pozycje = (alert?.pozycje ?? []).filter((p) => p?.tytul);
     await wyslijEmail({
       to: user.email,
       subject: tresc.title,
-      text: tresc.body,
-      html: `<p>${tresc.body}</p>`,
+      text: [tresc.body, ...pozycje.map((p) => `• ${p.tytul}${p.organizacja ? ` — ${p.organizacja}` : ''}`)].join('\n'),
+      html: htmlAlertu(tresc, pozycje),
     });
     return 'email';
   }
   return 'brak';
+}
+
+/**
+ * Escape HTML — lokalny, świadomie niezależny od szablonów w services/email.js.
+ *
+ * Nazwa wyszukiwania pochodzi od użytkownika, a tytuły i nazwy zamawiających
+ * z rejestrów publicznych. Wklejone surowo do HTML maila pozwalały wstrzyknąć
+ * znaczniki (link, obrazek śledzący) do wiadomości wysyłanej z naszej domeny.
+ */
+function esc(wartosc) {
+  return String(wartosc ?? '').replace(/[&<>"']/g, (z) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[z]);
+}
+
+function htmlAlertu(tresc, pozycje) {
+  const lista = pozycje.length
+    ? `<ul>${pozycje.map((p) => `<li>${esc(p.tytul)}${p.organizacja ? ` — ${esc(p.organizacja)}` : ''}</li>`).join('')}</ul>`
+    : '';
+  return `<p><b>${esc(tresc.title)}</b></p><p>${esc(tresc.body)}</p>${lista}`;
 }
 
 /**
@@ -116,8 +145,20 @@ async function wczytajStrumien({ od, budzetOdczytow, czyPrzerwac }) {
 }
 
 /**
+ * Budżet czasu CAŁEGO przebiegu obserwacji (2026-09-25).
+ *
+ * `monitorWyszukiwan` w index.js ma `timeoutSeconds: 540` i po tym jobie woła jeszcze
+ * monitoring planów. Bez budżetu platforma zabijała funkcję w połowie partii — bez
+ * śladu, a przy kolejności z bazy zawsze na tych samych kontach. Po 360 s nie
+ * zaczynamy kolejnej obserwacji; nieobsłużone zostają wymagalne i dzięki rotacji
+ * (`kolejnoscObslugi`) idą na czoło następnego przebiegu. Zostaje 180 s na plany.
+ */
+export const BUDZET_CZASU_MS = 360_000;
+
+/**
  * @param {{teraz?: string, wyslijPush?: Function, wyslijEmail?: Function,
- *   budzetOdczytow?: number, budzetCzasuStrumieniaMs?: number, zegar?: () => number}} opcje
+ *   budzetOdczytow?: number, budzetCzasuStrumieniaMs?: number, budzetCzasuMs?: number,
+ *   zegar?: () => number}} opcje
  *   wysyłka wstrzykiwana — testy sprawdzają DECYZJE joba, nie dostępność Expo
  */
 export async function runMonitorWyszukiwan({
@@ -126,12 +167,13 @@ export async function runMonitorWyszukiwan({
   wyslijEmail = sendEmail,
   budzetOdczytow = BUDZET_ODCZYTOW_NOWYCH,
   budzetCzasuStrumieniaMs = BUDZET_CZASU_STRUMIENIA_MS,
+  budzetCzasuMs = BUDZET_CZASU_MS,
   zegar = () => Date.now(),
 } = {}) {
   const start = zegar();
 
   const wszystkie = await wyszukiwania.zAlertem();
-  const wymagalne = wszystkie.filter((w) => czyNalezySprawdzic(w, teraz));
+  const wymagalne = kolejnoscObslugi(wszystkie.filter((w) => czyNalezySprawdzic(w, teraz)));
 
   const wynikPusty = {
     ok: true,
@@ -146,6 +188,9 @@ export async function runMonitorWyszukiwan({
     bledy: 0,
     // Obserwacje, do których przerwany strumień nie doszedł — wracają w następnym przebiegu.
     odlozone: 0,
+    // Budżet czasu skończył się przed końcem partii — reszta idzie w następnym przebiegu.
+    przerwano: false,
+    nieobsluzone: 0,
     strumien: { od: null, przeczytano: 0, zapytan: 0, wyczerpano: true, przejrzano_do: null },
     durationMs: zegar() - start,
   };
@@ -209,7 +254,15 @@ export async function runMonitorWyszukiwan({
   // Nieudany odczyt rynku to błąd przebiegu (Scheduler ponowi), choć obserwacje przeżyją.
   if (strumien.blad) wynik.bledy += 1;
 
-  for (const w of wymagalne) {
+  for (const [i, w] of wymagalne.entries()) {
+    // Budżet sprawdzamy PRZED obserwacją: zaczętej nie przerywamy w pół wysyłki.
+    if (zegar() - start >= budzetCzasuMs) {
+      wynik.przerwano = true;
+      wynik.nieobsluzone = wymagalne.length - i;
+      logger.warn({ nieobsluzone: wynik.nieobsluzone, budzetCzasuMs },
+        'Monitoring: budżet czasu wyczerpany — reszta obserwacji w następnym przebiegu');
+      break;
+    }
     try {
       /*
        * SORTOWANIE NADPISUJEMY NA „najnowsze" — świadomie, wbrew temu, co zapisał

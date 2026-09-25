@@ -2121,8 +2121,9 @@ export const wyszukiwania = {
    * obserwacja nie może kosztować odczytu w każdym przebiegu. Hamulec
    * częstotliwości działa DOPIERO na wyniku, bo zależy od czasu i jest czysty.
    *
-   * Bez `orderBy` — collectionGroup z sortowaniem wymagałby indeksu złożonego,
-   * a kolejność sprawdzania nie ma tu znaczenia.
+   * Bez `orderBy` — collectionGroup z sortowaniem wymagałby indeksu złożonego.
+   * Kolejność MA znaczenie (przebieg ma budżet czasu), ale ustala ją job w pamięci:
+   * najdawniej sprawdzane pierwsze (`kolejnoscObslugi`, 2026-09-25).
    */
   async zAlertem() {
     const snap = await db().collectionGroup('wyszukiwania').where('alert_wlaczony', '==', true).get();

@@ -321,6 +321,21 @@ export function oknoOdczytuZmian(wpisy = [], teraz) {
 }
 
 /**
+ * Kolejność obsługi obserwacji w przebiegu (2026-09-25): najpierw nigdy nie
+ * sprawdzane, potem najdawniej sprawdzane.
+ *
+ * Przebieg ma budżet czasu i może skończyć się przed końcem partii. Przy kolejności
+ * z bazy (collectionGroup bez `orderBy`) przerwanie trafiałoby zawsze w te same
+ * obserwacje i te same konta nie dostawałyby alertów nigdy. Obserwacja nieobsłużona
+ * zachowuje stary `ostatnio_sprawdzone_o`, więc w następnym przebiegu jest na czele.
+ * Sortujemy w pamięci — sortowanie w zapytaniu wymagałoby indeksu złożonego grupy.
+ */
+export function kolejnoscObslugi(wpisy = []) {
+  const klucz = (w) => (typeof w?.ostatnio_sprawdzone_o === 'string' ? w.ostatnio_sprawdzone_o : '');
+  return [...wpisy].sort((a, b) => klucz(a).localeCompare(klucz(b)));
+}
+
+/**
  * Od którego `fetched_at` czytać strumień NOWYCH ogłoszeń w tym przebiegu (2026-09-25).
  *
  * Jeden odczyt dla CAŁEJ partii — od najstarszego kursora, bo każda obserwacja

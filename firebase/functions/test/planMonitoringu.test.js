@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   MAKS_DNI_WSTECZ, MAKS_DNI_WSTECZ_NOWYCH,
   noweTrafienia, zmianyDlaWyszukiwania, zbudujAlertNowych, zbudujAlertZmian,
-  trescPush, oknoOdczytuZmian, oknoOdczytuNowych,
+  trescPush, oknoOdczytuZmian, oknoOdczytuNowych, kolejnoscObslugi,
 } from '../src/lib/planMonitoringu.js';
 
 /*
@@ -335,4 +335,14 @@ test('okno odczytu NOWYCH sięga do najstarszego kursora, przycięte do sufitu d
 
   // Same pierwsze przebiegi — strumień niepotrzebny.
   assert.equal(oknoOdczytuNowych([{ kursor: null }, {}], teraz), null);
+});
+
+test('kolejność obsługi: nigdy nie sprawdzane pierwsze, potem najdawniej sprawdzane', () => {
+  const wpisy = [
+    { id: 'wczoraj', ostatnio_sprawdzone_o: '2026-09-24T10:00:00.000Z' },
+    { id: 'nowe', ostatnio_sprawdzone_o: null },
+    { id: 'tydzien', ostatnio_sprawdzone_o: '2026-09-17T10:00:00.000Z' },
+  ];
+  assert.deepEqual(kolejnoscObslugi(wpisy).map((w) => w.id), ['nowe', 'tydzien', 'wczoraj']);
+  assert.equal(wpisy[0].id, 'wczoraj', 'wejście nie jest mutowane');
 });

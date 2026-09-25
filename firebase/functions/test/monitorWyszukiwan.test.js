@@ -21,7 +21,7 @@ process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 
-const { runMonitorWyszukiwan } = await import('../src/jobs/monitorWyszukiwan.js');
+const { runMonitorWyszukiwan, dostarcz } = await import('../src/jobs/monitorWyszukiwan.js');
 const { wyszukiwania, alerty, tenders, users } = await import('../src/db/repos.js');
 
 let seq = 0;
@@ -477,4 +477,96 @@ test('budżet odczytów przerywa strumień: „co najmniej N", kursor na granicy
   const zgloszone = lista.flatMap((a) => a.pozycje.map((p) => p.tender_id));
   assert.ok(zgloszone.includes(t2.id), 'T2 dotarło w następnym przebiegu');
   assert.equal(zgloszone.filter((id) => id === t1.id).length, 1, 'T1 zgłoszone dokładnie raz');
+});
+
+/*
+ * DOSTARCZENIE I BUDŻET PRZEBIEGU (naprawa 2026-09-25).
+ */
+
+test('push, którego Expo NIE przyjęło (sent: 0), przechodzi na e-mail awaryjny', async () => {
+  const maile = [];
+  const kanal = await dostarcz({
+    user: { push_token: 'ExponentPushToken[martwy]', email: 'firma@example.pl' },
+    alert: { tytul: { pl: 'Drogi: 3 przetargi' }, tresc: { pl: 'x' }, typ: 'nowe_trafienia', klucz: 'k' },
+    wyslijPush: async () => ({ sent: 0, failed: 1, bledy: { DeviceNotRegistered: 1 } }),
+    wyslijEmail: async (m) => { maile.push(m); return { sent: true }; },
+  });
+  assert.equal(kanal, 'email', 'martwy token nie może oznaczać „dostarczono"');
+  assert.equal(maile.length, 1);
+  assert.equal(maile[0].to, 'firma@example.pl');
+});
+
+test('push przyjęty przez Expo NIE wysyła dodatkowo e-maila', async () => {
+  const maile = [];
+  const kanal = await dostarcz({
+    user: { push_token: 'ExponentPushToken[ok]', email: 'firma@example.pl' },
+    alert: { tytul: { pl: 'T' }, tresc: { pl: 'x' }, typ: 'nowe_trafienia', klucz: 'k' },
+    wyslijPush: async () => ({ sent: 1, failed: 0 }),
+    wyslijEmail: async (m) => { maile.push(m); return { sent: true }; },
+  });
+  assert.equal(kanal, 'push');
+  assert.equal(maile.length, 0);
+});
+
+test('HTML maila monitoringu escapuje nazwę wyszukiwania i tytuły ogłoszeń', async () => {
+  const maile = [];
+  await dostarcz({
+    user: { email: 'firma@example.pl' },
+    alert: {
+      tytul: { pl: '<img src=x onerror=alert(1)>: 2 przetargi' },
+      tresc: { pl: 'W obserwowanym wyszukiwaniu pojawiły się 2 przetargi.' },
+      typ: 'nowe_trafienia',
+      klucz: 'k',
+      pozycje: [{ tytul: 'Dostawa <b>"cegieł"</b> & zaprawy', organizacja: "Gmina O'Brien" }],
+    },
+    wyslijPush: async () => ({ sent: 1 }),
+    wyslijEmail: async (m) => { maile.push(m); return { sent: true }; },
+  });
+  const { html } = maile[0];
+  assert.equal(/<img|<b>"/.test(html), false, 'surowe znaczniki z nazwy/tytułu trafiły do HTML');
+  assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.match(html, /Dostawa &lt;b&gt;&quot;cegieł&quot;&lt;\/b&gt; &amp; zaprawy/);
+  assert.match(html, /Gmina O&#39;Brien/);
+});
+
+test('budżet czasu: przebieg przerywa się między obserwacjami, a najdłużej czekające idą pierwsze', async () => {
+  await wylaczInneObserwacje();
+  const u = await konto();
+  const cpvA = unikalneCpv();
+  const cpvB = unikalneCpv();
+  const a = await wyszukiwania.create(u, { nazwa: 'Świeższa', filtry: { cpv: cpvA }, odcisk: `o-${nast()}` });
+  const b = await wyszukiwania.create(u, { nazwa: 'Dłużej czeka', filtry: { cpv: cpvB }, odcisk: `o-${nast()}` });
+  const kursor = { fetched_at: new Date().toISOString() };
+  await wyszukiwania.oznaczSprawdzone(u, a.id, { teraz: dwaDniTemu(), kursor });
+  await wyszukiwania.oznaczSprawdzone(u, b.id, {
+    teraz: new Date(Date.now() - 3 * 86_400_000).toISOString(), kursor,
+  });
+  await new Promise((r) => { setTimeout(r, 5); });
+  await przetarg(cpvA);
+  await przetarg(cpvB);
+
+  // Zegar stoi, dopóki nie wyjdzie pierwsza wysyłka — potem „mija" cały budżet.
+  let t = 0;
+  const pushe = [];
+  const wynik = await runMonitorWyszukiwan({
+    teraz: zaChwile(),
+    zegar: () => t,
+    budzetCzasuMs: 1000,
+    wyslijPush: async (token, tresc) => { pushe.push(tresc); t = 10_000; return { sent: 1 }; },
+    wyslijEmail: async () => ({ sent: true }),
+  });
+
+  assert.equal(pushe.length, 1, 'po wyczerpaniu budżetu nie zaczynamy kolejnej obserwacji');
+  assert.match(pushe[0].title, /Dłużej czeka/, 'rotacja: najdawniej sprawdzona obserwacja idzie pierwsza');
+  assert.equal(wynik.przerwano, true);
+  assert.equal(wynik.nieobsluzone, 1);
+  assert.equal(wynik.ok, true, 'niedokończona partia to nie błąd — reszta idzie w następnym przebiegu');
+
+  const poA = await wyszukiwania.get(u, a.id);
+  assert.equal(poA.kursor.fetched_at, kursor.fetched_at, 'nieobsłużona obserwacja zostaje nietknięta');
+
+  // Następny przebieg podejmuje resztę.
+  const z = zbierak();
+  await runMonitorWyszukiwan({ teraz: zaChwile(), ...z });
+  assert.ok(z.pushe.some((p) => /Świeższa/.test(p.tresc.title)));
 });
