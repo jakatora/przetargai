@@ -8,6 +8,7 @@
  */
 
 import { bladKwoty, bladProcentu, zbierzBledy } from './walidacjaLiczb.js';
+import { doGroszy, iloczynDoGroszy, procentDoGroszy, sumaGroszy } from './grosze.js';
 
 /** Dozwolone stawki VAT w zamówieniach publicznych (procenty). */
 export const STAWKI_VAT = [23, 8, 5, 0];
@@ -18,33 +19,36 @@ function liczba(x) {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-const grosze = (n) => Math.round(n * 100) / 100;
-
 /**
+ * Grosze (2026-09-25): każdy etap łańcucha zaokrąglamy do groszy wspólnym `grosze.js`
+ * (dokładnie, połówka w górę) i następny liczymy od ZAOKRĄGLONEGO poprzedniego — VAT od
+ * zaokrąglonego netto, brutto = netto + VAT. Wcześniej `Math.round` na nieprzyciętych
+ * floatach dawał np. 29,50 + VAT 6,79 = brutto 36,28, a tabela nie sumowała się do grosza.
  * @param {{material?, robocizna?, inne?, narzutProc?, zyskProc?, vatProc?}} we
  *   kwoty i procenty jako liczby lub stringi (z przecinkiem/spacjami).
  * @returns {{bezposrednie, posrednie, kosztWytworzenia, zysk, netto, vat, brutto,
  *   udzialZyskuProc, maDane: boolean}} wszystkie kwoty zaokrąglone do groszy.
  */
 export function policzCene({ material, robocizna, inne, narzutProc, zyskProc, vatProc } = {}) {
-  const bezposrednie = liczba(material) + liczba(robocizna) + liczba(inne);
-  const posrednie = bezposrednie * (liczba(narzutProc) / 100);
-  const kosztWytworzenia = bezposrednie + posrednie;
-  const zysk = kosztWytworzenia * (liczba(zyskProc) / 100);
-  const netto = kosztWytworzenia + zysk;
-  const vat = netto * (liczba(vatProc) / 100);
-  const brutto = netto + vat;
-  const udzialZysku = netto > 0 ? zysk / netto : 0;
+  const bezposrednie = sumaGroszy([liczba(material), liczba(robocizna), liczba(inne)]);
+  const posrednie = procentDoGroszy(bezposrednie, liczba(narzutProc));
+  const kosztWytworzenia = sumaGroszy([bezposrednie, posrednie]);
+  const zysk = procentDoGroszy(kosztWytworzenia, liczba(zyskProc));
+  const netto = sumaGroszy([kosztWytworzenia, zysk]);
+  const vat = procentDoGroszy(netto, liczba(vatProc));
+  const brutto = sumaGroszy([netto, vat]);
+  // udział zysku w % = zysk × 100 / netto (netto 0 → dzielnik 0 → 0)
+  const udzialZyskuProc = iloczynDoGroszy([zysk, 100], netto);
 
   return {
-    bezposrednie: grosze(bezposrednie),
-    posrednie: grosze(posrednie),
-    kosztWytworzenia: grosze(kosztWytworzenia),
-    zysk: grosze(zysk),
-    netto: grosze(netto),
-    vat: grosze(vat),
-    brutto: grosze(brutto),
-    udzialZyskuProc: grosze(udzialZysku * 100),
+    bezposrednie,
+    posrednie,
+    kosztWytworzenia,
+    zysk,
+    netto,
+    vat,
+    brutto,
+    udzialZyskuProc,
     maDane: bezposrednie > 0,
   };
 }
@@ -67,7 +71,7 @@ export function walidujCene({ material, robocizna, inne, narzutProc, zyskProc } 
 
 /** Formatuje kwotę PLN po polsku bez Intl (Hermes bywa okrojony): „12 345,67 zł". */
 export function formatujPLN(n) {
-  const zaokr = Math.round((Number.isFinite(n) ? n : 0) * 100) / 100;
+  const zaokr = doGroszy(n); // wspólne zaokrąglenie (1,005 → 1,01); nie-liczba → 0
   const [calosc, ulamek] = Math.abs(zaokr).toFixed(2).split('.');
   const cyfry = calosc.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   return `${zaokr < 0 ? '-' : ''}${cyfry},${ulamek} zł`;

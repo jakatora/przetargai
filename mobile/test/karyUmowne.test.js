@@ -42,6 +42,15 @@ test('polski przecinek i puste/niepoprawne pola', () => {
   assert.equal(w.suma, 30000);
 });
 
+test('grosze odporne na float: 10,35 zł × 10% = 1,035 → 1,04; 29 zł × 0,5% × 7 dni = 1,015 → 1,02', () => {
+  const odst = policzKary({ wartosc: '10,35', odstapienieProc: '10' });
+  assert.equal(odst.karaOdstapienia, 1.04);
+  const zw = policzKary({ wartosc: '29', stawkaZwlokiProc: '0,5', dniZwloki: '7' });
+  assert.equal(zw.karaZwloki, 1.02);
+  const oba = policzKary({ wartosc: '10,35', stawkaZwlokiProc: '0,5', dniZwloki: '1', odstapienieProc: '10' });
+  assert.equal(oba.suma, 1.09); // 0,05 (0,05175) + 1,04 — suma zaokrąglonych kwot co do grosza
+});
+
 test('bez wartości umowy → maDane false, zera', () => {
   const w = policzKary({ stawkaZwlokiProc: 0.2, dniZwloki: 10 });
   assert.equal(w.maDane, false);

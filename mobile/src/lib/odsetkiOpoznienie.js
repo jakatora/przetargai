@@ -14,6 +14,7 @@
 
 import { naDzienUTC, MS_DZIEN } from './terminKio.js';
 import { formatujPLN } from './kalkulatorCeny.js';
+import { iloczynDoGroszy } from './grosze.js';
 import { bladKwoty, bladProcentu, zbierzBledy } from './walidacjaLiczb.js';
 
 export { formatujPLN };
@@ -22,7 +23,6 @@ function num(x) {
   const n = Number(String(x ?? '').replace(/\s/g, '').replace(',', '.'));
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
-const grosze = (n) => Math.round(n * 100) / 100;
 
 /** Kwota rekompensaty w EUR wg progu należności (art. 10 ust. 1). */
 export function rekompensataEUR(kwota) {
@@ -49,7 +49,9 @@ export function policzOdsetki({ kwota, terminPlatnosci, dataZaplaty, stawkaRoczn
     dniOpoznienia = Math.max(0, Math.round((zaplataMs - terminMs) / MS_DZIEN));
   }
 
-  const odsetki = grosze(k * (num(stawkaRoczna) / 100) * (dniOpoznienia / 365));
+  // kwota × stawka% × dni / 365 liczone DOKŁADNIE (wspólny grosze.js, 2026-09-25) — `Math.round`
+  // na floacie gubił połówkę grosza (20 805 zł × 11,75% × 30 dni: 200,92 zamiast 200,93).
+  const odsetki = iloczynDoGroszy([k, num(stawkaRoczna), dniOpoznienia], 36500);
 
   return {
     dniOpoznienia,

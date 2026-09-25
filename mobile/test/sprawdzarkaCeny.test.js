@@ -65,6 +65,44 @@ test('puste/niepoprawne wejście → zera, bez wywrotki', () => {
   assert.deepEqual(sprawdzFormularz(null).pozycje, []);
 });
 
+// ─── zaokrąglanie groszy odporne na float (2026-09-25) ───────────────────────
+// `Math.round(n * 100) / 100` dawało 0,5 × 2,01 = 1,00 → fałszywy „błąd rachunkowy"
+// przy poprawnie wpisanym 1,01, a 0,1 × 10,35 = 1,03 zamiast 1,04.
+
+test('połówka grosza w górę: 0,5 × 2,01 = 1,01 — wpisane 1,01 to NIE błąd rachunkowy', () => {
+  const w = sprawdzWiersz({ ilosc: '0,5', cenaJedn: '2,01', vat: '23', wartoscPodana: '1,01' });
+  assert.equal(w.obliczona, 1.01);
+  assert.equal(w.bladWartosci, false);
+  assert.equal(sprawdzWiersz({ ilosc: '0,1', cenaJedn: '10,35', vat: '23' }).obliczona, 1.04);
+});
+
+test('PĘTLA wierszy: ilość 0,1–10 × cena 0,01–50 (z przecinkiem) = dokładne zaokrąglenie', () => {
+  for (let dziesiate = 1; dziesiate <= 100; dziesiate += 1) {
+    const ilosc = String(dziesiate / 10).replace('.', ',');
+    for (let gr = 1; gr <= 5000; gr += 1) {
+      const cena = String(gr / 100).replace('.', ',');
+      const oczekiwane = Math.floor((dziesiate * gr + 5) / 10) / 100;
+      const w = sprawdzWiersz({ ilosc, cenaJedn: cena, vat: '0' });
+      if (w.obliczona !== oczekiwane) assert.fail(`${ilosc} × ${cena}: jest ${w.obliczona}, powinno ${oczekiwane}`);
+    }
+  }
+});
+
+test('VAT per wiersz od zaokrąglonej wartości netto; brutto = netto + VAT co do grosza', () => {
+  const w = sprawdzWiersz({ ilosc: 1, cenaJedn: 29.5, vat: 23 });
+  assert.equal(w.vatKwota, 6.79); // 6,785 → 6,79
+  assert.equal(w.brutto, 36.29);
+  const f = sprawdzFormularz([
+    { ilosc: 1, cenaJedn: 29.5, vat: 23 },
+    { ilosc: '0,5', cenaJedn: '2,01', vat: 8 },   // 1,01 netto; 0,0808 → 0,08 VAT
+    { ilosc: 3, cenaJedn: '0,35', vat: 5 },       // 1,05 netto; 0,0525 → 0,05 VAT
+  ]);
+  assert.equal(f.sumaNetto, 31.56);
+  assert.equal(f.sumaVat, 6.92);
+  assert.equal(f.sumaBrutto, 38.48);
+  assert.equal(Math.round(f.sumaBrutto * 100), Math.round(f.sumaNetto * 100) + Math.round(f.sumaVat * 100));
+});
+
 // ─── walidacja pól (pozycje dynamiczne → błędy per pozycja, klucz pole_indeks) ─
 // Dotąd „1.200,50" w wartości z formularza dawało po cichu 0 → fałszywe
 // „W formularzu masz 0,00 zł", a VAT 230 liczył się bez ostrzeżenia.

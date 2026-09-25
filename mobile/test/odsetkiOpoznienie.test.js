@@ -10,6 +10,12 @@ test('odsetki = kwota × stawka% × dni/365', () => {
   assert.equal(w.maDane, true);
 });
 
+test('odsetki: połówka grosza w górę mimo float (20 805 zł × 11,75% × 30/365 = 200,925 → 200,93)', () => {
+  const w = policzOdsetki({ kwota: '20 805', terminPlatnosci: '2026-01-02', dataZaplaty: '2026-02-01', stawkaRoczna: '11,75' });
+  assert.equal(w.dniOpoznienia, 30);
+  assert.equal(w.odsetki, 200.93);
+});
+
 test('zapłata w terminie lub przed → 0 dni i 0 odsetek', () => {
   const w = policzOdsetki({ kwota: 100000, terminPlatnosci: '2026-05-01', dataZaplaty: '2026-05-01', stawkaRoczna: 11.5 });
   assert.equal(w.dniOpoznienia, 0);
