@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { AppError, badRequest, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
+import { trescDokumentu, bladLimituTresci } from '../lib/limityTresci.js';
 import { umowyMonitorowane } from '../db/repos.js';
 import { ekstrahuj_i_normalizuj } from '../lib/umowaEkstrakcja.js';
 import { zbuduj_flagi_umowy } from '../lib/umowaAnaliza.js';
@@ -29,7 +30,7 @@ const router = Router();
 // surowego błędu walidacji struktury. `miesiace` (szacowany czas trwania umowy)
 // jest opcjonalny i steruje flagą braku obowiązkowej klauzuli waloryzacyjnej.
 const analizaSchema = z.object({
-  tekst: z.string().optional(),
+  tekst: trescDokumentu().optional(),
   pdf_base64: z.string().optional(),
   miesiace: z.number().optional(),
 });
@@ -39,8 +40,17 @@ function maTresc(data) {
   return Boolean(data.tekst?.trim()) || Boolean(data.pdf_base64?.trim());
 }
 
-router.post('/analiza', ah(async (req, res) => {
+/*
+ * Od 2026-09-25 trasa wymaga logowania (wcześniej była publiczna i parsowała PDF w wątku
+ * głównym dla każdego anonima). Most z Firebase dokłada token do każdego żądania
+ * /api/przetarg/*, a aplikacja wysyła go i tak — kontrakt dla klientów się nie zmienia.
+ * Limity: tekst jak treść SWZ (lib/limityTresci.js), PDF 5 MB i 200 stron
+ * (lib/umowaEkstrakcja.js) — przekroczenie to 413 z komunikatem PL.
+ */
+router.post('/analiza', authRequired, ah(async (req, res) => {
   const parsed = analizaSchema.safeParse(req.body ?? {});
+  const zaDluga = parsed.success ? null : bladLimituTresci(parsed.error);
+  if (zaDluga) throw zaDluga;
   if (!parsed.success || !maTresc(parsed.data)) {
     throw badRequest('Podaj treść umowy: pole "tekst" (umowa jako tekst) albo "pdf_base64" (plik PDF w base64).');
   }

@@ -107,9 +107,12 @@ test('Sejf: ciało 11 MB => 413 ZA_DUZY_PLIK z komunikatem PL (nie 500)', async 
   assert.match(json.error.message, /10 MB/, 'komunikat podaje limit trasy');
 });
 
-test('Umowa: analiza tekstu ~2 MB przechodzi przez parser trasy (nie 500/413)', async () => {
+test('Umowa: analiza tekstu ~2 MB (UTF-8) przechodzi przez parser trasy (nie 500/413)', async () => {
   const akapit = 'Wykonawca zapłaci karę umowną w wysokości 0,5% wynagrodzenia za każdy dzień zwłoki. ';
-  const tekst = akapit.repeat(Math.ceil((2 * MB) / akapit.length));
+  // Tuż pod limitem treści (2 mln znaków, lib/limityTresci.js); polskie znaki w UTF-8
+  // dają ciało ~2 MB — dwa razy ponad dawny, przypadkowy limit 1 MB.
+  const tekst = akapit.repeat(Math.floor(1_990_000 / akapit.length));
+  assert.ok(Buffer.byteLength(JSON.stringify({ tekst })) > 1.9 * MB, 'ciało ponad stary limit 1 MB');
 
   const { status, json } = await wyslij('/api/przetarg/umowa/analiza', { tekst });
   assert.notEqual(status, 500, JSON.stringify(json)?.slice(0, 300));

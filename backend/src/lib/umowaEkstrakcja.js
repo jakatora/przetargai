@@ -12,6 +12,18 @@
  * twarde/zerowe spacje, słowa przełamane myślnikiem na końcu wiersza.
  */
 
+import { AppError } from './errors.js';
+
+/*
+ * Limity PDF-a umowy (2026-09-25). pdfjs parsuje w wątku głównym, a na tym procesie wiszą
+ * wszystkie aplikacje — wielomegabajtowy, tysiącstronicowy PDF blokował pętlę zdarzeń.
+ * Projekt umowy z załącznikami to zwykle kilkadziesiąt stron i < 2 MB, więc 5 MB i 200
+ * stron zostawia duży zapas. Liczbę stron pdfjs zna po wczytaniu drzewa stron (przed
+ * parsowaniem treści stron), więc za długi dokument odrzucamy, zanim zaczniemy ciężką pracę.
+ */
+export const MAKS_BAJTOW_PDF = 5 * 1024 * 1024;
+export const MAKS_STRON_PDF = 200;
+
 // Znaki niewidoczne, które trzeba USUNĄĆ (nie zamienić na spację): miękki dywiz
 // (U+00AD), zero-width space (U+200B) oraz BOM / zero-width no-break (U+FEFF).
 const NIEWIDOCZNE = /[\u00AD\u200B\uFEFF]/g;
@@ -46,10 +58,17 @@ export function normalizujTekst(raw) {
  * za wczytanie ciężkiego modułu, a start aplikacji zostaje lekki.
  * @param {string} pdfBase64 zawartość PDF w base64 (opcjonalnie z prefiksem data-URL)
  * @returns {Promise<string>}
+ * @throws {AppError} 413 ZA_DUZY_PLIK / ZA_DUZO_STRON — jedyne wyjątki: PDF ponad
+ *   MAKS_BAJTOW_PDF lub MAKS_STRON_PDF to błąd wejścia, nie „brak tekstu" (2026-09-25).
  */
 export async function ekstrahujZPdf(pdfBase64) {
   if (typeof pdfBase64 !== 'string' || !pdfBase64.trim()) return '';
   const b64 = pdfBase64.replace(/^data:[^;]*;base64,/, '').trim();
+  // Rozmiar liczymy z długości base64 (bez dekodowania) — za duży plik odrzucamy od razu.
+  if (Buffer.byteLength(b64, 'base64') > MAKS_BAJTOW_PDF) {
+    throw new AppError(413, 'ZA_DUZY_PLIK', `PDF umowy jest za duży — limit to ${MAKS_BAJTOW_PDF / (1024 * 1024)} MB. `
+      + 'Wgraj samą umowę (bez załączników) albo skompresuj plik.');
+  }
   const buf = Buffer.from(b64, 'base64');
   if (!buf.length) return '';
 
@@ -62,6 +81,10 @@ export async function ekstrahujZPdf(pdfBase64) {
       verbosity: 0,           // tylko błędy — cisza dla ostrzeżeń o fontach standardowych
     });
     const doc = await loadingTask.promise;
+    if (doc.numPages > MAKS_STRON_PDF) {
+      throw new AppError(413, 'ZA_DUZO_STRON', `PDF umowy ma ${doc.numPages} stron — limit analizy to ${MAKS_STRON_PDF} stron. `
+        + 'Wgraj samą umowę (bez załączników) albo wklej jej treść jako tekst.');
+    }
 
     let out = '';
     for (let p = 1; p <= doc.numPages; p += 1) {
@@ -73,7 +96,9 @@ export async function ekstrahujZPdf(pdfBase64) {
       out += '\n';
     }
     return out;
-  } catch {
+  } catch (err) {
+    // Przekroczony limit stron to błąd wejścia (413), a nie „brak tekstu" — przepuszczamy.
+    if (err instanceof AppError) throw err;
     return '';
   } finally {
     // Sprzątanie workera pdfjs — best-effort. NIE w bloku zwracającym `out`,
