@@ -3,6 +3,7 @@ import { Pressable, View, Text } from 'react-native';
 import { radius, spacing } from '../theme';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useSaved } from '../context/SavedContext';
+import { useJezyk } from '../context/JezykContext';
 import { formatDate } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { opisWadium } from '../lib/wadium';
@@ -12,6 +13,7 @@ import { ZnacznikiWyjasnienia } from './Wyjasnienie';
 /** Przycisk zakładki — ★ zapisany (brand), ☆ do zapisania. Nie nawiguje. */
 export function SaveStar({ tenderId, styles, kolory }) {
   const { isSaved, toggle } = useSaved();
+  const { t } = useJezyk();
   const zapisany = isSaved(tenderId);
   return (
     <Pressable
@@ -19,7 +21,7 @@ export function SaveStar({ tenderId, styles, kolory }) {
       hitSlop={12}
       accessibilityRole="button"
       accessibilityState={{ selected: zapisany }}
-      accessibilityLabel={zapisany ? 'Usuń z zapisanych' : 'Zapisz przetarg'}
+      accessibilityLabel={zapisany ? t('Usuń z zapisanych', 'Remove from saved') : t('Zapisz przetarg', 'Save tender')}
       style={styles.gwiazdka}
     >
       <Text style={[styles.gwiazdkaZnak, { color: zapisany ? kolory.blue : kolory.textMuted }]}>
@@ -33,6 +35,7 @@ export function SaveStar({ tenderId, styles, kolory }) {
 export function ScoreBadge({ score, size = 'md' }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKarty);
+  const { t } = useJezyk();
   const color = score >= 80 ? kolory.green : score >= 60 ? kolory.blue : kolory.textMuted;
   const big = size === 'lg';
   return (
@@ -43,7 +46,7 @@ export function ScoreBadge({ score, size = 'md' }) {
       ]}
     >
       <Text style={[styles.scoreNum, big && styles.scoreNumBig]}>{score}</Text>
-      <Text style={styles.scorePct}>% dopasowania</Text>
+      <Text style={styles.scorePct}>{t('% dopasowania', '% match')}</Text>
     </View>
   );
 }
@@ -57,6 +60,7 @@ export function ScoreBadge({ score, size = 'md' }) {
 function MatchCard({ match, onOtworz, nowe = false }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKarty);
+  const { t } = useJezyk();
   const tender = match.tender;
   /*
    * Przetargi po terminie zostają w feedzie (to historia użytkownika), ale muszą
@@ -71,7 +75,10 @@ function MatchCard({ match, onOtworz, nowe = false }) {
       onPress={() => onOtworz(match)}
       style={({ pressed }) => [styles.card, pressed && styles.pressed, termin.minal && styles.kartaMiniona]}
       accessibilityRole="button"
-      accessibilityLabel={`${tender.title}. Dopasowanie ${match.confidence_score} procent. ${termin.etykieta}.`}
+      accessibilityLabel={t(
+        `${tender.title}. Dopasowanie ${match.confidence_score} procent. ${t(termin.etykieta)}.`,
+        `${tender.title}. ${match.confidence_score} percent match. ${t(termin.etykieta)}.`,
+      )}
     >
       <SaveStar tenderId={tender.id} styles={styles} kolory={kolory} />
       <View style={styles.row}>
@@ -86,10 +93,10 @@ function MatchCard({ match, onOtworz, nowe = false }) {
             </Text>
           ) : null}
           <Text style={styles.deadline}>
-            Termin składania ofert: {formatDate(tender.deadline)}
+            {t('Termin składania ofert', 'Bid deadline')}: {formatDate(tender.deadline)}
           </Text>
           <View style={styles.znacznikiRzad}>
-            {nowe ? <Text style={styles.noweChip}>NOWE</Text> : null}
+            {nowe ? <Text style={styles.noweChip}>{t('NOWE', 'NEW')}</Text> : null}
             <Text
               style={[
                 styles.znacznik,
@@ -97,11 +104,13 @@ function MatchCard({ match, onOtworz, nowe = false }) {
                 termin.pilny && styles.znacznikPilny,
               ]}
             >
-              {termin.etykieta}
+              {t(termin.etykieta)}
             </Text>
             {wadium ? (
               <Text style={[styles.wadiumChip, wadium.ostrzezenie ? styles.wadiumChipWymaga : styles.wadiumChipBez]}>
-                {wadium.ostrzezenie ? `Wadium ${wadium.wartosc}` : 'Bez wadium'}
+                {wadium.ostrzezenie
+                  ? t(`Wadium ${t(wadium.wartosc)}`, `Bid security ${t(wadium.wartosc)}`)
+                  : t('Bez wadium', 'No bid security')}
               </Text>
             ) : null}
           </View>

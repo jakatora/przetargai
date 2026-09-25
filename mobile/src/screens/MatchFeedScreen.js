@@ -40,26 +40,27 @@ const KLUCZ_OSTATNIA_WIZYTA = 'przetargai.feed_ostatnia_wizyta';
  * zamiast nich. Reguły „kod/liczba → słowo" i sortowanie żyją w lib/podprogowe.js.
  */
 function KartaPodprogowa({ ogloszenie, onPress, styles }) {
+  const { t } = useJezyk();
   const wartosc = etykietaWartosciNetto(ogloszenie.wartosc_netto, ogloszenie.waluta);
   const flagi = flagiPodprogowe(ogloszenie.flagi);
   return (
     <Pressable onPress={onPress} style={styles.ppKarta} accessibilityRole="button">
       {ogloszenie.latwiejszy_start ? (
-        <Text style={styles.ppBadge}>Łatwiejszy start</Text>
+        <Text style={styles.ppBadge}>{t('Łatwiejszy start', 'Easier start')}</Text>
       ) : null}
       <Text style={styles.ppTytul} numberOfLines={2}>{ogloszenie.tytul}</Text>
       {ogloszenie.zamawiajacy ? (
         <Text style={styles.ppZamawiajacy} numberOfLines={1}>{ogloszenie.zamawiajacy}</Text>
       ) : null}
-      {wartosc ? <Text style={styles.ppWartosc}>{wartosc}</Text> : null}
+      {wartosc ? <Text style={styles.ppWartosc}>{t(wartosc)}</Text> : null}
       {flagi.length ? (
         <View style={styles.ppFlagiRzad}>
           {flagi.map((f) => (
-            <Text key={f.klucz} style={styles.ppFlaga}>{f.etykieta}</Text>
+            <Text key={f.klucz} style={styles.ppFlaga}>{t(f.etykieta)}</Text>
           ))}
         </View>
       ) : null}
-      <Text style={styles.ppZrodlo}>{etykietaZrodla(ogloszenie.zrodlo)}</Text>
+      <Text style={styles.ppZrodlo}>{t(etykietaZrodla(ogloszenie.zrodlo))}</Text>
     </Pressable>
   );
 }
@@ -283,20 +284,20 @@ export default function MatchFeedScreen({ navigation }) {
           <Pressable accessibilityRole="button"
             onPress={() => navigation.navigate('Narzedzia')}
             hitSlop={12}
-            accessibilityLabel="Wszystkie narzędzia"
+            accessibilityLabel={t('Wszystkie narzędzia', 'All tools')}
           >
-            <Text style={styles.headerBtn}>Narzędzia</Text>
+            <Text style={styles.headerBtn}>{t('Narzędzia', 'Tools')}</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Saved')} hitSlop={12} accessibilityLabel="Zapisane przetargi">
+          <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Saved')} hitSlop={12} accessibilityLabel={t('Zapisane przetargi', 'Saved tenders')}>
             <Text style={styles.headerGwiazdka}>★</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Konto" onPress={() => navigation.navigate('Account')} hitSlop={12}>
-            <Text style={styles.headerBtn}>Konto</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={t('Konto', 'Account')} onPress={() => navigation.navigate('Account')} hitSlop={12}>
+            <Text style={styles.headerBtn}>{t('Konto', 'Account')}</Text>
           </Pressable>
         </View>
       ),
     });
-  }, [navigation, styles]);
+  }, [navigation, styles, t]);
 
   /**
    * Feed dopasowań („Dla mnie"). Wydzielony do funkcji, bo ekran renderuje
@@ -317,10 +318,10 @@ export default function MatchFeedScreen({ navigation }) {
     if (error && !matches.length) {
       return (
         <View style={styles.center}>
-          <Text style={styles.title}>Nie udało się wczytać przetargów</Text>
+          <Text style={styles.title}>{t('Nie udało się wczytać przetargów', 'Could not load tenders')}</Text>
           <Text style={styles.text}>{error}</Text>
           <Button
-            title="Spróbuj ponownie"
+            title={t('Spróbuj ponownie', 'Try again')}
             variant="ghost"
             onPress={() => { setLoading(true); load(); }}
             style={styles.retry}
@@ -337,9 +338,9 @@ export default function MatchFeedScreen({ navigation }) {
         contentContainerStyle={widoczne.length ? styles.list : styles.listEmpty}
         renderSectionHeader={({ section }) => (
           <View style={styles.sekcjaNaglowek}>
-            <Text style={styles.sekcjaTytul}>{section.tytul}</Text>
+            <Text style={styles.sekcjaTytul}>{t(section.tytul)}</Text>
             {section.nowe > 0 ? (
-              <Text style={styles.sekcjaNowe}>{section.nowe} nowe</Text>
+              <Text style={styles.sekcjaNowe}>{t(`${section.nowe} nowe`, `${section.nowe} new`)}</Text>
             ) : null}
           </View>
         )}
@@ -351,8 +352,11 @@ export default function MatchFeedScreen({ navigation }) {
                 <Text style={styles.noweBanerKropka}>●</Text>
                 <Text style={styles.noweBanerTekst}>
                   {noweLacznie === 1
-                    ? '1 nowy przetarg od ostatniej wizyty'
-                    : `${noweLacznie} nowych przetargów od ostatniej wizyty`}
+                    ? t('1 nowy przetarg od ostatniej wizyty', '1 new tender since your last visit')
+                    : t(
+                      `${noweLacznie} nowych przetargów od ostatniej wizyty`,
+                      `${noweLacznie} new tenders since your last visit`,
+                    )}
                 </Text>
               </View>
             ) : null}
@@ -362,7 +366,11 @@ export default function MatchFeedScreen({ navigation }) {
               <Pressable style={styles.fomo} onPress={przejdzNaStandard} disabled={upgrading} accessibilityRole="button">
                 <Text style={styles.fomoTytul}>{zacheta.tytul}</Text>
                 <Text style={styles.fomoOpis}>{zacheta.opis}</Text>
-                <Text style={styles.fomoCta}>{upgrading ? 'Otwieram…' : 'Przejdź na Standard — 49 zł/mc →'}</Text>
+                <Text style={styles.fomoCta}>
+                  {upgrading
+                    ? t('Otwieram…', 'Opening…')
+                    : t('Przejdź na Standard — 49 zł/mc →', 'Upgrade to Standard — PLN 49/mo →')}
+                </Text>
               </Pressable>
             ) : null}
 
@@ -371,13 +379,15 @@ export default function MatchFeedScreen({ navigation }) {
             {podprogowePrefs !== null ? (
               <View style={styles.ppBand}>
                 <View style={styles.ppNaglowek}>
-                  <Text style={styles.ppTytulSekcji}>Łatwiejszy start</Text>
+                  <Text style={styles.ppTytulSekcji}>{t('Łatwiejszy start', 'Easier start')}</Text>
                   <Pressable accessibilityRole="button"
                     onPress={() => navigation.navigate('PodprogoweUstawienia')}
                     hitSlop={10}
-                    accessibilityLabel="Ustawienia radaru podprogowego"
+                    accessibilityLabel={t('Ustawienia radaru podprogowego', 'Below-threshold radar settings')}
                   >
-                    <Text style={styles.ppUstaw}>{podprogowePrefs.length ? 'Ustawienia' : 'Ustaw'}</Text>
+                    <Text style={styles.ppUstaw}>
+                      {podprogowePrefs.length ? t('Ustawienia', 'Settings') : t('Ustaw', 'Set up')}
+                    </Text>
                   </Pressable>
                 </View>
 
@@ -387,16 +397,22 @@ export default function MatchFeedScreen({ navigation }) {
                     onPress={() => navigation.navigate('PodprogoweUstawienia')}
                     accessibilityRole="button"
                   >
-                    <Text style={styles.ppZaproszenieTytul}>Włącz radar zamówień podprogowych</Text>
+                    <Text style={styles.ppZaproszenieTytul}>
+                      {t('Włącz radar zamówień podprogowych', 'Turn on the below-threshold contract radar')}
+                    </Text>
                     <Text style={styles.ppZaproszenieOpis}>
-                      Ustaw branżę i region, a pokażemy tu zakupy poniżej progu Pzp — zwykle bez
-                      wadium i bez KIO, z prostszą procedurą. Idealne na łatwiejszy start.
+                      {t(
+                        'Ustaw branżę i region, a pokażemy tu zakupy poniżej progu Pzp — zwykle bez wadium i bez KIO, z prostszą procedurą. Idealne na łatwiejszy start.',
+                        'Set your industry and region and we will show purchases below the Pzp threshold here — usually with no bid security, no KIO appeals and a simpler procedure. Ideal for an easier start.',
+                      )}
                     </Text>
                   </Pressable>
                 ) : podprogoweWidoczne.length === 0 ? (
                   <Text style={styles.ppPusto}>
-                    Brak nowych zamówień podprogowych dla Twojego obszaru. Zajrzyj później albo
-                    odśwież w ustawieniach.
+                    {t(
+                      'Brak nowych zamówień podprogowych dla Twojego obszaru. Zajrzyj później albo odśwież w ustawieniach.',
+                      'No new below-threshold contracts for your area. Check back later or refresh in settings.',
+                    )}
                   </Text>
                 ) : (
                   <ScrollView
@@ -424,13 +440,13 @@ export default function MatchFeedScreen({ navigation }) {
                 style={styles.szukajPole}
                 value={szukaj}
                 onChangeText={setSzukaj}
-                placeholder="Szukaj po nazwie lub zamawiającym"
+                placeholder={t('Szukaj po nazwie lub zamawiającym', 'Search by title or contracting authority')}
                 placeholderTextColor={kolory.textMuted}
                 autoCorrect={false}
-                accessibilityLabel="Szukaj w przetargach"
+                accessibilityLabel={t('Szukaj w przetargach', 'Search tenders')}
               />
               {szukaj ? (
-                <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel="Wyczyść szukanie">
+                <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel={t('Wyczyść szukanie', 'Clear search')}>
                   <Text style={styles.szukajX}>✕</Text>
                 </Pressable>
               ) : null}
@@ -450,7 +466,7 @@ export default function MatchFeedScreen({ navigation }) {
                     style={[styles.progChip, aktywny && styles.progChipAktywny]}
                   >
                     <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>
-                      {opcja.etykieta}{licznik}
+                      {t(opcja.etykieta)}{licznik}
                     </Text>
                   </Pressable>
                 );
@@ -469,7 +485,7 @@ export default function MatchFeedScreen({ navigation }) {
                     accessibilityState={{ selected: aktywny }}
                     style={[styles.progChip, aktywny && styles.progChipAktywny]}
                   >
-                    <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>{opcja.etykieta}</Text>
+                    <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>{t(opcja.etykieta)}</Text>
                   </Pressable>
                 );
               })}
@@ -488,7 +504,7 @@ export default function MatchFeedScreen({ navigation }) {
                     style={[styles.progChip, aktywny && styles.progChipAktywny]}
                   >
                     <Text style={[styles.progTekst, aktywny && styles.progTekstAktywny]}>
-                      {opcja.etykieta}
+                      {t(opcja.etykieta)}
                     </Text>
                   </Pressable>
                 );
@@ -502,7 +518,7 @@ export default function MatchFeedScreen({ navigation }) {
               style={[styles.malaChip, malaFirma && styles.malaChipAktywny]}
             >
               <Text style={[styles.malaTekst, malaFirma && styles.malaTekstAktywny]}>
-                {malaFirma ? '✓ ' : ''}Dla małej firmy (bez dużego wadium)
+                {malaFirma ? '✓ ' : ''}{t('Dla małej firmy (bez dużego wadium)', 'For small firms (no large bid security)')}
               </Text>
             </Pressable>
             {/* Filtr województwa — tylko gdy w feedzie SĄ dane regionu (co najmniej 2). */}
@@ -514,7 +530,9 @@ export default function MatchFeedScreen({ navigation }) {
                   accessibilityState={{ selected: !woj }}
                   style={[styles.wojChip, !woj && styles.wojChipOn]}
                 >
-                  <Text style={[styles.wojTekst, !woj && styles.wojTekstOn]}>Wszystkie województwa</Text>
+                  <Text style={[styles.wojTekst, !woj && styles.wojTekstOn]}>
+                    {t('Wszystkie województwa', 'All voivodeships')}
+                  </Text>
                 </Pressable>
                 {regiony.map((kod) => {
                   const on = woj === kod;
@@ -536,8 +554,14 @@ export default function MatchFeedScreen({ navigation }) {
             {widoczne.length > 0 ? (
               <Text style={styles.licznik}>
                 {widoczne.length === matches.length
-                  ? `${widoczne.length} ${widoczne.length === 1 ? 'przetarg' : 'przetargów'}`
-                  : `${widoczne.length} z ${matches.length} przetargów`}
+                  ? t(
+                    `${widoczne.length} ${widoczne.length === 1 ? 'przetarg' : 'przetargów'}`,
+                    `${widoczne.length} ${widoczne.length === 1 ? 'tender' : 'tenders'}`,
+                  )
+                  : t(
+                    `${widoczne.length} z ${matches.length} przetargów`,
+                    `${widoczne.length} of ${matches.length} ${matches.length === 1 ? 'tender' : 'tenders'}`,
+                  )}
               </Text>
             ) : null}
             {/*
@@ -547,21 +571,40 @@ export default function MatchFeedScreen({ navigation }) {
             {error ? (
               <Pressable accessibilityRole="button" style={styles.pasekBledu} onPress={() => load('refresh')}>
                 <Text style={styles.pasekBleduTekst}>
-                  Nie udało się odświeżyć. Pokazujemy ostatnio pobrane przetargi. Dotknij, aby spróbować ponownie.
+                  {t(
+                    'Nie udało się odświeżyć. Pokazujemy ostatnio pobrane przetargi. Dotknij, aby spróbować ponownie.',
+                    'Could not refresh. Showing the most recently loaded tenders. Tap to try again.',
+                  )}
                 </Text>
               </Pressable>
             ) : null}
             {matches.length > 0 && widoczne.length === 0 ? (
               <Text style={styles.pustyFiltr}>
                 {statusTerminu === 'poterminie' && liczbaPoTerminie === 0
-                  ? 'Brak przetargów po terminie. Wróć do „Aktywne".'
+                  ? t('Brak przetargów po terminie. Wróć do „Aktywne".', 'No tenders past the deadline. Go back to "Active".')
                   : szukajFiltr
-                    ? `Brak wyników dla „${szukajFiltr}". Wyczyść szukanie lub zmień frazę.`
+                    ? t(
+                      `Brak wyników dla „${szukajFiltr}". Wyczyść szukanie lub zmień frazę.`,
+                      `No results for "${szukajFiltr}". Clear the search or change the phrase.`,
+                    )
                     : woj
-                      ? `Brak przetargów z województwa „${WOJEWODZTWA[woj]}" w bieżącym feedzie. Wybierz „Wszystkie województwa".`
+                      ? t(
+                        `Brak przetargów z województwa „${WOJEWODZTWA[woj]}" w bieżącym feedzie. Wybierz „Wszystkie województwa".`,
+                        `No tenders from the ${WOJEWODZTWA[woj]} voivodeship in the current feed. Choose "All voivodeships".`,
+                      )
                       : statusTerminu === 'aktywne'
-                        ? `Wszystkie ${matches.length} dopasowań ma już po terminie — zajrzyj do zakładki „Po terminie".`
-                        : `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`}
+                        ? t(
+                          `Wszystkie ${matches.length} dopasowań ma już po terminie — zajrzyj do zakładki „Po terminie".`,
+                          matches.length === 1
+                            ? 'Your only match is already past its deadline — see the "Past deadline" tab.'
+                            : `All ${matches.length} matches are already past their deadline — see the "Past deadline" tab.`,
+                        )
+                        : t(
+                          `Żadne z ${matches.length} dopasowań nie ma ${prog}%+ — obniż próg, aby je zobaczyć.`,
+                          matches.length === 1
+                            ? `Your only match scores below ${prog}% — lower the threshold to see it.`
+                            : `None of the ${matches.length} matches scores ${prog}%+ — lower the threshold to see them.`,
+                        )}
               </Text>
             ) : null}
           </View>
