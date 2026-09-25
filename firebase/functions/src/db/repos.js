@@ -174,6 +174,29 @@ export const users = {
     await db().collection('users').doc(id).update({ push_token: null, updated_at: nowIso() });
   },
 
+  /**
+   * Zdejmuje MARTWE tokeny push (Expo: DeviceNotRegistered) z każdego konta, które
+   * je ma (2026-09-25). Bez tego odinstalowana aplikacja zostawiała token na zawsze:
+   * każdy cykl wysyłał w próżnię. Operator `in` przyjmuje najwyżej 30 wartości.
+   * @param {string[]} tokeny
+   * @returns {Promise<number>} ile kont wyczyszczono
+   */
+  async zdejmijPushTokeny(tokeny) {
+    const unikalne = [...new Set((tokeny ?? []).filter((t) => typeof t === 'string' && t))];
+    let wyczyszczone = 0;
+    for (let i = 0; i < unikalne.length; i += 30) {
+      const snap = await db().collection('users')
+        .where('push_token', 'in', unikalne.slice(i, i + 30)).get();
+      if (snap.empty) continue;
+      const batch = db().batch();
+      const ts = nowIso();
+      for (const d of snap.docs) batch.update(d.ref, { push_token: null, updated_at: ts });
+      await batch.commit();
+      wyczyszczone += snap.size;
+    }
+    return wyczyszczone;
+  },
+
   async setTier(id, tier) {
     await db().collection('users').doc(id).update({ premium_tier: tier, updated_at: nowIso() });
   },

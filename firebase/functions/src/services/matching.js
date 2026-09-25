@@ -57,9 +57,10 @@ function heuristicReasoning(h) {
  * Dopasowuje użytkownika do puli przetargów.
  * @param {object} user
  * @param {object[]} pool przetargi z otwartym terminem (pobrane RAZ dla wszystkich userów)
+ * @param {{wyslijPush?: Function}} [opcje] wysyłka wstrzykiwana w testach (wynik jak sendPush)
  * @returns {Promise<{created: number, evaluated: number, aiCalls: number}>}
  */
-export async function generateMatchesForUser(user, pool) {
+export async function generateMatchesForUser(user, pool, { wyslijPush = sendPush } = {}) {
   if (!user.keywords?.length && !user.cpv_codes?.length) return { created: 0, evaluated: 0, aiCalls: 0 };
 
   const isFree = user.premium_tier === 'free';
@@ -177,14 +178,33 @@ export async function generateMatchesForUser(user, pool) {
   // (remindDeadlines) od początku szły bez bramki planu — teraz jest to spójne, a codzienny
   // push o nowych przetargach to fundament retencji.
   if (user.push_token && fresh.length) {
-    await sendPush(user.push_token, {
-      title: 'Nowe dopasowane przetargi',
-      body: fresh.length === 1
-        ? fresh[0].title
-        : `${fresh.length} nowych przetargów dopasowanych do Twojej firmy`,
-      data: { type: 'new_matches', count: fresh.length },
-    });
-    await matches.markNotifiedBatch(user.id, fresh.map((m) => m.id));
+    let wynik = null;
+    try {
+      wynik = await wyslijPush(user.push_token, {
+        title: 'Nowe dopasowane przetargi',
+        body: fresh.length === 1
+          ? fresh[0].title
+          : `${fresh.length} nowych przetargów dopasowanych do Twojej firmy`,
+        data: { type: 'new_matches', count: fresh.length },
+      });
+    } catch (err) {
+      // Dopasowania są już zapisane — awaria pusha nie może wywrócić cyklu użytkownika.
+      logger.error({ err: err.message, userId: user.id }, 'Push o nowych dopasowaniach nie wysłany');
+    }
+
+    /*
+     * „Powiadomiono" TYLKO po realnej dostawie (2026-09-25). Wcześniej znacznik szedł
+     * zawsze, także przy sent === 0 (martwy token, brak klucza FCM) — baza twierdziła,
+     * że użytkownik wie o przetargach, o których nie dowiedział się nigdy.
+     */
+    if ((wynik?.sent ?? 0) > 0) {
+      await matches.markNotifiedBatch(user.id, fresh.map((m) => m.id));
+    } else if (wynik?.bledy?.DeviceNotRegistered && !Array.isArray(wynik.martweTokeny)) {
+      // Prawdziwy sendPush sprząta martwe tokeny sam i zwraca ich listę. Wynik bez
+      // listy (inny nadawca) sprzątamy tutaj — token jest jeden i znany.
+      await users.zdejmijPushTokeny([user.push_token]).catch((err) =>
+        logger.error({ err: err.message, userId: user.id }, 'Nie udało się zdjąć martwego tokenu push'));
+    }
   }
 
   return { created, evaluated, aiCalls };
