@@ -840,6 +840,94 @@ export const tenders = {
     };
   },
 
+  /**
+   * Strumień NOWYCH ogłoszeń dla monitoringu zapisanych wyszukiwań (naprawa 2026-09-25).
+   *
+   * Monitoring czytał dawniej `katalog` z `limit: 50` osobno dla każdego wyszukiwania,
+   * a skan katalogu kończy się po `SKAN_MAKS` (1200) dokumentach. Trafienie przykryte
+   * większą liczbą nowszych ogłoszeń (doba ~950, tydzień ~5700) nie było widziane nigdy.
+   * Tu czytamy RAZ na przebieg wszystko, co nowsze od najstarszego kursora, stronami
+   * aż do wyczerpania — z budżetem odczytów i czasu jako bezpiecznikiem kosztu.
+   *
+   * Porządek ROSNĄCY jest istotą naprawy: przerwany strumień to zawsze CIĄGŁY odcinek
+   * `(od, przejrzanoDo]`, więc każda obserwacja może przesunąć kursor dokładnie do
+   * miejsca przejrzanego i niczego nie przeskoczyć.
+   *
+   * Indeks: nierówność i oba sortowania po `fetched_at` + `__name__` w tym samym
+   * kierunku — obsługuje je AUTOMATYCZNY indeks jednopolowy (strażnik w
+   * test/indeksyFirestore.test.js pilnuje, żeby nic go nie wyłączyło).
+   *
+   * @param {{od: string, doMaks?: string|null, budzetOdczytow?: number,
+   *   rozmiarStrony?: number, czyPrzerwac?: () => boolean}} opts
+   * @returns {Promise<{wiersze: object[], wyczerpano: boolean, przejrzanoDo: string|null,
+   *   przeczytano: number, zapytan: number}>}
+   *   `przejrzanoDo` — największy `fetched_at`, do którego WSZYSTKO zostało przeczytane
+   */
+  async noweOd({
+    od, doMaks = null, budzetOdczytow = 20_000, rozmiarStrony = 500, czyPrzerwac = () => false,
+  }) {
+    let zapytanie = db().collection('tenders').where('fetched_at', '>', od);
+    if (doMaks) zapytanie = zapytanie.where('fetched_at', '<=', doMaks);
+    zapytanie = zapytanie
+      .orderBy('fetched_at', 'asc')
+      .orderBy(FieldPath.documentId(), 'asc')
+      .select(...POLA_KATALOGU);
+
+    const wiersze = [];
+    let zapytan = 0;
+    let wyczerpano = false;
+
+    while (wiersze.length < budzetOdczytow && !czyPrzerwac()) {
+      const ile = Math.min(rozmiarStrony, budzetOdczytow - wiersze.length);
+      const ostatni = wiersze.at(-1);
+      const strona = ostatni ? zapytanie.startAfter(ostatni.fetched_at, ostatni.id) : zapytanie;
+      const snap = await strona.limit(ile).get();
+      zapytan += 1;
+      for (const doc of snap.docs) wiersze.push({ id: doc.id, ...doc.data() });
+      if (snap.docs.length < ile) { wyczerpano = true; break; }
+    }
+
+    const przeczytano = wiersze.length;
+    if (!wyczerpano && wiersze.length) {
+      /*
+       * Przerwanie W ŚRODKU grupy o tym samym `fetched_at` (pobieranie zapisuje setki
+       * ogłoszeń w tej samej milisekundzie) zostawiłoby jej resztę za kursorem, a filtr
+       * `fetched_at > kursor` nie wróciłby już do niej. Odcinamy więc całą ostatnią
+       * grupę — przeczyta ją w całości następny przebieg. Wyjątek: cały odczyt to jedna
+       * grupa (budżet mniejszy niż partia jednej milisekundy) — wtedy postęp jest
+       * ważniejszy niż teoretyczna reszta tej grupy.
+       */
+      const ostatniZnacznik = wiersze.at(-1).fetched_at;
+      const bezOgona = wiersze.filter((t) => t.fetched_at !== ostatniZnacznik);
+      if (bezOgona.length) {
+        wiersze.length = 0;
+        wiersze.push(...bezOgona);
+      } else {
+        console.warn(JSON.stringify({
+          severity: 'WARNING', message: 'Strumień nowych: budżet mniejszy niż grupa jednego znacznika', ostatniZnacznik, przeczytano,
+        }));
+      }
+    }
+
+    return {
+      wiersze,
+      wyczerpano,
+      przejrzanoDo: wiersze.at(-1)?.fetched_at ?? null,
+      przeczytano,
+      zapytan,
+    };
+  },
+
+  /** Znacznik najświeższego ogłoszenia w bazie — punkt „od teraz" dla nowej obserwacji. */
+  async najnowszyFetchedAt() {
+    const snap = await db().collection('tenders')
+      .orderBy('fetched_at', 'desc')
+      .select('fetched_at')
+      .limit(1)
+      .get();
+    return snap.docs[0]?.get('fetched_at') ?? null;
+  },
+
   async count() {
     const agg = await db().collection('tenders').count().get();
     return agg.data().count;

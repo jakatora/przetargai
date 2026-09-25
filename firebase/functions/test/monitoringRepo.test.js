@@ -208,3 +208,50 @@ test('RODO: usunięcie konta kasuje także zapisane wyszukiwania i centrum alert
   assert.equal((await wyszukiwania.list(u)).length, 0);
   assert.equal((await alerty.lista(u)).length, 0);
 });
+
+/*
+ * STRUMIEŃ NOWYCH OGŁOSZEŃ dla monitoringu (naprawa 2026-09-25).
+ *
+ * Dokumenty zapisujemy z JAWNYM `fetched_at` z 2001 roku: to jedyny sposób, żeby dać
+ * kilku ogłoszeniom TEN SAM znacznik (upsert stempluje zegarem), a daleka przeszłość
+ * nie wchodzi w okna innych testów, które czytają rynek od „teraz" wstecz.
+ */
+test('strumień nowych: rosnąco od `od`, do wyczerpania; przerwany budżetem NIE kończy się w środku grupy o tym samym znaczniku', async () => {
+  const { tenders } = await import('../src/db/repos.js');
+  const { getFirestore } = await import('firebase-admin/firestore');
+  const kol = getFirestore().collection('tenders');
+  const znak = `strumien-${process.pid}-${Date.now()}`;
+  const dok = (i, fetched_at) => ({ id: `${znak}-${i}`, title: `S${i}`, source: 'bzp', deadline: '2001-12-31T00:00:00.000Z', fetched_at });
+
+  const wpisy = [
+    dok(1, '2001-01-01T00:00:01.000Z'),
+    dok(2, '2001-01-01T00:00:02.000Z'),
+    // Trzy ogłoszenia zapisane w tej samej milisekundzie (partia pobierania).
+    dok(3, '2001-01-01T00:00:03.000Z'),
+    dok(4, '2001-01-01T00:00:03.000Z'),
+    dok(5, '2001-01-01T00:00:03.000Z'),
+    dok(6, '2001-01-01T00:00:04.000Z'),
+  ];
+  await Promise.all(wpisy.map(({ id, ...d }) => kol.doc(id).set(d)));
+
+  try {
+    const od = '2001-01-01T00:00:00.000Z';
+    const calosc = await tenders.noweOd({ od, doMaks: '2001-12-31T00:00:00.000Z' });
+    assert.equal(calosc.wyczerpano, true);
+    assert.deepEqual(calosc.wiersze.map((t) => t.id), wpisy.map((w) => w.id), 'porządek rosnący po fetched_at');
+    assert.equal(calosc.przejrzanoDo, '2001-01-01T00:00:04.000Z');
+
+    // Budżet 4 kończy się W ŚRODKU grupy 00:00:03 — cała grupa musi poczekać na następny przebieg,
+    // inaczej kursor na 00:00:03 zgubiłby jej nieprzeczytaną resztę (filtr to `fetched_at > kursor`).
+    const przerwany = await tenders.noweOd({ od, doMaks: '2001-12-31T00:00:00.000Z', budzetOdczytow: 4, rozmiarStrony: 2 });
+    assert.equal(przerwany.wyczerpano, false);
+    assert.deepEqual(przerwany.wiersze.map((t) => t.id), [`${znak}-1`, `${znak}-2`]);
+    assert.equal(przerwany.przejrzanoDo, '2001-01-01T00:00:02.000Z');
+
+    const dalej = await tenders.noweOd({ od: przerwany.przejrzanoDo, doMaks: '2001-12-31T00:00:00.000Z' });
+    assert.deepEqual(dalej.wiersze.map((t) => t.id), [`${znak}-3`, `${znak}-4`, `${znak}-5`, `${znak}-6`],
+      'następny przebieg podejmuje dokładnie tam, gdzie poprzedni przestał');
+  } finally {
+    await Promise.all(wpisy.map(({ id }) => kol.doc(id).delete()));
+  }
+});

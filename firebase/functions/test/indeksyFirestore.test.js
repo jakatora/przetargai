@@ -157,3 +157,23 @@ test('firestore.indexes.json jest poprawnym JSON-em o oczekiwanym kształcie', (
     assert.ok(Array.isArray(i.fields) && i.fields.length, 'indeks bez pól');
   }
 });
+
+test('strumień nowych ogłoszeń monitoringu ma indeks jednopolowy tenders.fetched_at (niczym niewyłączony)', () => {
+  /*
+   * Monitoring zapisanych wyszukiwań czyta RAZ na przebieg `tenders` z
+   * `where('fetched_at','>',od).orderBy('fetched_at').orderBy(__name__)` (naprawa
+   * 2026-09-25). Obsługuje to AUTOMATYCZNY indeks jednopolowy — ale `fieldOverrides`
+   * dla tego pola PODMIENIA ustawienia automatyczne w całości. Wpis bez indeksu
+   * ASCENDING w zakresie COLLECTION wyłączyłby monitoring na produkcji, a emulator
+   * (jak przy każdym indeksie) niczego by nie zauważył.
+   */
+  assert.ok(/where\(\s*'fetched_at'\s*,\s*'>'/.test(kod), 'strażnik nie widzi zapytania strumienia — zmieniono jego kształt?');
+
+  const konfiguracja = JSON.parse(fs.readFileSync(INDEXES, 'utf8'));
+  const nadpisanie = (konfiguracja.fieldOverrides ?? [])
+    .find((o) => o.collectionGroup === 'tenders' && o.fieldPath === 'fetched_at');
+  if (!nadpisanie) return; // brak nadpisania = automatyczne indeksy ASC/DESC działają
+
+  const ma = (nadpisanie.indexes ?? []).some((i) => i.queryScope === 'COLLECTION' && i.order === 'ASCENDING');
+  assert.ok(ma, 'fieldOverride tenders.fetched_at bez indeksu ASCENDING/COLLECTION wyłącza strumień monitoringu');
+});
