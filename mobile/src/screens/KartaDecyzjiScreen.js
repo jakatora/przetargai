@@ -24,9 +24,12 @@ export default function KartaDecyzjiScreen({ route }) {
   });
 
   const w = ocenStart(odp);
+  // „uzupelnij" (2026-09-25): brak odpowiedzi na pytanie krytyczne — neutralny ton zamiast
+  // przedwczesnego STARTUJ; lista braków pod werdyktem.
   const ton =
     w.werdykt === 'start' ? { tlo: kolory.sukcesTlo, akc: kolory.sukcesAkcent }
     : w.werdykt === 'rozwaz' ? { tlo: kolory.ostrzezenieTlo, akc: kolory.ostrzezenieTekst }
+    : w.werdykt === 'uzupelnij' ? { tlo: kolory.neutralneTlo, akc: kolory.text }
     : { tlo: kolory.dangerTlo, akc: kolory.danger };
 
   const wybierz = (klucz, wart) => setOdp((prev) => ({ ...prev, [klucz]: wart }));
@@ -45,6 +48,14 @@ export default function KartaDecyzjiScreen({ route }) {
           <Text style={[styles.heroWerdykt, { color: ton.akc }]}>{WERDYKTY[w.werdykt].etykieta}</Text>
           <Text style={styles.heroOpis}>{WERDYKTY[w.werdykt].opis}</Text>
           <Text style={styles.heroMeta}>Ocena {w.procent}% · odpowiedziano {w.odpowiedziano}/{w.wszystkich}</Text>
+          {w.werdykt === 'uzupelnij' ? (
+            <View style={[styles.flagi, { borderColor: kolory.border }]}>
+              <Text style={[styles.flagiTytul, { color: kolory.text }]}>Brakuje odpowiedzi</Text>
+              {w.brakujaceKrytyczne.map((b) => (
+                <Text key={b.klucz} style={[styles.flaga, { color: kolory.text }]}>• {b.pytanie}</Text>
+              ))}
+            </View>
+          ) : null}
           {w.zBlokada ? (
             <View style={[styles.flagi, { borderColor: kolory.danger }]}>
               <Text style={[styles.flagiTytul, { color: kolory.danger }]}>Czerwone flagi</Text>

@@ -6,6 +6,10 @@
  * Każdy czynnik ma wagę i 2–3 odpowiedzi (dobrze/średnio/źle → punkty 1/0.5/0). Niektóre
  * odpowiedzi „źle" to BLOKADY (np. brak wadium, strata, nie spełniam warunków) — pojedyncza
  * blokada wywraca werdykt na ODPUŚĆ, niezależnie od reszty. Czysta logika, w pełni testowalna.
+ *
+ * Czynniki KRYTYCZNE (poprawka 2026-09-25) = te, które mają odpowiedź blokującą. Dopóki choć
+ * jeden z nich jest bez odpowiedzi (i nie padła żadna blokada), werdykt to UZUPEŁNIJ z listą
+ * braków — wcześniej samo „dopasowanie: wysokie" dawało 100% i STARTUJ.
  */
 
 export const CZYNNIKI = [
@@ -78,20 +82,32 @@ export const WERDYKTY = {
   start: { etykieta: 'STARTUJ', opis: 'Sygnały na TAK — składaj ofertę.' },
   rozwaz: { etykieta: 'ROZWAŻ', opis: 'Da się, ale są słabe punkty — dociśnij je albo policz dokładniej.' },
   odpusc: { etykieta: 'ODPUŚĆ', opis: 'Szanse/rentowność za niskie — lepiej oszczędzić czas na inny przetarg.' },
+  uzupelnij: { etykieta: 'UZUPEŁNIJ', opis: 'Odpowiedz na pytania krytyczne — każde z nich może samo przesądzić o ODPUŚĆ.' },
 };
+
+/** Klucze czynników krytycznych: tych, których odpowiedź może być BLOKADĄ. */
+export const CZYNNIKI_KRYTYCZNE = Object.freeze(
+  CZYNNIKI.filter((c) => c.opcje.some((o) => o.blokada)).map((c) => c.klucz),
+);
 
 /**
  * @param {Record<string,string>} odpowiedzi mapa klucz→wartość odpowiedzi
- * @returns {{procent:number, werdykt:'start'|'rozwaz'|'odpusc', zBlokada:boolean,
- *   blokady:Array<{klucz:string,tekst:string}>, odpowiedziano:number, wszystkich:number}}
+ * @returns {{procent:number, werdykt:'start'|'rozwaz'|'odpusc'|'uzupelnij', zBlokada:boolean,
+ *   blokady:Array<{klucz:string,tekst:string}>, brakujaceKrytyczne:Array<{klucz:string,pytanie:string}>,
+ *   odpowiedziano:number, wszystkich:number}}
+ *   Blokada → zawsze 'odpusc'; bez blokady, ale z brakami krytycznymi → 'uzupelnij'.
  */
 export function ocenStart(odpowiedzi) {
   let sumaP = 0; let sumaW = 0; let odpowiedziano = 0;
   const blokady = [];
+  const brakujaceKrytyczne = [];
   for (const c of CZYNNIKI) {
     const w = odpowiedzi?.[c.klucz];
     const opt = c.opcje.find((o) => o.w === w);
-    if (!opt) continue;
+    if (!opt) {
+      if (CZYNNIKI_KRYTYCZNE.includes(c.klucz)) brakujaceKrytyczne.push({ klucz: c.klucz, pytanie: c.pytanie });
+      continue;
+    }
     odpowiedziano += 1;
     sumaP += opt.p * c.waga;
     sumaW += c.waga;
@@ -101,8 +117,9 @@ export function ocenStart(odpowiedzi) {
   const zBlokada = blokady.length > 0;
   let werdykt;
   if (zBlokada) werdykt = 'odpusc';
+  else if (brakujaceKrytyczne.length > 0) werdykt = 'uzupelnij';
   else if (procent >= 70) werdykt = 'start';
   else if (procent >= 45) werdykt = 'rozwaz';
   else werdykt = 'odpusc';
-  return { procent, werdykt, zBlokada, blokady, odpowiedziano, wszystkich: CZYNNIKI.length };
+  return { procent, werdykt, zBlokada, blokady, brakujaceKrytyczne, odpowiedziano, wszystkich: CZYNNIKI.length };
 }
