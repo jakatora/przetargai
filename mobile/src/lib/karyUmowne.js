@@ -8,7 +8,7 @@
  */
 
 import { formatujPLN } from './kalkulatorCeny.js';
-import { iloczynDoGroszy, procentDoGroszy, sumaGroszy } from './grosze.js';
+import { iloczynDoGroszy, procentDoGroszy, sumaGroszy, ilorazWGore } from './grosze.js';
 import { bladKwoty, bladProcentu, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 export { formatujPLN };
@@ -38,8 +38,24 @@ export function policzKary({ wartosc, stawkaZwlokiProc, dniZwloki, odstapieniePr
   const limitKwota = maLimit ? procentDoGroszy(w, num(limitProc)) : null;
   const przekroczono = maLimit && suma > limitKwota;
   const doZaplaty = maLimit ? Math.min(suma, limitKwota) : suma;
-  // Ile dni SAMEJ zwłoki wyczerpuje limit (najgorszy scenariusz zwłoki bez odstąpienia).
-  const dniDoLimitu = maLimit && dziennaZwloka > 0 ? Math.floor(limitKwota / dziennaZwloka) : null;
+  // Ile dni SAMEJ zwłoki wyczerpuje limit (najgorszy scenariusz zwłoki bez odstąpienia) =
+  // PIERWSZY dzień, w którym kara ≥ limit. Poprawka 2026-09-25: Math.floor zaniżał o 1
+  // (0,3%/dzień, limit 20%, 1 mln → 66, a po 66 dniach kara 198 000 < 200 000; poprawnie 67).
+  // Górna granica = ⌈limit% / stawka%⌉ liczone dokładnie (float: 0,3 / 0,1 = 2,999…); potem
+  // wyszukiwanie binarne po kwotach w groszach, żeby wynik zgadzał się z tym, co pokazuje ekran
+  // (zaokrąglenie do grosza może zrównać karę z limitem dzień wcześniej).
+  let dniDoLimitu = null;
+  if (maLimit && dziennaZwloka > 0) {
+    const karaPo = (dni) => iloczynDoGroszy([w, stawka, dni], 100);
+    let od = 1;
+    let doDni = ilorazWGore(num(limitProc), stawka);
+    while (od < doDni) {
+      const srodek = Math.floor((od + doDni) / 2);
+      if (karaPo(srodek) >= limitKwota) doDni = srodek;
+      else od = srodek + 1;
+    }
+    dniDoLimitu = od;
+  }
 
   return {
     karaZwloki,
