@@ -151,6 +151,13 @@ test('przetarg ANULOWANY w źródle → brak pusha, przypomnienie zamknięte', a
   const { tenderId, externalId } = await wymagalne(userId);
   await tenders.oznaczAnulowany(externalId, { powod: 'unieważnienie' });
 
+  // `uzgodnijKopiePrzetargu` (2026-09-25) już przy zapisie źródła wyłącza przypomnienie
+  // na kopii w „Zapisanych" — ten wpis by więc w ogóle nie wrócił jako wymagalny, a poniższa
+  // kontrola w remindDeadlines nigdy by nie zadziałała. Cofamy kopię do stanu SPRZED tej
+  // propagacji (jak wpis zapisany, zanim ta poprawka trafiła na produkcję), żeby przetestować
+  // WŁASNĄ, reaktywną kontrolę joba — drugą linię obrony, nie tylko synchronizację przy zapisie.
+  await ref(userId, tenderId).update({ reminder_enabled: true, remind_at: '2000-01-01T00:00:00.000Z' });
+
   const wynik = await runReminderCheck();
   assert.equal(pushe.get(token) ?? 0, 0, 'nie przypominamy o postępowaniu, którego już nie ma');
   assert.ok(wynik.anulowane >= 1);
@@ -162,6 +169,14 @@ test('termin PRZESUNIĘTY w źródle → etap liczony od nowego terminu, brak pr
   const { userId, token } = await uzytkownik();
   const { tenderId, externalId } = await wymagalne(userId, '2099-01-03T10:00:00.000Z');
   await tenders.zaktualizujZeZrodla({ externalId, deadline: '2099-03-03T10:00:00.000Z' });
+
+  // Jak wyżej: cofamy kopię do stanu sprzed propagacji przy zapisie, żeby przetestować
+  // reaktywną kontrolę w remindDeadlines (drugą linię obrony) niezależnie od niej.
+  await ref(userId, tenderId).update({
+    tender_deadline: '2099-01-03T10:00:00.000Z',
+    remind_at: '2000-01-01T00:00:00.000Z',
+    remind_etap: 7,
+  });
 
   const wynik = await runReminderCheck();
   assert.equal(pushe.get(token) ?? 0, 0, '„zostało 7 dni" przy terminie za dwa miesiące to fałszywy alarm');
