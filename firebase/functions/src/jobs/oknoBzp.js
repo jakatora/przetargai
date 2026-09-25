@@ -34,10 +34,18 @@ import { pustyLicznik } from '../lib/licznikZrodla.js';
  * Tak samo doba, z której choć jednego ogłoszenia NIE ZAPISALIŚMY (2026-09-25):
  * pobrać to nie znaczy mieć — zamknięta doba nie wraca, więc ogłoszenie przepadłoby.
  */
-function dobaKompletna(wpis, dzien, dzisiaj) {
+export function dobaKompletna(wpis, dzien, dzisiaj) {
   if (dzien >= dzisiaj) return false;
   if (wpis.blad) return false;
   if ((wpis.niezapisane ?? 0) > 0) return false;
+  /*
+   * Województwo na SUFICIE 500 (2026-09-25): BZP nie ma już filtra, którym dałoby się
+   * dociąć dalej, więc część ogłoszeń tej doby jest nieosiągalna. Dawniej tylko log,
+   * a doba zamykała się jako kompletna. Teraz zostaje otwarta — kolejne przebiegi
+   * próbują ponownie (sufit bywa chwilowy, gdy BZP dosypuje korekty), a licznik
+   * w checkpoincie i w `/health` mówi dyżurnemu, że potrzebne jest cięcie po godzinach.
+   */
+  if ((wpis.wojewodztwaNaSuficie ?? 0) > 0) return false;
   return (wpis.wojewodztwaBezDanych ?? 0) === 0;
 }
 
@@ -81,6 +89,7 @@ export function zaktualizujCheckpoint({ checkpoint, raport = [], pominieteDni = 
       ucietySufit: wpis.ucietySufit ?? false,
       zapytania: wpis.zapytania ?? 0,
       wojewodztwaBezDanych: wpis.wojewodztwaBezDanych ?? 0,
+      wojewodztwaNaSuficie: wpis.wojewodztwaNaSuficie ?? 0,
       niezapisane: wpis.niezapisane ?? 0,
       blad: wpis.blad ?? null,
       kompletny: dobaKompletna(wpis, wpis.dzien, dzisiaj),
@@ -265,6 +274,8 @@ export async function runBzpOkno({ budzetMs = BUDZET_OKNA_MS } = {}) {
     doby_okna: licznik.dobyOkna ?? null,
     doby_niedomkniete: licznik.dobyNiedomkniete ?? null,
     doby_pominiete: (licznik.pominieteDni ?? []).length,
+    // Województwa na suficie 500 w dobach TEGO przebiegu — takie doby zostają otwarte.
+    wojewodztwa_na_suficie: (licznik.dni ?? []).reduce((suma, d) => suma + (d.wojewodztwaNaSuficie ?? 0), 0),
     durationMs: Date.now() - start,
     zakonczony_o: new Date().toISOString(),
   };

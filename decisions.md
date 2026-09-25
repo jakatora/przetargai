@@ -113,6 +113,13 @@ dużo niż stracić.
 1154 → 590 ogłoszeń naprawdę z tej doby) i znika mniej więcej połowa zapisów do
 Firestore, które i tak nadpisywały te same dokumenty.
 
+**Korekta pomiaru (2026-09-25, recenzja).** Górna granica okna NIE jest przez
+`OrganizationProvince` ignorowana, tylko **przesunięta o +1 dobę**: zapytanie o dobę D
+z filtrem województwa oddaje ogłoszenia z D i D+1, ale nie z D+2 i dalej. Decyzja
+(odsiewanie po `publicationDate`) pozostaje bez zmian i nadal niczego nie gubi.
+Przy okazji: województwo, które samo trafia sufit 500, jest od 2026-09-25 liczone
+(`wojewodztwaNaSuficie`), a taka doba NIE jest zamykana w checkpoincie jako kompletna.
+
 **Czego NIE zmieniono.** Ta sama pułapka dotyczy ścieżki pobierania OGŁOSZEŃ
 (`pobierzDzien` używa tego samego docinania), ale tam dedup po `externalId` i
 create-only `tenders.upsert` czynią ją nieszkodliwą dla danych — kosztuje tylko

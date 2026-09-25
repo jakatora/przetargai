@@ -151,3 +151,18 @@ test('lista `dni` nadpisuje zakres from/to — to podstawa wznawiania po checkpo
   assert.deepEqual(pytane, ['2026-09-22', '2026-09-18'],
     'wznowienie pobiera DOKŁADNIE brakujące doby, w podanej kolejności');
 });
+
+test('województwo, które też trafiło sufit 500, jest POLICZONE w raporcie doby (2026-09-25)', async () => {
+  globalThis.fetch = async (u) => {
+    const woj = new URL(String(u)).searchParams.get('OrganizationProvince');
+    // Doba na suficie; jedno województwo (PL14) też na suficie, reszta poniżej.
+    if (!woj || woj === 'PL14') return odpowiedz(ogloszenia(SUFIT_ZAPYTANIA, woj ?? 'doba'));
+    return odpowiedz(ogloszenia(3, woj));
+  };
+  const { tempo } = tempoTestowe();
+  const licznik = pustyLicznik();
+  await pobierzOgloszeniaBzp({ from: '2026-09-22', to: '2026-09-22', licznik, tempo });
+
+  assert.equal(licznik.dni[0].ucietySufit, true);
+  assert.equal(licznik.dni[0].wojewodztwaNaSuficie, 1, 'sufit województwa nie może zostać tylko w logu');
+});

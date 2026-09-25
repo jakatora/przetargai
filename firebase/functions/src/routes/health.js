@@ -141,6 +141,8 @@ router.get('/', async (_req, res) => {
         newTenders: stanOkna.ostatni_przebieg.newTenders ?? null,
         ok: stanOkna.ostatni_przebieg.ok ?? null,
         skipped: stanOkna.ostatni_przebieg.skipped ?? null,
+        // > 0 = doby z województwem na suficie 500: niekompletne, trzeba ciąć po godzinach.
+        wojewodztwa_na_suficie: stanOkna.ostatni_przebieg.wojewodztwa_na_suficie ?? null,
         error: stanOkna.ostatni_przebieg.error ?? null,
       }
       : null,

@@ -237,7 +237,7 @@ async function pobierzDzien(dzien, licznik, tempo) {
 
   const zDnia = await zapytaj();
   if (zDnia.length < SUFIT_ZAPYTANIA) {
-    return { ogloszenia: zDnia, ucietySufit: false, zapytania, wojewodztwaBezDanych: 0 };
+    return { ogloszenia: zDnia, ucietySufit: false, zapytania, wojewodztwaBezDanych: 0, wojewodztwaNaSuficie: 0 };
   }
 
   logger.warn({ dzien, pobrane: zDnia.length },
@@ -249,6 +249,7 @@ async function pobierzDzien(dzien, licznik, tempo) {
   // (audyt 2026-07-17). Dedup po externalId i tak scala nakładki.
   const wynik = new Map(zDnia.map((n) => [n.externalId, n]));
   let wojewodztwaBezDanych = 0;
+  let wojewodztwaNaSuficie = 0;
   for (const woj of WOJEWODZTWA_TERYT) {
     try {
       const zWoj = await zapytaj({ province: woj });
@@ -256,6 +257,9 @@ async function pobierzDzien(dzien, licznik, tempo) {
       if (zWoj.length >= SUFIT_ZAPYTANIA) {
         // Pojedyncze województwo na sufitie = nie mamy już czym ciąć (BZP nie ma
         // innego działającego filtra). Krzyczymy — to sygnał do cięcia po godzinach.
+        // Od 2026-09-25 także LICZYMY: dawniej był tylko log, a doba zamykała się
+        // w checkpoincie jako kompletna, choć część jej ogłoszeń była nieosiągalna.
+        wojewodztwaNaSuficie += 1;
         logger.error({ dzien, woj, pobrane: zWoj.length },
           'BZP: województwo też trafiło sufit — część ogłoszeń tej doby jest NIEOSIĄGALNA tym filtrem');
       }
@@ -267,7 +271,7 @@ async function pobierzDzien(dzien, licznik, tempo) {
       logger.error({ err: err.message, dzien, woj }, 'BZP: województwo pominięte');
     }
   }
-  return { ogloszenia: [...wynik.values()], ucietySufit: true, zapytania, wojewodztwaBezDanych };
+  return { ogloszenia: [...wynik.values()], ucietySufit: true, zapytania, wojewodztwaBezDanych, wojewodztwaNaSuficie };
 }
 
 /**
@@ -322,6 +326,7 @@ export async function pobierzOgloszeniaBzp({
         ucietySufit: doba.ucietySufit,
         zapytania: doba.zapytania,
         wojewodztwaBezDanych: doba.wojewodztwaBezDanych,
+        wojewodztwaNaSuficie: doba.wojewodztwaNaSuficie,
       });
     } catch (err) {
       // Awaria doby nie przerywa okna, ale MUSI wyjść na wierzch. Do 2026-09-24
