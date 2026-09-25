@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { badRequest, conflict, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { db } from '../db/index.js';
 import { createPodprogoweRepo } from '../db/podprogoweRepo.js';
@@ -53,6 +53,9 @@ export function ustawZrodlaOdswiezania({ adaptery, uzupelnij } = {}) {
 
 // ── Preferencje radaru ───────────────────────────────────────────────────────
 
+/** Maks. liczba preferencji (par branża/region) na użytkownika. */
+export const LIMIT_PREFERENCJI = 10;
+
 const prefSchema = z.object({
   branza: z.string().max(200).optional(),
   region: z.string().max(200).optional(),
@@ -70,6 +73,16 @@ router.post('/preferencje', authRequired, ah(async (req, res) => {
   const region = (parsed.data.region ?? '').trim();
   // Preferencja bez branży i regionu łapałaby wszystko — wymagamy co najmniej jednej.
   if (!branza && !region) throw badRequest('Podaj co najmniej branżę lub region do monitorowania.');
+
+  // Limit (2026-09-25): każda preferencja to przelot po wszystkich źródłach w monitorze —
+  // bez limitu jedno konto mogło zlecić setki pobrań dziennie. Aktualizacja progu
+  // istniejącej pary nie jest nową preferencją, więc przechodzi także przy komplecie.
+  const istniejace = prefRepo.listForUser(req.user.id);
+  const juzJest = istniejace.some((p) => p.branza === branza && p.region === region);
+  if (!juzJest && istniejace.length >= LIMIT_PREFERENCJI) {
+    throw conflict(`Możesz monitorować maksymalnie ${LIMIT_PREFERENCJI} preferencji (par branża/region). `
+      + 'Usuń jedną z nich, aby dodać nową.');
+  }
 
   const preferencja = prefRepo.upsert({
     userId: req.user.id,
