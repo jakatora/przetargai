@@ -4,10 +4,40 @@ import { policzOdsetki, rekompensataEUR, walidujOdsetki } from '../src/lib/odset
 
 test('odsetki = kwota × stawka% × dni/365', () => {
   // 100 000 zł, 11,5%/rok, 40 dni → 100000 × 0,115 × 40/365 = 1260,27
-  const w = policzOdsetki({ kwota: 100000, terminPlatnosci: '2026-05-01', dataZaplaty: '2026-06-10', stawkaRoczna: 11.5 });
+  // (termin w dzień roboczy — 1 maja to święto, termin przesunąłby się na 4 maja)
+  const w = policzOdsetki({ kwota: 100000, terminPlatnosci: '2026-04-30', dataZaplaty: '2026-06-09', stawkaRoczna: 11.5 });
   assert.equal(w.dniOpoznienia, 40);
   assert.equal(w.odsetki, 1260.27);
   assert.equal(w.maDane, true);
+  assert.equal(w.terminPrzesunietyNa, null);
+});
+
+// ─── art. 115 KC: termin w dzień wolny → najbliższy dzień roboczy (2026-09-25) ──
+
+test('termin w sobotę 2026-05-02, zapłata w poniedziałek 04.05 → 0 dni, bez odsetek i rekompensaty', () => {
+  // 2 maja sobota, 3 maja niedziela + Święto Konstytucji → termin upływa w pon. 4 maja.
+  const w = policzOdsetki({ kwota: 10000, terminPlatnosci: '2026-05-02', dataZaplaty: '2026-05-04', stawkaRoczna: 11.5 });
+  assert.equal(w.terminPrzesunietyNa, '2026-05-04');
+  assert.equal(w.dniOpoznienia, 0);
+  assert.equal(w.odsetki, 0);
+  assert.equal(w.rekompensataEUR, null);
+  assert.equal(w.maDane, true);
+});
+
+test('termin w dzień wolny: opóźnienie liczone od przesuniętego terminu', () => {
+  const w = policzOdsetki({ kwota: 10000, terminPlatnosci: '2026-05-02', dataZaplaty: '2026-05-05', stawkaRoczna: 10 });
+  assert.equal(w.dniOpoznienia, 1);
+  assert.equal(w.odsetki, 2.74); // 10000 × 10% × 1/365 = 2,7397
+  assert.equal(w.rekompensataEUR, 70);
+  const swieto = policzOdsetki({ kwota: 10000, terminPlatnosci: '2026-01-01', dataZaplaty: '2026-01-02', stawkaRoczna: 10 });
+  assert.equal(swieto.terminPrzesunietyNa, '2026-01-02', 'Nowy Rok (czwartek) → piątek');
+  assert.equal(swieto.dniOpoznienia, 0);
+});
+
+test('zapłata w terminie → brak rekompensaty (należy się dopiero przy opóźnieniu)', () => {
+  const w = policzOdsetki({ kwota: 60000, terminPlatnosci: '2026-06-10', dataZaplaty: '2026-06-10', stawkaRoczna: 11.5 });
+  assert.equal(w.dniOpoznienia, 0);
+  assert.equal(w.rekompensataEUR, null);
 });
 
 test('odsetki: połówka grosza w górę mimo float (20 805 zł × 11,75% × 30/365 = 200,925 → 200,93)', () => {
@@ -42,7 +72,7 @@ test('rekompensataEUR w wyniku zależna od kwoty; null bez kwoty', () => {
 });
 
 test('polski przecinek w kwocie i stawce', () => {
-  const w = policzOdsetki({ kwota: '10 000,00', terminPlatnosci: '2026-01-01', dataZaplaty: '2026-01-31', stawkaRoczna: '12,5' });
+  const w = policzOdsetki({ kwota: '10 000,00', terminPlatnosci: '2026-01-02', dataZaplaty: '2026-02-01', stawkaRoczna: '12,5' });
   assert.equal(w.dniOpoznienia, 30);
   assert.equal(w.odsetki, 102.74); // 10000 × 0,125 × 30/365 = 102,7397 → 102,74
 });

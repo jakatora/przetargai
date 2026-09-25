@@ -68,19 +68,32 @@ export default function KalkulatorOdsetekScreen({ route }) {
             <Text style={styles.heroPod}>za {w.dniOpoznienia} {w.dniOpoznienia === 1 ? 'dzień' : 'dni'} opóźnienia</Text>
           </View>
 
+          {w.terminPrzesunietyNa ? (
+            <Text style={styles.podpowiedz}>
+              Termin płatności wypadł w dzień wolny — upływa w najbliższy dzień roboczy,{' '}
+              {w.terminPrzesunietyNa} (art. 115 KC). Opóźnienie liczymy od tej daty.
+            </Text>
+          ) : null}
+
           <View style={styles.card}>
             <Wiersz styles={styles} etykieta="Dni opóźnienia" wartosc={String(w.dniOpoznienia)} />
             <Wiersz styles={styles} etykieta="Odsetki (kwota × stawka% × dni/365)" wartosc={formatujPLN(w.odsetki)} wariant="suma" />
           </View>
 
-          <View style={styles.rekomp}>
-            <Text style={styles.rekompTytul}>+ Rekompensata za koszty odzyskiwania</Text>
-            <Text style={styles.rekompKwota}>{w.rekompensataEUR} €</Text>
-            <Text style={styles.rekompOpis}>
-              Ryczałt niezależny od odsetek (art. 10 ustawy). Równowartość w zł liczysz po średnim
-              kursie EUR z NBP z ostatniego dnia roboczego miesiąca poprzedzającego wymagalność.
+          {w.rekompensataEUR != null ? (
+            <View style={styles.rekomp}>
+              <Text style={styles.rekompTytul}>+ Rekompensata za koszty odzyskiwania</Text>
+              <Text style={styles.rekompKwota}>{w.rekompensataEUR} €</Text>
+              <Text style={styles.rekompOpis}>
+                Ryczałt niezależny od odsetek (art. 10 ustawy). Równowartość w zł liczysz po średnim
+                kursie EUR z NBP z ostatniego dnia roboczego miesiąca poprzedzającego wymagalność.
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.podpowiedz}>
+              Zapłata w terminie — odsetki ani rekompensata nie przysługują.
             </Text>
-          </View>
+          )}
         </>
       ) : (
         <Text style={styles.podpowiedz}>
