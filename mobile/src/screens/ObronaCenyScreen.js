@@ -5,16 +5,22 @@ import TextField from '../components/TextField';
 import { formatBudget } from '../lib/format';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { SKLADNIKI, analizaObrony, werdyktObrony, walidujObrone } from '../lib/obronaCeny';
+import {
+  SKLADNIKI, analizaObrony, werdyktObrony, walidujObrone,
+  ETYKIETA_CENY, PODPOWIEDZ_CENY, MIN_STAWKA_GODZ_2026,
+} from '../lib/obronaCeny';
 
 /**
  * Panel „ASYSTENT OBRONY CENY (rażąco niska cena)".
  *
  * Gdy przychodzi wezwanie z art. 224 Pzp, o utrzymaniu oferty decydują DOWODY. Ten ekran
- * rozbija cenę na składniki (muszą sumować się do oferty), sprawdza stawkę pracy vs minimum i
+ * rozbija cenę NETTO na składniki (muszą się do niej sumować), sprawdza stawkę pracy vs minimum i
  * pilnuje, żeby każdy istotny składnik miał dowód — bo wyjaśnienia bez dowodów są z automatu
  * niewystarczające. Cała ocena jest w testowanym `lib/obronaCeny.js`.
  */
+
+/** Domyślna min. stawka jako tekst pola, po polsku: „31,40" (2026-09-25: było „30.50" z 2025 r.). */
+const MIN_STAWKA_DOMYSLNA = MIN_STAWKA_GODZ_2026.toFixed(2).replace('.', ',');
 
 function naLiczbe(txt) {
   if (typeof txt !== 'string') return 0;
@@ -36,7 +42,7 @@ export default function ObronaCenyScreen({ route }) {
 
   const [cena, setCena] = useState('');
   const [roboczogodziny, setRoboczogodziny] = useState('');
-  const [minStawka, setMinStawka] = useState('30.50');
+  const [minStawka, setMinStawka] = useState(MIN_STAWKA_DOMYSLNA);
   const [skladniki, setSkladniki] = useState({});
   const [dowody, setDowody] = useState({});
 
@@ -74,10 +80,10 @@ export default function ObronaCenyScreen({ route }) {
       {/* ── Cena i praca ── */}
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>Cena i koszty pracy</Text>
-        <TextField label="Cena oferty (zł)" value={cena} onChangeText={setCena} placeholder="np. 200000" keyboardType="numeric" error={bledy.cena} />
+        <TextField label={ETYKIETA_CENY} hint={PODPOWIEDZ_CENY} value={cena} onChangeText={setCena} placeholder="np. 200000" keyboardType="numeric" error={bledy.cena} />
         <View style={styles.rzad}>
           <TextField label="Roboczogodziny (łącznie)" value={roboczogodziny} onChangeText={setRoboczogodziny} placeholder="np. 2500" keyboardType="numeric" style={styles.pole} error={bledy.roboczogodziny} />
-          <TextField label="Min. stawka (zł/h)" value={minStawka} onChangeText={setMinStawka} placeholder="30.50" keyboardType="numeric" style={styles.pole} error={bledy.minStawkaGodz} />
+          <TextField label="Min. stawka (zł/h)" hint="Stawka na 2026 r." value={minStawka} onChangeText={setMinStawka} placeholder={MIN_STAWKA_DOMYSLNA} keyboardType="numeric" style={styles.pole} error={bledy.minStawkaGodz} />
         </View>
         {wynik && wynik.stawkaGodz !== null ? (
           <Text style={[styles.stawka, wynik.ponizejMinimum && { color: kolory.danger, fontWeight: '800' }]}>
@@ -99,7 +105,7 @@ export default function ObronaCenyScreen({ route }) {
         </View>
         {wynik && !wynik.zgodna && naLiczbe(cena) > 0 ? (
           <Text style={styles.niezgodne}>
-            Składniki nie sumują się do ceny (różnica {formatBudget(Math.abs(wynik.roznicaDoCeny))}).
+            Składniki nie sumują się do ceny netto (różnica {formatBudget(Math.abs(wynik.roznicaDoCeny))}).
           </Text>
         ) : null}
 
