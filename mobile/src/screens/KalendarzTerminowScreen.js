@@ -12,6 +12,7 @@ import { spacing, radius } from '../theme';
 import {
   ulozKalendarz, kartaNastepnegoKroku, opisPozycji, opisPrzypomnienia,
 } from '../lib/kalendarzPrzetargu';
+import { ogloszenieZKalendarza } from '../lib/skrotOgloszenia';
 
 /*
  * KALENDARZ TERMINÓW (etap 5, P1-7).
@@ -196,8 +197,10 @@ export default function KalendarzTerminowScreen({ navigation }) {
               <Pressable
                 key={`${p.tenderId}-${p.kod}`}
                 style={styles.karta}
+                // Rejestr jako metryczka `zrodlo` (był zły klucz `source` → „BZP" przy
+                // TED) + termin SKŁADANIA z pozycji „oferty" (2026-09-25).
                 onPress={() => navigation.navigate('KatalogDetail', {
-                  tender: { id: p.tenderId, title: p.tytulPrzetargu, source: p.zrodlo },
+                  tender: ogloszenieZKalendarza(p, dane?.przetargi),
                 })}
                 accessibilityRole="button"
                 accessibilityLabel={`${o.co}. ${p.tytulPrzetargu ?? ''}. ${o.kiedy ?? ''}`}

@@ -9,6 +9,7 @@ import { spacing, radius } from '../theme';
 import {
   etykietaTerminu, opisPoziomu, tonPoziomu, opisKamienia, opisOgloszenia, formatujWartoscPlanu,
 } from '../lib/radarPlanow';
+import { ogloszenieZRadaru } from '../lib/skrotOgloszenia';
 
 /*
  * Szczegół pozycji planu (Radar planów, P2-4): co zrobić i KIEDY, żeby w dniu
@@ -134,7 +135,9 @@ export default function RadarPlanuScreen({ route, navigation }) {
           <Text style={[styles.blokMeta, { color: tonOgl.tekst }]}>{opisOgl.pewnosc}</Text>
           <Button
             title={t('Otwórz ogłoszenie', 'Open the tender')}
-            onPress={() => navigation.navigate('KatalogDetail', { tender: { id: ogloszenie.tender_id, title: ogloszenie.tytul } })}
+            // Link, termin, publikacja i zamawiający zamiast samego `{ id, title }`;
+            // rejestru backend tu nie podaje — ekran pokaże go jako nieznany (2026-09-25).
+            onPress={() => navigation.navigate('KatalogDetail', { tender: ogloszenieZRadaru(ogloszenie, pozycja) })}
             style={styles.gapMaly}
           />
         </View>

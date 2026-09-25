@@ -2,7 +2,7 @@ import { View, Text, Pressable, Linking, Alert } from 'react-native';
 import { spacing, radius } from '../theme';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
-import { podpisZrodla, ostrzezenieZrodla, linkDoOryginalu, etykietaOtwarcia } from '../lib/zrodlaDanych';
+import { podpisZrodla, ostrzezenieZrodla, linkDoOryginalu, etykietaOtwarciaOgloszenia } from '../lib/zrodlaDanych';
 
 /** Ton semantyczny → token koloru z motywu. Ekran nie zna hexów. */
 export function tonNaKolor(kolory, ton) {
@@ -68,7 +68,8 @@ export function PrzyciskOryginalu({ tender, styl }) {
 
   return (
     <Pressable onPress={otworz} accessibilityRole="link" style={[styles.link, styl]}>
-      <Text style={styles.linkTekst}>{t(etykietaOtwarcia(tender?.zrodlo))} ↗</Text>
+      {/* Nieznany rejestr (np. ogłoszenie z radaru planów) → neutralny napis, nie „w BZP" (2026-09-25). */}
+      <Text style={styles.linkTekst}>{t(etykietaOtwarciaOgloszenia(tender))} ↗</Text>
     </Pressable>
   );
 }

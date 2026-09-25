@@ -8,6 +8,7 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { grupujAlerty, etykietaPlakietki, opisPustegoCentrum } from '../lib/centrumAlertow';
+import { ogloszenieZAlertu } from '../lib/skrotOgloszenia';
 
 /*
  * CENTRUM ALERTÓW I ZMIAN (etap 5).
@@ -75,7 +76,9 @@ export default function CentrumAlertowScreen({ navigation }) {
       api.oznaczAlertPrzeczytany(alert.id).then(() => wczytaj()).catch(() => {});
     }
     const pierwsza = alert.pozycje?.[0];
-    if (pierwsza?.tenderId) navigation.navigate('KatalogDetail', { tender: { id: pierwsza.tenderId, title: pierwsza.tytul } });
+    // Całe to, co alert wie: rejestr, zamawiający, termin — samo `{ id, title }`
+    // dawało „BZP" przy TED, brak „Otwórz oryginał" i „Termin nieznany" (2026-09-25).
+    if (pierwsza?.tenderId) navigation.navigate('KatalogDetail', { tender: ogloszenieZAlertu(pierwsza) });
   }, [navigation, wczytaj]);
 
   const { grupy, nieprzeczytane } = grupujAlerty(alerty, Date.now(), jezyk);

@@ -11,6 +11,7 @@ import { opisCpv } from '../lib/cpv';
 import { opisWadium } from '../lib/wadium';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
+import { normalizujOgloszenie } from '../lib/skrotOgloszenia';
 
 /*
  * Szczegóły ogłoszenia z trybu „Wszystkie" (P1-3).
@@ -35,7 +36,12 @@ function Wiersz({ etykieta, wartosc, styles, ostatni }) {
 export default function KatalogDetailScreen({ route, navigation }) {
   const styles = useStyle(tworzStyleSzczegolow);
   const { t } = useJezyk();
-  const tender = route?.params?.tender;
+  // Ekran bywa otwierany spoza katalogu (kalendarz, alerty, radar planów) z
+  // niepełnym ogłoszeniem: rejestr jako napis albo pod starym kluczem `source`,
+  // czasem bez rejestru w ogóle. Normalizacja zamienia go na metryczkę, a brak
+  // rejestru oznacza jako NIEZNANY — zamiast domyślnego „BZP" (2026-09-25).
+  // Pełnego ogłoszenia nie dociągamy: backend nie ma trasy `/tenders/:id`.
+  const tender = normalizujOgloszenie(route?.params?.tender);
 
   if (!tender) {
     return (
@@ -58,8 +64,16 @@ export default function KatalogDetailScreen({ route, navigation }) {
 
       {/* Metryczka źródła — skąd to jest i jak świeże. */}
       <View style={styles.zrodloBox}>
-        <Text style={styles.zrodloNazwa}>{t(pelnaNazwaZrodla(tender.zrodlo?.kod))}</Text>
-        <PodpisZrodla zrodlo={tender.zrodlo} />
+        {tender.zrodlo ? (
+          <>
+            <Text style={styles.zrodloNazwa}>{t(pelnaNazwaZrodla(tender.zrodlo.kod))}</Text>
+            <PodpisZrodla zrodlo={tender.zrodlo} />
+          </>
+        ) : (
+          <Text style={styles.zrodloNazwa}>
+            {t('Rejestr źródłowy nieznany — sprawdź w oryginale', 'Source register unknown — check the original')}
+          </Text>
+        )}
         <PrzyciskOryginalu tender={tender} />
       </View>
 
