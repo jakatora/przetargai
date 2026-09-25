@@ -128,6 +128,11 @@ export default function KalkulatorPunktowScreen({ route }) {
                 Twoja przewaga jakością przewyższa całą wagę ceny — przy tych kryteriach wygrywasz z tym
                 konkurentem PRZY KAŻDEJ cenie.
               </Text>
+            ) : wynik.bezSzans ? (
+              <Text style={styles.cenaText}>
+                Na kryteriach pozacenowych tracisz więcej, niż jest warta cała waga ceny — przy tych
+                kryteriach nie wygrasz z tym konkurentem ŻADNĄ ceną. Popraw ofertę w kryteriach.
+              </Text>
             ) : wynik.cenaBreakEven !== null ? (
               wynik.pctRoznica >= 0 ? (
                 <Text style={styles.cenaText}>

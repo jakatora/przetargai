@@ -12,6 +12,8 @@
  *
  * Kluczowy wynik: `cenaBreakEven` — najwyższa Twoja cena, przy której nadal remisujesz z tym
  * konkurentem (trzymając kryteria stałe). Powyżej niej przegrywasz mimo lepszej jakości.
+ * Nie zależy od Twojej obecnej ceny. `bezLimitu` — wygrywasz przy każdej cenie; `bezSzans` —
+ * nie wygrasz żadną ceną (strata na kryteriach ≥ cała waga ceny).
  * Wszystko deterministyczne; braki liczymy ostrożnie (NaN/≤0 → 0 pkt).
  */
 
@@ -43,7 +45,7 @@ export function punktKryterium(wartosc, przeciwnik, waga, kierunek = 'max') {
  * @param {{mojaCena:number, konkurencyjnaCena:number, wagaCeny:number,
  *   kryteria: Array<{nazwa:string, waga:number, kierunek?:'max'|'min', moje:number, konkurent:number}>}} we
  * @returns {Readonly<object>} { mojePkt, konkPkt, roznica, wygrywam, cenaBreakEven, pctRoznica,
- *   bezLimitu, mojaCenaPkt, konkCenaPkt, rozbicie }
+ *   bezLimitu, bezSzans, mojaCenaPkt, konkCenaPkt, rozbicie }
  */
 export function analizaPunktow(we = {}) {
   const wagaCeny = Math.max(0, liczba(we.wagaCeny));
@@ -69,19 +71,31 @@ export function analizaPunktow(we = {}) {
 
   const mojePkt = mojePoza + mojaCenaPkt;
   const konkPkt = konkPoza + konkCenaPkt;
-  const konkTotal = konkPoza + konkCenaPkt;
 
-  // cenaBreakEven: najwyższa moja cena, przy której total ≥ total konkurenta.
-  // total_moje(c) = mojePoza + wagaCeny·konkCena/c  (dla c ≥ konkCena) = konkTotal ⇒
-  //   c = wagaCeny·konkCena / (konkTotal − mojePoza).
-  const mianownik = konkTotal - mojePoza;
+  // cenaBreakEven: najwyższa moja cena c, przy której mój total ≥ total konkurenta.
+  // Dlaczego tak (2026-09-25): wcześniej punkty konkurenta za cenę brano przy MOJEJ obecnej
+  // cenie, a po przebiciu ceny konkurenta i tak dostaje on pełną wagę — próg wychodził
+  // zawyżony (90 zł vs 100 zł → 158 zamiast 136,36) albo fałszywie „bez limitu".
+  // Próg zależy tylko od ceny konkurenta i punktów pozacenowych; dwa przedziały:
+  //  • c ≥ konkCena (konkurent najtańszy, ma pełne wagaCeny):
+  //      mojePoza + wagaCeny·konkCena/c = konkPoza + wagaCeny
+  //      ⇒ c1 = wagaCeny·konkCena / (konkPoza + wagaCeny − mojePoza);
+  //  • c ≤ konkCena (ja najtańszy, konkurent dostaje wagaCeny·c/konkCena):
+  //      mojePoza + wagaCeny = konkPoza + wagaCeny·c/konkCena
+  //      ⇒ c2 = konkCena·(mojePoza + wagaCeny − konkPoza) / wagaCeny.
+  // c1 obowiązuje, gdy wypada ≥ konkCena (czyli mojePoza ≥ konkPoza), inaczej c2.
   let cenaBreakEven = null;
   let bezLimitu = false;
+  let bezSzans = false;
   if (konkCena > 0 && wagaCeny > 0) {
-    if (mianownik <= 0) {
-      bezLimitu = true; // przewaga jakością przewyższa całą wagę ceny — wygrywasz przy każdej cenie
+    if (mojePoza >= konkPoza + wagaCeny) {
+      bezLimitu = true; // przewaga jakością ≥ cała waga ceny — wygrywasz przy każdej cenie
+    } else if (mojePoza >= konkPoza) {
+      cenaBreakEven = (wagaCeny * konkCena) / (konkPoza + wagaCeny - mojePoza);
+    } else if (mojePoza + wagaCeny > konkPoza) {
+      cenaBreakEven = (konkCena * (mojePoza + wagaCeny - konkPoza)) / wagaCeny;
     } else {
-      cenaBreakEven = (wagaCeny * konkCena) / mianownik;
+      bezSzans = true; // strata pozacenowa ≥ cała waga ceny — nie dogonisz nawet ceną ≈ 0
     }
   }
   const pctRoznica = cenaBreakEven !== null && konkCena > 0
@@ -95,9 +109,12 @@ export function analizaPunktow(we = {}) {
     wygrywam: mojePkt >= konkPkt,
     mojaCenaPkt: round2(mojaCenaPkt),
     konkCenaPkt: round2(konkCenaPkt),
-    cenaBreakEven: cenaBreakEven === null ? null : Math.round(cenaBreakEven),
+    // W DÓŁ do pełnego złotego: przy podanej cenie nie przegrywasz (Math.round potrafił
+    // zaokrąglić w górę na cenę, przy której już przegrywasz).
+    cenaBreakEven: cenaBreakEven === null ? null : Math.floor(cenaBreakEven),
     pctRoznica,
     bezLimitu,
+    bezSzans,
     rozbicie,
   });
 }

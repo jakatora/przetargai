@@ -14,7 +14,7 @@
  *  • ust. 6 — odrzuca ofertę, jeśli wyjaśnienia nie uzasadniają ceny (a wyjaśnienia bez dowodów
  *    są z automatu niewystarczające).
  *
- * Narzędzie: rozbij cenę na składniki (mają sumować się do oferty), sprawdź stawkę pracy vs
+ * Narzędzie: rozbij cenę na składniki (mają sumować się do ceny oferty NETTO), sprawdź stawkę pracy vs
  * minimum i przypilnuj, żeby KAŻDY istotny składnik miał dowód. Bez dowodu = odrzucenie.
  */
 
@@ -22,6 +22,23 @@ import { bladKwoty, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 /** Górna granica sensownej minimalnej stawki godzinowej (zł/h) — łapie np. „3050" zamiast „30,50". */
 const MAX_MIN_STAWKA_GODZ = 1000;
+
+/**
+ * Minimalna stawka godzinowa w 2026 r. (zł/h) — rozporządzenie Rady Ministrów z 11.09.2025 r.
+ * w sprawie wysokości minimalnego wynagrodzenia za pracę oraz minimalnej stawki godzinowej
+ * w 2026 r. Domyślna podpowiedź ekranu (poprawka 2026-09-25: było 30,50 zł z 2025 r.).
+ * Stawka zmienia się co roku — od 2027 r. zaktualizuj wg nowego rozporządzenia.
+ */
+export const MIN_STAWKA_GODZ_2026 = 31.4;
+
+/**
+ * Pole ceny jest NETTO (poprawka 2026-09-25): składniki kalkulacji są bez VAT, a użytkownik
+ * wpisywał cenę brutto jak w formularzu ofertowym → fałszywe „składniki nie sumują się"
+ * (różnica = VAT). Prostsze i spójne z resztą ekranu jest jednoznaczne oznaczenie pola niż
+ * dokładanie składnika VAT.
+ */
+export const ETYKIETA_CENY = 'Cena oferty NETTO (zł)';
+export const PODPOWIEDZ_CENY = 'Bez VAT — tak jak składniki poniżej.';
 
 function liczba(x) {
   const n = Number(x);
@@ -72,7 +89,7 @@ export function analizaObrony(we = {}) {
     problemy.push({ ton: 'danger', tekst: `Bez dowodów: ${brakDowodu.join(', ')}. Wyjaśnienia bez dowodów są niewystarczające (art. 224 ust. 5-6).` });
   }
   if (!zgodna && cena > 0) {
-    problemy.push({ ton: 'ostrzezenie', tekst: `Składniki (${Math.round(suma)} zł) nie sumują się do ceny oferty (${Math.round(cena)} zł) — uzupełnij kalkulację.` });
+    problemy.push({ ton: 'ostrzezenie', tekst: `Składniki (${Math.round(suma)} zł) nie sumują się do ceny oferty netto (${Math.round(cena)} zł) — uzupełnij kalkulację; cenę wpisz bez VAT.` });
   }
 
   const gotowa = zgodna && !ponizejMinimum && brakDowodu.length === 0;

@@ -19,6 +19,16 @@ const RE_OBOWIAZEK = [
   /wymaga\w*\s+(?:odbyci|przeprowadzeni)/i,
   /niezb[eę]dn\w*\s+(?:jest\s+)?(?:odbyci|przeprowadzeni|dokonani)\w*\s+wizj/i,
 ];
+// ZAPRZECZENIA obowiązku — wycinane z tekstu PRZED szukaniem sygnałów rygoru (2026-09-25):
+// /obowiązkow/ łapał „nieobowiązkowa" i „nie jest obowiązkowa" → fałszywe „oferta odrzucona".
+// Wycinamy tylko samą frazę, więc rygor w innym zdaniu dalej jest wykrywany.
+const RE_ZAPRZECZENIE = [
+  /nieobowiązkow/gi,
+  /nie\s+(?:jest\s+|są\s+|będzie\s+|będą\s+)?obowiązkow/gi,
+  /nie\s+przewiduj\w*\s+(?:się\s+)?obowiązkow/gi,
+  /nie\s+wymaga\w*\s+(?:się\s+)?(?:odbyci|przeprowadzeni)/gi,
+  /nie\s+(?:jest\s+|są\s+)?(?:wymagan|niezb[eę]dn|konieczn)/gi,
+];
 // Sygnały jedynie ZALECENIA/możliwości.
 const RE_MOZLIWA = [
   /zaleca\w*/i,
@@ -53,8 +63,11 @@ export function wykryjWizje(tekst) {
     return { wystepuje: false, obowiazkowa: false, mozliwa: false, ton: 'neutral',
       etykieta: 'Nie znaleziono wzmianki o wizji lokalnej', dopasowania: [] };
   }
-  const obowiazkowa = RE_OBOWIAZEK.some((re) => re.test(t));
-  const mozliwa = !obowiazkowa && RE_MOZLIWA.some((re) => re.test(t));
+  const bezZaprzeczen = RE_ZAPRZECZENIE.reduce((s, re) => s.replace(re, ' '), t);
+  const zaprzeczenie = bezZaprzeczen !== t;
+  const obowiazkowa = RE_OBOWIAZEK.some((re) => re.test(bezZaprzeczen));
+  // Wprost zaprzeczony obowiązek = wizja możliwa (bez rygoru).
+  const mozliwa = !obowiazkowa && (zaprzeczenie || RE_MOZLIWA.some((re) => re.test(t)));
   let ton;
   let etykieta;
   if (obowiazkowa) {

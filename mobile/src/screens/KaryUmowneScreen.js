@@ -91,7 +91,9 @@ export default function KaryUmowneScreen({ route }) {
           {w.dniDoLimitu != null ? (
             <View style={styles.info}>
               <Text style={styles.infoTekst}>
-                Limit kar wyczerpiesz samą zwłoką po <Text style={styles.infoMocny}>{w.dniDoLimitu} dniach</Text>.
+                {/* dniDoLimitu = pierwszy dzień, w którym kara ≥ limit (lib zaokrągla w górę). */}
+                Limit kar wyczerpiesz samą zwłoką po{' '}
+                <Text style={styles.infoMocny}>{w.dniDoLimitu} {w.dniDoLimitu === 1 ? 'dniu' : 'dniach'}</Text>.
               </Text>
             </View>
           ) : null}

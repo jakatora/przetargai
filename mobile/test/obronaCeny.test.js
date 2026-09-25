@@ -1,7 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SKLADNIKI, analizaObrony, werdyktObrony, walidujObrone } from '../src/lib/obronaCeny.js';
+import {
+  SKLADNIKI,
+  analizaObrony,
+  werdyktObrony,
+  walidujObrone,
+  ETYKIETA_CENY,
+  PODPOWIEDZ_CENY,
+  MIN_STAWKA_GODZ_2026,
+} from '../src/lib/obronaCeny.js';
 
 // Komplet dowodów dla wszystkich składników.
 const WSZYSTKIE_DOWODY = Object.fromEntries(SKLADNIKI.map((s) => [s.klucz, true]));
@@ -64,6 +72,33 @@ test('analizaObrony: składniki nie sumują się do ceny → ostrzeżenie', () =
   assert.equal(w.zgodna, false);
   assert.equal(w.ton, 'ostrzezenie');
   assert.equal(w.gotowa, false);
+});
+
+// ─── cena NETTO i aktualna stawka minimalna (2026-09-25) ─────────────────────
+// Składniki (netto) porównywano z polem „Cena oferty (zł)", w które wpisuje się cenę brutto
+// jak w formularzu ofertowym → fałszywe „składniki nie sumują się" (różnica = VAT).
+
+test('pole ceny jednoznacznie NETTO: etykieta i podpowiedź „bez VAT — jak składniki"', () => {
+  assert.match(ETYKIETA_CENY, /NETTO/);
+  assert.match(PODPOWIEDZ_CENY, /bez VAT/i);
+  assert.match(PODPOWIEDZ_CENY, /składniki/i);
+});
+
+test('komunikat o niezgodnej sumie mówi o cenie NETTO', () => {
+  const w = analizaObrony({
+    cena: 246000, // ktoś wpisał brutto (200 000 + 23% VAT)
+    skladniki: { robocizna: 100000, materialy: 60000, sprzet: 20000, posrednie: 12000, zysk: 8000 },
+    dowody: WSZYSTKIE_DOWODY,
+  });
+  assert.equal(w.zgodna, false);
+  const problem = w.problemy.find((p) => /nie sumują/.test(p.tekst));
+  assert.match(problem.tekst, /netto/i);
+  assert.match(problem.tekst, /bez VAT/i);
+});
+
+test('minimalna stawka godzinowa 2026 = 31,40 zł (rozp. RM z 11.09.2025) — domyślna podpowiedź', () => {
+  assert.equal(MIN_STAWKA_GODZ_2026, 31.4);
+  assert.equal(walidujObrone({ minStawkaGodz: '31,40' }).maBledy, false);
 });
 
 test('analizaObrony: bez roboczogodzin nie liczymy stawki (nie blokuje)', () => {

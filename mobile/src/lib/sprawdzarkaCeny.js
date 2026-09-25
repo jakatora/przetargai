@@ -6,6 +6,7 @@
  */
 
 import { formatujPLN } from './kalkulatorCeny.js';
+import { iloczynDoGroszy, procentDoGroszy, sumaGroszy } from './grosze.js';
 import { bladKwoty, bladProcentu, bladLiczby, zbierzBledy } from './walidacjaLiczb.js';
 
 export { formatujPLN };
@@ -14,20 +15,25 @@ function num(x) {
   const n = Number(String(x ?? '').replace(/\s/g, '').replace(',', '.'));
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
-const grosze = (n) => Math.round(n * 100) / 100;
 const pusta = (x) => x === '' || x === null || x === undefined;
 
 /**
  * Sprawdza jeden wiersz. `wartoscPodana` (opcjonalna) = wartość netto wpisana w formularzu;
  * gdy podana i różni się od obliczonej → `bladWartosci`.
+ *
+ * Grosze (2026-09-25): wartość = DOKŁADNY iloczyn ilość × cena zaokrąglony połówką w górę
+ * (wspólny `grosze.js`) — `Math.round(q*c*100)/100` dawał 0,5 × 2,01 = 1,00 i fałszywy błąd
+ * rachunkowy przy poprawnym 1,01. VAT liczony PER WIERSZ od zaokrąglonej wartości netto,
+ * brutto = netto + VAT. Uwaga: część formularzy liczy VAT raz od sumy netto (wynik może się
+ * różnić o grosze) — przejście na VAT od sumy to decyzja właściciela produktu, nie tej poprawki.
  */
 export function sprawdzWiersz({ nazwa = '', ilosc, cenaJedn, vat, wartoscPodana } = {}) {
   const q = num(ilosc);
   const c = num(cenaJedn);
   const v = num(vat);
-  const obliczona = grosze(q * c);
-  const vatKwota = grosze((obliczona * v) / 100);
-  const brutto = grosze(obliczona + vatKwota);
+  const obliczona = iloczynDoGroszy([q, c]);
+  const vatKwota = procentDoGroszy(obliczona, v);
+  const brutto = sumaGroszy([obliczona, vatKwota]);
   const podana = pusta(wartoscPodana) ? null : num(wartoscPodana);
   const bladWartosci = podana !== null && Math.abs(podana - obliczona) > 0.001;
   return { nazwa, ilosc: q, cenaJedn: c, vat: v, obliczona, vatKwota, brutto, podana, bladWartosci, maDane: q > 0 && c > 0 };
@@ -41,9 +47,9 @@ export function sprawdzWiersz({ nazwa = '', ilosc, cenaJedn, vat, wartoscPodana 
 export function sprawdzFormularz(wiersze) {
   const pozycje = (Array.isArray(wiersze) ? wiersze : []).map((w, i) => ({ indeks: i, ...sprawdzWiersz(w) }));
   const aktywne = pozycje.filter((p) => p.maDane);
-  const sumaNetto = grosze(aktywne.reduce((s, p) => s + p.obliczona, 0));
-  const sumaVat = grosze(aktywne.reduce((s, p) => s + p.vatKwota, 0));
-  const sumaBrutto = grosze(aktywne.reduce((s, p) => s + p.brutto, 0));
+  const sumaNetto = sumaGroszy(aktywne.map((p) => p.obliczona));
+  const sumaVat = sumaGroszy(aktywne.map((p) => p.vatKwota));
+  const sumaBrutto = sumaGroszy(aktywne.map((p) => p.brutto));
   const bledy = aktywne
     .filter((p) => p.bladWartosci)
     .map((p) => ({ indeks: p.indeks, nazwa: p.nazwa, podana: p.podana, obliczona: p.obliczona }));
