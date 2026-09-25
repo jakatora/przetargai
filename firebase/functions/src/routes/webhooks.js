@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { constructWebhookEvent, pobierzKlientaZCharge } from '../services/stripe.js';
+import {
+  constructWebhookEvent, pobierzKlientaZCharge, statusSubskrypcji, zyweSubskrypcjeKlienta,
+} from '../services/stripe.js';
 import { users, stripeEvents, faktury } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 import { audit } from '../lib/audit.js';
 import { sendEmail, subscriptionActiveEmail } from '../services/email.js';
 import { createStandardInvoice } from '../services/invoice.js';
-import { tierPrzetargAi } from '../lib/subscriptionStatus.js';
+import { tierPrzetargAi, czyZywa } from '../lib/subscriptionStatus.js';
 import { backfillUser } from '../services/matching.js';
 
 /**
@@ -172,8 +174,7 @@ async function obsluzCheckout(session) {
     return;
   }
 
-  if (session.customer) await users.setStripeCustomer(user.id, session.customer);
-  if (session.subscription) await users.setStripeSubscription(user.id, session.subscription);
+  await przypiszKlientaISubskrypcje(user, session);
   await users.setTier(user.id, 'standard');
   audit({ userId: user.id, action: 'subscription_activated' });
   logger.info({ userId: user.id }, 'Subskrypcja Standard aktywowana');
@@ -186,6 +187,69 @@ async function obsluzCheckout(session) {
     .catch((err) => logger.error({ err: err.message, userId: user.id }, 'Email aktywacji nie wysłany'));
 
   await wystawFakture(session, user);
+}
+
+/** Identyfikator obiektu Stripe — pole bywa samym id albo (po `expand`) obiektem. */
+function idObiektu(pole) {
+  if (!pole) return null;
+  return typeof pole === 'string' ? pole : (pole.id ?? null);
+}
+
+/**
+ * Zapisuje klienta i subskrypcję z opłaconego checkoutu, wykrywając DUPLIKAT
+ * (2026-09-25, P2 „osierocona druga subskrypcja").
+ *
+ * Dotąd identyfikator subskrypcji był po prostu NADPISYWANY. Gdy klient miał już
+ * inną żywą subskrypcję (dwie opłacone sesje, zakup po zwrocie/chargebacku), stara
+ * obciążała kartę co miesiąc, a konto nie zostawiało po niej śladu: rezygnacja
+ * i usunięcie konta anulowały tylko nową, a nikt nie wiedział, że stara istnieje.
+ *
+ * Bieżącą zostaje NOWA (klient właśnie za nią zapłacił i widzi „subskrypcja aktywna").
+ * Starą żywą zapisujemy w `stripe_subscription_duplikaty`, logujemy ERROR i zostawiamy
+ * wpis audytu. NICZEGO nie anulujemy ani nie zwracamy — to decyzja właściciela
+ * (twardy zakaz autonomicznego ruchu pieniędzy).
+ */
+async function przypiszKlientaISubskrypcje(user, session) {
+  const klient = idObiektu(session.customer);
+  const nowa = idObiektu(session.subscription);
+
+  if (klient && user.stripe_customer_id && user.stripe_customer_id !== klient) {
+    // Po 2026-09-25 każda sesja idzie na zapisanego klienta — inny klient to sesja
+    // sprzed wdrożenia (customer_email) albo błąd. W obu przypadkach: drugi klient,
+    // najpewniej z drugą subskrypcją, której zdarzenia przestaną trafiać w to konto.
+    logger.error({ userId: user.id, zapisany: user.stripe_customer_id, zSesji: klient, sessionId: session.id },
+      'Checkout opłacony przez INNEGO klienta Stripe niż zapisany przy koncie — sprawdź duplikat klienta i subskrypcji');
+    audit({
+      userId: user.id,
+      action: 'stripe_customer_changed',
+      detail: { poprzedni: user.stripe_customer_id, nowy: klient, sesja: session.id },
+    });
+  }
+  if (klient) await users.setStripeCustomer(user.id, klient);
+  if (!nowa) return;
+
+  const biezaca = user.stripe_subscription_id;
+  if (biezaca && biezaca !== nowa) {
+    const statusStarej = await statusSubskrypcji(biezaca);
+    // „nieznany" (Stripe nie odpowiedział) traktujemy jak żywą: fałszywy alarm kosztuje
+    // spojrzenie właściciela, przeoczony duplikat — podwójne obciążenie co miesiąc.
+    const staraPobieraOplaty = statusStarej === 'nieznany' || czyZywa(statusStarej);
+    if (staraPobieraOplaty) {
+      logger.error({ userId: user.id, stara: biezaca, statusStarej, nowa, sessionId: session.id },
+        'DUPLIKAT SUBSKRYPCJI: klient ma dwie subskrypcje pobierające opłaty — decyzja o zwrocie/anulowaniu '
+        + 'należy do właściciela (kod niczego nie anuluje)');
+      audit({
+        userId: user.id,
+        action: 'subscription_duplicate',
+        detail: { stara: biezaca, status_starej: statusStarej, nowa, sesja: session.id, decyzja: 'wlasciciel' },
+      });
+      await users.dopiszDuplikatSubskrypcji(user.id, biezaca);
+    } else {
+      logger.info({ userId: user.id, stara: biezaca, statusStarej, nowa },
+        'Poprzednia subskrypcja już nie pobiera opłat — bieżącą zostaje nowa');
+    }
+  }
+  await users.setStripeSubscription(user.id, nowa);
 }
 
 /**
@@ -328,6 +392,7 @@ async function obsluzZmianeSubskrypcji(sub) {
     logger.warn({ subId: sub.id, customer: sub.customer }, 'Zmiana subskrypcji: nie znaleziono użytkownika');
     return;
   }
+  if (zignorujNieBiezaca(user, sub, 'customer.subscription.updated')) return;
 
   // `cancel_at_period_end` to zapowiedź, nie fakt: klient zapłacił do końca okresu
   // i ma prawo korzystać. Dostęp odbiera dopiero `customer.subscription.deleted`.
@@ -347,11 +412,75 @@ async function obsluzUsuniecieSubskrypcji(sub) {
 
   const user = await users.findByStripeCustomer(sub.customer);
   if (!user) return;
+  if (zignorujNieBiezaca(user, sub, 'customer.subscription.deleted')) {
+    // Zamknięty duplikat nie jest już czym się martwić — znika z listy do decyzji.
+    if ((user.stripe_subscription_duplikaty ?? []).includes(sub.id)) {
+      await users.usunDuplikatSubskrypcji(user.id, sub.id);
+    }
+    return;
+  }
+
+  /*
+   * Zamknięto BIEŻĄCĄ subskrypcję, ale klient może mieć drugą, która dalej pobiera
+   * opłaty (duplikat, o którym zdecydował właściciel — np. anulował nowszą). Bez tego
+   * sprawdzenia płacący klient spadał do Free (2026-09-25). Przepinamy konto na żywą,
+   * żeby rezygnacja i usunięcie konta trafiały w subskrypcję, która obciąża kartę.
+   * Błąd Stripe rzuca → 500 → Stripe ponowi zdarzenie; do tego czasu plan zostaje
+   * (mniejsze zło niż odcięcie płacącego klienta).
+   */
+  const inne = (await zyweSubskrypcjeKlienta(sub.customer))
+    .filter((s) => s.id !== sub.id && !nalezyDoFittera(s))
+    .sort((a, b) => (b.created ?? 0) - (a.created ?? 0));
+  if (inne.length) {
+    const nastepczyni = inne[0];
+    await users.setStripeSubscription(user.id, nastepczyni.id);
+    await users.usunDuplikatSubskrypcji(user.id, nastepczyni.id);
+    const tier = tierPrzetargAi(nastepczyni.status);
+    if (user.premium_tier !== tier) await users.setTier(user.id, tier);
+    logger.error({ userId: user.id, zamknieta: sub.id, nastepczyni: nastepczyni.id, pozostale: inne.map((s) => s.id) },
+      'Zamknięto bieżącą subskrypcję, ale klient ma inną pobierającą opłaty — konto przepięte na nią (sprawdź duplikat)');
+    audit({
+      userId: user.id,
+      action: 'subscription_switched',
+      detail: { zamknieta: sub.id, nastepczyni: nastepczyni.id, status: nastepczyni.status },
+    });
+    return;
+  }
 
   await users.setTier(user.id, 'free');
   await users.setStripeSubscription(user.id, null);
   audit({ userId: user.id, action: 'subscription_cancelled' });
   logger.info({ userId: user.id }, 'Subskrypcja anulowana — powrót do planu Free');
+}
+
+/**
+ * Zdarzenia subskrypcji, która NIE jest bieżącą subskrypcją konta, nie zmieniają
+ * planu (2026-09-25, P2 „osierocona druga subskrypcja").
+ *
+ * Dotąd `updated`/`deleted` szukały użytkownika po samym kliencie Stripe, więc
+ * `deleted` STAREJ subskrypcji zdejmował plan opłacony NOWĄ. Dodatkowo klient Stripe
+ * jest teraz zapisywany przed płatnością — bez tej bramki wczesne zdarzenie nowej
+ * subskrypcji (np. `incomplete`, którego nie ma w BEZ_DOSTEPU) dawałoby Standard
+ * ZANIM checkout potwierdzi zapłatę. Plan przyznaje wyłącznie opłacony checkout.
+ *
+ * @returns {boolean} true = zdarzenie zignorowane (log + audyt)
+ */
+function zignorujNieBiezaca(user, sub, typ) {
+  if (user.stripe_subscription_id && user.stripe_subscription_id === sub.id) return false;
+
+  const kontekst = { userId: user.id, subId: sub.id, biezaca: user.stripe_subscription_id ?? null, status: sub.status, typ };
+  if (user.stripe_subscription_id && czyZywa(sub.status)) {
+    // Druga subskrypcja, która pobiera opłaty — to jest duplikat, nie szum.
+    logger.error(kontekst, 'Zdarzenie ŻYWEJ subskrypcji innej niż bieżąca — możliwy duplikat, plan bez zmian');
+  } else {
+    logger.warn(kontekst, 'Zdarzenie subskrypcji innej niż bieżąca — plan bez zmian');
+  }
+  audit({
+    userId: user.id,
+    action: 'subscription_event_ignored',
+    detail: { typ, subskrypcja: sub.id, biezaca: user.stripe_subscription_id ?? null, status: sub.status ?? null },
+  });
+  return true;
 }
 
 /**
