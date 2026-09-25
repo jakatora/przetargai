@@ -3,9 +3,9 @@
  * terminie, wykonawcy należą się odsetki ustawowe za opóźnienie w transakcjach handlowych
  * ORAZ stała rekompensata za koszty odzyskiwania należności (art. 10 ustawy o
  * przeciwdziałaniu nadmiernym opóźnieniom w transakcjach handlowych):
- *   • 40 euro  — świadczenie < 5 000 zł
- *   • 70 euro  — świadczenie 5 000 zł do < 50 000 zł
- *   • 100 euro — świadczenie ≥ 50 000 zł
+ *   • 40 euro  — świadczenie nie przekracza 5 000 zł (≤ 5 000 zł)
+ *   • 70 euro  — świadczenie wyższe niż 5 000 zł, ale niższe niż 50 000 zł
+ *   • 100 euro — świadczenie równe lub wyższe od 50 000 zł
  *
  * Odsetki = kwota × stawka_roczna% × dni_opóźnienia / 365. Stawka jest zmienna (obwieszczenie
  * MRPiT), więc podaje ją użytkownik — nie zgadujemy aktualnej wartości. Daty liczone w UTC
@@ -24,10 +24,14 @@ function num(x) {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-/** Kwota rekompensaty w EUR wg progu należności (art. 10 ust. 1). */
+/**
+ * Kwota rekompensaty w EUR wg progu należności (art. 10 ust. 1). Próg 5 000 zł jest
+ * WŁĄCZNIE po stronie 40 € („nie przekracza 5000 złotych") — poprawka 2026-09-25, wcześniej
+ * dokładnie 5 000 zł dawało 70 €.
+ */
 export function rekompensataEUR(kwota) {
   const k = num(kwota);
-  if (k < 5000) return 40;
+  if (k <= 5000) return 40;
   if (k < 50000) return 70;
   return 100;
 }

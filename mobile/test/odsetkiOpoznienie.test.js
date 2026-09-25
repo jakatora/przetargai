@@ -26,8 +26,12 @@ test('zapłata w terminie lub przed → 0 dni i 0 odsetek', () => {
 
 test('rekompensata wg progów należności (art. 10 ust. 1)', () => {
   assert.equal(rekompensataEUR(4999), 40);
-  assert.equal(rekompensataEUR(5000), 70);
+  // art. 10 ust. 1 pkt 1: 40 € gdy świadczenie „nie przekracza 5000 zł" — 5000 zł to jeszcze 40 €.
+  assert.equal(rekompensataEUR(5000), 40);
+  assert.equal(rekompensataEUR('5 000,00'), 40);
+  assert.equal(rekompensataEUR(5000.01), 70);
   assert.equal(rekompensataEUR(49999), 70);
+  assert.equal(rekompensataEUR(49999.99), 70);
   assert.equal(rekompensataEUR(50000), 100);
   assert.equal(rekompensataEUR(250000), 100);
 });
