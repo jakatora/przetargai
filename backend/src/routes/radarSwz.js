@@ -8,6 +8,7 @@ import { analizujSwz } from '../services/analizaSwz.js';
 import { odswiezPostepowanie } from '../jobs/monitorSwz.js';
 import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
 import { terminPytanSwz } from '../lib/terminPytanSwz.js';
+import { trescDokumentu, bladLimituTresci } from '../lib/limityTresci.js';
 
 /*
  * Radar SWZ — uruchomienie ANALIZY treści SWZ dla danego postępowania
@@ -128,10 +129,12 @@ router.get('/postepowania/:id', authRequired, ah(async (req, res) => {
 
 // Wszystkie pola opcjonalne w schemacie; regułę „co najmniej jeden dokument niesie
 // treść" egzekwujemy niżej (maTresc) dla czytelnego 400 — spójnie z /umowa/analiza.
+// Każdy dokument ma twardy limit znaków/linii (lib/limityTresci.js, 2026-09-25) —
+// przekroczenie to 413 z komunikatem PL, zanim cokolwiek trafi do płatnego AI.
 const analizaSchema = z.object({
-  swz: z.string().optional(),
-  umowa: z.string().optional(),
-  przedmiar: z.string().optional(),
+  swz: trescDokumentu().optional(),
+  umowa: trescDokumentu().optional(),
+  przedmiar: trescDokumentu().optional(),
 });
 
 /** Czy żądanie w ogóle niesie coś do analizy (SWZ, umowa lub przedmiar). */
@@ -144,9 +147,9 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
   if (!postepowanie) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');
 
   const parsed = analizaSchema.safeParse(req.body ?? {});
-  if (!parsed.success || !maTresc(parsed.data)) {
-    throw badRequest('Podaj treść do analizy: "swz", "umowa" lub "przedmiar" (co najmniej jedno).');
-  }
+  const brakTresci = 'Podaj treść do analizy: "swz", "umowa" lub "przedmiar" (co najmniej jedno).';
+  if (!parsed.success) throw bladLimituTresci(parsed.error) ?? badRequest(brakTresci);
+  if (!maTresc(parsed.data)) throw badRequest(brakTresci);
 
   const pytania = await analizujSwz({
     swz: parsed.data.swz ?? '',
@@ -168,9 +171,10 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
 
 // Ręczne odświeżenie: opcjonalnie niesie nowo opublikowaną wersję SWZ (treść inline
 // albo ścieżka/URL + hasz). Wszystkie pola opcjonalne — bez treści żądanie i tak
-// odpyta automatyczne źródło (domyślnie stub => nic nowego).
+// odpyta automatyczne źródło (domyślnie stub => nic nowego). `tresc` ma twardy limit
+// znaków/linii (2026-09-25): bez niego diff wersji w wątku głównym mógł zatrzymać proces.
 const odswiezSchema = z.object({
-  tresc: z.string().optional(),
+  tresc: trescDokumentu().optional(),
   sciezka: z.string().optional(),
   hash: z.string().optional(),
   dataPublikacji: z.string().optional(),
@@ -181,7 +185,7 @@ router.post('/postepowania/:id/odswiez', authRequired, ah(async (req, res) => {
   if (!postepowanie) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');
 
   const parsed = odswiezSchema.safeParse(req.body ?? {});
-  if (!parsed.success) throw badRequest('Nieprawidłowe dane odświeżenia SWZ.');
+  if (!parsed.success) throw bladLimituTresci(parsed.error) ?? badRequest('Nieprawidłowe dane odświeżenia SWZ.');
   const d = parsed.data;
 
   // Wersję wgraną ręcznie dokładamy tylko, gdy niesie treść lub ścieżkę — inaczej

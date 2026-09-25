@@ -1,9 +1,10 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Sentry, sentryEnabled } from './lib/sentry.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
+import { zweryfikowanySub } from './middleware/auth.js';
 import healthRouter from './routes/health.js';
 import atlasMostRouter from './routes/atlasMost.js';
 import atlasPilotRouter from './routes/atlasPilot.js';
@@ -41,6 +42,28 @@ export function createApp() {
   // Webhooki montowane PRZED express.json() — wymagają surowego body.
   app.use('/webhooks', webhooksRouter);
 
+  /*
+   * Parsery JSON z WŁASNYM limitem — montowane PRZED globalnym (1 MB). Do 2026-09-25
+   * globalny parser stał pierwszy, a body-parser pomija ciało już raz przeczytane, więc
+   * realny limit KAŻDEJ trasy wynosił 1 MB: plik 900 KB w Sejfie, umowa 2 MB czy zdjęcie
+   * rysunku ISO 3 MB (Fitter!) kończyły się 500. Jedna tabela = jedno miejsce prawdy o
+   * limitach; wartości są DOKŁADNIE te, które trasy deklarowały wcześniej przy montażu.
+   * Parser trasy czyta ciało pierwszy, globalny widzi je już przeczytane i je pomija.
+   */
+  const PARSERY_TRAS = [
+    // Skan ISO: zdjęcia rysunków w base64 ważą 3-8 MB.
+    ['/api/fitter/scan-iso', '12mb'],
+    // Moduły PrzetargAI z dużym wejściem (całe SWZ/umowa, oryginały w base64, zrzuty
+    // ekranu, roczny plan zamawiającego) — uzasadnienia przy montażu tras niżej.
+    ['/api/przetarg/umowa', '10mb'],
+    ['/api/przetarg/swz', '10mb'],
+    ['/api/przetarg/sejf', '10mb'],
+    ['/api/przetarg/czarna-skrzynka', '10mb'],
+    ['/api/przetarg/symulator-plynnosci', '10mb'],
+    ['/api/przetarg/radar-planow', '10mb'],
+  ];
+  for (const [trasa, limit] of PARSERY_TRAS) app.use(trasa, express.json({ limit }));
+
   app.use(express.json({ limit: '1mb' }));
 
   const apiLimiter = rateLimit({
@@ -48,6 +71,21 @@ export function createApp() {
   });
   const authLimiter = rateLimit({
     windowMs: 15 * 60_000, max: 30, standardHeaders: true, legacyHeaders: false,
+  });
+  /*
+   * Limiter modułów PrzetargAI kluczowany po UŻYTKOWNIKU (2026-09-25). Aplikacja woła
+   * /api/przetarg/* przez most w Firebase Cloud Functions, więc cały ruch przychodzi z
+   * kilku adresów Google — limiter po IP wrzucał wszystkich do JEDNEGO kubełka 120/min
+   * i jeden aktywny użytkownik odcinał resztę. Kluczem jest `sub` ZWERYFIKOWANEGO tokenu
+   * (most podpisuje go wspólnym JWT_SECRET, więc klucza nie da się podrobić); bez
+   * poprawnego tokenu — adres IP jak dotąd. Te same okno i limit co apiLimiter.
+   */
+  const przetargLimiter = rateLimit({
+    windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false,
+    keyGenerator: (req) => {
+      const sub = zweryfikowanySub(req);
+      return sub ? `user:${sub}` : `ip:${ipKeyGenerator(req.ip ?? '')}`;
+    },
   });
   // Klucz administratora można było zgadywać bez żadnego ograniczenia — /admin
   // był jedynym routerem bez limitera (audyt 2026-07-09).
@@ -67,14 +105,9 @@ export function createApp() {
   });
 
   // Scan-iso route gets a dedicated, larger JSON parser (base64 ISO photos
-  // run 3-8 MB) layered IN FRONT of the rate limiter + router for this path
-  // only — global parser stays at 1 MB.
-  app.use(
-    '/api/fitter/scan-iso',
-    express.json({ limit: '12mb' }),
-    aiLimiter,
-    fitterScanRouter,
-  );
+  // run 3-8 MB) — registered in PARSERY_TRAS above, BEFORE the global 1 MB
+  // parser, so it still runs in front of the rate limiter + router for this path.
+  app.use('/api/fitter/scan-iso', aiLimiter, fitterScanRouter);
 
   app.use('/health', healthRouter);
   // MOST ATLAS-a (2026-08-13) — przekaźnik telefon ↔ komputer właściciela, żeby apka działała
@@ -95,42 +128,42 @@ export function createApp() {
   app.use('/api/fitter/jobs', apiLimiter, fitterJobsRouter);
   // Analiza projektu umowy — treść bywa duża (całe SWZ/umowa, docelowo PDF),
   // więc trasa dostaje własny, większy parser JSON ponad globalnym limitem 1 MB.
-  app.use('/api/przetarg/umowa', express.json({ limit: '10mb' }), apiLimiter, przetargUmowaRouter);
+  app.use('/api/przetarg/umowa', przetargLimiter, przetargUmowaRouter);
   // Eksport zobowiązania podmiotu (art. 118 Pzp) — małe pola tekstowe, globalny
   // parser JSON (1 MB) wystarcza; „Pożycz doświadczenie" 8/12.
-  app.use('/api/przetarg/zobowiazanie', apiLimiter, przetargZobowiazanieRouter);
+  app.use('/api/przetarg/zobowiazanie', przetargLimiter, przetargZobowiazanieRouter);
   // Radar SWZ — analiza treści SWZ/umowy/przedmiaru (podzadanie 3/7). Wejście bywa
   // duże (całe dokumenty), więc trasa dostaje własny, większy parser JSON (10 MB)
   // ponad globalnym limitem 1 MB — jak /api/przetarg/umowa.
-  app.use('/api/przetarg/swz', express.json({ limit: '10mb' }), apiLimiter, radarSwzRouter);
+  app.use('/api/przetarg/swz', przetargLimiter, radarSwzRouter);
   // Radar zamówień podprogowych (poniżej 170 tys. zł) — preferencje + scalony strumień
   // + ręczne odświeżenie (podzadanie 6/7). Małe payloady (filtry/preferencje), więc
   // globalny parser JSON (1 MB) wystarcza; pod limiterem API jak reszta tras.
-  app.use('/api/przetarg/podprogowe', apiLimiter, radarPodprogowyRouter);
+  app.use('/api/przetarg/podprogowe', przetargLimiter, radarPodprogowyRouter);
   // Sejf dokumentów firmy — lista z licznikiem świeżości + upload ORYGINAŁÓW (XML/
   // podpisany PDF w base64; podpisane PDF-y bywają wielomegabajtowe), więc trasa dostaje
   // własny, większy parser JSON (10 MB) ponad globalnym limitem 1 MB — jak /umowa i /swz.
-  app.use('/api/przetarg/sejf', express.json({ limit: '10mb' }), apiLimiter, sejfDokumentowRouter);
+  app.use('/api/przetarg/sejf', przetargLimiter, sejfDokumentowRouter);
   // Czarna skrzynka składania oferty — rejestrator lotu utrwala dowody (zrzuty ekranu i
   // oryginał oferty w base64 bywają wielomegabajtowe), więc trasa dostaje własny, większy
   // parser JSON (10 MB) ponad globalnym limitem 1 MB — jak /umowa, /swz i /sejf.
-  app.use('/api/przetarg/czarna-skrzynka', express.json({ limit: '10mb' }), apiLimiter, czarnaSkrzynkaRouter);
+  app.use('/api/przetarg/czarna-skrzynka', przetargLimiter, czarnaSkrzynkaRouter);
   // Symulator płynności „czy udźwigniesz kontrakt" — wejście bywa duże (całe SWZ + wzór
   // umowy w treści), więc trasa dostaje własny, większy parser JSON (10 MB) ponad globalnym
   // limitem 1 MB — jak /umowa, /swz, /sejf i /czarna-skrzynka. Endpointy BEZSTANOWE (czyste
   // usługi liczące, bez DB i płatnego AI), pod limiterem API jak reszta tras.
-  app.use('/api/przetarg/symulator-plynnosci', express.json({ limit: '10mb' }), apiLimiter, symulatorPlynnosciRouter);
+  app.use('/api/przetarg/symulator-plynnosci', przetargLimiter, symulatorPlynnosciRouter);
   // Radar planów postępowań — cały roczny plan zamawiającego (art. 23 Pzp) bywa długą listą
   // pozycji, więc trasa dostaje własny, większy parser JSON (10 MB) ponad globalnym limitem
   // 1 MB — jak /umowa, /swz, /sejf, /czarna-skrzynka i /symulator-plynnosci. Endpointy
   // BEZSTANOWE (czyste usługi liczące, bez DB i płatnego AI), pod limiterem API jak reszta.
-  app.use('/api/przetarg/radar-planow', express.json({ limit: '10mb' }), apiLimiter, radarPlanowRouter);
+  app.use('/api/przetarg/radar-planow', przetargLimiter, radarPlanowRouter);
   // Odzyskiwacz zabezpieczenia — pilnowanie zwrotu zabezpieczenia należytego wykonania
   // (art. 453 Pzp): harmonogram transz, alarm wymagalności, wezwanie do zwrotu, porównanie
   // kosztu gotówka vs gwarancja. Małe payloady (kwoty/daty/pola pisma), więc globalny parser
   // JSON (1 MB) wystarcza. Endpointy BEZSTANOWE (czyste liby liczące, bez DB i płatnego AI),
   // pod limiterem API jak reszta tras.
-  app.use('/api/przetarg/zabezpieczenie', apiLimiter, zabezpieczenieZwrotRouter);
+  app.use('/api/przetarg/zabezpieczenie', przetargLimiter, zabezpieczenieZwrotRouter);
   // SmartSpiżarka — publiczny endpoint cen produktów (GET ?productId=<ingredientName>).
   // Tylko odczyt statycznego, ręcznie zweryfikowanego katalogu (mirror seed_prices.json):
   // BEZSTANOWY, bez DB, bez płatnego AI. Reguła money-path: brak potwierdzonego źródła

@@ -29,14 +29,19 @@ migrate();
 
 const { db } = await import('../src/db/index.js');
 const { createApp } = await import('../src/app.js');
+const { users } = await import('../src/db/repos.js');
+const { signToken } = await import('../src/middleware/auth.js');
 
 const TYPY = ['waloryzacja', 'kary', 'odbiory', 'podwykonawcy'];
 const KOLORY = new Set(['zielony', 'pomarańczowy', 'czerwony']);
 
 let server;
 let base;
+// Od 2026-09-25 /analiza wymaga logowania (most z Firebase i aplikacja i tak wysyłają token).
+let token;
 
 before(() => {
+  token = signToken(users.create({ companyNip: null, companyName: null, email: `umowa-${process.pid}@t.pl`, passwordHash: 'h' }).id);
   server = createApp().listen(0);
   base = `http://127.0.0.1:${server.address().port}`;
 });
@@ -51,7 +56,7 @@ after(() => {
 async function analiza(body) {
   const res = await fetch(`${base}/api/przetarg/umowa/analiza`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
   });
   return { status: res.status, json: await res.json() };

@@ -25,6 +25,11 @@ const schema = z.object({
   AI_MATCH_MODEL: z.string().default('claude-haiku-4-5'),
   AI_BUDGET_SOFT_USD: z.coerce.number().nonnegative().default(200),
   AI_BUDGET_HARD_USD: z.coerce.number().nonnegative().default(500),
+  // Dobowy limit płatnych wywołań AI modułów przetargowych NA UŻYTKOWNIKA, łącznie dla
+  // analizy SWZ, opisu różnic SWZ i streszczenia regulaminu (2026-09-25). Bez niego jedyną
+  // granicą była miesięczna bramka budżetu wspólna dla wszystkich aplikacji — jedno konto
+  // mogło ją wyczerpać i zgasić AI reszcie. 30/dobę to kilka postępowań dziennie z zapasem.
+  PRZETARG_AI_DAILY_LIMIT_PER_USER: z.coerce.number().int().positive().default(30),
 
   STRIPE_PUBLISHABLE_KEY: z.string().default(''),
   STRIPE_SECRET_KEY: z.string().default(''),
