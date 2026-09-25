@@ -73,6 +73,30 @@ export const api = onRequest({ secrets: SEKRETY_API, memory: '512MiB', timeoutSe
   return app(req, res);
 });
 
+/*
+ * PONOWIENIA Cloud Schedulera (2026-09-25).
+ *
+ * Komentarze niżej obiecywały, że rzucenie wyjątku „uruchomi ponowienie" — ale żaden
+ * job nie miał `retryCount`, a domyślnie Cloud Scheduler NIE ponawia. Nieudany przebieg
+ * po prostu przepadał do następnego terminu (dla przeglądu tygodnia: tydzień).
+ *
+ * Włączone WYŁĄCZNIE dla jobów idempotentnych — dla pozostałych powtórka byłaby drugim
+ * mailem/pushem (strażnik: test/ponowieniaJobow.test.js):
+ *  • weeklyDigest       — znacznik `meta/digest_<tydzień ISO>` przed wysyłką,
+ *  • remindDeadlines    — transakcyjna rezerwacja etapu przed wysyłką,
+ *  • bzpOknoFetch/bkOknoFetch — checkpoint + docId przetargu = identyfikator źródła,
+ *  • monitorWyszukiwan  — alert z deterministycznym docId, checkpoint po wysyłce,
+ *  • dailyTenderFetch   — dopasowanie z docId = tenderId (push tylko dla nowo
+ *                         utworzonych), ślad oceny chroni przed drugą opłatą za AI.
+ *
+ * W firebase-functions v2 to opcja `retryCount` na PIERWSZYM poziomie `onSchedule`
+ * (scheduler.js składa z niej retryConfig) — zagnieżdżone `retryConfig` byłoby
+ * zignorowane. Ponowienie nie nałoży się na trwający przebieg: firebase-tools ustawia
+ * attemptDeadline zadania = timeoutSeconds funkcji (maks. 1800 s). Odstęp 5 min, bo
+ * natychmiastowa powtórka po awarii źródła (BZP nie odpowiada) nic nie daje.
+ */
+const PONOWIENIA_IDEMPOTENTNE = { retryCount: 2, minBackoffSeconds: 300 };
+
 /**
  * Codzienne pobranie przetargów o 12:00 czasu polskiego (D-021) — nośnikiem
  * jest Cloud Scheduler zamiast node-crona.
@@ -83,6 +107,7 @@ export const api = onRequest({ secrets: SEKRETY_API, memory: '512MiB', timeoutSe
  */
 export const dailyTenderFetch = onSchedule(
   {
+    ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 12 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 540,
@@ -121,6 +146,7 @@ export const dailyTenderFetch = onSchedule(
  */
 export const bzpOknoFetch = onSchedule(
   {
+    ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '20 */3 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 1800,
@@ -156,6 +182,7 @@ export const bzpOknoFetch = onSchedule(
  */
 export const bkOknoFetch = onSchedule(
   {
+    ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '50 */3 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 900,
@@ -177,11 +204,14 @@ export const bkOknoFetch = onSchedule(
 /**
  * Przypomnienia o terminach składania ofert dla ZAPISANYCH przetargów (D-050).
  * Co 6 godzin — częściej niż cykl dobowy, bo terminy „za kilka godzin" muszą
- * zdążyć. Push idzie tylko do użytkowników z tokenem; wpis oznaczany jako
- * powiadomiony, więc każde przypomnienie leci dokładnie raz.
+ * zdążyć. Push idzie tylko do użytkowników z tokenem; etap rezerwowany w transakcji
+ * PRZED wysyłką (2026-09-25), więc każde przypomnienie leci najwyżej raz — także przy
+ * ponowieniu. Nieudany push (awaria Expo) NIE jest błędem joba: wraca w kolejnym
+ * przebiegu z limitem prób. Rzucamy tylko przy błędach infrastruktury.
  */
 export const remindDeadlines = onSchedule(
   {
+    ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 */6 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 300,
@@ -191,6 +221,10 @@ export const remindDeadlines = onSchedule(
   async () => {
     const { runReminderCheck } = await import('./src/jobs/remindDeadlines.js');
     const wynik = await runReminderCheck();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'remindDeadlines: część wpisów padła', ...wynik }));
+      throw new Error(`remindDeadlines: ${wynik.bledy} wpisów zakończyło się błędem`);
+    }
     console.log(JSON.stringify({ severity: 'INFO', message: 'remindDeadlines zakończony', ...wynik }));
   },
 );
@@ -219,6 +253,7 @@ export const remindDeadlines = onSchedule(
  */
 export const monitorWyszukiwan = onSchedule(
   {
+    ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '35 */2 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 540,
@@ -257,9 +292,12 @@ export const monitorWyszukiwan = onSchedule(
  * polskiego — początek tygodnia, gdy firmy planują, w co startować. Wysyłamy tylko
  * do kont z ≥1 nowym dopasowaniem w minionym tygodniu (bez spamu). RESEND_API_KEY
  * do wysyłki; bez niego job działa w trybie degradacji (loguje, nie wysyła).
+ * Znacznik tygodnia (2026-09-25) pozwala bezpiecznie ponowić przebieg po błędzie
+ * wysyłki — ponowienie dosyła tylko tym, którzy jeszcze nie dostali.
  */
 export const weeklyDigest = onSchedule(
   {
+    ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 8 * * 1',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 540,
@@ -269,6 +307,10 @@ export const weeklyDigest = onSchedule(
   async () => {
     const { runWeeklyDigest } = await import('./src/jobs/weeklyDigest.js');
     const wynik = await runWeeklyDigest();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'weeklyDigest: część wysyłek padła', ...wynik }));
+      throw new Error(`weeklyDigest: ${wynik.bledy} wysyłek zakończyło się błędem`);
+    }
     console.log(JSON.stringify({ severity: 'INFO', message: 'weeklyDigest zakończony', ...wynik }));
   },
 );

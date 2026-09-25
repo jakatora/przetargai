@@ -1239,6 +1239,139 @@ export const saved = {
     }
     return d.remind_etap ?? null;
   },
+
+  /**
+   * Rezerwuje etap przypomnienia PRZED wysyłką — w transakcji (2026-09-25, P2).
+   *
+   * Dotąd job wysyłał push, a etap przesuwał DOPIERO potem i bez warunku: dwa
+   * równoległe przebiegi (podwójne wyzwolenie Cloud Schedulera, ponowienie) widziały
+   * ten sam wymagalny wpis i obydwa wysyłały. Teraz przesunięcie jest warunkowe:
+   * przechodzi tylko, gdy wpis wciąż ma DOKŁADNIE ten etap i `remind_at`, które job
+   * odczytał — drugi przebieg dostaje `zajete` i nic nie wysyła. Awarię wysyłki
+   * odkręca `cofnijEtap` (z limitem prób).
+   *
+   * `termin` to AKTUALNY termin z dokumentu przetargu (P1): gdy w źródle się zmienił,
+   * wpis dostaje nowy termin, a etapy liczymy od nowa — zamiast „zostało 7 dni"
+   * przy terminie przesuniętym o dwa miesiące. Termin miniony zamyka przypomnienie.
+   *
+   * @param {{etap: number, remindAt: string, termin?: string|null, teraz?: string}} oczekiwane
+   * @returns {Promise<{stan: 'zarezerwowany', etap: number, termin: string, poprzedni: object, ustawione: object}
+   *   | {stan: 'zajete'|'brak'|'przeplanowany'|'zakonczony', powod?: string}>}
+   */
+  async zarezerwujEtap(userId, tenderId, { etap, remindAt, termin = null, teraz = nowIso() }) {
+    const ref = savedCol(userId).doc(tenderId);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return { stan: 'brak' };
+      const d = doc.data();
+      if (d.reminder_enabled !== true || d.reminder_notified === true
+          || d.remind_etap !== etap || d.remind_at !== remindAt) {
+        return { stan: 'zajete' };
+      }
+
+      const wyslane = (d.reminded_stages ?? []).filter((x) => typeof x === 'number');
+      const aktualny = termin || d.tender_deadline || null;
+      // Porównanie po czasie, nie po napisie — ten sam termin bywa zapisany z innym formatem.
+      const zmienionyTermin = Boolean(termin)
+        && new Date(termin).getTime() !== new Date(d.tender_deadline ?? NaN).getTime();
+      const pola = zmienionyTermin ? { tender_deadline: termin } : {};
+      const koniec = (powod) => {
+        tx.update(ref, { ...pola, reminder_notified: true, remind_proby: 0 });
+        return { stan: 'zakonczony', powod };
+      };
+
+      const terminMs = aktualny ? new Date(aktualny).getTime() : NaN;
+      if (!Number.isFinite(terminMs) || terminMs <= new Date(teraz).getTime()) return koniec('po_terminie');
+
+      let etapDoWyslania = d.remind_etap;
+      if (pola.tender_deadline) {
+        const plan = nastepneRemind(aktualny, teraz, wyslane);
+        if (!plan) return koniec('termin_zmieniony');
+        if (plan.at > teraz) {
+          tx.update(ref, { ...pola, remind_at: plan.at, remind_etap: plan.etap, remind_proby: 0 });
+          return { stan: 'przeplanowany', remind_at: plan.at, etap: plan.etap };
+        }
+        etapDoWyslania = plan.etap;
+      }
+
+      const poWysylce = [...wyslane, etapDoWyslania];
+      const nast = nastepneRemind(aktualny, teraz, poWysylce);
+      const ustawione = nast
+        ? { remind_at: nast.at, remind_etap: nast.etap, reminder_notified: false }
+        : { remind_at: d.remind_at, remind_etap: d.remind_etap, reminder_notified: true };
+      tx.update(ref, { ...pola, ...ustawione, reminded_stages: poWysylce, remind_proby: 0 });
+      return {
+        stan: 'zarezerwowany',
+        etap: etapDoWyslania,
+        termin: aktualny,
+        poprzedni: { reminded_stages: wyslane, remind_proby: d.remind_proby ?? 0 },
+        ustawione,
+      };
+    });
+  },
+
+  /**
+   * Odkręca rezerwację etapu po NIEUDANEJ wysyłce (2026-09-25, P1).
+   *
+   * `sendPush` nie rzuca — zwraca `{sent, failed}`. Job liczył wysyłkę jako udaną
+   * i przesuwał etap bez patrzenia na wynik, więc chwilowa awaria Expo po cichu
+   * kasowała przypomnienie o terminie. Teraz etap wraca z odstępem `odstepMs`
+   * (kolejny przebieg, nie pętla w tym samym), a po `maksProb` nieudanych próbach
+   * — albo gdy ponowienie wypadłoby po terminie — zostaje zamknięty.
+   *
+   * Odkręcamy tylko, jeśli wpis wciąż wygląda tak, jak zostawiła go rezerwacja —
+   * gdy użytkownik w międzyczasie wyłączył albo przestawił przypomnienie, jego
+   * decyzja wygrywa.
+   *
+   * @returns {Promise<{stan: 'ponowienie'|'porzucony'|'zmienione'|'brak', proby?: number}>}
+   */
+  async cofnijEtap(userId, tenderId, rezerwacja, { teraz = nowIso(), maksProb, odstepMs }) {
+    const ref = savedCol(userId).doc(tenderId);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return { stan: 'brak' };
+      const d = doc.data();
+      const u = rezerwacja.ustawione;
+      if (d.reminder_enabled !== true || d.remind_at !== u.remind_at || d.remind_etap !== u.remind_etap
+          || (d.reminder_notified === true) !== u.reminder_notified) {
+        return { stan: 'zmienione' };
+      }
+
+      const proby = (rezerwacja.poprzedni.remind_proby ?? 0) + 1;
+      const ponownieMs = new Date(teraz).getTime() + odstepMs;
+      const przedTerminem = ponownieMs < new Date(rezerwacja.termin).getTime();
+      // Etap zostaje zamknięty tak, jak go zostawiła rezerwacja (licznik już wyzerowany).
+      if (proby >= maksProb || !przedTerminem) return { stan: 'porzucony', proby };
+
+      tx.update(ref, {
+        remind_at: new Date(ponownieMs).toISOString(),
+        remind_etap: rezerwacja.etap,
+        reminded_stages: rezerwacja.poprzedni.reminded_stages,
+        reminder_notified: false,
+        remind_proby: proby,
+      });
+      return { stan: 'ponowienie', proby };
+    });
+  },
+
+  /**
+   * Zamyka przypomnienie bez wysyłki — np. przetarg ANULOWANY przez zamawiającego
+   * (2026-09-25, P1: job przypominał o postępowaniach, których już nie ma).
+   * @returns {Promise<boolean>} false, gdy wpisu już nie ma
+   */
+  async zakonczPrzypomnienie(userId, tenderId, powod) {
+    try {
+      await savedCol(userId).doc(tenderId).update({
+        reminder_notified: true,
+        reminder_zakonczone_powod: powod,
+        remind_proby: 0,
+      });
+      return true;
+    } catch (err) {
+      if (err.code === 5 /* NOT_FOUND */) return false;
+      throw err;
+    }
+  },
 };
 
 // ============================ znacznik cotygodniowego przeglądu ============================
