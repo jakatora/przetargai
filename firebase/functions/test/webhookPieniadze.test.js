@@ -217,6 +217,10 @@ test('subscription.updated: niepłacący traci Standard, płacący go odzyskuje'
   const user = await dodajUsera();
   const cus = `cus_deg_${process.pid}`;
   await users.setStripeCustomer(user.id, cus);
+  // 2026-09-25: zdarzenie działa tylko dla BIEŻĄCEJ subskrypcji konta (ustawianej przez
+  // opłacony checkout) — zdarzenia innych subskrypcji klienta nie zmieniają planu
+  // (test/subskrypcjaJedna.test.js).
+  await users.setStripeSubscription(user.id, 'sub_d');
   await users.setTier(user.id, 'standard');
 
   await handleEvent({ type: 'customer.subscription.updated', data: { object: { id: 'sub_d', customer: cus, status: 'unpaid' } } });

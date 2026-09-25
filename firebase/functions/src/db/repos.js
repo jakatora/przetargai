@@ -160,6 +160,48 @@ export const users = {
   },
 
   /**
+   * Zapisuje klienta Stripe TYLKO, gdy konto jeszcze go nie ma (2026-09-25, P2
+   * „osierocona druga subskrypcja"). Transakcja: dwa równoległe checkouty nie mogą
+   * nadpisać sobie nawzajem klienta — przegrany dostaje identyfikator zwycięzcy,
+   * więc obie sesje trafiają do jednego klienta, a sprawdzenie „czy już płaci"
+   * widzi wszystkie jego subskrypcje.
+   *
+   * @returns {Promise<string>} identyfikator klienta, który OBOWIĄZUJE dla konta
+   */
+  async ustawStripeCustomerJesliBrak(id, customerId) {
+    const ref = db().collection('users').doc(id);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) throw new Error(`Użytkownik ${id} nie istnieje`);
+      const zapisany = doc.data().stripe_customer_id;
+      if (zapisany) return zapisany;
+      tx.update(ref, { stripe_customer_id: customerId, updated_at: nowIso() });
+      return customerId;
+    });
+  },
+
+  /**
+   * Odnotowuje przy koncie DRUGĄ żywą subskrypcję, która przestała być bieżącą
+   * (2026-09-25). Wcześniej jej identyfikator był po prostu nadpisywany — subskrypcja
+   * obciążała kartę co miesiąc, a konto nie zostawiało po niej żadnego śladu.
+   * O zwrocie/anulowaniu decyduje właściciel; lista mówi mu, czego szukać.
+   */
+  async dopiszDuplikatSubskrypcji(id, subscriptionId) {
+    await db().collection('users').doc(id).update({
+      stripe_subscription_duplikaty: FieldValue.arrayUnion(subscriptionId),
+      updated_at: nowIso(),
+    });
+  },
+
+  /** Zdejmuje subskrypcję z listy duplikatów (została zamknięta albo stała się bieżącą). */
+  async usunDuplikatSubskrypcji(id, subscriptionId) {
+    await db().collection('users').doc(id).update({
+      stripe_subscription_duplikaty: FieldValue.arrayRemove(subscriptionId),
+      updated_at: nowIso(),
+    });
+  },
+
+  /**
    * Znacznik ostatniego obsłużonego cyklu dopasowań. Cykl sortuje po nim rosnąco,
    * więc gdy zabraknie czasu, następny przebieg zaczyna od pominiętych zamiast
    * co dzień głodzić tych samych użytkowników (audyt 2026-07-10).

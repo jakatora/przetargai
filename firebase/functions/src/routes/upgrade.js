@@ -4,8 +4,11 @@ import { ah } from '../lib/asyncHandler.js';
 import { env } from '../config.js';
 import { users, magicLinks } from '../db/repos.js';
 import { consumeUpgradeLink } from '../services/magicLink.js';
-import { createCheckoutSession, isStripeEnabled, zaplanujAnulowanieNaKoniecOkresu } from '../services/stripe.js';
-import { badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
+import {
+  createCheckoutSession, isStripeEnabled, zaplanujAnulowanieNaKoniecOkresu,
+  utworzKlientaStripe, zyweSubskrypcjeKlienta, wygasOtwarteSesje,
+} from '../services/stripe.js';
+import { badRequest, conflict, notFound, serviceUnavailable } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { audit } from '../lib/audit.js';
 import { logger } from '../lib/logger.js';
@@ -24,9 +27,10 @@ const upgradeSchema = z.object({
  *
  * KOLEJNOŚĆ (naprawa audytu 2026-07-09): dawniej link był ZUŻYWANY (markUsed)
  * PRZED utworzeniem sesji Stripe, więc przejściowy błąd Stripe bezpowrotnie palił
- * jednorazowy token. Teraz: (1) peek — walidacja bez zużycia, (2) sesja Stripe,
- * (3) consume — transakcyjne zużycie DOPIERO po sukcesie. Gdy Stripe padnie, link
- * zostaje ważny i użytkownik może spróbować ponownie.
+ * jednorazowy token. Teraz: (1) peek — walidacja bez zużycia, (2) klient Stripe
+ * i blokada drugiej subskrypcji (2026-09-25), (3) sesja Stripe, (4) consume —
+ * transakcyjne zużycie DOPIERO po sukcesie. Gdy Stripe padnie, link zostaje ważny
+ * i użytkownik może spróbować ponownie.
  */
 async function startCheckout({ userId, token, req }) {
   const user = await users.findById(userId);
@@ -42,14 +46,53 @@ async function startCheckout({ userId, token, req }) {
     throw serviceUnavailable('Płatności chwilowo niedostępne — skontaktuj się z obsługą');
   }
 
-  // 2) Sesja Stripe. Gdyby rzuciła (błąd sieci / brak price), link NIE jest jeszcze zużyty.
+  /*
+   * 2) JEDEN klient Stripe i ŻADNEJ drugiej subskrypcji (2026-09-25, P2).
+   *
+   * Dotąd sprawdzaliśmy wyłącznie lokalny `premium_tier`. Po zwrocie albo chargebacku
+   * plan spada do Free, a subskrypcja w Stripe ŻYJE i dalej obciąża kartę — nowy
+   * zakup zakładał wtedy drugą, a rezygnacja i usunięcie konta trafiały tylko w nią.
+   * Źródłem prawdy o tym, czy klient płaci, jest Stripe, nie nasza kopia planu.
+   */
+  const customerId = user.stripe_customer_id
+    || await users.ustawStripeCustomerJesliBrak(user.id, await utworzKlientaStripe(user));
+
+  let zywe;
+  try {
+    zywe = await zyweSubskrypcjeKlienta(customerId);
+  } catch (err) {
+    // Fail-closed: bez pewności, że klient nie płaci już za Standard, nie otwieramy płatności.
+    logger.error({ err: err.message, userId: user.id }, 'Nie udało się sprawdzić subskrypcji klienta w Stripe — checkout wstrzymany');
+    throw serviceUnavailable('Płatności chwilowo niedostępne — spróbuj ponownie za chwilę');
+  }
+  if (zywe.length) {
+    audit({
+      userId: user.id,
+      action: 'checkout_blocked_active_subscription',
+      detail: { subskrypcje: zywe.map((s) => ({ id: s.id, status: s.status })) },
+      ip: req.ip,
+    });
+    logger.warn({ userId: user.id, subskrypcje: zywe.map((s) => s.id) },
+      'Checkout zablokowany — klient ma już żywą subskrypcję w Stripe (ochrona przed podwójną opłatą)');
+    throw conflict(
+      'Masz już aktywną subskrypcję PrzetargAI w systemie płatności — nie zakładamy drugiej, '
+      + 'żeby nie pobrać opłaty podwójnie. Jeśli plan Standard nie działa w aplikacji, '
+      + 'napisz do obsługi (odpowiedz na dowolny e-mail od PrzetargAI), a przywrócimy dostęp.',
+    );
+  }
+
+  // Druga karta przeglądarki z otwartą sesją to druga subskrypcja po opłaceniu obu.
+  await wygasOtwarteSesje(customerId);
+
+  // 3) Sesja Stripe. Gdyby rzuciła (błąd sieci / brak price), link NIE jest jeszcze zużyty.
   const session = await createCheckoutSession({
     user,
+    customerId,
     successUrl: `${env.APP_URL}/upgrade/success`,
     cancelUrl: `${env.APP_URL}/upgrade/cancel`,
   });
 
-  // 3) Sesja istnieje — teraz zużywamy link transakcyjnie i jednorazowo.
+  // 4) Sesja istnieje — teraz zużywamy link transakcyjnie i jednorazowo.
   const consumed = await consumeUpgradeLink(userId, token);
   if (!consumed) {
     // Ktoś zużył link równolegle między peek a consume (albo właśnie wygasł).
