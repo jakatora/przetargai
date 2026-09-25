@@ -20,7 +20,11 @@
  *
  * Cała arytmetyka idzie w UTC (Date.UTC / getUTC*), żeby wynik nie zależał od
  * strefy czasowej środowiska (test, telefon) — liczymy dni kalendarzowe, nie chwile.
+ * Wyjątek: CHWILA upływu terminu (odliczanie) to 24:00 czasu polskiego — patrz
+ * {@link ./dataUtc koniecDniaPL}.
  */
+
+import { koniecDniaPL } from './dataUtc.js';
 
 export const MS_DZIEN = 24 * 60 * 60 * 1000;
 const MS_GODZINA = 60 * 60 * 1000;
@@ -190,10 +194,12 @@ export function oblicz_termin_kio(data_ogloszenia_wyniku, tryb) {
  * ({@link ../lib/poprzetargowaKontrola dolaczPozostalyCzas}).
  *
  * Termin PRAWNY obejmuje CAŁY dzień graniczny — odwołanie do KIO można wnieść aż
- * do końca tej daty. Dlatego moment upływu = KONIEC dnia granicznego = północ
- * dnia następnego (w UTC, jak cała arytmetyka tego pliku — liczymy dni
- * kalendarzowe, nie chwile lokalne). Świadomie inaczej niż {@link ../lib/termin
- * opisTerminu}, gdzie `deadline` niesie konkretną godzinę złożenia oferty.
+ * do końca tej daty. Dlatego moment upływu = KONIEC dnia granicznego = 24:00
+ * czasu POLSKIEGO ({@link ./dataUtc koniecDniaPL}). Poprawka 2026-09-25: wcześniej
+ * brana była północ UTC (01:00/02:00 w Polsce) — o 00:30 PL dnia następnego
+ * odliczanie wciąż pokazywało, że termin trwa. Świadomie inaczej niż
+ * {@link ../lib/termin opisTerminu}, gdzie `deadline` niesie konkretną godzinę
+ * złożenia oferty.
  *
  * `dni`/`godziny` to rozbicie pozostałego czasu w DÓŁ (floor): „zostały co
  * najmniej 3 dni i 5 godz." — bez zawyżania, bo spóźnione odwołanie KIO odrzuca.
@@ -210,7 +216,7 @@ export function pozostaly_czas_do(termin, teraz = Date.now()) {
   const dzienMs = naDzienUTC(termin);
   if (dzienMs === null) return null;
 
-  const uplywMs = dzienMs + MS_DZIEN; // koniec dnia granicznego = północ następnego dnia
+  const uplywMs = koniecDniaPL(dzienMs); // koniec dnia granicznego = 24:00 czasu polskiego
   const pozostaloMs = uplywMs - teraz;
 
   if (pozostaloMs <= 0) {

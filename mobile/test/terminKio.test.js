@@ -140,14 +140,16 @@ test('data o poprawnym kształcie, ale nieistniejąca → null (bez cichej norma
 /*
  * ===== Odliczanie do upływu terminu — pozostaly_czas_do (podzadanie 4/13) =====
  * `teraz` wstrzykiwany jako ms (UTC), żeby test nie zależał od zegara/strefy.
- * Moment upływu = koniec dnia granicznego = północ dnia następnego (UTC).
+ * Moment upływu = koniec dnia granicznego = 24:00 CZASU POLSKIEGO (poprawka
+ * 2026-09-25: wcześniej północ UTC, czyli 01:00/02:00 w Polsce). W sierpniu
+ * obowiązuje CEST (UTC+2), więc dzień D upływa o 22:00 UTC.
  */
 
 // --- Pełne dni / dni + godziny (rozbicie w dół) ---
 
 test('pozostaly_czas_do: równe pełne dni przed terminem', () => {
-  // 2026-08-10 → upływ 2026-08-11T00:00Z; teraz 2026-08-05T00:00Z = dokładnie 6 dni.
-  const r = pozostaly_czas_do('2026-08-10', Date.UTC(2026, 7, 5, 0, 0, 0));
+  // 2026-08-10 → upływ 2026-08-10T22:00Z; teraz 2026-08-04T22:00Z (00:00 PL 05.08) = dokładnie 6 dni.
+  const r = pozostaly_czas_do('2026-08-10', Date.UTC(2026, 7, 4, 22, 0, 0));
   assert.deepEqual(
     { poTerminie: r.poTerminie, dni: r.dni, godziny: r.godziny },
     { poTerminie: false, dni: 6, godziny: 0 },
@@ -155,8 +157,8 @@ test('pozostaly_czas_do: równe pełne dni przed terminem', () => {
 });
 
 test('pozostaly_czas_do: dni + godziny liczone w dół (floor, bez zawyżania)', () => {
-  // upływ 2026-08-11T00:00Z − teraz 2026-08-05T10:30Z = 5 dni 13 godz. 30 min → 5 dni 13 godz.
-  const r = pozostaly_czas_do('2026-08-10', Date.UTC(2026, 7, 5, 10, 30, 0));
+  // upływ 2026-08-10T22:00Z − teraz 2026-08-05T08:30Z = 5 dni 13 godz. 30 min → 5 dni 13 godz.
+  const r = pozostaly_czas_do('2026-08-10', Date.UTC(2026, 7, 5, 8, 30, 0));
   assert.equal(r.poTerminie, false);
   assert.equal(r.dni, 5);
   assert.equal(r.godziny, 13);
@@ -165,8 +167,8 @@ test('pozostaly_czas_do: dni + godziny liczone w dół (floor, bez zawyżania)',
 // --- Cały dzień graniczny jest jeszcze ważny (kluczowa semantyka) ---
 
 test('pozostaly_czas_do: rano DNIA granicznego termin NIE minął (można wnieść do końca dnia)', () => {
-  // termin 2026-08-05, teraz 2026-08-05T09:00Z → do północy 2026-08-06 zostaje 15 godz.
-  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 5, 9, 0, 0));
+  // termin 2026-08-05, teraz 09:00 PL (07:00Z) → do 24:00 PL zostaje 15 godz.
+  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 5, 7, 0, 0));
   assert.equal(r.poTerminie, false);
   assert.equal(r.dni, 0);
   assert.equal(r.godziny, 15);
@@ -174,8 +176,8 @@ test('pozostaly_czas_do: rano DNIA granicznego termin NIE minął (można wnieś
 
 // --- Granica i po terminie ---
 
-test('pozostaly_czas_do: dokładnie w chwili upływu (północ następnego dnia) → po terminie', () => {
-  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 6, 0, 0, 0));
+test('pozostaly_czas_do: dokładnie w chwili upływu (24:00 PL) → po terminie', () => {
+  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 5, 22, 0, 0));
   assert.deepEqual(
     { poTerminie: r.poTerminie, dni: r.dni, godziny: r.godziny },
     { poTerminie: true, dni: 0, godziny: 0 },
@@ -184,17 +186,43 @@ test('pozostaly_czas_do: dokładnie w chwili upływu (północ następnego dnia)
 });
 
 test('pozostaly_czas_do: po upływie → poTerminie=true, dni/godziny=0, ujemny pozostaloMs', () => {
-  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 6, 0, 0, 1)); // sekunda po
+  const r = pozostaly_czas_do('2026-08-05', Date.UTC(2026, 7, 5, 22, 0, 1)); // sekunda po
   assert.equal(r.poTerminie, true);
   assert.equal(r.dni, 0);
   assert.equal(r.godziny, 0);
   assert.equal(r.pozostaloMs, -1000);
 });
 
+// --- Strefa Europe/Warsaw (błąd P1 z recenzji 2026-09-25) ---
+
+test('pozostaly_czas_do: 00:30 PL dnia następnego to JUŻ po terminie (w UTC jeszcze 10.06)', () => {
+  // 00:30 CEST 11.06 = 22:30 UTC 10.06 — liczone wg północy UTC dawało „zostało 1 godz. 30 min"
+  const r = pozostaly_czas_do('2026-06-10', Date.UTC(2026, 5, 10, 22, 30));
+  assert.equal(r.poTerminie, true);
+  assert.equal(r.dni, 0);
+  assert.equal(r.godziny, 0);
+});
+
+test('pozostaly_czas_do: 23:00 PL dnia granicznego zostaje 1 godz. (nie 3)', () => {
+  const r = pozostaly_czas_do('2026-06-10', Date.UTC(2026, 5, 10, 21, 0));
+  assert.deepEqual(
+    { poTerminie: r.poTerminie, dni: r.dni, godziny: r.godziny },
+    { poTerminie: false, dni: 0, godziny: 1 },
+  );
+});
+
+test('pozostaly_czas_do: zimą (CET) dzień upływa o 23:00 UTC', () => {
+  const przed = pozostaly_czas_do('2026-01-15', Date.UTC(2026, 0, 15, 22, 30)); // 23:30 PL
+  assert.equal(przed.poTerminie, false);
+  assert.equal(przed.pozostaloMs, 30 * 60 * 1000);
+  const po = pozostaly_czas_do('2026-01-15', Date.UTC(2026, 0, 15, 23, 0)); // 24:00 PL
+  assert.equal(po.poTerminie, true);
+});
+
 // --- Formaty wejścia (spójnie z oblicz_termin_kio) ---
 
 test('pozostaly_czas_do: akceptuje Date i pełny ISO (dzień z pierwszych 10 znaków)', () => {
-  const teraz = Date.UTC(2026, 7, 5, 0, 0, 0);
+  const teraz = Date.UTC(2026, 7, 4, 22, 0, 0);
   const zDate = pozostaly_czas_do(new Date(Date.UTC(2026, 7, 10)), teraz);
   const zIso = pozostaly_czas_do('2026-08-10T23:30:00Z', teraz); // godzina nie przesuwa dnia
   assert.equal(zDate.dni, 6);
@@ -215,8 +243,8 @@ test('pozostaly_czas_do: nieczytelny/pusty termin → null (jak oblicz_termin_ki
 test('pozostaly_czas_do: łańcuch z oblicz_termin_kio', () => {
   const termin = oblicz_termin_kio('2026-07-20', 'unijny'); // → 2026-07-30
   assert.equal(termin, '2026-07-30');
-  // teraz 2026-07-25T00:00Z → upływ 2026-07-31T00:00Z = 6 dni.
-  const r = pozostaly_czas_do(termin, Date.UTC(2026, 6, 25, 0, 0, 0));
+  // teraz 2026-07-24T22:00Z (00:00 PL 25.07) → upływ 2026-07-30T22:00Z = 6 dni.
+  const r = pozostaly_czas_do(termin, Date.UTC(2026, 6, 24, 22, 0, 0));
   assert.equal(r.poTerminie, false);
   assert.equal(r.dni, 6);
 });

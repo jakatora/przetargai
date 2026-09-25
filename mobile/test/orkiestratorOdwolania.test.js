@@ -102,6 +102,25 @@ test('uruchomSciezkeOdwolania: domyka termin na kontroli założonej BEZ terminu
   assert.equal(kontrola.terminOdwolaniaKio, oblicz_termin_kio('2026-07-06', undefined));
 });
 
+// Poprawka 2026-09-25: „dziś" (dzień oznaczenia przegranej) to dzień w POLSCE, nie w UTC.
+test('uruchomSciezkeOdwolania: „dziś" liczone po polskiej północy', async () => {
+  const mag = atrapaMagazynu();
+  // 00:30 CEST 07.07 = 22:30 UTC 06.07 — wg UTC byłby jeszcze 06.07 (termin o dzień za wcześnie).
+  const teraz = Date.UTC(2026, 6, 6, 22, 30);
+  const kontrola = await uruchomSciezkeOdwolania(mag, { id: 'BZP-PL' }, { teraz });
+  assert.equal(kontrola.dataOgloszeniaWyniku, '2026-07-07');
+  assert.equal(kontrola.terminOdwolaniaKio, oblicz_termin_kio('2026-07-07', undefined));
+});
+
+test('powiadomienieOTerminieKio: po polskiej północy dnia granicznego nie ma już o czym przypominać', () => {
+  // 00:30 CEST 21.07 = 22:30 UTC 20.07 — termin 20.07 upłynął o 24:00 PL.
+  const plan = powiadomienieOTerminieKio(
+    { terminOdwolaniaKio: '2026-07-20' },
+    { teraz: Date.UTC(2026, 6, 20, 22, 30) },
+  );
+  assert.equal(plan, null);
+});
+
 test('uruchomSciezkeOdwolania: brak id → null (nie wywraca UI)', async () => {
   const mag = atrapaMagazynu();
   const wynik = await uruchomSciezkeOdwolania(mag, {}, { teraz: TERAZ });
@@ -114,8 +133,9 @@ test('powiadomienieOTerminieKio: plan odpalany 2 dni przed upływem terminu', ()
     { teraz: TERAZ },
   );
   assert.ok(plan);
-  // Upływ = koniec dnia 2026-07-20 = północ 2026-07-21. Próg 2 dni → 2026-07-19 00:00.
-  assert.equal(plan.uruchomOMs, Date.UTC(2026, 6, 19, 0, 0, 0));
+  // Upływ = koniec dnia 2026-07-20 = 24:00 PL (CEST) = 2026-07-20T22:00Z.
+  // Próg 2 dni → 2026-07-18T22:00Z (00:00 PL 19.07).
+  assert.equal(plan.uruchomOMs, Date.UTC(2026, 6, 18, 22, 0, 0));
   assert.ok(plan.uruchomOMs > TERAZ);
   assert.equal(plan.terminPL, '20.07.2026');
   assert.match(plan.tresc, /20\.07\.2026/);
@@ -137,8 +157,8 @@ test('powiadomienieOTerminieKio: konfigurowalny próg dni', () => {
     { terminOdwolaniaKio: '2026-07-20' },
     { teraz: TERAZ, progDniPrzypomnienia: 5 },
   );
-  // Upływ 2026-07-21 00:00 − 5 dni = 2026-07-16 00:00.
-  assert.equal(plan.uruchomOMs, Date.UTC(2026, 6, 16, 0, 0, 0));
+  // Upływ 2026-07-20T22:00Z (24:00 PL) − 5 dni = 2026-07-15T22:00Z.
+  assert.equal(plan.uruchomOMs, Date.UTC(2026, 6, 15, 22, 0, 0));
 });
 
 test('powiadomienieOTerminieKio: brak terminu → null', () => {
@@ -158,6 +178,6 @@ test('DOMYSLNY_PROG_PRZYPOMNIENIA_DNI to sensowna, krótka wartość', () => {
   assert.equal(DOMYSLNY_PROG_PRZYPOMNIENIA_DNI, 2);
   // Sanity: domyślny próg zgodny z odległością upływ−uruchom dla dalekiego terminu.
   const plan = powiadomienieOTerminieKio({ terminOdwolaniaKio: '2026-07-20' }, { teraz: TERAZ });
-  const uplywMs = Date.UTC(2026, 6, 21, 0, 0, 0);
+  const uplywMs = Date.UTC(2026, 6, 20, 22, 0, 0); // 24:00 PL 20.07
   assert.equal(uplywMs - plan.uruchomOMs, DOMYSLNY_PROG_PRZYPOMNIENIA_DNI * MS_DZIEN);
 });

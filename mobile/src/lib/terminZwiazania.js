@@ -12,10 +12,10 @@
  *  - art. 226 ust. 1 pkt 4 — oferta z upływem terminu związania podlega odrzuceniu.
  *  - wadium musi zabezpieczać ofertę przez CAŁY termin związania (i jego przedłużenie).
  *
- * Czas wstrzykiwany; arytmetyka dat w UTC (przez `dataUtc`).
+ * Czas wstrzykiwany; arytmetyka dat w UTC (przez `dataUtc`), a „dziś" to dzień w Polsce.
  */
 
-import { naDzienUTC, roznicaDni, dzisiajUTC, odmianaDni } from './dataUtc.js';
+import { naDzienUTC, roznicaDni, dzisiajPL, odmianaDni } from './dataUtc.js';
 
 /** Maksymalne długości terminu związania wg wartości (art. 220 ust. 1) — do podpowiedzi. */
 export const MAKS_TERMINY = Object.freeze([
@@ -33,7 +33,9 @@ export const MAKS_TERMINY = Object.freeze([
  */
 export function analizaZwiazania(we = {}, teraz = Date.now()) {
   const termin = naDzienUTC(we.terminZwiazania);
-  const dzis = dzisiajUTC(teraz);
+  // Poprawka 2026-09-25: dzień kalendarzowy w POLSCE — wg UTC o 00:30 PL „dziś" było jeszcze
+  // wczoraj i termin, który już upłynął, pokazywał się jako „upływa dziś".
+  const dzis = dzisiajPL(teraz);
   if (termin === null) {
     return {
       znany: false, dniDoKonca: null, poTerminie: false, wadiumPokrywa: null, wadiumDni: null,

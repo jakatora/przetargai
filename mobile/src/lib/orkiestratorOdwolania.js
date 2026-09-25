@@ -24,7 +24,8 @@ import {
   utworzKontrolePoPrzegranej,
   zapiszKontrole,
 } from './poprzetargowaKontrola.js';
-import { oblicz_termin_kio, pozostaly_czas_do } from './terminKio.js';
+import { oblicz_termin_kio, pozostaly_czas_do, formatujDate } from './terminKio.js';
+import { dzisiajPL } from './dataUtc.js';
 
 const MS_DZIEN = 24 * 60 * 60 * 1000;
 
@@ -35,14 +36,6 @@ const MS_DZIEN = 24 * 60 * 60 * 1000;
  * samym początku, gdy jest jeszcze dużo czasu.
  */
 export const DOMYSLNY_PROG_PRZYPOMNIENIA_DNI = 2;
-
-/** Znacznik ms → dzień kalendarzowy UTC jako `YYYY-MM-DD` (spójnie z terminKio). */
-function isoDzienUTC(ms) {
-  const d = new Date(ms);
-  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(d.getUTCDate()).padStart(2, '0');
-  return `${d.getUTCFullYear()}-${mm}-${dd}`;
-}
 
 /** `YYYY-MM-DD…` → polski zapis `DD.MM.RRRR` (bez przesuwania dnia przez strefę). */
 function formatujDatePL(iso) {
@@ -86,10 +79,12 @@ export async function uruchomSciezkeOdwolania(magazyn, postepowanie, opcje = {})
   // Termin wyliczamy tylko raz — istniejącego nie ruszamy (idempotentnie).
   if (!kontrola.terminOdwolaniaKio) {
     const teraz = typeof opcje.teraz === 'number' ? opcje.teraz : Date.now();
+    // „Dziś" = dzień kalendarzowy w POLSCE (poprawka 2026-09-25) — wg UTC między 00:00 a
+    // 01:00/02:00 czasu polskiego byłby to jeszcze wczoraj i termin KIO wyszedłby o dzień za wcześnie.
     const dataOgloszenia =
       kontrola.dataOgloszeniaWyniku ??
       tekstAlboNull(opcje.dataOgloszeniaWyniku) ??
-      isoDzienUTC(teraz);
+      formatujDate(dzisiajPL(teraz));
 
     const termin = oblicz_termin_kio(dataOgloszenia, opcje.tryb);
     if (termin) {
@@ -131,7 +126,8 @@ export function powiadomienieOTerminieKio(kontrola, opcje = {}) {
       ? opcje.progDniPrzypomnienia
       : DOMYSLNY_PROG_PRZYPOMNIENIA_DNI;
 
-  const uplywMs = teraz + czas.pozostaloMs; // koniec dnia granicznego (z pozostaly_czas_do)
+  // Koniec dnia granicznego = 24:00 czasu polskiego (z pozostaly_czas_do, poprawka 2026-09-25).
+  const uplywMs = teraz + czas.pozostaloMs;
   const uruchomOMs = Math.max(teraz, uplywMs - progDni * MS_DZIEN);
   const terminPL = formatujDatePL(termin);
 

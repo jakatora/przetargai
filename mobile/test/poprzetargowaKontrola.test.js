@@ -224,7 +224,8 @@ test('przegrana: dataOgloszeniaWyniku przepisana, gdy postępowanie ją niesie',
 
 test('dolaczPozostalyCzas: dolicza pole pomocnicze z terminOdwolaniaKio', () => {
   const k = new PoprzetargowaKontrola({ postepowanieId: 1, terminOdwolaniaKio: '2026-08-10' });
-  dolaczPozostalyCzas(k, Date.UTC(2026, 7, 5, 0, 0, 0)); // 6 dni przed
+  // 00:00 PL 05.08 (CEST) = 22:00 UTC 04.08; termin upływa o 24:00 PL 10.08 → 6 pełnych dni.
+  dolaczPozostalyCzas(k, Date.UTC(2026, 7, 4, 22, 0, 0));
   assert.equal(k.pozostalyCzas.poTerminie, false);
   assert.equal(k.pozostalyCzas.dni, 6);
 });

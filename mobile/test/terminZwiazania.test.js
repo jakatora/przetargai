@@ -34,6 +34,23 @@ test('analizaZwiazania: po terminie → danger (art. 226 ust. 1 pkt 4)', () => {
   assert.match(w.etykieta, /Po terminie/i);
 });
 
+// Poprawka 2026-09-25: „dziś" to dzień kalendarzowy w POLSCE, nie w UTC.
+test('analizaZwiazania: po północy czasu polskiego termin z wczoraj już upłynął', () => {
+  // 00:30 CET 16.01 = 23:30 UTC 15.01 — wg UTC byłoby jeszcze „Termin upływa dziś".
+  const w = analizaZwiazania({ terminZwiazania: '2026-01-15' }, Date.UTC(2026, 0, 15, 23, 30));
+  assert.equal(w.poTerminie, true);
+  assert.equal(w.dniDoKonca, -1);
+  assert.equal(w.ton, 'danger');
+});
+
+test('analizaZwiazania: późny wieczór PL w dniu terminu → „Termin upływa dziś"', () => {
+  // 23:30 CEST 10.06 = 21:30 UTC 10.06
+  const w = analizaZwiazania({ terminZwiazania: '2026-06-10' }, Date.UTC(2026, 5, 10, 21, 30));
+  assert.equal(w.poTerminie, false);
+  assert.equal(w.dniDoKonca, 0);
+  assert.equal(w.etykieta, 'Termin upływa dziś');
+});
+
 test('analizaZwiazania: brak terminu → nieznany', () => {
   const w = analizaZwiazania({}, TERAZ);
   assert.equal(w.znany, false);
