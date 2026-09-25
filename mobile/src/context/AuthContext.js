@@ -163,6 +163,9 @@ export function AuthProvider({ children }) {
       } else {
         await przeprowadzWylogowanie({
           storage,
+          // PRZED skasowaniem tokenu sesji — DELETE wymaga autoryzacji. Błąd sieci,
+          // 404 (backend bez trasy) czy zawieszone łącze nie blokują wylogowania.
+          usunPushToken: opcje?.wyrejestrujPush === false ? undefined : () => api.usunPushToken(),
           anulujPowiadomienia: anulujPowiadomieniaKonta,
         }).catch(() => {});
         setOnboardingPominiety(false);
