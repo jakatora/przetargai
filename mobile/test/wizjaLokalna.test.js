@@ -39,6 +39,39 @@ test('wykryjWizje: brak wzmianki → neutralny', () => {
   assert.deepEqual(w.dopasowania, []);
 });
 
+// ─── zaprzeczenia (2026-09-25) ───────────────────────────────────────────────
+// Regex /obowiązkow/ łapał „nieobowiązkowa" → fałszywe „bez niej oferta odrzucona".
+
+test('wykryjWizje: „nieobowiązkowa" → NIE obowiązkowa (możliwa)', () => {
+  const w = wykryjWizje('Wizja lokalna jest nieobowiązkowa.');
+  assert.equal(w.obowiazkowa, false);
+  assert.equal(w.mozliwa, true);
+  assert.equal(w.ton, 'ostrzezenie');
+  assert.doesNotMatch(w.etykieta, /OBOWIĄZKOWA/);
+});
+
+test('wykryjWizje: „nie jest obowiązkowa" / „nie wymaga odbycia" → NIE obowiązkowa', () => {
+  for (const tekst of [
+    'Wizja lokalna nie jest obowiązkowa.',
+    'Odbycie wizji lokalnej nie jest obowiązkowe, ale zalecane.',
+    'Zamawiający nie wymaga odbycia wizji lokalnej.',
+    'Wizja lokalna NIE JEST OBOWIĄZKOWA.',
+    'Zamawiający nie przewiduje obowiązkowej wizji lokalnej.',
+  ]) {
+    const w = wykryjWizje(tekst);
+    assert.equal(w.obowiazkowa, false, tekst);
+    assert.equal(w.mozliwa, true, tekst);
+  }
+});
+
+test('wykryjWizje: zaprzeczenie w jednym zdaniu nie gasi rygoru w innym', () => {
+  const w = wykryjWizje(
+    'Wizja lokalna jest obowiązkowa pod rygorem odrzucenia oferty. Udział projektanta w wizji nie jest obowiązkowy.',
+  );
+  assert.equal(w.obowiazkowa, true);
+  assert.equal(w.ton, 'danger');
+});
+
 test('wykryjWizje: śmieci/pusty → nie wywala', () => {
   assert.equal(wykryjWizje(null).wystepuje, false);
   assert.equal(wykryjWizje(undefined).wystepuje, false);
