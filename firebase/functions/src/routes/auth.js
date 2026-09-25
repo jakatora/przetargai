@@ -287,7 +287,19 @@ const pushTokenSchema = z.object({ push_token: z.string().min(1).max(300) });
 
 router.put('/me/push-token', authRequired, ah(async (req, res) => {
   const data = parseBody(pushTokenSchema, req.body);
+  // Repo zdejmuje ten sam token z innych kont (ten sam telefon, inne konto).
   await users.setPushToken(req.user.id, data.push_token);
+  res.json({ ok: true });
+}));
+
+/*
+ * Wylogowanie z telefonu (P0, 2026-09-25). Bez tej trasy token zostawał na koncie
+ * i telefon po wylogowaniu dalej dostawał powiadomienia o przetargach konta, które
+ * już na nim nie jest zalogowane. Idempotentne — mobile woła to przy każdym
+ * wylogowaniu, także gdy tokenu nigdy nie było (brak zgody na powiadomienia).
+ */
+router.delete('/me/push-token', authRequired, ah(async (req, res) => {
+  await users.usunPushToken(req.user.id);
   res.json({ ok: true });
 }));
 

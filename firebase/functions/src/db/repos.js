@@ -143,8 +143,35 @@ export const users = {
     });
   },
 
+  /**
+   * Przypisuje token push do konta — i ZDEJMUJE go z każdego innego konta.
+   *
+   * Token Expo należy do TELEFONU, nie do konta (P0, 2026-09-25). Gdy na tym samym
+   * telefonie loguje się konto B, rejestruje ono ten sam token; bez zdjęcia go
+   * z konta A właściciel A dostawałby alerty (tytuły przetargów, terminy) na
+   * telefon B. Transakcja, żeby dwie równoległe rejestracje nie zostawiły tokenu
+   * na dwóch kontach naraz. Zapytanie po jednym polu obsługuje indeks automatyczny.
+   */
   async setPushToken(id, token) {
-    await db().collection('users').doc(id).update({ push_token: token, updated_at: nowIso() });
+    const firestore = db();
+    const ts = nowIso();
+    await firestore.runTransaction(async (tx) => {
+      const zTymTokenem = await tx.get(
+        firestore.collection('users').where('push_token', '==', token),
+      );
+      for (const d of zTymTokenem.docs) {
+        if (d.id !== id) tx.update(d.ref, { push_token: null, updated_at: ts });
+      }
+      tx.update(firestore.collection('users').doc(id), { push_token: token, updated_at: ts });
+    });
+  },
+
+  /**
+   * Zeruje token push konta (wylogowanie z telefonu). Idempotentne — konto bez
+   * tokenu to nie błąd, bo mobile woła to przy KAŻDYM wylogowaniu.
+   */
+  async usunPushToken(id) {
+    await db().collection('users').doc(id).update({ push_token: null, updated_at: nowIso() });
   },
 
   async setTier(id, tier) {
