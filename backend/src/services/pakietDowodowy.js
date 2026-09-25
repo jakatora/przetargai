@@ -66,9 +66,11 @@ function zdarzeniaZ(sesja) {
  *   `typy` — unikalne, posortowane typy awarii; `powody` — każde zdarzenie-dowód w kolejności logu.
  */
 export function wykryjAwarie(sesja) {
+  const zdarzenia = zdarzeniaZ(sesja);
+  const pingiWSerii = nieudanePingiWSeriach(zdarzenia);
   const powody = [];
-  for (const z of zdarzeniaZ(sesja)) {
-    const typAwarii = TYP_ZDARZENIA_NA_AWARIE[z.typ] || (pingNiedostepny(z) ? 'niedostepnosc' : null);
+  for (const z of zdarzenia) {
+    const typAwarii = TYP_ZDARZENIA_NA_AWARIE[z.typ] || (pingiWSerii.has(z) ? 'niedostepnosc' : null);
     if (!typAwarii) continue;
     powody.push({
       typ: typAwarii,
@@ -79,6 +81,36 @@ export function wykryjAwarie(sesja) {
   }
   const typy = [...new Set(powody.map((p) => p.typ))].sort();
   return { awaria: powody.length > 0, typy, powody };
+}
+
+/**
+ * Ile KOLEJNYCH nieudanych pingów monitora uznajemy za niedostępność platformy (2026-09-25).
+ * Wcześniej JEDEN nieudany ping w dowolnym momencie sesji = `awaria=true` — a pojedynczy
+ * zanik to zwykle timeout / chwilowa sieć po NASZEJ stronie, nie awaria platformy; pismo
+ * o przedłużenie terminu oparte na jednym pomiarze nie obroni się przed KIO.
+ */
+export const MIN_NIEUDANYCH_PINGOW_Z_RZEDU = 2;
+
+/**
+ * Nieudane pingi należące do serii ≥ MIN_NIEUDANYCH_PINGOW_Z_RZEDU. „Kolejne" liczymy w
+ * sekwencji samych pingów: udany ping przerywa serię, wpis innego typu (krok, zrzut) — nie.
+ * Jawne wpisy wykonawcy ('niedostepnosc') liczą się osobno i od razu — to relacja, nie pomiar.
+ * @returns {Set<object>} zdarzenia-pingi, które są dowodem niedostępności
+ */
+function nieudanePingiWSeriach(zdarzenia) {
+  const wynik = new Set();
+  let seria = [];
+  const domknij = () => {
+    if (seria.length >= MIN_NIEUDANYCH_PINGOW_Z_RZEDU) for (const p of seria) wynik.add(p);
+    seria = [];
+  };
+  for (const z of zdarzenia) {
+    if (z.typ !== 'ping') continue;
+    if (pingNiedostepny(z)) seria.push(z);
+    else domknij();
+  }
+  domknij();
+  return wynik;
 }
 
 // ─────────────────────────── Budowa pakietu dowodowego ──────────────────────
@@ -105,17 +137,27 @@ export function createPakietDowodowy(db, { skrzynka = createCzarnaSkrzynka(db), 
     if (!sesja) throw new Error('Sesja nie istnieje albo należy do innego użytkownika');
     const zdarzenia = skrzynka.zdarzenia(userId, sesjaId) || [];
 
+    // `plik_sha256` / `sha256` (2026-09-25, wersja 2 pakietu): suma pliku utrwalona w logu W
+    // CHWILI ZAPISU — bez niej zrzut był tylko nazwą pliku, którą dało się podmienić bez śladu.
     const przebieg = zdarzenia.map((z) => ({
       pozycja: z.id,
       typ: z.typ,
       opis: z.opis ?? null,
       plik_url: z.plik_url ?? null,
+      plik_sha256: z.plik_sha256 ?? null,
       czas_serwera: z.czas_serwera,
       strefa_czasowa: z.strefa_czasowa,
     }));
     const zrzuty = przebieg
       .filter((e) => e.typ === 'zrzut')
-      .map((e) => ({ pozycja: e.pozycja, opis: e.opis, plik_url: e.plik_url, czas_serwera: e.czas_serwera, strefa_czasowa: e.strefa_czasowa }));
+      .map((e) => ({
+        pozycja: e.pozycja,
+        opis: e.opis,
+        plik_url: e.plik_url,
+        sha256: e.plik_sha256,
+        czas_serwera: e.czas_serwera,
+        strefa_czasowa: e.strefa_czasowa,
+      }));
     const dostepnosc = zdarzenia
       .filter((z) => z.typ === 'ping')
       .map((z) => ({ pozycja: z.id, opis: z.opis ?? null, czas_serwera: z.czas_serwera, dostepna: !PING_NIEDOSTEPNA.test(String(z.opis ?? '')) }));
@@ -123,7 +165,7 @@ export function createPakietDowodowy(db, { skrzynka = createCzarnaSkrzynka(db), 
     // Treść dowodowa pakietu (BEZ sumy kontrolnej — to ona ją domyka). Stała kolejność kluczy
     // => kanoniczna serializacja => deterministyczna suma kontrolna.
     const tresc = {
-      wersja: 1,
+      wersja: 2, // 2 = sumy SHA-256 plików w manifeście (2026-09-25)
       sesjaId: sesja.id,
       userId: sesja.user_id,
       postepowanieId: sesja.postepowanie_id ?? null,

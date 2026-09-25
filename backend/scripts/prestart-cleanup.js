@@ -6,24 +6,64 @@
  * oraz osieroconymi snapshotami VACUUM INTO (`.snapshot-*.db`), których
  * `pruneOldBackups` nie sprząta. Pełny dysk => `SQLITE_FULL` przy migracji =>
  * serwis nie wstaje. Ten skrypt uruchamiany jest jako `prestart`: zostawia
- * aktywną bazę + WAL/SHM oraz 2 najnowsze backupy, kasuje resztę, po czym
- * pozwala ruszyć backendowi.
+ * aktywną bazę + WAL/SHM oraz kopie w ramach retencji, sprząta osierocone
+ * snapshoty, po czym pozwala ruszyć backendowi.
+ *
+ * RETENCJA (2026-09-25): wcześniej stałe KEEP_BACKUPS = 2 przycinało kopie przy
+ * KAŻDYM starcie/deployu, choć retencja to 7 (BACKUP_RETENTION) — każdy deploy
+ * zjadał 5 dni kopii, a na produkcji bez B2 kopie na wolumenie są jedyne. Teraz:
+ *  1) ponad retencję (BACKUP_RETENTION, domyślnie 7) kasujemy najstarsze,
+ *  2) GŁĘBIEJ tylko przy realnym braku miejsca (wolne < 1,25 × baza, jak
+ *     `przytnijKopie` w services/backup.js) i NIGDY ostatniej kopii.
  *
  * ZASADY:
  *  - fail-open: żaden błąd czyszczenia nie może przerwać startu (nie rzucamy);
  *  - NIGDY nie kasujemy `data.db` / `data.db-wal` / `data.db-shm`;
+ *  - NIGDY nie kasujemy ostatniej (najnowszej) kopii;
  *  - idempotentny: kolejne przebiegi po prostu nie mają czego usuwać.
  *
  * Zależności: wyłącznie wbudowane moduły `node:` — dzięki temu skrypt nie
  * ładuje `config/env.js` (walidacja Zod + process.exit), więc odpala się także
- * na atrapie katalogu w teście lokalnym.
+ * na atrapie katalogu w teście lokalnym. Z tego samego powodu NIE importujemy
+ * `przytnijKopie` z services/backup.js (ciągnie env.js i otwiera bazę) — reguła
+ * „brak miejsca” jest tu zduplikowana minimalnie; MARGINES musi być ten sam.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-/** Ile najnowszych `backup-*.db.enc` zachować (reszta do kasacji). */
-const KEEP_BACKUPS = 2;
+/** Retencja kopii, gdy BACKUP_RETENTION nie ustawione / błędne — jak w config/env.js. */
+const RETENCJA_DOMYSLNA = 7;
+
+/** Zapas ponad rozmiar bazy, który musi być wolny — ten sam co MARGINES w services/backup.js. */
+const MARGINES = 1.25;
+
+/**
+ * Retencja z wartości zmiennej BACKUP_RETENTION (dodatnia liczba całkowita), inaczej 7.
+ * @param {string|undefined} wartosc
+ */
+export function retencjaKopii(wartosc) {
+  const n = Number(wartosc);
+  return Number.isInteger(n) && n > 0 ? n : RETENCJA_DOMYSLNA;
+}
+
+/** Wolne bajty na wolumenie katalogu; null gdy nie da się zmierzyć (wtedy nie tniemy głębiej). */
+function zmierzWolneBajty(dir) {
+  try {
+    const st = fs.statfsSync(dir);
+    return st.bavail * st.bsize;
+  } catch {
+    return null;
+  }
+}
+
+function bajtyPliku(sciezka) {
+  try {
+    return fs.statSync(sciezka).size;
+  } catch {
+    return 0;
+  }
+}
 
 /** Rozmiar pliku w czytelnej postaci „<B> B (<MB> MB)” (MB = MiB, /1048576). */
 function opiszRozmiar(bytes) {
@@ -65,46 +105,28 @@ function listuj(dir) {
 
 /**
  * Właściwe czyszczenie. Fail-open na każdym kroku.
- * @param {{dataDir:string, backupDir:string, keepBackups?:number, dbBasename?:string}} opcje
+ * @param {{dataDir:string, backupDir:string, keepBackups?:number, dbBasename?:string,
+ *   wolneBajty?:number|null}} opcje
+ *   keepBackups — retencja (domyślnie BACKUP_RETENTION z env, inaczej 7);
+ *   wolneBajty — wolne miejsce PRZED czyszczeniem (wstrzykiwane w testach; domyślnie statfs).
  * @returns {{deletedFiles:number, freedBytes:number}}
  */
-export function cleanupVolume({ dataDir, backupDir, keepBackups = KEEP_BACKUPS, dbBasename = 'data.db' }) {
+export function cleanupVolume({
+  dataDir,
+  backupDir,
+  keepBackups = retencjaKopii(process.env.BACKUP_RETENTION),
+  dbBasename = 'data.db',
+  wolneBajty,
+}) {
   let deletedFiles = 0;
   let freedBytes = 0;
 
   // Nigdy nie ruszamy aktywnej bazy ani jej plików pomocniczych WAL/SHM.
   const chronione = new Set([dbBasename, `${dbBasename}-wal`, `${dbBasename}-shm`]);
 
-  // 1) Stare zaszyfrowane kopie: `backup-*.db.enc` posortowane mtime malejąco,
-  //    zachowaj `keepBackups` najnowszych, usuń resztę.
-  try {
-    const kopie = listuj(backupDir)
-      .filter((f) => f.startsWith('backup-') && f.endsWith('.db.enc') && !chronione.has(f))
-      .map((f) => {
-        const pelna = path.join(backupDir, f);
-        let mtimeMs = 0;
-        try {
-          mtimeMs = fs.statSync(pelna).mtimeMs;
-        } catch {
-          mtimeMs = 0;
-        }
-        return { pelna, mtimeMs };
-      })
-      .sort((a, b) => b.mtimeMs - a.mtimeMs); // najnowsze na początku
-
-    for (const { pelna } of kopie.slice(keepBackups)) {
-      const freed = usunPlik(pelna, 'stary backup ponad limit');
-      if (freed > 0) {
-        deletedFiles += 1;
-        freedBytes += freed;
-      }
-    }
-  } catch (err) {
-    console.error(`[prestart-cleanup] BŁĄD przy kopiach zapasowych: ${err.message} — kontynuuję`);
-  }
-
-  // 2) Osierocone snapshoty VACUUM INTO: `.snapshot-*.db` (kropka wg backup.js)
+  // 1) Osierocone snapshoty VACUUM INTO: `.snapshot-*.db` (kropka wg backup.js)
   //    lub `snapshot-*.db`. Kasujemy w katalogu backupów i w korzeniu wolumenu.
+  //    NAJPIERW one — to czyste śmieci, a zwolnione miejsce oszczędza kopie w kroku 2.
   const snapshotRe = /^\.?snapshot-.*\.db$/;
   const katalogiSnap = backupDir === dataDir ? [dataDir] : [dataDir, backupDir];
   for (const dir of katalogiSnap) {
@@ -120,6 +142,52 @@ export function cleanupVolume({ dataDir, backupDir, keepBackups = KEEP_BACKUPS, 
     } catch (err) {
       console.error(`[prestart-cleanup] BŁĄD przy snapshotach w ${dir}: ${err.message} — kontynuuję`);
     }
+  }
+
+  // 2) Kopie `backup-*.db.enc` od najstarszej (mtime rosnąco): ponad retencję zawsze,
+  //    poniżej retencji WYŁĄCZNIE przy braku miejsca — i nigdy ostatnia kopia.
+  try {
+    const odNajstarszej = listuj(backupDir)
+      .filter((f) => f.startsWith('backup-') && f.endsWith('.db.enc') && !chronione.has(f))
+      .map((f) => {
+        const pelna = path.join(backupDir, f);
+        let mtimeMs = 0;
+        try {
+          mtimeMs = fs.statSync(pelna).mtimeMs;
+        } catch {
+          mtimeMs = 0;
+        }
+        return { pelna, mtimeMs };
+      })
+      .sort((a, b) => a.mtimeMs - b.mtimeMs || a.pelna.localeCompare(b.pelna));
+
+    const bazaSciezka = path.join(dataDir, dbBasename);
+    const potrzebne = Math.ceil((bajtyPliku(bazaSciezka) + bajtyPliku(`${bazaSciezka}-wal`)) * MARGINES);
+    // Wstrzyknięte „wolne” to stan PRZED czyszczeniem — doliczamy zwolnione snapshoty;
+    // statfs mierzymy teraz, więc już je uwzględnia. Brak pomiaru => nie tniemy głębiej.
+    let wolne = wolneBajty !== undefined && wolneBajty !== null
+      ? wolneBajty + freedBytes
+      : zmierzWolneBajty(backupDir);
+
+    const kasuj = ({ pelna }, powod) => {
+      const freed = usunPlik(pelna, powod);
+      if (freed > 0) {
+        deletedFiles += 1;
+        freedBytes += freed;
+        if (wolne !== null) wolne += freed;
+      }
+    };
+
+    let i = 0;
+    const ponadRetencje = Math.max(0, odNajstarszej.length - keepBackups);
+    while (i < ponadRetencje) kasuj(odNajstarszej[i++], `kopia ponad retencję ${keepBackups}`);
+    // `length - 1`: ostatniej (najnowszej) kopii nie ruszamy nigdy — na produkcji bez B2
+    // to jedyne zabezpieczenie bazy.
+    while (wolne !== null && wolne < potrzebne && i < odNajstarszej.length - 1) {
+      kasuj(odNajstarszej[i++], `brak miejsca (wolne ${wolne} B < potrzebne ${potrzebne} B)`);
+    }
+  } catch (err) {
+    console.error(`[prestart-cleanup] BŁĄD przy kopiach zapasowych: ${err.message} — kontynuuję`);
   }
 
   return { deletedFiles, freedBytes };

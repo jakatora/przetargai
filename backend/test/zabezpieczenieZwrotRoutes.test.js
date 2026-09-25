@@ -112,6 +112,18 @@ test('POST /harmonogram — przeterminowana transza niesie naliczone odsetki', a
   assert.ok(t1.odsetki > 0, 'po terminie naliczamy odsetki');
 });
 
+test('POST /harmonogram — bez stopy: przeterminowana transza ma odsetki=null (bez zgadywania stawki)', async () => {
+  const token = await zaloz(`zz-harm-bez-stopy-${process.pid}@t.pl`);
+  const r = await post(token, '/harmonogram', {
+    kwota: 50_000, dataNalezytegoWykonania: '2027-05-31', dataUplywuRekojmi: '2032-05-31', dzisiaj: '2027-08-30',
+  });
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  const t1 = r.json.harmonogram.transze[0];
+  assert.equal(t1.status, 'przeterminowane');
+  assert.equal(t1.odsetki, null, 'kwota odsetek nieznana bez podanej stopy');
+  assert.equal(r.json.alarm, true, 'alarm zwrotu nadal działa');
+});
+
 // ══════════════════════════ Porównanie kosztu ═════════════════════════════════
 
 test('POST /porownaj — koszt gotówki vs gwarancji + tańsza opcja', async () => {

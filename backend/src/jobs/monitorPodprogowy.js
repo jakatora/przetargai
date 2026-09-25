@@ -117,8 +117,16 @@ export async function odswiezPreferencje({
  *   adaptery?: import('../services/adaptery/kontrakt.js').AdapterZrodla[],
  *   uzupelnij?: typeof uzupelnijRegulamin, zbierz?: typeof zbierzIWepnij,
  *   pobierzStrone?: (url: string) => Promise<string>}} [deps]
- * @returns {Promise<{ok: boolean, preferencje: number, dodano: number,
+ * DEDUPLIKACJA (2026-09-25): wcześniej KAŻDA preferencja = osobny przelot po wszystkich
+ * źródłach, więc ta sama para (branża, region) u wielu użytkowników była pobierana wiele
+ * razy w jednym przebiegu. Teraz grupujemy po parze (trim, bez wielkości liter) i
+ * pobieramy RAZ. Wynik trafia do WSPÓLNEJ tabeli ogłoszeń (dedup po hash_dedup), a
+ * każdy użytkownik dostaje go przez filtr strumienia (branża/region/próg) — dlatego próg
+ * pobrania grupy = NAJWYŻSZY próg jej preferencji (suma potrzeb wszystkich userów).
+ *
+ * @returns {Promise<{ok: boolean, preferencje: number, pobrania: number, dodano: number,
  *   regulaminy: number, bledy: number, durationMs: number}>}
+ *   `pobrania` — liczba unikalnych par (faktycznych przelotów po źródłach).
  */
 export async function runPodprogowyMonitor({
   repo = repoDomyslne,
@@ -134,23 +142,56 @@ export async function runPodprogowyMonitor({
   let regulaminy = 0;
   let bledy = 0;
 
-  for (const pref of preferencje) {
+  const grupy = grupujPoParze(preferencje, () => { bledy++; });
+
+  for (const g of grupy.values()) {
     try {
+      const pref = { branza: g.branza, region: g.region, ...(g.prog_netto !== null ? { prog_netto: g.prog_netto } : {}) };
       const wynik = await odswiezPreferencje({ pref, repo, adaptery, uzupelnij, zbierz, pobierzStrone });
       dodano += wynik.dodano;
       regulaminy += wynik.regulaminy;
     } catch (err) {
       bledy++;
-      logger.error({ pref: pref?.id, err: err.message }, 'monitorPodprogowy: błąd preferencji');
+      logger.error({ branza: g.branza, region: g.region, preferencje: g.ids, err: err.message },
+        'monitorPodprogowy: błąd pobrania dla pary branża/region');
     }
   }
 
   const durationMs = Date.now() - startedAt;
   logger.info(
-    { preferencje: preferencje.length, dodano, regulaminy, bledy, durationMs },
+    { preferencje: preferencje.length, pobrania: grupy.size, dodano, regulaminy, bledy, durationMs },
     'monitorPodprogowy: zakończono',
   );
-  return { ok: true, preferencje: preferencje.length, dodano, regulaminy, bledy, durationMs };
+  return { ok: true, preferencje: preferencje.length, pobrania: grupy.size, dodano, regulaminy, bledy, durationMs };
+}
+
+/**
+ * Grupuje preferencje po parze (branża, region) — trim + bez wielkości liter. Próg grupy
+ * = najwyższy próg w grupie (null, gdy żadna nie ma progu => domyślny z normalizacji).
+ * Niepoprawny rekord (np. null) nie wywraca przebiegu: liczony przez `naBlad`.
+ * @returns {Map<string, {branza: string, region: string, prog_netto: number|null, ids: string[]}>}
+ */
+function grupujPoParze(preferencje, naBlad) {
+  const grupy = new Map();
+  for (const pref of preferencje) {
+    try {
+      const branza = String(pref.branza ?? '').trim();
+      const region = String(pref.region ?? '').trim();
+      const prog = Number.isFinite(pref.prog_netto) ? pref.prog_netto : null;
+      const klucz = `${branza.toLowerCase()}\u0000${region.toLowerCase()}`;
+      const g = grupy.get(klucz);
+      if (!g) {
+        grupy.set(klucz, { branza, region, prog_netto: prog, ids: [pref.id] });
+      } else {
+        if (prog !== null && (g.prog_netto === null || prog > g.prog_netto)) g.prog_netto = prog;
+        g.ids.push(pref.id);
+      }
+    } catch (err) {
+      naBlad();
+      logger.error({ pref: pref?.id, err: err.message }, 'monitorPodprogowy: błąd preferencji');
+    }
+  }
+  return grupy;
 }
 
 // Ręczne uruchomienie: `node src/jobs/monitorPodprogowy.js`

@@ -11,6 +11,20 @@ export const BACKEND_ROOT = path.resolve(__dirname, '../..');
 
 dotenv.config({ path: path.join(BACKEND_ROOT, '.env'), quiet: true });
 
+/**
+ * Flaga logiczna ze zmiennej środowiskowej. `z.coerce.boolean()` zamienia KAŻDY
+ * niepusty napis na true (także „false"), więc parsujemy jawnie; pusta => domyślna,
+ * nieznana wartość => błąd konfiguracji (zamiast cichego zgadywania).
+ */
+const flaga = (domyslnie) => z.string().optional().transform((v, ctx) => {
+  if (v === undefined || v.trim() === '') return domyslnie;
+  const t = v.trim().toLowerCase();
+  if (['true', '1', 'tak', 'yes'].includes(t)) return true;
+  if (['false', '0', 'nie', 'no'].includes(t)) return false;
+  ctx.addIssue({ code: 'custom', message: `oczekiwano true/false, otrzymano „${v}"` });
+  return z.NEVER;
+});
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -49,6 +63,18 @@ const schema = z.object({
   EMAIL_FROM: z.string().default('PrzetargAI <noreply@przetargai.pl>'),
   EMAIL_REPLY_TO: z.string().default('support@przetargai.pl'),
 
+  /*
+   * Konta pomostowe mostu Firebase → Railway (2026-09-25). Most zakłada je przez publiczne
+   * /auth/register na adresach `most.<uid>@<MOST_EMAIL_DOMENA>`. Ta domena nie istnieje:
+   * mail na nią = twarde odbicie w Resend (reputacja nadawcy), więc na nią nie wysyłamy.
+   * Rejestracja w tej domenie wymaga nagłówka `X-Most-Podpis` = HMAC-SHA256(JWT_SECRET,
+   * email po trim+lowercase) w hex — inaczej każdy mógłby zająć cudzy adres pomostowy.
+   * MOST_WYMAGAJ_PODPISU=false tylko na czas wdrożenia: NAJPIERW Firebase (zaczyna wysyłać
+   * nagłówek), POTEM Railway z true — odwrotna kolejność zablokuje zakładanie kont mostu.
+   */
+  MOST_EMAIL_DOMENA: z.string().trim().toLowerCase().default('most.przetarg-ai.pl'),
+  MOST_WYMAGAJ_PODPISU: flaga(true),
+
   SENTRY_DSN_BACKEND: z.string().default(''),
 
   B2_ACCOUNT_ID: z.string().default(''),
@@ -86,6 +112,14 @@ const schema = z.object({
    */
   BACKUP_RETENTION: z.coerce.number().int().positive().default(7),
 
+  /*
+   * LEGACY PrzetargAI na Railway (2026-09-25, decyzja D-031): `tender-fetch` + matching AI
+   * (Haiku) + push dublowały pracę Firebase — te same pary oceniane dwa razy, dwa liczniki
+   * budżetu. Żaden moduł mostu (/api/przetarg/*) nie czyta `tenders`/`matches`, więc
+   * domyślnie WYŁĄCZONE: scheduler nie rejestruje `tender-fetch`, a rejestracja / PATCH
+   * /auth/me nie odpalają onboardingowego backfillu. true = zachowanie sprzed zmiany.
+   */
+  LEGACY_PRZETARG_ENABLED: flaga(false),
   // Codzienne pobieranie przetargów o 12:00 czasu polskiego (SCHEDULER_TZ).
   TENDER_FETCH_CRON: z.string().default('0 12 * * *'),
   // Codzienny monitoring waloryzacji o 6:00 czasu polskiego — sprawdza wskaźniki

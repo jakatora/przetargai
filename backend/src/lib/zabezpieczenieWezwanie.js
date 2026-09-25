@@ -35,6 +35,14 @@ function fmtKwota(v, waluta = 'PLN') {
   return `${liczba} ${waluta === 'PLN' ? 'zł' : waluta}`;
 }
 
+/** Dzień po dacie „YYYY-MM-DD" (początek biegu odsetek) albo null przy niepoprawnej dacie. */
+function dzienPo(data) {
+  const m = typeof data === 'string' ? /^(\d{4})-(\d{2})-(\d{2})/.exec(data.trim()) : null;
+  if (!m) return null;
+  const ms = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + 1);
+  return Number.isFinite(ms) ? new Date(ms).toISOString().slice(0, 10) : null;
+}
+
 /** Procent po polsku (kropka dziesiętna → przecinek), np. 12.5 → „12,5%". */
 function fmtProc(v) {
   return `${String(v).replace('.', ',')}%`;
@@ -85,14 +93,28 @@ function budujTresc(w, dane) {
     );
     linie.push('');
     linie.push('Wobec upływu terminu:');
-    linie.push(`  • naliczam odsetki ustawowe za opóźnienie (art. 481 § 2 Kodeksu cywilnego) `
-      + `wg stopy ${fmtProc(w.stopaRoczna)} rocznie za ${w.dni} dni zwłoki: ${fmtKwota(w.odsetki, waluta)},`);
-    linie.push(`  • zatrzymanie kwoty zabezpieczenia po terminie jej zwrotu stanowi `
-      + `bezpodstawne wzbogacenie zamawiającego (art. 405 Kodeksu cywilnego), które podlega zwrotowi.`);
-    linie.push('');
-    linie.push(`Wzywam do zapłaty łącznej kwoty ${fmtKwota(w.kwotaZadania, waluta)} `
-      + `(zabezpieczenie ${fmtKwota(kwota, waluta)} + odsetki ${fmtKwota(w.odsetki, waluta)}) `
-      + `w terminie 7 dni od otrzymania niniejszego wezwania.`);
+    if (w.odsetki === null) {
+      // Bez stopy podanej przez użytkownika NIE wpisujemy liczby (2026-09-25): stawka
+      // ustawowa zmienia się ze stopą referencyjną NBP — żądamy odsetek opisowo.
+      const odDnia = dzienPo(termin) ?? '[dzień po terminie zwrotu]';
+      linie.push(`  • żądam odsetek ustawowych za opóźnienie (art. 481 § 1 i 2 Kodeksu cywilnego) `
+        + `od dnia ${odDnia} do dnia zapłaty (${w.dni} dni zwłoki na dzień sporządzenia pisma),`);
+      linie.push(`  • zatrzymanie kwoty zabezpieczenia po terminie jej zwrotu stanowi `
+        + `bezpodstawne wzbogacenie zamawiającego (art. 405 Kodeksu cywilnego), które podlega zwrotowi.`);
+      linie.push('');
+      linie.push(`Wzywam do zapłaty kwoty ${fmtKwota(kwota, waluta)} wraz z odsetkami ustawowymi `
+        + `za opóźnienie od dnia ${odDnia} do dnia zapłaty, w terminie 7 dni od otrzymania `
+        + `niniejszego wezwania.`);
+    } else {
+      linie.push(`  • naliczam odsetki ustawowe za opóźnienie (art. 481 § 2 Kodeksu cywilnego) `
+        + `wg stopy ${fmtProc(w.stopaRoczna)} rocznie za ${w.dni} dni zwłoki: ${fmtKwota(w.odsetki, waluta)},`);
+      linie.push(`  • zatrzymanie kwoty zabezpieczenia po terminie jej zwrotu stanowi `
+        + `bezpodstawne wzbogacenie zamawiającego (art. 405 Kodeksu cywilnego), które podlega zwrotowi.`);
+      linie.push('');
+      linie.push(`Wzywam do zapłaty łącznej kwoty ${fmtKwota(w.kwotaZadania, waluta)} `
+        + `(zabezpieczenie ${fmtKwota(kwota, waluta)} + odsetki ${fmtKwota(w.odsetki, waluta)}) `
+        + `w terminie 7 dni od otrzymania niniejszego wezwania.`);
+    }
   } else {
     linie.push(`Wzywam do zwrotu kwoty ${fmtKwota(kwota, waluta)} na rachunek Wykonawcy `
       + `w terminie wynikającym z art. 453 ustawy Prawo zamówień publicznych. `
@@ -122,7 +144,7 @@ function budujTresc(w, dane) {
  * @param {string} [dane.dataPisma]
  * @param {string} [dane.waluta='PLN']
  * @returns {{wariant:'zwykle'|'przeterminowane', status:string, dni:number,
- *   kwota:number, odsetki:number, stopaRoczna:number, kwotaZadania:number,
+ *   kwota:number, odsetki:number|null, stopaRoczna:number|null, kwotaZadania:number,
  *   waluta:string, tresc:string, nazwaPliku:string}}
  */
 export function generujWezwanieDoZwrotu(dane = {}) {
@@ -143,7 +165,8 @@ export function generujWezwanieDoZwrotu(dane = {}) {
     kwota,
     odsetki: ods.odsetki,
     stopaRoczna: ods.stopaRoczna,
-    kwotaZadania: grosze(kwota + ods.odsetki),
+    // Bez stopy odsetki są nieznane (null) — żądamy samej kwoty + odsetek opisowo w treści.
+    kwotaZadania: grosze(kwota + (ods.odsetki ?? 0)),
     waluta,
     tresc: null,
     nazwaPliku: null,

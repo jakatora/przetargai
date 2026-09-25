@@ -172,3 +172,33 @@ test('runPodprogowyMonitor — przelatuje wszystkie preferencje i izoluje błąd
   assert.equal(wynik.bledy, 1, 'zła preferencja policzona jako błąd, nie wywróciła przebiegu');
   d.close();
 });
+
+// 2026-09-25: wielu użytkowników z tą samą parą (branża, region) => JEDNO pobranie na parę
+// w przebiegu (wcześniej każdy użytkownik = osobny przelot po wszystkich źródłach).
+// Ogłoszenia lądują we wspólnej tabeli (dedup po hash_dedup), a użytkownicy dostają je
+// przez filtr strumienia — więc próg pobrania = NAJWYŻSZY próg w grupie (suma potrzeb).
+test('runPodprogowyMonitor — deduplikuje pobrania po unikalnej parze (branża, region)', async () => {
+  const { d, repo } = repoWPamieci();
+  const wywolania = [];
+  const zbierz = async ({ adapter, branza, region, konfig }) => {
+    wywolania.push({ zrodlo: adapter.zrodlo, branza, region, prog: konfig.prog_netto });
+    return { zrodlo: adapter.zrodlo, pobrano: 0, zakwalifikowano: 0, dodano: 0, duplikaty: 0, odrzucono: 0, dodane: [] };
+  };
+  const prefRepo = {
+    listAll: () => [
+      { id: 'a', user_id: 'u1', branza: 'budownictwo', region: 'mazowieckie', prog_netto: 100000 },
+      { id: 'b', user_id: 'u2', branza: 'Budownictwo ', region: 'Mazowieckie', prog_netto: 150000 },
+      { id: 'c', user_id: 'u3', branza: 'it', region: '', prog_netto: 170000 },
+      { id: 'd', user_id: 'u3', branza: 'budownictwo', region: 'mazowieckie', prog_netto: 120000 },
+    ],
+  };
+  const adaptery = [fakeAdapter('bip', []), fakeAdapter('baza_konkurencyjnosci', [])];
+
+  const wynik = await runPodprogowyMonitor({ repo, prefRepo, adaptery, uzupelnij: fakeUzupelnij(), zbierz });
+  assert.equal(wynik.preferencje, 4);
+  assert.equal(wynik.pobrania, 2, 'dwie unikalne pary => dwa przeloty');
+  assert.equal(wywolania.length, 4, '2 pary × 2 adaptery (bez deduplikacji byłoby 8)');
+  const bud = wywolania.filter((w) => w.branza.toLowerCase() === 'budownictwo');
+  assert.ok(bud.every((w) => w.prog === 150000), 'próg grupy = najwyższy z preferencji');
+  d.close();
+});

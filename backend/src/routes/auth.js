@@ -12,6 +12,10 @@ import { publicUser } from '../lib/serialize.js';
 import { createUpgradeLink } from '../services/magicLink.js';
 import { sendEmail, welcomeEmail, resetPasswordEmail } from '../services/email.js';
 import { backfillUser } from '../services/matching.js';
+import { zbierzPlikiKonta, usunPlikiKonta } from '../services/plikiKonta.js';
+import { jestAdresemMostu, poprawnyPodpisMostu } from '../lib/mostPodpis.js';
+import { env } from '../config/env.js';
+import { db } from '../db/index.js';
 import { logger } from '../lib/logger.js';
 
 /** Ważność kodu resetu hasła (1 h) — krótko, bo to klucz do konta. */
@@ -51,6 +55,16 @@ const registerSchema = z.object({
 router.post('/register', ah(async (req, res) => {
   const data = parseBody(registerSchema, req.body);
 
+  // Konto pomostowe (most Firebase → Railway) — patrz lib/mostPodpis.js. Podpis sprawdzamy
+  // PRZED jakimkolwiek odczytem bazy: 403 bez podpisu także dla zajętego adresu, więc
+  // nie da się nim sondować, które konta pomostowe istnieją (2026-09-25).
+  const kontoPomostowe = jestAdresemMostu(data.email, env.MOST_EMAIL_DOMENA);
+  if (kontoPomostowe && env.MOST_WYMAGAJ_PODPISU
+    && !poprawnyPodpisMostu(data.email, req.get('X-Most-Podpis'), env.JWT_SECRET)) {
+    audit({ userId: null, action: 'register_most_bez_podpisu', ip: req.ip });
+    throw forbidden('Adres w domenie technicznej mostu wymaga poprawnego podpisu X-Most-Podpis');
+  }
+
   // NIP podany dobrowolnie nadal przechodzi pełną walidację i musi być unikalny.
   let nip = null;
   if (data.company_nip?.trim()) {
@@ -73,13 +87,17 @@ router.post('/register', ah(async (req, res) => {
   });
 
   audit({ userId: user.id, action: 'register', ip: req.ip });
-  sendEmail({ to: email, ...welcomeEmail(user.company_name) })
-    .catch((err) => logger.error({ err: err.message }, 'Email powitalny nie wysłany'));
+  // Na adres techniczny mostu nie wysyłamy: domena nie istnieje => twarde odbicie w Resend.
+  if (!kontoPomostowe) {
+    sendEmail({ to: email, ...welcomeEmail(user.company_name) })
+      .catch((err) => logger.error({ err: err.message }, 'Email powitalny nie wysłany'));
+  }
 
   // Onboarding backfill: jeśli user dał keywords/CPV, dopasuj go do istniejących
   // przetargów z otwartym terminem. Fire-and-forget — nie blokuje response.
   // Bez tego feed byłby pusty do następnego cyklu cron (do 24 h).
-  if (user.keywords.length || user.cpv_codes.length) {
+  // Tylko przy LEGACY_PRZETARG_ENABLED (2026-09-25, D-031): matching robi Firebase.
+  if (env.LEGACY_PRZETARG_ENABLED && (user.keywords.length || user.cpv_codes.length)) {
     backfillUser(user)
       .then((r) => logger.info({ userId: user.id, ...r }, 'Onboarding matching zakończony'))
       .catch((err) => logger.error({ err: err.message, userId: user.id }, 'Onboarding matching nieudany'));
@@ -199,7 +217,7 @@ router.patch('/me', authRequired, ah(async (req, res) => {
   const criteriaChanged =
     (data.keywords && JSON.stringify(data.keywords) !== JSON.stringify(req.user.keywords))
     || (data.cpv_codes && JSON.stringify(data.cpv_codes) !== JSON.stringify(req.user.cpv_codes));
-  if (criteriaChanged) {
+  if (criteriaChanged && env.LEGACY_PRZETARG_ENABLED) {
     backfillUser(updated)
       .then((r) => logger.info({ userId: updated.id, ...r }, 'Re-matching po zmianie profilu zakończony'))
       .catch((err) => logger.error({ err: err.message, userId: updated.id }, 'Re-matching po zmianie profilu nieudany'));
@@ -249,8 +267,12 @@ router.delete('/me', authRequired, ah(async (req, res) => {
 
   // Audyt PRZED usunięciem: potem nie ma już do czego się odwołać.
   audit({ userId: req.user.id, action: 'delete_account', ip: req.ip });
+  // Pliki na wolumenie (sejf, czarna skrzynka) kaskada SQLite omija — klucze zbieramy
+  // PRZED usunięciem wierszy, kasujemy PO nim (2026-09-25, patrz services/plikiKonta.js).
+  const pliki = zbierzPlikiKonta(db, req.user.id);
   users.usunKonto(req.user.id);
-  logger.info({ userId: req.user.id }, 'Konto usunięte na żądanie użytkownika');
+  const plikiUsuniete = usunPlikiKonta(pliki);
+  logger.info({ userId: req.user.id, plikiUsuniete }, 'Konto usunięte na żądanie użytkownika');
 
   res.json({ ok: true, message: 'Konto i wszystkie dane zostały trwale usunięte' });
 }));

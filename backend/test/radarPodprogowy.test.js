@@ -222,3 +222,21 @@ test('POST /odswiez — doraźna branża/region z body (bez zapisanej preferencj
   assert.equal(r.status, 200, JSON.stringify(r.json));
   assert.equal(r.json.odswiezono, 1, 'jedna doraźna preferencja');
 });
+
+// 2026-09-25: limit preferencji — każda preferencja to przelot po wszystkich źródłach w
+// monitorze; bez limitu jedno konto mogło zlecić setki pobrań dziennie.
+test('POST /preferencje — limit 10 na użytkownika (11. nowa => 409), aktualizacja istniejącej przechodzi', async () => {
+  const uid = users.create({ companyNip: null, companyName: null, email: `limit-pref-${process.pid}@t.pl`, passwordHash: 'h' }).id;
+  const tok = signToken(uid);
+  for (let i = 0; i < 10; i++) {
+    const r = await req('POST', `${P}/preferencje`, { tok, body: { branza: `branza-${i}`, region: 'mazowieckie' } });
+    assert.equal(r.status, 201, JSON.stringify(r.json));
+  }
+  const nadmiar = await req('POST', `${P}/preferencje`, { tok, body: { branza: 'branza-10', region: 'mazowieckie' } });
+  assert.equal(nadmiar.status, 409, JSON.stringify(nadmiar.json));
+  assert.match(nadmiar.json.error.message, /10 preferencji/);
+
+  const aktualizacja = await req('POST', `${P}/preferencje`, { tok, body: { branza: 'branza-3', region: 'mazowieckie', prog_netto: 90000 } });
+  assert.equal(aktualizacja.status, 201, 'upsert istniejącej pary nie jest nową preferencją');
+  assert.equal(aktualizacja.json.preferencja.prog_netto, 90000);
+});

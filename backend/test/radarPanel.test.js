@@ -140,9 +140,10 @@ test('GET /postepowania/:id — agregat: termin pytań + pytania + timeline + ch
   const { status, json } = await req('GET', `/api/przetarg/swz/postepowania/${p.id}`, { tok: token });
   assert.equal(status, 200, JSON.stringify(json));
 
-  // Meta + termin pytań (koniec dnia połowy okna 01-01…01-11 => 06.01).
+  // Meta + termin pytań. Od 2026-09-25 wg art. 135 ust. 2 Pzp (nie „połowa terminu" z
+  // uchylonego art. 38): tryb nieznany => bezpieczne 14 dni przed 11.01 => 28.12.2025.
   assert.equal(json.postepowanie.nazwa, 'Dostawa sprzętu');
-  assert.ok(json.termin_pytania.terminPytan?.startsWith('2026-01-06'), 'termin pytań = koniec dnia połowy okna');
+  assert.equal(json.termin_pytania.terminPytan, '2025-12-28T22:59:59.999Z', 'termin pytań = koniec dnia 14 dni przed terminem (czas polski)');
 
   // Pytania (obie, w kolejności zapisu) z fragmentem i statusem.
   assert.equal(json.pytania.length, 2);

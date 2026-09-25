@@ -53,6 +53,20 @@ test('wezwanie: stawka odsetek jest jawnie wypisana w treści (nic ukrytego)', (
   assert.match(w.tresc, /12,5\s?%/, 'użyta stopa odsetek wprost w piśmie');
 });
 
+// 2026-09-25: bez podanej stopy pismo NIE podaje zgadywanej liczby (11,25% było nieaktualne).
+test('wezwanie przeterminowane BEZ stopy: żąda odsetek ustawowych za opóźnienie, bez liczby i kwoty odsetek', () => {
+  const w = generujWezwanieDoZwrotu({ ...BAZA, dzisiaj: '2028-06-30' });
+  assert.equal(w.wariant, 'przeterminowane');
+  assert.equal(w.stopaRoczna, null);
+  assert.equal(w.odsetki, null, 'kwota odsetek nieznana — nie liczymy jej bez stopy');
+  assert.equal(w.kwotaZadania, 35_000, 'kwota żądania = samo zabezpieczenie (odsetki opisowo)');
+  assert.match(w.tresc, /odsetkami ustawowymi za opóźnienie/i);
+  assert.match(w.tresc, /od dnia 2027-07-01 do dnia zapłaty/, 'odsetki od dnia po terminie do dnia zapłaty');
+  assert.ok(!/\d+,\d+\s?%/.test(w.tresc), 'żadnej stawki procentowej w piśmie');
+  assert.ok(!/11,25/.test(w.tresc));
+  assert.match(w.tresc, /art\. ?481/);
+});
+
 test('wezwanie: nazwa pliku bez diakrytyków, oparta o numer umowy', () => {
   const w = generujWezwanieDoZwrotu({ ...BAZA, dzisiaj: '2027-06-30' });
   assert.match(w.nazwaPliku, /^wezwanie-do-zwrotu-zabezpieczenia-.*\.txt$/);

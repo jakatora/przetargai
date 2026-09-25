@@ -393,9 +393,10 @@ CREATE TABLE IF NOT EXISTS czarna_skrzynka_sesja (
   postepowanie_id  TEXT,                         -- luźne odniesienie do postępowania (BZP/SWZ/podprogowe) — bez FK
   strefa_czasowa   TEXT NOT NULL,                -- strefa zegara serwera w chwili startu (IANA, np. 'Europe/Warsaw')
   hash_oferty      TEXT,                         -- SHA-256 pliku oferty (gdy wgrany) — dowód integralności
-  plik_oferty_url  TEXT,                         -- URL/ścieżka ORYGINAŁU oferty zapisanego bez modyfikacji
+  plik_oferty_url  TEXT,                         -- nazwa pliku ORYGINAŁU oferty w magazynie (bez modyfikacji)
   created_at       TEXT NOT NULL,
-  updated_at       TEXT NOT NULL
+  updated_at       TEXT NOT NULL,
+  termin_skladania TEXT                          -- ISO 8601 — termin składania ofert (migracja 014); koniec okna pingowania
 );
 CREATE INDEX IF NOT EXISTS idx_czarna_skrzynka_sesja_user
   ON czarna_skrzynka_sesja(user_id, postepowanie_id);
@@ -407,9 +408,10 @@ CREATE TABLE IF NOT EXISTS czarna_skrzynka_zdarzenie (
   sesja_id       TEXT NOT NULL REFERENCES czarna_skrzynka_sesja(id) ON DELETE CASCADE,
   typ            TEXT NOT NULL,                  -- 'krok'|'blad_wysylki'|'brak_epo'|'niedostepnosc'|'zrzut'|'hash_oferty'|'ping'
   opis           TEXT,                           -- czytelny opis zdarzenia
-  plik_url       TEXT,                           -- URL zrzutu/artefaktu (dla typ='zrzut'); NULL dla wpisów tekstowych
+  plik_url       TEXT,                           -- nazwa pliku w magazynie (zrzut / oryginał oferty); NULL dla wpisów tekstowych
   czas_serwera   TEXT NOT NULL,                  -- ISO 8601 (UTC) — znacznik czasu z zegara serwera
-  strefa_czasowa TEXT NOT NULL                   -- strefa zegara serwera (IANA) — jednoznaczny „widoczny czas" dowodu
+  strefa_czasowa TEXT NOT NULL,                  -- strefa zegara serwera (IANA) — jednoznaczny „widoczny czas" dowodu
+  plik_sha256    TEXT                            -- SHA-256 pliku z chwili zapisu (migracja 013); NULL dla wpisów tekstowych
 );
 CREATE INDEX IF NOT EXISTS idx_czarna_skrzynka_zdarzenie_sesja
   ON czarna_skrzynka_zdarzenie(sesja_id, id);

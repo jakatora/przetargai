@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { schedulerJobs } from '../src/jobs/scheduler.js';
+import { schedulerJobs, startScheduler, stopScheduler } from '../src/jobs/scheduler.js';
 import { env } from '../src/config/env.js';
 
 /*
@@ -20,7 +20,49 @@ const CFG = {
   DOSTEPNOSC_PLATFORMY_CRON: '*/15 * * * *',
   BACKUP_CRON: '0 3 * * *',
   SCHEDULER_TZ: 'Europe/Warsaw',
+  LEGACY_PRZETARG_ENABLED: true,
 };
+
+/*
+ * LEGACY cron PrzetargAI (2026-09-25, decyzja D-031). `tender-fetch` co przebieg oceniał
+ * przez AI (Haiku) te same pary co Firebase — podwójna praca i podwójny koszt. Żaden moduł
+ * mostu (/api/przetarg/*) nie czyta `tenders`/`matches`, więc domyślnie zadanie jest
+ * WYCIĘTE; monitory modułów mostu zostają.
+ */
+const MONITORY_MOSTU = ['waloryzacja-monitor', 'swz-monitor', 'podprogowy-monitor', 'sejf-monitor', 'dostepnosc-platformy', 'backup'];
+
+test('LEGACY_PRZETARG_ENABLED=false — bez tender-fetch, monitory modułów mostu zostają', () => {
+  const nazwy = schedulerJobs({ ...CFG, LEGACY_PRZETARG_ENABLED: false }).map((j) => j.name);
+  assert.ok(!nazwy.includes('tender-fetch'), 'legacy pobieranie + matching AI wycięte');
+  for (const n of MONITORY_MOSTU) assert.ok(nazwy.includes(n), `brak zadania ${n}`);
+});
+
+test('LEGACY_PRZETARG_ENABLED=true — harmonogram jak dotąd (z tender-fetch)', () => {
+  const nazwy = schedulerJobs(CFG).map((j) => j.name);
+  assert.deepEqual(nazwy, ['tender-fetch', ...MONITORY_MOSTU]);
+});
+
+test('KONFIG: domyślnie legacy cron PrzetargAI jest wyłączony', () => {
+  assert.equal(env.LEGACY_PRZETARG_ENABLED, false);
+});
+
+test('startScheduler — każde zadanie z noOverlap (node-cron 4 domyślnie pozwala na nakładanie)', () => {
+  const zarejestrowane = [];
+  const cronAtrapa = {
+    validate: () => true,
+    schedule: (expression, fn, opcje) => {
+      zarejestrowane.push({ expression, opcje });
+      return { stop() {} };
+    },
+  };
+  startScheduler({ cfg: { ...CFG, LEGACY_PRZETARG_ENABLED: false }, cronImpl: cronAtrapa });
+  stopScheduler();
+  assert.equal(zarejestrowane.length, MONITORY_MOSTU.length);
+  for (const { opcje } of zarejestrowane) {
+    assert.equal(opcje.noOverlap, true, 'przebieg dłuższy niż interwał nie odpala drugiego równolegle');
+    assert.equal(opcje.timezone, 'Europe/Warsaw');
+  }
+});
 
 test('schedulerJobs — pobieranie przetargów codziennie o 12:00', () => {
   const fetch = schedulerJobs(CFG).find((j) => j.name === 'tender-fetch');
