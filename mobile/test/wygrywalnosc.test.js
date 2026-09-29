@@ -73,8 +73,15 @@ describe('opisGotowosci — źródło wymagań i sejfu', () => {
     assert.match(opis.tekst, /sejf/i);
   });
 
-  test('znane wymagania i sejf: dotychczasowa ocena bez zmian', () => {
-    assert.equal(opisGotowosci(gotowa, 'pl', { wymagania: 'znane', sejf: 'ok' }).ton, 'sukces');
+  test('wymagania z parsera SWZ (znane) i komplet wykrytych: NIE sukces, tylko „wykryte automatycznie" + sprawdź resztę', () => {
+    const opis = opisGotowosci(gotowa, 'pl', { wymagania: 'znane', sejf: 'ok', wykryte: 3 });
+    assert.equal(opis.ton, 'ostrzezenie');
+    assert.match(opis.tekst, /wykryte automatycznie \(3\)/);
+    assert.doesNotMatch(opis.tekst, /wszystkie obowiązkowe/i);
+  });
+
+  test('bez kontekstu źródeł (wywołanie historyczne) ocena backendu bez zmian', () => {
+    assert.equal(opisGotowosci(gotowa, 'pl').ton, 'sukces');
   });
 });
 

@@ -223,12 +223,10 @@ export const remindDeadlines = onSchedule(
     secrets: [JWT_SECRET],
   },
   async () => {
-    const { runReminderCheck } = await import('./src/jobs/remindDeadlines.js');
-    const { runPrzypomnieniaPytanSwz } = await import('./src/jobs/przypomnieniaPytanSwz.js');
-    const terminy = await runReminderCheck();
-    // Oba przebiegi niezależne: awaria jednego nie wstrzymuje drugiego.
-    const pytania = await runPrzypomnieniaPytanSwz();
-    const wynik = { ...terminy, ok: terminy.ok && pytania.ok, bledy: terminy.bledy + pytania.bledy, pytania };
+    // Oba przebiegi niezależne (allSettled): wyjątek jednego nie blokuje drugiego,
+    // a porażka któregokolwiek kończy się wyjątkiem → ponowienie Schedulera.
+    const { uruchomPrzypomnienia } = await import('./src/jobs/harmonogramPrzypomnien.js');
+    const wynik = await uruchomPrzypomnienia();
     if (!wynik.ok) {
       console.error(JSON.stringify({ severity: 'ERROR', message: 'remindDeadlines: część wpisów padła', ...wynik }));
       throw new Error(`remindDeadlines: ${wynik.bledy} wpisów zakończyło się błędem`);

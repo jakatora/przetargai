@@ -216,7 +216,14 @@ const NIEUSTALONE_WYMAGANIA = {
  * (`wymagania !== 'znane'`) albo przy błędzie odczytu sejfu gotowość jest
  * NIEUSTALONA — nigdy „gotowe", nawet gdyby backend tak policzył.
  *
- * @param {{wymagania?: 'znane'|'brak_powiazania'|'blad'|'nieznany_format'|'brak_wymagan', sejf?: 'ok'|'blad'}} [zrodla]
+ * `wymagania: 'znane'` to lista z parsera FRAZ SWZ (Railway `wykryjWymaganeTypy`) —
+ * HEURYSTYKA, nie komplet (review 2026-09-29: SWZ wymagająca KRS, US i ZUS innymi
+ * słowami dawała tylko KRS, a ekran mówił „Wszystkie obowiązkowe dokumenty są
+ * ważne"). Na takich danych nie ma tonu sukcesu ani twierdzenia o komplecie:
+ * mówimy, ile wykryto, co brakuje/wygasa i że resztę SWZ trzeba sprawdzić.
+ *
+ * @param {{wymagania?: 'znane'|'brak_powiazania'|'blad'|'nieznany_format'|'brak_wymagan',
+ *   sejf?: 'ok'|'blad', wykryte?: number}} [zrodla]
  */
 export function opisGotowosci(checklista, jezyk = 'pl', zrodla = {}) {
   if (!checklista) return null;
@@ -251,12 +258,39 @@ export function opisGotowosci(checklista, jezyk = 'pl', zrodla = {}) {
         : 'Ogłoszenie nie podaje terminu składania, więc nie sprawdzimy ważności dokumentów na ten dzień.',
     };
   }
+  const heurystyczne = zrodla.wymagania === 'znane';
+  const wykryte = Number.isFinite(zrodla.wykryte) ? zrodla.wykryte
+    : ['masz', 'przeterminuje_sie', 'brakuje'].reduce((n, k) => n + (checklista.koszyki?.[k] ?? []).length, 0);
+  const uwagaHeurystyki = jezyk === 'en'
+    ? ' The list may be incomplete — check the remaining tender-document requirements.'
+    : ' Lista może być niepełna — sprawdź pozostałe wymagania SWZ.';
+
   if (!stan.znamySejf) {
     return {
       ton: 'ostrzezenie',
-      tekst: jezyk === 'en'
+      tekst: (jezyk === 'en'
         ? 'Your document safe is empty — everything shows as missing.'
-        : 'Twój sejf dokumentów jest pusty — wszystko pokazuje się jako brakujące.',
+        : 'Twój sejf dokumentów jest pusty — wszystko pokazuje się jako brakujące.')
+        + (heurystyczne ? uwagaHeurystyki : ''),
+    };
+  }
+  if (heurystyczne) {
+    const braki = (checklista.koszyki?.brakuje ?? []).length
+      + (checklista.koszyki?.przeterminuje_sie ?? []).length;
+    if (!braki) {
+      return {
+        ton: 'ostrzezenie',
+        tekst: jezyk === 'en'
+          ? `Documents detected automatically (${wykryte}) are valid on the submission day. This is a help, not a completeness check — check the remaining tender-document requirements.`
+          : `Dokumenty wykryte automatycznie (${wykryte}) są ważne w dniu składania. To pomoc, nie potwierdzenie kompletności — sprawdź pozostałe wymagania SWZ.`,
+      };
+    }
+    return {
+      ton: 'danger',
+      tekst: (jezyk === 'en'
+        ? `${braki} item(s) to sort out out of ${wykryte} detected automatically.`
+        : `${braki} ${braki === 1 ? 'rzecz' : 'rzeczy'} do załatwienia spośród ${wykryte} wykrytych automatycznie.`)
+        + uwagaHeurystyki,
     };
   }
   if (checklista.gotowe) {

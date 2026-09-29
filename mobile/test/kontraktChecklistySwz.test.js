@@ -63,3 +63,55 @@ test('brak wymagań w analizie: checklista Functions NIE uznaje gotowości', () 
   assert.equal(checklista.gotowe, false);
   assert.equal(checklista.stanWiedzy.znamyWymagania, false);
 });
+
+// ── Częściowa detekcja (review 2026-09-29) ──────────────────────────────────────
+// `wymagane_typy` pochodzi z parsera FRAZ (wykryjWymaganeTypy). SWZ wymagająca
+// KRS, US i ZUS innymi słowami daje tylko KRS — a firma z ważnym KRS widziała
+// „Wszystkie obowiązkowe dokumenty są ważne". Automatyczna lista to pomoc,
+// nie potwierdzenie kompletności.
+
+import { opisGotowosci } from '../src/lib/wygrywalnosc.js';
+
+process.env.JWT_SECRET ??= 'test-mobile-kontrakt-atrapa-0000';
+const { wykryjWymaganeTypy } = await import('../../backend/src/services/dopasowanieSejfSWZ.js');
+
+const SWZ_CZESCIOWA = 'Wykonawca złoży odpis z KRS, zaświadczenie o niezaleganiu z opłacaniem podatków '
+  + 'oraz dokument potwierdzający brak zaległości w opłacaniu składek społecznych.';
+
+test('częściowa detekcja parsera: ważny KRS NIE daje „wszystkie obowiązkowe" ani tonu sukcesu', () => {
+  const typy = wykryjWymaganeTypy(SWZ_CZESCIOWA);
+  assert.deepEqual(typy, ['wpis_rejestr'], 'parser fraz łapie tylko KRS — US i ZUS opisano innymi słowami');
+
+  const { stan, wymagania } = wymaganiaZDopasowania(odpowiedzDopasowania(typy), KATALOG);
+  const dokumenty = [{ id: 'd1', typ_dokumentu: 'wpis_rejestr', dataWaznosci: '2027-01-31' }];
+  const checklista = zbudujChecklisteOferty({ tender: PRZETARG, wymagania, dokumenty, teraz: TERAZ });
+  assert.equal(checklista.gotowe, true, 'backend liczy tylko to, co wykryto');
+
+  const opis = opisGotowosci(checklista, 'pl', { wymagania: stan, sejf: 'ok', wykryte: wymagania.length });
+  assert.notEqual(opis.ton, 'sukces');
+  assert.doesNotMatch(opis.tekst, /wszystkie obowiązkowe/i);
+  assert.match(opis.tekst, /wykryte automatycznie \(1\)/i);
+  assert.match(opis.tekst, /sprawdź pozostałe wymagania SWZ/i);
+});
+
+test('częściowa detekcja z brakami: liczba braków spośród wykrytych + ostrzeżenie o niepełnej liście', () => {
+  const { stan, wymagania } = wymaganiaZDopasowania(odpowiedzDopasowania(['krk', 'zus']), KATALOG);
+  const checklista = zbudujChecklisteOferty({
+    tender: PRZETARG, wymagania, dokumenty: [{ id: 'd1', typ_dokumentu: 'krk', dataWaznosci: '2027-01-31' }], teraz: TERAZ,
+  });
+  const opis = opisGotowosci(checklista, 'pl', { wymagania: stan, sejf: 'ok', wykryte: wymagania.length });
+  assert.equal(opis.ton, 'danger');
+  assert.match(opis.tekst, /1 rzecz do załatwienia spośród 2 wykrytych automatycznie/);
+  assert.match(opis.tekst, /sprawdź pozostałe wymagania SWZ/i);
+});
+
+test('regresja: puste i błędne dane dalej dają gotowość nieustaloną', () => {
+  const checklista = zbudujChecklisteOferty({ tender: PRZETARG, wymagania: [], dokumenty: [], teraz: TERAZ });
+  for (const odp of [odpowiedzDopasowania([]), { checklista: {} }, null]) {
+    const { stan } = wymaganiaZDopasowania(odp, KATALOG);
+    const opis = opisGotowosci(checklista, 'pl', { wymagania: stan, sejf: 'ok' });
+    assert.notEqual(opis.ton, 'sukces');
+    assert.match(opis.tekst, /nieustalona|nieznanym formacie/i);
+  }
+  assert.notEqual(opisGotowosci(checklista, 'pl', { wymagania: 'blad', sejf: 'ok' }).ton, 'sukces');
+});

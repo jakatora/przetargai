@@ -19,6 +19,13 @@ import { reguluZrodla } from '../lib/kalendarzPrzetargu.js';
  *  • aktualny dokument przetargu przed wysyłką — anulowany albo z przesuniętym
  *    terminem nie dostaje przypomnienia o nieaktualnej dacie.
  *
+ * OGRANICZENIE (review 2026-09-29): gwarancja „jeden push" dotyczy powtórzonych
+ * i równoległych przebiegów. Jeśli proces padnie PO przyjęciu pushu przez Expo,
+ * a PRZED zapisem „wyslane", rezerwacja po 30 min uznawana jest za osieroconą
+ * i push może pójść drugi raz. Expo Push API nie ma klucza idempotencji, więc
+ * pełnego „dokładnie raz" nie da się tu zagwarantować — wybraliśmy możliwy
+ * duplikat zamiast możliwej utraty przypomnienia.
+ *
  * @param {{teraz?: string, wyslij?: typeof sendPush}} [opcje] wstrzykiwane w testach
  */
 

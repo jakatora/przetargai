@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as WebBrowser from 'expo-web-browser';
@@ -11,6 +11,8 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
 import { opisStatusu, etykietaLicznika, sortujDokumenty, stanListySejfu } from '../lib/sejf';
+import { potwierdzAkcje } from '../lib/potwierdzenie';
+import { srodowiskoPotwierdzen, komunikat } from '../services/srodowiskoPotwierdzen';
 
 /**
  * Panel „SEJF DOKUMENTÓW FIRMY" — podzadanie 7/7 ulepszenia „Sejf podmiotowych środków
@@ -144,7 +146,7 @@ export default function SejfScreen() {
     try {
       wybor = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: false });
     } catch {
-      Alert.alert('Nie udało się otworzyć wyboru pliku', 'Spróbuj ponownie.');
+      komunikat('Nie udało się otworzyć wyboru pliku', 'Spróbuj ponownie.');
       return;
     }
     if (wybor.canceled || !wybor.assets?.length) return;
@@ -159,24 +161,23 @@ export default function SejfScreen() {
       if (wynik.ostrzezenie) {
         // Skan papieru zamiast oryginału elektronicznego — pokaż to WPROST (backend
         // przyjął plik, ale flaga podpisu = false; w zamówieniach publicznych to błąd).
-        Alert.alert('Wgrano — ale sprawdź', wynik.ostrzezenie);
+        komunikat('Wgrano — ale sprawdź', wynik.ostrzezenie);
       }
     } catch (err) {
-      Alert.alert('Nie udało się wgrać pliku', err.message);
+      komunikat('Nie udało się wgrać pliku', err.message);
     } finally {
       setUploadId(null);
     }
   }
 
   function potwierdzUsuniecie(dok) {
-    Alert.alert(
-      'Usunąć dokument?',
-      `${dok.nazwaTypu} zniknie z sejfu. Tej operacji nie da się cofnąć.`,
-      [
-        { text: 'Anuluj', style: 'cancel' },
-        { text: 'Usuń', style: 'destructive', onPress: () => usun(dok) },
-      ],
-    );
+    // Na webie Alert.alert jest pusty — potwierdzAkcje pyta przez window.confirm.
+    potwierdzAkcje({
+      tytul: 'Usunąć dokument?',
+      tresc: `${dok.nazwaTypu} zniknie z sejfu. Tej operacji nie da się cofnąć.`,
+      etykietaTak: 'Usuń',
+      onTak: () => usun(dok),
+    }, srodowiskoPotwierdzen());
   }
 
   async function usun(dok) {

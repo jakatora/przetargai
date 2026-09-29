@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import Screen from '../components/Screen';
@@ -7,6 +7,8 @@ import Button from '../components/Button';
 import { api } from '../api/client';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
+import { wybierzOpcje } from '../lib/potwierdzenie';
+import { srodowiskoPotwierdzen, komunikat } from '../services/srodowiskoPotwierdzen';
 import {
   KROKI_REJESTRATORA,
   odliczanieBezpieczenstwa,
@@ -84,6 +86,8 @@ export default function RejestratorOfertyScreen({ route }) {
   const [zajete, setZajete] = useState(null); // id kroku aktualnie wykonywanego
   const [awaria, setAwaria] = useState(null); // { awaria, pakiet, pismo }
   const [awariaBusy, setAwariaBusy] = useState(false);
+  // Web: opcje awarii jako przyciski w treści (Alert.alert w RN-web jest pusty).
+  const [opcjeAwarii, setOpcjeAwarii] = useState(null);
 
   // Tykający zegar — odliczanie odświeża się bez akcji użytkownika (co 30 s wystarczy).
   const [teraz, setTeraz] = useState(() => Date.now());
@@ -154,7 +158,7 @@ export default function RejestratorOfertyScreen({ route }) {
         type: krok.id === 'zrzut' ? 'image/*' : '*/*',
       });
     } catch {
-      Alert.alert('Nie udało się otworzyć wyboru pliku', 'Spróbuj ponownie.');
+      komunikat('Nie udało się otworzyć wyboru pliku', 'Spróbuj ponownie.');
       return;
     }
     if (wybor.canceled || !wybor.assets?.length) return;
@@ -171,7 +175,7 @@ export default function RejestratorOfertyScreen({ route }) {
       }
       await odswiezSesje(sesja.id);
     } catch (err) {
-      Alert.alert('Nie udało się utrwalić dowodu', err.message);
+      komunikat('Nie udało się utrwalić dowodu', err.message);
     } finally {
       setZajete(null);
     }
@@ -199,18 +203,16 @@ export default function RejestratorOfertyScreen({ route }) {
   }
 
   function potwierdzAwarie() {
-    Alert.alert(
-      'Zgłoś awarię platformy',
-      'Wybierz, co zawiodło. Utrwalimy to na taśmie i od razu złożymy pakiet dowodowy oraz '
+    // Wielokrotny wybór: na webie (pusty Alert.alert) opcje pokazujemy jako przyciski w treści.
+    wybierzOpcje({
+      tytul: 'Zgłoś awarię platformy',
+      tresc: 'Wybierz, co zawiodło. Utrwalimy to na taśmie i od razu złożymy pakiet dowodowy oraz '
         + 'gotowe pismo o przedłużenie terminu.',
-      [
-        { text: 'Anuluj', style: 'cancel' },
-        ...Object.keys(TYPY_AWARII).map((typ) => ({
-          text: opisAwarii(typ).etykieta,
-          onPress: () => zglosAwarie(typ),
-        })),
-      ],
-    );
+      opcje: Object.keys(TYPY_AWARII).map((typ) => ({
+        etykieta: opisAwarii(typ).etykieta,
+        onWybor: () => { setOpcjeAwarii(null); zglosAwarie(typ); },
+      })),
+    }, srodowiskoPotwierdzen({ pokazWLinii: setOpcjeAwarii }));
   }
 
   // Krok uznajemy za wykonany, gdy na taśmie jest wpis jego typu (oferta ↔ hash_oferty).
@@ -310,6 +312,15 @@ export default function RejestratorOfertyScreen({ route }) {
               loading={awariaBusy}
               style={styles.gap}
             />
+            {opcjeAwarii ? (
+              <View style={styles.gap}>
+                <Text style={styles.kartaOpis}>Co zawiodło?</Text>
+                {opcjeAwarii.map((o) => (
+                  <Button key={o.etykieta} title={o.etykieta} variant="ghost" onPress={o.onWybor} style={styles.gap} />
+                ))}
+                <Button title="Anuluj" variant="ghost" onPress={() => setOpcjeAwarii(null)} style={styles.gap} />
+              </View>
+            ) : null}
           </View>
 
           {/* ── Wynik zgłoszenia awarii: pakiet + pismo ── */}

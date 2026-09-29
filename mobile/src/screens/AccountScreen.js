@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Alert, Pressable, Linking, Platform } from 'react-native';
+import { View, Text, Pressable, Linking } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,7 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PREFERENCJE, ETYKIETY_PREFERENCJI } from '../lib/motyw';
 import { spacing, radius } from '../theme';
 import { potwierdzAkcje } from '../lib/potwierdzenie';
+import { srodowiskoPotwierdzen, komunikat } from '../services/srodowiskoPotwierdzen';
 
 function parseList(text) {
   return text.split(',').map((s) => s.trim()).filter(Boolean);
@@ -57,7 +58,7 @@ export default function AccountScreen({ navigation }) {
   function otworzKontakt() {
     const temat = encodeURIComponent(`PrzetargAI — pomoc (v${wersjaApp})`);
     Linking.openURL(`mailto:${KONTAKT_EMAIL}?subject=${temat}`).catch(() => {
-      Alert.alert('Kontakt', `Napisz do nas na adres:\n${KONTAKT_EMAIL}`);
+      komunikat('Kontakt', `Napisz do nas na adres:\n${KONTAKT_EMAIL}`);
     });
   }
 
@@ -99,9 +100,9 @@ export default function AccountScreen({ navigation }) {
         wartosc_max: wartoscMax.trim() ? Number(wartoscMax.replace(/[^\d]/g, '')) : null,
       });
       setUser(data.user);
-      Alert.alert('Zapisano', 'Profil firmy został zaktualizowany.');
+      komunikat('Zapisano', 'Profil firmy został zaktualizowany.');
     } catch (err) {
-      Alert.alert('Błąd', err.message);
+      komunikat('Błąd', err.message);
     } finally {
       setSaving(false);
     }
@@ -137,14 +138,14 @@ export default function AccountScreen({ navigation }) {
 
       const aktywny = await poczekajNaAktywacjePlanu();
       if (!aktywny) {
-        Alert.alert(
+        komunikat(
           'Płatność w toku',
           'Jeśli płatność się powiodła, plan aktywuje się w ciągu kilku minut. '
           + 'Odśwież ten ekran lub sprawdź skrzynkę e-mail.',
         );
       }
     } catch (err) {
-      Alert.alert('Błąd', err.message);
+      komunikat('Błąd', err.message);
     } finally {
       setUpgrading(false);
     }
@@ -156,15 +157,15 @@ export default function AccountScreen({ navigation }) {
    * Nie pobieramy żadnej opłaty i nie zwracamy pieniędzy — sama zmiana harmonogramu.
    */
   async function potwierdzRezygnacje() {
-    Alert.alert(
-      'Zrezygnować z subskrypcji?',
-      'Standard będzie działać do końca opłaconego okresu, a potem konto wróci na plan Free. '
-      + 'Nie pobierzemy kolejnej opłaty. W każdej chwili możesz wznowić subskrypcję.',
-      [
-        { text: 'Zostaję', style: 'cancel' },
-        { text: 'Rezygnuję', style: 'destructive', onPress: anulujSubskrypcje },
-      ],
-    );
+    // Na webie Alert.alert jest pusty — potwierdzAkcje pyta przez window.confirm.
+    potwierdzAkcje({
+      tytul: 'Zrezygnować z subskrypcji?',
+      tresc: 'Standard będzie działać do końca opłaconego okresu, a potem konto wróci na plan Free. '
+        + 'Nie pobierzemy kolejnej opłaty. W każdej chwili możesz wznowić subskrypcję.',
+      etykietaTak: 'Rezygnuję',
+      etykietaNie: 'Zostaję',
+      onTak: () => anulujSubskrypcje(),
+    }, srodowiskoPotwierdzen());
   }
 
   async function anulujSubskrypcje() {
@@ -174,9 +175,9 @@ export default function AccountScreen({ navigation }) {
       // Odświeżamy usera — plan nie zmienia się od razu (Standard do końca okresu),
       // ale gdyby backend zaktualizował cokolwiek, chcemy to zobaczyć.
       await refreshUser().catch(() => {});
-      Alert.alert('Rezygnacja przyjęta', wynik.komunikat || 'Subskrypcja nie odnowi się.');
+      komunikat('Rezygnacja przyjęta', wynik.komunikat || 'Subskrypcja nie odnowi się.');
     } catch (err) {
-      Alert.alert('Nie udało się zrezygnować', err.message);
+      komunikat('Nie udało się zrezygnować', err.message);
     } finally {
       setRezygnacja(false);
     }
@@ -215,7 +216,7 @@ export default function AccountScreen({ navigation }) {
       etykietaTak: 'Wyloguj',
       // Bez przekazywania argumentów — signOut przyjmuje opcje (2026-09-25).
       onTak: () => signOut(),
-    }, { platforma: Platform.OS, alert: (...a) => Alert.alert(...a), confirm: (tekst) => globalThis.confirm?.(tekst) === true });
+    }, srodowiskoPotwierdzen());
   }
 
   /**
@@ -224,7 +225,7 @@ export default function AccountScreen({ navigation }) {
    */
   async function usunKonto() {
     if (!haslo) {
-      Alert.alert('Podaj hasło', 'Wpisz hasło, aby potwierdzić usunięcie konta.');
+      komunikat('Podaj hasło', 'Wpisz hasło, aby potwierdzić usunięcie konta.');
       return;
     }
     setUsuwanie(true);
@@ -236,22 +237,20 @@ export default function AccountScreen({ navigation }) {
       // skasowanym kontem i tak dostałoby 401 (2026-09-25).
       await signOut({ wyrejestrujPush: false });
     } catch (err) {
-      Alert.alert('Nie udało się usunąć konta', err.message);
+      komunikat('Nie udało się usunąć konta', err.message);
     } finally {
       setUsuwanie(false);
     }
   }
 
   function potwierdzUsuniecie() {
-    Alert.alert(
-      'Usunąć konto na zawsze?',
-      'Stracisz wszystkie dopasowane przetargi i ustawienia profilu. Tej operacji nie da się cofnąć.'
-      + (isStandard ? '\n\nSubskrypcja Standard zostanie anulowana.' : ''),
-      [
-        { text: 'Anuluj', style: 'cancel' },
-        { text: 'Usuń konto', style: 'destructive', onPress: usunKonto },
-      ],
-    );
+    potwierdzAkcje({
+      tytul: 'Usunąć konto na zawsze?',
+      tresc: 'Stracisz wszystkie dopasowane przetargi i ustawienia profilu. Tej operacji nie da się cofnąć.'
+        + (isStandard ? '\n\nSubskrypcja Standard zostanie anulowana.' : ''),
+      etykietaTak: 'Usuń konto',
+      onTak: () => usunKonto(),
+    }, srodowiskoPotwierdzen());
   }
 
   return (

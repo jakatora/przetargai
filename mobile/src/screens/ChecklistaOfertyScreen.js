@@ -87,6 +87,7 @@ export default function ChecklistaOfertyScreen({ route, navigation }) {
           const odp = await api.sejfDopasowanie(powiazana.postepowanie_id, {});
           const wynik = wymaganiaZDopasowania(odp, typy);
           nowe.wymagania = wynik.stan;
+          nowe.wykryte = wynik.wymagania.length;
           wymagania = wynik.wymagania;
         } catch {
           nowe.wymagania = 'blad';
@@ -203,6 +204,13 @@ export default function ChecklistaOfertyScreen({ route, navigation }) {
             <Text style={styles.akapit}>
               {t('Wymagania bierzemy z analizy', 'Requirements come from the analysis')}: {powiazanie.nazwa ?? powiazanie.postepowanie_id}
             </Text>
+            {zrodla.wymagania === 'znane' ? (
+              // Parser fraz SWZ to pomoc, nie komplet (review 2026-09-29).
+              <Text style={styles.ostrzezenie}>
+                {t(`Wykryto automatycznie ${zrodla.wykryte} ${zrodla.wykryte === 1 ? 'dokument' : 'dokumenty/-ów'} z treści SWZ — lista może być niepełna. Pozostałe wymagania SWZ sprawdź sam.`,
+                  `${zrodla.wykryte} document(s) detected automatically in the tender documents — the list may be incomplete. Check the remaining requirements yourself.`)}
+              </Text>
+            ) : null}
             <View style={styles.rzadPrzyciskow}>
               <Button title={t('Zmień analizę', 'Change analysis')} variant="ghost" onPress={otworzWybor} disabled={zapisuje} />
               <Button title={t('Odłącz', 'Unlink')} variant="ghost" onPress={odlacz} loading={zapisuje} />

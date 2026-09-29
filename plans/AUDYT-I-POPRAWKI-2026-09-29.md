@@ -22,13 +22,13 @@ Checkout `D:\projekty\przetarg-ai` jest starszy (apka 1.0.9/vc9) i nie był rusz
 5. **Funkcja A — przypomnienie o terminie pytań do SWZ.**
    - Pliki: `jobs/przypomnieniaPytanSwz.js` i `lib/przypomnieniePytan.js`, wywoływane z `remindDeadlines` co 6 h (Europe/Warsaw).
    - Termin pochodzi z istniejącego `lib/kalendarzPrzetargu.js` (BZP −4 dni, TED −14 dni). Baza Konkurencyjności albo brak terminu oznacza brak wysyłki; nie dodano nowych reguł prawnych.
-   - Jedno powiadomienie w ostatniej dobie przed terminem. Rezerwacja w transakcji przed wysyłką, więc powtórka ani równoległy przebieg nie dublują pusha. Błąd dostawcy prowadzi do ponowienia, najwyżej 3 próby.
+   - Jedno powiadomienie w ostatniej dobie przed terminem. Rezerwacja w transakcji przed wysyłką, więc powtórka ani równoległy przebieg nie dublują pusha. Błąd dostawcy prowadzi do ponowienia, najwyżej 3 próby. **Ograniczenie:** jeśli proces padnie po przyjęciu pushu przez Expo, a przed zapisem „wyslane”, rezerwacja po 30 min jest uznawana za osieroconą i push może pójść drugi raz. Expo Push API nie ma klucza idempotencji — to „najwyżej jeden przy powtórkach i równoległych przebiegach”, nie absolutne „dokładnie raz”.
    - Przypomnienie idzie tylko przy włączonym przełączniku „Przypomnij przed terminem”. Treść jest po polsku, z godziną warszawską. Push prowadzi do Kalendarza z podświetlonym terminem pytań.
    - Nowy indeks złożony `saved(reminder_enabled, tender_deadline)`.
 6. **Znalezione przy weryfikacji: most gubił ciało POST/PATCH.** Runtime Functions (i emulator) parsuje żądanie przed aplikacją, a most przekazywał `req.body` zamiast `req.rawBody`. W emulatorze dodanie do Sejfu i utworzenie analizy SWZ dawały 400. **Na produkcji prawdopodobnie tak samo — niezweryfikowane.** Poprawka jest w `routes/most.js`, z testem odtwarzającym runtime.
 7. **Konfiguracja testów:** `backend/.env.test` z atrapami (`JWT_SECRET`, klucz szyfrowania kopii, puste klucze usług). Smoke i emulator używają spójnego klucza admina.
 
-## Wyniki testów (końcowe)
+## Wyniki testów — etap 2 (ostatni PEŁNY zestaw, przed korektą z etapu 3)
 
 | Zestaw | Wynik |
 |---|---|
@@ -48,16 +48,44 @@ Dowody (poza repo): `D:\wt\dowody-przetargai-2026-09-29\` — zrzuty `01…11-*.
 - [x] Login z gotowym profilem trafia do feedu, nowe konto do onboardingu, wylogowanie i ponowny login nie zostawiają starego stosu (test routera + web-flow 2a–2d).
 - [x] Powiązanie SWZ ↔ przetarg: trwałe, w zakresie użytkownika i przetargu. Cudza analiza daje 404, a checklista pokazuje brakujące, nieaktualne i posiadane dokumenty (testy + web-flow 3a–3f).
 - [x] Sejf: błąd pobrania to nie pusty sejf; „Ponów” działa; dane zostają przy chwilowym błędzie (web-flow 4a–4d).
-- [x] Przypomnienie o pytaniach do SWZ: jedno w oknie 24 h, bez duplikatów, błąd dostawcy to nie sukces, preferencja jest respektowana, strefa Europe/Warsaw; tylko testowy dostawca.
+- [x] Przypomnienie o pytaniach do SWZ: jedno w oknie 24 h przy powtórzonych i równoległych przebiegach (z ograniczeniem opisanym wyżej), błąd dostawcy to nie sukces, preferencja jest respektowana, strefa Europe/Warsaw; tylko testowy dostawca.
+- [x] Checklista nie twierdzi o komplecie na danych z parsera fraz (etap 3).
+- [x] Oba przebiegi przypomnień niezależne (etap 3).
+- [x] Okna potwierdzeń i komunikaty w Koncie, Sejfie i Rejestratorze działają na webie (etap 3).
 - [ ] Wydanie: deploy Functions **razem z indeksami** (`firebase deploy --only functions,firestore:indexes`), nowy build mobile (nawigacja, Sejf, checklista, wylogowanie web). Railway bez zmian w kodzie.
 
 ## Pozostałe ograniczenia
 
 - Natywnego buildu, płatnego AI (analiza SWZ modelem) ani prawdziwego pushu nie uruchamiano.
 - Poprawka ciała mostu jest potwierdzona w emulatorze. Na produkcji wymaga deployu i sprawdzenia na prawdziwym koncie.
-- Na webie pozostałe okna potwierdzeń (usuwanie dokumentu w Sejfie, usuwanie konta, awaria w Rejestratorze) nadal używają pustego `Alert.alert`. Naprawiono tylko wylogowanie.
+- Poza Kontem, Sejfem i Rejestratorem inne ekrany mogą nadal używać `Alert.alert` (na webie niewidoczny) — poza zakresem tej korekty.
+- Lista wymaganych dokumentów pochodzi z parsera fraz SWZ: to pomoc, nie komplet. Checklista mówi to wprost, ale nie wykryje wymagań opisanych nietypowo.
 - Wszystkie analizy SWZ użytkownika są dostępne do powiązania; tworzenie analizy prosto z karty przetargu (auto-powiązanie) nie jest zrobione.
 - Na produkcji tygodniowy digest trafia co tydzień do kont testowych `qa-/qa2-/chk-…@test.pl` i odbija się (Resend: `bounced`). Kont nie ruszano — do decyzji właściciela.
+
+## Etap 3 — korekta po niezależnym przeglądzie (CHANGES_REQUIRED)
+
+Druga sesja Claude wskazała cztery problemy. Wszystkie poprawiono w osobnym commicie:
+
+1. **Fałszywa pełna gotowość.** `wymagane_typy` pochodzi z parsera fraz (`wykryjWymaganeTypy`). SWZ wymagająca KRS, US i ZUS innymi słowami dawała tylko KRS, a ekran mówił „Wszystkie obowiązkowe dokumenty są ważne”.
+   - Teraz dla wymagań z parsera (`znane`) nie ma tonu sukcesu ani twierdzenia o komplecie.
+   - Komunikat: „Dokumenty wykryte automatycznie (N) są ważne… To pomoc, nie potwierdzenie kompletności — sprawdź pozostałe wymagania SWZ” albo „X rzeczy do załatwienia spośród N wykrytych automatycznie. Lista może być niepełna…”.
+   - Pod analizą stała uwaga o liczbie wykrytych. Stany nieznany i błąd pozostają nieustalone.
+   - Na ekranie nie ma innego nagłówka, badge'a ani procentu gotowości.
+   - Test behawioralny przepuszcza przykład przez prawdziwy parser Railway, mapowanie w aplikacji, checklistę Functions i komunikat; do tego regresja dla pustych i błędnych danych.
+2. **Niezależne przypomnienia.** `jobs/harmonogramPrzypomnien.js` uruchamia oba przebiegi przez `Promise.allSettled`. Wyjątek któregokolwiek daje `ok:false`, handler rzuca, a Scheduler ponawia. Test zachowania obejmuje 4 przypadki (pierwszy rzuca, drugi rzuca, oba OK, oba FAIL).
+3. **Okna na webie.** `lib/potwierdzenie.js` ma `potwierdzAkcje`, `wybierzOpcje` i `pokazKomunikat`, a `services/srodowiskoPotwierdzen.js` dostarcza środowisko.
+   - Podpięte: usuwanie konta, rezygnacja z subskrypcji, usuwanie dokumentu w Sejfie (`window.confirm`) oraz wybór typu awarii w Rejestratorze (na webie przyciski w treści ekranu).
+   - Komunikaty jednoprzyciskowe (np. błędy) w tych trzech ekranach idą przez `window.alert`.
+   - Sens akcji bez zmian.
+4. **Uczciwość raportu:** ograniczenie idempotencji opisane w punkcie 5 i w kodzie joba.
+
+**Testy po korekcie** (celowane, bez ponownego pełnego zestawu Functions):
+- Mobile: pełny `npm test` **1068/1068**, `check` czysty.
+- Functions: pliki harmonogramu, przypomnień, push, izolacji, indeksów i sekretów — **94/94** (14 plików).
+- Izolowany web-flow po korekcie (świeży bundle): **7/7 PASS** — częściowa detekcja bez „wszystkie obowiązkowe”, braki spośród wykrytych, `confirm` przy usuwaniu dokumentu w Sejfie i dokument znika z listy.
+- Izolacja w tym przebiegu: 0 żądań poza maszynę, 0 prób dostępu do sekretów, 0 wyjść lokalnego Railway.
+- Dowody: `D:\wt\dowody-przetargai-2026-09-29-korekta\`. Zrzuty z etapu 2 pokazują stan sprzed korekty.
 
 ## Incydent testowy (etap 1, 2026-09-29, bez sekretów)
 
