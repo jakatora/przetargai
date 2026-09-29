@@ -15,7 +15,7 @@
     "seed": "node --disable-warning=ExperimentalWarning src/db/seed.js",
     "fetch-tenders": "node --disable-warning=ExperimentalWarning src/jobs/fetchTenders.js --once",
     "backup": "node --disable-warning=ExperimentalWarning src/services/backup.js",
-    "test": "node --disable-warning=ExperimentalWarning --test"
+    "test": "node --env-file=.env.test --disable-warning=ExperimentalWarning --test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.97.1",

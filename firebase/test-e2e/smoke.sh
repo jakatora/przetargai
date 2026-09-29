@@ -3,7 +3,7 @@
 # (node --check nie rozwiązuje importów) i czy kontrakt API się nie zmienił.
 # Port 5002 = konfiguracja testowa (firebase.test.json) — nie koliduje
 # z devowym emulatorem na 5001. Nadpisywalny przez SMOKE_BASE.
-B="${SMOKE_BASE:-http://127.0.0.1:5002/przetargai/europe-central2/api}"
+B="${SMOKE_BASE:-http://127.0.0.1:5002/demo-przetargai/europe-central2/api}"
 fail=0
 # Zrzuty odpowiedzi (JWT, dane kont testowych) idą do katalogu tymczasowego,
 # nie do firebase/functions — stamtąd trafiały do publicznego repo (2026-09-24).

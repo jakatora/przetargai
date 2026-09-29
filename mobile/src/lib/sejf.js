@@ -110,3 +110,24 @@ export function sortujDokumenty(lista) {
     return String(a.typ_dokumentu ?? '').localeCompare(String(b.typ_dokumentu ?? ''));
   });
 }
+
+/**
+ * Co pokazać w miejscu listy dokumentów.
+ *
+ * Audyt 2026-09-29: przy awarii mostu ekran mówił „Sejf jest pusty" pod komunikatem
+ * błędu. Pusty stan jest więc dozwolony WYŁĄCZNIE po udanym pobraniu pustej listy,
+ * a chwilowy błąd nie ukrywa dokumentów pobranych wcześniej (`nieaktualna: true`).
+ *
+ * @param {{dokumenty: Array|null, bladWczytania: string|null}} stan
+ *   `dokumenty` = ostatnia UDANIE pobrana lista (null = jeszcze żadnej)
+ * @returns {{stan: 'ladowanie'|'blad'|'pusto'|'lista', nieaktualna: boolean}}
+ */
+export function stanListySejfu({ dokumenty, bladWczytania } = {}) {
+  const maBlad = Boolean(bladWczytania);
+  if (Array.isArray(dokumenty) && dokumenty.length > 0) {
+    return { stan: 'lista', nieaktualna: maBlad };
+  }
+  if (maBlad) return { stan: 'blad', nieaktualna: false };
+  if (!Array.isArray(dokumenty)) return { stan: 'ladowanie', nieaktualna: false };
+  return { stan: 'pusto', nieaktualna: false };
+}

@@ -208,6 +208,10 @@ export const bkOknoFetch = onSchedule(
  * PRZED wysyłką (2026-09-25), więc każde przypomnienie leci najwyżej raz — także przy
  * ponowieniu. Nieudany push (awaria Expo) NIE jest błędem joba: wraca w kolejnym
  * przebiegu z limitem prób. Rzucamy tylko przy błędach infrastruktury.
+ *
+ * W tym samym przebiegu: przypomnienie o terminie PYTAŃ do SWZ (2026-09-29) — jedno
+ * w ostatniej dobie przed terminem wyliczonym z kalendarza przetargu, z tą samą
+ * rezerwacją przed wysyłką (jobs/przypomnieniaPytanSwz.js).
  */
 export const remindDeadlines = onSchedule(
   {
@@ -220,7 +224,11 @@ export const remindDeadlines = onSchedule(
   },
   async () => {
     const { runReminderCheck } = await import('./src/jobs/remindDeadlines.js');
-    const wynik = await runReminderCheck();
+    const { runPrzypomnieniaPytanSwz } = await import('./src/jobs/przypomnieniaPytanSwz.js');
+    const terminy = await runReminderCheck();
+    // Oba przebiegi niezależne: awaria jednego nie wstrzymuje drugiego.
+    const pytania = await runPrzypomnieniaPytanSwz();
+    const wynik = { ...terminy, ok: terminy.ok && pytania.ok, bledy: terminy.bledy + pytania.bledy, pytania };
     if (!wynik.ok) {
       console.error(JSON.stringify({ severity: 'ERROR', message: 'remindDeadlines: część wpisów padła', ...wynik }));
       throw new Error(`remindDeadlines: ${wynik.bledy} wpisów zakończyło się błędem`);

@@ -10,7 +10,7 @@ import { api } from '../api/client';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
-import { opisStatusu, etykietaLicznika, sortujDokumenty } from '../lib/sejf';
+import { opisStatusu, etykietaLicznika, sortujDokumenty, stanListySejfu } from '../lib/sejf';
 
 /**
  * Panel „SEJF DOKUMENTÓW FIRMY" — podzadanie 7/7 ulepszenia „Sejf podmiotowych środków
@@ -79,7 +79,12 @@ export default function SejfScreen() {
   const styles = useStyle(tworzStyleSejfu);
 
   const [katalog, setKatalog] = useState(null);
+  // Ostatnia UDANIE pobrana lista (null = jeszcze żadnej) — błąd jej nie nadpisuje.
   const [dokumenty, setDokumenty] = useState(null);
+  // Błąd POBRANIA listy osobno od błędów akcji (dodaj/wgraj/usuń): tylko on decyduje,
+  // czy wolno powiedzieć „sejf jest pusty" (audyt 2026-09-29).
+  const [bladWczytania, setBladWczytania] = useState(null);
+  const [wczytuje, setWczytuje] = useState(false);
   const [blad, setBlad] = useState(null);
 
   // Formularz dodawania.
@@ -92,17 +97,22 @@ export default function SejfScreen() {
   const [usuwaneId, setUsuwaneId] = useState(null);
 
   const wczytaj = useCallback(async () => {
-    setBlad(null);
+    setWczytuje(true);
     try {
       const [k, d] = await Promise.all([api.sejfKatalog(), api.sejfDokumenty()]);
       setKatalog(Array.isArray(k?.typy) ? k.typy : []);
       setDokumenty(Array.isArray(d?.dokumenty) ? d.dokumenty : []);
+      setBladWczytania(null);
     } catch (err) {
-      setBlad(err.message);
-      setKatalog((prev) => prev ?? []);
-      setDokumenty((prev) => prev ?? []);
+      // Poprzednia lista i katalog ZOSTAJĄ — chwilowy błąd nie może ich ukryć
+      // ani udawać pustego sejfu.
+      setBladWczytania(err.message || 'Nie udało się pobrać dokumentów.');
+    } finally {
+      setWczytuje(false);
     }
   }, []);
+
+  const stanListy = stanListySejfu({ dokumenty, bladWczytania });
 
   useFocusEffect(useCallback(() => { wczytaj(); }, [wczytaj]));
 
@@ -198,7 +208,13 @@ export default function SejfScreen() {
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>Dodaj dokument</Text>
         {katalog === null ? (
-          <ActivityIndicator color={kolory.blue} style={styles.spinner} />
+          bladWczytania ? (
+            <Text style={styles.typPodpowiedz}>
+              Nie udało się pobrać listy typów dokumentów — użyj „Ponów” poniżej.
+            </Text>
+          ) : (
+            <ActivityIndicator color={kolory.blue} style={styles.spinner} />
+          )
         ) : (
           <>
             <View style={styles.typyRzad}>
@@ -268,9 +284,19 @@ export default function SejfScreen() {
 
       {/* ── Lista dokumentów ── */}
       <Text style={styles.sekcjaTytul}>Twoje dokumenty</Text>
-      {dokumenty === null ? (
+      {bladWczytania ? (
+        <View style={styles.bladCard}>
+          <Text style={styles.bladText}>
+            {stanListy.nieaktualna
+              ? `Nie udało się odświeżyć sejfu (${bladWczytania}). Poniżej ostatnio pobrana lista — może być nieaktualna.`
+              : `Nie udało się pobrać dokumentów (${bladWczytania}). To nie znaczy, że sejf jest pusty.`}
+          </Text>
+          <Button title="Ponów" variant="ghost" onPress={wczytaj} loading={wczytuje} style={styles.gap} />
+        </View>
+      ) : null}
+      {stanListy.stan === 'ladowanie' ? (
         <ActivityIndicator color={kolory.blue} style={styles.spinner} />
-      ) : uporzadkowane.length === 0 ? (
+      ) : stanListy.stan === 'blad' ? null : stanListy.stan === 'pusto' ? (
         <Text style={styles.pusto}>Sejf jest pusty. Dodaj pierwszy dokument powyżej.</Text>
       ) : (
         uporzadkowane.map((dok) => {

@@ -6,6 +6,7 @@ import {
   opisStatusu,
   etykietaLicznika,
   sortujDokumenty,
+  stanListySejfu,
 } from '../src/lib/sejf.js';
 
 /*
@@ -125,4 +126,39 @@ test('sortujDokumenty: brak danych → pusta tablica', () => {
   assert.deepEqual(sortujDokumenty([]), []);
   assert.deepEqual(sortujDokumenty(undefined), []);
   assert.deepEqual(sortujDokumenty(null), []);
+});
+
+// ── Stan listy przy awarii pobrania (audyt 2026-09-29) ─────────────────────────
+// Przy błędzie mostu ekran mówił „Sejf jest pusty" pod komunikatem błędu —
+// firma mogła uznać, że straciła zaświadczenia. Pusty stan wolno pokazać WYŁĄCZNIE
+// po udanym pobraniu pustej listy.
+
+test('stanListySejfu: przed pierwszym pobraniem — ładowanie', () => {
+  assert.deepEqual(stanListySejfu({ dokumenty: null, bladWczytania: null }),
+    { stan: 'ladowanie', nieaktualna: false });
+});
+
+test('stanListySejfu: błąd bez żadnych danych — błąd, NIE pusty sejf', () => {
+  assert.deepEqual(stanListySejfu({ dokumenty: null, bladWczytania: 'Most niedostępny' }),
+    { stan: 'blad', nieaktualna: false });
+});
+
+test('stanListySejfu: udane pobranie pustej listy — pusty sejf', () => {
+  assert.deepEqual(stanListySejfu({ dokumenty: [], bladWczytania: null }),
+    { stan: 'pusto', nieaktualna: false });
+});
+
+test('stanListySejfu: nieudane odświeżenie po pustej liście — błąd, bo pustki nie potwierdzono', () => {
+  assert.deepEqual(stanListySejfu({ dokumenty: [], bladWczytania: 'Most niedostępny' }),
+    { stan: 'blad', nieaktualna: false });
+});
+
+test('stanListySejfu: chwilowy błąd NIE ukrywa posiadanych dokumentów', () => {
+  assert.deepEqual(stanListySejfu({ dokumenty: [{ id: 'd1' }], bladWczytania: 'Most niedostępny' }),
+    { stan: 'lista', nieaktualna: true });
+});
+
+test('stanListySejfu: udane pobranie z dokumentami — lista aktualna', () => {
+  assert.deepEqual(stanListySejfu({ dokumenty: [{ id: 'd1' }], bladWczytania: null }),
+    { stan: 'lista', nieaktualna: false });
 });

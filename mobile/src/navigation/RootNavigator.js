@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { navigationRef } from './nawigacjaRef';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
-import { trasaStartowa } from '../lib/onboarding';
+import { trasaStartowa, kluczNawigatora } from '../lib/onboarding';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
@@ -100,7 +100,9 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer ref={navigationRef} theme={navTheme}>
+      {/* Klucz sesji: logowanie/wylogowanie montuje nawigator od nowa (lib/onboarding.js). */}
       <Stack.Navigator
+        key={kluczNawigatora(user)}
         screenOptions={screenOptions}
         initialRouteName={trasaStartowa(user, pokazOnboarding)}
       >

@@ -5,7 +5,78 @@ import { readFileSync } from 'node:fs';
 import {
   tonCzynnika, opisWerdyktu, metryczkaProbki, uporzadkujCzynniki, policzTony,
   KOSZYKI_CHECKLISTY, opisGotowosci, opisDniDoZlozenia, odmianaDni, TONY,
+  wymaganiaZDopasowania,
 } from '../src/lib/wygrywalnosc.js';
+
+// ── Wymagania z analizy SWZ (audyt 2026-09-29) ─────────────────────────────────
+// Checklista brała `odp.checklista` z Radaru SWZ — to lista ZMIAN SWZ do odhaczenia
+// (obiekt), nie wymagane dokumenty. Prawdziwe pole to `wymagane_typy` z dopasowania
+// sejf↔SWZ (Railway `POST /api/przetarg/sejf/dopasowanie/:id`).
+
+const KATALOG_SEJFU = [
+  { id: 'krk', nazwa: 'Zaświadczenie o niekaralności (KRK)' },
+  { id: 'zus', nazwa: 'Zaświadczenie z ZUS' },
+];
+
+describe('wymaganiaZDopasowania', () => {
+  test('wymagane_typy → wymagania z nazwą z katalogu sejfu', () => {
+    assert.deepEqual(wymaganiaZDopasowania({ wymagane_typy: ['krk', 'zus'] }, KATALOG_SEJFU), {
+      stan: 'znane',
+      wymagania: [
+        { kod: 'krk', nazwa: 'Zaświadczenie o niekaralności (KRK)', obowiazkowe: true },
+        { kod: 'zus', nazwa: 'Zaświadczenie z ZUS', obowiazkowe: true },
+      ],
+    });
+  });
+
+  test('typ spoza katalogu zachowuje kod jako nazwę, duplikaty liczone raz', () => {
+    const wynik = wymaganiaZDopasowania({ wymagane_typy: ['us', 'us'] }, KATALOG_SEJFU);
+    assert.deepEqual(wynik.wymagania, [{ kod: 'us', nazwa: 'us', obowiazkowe: true }]);
+  });
+
+  test('pusta lista wymagań — brak wymagań, NIE „gotowe"', () => {
+    assert.deepEqual(wymaganiaZDopasowania({ wymagane_typy: [] }, KATALOG_SEJFU), { stan: 'brak_wymagan', wymagania: [] });
+  });
+
+  test('stary, błędny kształt (obiekt checklisty zmian) i śmieci — nieznany format', () => {
+    for (const odp of [{ checklista: { pozycje: [] } }, { wymagane_typy: 'krk' }, { wymagane_typy: ['krk', 7] }, null]) {
+      assert.deepEqual(wymaganiaZDopasowania(odp, KATALOG_SEJFU), { stan: 'nieznany_format', wymagania: [] });
+    }
+  });
+});
+
+describe('opisGotowosci — źródło wymagań i sejfu', () => {
+  const gotowa = { gotowe: true, stanWiedzy: { znamyWymagania: true, znamySejf: true, znamyTermin: true } };
+  const bezWymagan = { gotowe: false, stanWiedzy: { znamyWymagania: false, znamySejf: true, znamyTermin: true } };
+
+  for (const [zrodlo, fragment] of [
+    ['brak_powiazania', /połącz/i],
+    ['blad', /nie udało się pobrać wymagań/i],
+    ['nieznany_format', /nieznanym formacie/i],
+    ['brak_wymagan', /nie wskazała wymaganych dokumentów/i],
+  ]) {
+    test(`${zrodlo}: gotowość nieustalona, nigdy „gotowe"`, () => {
+      // Nawet gdyby backend policzył „gotowe" — bez znanych wymagań to nieprawda.
+      for (const checklista of [gotowa, bezWymagan]) {
+        const opis = opisGotowosci(checklista, 'pl', { wymagania: zrodlo, sejf: 'ok' });
+        assert.notEqual(opis.ton, 'sukces');
+        assert.match(opis.tekst, fragment);
+      }
+    });
+  }
+
+  test('błąd odczytu sejfu: nieustalona, a NIE „sejf jest pusty"', () => {
+    const pusta = { gotowe: false, stanWiedzy: { znamyWymagania: true, znamySejf: false, znamyTermin: true } };
+    const opis = opisGotowosci(pusta, 'pl', { wymagania: 'znane', sejf: 'blad' });
+    assert.notEqual(opis.ton, 'sukces');
+    assert.doesNotMatch(opis.tekst, /pusty/i);
+    assert.match(opis.tekst, /sejf/i);
+  });
+
+  test('znane wymagania i sejf: dotychczasowa ocena bez zmian', () => {
+    assert.equal(opisGotowosci(gotowa, 'pl', { wymagania: 'znane', sejf: 'ok' }).ton, 'sukces');
+  });
+});
 
 describe('wygrywalność — ton czynnika to KLASA koloru, nie hex', () => {
   test('mapuje tony backendu na klasy motywu', () => {

@@ -15,6 +15,11 @@ import crypto from 'node:crypto';
  * Test bez emulatora: most woła tylko sieć (atrapa fetch), bazy nie dotyka.
  */
 
+// Most włączony JAWNIE i tylko na atrapę Railway na loopback (tryb lokalny
+// zabrania produkcyjnego hosta — test/srodowiskoLokalne.test.js).
+process.env.MOST_ENABLED = 'true';
+process.env.MOST_RAILWAY_URL = 'http://127.0.0.1:39123';
+
 const { env } = await import('../src/config.js');
 const { zalozKontoPomostowe, podpisMostu, emailMostu } = await import('../src/services/mostRailway.js');
 

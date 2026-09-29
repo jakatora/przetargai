@@ -264,3 +264,27 @@ export function tozsamoscPrzepadla({ status, cialo }) {
   if (status !== 401) return false;
   return String(cialo ?? '').includes('Konto nie istnieje');
 }
+
+/**
+ * Jedno zapytanie do modułu przetargowego (Railway) w imieniu użytkownika — ta sama
+ * tożsamość co w trasie mostu: mapowanie konta pomostowego i DOKŁADNIE jedno
+ * ponowienie, gdy konto po tamtej stronie przepadło. Railway sam ogranicza dane do
+ * konta, więc cudza analiza odpowiada 404 (audyt 2026-09-29: weryfikacja własności
+ * analizy SWZ przed powiązaniem jej z przetargiem).
+ *
+ * @param {{id: string, most_railway_user_id?: string}} uzytkownik
+ * @param {{metoda?: string, sciezka: string}} zadanie `sciezka` względem `/api/przetarg`
+ * @returns {Promise<{status: number, dane: any}>}
+ * @throws {Error} przy braku łączności z Railway albo ścieżce poza prefiksem
+ */
+export async function zapytajModulPrzetargowy(uzytkownik, { metoda = 'GET', sciezka }) {
+  let idRailway = await idRailwayDlaUzytkownika(uzytkownik);
+  let odpowiedz = await przekaz({ metoda, sciezka, naglowki: {}, idRailway });
+  if (tozsamoscPrzepadla({ status: odpowiedz.status, cialo: odpowiedz.cialo })) {
+    idRailway = await idRailwayDlaUzytkownika(uzytkownik, { wymusOdnowienie: true });
+    odpowiedz = await przekaz({ metoda, sciezka, naglowki: {}, idRailway });
+  }
+  let dane = null;
+  try { dane = JSON.parse(odpowiedz.cialo.toString('utf8')); } catch { /* treść nie-JSON */ }
+  return { status: odpowiedz.status, dane };
+}

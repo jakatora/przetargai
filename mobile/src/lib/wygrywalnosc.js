@@ -160,12 +160,80 @@ export const KOSZYKI_CHECKLISTY = Object.freeze([
 ]);
 
 /**
+ * Odpowiedź dopasowania sejf↔SWZ (Railway `POST /api/przetarg/sejf/dopasowanie/:id`)
+ * → wymagania dla checklisty (audyt 2026-09-29).
+ *
+ * Prawdziwe pole to `wymagane_typy` — identyfikatory typów z katalogu sejfu, wykryte
+ * deterministycznie (bez płatnego AI) w SWZ zapisanej w Radarze. Wcześniej ekran brał
+ * `checklista` z Radaru SWZ, czyli listę ZMIAN SWZ do odhaczenia — inny obiekt.
+ * Wszystko, co nie jest listą niepustych napisów, to `nieznany_format`: lepiej
+ * powiedzieć „nie wiemy", niż zbudować z tego checklistę, która kłamie.
+ *
+ * @param {object|null} odpowiedz ciało odpowiedzi dopasowania
+ * @param {Array<{id: string, nazwa: string}>} katalogTypow katalog sejfu (nazwy do wyświetlenia)
+ * @returns {{stan: 'znane'|'brak_wymagan'|'nieznany_format',
+ *   wymagania: Array<{kod: string, nazwa: string, obowiazkowe: true}>}}
+ */
+export function wymaganiaZDopasowania(odpowiedz, katalogTypow = []) {
+  const typy = odpowiedz?.wymagane_typy;
+  if (!Array.isArray(typy) || !typy.every((t) => typeof t === 'string' && t.trim())) {
+    return { stan: 'nieznany_format', wymagania: [] };
+  }
+  const kody = [...new Set(typy.map((t) => t.trim()))];
+  if (!kody.length) return { stan: 'brak_wymagan', wymagania: [] };
+  const nazwy = new Map((Array.isArray(katalogTypow) ? katalogTypow : []).map((t) => [t?.id, t?.nazwa]));
+  return {
+    stan: 'znane',
+    wymagania: kody.map((kod) => ({ kod, nazwa: nazwy.get(kod) || kod, obowiazkowe: true })),
+  };
+}
+
+/** Komunikaty „gotowość nieustalona" — skąd wymagania NIE przyszły. */
+const NIEUSTALONE_WYMAGANIA = {
+  brak_powiazania: {
+    pl: 'Nie wiemy jeszcze, czego wymaga to postępowanie — połącz ten przetarg z analizą SWZ z Radaru.',
+    en: 'We do not know what this tender requires yet — link it to a tender-document analysis from the radar.',
+  },
+  blad: {
+    pl: 'Nie udało się pobrać wymagań z analizy SWZ — gotowość nieustalona. Spróbuj odświeżyć.',
+    en: 'Could not load requirements from the tender-document analysis — readiness unknown. Try refreshing.',
+  },
+  nieznany_format: {
+    pl: 'Analiza SWZ zwróciła wymagania w nieznanym formacie — gotowość nieustalona.',
+    en: 'The tender-document analysis returned requirements in an unknown format — readiness unknown.',
+  },
+  brak_wymagan: {
+    pl: 'Analiza SWZ nie wskazała wymaganych dokumentów — sprawdź SWZ ręcznie; gotowość nieustalona.',
+    en: 'The tender-document analysis found no required documents — check the documents manually; readiness unknown.',
+  },
+};
+
+/**
  * Zdanie o gotowości. Rozróżnia „wszystko masz" od „nie wiemy, czego trzeba" —
  * obie sytuacje dają zero braków, a znaczą coś przeciwnego.
+ *
+ * `zrodla` (opcjonalne) mówi, skąd ekran wziął dane: bez znanych wymagań
+ * (`wymagania !== 'znane'`) albo przy błędzie odczytu sejfu gotowość jest
+ * NIEUSTALONA — nigdy „gotowe", nawet gdyby backend tak policzył.
+ *
+ * @param {{wymagania?: 'znane'|'brak_powiazania'|'blad'|'nieznany_format'|'brak_wymagan', sejf?: 'ok'|'blad'}} [zrodla]
  */
-export function opisGotowosci(checklista, jezyk = 'pl') {
+export function opisGotowosci(checklista, jezyk = 'pl', zrodla = {}) {
   if (!checklista) return null;
   const stan = checklista.stanWiedzy ?? {};
+
+  const nieustalone = NIEUSTALONE_WYMAGANIA[zrodla.wymagania];
+  if (nieustalone) {
+    return { ton: zrodla.wymagania === 'brak_powiazania' ? 'neutral' : 'ostrzezenie', tekst: nieustalone[jezyk] ?? nieustalone.pl };
+  }
+  if (zrodla.sejf === 'blad') {
+    return {
+      ton: 'ostrzezenie',
+      tekst: jezyk === 'en'
+        ? 'Could not read your document safe — readiness unknown. Try refreshing.'
+        : 'Nie udało się odczytać sejfu dokumentów — gotowość nieustalona. Spróbuj odświeżyć.',
+    };
+  }
 
   if (!stan.znamyWymagania) {
     return {

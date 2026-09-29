@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { profilPusty, czyPokazacOnboarding, trasaStartowa } from '../src/lib/onboarding.js';
+import { readFileSync } from 'node:fs';
+import { StackRouter } from '@react-navigation/routers';
+import {
+  profilPusty, czyPokazacOnboarding, trasaStartowa, kluczNawigatora,
+} from '../src/lib/onboarding.js';
 
 test('profilPusty: brak słów i CPV = pusty', () => {
   assert.equal(profilPusty({ keywords: [], cpv_codes: [] }), true);
@@ -43,4 +47,60 @@ test('trasaStartowa: onboarding wymagany → Witaj', () => {
 test('trasaStartowa: brak usera → Login (zawsze nazwana trasa, nigdy undefined)', () => {
   assert.equal(trasaStartowa(null, false), 'Login');
   assert.equal(trasaStartowa(null, true), 'Login');
+});
+
+// ── Po zalogowaniu (audyt 2026-09-29) ──────────────────────────────────────────
+// React Navigation tworzy router RAZ (useLazyValue) z initialRouteName z chwili
+// montażu — dla gościa to 'Login'. Po zalogowaniu 'Login' znika, a router spada
+// na PIERWSZY ekran grupy zalogowanego, czyli 'Witaj': każdy użytkownik z gotowym
+// profilem lądował na onboardingu. Naprawa: nawigator dostaje `key` zależny od
+// sesji, więc przy logowaniu/wylogowaniu montuje się od nowa z właściwą trasą.
+
+const TRASY_GOSCIA = ['Login', 'Register', 'ForgotPassword', 'ResetPassword'];
+const TRASY_ZALOGOWANEGO = ['Witaj', 'MatchFeed', 'MatchDetail', 'Saved', 'Account'];
+const zPelnymProfilem = { id: 'u1', keywords: ['droga'], cpv_codes: [] };
+const nowy = { id: 'u2', keywords: [], cpv_codes: [] };
+
+/** Symulacja montażu nawigatora tak, jak robi to React: nowy klucz = nowy router. */
+function poZmianieSesji({ przed, po, pominiety = false }) {
+  const router = StackRouter({ initialRouteName: trasaStartowa(przed, czyPokazacOnboarding(przed, pominiety)) });
+  const stan = router.getInitialState({ routeNames: przed ? TRASY_ZALOGOWANEGO : TRASY_GOSCIA, routeParamList: {} });
+  const trasyPo = po ? TRASY_ZALOGOWANEGO : TRASY_GOSCIA;
+  if (kluczNawigatora(przed) === kluczNawigatora(po)) {
+    // Ten sam klucz — React zachowuje router, a ten tylko przycina stos.
+    const nowyStan = router.getStateForRouteNamesChange(stan, { routeNames: trasyPo, routeParamList: {}, routeKeyChanges: [] });
+    return nowyStan.routes.map((r) => r.name);
+  }
+  const nowyRouter = StackRouter({ initialRouteName: trasaStartowa(po, czyPokazacOnboarding(po, pominiety)) });
+  return nowyRouter.getInitialState({ routeNames: trasyPo, routeParamList: {} }).routes.map((r) => r.name);
+}
+
+test('kluczNawigatora: gość i zalogowany mają RÓŻNE klucze (logowanie montuje nawigator od nowa)', () => {
+  assert.notEqual(kluczNawigatora(null), kluczNawigatora(zPelnymProfilem));
+  assert.notEqual(kluczNawigatora(zPelnymProfilem), kluczNawigatora(nowy));
+});
+
+test('kluczNawigatora: edycja profilu tego samego konta NIE resetuje stosu', () => {
+  assert.equal(kluczNawigatora(zPelnymProfilem), kluczNawigatora({ ...zPelnymProfilem, keywords: ['most'] }));
+});
+
+test('logowanie z gotowym profilem: główny widok, bez onboardingu i bez starego stosu', () => {
+  assert.deepEqual(poZmianieSesji({ przed: null, po: zPelnymProfilem }), ['MatchFeed']);
+});
+
+test('logowanie nowego konta z pustym profilem: onboarding', () => {
+  assert.deepEqual(poZmianieSesji({ przed: null, po: nowy }), ['Witaj']);
+});
+
+test('pusty profil, ale onboarding pominięty wcześniej: główny widok', () => {
+  assert.deepEqual(poZmianieSesji({ przed: null, po: nowy, pominiety: true }), ['MatchFeed']);
+});
+
+test('wylogowanie: ekran logowania, stos zalogowanego znika', () => {
+  assert.deepEqual(poZmianieSesji({ przed: zPelnymProfilem, po: null }), ['Login']);
+});
+
+test('RootNavigator: Stack.Navigator dostaje klucz sesji', () => {
+  const zrodlo = readFileSync(new URL('../src/navigation/RootNavigator.js', import.meta.url), 'utf8');
+  assert.match(zrodlo, /<Stack\.Navigator\s[^>]*key=\{kluczNawigatora\(user\)\}/);
 });

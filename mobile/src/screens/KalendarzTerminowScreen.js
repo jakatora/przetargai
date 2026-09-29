@@ -34,7 +34,9 @@ function kolorTonu(kolory, ton) {
   return kolory.textMuted;
 }
 
-export default function KalendarzTerminowScreen({ navigation }) {
+export default function KalendarzTerminowScreen({ navigation, route }) {
+  // Z pushu „ostatnia doba na pytania do SWZ": podświetl ten termin tego przetargu.
+  const { podswietlTenderId, podswietlKod } = route?.params ?? {};
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKalendarza);
   const { t, jezyk } = useJezyk();
@@ -196,7 +198,11 @@ export default function KalendarzTerminowScreen({ navigation }) {
             return (
               <Pressable
                 key={`${p.tenderId}-${p.kod}`}
-                style={styles.karta}
+                style={[
+                  styles.karta,
+                  p.tenderId === podswietlTenderId && p.kod === podswietlKod
+                    ? { borderColor: kolory.ostrzezenieAkcent, borderWidth: 2 } : null,
+                ]}
                 // Rejestr jako metryczka `zrodlo` (był zły klucz `source` → „BZP" przy
                 // TED) + termin SKŁADANIA z pozycji „oferty" (2026-09-25).
                 onPress={() => navigation.navigate('KatalogDetail', {

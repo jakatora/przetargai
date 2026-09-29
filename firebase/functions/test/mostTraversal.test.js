@@ -15,6 +15,10 @@ import http from 'node:http';
  */
 
 process.env.ANTHROPIC_API_KEY = '';
+// Most włączony JAWNIE i tylko na atrapę Railway na loopback (tryb lokalny
+// zabrania produkcyjnego hosta — test/srodowiskoLokalne.test.js).
+process.env.MOST_ENABLED = 'true';
+process.env.MOST_RAILWAY_URL = 'http://127.0.0.1:39123';
 
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();

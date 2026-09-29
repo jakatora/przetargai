@@ -2777,3 +2777,118 @@ export const limitEksportu = {
     });
   },
 };
+
+/*
+ * POWIĄZANIE ANALIZY SWZ Z PRZETARGIEM (audyt 2026-09-29).
+ *
+ * Analiza SWZ żyje na Railway (Radar SWZ), a przetarg w Firestore — i nic ich dotąd
+ * nie łączyło, więc checklista „co musisz mieć do dnia składania" nigdy nie znała
+ * wymagań. Powiązanie jest w zakresie UŻYTKOWNIKA (ścieżka users/{uid}/…) i PRZETARGU
+ * (id dokumentu), wskazywane jawnie przez użytkownika — bez zgadywania po tytule.
+ * Własność analizy sprawdza trasa przez most PRZED zapisem. Znika razem z kontem
+ * (`usunKonto` → recursiveDelete).
+ */
+const powiazanieSwzDoc = (userId, tenderId) =>
+  db().collection('users').doc(userId).collection('powiazania_swz').doc(String(tenderId));
+
+export const powiazaniaSwz = {
+  /** @returns {Promise<{tender_id: string, postepowanie_id: string, nazwa: string|null, powiazano_o: string}|null>} */
+  async pobierz(userId, tenderId) {
+    const snap = await powiazanieSwzDoc(userId, tenderId).get();
+    if (!snap.exists) return null;
+    const d = snap.data();
+    return {
+      tender_id: String(tenderId),
+      postepowanie_id: d.postepowanie_id,
+      nazwa: d.nazwa ?? null,
+      powiazano_o: d.powiazano_o ?? null,
+    };
+  },
+
+  async ustaw(userId, tenderId, { postepowanieId, nazwa = null }) {
+    const rekord = {
+      tender_id: String(tenderId),
+      postepowanie_id: String(postepowanieId),
+      nazwa: nazwa ?? null,
+      powiazano_o: nowIso(),
+    };
+    await powiazanieSwzDoc(userId, tenderId).set(rekord);
+    return rekord;
+  },
+
+  async usun(userId, tenderId) {
+    await powiazanieSwzDoc(userId, tenderId).delete();
+  },
+};
+
+/*
+ * PRZYPOMNIENIE O TERMINIE PYTAŃ DO SWZ (funkcja A, 2026-09-29).
+ *
+ * Stan wysyłki leży na wpisie „Zapisanych" w polu `przypomnienie_pytan`
+ * { termin, stan, proby, zmieniono_o, ponow_po }. `termin` (ISO terminu pytań) jest
+ * kluczem idempotencji: zmiana terminu składania w źródle daje nowy termin pytań
+ * i nowe — znów jedno — przypomnienie. Preferencja użytkownika to ten sam przełącznik
+ * co przy terminie składania (`reminder_enabled` — „Przypomnij przed terminem").
+ *
+ * Stany: zarezerwowane → wyslane | ponowienie (błąd dostawcy, z limitem prób) |
+ * porzucone (martwy token / wyczerpane próby) | bez_tokenu (spróbujemy znowu,
+ * bo zgoda na push może przyjść jeszcze w oknie).
+ */
+/** Rezerwacja starsza niż to uznawana jest za osieroconą (przebieg padł w połowie). */
+const PRZETERMINOWANIE_REZERWACJI_PYTAN_MS = 30 * 60_000;
+
+export const przypomnieniaPytan = {
+  /**
+   * Wpisy z włączonym przypomnieniem i terminem składania w [od, doKiedy].
+   * collectionGroup — indeks w firestore.indexes.json (reminder_enabled + tender_deadline).
+   */
+  async kandydaci({ od, doKiedy }) {
+    const snap = await db().collectionGroup('saved')
+      .where('reminder_enabled', '==', true)
+      .where('tender_deadline', '>=', od)
+      .where('tender_deadline', '<=', doKiedy)
+      .get();
+    return snap.docs.map((d) => ({ userId: d.ref.parent.parent.id, tenderId: d.id, ...d.data() }));
+  },
+
+  /**
+   * Rezerwacja wysyłki PRZED pushem (transakcja) — dwa równoległe przebiegi joba
+   * nie wyślą dwóch powiadomień o tym samym terminie.
+   * @returns {Promise<{stan: 'zarezerwowane', proby: number}|{stan: 'zajete'|'wylaczone'|'brak_wpisu'}>}
+   */
+  async zarezerwuj(userId, tenderId, { termin, teraz }) {
+    const ref = savedCol(userId).doc(tenderId);
+    return db().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) return { stan: 'brak_wpisu' };
+      const d = snap.data();
+      if (d.reminder_enabled !== true) return { stan: 'wylaczone' };
+      const p = d.przypomnienie_pytan?.termin === termin ? d.przypomnienie_pytan : null;
+      if (p) {
+        if (p.stan === 'wyslane' || p.stan === 'porzucone') return { stan: 'zajete' };
+        if (p.stan === 'zarezerwowane'
+          && Date.parse(teraz) - Date.parse(p.zmieniono_o) < PRZETERMINOWANIE_REZERWACJI_PYTAN_MS) {
+          return { stan: 'zajete' };
+        }
+        if (p.stan === 'ponowienie' && p.ponow_po && p.ponow_po > teraz) return { stan: 'zajete' };
+      }
+      const proby = p?.proby ?? 0;
+      tx.update(ref, {
+        przypomnienie_pytan: { termin, stan: 'zarezerwowane', proby, zmieniono_o: teraz, ponow_po: null },
+      });
+      return { stan: 'zarezerwowane', proby };
+    });
+  },
+
+  /** Wynik wysyłki — zapisuje się tylko na WŁASNĄ rezerwację (ten sam termin i stan). */
+  async zakoncz(userId, tenderId, { termin, teraz, stan, proby, ponowPo = null }) {
+    const ref = savedCol(userId).doc(tenderId);
+    return db().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const p = snap.exists ? snap.data().przypomnienie_pytan : null;
+      if (!p || p.termin !== termin || p.stan !== 'zarezerwowane') return false;
+      tx.update(ref, { przypomnienie_pytan: { termin, stan, proby, zmieniono_o: teraz, ponow_po: ponowPo } });
+      return true;
+    });
+  },
+};

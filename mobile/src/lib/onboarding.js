@@ -44,3 +44,20 @@ export function trasaStartowa(user, pokazOnboarding) {
   if (!user) return 'Login';
   return pokazOnboarding ? 'Witaj' : 'MatchFeed';
 }
+
+/**
+ * Klucz nawigatora = tożsamość sesji (audyt 2026-09-29).
+ *
+ * React Navigation tworzy router RAZ, z `initialRouteName` z chwili montażu. Dla gościa
+ * to 'Login'; po zalogowaniu ta trasa znika i router spadał na PIERWSZY ekran grupy
+ * zalogowanego — 'Witaj' — więc każdy użytkownik z gotowym profilem lądował na
+ * onboardingu. Zmiana klucza przy logowaniu/wylogowaniu montuje nawigator od nowa:
+ * właściwa trasa startowa i żadnego stosu z poprzedniej sesji. Edycja profilu tego
+ * samego konta klucza nie zmienia (stos zostaje).
+ *
+ * @param {object|null} user profil z AuthContext
+ * @returns {string}
+ */
+export function kluczNawigatora(user) {
+  return user ? `sesja:${user.id ?? 'zalogowany'}` : 'gosc';
+}

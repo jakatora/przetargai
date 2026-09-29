@@ -6,7 +6,9 @@ import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
-import { KOSZYKI_CHECKLISTY, opisGotowosci, opisDniDoZlozenia } from '../lib/wygrywalnosc';
+import {
+  KOSZYKI_CHECKLISTY, opisGotowosci, opisDniDoZlozenia, wymaganiaZDopasowania,
+} from '../lib/wygrywalnosc';
 
 /*
  * „Co muszę mieć do dnia składania" (etap 6).
@@ -32,8 +34,8 @@ function tokenyTonu(ton, k) {
   return { tlo: k.neutralneTlo, tekst: k.textMuted };
 }
 
-export default function ChecklistaOfertyScreen({ route }) {
-  const { tenderId, tytul, postepowanieId } = route.params ?? {};
+export default function ChecklistaOfertyScreen({ route, navigation }) {
+  const { tenderId, tytul } = route.params ?? {};
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleChecklisty);
   const { t, jezyk } = useJezyk();
@@ -42,30 +44,58 @@ export default function ChecklistaOfertyScreen({ route }) {
   const [blad, setBlad] = useState(null);
   const [ostrzezenia, setOstrzezenia] = useState([]);
   const [ladowanie, setLadowanie] = useState(true);
+  // Skąd przyszły dane — bez znanych wymagań gotowość jest NIEUSTALONA (lib/wygrywalnosc).
+  const [zrodla, setZrodla] = useState({ wymagania: 'brak_powiazania', sejf: 'ok' });
+  const [powiazanie, setPowiazanie] = useState(null);
+  // Wybór analizy SWZ: null = zamknięty | { ladowanie } | { lista } | { blad }.
+  const [wybor, setWybor] = useState(null);
+  const [bladPowiazania, setBladPowiazania] = useState(null);
+  const [zapisuje, setZapisuje] = useState(false);
 
   const wczytaj = useCallback(async () => {
     setLadowanie(true);
     const problemy = [];
+    const nowe = { wymagania: 'brak_powiazania', sejf: 'ok' };
 
     // Sejf i Radar SWZ są w osobnej usłudze — ich awaria NIE może wywrócić
     // checklisty. Zbieramy, co się da, i mówimy, czego zabrakło.
+    const [sejf, katalog, pow] = await Promise.allSettled([
+      api.sejfDokumenty(), api.sejfKatalog(), api.powiazanieSwz(tenderId),
+    ]);
+
     let dokumenty = [];
-    try {
-      const odp = await api.sejfDokumenty();
-      dokumenty = odp?.dokumenty ?? odp ?? [];
-    } catch {
+    if (sejf.status === 'fulfilled') {
+      dokumenty = Array.isArray(sejf.value?.dokumenty) ? sejf.value.dokumenty : [];
+    } else {
+      nowe.sejf = 'blad';
       problemy.push(t('Nie udało się odczytać sejfu dokumentów.', 'Could not read the document safe.'));
     }
+    // Katalog daje tylko NAZWY typów — bez niego wymagania mają kody, ale dalej działają.
+    const typy = katalog.status === 'fulfilled' && Array.isArray(katalog.value?.typy) ? katalog.value.typy : [];
 
     let wymagania = [];
-    if (postepowanieId) {
-      try {
-        const odp = await api.radarPostepowanie(postepowanieId);
-        wymagania = odp?.checklista ?? odp?.wymagania ?? [];
-      } catch {
-        problemy.push(t('Nie udało się odczytać wymagań z Radaru SWZ.', 'Could not read requirements from the tender-document radar.'));
+    let powiazana = null;
+    if (pow.status === 'rejected') {
+      nowe.wymagania = 'blad';
+      problemy.push(t('Nie udało się sprawdzić, która analiza SWZ jest powiązana z tym przetargiem.',
+        'Could not check which tender-document analysis is linked to this tender.'));
+    } else {
+      powiazana = pow.value?.powiazanie ?? null;
+      if (powiazana) {
+        try {
+          // Prawdziwe pole wymagań: `wymagane_typy` z dopasowania sejf↔SWZ (bez płatnego AI).
+          const odp = await api.sejfDopasowanie(powiazana.postepowanie_id, {});
+          const wynik = wymaganiaZDopasowania(odp, typy);
+          nowe.wymagania = wynik.stan;
+          wymagania = wynik.wymagania;
+        } catch {
+          nowe.wymagania = 'blad';
+          problemy.push(t('Nie udało się odczytać wymagań z analizy SWZ.', 'Could not read requirements from the tender-document analysis.'));
+        }
       }
     }
+    setPowiazanie(powiazana);
+    setZrodla(nowe);
 
     try {
       setDane(await api.checklistaOferty(tenderId, { wymagania, dokumenty }));
@@ -76,9 +106,47 @@ export default function ChecklistaOfertyScreen({ route }) {
       setOstrzezenia(problemy);
       setLadowanie(false);
     }
-  }, [tenderId, postepowanieId, t]);
+  }, [tenderId, t]);
 
   useEffect(() => { wczytaj(); }, [wczytaj]);
+
+  const otworzWybor = useCallback(async () => {
+    setBladPowiazania(null);
+    setWybor({ ladowanie: true });
+    try {
+      const odp = await api.radarListaPostepowan();
+      setWybor({ lista: Array.isArray(odp?.postepowania) ? odp.postepowania : [] });
+    } catch (err) {
+      setWybor({ blad: err.message });
+    }
+  }, []);
+
+  const powiaz = useCallback(async (postepowanieId) => {
+    setZapisuje(true);
+    setBladPowiazania(null);
+    try {
+      await api.powiazSwz(tenderId, postepowanieId);
+      setWybor(null);
+      await wczytaj();
+    } catch (err) {
+      setBladPowiazania(err.message);
+    } finally {
+      setZapisuje(false);
+    }
+  }, [tenderId, wczytaj]);
+
+  const odlacz = useCallback(async () => {
+    setZapisuje(true);
+    setBladPowiazania(null);
+    try {
+      await api.odlaczSwz(tenderId);
+      await wczytaj();
+    } catch (err) {
+      setBladPowiazania(err.message);
+    } finally {
+      setZapisuje(false);
+    }
+  }, [tenderId, wczytaj]);
 
   if (ladowanie && !dane) {
     return (
@@ -99,7 +167,7 @@ export default function ChecklistaOfertyScreen({ route }) {
   }
 
   const checklista = dane?.checklista;
-  const gotowosc = opisGotowosci(checklista, jezyk);
+  const gotowosc = opisGotowosci(checklista, jezyk, zrodla);
   const tokenyGotowosci = tokenyTonu(gotowosc?.ton, kolory);
   const licznik = opisDniDoZlozenia(checklista, jezyk);
   const nastepny = checklista?.nastepnyKrok;
@@ -126,6 +194,67 @@ export default function ChecklistaOfertyScreen({ route }) {
       {ostrzezenia.map((tekst) => (
         <Text key={tekst} style={styles.ostrzezenie}>{tekst}</Text>
       ))}
+
+      {/* Źródło wymagań: analiza SWZ wskazana JAWNIE dla tego przetargu (audyt 2026-09-29). */}
+      <View style={styles.sekcja}>
+        <Text style={styles.sekcjaTytul}>{t('Analiza SWZ tego przetargu', 'Tender-document analysis for this tender')}</Text>
+        {powiazanie ? (
+          <>
+            <Text style={styles.akapit}>
+              {t('Wymagania bierzemy z analizy', 'Requirements come from the analysis')}: {powiazanie.nazwa ?? powiazanie.postepowanie_id}
+            </Text>
+            <View style={styles.rzadPrzyciskow}>
+              <Button title={t('Zmień analizę', 'Change analysis')} variant="ghost" onPress={otworzWybor} disabled={zapisuje} />
+              <Button title={t('Odłącz', 'Unlink')} variant="ghost" onPress={odlacz} loading={zapisuje} />
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.akapit}>
+              {t('Połącz ten przetarg z analizą SWZ z Radaru — wtedy checklista pokaże brakujące i nieaktualne dokumenty.',
+                'Link this tender to a tender-document analysis — the checklist will then show missing and outdated documents.')}
+            </Text>
+            {!wybor ? (
+              <Button title={t('Wybierz analizę SWZ', 'Choose an analysis')} onPress={otworzWybor} style={styles.gap} />
+            ) : null}
+          </>
+        )}
+
+        {wybor?.ladowanie ? <ActivityIndicator color={kolory.blue} style={styles.gap} /> : null}
+        {wybor?.blad ? (
+          <>
+            <Text style={styles.ostrzezenie}>{wybor.blad}</Text>
+            <Button title={t('Ponów', 'Retry')} variant="ghost" onPress={otworzWybor} />
+          </>
+        ) : null}
+        {wybor?.lista ? (
+          wybor.lista.length ? (
+            <View style={styles.gap}>
+              <Text style={styles.sekcjaOpis}>{t('Twoje analizy SWZ — wybierz tę dla tego przetargu:', 'Your analyses — choose the one for this tender:')}</Text>
+              {wybor.lista.map((p) => (
+                <Button
+                  key={p.id}
+                  title={p.nazwa}
+                  variant="ghost"
+                  onPress={() => powiaz(p.id)}
+                  disabled={zapisuje}
+                  style={styles.opcja}
+                />
+              ))}
+              <Button title={t('Anuluj', 'Cancel')} variant="ghost" onPress={() => setWybor(null)} />
+            </View>
+          ) : (
+            <View style={styles.gap}>
+              <Text style={styles.akapit}>
+                {t('Nie masz jeszcze analiz SWZ. Dodaj SWZ tego przetargu w Radarze SWZ i wróć tutaj.',
+                  'You have no analyses yet. Add this tender’s documents in the radar and come back.')}
+              </Text>
+              <Button title={t('Otwórz Radar SWZ', 'Open the radar')} onPress={() => navigation.navigate('RadarSwz')} style={styles.gap} />
+            </View>
+          )
+        ) : null}
+        {bladPowiazania ? <Text style={styles.ostrzezenie}>{bladPowiazania}</Text> : null}
+      </View>
 
       {KOSZYKI_CHECKLISTY.map((koszyk) => {
         const pozycje = checklista?.koszyki?.[koszyk.kod] ?? [];
@@ -228,4 +357,6 @@ const tworzStyleChecklisty = tworzStyle((k) => ({
   pozycjaNazwa: { fontSize: 14, fontWeight: '700', color: k.text },
   pozycjaMeta: { fontSize: 12, color: k.textMuted },
   gap: { marginTop: spacing.lg },
+  rzadPrzyciskow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  opcja: { marginTop: spacing.xs },
 }));

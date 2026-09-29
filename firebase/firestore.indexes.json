@@ -51,6 +51,20 @@
       ]
     },
     {
+      "collectionGroup": "saved",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "reminder_enabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tender_deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "rozstrzygniecia",
       "queryScope": "COLLECTION",
       "fields": [

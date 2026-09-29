@@ -1,4 +1,5 @@
 import { logger } from '../lib/logger.js';
+import { features } from '../config.js';
 import { users } from '../db/repos.js';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -37,6 +38,12 @@ export async function sendPush(tokens, { title, body, data = {} }, { zdejmijMart
   const valid = (Array.isArray(tokens) ? tokens : [tokens])
     .filter((t) => typeof t === 'string' && t.startsWith('ExponentPushToken'));
   if (!valid.length) return { sent: 0, failed: 0, martweTokeny: [] };
+
+  // Emulator nie wysyła pushy do Expo. To NIE jest sukces — nadawca widzi porażkę.
+  if (!features.push) {
+    logger.warn({ tokeny: valid.length, title }, 'Push pominięty — emulator (features.push=false)');
+    return { sent: 0, failed: valid.length, bledy: { PushWylaczonyLokalnie: valid.length }, martweTokeny: [] };
+  }
 
   const messages = valid.map((to) => ({ to, title, body, data, sound: 'default' }));
   try {

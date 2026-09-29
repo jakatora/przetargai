@@ -9,6 +9,7 @@
  * i jobs/remindDeadlines.js):
  *  • `new_matches`      → nowe dopasowane przetargi → lista „Twoje przetargi" (MatchFeed).
  *  • `deadline_reminder`→ zbliża się termin zapisanego przetargu → „Zapisane" (Saved).
+ *  • `swz_questions_reminder` → ostatnia doba na pytania do SWZ → kalendarz terminów.
  *  • `nowe_trafienia`   → nowe przetargi w obserwowanym wyszukiwaniu → centrum alertów.
  *  • `zmiany`           → zmiana terminu/wartości/statusu obserwowanego ogłoszenia → centrum alertów.
  *
@@ -32,6 +33,13 @@ export function celPush(data) {
       return {
         ekran: 'Saved',
         params: data.tender_id ? { podswietlTenderId: String(data.tender_id) } : {},
+      };
+    // Ostatnia doba na pytania do SWZ (jobs/przypomnieniaPytanSwz.js) → kalendarz
+    // terminów z podświetlonym terminem pytań TEGO przetargu.
+    case 'swz_questions_reminder':
+      return {
+        ekran: 'KalendarzTerminow',
+        params: data.tender_id ? { podswietlTenderId: String(data.tender_id), podswietlKod: 'pytania' } : {},
       };
     /*
      * Monitoring (etap 5). Oba typy prowadzą do CENTRUM ALERTÓW, a nie wprost do

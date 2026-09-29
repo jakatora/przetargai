@@ -44,13 +44,22 @@ router.use(async (req, res, next) => {
     });
   }
 
+  /*
+   * Ciało żądania (2026-09-29): runtime Functions (produkcja i emulator) parsuje je
+   * PRZED aplikacją — oryginalne bajty są w `req.rawBody`, a `express.raw()` z app.js
+   * nie ma już czego czytać i zostawia `req.body` jako obiekt. Przekazanie obiektu
+   * gubiło ciało każdego POST/PATCH (Railway odpowiadał 400). Na czystym Expressie
+   * (testy, lokalny serwer) `rawBody` nie istnieje, więc zostaje bufor z express.raw().
+   */
+  const cialo = Buffer.isBuffer(req.rawBody) ? req.rawBody : req.body;
+
   try {
     let idRailway = await idRailwayDlaUzytkownika(req.user);
     let odpowiedz = await przekaz({
       metoda: req.method,
       sciezka: req.url,
       naglowki: req.headers,
-      cialo: req.body,
+      cialo,
       idRailway,
     });
 
@@ -67,7 +76,7 @@ router.use(async (req, res, next) => {
         metoda: req.method,
         sciezka: req.url,
         naglowki: req.headers,
-        cialo: req.body,
+        cialo,
         idRailway,
       });
     }

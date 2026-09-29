@@ -21,5 +21,6 @@ export function wymagajEmulatora() {
 export async function polaczZEmulatorem() {
   wymagajEmulatora();
   const { initializeApp, getApps } = await import('firebase-admin/app');
-  if (!getApps().length) initializeApp({ projectId: 'przetargai' });
+  // Projekt demo- (jak w skryptach npm): emulator nie ma dostępu do zasobów produkcji.
+  if (!getApps().length) initializeApp({ projectId: 'demo-przetargai' });
 }

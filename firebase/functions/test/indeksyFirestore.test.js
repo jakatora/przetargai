@@ -201,3 +201,19 @@ test('collectionGroup(X).where(pole) ma indeks COLLECTION_GROUP właśnie na TYM
     `strażnik nie widzi zapytań po tender_id: ${widziane.join(', ')}`);
   assert.deepEqual(naruszenia, [], 'zapytanie grupowe bez indeksu grupowego na polu filtra');
 });
+
+/*
+ * Przypomnienie o terminie pytań do SWZ (2026-09-29): równość `reminder_enabled`
+ * + zakres po `tender_deadline` w collectionGroup('saved'). Firestore wymaga na to
+ * indeksu ZŁOŻONEGO o zasięgu COLLECTION_GROUP — emulator tego nie sprawdza, więc
+ * bez tej asercji job działałby w testach i padał na produkcji.
+ */
+test('przypomnienia o pytaniach SWZ: indeks złożony saved(reminder_enabled, tender_deadline)', () => {
+  const konfiguracja = JSON.parse(fs.readFileSync(INDEXES, 'utf8'));
+  const jest = konfiguracja.indexes.some((i) => i.collectionGroup === 'saved'
+    && i.queryScope === 'COLLECTION_GROUP'
+    && i.fields.length === 2
+    && i.fields[0].fieldPath === 'reminder_enabled'
+    && i.fields[1].fieldPath === 'tender_deadline');
+  assert.ok(jest, 'brak indeksu złożonego saved(reminder_enabled, tender_deadline) w firestore.indexes.json');
+});

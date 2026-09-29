@@ -2,8 +2,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { tenders, users, benchmarkRynku } from '../db/repos.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { tenders, users, benchmarkRynku, powiazaniaSwz } from '../db/repos.js';
+import { AppError, badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
+import { features } from '../config.js';
+import { logger } from '../lib/logger.js';
+import { zapytajModulPrzetargowy } from '../services/mostRailway.js';
 import { zbudujChecklisteOferty } from '../lib/checklistaOferty.js';
 import { zbudujKalendarz } from '../lib/kalendarzPrzetargu.js';
 import { zbudujKarteStartu, kluczeBenchmarku, rozstrzygniecieTegoPostepowania } from '../services/kartaStartu.js';
@@ -124,6 +127,60 @@ router.post('/tender/:id/checklista', ah(async (req, res) => {
     // WCZEŚNIEJSZY termin niż składanie, a to on zwykle przepada niezauważony.
     kalendarz: zbudujKalendarz(tender, { teraz: new Date(teraz).toISOString() }),
   });
+}));
+
+/*
+ * Powiązanie analizy SWZ z TYM przetargiem (audyt 2026-09-29).
+ *
+ * Checklista nigdy nie znała wymagań, bo nic nie łączyło przetargu z analizą SWZ
+ * z Radaru. Użytkownik wskazuje analizę jawnie; zapis leży w jego zakresie
+ * (users/{uid}/powiazania_swz/{tenderId}), a PRZED zapisem most pyta Railway
+ * o tę analizę na koncie użytkownika — cudza odpowiada 404 i nic nie powstaje.
+ * Wymagania dociąga potem klient z dopasowania sejf↔SWZ (Railway), bo ten
+ * endpoint checklisty jest z założenia bezstanowy (patrz wyżej).
+ */
+const wejsciePowiazania = z.object({
+  // Identyfikator z Radaru SWZ; znaki spoza wzorca (ukośniki, kropki) nie mają
+  // prawa dojść do ścieżki mostu.
+  postepowanie_id: z.string().trim().min(1).max(100).regex(/^[A-Za-z0-9_-]+$/),
+});
+
+router.get('/tender/:id/swz', ah(async (req, res) => {
+  res.json({ powiazanie: await powiazaniaSwz.pobierz(req.user.id, req.params.id) });
+}));
+
+router.put('/tender/:id/swz', ah(async (req, res) => {
+  const parsed = wejsciePowiazania.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Nieprawidłowy identyfikator analizy SWZ');
+
+  const tender = await tenders.findById(req.params.id);
+  if (!tender) throw notFound('Przetarg nie został znaleziony');
+  if (!features.most) throw serviceUnavailable('Moduł analizy SWZ jest chwilowo wyłączony');
+
+  const postepowanieId = parsed.data.postepowanie_id;
+  let wynik;
+  try {
+    wynik = await zapytajModulPrzetargowy(req.user, { sciezka: `/swz/postepowania/${postepowanieId}` });
+  } catch (err) {
+    logger.error({ err: err.message, uid: req.user.id }, 'Powiązanie SWZ: most niedostępny');
+    throw new AppError(502, 'MOST_NIEDOSTEPNY', 'Moduł analizy SWZ jest chwilowo niedostępny. Spróbuj za chwilę.');
+  }
+  if (wynik.status === 404) throw notFound('Nie znaleziono tej analizy SWZ na Twoim koncie');
+  if (wynik.status !== 200 || !wynik.dane?.postepowanie) {
+    logger.error({ status: wynik.status, uid: req.user.id }, 'Powiązanie SWZ: nieoczekiwana odpowiedź modułu');
+    throw new AppError(502, 'MOST_NIEDOSTEPNY', 'Moduł analizy SWZ odpowiedział nieoczekiwanie. Spróbuj za chwilę.');
+  }
+
+  const powiazanie = await powiazaniaSwz.ustaw(req.user.id, tender.id, {
+    postepowanieId,
+    nazwa: typeof wynik.dane.postepowanie.nazwa === 'string' ? wynik.dane.postepowanie.nazwa : null,
+  });
+  res.json({ powiazanie });
+}));
+
+router.delete('/tender/:id/swz', ah(async (req, res) => {
+  await powiazaniaSwz.usun(req.user.id, req.params.id);
+  res.json({ powiazanie: null });
 }));
 
 export default router;

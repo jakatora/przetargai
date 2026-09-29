@@ -372,6 +372,15 @@ export const api = {
       method: 'POST',
       body: { wymagania, dokumenty },
     }),
+  /**
+   * Analiza SWZ (Radar SWZ) powiązana z TYM przetargiem na koncie użytkownika
+   * → `{ powiazanie: { postepowanie_id, nazwa, powiazano_o } | null }`.
+   */
+  powiazanieSwz: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}/swz`),
+  /** Powiąż własną analizę SWZ z przetargiem (backend sprawdza własność przez most). */
+  powiazSwz: (tenderId, postepowanieId) =>
+    request(`/wygrywalnosc/tender/${tenderId}/swz`, { method: 'PUT', body: { postepowanie_id: postepowanieId } }),
+  odlaczSwz: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}/swz`, { method: 'DELETE', body: {} }),
 
   // ----- Radar planów postępowań (P2-4) -----
   // Wstępne ogłoszenia informacyjne z TED, ranking pod profil i plan przygotowań.

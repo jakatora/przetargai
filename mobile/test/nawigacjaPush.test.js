@@ -61,3 +61,14 @@ test('radar planów: „przetarg z planu ogłoszono" prowadzi do centrum alertó
     params: { podswietlKlucz: 'plan_657219-2026_ted~1' },
   });
 });
+
+// Przypomnienie o terminie pytań do SWZ (2026-09-29): prowadzi do KALENDARZA terminów,
+// z podświetleniem terminu pytań właśnie tego przetargu.
+test('swz_questions_reminder → Kalendarz terminów z podświetleniem terminu pytań przetargu', () => {
+  const cel = celPush({ type: 'swz_questions_reminder', tender_id: 't-7', termin: '2098-03-06T09:00:00.000Z' });
+  assert.deepEqual(cel, { ekran: 'KalendarzTerminow', params: { podswietlTenderId: 't-7', podswietlKod: 'pytania' } });
+});
+
+test('swz_questions_reminder bez tender_id → Kalendarz bez podświetlenia', () => {
+  assert.deepEqual(celPush({ type: 'swz_questions_reminder' }), { ekran: 'KalendarzTerminow', params: {} });
+});

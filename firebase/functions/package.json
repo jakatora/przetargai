@@ -7,10 +7,10 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project przetargai --config ../firebase.test.json \"npm run test:raw\"",
-    "emulators": "firebase emulators:start --only functions,firestore",
+    "test": "firebase emulators:exec --only firestore --project demo-przetargai --config ../firebase.test.json \"npm run test:raw\"",
+    "emulators": "firebase emulators:start --only functions,firestore --project demo-przetargai",
     "deploy": "firebase deploy --only functions,firestore",
-    "test:e2e": "firebase emulators:exec --only functions,firestore --project przetargai --config ../firebase.test.json \"bash ../test-e2e/smoke.sh\"",
+    "test:e2e": "firebase emulators:exec --only functions,firestore --project demo-przetargai --config ../firebase.test.json \"bash ../test-e2e/smoke.sh\"",
     "test:raw": "node --env-file=.env.test --disable-warning=ExperimentalWarning --test --test-concurrency=1 \"test/*.test.js\""
   },
   "dependencies": {

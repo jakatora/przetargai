@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Alert, Pressable, Linking } from 'react-native';
+import { View, Text, Alert, Pressable, Linking, Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,7 @@ import CpvPicker from '../components/CpvPicker';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PREFERENCJE, ETYKIETY_PREFERENCJI } from '../lib/motyw';
 import { spacing, radius } from '../theme';
+import { potwierdzAkcje } from '../lib/potwierdzenie';
 
 function parseList(text) {
   return text.split(',').map((s) => s.trim()).filter(Boolean);
@@ -207,11 +208,14 @@ export default function AccountScreen({ navigation }) {
   }
 
   function confirmSignOut() {
-    Alert.alert('Wylogowanie', 'Czy na pewno chcesz się wylogować?', [
-      { text: 'Anuluj', style: 'cancel' },
-      // Bez przekazywania argumentów przycisku — signOut przyjmuje opcje (2026-09-25).
-      { text: 'Wyloguj', style: 'destructive', onPress: () => signOut() },
-    ]);
+    // Na webie Alert.alert jest pusty — potwierdzAkcje pyta tam przez window.confirm.
+    potwierdzAkcje({
+      tytul: 'Wylogowanie',
+      tresc: 'Czy na pewno chcesz się wylogować?',
+      etykietaTak: 'Wyloguj',
+      // Bez przekazywania argumentów — signOut przyjmuje opcje (2026-09-25).
+      onTak: () => signOut(),
+    }, { platforma: Platform.OS, alert: (...a) => Alert.alert(...a), confirm: (tekst) => globalThis.confirm?.(tekst) === true });
   }
 
   /**

@@ -5,8 +5,9 @@ import { isModelPriced } from './lib/pricing.js';
  * Konfiguracja Functions. Źródła wartości:
  *  • produkcja: Secret Manager (defineSecret w index.js wiąże sekret z funkcją,
  *    a runtime wystawia go w process.env pod tą samą nazwą),
- *  • emulator/testy: plik functions/.env.local (gitignored) — firebase-functions
- *    ładuje pliki .env* automatycznie.
+ *  • emulator: functions/.secret.local — WYŁĄCZNIE atrapy (bez niego firebase-tools
+ *    pobiera sekrety z Secret Managera); zwykłe zmienne z .env.local (gitignored),
+ *  • testy: functions/.env.test (`npm test`).
  * Zniknęły względem Railway: PORT (nadaje platforma), DATABASE_PATH (Firestore),
  * BACKUP_* i B2_* (zarządzane kopie Firestore), TENDER_FETCH_CRON i SCHEDULER_TZ
  * (harmonogram deklarowany w onSchedule w index.js — patrz D-021).
@@ -134,7 +135,24 @@ const schema = z.object({
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(10),
 });
 
-const parsed = schema.safeParse(process.env);
+/*
+ * TRYB LOKALNY = emulator Functions albo testy (incydent testowy 2026-09-29).
+ *
+ * Emulator bez `.secret.local` pobrał sekrety z Secret Managera, wysłał przez
+ * Resend maile powitalne na adresy testowe, a most — z domyślnym adresem
+ * produkcyjnego Railway — założył tam konto pomostowe. Dlatego lokalnie:
+ *  • most jest domyślnie WYŁĄCZONY i skierowany na localhost; włączyć go można
+ *    tylko jawnie i tylko na lokalny backend (inny host = błąd konfiguracji),
+ *  • w emulatorze AI, Stripe, e-mail, faktury i push są wyłączone bez względu
+ *    na klucze — nawet gdyby ktoś wgrał prawdziwe do `.secret.local`.
+ * Produkcja (bez FUNCTIONS_EMULATOR, NODE_ENV≠test) zachowuje domyślne ze schematu.
+ */
+const W_EMULATORZE = process.env.FUNCTIONS_EMULATOR === 'true';
+const TRYB_LOKALNY = W_EMULATORZE || process.env.NODE_ENV === 'test';
+const DOMYSLNE_LOKALNE = { MOST_ENABLED: 'false', MOST_RAILWAY_URL: 'http://127.0.0.1:3100' };
+const HOSTY_LOKALNE = new Set(['127.0.0.1', 'localhost', '[::1]']);
+
+const parsed = schema.safeParse(TRYB_LOKALNY ? { ...DOMYSLNE_LOKALNE, ...process.env } : process.env);
 if (!parsed.success) {
   const issues = parsed.error.issues
     .map((i) => `${i.path.join('.')}: ${i.message}`)
@@ -144,15 +162,26 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 
+if (TRYB_LOKALNY && env.MOST_ENABLED === 'true'
+    && !HOSTY_LOKALNE.has(new URL(env.MOST_RAILWAY_URL).hostname)) {
+  throw new Error(
+    'Błędna konfiguracja środowiska: w emulatorze i testach most wolno skierować tylko na localhost '
+    + `(MOST_RAILWAY_URL → ${new URL(env.MOST_RAILWAY_URL).host}). Produkcyjny Railway jest tu zabroniony.`,
+  );
+}
+
 /** Flagi funkcji — brak klucza = tryb ograniczony zamiast wywrotki backendu. */
 export const features = {
-  ai: Boolean(env.ANTHROPIC_API_KEY),
-  stripe: Boolean(env.STRIPE_SECRET_KEY),
-  email: Boolean(env.RESEND_API_KEY),
-  invoicing: env.FAKTUROWANIE_ENABLED === 'true' && Boolean(env.FAKTUROWNIA_API_KEY && env.FAKTUROWNIA_DOMAIN),
+  ai: !W_EMULATORZE && Boolean(env.ANTHROPIC_API_KEY),
+  stripe: !W_EMULATORZE && Boolean(env.STRIPE_SECRET_KEY),
+  email: !W_EMULATORZE && Boolean(env.RESEND_API_KEY),
+  invoicing: !W_EMULATORZE && env.FAKTUROWANIE_ENABLED === 'true'
+    && Boolean(env.FAKTUROWNIA_API_KEY && env.FAKTUROWNIA_DOMAIN),
   ted: env.TED_ENABLED === 'true',
   bk: env.BK_ENABLED === 'true',
   most: env.MOST_ENABLED === 'true',
+  // Push idzie do Expo — z emulatora nigdy (testy podstawiają własny transport).
+  push: !W_EMULATORZE,
 };
 
 /*
