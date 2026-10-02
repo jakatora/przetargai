@@ -7,8 +7,18 @@ import { esc } from '../lib/html.js';
 const resend = features.email ? new Resend(env.RESEND_API_KEY) : null;
 
 /**
+ * Czy Resend odrzucił ADRES ODBIORCY (422 validation_error na polu `to`, np. domena
+ * example.com). Ponowienie nic tu nie zmieni — w odróżnieniu od złego nadawcy
+ * (`from`) czy awarii Resend, które dotyczą wszystkich i muszą być widoczne.
+ */
+export function czyOdrzuconyAdresat(error) {
+  return error?.name === 'validation_error' && /`to`/.test(String(error?.message ?? ''));
+}
+
+/**
  * Wysyła email transakcyjny przez Resend.
  * Bez RESEND_API_KEY działa w trybie degradacji (loguje treść, nie wysyła).
+ * `odrzuconyAdresat: true` = trwałe odrzucenie adresu (patrz czyOdrzuconyAdresat).
  */
 export async function sendEmail({ to, subject, html, text, attachments }) {
   if (!resend) {
@@ -27,6 +37,10 @@ export async function sendEmail({ to, subject, html, text, attachments }) {
       ...(attachments?.length ? { attachments } : {}),
     });
     if (error) {
+      if (czyOdrzuconyAdresat(error)) {
+        logger.warn({ error }, 'Resend odrzucił adres odbiorcy');
+        return { sent: false, error, odrzuconyAdresat: true };
+      }
       logger.error({ error }, 'Resend zwrócił błąd');
       return { sent: false, error };
     }

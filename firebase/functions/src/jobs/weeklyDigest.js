@@ -34,7 +34,9 @@ export function kluczTygodniaIso(ms) {
  *    wyzwolenie Cloud Schedulera i ponowienie po błędzie nie wysyłają drugi raz,
  *  • błąd jednego maila nie przerywa całej partii; zwalnia znacznik tego konta
  *    i kończy przebieg `ok: false`, żeby Scheduler go ponowił (index.js) — ponowienie
- *    dosyła tylko brakujące.
+ *    dosyła tylko brakujące,
+ *  • adres trwale odrzucony przez Resend (422 na `to`) nie jest błędem przebiegu:
+ *    liczony jako `odrzucone`, bez ponowień w tym tygodniu.
  *
  * Kompromis: gdy instancja padnie MIĘDZY znacznikiem a wysyłką, konto nie dostanie
  * przeglądu w tym tygodniu. Brak jednego maila retencyjnego jest mniejszym złem niż
@@ -52,6 +54,7 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
   let wyslane = 0;
   let juzWyslane = 0;
   let bledy = 0;
+  let odrzucone = 0;
 
   for (const user of wszyscy) {
     try {
@@ -81,6 +84,15 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
         continue;
       }
 
+      // Adres odrzucony na stałe (2026-09-28: konto testowe @example.com wywracało cały
+      // przebieg i trzy ponowienia). Znacznik ZOSTAJE — w tym tygodniu nie próbujemy
+      // ponownie — a przebieg nie jest przez to nieudany.
+      if (wynik.odrzuconyAdresat) {
+        odrzucone++;
+        logger.warn({ userId: user.id }, 'Cotygodniowy przegląd: adres odbiorcy odrzucony — pomijam do przyszłego tygodnia');
+        continue;
+      }
+
       // Nic nie wyszło — zwalniamy znacznik, żeby ponowienie (albo włączenie Resend) dosłało.
       await znacznikDigestu.zwolnij(user.id, tydzien);
       // Tryb degradacji (brak RESEND_API_KEY) to stan znany, nie awaria — bez ponowień.
@@ -95,7 +107,7 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
   }
 
   const wynik = {
-    ok: bledy === 0, tydzien, uzytkownicy: wszyscy.length, kandydaci, wyslane, juzWyslane, bledy,
+    ok: bledy === 0, tydzien, uzytkownicy: wszyscy.length, kandydaci, wyslane, juzWyslane, bledy, odrzucone,
     durationMs: Date.now() - startedAt,
   };
   logger.info(wynik, 'runWeeklyDigest: zakończono');

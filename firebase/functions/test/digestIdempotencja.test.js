@@ -24,13 +24,27 @@ const { runWeeklyDigest, kluczTygodniaIso } = await import('../src/jobs/weeklyDi
 const oryginalnyFetch = globalThis.fetch;
 let wyslane;
 let awarie;
-beforeEach(() => { wyslane = new Map(); awarie = new Set(); });
+let proby;
+let odrzucaAdres;
+let odrzucaNadawce;
+beforeEach(() => {
+  wyslane = new Map(); awarie = new Set(); proby = new Map(); odrzucaAdres = new Set(); odrzucaNadawce = new Set();
+});
+// Prawdziwe ciało odpowiedzi Resend 422 z produkcji (2026-09-28, adres @example.com).
+const odpowiedz422 = (pole) => new Response(JSON.stringify({
+  statusCode: 422,
+  name: 'validation_error',
+  message: `Invalid \`${pole}\` field. Please use our testing email address instead of domains like \`example.com\`. See our documentation for more information.`,
+}), { status: 422, headers: { 'content-type': 'application/json' } });
 globalThis.fetch = async (url, opts) => {
   if (!String(url).startsWith('https://api.resend.com')) {
     throw new Error(`Nieoczekiwane wyjście do sieci w teście: ${url}`);
   }
   const cialo = JSON.parse(opts.body);
   const do_ = [].concat(cialo.to)[0];
+  proby.set(do_, (proby.get(do_) ?? 0) + 1);
+  if (odrzucaAdres.has(do_)) return odpowiedz422('to');
+  if (odrzucaNadawce.has(do_)) return odpowiedz422('from');
   if (awarie.has(do_)) {
     return new Response(JSON.stringify({ name: 'application_error', message: 'awaria atrapy' }), { status: 500 });
   }
@@ -86,6 +100,41 @@ test('nieudana wysyłka zwalnia znacznik: ponowienie dosyła brakujący, bez dub
   await runWeeklyDigest({ now: teraz + 60_000 });
   assert.equal(wyslane.get(pechowy.email), 1, 'ponowienie MUSI dosłać przegląd, którego nie udało się wysłać');
   assert.equal(wyslane.get(szczesliwy.email), 1, 'ponowienie NIE MOŻE wysłać drugi raz tym, którzy już dostali');
+});
+
+/*
+ * 2026-09-28 na produkcji: jedno konto testowe z adresem @example.com (Resend 422
+ * „Invalid `to` field") oznaczało CAŁY przebieg jako nieudany, a Scheduler ponawiał
+ * go trzy razy — za każdym razem z tym samym, nie do naprawienia odrzuceniem.
+ */
+test('adres odrzucony przez Resend (422 `to`) → przebieg OK i bez ponawiania tego adresu', async () => {
+  const odrzucony = await userZDopasowaniem();
+  const zwykly = await userZDopasowaniem();
+  odrzucaAdres.add(odrzucony.email);
+  const teraz = Date.now();
+
+  const pierwszy = await runWeeklyDigest({ now: teraz });
+  assert.equal(pierwszy.ok, true, 'odrzucony adres to nie awaria — Scheduler nie ma czego ponawiać');
+  assert.equal(pierwszy.bledy, 0);
+  assert.ok(pierwszy.odrzucone >= 1, 'odrzucony adres jest policzony osobno');
+  assert.equal(wyslane.get(zwykly.email), 1);
+
+  await runWeeklyDigest({ now: teraz + 60_000 });
+  assert.equal(proby.get(odrzucony.email), 1, 'ten sam tydzień: odrzuconego adresu nie próbujemy drugi raz');
+});
+
+test('odrzucony NADAWCA (422 `from`) to błąd konfiguracji → przebieg nieudany i do ponowienia', async () => {
+  const user = await userZDopasowaniem();
+  odrzucaNadawce.add(user.email);
+  const teraz = Date.now();
+
+  const pierwszy = await runWeeklyDigest({ now: teraz });
+  assert.equal(pierwszy.ok, false, 'zły nadawca dotyczy wszystkich — musi być widoczną awarią');
+  assert.ok(pierwszy.bledy >= 1);
+
+  odrzucaNadawce.clear();
+  await runWeeklyDigest({ now: teraz + 60_000 });
+  assert.equal(wyslane.get(user.email), 1, 'po naprawie konfiguracji ponowienie dosyła przegląd');
 });
 
 test('równoległe przebiegi (dwa wyzwolenia naraz) → nadal jeden e-mail', async () => {
