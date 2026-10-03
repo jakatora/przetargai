@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 /*
  * SmartSpiżarka — publiczny endpoint cen. TEST KONTRAKTU dla ZWERYFIKOWANYCH,
@@ -172,19 +173,38 @@ test('(a2) WSZYSTKIE zweryfikowane oferty + zegar w oknie → niepusta cena + wa
   }
 });
 
-test('(a3) ŻYWY HTTP GET "Mąka pszenna" → 200 + body WIERNIE = budowniczy(rekord), niepuste currency/quantity', async () => {
+test('(a3) ŻYWY HTTP GET "Mąka pszenna" → 200 + body WIERNIE = budowniczy(rekord); aktywna cena dowiedziona na zegarze W OKNIE', async () => {
+  const rekord = CENY['Mąka pszenna'];
   const { status, body } = await pobierz('Mąka pszenna');
 
   assert.equal(status, 200);
   // Handler zwraca dokładnie `zbudujOfertePubliczna(rekord)` (zegar serwera) —
   // porównujemy z budowniczym uruchomionym na TYM SAMYM rekordzie i zegarze
   // domyślnym: deterministyczne niezależnie od realnej daty, bez pułapki czasowej.
-  const oczekiwane = zbudujOfertePubliczna(CENY['Mąka pszenna']);
-  assert.deepEqual(body, oczekiwane);
-  // na żywej odpowiedzi: waluta i ilość NIEPUSTE (nowy kontrakt) + pełne 8 pól
-  assert.equal(body.currency, 'PLN');
-  assert.ok(Number.isFinite(body.quantity) && body.quantity > 0);
+  assert.deepEqual(body, zbudujOfertePubliczna(rekord));
   assert.deepEqual(Object.keys(body).sort(), PELNY_KONTRAKT);
+
+  /*
+   * PUŁAPKA CZASOWA (naprawiona 2026-10-03): do tej pory test wymagał `currency === 'PLN'`
+   * na ŻYWEJ odpowiedzi, czyli na zegarze serwera. Oferta w seedzie wygasa 2026-09-30,
+   * więc od 1.10 poprawnie działający endpoint (piątka money = null) wywracał cały
+   * zestaw. Niepustą walutę i ilość dowodzimy na zegarze WSTRZYKNIĘTYM w okno ważności,
+   * a wygaśnięcie — na zegarze po terminie; żywa odpowiedź musi być DOKŁADNIE jednym
+   * z tych dwóch stanów (nigdy czymś trzecim), bez zgadywania, który dziś obowiązuje.
+   */
+  const wOknie = zbudujOfertePubliczna(rekord, TERAZ_W_OKNIE);
+  assert.equal(wOknie.currency, 'PLN', 'w oknie ważności: waluta niepusta');
+  assert.ok(Number.isFinite(wOknie.quantity) && wOknie.quantity > 0, 'w oknie ważności: ilość dodatnia');
+  assert.ok(Number.isFinite(wOknie.price) && wOknie.price > 0, 'w oknie ważności: cena dodatnia');
+
+  const poTerminie = zbudujOfertePubliczna(rekord, TERAZ_PO_WYGASNIECIU);
+  for (const pole of ['price', 'currency', 'quantity', 'sourceUrl', 'validUntil']) {
+    assert.equal(poTerminie[pole], null, `po terminie: ${pole} nieznane`);
+  }
+  assert.notDeepEqual(wOknie, poTerminie, 'stany „aktywna" i „wygasła" są rozróżnialne');
+
+  const stany = [wOknie, poTerminie].filter((stan) => isDeepStrictEqual(body, stan));
+  assert.equal(stany.length, 1, `żywa odpowiedź to cena aktywna ALBO wygasła, było: ${JSON.stringify(body)}`);
 });
 
 // ── (b) niekompletna oferta (quantity/currency) → piątka money null ───────────
