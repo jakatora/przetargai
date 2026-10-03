@@ -141,3 +141,15 @@ test('opisOceny odróżnia AI od heurystyki', () => {
   // Nieznany scorer nie może udawać AI.
   assert.equal(opisOceny(undefined).etykieta, opisOceny('heuristic').etykieta);
 });
+
+/*
+ * E2E 2026-10-03: przetarg z terminem 6 sierpnia (minionym) pokazywał przy przełączniku
+ * przypomnienia „Ten przetarg nie ma terminu do przypomnienia" — a termin MA, tylko minął.
+ */
+test('przypomnienie: miniony termin to „termin minął", nie „brak terminu"', async () => {
+  const { opisBrakuPrzypomnienia } = await import('../src/lib/termin.js');
+  assert.match(opisBrakuPrzypomnienia('2026-08-06T08:00:00.000Z', TERAZ + 40 * DZIEN).pl, /minął/i);
+  assert.match(opisBrakuPrzypomnienia('2026-08-06T08:00:00.000Z', TERAZ + 40 * DZIEN).en, /passed/i);
+  assert.match(opisBrakuPrzypomnienia(null, TERAZ).pl, /nie ma terminu/i);
+  assert.match(opisBrakuPrzypomnienia('nie-data', TERAZ).pl, /nie ma terminu/i);
+});

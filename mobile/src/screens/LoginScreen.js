@@ -8,6 +8,7 @@ import { useJezyk } from '../context/JezykContext';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
+import { odmienPrzetargi } from '../lib/katalogPrzetargow';
 import { spacing } from '../theme';
 
 /** Separator tysięcy bez Intl (Hermes bywa okrojony) — „12 345". */
@@ -65,7 +66,7 @@ export default function LoginScreen({ navigation }) {
       {stats?.lacznie ? (
         <View style={styles.spoleczny}>
           <Text style={styles.spolecznyLiczba}>
-            {t(`${formatLiczba(stats.lacznie)} przetargów w bazie`, `${formatLiczba(stats.lacznie)} tenders in the database`)}
+            {t(`${formatLiczba(stats.lacznie)} ${odmienPrzetargi(stats.lacznie)} w bazie`, `${formatLiczba(stats.lacznie)} tenders in the database`)}
           </Text>
           <Text style={styles.spolecznyOpis}>
             {stats.nowe24h > 0

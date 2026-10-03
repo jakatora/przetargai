@@ -262,6 +262,39 @@ describe('karta — czas i wadium pochodzą z OGŁOSZENIA, nie ze statystyki', (
     assert.equal(czynnik(karta, 'czas').ton, TON.CZERWONY);
   });
 
+  /*
+   * E2E 2026-10-03: szczegóły przetargu mówiły „Zostało 9 dni", a karta „czy warto"
+   * dla tego samego ogłoszenia „Zostało 8 dni" — liczyła pełne doby (floor), a aplikacja
+   * dni KALENDARZOWE w Polsce (mobile/src/lib/termin.js).
+   */
+  test('dni do terminu = dni kalendarzowe w Polsce, jak na karcie przetargu', () => {
+    const teraz = Date.parse('2026-10-03T09:00:00.000Z'); // sobota 11:00 w Polsce
+    const karta = kartaStartu({
+      tender: { deadline: '2026-10-12T08:00:00.000Z' }, // poniedziałek 10:00 w Polsce
+      benchmarki: { zamawiajacy: kubelek() }, teraz,
+    });
+    assert.equal(czynnik(karta, 'czas').naglowek, 'Zostało 9 dni');
+    assert.equal(czynnik(karta, 'czas').wartosc, 9);
+  });
+
+  test('termin dziś o 23:30 w Polsce to „dziś"', () => {
+    const teraz = Date.parse('2026-10-03T06:00:00.000Z'); // 08:00 w Polsce
+    const karta = kartaStartu({
+      tender: { deadline: '2026-10-03T21:30:00.000Z' }, // 23:30 w Polsce
+      benchmarki: { zamawiajacy: kubelek() }, teraz,
+    });
+    assert.equal(czynnik(karta, 'czas').naglowek, 'Termin mija dzisiaj');
+  });
+
+  test('termin jutro rano w Polsce to „1 dzień", choć do niego mniej niż doba', () => {
+    const teraz = Date.parse('2026-10-03T18:00:00.000Z'); // 20:00 w Polsce
+    const karta = kartaStartu({
+      tender: { deadline: '2026-10-04T07:00:00.000Z' }, // jutro 09:00 w Polsce
+      benchmarki: { zamawiajacy: kubelek() }, teraz,
+    });
+    assert.equal(czynnik(karta, 'czas').naglowek, 'Zostało 1 dzień');
+  });
+
   test('brak terminu w ogłoszeniu = nieznany, nie „minął"', () => {
     const karta = kartaStartu({ tender: {}, benchmarki: { zamawiajacy: kubelek() }, teraz: TERAZ });
     assert.equal(czynnik(karta, 'czas').ton, TON.NIEZNANY);

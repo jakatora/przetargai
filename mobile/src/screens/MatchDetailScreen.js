@@ -8,7 +8,7 @@ import { ScoreBadge } from '../components/MatchCard';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useSaved } from '../context/SavedContext';
 import { spacing, radius } from '../theme';
-import { opisOceny, opisTerminu } from '../lib/termin';
+import { opisBrakuPrzypomnienia, opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
@@ -134,6 +134,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   const termin = opisTerminu(tender.deadline);
   const deadlineText = `${formatDate(tender.deadline)}  ·  ${t(termin.etykieta)}`;
   const maTermin = !!tender.deadline && !termin.minal;
+  const brakPrzypomnienia = opisBrakuPrzypomnienia(tender.deadline);
   // Wniosek już poszedł, gdy kontrola przeszła poza etap „nowa".
   const wniosekWyslany = !!kontrola && kontrola.status !== 'nowa';
   // Analiza gotowa → mamy wynik do pokazania na osobnym ekranie (podzadanie 12/13).
@@ -403,7 +404,7 @@ export default function MatchDetailScreen({ route, navigation }) {
             <Text style={styles.przypOpis}>
               {maTermin
                 ? t('Push na 7, 3 i 1 dzień przed terminem składania ofert.', 'A push 7, 3 and 1 day before the bid deadline.')
-                : t('Ten przetarg nie ma terminu do przypomnienia.', 'This tender has no deadline to remind you about.')}
+                : t(brakPrzypomnienia.pl, brakPrzypomnienia.en)}
             </Text>
           </View>
           <Switch

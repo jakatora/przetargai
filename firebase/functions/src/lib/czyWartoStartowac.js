@@ -50,11 +50,21 @@ export const PROGI = {
 
 const KRYTERIUM_TYLKO_CENA = /(^|[^a-ząćęłńóśźż])cena\s*[-–:]?\s*100|wy[łl]ącznie cena|tylko cena|cena\s*=?\s*100\s*%/i;
 
+const DZIEN_W_POLSCE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw' });
+const dzienPL = (ms) => Date.parse(`${DZIEN_W_POLSCE.format(ms)}T00:00:00Z`);
+
+/**
+ * Dni do terminu — dni KALENDARZOWE w Polsce, tak samo jak karta przetargu w aplikacji
+ * (mobile/src/lib/termin.js). Pełne doby (floor) dawały „8 dni" przy „9 dniach" na
+ * szczegółach tego samego ogłoszenia, a termin jutro rano — „mija dzisiaj" (E2E 2026-10-03).
+ * Termin, który już upłynął, jest ujemny także wtedy, gdy przypada na dziś.
+ */
 function dniDo(termin, teraz) {
   if (!termin) return null;
   const koniec = Date.parse(termin);
   if (!Number.isFinite(koniec)) return null;
-  return Math.floor((koniec - teraz) / 86_400_000);
+  if (koniec <= teraz) return Math.min(-1, Math.floor((koniec - teraz) / 86_400_000));
+  return Math.round((dzienPL(koniec) - dzienPL(teraz)) / 86_400_000);
 }
 
 /**

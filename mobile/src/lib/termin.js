@@ -72,6 +72,20 @@ export function opisTerminu(deadline, teraz = Date.now()) {
 }
 
 /**
+ * Dlaczego przypomnienia nie da się włączyć: termin minął albo ogłoszenie go nie podaje.
+ * Wcześniej oba przypadki mówiły „nie ma terminu" — także przy terminie, który po prostu
+ * upłynął (E2E 2026-10-03).
+ *
+ * @returns {{pl: string, en: string}}
+ */
+export function opisBrakuPrzypomnienia(deadline, teraz = Date.now()) {
+  if (opisTerminu(deadline, teraz).minal) {
+    return { pl: 'Termin minął — nie ma już o czym przypominać.', en: 'The deadline has passed — there is nothing left to remind you about.' };
+  }
+  return { pl: 'Ten przetarg nie ma terminu do przypomnienia.', en: 'This tender has no deadline to remind you about.' };
+}
+
+/**
  * Skąd wzięła się ocena dopasowania. Backend to wie (`scorer`), ale aplikacja
  * dotąd tego nie pokazywała — mechaniczne trafienie w słowo kluczowe wyglądało
  * identycznie jak ocena modelu (audyt 2026-07-10).

@@ -9,7 +9,7 @@ import { useJezyk } from '../context/JezykContext';
 import { useSaved } from '../context/SavedContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
-import { opisTerminu } from '../lib/termin';
+import { opisBrakuPrzypomnienia, opisTerminu } from '../lib/termin';
 import { ScoreBadge } from '../components/MatchCard';
 import StatusPicker from '../components/StatusPicker';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
@@ -96,6 +96,7 @@ export default function SavedScreen({ navigation }) {
     const tender = item.tender;
     const termin = opisTerminu(tender.deadline);
     const maTermin = !!tender.deadline && !termin.minal;
+    const brakPrzypomnienia = opisBrakuPrzypomnienia(tender.deadline);
     return (
       // Karta to zwykły View: NAWIGUJE tylko górny wiersz. Gdyby cała karta była
       // Pressable, przełącznik przypomnienia (na web) otwierałby szczegóły.
@@ -134,8 +135,7 @@ export default function SavedScreen({ navigation }) {
                   ? t('Powiadomimy Cię na 7, 3 i 1 dzień przed terminem składania ofert.',
                     'We will notify you 7, 3 and 1 day before the bid submission deadline.')
                   : t('Push, żebyś nie przegapił terminu.', 'A push so you do not miss the deadline.'))
-                : t('Ten przetarg nie ma terminu, o którym można przypomnieć.',
-                  'This tender has no deadline to remind you about.')}
+                : t(brakPrzypomnienia.pl, brakPrzypomnienia.en)}
             </Text>
           </View>
           <Switch

@@ -101,3 +101,17 @@ test('zmiana filtru kasuje kursor — stara strona nie należy do nowego zestawu
   assert.equal(K.czyResetowacKursor(K.FILTRY_DOMYSLNE, K.normalizujFiltry({ zrodlo: 'ted' })), true);
   assert.equal(K.czyResetowacKursor(K.FILTRY_DOMYSLNE, K.normalizujFiltry({})), false);
 });
+
+/*
+ * E2E 2026-10-03: ekran logowania pokazał „51 362 przetargów w bazie" — liczba
+ * kończąca się na 2–4 (poza 12–14) wymaga „przetargi". Ekran logowania korzysta
+ * z tej samej odmiany co licznik listy.
+ */
+test('odmienPrzetargi: odmiana po liczbie, także dla dużych liczb z bazy', async () => {
+  const { odmienPrzetargi } = await import('../src/lib/katalogPrzetargow.js');
+  assert.equal(odmienPrzetargi(1), 'przetarg');
+  assert.equal(odmienPrzetargi(51362), 'przetargi');
+  assert.equal(odmienPrzetargi(51360), 'przetargów');
+  assert.equal(odmienPrzetargi(51312), 'przetargów');
+  assert.equal(odmienPrzetargi(24), 'przetargi');
+});

@@ -142,7 +142,7 @@ export function opisPustki(filtry) {
 }
 
 /** Polska odmiana rzeczownika po liczbie: 1 przetarg, 2-4 przetargi, 5+ przetargów. */
-function odmienPrzetargi(n) {
+export function odmienPrzetargi(n) {
   const setki = n % 100;
   if (setki >= 12 && setki <= 14) return 'przetargów';
   const jednosci = n % 10;
