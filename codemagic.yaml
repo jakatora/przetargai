@@ -107,16 +107,14 @@ workflows:
       - name: Konfiguracja podpisu release
         script: cd mobile && node scripts/configure-android-release-signing.mjs
       - name: Numer wersji
-        # build.gradle z prebuilda (Expo 54) HARDKODUJE `versionCode 1` i nie czyta
-        # gradle.properties — wpis tam był no-opem i Play odrzucałby każdy kolejny
-        # upload („Version code 1 has already been used"). Podmieniamy wartość
-        # bezpośrednio w wygenerowanym pliku i weryfikujemy, że podmiana zaszła.
-        script: |
-          set -ex
-          cd mobile/android
-          NOWY=$(($BUILD_NUMBER + 100))
-          sed -i "s/versionCode 1$/versionCode $NOWY/" app/build.gradle
-          grep -q "versionCode $NOWY" app/build.gradle
+        # `expo prebuild` wpisuje do build.gradle `versionCode` z app.json
+        # (android.versionCode — dziś 17, dawniej 1) i nie czyta gradle.properties.
+        # Skrypt podmienia DOWOLNĄ całkowitą wartość na BUILD_NUMBER + 100 (rośnie
+        # z każdym buildem, jak numer builda iOS) i sam weryfikuje wynik. Brak wpisu,
+        # wartość nieliczbowa, zły BUILD_NUMBER albo kod, który nie rośnie, kończą
+        # krok jawnym błędem. Poprzedni `sed "s/versionCode 1$/…/"` trafiał tylko
+        # w wartość 1 — przy 17 był no-opem i wywracał build na `grep`.
+        script: cd mobile && node scripts/set-android-version-code.mjs
       - name: Build AAB
         script: cd mobile/android && ./gradlew bundleRelease
     artifacts:
