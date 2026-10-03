@@ -4,28 +4,28 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PrzetargAI — monitoring przetargów publicznych dla Twojej firmy</title>
-  <meta name="description" content="PrzetargAI codziennie analizuje ogłoszenia z Biuletynu Zamówień Publicznych i powiadamia Cię tylko o przetargach dopasowanych do profilu Twojej firmy." />
+  <meta name="description" content="PrzetargAI codziennie dopasowuje ogłoszenia o przetargach do profilu Twojej firmy i pomaga przygotować pierwszą ofertę: wymagania SWZ, dokumenty i następny krok." />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#2563eb" />
-  <link rel="canonical" href="https://przetargai.pl/" />
+  <link rel="canonical" href="https://przetargai.web.app/" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="PrzetargAI — nie przegap żadnego przetargu" />
-  <meta property="og:description" content="AI dopasowuje przetargi z BZP do profilu Twojej firmy budowlanej lub IT." />
+  <meta property="og:title" content="PrzetargAI — przetargi dopasowane do firmy i pomoc w pierwszej ofercie" />
+  <meta property="og:description" content="AI dopasowuje przetargi do profilu Twojej firmy, a aplikacja pomaga przygotować ofertę krok po kroku." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://przetargai.pl/" />
+  <meta property="og:url" content="https://przetargai.web.app/" />
   <meta property="og:site_name" content="PrzetargAI" />
   <meta property="og:locale" content="pl_PL" />
-  <meta property="og:image" content="https://przetargai.pl/og-image.png" />
+  <meta property="og:image" content="https://przetargai.web.app/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="PrzetargAI — monitoring przetargów publicznych z BZP dopasowany przez AI" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="PrzetargAI — nie przegap żadnego przetargu" />
-  <meta name="twitter:description" content="AI dopasowuje przetargi z BZP do profilu Twojej firmy budowlanej lub IT." />
-  <meta name="twitter:image" content="https://przetargai.pl/og-image.png" />
+  <meta name="twitter:title" content="PrzetargAI — przetargi dopasowane do firmy i pomoc w pierwszej ofercie" />
+  <meta name="twitter:description" content="AI dopasowuje przetargi do profilu Twojej firmy, a aplikacja pomaga przygotować ofertę krok po kroku." />
+  <meta name="twitter:image" content="https://przetargai.web.app/og-image.png" />
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563eb'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563eb'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
@@ -38,18 +38,18 @@
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://przetargai.pl/#organization",
+        "@id": "https://przetargai.web.app/#organization",
         "name": "PrzetargAI",
-        "url": "https://przetargai.pl/",
+        "url": "https://przetargai.web.app/",
         "description": "Monitoring przetargów publicznych z Biuletynu Zamówień Publicznych dla firm budowlanych i IT.",
-        "email": "support@przetargai.pl"
+        "email": "jakatora68@gmail.com"
       },
       {
         "@type": "SoftwareApplication",
         "name": "PrzetargAI",
         "operatingSystem": "iOS, Android",
         "applicationCategory": "BusinessApplication",
-        "description": "AI dopasowuje przetargi z BZP do profilu Twojej firmy budowlanej lub IT i powiadamia o trafnych ogłoszeniach.",
+        "description": "AI dopasowuje przetargi z BZP, TED i Bazy Konkurencyjności do profilu Twojej firmy i pokazuje trafne ogłoszenia w aplikacji. Aplikacja prowadzi też przez przygotowanie oferty: karta decyzji GO/NO-GO, kontrola oferty przed wysłaniem, kalkulatory (cena, terminy Pzp, kary umowne, punktacja), orientacyjna wartość zamówienia, kalendarz terminów i radar zamówień podprogowych.",
         "offers": [
           {
             "@type": "Offer",
@@ -61,9 +61,9 @@
           {
             "@type": "Offer",
             "name": "Standard",
-            "price": "49",
+            "price": "99",
             "priceCurrency": "PLN",
-            "description": "Nielimitowane dopasowane przetargi i powiadomienia push, miesięcznie netto."
+            "description": "Nielimitowane dopasowane przetargi i powiadomienia push, miesięcznie brutto."
           }
         ]
       },
@@ -73,7 +73,7 @@
           {
             "@type": "Question",
             "name": "Skąd pochodzą dane o przetargach?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Bezpośrednio z Biuletynu Zamówień Publicznych (BZP) prowadzonego na platformie e-Zamówienia. To oficjalne, publiczne źródło ogłoszeń o zamówieniach publicznych w Polsce." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Z oficjalnych, publicznych rejestrów: Biuletynu Zamówień Publicznych (BZP) na platformie e-Zamówienia, unijnego TED oraz Bazy Konkurencyjności. Wiążąca jest treść ogłoszenia u źródła." }
           },
           {
             "@type": "Question",
@@ -111,13 +111,14 @@
       </a>
       <nav class="nav__links" id="navMenu" aria-label="Główna nawigacja">
         <a href="#funkcje">Funkcje</a>
+        <a href="#narzedzia">Narzędzia</a>
         <a href="#jak-dziala">Jak działa</a>
         <a href="#cennik">Cennik</a>
         <a href="#faq">FAQ</a>
         <a href="/pobierz">Pobierz aplikację</a>
-        <a class="btn btn--primary btn--sm nav__menu-cta" href="#cennik">Zacznij za darmo</a>
+        <a class="btn btn--primary btn--sm nav__menu-cta" href="#pobierz">Zacznij za darmo</a>
       </nav>
-      <a class="btn btn--primary btn--sm nav__bar-cta" href="#cennik">Zacznij za darmo</a>
+      <a class="btn btn--primary btn--sm nav__bar-cta" href="#pobierz">Zacznij za darmo</a>
       <button class="nav__toggle" id="navToggle" type="button" aria-label="Otwórz menu" aria-expanded="false" aria-controls="navMenu">
         <span class="nav__toggle-bar"></span>
         <span class="nav__toggle-bar"></span>
@@ -132,15 +133,16 @@
       <div class="container hero__inner">
         <div class="hero__copy">
           <span class="badge">Biuletyn Zamówień Publicznych · codzienna analiza</span>
-          <h1>Nie przegap żadnego przetargu dla swojej firmy</h1>
+          <h1>Znajdź przetarg dla swojej firmy i przygotuj pierwszą ofertę krok po kroku</h1>
           <p class="lead">
-            PrzetargAI codziennie analizuje ogłoszenia z BZP i powiadamia Cię
-            tylko o tych dopasowanych do profilu Twojej firmy budowlanej lub IT.
-            Koniec z przeglądaniem setek nieistotnych ogłoszeń.
+            PrzetargAI codziennie dopasowuje ogłoszenia do profilu Twojej firmy.
+            Gdy wybierzesz przetarg, aplikacja pomaga przeanalizować wymagania SWZ,
+            sprawdzić dokumenty na dzień składania i wskazuje następny krok.
+            To pomoc w przygotowaniu oferty — nie gwarancja wygranej.
           </p>
           <div class="hero__cta">
-            <a class="btn btn--primary btn--lg" href="#cennik">Zacznij za darmo</a>
-            <a class="btn btn--ghost btn--lg" href="#jak-dziala">Zobacz, jak to działa</a>
+            <a class="btn btn--primary btn--lg" href="#pobierz">Zacznij za darmo</a>
+            <a class="btn btn--ghost btn--lg" href="#pierwsza-oferta">Zobacz ścieżkę pierwszej oferty</a>
           </div>
           <p class="hero__note">Plan darmowy na zawsze · bez karty · 5 dopasowań dziennie</p>
         </div>
@@ -180,17 +182,21 @@
       <div class="container">
         <h2 class="section__title">Przetargi to szansa — jeśli zdążysz je znaleźć</h2>
         <div class="grid grid--3">
+          <!--
+            Liczba pojawia się WYŁĄCZNIE po udanym pobraniu z /stats/public (skrypt na dole).
+            Bez niej zostaje opis bez statystyki — strona nie pokazuje liczby, której nie ma.
+          -->
           <div class="stat">
-            <div class="stat__num">300+</div>
-            <p>nowych ogłoszeń w BZP każdego dnia roboczego</p>
+            <div class="stat__num" data-stat="nowe24h">Codziennie</div>
+            <p data-stat-opis="nowe24h">pobieramy nowe ogłoszenia z rejestrów publicznych</p>
           </div>
           <div class="stat">
-            <div class="stat__num">~2 h</div>
-            <p>dziennie traci firma na ręczne przeglądanie ogłoszeń</p>
+            <div class="stat__num">0–100</div>
+            <p>skala oceny dopasowania każdego ogłoszenia do profilu Twojej firmy — z uzasadnieniem</p>
           </div>
           <div class="stat">
-            <div class="stat__num">0</div>
-            <p>tyle istotnych przetargów przegapisz z PrzetargAI</p>
+            <div class="stat__num">3</div>
+            <p>rejestry w jednym miejscu: BZP, TED (zamówienia unijne) i Baza Konkurencyjności</p>
           </div>
         </div>
       </div>
@@ -199,28 +205,116 @@
     <!-- FEATURES -->
     <section class="section" id="funkcje">
       <div class="container">
-        <h2 class="section__title">Wszystko, czego potrzebujesz, by wygrywać przetargi</h2>
+        <h2 class="section__title">Od znalezienia przetargu po złożenie oferty</h2>
+        <p class="section__sub">PrzetargAI nie tylko znajduje przetargi — prowadzi Cię przez całą drogę do złożenia dobrej oferty.</p>
         <div class="grid grid--2 features">
           <div class="feature">
             <div class="feature__icon">🎯</div>
             <h3>Dopasowanie przez AI</h3>
-            <p>Sztuczna inteligencja ocenia każde ogłoszenie pod kątem profilu Twojej firmy i podaje uzasadnienie dopasowania.</p>
-          </div>
-          <div class="feature">
-            <div class="feature__icon">🔔</div>
-            <h3>Powiadomienia push</h3>
-            <p>Nowy, trafny przetarg? Dowiesz się o nim natychmiast na telefonie — zanim zrobi to konkurencja.</p>
+            <p>Sztuczna inteligencja ocenia każde ogłoszenie pod kątem profilu Twojej firmy w skali 0–100 i podaje uzasadnienie dopasowania.</p>
           </div>
           <div class="feature">
             <div class="feature__icon">📊</div>
-            <h3>Codzienna analiza BZP</h3>
-            <p>Automatycznie pobieramy i analizujemy ogłoszenia z Biuletynu Zamówień Publicznych — kilka razy dziennie.</p>
+            <h3>Codzienna analiza BZP i TED</h3>
+            <p>Automatycznie pobieramy i analizujemy ogłoszenia z Biuletynu Zamówień Publicznych oraz przetargi unijne z TED — codziennie.</p>
           </div>
           <div class="feature">
-            <div class="feature__icon">⚡</div>
-            <h3>Profil firmy w 2 minuty</h3>
-            <p>Podaj słowa kluczowe i kody CPV swojej branży. Resztę robi PrzetargAI.</p>
+            <div class="feature__icon">🗓️</div>
+            <h3>Nowości dzień po dniu</h3>
+            <p>Nowe dopasowania pojawiają się w aplikacji w feedzie pogrupowanym dniami dodania, z oznaczeniem nowości.</p>
           </div>
+          <div class="feature">
+            <div class="feature__icon">💰</div>
+            <h3>Orientacyjna wartość zamówienia</h3>
+            <p>BZP nie podaje kwot przy ogłoszeniu — pokazujemy widełki na podstawie historycznych wartości podobnych zamówień w Twojej branży i regionie.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">⚖️</div>
+            <h3>Decyzja: startować czy odpuścić</h3>
+            <p>Karta decyzji zbiera kluczowe czynniki (warunki, konkurencyjność, płynność, wadium, termin) w czytelny werdykt z czerwonymi flagami — zanim włożysz pracę w ofertę.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">✅</div>
+            <h3>Kontrola oferty przed wysłaniem</h3>
+            <p>Lista formalnych pułapek, przez które oferty najczęściej odpadają (podpis elektroniczny, załączniki, wadium, termin), plus sprawdzarka formularza cenowego.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NARZĘDZIA -->
+    <section class="section section--soft" id="narzedzia">
+      <div class="container">
+        <h2 class="section__title">Zestaw narzędzi dla startujących w przetargach</h2>
+        <p class="section__sub">Wszystko w jednej aplikacji — od decyzji, przez wycenę, po pilnowanie terminów.</p>
+        <div class="grid grid--3">
+          <div class="feature">
+            <div class="feature__icon">🧮</div>
+            <h3>Kalkulatory</h3>
+            <p>Cena ofertowa, terminy Pzp (dni robocze i święta), kary umowne, odsetki za opóźnienie, symulator punktacji oferty.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">🏆</div>
+            <h3>Krok po kroku do oferty</h3>
+            <p>Przewodnik spinający całą ścieżkę — od analizy SWZ, przez dokumenty i wadium, po złożenie oferty i terminy.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">🗂️</div>
+            <h3>Dokumenty i doświadczenie</h3>
+            <p>Sejf z licznikiem ważności zaświadczeń (US, ZUS, KRK) i bank referencji, który pilnuje „terminu przydatności” Twojego doświadczenia.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">📅</div>
+            <h3>Terminy</h3>
+            <p>Kalendarz terminów składania z zapisanych przetargów i strażnik terminu związania ofertą.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">🔍</div>
+            <h3>Radar SWZ i umowy</h3>
+            <p>Szkice pytań do SWZ z terminem ich składania, porównanie kolejnych wersji specyfikacji, które wkleisz, oraz prześwietlenie projektu umowy pod kątem kar i pułapek przed podpisem.</p>
+          </div>
+          <div class="feature">
+            <div class="feature__icon">🚀</div>
+            <h3>Łatwiejszy start</h3>
+            <p>Radar zamówień podprogowych — zakupy poniżej progu Pzp, zwykle bez wadium i prostszą procedurą, idealne na początek.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!--
+      PIERWSZA OFERTA (2026-10-03) — sekcja dla firm, które dopiero zaczynają.
+      Opisuje WYŁĄCZNIE funkcje istniejące w aplikacji (Radar SWZ, checklista
+      „Co musisz mieć do dnia składania", przewodnik krok po kroku).
+      Bez liczb, opinii klientów i obietnicy wygranej — zastrzeżenie na dole NIE jest ozdobą.
+    -->
+    <section class="section" id="pierwsza-oferta">
+      <div class="container">
+        <h2 class="section__title">Pierwsza oferta? Przejdziesz ją krok po kroku</h2>
+        <p class="section__sub">Znalezienie przetargu to początek. Aplikacja pomaga uporządkować to, co trzeba zrobić przed złożeniem oferty.</p>
+        <div class="grid grid--3 steps">
+          <div class="step">
+            <div class="step__num">1</div>
+            <h3>Przeanalizuj wymagania</h3>
+            <p>Radar SWZ pilnuje terminu na pytania do zamawiającego. Wklejasz treść SWZ, a AI wskazuje niejasne zapisy i przygotowuje szkice pytań — Ty decydujesz, które wysłać.</p>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <h3>Sprawdź dokumenty</h3>
+            <p>Checklista „Co musisz mieć do dnia składania” zestawia dokumenty z Twojego sejfu z wymaganiami wykrytymi w SWZ i terminem przetargu: co masz, czego brakuje i co straci ważność, zanim złożysz ofertę.</p>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <h3>Zrób następny krok</h3>
+            <p>Przewodnik prowadzi od SWZ, przez dokumenty i wadium, po złożenie oferty. Odhaczasz kolejne kroki, a checklista dokumentów wskazuje, co załatwić najpierw.</p>
+          </div>
+        </div>
+        <p class="section__sub" style="margin-top:32px;margin-bottom:24px;font-size:15px">
+          To pomoc w przygotowaniu oferty — nie porada prawna i nie gwarancja wygranej.
+          Lista dokumentów wykrytych automatycznie może być niepełna; wiążąca jest treść SWZ.
+        </p>
+        <div class="cta__buttons">
+          <a class="btn btn--primary" href="#pobierz">Pobierz aplikację</a>
         </div>
       </div>
     </section>
@@ -242,7 +336,7 @@
           </div>
           <div class="step">
             <div class="step__num">3</div>
-            <h3>Otrzymujesz powiadomienia</h3>
+            <h3>Dostajesz dopasowane przetargi</h3>
             <p>Trafne przetargi trafiają prosto do aplikacji — z wynikiem dopasowania i terminem składania ofert.</p>
           </div>
         </div>
@@ -268,7 +362,6 @@
             <a class="btn btn--ghost btn--block" href="#pobierz">Pobierz aplikację</a>
           </div>
           <div class="plan plan--featured">
-            <span class="plan__tag">Najczęściej wybierany</span>
             <h3 class="plan__name">Standard</h3>
             <div class="plan__price">
               <span class="amount">99 zł</span><span class="period">/ miesiąc</span>
@@ -294,7 +387,7 @@
         <h2 class="section__title">Najczęstsze pytania</h2>
         <details class="faq">
           <summary>Skąd pochodzą dane o przetargach?</summary>
-          <p>Bezpośrednio z Biuletynu Zamówień Publicznych (BZP) prowadzonego na platformie e-Zamówienia. To oficjalne, publiczne źródło ogłoszeń o zamówieniach publicznych w Polsce.</p>
+          <p>Z oficjalnych, publicznych rejestrów: Biuletynu Zamówień Publicznych (BZP) na platformie e-Zamówienia, unijnego TED oraz Bazy Konkurencyjności. Wiążąca jest treść ogłoszenia u źródła.</p>
         </details>
         <details class="faq">
           <summary>Jak działa dopasowanie AI?</summary>
@@ -318,26 +411,24 @@
     <!-- CTA -->
     <section class="cta" id="pobierz">
       <div class="container cta__inner">
-        <h2>Zacznij wygrywać przetargi już dziś</h2>
-        <p>Pobierz PrzetargAI i skonfiguruj profil firmy w 2 minuty.</p>
+        <h2>Pobierz PrzetargAI i przygotuj pierwszą ofertę</h2>
+        <p>Załóż darmowe konto, opisz profil firmy i zobacz dopasowane przetargi.</p>
         <div class="cta__buttons">
-          <!--
-            Realne pobieranie APK wprost z CTA (życzenie usera 2026-07-14). Wcześniej
-            były tu same plakietki „wkrótce" — strona nie dawała ŻADNEJ drogi do apki,
-            mimo że plik i strona /pobierz istniały. `download` wymusza zapis pliku
-            zamiast prób otwarcia w przeglądarce.
-          -->
-          <a class="btn btn--primary" href="/PrzetargAI.apk" download>
-            Pobierz na Androida (APK)
+          <!-- Aplikacja jest już w oficjalnych sklepach (Google Play + App Store);
+               APK zostaje jako alternatywa dla instalacji z pominięciem sklepu. -->
+          <a class="btn btn--primary" href="https://play.google.com/store/apps/details?id=pl.przetargai.app" rel="noopener">
+            Pobierz z Google Play
           </a>
-          <a class="btn btn--ghost" href="https://apps.apple.com/pl/app/id6773018962" rel="noopener">
-            Pobierz na iPhone (App Store)
+          <a class="btn btn--primary" href="https://apps.apple.com/pl/app/id6773018962" rel="noopener">
+            Pobierz z App Store
+          </a>
+          <a class="btn btn--ghost" href="/PrzetargAI.apk" download>
+            Android APK (bez sklepu)
           </a>
           <a class="btn btn--ghost" href="/pobierz">Jak zainstalować?</a>
         </div>
         <p class="cta__note">
-          Android: wersja 1.0.8 (.apk, instalacja z pominięciem sklepu) ·
-          iPhone: App Store · Google Play — wkrótce.
+          Android: Google Play (lub plik .apk bez sklepu) · iPhone: App Store.
         </p>
       </div>
     </section>
@@ -367,7 +458,9 @@
           <a href="https://ezamowienia.gov.pl" target="_blank" rel="noopener">ezamowienia.gov.pl</a> (BZP,
           Urząd Zamówień Publicznych) ·
           <a href="https://ted.europa.eu" target="_blank" rel="noopener">ted.europa.eu</a> (TED, Dziennik
-          Urzędowy UE). Wiążąca jest treść ogłoszenia u źródła; oceny i wyjaśnienia generuje AI
+          Urzędowy UE) ·
+          <a href="https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl" target="_blank" rel="noopener">bazakonkurencyjnosci.funduszeeuropejskie.gov.pl</a>
+          (Baza Konkurencyjności, fundusze europejskie). Wiążąca jest treść ogłoszenia u źródła; oceny i wyjaśnienia generuje AI
           i mają charakter informacyjny.
         </p>
       </div>
@@ -378,14 +471,34 @@
         <a href="/pobierz">Pobierz aplikację</a>
         <a href="/regulamin">Regulamin</a>
         <a href="/polityka-prywatnosci">Polityka prywatności</a>
-        <a href="mailto:support@przetargai.pl">Kontakt</a>
+        <a href="mailto:jakatora68@gmail.com">Kontakt</a>
       </div>
     </div>
     <div class="container footer__bottom">
       <span>© 2026 PrzetargAI</span>
-      <span>support@przetargai.pl</span>
+      <span>jakatora68@gmail.com</span>
     </div>
   </footer>
   <script src="nav.js" defer></script>
+  <script src="config.js"></script>
+  <script>
+    // Żywy licznik z tego samego publicznego endpointu co ekran logowania aplikacji.
+    // Liczbę i jej opis wstawiamy RAZEM i tylko po udanym pobraniu. Przy błędzie zostaje
+    // tekst z HTML, w którym żadnej liczby nie ma — bez statystyki „na żywo" z zapasu.
+    (function () {
+      var el = document.querySelector('[data-stat="nowe24h"]');
+      var opis = document.querySelector('[data-stat-opis="nowe24h"]');
+      var api = window.PRZETARGAI && window.PRZETARGAI.API_URL;
+      if (!el || !opis || !api || !window.fetch) return;
+      fetch(api + '/stats/public')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || typeof d.nowe24h !== 'number' || !(d.nowe24h > 0)) return;
+          el.textContent = String(d.nowe24h).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+          opis.textContent = 'nowych ogłoszeń w ostatniej dobie — na żywo z naszej bazy';
+        })
+        .catch(function () {});
+    })();
+  </script>
 </body>
 </html>

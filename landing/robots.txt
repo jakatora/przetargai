@@ -5,4 +5,4 @@ Allow: /
 Disallow: /upgrade
 Disallow: /upgrade/
 
-Sitemap: https://przetargai.pl/sitemap.xml
+Sitemap: https://przetargai.web.app/sitemap.xml
