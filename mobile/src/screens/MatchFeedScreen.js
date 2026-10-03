@@ -369,7 +369,7 @@ export default function MatchFeedScreen({ navigation }) {
                 <Text style={styles.fomoCta}>
                   {upgrading
                     ? t('Otwieram…', 'Opening…')
-                    : t('Przejdź na Standard — 49 zł/mc →', 'Upgrade to Standard — PLN 49/mo →')}
+                    : t('Przejdź na Standard — 99 zł/mc →', 'Upgrade to Standard — PLN 99/mo →')}
                 </Text>
               </Pressable>
             ) : null}

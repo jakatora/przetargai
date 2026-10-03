@@ -12,7 +12,7 @@ import Constants from 'expo-constants';
  *    na web `hostUri` bywa niedostępne, więc czytamy hosta ze strony. Bez tego
  *    fallbacku wersja webowa w DEV uderzałaby w PRODUKCYJNY backend.
  * 3. Produkcja bez zmiennej — **Cloud Functions (D-043, wdrożone 2026-07-10)**.
- *    Płatności tam są PRAWDZIWE (Stripe LIVE, 49 zł/mc).
+ *    Płatności tam są PRAWDZIWE (Stripe LIVE, 99 zł/mc).
  *
  * Rollback (dopóki Railway żyje): zbuduj z
  * `EXPO_PUBLIC_API_URL=https://backend-production-a43e3.up.railway.app`.

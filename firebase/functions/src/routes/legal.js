@@ -12,7 +12,7 @@ const COMPANY = {
   address: 'Jagiełła 68, 37-203 Gniewczyna Tryniecka',
   nip: '7941844550',
   email: 'jakatora68@gmail.com',
-  lastUpdate: '10 lipca 2026 r.',
+  lastUpdate: '3 października 2026 r.',
 };
 
 function legalShell(title, body) {
@@ -127,7 +127,7 @@ dopasowanych do profilu firmy, wraz z oceną trafności i uzasadnieniem generowa
 <h2>§5. Plany i ceny</h2>
 <ul>
 <li><strong>Plan Free</strong> — bezpłatny i bezterminowy, do 5 dopasowanych przetargów dziennie, bez powiadomień push.</li>
-<li><strong>Plan Standard</strong> — 49 zł miesięcznie (brutto, zawiera VAT 23%); nielimitowane dopasowania oraz powiadomienia push.</li>
+<li><strong>Plan Standard</strong> — 99 zł miesięcznie (brutto, zawiera VAT 23%); nielimitowane dopasowania oraz powiadomienia push.</li>
 </ul>
 <h2>§6. Płatności i faktury</h2>
 <p>Płatności obsługuje Stripe Inc. Subskrypcja odnawiana miesięcznie. Po opłaceniu Użytkownik otrzymuje

@@ -1,7 +1,7 @@
 import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
 
-const STANDARD_BRUTTO_PLN = 49; // 49 zl/mc brutto (D-042); VAT 23% w srodku
+const STANDARD_BRUTTO_PLN = 99; // 99 zl/mc brutto (2026-10-03, wczesniej 49 D-042); VAT 23% w srodku
 
 /**
  * Wystawia fakturę VAT w Fakturowni za subskrypcję Standard.

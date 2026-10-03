@@ -3,10 +3,10 @@ import { logger } from '../lib/logger.js';
 
 /**
  * Cena katalogowa BRUTTO — używana TYLKO wtedy, gdy Stripe nie poda kwoty.
- * 49 zł/mc (decyzja usera 2026-07-10, D-042); Stripe pobiera kwotę brutto,
+ * 99 zł/mc (decyzja usera 2026-10-03; wcześniej 49 zł, D-042); Stripe pobiera kwotę brutto,
  * VAT 23% siedzi w środku (pozycja faktury liczy go z total_price_gross).
  */
-const STANDARD_BRUTTO_PLN = 49;
+const STANDARD_BRUTTO_PLN = 99;
 
 /**
  * Kwota brutto faktury w złotych.
@@ -23,7 +23,7 @@ export function kwotaBruttoPln(amountTotalGrosze) {
   if (Number.isFinite(amountTotalGrosze) && amountTotalGrosze > 0) {
     return Number((amountTotalGrosze / 100).toFixed(2));
   }
-  // Zapasowo cena katalogowa — lepsza faktura na 49 zł niż brak faktury.
+  // Zapasowo cena katalogowa — lepsza faktura na 99 zł niż brak faktury.
   return STANDARD_BRUTTO_PLN;
 }
 

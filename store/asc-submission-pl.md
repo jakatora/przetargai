@@ -159,7 +159,7 @@ JAK TO DZIAŁA
 
 PLANY
 • Free — 5 dopasowanych przetargów dziennie, bezpłatnie i bezterminowo
-• Standard (49 zł/mc) — nielimitowane dopasowania oraz powiadomienia push
+• Standard (99 zł/mc) — nielimitowane dopasowania oraz powiadomienia push
 
 ŹRÓDŁA INFORMACJI URZĘDOWYCH
 Wszystkie ogłoszenia pochodzą z oficjalnych, publicznie dostępnych rejestrów prowadzonych przez instytucje publiczne:
@@ -247,7 +247,7 @@ Więcej źródeł i pełna kontrola nad listą przetargów:
 • Ściąga kodów CPV — nie musisz znać kodów. Wyszukaj swoją branżę.
 • Tryb ciemny — jasny, ciemny albo zgodny z ustawieniem telefonu.
 • Prostsza rejestracja — wystarczą e-mail i hasło, bez NIP-u.
-• Plan Standard 49 zł/mies. — nielimitowane dopasowania i powiadomienia push.
+• Plan Standard 99 zł/mies. — nielimitowane dopasowania i powiadomienia push.
 ```
 
 ---
@@ -285,7 +285,7 @@ DATA SOURCE:
 All tender data comes from the official Polish government API at ezamowienia.gov.pl/mo-board/api/v1/notice (Biuletyn Zamówień Publicznych — public domain information published by the Polish Public Procurement Office). No scraping, no private data — it's the official public registry mandated by Polish law.
 
 SUBSCRIPTION FLOW (important — explains why no StoreKit):
-The "Standard" 49 PLN/month subscription is sold through our external website (jakatora.github.io/przetargai), not through in-app purchases. This is intentional — the app itself is free; the Standard subscription is a separate web-based B2B service handled by Stripe.
+The "Standard" 99 PLN/month subscription is sold through our external website (jakatora.github.io/przetargai), not through in-app purchases. This is intentional — the app itself is free; the Standard subscription is a separate web-based B2B service handled by Stripe.
 
 The "Aktywuj Standard" / "Upgrade" button in the Account screen opens an external browser to handle the magic-link upgrade flow. The app does NOT use StoreKit because it's a free professional tool, not a digital content app.
 
@@ -379,7 +379,7 @@ Najczęstsze powody odrzucenia metadata (NIE binarki):
 | Privacy Policy URL nie działa | sprawdź `https://jakatora.github.io/przetargai/polityka-prywatnosci.html` w przeglądarce |
 | Screenshots zawierają placeholder text (`reallygreatsite.com`) | wgraj nowe screenshoty z prawdziwej apki |
 | Demo account nie działa | upewnij się że konto `apple-review@przetargai.demo` istnieje w produkcyjnej bazie + ma matche w feedzie |
-| Subscription terms / pricing nie zgadza się z opisem | zostaw 49 PLN/mc spójnie wszędzie |
+| Subscription terms / pricing nie zgadza się z opisem | zostaw 99 PLN/mc spójnie wszędzie |
 | Wymaga login bez wyjaśnienia po co | dodać w Notes for Reviewer kontekst (już mamy) |
 
 ---

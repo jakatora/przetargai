@@ -12,7 +12,7 @@ Aplikacja: [Google Play](https://play.google.com/store/apps/details?id=pl.przeta
 | Plan | Cena | Limity |
 |------|------|--------|
 | Free | 0 zł | 5 dopasowań / dobę |
-| Standard | 49 zł / mc (brutto) | nielimitowane dopasowania |
+| Standard | 99 zł / mc (brutto) | nielimitowane dopasowania |
 
 Wiążąca treść: regulamin (`/regulamin`, `firebase/functions/src/routes/legal.js`).
 

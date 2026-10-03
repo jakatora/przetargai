@@ -295,7 +295,7 @@ export default function AccountScreen({ navigation }) {
           <Text style={styles.upgradeTitle}>Przejdź na Standard</Text>
           <Text style={styles.upgradeText}>
             Nielimitowane dopasowania i powiadomienia push o nowych przetargach
-            — 49 zł / miesiąc.
+            — 99 zł / miesiąc.
           </Text>
           <Button
             title="Przejdź na Standard"

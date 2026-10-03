@@ -71,18 +71,19 @@ test('AUDYT: kwota faktury bierze się z FAKTYCZNEJ płatności, nie z cennika',
    * a fakturę dostawał na pełną cenę — zawyżony VAT i błąd księgowy
    * po obu stronach.
    */
-  assert.equal(kwotaBruttoPln(4900), 49, 'pełna cena planu (49 zł brutto — decyzja usera 2026-07-10)');
+  assert.equal(kwotaBruttoPln(9900), 99, 'pełna cena planu (99 zł brutto — decyzja usera 2026-10-03)');
+  assert.equal(kwotaBruttoPln(4900), 49, 'dawna cena 49 zł: fakturujemy co pobrano, nie aktualny cennik');
   assert.equal(kwotaBruttoPln(12300), 123, 'kod rabatowy / inna kwota: fakturujemy co pobrano');
   assert.equal(kwotaBruttoPln(1), 0.01, 'grosze przeliczane dokładnie');
 });
 
-test('kwota: brak danych ze Stripe cofa nas do ceny katalogowej 49 zł brutto', () => {
+test('kwota: brak danych ze Stripe cofa nas do ceny katalogowej 99 zł brutto', () => {
   // Lepsza faktura na cenę katalogową niż brak faktury. Cena jest BRUTTO —
-  // Stripe pobiera 49,00 zł i tyle musi być na fakturze (VAT w środku).
-  assert.equal(kwotaBruttoPln(undefined), 49);
-  assert.equal(kwotaBruttoPln(null), 49);
-  assert.equal(kwotaBruttoPln(0), 49);
-  assert.equal(kwotaBruttoPln(-500), 49, 'ujemna kwota to błąd, nie zwrot');
+  // Stripe pobiera 99,00 zł i tyle musi być na fakturze (VAT w środku).
+  assert.equal(kwotaBruttoPln(undefined), 99);
+  assert.equal(kwotaBruttoPln(null), 99);
+  assert.equal(kwotaBruttoPln(0), 99);
+  assert.equal(kwotaBruttoPln(-500), 99, 'ujemna kwota to błąd, nie zwrot');
 });
 
 // ---------------- wystawFakture: co dzieje się z webhookiem ----------------
