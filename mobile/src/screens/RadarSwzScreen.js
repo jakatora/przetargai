@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
@@ -15,6 +15,14 @@ import {
   parsujDiff,
   etykietaSekcji,
   etykietaPoziomuBramki,
+  wstepneDaneRadaru,
+  opisPowiazania,
+  potwierdzonePowiazanie,
+  powiazIPotwierdz,
+  sprawdzPowiazanie,
+  opisTresciSwz,
+  podpowiedzPustegoDopasowania,
+  STAN_POWIAZANIA,
 } from '../lib/radarSwz';
 import { opisStatusu, etykietaLicznika } from '../lib/sejf';
 
@@ -67,9 +75,34 @@ function tonNaTokeny(ton, k) {
   return { tlo: k.neutralneTlo, tekst: k.textMuted };
 }
 
-export default function RadarSwzScreen() {
+export default function RadarSwzScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleRadaru);
+  // Wejście z przetargu (ścieżka) niesie nazwę i daty z ogłoszenia; z katalogu narzędzi
+  // parametrów nie ma i formularz startuje pusty. Liczone raz — to tylko stan początkowy.
+  const [wstepne] = useState(() => wstepneDaneRadaru(route?.params));
+  // Powiązanie analizy z przetargiem, z którego otwarto Radar (checklista bierze z niej
+  // wymagania). Sukces pokazujemy dopiero po odpowiedzi serwera; błąd zostaje na ekranie
+  // z ponowieniem — nigdy cichy.
+  const [powiazanie, setPowiazanie] = useState({ stan: STAN_POWIAZANIA.BRAK, postepowanieId: null, komunikat: null });
+
+  // Radar otwarty z przetargu, który ma już powiązaną analizę (np. powrót z checklisty):
+  // pytamy serwer, żeby nie proponować powiązania czegoś, co jest powiązane. Błąd odczytu
+  // zostawia stan „nie wiemy" — karta proponuje wtedy powiązanie, niczego nie twierdząc.
+  useEffect(() => {
+    if (wstepne.tenderId === null) return undefined;
+    let aktywny = true;
+    api.powiazanieSwz(wstepne.tenderId)
+      .then((odp) => {
+        const id = odp?.powiazanie?.postepowanie_id;
+        if (!aktywny || !potwierdzonePowiazanie(odp, id)) return;
+        setPowiazanie((biezace) => (biezace.stan === STAN_POWIAZANIA.BRAK
+          ? { stan: STAN_POWIAZANIA.OK, postepowanieId: id, komunikat: null }
+          : biezace));
+      })
+      .catch(() => {});
+    return () => { aktywny = false; };
+  }, [wstepne.tenderId]);
 
   const [mode, setMode] = useState('lista'); // 'lista' | 'detal'
   const [lista, setLista] = useState(null);
@@ -81,9 +114,9 @@ export default function RadarSwzScreen() {
   const [bladDetal, setBladDetal] = useState(null);
 
   // Formularz założenia postępowania (wejście panelu).
-  const [nowaNazwa, setNowaNazwa] = useState('');
-  const [nowaOgloszenie, setNowaOgloszenie] = useState('');
-  const [nowyTermin, setNowyTermin] = useState('');
+  const [nowaNazwa, setNowaNazwa] = useState(wstepne.nazwa);
+  const [nowaOgloszenie, setNowaOgloszenie] = useState(wstepne.dataOgloszenia);
+  const [nowyTermin, setNowyTermin] = useState(wstepne.termin);
   const [tworze, setTworze] = useState(false);
 
   // Akcje w detalu: analiza (generuje pytania), odświeżenie (nowa wersja SWZ).
@@ -164,6 +197,44 @@ export default function RadarSwzScreen() {
     setDetal(null);
   }
 
+  // Wiąże analizę z przetargiem przez istniejące API checklisty (PUT …/tender/:id/swz).
+  // Wołane automatycznie po utworzeniu analizy z przetargu i ręcznie („Ponów"/„Powiąż").
+  // Wynik zawsze pochodzi z potwierdzenia serwera: gdy odpowiedź na zapis zaginie albo
+  // nie oddaje tej analizy, `powiazIPotwierdz` odczytuje stan faktyczny (lib/radarSwz.js).
+  async function powiazZPrzetargiem(postepowanieId) {
+    if (wstepne.tenderId === null || !postepowanieId) return;
+    setPowiazanie({ stan: STAN_POWIAZANIA.TRWA, postepowanieId, komunikat: null });
+    setPowiazanie(await powiazIPotwierdz({
+      powiaz: api.powiazSwz, odczytaj: api.powiazanieSwz, tenderId: wstepne.tenderId, postepowanieId,
+    }));
+  }
+
+  // Sam odczyt stanu — po błędzie, którego skutku nie znamy, bez ponownego zapisu.
+  async function sprawdzStanPowiazania(postepowanieId) {
+    if (wstepne.tenderId === null || !postepowanieId) return;
+    const powod = powiazanie.postepowanieId === postepowanieId ? powiazanie.komunikat : null;
+    setPowiazanie({ stan: STAN_POWIAZANIA.TRWA, postepowanieId, komunikat: null });
+    setPowiazanie(await sprawdzPowiazanie({
+      odczytaj: api.powiazanieSwz, tenderId: wstepne.tenderId, postepowanieId, komunikat: powod,
+    }));
+  }
+
+  function otworzCheckliste() {
+    navigation?.navigate('ChecklistaOferty', wstepne.nazwa
+      ? { tenderId: wstepne.tenderId, tytul: wstepne.nazwa }
+      : { tenderId: wstepne.tenderId });
+  }
+
+  // Cichy odczyt panelu po nieudanej akcji: stan „treść SWZ zapisana" ma się odświeżyć,
+  // ale błąd tego odczytu nie może zastąpić ekranu komunikatem o błędzie.
+  async function odswiezDetalCicho(id) {
+    try {
+      setDetal(await api.radarPostepowanie(id));
+    } catch {
+      /* zostaje poprzedni stan panelu */
+    }
+  }
+
   async function utworz() {
     const nazwa = nowaNazwa.trim();
     if (!nazwa || tworze) return;
@@ -178,6 +249,9 @@ export default function RadarSwzScreen() {
       setNowaOgloszenie('');
       setNowyTermin('');
       otworz(postepowanie.id);
+      // Analiza utworzona z przetargu → od razu wiążemy ją z tym przetargiem. Wynik
+      // (także błąd, z ponowieniem) pokazuje karta powiązania w panelu analizy.
+      await powiazZPrzetargiem(postepowanie.id);
     } catch (err) {
       setBladListy(err.message);
     } finally {
@@ -195,6 +269,9 @@ export default function RadarSwzScreen() {
       await wczytajDetal(wybraneId);
     } catch (err) {
       setBladAkcji(err.message);
+      // Analiza AI mogła się nie udać, ale serwer zapamiętuje wklejoną treść wcześniej —
+      // odczytujemy panel, żeby pokazać to, co serwer faktycznie potwierdza.
+      await odswiezDetalCicho(wybraneId);
     } finally {
       setAnalizuje(false);
     }
@@ -262,6 +339,15 @@ export default function RadarSwzScreen() {
 
         <View style={styles.card}>
           <Text style={styles.sekcjaTytul}>Weź postępowanie pod radar</Text>
+          {wstepne.zPrzetargu ? (
+            <Text style={styles.kartaOpis}>
+              Pola wypełniliśmy danymi z ogłoszenia wybranego przetargu. Sprawdź je i popraw,
+              jeśli trzeba — nic nie zostanie dodane, dopóki nie naciśniesz „Dodaj do radaru".
+              {wstepne.tenderId !== null
+                ? ' Po dodaniu powiążemy analizę z tym przetargiem, żeby checklista dokumentów wzięła z niej wymagania.'
+                : ''}
+            </Text>
+          ) : null}
           <TextField
             label="Nazwa postępowania"
             value={nowaNazwa}
@@ -343,6 +429,9 @@ export default function RadarSwzScreen() {
   const akcentTerminu = akcentOdliczania(odliczanie.stan, kolory);
   const werdykt = wyslijWynik ?? bramka;
   const akcentWerdyktu = akcentBramki(werdykt.poziom, kolory);
+  const kartaPowiazania = opisPowiazania({ tenderId: wstepne.tenderId, postepowanieId: wybraneId, powiazanie });
+  // `tresc_swz` oddaje nowszy backend; bez niego (null) niczego o zapisie treści nie twierdzimy.
+  const stanTresci = opisTresciSwz(detal.tresc_swz);
 
   return (
     <Screen scroll>
@@ -354,6 +443,32 @@ export default function RadarSwzScreen() {
 
       {bladAkcji ? (
         <View style={styles.bladCard}><Text style={styles.bladText}>{bladAkcji}</Text></View>
+      ) : null}
+
+      {/* ── Powiązanie z przetargiem, z którego otwarto Radar ── */}
+      {kartaPowiazania ? (
+        <View style={[styles.card, { borderColor: tonNaTokeny(kartaPowiazania.ton, kolory).tekst }]}>
+          <Text style={styles.kartaTytul}>Przetarg i checklista dokumentów</Text>
+          {wstepne.nazwa ? <Text style={styles.kartaOpis}>{wstepne.nazwa}</Text> : null}
+          <Text style={[styles.powiazanieTekst, { color: tonNaTokeny(kartaPowiazania.ton, kolory).tekst }]}>
+            {kartaPowiazania.tekst}
+          </Text>
+          {kartaPowiazania.wToku ? <ActivityIndicator color={kolory.blue} /> : null}
+          {/* Kolejność przycisków ustala `opisPowiazania`: pierwszy to działanie zalecane. */}
+          {kartaPowiazania.akcje.map((akcja, i) => {
+            const wariant = i === 0 && akcja !== 'checklista' && akcja !== 'powiaz' ? 'primary' : 'ghost';
+            if (akcja === 'sprawdz') {
+              return <Button key={akcja} title="Sprawdź powiązanie" variant={wariant} onPress={() => sprawdzStanPowiazania(wybraneId)} style={styles.powiazaniePrzycisk} />;
+            }
+            if (akcja === 'ponow') {
+              return <Button key={akcja} title="Ponów powiązanie" variant={wariant} onPress={() => powiazZPrzetargiem(wybraneId)} style={styles.powiazaniePrzycisk} />;
+            }
+            if (akcja === 'powiaz') {
+              return <Button key={akcja} title="Powiąż z przetargiem" variant="ghost" onPress={() => powiazZPrzetargiem(wybraneId)} style={styles.powiazaniePrzycisk} />;
+            }
+            return <Button key={akcja} title="Otwórz checklistę dokumentów" variant="ghost" onPress={otworzCheckliste} style={styles.powiazaniePrzycisk} />;
+          })}
+        </View>
       ) : null}
 
       {/* ── 1. Termin pytań + pytania ── */}
@@ -386,6 +501,17 @@ export default function RadarSwzScreen() {
         <Text style={styles.kartaOpis}>
           Wklej treść SWZ — wykryjemy niejasności, sprzeczności i braki parametrów i zapiszemy je jako gotowe szkice pytań.
         </Text>
+        {stanTresci ? (
+          <Text style={[styles.trescStan, { color: tonNaTokeny(stanTresci.ton, kolory).tekst }]}>
+            {stanTresci.tekst}
+          </Text>
+        ) : null}
+        {stanTresci?.zapamietujemyPierwsza ? (
+          <Text style={styles.kartaOpis}>
+            Zapamiętujemy tylko pierwszą wklejoną treść — kolejne analizy jej nie zmieniają.
+            Nowszą wersję SWZ podaj w „Sprawdź publikacje zamawiającego".
+          </Text>
+        ) : null}
         <TextField
           value={swzTekst}
           onChangeText={setSwzTekst}
@@ -517,12 +643,16 @@ export default function RadarSwzScreen() {
             </Text>
 
             {(dopasowanie.wymagane_typy?.length ?? 0) === 0 ? (
-              <Text style={styles.dopPusto}>
-                Nie wykryliśmy w SWZ konkretnych wymaganych dokumentów. Wklej treść SWZ w
-                „Wygeneruj pytania" albo „Sprawdź publikacje" powyżej i spróbuj ponownie.
-              </Text>
+              <Text style={styles.dopPusto}>{podpowiedzPustegoDopasowania(dopasowanie.zrodlo_swz)}</Text>
             ) : (
               <>
+                {/* Parser fraz zna kilka typowych dokumentów — lista jest pomocą, nie kompletem. */}
+                {dopasowanie.wymagania_heurystyczne !== false ? (
+                  <Text style={styles.dopNiepelne}>
+                    Wykryto automatycznie {dopasowanie.wymagane_typy.length} z typowych dokumentów
+                    w treści SWZ — lista może być niepełna. Pozostałe wymagania sprawdź w SWZ.
+                  </Text>
+                ) : null}
                 {/* Masz świeże */}
                 <Text style={[styles.koszykTytul, { color: kolory.sukcesAkcent }]}>
                   Masz świeże ({dopasowanie.swieze.length})
@@ -756,6 +886,10 @@ const tworzStyleRadaru = tworzStyle((k) => ({
   dopBlad: { fontSize: 13, color: k.danger, lineHeight: 18, marginTop: spacing.sm },
   dopDzien: { fontSize: 13, fontWeight: '700', color: k.text, marginTop: spacing.sm, marginBottom: spacing.xs },
   dopPusto: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginTop: spacing.sm },
+  dopNiepelne: { fontSize: 12, color: k.ostrzezenieAkcent, lineHeight: 17, marginTop: spacing.xs },
+  powiazanieTekst: { fontSize: 13, lineHeight: 19, marginBottom: spacing.sm },
+  powiazaniePrzycisk: { marginTop: spacing.sm },
+  trescStan: { fontSize: 13, lineHeight: 19, marginBottom: spacing.sm },
   dopBtn: { marginTop: spacing.md },
   koszykTytul: { fontSize: 13, fontWeight: '800', marginTop: spacing.md, marginBottom: spacing.xs },
   koszykPusto: { fontSize: 13, color: k.textMuted, fontStyle: 'italic' },

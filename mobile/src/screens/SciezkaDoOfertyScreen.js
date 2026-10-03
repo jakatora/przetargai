@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import Screen from '../components/Screen';
+import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import * as storage from '../lib/storage';
-import { zbudujSciezke, wczytajSciezke, zapiszSciezke } from '../lib/sciezkaDoOferty';
+import {
+  zbudujSciezke, wczytajSciezke, zapiszSciezke, parametryNarzedzia,
+} from '../lib/sciezkaDoOferty';
 
 /**
  * „KROK PO KROKU DO WYGRANEJ" — przewodnik przygotowania oferty. Prowadzi wykonawcę
@@ -40,15 +43,13 @@ export default function SciezkaDoOfertyScreen({ route, navigation }) {
     });
   }
 
-  function otworz(krok) {
-    if (!krok.ekran) return;
-    if (krok.ekran === 'RejestratorOferty') {
-      navigation.navigate('RejestratorOferty', {
-        termin: tender?.deadline, postepowanieId: match?.id, nazwa: tender?.title,
-      });
-    } else {
-      navigation.navigate(krok.ekran, { nazwa: tender?.title });
-    }
+  // Parametry liczy czysta `parametryNarzedzia`: `null` = ekran wymaga identyfikatora
+  // przetargu, którego tu nie ma — wtedy wejścia nie pokazujemy i nie otwieramy.
+  function otworz(ekran) {
+    if (!ekran) return;
+    const params = parametryNarzedzia(ekran, match);
+    if (params === null) return;
+    navigation.navigate(ekran, params);
   }
 
   if (!tender) {
@@ -66,7 +67,7 @@ export default function SciezkaDoOfertyScreen({ route, navigation }) {
     return <View style={styles.center}><ActivityIndicator size="large" color={kolory.blue} /></View>;
   }
 
-  const { fazy, postep } = zbudujSciezke(wykonane);
+  const { fazy, postep, nastepny } = zbudujSciezke(wykonane);
 
   return (
     <Screen scroll>
@@ -85,9 +86,36 @@ export default function SciezkaDoOfertyScreen({ route, navigation }) {
           <View style={[styles.pasekWypelnienie, { width: `${postep.procent}%` }]} />
         </View>
         {postep.wszystkieWymaganeGotowe ? (
-          <Text style={styles.gotowe}>Komplet kroków odhaczony — powodzenia na otwarciu! 🍀</Text>
+          // Odhaczenia są deklaracją użytkownika — przewodnik nie widzi treści oferty,
+          // więc nie wolno mu ogłaszać, że oferta jest kompletna.
+          <Text style={styles.gotowe}>
+            Wszystkie kroki przewodnika odhaczone. To Twoje własne odhaczenia — przewodnik
+            nie sprawdza treści ani kompletności oferty. Przed wysłaniem porównaj ją z SWZ.
+          </Text>
         ) : null}
       </View>
+
+      {/* JEDNO następne działanie: pierwszy nieodhaczony krok wymagany, w kolejności ścieżki. */}
+      {nastepny ? (
+        <View style={styles.nastepnyCard}>
+          <Text style={styles.nastepnyEtykieta}>Następny krok</Text>
+          <Text style={styles.nastepnyTytul}>{nastepny.tytul}</Text>
+          <Text style={styles.krokOpis}>{nastepny.opis}</Text>
+          {nastepny.ekran ? (
+            <Button
+              title="Otwórz narzędzie"
+              onPress={() => otworz(nastepny.ekran)}
+              style={styles.nastepnyPrzycisk}
+            />
+          ) : null}
+          <Button
+            title="Oznacz jako zrobione"
+            variant="ghost"
+            onPress={() => przelacz(nastepny.klucz)}
+            style={styles.nastepnyPrzycisk}
+          />
+        </View>
+      ) : null}
 
       {fazy.map((f, i) => (
         <View key={f.nazwa} style={styles.faza}>
@@ -112,10 +140,23 @@ export default function SciezkaDoOfertyScreen({ route, navigation }) {
                 </View>
               </Pressable>
               {k.ekran ? (
-                <Pressable onPress={() => otworz(k)} hitSlop={6} accessibilityRole="button" style={styles.narzedzieRzad}>
+                <Pressable onPress={() => otworz(k.ekran)} hitSlop={6} accessibilityRole="button" style={styles.narzedzieRzad}>
                   <Text style={styles.narzedzieLink}>Otwórz narzędzie →</Text>
                 </Pressable>
               ) : null}
+              {(k.dodatkowe ?? [])
+                .filter((d) => parametryNarzedzia(d.ekran, match) !== null)
+                .map((d) => (
+                  <Pressable
+                    key={d.ekran}
+                    onPress={() => otworz(d.ekran)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    style={styles.narzedzieRzad}
+                  >
+                    <Text style={styles.narzedzieLink}>{d.etykieta} →</Text>
+                  </Pressable>
+                ))}
             </View>
           ))}
         </View>
@@ -145,7 +186,15 @@ const tworzStyleSciezki = tworzStyle((k) => ({
   postepProcent: { fontSize: 18, fontWeight: '900', color: k.blue },
   pasekTlo: { height: 10, borderRadius: 999, backgroundColor: k.neutralneTlo, overflow: 'hidden' },
   pasekWypelnienie: { height: 10, borderRadius: 999, backgroundColor: k.blue },
-  gotowe: { fontSize: 13, fontWeight: '700', color: k.sukcesAkcent, marginTop: spacing.sm },
+  gotowe: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginTop: spacing.sm },
+
+  nastepnyCard: {
+    backgroundColor: k.wyroznienie, borderRadius: radius.lg, borderWidth: 1.5, borderColor: k.blue,
+    padding: spacing.md, marginBottom: spacing.lg,
+  },
+  nastepnyEtykieta: { fontSize: 11, fontWeight: '800', color: k.blue, textTransform: 'uppercase', letterSpacing: 0.5 },
+  nastepnyTytul: { fontSize: 16, fontWeight: '800', color: k.text, lineHeight: 22, marginTop: 4 },
+  nastepnyPrzycisk: { marginTop: spacing.sm },
 
   faza: { marginBottom: spacing.lg },
   fazaTytul: { fontSize: 15, fontWeight: '800', color: k.blue, marginBottom: spacing.sm },

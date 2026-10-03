@@ -30,6 +30,7 @@ import { opisWyniki } from '../lib/wyniki';
 import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
 import Wyjasnienie from '../components/Wyjasnienie';
 import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
+import { parametryNarzedzia } from '../lib/sciezkaDoOferty';
 import { useJezyk } from '../context/JezykContext';
 
 /** Etykieta etapu kontroli (STATUSY_KONTROLI); brak kontroli → pierwszy etap „Nowa". */
@@ -139,6 +140,8 @@ export default function MatchDetailScreen({ route, navigation }) {
   const wniosekWyslany = !!kontrola && kontrola.status !== 'nowa';
   // Analiza gotowa → mamy wynik do pokazania na osobnym ekranie (podzadanie 12/13).
   const analizaGotowa = !!kontrola?.analiza;
+  // Checklista jest adresowana identyfikatorem przetargu — bez niego wejścia nie pokazujemy.
+  const paramsChecklisty = parametryNarzedzia('ChecklistaOferty', match);
 
   async function przelaczZapis() {
     try {
@@ -368,6 +371,16 @@ export default function MatchDetailScreen({ route, navigation }) {
         </Text>
         <Text style={styles.sciezkaCtaLink}>{t('Otwórz przewodnik →', 'Open the guide →')}</Text>
       </Pressable>
+
+      {/* Bezpośrednie wejście do checklisty — dotąd tylko z dołu ekranu „Czy warto". */}
+      {paramsChecklisty ? (
+        <Button
+          title={t('Co muszę mieć do dnia składania', 'What I need by submission day')}
+          onPress={() => navigation.navigate('ChecklistaOferty', paramsChecklisty)}
+          variant="ghost"
+          style={styles.checklistaCta}
+        />
+      ) : null}
 
       {wyniki ? (
         <>
@@ -943,6 +956,7 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   sciezkaCtaTytul: { fontSize: 16, fontWeight: '800', color: k.white },
   sciezkaCtaOpis: { fontSize: 13, color: k.white, opacity: 0.92, lineHeight: 18, marginTop: 4 },
   sciezkaCtaLink: { fontSize: 14, fontWeight: '800', color: k.white, marginTop: 8 },
+  checklistaCta: { marginTop: spacing.md },
   kontrolaEtapRzad: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: k.border,

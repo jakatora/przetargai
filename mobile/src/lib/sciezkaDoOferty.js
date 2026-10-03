@@ -24,6 +24,8 @@ export const FAZY = [
 /**
  * Kroki ścieżki. `opcjonalny: true` = dotyczy tylko części wykonawców (nie liczy się do
  * paska postępu, ale można odhaczyć). `ekran` = dokąd prowadzi przycisk „Otwórz narzędzie".
+ * `dodatkowe` = dalsze wejścia w tym samym kroku — ekrany, które potrzebują KONTEKSTU
+ * przetargu (patrz `parametryNarzedzia`), więc pokazujemy je tylko, gdy ten kontekst jest.
  */
 export const KROKI = [
   { klucz: 'swz', faza: 'Rozeznanie', ekran: 'RadarSwz',
@@ -34,6 +36,7 @@ export const KROKI = [
     opis: 'Zweryfikuj warunki udziału (doświadczenie, potencjał) i brak podstaw wykluczenia. Upewnij się, że masz aktualne referencje na wymagany zakres i wartość.' },
 
   { klucz: 'oplacalnosc', faza: 'Decyzja: startować?', ekran: 'SymulatorPlynnosci',
+    dodatkowe: [{ ekran: 'CzyWarto', etykieta: 'Sprawdź, czy warto tu startować' }],
     tytul: 'Policz, czy to się opłaca',
     opis: 'Zanim włożysz pracę: sprawdź, za ile robi się to w Twoim regionie i czy udźwigniesz płynność — ile własnej gotówki wyłożysz, zanim zapłaci zamawiający.' },
   { klucz: 'punkty', faza: 'Decyzja: startować?', ekran: 'KalkulatorPunktow',
@@ -44,6 +47,7 @@ export const KROKI = [
     tytul: 'Zabezpiecz wadium',
     opis: 'Jeśli wymagane — wnieś wadium w terminie i właściwej formie. Gwarancją? Przekontroluj jej treść, żeby nie odpaść formalnie.' },
   { klucz: 'dokumenty', faza: 'Dokumenty', ekran: 'Sejf',
+    dodatkowe: [{ ekran: 'ChecklistaOferty', etykieta: 'Co muszę mieć do dnia składania' }],
     tytul: 'Skompletuj dokumenty',
     opis: 'Przygotuj oświadczenia (JEDZ / oświadczenie własne), pełnomocnictwa i podmiotowe środki dowodowe. Trzymaj je w Sejfie z pilnowaniem ważności.' },
   { klucz: 'konsorcjum', faza: 'Dokumenty', ekran: 'Konsorcjum', opcjonalny: true,
@@ -79,14 +83,94 @@ export const KROKI = [
     opis: 'Po wyborze oferty: jeśli przegrałeś nieznacznie, prześwietl ofertę zwycięzcy (ustaw etap „Przegrana" w szczegółach) i policz termin na odwołanie do KIO.' },
 ];
 
+/** Zbiór kluczy z dowolnego wejścia (Set, tablica, śmieci → pusty zbiór). */
+function jakoZbior(wykonane) {
+  return wykonane instanceof Set ? wykonane : new Set(Array.isArray(wykonane) ? wykonane : []);
+}
+
+/**
+ * JEDNO następne działanie: pierwszy WYMAGANY krok, który nie jest odhaczony — w kolejności
+ * ścieżki. Kroki opcjonalne pomijamy (dotyczą części wykonawców). `null` znaczy tylko tyle,
+ * że użytkownik odhaczył wszystkie wymagane kroki przewodnika; o kompletności OFERTY nie
+ * mówi to nic — przewodnik nie widzi jej treści.
+ * @param {Set<string>|string[]} wykonane klucze ukończonych kroków
+ * @returns {object|null} krok z `KROKI` albo null
+ */
+export function nastepnyKrok(wykonane) {
+  const zbior = jakoZbior(wykonane);
+  return KROKI.find((k) => !k.opcjonalny && !zbior.has(k.klucz)) ?? null;
+}
+
+/** Niepusty napis albo null (białe znaki to też „brak"). */
+function tekstLubNull(wartosc) {
+  return typeof wartosc === 'string' && wartosc.trim() ? wartosc : null;
+}
+
+/** Identyfikator: niepusty napis albo skończona liczba; wszystko inne → null. */
+function idLubNull(wartosc) {
+  if (typeof wartosc === 'number') return Number.isFinite(wartosc) ? wartosc : null;
+  return tekstLubNull(wartosc);
+}
+
+/**
+ * Parametry nawigacji do narzędzia otwieranego Z KONTEKSTU przetargu (ścieżka, szczegóły).
+ *
+ * Do 2026-10-03 ścieżka przekazywała każdemu narzędziu wyłącznie `{ nazwa }`. Ekrany, które
+ * adresują dane identyfikatorem (checklista, „czy warto"), nie miały jak się otworzyć, a
+ * Radar SWZ kazał przepisywać nazwę i daty, które przetarg już zna.
+ *
+ * Zwraca `null`, gdy ekran WYMAGA identyfikatora, a kontekst go nie ma — wołający nie
+ * pokazuje wtedy wejścia, zamiast otwierać ekran, który skończy się błędem. Dla pozostałych
+ * narzędzi zachowanie jak dotąd: `{ nazwa }` albo pusty obiekt.
+ *
+ * @param {string} ekran nazwa trasy z RootNavigatora
+ * @param {object|null|undefined} match dopasowanie z `tender` (może być niepełne)
+ * @returns {object|null}
+ */
+export function parametryNarzedzia(ekran, match) {
+  const m = match && typeof match === 'object' ? match : {};
+  const tender = m.tender && typeof m.tender === 'object' ? m.tender : {};
+  const tenderId = idLubNull(tender.id) ?? idLubNull(m.tender_id);
+  const matchId = idLubNull(m.id);
+  const tytul = tekstLubNull(tender.title);
+  const termin = tekstLubNull(tender.deadline);
+  const dataOgloszenia = tekstLubNull(tender.published_at);
+
+  switch (ekran) {
+    case 'ChecklistaOferty':
+      if (tenderId === null) return null;
+      return tytul ? { tenderId, tytul } : { tenderId };
+    case 'CzyWarto': {
+      if (tenderId === null && matchId === null) return null;
+      const params = { matchId, tenderId };
+      if (tytul) params.tytul = tytul;
+      return params;
+    }
+    case 'RadarSwz': {
+      // Tylko to, co ogłoszenie realnie podaje — formularz Radaru zostaje edytowalny.
+      // `tenderId` pozwala Radarowi powiązać nową analizę z tym przetargiem (checklista).
+      const params = {};
+      if (tenderId !== null) params.tenderId = tenderId;
+      if (tytul) params.nazwa = tytul;
+      if (termin) params.termin = termin;
+      if (dataOgloszenia) params.dataOgloszenia = dataOgloszenia;
+      return params;
+    }
+    case 'RejestratorOferty':
+      return { termin: termin ?? undefined, postepowanieId: matchId ?? undefined, nazwa: tytul ?? undefined };
+    default:
+      return tytul ? { nazwa: tytul } : {};
+  }
+}
+
 /**
  * Buduje ścieżkę z odhaczeniem wykonanych kroków i policzeniem postępu.
  * @param {Set<string>|string[]} wykonane klucze ukończonych kroków
- * @returns {{fazy: Array<{nazwa: string, kroki: object[]}>,
+ * @returns {{fazy: Array<{nazwa: string, kroki: object[]}>, nastepny: object|null,
  *   postep: {wymagane: number, zrobione: number, procent: number, wszystkieWymaganeGotowe: boolean}}}
  */
 export function zbudujSciezke(wykonane) {
-  const zbior = wykonane instanceof Set ? wykonane : new Set(Array.isArray(wykonane) ? wykonane : []);
+  const zbior = jakoZbior(wykonane);
   const kroki = KROKI.map((k) => ({ ...k, wykonany: zbior.has(k.klucz) }));
 
   // Pasek postępu liczy TYLKO kroki wymagane — odhaczenie opcjonalnego nie „nabija" postępu.
@@ -99,6 +183,7 @@ export function zbudujSciezke(wykonane) {
 
   return {
     fazy,
+    nastepny: nastepnyKrok(zbior),
     postep: {
       wymagane: wymagane.length,
       zrobione,

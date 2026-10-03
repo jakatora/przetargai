@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -9,6 +10,7 @@ import { spacing, radius } from '../theme';
 import {
   KOSZYKI_CHECKLISTY, opisGotowosci, opisDniDoZlozenia, wymaganiaZDopasowania,
 } from '../lib/wygrywalnosc';
+import { parametryRadaruZChecklisty } from '../lib/radarSwz';
 
 /*
  * „Co muszę mieć do dnia składania" (etap 6).
@@ -109,7 +111,15 @@ export default function ChecklistaOfertyScreen({ route, navigation }) {
     }
   }, [tenderId, t]);
 
-  useEffect(() => { wczytaj(); }, [wczytaj]);
+  // Przy każdym powrocie na ekran (np. z Radaru SWZ, gdzie właśnie dodano i powiązano
+  // analizę) czytamy stan od nowa — inaczej checklista pokazywałaby „brak powiązania".
+  useFocusEffect(useCallback(() => { wczytaj(); }, [wczytaj]));
+
+  // Radar otwierany stąd dostaje kontekst przetargu: wypełni nazwę i powiąże nową analizę.
+  // Termin składania przekazujemy z kalendarza postępowania (data z ogłoszenia).
+  const otworzRadar = useCallback(() => {
+    navigation.navigate('RadarSwz', parametryRadaruZChecklisty({ tenderId, tytul, kalendarz: dane?.kalendarz }));
+  }, [navigation, tenderId, tytul, dane]);
 
   const otworzWybor = useCallback(async () => {
     setBladPowiazania(null);
@@ -211,6 +221,20 @@ export default function ChecklistaOfertyScreen({ route, navigation }) {
                   `${zrodla.wykryte} document(s) detected automatically in the tender documents — the list may be incomplete. Check the remaining requirements yourself.`)}
               </Text>
             ) : null}
+            {zrodla.wymagania === 'brak_tresci' || zrodla.wymagania === 'brak_wymagan' ? (
+              // Pusta lista wymagań to nie „nic nie trzeba": albo analiza nie ma treści SWZ,
+              // albo parser fraz niczego w niej nie rozpoznał.
+              <>
+                <Text style={styles.ostrzezenie}>
+                  {zrodla.wymagania === 'brak_tresci'
+                    ? t('Ta analiza nie ma jeszcze treści SWZ. Wklej ją w Radarze SWZ („Wygeneruj pytania") — wtedy checklista pokaże wymagane dokumenty.',
+                      'This analysis has no tender-document text yet. Paste it in the radar and the checklist will show the required documents.')
+                    : t('W treści SWZ nie rozpoznaliśmy typowych dokumentów. To nie znaczy, że SWZ ich nie wymaga — sprawdź rozdział o podmiotowych środkach dowodowych.',
+                      'No typical documents were recognised in the tender documents. That does not mean none are required — check the section on means of proof.')}
+                </Text>
+                <Button title={t('Otwórz Radar SWZ', 'Open the radar')} variant="ghost" onPress={otworzRadar} style={styles.gap} />
+              </>
+            ) : null}
             <View style={styles.rzadPrzyciskow}>
               <Button title={t('Zmień analizę', 'Change analysis')} variant="ghost" onPress={otworzWybor} disabled={zapisuje} />
               <Button title={t('Odłącz', 'Unlink')} variant="ghost" onPress={odlacz} loading={zapisuje} />
@@ -223,7 +247,10 @@ export default function ChecklistaOfertyScreen({ route, navigation }) {
                 'Link this tender to a tender-document analysis — the checklist will then show missing and outdated documents.')}
             </Text>
             {!wybor ? (
-              <Button title={t('Wybierz analizę SWZ', 'Choose an analysis')} onPress={otworzWybor} style={styles.gap} />
+              <>
+                <Button title={t('Dodaj SWZ w Radarze', 'Add tender documents in the radar')} onPress={otworzRadar} style={styles.gap} />
+                <Button title={t('Wybierz istniejącą analizę SWZ', 'Choose an existing analysis')} variant="ghost" onPress={otworzWybor} style={styles.gap} />
+              </>
             ) : null}
           </>
         )}
@@ -257,7 +284,7 @@ export default function ChecklistaOfertyScreen({ route, navigation }) {
                 {t('Nie masz jeszcze analiz SWZ. Dodaj SWZ tego przetargu w Radarze SWZ i wróć tutaj.',
                   'You have no analyses yet. Add this tender’s documents in the radar and come back.')}
               </Text>
-              <Button title={t('Otwórz Radar SWZ', 'Open the radar')} onPress={() => navigation.navigate('RadarSwz')} style={styles.gap} />
+              <Button title={t('Otwórz Radar SWZ', 'Open the radar')} onPress={otworzRadar} style={styles.gap} />
             </View>
           )
         ) : null}

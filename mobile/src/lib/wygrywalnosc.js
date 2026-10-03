@@ -171,7 +171,7 @@ export const KOSZYKI_CHECKLISTY = Object.freeze([
  *
  * @param {object|null} odpowiedz ciało odpowiedzi dopasowania
  * @param {Array<{id: string, nazwa: string}>} katalogTypow katalog sejfu (nazwy do wyświetlenia)
- * @returns {{stan: 'znane'|'brak_wymagan'|'nieznany_format',
+ * @returns {{stan: 'znane'|'brak_wymagan'|'brak_tresci'|'nieznany_format',
  *   wymagania: Array<{kod: string, nazwa: string, obowiazkowe: true}>}}
  */
 export function wymaganiaZDopasowania(odpowiedz, katalogTypow = []) {
@@ -180,7 +180,11 @@ export function wymaganiaZDopasowania(odpowiedz, katalogTypow = []) {
     return { stan: 'nieznany_format', wymagania: [] };
   }
   const kody = [...new Set(typy.map((t) => t.trim()))];
-  if (!kody.length) return { stan: 'brak_wymagan', wymagania: [] };
+  // Pusta lista znaczy dwie różne rzeczy: Radar nie ma treści SWZ (`zrodlo_swz: 'brak'`)
+  // albo treść jest, a parser nic w niej nie rozpoznał. Starszy backend pola nie oddaje.
+  if (!kody.length) {
+    return { stan: odpowiedz.zrodlo_swz === 'brak' ? 'brak_tresci' : 'brak_wymagan', wymagania: [] };
+  }
   const nazwy = new Map((Array.isArray(katalogTypow) ? katalogTypow : []).map((t) => [t?.id, t?.nazwa]));
   return {
     stan: 'znane',
@@ -206,6 +210,10 @@ const NIEUSTALONE_WYMAGANIA = {
     pl: 'Analiza SWZ nie wskazała wymaganych dokumentów — sprawdź SWZ ręcznie; gotowość nieustalona.',
     en: 'The tender-document analysis found no required documents — check the documents manually; readiness unknown.',
   },
+  brak_tresci: {
+    pl: 'Powiązana analiza nie ma jeszcze treści SWZ — wklej ją w Radarze SWZ, a checklista pokaże wymagane dokumenty. Gotowość nieustalona.',
+    en: 'The linked analysis has no tender-document text yet — paste it in the radar and the checklist will show the required documents. Readiness unknown.',
+  },
 };
 
 /**
@@ -222,7 +230,7 @@ const NIEUSTALONE_WYMAGANIA = {
  * ważne"). Na takich danych nie ma tonu sukcesu ani twierdzenia o komplecie:
  * mówimy, ile wykryto, co brakuje/wygasa i że resztę SWZ trzeba sprawdzić.
  *
- * @param {{wymagania?: 'znane'|'brak_powiazania'|'blad'|'nieznany_format'|'brak_wymagan',
+ * @param {{wymagania?: 'znane'|'brak_powiazania'|'blad'|'nieznany_format'|'brak_wymagan'|'brak_tresci',
  *   sejf?: 'ok'|'blad', wykryte?: number}} [zrodla]
  */
 export function opisGotowosci(checklista, jezyk = 'pl', zrodla = {}) {
