@@ -272,6 +272,16 @@ CREATE TABLE IF NOT EXISTS swz_wersja (
 );
 CREATE INDEX IF NOT EXISTS idx_swz_wersja_postepowanie ON swz_wersja(postepowanie_id, data_publikacji);
 
+-- Treść SWZ WKLEJONA PRZEZ UŻYTKOWNIKA do pierwszej analizy (migracja 015). Osobno od
+-- `swz_wersja`: to nie jest publikacja zamawiającego, więc nie ma daty publikacji i nie
+-- bierze udziału w silniku różnic. Jeden wiersz na postępowanie — pierwsza treść wygrywa.
+CREATE TABLE IF NOT EXISTS swz_tresc_wklejona (
+  postepowanie_id TEXT PRIMARY KEY REFERENCES postepowanie_swz(id) ON DELETE CASCADE,
+  hash            TEXT NOT NULL,                 -- SHA-256 treści (rozpoznanie ponowienia tej samej treści)
+  tresc           TEXT NOT NULL,                 -- treść SWZ wklejona przez użytkownika do analizy
+  created_at      TEXT NOT NULL                  -- ISO 8601 — kiedy UŻYTKOWNIK ją wkleił (to NIE data publikacji)
+);
+
 -- Pytania do treści SWZ (wygenerowane lub ręczne). Status prowadzi cykl życia
 -- szkic → wysłane → odpowiedziane; `fragment_swz` wiąże pytanie z konkretnym
 -- fragmentem dokumentacji, którego dotyczy.

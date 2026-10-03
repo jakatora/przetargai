@@ -85,6 +85,7 @@ test('migracja: na istniejącej bazie wykonują się WSZYSTKIE migracje po kolei
     '012_password_resets',
     '013_czarna_skrzynka_sha256',
     '014_czarna_skrzynka_termin',
+    '015_swz_tresc_wklejona',
   ]);
 });
 
@@ -227,8 +228,16 @@ test('migracja 014: termin składania na sesji czarnej skrzynki na zmigrowanej p
   assert.ok(kolumny.includes('termin_skladania'), 'migracja 014 dokłada termin_skladania');
 });
 
+test('migracja 015: tabela treści SWZ wklejonej do analizy na zmigrowanej produkcji', () => {
+  const kolumny = db.prepare('PRAGMA table_info(swz_tresc_wklejona)').all().map((c) => c.name);
+  assert.deepEqual(kolumny, ['postepowanie_id', 'hash', 'tresc', 'created_at']);
+  // Migracja dokłada NOWĄ tabelę i nie rusza wersji opublikowanych ani zmian.
+  const wersja = db.prepare('PRAGMA table_info(swz_wersja)').all().map((c) => c.name);
+  assert.ok(wersja.includes('data_publikacji') && !wersja.includes('zrodlo'), 'swz_wersja bez zmian kształtu');
+});
+
 test('migracja: ponowne uruchomienie niczego nie zmienia (idempotencja)', () => {
   const drugie = migrate();
   assert.deepEqual(drugie.applied, []);
-  assert.equal(drugie.skipped, 14); // 14 migracji (001–014) — wszystkie już zastosowane
+  assert.equal(drugie.skipped, 15); // 15 migracji (001–015) — wszystkie już zastosowane
 });

@@ -784,6 +784,36 @@ export const swzWersje = {
   },
 };
 
+// ---------- swz_tresc_wklejona ----------
+
+/*
+ * Jedno zdanie SQL zamiast „sprawdź, potem wstaw": warunek „postępowanie nie ma jeszcze
+ * żadnej wersji opublikowanej" i sam zapis są atomowe, a `ON CONFLICT DO NOTHING` na
+ * kluczu głównym sprawia, że drugie żądanie (ponowienie, równoległe) niczego nie zmienia.
+ */
+const _stwInsert = lazy(`
+  INSERT INTO swz_tresc_wklejona (postepowanie_id, hash, tresc, created_at)
+  SELECT ?, ?, ?, ?
+  WHERE NOT EXISTS (SELECT 1 FROM swz_wersja WHERE postepowanie_id = ?)
+  ON CONFLICT(postepowanie_id) DO NOTHING`);
+const _stwGet = lazy(`SELECT * FROM swz_tresc_wklejona WHERE postepowanie_id = ?`);
+
+export const swzTrescWklejona = {
+  /**
+   * Zapamiętuje treść SWZ wklejoną przez użytkownika — TYLKO pierwszą i tylko wtedy, gdy
+   * postępowanie nie ma jeszcze wersji opublikowanej (`swz_wersja`). Nigdy nie nadpisuje.
+   * Zwraca `{ wiersz, created }`: `wiersz` to treść zapisana w bazie (może być wcześniejsza
+   * niż podana) albo null, gdy zapis pominięto, bo istnieje wersja opublikowana.
+   */
+  zapiszPierwsza({ postepowanieId, hash, tresc }) {
+    const res = _stwInsert().run(postepowanieId, hash, tresc, nowIso(), postepowanieId);
+    return { wiersz: _stwGet().get(postepowanieId) || null, created: res.changes > 0 };
+  },
+  get(postepowanieId) {
+    return _stwGet().get(postepowanieId) || null;
+  },
+};
+
 // ---------- pytania_swz ----------
 
 const STATUSY_PYTANIA = new Set(['szkic', 'wyslane', 'odpowiedziane']);

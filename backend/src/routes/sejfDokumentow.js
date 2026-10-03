@@ -4,7 +4,8 @@ import { ah } from '../lib/asyncHandler.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { db } from '../db/index.js';
-import { postepowaniaSwz, swzWersje } from '../db/repos.js';
+import { postepowaniaSwz } from '../db/repos.js';
+import { trescSwzPostepowania } from '../services/trescSwz.js';
 import { createSejfDokumentow } from '../services/sejfDokumentow.js';
 import { createDopasowanieSejfSWZ } from '../services/dopasowanieSejfSWZ.js';
 import { jestZnanymTypem, ID_TYPOW_DOKUMENTOW, TYPY_DOKUMENTOW } from '../config/dokumentyKatalog.js';
@@ -194,7 +195,8 @@ router.post('/dokumenty/:id/plik', authRequired, ah(async (req, res) => {
 //
 // Wymagane typy: z jawnej listy `wymagane_typy` albo z parsera treści SWZ (deterministyczny,
 // BEZ płatnego AI — patrz services/dopasowanieSejfSWZ.js). Treść SWZ z body `swz` albo z
-// najnowszej zapisanej wersji SWZ. Dzień złożenia: override `dzien_zlozenia` → termin
+// Radaru: najnowsza wersja opublikowana, a gdy jej nie ma — treść wklejona do pierwszej
+// analizy (services/trescSwz.js). Dzień złożenia: override `dzien_zlozenia` → termin
 // składania z postępowania → dziś. Bez płatnego AI, więc trasa tylko odczytuje/liczy.
 
 const dopasowanieSchema = z.object({
@@ -227,10 +229,11 @@ router.post('/dopasowanie/:postepowanieId', authRequired, ah(async (req, res) =>
     }
   }
 
-  // Treść SWZ: z body albo z najnowszej zapisanej wersji SWZ postępowania (Radar SWZ).
-  const swzTekst = d.swz?.trim()
-    ? d.swz
-    : (swzWersje.latestForPostepowanie(postepowanie.id)?.tresc ?? '');
+  // Treść SWZ: z body, a bez niego — z Radaru SWZ tego postępowania: najnowsza wersja
+  // opublikowana albo (gdy żadnej jeszcze nie ma) treść wklejona do pierwszej analizy.
+  const zRadaru = d.swz?.trim() ? null : trescSwzPostepowania(postepowanie.id);
+  const swzTekst = zRadaru ? zRadaru.tresc : d.swz;
+  const jawnaLista = Array.isArray(d.wymagane_typy) && d.wymagane_typy.length > 0;
 
   const wynik = dopasowanie.dlaPostepowania({
     userId: req.user.id,
@@ -240,7 +243,18 @@ router.post('/dopasowanie/:postepowanieId', authRequired, ah(async (req, res) =>
     dzienZlozenia: dzien || undefined,
   });
 
-  res.status(200).json({ postepowanie_id: postepowanie.id, ...wynik });
+  res.status(200).json({
+    postepowanie_id: postepowanie.id,
+    ...wynik,
+    /*
+     * Skąd wzięły się wymagania — żeby klient odróżnił „Radar nie ma treści SWZ" od
+     * „w treści nic nie wykryto" i nie pokazywał obu jako tego samego pustego wyniku.
+     * `wymagania_heurystyczne`: lista pochodzi z parsera FRAZ (kilka typowych dokumentów),
+     * więc jest pomocą, a nie kompletem wymagań SWZ.
+     */
+    zrodlo_swz: jawnaLista ? 'lista' : (zRadaru ? zRadaru.zrodlo : 'zadanie'),
+    wymagania_heurystyczne: !jawnaLista,
+  });
 }));
 
 export default router;

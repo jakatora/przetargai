@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
-import { badRequest, conflict, notFound } from '../lib/errors.js';
+import { AppError, badRequest, conflict, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { postepowaniaSwz, pytaniaSwz, zmianySwz } from '../db/repos.js';
 import { analizujSwz } from '../services/analizaSwz.js';
+import { zapamietajWklejonaSwz, stanTresciSwz } from '../services/trescSwz.js';
 import { odswiezPostepowanie } from '../jobs/monitorSwz.js';
 import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
 import { terminPytanSwz } from '../lib/terminPytanSwz.js';
@@ -124,6 +125,8 @@ router.get('/postepowania/:id', authRequired, ah(async (req, res) => {
     zmiany,
     checklista,
     bramka: ocenBramke(checklista),
+    // Czy i skąd Radar ma treść SWZ do dopasowania dokumentów (bez samej treści).
+    tresc_swz: stanTresciSwz(postepowanie.id),
   });
 }));
 
@@ -151,22 +154,53 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
   if (!parsed.success) throw bladLimituTresci(parsed.error) ?? badRequest(brakTresci);
   if (!maTresc(parsed.data)) throw badRequest(brakTresci);
 
-  const pytania = await analizujSwz({
-    swz: parsed.data.swz ?? '',
-    umowa: parsed.data.umowa ?? '',
-    przedmiar: parsed.data.przedmiar ?? '',
-  });
+  /*
+   * Wklejoną SWZ zapamiętujemy PRZED płatnym AI (2026-10-03). Dopasowanie sejfu do SWZ
+   * i checklista dokumentów czytają tę treść parserem deterministycznym, więc muszą ją
+   * mieć także wtedy, gdy AI nie ma klucza, wyczerpał się budżet albo dobowy limit, albo
+   * model zwrócił błąd. Własność i limity rozmiaru są już sprawdzone wyżej. To NIE jest
+   * wersja opublikowana: nie powstaje `swz_wersja` ani wpis `zmiany_swz`, a istniejąca
+   * treść (wersja zamawiającego albo wcześniejsze wklejenie) zostaje nietknięta.
+   */
+  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: parsed.data.swz });
+
+  let pytania;
+  try {
+    pytania = await analizujSwz({
+      swz: parsed.data.swz ?? '',
+      umowa: parsed.data.umowa ?? '',
+      przedmiar: parsed.data.przedmiar ?? '',
+    });
+  } catch (err) {
+    // Błąd AI nie cofa zapisu treści — mówimy o tym wprost, żeby klient nie musiał zgadywać.
+    if (err instanceof AppError && !err.details) {
+      err.details = { tresc_swz: stanTresciSwz(postepowanie.id) };
+    }
+    throw err;
+  }
 
   // Zapis wykrytych pytań jako szkice powiązane z postępowaniem (status 'szkic'
   // domyślny w repo). Fragment SWZ zachowujemy do UI („czego dotyczy pytanie").
-  const zapisane = pytania.map((p) => pytaniaSwz.create({
-    postepowanieId: postepowanie.id,
-    tresc: p.tresc,
-    fragmentSwz: p.fragment,
-    status: 'szkic',
-  }));
+  // Ponowiona analiza nie dubluje szkiców o identycznej treści.
+  const znane = new Set(pytaniaSwz.listForPostepowanie(postepowanie.id).map((p) => p.tresc));
+  const zapisane = [];
+  for (const p of pytania) {
+    if (znane.has(p.tresc)) continue;
+    znane.add(p.tresc);
+    zapisane.push(pytaniaSwz.create({
+      postepowanieId: postepowanie.id,
+      tresc: p.tresc,
+      fragmentSwz: p.fragment,
+      status: 'szkic',
+    }));
+  }
 
-  res.status(201).json({ postepowanie_id: postepowanie.id, liczba: zapisane.length, pytania: zapisane });
+  res.status(201).json({
+    postepowanie_id: postepowanie.id,
+    liczba: zapisane.length,
+    pytania: zapisane,
+    tresc_swz: stanTresciSwz(postepowanie.id),
+  });
 }));
 
 // Ręczne odświeżenie: opcjonalnie niesie nowo opublikowaną wersję SWZ (treść inline
