@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 /*
@@ -192,6 +193,33 @@ test('strona pobierania jest zgodna z produkcją: sklepy zamiast „wkrótce"', 
   assert.match(pobierz, /href="https:\/\/play\.google\.com\/store\/apps\/details\?id=pl\.przetargai\.app"/);
   assert.match(pobierz, /href="https:\/\/apps\.apple\.com\/pl\/app\/id6773018962"/);
   assert.doesNotMatch(pobierz.replace(/<style[\s\S]*?<\/style>/, ''), /wkrótce/i);
+});
+
+test('strona pobierania: wersja APK = wersja aplikacji, a suma SHA-256 to suma wydanego pliku', () => {
+  const pobierz = fs.readFileSync(path.join(LANDING, 'pobierz.html'), 'utf8');
+  const wersjaAplikacji = JSON.parse(fs.readFileSync(path.join(LANDING, '..', 'mobile', 'app.json'), 'utf8')).expo.version;
+
+  // Wersja przy linku do pliku musi iść w parze z wydaniem — inaczej strona podpisuje
+  // nowy plik starą wersją (albo odwrotnie).
+  const link = pobierz.match(/<a href="\/PrzetargAI\.apk" download>Pobierz APK ([\d.]+)<\/a> \(ok\.&nbsp;(\d+)&nbsp;MB/);
+  assert.ok(link, 'link do APK z wersją i rozmiarem');
+  assert.equal(link[1], wersjaAplikacji, 'wersja APK na stronie = expo.version z mobile/app.json');
+
+  // Dokładnie jedna suma kontrolna i jest to suma APK 1.1.5 podpisanego kluczem przesyłania
+  // (CN=PrzetargAI, O=Jakatora; build lokalny 2026-10-03, 67 672 771 B).
+  const sumy = [...pobierz.matchAll(/<code>([0-9a-f]{64})<\/code>/g)].map((m) => m[1]);
+  assert.deepEqual(sumy, ['ad10546753fe7ff9e5b8d1e54faab71daac1c0d51b1783097a8482f40a94c6c4']);
+  assert.equal(Number(link[2]), Math.round(67_672_771 / 1024 / 1024), 'rozmiar w MB zgodny z plikiem');
+  assert.doesNotMatch(pobierz, /65c425f4add9f7247d050c4a642529a29e652ef44ccd09c011ce2eeeb293088a/, 'suma poprzedniego APK (1.1.1) usunięta');
+
+  // Jeśli plik leży obok strony (katalog hostingu / lokalna kopia; w repo go nie ma),
+  // jego rzeczywista suma i rozmiar MUSZĄ zgadzać się z tym, co strona obiecuje.
+  const plik = path.join(LANDING, 'PrzetargAI.apk');
+  if (fs.existsSync(plik)) {
+    const zawartosc = fs.readFileSync(plik);
+    assert.equal(crypto.createHash('sha256').update(zawartosc).digest('hex'), sumy[0], 'suma landing/PrzetargAI.apk');
+    assert.equal(Math.round(zawartosc.length / 1024 / 1024), Number(link[2]), 'rozmiar landing/PrzetargAI.apk');
+  }
 });
 
 test('treści z żywej strony nie zostały cofnięte', () => {

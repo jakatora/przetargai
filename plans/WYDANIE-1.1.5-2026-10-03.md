@@ -178,3 +178,80 @@ klawiatury, gestów, SecureStore ani powiadomień.
    wersji przy mieszaniu buildów lokalnych z CI).
 5. Windows: przed `electron-builder` wykonać eksport webowy z `--clear`.
 6. Na prawdziwym urządzeniu przejść scenariusz 3 z testu UI na koncie testowym właściciela.
+
+## 7. Android 1.1.5 (vc17) — build lokalny i strona pobierania (2026-10-03, po odbiorze CI)
+
+### 7.1 Ograniczenie CI
+
+Build Codemagic `6ac103970f73e3fd2f69d0d8` (`android-release`) **padł przed checkoutem**:
+`No keystores with reference przetargai_keystore were found from code signing identities`.
+W Codemagic nie ma keystore o tej referencji, więc workflow nie może podpisać builda — niezależnie
+od naprawionego kroku „Numer wersji" (ten nie zdążył się wykonać i pozostaje niezweryfikowany na CI).
+Nie zakładałem nowego keystore, konta ani integracji i nie zmieniałem `codemagic.yaml`.
+Do czasu wgrania w Codemagic **istniejącego** klucza przesyłania (ten sam plik co lokalnie —
+nowy klucz oznaczałby odrzucenie uploadu przez Google Play) Android buduje się lokalnie.
+Upload z CI z `versionCode` ≥ 101 nie nastąpił, więc lokalne `versionCode 17` jest poprawne.
+
+### 7.2 Build lokalny
+
+Z czystego drzewa na `9a507b3` (kod aplikacji identyczny z `1195227`, z którego powstał build iOS),
+wg przepisu projektu: `mobile/android`, JDK 21 (`~/.jdks/jdk-21.0.12.1+1`), `gradlew.bat bundleRelease
+assembleRelease`. Podpis: istniejący klucz przesyłania PrzetargAI (`przetargai-upload.jks`) przez
+`PRZETARGAI_UPLOAD_*` z lokalnego `gradle.properties` — bez generowania czegokolwiek, hasła niewypisywane.
+
+| | AAB | APK |
+|---|---|---|
+| Plik | `…/Codex/2026-10-03/spra/outputs/PrzetargAI-1.1.5.aab` | `…/Codex/2026-10-03/spra/outputs/PrzetargAI-1.1.5.apk` |
+| Rozmiar | 46 514 205 B | 67 672 771 B (64,5 MiB) |
+| SHA-256 pliku | `2f2f8ef2764824adf9fe73665edf45ad907b1e7e3aeffde063baa28500cbaf58` | `ad10546753fe7ff9e5b8d1e54faab71daac1c0d51b1783097a8482f40a94c6c4` |
+| Pakiet | `pl.przetargai.app` | `pl.przetargai.app` |
+| Wersja | 1.1.5, `versionCode 17` | 1.1.5, `versionCode 17` |
+| Podpis | `jar verified` | `apksigner`: Verifies, schemat v2, 1 podpisujący |
+| Certyfikat | `CN=PrzetargAI, O=Jakatora, C=PL` | `CN=PrzetargAI, O=Jakatora, C=PL` |
+| SHA-1 certyfikatu | `B6:6E:24:D7:D8:1D:13:08:71:28:B2:5F:89:86:96:BC:CA:84:65:00` | to samo |
+| SHA-256 certyfikatu | `B9:11:28:E1:69:C7:A1:65:9E:14:F9:AC:95:31:9A:25:B9:A1:4C:20:6E:B6:6F:27:D9:CA:BE:A2:CD:4B:01:2A` | to samo |
+
+- **Ten sam certyfikat co dotąd:** identyczne SHA-1 i SHA-256 mają `PrzetargAI-1.1.3.apk`,
+  `PrzetargAI-1.1.3-vc15.aab`, `1.1.2-vc14`, `1.0.9-vc12` i `1.0.9-vc10` z `Documents/`.
+  (`Documents/przetargai-upload-cert.pem` to INNY certyfikat — `FD:26:7A:…`, `C=US` — i żaden
+  z dotychczasowych artefaktów nie jest nim podpisany; nie był punktem odniesienia.)
+- **Endpoint:** bundel JS w APK i AAB zawiera produkcyjny adres Cloud Functions (1 wystąpienie),
+  zero wystąpień adresu atrapy z testu UI i zero adresu Railway.
+- Wersję z manifestu AAB odczytałem bezpośrednio z `base/manifest/AndroidManifest.xml`; APK przez `aapt2`.
+- Uwagi `jarsigner` o wpisach „not signed in JarInputStream" (1334) są takie same dla
+  poprzedniego AAB 1.1.3 — to cecha narzędzia, nie różnica w podpisie.
+
+**Pułapki builda w tej sesji** (środowisko, nie kod; `build.gradle` i `gradle.properties` bez zmian):
+1. `Unable to establish loopback connection` — `TEMP` w notacji 8.3; pomogło ustawienie długiej
+   ścieżki `TEMP`/`TMP` i `-Djdk.net.unixdomain.tmpdir=C:\jtmp`.
+2. `configureCMake…` padał na ostrzeżeniu JVM o grupach procesorów — pomogło
+   `-XX:+UseAllWindowsProcessorGroups`.
+3. Sama ta flaga psuła wykrywanie JDK 17 (toolchain Gradle) — potrzebne jeszcze
+   `-XX:+IgnoreUnrecognizedVMOptions`.
+Działający zestaw: `JAVA_TOOL_OPTIONS=-XX:+IgnoreUnrecognizedVMOptions -XX:+UseAllWindowsProcessorGroups
+-Djdk.net.unixdomain.tmpdir=C:\jtmp` + długie `TEMP`/`TMP`. Build: 2 min 47 s.
+
+Niezweryfikowane: instalacja i działanie na prawdziwym urządzeniu; ostatni `versionCode` w Google
+Play (lokalnie najnowszy wcześniejszy AAB to vc15; 1.1.4/vc16 dla Androida lokalnie nie istnieje —
+17 jest wyższe w obu przypadkach).
+
+### 7.3 Strona pobierania
+
+`landing/pobierz.html` — zmienione **wyłącznie** dwie linie: „Pobierz APK 1.1.5" z rozmiarem
+„ok. 65 MB" (było 1.1.1 / 64 MB) oraz suma SHA-256 nowego APK. Układ, linki sklepów i reszta
+bez zmian; delta wobec produkcji to te dwie linie. `mobile/test/landingStrona.test.js` (15/15 PASS)
+pilnuje teraz, że wersja przy linku = `expo.version`, suma na stronie to suma wydanego APK, a jeśli
+obok strony leży `PrzetargAI.apk`, to jego rzeczywista suma i rozmiar muszą się z nią zgadzać
+(sprawdzone z prawdziwym plikiem).
+
+**Publikacja (koordynator):** podmienić na hostingu RAZEM `PrzetargAI.apk` (kopią
+`PrzetargAI-1.1.5.apk`) i `pobierz.html` — sama strona bez pliku pokazywałaby sumę, która nie
+pasuje do pobieranego APK. Niczego nie wdrażałem.
+
+### 7.4 Stan publikacji w sklepach (od koordynatora — bez moich zmian)
+
+- **Google Play:** upload wstrzymany — konto `jakatora68@gmail.com` nie jest kontem dewelopera;
+  prośba o właściwe konto w toku. AAB czeka w `outputs/`.
+- **iOS:** build Codemagic `6ac101f633554ecbc2352716` zakończony sukcesem, IPA 1.1.5 build 120,
+  w App Store Connect VALID; testy zewnętrzne wymagają danych kontaktowych (imię i nazwisko,
+  telefon) — prośba do właściciela w toku. Metadanych ASC i CI nie zmieniałem.
