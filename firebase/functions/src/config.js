@@ -49,6 +49,8 @@ const schema = z.object({
   // (aktywna, DNS w OVH). Reply-to = realna skrzynka właściciela, żeby odpowiedzi docierały.
   EMAIL_FROM: z.string().default('PrzetargAI <noreply@przetarg-ai.pl>'),
   EMAIL_REPLY_TO: z.string().default('jakatora68@gmail.com'),
+  // Dokąd idą alarmy operacyjne (np. brak kredytów Anthropic) — skrzynka właściciela.
+  ALARM_EMAIL: z.string().email().default('jakatora68@gmail.com'),
 
   ADMIN_API_KEY: z.string().default(''),
 

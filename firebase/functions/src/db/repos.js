@@ -2199,11 +2199,63 @@ export const cykl = {
       };
     }
 
-    await CYKL_REF().set({ zakonczony_o: teraz, wynik, zrodla });
+    /*
+     * Ta sama trwała historia dla AI (2026-10-17): przebieg, w którym WSZYSTKIE oceny
+     * padły, nie może skasować wiedzy, kiedy AI działało ostatnio — to pierwsze
+     * pytanie przy incydencie „od kiedy nie ma kredytów".
+     */
+    const aiBylo = poprzedni.exists ? (poprzedni.data().ai ?? {}) : {};
+    const ai = {
+      ostatni_sukces_o: wynik?.ai?.ostatni_sukces_o ?? aiBylo.ostatni_sukces_o ?? null,
+      ostatni_blad: wynik?.ai?.ostatni_blad ?? aiBylo.ostatni_blad ?? null,
+    };
+
+    await CYKL_REF().set({ zakonczony_o: teraz, wynik, zrodla, ai });
   },
 
   async ostatniPrzebieg() {
     const doc = await CYKL_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+};
+
+/**
+ * Znacznik maila alarmowego o awarii AI (2026-10-17) — najwyżej jeden na dobę
+ * kalendarzową. Jeden dokument zamiast dokumentu na dzień: liczy się tylko to,
+ * czy DZIŚ już poszedł. Transakcja chroni przed dublem przy ponowieniu crona,
+ * które wystartuje, zanim poprzednia próba skończy wysyłkę.
+ */
+const ALARM_AI_REF = () => db().collection('_health').doc('alarm_ai');
+
+export const alarmAi = {
+  /** @returns {Promise<boolean>} true = wolno wysłać (dziś jeszcze nie poszedł) */
+  async zarezerwuj(dzien) {
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ALARM_AI_REF());
+      const bylo = doc.exists ? doc.data() : {};
+      if (bylo.dzien === dzien) return false;
+      tx.set(ALARM_AI_REF(), {
+        dzien, stan: 'wysylanie', zarezerwowano_o: nowIso(), poprzedni_dzien: bylo.dzien ?? null,
+      });
+      return true;
+    });
+  },
+
+  async potwierdz(dzien, { emailId = null, typ = null } = {}) {
+    await ALARM_AI_REF().set({ dzien, stan: 'wyslany', wyslano_o: nowIso(), email_id: emailId, typ }, { merge: true });
+  },
+
+  /** Nieudana wysyłka — przywracamy poprzedni dzień, żeby ponowienie przebiegu dosłało alarm. */
+  async zwolnij(dzien) {
+    await db().runTransaction(async (tx) => {
+      const doc = await tx.get(ALARM_AI_REF());
+      if (!doc.exists || doc.data().dzien !== dzien) return;
+      tx.set(ALARM_AI_REF(), { dzien: doc.data().poprzedni_dzien ?? null, stan: 'zwolniony' }, { merge: true });
+    });
+  },
+
+  async wczytaj() {
+    const doc = await ALARM_AI_REF().get();
     return doc.exists ? doc.data() : null;
   },
 };

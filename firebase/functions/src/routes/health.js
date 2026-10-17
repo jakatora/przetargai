@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
 import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
+import { ocenStanAi } from '../lib/stanAi.js';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ function zrodlaZBledem(wynik) {
 /**
  * Health check — dla monitoringu zewnętrznego (UptimeRobot) i człowieka na dyżurze.
  *
- * Sprawdza cztery rzeczy, bo każda pęka inaczej:
+ * Sprawdza pięć rzeczy, bo każda pęka inaczej:
  *  • czy Firestore odpowiada (503, jeśli nie),
  *  • **czy dzienny cykl w ogóle się wykonał** — bez tego „martwy cron" jest
  *    niewykrywalny: API odpowiada, baza żyje, a użytkownicy po prostu przestają
@@ -29,6 +30,8 @@ function zrodlaZBledem(wynik) {
  *    żywo cykl zakończony błędem na OBU źródłach (BZP timeout, TED 429), który
  *    mimo to raportował `status: "ok"`. Monitoring nie miał szans zobaczyć awarii
  *    pobierania, bo `cron.ok` liczyło wyłącznie CZAS od ostatniego przebiegu,
+ *  • **czy oceny AI w cyklu działały** — od 2026-10-12 wszystkie padały na braku
+ *    kredytów Anthropic, a endpoint przez 6 dni zwracał `ok` (sekcja `ai`),
  *  • jaka wersja kodu działa — przy incydencie pierwsze pytanie brzmi „co jest wdrożone".
  *
  * Do tego dwie liczby, bez których audyt kompletności jest zgadywaniem:
@@ -88,12 +91,21 @@ router.get('/', async (_req, res) => {
     || (wynik.ok !== false && (sladSprzedNaprawa || zBledem.length === 0));
 
   /*
+   * Oceny AI w ostatnim przebiegu (2026-10-17). Od 2026-10-12 każde wywołanie padało
+   * na braku kredytów, cykl liczył dopasowania samą heurystyką, a ten endpoint przez
+   * 6 dni zwracał `ok`. `false` = większość ocen padła → 503, bo monitoring patrzy
+   * na kod odpowiedzi. `null` = brak prób (AI wyłączone, ślad sprzed tej zmiany).
+   */
+  const aiWynik = wynik?.ai ?? null;
+  const aiOk = ocenStanAi(aiWynik);
+
+  /*
    * Brak śladu cyklu NIE daje 503: świeżo wdrożony projekt czeka na pierwszy przebieg
    * i alarmowanie przez pierwszą dobę byłoby fałszywe. Operator widzi jednak
    * `cron.ok = false` i `ostatni_przebieg = null` — jeśli to trwa dłużej niż dobę,
    * cron nigdy nie wystartował.
    */
-  const zdrowy = dbOk && (cronOk || ostatniCykl === null) && pobieranieOk;
+  const zdrowy = dbOk && (cronOk || ostatniCykl === null) && pobieranieOk && aiOk !== false;
 
   /*
    * Ogłoszenia POBRANE, a NIEZAPISANE (2026-09-25). Dawniej błąd zapisu kończył się
@@ -205,6 +217,20 @@ router.get('/', async (_req, res) => {
         error: stanOknaPlanow.ostatni_przebieg.error ?? null,
       }
       : null,
+    /*
+     * Oceny AI w ostatnim cyklu dopasowań. Liczniki opisują WYŁĄCZNIE ostatni przebieg;
+     * `ostatni_sukces_o` i `ostatni_blad` to trwała historia (jak `cron.zrodla`), więc
+     * przy awarii od razu widać, od kiedy AI nie działa i dlaczego.
+     */
+    ai: {
+      ok: aiOk,
+      wlaczone: aiWynik?.wlaczone ?? null,
+      udane: aiWynik?.udane ?? null,
+      nieudane: aiWynik?.nieudane ?? null,
+      bledy_wg_typu: aiWynik?.bledy_wg_typu ?? {},
+      ostatni_blad: ostatniCykl?.ai?.ostatni_blad ?? null,
+      ostatni_sukces_o: ostatniCykl?.ai?.ostatni_sukces_o ?? null,
+    },
     cron: {
       ok: cronOk,
       ostatni_przebieg: ostatniCykl?.zakonczony_o ?? null,

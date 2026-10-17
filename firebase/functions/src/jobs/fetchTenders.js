@@ -7,6 +7,8 @@ import { pobierzBkZWznowieniem, zatwierdzCheckpointBk } from './oknoBk.js';
 import { tenders, cykl } from '../db/repos.js';
 import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
 import { scalMiedzyZrodlami } from '../lib/dedupZrodel.js';
+import { pustyLicznikAi, zbierajStatystykiAi, ocenStanAi } from '../lib/stanAi.js';
+import { alarmujAwarieAi } from './alarmAi.js';
 
 /**
  * Rejestr źródeł ogłoszeń (D-039). Każde źródło zwraca ZNORMALIZOWANE przetargi
@@ -103,13 +105,33 @@ async function zapiszSlad(wynik) {
 }
 
 /**
+ * Ślad przebiegu z dopasowaniami + alarm o awarii AI.
+ *
+ * Alarm idzie PO zapisie śladu: `/health` ma pokazać awarię nawet wtedy, gdy mail
+ * się nie wyśle. Awaria alarmu nie może wywrócić cyklu — logujemy i jedziemy dalej.
+ */
+async function zapiszSladZAi(wynik, alarmujAi) {
+  await zapiszSlad(wynik);
+  if (ocenStanAi(wynik.ai) === false) {
+    logger.error({ ai: wynik.ai }, 'fetchTenders: oceny AI w większości NIE powiodły się — dopasowania na heurystyce');
+  }
+  try {
+    await alarmujAi(wynik.ai);
+  } catch (err) {
+    logger.error({ err: err.message }, 'fetchTenders: alarm o awarii AI nie powiódł się');
+  }
+  return wynik;
+}
+
+/**
  * Pobiera ogłoszenia ze wszystkich źródeł, zapisuje nowe i generuje dopasowania.
  * @param {{zrodla?: Array<{nazwa: string, pobierz: () => Promise<object[]>}>}} opts
  *   `zrodla` — wstrzykiwane w testach; produkcja używa rejestru domyślnego.
+ *   `alarmujAi` — wstrzykiwany w testach; produkcja wysyła mail przez Resend.
  *   (`pageSize` usunięty — rozmiar okna nie jest już decyzją wołającego, bo BZP
  *   wymaga cięcia dzień po dniu; patrz komentarz przy `domyslneZrodla`.)
  */
-export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
+export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = alarmujAwarieAi } = {}) {
   const startedAt = Date.now();
   const statystyki = {};
   const zebrane = [];
@@ -271,23 +293,31 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
   // Dopasowania liczymy nawet po częściowym zapisie — konto Free odbiera wtedy
   // przetargi odroczone wczoraj przez dzienny limit.
   let matchesCreated = 0;
+  /*
+   * Udane i nieudane oceny AI z całego cyklu dopasowań (2026-10-17). `scoreTenderMatch`
+   * przy błędzie zwraca null i cykl jedzie dalej na heurystyce — bez tego licznika
+   * 6 dni zerowych kredytów wyglądało w `/health` jak zdrowy system.
+   */
+  const licznikAi = pustyLicznikAi();
+  const statystykiAi = () => ({ wlaczone: features.ai, ...licznikAi });
   try {
     // Budżet z tego, co ZOSTAŁO po pobieraniu — patrz `pozostalyBudzetMs`.
     const budzetCzasuMs = pozostalyBudzetMs(Date.now() - startedAt);
     logger.info({ pobieranieMs: Date.now() - startedAt, budzetDopasowanMs: budzetCzasuMs },
       'fetchTenders: przechodzę do dopasowań z budżetem resztkowym');
-    matchesCreated = await generateMatchesForAllUsers({ budzetCzasuMs });
+    matchesCreated = await zbierajStatystykiAi(licznikAi,
+      () => generateMatchesForAllUsers({ budzetCzasuMs }));
   } catch (err) {
     logger.error({ err: err.message }, 'fetchTenders: cykl dopasowań nie powiódł się');
-    return zapiszSlad({
+    return zapiszSladZAi({
       ok: false, error: err.message, fetched, newTenders: noweTenders,
       skipped: pominiete, zduplikowane_miedzy_zrodlami: scalone.duplikaty,
       matchesCreated: 0, durationMs: Date.now() - startedAt,
-      zrodla: statystyki,
-    });
+      zrodla: statystyki, ai: statystykiAi(),
+    }, alarmujAi);
   }
 
-  return zapiszSlad({
+  return zapiszSladZAi({
     ok: true, fetched, newTenders: noweTenders, skipped: pominiete,
     /*
      * Utracone zapisy NIE dają czystego sukcesu (2026-09-25), ale też nie `ok: false`:
@@ -300,5 +330,6 @@ export async function runTenderFetch({ zrodla = domyslneZrodla() } = {}) {
     // różnica `fetched` − `newTenders` wygląda jak zgubione dane, a jest kopią.
     zduplikowane_miedzy_zrodlami: scalone.duplikaty,
     matchesCreated, durationMs: Date.now() - startedAt, zrodla: statystyki,
-  });
+    ai: statystykiAi(),
+  }, alarmujAi);
 }

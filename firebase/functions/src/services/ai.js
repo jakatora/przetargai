@@ -5,6 +5,7 @@ import { costUsd } from '../lib/pricing.js';
 import { aiUsage } from '../db/repos.js';
 import { buildSummaryPrompt, parseStreszczenie } from '../lib/streszczenie.js';
 import { buildProfilPrompt, parsujSugestie } from '../lib/profilSugestia.js';
+import { klasyfikujBladAi, zglosNiepowodzenieAi, zglosSukcesAi } from '../lib/stanAi.js';
 
 /*
  * Domyślny timeout SDK Anthropica to 10 minut. Cykl dopasowań ma na CAŁĄ pracę
@@ -154,6 +155,8 @@ export async function scoreTenderMatch(company, tender) {
   if (status.hardExceeded) {
     logger.error({ status }, 'Limit TWARDY budżetu AI przekroczony — pomijam wywołanie AI');
     zglosPrzekroczenieBudzetu(status, 'twardy');
+    // Dla użytkownika to ta sama degradacja co awaria API — /health ma ją widzieć.
+    zglosNiepowodzenieAi({ typ: 'budzet', komunikat: 'Twardy limit budżetu AI przekroczony — wywołanie pominięte' });
     return null;
   }
   if (status.softExceeded) {
@@ -184,9 +187,16 @@ export async function scoreTenderMatch(company, tender) {
     });
 
     const text = resp.content?.find((block) => block.type === 'text')?.text ?? '';
-    return parseScore(text);
+    const ocena = parseScore(text);
+    if (ocena) zglosSukcesAi();
+    else zglosNiepowodzenieAi({ typ: 'nieczytelna_odpowiedz', komunikat: text || '(pusta odpowiedź modelu)' });
+    return ocena;
   } catch (err) {
-    logger.error({ err: err.message }, 'Wywołanie AI nie powiodło się');
+    // Zwracamy null jak dotąd (cykl ma jechać dalej na heurystyce), ale porażka
+    // trafia do licznika przebiegu — bez tego awaria była widoczna tylko w logach.
+    const blad = klasyfikujBladAi(err);
+    zglosNiepowodzenieAi(blad);
+    logger.error({ err: err.message, typ: blad.typ, status: blad.status }, 'Wywołanie AI nie powiodło się');
     return null;
   }
 }

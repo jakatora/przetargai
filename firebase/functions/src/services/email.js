@@ -101,3 +101,45 @@ zignoruj tę wiadomość, nic się nie zmieni.</p>
 <p>Zespół PrzetargAI</p>`,
   };
 }
+
+/*
+ * Alarm operacyjny: AI przestało działać z powodu, który sam nie minie (2026-10-17).
+ * Odbiorca to właściciel, nie użytkownik — treść może mówić wprost o kluczach i kredytach.
+ */
+const CO_ZROBIC_AI = {
+  kredyty: 'Doładuj kredyty w konsoli Anthropic (console.anthropic.com → Plans & Billing).',
+  autoryzacja: 'Sprawdź klucz ANTHROPIC_API_KEY w Secret Managerze projektu przetargai (odwołany, wygasły albo zły).',
+};
+const OPIS_AI = {
+  kredyty: 'skończyły się kredyty Anthropic',
+  autoryzacja: 'klucz Anthropic jest odrzucany',
+};
+
+export function alarmAiEmail({ typ, udane = 0, nieudane = 0, ostatniBlad = null, healthUrl }) {
+  const opis = OPIS_AI[typ] ?? `błąd AI (${typ})`;
+  const coZrobic = CO_ZROBIC_AI[typ] ?? 'Sprawdź logi funkcji dailyTenderFetch.';
+  const komunikat = ostatniBlad?.komunikat ?? '(brak treści błędu)';
+  return {
+    subject: `PrzetargAI: ${opis} — oceny AI wyłączone`,
+    text: `Dzisiejszy cykl dopasowań: ${nieudane} nieudanych ocen AI, ${udane} udanych.
+`
+      + `Dopasowania liczą się samą heurystyką, dopóki tego nie naprawisz.
+
+`
+      + `Co zrobić: ${coZrobic}
+
+Ostatni błąd: ${komunikat}
+
+Stan: ${healthUrl}
+
+`
+      + 'Ten alarm przychodzi najwyżej raz na dobę, dopóki problem trwa.',
+    html: `<p><b>${esc(opis)}</b> — dzisiejszy cykl dopasowań: ${Number(nieudane)} nieudanych ocen AI,
+${Number(udane)} udanych. Dopasowania liczą się samą heurystyką, dopóki tego nie naprawisz.</p>
+<p><b>Co zrobić:</b> ${esc(coZrobic)}</p>
+<p>Ostatni błąd:</p>
+<p style="font-family:monospace;background:#f2f4f7;padding:12px;border-radius:8px;word-break:break-word">${esc(komunikat)}</p>
+<p>Stan: <a href="${esc(healthUrl)}">${esc(healthUrl)}</a></p>
+<p style="color:#667085">Ten alarm przychodzi najwyżej raz na dobę, dopóki problem trwa.</p>`,
+  };
+}
