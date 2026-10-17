@@ -18,6 +18,9 @@ import fs from 'node:fs';
 const DB_FILE = path.join(os.tmpdir(), `przetargai-gate-${process.pid}.db`);
 process.env.DATABASE_PATH = DB_FILE;
 process.env.ANTHROPIC_API_KEY = 'sk-ant-atrapa-do-testow';
+// Fitter ma własny klucz (klucz PrzetargAI jest tylko dla PrzetargAI) — bez niego
+// klient Fittera byłby null i bramka budżetu nie byłaby w ogóle ćwiczona.
+process.env.FITTER_ANTHROPIC_API_KEY = 'sk-ant-atrapa-fittera-do-testow';
 process.env.AI_BUDGET_SOFT_USD = '200';
 process.env.AI_BUDGET_HARD_USD = '500';
 

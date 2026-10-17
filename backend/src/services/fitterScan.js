@@ -16,7 +16,8 @@ import { serviceUnavailable } from '../lib/errors.js';
 // for routine fab use. Cost per scan is ~$0.01-0.03 depending on image size,
 // tracked through aiUsage so the user's monthly budget covers it.
 
-const client = features.ai ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }) : null;
+// Własny klucz Fittera — klucz PrzetargAI (ANTHROPIC_API_KEY) jest tylko dla PrzetargAI.
+const client = features.fitterAi ? new Anthropic({ apiKey: env.FITTER_ANTHROPIC_API_KEY }) : null;
 const SCAN_MODEL = 'claude-sonnet-4-6';
 
 const SYSTEM_PROMPT = [

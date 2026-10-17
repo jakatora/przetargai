@@ -25,10 +25,11 @@ const DB_FILE = path.join(os.tmpdir(), `przetargai-limit-ciala-${process.pid}.db
 const STORAGE_DIR = path.join(os.tmpdir(), `przetargai-limit-ciala-store-${process.pid}`);
 process.env.DATABASE_PATH = DB_FILE;
 process.env.SEJF_STORAGE_DIR = STORAGE_DIR;
-// Fałszywy klucz: skan ISO sprawdza `features.ai` PRZED walidacją ciała — bez klucza
+// Fałszywy klucz: skan ISO sprawdza `features.fitterAi` PRZED walidacją ciała — bez klucza
 // odpowiedziałby 503 i nie dowiedzielibyśmy się, czy parser przepuścił 3 MB. Żadne
 // żądanie w tym pliku nie dochodzi do wywołania Anthropic (walidacja odrzuca wcześniej).
 process.env.ANTHROPIC_API_KEY = 'sk-ant-test-nieprawdziwy';
+process.env.FITTER_ANTHROPIC_API_KEY = 'sk-ant-test-nieprawdziwy-fitter';
 process.env.RESEND_API_KEY = '';
 
 const { migrate } = await import('../src/db/migrate.js');

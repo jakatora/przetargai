@@ -10,7 +10,8 @@ import { aiBudgetAllows } from './ai.js';
 import { serviceUnavailable } from '../lib/errors.js';
 
 // Fitter Welder Pro AI chat service. Reuses Anthropic SDK + budget tracking
-// from ai.js (same project, same Anthropic key) but runs against a different
+// from ai.js, but with ITS OWN key (FITTER_ANTHROPIC_API_KEY — the PrzetargAI key
+// is reserved for PrzetargAI only) and runs against a different
 // knowledge base and system prompt — answers field welder/fitter questions
 // with grounding in piping_knowledge.md (1.2 MB, ~100 iteracji research).
 //
@@ -21,7 +22,7 @@ import { serviceUnavailable } from '../lib/errors.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const KB_PATH = path.resolve(__dirname, '../data/piping_knowledge.md');
 
-const client = features.ai ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }) : null;
+const client = features.fitterAi ? new Anthropic({ apiKey: env.FITTER_ANTHROPIC_API_KEY }) : null;
 const FITTER_MODEL = 'claude-haiku-4-5';
 
 const SYSTEM_PROMPT = [

@@ -36,6 +36,10 @@ const schema = z.object({
   JWT_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
   ANTHROPIC_API_KEY: z.string().default(''),
+  // Osobny klucz dla tras Fitter Welder Pro (/api/fitter/ai, /api/fitter/scan-iso).
+  // ANTHROPIC_API_KEY należy WYŁĄCZNIE do PrzetargAI (decyzja właściciela 2026-10-17)
+  // — Fitter nie może po niego sięgać. Brak tej zmiennej = AI Fittera tutaj wyłączone (503).
+  FITTER_ANTHROPIC_API_KEY: z.string().default(''),
   AI_MATCH_MODEL: z.string().default('claude-haiku-4-5'),
   AI_BUDGET_SOFT_USD: z.coerce.number().nonnegative().default(200),
   AI_BUDGET_HARD_USD: z.coerce.number().nonnegative().default(500),
@@ -193,6 +197,7 @@ export const BACKUP_DIR = env.BACKUP_DIR
  */
 export const features = {
   ai: Boolean(env.ANTHROPIC_API_KEY),
+  fitterAi: Boolean(env.FITTER_ANTHROPIC_API_KEY),
   stripe: Boolean(env.STRIPE_SECRET_KEY),
   email: Boolean(env.RESEND_API_KEY),
   invoicing: Boolean(env.FAKTUROWNIA_API_KEY && env.FAKTUROWNIA_DOMAIN),

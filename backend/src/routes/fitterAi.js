@@ -25,7 +25,7 @@ const chatSchema = z.object({
 });
 
 router.post('/chat', ah(async (req, res) => {
-  if (!features.ai) throw serviceUnavailable('AI offline (brak klucza Anthropic)');
+  if (!features.fitterAi) throw serviceUnavailable('AI offline (brak klucza Anthropic)');
   const parsed = chatSchema.safeParse(req.body);
   if (!parsed.success) {
     throw badRequest(`Niepoprawne dane: ${parsed.error.issues.map(i => i.path.join('.')).join(', ')}`);

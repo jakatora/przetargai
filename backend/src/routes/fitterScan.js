@@ -21,7 +21,7 @@ const scanSchema = z.object({
 });
 
 router.post('/', ah(async (req, res) => {
-  if (!features.ai) throw serviceUnavailable('AI niedostępne');
+  if (!features.fitterAi) throw serviceUnavailable('AI niedostępne');
   const parsed = scanSchema.safeParse(req.body);
   if (!parsed.success) throw badRequest('Wymagane: image_base64 (base64 obrazu), device_id');
   const { image_base64: img, media_type: mt, device_id: deviceId } = parsed.data;
