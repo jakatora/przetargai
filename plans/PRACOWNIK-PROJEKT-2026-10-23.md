@@ -407,3 +407,60 @@ warszawskiej bez `odrzucony_przez_klienta`/`odrzucony_przez_pracownika`; histori
   ale raport pierwszego dnia będzie nietypowy; AI ograniczone dobowymi limitami.
 - **Stara apka** pokazuje dopasowania odrzucone przez klienta w nowej apce (inna lista) —
   akceptowalne, znika po aktualizacji.
+
+## 14. Teksty dla klienta — bez słowa „pracownik” (decyzja 2026-10-23)
+
+„Pracownik” to przenośnia projektowa. W aplikacji, mailach i na stronie to słowo NIE pada.
+Nazwy wewnętrzne w kodzie (`routes/pracownik.js`, `/pracownik/*`, `services/pracownik.js`)
+zostają — klient ich nie widzi. Wszędzie, gdzie §§0–13 mówią „pracownik wybrał/przejrzał”,
+klient czyta „my” (PrzetargAI):
+
+| Miejsce | PL | EN |
+|---|---|---|
+| Tytuł ekranu (trasa `MatchFeed`) | Twoje przetargi | Your tenders |
+| Raport dnia | Dziś przejrzeliśmy N ogłoszeń · wybraliśmy W · odrzuciliśmy O | Today we reviewed N notices · picked W · rejected O |
+| Sekcja | Dziś wybrane dla Ciebie | Picked for you today |
+| Sekcja | Odrzucone (O) | Rejected (O) |
+| Szczegóły | Dlaczego to wybraliśmy | Why we picked this |
+| Mail Free | Mamy dla Ciebie N nowe przetargi | — (maile tylko PL) |
+| Mail Standard (1 przetarg) | Nowy przetarg dla Twojej firmy: <tytuł> | — |
+
+## 15. Tydzień próbny Standard dla nowych kont (decyzja 2026-10-23)
+
+**Słowa właściciela:** „zróbmy jeszcze tydzień prób dla nowych klientów”. Wariant: próba
+BEZ karty — nowe konto ma pełny Standard przez 7 dni, potem samo wraca na Free;
+przypomnienie mailem przed końcem i pasek w apce; tylko nowe konta.
+
+- **Dane:** `users.proba_do` (ISO) = chwila rejestracji + 7 dni, ustawiane w
+  `POST /auth/register` (`users.create({ …, probaDni: 7 })`). `users.create` bez
+  `probaDni` (testy, skrypty) → `proba_do: null`. Konta sprzed wdrożenia: brak pola = brak
+  próby, bez migracji. Zmiana e-maila nie odnawia próby; jedna próba na konto.
+- **Plan efektywny:** `lib/plan.js` → `planEfektywny(user, teraz)`: `'standard'`, gdy
+  `premium_tier === 'standard'` albo (`premium_tier === 'free'` i `proba_do > teraz`);
+  inaczej `'free'`. `stanProby(user, teraz)` → `{aktywna, do, dni_zostalo}` albo `null`
+  (nigdy nie miał próby).
+- **Bramki FUNKCJI** używają wyłącznie `planEfektywny`: dobowe limity AI, limit 5
+  wybranych/dobę, limit wyjaśnień AI, blokady `/pracownik/*` i `/matches/:id/warunki`,
+  przebieg co 3 h (kto jest Standard), powiadomienia od razu, zachęta FOMO (w próbie
+  ukryta). **Bramki ROZLICZEŃ** (`webhooks.js`, `upgrade.js`, `auth.js` upgrade-link,
+  `users.setTier`) — bez zmian, działają na `premium_tier`. Zakup w trakcie próby →
+  webhook ustawia `premium_tier='standard'` jak dziś.
+- **API:** `publicUser` dokłada `plan` (efektywny) i `proba` (`stanProby`); `premium_tier`
+  bez zmian (stara apka nie zna próby i pokaże Free — akceptowalne).
+- **Maile (przebieg 12:00, po selekcji):** (1) „Zostały 2 dni próby Standard” — raz, gdy do
+  `proba_do` zostało ≤48 h; (2) „Próba Standard się skończyła — od dziś 5 przetargów
+  dziennie” — raz, w pierwszym przebiegu po `proba_do`. Znaczniki `proba_maile.przypomnienie`
+  / `proba_maile.koniec` na użytkowniku, rezerwowane transakcyjnie PRZED wysyłką, zwalniane
+  przy nieudanej wysyłce (wzór `znacznikDigestu`); odrzucony adresat = znacznik zostaje.
+  CTA: tekst „Otwórz aplikację PrzetargAI → Konto → Przejdź na Standard” + link
+  `env.APP_LINK_URL` (domyślnie `https://przetarg-ai.pl`) — maile nie niosą magic linku
+  zakupu (ten żyje 10 min).
+- **Apka:** pasek na „Twoje przetargi” i w Koncie: „Próba Standard: zostało N dni” +
+  „Przejdź na Standard”; po końcu jednorazowo (zapamiętane lokalnie) „Próba się skończyła”.
+- **Strona:** dopisek „7 dni Standard za darmo, bez karty” przy planie Standard (sklepy
+  przy wysyłce).
+- **Nadużycia:** świadomie bez ochrony (nowe konta na kolejne e-maile) — cena 99 zł,
+  skala 24 kont.
+- **Testy:** granice `planEfektywny` (tuż przed / dokładnie / po `proba_do`, po zakupie, po
+  anulowaniu), rejestracja ustawia `proba_do`, maile próby raz i tylko raz, bramki tras
+  w próbie, FOMO ukryte w próbie.
