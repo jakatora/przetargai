@@ -56,6 +56,7 @@ export const KATALOG_NARZEDZI = [
   {
     kategoria: 'Oferta i złożenie',
     narzedzia: [
+      { ekran: 'DokumentyOferty', tytul: 'Dokumenty do oferty w 1 klik', opis: 'Formularz ofertowy i oświadczenia (art. 125, grupa kapitałowa) z danych firmy wpisanych raz' },
       { ekran: 'KontrolaOferty', tytul: 'Kontrola przed wysłaniem', opis: 'Lista formalnych pułapek, przez które oferty odpadają' },
       { ekran: 'RejestratorOferty', tytul: 'Rejestrator oferty', opis: 'Utrwal dowody na wypadek awarii platformy' },
       { ekran: 'TrenerNegocjacji', tytul: 'Trener negocjacji i oferty dodatkowej', opis: 'Tryb podstawowy w2/w3 — oferta dodatkowa bez odrzucenia (art. 296)' },

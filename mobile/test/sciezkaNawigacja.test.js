@@ -171,7 +171,7 @@ test('dodatkowe wejścia kroków prowadzą do ekranów zarejestrowanych w nawiga
     [...zrodlo('../src/navigation/RootNavigator.js').matchAll(/name="(\w+)"/g)].map((m) => m[1]),
   );
   const dodatkowe = KROKI.flatMap((k) => k.dodatkowe ?? []);
-  assert.deepEqual(dodatkowe.map((d) => d.ekran).sort(), ['ChecklistaOferty', 'CzyWarto']);
+  assert.deepEqual(dodatkowe.map((d) => d.ekran).sort(), ['ChecklistaOferty', 'CzyWarto', 'DokumentyOferty']);
   for (const d of dodatkowe) {
     assert.ok(d.etykieta && d.etykieta.trim(), `wejście ${d.ekran} bez etykiety`);
     assert.ok(zarejestrowane.has(d.ekran), `„${d.ekran}" nie istnieje w RootNavigator`);
@@ -194,6 +194,7 @@ test('ekrany czytają dokładnie te parametry, które wysyła ścieżka', () => 
   assert.match(zrodlo('../src/screens/ChecklistaOfertyScreen.js'), /const \{ tenderId, tytul \} = route\.params/);
   assert.match(zrodlo('../src/screens/CzyWartoScreen.js'), /const \{ tenderId, matchId, tytul \} = route\.params/);
   assert.match(zrodlo('../src/screens/RadarSwzScreen.js'), /wstepneDaneRadaru\(route\?\.params\)/);
+  assert.match(zrodlo('../src/screens/DokumentyOfertyScreen.js'), /route\?\.params\?\.match/);
 });
 
 test('ścieżka nie ogłasza kompletności oferty', () => {

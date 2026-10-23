@@ -47,9 +47,12 @@ export const KROKI = [
     tytul: 'Zabezpiecz wadium',
     opis: 'Jeśli wymagane — wnieś wadium w terminie i właściwej formie. Gwarancją? Przekontroluj jej treść, żeby nie odpaść formalnie.' },
   { klucz: 'dokumenty', faza: 'Dokumenty', ekran: 'Sejf',
-    dodatkowe: [{ ekran: 'ChecklistaOferty', etykieta: 'Co muszę mieć do dnia składania' }],
+    dodatkowe: [
+      { ekran: 'DokumentyOferty', etykieta: 'Dokumenty do oferty w 1 klik' },
+      { ekran: 'ChecklistaOferty', etykieta: 'Co muszę mieć do dnia składania' },
+    ],
     tytul: 'Skompletuj dokumenty',
-    opis: 'Przygotuj oświadczenia (JEDZ / oświadczenie własne), pełnomocnictwa i podmiotowe środki dowodowe. Trzymaj je w Sejfie z pilnowaniem ważności.' },
+    opis: 'Formularz ofertowy i oświadczenia (art. 125, grupa kapitałowa) wygeneruj w 1 klik z danych firmy; pełnomocnictwa i podmiotowe środki dowodowe trzymaj w Sejfie z pilnowaniem ważności.' },
   { klucz: 'konsorcjum', faza: 'Dokumenty', ekran: 'Konsorcjum', opcjonalny: true,
     tytul: 'Konsorcjum lub podmiot trzeci',
     opis: 'Startujesz z partnerem albo cudzym potencjałem? Dołącz właściwe oświadczenia i zobowiązania (art. 117 / 118).' },
@@ -156,6 +159,9 @@ export function parametryNarzedzia(ekran, match) {
       if (dataOgloszenia) params.dataOgloszenia = dataOgloszenia;
       return params;
     }
+    case 'DokumentyOferty':
+      // Ekran sam mapuje ogłoszenie (`daneZOgloszenia(match.tender)`); bez match działa jako generator ogólny.
+      return match ? { match } : {};
     case 'RejestratorOferty':
       return { termin: termin ?? undefined, postepowanieId: matchId ?? undefined, nazwa: tytul ?? undefined };
     default:

@@ -648,6 +648,11 @@ export default function MatchDetailScreen({ route, navigation }) {
           )}
         </Text>
         <Button
+          title={t('Dokumenty do oferty w 1 klik', 'Bid documents in one tap')}
+          onPress={() => navigation.navigate('DokumentyOferty', { match })}
+          style={styles.gap}
+        />
+        <Button
           title={t('Lista kontrolna przed wysłaniem', 'Pre-submission checklist')}
           onPress={() => navigation.navigate('KontrolaOferty', { match })}
           variant="ghost"

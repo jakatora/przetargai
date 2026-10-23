@@ -46,6 +46,7 @@ export const KLUCZE_KONTA = Object.freeze([
   'przetargai.przewodnik-startu', // postęp przewodnika startu (lib/przewodnikStartu)
   'przetargai.onboarding_pominiety', // decyzja TEGO konta o pominięciu powitania
   'przetargai.feed_ostatnia_wizyta', // „nowe od ostatniej wizyty" w feedzie dopasowań konta
+  'przetargai.dane_wykonawcy', // dane firmy do dokumentów oferty (lib/dokumentyOferty)
   KLUCZ_WLASCICIELA,
   KLUCZ_INDEKSU_KONTA,
 ]);
