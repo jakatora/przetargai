@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, Share, Switch } from 'react-native';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
@@ -20,6 +20,7 @@ import {
   pakietDokumentow,
   coJeszczeDolaczyc,
 } from '../lib/dokumentyOferty';
+import { pobierzDanePoNip } from '../lib/danePoNip';
 
 /**
  * „DOKUMENTY DO OFERTY W 1 KLIK" — dane firmy wpisujesz RAZ (zostają w aplikacji),
@@ -45,6 +46,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
   const [oferta, setOferta] = useState({ cenaNetto: '', vatProc: 23, terminWykonania: '', gwarancjaMies: '', podwykonawcy: '', tajemnica: false });
   const [sytuacja, setSytuacja] = useState({ art109: false, grupaKapitalowa: false, pelnomocnik: false, polegaNaZasobach: false, konsorcjum: false, wadium: false });
   const [udostepnione, setUdostepnione] = useState(() => new Set());
+  const [nipStan, setNipStan] = useState({ laduje: false, komunikat: null, ok: false });
 
   // Dane firmy wpisane raz — przy kolejnej ofercie już są.
   useEffect(() => {
@@ -74,6 +76,28 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
     setZapisano(false);
     setWykonawca((w) => ({ ...w, [id]: tekst }));
   };
+
+  // „Wpisz NIP — resztę wstawimy": Biała lista VAT MF (publiczne API, bez klucza).
+  async function pobierzPoNip() {
+    setNipStan({ laduje: true, komunikat: null, ok: false });
+    const { dane, blad } = await pobierzDanePoNip(wykonawca.nip);
+    if (!dane) {
+      setNipStan({ laduje: false, komunikat: blad, ok: false });
+      return;
+    }
+    setZapisano(false);
+    setWykonawca((w) => ({
+      ...w,
+      nazwa: dane.nazwa || w.nazwa,
+      adres: dane.adres || w.adres,
+      nip: dane.nip || w.nip,
+      regon: dane.regon || w.regon,
+      rejestr: dane.rejestr || w.rejestr,
+      reprezentant: w.reprezentant || dane.reprezentanci[0] || '',
+    }));
+    const vat = dane.statusVat ? ` Status VAT: ${dane.statusVat}.` : '';
+    setNipStan({ laduje: false, komunikat: `Wstawiono dane z Białej listy VAT.${vat} Sprawdź je i uzupełnij osobę podpisującą oraz e-mail.`, ok: true });
+  }
 
   async function zapiszDane() {
     setProbowano(true);
@@ -134,8 +158,8 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
       {pokazDane ? (
         <View>
           {POLA_WYKONAWCY.filter((p) => p.id !== ID_POL_WYKONAWCY.WIELKOSC).map((p) => (
+            <Fragment key={p.id}>
             <TextField
-              key={p.id}
               label={`${p.etykieta} · ${p.wymagane ? 'wymagane' : 'opcjonalne'}`}
               value={wykonawca[p.id] ?? ''}
               onChangeText={zmienWykonawce(p.id)}
@@ -145,6 +169,15 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
               keyboardType={p.id === ID_POL_WYKONAWCY.NIP || p.id === ID_POL_WYKONAWCY.REGON || p.id === ID_POL_WYKONAWCY.TELEFON ? 'phone-pad' : p.id === ID_POL_WYKONAWCY.EMAIL ? 'email-address' : 'default'}
               multiline={p.id === ID_POL_WYKONAWCY.ADRES}
             />
+            {p.id === ID_POL_WYKONAWCY.NIP ? (
+              <View style={styles.nipBlok}>
+                <Button title="Pobierz dane firmy po NIP" onPress={pobierzPoNip} variant="ghost" loading={nipStan.laduje} />
+                <Text style={nipStan.ok ? styles.nipOk : nipStan.komunikat ? styles.blad : styles.nipHint}>
+                  {nipStan.komunikat ?? 'Nazwę, adres, REGON i KRS wstawimy z Białej listy VAT Ministerstwa Finansów.'}
+                </Text>
+              </View>
+            ) : null}
+            </Fragment>
           ))}
           <Text style={styles.label}>Wielkość firmy (oświadczenie MŚP)</Text>
           <View style={styles.chipy}>
@@ -264,6 +297,9 @@ const tworzStyleDokumentow = tworzStyle((k) => ({
   chipTekst: { fontSize: 13, color: k.text, fontWeight: '600' },
   chipTekstAktywny: { color: k.white },
   blad: { fontSize: 13, color: k.danger, marginTop: spacing.sm, lineHeight: 18 },
+  nipBlok: { marginBottom: spacing.md },
+  nipHint: { fontSize: 12, color: k.textMuted, marginTop: 6, lineHeight: 17 },
+  nipOk: { fontSize: 13, color: k.green, marginTop: 6, lineHeight: 18, fontWeight: '600' },
   ostrzezenie: { fontSize: 13, color: k.danger, lineHeight: 19, marginBottom: spacing.sm },
   przelacznik: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingVertical: 8 },
   przelacznikTekst: { flex: 1, fontSize: 14, color: k.text, lineHeight: 20 },
