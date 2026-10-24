@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { odmianaPrzetargow, zdanieRaportu, mailSelekcji } from '../src/lib/mailSelekcji.js';
-import { mailProbyPrzypomnienie, mailProbyKoniec } from '../src/lib/mailProby.js';
+import { mailProbyPrzypomnienie, mailProbyKoniec, dniDoKoncaProby } from '../src/lib/mailProby.js';
 
 const LINKI = { linkWypisu: 'https://api/pracownik/wypisz?token=abc', linkAplikacji: 'https://przetarg-ai.pl' };
 const POZ = { tytul: 'Remont <b>dachu</b>', organizacja: 'Gmina & Miasto', termin: '2026-11-10T10:00:00.000Z', punkty: ['Zakres: dachy', 'Teren: Podkarpackie', 'trzeci'] };
@@ -38,6 +38,11 @@ test('mail Standard z jednym przetargiem: tytuł w temacie i pierwszy krok', () 
 test('maile próby', () => {
   assert.equal(mailProbyPrzypomnienie({ dniZostalo: 2, ...LINKI }).subject, 'Twoja próba Standard kończy się za 2 dni');
   assert.equal(mailProbyPrzypomnienie({ dniZostalo: 1, ...LINKI }).subject, 'Twoja próba Standard kończy się jutro');
+  assert.equal(mailProbyPrzypomnienie({ dniZostalo: 0, ...LINKI }).subject, 'Twoja próba Standard kończy się dziś');
+  // Dni KALENDARZOWE w Warszawie: rejestracja o 15:00, przebieg 12:00 dzień przed końcem = „jutro” (27 h, nie „za 2 dni”).
+  assert.equal(dniDoKoncaProby('2026-10-23T13:00:00.000Z', '2026-10-22T10:00:00.000Z'), 1);
+  assert.equal(dniDoKoncaProby('2026-10-24T13:00:00.000Z', '2026-10-22T10:00:00.000Z'), 2);
+  assert.equal(dniDoKoncaProby('2026-10-22T21:30:00.000Z', '2026-10-22T10:00:00.000Z'), 0, '23:30 tego samego dnia = dziś');
   const k = mailProbyKoniec(LINKI);
   assert.equal(k.subject, 'Próba Standard się skończyła — od dziś 5 przetargów dziennie');
   assert.ok(k.text.includes('Konto') && k.text.includes('99 zł'));

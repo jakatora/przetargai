@@ -2,7 +2,7 @@ import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
 import { stanProby } from '../lib/plan.js';
-import { mailProbyPrzypomnienie, mailProbyKoniec } from '../lib/mailProby.js';
+import { mailProbyPrzypomnienie, mailProbyKoniec, dniDoKoncaProby } from '../lib/mailProby.js';
 import { users } from '../db/repos.js';
 import { sendEmail } from './email.js';
 
@@ -25,7 +25,7 @@ export async function wyslijMaileProby({ teraz = nowIso(), wyslijEmail = sendEma
     if (!rodzaj || !await users.zarezerwujMailProby(user.id, rodzaj, teraz)) continue;
     const tresc = rodzaj === 'koniec'
       ? mailProbyKoniec({ linkAplikacji: env.APP_LINK_URL })
-      : mailProbyPrzypomnienie({ dniZostalo: stanProby(user, teraz).dni_zostalo, linkAplikacji: env.APP_LINK_URL });
+      : mailProbyPrzypomnienie({ dniZostalo: dniDoKoncaProby(stanProby(user, teraz).do, teraz), linkAplikacji: env.APP_LINK_URL });
     try {
       const w = await wyslijEmail({ to: user.email, ...tresc });
       if (w?.sent || w?.odrzuconyAdresat) {

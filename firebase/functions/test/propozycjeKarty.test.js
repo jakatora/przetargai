@@ -89,3 +89,12 @@ test('zastosujPropozycje: dopisuje wykluczenie, nie ruszając reszty karty', () 
   assert.equal(zastosujPropozycje(user, { pole: 'wartosc_max', nowa_wartosc: 7 }).wartoscMax, 7);
   assert.throws(() => zastosujPropozycje(user, { pole: 'formalne', nowa_wartosc: null }));
 });
+
+test('kwoty: propozycja nie tworzy przedziału „od” > „do” (przegląd 2026-10-24)', () => {
+  const duze = ['A', 'B', 'C'].map((t) => odrz(t, 'za_duze', { wartosc: 300_000 }));
+  const male = ['D', 'E', 'F'].map((t) => odrz(t, 'za_male', { wartosc: 900_000 }));
+  // „do” 300 tys. przy „od” 500 tys. — sprzeczne, nie proponujemy.
+  assert.deepEqual(propozycjeKarty({ karta: { wartosc_min: 500_000 }, pracownik_sygnaly: duze }, TERAZ), []);
+  // „od” 900 tys. przy „do” 800 tys. — też nie.
+  assert.deepEqual(propozycjeKarty({ wartosc_max: 800_000, pracownik_sygnaly: male }, TERAZ), []);
+});

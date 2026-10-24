@@ -101,7 +101,8 @@ export function propozycjeKarty(user, teraz) {
     const najmniejsza = Math.min(...duze.map((s) => s.wartosc));
     const nowa = zaokraglij(najmniejsza, 'dol');
     const obecna = typeof user?.wartosc_max === 'number' ? user.wartosc_max : null;
-    if (obecna === null || nowa < obecna) {
+    // Bez sprzecznego przedziału: „do” poniżej obecnego „od” odrzuciłby wszystko (PUT /karta też tego pilnuje).
+    if ((obecna === null || nowa < obecna) && (karta.wartosc_min === null || nowa > karta.wartosc_min)) {
       dodaj({ pole: 'wartosc_max', nowa_wartosc: nowa, akcja: 'zmien', dowody: duze.map((s) => s.tytul).slice(0, 3), opis: {
         pl: `Odrzuciłeś ${duze.length} przetargi jako za duże (od ${zl(najmniejsza)}). Ustawić największą wartość na ${zl(nowa)}?`,
         en: `You rejected ${duze.length} tenders as too large (from ${pln(najmniejsza)}). Set your maximum to ${pln(nowa)}?`,
@@ -113,7 +114,8 @@ export function propozycjeKarty(user, teraz) {
   if (male.length >= PROG_POWTORZEN) {
     const najwieksza = Math.max(...male.map((s) => s.wartosc));
     const nowa = zaokraglij(najwieksza, 'gora');
-    if (karta.wartosc_min === null || nowa > karta.wartosc_min) {
+    const obecnaMax = typeof user?.wartosc_max === 'number' ? user.wartosc_max : null;
+    if ((karta.wartosc_min === null || nowa > karta.wartosc_min) && (obecnaMax === null || nowa < obecnaMax)) {
       dodaj({ pole: 'wartosc_min', nowa_wartosc: nowa, akcja: 'zmien', dowody: male.map((s) => s.tytul).slice(0, 3), opis: {
         pl: `Odrzuciłeś ${male.length} przetargi jako za małe (do ${zl(najwieksza)}). Ustawić najmniejszą wartość na ${zl(nowa)}?`,
         en: `You rejected ${male.length} tenders as too small (up to ${pln(najwieksza)}). Set your minimum to ${pln(nowa)}?`,

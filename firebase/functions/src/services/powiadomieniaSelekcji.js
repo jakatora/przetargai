@@ -22,7 +22,7 @@ const WYPIS_TTL_MIN = 30 * 24 * 60;
 
 async function linkWypisu(userId) {
   const { token } = await magicLinks.create({ userId, purpose: 'wypisz_pracownik', ttlMinutes: WYPIS_TTL_MIN });
-  return `${env.APP_URL}/pracownik/wypisz?token=${token}`;
+  return `${env.APP_URL}/maile/wypisz?token=${token}`;
 }
 
 function pozycjeZ(lista, { zKrokiem, teraz }) {

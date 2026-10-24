@@ -279,6 +279,8 @@ router.get('/:id/warunki', ah(async (req, res) => {
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
   const teraz = new Date().toISOString();
   if (planEfektywny(req.user, teraz) !== 'standard') { res.json({ warunki: null, powod: 'plan' }); return; }
+  // Przełącznik awaryjny selekcji wyłącza też to płatne (AI) porównanie.
+  if (env.PRACOWNIK_ENABLED !== 'true') { res.json({ warunki: null, powod: 'niedostepne' }); return; }
 
   const tender = await tenders.findById(row.tender_id);
   const wu = tender?.warunki_udzialu ?? null;

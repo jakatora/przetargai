@@ -1381,8 +1381,11 @@ export const matches = {
    * Gdy dopasowanie już istnieje (wybór z dnia awarii AI, sprzed wdrożenia), aktualizujemy
    * ocenę BEZ ruszania `created_at` i `notified` — przetarg nie wraca jako „nowy”.
    * `zapiszSlad: false` = decyzja tymczasowa (awaria AI): bez śladu, AI oceni jutro.
+   * `wersjaFormalnych` (selekcja): odrzucony za warunki przy TYCH SAMYCH danych formalnych zostaje
+   * odrzucony — zmiana zakresu czy terenu nie zmienia tego, czy firma spełnia warunki (spec §6.2).
+   * Przywrócenie przez klienta nie podaje wersji, więc zawsze przechodzi.
    */
-  async utworzWybrany({ userId, tender, score, punkty, scorer, ocenaBezAi, criteriaHash, zapiszSlad, teraz = nowIso() }) {
+  async utworzWybrany({ userId, tender, score, punkty, scorer, ocenaBezAi, criteriaHash, zapiszSlad, wersjaFormalnych = null, teraz = nowIso() }) {
     const matchRef = matchCol(userId).doc(tender.id);
     const evalRef = evalCol(userId).doc(tender.id);
     const record = {
@@ -1406,6 +1409,13 @@ export const matches = {
       return { created: true, match: { id: tender.id, ...record } };
     } catch (err) {
       if (err.code !== 6 /* ALREADY_EXISTS */) throw err;
+      const obecny = (await matchRef.get()).data() ?? {};
+      if (wersjaFormalnych && obecny.odrzucony_przez_pracownika?.przyczyna === 'warunki'
+        && obecny.warunki?.wersja_formalnych === wersjaFormalnych) {
+        // Ślad „odrzucony: warunki” zostaje, dostaje tylko bieżącą wersję karty — bez ponownej oceny co przebieg.
+        if (zapiszSlad) await evalRef.set({ criteria_hash: criteriaHash, evaluated_at: teraz }, { merge: true });
+        return { created: false, match: null, odrzuconyNaWarunkach: true };
+      }
       await matchRef.update({
         confidence_score: Math.round(score), match_reasoning: punkty.join(' '), scorer,
         uzasadnienie: punkty, ocena_bez_ai: Boolean(ocenaBezAi), odrzucony_przez_pracownika: null,
@@ -1441,6 +1451,26 @@ export const matches = {
     });
     await batch.commit();
     return true;
+  },
+
+  /**
+   * Pełny przegląd selekcji (zmiana karty, pierwszy przebieg): widoczne dopasowania, które schodzą
+   * z listy, jeśli teraz odpadną. Zapisane zostają — klient nad nimi pracuje (etap oferty żyje w `saved`).
+   */
+  async doSchowaniaPrzyPrzegladzie(userId) {
+    const [m, s] = await Promise.all([
+      matchCol(userId).select('odrzucony_przez_klienta', 'odrzucony_przez_pracownika').get(),
+      savedCol(userId).select().get(),
+    ]);
+    const zapisane = new Set(s.docs.map((d) => d.id));
+    return new Set(m.docs
+      .filter((d) => !d.get('odrzucony_przez_klienta') && !d.get('odrzucony_przez_pracownika') && !zapisane.has(d.id))
+      .map((d) => d.id));
+  },
+
+  /** Dopasowanie odrzucone przy ponownej ocenie schodzi z listy (ślad decyzji zapisuje lejek). */
+  async schowajOdrzucony(userId, tenderId, { przyczyna, szczegol = null, teraz = nowIso() }) {
+    await matchCol(userId).doc(tenderId).update({ odrzucony_przez_pracownika: { przyczyna, szczegol, o: teraz } });
   },
 
   /** Wybór na samej heurystyce (dzień awarii AI), który AI potem odrzuciło, schodzi z „Wybranych”. */
@@ -1868,6 +1898,7 @@ const dziennikRef = (userId, doba) => db().collection('users').doc(userId).colle
 export const dziennik = {
   async dopisz(userId, doba, { przejrzane = 0, wybrane = 0, oczekuje = 0, odrzucone = {}, aiWywolan = 0, teraz = nowIso() }) {
     const inc = FieldValue.increment;
+    const przyrostOdrzuconych = Object.entries(odrzucone).filter(([, n]) => n > 0).map(([k, n]) => [k, inc(n)]);
     await dziennikRef(userId, doba).set({
       doba,
       przejrzane: inc(przejrzane),
@@ -1875,7 +1906,8 @@ export const dziennik = {
       ai_wywolan: inc(aiWywolan),
       oczekuje,
       // set+merge scala mapy GŁĘBOKO (pamięć: pulapki-firestore-merge) — tu dokładnie tego chcemy.
-      odrzucone: Object.fromEntries(Object.entries(odrzucone).filter(([, n]) => n > 0).map(([k, n]) => [k, inc(n)])),
+      // Ale PUSTA mapa to „ustaw {}” i kasuje liczniki dnia — cichy przebieg pomija pole.
+      ...(przyrostOdrzuconych.length ? { odrzucone: Object.fromEntries(przyrostOdrzuconych) } : {}),
       ostatni_przebieg_o: teraz,
       przebiegi: FieldValue.arrayUnion({ o: teraz, przejrzane, wybrane }),
     }, { merge: true });

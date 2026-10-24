@@ -10,6 +10,8 @@ export const SYSTEM_PROMPT_SELEKCJI = [
   'Jesteś doświadczonym specjalistą od zamówień publicznych w polskiej firmie.',
   'Codziennie przeglądasz ogłoszenia i wybierasz WYŁĄCZNIE te, na które TA firma realnie może startować:',
   'pasuje zakres prac, teren, skala i czas na przygotowanie oferty. Lepiej pominąć wątpliwe, niż wybrać przypadkowe.',
+  'Gdy wartość, województwo albo termin są oznaczone jako nieznana/nieznane, to nie jest powodem odrzucenia —',
+  'oceniaj wtedy po zakresie prac; za_duze, za_male, teren i termin podawaj tylko na podstawie danych, które są.',
   'Zwracasz WYŁĄCZNIE obiekt JSON:',
   '{"decyzja":"biore"|"odrzucam","przyczyna":null|"branza"|"teren"|"za_duze"|"za_male"|"termin"|"warunki"|"inne",',
   '"punkty":["krótki punkt po polsku"],"score":<liczba 0-100>}.',

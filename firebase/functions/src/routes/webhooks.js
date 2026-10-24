@@ -8,7 +8,7 @@ import { audit } from '../lib/audit.js';
 import { sendEmail, subscriptionActiveEmail } from '../services/email.js';
 import { createStandardInvoice } from '../services/invoice.js';
 import { tierPrzetargAi, czyZywa } from '../lib/subscriptionStatus.js';
-import { backfillUser } from '../services/matching.js';
+import { przeliczProfil } from '../services/pracownik.js';
 
 /**
  * INCYDENT 2026-07-10 (D-046): klient kupił Standard, a feed dalej pokazywał
@@ -16,10 +16,12 @@ import { backfillUser } from '../services/matching.js';
  * przeliczamy dopasowania OD RAZU (i czekamy — Functions zamrażają tło, D-044).
  * BEZ `wymus`: cooldown backfillu (10 min) chroni przed burzą przy ponowieniach
  * Stripe. Błąd przeliczenia nie może wywrócić aktywacji — plan już przyznany.
+ * Przez `przeliczProfil` (lejek selekcji z kartą firmy; przy PRACOWNIK_ENABLED=false stary
+ * backfill) — stary silnik wprost nadpisywał decyzje selekcji i omijał reguły karty.
  */
 async function dowiezFeedPoAktywacji(user) {
   try {
-    const wynik = await backfillUser(user);
+    const wynik = await przeliczProfil(user);
     logger.info({ userId: user.id, ...wynik }, 'Feed przeliczony po aktywacji planu');
   } catch (err) {
     logger.error({ err: err.message, userId: user.id },

@@ -51,7 +51,9 @@ test('REVIEW FOCUS 3: Free — jeden mail na dobę; drugi przebieg nie wysyła d
   assert.equal(await powiadomPoPrzebiegu(user, { teraz: DZIEN, ...n }), 'dostarczono');
   assert.equal(n.wyslane.email.length, 1);
   assert.equal(n.wyslane.email[0].subject, 'Mamy dla Ciebie 2 nowe przetargi');
-  assert.match(n.wyslane.email[0].text, /pracownik\/wypisz\?token=/);
+  // Adres wypisu jest widoczny w treści maila — bez słowa „pracownik” (spec §14).
+  assert.match(n.wyslane.email[0].text, /\/maile\/wypisz\?token=/);
+  assert.doesNotMatch(n.wyslane.email[0].text, /pracownik/i);
   assert.equal(n.wyslane.push.length, 1);
   assert.equal((await matches.detail(user.id, ids[0])).notified, 1);
   assert.equal(await powiadomPoPrzebiegu(user, { teraz: DZIEN, ...n }), 'brak');

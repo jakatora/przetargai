@@ -146,11 +146,11 @@ test('GET /matches/:id: termin pytań do SWZ; GET /auth/me: plan i próba', asyn
 test('wypis z maili: GET niczego nie zmienia, POST wypisuje, drugi POST 400', async () => {
   const k = await konto();
   const { token } = await magicLinks.create({ userId: k.id, purpose: 'wypisz_pracownik', ttlMinutes: 60 });
-  const strona = await fetch(`${BAZA}/pracownik/wypisz?token=${token}`);
+  const strona = await fetch(`${BAZA}/maile/wypisz?token=${token}`);
   assert.equal(strona.status, 200);
   assert.match(await strona.text(), /<form method="post"/);
   assert.notEqual((await users.findById(k.id)).powiadomienia_pracownik_email, false);
-  assert.equal((await fetch(`${BAZA}/pracownik/wypisz?token=${token}`, { method: 'POST' })).status, 200);
+  assert.equal((await fetch(`${BAZA}/maile/wypisz?token=${token}`, { method: 'POST' })).status, 200);
   assert.equal((await users.findById(k.id)).powiadomienia_pracownik_email, false);
-  assert.equal((await fetch(`${BAZA}/pracownik/wypisz?token=${token}`, { method: 'POST' })).status, 400);
+  assert.equal((await fetch(`${BAZA}/pracownik/wypisz?token=${token}`, { method: 'POST' })).status, 400, 'stary adres nadal działa');
 });

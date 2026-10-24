@@ -25,6 +25,8 @@ import { przeliczProfil } from '../services/pracownik.js';
  * Plan dostępu pilnowany TUTAJ (planEfektywny), nie tylko w aplikacji.
  */
 const router = Router();
+/** Wypis z maili bez logowania — montowany też pod `/maile` (adres widać w treści maila, spec §14). */
+export const wypisRouter = Router();
 const DOBA_MS = 86_400_000;
 const ODRZUCONE_DNI = 30;
 const CEL_WYPISU = 'wypisz_pracownik';
@@ -39,7 +41,7 @@ function stronaWypisu(tresc, formularz = '') {
  * Wypis z maili — BEZ logowania. GET tylko pyta: skanery poczty otwierają linki z maili
  * i jednym GET-em wypisałyby klienta bez jego wiedzy. Wypisuje dopiero POST z przycisku.
  */
-router.get('/wypisz', ah(async (req, res) => {
+wypisRouter.get('/wypisz', ah(async (req, res) => {
   const token = typeof req.query.token === 'string' ? req.query.token.slice(0, 200) : '';
   if (!token || !await magicLinks.peek(token, CEL_WYPISU)) {
     res.status(400).type('html').send(stronaWypisu('Link wygasł albo został już użyty. Maile wyłączysz też w aplikacji: Konto → Maile o przetargach.'));
@@ -49,7 +51,7 @@ router.get('/wypisz', ah(async (req, res) => {
     `<form method="post" action="?token=${esc(token)}"><button type="submit" style="padding:12px 20px;font-size:16px">Wyłącz maile</button></form>`));
 }));
 
-router.post('/wypisz', ah(async (req, res) => {
+wypisRouter.post('/wypisz', ah(async (req, res) => {
   const token = typeof req.query.token === 'string' ? req.query.token.slice(0, 200) : '';
   const userId = token ? await magicLinks.consume(token, CEL_WYPISU) : null;
   if (!userId) {
@@ -61,6 +63,7 @@ router.post('/wypisz', ah(async (req, res) => {
   res.type('html').send(stronaWypisu('Gotowe — nie wyślemy więcej maili o nowych przetargach. Włączysz je w aplikacji: Konto.'));
 }));
 
+router.use(wypisRouter);
 router.use(authRequired);
 router.use((req, res, next) => {
   if (env.PRACOWNIK_ENABLED === 'true') { next(); return; }
@@ -148,7 +151,8 @@ router.post('/przywroc/:tenderId', ah(async (req, res) => {
   await matches.utworzWybrany({
     userId: req.user.id, tender, score: Math.max(slad.score ?? 0, env.MATCH_CONFIDENCE_THRESHOLD),
     punkty: ['Przywrócony przez Ciebie z listy odrzuconych.'], scorer: 'klient', ocenaBezAi: false,
-    criteriaHash: slad.criteria_hash ?? wersjaKarty(req.user), zapiszSlad: true, teraz,
+    // Bieżąca wersja karty: ślad ze starą wersją przy następnym przebiegu wróciłby do oceny i mógł znów odpaść.
+    criteriaHash: wersjaKarty(req.user), zapiszSlad: true, teraz,
   });
   await users.dodajSygnal(req.user.id, zbudujSygnal({
     typ: 'przywrocenie', tenderId: tender.id, tytul: tender.title, wojewodztwo: kodWojewodztwa(tender.wojewodztwo),

@@ -91,6 +91,17 @@ test('dziennik: inkrementy z kilku przebiegów, odrzucone sumowane po przyczynie
   assert.equal(await dziennik.pobierz(u.id, '2026-10-20'), null);
 });
 
+test('dziennik: cichy przebieg bez odrzuceń nie zeruje liczników z wcześniejszych przebiegów', async () => {
+  // Przegląd 2026-10-24: pusta mapa w set+merge to „jawnie ustaw {}” — wieczorny przebieg bez nowych
+  // ogłoszeń kasował licznik odrzuconych z całego dnia (raport w apce i mail Free zaniżone).
+  const u = await user();
+  await dziennik.dopisz(u.id, '2026-10-22', { przejrzane: 50, odrzucone: { teren: 3, branza: 40 }, teraz: '2026-10-22T10:00:00.000Z' });
+  await dziennik.dopisz(u.id, '2026-10-22', { przejrzane: 0, odrzucone: {}, teraz: '2026-10-22T20:00:00.000Z' });
+  await dziennik.dopisz(u.id, '2026-10-22', { przejrzane: 0, odrzucone: { teren: 0 }, teraz: '2026-10-22T23:00:00.000Z' });
+  const d = await dziennik.pobierz(u.id, '2026-10-22');
+  assert.deepEqual(d.odrzucone, { teren: 3, branza: 40 });
+});
+
 test('limit porównań warunków i znacznik maila dnia', async () => {
   const u = await user();
   assert.equal(await warunkiQuota.reserve(u.id, 1), true);

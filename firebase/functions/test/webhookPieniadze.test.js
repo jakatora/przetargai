@@ -17,7 +17,7 @@ process.env.FAKTUROWNIA_DOMAIN = 'test-domena';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 
-const { users, faktury, stripeEvents, tenders, matches } = await import('../src/db/repos.js');
+const { users, faktury, stripeEvents, tenders, matches, evaluations } = await import('../src/db/repos.js');
 const { handleEvent, przetworzZdarzenie } = await import('../src/routes/webhooks.js');
 
 let seq = 0;
@@ -133,6 +133,35 @@ test('checkout OPŁACONY aktywuje Standard, zapisuje Stripe ID i wystawia faktur
   const feed = await matches.listForUser(user.id, 20);
   assert.ok(feed.length >= 7,
     `po zakupie Standard feed ma być pełny OD RAZU (jest ${feed.length}, oczekiwano ≥7) — klient zapłacił i patrzy`);
+});
+
+test('aktywacja przelicza feed lejkiem selekcji: wykluczenie z karty działa, decyzja zapisana', async () => {
+  // Przegląd 2026-10-24: webhook wołał stary backfillUser — po zakupie do feedu wpadały przetargi
+  // odrzucone regułami karty, a ocena nadpisywała decyzję selekcji (bez decyzja/przyczyna).
+  const user = await dodajUsera({ keywords: ['oswietlenie'] });
+  await users.zapiszKarte(user.id, {
+    companyName: null, keywords: ['oswietlenie'], cpvCodes: [], regiony: [], wartoscMax: null,
+    karta: { opis: null, wykluczenia: ['drogowe'], wartosc_min: null, min_dni_oferta: 5,
+      formalne: { obrot_roczny: null, referencja_kwota: null, referencja_opis: null, uprawnienia: [] } },
+  });
+  const { tender } = await tenders.upsert({
+    externalId: `wp-lejek-${process.pid}`, title: 'Oswietlenie drogowe w gminie', organization: 'Gmina',
+    deadline: '2099-01-01T00:00:00.000Z',
+  });
+  tenders.odswiezPule();
+  fakturowniaDziala();
+
+  await handleEvent({
+    type: 'checkout.session.completed',
+    data: { object: { id: `cs_lejek_${process.pid}`, payment_status: 'paid', client_reference_id: user.id,
+      customer: 'cus_lejek', subscription: 'sub_lejek', amount_total: 9900 } },
+  });
+
+  const ocena = await evaluations.pobierz(user.id, tender.id);
+  assert.equal(ocena?.decyzja, 'odrzucony', 'po zakupie karta firmy musi nadal działać');
+  assert.equal(ocena?.przyczyna, 'wykluczenie');
+  const feed = await matches.listForUser(user.id, 50);
+  assert.ok(!feed.some((m) => m.tender_id === tender.id), 'przetarg odrzucony regułą nie trafia do feedu');
 });
 
 test('checkout z nieistniejącym userem NIE rzuca (trwały błąd danych — ponowienia nic nie dadzą)', async () => {

@@ -25,6 +25,14 @@ import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
  * w `evaluations` przypięty do WERSJI KARTY — zmiana karty = przegląd od nowa.
  */
 export const LIMIT_WARUNKOW_DZIENNIE = 20;
+/** Tyle nieudanych wywołań AI z rzędu i przebieg przestaje pytać AI (awaria Anthropic, twardy limit budżetu). */
+export const MAKS_KOLEJNYCH_BLEDOW_AI = 3;
+/**
+ * Budżet czasu przeliczeń, na które ktoś czeka (rejestracja, zapis karty, propozycja, zakup). Konto
+ * w próbie jest Standard — bez budżetu rejestracja czekałaby na ~30 ocen AI (60+ s, limit apki 60 s).
+ * Resztę kandydatów oceni najbliższy przebieg (Standard co 3 h, Free 12:00); raport pokazuje „czeka”.
+ */
+export const BUDZET_PRZELICZENIA_MS = 20_000;
 
 function punktyZHeurystyki(h) {
   const punkty = [];
@@ -58,9 +66,15 @@ async function odpadaNaWarunkach(user, tenderId, { porownaj, teraz, wersja }) {
  * Jeden przebieg selekcji dla jednego klienta.
  * @param {object} user dokument użytkownika (z kartą i sygnałami)
  * @param {object[]} pool otwarte przetargi (POLA_PULI) — czytane RAZ dla wszystkich
- * @param {{teraz?: string, ocen?: Function, porownaj?: Function}} [opcje] AI wstrzykiwane w testach
+ * @param {{teraz?: string, ocen?: Function, porownaj?: Function, stanAi?: {kolejneBledy: number}}} [opcje]
+ *   AI wstrzykiwane w testach; `stanAi` — bezpiecznik wspólny dla całego przebiegu (wszyscy klienci);
+ *   `budzetMs` — po tym czasie kandydaci czekają (bez AI i bez porównania warunków)
  */
-export async function pracujDlaUzytkownika(user, pool, { teraz = nowIso(), ocen = ocenDlaKlienta, porownaj = porownajWarunki } = {}) {
+export async function pracujDlaUzytkownika(user, pool, {
+  teraz = nowIso(), ocen = ocenDlaKlienta, porownaj = porownajWarunki, stanAi = { kolejneBledy: 0 }, budzetMs = Infinity,
+} = {}) {
+  const koniec = Date.now() + budzetMs;
+  const poCzasie = () => Date.now() >= koniec;
   const wynik = { przejrzane: 0, wybrane: 0, oczekuje: 0, odrzucone: pustyLicznikPrzyczyn(), aiCalls: 0, nowe: [] };
   if (!user.keywords?.length && !user.cpv_codes?.length) return wynik;
 
@@ -73,13 +87,25 @@ export async function pracujDlaUzytkownika(user, pool, { teraz = nowIso(), ocen 
     ? Math.max(0, env.FREE_TIER_DAILY_MATCH_LIMIT - await matches.countToday(user.id))
     : Infinity;
 
+  // Pełny przegląd: wcześniejsze dopasowania, które teraz odpadają, schodzą z listy (poza zapisanymi).
+  const doSchowania = pelnyPrzeglad ? await matches.doSchowaniaPrzyPrzegladzie(user.id) : new Set();
+  const schowaj = async (tenderId, przyczyna, szczegol = null) => {
+    // „Termin” nie chowa: za mało dni to nie powód, żeby zabrać przetarg, który klient już zna.
+    if (przyczyna === 'termin' || !doSchowania.has(tenderId)) return;
+    doSchowania.delete(tenderId);
+    await matches.schowajOdrzucony(user.id, tenderId, { przyczyna, szczegol, teraz });
+  };
+
   const ranked = [];
   for (const tender of pool) {
     const nowy = czyNowy(tender);
     if (nowy) wynik.przejrzane++;
     const h = heuristicScore(user, tender);
     if (h.score > 0) ranked.push({ tender, h });
-    else if (nowy) wynik.odrzucone.branza++;
+    else {
+      if (nowy) wynik.odrzucone.branza++;
+      await schowaj(tender.id, 'branza');
+    }
   }
   ranked.sort((a, b) => b.h.score - a.h.score);
 
@@ -104,13 +130,16 @@ export async function pracujDlaUzytkownika(user, pool, { teraz = nowIso(), ocen 
       decyzja: 'odrzucony', przyczyna, etap, szczegol, score, scorer, criteriaHash: wersja, tender, teraz,
     });
     wynik.odrzucone[przyczyna] = (wynik.odrzucone[przyczyna] ?? 0) + 1;
+    await schowaj(tender.id, przyczyna, szczegol);
   };
   const wybierz = async (tender, { score, punkty, scorer, ocenaBezAi, ostateczna }) => {
-    const { created } = await matches.utworzWybrany({
-      userId: user.id, tender, score, punkty, scorer, ocenaBezAi, criteriaHash: wersja, zapiszSlad: ostateczna, teraz,
+    const { created, odrzuconyNaWarunkach } = await matches.utworzWybrany({
+      userId: user.id, tender, score, punkty, scorer, ocenaBezAi, criteriaHash: wersja, zapiszSlad: ostateczna,
+      wersjaFormalnych: wersjaFormalnych(user), teraz,
     });
+    if (odrzuconyNaWarunkach) { wynik.odrzucone.warunki++; return; }
     if (!created) return;
-    if (plan === 'standard' && await odpadaNaWarunkach(user, tender.id, { porownaj, teraz, wersja })) {
+    if (plan === 'standard' && !poCzasie() && await odpadaNaWarunkach(user, tender.id, { porownaj, teraz, wersja })) {
       wynik.odrzucone.warunki++;
       return;
     }
@@ -139,11 +168,15 @@ export async function pracujDlaUzytkownika(user, pool, { teraz = nowIso(), ocen 
       continue;
     }
 
-    // Limit AI wyczerpany: kandydat CZEKA. Precyzja przed kompletnością (spec §0) — bez wyboru na samej heurystyce.
-    if (budzetAi <= 0 || !await aiQuota.reserve(user.id, limitAi)) { budzetAi = 0; wynik.oczekuje++; continue; }
+    // Limit AI wyczerpany albo AI leży (bezpiecznik): kandydat CZEKA. Precyzja przed kompletnością
+    // (spec §0) — bez wyboru na samej heurystyce i bez palenia limitu na kolejne nieudane wywołania.
+    if (budzetAi <= 0 || stanAi.kolejneBledy >= MAKS_KOLEJNYCH_BLEDOW_AI || poCzasie() || !await aiQuota.reserve(user.id, limitAi)) {
+      budzetAi = 0; wynik.oczekuje++; continue;
+    }
     budzetAi--;
     wynik.aiCalls++;
     const werdykt = await ocen(user, tender, przyklady, { teraz });
+    stanAi.kolejneBledy = werdykt ? 0 : stanAi.kolejneBledy + 1;
 
     if (!werdykt) {
       // Awaria AI: wybór tymczasowy bez śladu — jutro AI oceni jeszcze raz (spec §4.4).
@@ -200,6 +233,7 @@ export async function pracujDlaWszystkich({
   if (!wszyscy.length) return wynik;
 
   const pool = await wczytajPule();
+  const stanAi = { kolejneBledy: 0 };
   wszyscy.sort((a, b) => String(a.last_cycle_at ?? '').localeCompare(String(b.last_cycle_at ?? '')));
 
   for (let i = 0; i < wszyscy.length; i += ROWNOLEGLE_USEROW) {
@@ -211,7 +245,7 @@ export async function pracujDlaWszystkich({
     const porcja = wszyscy.slice(i, i + ROWNOLEGLE_USEROW);
     const wyniki = await Promise.all(porcja.map(async (user) => {
       try {
-        const w = await pracujDlaUzytkownika(user, pool, { teraz: teraz() });
+        const w = await pracujDlaUzytkownika(user, pool, { teraz: teraz(), stanAi });
         try {
           await powiadom(await users.findById(user.id) ?? user, { tryb, teraz: teraz() });
         } catch (err) {
@@ -237,13 +271,13 @@ export async function pracujDlaWszystkich({
  * Ponowna ocena po zmianie karty/profilu, rejestracji albo z panelu admina.
  * Kształt wyniku jak `backfillUser` — wołający się nie zmieniają.
  */
-export async function przeliczProfil(user, { wymus = false } = {}) {
+export async function przeliczProfil(user, { wymus = false, budzetMs = BUDZET_PRZELICZENIA_MS } = {}) {
   if (env.PRACOWNIK_ENABLED !== 'true') return backfillUser(user, { wymus });
   if (!wymus && !await backfillCooldown.reserve(user.id)) {
     logger.info({ userId: user.id }, 'Przeliczenie pominięte — poprzedni przebieg był niedawno');
     return { created: 0, evaluated: 0, aiCalls: 0, pominiety: true };
   }
-  const w = await pracujDlaUzytkownika(user, await tenders.openPool());
+  const w = await pracujDlaUzytkownika(user, await tenders.openPool(), { budzetMs });
   return { created: w.wybrane, evaluated: w.przejrzane, aiCalls: w.aiCalls };
 }
 
