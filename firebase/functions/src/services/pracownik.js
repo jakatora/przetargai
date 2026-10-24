@@ -14,6 +14,7 @@ import {
 import { users, tenders, matches, evaluations, aiQuota, dziennik, warunkiQuota, backfillCooldown } from '../db/repos.js';
 import { ocenDlaKlienta, porownajWarunki } from './ai.js';
 import { backfillUser, generateMatchesForAllUsers } from './matching.js';
+import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
 
 /*
  * Selekcja przetargów pod klienta (plans/PRACOWNIK-PROJEKT-2026-10-23.md §4).
@@ -178,9 +179,6 @@ export async function pracujDlaUzytkownika(user, pool, { teraz = nowIso(), ocen 
 const ROWNOLEGLE_USEROW = 5;
 const BUDZET_CZASU_CYKLU_MS = 440_000;
 
-/** Zastępnik do czasu podpięcia powiadomień (Task 15). */
-const bezPowiadomien = async () => 'brak';
-
 /**
  * Przebieg dla wszystkich (12:00) albo tylko Standard (co 3 h). Pula czytana RAZ,
  * kolejka od najdawniej obsłużonego, porcje równoległe, budżet czasu — jak w
@@ -193,7 +191,7 @@ export async function pracujDlaWszystkich({
   teraz = () => nowIso(),
   wczytajUzytkownikow = () => users.all(),
   wczytajPule = () => tenders.openPool({ swiezaKopia: true }),
-  powiadom = bezPowiadomien,
+  powiadom = powiadomPoPrzebiegu,
 } = {}) {
   const start = Date.now();
   const wszyscy = (await wczytajUzytkownikow())
