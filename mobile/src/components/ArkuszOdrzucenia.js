@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, View, Text, Pressable, TextInput } from 'react-native';
 import Button from './Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
@@ -17,9 +17,12 @@ export default function ArkuszOdrzucenia({ widoczny, onAnuluj, onOdrzuc, zapisyw
   const [przyczyna, setPrzyczyna] = useState(null);
   const [komentarz, setKomentarz] = useState('');
 
+  // Każde otwarcie od czysta — poprzednia przyczyna nie może trafić do nauki przy kolejnym przetargu.
+  useEffect(() => {
+    if (!widoczny) { setPrzyczyna(null); setKomentarz(''); }
+  }, [widoczny]);
+
   function zamknij() {
-    setPrzyczyna(null);
-    setKomentarz('');
     onAnuluj();
   }
 
@@ -35,7 +38,7 @@ export default function ArkuszOdrzucenia({ widoczny, onAnuluj, onOdrzuc, zapisyw
             <Pressable
               key={kod}
               accessibilityRole="radio"
-              accessibilityState={{ selected: przyczyna === kod }}
+              accessibilityState={{ checked: przyczyna === kod }}
               onPress={() => setPrzyczyna(kod)}
               style={[styles.opcja, przyczyna === kod && styles.opcjaWybrana]}
             >

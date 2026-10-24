@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FlatList, View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { api } from '../api/client';
 import Button from '../components/Button';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
@@ -18,16 +18,27 @@ export default function OdrzuconeScreen({ navigation }) {
   const [ladowanie, setLadowanie] = useState(true);
   const [powod, setPowod] = useState(null);
   const [przywracane, setPrzywracane] = useState(null);
+  const [blad, setBlad] = useState(null);
+  // Ref, nie stan: dwa onEndReached w jednej klatce widzą ten sam stan i pobrałyby stronę dwa razy.
+  const wToku = useRef(false);
+  const numerZapytania = useRef(0);
 
   const wczytaj = useCallback(async (dalej = false) => {
+    if (dalej && wToku.current) return;
+    const numer = ++numerZapytania.current;
+    wToku.current = true;
     setLadowanie(true);
+    setBlad(null);
     try {
       const d = await api.pracownikOdrzucone({ przyczyna, before: dalej ? kursor : undefined });
+      if (numer !== numerZapytania.current) return; // nowszy filtr już w drodze
       setPowod(d.powod ?? null);
-      setLista((l) => (dalej ? [...l, ...d.odrzucone] : d.odrzucone));
-      setKursor(d.next_before);
+      setLista((l) => (dalej ? [...l, ...(d.odrzucone ?? [])] : (d.odrzucone ?? [])));
+      setKursor(d.next_before ?? null);
+    } catch (err) {
+      if (numer === numerZapytania.current) setBlad(err.message);
     } finally {
-      setLadowanie(false);
+      if (numer === numerZapytania.current) { wToku.current = false; setLadowanie(false); }
     }
   }, [przyczyna, kursor]);
 
@@ -39,6 +50,8 @@ export default function OdrzuconeScreen({ navigation }) {
     try {
       await api.pracownikPrzywroc(tenderId);
       setLista((l) => l.filter((x) => x.tender_id !== tenderId));
+    } catch (err) {
+      Alert.alert(t('Nie udało się przywrócić przetargu', 'Could not restore the tender'), err.message);
     } finally {
       setPrzywracane(null);
     }
@@ -73,7 +86,12 @@ export default function OdrzuconeScreen({ navigation }) {
           ))}
         </View>
       )}
-      ListEmptyComponent={ladowanie ? <ActivityIndicator /> : (
+      ListEmptyComponent={ladowanie ? <ActivityIndicator /> : blad ? (
+        <View>
+          <Text style={styles.tekst}>{blad}</Text>
+          <Button title={t('Spróbuj ponownie', 'Try again')} variant="ghost" onPress={() => wczytaj(false)} />
+        </View>
+      ) : (
         <Text style={styles.tekst}>{t('Brak odrzuconych w ostatnich 30 dniach.', 'No rejections in the last 30 days.')}</Text>
       )}
       renderItem={({ item }) => (
@@ -89,7 +107,7 @@ export default function OdrzuconeScreen({ navigation }) {
           <Button title={t('To jednak pasuje', 'This fits after all')} variant="ghost" loading={przywracane === item.tender_id} onPress={() => przywroc(item.tender_id)} />
         </View>
       )}
-      onEndReached={() => { if (kursor && !ladowanie) wczytaj(true); }}
+      onEndReached={() => { if (kursor && !blad) wczytaj(true); }}
       onEndReachedThreshold={0.4}
     />
   );

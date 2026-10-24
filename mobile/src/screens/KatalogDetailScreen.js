@@ -134,7 +134,7 @@ export default function KatalogDetailScreen({ route, navigation }) {
         <Button
           title={t('Uzupełnij profil', 'Update profile')}
           variant="ghost"
-          onPress={() => navigation.navigate('Account')}
+          onPress={() => navigation.navigate('KartaFirmy')}
           style={styles.notkaPrzycisk}
         />
       </View>

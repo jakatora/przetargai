@@ -282,6 +282,15 @@ export default function MatchFeedScreen({ navigation }) {
   // Odświeżenie listy przy każdym wejściu na ekran.
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  // Odrzucenie w panelu albo przyjęta propozycja karty — lista pod spodem pobiera się na nowo
+  // (panel sam już się odświeżył, więc bez ponownego przeładowania panelu).
+  const poZmianieWPanelu = useCallback(() => {
+    api.getMatches({ limit: 50 }).then((data) => {
+      setMatches(data.matches || []);
+      setKursor(data.next_before ?? null);
+    }).catch(() => {});
+  }, []);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -356,6 +365,7 @@ export default function MatchFeedScreen({ navigation }) {
               odswiezenie={odswiezPanel}
               onWybraneIds={setWybraneDzis}
               onUpgrade={przejdzNaStandard}
+              onZmiana={poZmianieWPanelu}
             />
             {/* Baner „nowe od ostatniej wizyty" — to jest „powiadomienie" wewnątrz apki. */}
             {noweLacznie > 0 ? (
@@ -660,7 +670,7 @@ export default function MatchFeedScreen({ navigation }) {
                 podpowiedz={podpowiedz}
                 onPress={() => (podpowiedz?.kod === 'obejrzyj_wszystkie'
                   ? zmienTryb('wszystkie')
-                  : navigation.navigate('Account'))}
+                  : navigation.navigate('KartaFirmy'))}
               />
               <Text style={styles.text}>
                 {t(

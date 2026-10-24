@@ -23,6 +23,27 @@ test('parsujKwote: spacje, „zł”, przecinek dziesiętny; puste → null', ()
   assert.equal(parsujKwote('abc'), null);
 });
 
+test('parsujKwote: kropki i przecinki jako separatory tysięcy, „mln”/„tys.”', () => {
+  assert.equal(parsujKwote('2.000.000'), 2000000);
+  assert.equal(parsujKwote('800.000 zł'), 800000);
+  assert.equal(parsujKwote('1.500.000,00'), 1500000);
+  assert.equal(parsujKwote('1,500,000.50'), 1500000);
+  assert.equal(parsujKwote('1,5 mln'), 1500000);
+  assert.equal(parsujKwote('4,35 mln zł'), 4350000);
+  assert.equal(parsujKwote('250 tys.'), 250000);
+  assert.equal(parsujKwote('1 200 000'), 1200000);
+  assert.equal(parsujKwote('12.5'), 12);
+});
+
+test('walidacja: limity pól jak na serwerze, z nazwą pola', () => {
+  const ok = kartaDoFormularza({});
+  assert.match(walidujFormularz({ ...ok, wykluczenia: 'drogi, x' }).pl, /Czego nie bierzesz.*„x”/);
+  assert.match(walidujFormularz({ ...ok, keywords: 'a'.repeat(61) }).pl, /Słowa kluczowe/);
+  assert.match(walidujFormularz({ ...ok, cpv_codes: '1'.repeat(21) }).pl, /Kody CPV/);
+  assert.match(walidujFormularz({ ...ok, uprawnienia: 'B' }).pl, /Uprawnienia/);
+  assert.equal(walidujFormularz({ ...ok, wykluczenia: 'drogi, mosty', keywords: 'dach', uprawnienia: 'ISO 9001' }), null);
+});
+
 test('karta ⇄ formularz w obie strony', () => {
   const karta = { company_name: 'Dachpol', opis: 'Dachy', keywords: ['dach'], cpv_codes: ['45261000'], wykluczenia: ['drogi'],
     regiony: ['18'], wartosc_min: 50000, wartosc_max: 1000000, min_dni_oferta: 7,

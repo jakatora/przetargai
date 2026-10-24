@@ -60,6 +60,18 @@ export function opisProby(proba) {
   };
 }
 
+/** Znacznik „komunikat o końcu próby już pokazany” — wartość = `proba.do` tej próby. */
+export const KLUCZ_KONCA_PROBY = 'przetargai.proba_koniec_pokazany';
+
+/** Jednorazowy komunikat po końcu próby (spec §15) — tylko konto, które wróciło na Free. */
+export function opisKoncaProby(proba, plan, pokazanyDla) {
+  if (!proba?.do || proba.aktywna || plan !== 'free' || pokazanyDla === proba.do) return null;
+  return {
+    pl: 'Próba Standard się skończyła — od dziś wybieramy do 5 przetargów dziennie.',
+    en: 'Your Standard trial has ended — from today we pick up to 5 tenders a day.',
+  };
+}
+
 const dwie = (x) => String(x).padStart(2, '0');
 
 export function opisNastepnegoPrzebiegu(iso, teraz = new Date()) {

@@ -34,10 +34,31 @@ export function parsujListe(tekst, maks = 30) {
   }).slice(0, maks);
 }
 
+/**
+ * Kwota z pola tekstowego: spacje (też twarde), „zł”, „mln”/„tys.”. Separator, po którym stoją
+ * dokładnie 3 cyfry, grupuje tysiące („2.000.000”); końcowy z 1–2 cyframi to ułamek (ucinany).
+ */
 export function parsujKwote(tekst) {
-  const czesc = String(tekst ?? '').split(/[.,]/)[0].replace(/[^\d]/g, '');
-  return czesc ? Number(czesc) : null;
+  const surowy = String(tekst ?? '').toLocaleLowerCase('pl');
+  const mnoznik = surowy.includes('mln') ? 1_000_000 : surowy.includes('tys') ? 1_000 : 1;
+  const liczba = surowy.replace(/[^\d.,]/g, '').replace(/^[.,]+|[.,]+$/g, '');
+  if (!/\d/.test(liczba)) return null;
+  const ulamek = liczba.match(/[.,](\d{1,2})$/);
+  const calosc = (ulamek ? liczba.slice(0, ulamek.index) : liczba).replace(/[.,]/g, '');
+  const setne = ulamek ? Number(ulamek[1].padEnd(2, '0')) : 0;
+  // Liczenie w setnych: 4,35 mln = 435 × 10 000, bez błędu zmiennoprzecinkowego.
+  return Math.floor(((Number(calosc || '0') * 100 + setne) * mnoznik) / 100);
 }
+
+/** Pola-listy i ich limity — te same co w `kartaSchema` na serwerze. */
+const LIMITY_LIST = [
+  { pole: 'keywords', nazwa: { pl: 'Słowa kluczowe', en: 'Keywords' }, min: 1, max: 60, ile: 30 },
+  { pole: 'cpv_codes', nazwa: { pl: 'Kody CPV', en: 'CPV codes' }, min: 1, max: 20, ile: 30 },
+  { pole: 'wykluczenia', nazwa: { pl: 'Czego nie bierzesz', en: 'What you do not take on' }, min: 2, max: 60, ile: 20 },
+  { pole: 'uprawnienia', nazwa: { pl: 'Uprawnienia i certyfikaty', en: 'Licences and certificates' }, min: 2, max: 80, ile: 20 },
+];
+
+const skroc = (x) => (x.length > 24 ? `${x.slice(0, 24)}…` : x);
 
 const naTekst = (x) => (x === null || x === undefined ? '' : String(x));
 
@@ -94,6 +115,15 @@ export function walidujFormularz(form) {
   }
   if (String(form.opis ?? '').length > 600) {
     return { pl: 'Opis może mieć najwyżej 600 znaków.', en: 'The description can have at most 600 characters.' };
+  }
+  for (const l of LIMITY_LIST) {
+    const zla = parsujListe(form[l.pole], l.ile).find((x) => x.length < l.min || x.length > l.max);
+    if (zla) {
+      return {
+        pl: `${l.nazwa.pl}: „${skroc(zla)}” — każda pozycja ma mieć od ${l.min} do ${l.max} znaków.`,
+        en: `${l.nazwa.en}: “${skroc(zla)}” — each item must have ${l.min} to ${l.max} characters.`,
+      };
+    }
   }
   return null;
 }

@@ -2,8 +2,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   PRZYCZYNY, PRZYCZYNY_KLIENTA, ETYKIETY_PRZYCZYN, etykietaPrzyczyny, zdanieRaportu, grupujOdrzucone,
-  opisProby, opisNastepnegoPrzebiegu, zdanieOczekujacych,
+  opisProby, opisNastepnegoPrzebiegu, zdanieOczekujacych, opisKoncaProby, KLUCZ_KONCA_PROBY,
 } from '../src/lib/selekcja.js';
+import { czyKluczKonta } from '../src/lib/daneLokalne.js';
+
+test('koniec próby: jednorazowo, tylko konto z powrotem na Free (spec §15)', () => {
+  const koniec = { aktywna: false, do: '2026-10-22T10:00:00.000Z', dni_zostalo: 0 };
+  assert.match(opisKoncaProby(koniec, 'free', null).pl, /Próba Standard się skończyła/);
+  assert.ok(opisKoncaProby(koniec, 'free', null).en);
+  assert.equal(opisKoncaProby(koniec, 'free', koniec.do), null, 'już pokazany dla tej próby');
+  assert.equal(opisKoncaProby(koniec, 'standard', null), null, 'kupił Standard — bez komunikatu');
+  assert.equal(opisKoncaProby({ ...koniec, aktywna: true, dni_zostalo: 2 }, 'standard', null), null);
+  assert.equal(opisKoncaProby(null, 'free', null), null, 'konto bez próby');
+  assert.ok(czyKluczKonta(KLUCZ_KONCA_PROBY), 'znacznik należy do konta — znika przy zmianie konta');
+});
 
 test('przyczyny zgodne z backendem (te same kody)', () => {
   assert.deepEqual(PRZYCZYNY, ['branza', 'wykluczenie', 'teren', 'za_duze', 'za_male', 'termin', 'warunki', 'inne']);
