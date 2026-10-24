@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Share } from 'react-native';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
 import TextField from '../components/TextField';
 import * as storage from '../lib/storage';
 import { formatDate, formatBudget } from '../lib/format';
+import { KLUCZ_DANYCH_WYKONAWCY } from '../lib/dokumentyOferty';
+import { generujWykaz } from '../lib/wykazReferencji';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import {
@@ -47,6 +49,23 @@ function naLiczbe(txt) {
   if (!o) return undefined;
   const n = Number(o);
   return Number.isFinite(n) ? n : undefined;
+}
+
+/** Wykaz do oferty/wezwania z tego, co już jest w banku — dane firmy z magazynu dokumentów. */
+async function udostepnijWykaz(referencje, rodzaj) {
+  let wykonawca = {};
+  try {
+    const s = await storage.getItem(KLUCZ_DANYCH_WYKONAWCY);
+    if (s) wykonawca = JSON.parse(s);
+  } catch {
+    /* brak danych firmy — wykaz z kropkami do uzupełnienia */
+  }
+  const dok = generujWykaz({ wykonawca, referencje, rodzaj, dzisiaj: new Date().toISOString() });
+  try {
+    await Share.share({ message: dok.tresc, title: dok.nazwa });
+  } catch {
+    /* anulowane */
+  }
 }
 
 export default function BankReferencjiScreen() {
@@ -211,6 +230,19 @@ export default function BankReferencjiScreen() {
         })
       )}
 
+      {referencje.length ? (
+        <View style={styles.wykazBlok}>
+          <Text style={styles.wykazTytul}>Wykaz do oferty w 1 klik</Text>
+          <Text style={styles.wykazOpis}>
+            Z aktualnych pozycji banku składamy załącznik „Wykaz wykonanych robót / usług / dostaw"
+            (wymagany na wezwanie z art. 274). Wygasłe pozycje pomijamy.
+          </Text>
+          <Button title="Wykaz robót budowlanych" variant="ghost" onPress={() => udostepnijWykaz(referencje, 'roboty')} style={styles.gap} />
+          <Button title="Wykaz usług" variant="ghost" onPress={() => udostepnijWykaz(referencje, 'uslugi')} style={styles.gap} />
+          <Button title="Wykaz dostaw" variant="ghost" onPress={() => udostepnijWykaz(referencje, 'dostawy')} style={styles.gap} />
+        </View>
+      ) : null}
+
       <Text style={styles.stopka}>
         Liczymy najkrótsze, bezpieczne okno (5/3 lata). Zamawiający może je wydłużyć — wtedy
         „wygasłe" u nas doświadczenie może wciąż się liczyć w danym przetargu. Dane zostają na
@@ -262,4 +294,7 @@ const tworzStyleBanku = tworzStyle((k) => ({
   },
 
   stopka: { fontSize: 12, color: k.textMuted, lineHeight: 17, marginTop: spacing.lg, fontStyle: 'italic' },
+  wykazBlok: { backgroundColor: k.surface, borderRadius: radius.md, borderWidth: 1, borderColor: k.border, padding: spacing.md, marginTop: spacing.md },
+  wykazTytul: { fontSize: 15, fontWeight: '700', color: k.text },
+  wykazOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginTop: 4, marginBottom: spacing.sm },
 }));

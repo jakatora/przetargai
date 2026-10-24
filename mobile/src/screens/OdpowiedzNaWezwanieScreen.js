@@ -15,6 +15,10 @@ import {
   kontrolaPrzedWyslaniem,
 } from '../lib/odpowiedzNaWezwanie';
 import { useAuth } from '../context/AuthContext';
+import { generujWykaz } from '../lib/wykazReferencji';
+
+const CHIP_WYKAZU = 'Wykaz robót / usług / dostaw z referencjami';
+const KLUCZ_BANKU = 'przetargai.bankReferencji';
 
 /**
  * „ODPOWIEDŹ NA WEZWANIE W 1 KLIK" — wklejasz treść wezwania zamawiającego, aplikacja
@@ -105,6 +109,23 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
     }
   }
 
+  // Załącznik „wykaz" składa się sam z Banku referencji (dane już w aplikacji).
+  async function udostepnijWykaz(rodzajWykazu) {
+    let referencje = [];
+    try {
+      const s = await storage.getItem(KLUCZ_BANKU);
+      if (s) referencje = JSON.parse(s);
+    } catch {
+      /* pusty bank — wykaz powie „brak pozycji" */
+    }
+    const dok = generujWykaz({ wykonawca, przetarg, referencje, rodzaj: rodzajWykazu, dzisiaj: new Date().toISOString() });
+    try {
+      await Share.share({ message: dok.tresc, title: dok.nazwa });
+    } catch {
+      /* anulowane */
+    }
+  }
+
   return (
     <Screen scroll>
       <View style={styles.hero}>
@@ -176,6 +197,14 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
             <TextField label="Inny dokument" value={nowyDokument} onChangeText={setNowyDokument} style={styles.poleDodaj} onSubmitEditing={dodajDokument} />
             <Button title="Dodaj" variant="ghost" onPress={dodajDokument} style={styles.dodajBtn} />
           </View>
+          {dokumenty.includes(CHIP_WYKAZU) ? (
+            <View style={styles.wykazBlok}>
+              <Text style={styles.wykazOpis}>Wykaz złożymy z Twojego Banku referencji (tylko doświadczenie aktualne na dziś):</Text>
+              <Button title="Wykaz robót budowlanych" variant="ghost" onPress={() => udostepnijWykaz('roboty')} />
+              <Button title="Wykaz usług" variant="ghost" onPress={() => udostepnijWykaz('uslugi')} />
+              <Button title="Wykaz dostaw" variant="ghost" onPress={() => udostepnijWykaz('dostawy')} />
+            </View>
+          ) : null}
           {dokumenty.filter((d) => !TYPOWE_DOKUMENTY.includes(d)).map((d) => (
             <Pressable key={d} onPress={() => przelaczDokument(d)} style={styles.wlasny} accessibilityRole="button" accessibilityLabel={`Usuń ${d}`}>
               <Text style={styles.wlasnyTekst}>• {d}</Text>
@@ -242,6 +271,8 @@ const tworzStyleOdpowiedzi = tworzStyle((k) => ({
   wlasny: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
   wlasnyTekst: { flex: 1, fontSize: 14, color: k.text },
   wlasnyUsun: { fontSize: 13, color: k.danger, fontWeight: '600' },
+  wykazBlok: { backgroundColor: k.surface, borderRadius: radius.md, borderWidth: 1, borderColor: k.border, padding: spacing.md, marginBottom: spacing.sm, gap: spacing.sm },
+  wykazOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19 },
   punkt: { borderRadius: radius.md, borderWidth: 1, padding: spacing.md, marginBottom: spacing.sm },
   punktTekst: { fontSize: 13, lineHeight: 19, fontWeight: '600' },
   karta: { backgroundColor: k.surface, borderRadius: radius.md, borderWidth: 1, borderColor: k.border, padding: spacing.md, marginBottom: spacing.sm },
