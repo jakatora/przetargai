@@ -9,7 +9,8 @@ import { zapamietajWklejonaSwz, stanTresciSwz } from '../services/trescSwz.js';
 import { odswiezPostepowanie } from '../jobs/monitorSwz.js';
 import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
 import { terminPytanSwz } from '../lib/terminPytanSwz.js';
-import { trescDokumentu, bladLimituTresci } from '../lib/limityTresci.js';
+import { trescDokumentu, bladLimituTresci, MAKS_ZNAKOW_TRESCI } from '../lib/limityTresci.js';
+import { ekstrahujZPdf, normalizujTekst, MAKS_BAJTOW_PDF } from '../lib/umowaEkstrakcja.js';
 
 /*
  * Radar SWZ — uruchomienie ANALIZY treści SWZ dla danego postępowania
@@ -136,13 +137,32 @@ router.get('/postepowania/:id', authRequired, ah(async (req, res) => {
 // przekroczenie to 413 z komunikatem PL, zanim cokolwiek trafi do płatnego AI.
 const analizaSchema = z.object({
   swz: trescDokumentu().optional(),
+  // SWZ jako PLIK PDF (2026-10-24): użytkownik wybiera plik z telefonu zamiast kopiować
+  // tekst z PDF-a. Ekstrakcja tą samą biblioteką co umowa (lib/umowaEkstrakcja.js).
+  swz_pdf_base64: z.string().max(Math.ceil(MAKS_BAJTOW_PDF * 4 / 3) + 4).optional(),
   umowa: trescDokumentu().optional(),
   przedmiar: trescDokumentu().optional(),
 });
 
 /** Czy żądanie w ogóle niesie coś do analizy (SWZ, umowa lub przedmiar). */
 function maTresc(d) {
-  return Boolean(d.swz?.trim()) || Boolean(d.umowa?.trim()) || Boolean(d.przedmiar?.trim());
+  return Boolean(d.swz?.trim()) || Boolean(d.swz_pdf_base64?.trim()) || Boolean(d.umowa?.trim()) || Boolean(d.przedmiar?.trim());
+}
+
+/**
+ * PDF → tekst SWZ. Skan bez warstwy tekstowej daje pustkę — to 400 z jasnym komunikatem,
+ * nie „analiza niczego". Wklejony `swz` ma pierwszeństwo przed plikiem.
+ */
+async function swzZPliku(d) {
+  if (d.swz?.trim() || !d.swz_pdf_base64?.trim()) return d.swz;
+  const tekst = normalizujTekst(await ekstrahujZPdf(d.swz_pdf_base64));
+  if (!tekst.trim()) {
+    throw badRequest('Z tego PDF-a nie da się odczytać tekstu (to skan bez warstwy tekstowej). Wklej treść SWZ albo użyj wersji PDF ze strony zamawiającego.');
+  }
+  if (tekst.length > MAKS_ZNAKOW_TRESCI) {
+    throw new AppError(413, 'TRESC_ZA_DLUGA', `Tekst SWZ z pliku ma ${tekst.length} znaków — limit to ${MAKS_ZNAKOW_TRESCI}. Wklej tylko rozdziały o warunkach i dokumentach.`);
+  }
+  return tekst;
 }
 
 router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
@@ -153,6 +173,7 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
   const brakTresci = 'Podaj treść do analizy: "swz", "umowa" lub "przedmiar" (co najmniej jedno).';
   if (!parsed.success) throw bladLimituTresci(parsed.error) ?? badRequest(brakTresci);
   if (!maTresc(parsed.data)) throw badRequest(brakTresci);
+  parsed.data.swz = await swzZPliku(parsed.data);
 
   /*
    * Wklejoną SWZ zapamiętujemy PRZED płatnym AI (2026-10-03). Dopasowanie sejfu do SWZ

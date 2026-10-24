@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Share } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
+import * as DocumentPicker from 'expo-document-picker';
+import { czytajPlikBase64, sprawdzPlikSwz } from '../lib/plikBase64';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -141,6 +143,8 @@ export default function RadarSwzScreen({ route, navigation }) {
 
   // Akcje w detalu: analiza (generuje pytania), odświeżenie (nowa wersja SWZ).
   const [swzTekst, setSwzTekst] = useState('');
+  // SWZ jako plik PDF z telefonu — zamiast kopiowania tekstu z PDF-a (backend wyciąga warstwę tekstową).
+  const [plikSwz, setPlikSwz] = useState(null);
   const [analizuje, setAnalizuje] = useState(false);
   const [nowaWersja, setNowaWersja] = useState('');
   const [odswiezam, setOdswiezam] = useState(false);
@@ -279,13 +283,29 @@ export default function RadarSwzScreen({ route, navigation }) {
     }
   }
 
+  async function wybierzPlikSwz() {
+    setBladAkcji(null);
+    try {
+      const wybor = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: false, type: 'application/pdf' });
+      if (wybor.canceled || !wybor.assets?.length) return;
+      const plik = wybor.assets[0];
+      const kontrola = sprawdzPlikSwz(plik);
+      if (!kontrola.ok) { setBladAkcji(kontrola.blad); return; }
+      setPlikSwz({ nazwa: plik.name, base64: await czytajPlikBase64(plik.uri) });
+    } catch (err) {
+      setBladAkcji(err.message);
+    }
+  }
+
   async function analizuj() {
-    if (!swzTekst.trim() || analizuje) return;
+    const maTekst = Boolean(swzTekst.trim());
+    if ((!maTekst && !plikSwz) || analizuje) return;
     setAnalizuje(true);
     setBladAkcji(null);
     try {
-      await api.radarAnalizuj(wybraneId, { swz: swzTekst.trim() });
+      await api.radarAnalizuj(wybraneId, maTekst ? { swz: swzTekst.trim() } : { swz_pdf_base64: plikSwz.base64 });
       setSwzTekst('');
+      setPlikSwz(null);
       await wczytajDetal(wybraneId);
     } catch (err) {
       setBladAkcji(err.message);
@@ -547,7 +567,13 @@ export default function RadarSwzScreen({ route, navigation }) {
           numberOfLines={6}
           inputStyle={styles.inputWielo}
         />
-        <Button title="Wygeneruj pytania" onPress={analizuj} loading={analizuje} disabled={!swzTekst.trim()} />
+        <Button
+          title={plikSwz ? `Plik: ${plikSwz.nazwa} (zmień)` : 'Albo wybierz plik SWZ (PDF) z telefonu'}
+          variant="ghost"
+          onPress={wybierzPlikSwz}
+          disabled={analizuje}
+        />
+        <Button title="Wygeneruj pytania" onPress={analizuj} loading={analizuje} disabled={!swzTekst.trim() && !plikSwz} />
       </View>
 
       {/* ── 2. Timeline zmian ── */}
