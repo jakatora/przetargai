@@ -54,6 +54,8 @@ import RadarPlanowScreen from '../screens/RadarPlanowScreen';
 import RadarPlanuScreen from '../screens/RadarPlanuScreen';
 import TrenerNegocjacjiScreen from '../screens/TrenerNegocjacjiScreen';
 import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
+import DokumentyOfertyScreen from '../screens/DokumentyOfertyScreen';
+import OdpowiedzNaWezwanieScreen from '../screens/OdpowiedzNaWezwanieScreen';
 import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 import NarzedziaScreen from '../screens/NarzedziaScreen';
 import PrzewodnikStartuScreen from '../screens/PrzewodnikStartuScreen';
@@ -328,6 +330,16 @@ export default function RootNavigator() {
               name="KontrolaOferty"
               component={KontrolaOfertyScreen}
               options={{ title: 'Kontrola przed wysłaniem' }}
+            />
+            <Stack.Screen
+              name="DokumentyOferty"
+              component={DokumentyOfertyScreen}
+              options={{ title: 'Dokumenty do oferty' }}
+            />
+            <Stack.Screen
+              name="OdpowiedzNaWezwanie"
+              component={OdpowiedzNaWezwanieScreen}
+              options={{ title: 'Odpowiedź na wezwanie' }}
             />
             <Stack.Screen
               name="SprawdzarkaCeny"

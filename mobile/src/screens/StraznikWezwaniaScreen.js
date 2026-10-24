@@ -31,7 +31,7 @@ function tonNaTokeny(ton, k) {
   return { tlo: k.neutralneTlo, tekst: k.textMuted };
 }
 
-export default function StraznikWezwaniaScreen({ route }) {
+export default function StraznikWezwaniaScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleStraznika);
   const nazwa = route?.params?.nazwa ?? null;
@@ -162,6 +162,12 @@ export default function StraznikWezwaniaScreen({ route }) {
           </Text>
         </View>
       ) : null}
+
+      <Button
+        title="Napisz odpowiedź na wezwanie (pismo z załącznikami)"
+        variant="ghost"
+        onPress={() => navigation.navigate('OdpowiedzNaWezwanie', { nazwa, termin, dokumenty: dokumenty.map((d) => d.nazwa) })}
+      />
 
       <Text style={styles.stopka}>
         Odliczamy do chwili, którą podasz — zweryfikuj godzinę i strefę na platformie. To

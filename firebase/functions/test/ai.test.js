@@ -64,6 +64,17 @@ test('parseScore — JSON otoczony prozą (model lubi tłumaczyć)', () => {
   assert.equal(r.score, 42);
 });
 
+test('parseScore — odpowiedź UCIĘTA przez max_tokens (brak domykającego nawiasu) ratuje wynik i początek uzasadnienia', () => {
+  // Dokładnie taki tekst trafił do `nieczytelna_odpowiedz` 2026-10-24: model w ```json, długie uzasadnienie, limit 300 tokenów.
+  const r = parseScore('```json\n{\n  "score": 85,\n  "reasoning": "Przetarg dotyczy robót budowlanych w formule „zaprojektuj i wybuduj\\" z szerokim zakresem prac, co idealnie pasuje do profilu firmy. Kody CPV przetargu (45');
+  assert.ok(r, 'ucięta odpowiedź nie może przepaść');
+  assert.equal(r.score, 85);
+  assert.match(r.reasoning, /^Przetarg dotyczy robót budowlanych/);
+  assert.match(r.reasoning, /„zaprojektuj i wybuduj"/, 'escape cudzysłowu odwinięty');
+  assert.equal(parseScore('```json\n{\n  "reasoning": "bez wyniku'), null, 'bez score nie ma czego ratować');
+  assert.equal(parseScore('score: 85 bez JSON'), null, 'luźny tekst bez klucza JSON nadal odrzucany');
+});
+
 test('parseScore — wynik poza zakresem jest PRZYCINANY, nie odrzucany', () => {
   assert.equal(parseScore('{"score": 150, "reasoning": "x"}').score, 100);
   assert.equal(parseScore('{"score": -20, "reasoning": "x"}').score, 0);
