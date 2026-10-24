@@ -25,6 +25,9 @@ const PLIKI = [
   'components/MatchCard.js',
   'screens/MatchFeedScreen.js',
   'screens/MatchDetailScreen.js',
+  // Selekcja pod klienta (2026-10-23) — te same zasady: tekst tylko przez t(…).
+  'components/PanelWyboru.js',
+  'components/ArkuszOdrzucenia.js',
 ];
 
 const POLSKIE = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;

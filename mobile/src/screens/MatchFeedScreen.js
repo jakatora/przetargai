@@ -28,6 +28,7 @@ import * as storage from '../lib/storage';
 import { spacing, radius } from '../theme';
 import { useJezyk } from '../context/JezykContext';
 import KatalogWszystkich from '../components/KatalogWszystkich';
+import PanelWyboru from '../components/PanelWyboru';
 import { NastepnyKrok } from '../components/Wyjasnienie';
 import { TRYBY, TRYB_DOMYSLNY, KLUCZ_TRYBU, normalizujTryb } from '../lib/katalogPrzetargow';
 
@@ -96,6 +97,9 @@ export default function MatchFeedScreen({ navigation }) {
   // `null` = jeszcze nie wiadomo, czy user ma ustawiony radar (band się nie miga).
   const [podprogowe, setPodprogowe] = useState([]);
   const [podprogowePrefs, setPodprogowePrefs] = useState(null);
+  // Selekcja pod klienta (spec §10): dzisiejsze wybrane są w panelu, nie dublujemy ich w historii.
+  const [wybraneDzis, setWybraneDzis] = useState(() => new Set());
+  const [odswiezPanel, setOdswiezPanel] = useState(0);
 
   // Próg filtra i sortowanie przeżywają restart aplikacji.
   useEffect(() => {
@@ -156,13 +160,13 @@ export default function MatchFeedScreen({ navigation }) {
   const widoczne = useMemo(() => {
     // Najpierw status terminu (Aktywne domyślnie chowa przeterminowane) — reszta filtrów
     // i grupowanie działają już na wybranej „zakładce".
-    const poStatusie = filtrujStatusTerminu(matches, statusTerminu);
+    const poStatusie = filtrujStatusTerminu(matches.filter((m) => !wybraneDzis.has(m.id)), statusTerminu);
     const poProgu = filtrujPoProgu(poStatusie, prog);
     const poMalej = filtrujMalaFirma(poProgu, malaFirma);
     const poTekscie = filtrujTekst(poMalej, szukajFiltr);
     const poWoj = filtrujWojewodztwo(poTekscie, woj);
     return sortujDopasowania(poWoj, sort);
-  }, [matches, prog, szukajFiltr, sort, malaFirma, woj, statusTerminu]);
+  }, [matches, prog, szukajFiltr, sort, malaFirma, woj, statusTerminu, wybraneDzis]);
 
   // Jedna stabilna funkcja dla wszystkich kart — warunek, żeby memo(MatchCard) działało.
   const otworzPrzetarg = useCallback(
@@ -215,6 +219,7 @@ export default function MatchFeedScreen({ navigation }) {
       setMatches(data.matches || []);
       setKursor(data.next_before ?? null);
       setPodpowiedz(data.podpowiedz ?? null);
+      setOdswiezPanel((n) => n + 1);
       setError(null);
       // Statystyki poboczne — nie mogą wywalić feedu, gdy padną.
       api.getStatystyki().then((s) => setZacheta(s.zacheta)).catch(() => {});
@@ -346,6 +351,12 @@ export default function MatchFeedScreen({ navigation }) {
         )}
         ListHeaderComponent={
           <View>
+            <PanelWyboru
+              navigation={navigation}
+              odswiezenie={odswiezPanel}
+              onWybraneIds={setWybraneDzis}
+              onUpgrade={przejdzNaStandard}
+            />
             {/* Baner „nowe od ostatniej wizyty" — to jest „powiadomienie" wewnątrz apki. */}
             {noweLacznie > 0 ? (
               <View style={styles.noweBaner}>
