@@ -128,19 +128,37 @@ function buildUserPrompt(company, tender) {
  * „nie wiem" i wołający degraduje do heurystyki.
  */
 export function parseScore(text) {
-  const match = String(text).match(/\{[\s\S]*\}/);
-  if (!match) return null;
-  try {
-    const obj = JSON.parse(match[0]);
-    const score = Math.round(Number(obj.score));
-    if (!Number.isFinite(score)) return null;
-    return {
-      score: Math.max(0, Math.min(100, score)),
-      reasoning: String(obj.reasoning ?? '').slice(0, 800),
-    };
-  } catch {
-    return null;
+  const tekst = String(text);
+  const match = tekst.match(/\{[\s\S]*\}/);
+  if (match) {
+    try {
+      const obj = JSON.parse(match[0]);
+      const score = Math.round(Number(obj.score));
+      if (!Number.isFinite(score)) return null;
+      return {
+        score: Math.max(0, Math.min(100, score)),
+        reasoning: String(obj.reasoning ?? '').slice(0, 800),
+      };
+    } catch {
+      /* niedomknięty / uszkodzony JSON — próbujemy ratunku niżej */
+    }
   }
+  /*
+   * Odpowiedź UCIĘTA przez `max_tokens` (2026-10-24): model podał `"score": 85` i zaczął
+   * długie uzasadnienie, limit 300 tokenów uciął je przed domykającym nawiasem, a parser
+   * odrzucał całość jako „nieczytelną" — dopasowanie szło samą heurystyką, choć ocena
+   * była gotowa. Wynik jest zawsze na początku, więc wyciągamy go wprost; uzasadnienie
+   * bierzemy do miejsca ucięcia (dla użytkownika i tak lepsze niż brak).
+   */
+  const score = tekst.match(/"score"\s*:\s*(-?\d+(?:\.\d+)?)/);
+  if (!score) return null;
+  const zaokr = Math.round(Number(score[1]));
+  if (!Number.isFinite(zaokr)) return null;
+  const reasoning = tekst.match(/"reasoning"\s*:\s*"((?:[^"\\]|\\.)*)/)?.[1] ?? '';
+  return {
+    score: Math.max(0, Math.min(100, zaokr)),
+    reasoning: reasoning.replace(/\\"/g, '"').slice(0, 800),
+  };
 }
 
 /**
