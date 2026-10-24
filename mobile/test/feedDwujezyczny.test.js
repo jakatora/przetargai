@@ -28,6 +28,8 @@ const PLIKI = [
   // Selekcja pod klienta (2026-10-23) — te same zasady: tekst tylko przez t(…).
   'components/PanelWyboru.js',
   'components/ArkuszOdrzucenia.js',
+  'screens/KartaFirmyScreen.js',
+  'screens/OdrzuconeScreen.js',
 ];
 
 const POLSKIE = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;
