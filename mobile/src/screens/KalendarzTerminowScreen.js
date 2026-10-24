@@ -13,6 +13,8 @@ import {
   ulozKalendarz, kartaNastepnegoKroku, opisPozycji, opisPrzypomnienia,
 } from '../lib/kalendarzPrzetargu';
 import { ogloszenieZKalendarza } from '../lib/skrotOgloszenia';
+import * as storage from '../lib/storage';
+import { banerWezwania } from '../lib/wezwanieUzupelnienie';
 
 /*
  * KALENDARZ TERMINÓW (etap 5, P1-7).
@@ -46,8 +48,13 @@ export default function KalendarzTerminowScreen({ navigation, route }) {
   const [ladowanie, setLadowanie] = useState(true);
   const [odswiezanie, setOdswiezanie] = useState(false);
   const [blad, setBlad] = useState(null);
+  // Aktywne wezwanie ze strażnika (magazyn lokalny) — ma być widoczne obok terminów składania.
+  const [wezwanie, setWezwanie] = useState(null);
 
   const wczytaj = useCallback(async ({ odswiez = false } = {}) => {
+    storage.getItem('przetargai.wezwanie')
+      .then((s) => setWezwanie(s ? banerWezwania(JSON.parse(s)) : null))
+      .catch(() => setWezwanie(null));
     if (odswiez) setOdswiezanie(true);
     try {
       setDane(await api.getKalendarz());
@@ -110,6 +117,21 @@ export default function KalendarzTerminowScreen({ navigation, route }) {
       <Text style={styles.tytul}>{t('Kalendarz terminów', 'Deadline calendar')}</Text>
 
       {/* KARTA NASTĘPNEGO KROKU — główny element ekranu: co robię najbliżej i do kiedy. */}
+      {wezwanie?.pokaz ? (
+        <Pressable
+          onPress={() => navigation.navigate('StraznikWezwania')}
+          accessibilityRole="button"
+          style={[styles.karta, { borderColor: wezwanie.ton === 'danger' ? kolory.danger : wezwanie.ton === 'ostrzezenie' ? kolory.ostrzezenieTekst : kolory.border, borderWidth: 2 }]}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '800', color: wezwanie.ton === 'danger' ? kolory.danger : kolory.text }}>{wezwanie.etykieta}</Text>
+          <Text style={{ fontSize: 12, color: kolory.textMuted, marginTop: 4 }}>
+            {wezwanie.brakujace > 0
+              ? t(`Brakuje ${wezwanie.brakujace} dokumentów — otwórz strażnika wezwania`, `${wezwanie.brakujace} documents missing — open the request guard`)
+              : t('Otwórz strażnika wezwania', 'Open the request guard')}
+          </Text>
+        </Pressable>
+      ) : null}
+
       <View style={[styles.kartaKrok, { borderColor: kolorTonu(kolory, karta.ton) }]}>
         <Text style={styles.krokEtykieta}>{t('Następny krok', 'Next step')}</Text>
         <Text style={[styles.krokCo, { color: kolorTonu(kolory, karta.ton) }]}>{karta.co}</Text>
