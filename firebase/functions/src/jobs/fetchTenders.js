@@ -10,6 +10,7 @@ import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
 import { scalMiedzyZrodlami } from '../lib/dedupZrodel.js';
 import { pustyLicznikAi, zbierajStatystykiAi, ocenStanAi } from '../lib/stanAi.js';
 import { alarmujAwarieAi } from './alarmAi.js';
+import { alarmujCichePusteZrodla } from './alarmZrodla.js';
 
 /**
  * Rejestr źródeł ogłoszeń (D-039). Każde źródło zwraca ZNORMALIZOWANE przetargi
@@ -111,8 +112,14 @@ async function zapiszSlad(wynik) {
  * Alarm idzie PO zapisie śladu: `/health` ma pokazać awarię nawet wtedy, gdy mail
  * się nie wyśle. Awaria alarmu nie może wywrócić cyklu — logujemy i jedziemy dalej.
  */
-async function zapiszSladZAi(wynik, alarmujAi) {
+async function zapiszSladZAi(wynik, alarmujAi, alarmujZrodla = alarmujCichePusteZrodla) {
   await zapiszSlad(wynik);
+  // Cicho puste BZP/TED (2026-10-24) — osobny alarm, awaria nie wywraca cyklu.
+  try {
+    await alarmujZrodla({ wynik, zakonczonoIso: new Date().toISOString() });
+  } catch (err) {
+    logger.error({ err: err.message }, 'fetchTenders: alarm o cicho pustym źródle nie powiódł się');
+  }
   if (ocenStanAi(wynik.ai) === false) {
     logger.error({ ai: wynik.ai }, 'fetchTenders: oceny AI w większości NIE powiodły się — dopasowania na heurystyce');
   }
@@ -132,7 +139,7 @@ async function zapiszSladZAi(wynik, alarmujAi) {
  *   (`pageSize` usunięty — rozmiar okna nie jest już decyzją wołającego, bo BZP
  *   wymaga cięcia dzień po dniu; patrz komentarz przy `domyslneZrodla`.)
  */
-export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = alarmujAwarieAi } = {}) {
+export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = alarmujAwarieAi, alarmujZrodla = alarmujCichePusteZrodla } = {}) {
   const startedAt = Date.now();
   const statystyki = {};
   const zebrane = [];
@@ -315,7 +322,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
       skipped: pominiete, zduplikowane_miedzy_zrodlami: scalone.duplikaty,
       matchesCreated: 0, durationMs: Date.now() - startedAt,
       zrodla: statystyki, ai: statystykiAi(),
-    }, alarmujAi);
+    }, alarmujAi, alarmujZrodla);
   }
 
   // Maile próby Standard (spec §15) — po selekcji; awaria nie wywraca cyklu.
@@ -335,5 +342,5 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     zduplikowane_miedzy_zrodlami: scalone.duplikaty,
     matchesCreated, durationMs: Date.now() - startedAt, zrodla: statystyki,
     ai: statystykiAi(),
-  }, alarmujAi);
+  }, alarmujAi, alarmujZrodla);
 }
