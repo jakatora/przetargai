@@ -664,6 +664,8 @@ export const tenders = {
       // Wymiary do statystyk wyników (R17).
       rodzaj: t.rodzaj ?? null,
       wojewodztwo: t.wojewodztwo ?? null,
+      // Warunki udziału (spec §6.1) — wycinek ≤3000 znaków albo {tekst:null, zrodlo:'swz'}.
+      warunki_udzialu: t.warunki_udzialu ?? null,
       /*
        * Linki do TEGO SAMEGO postępowania w innych rejestrach (etap 3). Zamawiający
        * współfinansowany z UE ogłasza je i w BZP, i w Bazie Konkurencyjności, a ofertę
@@ -694,6 +696,18 @@ export const tenders = {
       if (err.code === 6 /* ALREADY_EXISTS */) {
         const snap = await ref.get();
         const dane = snap.data() ?? {};
+        /*
+         * Selekcja pod klienta (spec §6.1): warunki udziału i województwo TED pojawiły się
+         * po wdrożeniu — dopisujemy je raz, gdy dokument ich nie ma. Dalsze uzupełnienia
+         * poniżej działają jak dotąd (każde zwraca dokument już z tymi polami).
+         */
+        const doUzupelnienia = {};
+        if (t.warunki_udzialu && dane.warunki_udzialu == null) doUzupelnienia.warunki_udzialu = t.warunki_udzialu;
+        if (t.wojewodztwo && !dane.wojewodztwo) doUzupelnienia.wojewodztwo = t.wojewodztwo;
+        if (Object.keys(doUzupelnienia).length) {
+          await ref.update(doUzupelnienia);
+          Object.assign(dane, doUzupelnienia);
+        }
         /*
          * Uzupełnienie brakującego meta (audyt R12). `upsert` jest create-only, więc
          * pola dodane później (wadium/kryterium/części) NIGDY nie trafiały na przetargi
@@ -739,7 +753,7 @@ export const tenders = {
           await ref.update(meta);
           return { tender: { id, ...dane, ...meta }, created: false };
         }
-        return { tender: userSnap(snap), created: false };
+        return { tender: { id, ...dane }, created: false };
       }
       throw err;
     }

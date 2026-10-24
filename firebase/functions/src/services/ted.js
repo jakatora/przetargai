@@ -2,6 +2,8 @@ import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
 import { wyciagnijNip } from '../lib/nip.js';
+import { kodWojewodztwaZNuts } from '../lib/nuts.js';
+import { warunkiZTed } from '../lib/warunkiUdzialu.js';
 
 /*
  * TED (Tenders Electronic Daily) — dziennik zamówień publicznych UE.
@@ -30,6 +32,11 @@ const POLA = [
   'classification-cpv',
   'publication-date',
   'deadline-receipt-tender-date-lot',
+  // Selekcja pod klienta (spec §6.1): warunki udziału (BT-750) i województwo z NUTS.
+  'selection-criterion-description-lot',
+  'selection-criteria-source',
+  'buyer-country-sub',
+  'place-of-performance-subdiv-lot',
 ];
 
 /** Pierwsza wartość z obiektu wielojęzycznego TED — polski przed innymi. */
@@ -83,6 +90,10 @@ export function mapujOgloszenieTed(notice) {
     postepowanie_id: pierwszaWartosc(notice['procedure-identifier']),
     zamawiajacy_nip: wyciagnijNip(notice['buyer-identifier']),
     // Zapisujemy tylko pobrane pola (nie pełny XML) — raw służy podglądowi.
+    // Ta sama kolejność co w Radarze planów (services/tedPlany.js): siedziba zamawiającego, potem miejsce realizacji.
+    wojewodztwo: kodWojewodztwaZNuts(pierwszaWartosc(notice['buyer-country-sub']))
+      ?? kodWojewodztwaZNuts(pierwszaWartosc(notice['place-of-performance-subdiv-lot'])),
+    warunki_udzialu: warunkiZTed(notice),
     raw: notice,
   };
 }
