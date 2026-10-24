@@ -81,6 +81,46 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "evaluations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "decyzja",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "evaluated_at",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "evaluations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "decyzja",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "przyczyna",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "evaluated_at",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

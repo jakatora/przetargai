@@ -1187,6 +1187,33 @@ export const tenders = {
 
 const matchCol = (userId) => db().collection('users').doc(userId).collection('matches');
 
+/** Rekord dopasowania z ZDENORMALIZOWANYMI polami przetargu (jedno źródło kształtu). */
+function rekordDopasowania({ userId, tenderId, score, reasoning, scorer, tender, teraz = nowIso() }) {
+  return {
+    user_id: userId,
+    tender_id: tenderId,
+    confidence_score: Math.round(score),
+    match_reasoning: reasoning ?? null,
+    scorer,
+    notified: 0,
+    created_at: teraz,
+    tender_title: tender?.title ?? null,
+    tender_organization: tender?.organization ?? null,
+    tender_budget: tender?.budget ?? null,
+    tender_currency: tender?.currency ?? 'PLN',
+    tender_deadline: tender?.deadline ?? null,
+    tender_url: tender?.url ?? null,
+    tender_cpv: tender?.cpv_main ?? null,
+    tender_source: tender?.source ?? 'bzp',
+    tender_wojewodztwo: tender?.wojewodztwo ?? null,
+    tender_wadium_wymagane: tender?.wadium_wymagane ?? null,
+    tender_wadium_kwota: tender?.wadium_kwota ?? null,
+    tender_wadium_wiele_czesci: tender?.wadium_wiele_czesci ?? false,
+    tender_kryterium_oceny: tender?.kryterium_oceny ?? null,
+    tender_liczba_czesci: tender?.liczba_czesci ?? null,
+  };
+}
+
 export const matches = {
   /**
    * Tworzy dopasowanie. docId = tenderId → duplikat niemożliwy z konstrukcji
@@ -1194,29 +1221,7 @@ export const matches = {
    */
   async create({ userId, tenderId, score, reasoning, scorer = 'ai', tender }) {
     const ref = matchCol(userId).doc(tenderId);
-    const record = {
-      user_id: userId,
-      tender_id: tenderId,
-      confidence_score: Math.round(score),
-      match_reasoning: reasoning ?? null,
-      scorer,
-      notified: 0,
-      created_at: nowIso(),
-      tender_title: tender?.title ?? null,
-      tender_organization: tender?.organization ?? null,
-      tender_budget: tender?.budget ?? null,
-      tender_currency: tender?.currency ?? 'PLN',
-      tender_deadline: tender?.deadline ?? null,
-      tender_url: tender?.url ?? null,
-      tender_cpv: tender?.cpv_main ?? null,
-      tender_source: tender?.source ?? 'bzp',
-      tender_wojewodztwo: tender?.wojewodztwo ?? null,
-      tender_wadium_wymagane: tender?.wadium_wymagane ?? null,
-      tender_wadium_kwota: tender?.wadium_kwota ?? null,
-      tender_wadium_wiele_czesci: tender?.wadium_wiele_czesci ?? false,
-      tender_kryterium_oceny: tender?.kryterium_oceny ?? null,
-      tender_liczba_czesci: tender?.liczba_czesci ?? null,
-    };
+    const record = rekordDopasowania({ userId, tenderId, score, reasoning, scorer, tender });
     try {
       await ref.create(record);
       return { created: true, match: { id: tenderId, ...record } };
@@ -1240,29 +1245,7 @@ export const matches = {
    */
   async createWithEvaluation({ userId, tenderId, score, reasoning, scorer = 'ai', tender, criteriaHash = null }) {
     const matchRef = matchCol(userId).doc(tenderId);
-    const record = {
-      user_id: userId,
-      tender_id: tenderId,
-      confidence_score: Math.round(score),
-      match_reasoning: reasoning ?? null,
-      scorer,
-      notified: 0,
-      created_at: nowIso(),
-      tender_title: tender?.title ?? null,
-      tender_organization: tender?.organization ?? null,
-      tender_budget: tender?.budget ?? null,
-      tender_currency: tender?.currency ?? 'PLN',
-      tender_deadline: tender?.deadline ?? null,
-      tender_url: tender?.url ?? null,
-      tender_cpv: tender?.cpv_main ?? null,
-      tender_source: tender?.source ?? 'bzp',
-      tender_wojewodztwo: tender?.wojewodztwo ?? null,
-      tender_wadium_wymagane: tender?.wadium_wymagane ?? null,
-      tender_wadium_kwota: tender?.wadium_kwota ?? null,
-      tender_wadium_wiele_czesci: tender?.wadium_wiele_czesci ?? false,
-      tender_kryterium_oceny: tender?.kryterium_oceny ?? null,
-      tender_liczba_czesci: tender?.liczba_czesci ?? null,
-    };
+    const record = rekordDopasowania({ userId, tenderId, score, reasoning, scorer, tender });
     const evalRef = evalCol(userId).doc(tenderId);
     const slad = { score: Math.round(score), scorer, criteria_hash: criteriaHash, evaluated_at: nowIso() };
 
@@ -1377,6 +1360,98 @@ export const matches = {
     const batch = db().batch();
     for (const id of matchIds) batch.update(matchCol(userId).doc(id), { notified: 1 });
     await batch.commit();
+  },
+
+  /**
+   * Wybrany przetarg (spec §4.5): dopasowanie z uzasadnieniem + ślad „wybrany” jednym batchem.
+   * Gdy dopasowanie już istnieje (wybór z dnia awarii AI, sprzed wdrożenia), aktualizujemy
+   * ocenę BEZ ruszania `created_at` i `notified` — przetarg nie wraca jako „nowy”.
+   * `zapiszSlad: false` = decyzja tymczasowa (awaria AI): bez śladu, AI oceni jutro.
+   */
+  async utworzWybrany({ userId, tender, score, punkty, scorer, ocenaBezAi, criteriaHash, zapiszSlad, teraz = nowIso() }) {
+    const matchRef = matchCol(userId).doc(tender.id);
+    const evalRef = evalCol(userId).doc(tender.id);
+    const record = {
+      ...rekordDopasowania({ userId, tenderId: tender.id, score, reasoning: punkty.join(' '), scorer, tender, teraz }),
+      uzasadnienie: punkty,
+      ocena_bez_ai: Boolean(ocenaBezAi),
+      odrzucony_przez_klienta: null,
+      odrzucony_przez_pracownika: null,
+      warunki: null,
+    };
+    const slad = {
+      score: Math.round(score), scorer, criteria_hash: criteriaHash, evaluated_at: teraz,
+      decyzja: 'wybrany', przyczyna: null, etap: scorer === 'ai' ? 'ai' : (scorer === 'klient' ? 'klient' : 'heurystyka'), szczegol: null,
+    };
+
+    const batch = db().batch();
+    batch.create(matchRef, record);
+    if (zapiszSlad) batch.set(evalRef, slad);
+    try {
+      await batch.commit();
+      return { created: true, match: { id: tender.id, ...record } };
+    } catch (err) {
+      if (err.code !== 6 /* ALREADY_EXISTS */) throw err;
+      await matchRef.update({
+        confidence_score: Math.round(score), match_reasoning: punkty.join(' '), scorer,
+        uzasadnienie: punkty, ocena_bez_ai: Boolean(ocenaBezAi), odrzucony_przez_pracownika: null,
+      });
+      if (zapiszSlad) await evalRef.set(slad);
+      return { created: false, match: null };
+    }
+  },
+
+  /** Odrzucenie przez klienta (przycisk „Odrzuć”). null = brak takiego dopasowania. */
+  async oznaczOdrzuconyPrzezKlienta(userId, matchId, { przyczyna, komentarz = null, teraz = nowIso() }) {
+    const ref = matchCol(userId).doc(matchId);
+    const doc = await ref.get();
+    if (!doc.exists) return null;
+    const odrzucenie = { przyczyna, komentarz: komentarz ?? null, o: teraz };
+    await ref.update({ odrzucony_przez_klienta: odrzucenie });
+    return { id: doc.id, ...doc.data(), odrzucony_przez_klienta: odrzucenie };
+  },
+
+  /** Odrzucenie wybranego przez selekcję (warunki udziału, późniejsza ocena AI) + ślad z danymi do listy. */
+  async oznaczOdrzuconyPrzezPracownika(userId, tenderId, { przyczyna, szczegol = null, etap, criteriaHash, teraz = nowIso() }) {
+    const ref = matchCol(userId).doc(tenderId);
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    const row = doc.data();
+    const batch = db().batch();
+    batch.update(ref, { odrzucony_przez_pracownika: { przyczyna, szczegol, o: teraz } });
+    batch.set(evalCol(userId).doc(tenderId), {
+      score: row.confidence_score ?? null, scorer: row.scorer ?? null, criteria_hash: criteriaHash, evaluated_at: teraz,
+      decyzja: 'odrzucony', przyczyna, etap, szczegol,
+      tytul: row.tender_title ?? null, zamawiajacy: row.tender_organization ?? null, termin: row.tender_deadline ?? null,
+      wartosc: row.tender_budget ?? null, wojewodztwo: row.tender_wojewodztwo ?? null, zrodlo: row.tender_source ?? 'bzp',
+    });
+    await batch.commit();
+    return true;
+  },
+
+  /** Wybór na samej heurystyce (dzień awarii AI), który AI potem odrzuciło, schodzi z „Wybranych”. */
+  async cofnijWyborBezAi(userId, tenderId, { przyczyna, teraz = nowIso() }) {
+    const ref = matchCol(userId).doc(tenderId);
+    const doc = await ref.get();
+    if (!doc.exists || doc.data().ocena_bez_ai !== true || doc.data().odrzucony_przez_pracownika) return false;
+    await ref.update({ odrzucony_przez_pracownika: { przyczyna, szczegol: null, o: teraz } });
+    return true;
+  },
+
+  async zapiszWarunki(userId, matchId, warunki) {
+    await matchCol(userId).doc(matchId).update({ warunki });
+  },
+
+  /** Wybrane od chwili `odIso` (np. początek doby), bez odrzuconych — „Dziś wybrane”. */
+  async wybraneOd(userId, odIso) {
+    const snap = await matchCol(userId).where('created_at', '>=', odIso).orderBy('created_at', 'desc').limit(200).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      .filter((r) => !r.odrzucony_przez_klienta && !r.odrzucony_przez_pracownika);
+  },
+
+  /** Wybrane od `odIso`, o których klient jeszcze nie wie (`notified !== 1`). */
+  async doPowiadomienia(userId, odIso) {
+    return (await this.wybraneOd(userId, odIso)).filter((r) => r.notified !== 1);
   },
 };
 
@@ -1727,6 +1802,112 @@ export const evaluations = {
         .filter((s) => s.exists && (criteriaHash === undefined || s.data().criteria_hash === criteriaHash))
         .map((s) => s.id),
     );
+  },
+
+  /** Decyzja selekcji (spec §4.5). Odrzucony niesie dane przetargu — lista odrzuconych bez JOIN-a. */
+  async zapiszDecyzje(userId, tenderId, { decyzja, przyczyna = null, etap, szczegol = null, score = null, scorer = null,
+    criteriaHash, tender = null, teraz = nowIso() }) {
+    const rekord = {
+      score: score === null ? null : Math.round(score), scorer, criteria_hash: criteriaHash, evaluated_at: teraz,
+      decyzja, przyczyna, etap, szczegol,
+    };
+    if (decyzja === 'odrzucony' && tender) {
+      Object.assign(rekord, {
+        tytul: tender.title ?? null, zamawiajacy: tender.organization ?? null, termin: tender.deadline ?? null,
+        wartosc: typeof tender.budget === 'number' ? tender.budget : null, wojewodztwo: tender.wojewodztwo ?? null,
+        zrodlo: tender.source ?? 'bzp',
+      });
+    }
+    await evalCol(userId).doc(tenderId).set(rekord);
+  },
+
+  async pobierz(userId, tenderId) {
+    const doc = await evalCol(userId).doc(tenderId).get();
+    return doc.exists ? { tender_id: doc.id, ...doc.data() } : null;
+  },
+
+  /** Lista odrzuconych (Standard), od najnowszych, kursorem `evaluated_at|id`. */
+  async odrzucone(userId, { od, przyczyna = null, przed = null, limit = 20 }) {
+    let q = evalCol(userId).where('decyzja', '==', 'odrzucony');
+    if (przyczyna) q = q.where('przyczyna', '==', przyczyna);
+    q = q.where('evaluated_at', '>=', od)
+      .orderBy('evaluated_at', 'desc')
+      .orderBy(FieldPath.documentId(), 'desc');
+    if (przed) {
+      const i = przed.lastIndexOf('|');
+      q = i > 0 ? q.startAfter(przed.slice(0, i), przed.slice(i + 1)) : q.startAfter(przed, '');
+    }
+    const snap = await q.limit(limit).get();
+    return snap.docs.map((d) => ({ tender_id: d.id, ...d.data() }));
+  },
+
+  kursorZ(row) {
+    return row ? `${row.evaluated_at}|${row.tender_id}` : null;
+  },
+};
+
+// ============================ dziennik selekcji ============================
+
+const dziennikRef = (userId, doba) => db().collection('users').doc(userId).collection('dziennik').doc(doba);
+
+/** Raport dnia (spec §4.5): inkrementy z każdego przebiegu; `oczekuje` = stan z ostatniego. */
+export const dziennik = {
+  async dopisz(userId, doba, { przejrzane = 0, wybrane = 0, oczekuje = 0, odrzucone = {}, aiWywolan = 0, teraz = nowIso() }) {
+    const inc = FieldValue.increment;
+    await dziennikRef(userId, doba).set({
+      doba,
+      przejrzane: inc(przejrzane),
+      wybrane: inc(wybrane),
+      ai_wywolan: inc(aiWywolan),
+      oczekuje,
+      // set+merge scala mapy GŁĘBOKO (pamięć: pulapki-firestore-merge) — tu dokładnie tego chcemy.
+      odrzucone: Object.fromEntries(Object.entries(odrzucone).filter(([, n]) => n > 0).map(([k, n]) => [k, inc(n)])),
+      ostatni_przebieg_o: teraz,
+      przebiegi: FieldValue.arrayUnion({ o: teraz, przejrzane, wybrane }),
+    }, { merge: true });
+  },
+
+  async pobierz(userId, doba) {
+    const doc = await dziennikRef(userId, doba).get();
+    return doc.exists ? doc.data() : null;
+  },
+};
+
+/** Dobowy limit porównań warunków udziału (spec §6.2) — osobny licznik, wzór streszczenieQuota. */
+const warunkiQuotaDoc = (userId, day) => db().collection('users').doc(userId).collection('warunki_quota').doc(day);
+
+export const warunkiQuota = {
+  today() { return nowIso().slice(0, 10); },
+  async reserve(userId, limit) {
+    const ref = warunkiQuotaDoc(userId, this.today());
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const calls = doc.exists ? (doc.data().calls ?? 0) : 0;
+      if (calls >= limit) return false;
+      tx.set(ref, { calls: calls + 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+};
+
+/** Mail dnia planu Free (spec §7): rezerwacja przed wysyłką, wzór znacznikDigestu. */
+const mailSelekcjiRef = (userId, doba) => db().collection('users').doc(userId).collection('maile_selekcji').doc(doba);
+
+export const znacznikMailaSelekcji = {
+  async zarezerwuj(userId, doba) {
+    try {
+      await mailSelekcjiRef(userId, doba).create({ stan: 'wysylanie', zarezerwowano_o: nowIso() });
+      return true;
+    } catch (err) {
+      if (err.code === 6 /* ALREADY_EXISTS */) return false;
+      throw err;
+    }
+  },
+  async potwierdz(userId, doba, { emailId = null } = {}) {
+    await mailSelekcjiRef(userId, doba).set({ stan: 'wyslany', wyslano_o: nowIso(), email_id: emailId }, { merge: true });
+  },
+  async zwolnij(userId, doba) {
+    await mailSelekcjiRef(userId, doba).delete();
   },
 };
 
