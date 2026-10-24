@@ -227,6 +227,9 @@ export const api = {
   radarAnalizuj: (id, payload) =>
     request(`/api/przetarg/swz/postepowania/${id}/analiza`, { method: 'POST', body: payload }),
   /** Wchłonięcie nowo opublikowanej wersji SWZ → wersjonowanie + wpis zmiany (diff). */
+  /** Oznacza pytania (np. po udostępnieniu wniosku): { ids: [...], status: 'wyslane' } → { pytania }. */
+  radarPytaniaStatus: (id, payload) =>
+    request(`/api/przetarg/swz/postepowania/${id}/pytania/status`, { method: 'POST', body: payload }),
   radarOdswiez: (id, payload) =>
     request(`/api/przetarg/swz/postepowania/${id}/odswiez`, { method: 'POST', body: payload }),
   /** Odznaczenie/cofnięcie: potwierdza, że zmianę uwzględniono w ofercie. */

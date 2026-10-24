@@ -97,6 +97,57 @@ export const CZYNNIKI_KRYTYCZNE = Object.freeze(
  *   odpowiedziano:number, wszystkich:number}}
  *   Blokada → zawsze 'odpusc'; bez blokady, ale z brakami krytycznymi → 'uzupelnij'.
  */
+/**
+ * Auto-prefill karty z ogłoszenia i profilu firmy (2026-10-24): leniwy użytkownik dostaje
+ * większość sygnałów ustawionych, a sam poprawia tylko to, czego aplikacja nie wie.
+ * ZASADA BEZPIECZEŃSTWA: nigdy nie ustawiamy odpowiedzi BLOKUJĄCEJ („nie zdążę", „nie mam
+ * wadium", „zabraknie gotówki") — to decyzja człowieka; automat co najwyżej ostrzega („ryzyko",
+ * „napięte"). Czysta funkcja: zegar wchodzi parametrem `teraz`.
+ * @returns {{odpowiedzi: object, zrodla: Array<{klucz: string, opis: string}>}}
+ */
+export function prefillKartyDecyzji(we) {
+  const { match, user, wyniki, teraz = Date.now() } = we && typeof we === 'object' ? we : {};
+  const m = match && typeof match === 'object' ? match : {};
+  const t = m.tender && typeof m.tender === 'object' ? m.tender : {};
+  const u = user && typeof user === 'object' ? user : {};
+  const odpowiedzi = {};
+  const zrodla = [];
+
+  const s = m.confidence_score;
+  if (typeof s === 'number') {
+    odpowiedzi.dopasowanie = s >= 70 ? 'wysokie' : s >= 40 ? 'srednie' : 'niskie';
+    zrodla.push({ klucz: 'dopasowanie', opis: `ocena dopasowania ${Math.round(s)}%` });
+  }
+
+  const deadlineMs = t.deadline ? new Date(t.deadline).getTime() : NaN;
+  if (Number.isFinite(deadlineMs) && deadlineMs > teraz) {
+    const dni = Math.floor((deadlineMs - teraz) / 86_400_000);
+    odpowiedzi.termin = dni >= 7 ? 'tak' : 'ryzyko';
+    zrodla.push({ klucz: 'termin', opis: dni >= 7 ? `${dni} dni do składania ofert` : `tylko ${dni} dni do składania — sprawdź, czy zdążysz` });
+  }
+
+  if (t.wadium_wymagane === false) {
+    odpowiedzi.wadium = 'tak';
+    zrodla.push({ klucz: 'wadium', opis: 'zamawiający nie wymaga wadium' });
+  }
+
+  const budzet = Number(t.budget);
+  const maks = Number(u.wartosc_max);
+  if (Number.isFinite(budzet) && budzet > 0 && Number.isFinite(maks) && maks > 0) {
+    odpowiedzi.plynnosc = budzet <= maks ? 'tak' : 'napiete';
+    zrodla.push({ klucz: 'plynnosc', opis: budzet <= maks ? 'wartość w granicach Twojego limitu kontraktu' : 'wartość powyżej limitu kontraktu z profilu — policz płynność' });
+  }
+
+  // Konkurencyjność ze statystyk rozstrzygniętych postępowań tego typu (mediana liczby ofert).
+  const mediana = Number(wyniki?.oferty?.mediana);
+  if (Number.isFinite(mediana) && mediana > 0) {
+    odpowiedzi.konkurencyjnosc = mediana <= 3 ? 'tak' : 'srednio';
+    zrodla.push({ klucz: 'konkurencyjnosc', opis: mediana <= 3 ? `zwykle ${mediana} oferty w takich postępowaniach — mało konkurencji` : `zwykle ${mediana} ofert w takich postępowaniach — będzie ciasno` });
+  }
+
+  return { odpowiedzi, zrodla };
+}
+
 export function ocenStart(odpowiedzi) {
   let sumaP = 0; let sumaW = 0; let odpowiedziano = 0;
   const blokady = [];

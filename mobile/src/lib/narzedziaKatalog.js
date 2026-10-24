@@ -28,6 +28,7 @@ export const KATALOG_NARZEDZI = [
       { ekran: 'KaryUmowne', tytul: 'Kalkulator kar umownych', opis: 'Maksymalne ryzyko kar przed podpisem' },
       { ekran: 'KalkulatorOdsetek', tytul: 'Odsetki za opóźnienie + rekompensata', opis: 'Gdy zamawiający płaci po terminie' },
       { ekran: 'ZabezpieczenieZwrot', tytul: 'Odzyskiwacz zabezpieczenia', opis: 'Zwrot 5% kontraktu po realizacji' },
+      { ekran: 'ZwrotWadium', tytul: 'Wniosek o zwrot wadium', opis: 'Po przegranej, odrzuceniu lub wycofaniu oferty — pismo w 1 klik, zwrot w 7 dni (art. 98 ust. 2)' },
     ],
   },
   {
@@ -63,6 +64,12 @@ export const KATALOG_NARZEDZI = [
       { ekran: 'TrenerNegocjacji', tytul: 'Trener negocjacji i oferty dodatkowej', opis: 'Tryb podstawowy w2/w3 — oferta dodatkowa bez odrzucenia (art. 296)' },
       { ekran: 'RadarSwz', tytul: 'Radar SWZ', opis: 'Pytania do SWZ i zmiany specyfikacji' },
       { ekran: 'PrzeswietlenieUmowy', tytul: 'Prześwietlenie umowy', opis: 'Pułapki i kary przed podpisem' },
+    ],
+  },
+  {
+    kategoria: 'Po wygranej',
+    narzedzia: [
+      { ekran: 'PoWygranej', tytul: 'Po wygranej: pierwsze dni kontraktu', opis: 'Checklista + pisma w 1 klik: zgłoszenie podwykonawcy, zmiana terminu, zwrot zabezpieczenia' },
     ],
   },
   {

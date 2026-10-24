@@ -54,6 +54,7 @@ export const KLUCZE_KONTA = Object.freeze([
 /** Prefiksy kluczy per przetarg. Zapis takiego klucza MUSI przejść przez `zarejestrujKlucz`. */
 export const PREFIKSY_KONTA = Object.freeze([
   'przetargai.kontrola-oferty.', // lib/kontrolaOferty — checklista przed złożeniem
+  'przetargai.dokumenty-oferty.', // lib/dokumentyOferty — cena/termin/sytuacja tej oferty
   'przetargai.sciezka.', // lib/sciezkaDoOferty — ukończone kroki ścieżki
   'przetargai.kontrola-poprzetargowa.', // lib/poprzetargowaKontrola — kontrola po przegranej
 ]);

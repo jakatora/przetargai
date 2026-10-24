@@ -39,3 +39,25 @@ export function orientacyjnaWartosc(cpv, wojewodztwo) {
   const [p25, mediana, p75, n] = zrodlo;
   return { p25, mediana, p75, n, poziom: reg ? 'wojewodztwo' : 'kraj' };
 }
+
+/**
+ * Gdzie Twoja cena leży na tle rynku (widełki P25–mediana–P75 z rozstrzygnięć).
+ * Dla kalkulatora ceny: zamiast samych liczb użytkownik dostaje słowo i ostrzeżenie.
+ * Nie jest to „cena tego przetargu" — reguła jak na karcie: nie zaniżaj oferty.
+ * @returns {{pozycja: 'ponizej_p25'|'ponizej_mediany'|'powyzej_mediany'|'powyzej_p75', ton: string, tekst: string, procentMediany: number}|null}
+ */
+export function pozycjaWzgledemRynku(kwota, rynek) {
+  const k = Number(kwota);
+  if (!rynek || !Number.isFinite(k) || k <= 0 || !Number.isFinite(rynek.mediana) || rynek.mediana <= 0) return null;
+  const procentMediany = Math.round((k / rynek.mediana) * 100);
+  if (k < rynek.p25) {
+    return { pozycja: 'ponizej_p25', ton: 'ostrzezenie', procentMediany, tekst: `Poniżej 25 % rozstrzygnięć (${procentMediany} % mediany) — zamawiający może wezwać do wyjaśnień rażąco niskiej ceny (art. 224). Sprawdź, czy nic nie pominięto.` };
+  }
+  if (k <= rynek.mediana) {
+    return { pozycja: 'ponizej_mediany', ton: 'sukces', procentMediany, tekst: `Poniżej mediany (${procentMediany} % mediany) — cenowo konkurencyjna, a wciąż w widełkach rynku.` };
+  }
+  if (k <= rynek.p75) {
+    return { pozycja: 'powyzej_mediany', ton: 'neutral', procentMediany, tekst: `Powyżej mediany (${procentMediany} % mediany) — zarobisz, ale przy kryterium „cena 100 %" trudno wygrać.` };
+  }
+  return { pozycja: 'powyzej_p75', ton: 'ostrzezenie', procentMediany, tekst: `Powyżej 75 % rozstrzygnięć (${procentMediany} % mediany) — ceną raczej nie wygrasz; licz na kryteria jakościowe albo obniż koszty.` };
+}

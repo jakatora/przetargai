@@ -89,6 +89,28 @@ const PODPOWIEDZI = [
   { klucz: /polis|ubezpiecz/i, tekst: 'Polisa OC: sprawdź sumę gwarancyjną i okres — musi obejmować termin realizacji.' },
 ];
 
+/**
+ * Baner wezwania na Kalendarzu terminów: aktywne wezwanie (termin znany i nie starszy
+ * niż 7 dni po upływie) ma być widoczne tam, gdzie użytkownik patrzy na terminy —
+ * inaczej przegapi je między datami składania ofert.
+ * @param {{termin?: string, dokumenty?: Array}} zapis stan strażnika z magazynu
+ * @returns {{pokaz: boolean, etykieta: string, ton: string, brakujace: number, wszystkie: number}}
+ */
+export function banerWezwania(zapis, teraz = Date.now()) {
+  const z = zapis && typeof zapis === 'object' ? zapis : {};
+  const czas = pozostalyCzas(z.termin, teraz);
+  const status = statusChecklisty(z.dokumenty);
+  const pokaz = czas.znany && czas.ms > -7 * MS_DZIEN;
+  const dokumentyTekst = status.wszystkie ? ` · dokumenty ${status.gotowe}/${status.wszystkie}` : '';
+  return {
+    pokaz,
+    etykieta: pokaz ? `Wezwanie: ${czas.etykieta}${dokumentyTekst}` : '',
+    ton: czas.poTerminie ? 'danger' : czas.ton,
+    brakujace: status.brakujace.length,
+    wszystkie: status.wszystkie,
+  };
+}
+
 /** Zwraca podpowiedź do dokumentu albo '' (brak dopasowania). */
 export function podpowiedzDoDokumentu(nazwa) {
   const n = String(nazwa || '');

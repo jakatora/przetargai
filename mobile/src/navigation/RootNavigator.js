@@ -58,6 +58,8 @@ import TrenerNegocjacjiScreen from '../screens/TrenerNegocjacjiScreen';
 import KontrolaOfertyScreen from '../screens/KontrolaOfertyScreen';
 import DokumentyOfertyScreen from '../screens/DokumentyOfertyScreen';
 import OdpowiedzNaWezwanieScreen from '../screens/OdpowiedzNaWezwanieScreen';
+import ZwrotWadiumScreen from '../screens/ZwrotWadiumScreen';
+import PoWygranejScreen from '../screens/PoWygranejScreen';
 import SprawdzarkaCenyScreen from '../screens/SprawdzarkaCenyScreen';
 import NarzedziaScreen from '../screens/NarzedziaScreen';
 import PrzewodnikStartuScreen from '../screens/PrzewodnikStartuScreen';
@@ -352,6 +354,16 @@ export default function RootNavigator() {
               name="OdpowiedzNaWezwanie"
               component={OdpowiedzNaWezwanieScreen}
               options={{ title: 'Odpowiedź na wezwanie' }}
+            />
+            <Stack.Screen
+              name="ZwrotWadium"
+              component={ZwrotWadiumScreen}
+              options={{ title: 'Wniosek o zwrot wadium' }}
+            />
+            <Stack.Screen
+              name="PoWygranej"
+              component={PoWygranejScreen}
+              options={{ title: 'Po wygranej' }}
             />
             <Stack.Screen
               name="SprawdzarkaCeny"

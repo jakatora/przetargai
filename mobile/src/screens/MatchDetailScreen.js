@@ -92,6 +92,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   const [notatkaZapis, setNotatkaZapis] = useState('idle'); // idle | zapisywanie | zapisano
   // Statystyki wyników (R17) — lekki odczyt, pobierany raz na wejściu (bez kosztu AI).
   const [wyniki, setWyniki] = useState(null);
+  const [wynikiSurowe, setWynikiSurowe] = useState(null); // do auto-prefillu karty decyzji
   // Poprzetargowa kontrola oferty zwycięzcy (podzadanie 6/13) — tylko dla przegranej.
   const [kontrola, setKontrola] = useState(null);
   const [wniosekBusy, setWniosekBusy] = useState(false);
@@ -100,7 +101,7 @@ export default function MatchDetailScreen({ route, navigation }) {
     if (!match?.id) return undefined;
     let aktywny = true;
     api.getWyniki(match.id)
-      .then((d) => { if (aktywny && d.wyniki) setWyniki(opisWyniki(d.wyniki)); })
+      .then((d) => { if (aktywny && d.wyniki) { setWyniki(opisWyniki(d.wyniki)); setWynikiSurowe(d.wyniki); } })
       .catch(() => {});
     return () => { aktywny = false; };
   }, [match?.id]);
@@ -360,7 +361,7 @@ export default function MatchDetailScreen({ route, navigation }) {
 
       <Pressable
         style={styles.decyzjaCta}
-        onPress={() => navigation.navigate('KartaDecyzji', { match })}
+        onPress={() => navigation.navigate('KartaDecyzji', { match, wyniki: wynikiSurowe })}
         accessibilityRole="button"
       >
         <Text style={styles.decyzjaCtaTytul}>{t('⚖️ Startować czy odpuścić?', '⚖️ Bid or pass?')}</Text>
@@ -516,7 +517,7 @@ export default function MatchDetailScreen({ route, navigation }) {
         </Text>
         <Button
           title={t('Kalkulator ceny ofertowej', 'Bid price calculator')}
-          onPress={() => navigation.navigate('KalkulatorCeny', { nazwa: tender.title })}
+          onPress={() => navigation.navigate('KalkulatorCeny', { nazwa: tender.title, rynek: wartoscOrient ?? null, budzet: Number.isFinite(Number(tender.budget)) && Number(tender.budget) > 0 ? Number(tender.budget) : null })}
           variant="ghost"
           style={styles.gap}
         />
@@ -692,6 +693,27 @@ export default function MatchDetailScreen({ route, navigation }) {
         />
       </View>
 
+      {status === 'wygrana' ? (
+        <>
+          <Text style={styles.sectionTitle}>
+            {t('Wygrana! Co teraz', 'You won! What now')}
+          </Text>
+          <View style={styles.card}>
+            <Text style={styles.strPodtytul}>
+              {t(
+                'Pierwsze dni kontraktu to terminy z umowy: zabezpieczenie, polisa, zgłoszenie podwykonawców. Lista, czego pilnować, i trzy pisma gotowe do podpisu.',
+                'The first days of the contract are about contract deadlines: security, insurance, subcontractor notices. A checklist and three letters ready to sign.',
+              )}
+            </Text>
+            <Button
+              title={t('Otwórz „Po wygranej"', 'Open "After winning"')}
+              onPress={() => navigation.navigate('PoWygranej', { match })}
+              style={styles.gap}
+            />
+          </View>
+        </>
+      ) : null}
+
       {status === 'przegrana' ? (
         <>
           <Text style={styles.sectionTitle}>
@@ -704,6 +726,13 @@ export default function MatchDetailScreen({ route, navigation }) {
                 'Bids are public from the opening (attachments no later than 3 days after). Request access to the procurement record and the competing bids — then we will check the winning bid for grounds to appeal to the KIO.',
               )}
             </Text>
+
+            <Button
+              title={t('Odzyskaj wadium — wniosek w 1 klik', 'Get your bid bond back — request in one tap')}
+              onPress={() => navigation.navigate('ZwrotWadium', { match, podstawa: 'wybor_innej' })}
+              variant="ghost"
+              style={styles.gap}
+            />
 
             <View style={styles.kontrolaEtapRzad}>
               <Text style={styles.kontrolaEtapEtykieta}>{t('Etap kontroli', 'Review stage')}</Text>

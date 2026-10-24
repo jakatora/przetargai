@@ -58,6 +58,7 @@ export const KROKI = [
     opis: 'Startujesz z partnerem albo cudzym potencjałem? Dołącz właściwe oświadczenia i zobowiązania (art. 117 / 118).' },
 
   { klucz: 'oferta', faza: 'Oferta', ekran: 'ObronaCeny',
+    dodatkowe: [{ ekran: 'KalkulatorCeny', etykieta: 'Kalkulator ceny z widełkami rynku' }],
     tytul: 'Zbuduj wygrywającą ofertę',
     opis: 'Skalkuluj cenę pod kryteria. Jeśli Twoja cena jest niska — przygotuj uzasadnienie na wypadek zarzutu rażąco niskiej ceny (art. 224).' },
   { klucz: 'tajemnica', faza: 'Oferta', ekran: 'Tajemnica', opcjonalny: true,
@@ -78,10 +79,12 @@ export const KROKI = [
     tytul: 'Pilnuj terminu związania i wadium',
     opis: 'Po złożeniu jesteś związany ofertą — dopilnuj, by wadium pokrywało cały okres, i reaguj na wezwania do przedłużenia.' },
   { klucz: 'wezwania', faza: 'Po złożeniu', ekran: 'StraznikWezwania',
+    dodatkowe: [{ ekran: 'OdpowiedzNaWezwanie', etykieta: 'Odpowiedź na wezwanie w 1 klik' }],
     tytul: 'Reaguj na wezwania w terminie',
     opis: 'Wezwanie do uzupełnienia lub wyjaśnień ma krótki termin — przegapione = odpadasz formalnie. Odlicz czas i skompletuj odpowiedź.' },
 
   { klucz: 'wynik', faza: 'Rozstrzygnięcie', ekran: 'KalkulatorTerminow',
+    dodatkowe: [{ ekran: 'PoWygranej', etykieta: 'Wygrana: pierwsze dni kontraktu i pisma' }, { ekran: 'ZwrotWadium', etykieta: 'Przegrana: wniosek o zwrot wadium' }],
     tytul: 'Sprawdź wynik i rozważ odwołanie',
     opis: 'Po wyborze oferty: jeśli przegrałeś nieznacznie, prześwietl ofertę zwycięzcy (ustaw etap „Przegrana" w szczegółach) i policz termin na odwołanie do KIO.' },
 ];
@@ -160,6 +163,9 @@ export function parametryNarzedzia(ekran, match) {
       return params;
     }
     case 'DokumentyOferty':
+    case 'OdpowiedzNaWezwanie':
+    case 'PoWygranej':
+    case 'ZwrotWadium':
       // Ekran sam mapuje ogłoszenie (`daneZOgloszenia(match.tender)`); bez match działa jako generator ogólny.
       return match ? { match } : {};
     case 'RejestratorOferty':

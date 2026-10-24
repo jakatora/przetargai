@@ -3,7 +3,8 @@ import { View, Text, Pressable } from 'react-native';
 import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
-import { ocenStart, CZYNNIKI, WERDYKTY } from '../lib/kartaDecyzji';
+import { ocenStart, CZYNNIKI, WERDYKTY, prefillKartyDecyzji } from '../lib/kartaDecyzji';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * „STARTOWAĆ CZY ODPUŚCIĆ?" — karta decyzji. Scala sygnały (dopasowanie, warunki,
@@ -14,14 +15,13 @@ export default function KartaDecyzjiScreen({ route }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKarty);
   const match = route?.params?.match ?? null;
+  const { user } = useAuth();
   const nazwa = match?.tender?.title ?? route?.params?.nazwa ?? null;
 
-  // Prefill dopasowania z oceny AI (jeśli weszliśmy z konkretnego przetargu).
-  const [odp, setOdp] = useState(() => {
-    const s = match?.confidence_score;
-    if (s == null) return {};
-    return { dopasowanie: s >= 70 ? 'wysokie' : s >= 40 ? 'srednie' : 'niskie' };
-  });
+  // Auto-prefill z ogłoszenia i profilu (lib): dopasowanie, termin, wadium, płynność —
+  // nigdy odpowiedzi blokujących; użytkownik poprawia tylko to, czego aplikacja nie wie.
+  const [prefill] = useState(() => prefillKartyDecyzji({ match, user, wyniki: route?.params?.wyniki ?? null }));
+  const [odp, setOdp] = useState(() => prefill.odpowiedzi);
 
   const w = ocenStart(odp);
   // „uzupelnij" (2026-09-25): brak odpowiedzi na pytanie krytyczne — neutralny ton zamiast
@@ -41,6 +41,12 @@ export default function KartaDecyzjiScreen({ route }) {
         Zaznacz, jak wygląda każdy sygnał — od razu ocenię, czy warto startować, i wskażę
         czerwone flagi. Lepiej odpuścić na tym ekranie niż po tygodniu pracy nad ofertą.
       </Text>
+
+      {prefill.zrodla.length ? (
+        <Text style={styles.wstep}>
+          Ustawiłem z ogłoszenia: {prefill.zrodla.map((z) => z.opis).join('; ')}. Popraw, jeśli wiesz lepiej.
+        </Text>
+      ) : null}
 
       {w.odpowiedziano > 0 ? (
         <View style={[styles.hero, { backgroundColor: ton.tlo, borderColor: ton.akc }]}>

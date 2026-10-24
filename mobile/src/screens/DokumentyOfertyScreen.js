@@ -19,8 +19,11 @@ import {
   daneZOgloszenia,
   pakietDokumentow,
   coJeszczeDolaczyc,
+  wczytajStanOferty,
+  zapiszStanOferty,
 } from '../lib/dokumentyOferty';
 import { pobierzDanePoNip } from '../lib/danePoNip';
+import { generujSciageJedz } from '../lib/sciagaJedz';
 
 /**
  * „DOKUMENTY DO OFERTY W 1 KLIK" — dane firmy wpisujesz RAZ (zostają w aplikacji),
@@ -48,6 +51,29 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
   const [pelnomocnik, setPelnomocnik] = useState({ imie: '', stanowisko: '', dokument: '' });
   const [udostepnione, setUdostepnione] = useState(() => new Set());
   const [nipStan, setNipStan] = useState({ laduje: false, komunikat: null, ok: false });
+  const tenderId = match?.tender?.id ?? null;
+  const [stanOfertyWczytany, setStanOfertyWczytany] = useState(!tenderId);
+
+  // Stan „tej oferty" per przetarg — po powrocie nic nie wpisujesz drugi raz.
+  useEffect(() => {
+    if (!tenderId) return undefined;
+    let aktywny = true;
+    wczytajStanOferty(storage, tenderId).then((z) => {
+      if (!aktywny) return;
+      if (z) {
+        if (z.oferta) setOferta((o) => ({ ...o, ...z.oferta }));
+        if (z.sytuacja) setSytuacja((s) => ({ ...s, ...z.sytuacja }));
+        if (z.pelnomocnik) setPelnomocnik((p) => ({ ...p, ...z.pelnomocnik }));
+      }
+      setStanOfertyWczytany(true);
+    });
+    return () => { aktywny = false; };
+  }, [tenderId]);
+
+  useEffect(() => {
+    if (!tenderId || !stanOfertyWczytany) return;
+    zapiszStanOferty(storage, tenderId, { oferta, sytuacja, pelnomocnik }).catch(() => {});
+  }, [tenderId, stanOfertyWczytany, oferta, sytuacja, pelnomocnik]);
 
   // Dane firmy wpisane raz — przy kolejnej ofercie już są.
   useEffect(() => {
@@ -271,6 +297,37 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
           <Button title="Udostępnij / skopiuj" onPress={() => udostepnij(dok)} variant="ghost" />
         </View>
       ))}
+
+      {przetarg.zrodlo === 'ted' ? (
+        <View style={styles.karta}>
+          <Text style={styles.kartaTytul}>Przetarg unijny: zamiast oświadczenia — JEDZ (ESPD)</Text>
+          <Text style={styles.kartaOpis}>
+            Powyżej progów UE oświadczenie wstępne składasz na formularzu JEDZ. Ściąga mówi sekcja po sekcji,
+            co wpisać i co zaznaczyć — z Twoimi danymi już wstawionymi.
+          </Text>
+          <Button
+            title="Ściąga do JEDZ — udostępnij"
+            variant="ghost"
+            onPress={async () => {
+              const s = generujSciageJedz({ wykonawca, przetarg, sytuacja: { polegaNaZasobach: sytuacja.polegaNaZasobach, podwykonawcy: oferta.podwykonawcy, konsorcjum: sytuacja.konsorcjum } });
+              try { await Share.share({ message: s.tresc, title: s.nazwa }); } catch { /* anulowane */ }
+            }}
+          />
+        </View>
+      ) : null}
+
+      <Button
+        title="Udostępnij cały pakiet jednym ruchem"
+        onPress={async () => {
+          const calosc = pakiet.map((d) => `=== ${d.nazwa} (${ETYKIETY_KIEDY[d.kiedy]}) ===\n\n${d.tresc}`).join('\n\n\n');
+          try {
+            await Share.share({ message: calosc, title: `Dokumenty do oferty — ${przetarg.tytul ?? 'pakiet'}` });
+            setUdostepnione(new Set(pakiet.map((d) => d.id)));
+          } catch {
+            /* anulowane */
+          }
+        }}
+      />
 
       {/* ── 5. Co jeszcze ── */}
       <Text style={styles.sectionTitle}>5. Co jeszcze dołączyć</Text>

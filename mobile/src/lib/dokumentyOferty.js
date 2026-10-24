@@ -1,6 +1,7 @@
 import { analizujPole } from './walidacjaLiczb.js';
 import { formatujPLN } from './kalkulatorCeny.js';
 import { procentDoGroszy, sumaGroszy, doGroszy } from './grosze.js';
+import { zarejestrujKlucz } from './daneLokalne.js';
 
 /*
  * „Dokumenty do oferty w 1 klik" — generator oświadczeń i formularza ofertowego.
@@ -82,6 +83,36 @@ export const POLA_WYKONAWCY = deepFreeze([
 
 /** Klucz lokalnego magazynu z danymi wykonawcy (wpisane raz, używane przy każdej ofercie). */
 export const KLUCZ_DANYCH_WYKONAWCY = 'przetargai.dane_wykonawcy';
+
+/*
+ * Stan „tej oferty" (cena, termin, gwarancja, przełączniki sytuacji) PER PRZETARG —
+ * po powrocie do tego samego ogłoszenia nic nie trzeba wpisywać drugi raz.
+ * Klucz per przetarg → rejestracja w indeksie konta (wylogowanie go skasuje; SecureStore
+ * nie listuje kluczy). Prefiks jest wpisany w `daneLokalne.PREFIKSY_KONTA`.
+ */
+/** SecureStore dopuszcza tylko [A-Za-z0-9._-] — id ogłoszeń mają „:" (np. `bzp:2026-BZP-…`). */
+export function kluczStanuOferty(tenderId) {
+  return `przetargai.dokumenty-oferty.${String(tenderId).replace(/[^A-Za-z0-9._-]/g, '_')}`;
+}
+
+/** @returns {Promise<{oferta?: object, sytuacja?: object, pelnomocnik?: object}|null>} */
+export async function wczytajStanOferty(storage, tenderId) {
+  if (!tenderId) return null;
+  try {
+    const raw = await storage.getItem(kluczStanuOferty(tenderId));
+    const dane = raw ? JSON.parse(raw) : null;
+    return dane && typeof dane === 'object' ? dane : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function zapiszStanOferty(storage, tenderId, stan) {
+  if (!tenderId || !stan || typeof stan !== 'object') return;
+  const klucz = kluczStanuOferty(tenderId);
+  await zarejestrujKlucz(storage, klucz);
+  await storage.setItem(klucz, JSON.stringify({ oferta: stan.oferta ?? {}, sytuacja: stan.sytuacja ?? {}, pelnomocnik: stan.pelnomocnik ?? {} }));
+}
 
 /** Same cyfry NIP (kreski/spacje z CEIDG i profilu precz). */
 export function normalizujNip(nip) {
