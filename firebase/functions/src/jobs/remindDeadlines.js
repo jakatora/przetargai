@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { saved, users, tenders } from '../db/repos.js';
 import { sendPush } from '../services/push.js';
+import { sendEmail, przypomnienieTerminuEmail } from '../services/email.js';
 
 /**
  * Wysyła przypomnienia o zbliżających się terminach składania ofert (D-050).
@@ -41,12 +42,12 @@ function opisEtapu(etap) {
   return 'Termin składania ofert już blisko';
 }
 
-export async function runReminderCheck() {
+export async function runReminderCheck({ wyslijEmail = sendEmail } = {}) {
   const startedAt = Date.now();
   const due = await saved.dueReminders();
   const wynik = {
     ok: true, due: due.length, sent: 0, nieudane: 0, porzucone: 0, anulowane: 0,
-    przeplanowane: 0, zakonczone: 0, zajete: 0, bezTokenu: 0, bledy: 0, durationMs: 0,
+    przeplanowane: 0, zakonczone: 0, zajete: 0, bezTokenu: 0, emaile: 0, bledy: 0, durationMs: 0,
   };
   if (!due.length) {
     wynik.durationMs = Date.now() - startedAt;
@@ -55,17 +56,18 @@ export async function runReminderCheck() {
 
   // Token pobieramy raz na użytkownika (jeden user może mieć kilka wymagalnych).
   const tokenCache = new Map();
+  // Token push + e-mail (fallback, gdy push nie działa) — raz na użytkownika.
   const tokenFor = async (userId) => {
     if (!tokenCache.has(userId)) {
       const u = await users.findById(userId).catch(() => null);
-      tokenCache.set(userId, u?.push_token ?? null);
+      tokenCache.set(userId, { token: u?.push_token ?? null, email: u?.email ?? null });
     }
     return tokenCache.get(userId);
   };
 
   for (const wpis of due) {
     try {
-      await obsluzWpis(wpis, wynik, tokenFor);
+      await obsluzWpis(wpis, wynik, tokenFor, wyslijEmail);
     } catch (err) {
       // Nie przerywamy całej partii przez jedno przypomnienie. Błąd (np. Firestore)
       // kończy przebieg `ok: false` → Cloud Scheduler ponowi, a rezerwacja etapu
@@ -82,7 +84,7 @@ export async function runReminderCheck() {
   return wynik;
 }
 
-async function obsluzWpis(wpis, wynik, tokenFor) {
+async function obsluzWpis(wpis, wynik, tokenFor, wyslijEmail) {
   // 1) Aktualny stan przetargu — wpis „Zapisanych" to kopia z chwili zapisu.
   const tender = await tenders.findById(wpis.tender_id ?? wpis.tenderId).catch(() => null);
   if (tender?.anulowany === true) {
@@ -102,9 +104,28 @@ async function obsluzWpis(wpis, wynik, tokenFor) {
   if (rez.stan === 'zakonczony') { wynik.zakonczone++; return; }
   if (rez.stan !== 'zarezerwowany') { wynik.zajete++; return; } // obsłużył inny przebieg / wpis zniknął
 
-  // 3) Wysyłka.
-  const token = await tokenFor(wpis.userId);
-  if (!token) { wynik.bezTokenu++; return; }
+  // 3) Wysyłka. Bez tokena push (albo z martwym) — e-mail (2026-10-24: push nie działa
+  // nigdzie, więc przypomnienia dotąd nie docierały wcale).
+  const { token, email } = await tokenFor(wpis.userId);
+  const tytul = tender?.title || wpis.tender_title || 'Zapisany przetarg — zbliża się termin składania ofert';
+  const emailem = async () => {
+    if (!email) return 'brak';
+    const r = await wyslijEmail({
+      to: email,
+      ...przypomnienieTerminuEmail({ etap: rez.etap, tytul, termin: tender?.deadline ?? wpis.remind_termin ?? null, organizacja: tender?.organization ?? null }),
+    }).catch((err) => ({ sent: false, error: err.message }));
+    if (r?.sent) return 'wyslano';
+    if (r?.degraded || r?.odrzuconyAdresat) return 'brak'; // bez klucza Resend / zły adres — ponawianie nic nie da
+    return 'blad';
+  };
+  if (!token) {
+    const e = await emailem();
+    if (e === 'wyslano') { wynik.emaile++; return; }
+    if (e === 'brak') { wynik.bezTokenu++; return; }
+    const cof = await saved.cofnijEtap(wpis.userId, wpis.tenderId, rez, { maksProb: MAKS_PROB_WYSYLKI, odstepMs: ODSTEP_PONOWIENIA_MS });
+    if (cof.stan === 'ponowienie') wynik.nieudane++; else wynik.porzucone++;
+    return;
+  }
 
   const push = await sendPush(token, {
     title: opisEtapu(rez.etap),
@@ -118,6 +139,8 @@ async function obsluzWpis(wpis, wynik, tokenFor) {
 
   const kody = Object.keys(push.bledy ?? {});
   if (kody.length && kody.every((k) => TRWALE_BLEDY_PUSH.has(k))) {
+    // Martwy token — zanim porzucimy, spróbuj e-mailem.
+    if ((await emailem()) === 'wyslano') { wynik.emaile++; return; }
     wynik.porzucone++;
     logger.warn({ userId: wpis.userId, tenderId: wpis.tenderId, bledy: push.bledy },
       'Przypomnienie niedostarczone — martwy token, etap zamknięty bez ponowień');

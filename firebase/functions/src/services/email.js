@@ -116,6 +116,29 @@ const OPIS_AI = {
 };
 
 /** Alarm „źródło cicho puste" — BZP/TED bez surowych ogłoszeń w dzień roboczy mimo `ok`. */
+/**
+ * Przypomnienie o terminie składania ofert E-MAILEM (2026-10-24) — awaryjnie, gdy użytkownik
+ * nie ma tokena push albo token jest martwy. Push nie działa dziś nigdzie (brak kluczy FCM/APNs),
+ * więc bez tego przypomnienia o terminach po prostu nie docierały.
+ */
+export function przypomnienieTerminuEmail({ etap, tytul, termin, organizacja = null }) {
+  const kiedy = etap === 7 ? 'Zostało 7 dni' : etap === 3 ? 'Zostały 3 dni' : etap === 1 ? 'Został 1 dzień' : 'Termin już blisko';
+  const data = termin ? new Date(termin) : null;
+  const terminTekst = data && !Number.isNaN(data.getTime())
+    ? data.toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : null;
+  const nazwa = tytul || 'Zapisany przetarg';
+  return {
+    subject: `PrzetargAI: ${kiedy} — ${nazwa}`,
+    text: `${kiedy} do składania ofert.\n\n${nazwa}${organizacja ? `\n${organizacja}` : ''}${terminTekst ? `\nTermin: ${terminTekst}` : ''}\n\n`
+      + 'Otwórz aplikację: „Krok po kroku do wygranej" pokaże, co zostało do zrobienia, a „Dokumenty do oferty w 1 klik" złoży oświadczenia.\n\n'
+      + 'To przypomnienie przyszło mailem, bo powiadomienia push nie są włączone na Twoim telefonie.',
+    html: `<p><b>${esc(kiedy)}</b> do składania ofert.</p><p><b>${esc(nazwa)}</b>${organizacja ? `<br>${esc(organizacja)}` : ''}${terminTekst ? `<br>Termin: ${esc(terminTekst)}` : ''}</p>`
+      + '<p>Otwórz aplikację: „Krok po kroku do wygranej" pokaże, co zostało do zrobienia, a „Dokumenty do oferty w 1 klik" złoży oświadczenia.</p>'
+      + '<p style="color:#666">To przypomnienie przyszło mailem, bo powiadomienia push nie są włączone na Twoim telefonie.</p>',
+  };
+}
+
 export function alarmZrodlaEmail({ zrodla = [], healthUrl }) {
   const lista = zrodla.map((z) => z.toUpperCase()).join(', ');
   return {

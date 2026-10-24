@@ -27,6 +27,7 @@ Uwaga: numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ a
 • Kalkulator ceny pokazuje, gdzie Twoja cena leży na tle rozstrzygnięć w branży i regionie.
 • Dla przetargów unijnych: ściąga do JEDZ z danymi firmy, sekcja po sekcji.
 • Aktywne wezwanie zamawiającego widoczne w Kalendarzu terminów.
+• Przypomnienia o terminie składania przychodzą e-mailem, gdy powiadomienia push nie są włączone.
 ```
 
 ## What's New — EN
@@ -46,6 +47,7 @@ Uwaga: numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ a
 • The price calculator shows where your price sits against awards in your sector and region.
 • For EU tenders: an ESPD cheat sheet with your company details, section by section.
 • An active buyer's request is visible in the deadline calendar.
+• Submission deadline reminders arrive by e-mail when push notifications are not enabled.
 ```
 
 ## Sklepowe pola bez zmian
