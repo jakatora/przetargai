@@ -22,6 +22,8 @@ import {
 } from '../lib/odpowiedzNaWezwanie';
 import { useAuth } from '../context/AuthContext';
 import { generujWykaz } from '../lib/wykazReferencji';
+import { stanZalacznikowZSejfu } from '../lib/stanDokumentowWezwania';
+import { api } from '../api/client';
 
 const CHIP_WYKAZU = 'Wykaz robót / usług / dostaw z referencjami';
 const CHIP_AKTUALNOSC = 'Oświadczenie o aktualności informacji z art. 125 ust. 1';
@@ -66,14 +68,21 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
   const [nowyDokument, setNowyDokument] = useState('');
   const [wyjasnienie, setWyjasnienie] = useState('');
   const [udostepniono, setUdostepniono] = useState(false);
+  // Dokumenty z Sejfu — przy zaznaczonym załączniku od razu widać, czy go masz i czy jest ważny.
+  const [sejf, setSejf] = useState([]);
 
   useEffect(() => {
     let aktywny = true;
     storage.getItem(KLUCZ_DANYCH_WYKONAWCY)
       .then((s) => { if (s && aktywny) setWykonawca((w) => ({ ...w, ...JSON.parse(s) })); })
       .catch(() => {});
+    api.sejfDokumenty()
+      .then((d) => { if (aktywny && Array.isArray(d?.dokumenty)) setSejf(d.dokumenty); })
+      .catch(() => { /* Sejf niedostępny — chipy bez podpowiedzi */ });
     return () => { aktywny = false; };
   }, []);
+
+  const stanSejfu = useMemo(() => stanZalacznikowZSejfu(sejf, dokumenty), [sejf, dokumenty]);
 
   function rozpoznaj() {
     const r = rozpoznajWezwanie(tekstWezwania);
@@ -235,6 +244,20 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
             <TextField label="Inny dokument" value={nowyDokument} onChangeText={setNowyDokument} style={styles.poleDodaj} onSubmitEditing={dodajDokument} />
             <Button title="Dodaj" variant="ghost" onPress={dodajDokument} style={styles.dodajBtn} />
           </View>
+          {Object.keys(stanSejfu).length ? (
+            <View style={styles.wykazBlok}>
+              {dokumenty.filter((n) => stanSejfu[n]).map((n) => {
+                const st = stanSejfu[n];
+                const tt = tonNaTokeny(st.ton, kolory);
+                return (
+                  <Text key={n} style={{ fontSize: 13, color: tt.tekst, lineHeight: 18 }}>
+                    {n}: <Text style={{ fontWeight: '700' }}>{st.etykieta}</Text>
+                  </Text>
+                );
+              })}
+              <Button title="Otwórz Sejf dokumentów" variant="ghost" onPress={() => navigation.navigate('Sejf')} />
+            </View>
+          ) : null}
           {dokumenty.includes(CHIP_AKTUALNOSC) || dokumenty.includes(CHIP_GRUPA) ? (
             <View style={styles.wykazBlok}>
               <Text style={styles.wykazOpis}>Te oświadczenia napiszemy za Ciebie z danych firmy — podpisz i dołącz:</Text>
