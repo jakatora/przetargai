@@ -2227,14 +2227,16 @@ export const cykl = {
  */
 const ALARM_AI_REF = () => db().collection('_health').doc('alarm_ai');
 
-export const alarmAi = {
+/** Znacznik „najwyżej jeden mail na dobę" — wspólny dla alarmu AI i alarmu cichych źródeł. */
+function znacznikAlarmu(ref) {
+  return {
   /** @returns {Promise<boolean>} true = wolno wysłać (dziś jeszcze nie poszedł) */
   async zarezerwuj(dzien) {
     return db().runTransaction(async (tx) => {
-      const doc = await tx.get(ALARM_AI_REF());
+      const doc = await tx.get(ref());
       const bylo = doc.exists ? doc.data() : {};
       if (bylo.dzien === dzien) return false;
-      tx.set(ALARM_AI_REF(), {
+      tx.set(ref(), {
         dzien, stan: 'wysylanie', zarezerwowano_o: nowIso(), poprzedni_dzien: bylo.dzien ?? null,
       });
       return true;
@@ -2242,23 +2244,28 @@ export const alarmAi = {
   },
 
   async potwierdz(dzien, { emailId = null, typ = null } = {}) {
-    await ALARM_AI_REF().set({ dzien, stan: 'wyslany', wyslano_o: nowIso(), email_id: emailId, typ }, { merge: true });
+    await ref().set({ dzien, stan: 'wyslany', wyslano_o: nowIso(), email_id: emailId, typ }, { merge: true });
   },
 
   /** Nieudana wysyłka — przywracamy poprzedni dzień, żeby ponowienie przebiegu dosłało alarm. */
   async zwolnij(dzien) {
     await db().runTransaction(async (tx) => {
-      const doc = await tx.get(ALARM_AI_REF());
+      const doc = await tx.get(ref());
       if (!doc.exists || doc.data().dzien !== dzien) return;
-      tx.set(ALARM_AI_REF(), { dzien: doc.data().poprzedni_dzien ?? null, stan: 'zwolniony' }, { merge: true });
+      tx.set(ref(), { dzien: doc.data().poprzedni_dzien ?? null, stan: 'zwolniony' }, { merge: true });
     });
   },
 
   async wczytaj() {
-    const doc = await ALARM_AI_REF().get();
+    const doc = await ref().get();
     return doc.exists ? doc.data() : null;
   },
-};
+  };
+}
+
+export const alarmAi = znacznikAlarmu(ALARM_AI_REF);
+/** Alarm „źródło cicho puste" (BZP/TED bez surowych ogłoszeń w dzień roboczy, 2026-10-24). */
+export const alarmZrodla = znacznikAlarmu(() => db().collection('_health').doc('alarm_zrodla'));
 
 // ============================ zdarzenia Stripe (idempotencja) ============================
 

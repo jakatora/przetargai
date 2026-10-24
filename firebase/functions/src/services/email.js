@@ -115,6 +115,24 @@ const OPIS_AI = {
   autoryzacja: 'klucz Anthropic jest odrzucany',
 };
 
+/** Alarm „źródło cicho puste" — BZP/TED bez surowych ogłoszeń w dzień roboczy mimo `ok`. */
+export function alarmZrodlaEmail({ zrodla = [], healthUrl }) {
+  const lista = zrodla.map((z) => z.toUpperCase()).join(', ');
+  return {
+    subject: `PrzetargAI: ${lista} nie dało dziś ANI JEDNEGO ogłoszenia`,
+    text: `Dzisiejszy cykl pobierania zakończył się „ok", ale źródło ${lista} zwróciło zero surowych ogłoszeń w dzień roboczy. `
+      + 'To nie jest normalne (BZP publikuje kilkaset dziennie) — zwykle przerwa techniczna e-Zamówienia (403 HTML) albo zmiana API.\n\n'
+      + 'Co zrobić: wejdź na https://ezamowienia.gov.pl — jeśli widzisz „Przerwa techniczna", nic nie rób, okno dociągnie dane po jej końcu. '
+      + 'Jeśli serwis działa, sprawdź logi funkcji bzpOknoFetch / dailyTenderFetch (zmiana schematu albo adresu API).\n\n'
+      + `Stan: ${healthUrl}\n\nTen alarm przychodzi najwyżej raz na dobę, dopóki problem trwa.`,
+    html: `<p><b>${esc(lista)}</b> zwróciło dziś zero surowych ogłoszeń w dzień roboczy, choć cykl zakończył się „ok". `
+      + 'To nie jest normalne (BZP publikuje kilkaset dziennie) — zwykle przerwa techniczna e-Zamówienia (403 HTML) albo zmiana API.</p>'
+      + '<p><b>Co zrobić:</b> wejdź na <a href="https://ezamowienia.gov.pl">ezamowienia.gov.pl</a> — przy „Przerwie technicznej" nic nie rób, okno dociągnie dane po jej końcu. '
+      + 'Jeśli serwis działa, sprawdź logi bzpOknoFetch / dailyTenderFetch.</p>'
+      + `<p>Stan: <a href="${esc(healthUrl)}">${esc(healthUrl)}</a></p><p>Ten alarm przychodzi najwyżej raz na dobę, dopóki problem trwa.</p>`,
+  };
+}
+
 export function alarmAiEmail({ typ, udane = 0, nieudane = 0, ostatniBlad = null, healthUrl }) {
   const opis = OPIS_AI[typ] ?? `błąd AI (${typ})`;
   const coZrobic = CO_ZROBIC_AI[typ] ?? 'Sprawdź logi funkcji dailyTenderFetch.';
