@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { sprawdzFormularz, walidujFormularz, maBladPozycji, formatujPLN } from '../lib/sprawdzarkaCeny';
+import { parsujPozycjeFormularza, naWierszeSprawdzarki } from '../lib/parserPozycji';
 
 /**
  * „SPRAWDZARKA FORMULARZA CENOWEGO". Liczy każdą pozycję poprawnie (ilość × cena, VAT, brutto)
@@ -39,6 +40,8 @@ export default function SprawdzarkaCenyScreen({ route }) {
   const styles = useStyle(tworzStyleSprawdzarki);
   const nazwa = route?.params?.nazwa ?? null;
   const licznik = useRef(1);
+  const [wklejka, setWklejka] = useState('');
+  const [wklejkaInfo, setWklejkaInfo] = useState(null);
 
   const [wiersze, setWiersze] = useState([
     { id: 'w0', nazwa: '', ilosc: '', cenaJedn: '', vat: '23', wartoscPodana: '' },
@@ -47,6 +50,23 @@ export default function SprawdzarkaCenyScreen({ route }) {
   const ustaw = (id, pole, v) => setWiersze((prev) => prev.map((w) => (w.id === id ? { ...w, [pole]: v } : w)));
   const dodaj = () => setWiersze((prev) => [...prev, { id: `w${licznik.current++}`, nazwa: '', ilosc: '', cenaJedn: '', vat: '23', wartoscPodana: '' }]);
   const usun = (id) => setWiersze((prev) => (prev.length > 1 ? prev.filter((w) => w.id !== id) : prev));
+
+  // „Wklej pozycje z SWZ": tabela z PDF/Worda/Excela → wiersze (parser w lib/parserPozycji.js).
+  const wklejPozycje = () => {
+    const pozycje = parsujPozycjeFormularza(wklejka);
+    if (!pozycje.length) {
+      setWklejkaInfo('Nie rozpoznałem żadnej pozycji — wklej wiersze w układzie „lp | nazwa | jm | ilość" albo tekst „1. Nazwa m2 450".');
+      return;
+    }
+    const nowe = naWierszeSprawdzarki(pozycje, { vat: '23', odId: licznik.current });
+    licznik.current += nowe.length;
+    setWiersze((prev) => {
+      const pusty = (w) => !w.nazwa && !w.ilosc && !w.cenaJedn && !w.wartoscPodana;
+      return [...prev.filter((w) => !pusty(w)), ...nowe];
+    });
+    setWklejkaInfo(`Wstawiono ${pozycje.length} pozycji. Uzupełnij ceny jednostkowe — resztę policzymy.`);
+    setWklejka('');
+  };
 
   const wynik = sprawdzFormularz(wiersze);
   // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
@@ -60,6 +80,21 @@ export default function SprawdzarkaCenyScreen({ route }) {
         wartość się NIE zgadza — błąd rachunkowy albo zła stawka VAT potrafi Cię wykluczyć.
       </Text>
       {nazwa ? <Text style={styles.postepowanie}>{nazwa}</Text> : null}
+
+      <View style={styles.wklejkaBlok}>
+        <Text style={styles.wklejkaTytul}>Wklej pozycje z SWZ zamiast przepisywać</Text>
+        <TextField
+          label="Tabela formularza cenowego (z PDF, Worda lub Excela)"
+          value={wklejka}
+          onChangeText={(v) => { setWklejka(v); setWklejkaInfo(null); }}
+          multiline
+          inputStyle={styles.wklejkaPole}
+          hint="Rozpoznajemy lp, nazwę, jednostkę, ilość, a gdy są — cenę i wartość"
+          autoCapitalize="none"
+        />
+        <Button title="Wstaw pozycje" variant="ghost" onPress={wklejPozycje} disabled={!wklejka.trim()} />
+        {wklejkaInfo ? <Text style={styles.wklejkaInfo}>{wklejkaInfo}</Text> : null}
+      </View>
 
       {/* Przy błędnych polach nie pokazujemy sum — liczyłyby się z wyzerowanych wartości. */}
       {maBledy ? (
@@ -143,6 +178,10 @@ export default function SprawdzarkaCenyScreen({ route }) {
 }
 
 const tworzStyleSprawdzarki = tworzStyle((k) => ({
+  wklejkaBlok: { backgroundColor: k.surface, borderRadius: radius.md, borderWidth: 1, borderColor: k.border, padding: spacing.md, marginBottom: spacing.md },
+  wklejkaTytul: { fontSize: 15, fontWeight: '700', color: k.text, marginBottom: spacing.sm },
+  wklejkaPole: { minHeight: 96, paddingTop: 12, textAlignVertical: 'top' },
+  wklejkaInfo: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: spacing.sm },
   wstep: { fontSize: 14, color: k.textMuted, lineHeight: 21, marginBottom: spacing.md },
   postepowanie: { fontSize: 15, fontWeight: '800', color: k.text, marginBottom: spacing.sm, lineHeight: 20 },
 
