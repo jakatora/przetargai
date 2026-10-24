@@ -13,6 +13,16 @@ import { zbudujPulpit, stanPulpitu } from '../lib/pulpit';
  * „MOJE POSTĘPOWANIA" (pulpit) — widok ETAPOWY zapisanych przetargów. Domyka triadę
  * feed → kalendarz → pulpit: ile ofert na jakim etapie i co pilne. Logika w lib/pulpit.js.
  */
+/**
+ * Najbliższa akcja dla etapu (leniwy użytkownik nie szuka jej w katalogu):
+ * złożona → wezwanie, wygrana → pierwsze dni kontraktu, przegrana → wadium wraca na wniosek.
+ */
+const AKCJE_ETAPU = {
+  zlozona: { ekran: 'OdpowiedzNaWezwanie', pl: 'Dostałeś wezwanie? Odpowiedź w 1 klik', en: 'Got a buyer request? Reply in one tap' },
+  wygrana: { ekran: 'PoWygranej', pl: 'Pierwsze dni kontraktu i pisma', en: 'First days of the contract and letters' },
+  przegrana: { ekran: 'ZwrotWadium', pl: 'Odzyskaj wadium — wniosek w 1 klik', en: 'Get the bid bond back — one-tap request' },
+};
+
 export default function PulpitScreen({ navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStylePulpitu);
@@ -130,6 +140,15 @@ export default function PulpitScreen({ navigation }) {
                 <Text style={styles.data}>{p.maTermin ? formatDate(p.deadline) : t('Bez terminu', 'No deadline')}</Text>
                 <Text style={[styles.czas, { color: kolorCzasu(p) }]}>{p.etykietaCzasu}</Text>
               </View>
+              {AKCJE_ETAPU[g.wartosc] ? (
+                <Pressable
+                  onPress={() => navigation.navigate(AKCJE_ETAPU[g.wartosc].ekran, { match: p.zrodlo })}
+                  accessibilityRole="button"
+                  hitSlop={6}
+                >
+                  <Text style={styles.akcja}>{t(AKCJE_ETAPU[g.wartosc].pl, AKCJE_ETAPU[g.wartosc].en)} →</Text>
+                </Pressable>
+              ) : null}
             </Pressable>
           ))}
         </View>
@@ -164,6 +183,7 @@ const tworzStylePulpitu = tworzStyle((k) => ({
   tytul: { fontSize: 15, fontWeight: '700', color: k.text, lineHeight: 20 },
   org: { fontSize: 13, color: k.textMuted, marginTop: 3 },
   stopkaKarty: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
+  akcja: { fontSize: 13, fontWeight: '700', color: k.blue, marginTop: 8 },
   data: { fontSize: 13, color: k.textMuted, fontWeight: '600' },
   czas: { fontSize: 13, fontWeight: '800' },
 
