@@ -168,15 +168,16 @@ test('licznik ogłoszeń: bez pobranej wartości strona nie pokazuje żadnej lic
   assert.match(skrypt, /\.catch\(function \(\) \{\}\)/, 'błąd pobierania zostawia tekst z HTML');
 });
 
-test('powiadomienia push nie są obiecywane poza opisem planów (cennik zostaje nietknięty)', () => {
+test('powiadomienia są obiecywane tylko w opisie planów (cennik: Standard z próbą 7 dni)', () => {
   const bezCennika = html
     .replace(/<section class="section" id="cennik">[\s\S]*?<\/section>/, '')
     .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '')
     .replace(/<!--[\s\S]*?-->/g, '');
   assert.doesNotMatch(czysty(bezCennika), /push|powiadomieni|powiadamia/i);
   assert.doesNotMatch(wezel('SoftwareApplication').description, /powiadamia/i);
-  // Cennik i opis planu w danych strukturalnych — bez zmian w tej rundzie.
-  assert.match(html, /<li><strong>Powiadomienia push<\/strong> o nowych przetargach<\/li>/);
+  // Cennik i opis planu w danych strukturalnych — Standard po zmianie selekcji (spec §8), z próbą bez karty.
+  assert.match(html, /<li>Przegląd co 3 godziny i <strong>powiadomienia od razu<\/strong><\/li>/);
+  assert.match(html, /7 dni Standard za darmo po rejestracji — bez karty\./);
   assert.match(html, /Subskrypcję aktywujesz z poziomu aplikacji\. Faktura VAT automatycznie\./);
 });
 
