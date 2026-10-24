@@ -84,6 +84,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   const [notatkaZapis, setNotatkaZapis] = useState('idle'); // idle | zapisywanie | zapisano
   // Statystyki wyników (R17) — lekki odczyt, pobierany raz na wejściu (bez kosztu AI).
   const [wyniki, setWyniki] = useState(null);
+  const [wynikiSurowe, setWynikiSurowe] = useState(null); // do auto-prefillu karty decyzji
   // Poprzetargowa kontrola oferty zwycięzcy (podzadanie 6/13) — tylko dla przegranej.
   const [kontrola, setKontrola] = useState(null);
   const [wniosekBusy, setWniosekBusy] = useState(false);
@@ -92,7 +93,7 @@ export default function MatchDetailScreen({ route, navigation }) {
     if (!match?.id) return undefined;
     let aktywny = true;
     api.getWyniki(match.id)
-      .then((d) => { if (aktywny && d.wyniki) setWyniki(opisWyniki(d.wyniki)); })
+      .then((d) => { if (aktywny && d.wyniki) { setWyniki(opisWyniki(d.wyniki)); setWynikiSurowe(d.wyniki); } })
       .catch(() => {});
     return () => { aktywny = false; };
   }, [match?.id]);
@@ -344,7 +345,7 @@ export default function MatchDetailScreen({ route, navigation }) {
 
       <Pressable
         style={styles.decyzjaCta}
-        onPress={() => navigation.navigate('KartaDecyzji', { match })}
+        onPress={() => navigation.navigate('KartaDecyzji', { match, wyniki: wynikiSurowe })}
         accessibilityRole="button"
       >
         <Text style={styles.decyzjaCtaTytul}>{t('⚖️ Startować czy odpuścić?', '⚖️ Bid or pass?')}</Text>

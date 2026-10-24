@@ -106,7 +106,7 @@ export const CZYNNIKI_KRYTYCZNE = Object.freeze(
  * @returns {{odpowiedzi: object, zrodla: Array<{klucz: string, opis: string}>}}
  */
 export function prefillKartyDecyzji(we) {
-  const { match, user, teraz = Date.now() } = we && typeof we === 'object' ? we : {};
+  const { match, user, wyniki, teraz = Date.now() } = we && typeof we === 'object' ? we : {};
   const m = match && typeof match === 'object' ? match : {};
   const t = m.tender && typeof m.tender === 'object' ? m.tender : {};
   const u = user && typeof user === 'object' ? user : {};
@@ -136,6 +136,13 @@ export function prefillKartyDecyzji(we) {
   if (Number.isFinite(budzet) && budzet > 0 && Number.isFinite(maks) && maks > 0) {
     odpowiedzi.plynnosc = budzet <= maks ? 'tak' : 'napiete';
     zrodla.push({ klucz: 'plynnosc', opis: budzet <= maks ? 'wartość w granicach Twojego limitu kontraktu' : 'wartość powyżej limitu kontraktu z profilu — policz płynność' });
+  }
+
+  // Konkurencyjność ze statystyk rozstrzygniętych postępowań tego typu (mediana liczby ofert).
+  const mediana = Number(wyniki?.oferty?.mediana);
+  if (Number.isFinite(mediana) && mediana > 0) {
+    odpowiedzi.konkurencyjnosc = mediana <= 3 ? 'tak' : 'srednio';
+    zrodla.push({ klucz: 'konkurencyjnosc', opis: mediana <= 3 ? `zwykle ${mediana} oferty w takich postępowaniach — mało konkurencji` : `zwykle ${mediana} ofert w takich postępowaniach — będzie ciasno` });
   }
 
   return { odpowiedzi, zrodla };

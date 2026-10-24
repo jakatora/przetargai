@@ -24,6 +24,14 @@ test('krótki termin i wartość ponad limit → ostrzeżenia („ryzyko", „na
   assert.equal(ocenStart(p.odpowiedzi).zBlokada, false, 'automat nie generuje czerwonych flag');
 });
 
+test('konkurencyjność ze statystyk wyników: mediana ≤ 3 ofert → tak, więcej → średnio; brak statystyk → nic', () => {
+  assert.equal(prefillKartyDecyzji({ match: {}, wyniki: { oferty: { mediana: 2 } }, teraz: TERAZ }).odpowiedzi.konkurencyjnosc, 'tak');
+  const duzo = prefillKartyDecyzji({ match: {}, wyniki: { oferty: { mediana: 7 } }, teraz: TERAZ });
+  assert.equal(duzo.odpowiedzi.konkurencyjnosc, 'srednio');
+  assert.match(duzo.zrodla[0].opis, /7 ofert/);
+  assert.equal(prefillKartyDecyzji({ match: {}, wyniki: null, teraz: TERAZ }).odpowiedzi.konkurencyjnosc, undefined);
+});
+
 test('termin miniony, brak score, brak budżetu lub limitu → nic nie ustawiamy; null nie rzuca', () => {
   const p = prefillKartyDecyzji({ match: { tender: { deadline: '2026-10-01', budget: 100 } }, user: {}, teraz: TERAZ });
   assert.deepEqual(p.odpowiedzi, {});

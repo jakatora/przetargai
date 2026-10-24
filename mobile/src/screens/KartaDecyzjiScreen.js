@@ -20,7 +20,7 @@ export default function KartaDecyzjiScreen({ route }) {
 
   // Auto-prefill z ogłoszenia i profilu (lib): dopasowanie, termin, wadium, płynność —
   // nigdy odpowiedzi blokujących; użytkownik poprawia tylko to, czego aplikacja nie wie.
-  const [prefill] = useState(() => prefillKartyDecyzji({ match, user }));
+  const [prefill] = useState(() => prefillKartyDecyzji({ match, user, wyniki: route?.params?.wyniki ?? null }));
   const [odp, setOdp] = useState(() => prefill.odpowiedzi);
 
   const w = ocenStart(odp);
