@@ -5,6 +5,8 @@ import TextField from '../components/TextField';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { pozycjaWzgledemRynku } from '../lib/wartosciBenchmark';
+import * as storage from '../lib/storage';
+import { wczytajStanOferty, zapiszStanOferty } from '../lib/dokumentyOferty';
 import { policzCene, walidujCene, formatujPLN, STAWKI_VAT } from '../lib/kalkulatorCeny';
 
 /**
@@ -39,6 +41,22 @@ export default function KalkulatorCenyScreen({ route }) {
   // szacunkowa z ogłoszenia — przekazane z karty przetargu; porównujemy z ceną netto.
   const rynek = route?.params?.rynek ?? null;
   const budzet = route?.params?.budzet ?? null;
+  // Wyliczona cena jednym przyciskiem trafia do formularza ofertowego tego przetargu.
+  const match = route?.params?.match ?? null;
+  const tenderId = match?.tender?.id ?? null;
+  const [wstawiono, setWstawiono] = useState(false);
+  async function wstawDoFormularza() {
+    if (!tenderId || !(w.netto > 0)) return;
+    try {
+      const stan = (await wczytajStanOferty(storage, tenderId)) ?? {};
+      const cenaNetto = w.netto.toFixed(2).replace('.', ',');
+      await zapiszStanOferty(storage, tenderId, { ...stan, oferta: { ...(stan.oferta ?? {}), cenaNetto, vatProc: Number(vat) || 23 } });
+      setWstawiono(true);
+      navigation.navigate('DokumentyOferty', { match });
+    } catch {
+      /* magazyn niedostępny — użytkownik przepisze cenę ręcznie */
+    }
+  }
 
   const [material, setMaterial] = useState('');
   const [robocizna, setRobocizna] = useState('');
@@ -119,6 +137,14 @@ export default function KalkulatorCenyScreen({ route }) {
               </View>
             );
           })() : null}
+
+          {tenderId && w.netto > 0 ? (
+            <Button
+              title={wstawiono ? 'Wstawiono do formularza ofertowego ✓' : 'Wstaw tę cenę do formularza ofertowego'}
+              variant="ghost"
+              onPress={wstawDoFormularza}
+            />
+          ) : null}
 
           {/* Rozbicie */}
           <View style={styles.card}>
