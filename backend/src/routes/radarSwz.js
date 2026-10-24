@@ -165,6 +165,28 @@ async function swzZPliku(d) {
   return tekst;
 }
 
+/*
+ * Status pytań (2026-10-24): po udostępnieniu wniosku o wyjaśnienie SWZ aplikacja oznacza
+ * pytania jako „wysłane" jednym żądaniem — użytkownik nie klika każdego osobno. Pytania
+ * muszą należeć do tego postępowania (a ono do użytkownika), inaczej 404 bez wycieku.
+ */
+const statusPytanSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(200),
+  status: z.enum(['szkic', 'wyslane', 'odpowiedziane']),
+});
+
+router.post('/postepowania/:id/pytania/status', authRequired, ah(async (req, res) => {
+  const postepowanie = postepowaniaSwz.findByIdForUser(req.params.id, req.user.id);
+  if (!postepowanie) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');
+  const parsed = statusPytanSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Podaj "ids" (lista id pytań) i "status" (szkic / wyslane / odpowiedziane).');
+  const wlasne = new Set(pytaniaSwz.listForPostepowanie(postepowanie.id).map((q) => String(q.id)));
+  const obce = parsed.data.ids.filter((id) => !wlasne.has(String(id)));
+  if (obce.length) throw notFound('Część pytań nie należy do tego postępowania.');
+  for (const id of parsed.data.ids) pytaniaSwz.setStatus(id, parsed.data.status);
+  res.json({ pytania: pytaniaSwz.listForPostepowanie(postepowanie.id) });
+}));
+
 router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
   const postepowanie = postepowaniaSwz.findByIdForUser(req.params.id, req.user.id);
   if (!postepowanie) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');

@@ -94,10 +94,23 @@ export default function RadarSwzScreen({ route, navigation }) {
       /* brak danych firmy — wniosek z kropkami do uzupełnienia */
     }
     const dok = generujWniosekOWyjasnienie({ wykonawca, postepowanie, pytania, dzisiaj: new Date().toISOString() });
+    let udostepniono = false;
     try {
-      await Share.share({ message: dok.tresc, title: dok.nazwa });
+      const wynik = await Share.share({ message: dok.tresc, title: dok.nazwa });
+      // iOS mówi „dismissedAction" przy anulowaniu; Android zawsze „sharedAction" — traktujemy jako wysłane.
+      udostepniono = !wynik || wynik.action !== Share.dismissedAction;
     } catch {
       /* anulowane */
+    }
+    if (!udostepniono) return;
+    // Jedno żądanie zamiast klikania każdego pytania: szkice → „wysłane".
+    const szkice = pytania.filter((q) => q.status === 'szkic').map((q) => String(q.id));
+    if (!szkice.length) return;
+    try {
+      await api.radarPytaniaStatus(postepowanie.id, { ids: szkice, status: 'wyslane' });
+      await odswiezDetalCicho(postepowanie.id);
+    } catch {
+      /* status zaktualizuje się przy następnym odczycie */
     }
   }
   // Wejście z przetargu (ścieżka) niesie nazwę i daty z ogłoszenia; z katalogu narzędzi
