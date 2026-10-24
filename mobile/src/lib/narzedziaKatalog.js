@@ -28,6 +28,7 @@ export const KATALOG_NARZEDZI = [
       { ekran: 'KaryUmowne', tytul: 'Kalkulator kar umownych', opis: 'Maksymalne ryzyko kar przed podpisem' },
       { ekran: 'KalkulatorOdsetek', tytul: 'Odsetki za opóźnienie + rekompensata', opis: 'Gdy zamawiający płaci po terminie' },
       { ekran: 'ZabezpieczenieZwrot', tytul: 'Odzyskiwacz zabezpieczenia', opis: 'Zwrot 5% kontraktu po realizacji' },
+      { ekran: 'ZwrotWadium', tytul: 'Wniosek o zwrot wadium', opis: 'Po przegranej, odrzuceniu lub wycofaniu oferty — pismo w 1 klik, zwrot w 7 dni (art. 98 ust. 2)' },
     ],
   },
   {

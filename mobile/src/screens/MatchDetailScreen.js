@@ -689,6 +689,13 @@ export default function MatchDetailScreen({ route, navigation }) {
               )}
             </Text>
 
+            <Button
+              title={t('Odzyskaj wadium — wniosek w 1 klik', 'Get your bid bond back — request in one tap')}
+              onPress={() => navigation.navigate('ZwrotWadium', { match, podstawa: 'wybor_innej' })}
+              variant="ghost"
+              style={styles.gap}
+            />
+
             <View style={styles.kontrolaEtapRzad}>
               <Text style={styles.kontrolaEtapEtykieta}>{t('Etap kontroli', 'Review stage')}</Text>
               <Text style={styles.kontrolaEtapWartosc}>{t(etykietaEtapuKontroli(kontrola?.status))}</Text>
