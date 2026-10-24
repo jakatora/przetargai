@@ -19,6 +19,9 @@ Uwaga: numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ a
 • Wykaz wykonanych robót, usług lub dostaw powstaje z Banku referencji — tylko doświadczenie aktualne na dziś.
 • Pytania z Radaru SWZ składają się w gotowy wniosek o wyjaśnienie treści specyfikacji.
 • Pełnomocnictwo do złożenia oferty, gdy podpisuje pełnomocnik.
+• Wklej tabelę formularza cenowego z SWZ — pozycje same trafią do sprawdzarki.
+• Wniosek o zwrot wadium po przegranej, odrzuceniu lub wycofaniu oferty.
+• Po wygranej: checklista pierwszych dni kontraktu oraz zgłoszenie podwykonawcy, wniosek o zmianę terminu i o zwrot zabezpieczenia.
 ```
 
 ## What's New — EN
@@ -30,6 +33,9 @@ Uwaga: numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ a
 • The list of completed works, services or supplies is built from your reference bank — only experience still valid today.
 • Questions from the tender-document radar turn into a ready request for clarification of the specification.
 • Power of attorney for submitting the bid when a proxy signs.
+• Paste the price form table from the tender documents and the items land in the price checker.
+• Request for the return of the bid bond after losing, rejection or withdrawal.
+• After winning: a checklist for the first days of the contract plus a subcontractor notice, a deadline change request and a performance security return request.
 ```
 
 ## Sklepowe pola bez zmian
