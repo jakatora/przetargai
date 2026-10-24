@@ -6,7 +6,13 @@ import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import * as storage from '../lib/storage';
-import { KLUCZ_DANYCH_WYKONAWCY, szablonDanychWykonawcy, daneZOgloszenia } from '../lib/dokumentyOferty';
+import {
+  KLUCZ_DANYCH_WYKONAWCY,
+  szablonDanychWykonawcy,
+  daneZOgloszenia,
+  generujOswiadczenieAktualnosci,
+  generujOswiadczenieGrupaKapitalowa,
+} from '../lib/dokumentyOferty';
 import {
   RODZAJE_WEZWANIA,
   TYPOWE_DOKUMENTY,
@@ -18,6 +24,8 @@ import { useAuth } from '../context/AuthContext';
 import { generujWykaz } from '../lib/wykazReferencji';
 
 const CHIP_WYKAZU = 'Wykaz robót / usług / dostaw z referencjami';
+const CHIP_AKTUALNOSC = 'Oświadczenie o aktualności informacji z art. 125 ust. 1';
+const CHIP_GRUPA = 'Oświadczenie o grupie kapitałowej (art. 108 ust. 1 pkt 5)';
 const KLUCZ_BANKU = 'przetargai.bankReferencji';
 
 /**
@@ -104,6 +112,19 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
     try {
       await Share.share({ message: pismo.tresc, title: pismo.nazwa });
       setUdostepniono(true);
+    } catch {
+      /* anulowane */
+    }
+  }
+
+  // Oświadczenia z wezwania składają się same z danych firmy — te same generatory co w pakiecie dokumentów.
+  async function udostepnijOswiadczenie(ktore) {
+    const wspolne = { wykonawca, przetarg, dzisiaj: new Date().toISOString() };
+    const dok = ktore === 'grupa'
+      ? generujOswiadczenieGrupaKapitalowa({ ...wspolne, nalezy: false })
+      : generujOswiadczenieAktualnosci(wspolne);
+    try {
+      await Share.share({ message: dok.tresc, title: dok.nazwa });
     } catch {
       /* anulowane */
     }
@@ -197,6 +218,14 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
             <TextField label="Inny dokument" value={nowyDokument} onChangeText={setNowyDokument} style={styles.poleDodaj} onSubmitEditing={dodajDokument} />
             <Button title="Dodaj" variant="ghost" onPress={dodajDokument} style={styles.dodajBtn} />
           </View>
+          {dokumenty.includes(CHIP_AKTUALNOSC) || dokumenty.includes(CHIP_GRUPA) ? (
+            <View style={styles.wykazBlok}>
+              <Text style={styles.wykazOpis}>Te oświadczenia napiszemy za Ciebie z danych firmy — podpisz i dołącz:</Text>
+              {dokumenty.includes(CHIP_AKTUALNOSC) ? <Button title="Oświadczenie o aktualności informacji" variant="ghost" onPress={() => udostepnijOswiadczenie('aktualnosc')} /> : null}
+              {dokumenty.includes(CHIP_GRUPA) ? <Button title="Oświadczenie o grupie kapitałowej (nie należę)" variant="ghost" onPress={() => udostepnijOswiadczenie('grupa')} /> : null}
+              {dokumenty.includes(CHIP_GRUPA) ? <Text style={styles.wykazOpis}>Należysz do grupy z innym oferentem? Wariant z listą wygenerujesz w „Dokumentach do oferty".</Text> : null}
+            </View>
+          ) : null}
           {dokumenty.includes(CHIP_WYKAZU) ? (
             <View style={styles.wykazBlok}>
               <Text style={styles.wykazOpis}>Wykaz złożymy z Twojego Banku referencji (tylko doświadczenie aktualne na dziś):</Text>
