@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, Switch } from 'react-native';
 import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { ocenaGwarancji, werdykt } from '../lib/gwarancjaWadialna';
+import * as storage from '../lib/storage';
+import { wczytajKontroleOferty, zapiszKontroleOferty } from '../lib/kontrolaOferty';
 
 /**
  * Panel „KONTROLER GWARANCJI WADIALNEJ — wadium z banku, które nie utopi oferty".
@@ -34,6 +36,18 @@ export default function KontrolerGwarancjiScreen({ route }) {
   }
 
   const wynik = ocenaGwarancji(odp, { konsorcjum });
+  const tenderId = route?.params?.tenderId ?? null;
+
+  // Gwarancja „gotowa" → punkt „Wadium" w Kontroli przed wysłaniem tego przetargu odhacza się sam.
+  const odhaczono = useRef(false);
+  useEffect(() => {
+    if (!tenderId || !wynik.gotowa) { odhaczono.current = false; return; }
+    if (odhaczono.current) return;
+    odhaczono.current = true;
+    wczytajKontroleOferty(storage, tenderId)
+      .then((w) => { const z = new Set(w); z.add('wadium'); return zapiszKontroleOferty(storage, tenderId, z); })
+      .catch(() => {});
+  }, [tenderId, wynik.gotowa]);
   const t = tonNaTokeny(wynik.ton, kolory);
 
   return (

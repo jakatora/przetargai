@@ -525,7 +525,7 @@ export default function MatchDetailScreen({ route, navigation }) {
         />
         <Button
           title={t('Kontroler gwarancji wadialnej', 'Bid security guarantee checker')}
-          onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title })}
+          onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title, tenderId: tender.id })}
           variant="ghost"
           style={styles.gap}
         />
