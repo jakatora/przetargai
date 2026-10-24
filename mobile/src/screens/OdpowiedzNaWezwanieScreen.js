@@ -117,6 +117,23 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
     }
   }
 
+  // Jedno wklejenie wezwania ustawia też odliczanie i checklistę w Strażniku (klucz jak w StraznikWezwaniaScreen).
+  async function ustawStraznika() {
+    let stare = { termin: '', dokumenty: [] };
+    try {
+      const s = await storage.getItem('przetargai.wezwanie');
+      if (s) { const d = JSON.parse(s); if (d && typeof d === 'object') stare = { termin: d.termin ?? '', dokumenty: Array.isArray(d.dokumenty) ? d.dokumenty : [] }; }
+    } catch { /* uszkodzony zapis — nadpiszemy */ }
+    const znane = new Set(stare.dokumenty.map((d) => d.nazwa));
+    const nowe = dokumenty.filter((n) => !znane.has(n)).map((n, i) => ({ id: `d${Date.now()}${i}`, nazwa: n, gotowy: false }));
+    const zapis = {
+      termin: termin ? (godzina ? `${termin}T${godzina}` : termin) : stare.termin,
+      dokumenty: [...stare.dokumenty, ...nowe],
+    };
+    try { await storage.setItem('przetargai.wezwanie', JSON.stringify(zapis)); } catch { /* magazyn niedostępny */ }
+    navigation.navigate('StraznikWezwania', { nazwa: przetarg.tytul ?? undefined });
+  }
+
   // Oświadczenia z wezwania składają się same z danych firmy — te same generatory co w pakiecie dokumentów.
   async function udostepnijOswiadczenie(ktore) {
     const wspolne = { wykonawca, przetarg, dzisiaj: new Date().toISOString() };
@@ -256,6 +273,13 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
           />
         </View>
       ) : null}
+
+      <Button
+        title="Ustaw odliczanie i checklistę w Strażniku wezwania"
+        variant="ghost"
+        onPress={ustawStraznika}
+        disabled={!termin && !dokumenty.length}
+      />
 
       <Text style={styles.sectionTitle}>Kontrola przed wysłaniem</Text>
       {kontrola.map((p) => {

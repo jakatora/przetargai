@@ -272,6 +272,19 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
         </View>
       ))}
 
+      <Button
+        title="Udostępnij cały pakiet jednym ruchem"
+        onPress={async () => {
+          const calosc = pakiet.map((d) => `=== ${d.nazwa} (${ETYKIETY_KIEDY[d.kiedy]}) ===\n\n${d.tresc}`).join('\n\n\n');
+          try {
+            await Share.share({ message: calosc, title: `Dokumenty do oferty — ${przetarg.tytul ?? 'pakiet'}` });
+            setUdostepnione(new Set(pakiet.map((d) => d.id)));
+          } catch {
+            /* anulowane */
+          }
+        }}
+      />
+
       {/* ── 5. Co jeszcze ── */}
       <Text style={styles.sectionTitle}>5. Co jeszcze dołączyć</Text>
       {dodatkowe.map((p) => (
