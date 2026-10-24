@@ -6,6 +6,8 @@ import { aiUsage } from '../db/repos.js';
 import { buildSummaryPrompt, parseStreszczenie } from '../lib/streszczenie.js';
 import { buildProfilPrompt, parsujSugestie } from '../lib/profilSugestia.js';
 import { klasyfikujBladAi, zglosNiepowodzenieAi, zglosSukcesAi } from '../lib/stanAi.js';
+import { SYSTEM_PROMPT_SELEKCJI, zbudujPromptSelekcji, parsujWerdykt } from '../lib/werdyktAi.js';
+import { SYSTEM_PROMPT_WARUNKOW, zbudujPromptWarunkow, parsujWerdyktWarunkow } from '../lib/werdyktWarunkow.js';
 
 /*
  * Domyślny timeout SDK Anthropica to 10 minut. Cykl dopasowań ma na CAŁĄ pracę
@@ -308,4 +310,70 @@ export async function zaproponujProfil(opis, { userId = null } = {}) {
     logger.error({ err: err.message }, 'Sugestia profilu AI nie powiodła się');
     return null;
   }
+}
+
+/**
+ * Wspólny tor wywołań selekcji (spec §4.4, §6.2): budżet, koszt, stan /health, degradacja do null.
+ * Istniejące funkcje (scoreTenderMatch, summarizeTender, zaproponujProfil) zostają bez zmian.
+ */
+async function wywolajSelekcje({ operation, system, prompt, maxTokens, userId, parsuj }) {
+  if (!client) return null;
+
+  const status = await budgetStatus();
+  if (status.hardExceeded) {
+    logger.error({ status, operation }, 'Limit TWARDY budżetu AI przekroczony — pomijam wywołanie AI');
+    zglosPrzekroczenieBudzetu(status, 'twardy');
+    zglosNiepowodzenieAi({ typ: 'budzet', komunikat: 'Twardy limit budżetu AI przekroczony — wywołanie pominięte' });
+    return null;
+  }
+  if (status.softExceeded) zglosPrzekroczenieBudzetu(status, 'miękki');
+
+  const model = env.AI_MATCH_MODEL;
+  try {
+    const resp = await client.messages.create({
+      model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: prompt }],
+    });
+    const inputTokens = resp.usage?.input_tokens ?? 0;
+    const outputTokens = resp.usage?.output_tokens ?? 0;
+    await aiUsage.record({
+      operation, model, inputTokens, outputTokens,
+      costUsd: costUsd(model, inputTokens, outputTokens),
+      userId: userId ?? null,
+    });
+
+    const text = resp.content?.find((block) => block.type === 'text')?.text ?? '';
+    const wynik = parsuj(text);
+    if (wynik) zglosSukcesAi();
+    else zglosNiepowodzenieAi({ typ: 'nieczytelna_odpowiedz', komunikat: text || '(pusta odpowiedź modelu)' });
+    return wynik;
+  } catch (err) {
+    const blad = klasyfikujBladAi(err);
+    zglosNiepowodzenieAi(blad);
+    logger.error({ err: err.message, typ: blad.typ, status: blad.status, operation }, 'Wywołanie AI nie powiodło się');
+    return null;
+  }
+}
+
+/** Werdykt selekcji dla jednego przetargu i jednego klienta (spec §4.4). */
+export function ocenDlaKlienta(user, tender, przyklady, { teraz = new Date().toISOString() } = {}) {
+  return wywolajSelekcje({
+    operation: 'pracownik_ocena',
+    system: SYSTEM_PROMPT_SELEKCJI,
+    prompt: zbudujPromptSelekcji({ user, tender, przyklady: przyklady ?? { zapisane: [], odrzucone: [] }, teraz }),
+    maxTokens: 400,
+    userId: user?.id,
+    parsuj: parsujWerdykt,
+  });
+}
+
+/** Porównanie warunków udziału z kartą firmy (spec §6.2). */
+export function porownajWarunki(user, tekst) {
+  return wywolajSelekcje({
+    operation: 'pracownik_warunki',
+    system: SYSTEM_PROMPT_WARUNKOW,
+    prompt: zbudujPromptWarunkow({ user, tekst }),
+    maxTokens: 700,
+    userId: user?.id,
+    parsuj: parsujWerdyktWarunkow,
+  });
 }
