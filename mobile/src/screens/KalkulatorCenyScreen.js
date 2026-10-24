@@ -33,7 +33,7 @@ function Wiersz({ styles, etykieta, kwota, wariant = 'zwykly' }) {
 
 const oczysc = (t) => t.replace(/[^0-9., ]/g, '');
 
-export default function KalkulatorCenyScreen({ route }) {
+export default function KalkulatorCenyScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleCeny);
   const nazwa = route?.params?.nazwa ?? null;
