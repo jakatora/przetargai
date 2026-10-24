@@ -24,6 +24,7 @@ import {
 } from '../lib/dokumentyOferty';
 import { pobierzDanePoNip } from '../lib/danePoNip';
 import { generujSciageJedz } from '../lib/sciagaJedz';
+import { wczytajKontroleOferty, zapiszKontroleOferty } from '../lib/kontrolaOferty';
 
 /**
  * „DOKUMENTY DO OFERTY W 1 KLIK" — dane firmy wpisujesz RAZ (zostają w aplikacji),
@@ -146,10 +147,27 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
   );
   const dodatkowe = useMemo(() => coJeszczeDolaczyc(sytuacja), [sytuacja]);
 
+  // Udostępnione dokumenty odhaczają odpowiednie punkty „Kontroli przed wysłaniem" tego przetargu —
+  // użytkownik nie zaznacza ręcznie tego, co aplikacja właśnie za niego zrobiła.
+  async function odhaczKontrole(klucze) {
+    if (!tenderId || !klucze.length) return;
+    try {
+      const wykonane = await wczytajKontroleOferty(storage, tenderId);
+      const zbior = new Set(wykonane instanceof Set ? wykonane : Array.isArray(wykonane) ? wykonane : []);
+      for (const k of klucze) zbior.add(k);
+      await zapiszKontroleOferty(storage, tenderId, zbior);
+    } catch {
+      /* checklista nie jest krytyczna — brak zapisu nie blokuje dokumentów */
+    }
+  }
+
+  const kluczeKontroliDla = (id) => (id === 'oswiadczenie_125' ? ['oswiadczenia'] : id === 'pelnomocnictwo' ? ['pelnomocnictwo'] : []);
+
   async function udostepnij(dok) {
     try {
       await Share.share({ message: dok.tresc, title: dok.nazwa });
       setUdostepnione((s) => new Set(s).add(dok.id));
+      await odhaczKontrole(kluczeKontroliDla(dok.id));
     } catch {
       /* użytkownik anulował — nic nie robimy */
     }
@@ -323,6 +341,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
           try {
             await Share.share({ message: calosc, title: `Dokumenty do oferty — ${przetarg.tytul ?? 'pakiet'}` });
             setUdostepnione(new Set(pakiet.map((d) => d.id)));
+            await odhaczKontrole(pakiet.flatMap((d) => kluczeKontroliDla(d.id)));
           } catch {
             /* anulowane */
           }
