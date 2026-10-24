@@ -2,7 +2,8 @@ import { logger } from '../lib/logger.js';
 import { features } from '../config.js';
 import { pobierzOgloszeniaTed } from '../services/ted.js';
 import { pobierzBzpZWznowieniem, zatwierdzCheckpointBzp } from './oknoBzp.js';
-import { generateMatchesForAllUsers } from '../services/matching.js';
+import { cyklDzienny } from '../services/pracownik.js';
+import { wyslijMaileProby } from '../services/mailProby.js';
 import { pobierzBkZWznowieniem, zatwierdzCheckpointBk } from './oknoBk.js';
 import { tenders, cykl } from '../db/repos.js';
 import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
@@ -306,7 +307,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     logger.info({ pobieranieMs: Date.now() - startedAt, budzetDopasowanMs: budzetCzasuMs },
       'fetchTenders: przechodzę do dopasowań z budżetem resztkowym');
     matchesCreated = await zbierajStatystykiAi(licznikAi,
-      () => generateMatchesForAllUsers({ budzetCzasuMs }));
+      () => cyklDzienny({ budzetCzasuMs }));
   } catch (err) {
     logger.error({ err: err.message }, 'fetchTenders: cykl dopasowań nie powiódł się');
     return zapiszSladZAi({
@@ -316,6 +317,9 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
       zrodla: statystyki, ai: statystykiAi(),
     }, alarmujAi);
   }
+
+  // Maile próby Standard (spec §15) — po selekcji; awaria nie wywraca cyklu.
+  await wyslijMaileProby().catch((err) => logger.error({ err: err.message }, 'fetchTenders: maile próby nie wysłane'));
 
   return zapiszSladZAi({
     ok: true, fetched, newTenders: noweTenders, skipped: pominiete,

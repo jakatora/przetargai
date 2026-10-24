@@ -8,7 +8,7 @@ import { runOknoWynikow } from '../jobs/oknoWynikow.js';
 import { runBenchmarkRynku } from '../jobs/benchmarkRynku.js';
 import { runOknoPlanow } from '../jobs/oknoPlanow.js';
 import { runWynikiAggregation } from '../jobs/aggregateResults.js';
-import { backfillUser } from '../services/matching.js';
+import { przeliczProfil } from '../services/pracownik.js';
 import { tenders, users } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
 import { notFound, serviceUnavailable } from '../lib/errors.js';
@@ -171,7 +171,7 @@ router.get('/users', ah(async (req, res) => {
 router.post('/match-user/:userId', ah(async (req, res) => {
   const user = await users.findById(req.params.userId);
   if (!user) throw notFound('Użytkownik nie istnieje');
-  const result = await backfillUser(user, { wymus: true });
+  const result = await przeliczProfil(user, { wymus: true });
   res.json({
     ok: true,
     user_id: user.id,

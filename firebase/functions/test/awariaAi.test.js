@@ -170,7 +170,8 @@ test('KRYTYCZNE: cykl przy zerowych kredytach — ślad, /health 503 z sekcją a
 });
 
 test('po doładowaniu: AI działa → 200, a historia pamięta ostatni błąd', async () => {
-  modelOdpowiada('{"score": 30, "reasoning": "Słabe dopasowanie."}');
+  // Cykl 12:00 ocenia przez selekcję pod klienta (services/pracownik.js) — model odpowiada werdyktem.
+  modelOdpowiada('{"decyzja": "odrzucam", "przyczyna": "branza", "punkty": ["Słabe dopasowanie."], "score": 30}');
 
   const wynik = await przebiegZKandydatemAi({ alarmujAi: async () => {} });
   assert.ok(wynik.ai.udane >= 1);
