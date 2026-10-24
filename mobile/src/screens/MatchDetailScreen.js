@@ -676,6 +676,27 @@ export default function MatchDetailScreen({ route, navigation }) {
         />
       </View>
 
+      {status === 'wygrana' ? (
+        <>
+          <Text style={styles.sectionTitle}>
+            {t('Wygrana! Co teraz', 'You won! What now')}
+          </Text>
+          <View style={styles.card}>
+            <Text style={styles.strPodtytul}>
+              {t(
+                'Pierwsze dni kontraktu to terminy z umowy: zabezpieczenie, polisa, zgłoszenie podwykonawców. Lista, czego pilnować, i trzy pisma gotowe do podpisu.',
+                'The first days of the contract are about contract deadlines: security, insurance, subcontractor notices. A checklist and three letters ready to sign.',
+              )}
+            </Text>
+            <Button
+              title={t('Otwórz „Po wygranej"', 'Open "After winning"')}
+              onPress={() => navigation.navigate('PoWygranej', { match })}
+              style={styles.gap}
+            />
+          </View>
+        </>
+      ) : null}
+
       {status === 'przegrana' ? (
         <>
           <Text style={styles.sectionTitle}>

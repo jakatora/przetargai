@@ -67,6 +67,12 @@ export const KATALOG_NARZEDZI = [
     ],
   },
   {
+    kategoria: 'Po wygranej',
+    narzedzia: [
+      { ekran: 'PoWygranej', tytul: 'Po wygranej: pierwsze dni kontraktu', opis: 'Checklista + pisma w 1 klik: zgłoszenie podwykonawcy, zmiana terminu, zwrot zabezpieczenia' },
+    ],
+  },
+  {
     kategoria: 'Moje postępowania',
     narzedzia: [
       { ekran: 'Pulpit', tytul: 'Pulpit — moje postępowania', opis: 'Widok etapowy prowadzonych ofert' },
