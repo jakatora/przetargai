@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { users, tenders, przypomnieniaPytan } from '../db/repos.js';
 import { sendPush } from '../services/push.js';
+import { sendEmail } from '../services/email.js';
 import { terminPytan, wOknie, trescPrzypomnieniaPytan, OKNO_PRZYPOMNIENIA_PYTAN_MS } from '../lib/przypomnieniePytan.js';
 import { reguluZrodla } from '../lib/kalendarzPrzetargu.js';
 
@@ -39,11 +40,11 @@ const MAKS_DNI_PYTAN = Math.max(reguluZrodla('bzp').dniPytania, reguluZrodla('te
 const MIN_DNI_PYTAN = Math.min(reguluZrodla('bzp').dniPytania, reguluZrodla('ted').dniPytania);
 const DZIEN_MS = 86_400_000;
 
-export async function runPrzypomnieniaPytanSwz({ teraz = new Date().toISOString(), wyslij = sendPush } = {}) {
+export async function runPrzypomnieniaPytanSwz({ teraz = new Date().toISOString(), wyslij = sendPush, wyslijEmail = sendEmail } = {}) {
   const startedAt = Date.now();
   const terazMs = Date.parse(teraz);
   const wynik = {
-    ok: true, kandydaci: 0, sent: 0, nieudane: 0, porzucone: 0, bezTokenu: 0,
+    ok: true, kandydaci: 0, sent: 0, emaile: 0, nieudane: 0, porzucone: 0, bezTokenu: 0,
     poza_oknem: 0, bez_terminu: 0, zajete: 0, bledy: 0, durationMs: 0,
   };
 
@@ -59,14 +60,14 @@ export async function runPrzypomnieniaPytanSwz({ teraz = new Date().toISOString(
   const tokenDla = async (userId) => {
     if (!tokenCache.has(userId)) {
       const u = await users.findById(userId).catch(() => null);
-      tokenCache.set(userId, u?.push_token ?? null);
+      tokenCache.set(userId, { token: u?.push_token ?? null, email: u?.email ?? null });
     }
     return tokenCache.get(userId);
   };
 
   for (const wpis of kandydaci) {
     try {
-      await obsluzWpis(wpis, { teraz, wyslij, tokenDla, wynik });
+      await obsluzWpis(wpis, { teraz, wyslij, wyslijEmail, tokenDla, wynik });
     } catch (err) {
       wynik.bledy++;
       logger.error({ err: err.message, userId: wpis.userId, tenderId: wpis.tenderId },
@@ -80,7 +81,7 @@ export async function runPrzypomnieniaPytanSwz({ teraz = new Date().toISOString(
   return wynik;
 }
 
-async function obsluzWpis(wpis, { teraz, wyslij, tokenDla, wynik }) {
+async function obsluzWpis(wpis, { teraz, wyslij, wyslijEmail, tokenDla, wynik }) {
   // 1) Aktualny stan przetargu — wpis „Zapisanych" to kopia z chwili zapisu.
   const tender = await tenders.findById(wpis.tender_id ?? wpis.tenderId).catch(() => null);
   const pozycja = terminPytan({
@@ -100,19 +101,46 @@ async function obsluzWpis(wpis, { teraz, wyslij, tokenDla, wynik }) {
     wpis.userId, wpis.tenderId, { termin: pozycja.at, teraz, stan, proby, ponowPo },
   );
 
-  // 3) Bez tokenu nie ma dokąd wysłać — spróbujemy w kolejnym przebiegu okna.
-  const token = await tokenDla(wpis.userId);
-  if (!token) {
-    await zakoncz('bez_tokenu');
-    wynik.bezTokenu++;
-    return;
-  }
-
+  const { token, email } = await tokenDla(wpis.userId);
   const tresc = trescPrzypomnieniaPytan({
     tenderId: wpis.tenderId,
     tytul: tender?.title || wpis.tender_title,
     pozycja,
   });
+  // 3) Bez tokenu push — e-mail (2026-10-24: push nie działa nigdzie, a termin pytań
+  // mija raz; brak maila = nieodwracalnie przegapione pytania). Bez e-maila / bez klucza
+  // Resend — jak dotąd: „bez_tokenu", kolejny przebieg okna spróbuje znowu.
+  if (!token) {
+    const dopisek = 'Wniosek złożysz w aplikacji: Radar SWZ → „Złóż wniosek o wyjaśnienie SWZ (pismo w 1 klik)".';
+    const r = email
+      ? await wyslijEmail({
+        to: email,
+        subject: `PrzetargAI: ${tresc.title}`,
+        text: `${tresc.body}\n\n${dopisek}`,
+        html: `<p><b>${tresc.title}</b></p><p>${tresc.body}</p><p>${dopisek}</p>`,
+      }).catch((err) => ({ sent: false, error: err.message }))
+      : null;
+    if (r?.sent) {
+      await zakoncz('wyslane');
+      wynik.emaile++;
+      return;
+    }
+    if (!r || r.degraded || r.odrzuconyAdresat) {
+      await zakoncz('bez_tokenu');
+      wynik.bezTokenu++;
+      return;
+    }
+    // Awaria poczty: ponowienie z limitem prób, jak przy pushu.
+    const proby = rez.proby + 1;
+    if (proby >= MAKS_PROB_WYSYLKI_PYTAN) {
+      await zakoncz('porzucone', { proby });
+      wynik.porzucone++;
+      return;
+    }
+    await zakoncz('ponowienie', { proby, ponowPo: new Date(Date.parse(teraz) + ODSTEP_PONOWIENIA_PYTAN_MS).toISOString() });
+    wynik.nieudane++;
+    return;
+  }
   const push = await wyslij(token, tresc)
     .catch((err) => ({ sent: 0, failed: 1, bledy: { [err.message]: 1 } }));
 

@@ -517,13 +517,13 @@ export default function MatchDetailScreen({ route, navigation }) {
         </Text>
         <Button
           title={t('Kalkulator ceny ofertowej', 'Bid price calculator')}
-          onPress={() => navigation.navigate('KalkulatorCeny', { nazwa: tender.title, rynek: wartoscOrient ?? null, budzet: Number.isFinite(Number(tender.budget)) && Number(tender.budget) > 0 ? Number(tender.budget) : null })}
+          onPress={() => navigation.navigate('KalkulatorCeny', { nazwa: tender.title, match, rynek: wartoscOrient ?? null, budzet: Number.isFinite(Number(tender.budget)) && Number(tender.budget) > 0 ? Number(tender.budget) : null })}
           variant="ghost"
           style={styles.gap}
         />
         <Button
           title={t('Sprawdzarka formularza cenowego', 'Price form checker')}
-          onPress={() => navigation.navigate('SprawdzarkaCeny', { nazwa: tender.title })}
+          onPress={() => navigation.navigate('SprawdzarkaCeny', { nazwa: tender.title, tenderId: tender.id })}
           variant="ghost"
           style={styles.gap}
         />
@@ -541,7 +541,7 @@ export default function MatchDetailScreen({ route, navigation }) {
         />
         <Button
           title={t('Kontroler gwarancji wadialnej', 'Bid security guarantee checker')}
-          onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title })}
+          onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title, tenderId: tender.id })}
           variant="ghost"
           style={styles.gap}
         />
