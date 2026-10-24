@@ -1,5 +1,6 @@
 import { ZRODLA } from './katalogPrzetargow.js';
 import { kodWojewodztwa, WOJEWODZTWA } from './wojewodztwa.js';
+import { planEfektywny, stanProby } from './plan.js';
 
 /** Reprezentacje zasobów bezpieczne do zwrotu w API (bez danych wrażliwych). */
 
@@ -91,6 +92,11 @@ export function publicUser(user) {
      */
     regiony: user.regiony ?? [],
     wartosc_max: user.wartosc_max ?? null,
+    // Plan EFEKTYWNY (spec §15): płatny Standard albo 7-dniowa próba. `premium_tier` zostaje
+    // rozliczeniowy — stara apka zna tylko jego i w próbie pokaże Free.
+    plan: planEfektywny(user),
+    proba: stanProby(user),
+    powiadomienia_pracownik_email: user.powiadomienia_pracownik_email !== false,
     created_at: user.created_at,
   };
 }
@@ -129,6 +135,11 @@ export function publicMatch(row, znaczniki = {}) {
     reasoning: row.match_reasoning,
     scorer: row.scorer,
     created_at: row.created_at,
+    // Selekcja pod klienta (spec §4.5): punkty uzasadnienia, ocena tymczasowa, warunki udziału.
+    uzasadnienie: Array.isArray(row.uzasadnienie) ? row.uzasadnienie : [],
+    ocena_bez_ai: row.ocena_bez_ai === true,
+    warunki: row.warunki ?? null,
+    odrzucony_przez_pracownika: row.odrzucony_przez_pracownika ?? null,
     tender: {
       id: row.tender_id,
       title: row.tender_title,
@@ -190,5 +201,22 @@ export function publicSaved(row, znaczniki = {}) {
       kryterium_oceny: row.tender_kryterium_oceny ?? null,
       liczba_czesci: row.tender_liczba_czesci ?? null,
     },
+  };
+}
+
+/** Odrzucony przetarg z listy (spec §9) — dane zdenormalizowane w śladzie oceny. */
+export function publicOdrzucony(row) {
+  return {
+    tender_id: row.tender_id,
+    tytul: row.tytul ?? null,
+    zamawiajacy: row.zamawiajacy ?? null,
+    termin: row.termin ?? null,
+    wartosc: row.wartosc ?? null,
+    wojewodztwo: row.wojewodztwo ?? null,
+    zrodlo: row.zrodlo ?? 'bzp',
+    przyczyna: row.przyczyna,
+    etap: row.etap ?? null,
+    szczegol: row.szczegol ?? null,
+    evaluated_at: row.evaluated_at,
   };
 }

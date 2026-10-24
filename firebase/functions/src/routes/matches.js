@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { matches, feedback, saved, tenders, streszczenieQuota, wynikiStats } from '../db/repos.js';
+import { matches, feedback, saved, tenders, streszczenieQuota, wynikiStats, users, warunkiQuota } from '../db/repos.js';
 import { kluczWyniku } from '../lib/wynikiAgregacja.js';
 import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
@@ -10,7 +10,14 @@ import { publicMatch, publicSaved, przetargZDopasowania } from '../lib/serialize
 import { wyjasnijDopasowanie, nastepnyKrokProfilu } from '../lib/wyjasnienieDopasowania.js';
 import { pobierzZnacznikiZrodel } from '../services/zakresZrodel.js';
 import { zbudujKarteStartu } from '../services/kartaStartu.js';
-import { summarizeTender } from '../services/ai.js';
+import { summarizeTender, porownajWarunki } from '../services/ai.js';
+import { LIMIT_WARUNKOW_DZIENNIE } from '../services/pracownik.js';
+import { planEfektywny } from '../lib/plan.js';
+import { formalnePuste, wersjaFormalnych } from '../lib/kartaFirmy.js';
+import { zbudujSygnal } from '../lib/sygnaly.js';
+import { kodWojewodztwa } from '../lib/wojewodztwa.js';
+import { terminPytan } from '../lib/przypomnieniePytan.js';
+import { logger } from '../lib/logger.js';
 import { normalizujStatus, oczyscNotatke, STATUSY } from '../lib/statusPrzetargu.js';
 import { zbudujZachete, POCZATEK_TYGODNIA_MS } from '../lib/potencjal.js';
 import { env } from '../config.js';
@@ -46,13 +53,15 @@ router.get('/', ah(async (req, res) => {
 
   // Pełna strona ⇒ prawdopodobnie jest kolejna. Krótsza ⇒ to koniec.
   const nastepny = rows.length === limit ? matches.kursorZ(rows[rows.length - 1]) : null;
+  // Odrzucone (przez klienta albo selekcję) nie wracają do listy — kursor liczony z pełnej strony.
+  const widoczne = rows.filter((r) => !r.odrzucony_przez_klienta && !r.odrzucony_przez_pracownika);
 
   /*
    * Wyjaśnienie liczy się TU, z profilu i zdenormalizowanych pól przetargu —
    * bez zapytania do bazy i bez wywołania AI. Karta ma powiedzieć, który sygnał
    * zadziałał, zamiast jednego zdania „Trafione słowa kluczowe: …".
    */
-  const wyjasnione = rows.map((row) => ({
+  const wyjasnione = widoczne.map((row) => ({
     ...publicMatch(row, znaczniki),
     wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
   }));
@@ -64,11 +73,11 @@ router.get('/', ah(async (req, res) => {
    */
   const pierwszaStrona = !przed;
   const podpowiedz = pierwszaStrona
-    ? nastepnyKrokProfilu(req.user, { liczbaDopasowan: rows.length })
+    ? nastepnyKrokProfilu(req.user, { liczbaDopasowan: widoczne.length })
     : null;
 
   res.json({
-    matches: wyjasnione, count: rows.length, limit, next_before: nastepny, podpowiedz,
+    matches: wyjasnione, count: widoczne.length, limit, next_before: nastepny, podpowiedz,
   });
 }));
 
@@ -103,7 +112,8 @@ router.get('/statystyki', ah(async (req, res) => {
     matches.countSince(req.user.id, tydzienTemu),
   ]);
   const zacheta = zbudujZachete({
-    isFree: req.user.premium_tier === 'free',
+    // Plan efektywny (spec §15): w próbie Standard zachęta do zakupu jest ukryta.
+    isFree: planEfektywny(req.user) === 'free',
     dzis,
     wTymTygodniu,
     limitDzienny: env.FREE_TIER_DAILY_MATCH_LIMIT,
@@ -116,6 +126,11 @@ router.put('/:id/save', ah(async (req, res) => {
   const row = await matches.detail(req.user.id, req.params.id);
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
   const created = await saved.add(req.user.id, row);
+  // Sygnał „takie chcę” dla selekcji (spec §5.1) — błąd zapisu sygnału nie psuje zakładki.
+  await users.dodajSygnal(req.user.id, zbudujSygnal({
+    typ: 'zapis', tenderId: row.tender_id, tytul: row.tender_title, wojewodztwo: kodWojewodztwa(row.tender_wojewodztwo),
+    wartosc: row.tender_budget, termin: row.tender_deadline, teraz: new Date().toISOString(),
+  })).catch((err) => logger.error({ err: err.message, userId: req.user.id }, 'Sygnał zapisu nie zapisany'));
   audit({ userId: req.user.id, action: 'save_tender', detail: { tenderId: row.id }, ip: req.ip });
   res.json({ saved: true, created });
 }));
@@ -188,7 +203,7 @@ router.get('/:id/streszczenie', ah(async (req, res) => {
     return;
   }
 
-  const limit = LIMIT_STRESZCZEN_DZIENNIE[req.user.premium_tier] ?? LIMIT_STRESZCZEN_DZIENNIE.free;
+  const limit = LIMIT_STRESZCZEN_DZIENNIE[planEfektywny(req.user)];
   if (!await streszczenieQuota.reserve(req.user.id, limit)) {
     res.json({
       streszczenie: null,
@@ -258,6 +273,32 @@ router.get('/:id/czy-warto', ah(async (req, res) => {
   res.json({ karta });
 }));
 
+/** Warunki udziału vs karta firmy (spec §6.2) — Standard; wynik zapamiętany na dopasowaniu. MUSI stać przed `GET /:id`. */
+router.get('/:id/warunki', ah(async (req, res) => {
+  const row = await matches.detail(req.user.id, req.params.id);
+  if (!row) throw notFound('Dopasowanie nie zostało znalezione');
+  const teraz = new Date().toISOString();
+  if (planEfektywny(req.user, teraz) !== 'standard') { res.json({ warunki: null, powod: 'plan' }); return; }
+
+  const tender = await tenders.findById(row.tender_id);
+  const wu = tender?.warunki_udzialu ?? null;
+  if (!wu) { res.json({ warunki: null, powod: 'brak_tekstu' }); return; }
+  if (!wu.tekst) { res.json({ warunki: null, powod: 'w_swz' }); return; }
+  if (formalnePuste(req.user)) { res.json({ warunki: null, powod: 'brak_karty', tekst: wu.tekst }); return; }
+
+  const wersja = wersjaFormalnych(req.user);
+  if (row.warunki?.wersja_formalnych === wersja) { res.json({ warunki: row.warunki, tekst: wu.tekst, cached: true }); return; }
+  if (!await warunkiQuota.reserve(req.user.id, LIMIT_WARUNKOW_DZIENNIE)) {
+    res.json({ warunki: null, powod: 'limit_dzienny', tekst: wu.tekst });
+    return;
+  }
+  const wynik = await porownajWarunki(req.user, wu.tekst);
+  if (!wynik) { res.json({ warunki: null, powod: 'niedostepne', tekst: wu.tekst }); return; }
+  const zapis = { ...wynik, wersja_formalnych: wersja, o: teraz };
+  await matches.zapiszWarunki(req.user.id, row.id, zapis);
+  res.json({ warunki: zapis, tekst: wu.tekst, cached: false });
+}));
+
 /** Szczegóły pojedynczego dopasowania. */
 router.get('/:id', ah(async (req, res) => {
   // Firestore: detail(userId, matchId) — kolejność (userId, matchId), a cudzych
@@ -270,6 +311,9 @@ router.get('/:id', ah(async (req, res) => {
     match: {
       ...publicMatch(row, await pobierzZnacznikiZrodel()),
       wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
+      // Termin pytań do SWZ (ten sam przepis co kalendarz) — plan działania w aplikacji (spec §6.3).
+      termin_pytan: terminPytan({ id: row.tender_id, source: row.tender_source, deadline: row.tender_deadline },
+        new Date().toISOString())?.at ?? null,
     },
   });
 }));
@@ -285,6 +329,18 @@ router.post('/:id/feedback', ah(async (req, res) => {
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
 
   await feedback.upsert({ userId: req.user.id, matchId: row.id, helpful: result.data.helpful });
+  // Stara apka (1.1.4/1.1.5): 👍 = sygnał zapisu, 👎 = odrzucenie z przyczyną „inne” (spec §5.1).
+  if (env.PRACOWNIK_ENABLED === 'true') {
+    const teraz = new Date().toISOString();
+    if (!result.data.helpful) {
+      await matches.oznaczOdrzuconyPrzezKlienta(req.user.id, row.id, { przyczyna: 'inne', komentarz: null, teraz });
+    }
+    await users.dodajSygnal(req.user.id, zbudujSygnal({
+      typ: result.data.helpful ? 'zapis' : 'odrzucenie', tenderId: row.tender_id, tytul: row.tender_title,
+      wojewodztwo: kodWojewodztwa(row.tender_wojewodztwo), wartosc: row.tender_budget, termin: row.tender_deadline,
+      przyczyna: result.data.helpful ? null : 'inne', teraz,
+    }));
+  }
   audit({
     userId: req.user.id,
     action: 'match_feedback',
