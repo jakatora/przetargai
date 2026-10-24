@@ -4,6 +4,7 @@ import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
+import { pozycjaWzgledemRynku } from '../lib/wartosciBenchmark';
 import { policzCene, walidujCene, formatujPLN, STAWKI_VAT } from '../lib/kalkulatorCeny';
 
 /**
@@ -34,6 +35,10 @@ export default function KalkulatorCenyScreen({ route }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleCeny);
   const nazwa = route?.params?.nazwa ?? null;
+  // Widełki rynkowe (P25–mediana–P75 z rozstrzygnięć dla działu CPV × województwo) i wartość
+  // szacunkowa z ogłoszenia — przekazane z karty przetargu; porównujemy z ceną netto.
+  const rynek = route?.params?.rynek ?? null;
+  const budzet = route?.params?.budzet ?? null;
 
   const [material, setMaterial] = useState('');
   const [robocizna, setRobocizna] = useState('');
@@ -96,6 +101,24 @@ export default function KalkulatorCenyScreen({ route }) {
               netto {formatujPLN(w.netto)}  +  VAT {vat}% {formatujPLN(w.vat)}
             </Text>
           </View>
+
+          {rynek || budzet ? (() => {
+            const poz = rynek ? pozycjaWzgledemRynku(w.netto, rynek) : null;
+            const kolorTonu = poz?.ton === 'sukces' ? kolory.green : poz?.ton === 'ostrzezenie' ? kolory.ostrzezenieTekst : kolory.textMuted;
+            return (
+              <View style={styles.card}>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: kolory.text }}>Twoja cena na tle rynku</Text>
+                {rynek ? (
+                  <Text style={styles.heroPod}>
+                    Rozstrzygnięcia w tym dziale CPV ({rynek.poziom === 'wojewodztwo' ? 'województwo' : 'kraj'}, n={rynek.n}): {formatujPLN(rynek.p25)} – {formatujPLN(rynek.mediana)} – {formatujPLN(rynek.p75)}
+                  </Text>
+                ) : null}
+                {budzet ? <Text style={styles.heroPod}>Wartość szacunkowa z ogłoszenia: {formatujPLN(budzet)}{w.netto > 0 ? ` · Twoja cena netto to ${Math.round((w.netto / budzet) * 100)} % tej kwoty` : ''}</Text> : null}
+                {poz ? <Text style={{ fontSize: 13, color: kolorTonu, marginTop: 6, lineHeight: 18, fontWeight: '600' }}>{poz.tekst}</Text> : null}
+                <Text style={styles.heroPod}>Orientacyjnie — to nie wartość tego przetargu. Nie zaniżaj oferty pod widełki.</Text>
+              </View>
+            );
+          })() : null}
 
           {/* Rozbicie */}
           <View style={styles.card}>
