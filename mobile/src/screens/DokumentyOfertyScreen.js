@@ -45,6 +45,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
   const [pokazDane, setPokazDane] = useState(true);
   const [oferta, setOferta] = useState({ cenaNetto: '', vatProc: 23, terminWykonania: '', gwarancjaMies: '', podwykonawcy: '', tajemnica: false });
   const [sytuacja, setSytuacja] = useState({ art109: false, grupaKapitalowa: false, pelnomocnik: false, polegaNaZasobach: false, konsorcjum: false, wadium: false });
+  const [pelnomocnik, setPelnomocnik] = useState({ imie: '', stanowisko: '', dokument: '' });
   const [udostepnione, setUdostepnione] = useState(() => new Set());
   const [nipStan, setNipStan] = useState({ laduje: false, komunikat: null, ok: false });
 
@@ -114,8 +115,8 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
   }
 
   const pakiet = useMemo(
-    () => pakietDokumentow({ wykonawca, przetarg, oferta, opcje: sytuacja, dzisiaj: new Date().toISOString() }),
-    [wykonawca, przetarg, oferta, sytuacja],
+    () => pakietDokumentow({ wykonawca, przetarg, oferta, opcje: { ...sytuacja, danePelnomocnika: pelnomocnik }, dzisiaj: new Date().toISOString() }),
+    [wykonawca, przetarg, oferta, sytuacja, pelnomocnik],
   );
   const dodatkowe = useMemo(() => coJeszczeDolaczyc(sytuacja), [sytuacja]);
 
@@ -237,9 +238,17 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
         ['konsorcjum', 'Startuję w konsorcjum'],
         ['wadium', 'Wymagane jest wadium'],
       ].map(([klucz, etykieta]) => (
-        <View key={klucz} style={styles.przelacznik}>
-          <Text style={styles.przelacznikTekst}>{etykieta}</Text>
-          <Switch value={sytuacja[klucz]} onValueChange={przelacz(klucz)} />
+        <View key={klucz}>
+          <View style={styles.przelacznik}>
+            <Text style={styles.przelacznikTekst}>{etykieta}</Text>
+            <Switch value={sytuacja[klucz]} onValueChange={przelacz(klucz)} />
+          </View>
+          {klucz === 'pelnomocnik' && sytuacja.pelnomocnik ? (
+            <View>
+              <TextField label="Pełnomocnik — imię i nazwisko" value={pelnomocnik.imie} onChangeText={(v) => setPelnomocnik((p) => ({ ...p, imie: v }))} hint="Pełnomocnictwo dojdzie do pakietu; podpisuje je mocodawca z rejestru" />
+              <TextField label="Stanowisko pełnomocnika (opcjonalnie)" value={pelnomocnik.stanowisko} onChangeText={(v) => setPelnomocnik((p) => ({ ...p, stanowisko: v }))} />
+            </View>
+          ) : null}
         </View>
       ))}
 

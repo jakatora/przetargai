@@ -15,6 +15,7 @@ import {
   generujFormularzOfertowy,
   generujOswiadczenieGrupaKapitalowa,
   generujOswiadczenieAktualnosci,
+  generujPelnomocnictwo,
   coJeszczeDolaczyc,
   pakietDokumentow,
 } from '../src/lib/dokumentyOferty.js';
@@ -207,6 +208,26 @@ test('coJeszczeDolaczyc: lista zależy od sytuacji wykonawcy', () => {
   for (const w of ['pelnomocnictwo', 'zobowiazanie118', 'konsorcjum117', 'wadium', 'podpis']) assert.ok(ids.includes(w), `brak ${w}`);
   const zob = wszystko.find((p) => p.id === 'zobowiazanie118');
   assert.equal(zob.ekran, 'Kreator118', 'pozycja prowadzi do istniejącego narzędzia');
+});
+
+test('pełnomocnictwo: mocodawca z rejestru, pełnomocnik, zakres z ofertą i wezwaniami, podpis mocodawcy; wchodzi do pakietu tylko na życzenie', () => {
+  const dok = generujPelnomocnictwo({ wykonawca: wykonawcaPelny(), przetarg: PRZETARG, dzisiaj: DZIS, pelnomocnik: { imie: 'Anna Nowak', stanowisko: 'Kierownik ds. ofert', dokument: 'dowód osobisty ABC 123456' } });
+  assert.equal(dok.kiedy, KIEDY.Z_OFERTA);
+  assert.match(dok.tresc, /^PEŁNOMOCNICTWO/);
+  assert.match(dok.tresc, /Mocodawca: Budrem Sp\. z o\.o\./);
+  assert.match(dok.tresc, /Jan Kowalski, Prezes Zarządu/);
+  assert.match(dok.tresc, /Anna Nowak \(Kierownik ds\. ofert\), legitymującej\/-emu się: dowód osobisty ABC 123456/);
+  assert.match(dok.tresc, /podpisania i złożenia oferty/);
+  assert.match(dok.tresc, /wezwanie Zamawiającego/);
+  assert.match(dok.tresc, /Krajowej Izby Odwoławczej/);
+  assert.match(dok.tresc, /MOCODAWCY/);
+  assert.match(dok.tresc, /ZP\.271\.14\.2026/);
+
+  const bez = pakietDokumentow({ wykonawca: wykonawcaPelny(), przetarg: PRZETARG, oferta: {}, dzisiaj: DZIS });
+  assert.ok(!bez.some((d) => d.id === 'pelnomocnictwo'));
+  const z = pakietDokumentow({ wykonawca: wykonawcaPelny(), przetarg: PRZETARG, oferta: {}, opcje: { pelnomocnik: true, danePelnomocnika: { imie: 'Anna Nowak' } }, dzisiaj: DZIS });
+  assert.deepEqual(z.map((d) => d.id), ['formularz_ofertowy', 'oswiadczenie_125', 'pelnomocnictwo', 'oswiadczenie_grupa_kapitalowa', 'oswiadczenie_aktualnosc']);
+  assert.match(z[2].tresc, /Anna Nowak/);
 });
 
 test('pakietDokumentow: 4 dokumenty w stałej kolejności, z etykietą „kiedy", każdy ma treść i podstawę', () => {

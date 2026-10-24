@@ -367,6 +367,45 @@ export function generujOswiadczenieAktualnosci({ wykonawca, przetarg, dzisiaj } 
   };
 }
 
+/** Pełnomocnictwo do złożenia oferty — gdy podpisuje ktoś inny niż osoba z rejestru. */
+export function generujPelnomocnictwo({ wykonawca, przetarg, pelnomocnik, dzisiaj } = {}) {
+  const k = wykonawca && typeof wykonawca === 'object' ? wykonawca : {};
+  const pm = pelnomocnik && typeof pelnomocnik === 'object' ? pelnomocnik : {};
+  const mocodawca = niepusty(k.stanowisko) ? `${w(k.reprezentant)}, ${k.stanowisko.trim()}` : w(k.reprezentant);
+  const tresc = [
+    'PEŁNOMOCNICTWO',
+    '',
+    `${w(k.miejscowosc)}, ${dataPL(dzisiaj)}`,
+    '',
+    `Mocodawca: ${w(k.nazwa)}, ${w(k.adres)}, NIP ${w(normalizujNip(k.nip) || k.nip)}`,
+    `reprezentowany przez: ${mocodawca}`,
+    '',
+    `niniejszym udziela pełnomocnictwa Pani/Panu: ${w(pm.imie)}${niepusty(pm.stanowisko) ? ` (${pm.stanowisko.trim()})` : ''}${niepusty(pm.dokument) ? `, legitymującej/-emu się: ${pm.dokument.trim()}` : ''}`,
+    '',
+    'do reprezentowania Mocodawcy w postępowaniu o udzielenie zamówienia publicznego:',
+    blokPostepowania(przetarg),
+    '',
+    'w zakresie:',
+    '1. podpisania i złożenia oferty wraz z załącznikami oraz oświadczeń, o których mowa w art. 125 ust. 1 ustawy Pzp,',
+    '2. składania wyjaśnień, uzupełnień i podmiotowych środków dowodowych na wezwanie Zamawiającego,',
+    '3. udziału w negocjacjach i składania ofert dodatkowych, jeżeli postępowanie je przewiduje,',
+    '4. wnoszenia środków ochrony prawnej (odwołanie do Krajowej Izby Odwoławczej) i odbioru korespondencji,',
+    niepusty(pm.zakres) ? `5. ${pm.zakres.trim()}` : '5. podpisania umowy w sprawie zamówienia publicznego — TAK / NIE (skreśl niepotrzebne).',
+    '',
+    'Pełnomocnik nie może udzielać dalszych pełnomocnictw. Pełnomocnictwo obowiązuje do zakończenia postępowania.',
+    '',
+    blokPodpisu(wykonawca, dzisiaj).replace('(podpis kwalifikowany, podpis zaufany albo podpis osobisty — oferta i oświadczenia w Pzp wymagają formy elektronicznej)', '(podpis kwalifikowany, zaufany albo osobisty MOCODAWCY — pełnomocnictwo w formie elektronicznej albo elektroniczna kopia poświadczona przez notariusza)'),
+  ].join('\n');
+  return {
+    id: 'pelnomocnictwo',
+    nazwa: 'Pełnomocnictwo do złożenia oferty',
+    podstawa: 'art. 98–99 KC; forma wg art. 63 Pzp i § 7 rozporządzenia o sposobie sporządzania dokumentów',
+    kiedy: KIEDY.Z_OFERTA,
+    tresc,
+    uwaga: 'Podpisuje MOCODAWCA (osoba z KRS/CEIDG), nie pełnomocnik. Skan podpisanego odręcznie papieru wymaga poświadczenia notarialnego — najprościej podpisać elektronicznie.',
+  };
+}
+
 /**
  * Co jeszcze dołączyć do oferty poza pakietem — zależnie od sytuacji wykonawcy.
  * Każda pozycja z `ekran` prowadzi do narzędzia, które ten dokument robi.
@@ -389,12 +428,16 @@ export function coJeszczeDolaczyc({ pelnomocnik, polegaNaZasobach, konsorcjum, w
   return lista;
 }
 
-/** Komplet czterech dokumentów w stałej kolejności: najpierw to, co idzie z ofertą. */
+/**
+ * Komplet dokumentów w stałej kolejności: najpierw to, co idzie z ofertą.
+ * Pełnomocnictwo dochodzi tylko, gdy ofertę podpisuje pełnomocnik (`opcje.pelnomocnik`).
+ */
 export function pakietDokumentow({ wykonawca, przetarg, oferta, opcje, dzisiaj } = {}) {
   const o = opcje && typeof opcje === 'object' ? opcje : {};
   return [
     generujFormularzOfertowy({ wykonawca, przetarg, oferta, dzisiaj }),
     generujOswiadczenie125({ wykonawca, przetarg, dzisiaj, opcje: { art109: Boolean(o.art109) } }),
+    ...(o.pelnomocnik ? [generujPelnomocnictwo({ wykonawca, przetarg, pelnomocnik: o.danePelnomocnika, dzisiaj })] : []),
     generujOswiadczenieGrupaKapitalowa({ wykonawca, przetarg, nalezy: Boolean(o.grupaKapitalowa), czlonkowie: o.czlonkowieGrupy, dzisiaj }),
     generujOswiadczenieAktualnosci({ wykonawca, przetarg, dzisiaj }),
   ];
