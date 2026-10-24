@@ -1,6 +1,8 @@
 import { getFirestore, FieldValue, FieldPath } from 'firebase-admin/firestore';
 import { env } from '../config.js';
 import { newId, nowIso, startOfTodayIso } from '../lib/ids.js';
+import { probaDo } from '../lib/plan.js';
+import { dodajSygnal as dolozSygnal } from '../lib/sygnaly.js';
 import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
 import {
   planZapytania, pasujeDoFiltrow, rozmiarPobrania, SKAN_STRONA, SKAN_MAKS,
@@ -52,7 +54,7 @@ export const users = {
    * rezerwacji tworzone w tej samej transakcji — create() na istniejącym rzuca.
    * @throws {Error} err.code === 'DUPLICATE_EMAIL' | 'DUPLICATE_NIP'
    */
-  async create({ companyNip = null, companyName = null, email, passwordHash, keywords = [], cpvCodes = [] }) {
+  async create({ companyNip = null, companyName = null, email, passwordHash, keywords = [], cpvCodes = [], probaDni = 0 }) {
     const id = newId();
     const ts = nowIso();
     const user = {
@@ -69,6 +71,8 @@ export const users = {
       token_version: 0,
       created_at: ts,
       updated_at: ts,
+      // Próba Standard (spec §15): tylko rejestracja ją przyznaje; konta testowe i skrypty — nie.
+      proba_do: probaDni > 0 ? probaDo(ts, probaDni) : null,
     };
     try {
       await db().runTransaction(async (tx) => {
@@ -130,6 +134,76 @@ export const users = {
       updated_at: nowIso(),
     });
     return this.findById(id);
+  },
+
+  /** Zapis karty firmy (spec §3) — profil + mapa `karta` jednym zapisem. */
+  async zapiszKarte(id, { companyName, keywords, cpvCodes, regiony, wartoscMax, karta }) {
+    await db().collection('users').doc(id).update({
+      company_name: companyName ?? null,
+      keywords: keywords ?? [],
+      cpv_codes: cpvCodes ?? [],
+      regiony: regiony ?? [],
+      wartosc_max: wartoscMax ?? null,
+      karta: {
+        opis: karta.opis ?? null,
+        wykluczenia: karta.wykluczenia ?? [],
+        wartosc_min: karta.wartosc_min ?? null,
+        min_dni_oferta: karta.min_dni_oferta,
+        formalne: karta.formalne,
+        zaktualizowano: nowIso(),
+      },
+      updated_at: nowIso(),
+    });
+    return this.findById(id);
+  },
+
+  /** Sygnał klienta (zapis / odrzucenie / przywrócenie) — transakcja, bo tablica jest współdzielona. */
+  async dodajSygnal(id, sygnal) {
+    const ref = db().collection('users').doc(id);
+    await db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return;
+      tx.update(ref, { pracownik_sygnaly: dolozSygnal(doc.data().pracownik_sygnaly, sygnal) });
+    });
+  },
+
+  /** „Nie teraz” dla propozycji zmiany karty; przy okazji sprząta wygasłe odłożenia. */
+  async odlozPropozycje(id, klucz, doIso, teraz = nowIso()) {
+    const ref = db().collection('users').doc(id);
+    await db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return;
+      const lista = (doc.data().pracownik_odlozone ?? []).filter((o) => o.do > teraz && o.klucz !== klucz);
+      tx.update(ref, { pracownik_odlozone: [...lista, { klucz, do: doIso }] });
+    });
+  },
+
+  async ustawPowiadomieniaEmail(id, wlaczone) {
+    await db().collection('users').doc(id).update({ powiadomienia_pracownik_email: Boolean(wlaczone), updated_at: nowIso() });
+  },
+
+  /** Znacznik przebiegu selekcji: od kiedy liczyć „nowe” i przy jakiej wersji karty. */
+  async oznaczPrzebiegSelekcji(id, { o, wersja }) {
+    await db().collection('users').doc(id).update({ pracownik_ostatni_przebieg: o, pracownik_wersja: wersja });
+  },
+
+  /** Maile próby (spec §15): rezerwacja PRZED wysyłką — każdy rodzaj najwyżej raz. */
+  async zarezerwujMailProby(id, rodzaj, teraz = nowIso()) {
+    const ref = db().collection('users').doc(id);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists || doc.data().proba_maile?.[rodzaj]) return false;
+      tx.update(ref, { [`proba_maile.${rodzaj}`]: { stan: 'wysylanie', o: teraz } });
+      return true;
+    });
+  },
+
+  async potwierdzMailProby(id, rodzaj, teraz = nowIso()) {
+    await db().collection('users').doc(id).update({ [`proba_maile.${rodzaj}`]: { stan: 'wyslany', o: teraz } });
+  },
+
+  async zwolnijMailProby(id, rodzaj) {
+    await db().collection('users').doc(id).update({ [`proba_maile.${rodzaj}`]: FieldValue.delete() });
   },
 
   /**
@@ -422,6 +496,8 @@ const POLA_PULI = [
    * jednostki, więc filtr po odczycie nic nie kosztuje.
    */
   'anulowany',
+  // Lejek selekcji: „nowe od ostatniego przebiegu” i rodzaj zamówienia dla AI (spec §4.2).
+  'fetched_at', 'rodzaj',
 ];
 
 /**
