@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Share } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
 import Screen from '../components/Screen';
@@ -9,6 +9,9 @@ import { api } from '../api/client';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
+import * as storage from '../lib/storage';
+import { KLUCZ_DANYCH_WYKONAWCY } from '../lib/dokumentyOferty';
+import { generujWniosekOWyjasnienie } from '../lib/wniosekWyjasnienieSwz';
 import {
   odliczaniePytan,
   statusPytaniaEtykieta,
@@ -78,6 +81,23 @@ function tonNaTokeny(ton, k) {
 export default function RadarSwzScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleRadaru);
+
+  // Pytania → formalny wniosek (art. 135/284) w 1 klik; dane firmy z magazynu dokumentów do oferty.
+  async function udostepnijWniosek(postepowanie, pytania) {
+    let wykonawca = {};
+    try {
+      const s = await storage.getItem(KLUCZ_DANYCH_WYKONAWCY);
+      if (s) wykonawca = JSON.parse(s);
+    } catch {
+      /* brak danych firmy — wniosek z kropkami do uzupełnienia */
+    }
+    const dok = generujWniosekOWyjasnienie({ wykonawca, postepowanie, pytania, dzisiaj: new Date().toISOString() });
+    try {
+      await Share.share({ message: dok.tresc, title: dok.nazwa });
+    } catch {
+      /* anulowane */
+    }
+  }
   // Wejście z przetargu (ścieżka) niesie nazwę i daty z ogłoszenia; z katalogu narzędzi
   // parametrów nie ma i formularz startuje pusty. Liczone raz — to tylko stan początkowy.
   const [wstepne] = useState(() => wstepneDaneRadaru(route?.params));
@@ -495,6 +515,13 @@ export default function RadarSwzScreen({ route, navigation }) {
           </View>
         ))
       )}
+      {pytania.length > 0 ? (
+        <Button
+          title="Złóż wniosek o wyjaśnienie SWZ (pismo w 1 klik)"
+          variant="ghost"
+          onPress={() => udostepnijWniosek(postepowanie, pytania)}
+        />
+      ) : null}
 
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>Wygeneruj pytania z treści SWZ</Text>
