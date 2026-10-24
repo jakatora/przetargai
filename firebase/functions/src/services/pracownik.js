@@ -1,5 +1,6 @@
 import { env, features } from '../config.js';
 import { nowIso } from '../lib/ids.js';
+import { logger } from '../lib/logger.js';
 import { heuristicScore } from '../lib/scoring.js';
 import { planEfektywny } from '../lib/plan.js';
 import { wersjaKarty, formalnePuste, wersjaFormalnych } from '../lib/kartaFirmy.js';
@@ -10,8 +11,9 @@ import { dobaWarszawska } from '../lib/czasPolski.js';
 import {
   AI_PREFILTER_MIN, AI_CALLS_PER_DAY, CANDIDATE_HEAD, OKNO_KANDYDATOW, MAKS_PRZEJRZANYCH,
 } from '../lib/limityAi.js';
-import { users, tenders, matches, evaluations, aiQuota, dziennik, warunkiQuota } from '../db/repos.js';
+import { users, tenders, matches, evaluations, aiQuota, dziennik, warunkiQuota, backfillCooldown } from '../db/repos.js';
 import { ocenDlaKlienta, porownajWarunki } from './ai.js';
+import { backfillUser, generateMatchesForAllUsers } from './matching.js';
 
 /*
  * Selekcja przetargów pod klienta (plans/PRACOWNIK-PROJEKT-2026-10-23.md §4).
@@ -171,4 +173,84 @@ export async function pracujDlaUzytkownika(user, pool, { teraz = nowIso(), ocen 
   });
   await users.oznaczPrzebiegSelekcji(user.id, { o: teraz, wersja });
   return wynik;
+}
+
+const ROWNOLEGLE_USEROW = 5;
+const BUDZET_CZASU_CYKLU_MS = 440_000;
+
+/** Zastępnik do czasu podpięcia powiadomień (Task 15). */
+const bezPowiadomien = async () => 'brak';
+
+/**
+ * Przebieg dla wszystkich (12:00) albo tylko Standard (co 3 h). Pula czytana RAZ,
+ * kolejka od najdawniej obsłużonego, porcje równoległe, budżet czasu — jak w
+ * generateMatchesForAllUsers (uzasadnienia tam). Powiadomienie po każdym kliencie.
+ */
+export async function pracujDlaWszystkich({
+  tylkoStandard = false,
+  tryb = 'dzienny',
+  budzetCzasuMs = BUDZET_CZASU_CYKLU_MS,
+  teraz = () => nowIso(),
+  wczytajUzytkownikow = () => users.all(),
+  wczytajPule = () => tenders.openPool({ swiezaKopia: true }),
+  powiadom = bezPowiadomien,
+} = {}) {
+  const start = Date.now();
+  const wszyscy = (await wczytajUzytkownikow())
+    .filter((u) => !tylkoStandard || planEfektywny(u, teraz()) === 'standard');
+  const wynik = { wybrane: 0, aiCalls: 0, obsluzeni: 0, pominieci: 0 };
+  if (!wszyscy.length) return wynik;
+
+  const pool = await wczytajPule();
+  wszyscy.sort((a, b) => String(a.last_cycle_at ?? '').localeCompare(String(b.last_cycle_at ?? '')));
+
+  for (let i = 0; i < wszyscy.length; i += ROWNOLEGLE_USEROW) {
+    if (Date.now() - start > budzetCzasuMs) {
+      wynik.pominieci = wszyscy.length - wynik.obsluzeni;
+      logger.warn({ ...wynik, tryb }, 'Selekcja przerwana po wyczerpaniu budżetu czasu — pominięci wejdą jako pierwsi');
+      break;
+    }
+    const porcja = wszyscy.slice(i, i + ROWNOLEGLE_USEROW);
+    const wyniki = await Promise.all(porcja.map(async (user) => {
+      try {
+        const w = await pracujDlaUzytkownika(user, pool, { teraz: teraz() });
+        try {
+          await powiadom(await users.findById(user.id) ?? user, { tryb, teraz: teraz() });
+        } catch (err) {
+          logger.error({ err: err.message, userId: user.id }, 'Powiadomienie po selekcji nie wysłane');
+        }
+        return w;
+      } catch (err) {
+        logger.error({ err: err.message, userId: user.id }, 'Selekcja użytkownika nie powiodła się');
+        return { wybrane: 0, aiCalls: 0 };
+      } finally {
+        await users.oznaczCyklObsluzony(user.id).catch(() => {});
+      }
+    }));
+    for (const w of wyniki) { wynik.wybrane += w.wybrane; wynik.aiCalls += w.aiCalls; }
+    wynik.obsluzeni += porcja.length;
+  }
+  logger.info({ ...wynik, tryb, uzytkownikow: wszyscy.length, pula: pool.length, durationMs: Date.now() - start },
+    'Selekcja zakończona');
+  return wynik;
+}
+
+/**
+ * Ponowna ocena po zmianie karty/profilu, rejestracji albo z panelu admina.
+ * Kształt wyniku jak `backfillUser` — wołający się nie zmieniają.
+ */
+export async function przeliczProfil(user, { wymus = false } = {}) {
+  if (env.PRACOWNIK_ENABLED !== 'true') return backfillUser(user, { wymus });
+  if (!wymus && !await backfillCooldown.reserve(user.id)) {
+    logger.info({ userId: user.id }, 'Przeliczenie pominięte — poprzedni przebieg był niedawno');
+    return { created: 0, evaluated: 0, aiCalls: 0, pominiety: true };
+  }
+  const w = await pracujDlaUzytkownika(user, await tenders.openPool());
+  return { created: w.wybrane, evaluated: w.przejrzane, aiCalls: w.aiCalls };
+}
+
+/** Cykl 12:00 (jobs/fetchTenders.js): selekcja albo stary silnik — wg przełącznika. */
+export async function cyklDzienny({ budzetCzasuMs } = {}) {
+  if (env.PRACOWNIK_ENABLED !== 'true') return generateMatchesForAllUsers({ budzetCzasuMs });
+  return (await pracujDlaWszystkich({ tryb: 'dzienny', budzetCzasuMs })).wybrane;
 }
