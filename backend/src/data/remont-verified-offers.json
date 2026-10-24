@@ -1,0 +1,38 @@
+[
+  {
+    "sourceId": "castorama-sniezka-5l",
+    "ean": "5903973139188",
+    "name": "Farba Śnieżka Barwy Natury biała 5 l",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/farba-sniezka-barwy-natury-biala-5-l~5903973139188_01h_PL_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 11800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-24T20:30:00.523Z",
+    "sourceUrl": "https://www.castorama.pl/farba-sniezka-barwy-natury-biala-5-l/5903973139188_CAPL.prd",
+    "evidenceSha256": "b76d617cdcff1a4f9fee62d3b9656a162b448c829728141e2213b6ec802153f1"
+  },
+  {
+    "sourceId": "obi-sniezka-5l",
+    "ean": "5903973139188",
+    "name": "Farba Śnieżka Barwy Natury biała 5 l",
+    "imageUrl": "https://bilder.obi.pl/7230568c-b4b2-4e6d-84c1-7297dd65cbc9/prZZK/image.jpeg",
+    "priceGrosze": 10999,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-24T20:30:38.682Z",
+    "sourceUrl": "https://www.obi.pl/p/6314371/farba-sniezka-barwy-natury-biala-5-l",
+    "evidenceSha256": "35b6667bb0deefb3f24c4308d8d90830ed57926870deb4925f242753e4c9c6f8"
+  },
+  {
+    "sourceId": "castorama-knauf-5l",
+    "ean": "5901793357737",
+    "name": "Grunt uniwersalny Knauf 5 l",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/grunt-uniwersalny-knauf-5-l~5901793357737_03c_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 3548,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-24T20:36:15.829Z",
+    "sourceUrl": "https://www.castorama.pl/grunt-uniwersalny-knauf-5-l/5901793357737_CAPL.prd",
+    "evidenceSha256": "6f2725aced4827e52690aeaadbbff623aeb48b095dfe14fe17b5995a9be41f73"
+  }
+]

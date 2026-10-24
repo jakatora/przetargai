@@ -1,3 +1,4 @@
+import remontRouter from './routes/remont.js';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -172,6 +173,7 @@ export function createApp() {
   app.use('/api/smartspizarka/prices', apiLimiter, smartspizarkaPricesRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
+  app.use('/api/remont', apiLimiter, remontRouter);
   app.use(notFoundHandler);
   if (sentryEnabled) Sentry.setupExpressErrorHandler(app);
   app.use(errorHandler);
