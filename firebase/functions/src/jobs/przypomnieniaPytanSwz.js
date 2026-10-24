@@ -2,6 +2,7 @@ import { logger } from '../lib/logger.js';
 import { users, tenders, przypomnieniaPytan } from '../db/repos.js';
 import { sendPush } from '../services/push.js';
 import { sendEmail } from '../services/email.js';
+import { esc } from '../lib/html.js';
 import { terminPytan, wOknie, trescPrzypomnieniaPytan, OKNO_PRZYPOMNIENIA_PYTAN_MS } from '../lib/przypomnieniePytan.js';
 import { reguluZrodla } from '../lib/kalendarzPrzetargu.js';
 
@@ -117,7 +118,8 @@ async function obsluzWpis(wpis, { teraz, wyslij, wyslijEmail, tokenDla, wynik })
         to: email,
         subject: `PrzetargAI: ${tresc.title}`,
         text: `${tresc.body}\n\n${dopisek}`,
-        html: `<p><b>${tresc.title}</b></p><p>${tresc.body}</p><p>${dopisek}</p>`,
+        // Tytuł przetargu to dane z BZP/TED — do HTML wyłącznie przez esc().
+        html: `<p><b>${esc(tresc.title)}</b></p><p>${esc(tresc.body)}</p><p>${esc(dopisek)}</p>`,
       }).catch((err) => ({ sent: false, error: err.message }))
       : null;
     if (r?.sent) {
