@@ -171,7 +171,7 @@ test('dodatkowe wejścia kroków prowadzą do ekranów zarejestrowanych w nawiga
     [...zrodlo('../src/navigation/RootNavigator.js').matchAll(/name="(\w+)"/g)].map((m) => m[1]),
   );
   const dodatkowe = KROKI.flatMap((k) => k.dodatkowe ?? []);
-  assert.deepEqual(dodatkowe.map((d) => d.ekran).sort(), ['ChecklistaOferty', 'CzyWarto', 'DokumentyOferty']);
+  assert.deepEqual(dodatkowe.map((d) => d.ekran).sort(), ['ChecklistaOferty', 'CzyWarto', 'DokumentyOferty', 'KalkulatorCeny', 'OdpowiedzNaWezwanie', 'PoWygranej', 'ZwrotWadium']);
   for (const d of dodatkowe) {
     assert.ok(d.etykieta && d.etykieta.trim(), `wejście ${d.ekran} bez etykiety`);
     assert.ok(zarejestrowane.has(d.ekran), `„${d.ekran}" nie istnieje w RootNavigator`);
