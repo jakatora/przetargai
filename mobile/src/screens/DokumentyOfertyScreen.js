@@ -23,6 +23,7 @@ import {
   zapiszStanOferty,
 } from '../lib/dokumentyOferty';
 import { pobierzDanePoNip } from '../lib/danePoNip';
+import { generujSciageJedz } from '../lib/sciagaJedz';
 
 /**
  * „DOKUMENTY DO OFERTY W 1 KLIK" — dane firmy wpisujesz RAZ (zostają w aplikacji),
@@ -296,6 +297,24 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
           <Button title="Udostępnij / skopiuj" onPress={() => udostepnij(dok)} variant="ghost" />
         </View>
       ))}
+
+      {przetarg.zrodlo === 'ted' ? (
+        <View style={styles.karta}>
+          <Text style={styles.kartaTytul}>Przetarg unijny: zamiast oświadczenia — JEDZ (ESPD)</Text>
+          <Text style={styles.kartaOpis}>
+            Powyżej progów UE oświadczenie wstępne składasz na formularzu JEDZ. Ściąga mówi sekcja po sekcji,
+            co wpisać i co zaznaczyć — z Twoimi danymi już wstawionymi.
+          </Text>
+          <Button
+            title="Ściąga do JEDZ — udostępnij"
+            variant="ghost"
+            onPress={async () => {
+              const s = generujSciageJedz({ wykonawca, przetarg, sytuacja: { polegaNaZasobach: sytuacja.polegaNaZasobach, podwykonawcy: oferta.podwykonawcy, konsorcjum: sytuacja.konsorcjum } });
+              try { await Share.share({ message: s.tresc, title: s.nazwa }); } catch { /* anulowane */ }
+            }}
+          />
+        </View>
+      ) : null}
 
       <Button
         title="Udostępnij cały pakiet jednym ruchem"
