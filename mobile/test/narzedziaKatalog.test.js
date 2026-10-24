@@ -15,7 +15,7 @@ const EKRANY = new Set([
   'KalendarzTerminow', 'SciezkaDoOferty', 'KalkulatorCeny', 'SymulatorPunktacji', 'KaryUmowne',
   'KalkulatorOdsetek', 'KartaDecyzji', 'Pulpit', 'KontrolaOferty', 'SprawdzarkaCeny', 'Saved', 'Account',
   'Narzedzia', 'PrzewodnikStartu', 'ZapisaneWyszukiwania', 'CentrumAlertow', 'RadarPlanow', 'RadarPlanu', 'TrenerNegocjacji',
-  'DokumentyOferty',
+  'DokumentyOferty', 'OdpowiedzNaWezwanie',
 ]);
 
 test('każde narzędzie ma niepusty tytuł i ekran istniejący w nawigatorze', () => {

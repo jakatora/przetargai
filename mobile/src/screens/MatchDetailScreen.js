@@ -659,6 +659,12 @@ export default function MatchDetailScreen({ route, navigation }) {
           style={styles.gap}
         />
         <Button
+          title={t('Dostałeś wezwanie? Odpowiedź w 1 klik', 'Got a request from the buyer? Reply in one tap')}
+          onPress={() => navigation.navigate('OdpowiedzNaWezwanie', { match })}
+          variant="ghost"
+          style={styles.gap}
+        />
+        <Button
           title={t('Otwórz rejestrator oferty', 'Open the bid recorder')}
           onPress={() => navigation.navigate('RejestratorOferty', {
             termin: tender.deadline,
