@@ -5,6 +5,8 @@ import { heuristicScore } from '../lib/scoring.js';
 import { users, tenders, matches, evaluations, aiQuota, backfillCooldown } from '../db/repos.js';
 import { scoreTenderMatch } from './ai.js';
 import { sendPush } from './push.js';
+import { AI_PREFILTER_MIN, AI_CALLS_PER_DAY, CANDIDATE_HEAD, OKNO_KANDYDATOW, MAKS_PRZEJRZANYCH } from '../lib/limityAi.js';
+import { planEfektywny } from '../lib/plan.js';
 
 /*
  * Silnik dopasowań na Firestore (port z Railway + naprawy z audytu 2026-07-09).
@@ -19,23 +21,16 @@ import { sendPush } from './push.js';
  *  3. aiBudgetAllows w services/ai.js — wspólny miesięczny limit (koszt globalny).
  */
 
-/** Poniżej tego wyniku heurystycznego nie wołamy AI (kontrola kosztów). */
-const AI_PREFILTER_MIN = 15;
-
-/** Dobowy limit płatnych wywołań AI na użytkownika, wg planu. */
-const AI_CALLS_PER_DAY = { free: 10, standard: 120 };
-
-/** Ilu ŚWIEŻYCH (jeszcze nieocenionych) kandydatów zbieramy na jeden przebieg. */
-const CANDIDATE_HEAD = 120;
-
-/** Ilu kandydatów sprawdzamy jednym `getAll` przy szukaniu świeżych. */
-const OKNO_KANDYDATOW = 150;
-
-/**
- * Górna granica przeglądania rankingu. Bez niej użytkownik z bardzo szerokim
- * profilem i tysiącami ocenionych przetargów kazałby nam czytać całą pulę.
+/*
+ * Limity (lib/limityAi.js): AI_PREFILTER_MIN — poniżej tego wyniku heurystycznego nie wołamy AI;
+ * AI_CALLS_PER_DAY — dobowy limit płatnych wywołań AI na użytkownika, wg planu; CANDIDATE_HEAD —
+ * ilu ŚWIEŻYCH kandydatów zbieramy na przebieg; OKNO_KANDYDATOW — ilu sprawdzamy jednym `getAll`.
  */
-const MAKS_PRZEJRZANYCH = 600;
+
+/*
+ * MAKS_PRZEJRZANYCH (lib/limityAi.js) — górna granica przeglądania rankingu. Bez niej użytkownik
+ * z bardzo szerokim profilem i tysiącami ocenionych przetargów kazałby nam czytać całą pulę.
+ */
 
 /** Odcisk kryteriów profilu — zmiana słów/CPV unieważnia stare oceny. */
 export function criteriaHash(user) {
@@ -63,7 +58,9 @@ function heuristicReasoning(h) {
 export async function generateMatchesForUser(user, pool, { wyslijPush = sendPush } = {}) {
   if (!user.keywords?.length && !user.cpv_codes?.length) return { created: 0, evaluated: 0, aiCalls: 0 };
 
-  const isFree = user.premium_tier === 'free';
+  // Plan efektywny (spec §15): konto w próbie Standard dostaje limity Standard także w starym silniku.
+  const plan = planEfektywny(user);
+  const isFree = plan === 'free';
   let dailyBudget = isFree
     ? Math.max(0, env.FREE_TIER_DAILY_MATCH_LIMIT - await matches.countToday(user.id))
     : Infinity;
@@ -105,7 +102,7 @@ export async function generateMatchesForUser(user, pool, { wyslijPush = sendPush
    * limitu — czyli transakcja Firestore (odczyt + zapis) na każdego z ~120
    * kandydatów, żeby za każdym razem usłyszeć „nie" (audyt 2026-07-10).
    */
-  const limitDobowy = AI_CALLS_PER_DAY[user.premium_tier] ?? AI_CALLS_PER_DAY.free;
+  const limitDobowy = AI_CALLS_PER_DAY[plan];
   const zuzytoDzis = features.ai ? await aiQuota.used(user.id) : limitDobowy;
   let aiBudget = Math.min(env.AI_RERANK_TOP_N, Math.max(0, limitDobowy - zuzytoDzis));
 
