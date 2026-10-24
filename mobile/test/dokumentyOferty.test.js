@@ -241,6 +241,24 @@ test('pakietDokumentow: 4 dokumenty w stałej kolejności, z etykietą „kiedy"
   assert.ok(Object.isFrozen(WIELKOSCI_FIRMY));
 });
 
+test('stan tej oferty per przetarg: zapis rejestruje klucz w indeksie konta, odczyt odtwarza, brak/śmieci → null', async () => {
+  const { kluczStanuOferty, wczytajStanOferty, zapiszStanOferty } = await import('../src/lib/dokumentyOferty.js');
+  const { KLUCZ_INDEKSU_KONTA } = await import('../src/lib/daneLokalne.js');
+  const mapa = new Map();
+  const storage = { getItem: async (k) => mapa.get(k) ?? null, setItem: async (k, v) => { mapa.set(k, v); }, deleteItem: async (k) => { mapa.delete(k); } };
+
+  assert.equal(await wczytajStanOferty(storage, 'bzp:1'), null);
+  await zapiszStanOferty(storage, 'bzp:1', { oferta: { cenaNetto: '1000', vatProc: 23 }, sytuacja: { wadium: true }, pelnomocnik: { imie: 'Anna' } });
+  const z = await wczytajStanOferty(storage, 'bzp:1');
+  assert.deepEqual(z, { oferta: { cenaNetto: '1000', vatProc: 23 }, sytuacja: { wadium: true }, pelnomocnik: { imie: 'Anna' } });
+  assert.ok(String(mapa.get(KLUCZ_INDEKSU_KONTA)).includes(kluczStanuOferty('bzp:1')), 'klucz per przetarg musi trafić do indeksu konta');
+
+  mapa.set(kluczStanuOferty('bzp:2'), '{nie json');
+  assert.equal(await wczytajStanOferty(storage, 'bzp:2'), null);
+  await zapiszStanOferty(storage, null, { oferta: {} });
+  assert.equal(await wczytajStanOferty(storage, null), null);
+});
+
 test('pakiet jest deterministyczny i nie rzuca na pustych danych', () => {
   const a = pakietDokumentow({ wykonawca: wykonawcaPelny(), przetarg: PRZETARG, oferta: {}, dzisiaj: DZIS });
   const b = pakietDokumentow({ wykonawca: wykonawcaPelny(), przetarg: PRZETARG, oferta: {}, dzisiaj: DZIS });

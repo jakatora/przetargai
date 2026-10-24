@@ -19,6 +19,8 @@ import {
   daneZOgloszenia,
   pakietDokumentow,
   coJeszczeDolaczyc,
+  wczytajStanOferty,
+  zapiszStanOferty,
 } from '../lib/dokumentyOferty';
 import { pobierzDanePoNip } from '../lib/danePoNip';
 
@@ -48,6 +50,29 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
   const [pelnomocnik, setPelnomocnik] = useState({ imie: '', stanowisko: '', dokument: '' });
   const [udostepnione, setUdostepnione] = useState(() => new Set());
   const [nipStan, setNipStan] = useState({ laduje: false, komunikat: null, ok: false });
+  const tenderId = match?.tender?.id ?? null;
+  const [stanOfertyWczytany, setStanOfertyWczytany] = useState(!tenderId);
+
+  // Stan „tej oferty" per przetarg — po powrocie nic nie wpisujesz drugi raz.
+  useEffect(() => {
+    if (!tenderId) return undefined;
+    let aktywny = true;
+    wczytajStanOferty(storage, tenderId).then((z) => {
+      if (!aktywny) return;
+      if (z) {
+        if (z.oferta) setOferta((o) => ({ ...o, ...z.oferta }));
+        if (z.sytuacja) setSytuacja((s) => ({ ...s, ...z.sytuacja }));
+        if (z.pelnomocnik) setPelnomocnik((p) => ({ ...p, ...z.pelnomocnik }));
+      }
+      setStanOfertyWczytany(true);
+    });
+    return () => { aktywny = false; };
+  }, [tenderId]);
+
+  useEffect(() => {
+    if (!tenderId || !stanOfertyWczytany) return;
+    zapiszStanOferty(storage, tenderId, { oferta, sytuacja, pelnomocnik }).catch(() => {});
+  }, [tenderId, stanOfertyWczytany, oferta, sytuacja, pelnomocnik]);
 
   // Dane firmy wpisane raz — przy kolejnej ofercie już są.
   useEffect(() => {
