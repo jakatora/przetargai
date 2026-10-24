@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
@@ -7,6 +7,8 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import { sprawdzFormularz, walidujFormularz, maBladPozycji, formatujPLN } from '../lib/sprawdzarkaCeny';
 import { parsujPozycjeFormularza, naWierszeSprawdzarki } from '../lib/parserPozycji';
+import * as storage from '../lib/storage';
+import { wczytajKontroleOferty, zapiszKontroleOferty } from '../lib/kontrolaOferty';
 
 /**
  * „SPRAWDZARKA FORMULARZA CENOWEGO". Liczy każdą pozycję poprawnie (ilość × cena, VAT, brutto)
@@ -39,6 +41,7 @@ export default function SprawdzarkaCenyScreen({ route }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleSprawdzarki);
   const nazwa = route?.params?.nazwa ?? null;
+  const tenderId = route?.params?.tenderId ?? null;
   const licznik = useRef(1);
   const [wklejka, setWklejka] = useState('');
   const [wklejkaInfo, setWklejkaInfo] = useState(null);
@@ -72,6 +75,19 @@ export default function SprawdzarkaCenyScreen({ route }) {
   // Walidacja pól liczbowych — logika i komunikaty PL wyłącznie z lib (bez duplikacji w ekranie).
   // Klucze błędów per pozycja: `${pole}_${indeks}`; `wynik.bledy` to osobno niezgodności rachunkowe.
   const { bledy: bledyPol, maBledy } = walidujFormularz(wiersze);
+
+  // Formularz policzony i bez błędów → punkt „Formularz cenowy bez błędów" w Kontroli przed
+  // wysłaniem tego przetargu odhacza się sam (zapis raz na zgodny stan, nie przy każdym renderze).
+  const odhaczono = useRef(false);
+  const zgodny = !maBledy && wynik.aktywnych > 0 && wynik.liczbaBledow === 0;
+  useEffect(() => {
+    if (!tenderId || !zgodny) { odhaczono.current = false; return; }
+    if (odhaczono.current) return;
+    odhaczono.current = true;
+    wczytajKontroleOferty(storage, tenderId)
+      .then((w) => { const z = new Set(w); z.add('formularz_cenowy'); return zapiszKontroleOferty(storage, tenderId, z); })
+      .catch(() => {});
+  }, [tenderId, zgodny]);
 
   return (
     <Screen scroll>
