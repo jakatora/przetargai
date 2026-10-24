@@ -30,6 +30,8 @@ const PLIKI = [
   'components/ArkuszOdrzucenia.js',
   'screens/KartaFirmyScreen.js',
   'screens/OdrzuconeScreen.js',
+  'components/WarunkiUdzialu.js',
+  'components/PlanDzialania.js',
 ];
 
 const POLSKIE = /[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/;

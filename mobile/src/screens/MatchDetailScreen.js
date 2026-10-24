@@ -32,6 +32,11 @@ import Wyjasnienie from '../components/Wyjasnienie';
 import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
 import { parametryNarzedzia } from '../lib/sciezkaDoOferty';
 import { useJezyk } from '../context/JezykContext';
+import { useAuth } from '../context/AuthContext';
+import * as WebBrowser from 'expo-web-browser';
+import ArkuszOdrzucenia from '../components/ArkuszOdrzucenia';
+import WarunkiUdzialu from '../components/WarunkiUdzialu';
+import PlanDzialania from '../components/PlanDzialania';
 
 /** Etykieta etapu kontroli (STATUSY_KONTROLI); brak kontroli → pierwszy etap „Nowa". */
 function etykietaEtapuKontroli(status) {
@@ -70,8 +75,11 @@ export default function MatchDetailScreen({ route, navigation }) {
   const { match } = route?.params ?? {};
   const tender = match?.tender;
   const ocena = opisOceny(match?.scorer);
-  const [feedback, setFeedback] = useState(null);
-  const [sending, setSending] = useState(false);
+  const { user } = useAuth();
+  // Plan efektywny z API (spec §15); stary zapis użytkownika bez `plan` — z planu rozliczeniowego.
+  const plan = user?.plan ?? (user?.premium_tier === 'standard' ? 'standard' : 'free');
+  const [arkusz, setArkusz] = useState(false);
+  const [odrzucanie, setOdrzucanie] = useState(false);
   // Stan przypomnienia: znany, gdy weszliśmy z ekranu „Zapisane"; inaczej domyślnie off.
   const [przypomnienie, setPrzypomnienie] = useState(match?.reminder_enabled === true);
   // Wyjaśnienie AI (D-052) — leniwe: generujemy dopiero na żądanie (koszt AI).
@@ -242,15 +250,23 @@ export default function MatchDetailScreen({ route, navigation }) {
     }
   }
 
-  async function handleFeedback(helpful) {
-    setSending(true);
+  async function przejdzNaStandard() {
     try {
-      await api.sendFeedback(match.id, helpful);
-      setFeedback(helpful ? 'up' : 'down');
+      const { url } = await api.createUpgradeLink();
+      await WebBrowser.openBrowserAsync(url);
+    } catch { /* bez linku — zostajemy na ekranie */ }
+  }
+
+  async function odrzuc(przyczyna, komentarz) {
+    setOdrzucanie(true);
+    try {
+      await api.pracownikOdrzuc(match.id, przyczyna, komentarz);
+      setArkusz(false);
+      navigation.goBack();
     } catch (err) {
       Alert.alert(t('Błąd', 'Error'), err.message);
     } finally {
-      setSending(false);
+      setOdrzucanie(false);
     }
   }
 
@@ -808,7 +824,15 @@ export default function MatchDetailScreen({ route, navigation }) {
         Wyjaśnienie dopasowania (P1-4): cztery sygnały z konkretami zamiast jednego
         zdania. Liczone z profilu i ogłoszenia — bez wywołania AI.
       */}
+      {(match.uzasadnienie ?? []).length ? (
+        <View style={styles.zrodloBox}>
+          <Text style={styles.sectionTitle}>{t('Dlaczego to wybraliśmy', 'Why we picked this')}</Text>
+          {match.uzasadnienie.map((p) => <Text key={p} style={styles.rowValue}>{`✓ ${p}`}</Text>)}
+        </View>
+      ) : null}
       <Wyjasnienie wyjasnienie={match.wyjasnienie} />
+      <WarunkiUdzialu match={match} plan={plan} navigation={navigation} onUpgrade={przejdzNaStandard} />
+      <PlanDzialania match={match} plan={plan} navigation={navigation} onUpgrade={przejdzNaStandard} />
 
       {/*
         Źródło pierwotne, czas ostatniej synchronizacji i link do ORYGINAŁU (P1-3).
@@ -829,34 +853,13 @@ export default function MatchDetailScreen({ route, navigation }) {
         style={styles.gap}
       />
 
-      <Text style={styles.sectionTitle}>{t('Czy to dopasowanie było trafne?', 'Was this match accurate?')}</Text>
-      {feedback ? (
-        <Text style={styles.feedbackDone}>
-          {feedback === 'up'
-            ? t('Dziękujemy! Cieszymy się, że trafione.', 'Thank you! Glad it was a good match.')
-            : t(
-              'Dziękujemy za informację — wykorzystamy ją do poprawy dopasowań.',
-              'Thanks for letting us know — we will use it to improve matches.',
-            )}
-        </Text>
-      ) : (
-        <View style={styles.feedbackRow}>
-          <Button
-            title={t('👍 Trafne', '👍 Accurate')}
-            variant="ghost"
-            onPress={() => handleFeedback(true)}
-            loading={sending}
-            style={styles.feedbackBtn}
-          />
-          <Button
-            title={t('👎 Nietrafne', '👎 Not accurate')}
-            variant="ghost"
-            onPress={() => handleFeedback(false)}
-            loading={sending}
-            style={styles.feedbackBtn}
-          />
-        </View>
-      )}
+      <Button
+        title={t('Odrzuć — nie pasuje do mojej firmy', 'Reject — not a fit for my company')}
+        variant="ghost"
+        onPress={() => setArkusz(true)}
+        style={styles.gap}
+      />
+      <ArkuszOdrzucenia widoczny={arkusz} onAnuluj={() => setArkusz(false)} onOdrzuc={odrzuc} zapisywanie={odrzucanie} />
     </Screen>
   );
 }
@@ -975,7 +978,4 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   kontrolaEtapEtykieta: { fontSize: 13, fontWeight: '700', color: k.blue },
   kontrolaEtapWartosc: { fontSize: 15, fontWeight: '700', color: k.text },
   kontrolaInfo: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: spacing.sm },
-  feedbackRow: { flexDirection: 'row', gap: spacing.md },
-  feedbackBtn: { flex: 1 },
-  feedbackDone: { fontSize: 14, color: k.green, fontWeight: '600' },
 }));
