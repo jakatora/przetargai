@@ -76,7 +76,7 @@ export default function KatalogDetailScreen({ route, navigation }) {
           </Text>
         )}
         <PrzyciskOryginalu tender={tender} />
-        <SzczegolPlatformy tender={tender} />
+        <SzczegolPlatformy tender={tender} navigation={navigation} />
       </View>
 
       <View style={styles.karta}>

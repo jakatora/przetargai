@@ -5,7 +5,7 @@ import { udostepnijTekst } from '../lib/udostepnianie';
 import { useFocusEffect } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
 import * as DocumentPicker from 'expo-document-picker';
-import { czytajPlikBase64, sprawdzPlikSwz } from '../lib/plikBase64';
+import { czytajPlikBase64, sprawdzPlikSwz, czytajUrlBase64 } from '../lib/plikBase64';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -162,6 +162,22 @@ export default function RadarSwzScreen({ route, navigation }) {
   const [swzTekst, setSwzTekst] = useState('');
   // SWZ jako plik PDF z telefonu — zamiast kopiowania tekstu z PDF-a (backend wyciąga warstwę tekstową).
   const [plikSwz, setPlikSwz] = useState(null);
+  // SWZ z załącznika platformazakupowa.pl (parametr `pdfUrl`): po otwarciu analizy dociągamy PDF
+  // sam — użytkownik tylko dotyka „Wygeneruj pytania”. Jedna próba na ekran; błąd = zwykła ścieżka.
+  const [pdfZPlatformy, setPdfZPlatformy] = useState({ probowano: false, laduje: false, info: null });
+  useEffect(() => {
+    if (!wstepne.pdfUrl || !wybraneId || plikSwz || pdfZPlatformy.probowano) return undefined;
+    let aktywny = true;
+    setPdfZPlatformy({ probowano: true, laduje: true, info: null });
+    czytajUrlBase64(wstepne.pdfUrl)
+      .then(({ base64 }) => {
+        if (!aktywny) return;
+        setPlikSwz({ nazwa: wstepne.pdfNazwa, base64 });
+        setPdfZPlatformy({ probowano: true, laduje: false, info: `Pobrano „${wstepne.pdfNazwa}” z platformy — dotknij „Wygeneruj pytania”.` });
+      })
+      .catch((err) => { if (aktywny) setPdfZPlatformy({ probowano: true, laduje: false, info: err.message }); });
+    return () => { aktywny = false; };
+  }, [wstepne.pdfUrl, wstepne.pdfNazwa, wybraneId, plikSwz, pdfZPlatformy.probowano]);
   const [analizuje, setAnalizuje] = useState(false);
   const [nowaWersja, setNowaWersja] = useState('');
   const [odswiezam, setOdswiezam] = useState(false);
@@ -591,6 +607,8 @@ export default function RadarSwzScreen({ route, navigation }) {
           onPress={wybierzPlikSwz}
           disabled={analizuje}
         />
+        {pdfZPlatformy.laduje ? <Text style={styles.pusto}>{t('Pobieram SWZ z platformazakupowa.pl…', 'Fetching the tender documents from platformazakupowa.pl…')}</Text> : null}
+        {pdfZPlatformy.info ? <Text style={styles.pusto}>{pdfZPlatformy.info}</Text> : null}
         <Button title="Wygeneruj pytania" onPress={analizuj} loading={analizuje} disabled={!swzTekst.trim() && !plikSwz} />
       </View>
 

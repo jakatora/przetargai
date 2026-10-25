@@ -54,8 +54,12 @@ export function wstepneDaneRadaru(params) {
   const tenderId = (typeof p.tenderId === 'string' && p.tenderId.trim())
     || (typeof p.tenderId === 'number' && Number.isFinite(p.tenderId))
     ? p.tenderId : null;
+  // Link do SWZ z platformazakupowa.pl (2026-10-25) — Radar dociąga PDF sam; obce hosty odcinamy.
+  const pdfUrl = typeof p.pdfUrl === 'string' && /^https:\/\/([a-z0-9-]+\.)*platformazakupowa\.pl\//i.test(p.pdfUrl) ? p.pdfUrl : null;
+  const pdfNazwa = pdfUrl ? String(p.pdfNazwa || 'SWZ.pdf').slice(0, 200) : null;
   return {
     nazwa, dataOgloszenia, termin, tenderId,
+    ...(pdfUrl ? { pdfUrl, pdfNazwa } : {}),
     zPrzetargu: Boolean(nazwa || dataOgloszenia || termin || tenderId !== null),
   };
 }

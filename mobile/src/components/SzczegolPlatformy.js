@@ -6,6 +6,7 @@ import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
+import { swzZZalacznikow, parametryRadaruZPlatformy } from '../lib/zalacznikiPlatformy';
 
 /**
  * Szczegół postępowania z platformazakupowa.pl NA ŻĄDANIE (2026-10-25): lista platformy daje tylko
@@ -14,7 +15,7 @@ import { formatDate } from '../lib/format';
  * pobieramy sami: każdy załącznik to link, który otwiera się w przeglądarce (jedno dotknięcie).
  * Pokazuje się tylko dla `source === 'platformazakupowa'`.
  */
-export default function SzczegolPlatformy({ tender }) {
+export default function SzczegolPlatformy({ tender, navigation }) {
   const styles = useStyle(tworzStyleSzczegolu);
   const { t } = useJezyk();
   // Szczegół już zapisany przy ogłoszeniu (selekcja albo wcześniejsze dotknięcie) pokazuje się od razu.
@@ -57,6 +58,14 @@ export default function SzczegolPlatformy({ tender }) {
                 </Pressable>
               ))}
               <Text style={styles.podpis}>{t('Otwierają się na platformazakupowa.pl — bez logowania.', 'They open on platformazakupowa.pl — no sign-in needed.')}</Text>
+              {navigation ? swzZZalacznikow(sz.zalaczniki).map((z) => (
+                <Button
+                  key={`radar-${z.url}`}
+                  title={t(`Pytania do SWZ z „${z.nazwa}” — Radar SWZ`, `Questions on “${z.nazwa}” — tender document radar`)}
+                  variant="ghost"
+                  onPress={() => navigation.navigate('RadarSwz', parametryRadaruZPlatformy({ tender, zalacznik: z }))}
+                />
+              )) : null}
             </View>
           ) : (
             <Text style={styles.podpis}>{t('Platforma nie wymienia załączników przy tym postępowaniu.', 'The platform lists no attachments for this procedure.')}</Text>

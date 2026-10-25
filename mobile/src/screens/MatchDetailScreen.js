@@ -874,7 +874,7 @@ export default function MatchDetailScreen({ route, navigation }) {
         <Text style={styles.zrodloNazwaRejestru}>{t(pelnaNazwaZrodla(tender.zrodlo?.kod ?? tender.source))}</Text>
         <PodpisZrodla zrodlo={tender.zrodlo ?? { kod: tender.source }} />
         <PrzyciskOryginalu tender={tender} />
-        <SzczegolPlatformy tender={tender} />
+        <SzczegolPlatformy tender={tender} navigation={navigation} />
       </View>
       <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />
 
