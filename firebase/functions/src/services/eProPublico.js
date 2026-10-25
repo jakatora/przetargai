@@ -1,5 +1,8 @@
+import https from 'node:https';
+import tls from 'node:tls';
 import { doUtcIso } from '../lib/daty.js';
 import { logger } from '../lib/logger.js';
+import { ROOT_YR_CROSS_PEM } from '../lib/certyLetsEncrypt.js';
 
 /*
  * E-PROPUBLICO (Datacomp) — piąte źródło ogłoszeń (2026-10-25). Platforma zakupowa szpitali
@@ -111,7 +114,30 @@ export function parsujSzczegol(html) {
   };
 }
 
-async function pobierz(url, { fetchFn = fetch, limitMs = LIMIT_ODCZYTU_MS } = {}) {
+/** Domyślne korzenie Node + brakujące ogniwo łańcucha e-propublico.pl (patrz lib/certyLetsEncrypt.js). */
+export const CA_EPP = [...tls.rootCertificates, ROOT_YR_CROSS_PEM];
+
+/**
+ * Zamiennik `fetch` na node:https z własnym `ca` — globalny fetch (undici) nie przyjmuje opcji TLS
+ * bez pakietu undici. Zwraca minimalny kształt `{ ok, status, text() }`, którego używa `pobierz`.
+ */
+export function fetchHttps(url, { headers = {}, signal } = {}) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, { method: 'GET', headers, ca: CA_EPP, signal }, (res) => {
+      const kawalki = [];
+      res.on('data', (k) => kawalki.push(k));
+      res.on('end', () => {
+        const cialo = Buffer.concat(kawalki).toString('utf8');
+        resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, status: res.statusCode, text: async () => cialo });
+      });
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+async function pobierz(url, { fetchFn = fetchHttps, limitMs = LIMIT_ODCZYTU_MS } = {}) {
   const kontroler = new AbortController();
   const zegar = setTimeout(() => kontroler.abort(), limitMs);
   try {
