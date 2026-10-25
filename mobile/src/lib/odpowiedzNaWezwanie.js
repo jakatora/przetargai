@@ -1,4 +1,5 @@
 import { pozostalyCzas, podpowiedzDoDokumentu } from './wezwanieUzupelnienie.js';
+import { zarejestrujKlucz } from './daneLokalne.js';
 
 /*
  * „Odpowiedź na wezwanie w 1 klik" — z wklejonej treści wezwania zamawiającego
@@ -25,6 +26,33 @@ function deepFreeze(wartosc) {
     Object.freeze(wartosc);
   }
   return wartosc;
+}
+
+/*
+ * Stan odpowiedzi na wezwanie PER PRZETARG (wklejony tekst, rodzaj, termin, znak, załączniki,
+ * wyjaśnienia) — użytkownik wraca dokończyć pismo i nic nie wpisuje drugi raz. Klucz per
+ * przetarg → indeks konta (wylogowanie kasuje). SecureStore: tylko [A-Za-z0-9._-].
+ */
+export function kluczStanuWezwania(tenderId) {
+  return `przetargai.wezwanie-odpowiedz.${String(tenderId).replace(/[^A-Za-z0-9._-]/g, '_')}`;
+}
+
+export async function wczytajStanWezwania(storage, tenderId) {
+  if (!tenderId) return null;
+  try {
+    const raw = await storage.getItem(kluczStanuWezwania(tenderId));
+    const dane = raw ? JSON.parse(raw) : null;
+    return dane && typeof dane === 'object' ? dane : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function zapiszStanWezwania(storage, tenderId, stan) {
+  if (!tenderId || !stan || typeof stan !== 'object') return;
+  const klucz = kluczStanuWezwania(tenderId);
+  await zarejestrujKlucz(storage, klucz);
+  await storage.setItem(klucz, JSON.stringify(stan));
 }
 
 /** Rodzaje wezwań. Kolejność wzorców = kolejność rozpoznawania; „inne" łapie resztę. */

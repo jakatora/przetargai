@@ -55,6 +55,7 @@ export const KLUCZE_KONTA = Object.freeze([
 export const PREFIKSY_KONTA = Object.freeze([
   'przetargai.kontrola-oferty.', // lib/kontrolaOferty — checklista przed złożeniem
   'przetargai.dokumenty-oferty.', // lib/dokumentyOferty — cena/termin/sytuacja tej oferty
+  'przetargai.wezwanie-odpowiedz.', // lib/odpowiedzNaWezwanie — stan pisma do wezwania
   'przetargai.sciezka.', // lib/sciezkaDoOferty — ukończone kroki ścieżki
   'przetargai.kontrola-poprzetargowa.', // lib/poprzetargowaKontrola — kontrola po przegranej
 ]);

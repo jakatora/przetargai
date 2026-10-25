@@ -111,6 +111,20 @@ test('pismo: brakujące dane → kropki, nigdy „undefined"; rodzaj nieznany �
   assert.doesNotMatch(dok.tresc, /undefined|null|NaN/);
 });
 
+test('stan odpowiedzi per przetarg: zapis rejestruje klucz (id oczyszczone), odczyt odtwarza, śmieci → null', async () => {
+  const { kluczStanuWezwania, wczytajStanWezwania, zapiszStanWezwania } = await import('../src/lib/odpowiedzNaWezwanie.js');
+  const { KLUCZ_INDEKSU_KONTA } = await import('../src/lib/daneLokalne.js');
+  const mapa = new Map();
+  const storage = { getItem: async (k) => mapa.get(k) ?? null, setItem: async (k, v) => { mapa.set(k, v); }, deleteItem: async (k) => { mapa.delete(k); } };
+  assert.equal(await wczytajStanWezwania(storage, 'bzp:1'), null);
+  await zapiszStanWezwania(storage, 'bzp:1', { tekst: 'Wezwanie…', rodzaj: 'uzupelnienie', termin: '2026-10-27', dokumenty: ['ZUS'] });
+  assert.deepEqual(await wczytajStanWezwania(storage, 'bzp:1'), { tekst: 'Wezwanie…', rodzaj: 'uzupelnienie', termin: '2026-10-27', dokumenty: ['ZUS'] });
+  assert.ok(String(mapa.get(KLUCZ_INDEKSU_KONTA)).includes(kluczStanuWezwania('bzp:1')));
+  assert.match(kluczStanuWezwania('bzp:1'), /^przetargai\.wezwanie-odpowiedz\.bzp_1$/);
+  mapa.set(kluczStanuWezwania('x'), '{zle');
+  assert.equal(await wczytajStanWezwania(storage, 'x'), null);
+});
+
 test('kontrola przed wysłaniem: termin (po terminie = danger), brak załączników, podpis, aktualność dokumentów z podpowiedzi', () => {
   const teraz = Date.parse('2026-10-26T08:00:00Z');
   const k = kontrolaPrzedWyslaniem({ rodzaj: 'uzupelnienie', termin: '2026-10-27', dokumenty: [{ nazwa: 'Zaświadczenie ZUS' }], teraz });

@@ -20,6 +20,8 @@ import {
   rozpoznajWezwanie,
   generujOdpowiedz,
   kontrolaPrzedWyslaniem,
+  wczytajStanWezwania,
+  zapiszStanWezwania,
 } from '../lib/odpowiedzNaWezwanie';
 import { useAuth } from '../context/AuthContext';
 import { generujWykaz } from '../lib/wykazReferencji';
@@ -71,6 +73,32 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
   const [udostepniono, setUdostepniono] = useState(false);
   // Dokumenty z Sejfu — przy zaznaczonym załączniku od razu widać, czy go masz i czy jest ważny.
   const [sejf, setSejf] = useState([]);
+  // Stan pisma per przetarg — po powrocie nic nie wpisujesz drugi raz.
+  const tenderId = match?.tender?.id ?? null;
+  const [stanWczytany, setStanWczytany] = useState(!tenderId);
+  useEffect(() => {
+    if (!tenderId) return undefined;
+    let aktywny = true;
+    wczytajStanWezwania(storage, tenderId).then((z) => {
+      if (!aktywny) return;
+      if (z) {
+        if (typeof z.tekst === 'string') setTekstWezwania(z.tekst);
+        if (typeof z.rodzaj === 'string') setRodzaj(z.rodzaj);
+        if (typeof z.znak === 'string') setZnak(z.znak);
+        if (typeof z.dataWezwania === 'string') setDataWezwania(z.dataWezwania);
+        if (typeof z.termin === 'string') setTermin(z.termin);
+        if (typeof z.godzina === 'string') setGodzina(z.godzina);
+        if (Array.isArray(z.dokumenty)) setDokumenty(z.dokumenty);
+        if (typeof z.wyjasnienie === 'string') setWyjasnienie(z.wyjasnienie);
+      }
+      setStanWczytany(true);
+    });
+    return () => { aktywny = false; };
+  }, [tenderId]);
+  useEffect(() => {
+    if (!tenderId || !stanWczytany) return;
+    zapiszStanWezwania(storage, tenderId, { tekst: tekstWezwania, rodzaj, znak, dataWezwania, termin, godzina, dokumenty, wyjasnienie }).catch(() => {});
+  }, [tenderId, stanWczytany, tekstWezwania, rodzaj, znak, dataWezwania, termin, godzina, dokumenty, wyjasnienie]);
 
   useEffect(() => {
     let aktywny = true;
