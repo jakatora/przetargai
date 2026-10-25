@@ -208,6 +208,7 @@ router.get('/', async (_req, res) => {
         nowe: stanOknaPz.ostatni_przebieg.nowe ?? null,
         zaktualizowane: stanOknaPz.ostatni_przebieg.zaktualizowane ?? null,
         bez_zmian: stanOknaPz.ostatni_przebieg.bez_zmian ?? null,
+        scalone_z_rejestrem: stanOknaPz.ostatni_przebieg.scalone_z_rejestrem ?? null,
         surowe: stanOknaPz.ostatni_przebieg.surowe ?? null,
         zapytania: stanOknaPz.ostatni_przebieg.zapytania ?? null,
         bledy_zapisu: stanOknaPz.ostatni_przebieg.bledy_zapisu ?? null,
