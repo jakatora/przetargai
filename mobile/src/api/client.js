@@ -65,6 +65,8 @@ export const api = {
   resetPassword: (payload) => request('/auth/reset-password', { method: 'POST', body: payload, auth: false }),
   /** Publiczne statystyki (bez logowania): { lacznie, nowe24h, nowe7dni } — dowód społeczny. */
   publicStats: () => request('/stats/public', { auth: false }),
+  /** Stan backendu (publiczny) — feed pokazuje z niego przerwę źródła (`cron.zrodla_cicho_puste`). */
+  health: () => request('/health', { auth: false }),
   getMe: () => request('/auth/me'),
   updateProfile: (payload) => request('/auth/me', { method: 'PATCH', body: payload }),
   /** Onboarding AI: opis firmy → { keywords, cpv } (albo { keywords: null, powod }). */

@@ -10,6 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { komunikatPrzerwyZrodel } from '../lib/stanZrodel';
 import * as WebBrowser from 'expo-web-browser';
 import { api } from '../api/client';
 import MatchCard from '../components/MatchCard';
@@ -91,6 +92,7 @@ export default function MatchFeedScreen({ navigation }) {
   const [statusTerminu, setStatusTerminu] = useState(STATUS_TERMINU_DOMYSLNY); // Aktywne / Po terminie
   // Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free).
   const [zacheta, setZacheta] = useState(null);
+  const [przerwaZrodel, setPrzerwaZrodel] = useState(null); // komunikat o przerwie BZP/TED z /health
   const [upgrading, setUpgrading] = useState(false);
   // Radar zamówień podprogowych (panel 7/7): scalony strumień „obok" dużych przetargów.
   // `null` = jeszcze nie wiadomo, czy user ma ustawiony radar (band się nie miga).
@@ -218,6 +220,8 @@ export default function MatchFeedScreen({ navigation }) {
       setError(null);
       // Statystyki poboczne — nie mogą wywalić feedu, gdy padną.
       api.getStatystyki().then((s) => setZacheta(s.zacheta)).catch(() => {});
+      // Przerwa źródła (e-Zamówienia 23–25.10): pusty feed ≠ awaria apki — mówimy to wprost.
+      api.health().then((h) => setPrzerwaZrodel(komunikatPrzerwyZrodel(h, 'pl').pokaz ? h : null)).catch(() => setPrzerwaZrodel(null));
       // Radar podprogowy — poboczny strumień; błąd NIE może wywalić głównego feedu.
       // Zbieramy ogłoszenia dla PIERWSZEJ (nadrzędnej) preferencji użytkownika; resztą
       // obszarów zarządza ekran ustawień. Bez preferencji band pokazuje zaproszenie.
@@ -568,6 +572,13 @@ export default function MatchFeedScreen({ navigation }) {
               Mamy starsze dane, ale odświeżenie się nie powiodło — mówimy o tym
               wprost, zamiast udawać, że lista jest aktualna.
             */}
+            {przerwaZrodel ? (
+              <View style={styles.pasekBledu}>
+                <Text style={styles.pasekBleduTekst}>
+                  {t(komunikatPrzerwyZrodel(przerwaZrodel, 'pl').tekst, komunikatPrzerwyZrodel(przerwaZrodel, 'en').tekst)}
+                </Text>
+              </View>
+            ) : null}
             {error ? (
               <Pressable accessibilityRole="button" style={styles.pasekBledu} onPress={() => load('refresh')}>
                 <Text style={styles.pasekBleduTekst}>
