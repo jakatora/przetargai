@@ -37,6 +37,11 @@ const NAZWY = {
     pelna: { pl: 'platformazakupowa.pl (Open Nexus)', en: 'platformazakupowa.pl (Open Nexus)' },
     rejestr: 'https://platformazakupowa.pl',
   },
+  epropublico: {
+    etykieta: { pl: 'e-ProPublico', en: 'e-ProPublico' },
+    pelna: { pl: 'e-ProPublico (Datacomp)', en: 'e-ProPublico (Datacomp)' },
+    rejestr: 'https://e-propublico.pl',
+  },
 };
 
 /**

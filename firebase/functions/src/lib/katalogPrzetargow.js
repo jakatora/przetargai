@@ -82,6 +82,19 @@ export const ZRODLA = [
       en: 'Procedures run on the Open Nexus purchasing platform — public and corporate; from the listing we know the title, buyer and deadline (no CPV or region).',
     },
   },
+  {
+    kod: 'epropublico',
+    etykieta: { pl: 'e-ProPublico', en: 'e-ProPublico' },
+    nazwa: {
+      pl: 'e-ProPublico (Datacomp)',
+      en: 'e-ProPublico (Datacomp)',
+    },
+    rejestr: 'https://e-propublico.pl',
+    zakres: {
+      pl: 'Postępowania szpitali, gmin i spółek komunalnych na platformie e-ProPublico — tytuł, zamawiający, termin, tryb i rodzaj (bez CPV i województwa; załączniki po zalogowaniu na platformie).',
+      en: 'Procedures of hospitals, municipalities and utilities on the e-ProPublico platform — title, buyer, deadline, mode and type (no CPV or region; attachments after signing in on the platform).',
+    },
+  },
 ];
 
 const KODY_ZRODEL = new Set(ZRODLA.map((z) => z.kod));

@@ -11,6 +11,7 @@ const NAZWY = Object.freeze({
   ted: 'TED (ogłoszenia unijne)',
   baza_konkurencyjnosci: 'Baza Konkurencyjności',
   platformazakupowa: 'platformazakupowa.pl',
+  epropublico: 'e-ProPublico',
 });
 
 /**

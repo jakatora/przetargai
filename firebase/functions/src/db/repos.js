@@ -915,6 +915,18 @@ export const tenders = {
     return true;
   },
 
+  /** Pola ze strony szczegółu rejestru (e-ProPublico): tylko to, co podano; puste nie kasują. */
+  async uzupelnijZeSzczegolu(id, { rodzaj, publishedAt, tryb_postepowania, deadline } = {}) {
+    const pola = {};
+    if (rodzaj) pola.rodzaj = rodzaj;
+    if (publishedAt) pola.published_at = publishedAt;
+    if (tryb_postepowania) pola.tryb_postepowania = tryb_postepowania;
+    if (deadline) pola.deadline = deadline;
+    if (!Object.keys(pola).length) return false;
+    await db().collection('tenders').doc(id).update(pola);
+    return true;
+  },
+
   /** Szczegół z platformazakupowa.pl pobrany na żądanie (tryb, załączniki…) — cache przy ogłoszeniu. */
   async zapiszSzczegolPz(id, szczegol, teraz = nowIso()) {
     await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz });
@@ -2540,6 +2552,18 @@ export const oknoBk = {
  * więc nie ma sensu trzymać odcisków — każde przejście i tak czyta wszystkie strony.
  */
 const OKNO_PZ_REF = () => db().collection('_health').doc('pz_okno');
+
+/** Ślad okna e-ProPublico (2026-10-25): pełne przejście listy co 6 h, bez kursora. */
+const OKNO_EPP_REF = () => db().collection('_health').doc('epp_okno');
+export const oknoEpp = {
+  async wczytaj() {
+    const doc = await OKNO_EPP_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+  async zapiszPrzebieg(wynik) {
+    await OKNO_EPP_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
 
 export const oknoPz = {
   async wczytaj() {

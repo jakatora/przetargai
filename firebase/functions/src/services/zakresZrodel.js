@@ -1,5 +1,5 @@
 import { features } from '../config.js';
-import { cykl, oknoBzp, oknoBk, oknoPz } from '../db/repos.js';
+import { cykl, oknoBzp, oknoBk, oknoPz, oknoEpp } from '../db/repos.js';
 import { nowIso } from '../lib/ids.js';
 import { zbudujZakresDanych, znacznikiSynchronizacji } from '../lib/zakresDanych.js';
 import { logger } from '../lib/logger.js';
@@ -33,9 +33,10 @@ export async function pobierzZakresDanych({ swiezy = false } = {}) {
   let stanBzp = null;
   let stanBk = null;
   let stanPz = null;
+  let stanEpp = null;
   try {
-    [slad, stanBzp, stanBk, stanPz] = await Promise.all([
-      cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoPz.wczytaj().catch(() => null),
+    [slad, stanBzp, stanBk, stanPz, stanEpp] = await Promise.all([
+      cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoPz.wczytaj().catch(() => null), oknoEpp.wczytaj().catch(() => null),
     ]);
   } catch (err) {
     logger.warn({ err: err.message }, 'zakres danych: nie udało się odczytać śladów źródeł');
@@ -43,11 +44,12 @@ export async function pobierzZakresDanych({ swiezy = false } = {}) {
 
   const zakres = zbudujZakresDanych({
     teraz: nowIso(),
-    wlaczone: { bzp: true, ted: features.ted, baza_konkurencyjnosci: features.bk, platformazakupowa: true },
+    wlaczone: { bzp: true, ted: features.ted, baza_konkurencyjnosci: features.bk, platformazakupowa: true, epropublico: true },
     zrodlaCyklu: slad?.zrodla ?? {},
     oknoBzp: stanBzp?.ostatni_przebieg ?? null,
     oknoBk: stanBk?.ostatni_przebieg ?? null,
     oknoPz: stanPz?.ostatni_przebieg ?? null,
+    oknoEpp: stanEpp?.ostatni_przebieg ?? null,
   });
 
   cache = { zakres, wygasa: Date.now() + CACHE_MS };

@@ -233,7 +233,7 @@ test('GET /tenders/zakres-danych mówi, co obejmujemy i czego NIE', async () => 
   assert.equal(odp.status, 200);
   const dane = await odp.json();
 
-  assert.deepEqual(dane.zrodla.map((z) => z.kod), ['bzp', 'ted', 'baza_konkurencyjnosci', 'platformazakupowa']);
+  assert.deepEqual(dane.zrodla.map((z) => z.kod), ['bzp', 'ted', 'baza_konkurencyjnosci', 'platformazakupowa', 'epropublico']);
   assert.ok(dane.nieobjete.some((n) => n.kod === 'bip'));
   assert.ok(dane.zastrzezenie.pl && dane.zastrzezenie.en);
   assert.doesNotMatch(dane.zastrzezenie.pl, /wszystkie przetargi w Polsce/i);
@@ -269,7 +269,7 @@ test('GET /tenders/filtry podaje słowniki filtrów w PL i EN', async () => {
   const token = await konto();
   const dane = await (await fetch(`${BAZA}/tenders/filtry`, { headers: auth(token) })).json();
 
-  assert.ok(dane.zrodla.length === 4);
+  assert.ok(dane.zrodla.length === 5);
   assert.equal(dane.regiony.length, 16);
   assert.ok(dane.sortowania.every((s) => s.etykieta.pl && s.etykieta.en));
   assert.ok(dane.terminy.every((s) => s.etykieta.pl && s.etykieta.en));

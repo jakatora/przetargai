@@ -228,6 +228,31 @@ export const pzOknoFetch = onSchedule(
 );
 
 /**
+ * Okno e-ProPublico (2026-10-25) — co 6 h o :05 (00:05, 06:05, 12:05, 18:05 PL): cała lista
+ * (~30–60 stron po 10), nowe ogłoszenia ze szczegółem (tryb, rodzaj, data publikacji).
+ * Idempotencja: docId = `epp:<guid>`.
+ */
+export const eppOknoFetch = onSchedule(
+  {
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '5 */6 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runOknoEpp } = await import('./src/jobs/oknoEProPublico.js');
+    const wynik = await runOknoEpp();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'eppOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`eppOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'eppOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Selekcja przetargów pod klienta co 3 h — TYLKO plan Standard (także 7-dniowa próba).
  * Godziny 2:10, 5:10 … 23:10 czasu polskiego, czyli po oknach BZP (:20) i BK (:50)
  * z poprzedniej godziny. Free dostaje przebieg raz dziennie w dailyTenderFetch.

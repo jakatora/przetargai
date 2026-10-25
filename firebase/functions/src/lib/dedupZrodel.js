@@ -28,7 +28,7 @@ import { normalize } from './textNorm.js';
  * 🚨 Ta kolejność MUSI zgadzać się z kolejnością źródeł w `domyslneZrodla()`
  * (jobs/fetchTenders.js) — inaczej scalanie i pobieranie mówiłyby co innego.
  */
-export const PRIORYTET_ZRODEL = ['bzp', 'ted', 'baza_konkurencyjnosci', 'platformazakupowa'];
+export const PRIORYTET_ZRODEL = ['bzp', 'ted', 'baza_konkurencyjnosci', 'epropublico', 'platformazakupowa'];
 
 /** Formy prawne, które nie odróżniają podmiotów, a bywają zapisywane na 3 sposoby. */
 const FORMY_PRAWNE = [

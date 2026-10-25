@@ -2,7 +2,7 @@ import { zrodlaCichoPusteWCyklu } from '../lib/zrodlaCichoPuste.js';
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz } from '../db/repos.js';
+import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 import { ocenStanAi } from '../lib/stanAi.js';
 
@@ -47,15 +47,16 @@ router.get('/', async (_req, res) => {
   let stanOkna = null;
   let stanOknaBk = null;
   let stanOknaPz = null;
+  let stanOknaEpp = null;
   let stanOknaWynikow = null;
   let stanOknaPlanow = null;
 
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz] = await Promise.all([
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp] = await Promise.all([
       cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
-      oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null),
+      oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null), oknoEpp.wczytaj().catch(() => null),
     ]);
   } catch { /* zgłoszone w polu db */ }
 
@@ -200,6 +201,22 @@ router.get('/', async (_req, res) => {
       }
       : null,
     /* Okno platformazakupowa.pl (2026-10-25): kursor stron i bilans ostatniego przebiegu. */
+    /* Okno e-ProPublico (2026-10-25): pełne przejście co 6 h. */
+    epp_okno: stanOknaEpp?.ostatni_przebieg
+      ? {
+        zakonczony_o: stanOknaEpp.ostatni_przebieg.zakonczony_o ?? null,
+        strony: stanOknaEpp.ostatni_przebieg.strony ?? null,
+        nowe: stanOknaEpp.ostatni_przebieg.nowe ?? null,
+        zaktualizowane: stanOknaEpp.ostatni_przebieg.zaktualizowane ?? null,
+        scalone_z_rejestrem: stanOknaEpp.ostatni_przebieg.scalone_z_rejestrem ?? null,
+        szczegoly: stanOknaEpp.ostatni_przebieg.szczegoly ?? null,
+        bledy_szczegolu: stanOknaEpp.ostatni_przebieg.bledy_szczegolu ?? null,
+        zapytania: stanOknaEpp.ostatni_przebieg.zapytania ?? null,
+        bledy_zapisu: stanOknaEpp.ostatni_przebieg.bledy_zapisu ?? null,
+        ok: stanOknaEpp.ostatni_przebieg.ok ?? null,
+        error: stanOknaEpp.ostatni_przebieg.error ?? null,
+      }
+      : null,
     pz_okno: stanOknaPz?.ostatni_przebieg
       ? {
         zakonczony_o: stanOknaPz.ostatni_przebieg.zakonczony_o ?? null,
