@@ -20007,6 +20007,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     return result;
   }
   const proposed = /* @__PURE__ */ new Map();
+  const wholePlans = /* @__PURE__ */ new Set();
   const basePlans = /* @__PURE__ */ new Map();
   function addPlan(selected, split) {
     const orders = /* @__PURE__ */ new Map();
@@ -20023,7 +20024,9 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
       }
     }
     const actual = [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
-    proposed.set(actual.map(signature).join(";"), actual);
+    const key = actual.map(signature).join(";");
+    proposed.set(key, actual);
+    if (!split) wholePlans.add(key);
   }
   for (let subset = 1; subset < 1 << stores.length; subset++) {
     const allowed = new Set(stores.filter((_store, index2) => subset & 1 << index2));
@@ -20049,8 +20052,11 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
   }
   const sum = (orders) => orders.reduce((total, order) => total + order.materialsGrosze, 0);
   const ordered = [...proposed.values()].sort((a, b) => Number(b.length === 1) - Number(a.length === 1) || sum(a) - sum(b));
+  const whole = ordered.filter((orders) => wholePlans.has(orders.map(signature).join(";"))).slice(0, 16);
+  const splits = ordered.filter((orders) => !wholePlans.has(orders.map(signature).join(";"))).slice(0, 24 - whole.length);
+  const selectedOrders = [...whole, ...splits];
   const unique = /* @__PURE__ */ new Map(), candidates = [];
-  for (const orders of ordered) {
+  for (const orders of selectedOrders) {
     const additional = orders.filter((order) => !unique.has(signature(order))).length;
     if (unique.size + additional > MAX_STORE_BASKETS) continue;
     candidates.push(orders);
@@ -20070,6 +20076,9 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   const first = /* @__PURE__ */ new Map();
   for (const [key, order] of ordered) if (!first.has(order.store)) first.set(order.store, key);
   const priority = new Set(first.values());
+  const smallest = /* @__PURE__ */ new Map();
+  for (const [key, order] of [...ordered].reverse()) if (!smallest.has(order.store)) smallest.set(order.store, key);
+  for (const key of smallest.values()) priority.add(key);
   const keys = [...priority, ...ordered.map(([key]) => key).filter((key) => !priority.has(key))];
   let cursor = 0;
   await Promise.all(Array.from({ length: Math.min(3, keys.length) }, async () => {
