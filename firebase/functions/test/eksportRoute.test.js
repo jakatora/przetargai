@@ -198,6 +198,31 @@ describe('POST /eksport/pismo — pismo jako Word na e-mail konta', () => {
     assert.equal((await fetch(`${BAZA}/eksport/pismo`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ pisma: zaDuzo }) })).status, 400);
   });
 
+  test('POST /eksport/pismo.docx zwraca plik Word do pobrania (ZIP „PK”, typ MIME, nazwa z polskimi znakami w filename*)', async () => {
+    const { token } = await konto();
+    const odp = await fetch(`${BAZA}/eksport/pismo.docx`, {
+      method: 'POST', headers: naglowki(token), body: JSON.stringify({ nazwa: 'Oświadczenie wstępne', tresc: 'Treść' }),
+    });
+    assert.equal(odp.status, 200);
+    assert.equal(odp.headers.get('content-type'), 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    assert.match(odp.headers.get('content-disposition'), /attachment; filename="Oswiadczenie wstepne.docx"; filename\*=UTF-8''O%C5%9Bwiadczenie%20wst%C4%99pne.docx/);
+    assert.equal(decodeURIComponent(odp.headers.get('x-plik')), 'Oświadczenie wstępne.docx');
+    const bajty = Buffer.from(await odp.arrayBuffer());
+    assert.equal(bajty.subarray(0, 2).toString('latin1'), 'PK');
+    assert.ok(bajty.length > 1000);
+    assert.equal((await fetch(`${BAZA}/eksport/pismo.docx`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ nazwa: 'x', tresc: '' }) })).status, 400);
+  });
+
+  test('CORS odsłania nagłówki pliku (X-Plik, Content-Disposition) — web zna nazwę pobieranego .docx', async () => {
+    const { token } = await konto();
+    const odp = await fetch(`${BAZA}/eksport/pismo.docx`, {
+      method: 'POST', headers: { ...naglowki(token), Origin: 'https://przetarg-ai.pl' }, body: JSON.stringify({ nazwa: 'Pismo', tresc: 'x' }),
+    });
+    assert.equal(odp.status, 200);
+    const expose = (odp.headers.get('access-control-expose-headers') ?? '').toLowerCase();
+    assert.ok(expose.includes('x-plik') && expose.includes('content-disposition'), expose);
+  });
+
   test('brak treści albo za długa nazwa → 400; bez tokenu → 401', async () => {
     const { token } = await konto();
     assert.equal((await fetch(`${BAZA}/eksport/pismo`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ nazwa: 'x', tresc: '' }) })).status, 400);

@@ -55,6 +55,33 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
   return data;
 }
 
+/**
+ * Żądanie o PLIK (web / Windows): zwraca Blob i nazwę z nagłówka `X-Plik` (ustawianego przez
+ * serwer obok Content-Disposition, bo przeglądarka nie zawsze odsłania to drugie przez CORS).
+ * Błędy jak w `request` (JSON z komunikatem), 401 wylogowuje tak samo.
+ */
+async function requestBlob(path, { method = 'POST', body } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  let res;
+  try {
+    res = await wyslijZLimitem(API_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined }, parametryDlaMetody(method));
+  } catch {
+    throw bladSieci();
+  }
+  if (!res.ok) {
+    let data = null;
+    try { data = await res.json(); } catch { /* bez treści */ }
+    const err = bladOdpowiedzi(res.status, data);
+    if (err.wygaslaSesja && authToken && naWygasnieciesesji) naWygasnieciesesji();
+    throw err;
+  }
+  const naglowek = res.headers?.get?.('x-plik');
+  let nazwaPliku = null;
+  try { nazwaPliku = naglowek ? decodeURIComponent(naglowek) : null; } catch { nazwaPliku = null; }
+  return { blob: await res.blob(), nazwaPliku, typMime: res.headers?.get?.('content-type') ?? 'application/octet-stream' };
+}
+
 /** Klient REST backendu PrzetargAI. */
 export const api = {
   register: (payload) => request('/auth/register', { method: 'POST', body: payload, auth: false }),
@@ -440,4 +467,6 @@ export const api = {
   wyslijPismoWord: ({ nazwa, tresc }) => request('/eksport/pismo', { method: 'POST', body: { nazwa, tresc } }),
   /** Kilka pism jednym e-mailem (każde jako osobny .docx); `pisma`: [{ nazwa, tresc }], `tytul` = temat e-maila. */
   wyslijPismaWord: ({ pisma, tytul }) => request('/eksport/pismo', { method: 'POST', body: { pisma, ...(tytul ? { tytul } : {}) } }),
+  /** Pismo jako plik .docx do pobrania (web / Windows) — { blob, nazwaPliku, typMime }. */
+  pobierzPismoWord: ({ nazwa, tresc }) => requestBlob('/eksport/pismo.docx', { body: { nazwa, tresc } }),
 };

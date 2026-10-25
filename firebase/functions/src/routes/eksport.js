@@ -223,3 +223,20 @@ router.post('/pismo', ah(async (req, res) => {
   if (!wynik.sent && !wynik.degraded) throw serviceUnavailable('Nie udało się wysłać e-maila — spróbuj za chwilę.');
   res.json({ wyslano: Boolean(wynik.sent), tryb_degradacji: Boolean(wynik.degraded), do: req.user.email, plik: pliki[0], pliki });
 }));
+
+/**
+ * To samo pismo jako PLIK do pobrania (web / Windows): przeglądarka zapisuje .docx od razu,
+ * bez okrążenia przez skrzynkę. Bez e-maila, więc bez dziennego limitu wysyłek.
+ * Nazwa pliku i w ASCII (stare klienty), i w UTF-8 (`filename*`, RFC 5987) — polskie znaki zostają.
+ */
+router.post('/pismo.docx', ah(async (req, res) => {
+  const parsed = jednoPismo.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Niepoprawne pismo', parsed.error.issues);
+  const { nazwa, tresc } = parsed.data;
+  const plik = nazwaPlikuDocx(nazwa);
+  const ascii = plik.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').replace(/Ł/g, 'L').replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '');
+  res.set('Content-Type', TYP_MIME_DOCX);
+  res.set('Content-Disposition', `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(plik)}`);
+  res.set('X-Plik', encodeURIComponent(plik));
+  res.send(zbudujDocx({ nazwa, tresc, teraz: new Date(nowIso()) }));
+}));

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import Button from './Button';
 import { api } from '../api/client';
+import { pobierzDokument } from '../services/dokumenty';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing } from '../theme';
 
@@ -35,8 +36,32 @@ export default function PrzyciskWord({ nazwa, tresc, pisma, tytul, title, varian
     }
   }
 
+  // Web / Windows: przeglądarka zapisze .docx od razu — bez okrążenia przez skrzynkę.
+  const [pobieranie, setPobieranie] = useState(false);
+  async function pobierz() {
+    const doPobrania = lista ?? [{ nazwa, tresc }];
+    if (!doPobrania.length || !String(doPobrania[0].tresc ?? '').trim()) return;
+    setPobieranie(true);
+    setStan({ laduje: false, komunikat: null, ok: false });
+    try {
+      for (const p of doPobrania) {
+        const { blob, nazwaPliku, typMime } = await api.pobierzPismoWord({ nazwa: p.nazwa, tresc: p.tresc });
+        await pobierzDokument({ tresc: blob, typMime, nazwaPliku: nazwaPliku ?? `${p.nazwa}.docx`, tytul: p.nazwa });
+      }
+      setStan({ laduje: false, komunikat: doPobrania.length > 1 ? `Pobrano ${doPobrania.length} plików Word.` : 'Pobrano plik Word — otwórz, podpisz i złóż na platformie.', ok: true });
+      poWyslaniu?.({ pobrano: true });
+    } catch (err) {
+      setStan({ laduje: false, komunikat: err.message, ok: false });
+    } finally {
+      setPobieranie(false);
+    }
+  }
+
   return (
     <>
+      {Platform.OS === 'web' ? (
+        <Button title={lista ? 'Pobierz pakiet jako pliki Word' : 'Pobierz jako plik Word'} variant={variant} loading={pobieranie} onPress={pobierz} style={style} />
+      ) : null}
       <Button title={title ?? (lista ? 'Wyślij cały pakiet jako Word na mój e-mail' : 'Wyślij jako Word na mój e-mail')} variant={variant} loading={stan.laduje} onPress={wyslij} style={style} />
       {stan.komunikat ? <Text style={stan.ok ? styles.ok : styles.blad}>{stan.komunikat}</Text> : null}
     </>
