@@ -18,7 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/shared-backend.ts
+// artifacts/api-server/src/shared-backend.ts
 var shared_backend_exports = {};
 __export(shared_backend_exports, {
   RETAIL_SOURCES: () => RETAIL_SOURCES,
@@ -30,7 +30,7 @@ var import_express = require("express");
 var import_node_fs = require("node:fs");
 var import_node_path = require("node:path");
 
-// D:/projekty/remont_assistance/lib/db/src/repositories/helpers.ts
+// lib/db/src/repositories/helpers.ts
 function normalizeProductName(name) {
   return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]+/g, " ").trim();
 }
@@ -75,7 +75,7 @@ function priceToGrosze(raw) {
   return Math.round(n * 100);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/entity.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/entity.js
 var entityKind = /* @__PURE__ */ Symbol.for("drizzle:entityKind");
 function is(value, type) {
   if (!value || typeof value !== "object") {
@@ -101,7 +101,7 @@ function is(value, type) {
   return false;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column.js
 var Column = class {
   constructor(table, config2) {
     this.table = table;
@@ -152,7 +152,7 @@ var Column = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column-builder.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column-builder.js
 var ColumnBuilder = class {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -255,10 +255,10 @@ var ColumnBuilder = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.utils.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.utils.js
 var TableName = /* @__PURE__ */ Symbol.for("drizzle:Name");
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/foreign-keys.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/foreign-keys.js
 var ForeignKeyBuilder = class {
   static [entityKind] = "PgForeignKeyBuilder";
   /** @internal */
@@ -315,12 +315,12 @@ var ForeignKey = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing-utils.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/unique-constraint.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
@@ -370,7 +370,7 @@ var UniqueConstraint = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/utils/array.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/utils/array.js
 function parsePgArrayValue(arrayString, startFrom, inQuotes) {
   for (let i = startFrom; i < arrayString.length; i++) {
     const char2 = arrayString[i];
@@ -446,7 +446,7 @@ function makePgArray(array2) {
   }).join(",")}}`;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/common.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/common.js
 var PgColumnBuilder = class extends ColumnBuilder {
   foreignKeyConfigs = [];
   static [entityKind] = "PgColumnBuilder";
@@ -630,7 +630,7 @@ var PgArray = class _PgArray extends PgColumn {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/enum.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/enum.js
 var PgEnumObjectColumnBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgEnumObjectColumnBuilder";
   constructor(name, enumInstance) {
@@ -688,7 +688,7 @@ var PgEnumColumn = class extends PgColumn {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/subquery.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/subquery.js
 var Subquery = class {
   static [entityKind] = "Subquery";
   constructor(sql2, fields, alias, isWith = false, usedTables = []) {
@@ -709,10 +709,10 @@ var WithSubquery = class extends Subquery {
   static [entityKind] = "WithSubquery";
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/version.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/version.js
 var version = "0.45.1";
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -747,10 +747,10 @@ var tracer = {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/view-common.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = /* @__PURE__ */ Symbol.for("drizzle:ViewBaseConfig");
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.js
 var Schema = /* @__PURE__ */ Symbol.for("drizzle:Schema");
 var Columns = /* @__PURE__ */ Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = /* @__PURE__ */ Symbol.for("drizzle:ExtraConfigColumns");
@@ -809,7 +809,7 @@ function isTable(table) {
   return typeof table === "object" && table !== null && IsDrizzleTable in table;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/sql.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/sql.js
 var FakePrimitiveParam = class {
   static [entityKind] = "FakePrimitiveParam";
 };
@@ -1189,7 +1189,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/utils.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/utils.js
 function getTableColumns(table) {
   return table[Table.Symbol.Columns];
 }
@@ -1204,7 +1204,7 @@ function getColumnNameAndConfig(a, b) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder();
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/int.common.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/int.common.js
 var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgIntColumnBaseBuilder";
   generatedAlwaysAsIdentity(sequence) {
@@ -1243,7 +1243,7 @@ var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigint.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigint.js
 var PgBigInt53Builder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgBigInt53Builder";
   constructor(name) {
@@ -1297,7 +1297,7 @@ function bigint(a, b) {
   return new PgBigInt64Builder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigserial.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigserial.js
 var PgBigSerial53Builder = class extends PgColumnBuilder {
   static [entityKind] = "PgBigSerial53Builder";
   constructor(name) {
@@ -1357,7 +1357,7 @@ function bigserial(a, b) {
   return new PgBigSerial64Builder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/boolean.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/boolean.js
 var PgBooleanBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBooleanBuilder";
   constructor(name) {
@@ -1378,7 +1378,7 @@ function boolean(name) {
   return new PgBooleanBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/char.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/char.js
 var PgCharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCharBuilder";
   constructor(name, config2) {
@@ -1407,7 +1407,7 @@ function char(a, b = {}) {
   return new PgCharBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/cidr.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/cidr.js
 var PgCidrBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCidrBuilder";
   constructor(name) {
@@ -1428,7 +1428,7 @@ function cidr(name) {
   return new PgCidrBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/custom.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/custom.js
 var PgCustomColumnBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -1472,7 +1472,7 @@ function customType(customTypeParams) {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.common.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.common.js
 var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgDateColumnBaseBuilder";
   defaultNow() {
@@ -1480,7 +1480,7 @@ var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.js
 var PgDateBuilder = class extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgDateBuilder";
   constructor(name) {
@@ -1535,7 +1535,7 @@ function date(a, b) {
   return new PgDateStringBuilder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/double-precision.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/double-precision.js
 var PgDoublePrecisionBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgDoublePrecisionBuilder";
   constructor(name) {
@@ -1565,7 +1565,7 @@ function doublePrecision(name) {
   return new PgDoublePrecisionBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/inet.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/inet.js
 var PgInetBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgInetBuilder";
   constructor(name) {
@@ -1586,7 +1586,7 @@ function inet(name) {
   return new PgInetBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/integer.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/integer.js
 var PgIntegerBuilder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgIntegerBuilder";
   constructor(name) {
@@ -1613,7 +1613,7 @@ function integer(name) {
   return new PgIntegerBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/interval.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/interval.js
 var PgIntervalBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgIntervalBuilder";
   constructor(name, intervalConfig) {
@@ -1640,7 +1640,7 @@ function interval(a, b = {}) {
   return new PgIntervalBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/json.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/json.js
 var PgJsonBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgJsonBuilder";
   constructor(name) {
@@ -1677,7 +1677,7 @@ function json(name) {
   return new PgJsonBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/jsonb.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/jsonb.js
 var PgJsonbBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgJsonbBuilder";
   constructor(name) {
@@ -1714,7 +1714,7 @@ function jsonb(name) {
   return new PgJsonbBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/line.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/line.js
 var PgLineBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgLineBuilder";
   constructor(name) {
@@ -1775,7 +1775,7 @@ function line(a, b) {
   return new PgLineABCBuilder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr.js
 var PgMacaddrBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgMacaddrBuilder";
   constructor(name) {
@@ -1796,7 +1796,7 @@ function macaddr(name) {
   return new PgMacaddrBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
 var PgMacaddr8Builder = class extends PgColumnBuilder {
   static [entityKind] = "PgMacaddr8Builder";
   constructor(name) {
@@ -1817,7 +1817,7 @@ function macaddr8(name) {
   return new PgMacaddr8Builder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/numeric.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/numeric.js
 var PgNumericBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgNumericBuilder";
   constructor(name, precision, scale) {
@@ -1934,7 +1934,7 @@ function numeric(a, b) {
   return mode === "number" ? new PgNumericNumberBuilder(name, config2?.precision, config2?.scale) : mode === "bigint" ? new PgNumericBigIntBuilder(name, config2?.precision, config2?.scale) : new PgNumericBuilder(name, config2?.precision, config2?.scale);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/point.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/point.js
 var PgPointTupleBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgPointTupleBuilder";
   constructor(name) {
@@ -2001,7 +2001,7 @@ function point(a, b) {
   return new PgPointObjectBuilder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
 function hexToBytes(hex) {
   const bytes = [];
   for (let c = 0; c < hex.length; c += 2) {
@@ -2040,7 +2040,7 @@ function parseEWKB(hex) {
   throw new Error("Unsupported geometry type");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
 var PgGeometryBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgGeometryBuilder";
   constructor(name) {
@@ -2100,7 +2100,7 @@ function geometry(a, b) {
   return new PgGeometryObjectBuilder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/real.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/real.js
 var PgRealBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgRealBuilder";
   constructor(name, length) {
@@ -2131,7 +2131,7 @@ function real(name) {
   return new PgRealBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/serial.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/serial.js
 var PgSerialBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSerialBuilder";
   constructor(name) {
@@ -2154,7 +2154,7 @@ function serial(name) {
   return new PgSerialBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallint.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallint.js
 var PgSmallIntBuilder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgSmallIntBuilder";
   constructor(name) {
@@ -2181,7 +2181,7 @@ function smallint(name) {
   return new PgSmallIntBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallserial.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallserial.js
 var PgSmallSerialBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSmallSerialBuilder";
   constructor(name) {
@@ -2207,7 +2207,7 @@ function smallserial(name) {
   return new PgSmallSerialBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/text.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/text.js
 var PgTextBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgTextBuilder";
   constructor(name, config2) {
@@ -2231,7 +2231,7 @@ function text(a, b = {}) {
   return new PgTextBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/time.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/time.js
 var PgTimeBuilder = class extends PgDateColumnBaseBuilder {
   constructor(name, withTimezone, precision) {
     super(name, "string", "PgTime");
@@ -2265,7 +2265,7 @@ function time(a, b = {}) {
   return new PgTimeBuilder(name, config2.withTimezone ?? false, config2.precision);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/timestamp.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/timestamp.js
 var PgTimestampBuilder = class extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgTimestampBuilder";
   constructor(name, withTimezone, precision) {
@@ -2346,7 +2346,7 @@ function timestamp(a, b = {}) {
   return new PgTimestampBuilder(name, config2?.withTimezone ?? false, config2?.precision);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/uuid.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/uuid.js
 var PgUUIDBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgUUIDBuilder";
   constructor(name) {
@@ -2373,7 +2373,7 @@ function uuid(name) {
   return new PgUUIDBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/varchar.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/varchar.js
 var PgVarcharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVarcharBuilder";
   constructor(name, config2) {
@@ -2402,7 +2402,7 @@ function varchar(a, b = {}) {
   return new PgVarcharBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
 var PgBinaryVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBinaryVectorBuilder";
   constructor(name, config2) {
@@ -2429,7 +2429,7 @@ function bit(a, b) {
   return new PgBinaryVectorBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
 var PgHalfVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgHalfVectorBuilder";
   constructor(name, config2) {
@@ -2462,7 +2462,7 @@ function halfvec(a, b) {
   return new PgHalfVectorBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
 var PgSparseVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSparseVectorBuilder";
   constructor(name, config2) {
@@ -2489,7 +2489,7 @@ function sparsevec(a, b) {
   return new PgSparseVectorBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
 var PgVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVectorBuilder";
   constructor(name, config2) {
@@ -2522,7 +2522,7 @@ function vector(a, b) {
   return new PgVectorBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/all.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/all.js
 function getPgColumnBuilders() {
   return {
     bigint,
@@ -2560,7 +2560,7 @@ function getPgColumnBuilders() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/table.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/table.js
 var InlineForeignKeys = /* @__PURE__ */ Symbol.for("drizzle:PgInlineForeignKeys");
 var EnableRLS = /* @__PURE__ */ Symbol.for("drizzle:EnableRLS");
 var PgTable = class extends Table {
@@ -2616,7 +2616,7 @@ var pgTable = (name, columns, extraConfig) => {
   return pgTableWithSchema(name, columns, extraConfig, void 0);
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/expressions/conditions.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -2643,7 +2643,7 @@ function and(...unfilteredConditions) {
   ]);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/indexes.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/indexes.js
 var IndexBuilderOn = class {
   constructor(unique, name) {
     this.unique = unique;
@@ -2715,12 +2715,12 @@ var IndexBuilder = class {
   static [entityKind] = "PgIndexBuilder";
   /** @internal */
   config;
-  constructor(columns, unique, only2, name, method = "btree") {
+  constructor(columns, unique, only3, name, method = "btree") {
     this.config = {
       name,
       columns,
       unique,
-      only: only2,
+      only: only3,
       method
     };
   }
@@ -2755,7 +2755,7 @@ function uniqueIndex(name) {
   return new IndexBuilderOn(true, name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
 var external_exports = {};
 __export(external_exports, {
   $brand: () => $brand,
@@ -2967,7 +2967,7 @@ __export(external_exports, {
   xid: () => xid2
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/index.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/index.js
 var core_exports2 = {};
 __export(core_exports2, {
   $ZodAny: () => $ZodAny,
@@ -3211,7 +3211,7 @@ __export(core_exports2, {
   version: () => version2
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/core.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/core.js
 var NEVER = Object.freeze({
   status: "aborted"
 });
@@ -3271,7 +3271,7 @@ function config(newConfig) {
   return globalConfig;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/util.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/util.js
 var util_exports = {};
 __export(util_exports, {
   BIGINT_FORMAT_RANGES: () => BIGINT_FORMAT_RANGES,
@@ -3792,7 +3792,7 @@ var Class = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/errors.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -3939,7 +3939,7 @@ function prettifyError(error40) {
   return lines.join("\n");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/parse.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -3991,7 +3991,7 @@ var _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
 };
 var safeParseAsync = /* @__PURE__ */ _safeParseAsync($ZodRealError);
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/regexes.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/regexes.js
 var regexes_exports = {};
 __export(regexes_exports, {
   _emoji: () => _emoji,
@@ -4104,7 +4104,7 @@ var _undefined = /undefined/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/checks.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a;
   inst._zod ?? (inst._zod = {});
@@ -4118,7 +4118,7 @@ var numericOriginMap = {
 };
 var $ZodCheckLessThan = /* @__PURE__ */ $constructor("$ZodCheckLessThan", (inst, def) => {
   $ZodCheck.init(inst, def);
-  const origin2 = numericOriginMap[typeof def.value];
+  const origin3 = numericOriginMap[typeof def.value];
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
     const curr = (def.inclusive ? bag.maximum : bag.exclusiveMaximum) ?? Number.POSITIVE_INFINITY;
@@ -4134,7 +4134,7 @@ var $ZodCheckLessThan = /* @__PURE__ */ $constructor("$ZodCheckLessThan", (inst,
       return;
     }
     payload.issues.push({
-      origin: origin2,
+      origin: origin3,
       code: "too_big",
       maximum: def.value,
       input: payload.value,
@@ -4146,7 +4146,7 @@ var $ZodCheckLessThan = /* @__PURE__ */ $constructor("$ZodCheckLessThan", (inst,
 });
 var $ZodCheckGreaterThan = /* @__PURE__ */ $constructor("$ZodCheckGreaterThan", (inst, def) => {
   $ZodCheck.init(inst, def);
-  const origin2 = numericOriginMap[typeof def.value];
+  const origin3 = numericOriginMap[typeof def.value];
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
     const curr = (def.inclusive ? bag.minimum : bag.exclusiveMinimum) ?? Number.NEGATIVE_INFINITY;
@@ -4162,7 +4162,7 @@ var $ZodCheckGreaterThan = /* @__PURE__ */ $constructor("$ZodCheckGreaterThan", 
       return;
     }
     payload.issues.push({
-      origin: origin2,
+      origin: origin3,
       code: "too_small",
       minimum: def.value,
       input: payload.value,
@@ -4198,7 +4198,7 @@ var $ZodCheckNumberFormat = /* @__PURE__ */ $constructor("$ZodCheckNumberFormat"
   $ZodCheck.init(inst, def);
   def.format = def.format || "float64";
   const isInt = def.format?.includes("int");
-  const origin2 = isInt ? "int" : "number";
+  const origin3 = isInt ? "int" : "number";
   const [minimum, maximum] = NUMBER_FORMAT_RANGES[def.format];
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
@@ -4213,7 +4213,7 @@ var $ZodCheckNumberFormat = /* @__PURE__ */ $constructor("$ZodCheckNumberFormat"
     if (isInt) {
       if (!Number.isInteger(input2)) {
         payload.issues.push({
-          expected: origin2,
+          expected: origin3,
           format: def.format,
           code: "invalid_type",
           input: input2,
@@ -4229,7 +4229,7 @@ var $ZodCheckNumberFormat = /* @__PURE__ */ $constructor("$ZodCheckNumberFormat"
             maximum: Number.MAX_SAFE_INTEGER,
             note: "Integers must be within the safe integer range.",
             inst,
-            origin: origin2,
+            origin: origin3,
             continue: !def.abort
           });
         } else {
@@ -4239,7 +4239,7 @@ var $ZodCheckNumberFormat = /* @__PURE__ */ $constructor("$ZodCheckNumberFormat"
             minimum: Number.MIN_SAFE_INTEGER,
             note: "Integers must be within the safe integer range.",
             inst,
-            origin: origin2,
+            origin: origin3,
             continue: !def.abort
           });
         }
@@ -4402,9 +4402,9 @@ var $ZodCheckMaxLength = /* @__PURE__ */ $constructor("$ZodCheckMaxLength", (ins
     const length = input2.length;
     if (length <= def.maximum)
       return;
-    const origin2 = getLengthableOrigin(input2);
+    const origin3 = getLengthableOrigin(input2);
     payload.issues.push({
-      origin: origin2,
+      origin: origin3,
       code: "too_big",
       maximum: def.maximum,
       inclusive: true,
@@ -4431,9 +4431,9 @@ var $ZodCheckMinLength = /* @__PURE__ */ $constructor("$ZodCheckMinLength", (ins
     const length = input2.length;
     if (length >= def.minimum)
       return;
-    const origin2 = getLengthableOrigin(input2);
+    const origin3 = getLengthableOrigin(input2);
     payload.issues.push({
-      origin: origin2,
+      origin: origin3,
       code: "too_small",
       minimum: def.minimum,
       inclusive: true,
@@ -4461,10 +4461,10 @@ var $ZodCheckLengthEquals = /* @__PURE__ */ $constructor("$ZodCheckLengthEquals"
     const length = input2.length;
     if (length === def.length)
       return;
-    const origin2 = getLengthableOrigin(input2);
+    const origin3 = getLengthableOrigin(input2);
     const tooBig = length > def.length;
     payload.issues.push({
-      origin: origin2,
+      origin: origin3,
       ...tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length },
       inclusive: true,
       exact: true,
@@ -4642,7 +4642,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/doc.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/doc.js
 var Doc = class {
   constructor(args = []) {
     this.content = [];
@@ -4678,14 +4678,14 @@ var Doc = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/versions.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/versions.js
 var version2 = {
   major: 4,
   minor: 0,
   patch: 0
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/schemas.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a;
   inst ?? (inst = {});
@@ -6312,7 +6312,7 @@ function handleRefineResult(result, payload, input2, inst) {
   }
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/index.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/index.js
 var locales_exports = {};
 __export(locales_exports, {
   ar: () => ar_default,
@@ -6356,7 +6356,7 @@ __export(locales_exports, {
   zhTW: () => zh_TW_default
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ar.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ar.js
 var error = () => {
   const Sizable = {
     string: { unit: "\u062D\u0631\u0641", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
@@ -6364,8 +6364,8 @@ var error = () => {
     array: { unit: "\u0639\u0646\u0635\u0631", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
     set: { unit: "\u0639\u0646\u0635\u0631", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -6473,7 +6473,7 @@ function ar_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/az.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/az.js
 var error2 = () => {
   const Sizable = {
     string: { unit: "simvol", verb: "olmal\u0131d\u0131r" },
@@ -6481,8 +6481,8 @@ var error2 = () => {
     array: { unit: "element", verb: "olmal\u0131d\u0131r" },
     set: { unit: "element", verb: "olmal\u0131d\u0131r" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -6589,7 +6589,7 @@ function az_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
 function getBelarusianPlural(count, one5, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
@@ -6640,8 +6640,8 @@ var error3 = () => {
       verb: "\u043C\u0435\u0446\u044C"
     }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -6754,7 +6754,7 @@ function be_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ca.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ca.js
 var error4 = () => {
   const Sizable = {
     string: { unit: "car\xE0cters", verb: "contenir" },
@@ -6762,8 +6762,8 @@ var error4 = () => {
     array: { unit: "elements", verb: "contenir" },
     set: { unit: "elements", verb: "contenir" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -6874,7 +6874,7 @@ function ca_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/cs.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/cs.js
 var error5 = () => {
   const Sizable = {
     string: { unit: "znak\u016F", verb: "m\xEDt" },
@@ -6882,8 +6882,8 @@ var error5 = () => {
     array: { unit: "prvk\u016F", verb: "m\xEDt" },
     set: { unit: "prvk\u016F", verb: "m\xEDt" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7010,7 +7010,7 @@ function cs_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/de.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/de.js
 var error6 = () => {
   const Sizable = {
     string: { unit: "Zeichen", verb: "zu haben" },
@@ -7018,8 +7018,8 @@ var error6 = () => {
     array: { unit: "Elemente", verb: "zu haben" },
     set: { unit: "Elemente", verb: "zu haben" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7127,7 +7127,7 @@ function de_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/en.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/en.js
 var parsedType = (data) => {
   const t = typeof data;
   switch (t) {
@@ -7155,8 +7155,8 @@ var error7 = () => {
     array: { unit: "items", verb: "to have" },
     set: { unit: "items", verb: "to have" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const Nouns = {
     regex: "input",
@@ -7245,7 +7245,7 @@ function en_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/eo.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/eo.js
 var parsedType2 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -7273,8 +7273,8 @@ var error8 = () => {
     array: { unit: "elementojn", verb: "havi" },
     set: { unit: "elementojn", verb: "havi" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const Nouns = {
     regex: "enigo",
@@ -7362,7 +7362,7 @@ function eo_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/es.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/es.js
 var error9 = () => {
   const Sizable = {
     string: { unit: "caracteres", verb: "tener" },
@@ -7370,8 +7370,8 @@ var error9 = () => {
     array: { unit: "elementos", verb: "tener" },
     set: { unit: "elementos", verb: "tener" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7480,7 +7480,7 @@ function es_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fa.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fa.js
 var error10 = () => {
   const Sizable = {
     string: { unit: "\u06A9\u0627\u0631\u0627\u06A9\u062A\u0631", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
@@ -7488,8 +7488,8 @@ var error10 = () => {
     array: { unit: "\u0622\u06CC\u062A\u0645", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
     set: { unit: "\u0622\u06CC\u062A\u0645", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7603,7 +7603,7 @@ function fa_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fi.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fi.js
 var error11 = () => {
   const Sizable = {
     string: { unit: "merkki\xE4", subject: "merkkijonon" },
@@ -7615,8 +7615,8 @@ var error11 = () => {
     int: { unit: "", subject: "kokonaisluvun" },
     date: { unit: "", subject: "p\xE4iv\xE4m\xE4\xE4r\xE4n" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7726,7 +7726,7 @@ function fi_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr.js
 var error12 = () => {
   const Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -7734,8 +7734,8 @@ var error12 = () => {
     array: { unit: "\xE9l\xE9ments", verb: "avoir" },
     set: { unit: "\xE9l\xE9ments", verb: "avoir" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7843,7 +7843,7 @@ function fr_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr-CA.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr-CA.js
 var error13 = () => {
   const Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -7851,8 +7851,8 @@ var error13 = () => {
     array: { unit: "\xE9l\xE9ments", verb: "avoir" },
     set: { unit: "\xE9l\xE9ments", verb: "avoir" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7961,7 +7961,7 @@ function fr_CA_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/he.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/he.js
 var error14 = () => {
   const Sizable = {
     string: { unit: "\u05D0\u05D5\u05EA\u05D9\u05D5\u05EA", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" },
@@ -7969,8 +7969,8 @@ var error14 = () => {
     array: { unit: "\u05E4\u05E8\u05D9\u05D8\u05D9\u05DD", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" },
     set: { unit: "\u05E4\u05E8\u05D9\u05D8\u05D9\u05DD", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8079,7 +8079,7 @@ function he_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/hu.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/hu.js
 var error15 = () => {
   const Sizable = {
     string: { unit: "karakter", verb: "legyen" },
@@ -8087,8 +8087,8 @@ var error15 = () => {
     array: { unit: "elem", verb: "legyen" },
     set: { unit: "elem", verb: "legyen" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8197,7 +8197,7 @@ function hu_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/id.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/id.js
 var error16 = () => {
   const Sizable = {
     string: { unit: "karakter", verb: "memiliki" },
@@ -8205,8 +8205,8 @@ var error16 = () => {
     array: { unit: "item", verb: "memiliki" },
     set: { unit: "item", verb: "memiliki" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8314,7 +8314,7 @@ function id_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/it.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/it.js
 var error17 = () => {
   const Sizable = {
     string: { unit: "caratteri", verb: "avere" },
@@ -8322,8 +8322,8 @@ var error17 = () => {
     array: { unit: "elementi", verb: "avere" },
     set: { unit: "elementi", verb: "avere" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8432,7 +8432,7 @@ function it_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ja.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ja.js
 var error18 = () => {
   const Sizable = {
     string: { unit: "\u6587\u5B57", verb: "\u3067\u3042\u308B" },
@@ -8440,8 +8440,8 @@ var error18 = () => {
     array: { unit: "\u8981\u7D20", verb: "\u3067\u3042\u308B" },
     set: { unit: "\u8981\u7D20", verb: "\u3067\u3042\u308B" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8548,7 +8548,7 @@ function ja_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/kh.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/kh.js
 var error19 = () => {
   const Sizable = {
     string: { unit: "\u178F\u17BD\u17A2\u1780\u17D2\u179F\u179A", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
@@ -8556,8 +8556,8 @@ var error19 = () => {
     array: { unit: "\u1792\u17B6\u178F\u17BB", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
     set: { unit: "\u1792\u17B6\u178F\u17BB", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8666,7 +8666,7 @@ function kh_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ko.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ko.js
 var error20 = () => {
   const Sizable = {
     string: { unit: "\uBB38\uC790", verb: "to have" },
@@ -8674,8 +8674,8 @@ var error20 = () => {
     array: { unit: "\uAC1C", verb: "to have" },
     set: { unit: "\uAC1C", verb: "to have" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8788,7 +8788,7 @@ function ko_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/mk.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/mk.js
 var error21 = () => {
   const Sizable = {
     string: { unit: "\u0437\u043D\u0430\u0446\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
@@ -8796,8 +8796,8 @@ var error21 = () => {
     array: { unit: "\u0441\u0442\u0430\u0432\u043A\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
     set: { unit: "\u0441\u0442\u0430\u0432\u043A\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8907,7 +8907,7 @@ function mk_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ms.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ms.js
 var error22 = () => {
   const Sizable = {
     string: { unit: "aksara", verb: "mempunyai" },
@@ -8915,8 +8915,8 @@ var error22 = () => {
     array: { unit: "elemen", verb: "mempunyai" },
     set: { unit: "elemen", verb: "mempunyai" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9024,7 +9024,7 @@ function ms_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/nl.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/nl.js
 var error23 = () => {
   const Sizable = {
     string: { unit: "tekens" },
@@ -9032,8 +9032,8 @@ var error23 = () => {
     array: { unit: "elementen" },
     set: { unit: "elementen" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9142,7 +9142,7 @@ function nl_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/no.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/no.js
 var error24 = () => {
   const Sizable = {
     string: { unit: "tegn", verb: "\xE5 ha" },
@@ -9150,8 +9150,8 @@ var error24 = () => {
     array: { unit: "elementer", verb: "\xE5 inneholde" },
     set: { unit: "elementer", verb: "\xE5 inneholde" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9259,7 +9259,7 @@ function no_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ota.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ota.js
 var error25 = () => {
   const Sizable = {
     string: { unit: "harf", verb: "olmal\u0131d\u0131r" },
@@ -9267,8 +9267,8 @@ var error25 = () => {
     array: { unit: "unsur", verb: "olmal\u0131d\u0131r" },
     set: { unit: "unsur", verb: "olmal\u0131d\u0131r" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9377,7 +9377,7 @@ function ota_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ps.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ps.js
 var error26 = () => {
   const Sizable = {
     string: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" },
@@ -9385,8 +9385,8 @@ var error26 = () => {
     array: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" },
     set: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9500,7 +9500,7 @@ function ps_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pl.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pl.js
 var error27 = () => {
   const Sizable = {
     string: { unit: "znak\xF3w", verb: "mie\u0107" },
@@ -9508,8 +9508,8 @@ var error27 = () => {
     array: { unit: "element\xF3w", verb: "mie\u0107" },
     set: { unit: "element\xF3w", verb: "mie\u0107" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9618,7 +9618,7 @@ function pl_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pt.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pt.js
 var error28 = () => {
   const Sizable = {
     string: { unit: "caracteres", verb: "ter" },
@@ -9626,8 +9626,8 @@ var error28 = () => {
     array: { unit: "itens", verb: "ter" },
     set: { unit: "itens", verb: "ter" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9735,7 +9735,7 @@ function pt_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
 function getRussianPlural(count, one5, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
@@ -9786,8 +9786,8 @@ var error29 = () => {
       verb: "\u0438\u043C\u0435\u0442\u044C"
     }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9900,7 +9900,7 @@ function ru_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sl.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sl.js
 var error30 = () => {
   const Sizable = {
     string: { unit: "znakov", verb: "imeti" },
@@ -9908,8 +9908,8 @@ var error30 = () => {
     array: { unit: "elementov", verb: "imeti" },
     set: { unit: "elementov", verb: "imeti" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10018,7 +10018,7 @@ function sl_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sv.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sv.js
 var error31 = () => {
   const Sizable = {
     string: { unit: "tecken", verb: "att ha" },
@@ -10026,8 +10026,8 @@ var error31 = () => {
     array: { unit: "objekt", verb: "att inneh\xE5lla" },
     set: { unit: "objekt", verb: "att inneh\xE5lla" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10137,7 +10137,7 @@ function sv_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ta.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ta.js
 var error32 = () => {
   const Sizable = {
     string: { unit: "\u0B8E\u0BB4\u0BC1\u0BA4\u0BCD\u0BA4\u0BC1\u0B95\u0BCD\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
@@ -10145,8 +10145,8 @@ var error32 = () => {
     array: { unit: "\u0B89\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BC1\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
     set: { unit: "\u0B89\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BC1\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10255,7 +10255,7 @@ function ta_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/th.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/th.js
 var error33 = () => {
   const Sizable = {
     string: { unit: "\u0E15\u0E31\u0E27\u0E2D\u0E31\u0E01\u0E29\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
@@ -10263,8 +10263,8 @@ var error33 = () => {
     array: { unit: "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
     set: { unit: "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10373,7 +10373,7 @@ function th_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/tr.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/tr.js
 var parsedType3 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -10401,8 +10401,8 @@ var error34 = () => {
     array: { unit: "\xF6\u011Fe", verb: "olmal\u0131" },
     set: { unit: "\xF6\u011Fe", verb: "olmal\u0131" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const Nouns = {
     regex: "girdi",
@@ -10489,7 +10489,7 @@ function tr_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ua.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ua.js
 var error35 = () => {
   const Sizable = {
     string: { unit: "\u0441\u0438\u043C\u0432\u043E\u043B\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
@@ -10497,8 +10497,8 @@ var error35 = () => {
     array: { unit: "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
     set: { unit: "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10607,7 +10607,7 @@ function ua_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ur.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ur.js
 var error36 = () => {
   const Sizable = {
     string: { unit: "\u062D\u0631\u0648\u0641", verb: "\u06C1\u0648\u0646\u0627" },
@@ -10615,8 +10615,8 @@ var error36 = () => {
     array: { unit: "\u0622\u0626\u0679\u0645\u0632", verb: "\u06C1\u0648\u0646\u0627" },
     set: { unit: "\u0622\u0626\u0679\u0645\u0632", verb: "\u06C1\u0648\u0646\u0627" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10725,7 +10725,7 @@ function ur_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/vi.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/vi.js
 var error37 = () => {
   const Sizable = {
     string: { unit: "k\xFD t\u1EF1", verb: "c\xF3" },
@@ -10733,8 +10733,8 @@ var error37 = () => {
     array: { unit: "ph\u1EA7n t\u1EED", verb: "c\xF3" },
     set: { unit: "ph\u1EA7n t\u1EED", verb: "c\xF3" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10842,7 +10842,7 @@ function vi_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-CN.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-CN.js
 var error38 = () => {
   const Sizable = {
     string: { unit: "\u5B57\u7B26", verb: "\u5305\u542B" },
@@ -10850,8 +10850,8 @@ var error38 = () => {
     array: { unit: "\u9879", verb: "\u5305\u542B" },
     set: { unit: "\u9879", verb: "\u5305\u542B" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10959,7 +10959,7 @@ function zh_CN_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-TW.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-TW.js
 var error39 = () => {
   const Sizable = {
     string: { unit: "\u5B57\u5143", verb: "\u64C1\u6709" },
@@ -10967,8 +10967,8 @@ var error39 = () => {
     array: { unit: "\u9805\u76EE", verb: "\u64C1\u6709" },
     set: { unit: "\u9805\u76EE", verb: "\u64C1\u6709" }
   };
-  function getSizing(origin2) {
-    return Sizable[origin2] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -11077,7 +11077,7 @@ function zh_TW_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/registries.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/registries.js
 var $output = /* @__PURE__ */ Symbol("ZodOutput");
 var $input = /* @__PURE__ */ Symbol("ZodInput");
 var $ZodRegistry = class {
@@ -11127,7 +11127,7 @@ function registry() {
 }
 var globalRegistry = /* @__PURE__ */ registry();
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/api.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/api.js
 function _string(Class2, params) {
   return new Class2({
     type: "string",
@@ -11985,7 +11985,7 @@ function _stringFormat(Class2, format, fnOrRegex, _params = {}) {
   return inst;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/function.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/function.js
 var $ZodFunction = class {
   constructor(def) {
     this._def = def;
@@ -12055,7 +12055,7 @@ function _function(params) {
   });
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/to-json-schema.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/to-json-schema.js
 var JSONSchemaGenerator = class {
   constructor(params) {
     this.counter = 0;
@@ -12822,10 +12822,10 @@ function isTransforming(_schema, _ctx) {
   throw new Error(`Unknown schema type: ${def.type}`);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/json-schema.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/json-schema.js
 var json_schema_exports = {};
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/iso.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/iso.js
 var iso_exports = {};
 __export(iso_exports, {
   ZodISODate: () => ZodISODate,
@@ -12866,7 +12866,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/errors.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -12900,13 +12900,13 @@ var ZodRealError = $constructor("ZodError", initializer2, {
   Parent: Error
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/parse.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/parse.js
 var parse2 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
 var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/schemas.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/schemas.js
 var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
   $ZodType.init(inst, def);
   inst.def = def;
@@ -13843,7 +13843,7 @@ function preprocess(fn, schema) {
   return pipe(transform(fn), schema);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/compat.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/compat.js
 var ZodIssueCode = {
   invalid_type: "invalid_type",
   too_big: "too_big",
@@ -13866,7 +13866,7 @@ function getErrorMap() {
   return config().customError;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/coerce.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/coerce.js
 var coerce_exports = {};
 __export(coerce_exports, {
   bigint: () => bigint4,
@@ -13891,10 +13891,10 @@ function date5(params) {
   return _coercedDate(ZodDate, params);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
 config(en_default());
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-o_d17bd9588130032e68d017cd2cdc66e3/node_modules/drizzle-zod/index.mjs
+// node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-o_d17bd9588130032e68d017cd2cdc66e3/node_modules/drizzle-zod/index.mjs
 var CONSTANTS = {
   INT8_MIN: -128,
   INT8_MAX: 127,
@@ -14141,7 +14141,7 @@ var createInsertSchema = (entity, refine2) => {
   return handleColumns(columns, refine2 ?? {}, insertConditions);
 };
 
-// D:/projekty/remont_assistance/lib/db/src/schema/products.ts
+// lib/db/src/schema/products.ts
 var productsTable = pgTable(
   "products",
   {
@@ -14176,7 +14176,7 @@ var insertProductSchema = createInsertSchema(productsTable).omit({
   updatedAt: true
 });
 
-// D:/projekty/remont_assistance/lib/db/src/repositories/products.repo.ts
+// lib/db/src/repositories/products.repo.ts
 var upsertProductInput = insertProductSchema.partial({ normalizedName: true });
 async function findByColumn(db, field, value) {
   const col = field === "ean" ? productsTable.ean : productsTable.gtin;
@@ -14201,7 +14201,7 @@ async function findByNormalizedNameAndCategory(db, name, category) {
   return rows[0];
 }
 
-// D:/projekty/remont_assistance/lib/db/src/schema/product-offers.ts
+// lib/db/src/schema/product-offers.ts
 var productOffersTable = pgTable(
   "product_offers",
   {
@@ -14231,7 +14231,7 @@ var insertProductOfferSchema = createInsertSchema(
   fetchedAt: true
 });
 
-// D:/projekty/remont_assistance/lib/db/src/schema/price-history.ts
+// lib/db/src/schema/price-history.ts
 var priceHistoryTable = pgTable(
   "price_history",
   {
@@ -14258,13 +14258,13 @@ var insertPriceHistorySchema = createInsertSchema(
   id: true
 });
 
-// D:/projekty/remont_assistance/lib/db/src/repositories/product-offers.repo.ts
+// lib/db/src/repositories/product-offers.repo.ts
 async function listOffersForProduct(db, productId) {
   const rows = await db.select().from(productOffersTable).where(eq(productOffersTable.productId, productId));
   return sortOffersWithCheapest(rows);
 }
 
-// D:/projekty/remont_assistance/lib/price-collector/src/normalize.ts
+// lib/price-collector/src/normalize.ts
 function parsePriceToGrosze(raw) {
   if (raw === null || raw === void 0) return null;
   let amount;
@@ -14291,7 +14291,7 @@ function parsePriceToGrosze(raw) {
   return Math.round(amount * 100);
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/package-optimizer.ts
+// lib/pricing-service/src/package-optimizer.ts
 var MAX_GRID = 2e6;
 function decimalPlaces(n) {
   if (!Number.isFinite(n) || Number.isInteger(n)) return 0;
@@ -14420,7 +14420,7 @@ function optimizePackages(requiredQuantity, variants) {
   };
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/purchase-quantity.ts
+// lib/pricing-service/src/purchase-quantity.ts
 function computePackagesNeeded(quantity, packageSize, purchaseMultiple = 1) {
   if (!(quantity > 0)) return 0;
   const size = packageSize > 0 ? packageSize : 1;
@@ -14428,7 +14428,7 @@ function computePackagesNeeded(quantity, packageSize, purchaseMultiple = 1) {
   return Math.ceil(quantity / (size * purchaseMultiple)) * purchaseMultiple;
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/estimate.ts
+// lib/pricing-service/src/estimate.ts
 var defaultDeps = {
   findProductByCode: async (db, code) => await findByEanOrGtin(db, code) ?? null,
   findProductByNameAndCategory: async (db, q) => await findByNormalizedNameAndCategory(db, q.normalizedName, q.category) ?? null,
@@ -14719,7 +14719,7 @@ function estimateProjectCost(stages) {
   };
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/labor-data.ts
+// lib/pricing-service/src/labor-data.ts
 var REGION_CODE = "lodzkie";
 var REGION_LABEL = "\u0141\xF3d\u017A / \u0142\xF3dzkie";
 var LABOR_RATES = [
@@ -15075,7 +15075,7 @@ function getLaborRateIdsForJob(jobId) {
   return LABOR_IDS_BY_JOB.get(jobId) ?? [];
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/labor.ts
+// lib/pricing-service/src/labor.ts
 function primaryArea(m) {
   if (m.wallArea) return m.wallArea;
   if (m.floorArea) return m.floorArea;
@@ -15175,7 +15175,7 @@ function estimateStageLabor(jobId, measurements, options = {}) {
   };
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/from-calculator.ts
+// lib/pricing-service/src/from-calculator.ts
 function withLabor(stage, jobId, measurements, options) {
   const labor = estimateStageLabor(jobId, measurements, options);
   const materialsTotalGrosze = stage.stageTotalGrosze;
@@ -15222,7 +15222,7 @@ async function estimateProjectCostFromCalculation(db, jobResults, options = {}, 
   return { ...project, stages };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
 var external_exports2 = {};
 __export(external_exports2, {
   BRAND: () => BRAND,
@@ -15334,7 +15334,7 @@ __export(external_exports2, {
   void: () => voidType
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
 var util;
 (function(util2) {
   util2.assertEqual = (_) => {
@@ -15468,7 +15468,7 @@ var getParsedType2 = (data) => {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
 var ZodIssueCode2 = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
@@ -15586,7 +15586,7 @@ ZodError2.create = (issues) => {
   return error40;
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
 var errorMap = (issue2, _ctx) => {
   let message;
   switch (issue2.code) {
@@ -15689,7 +15689,7 @@ var errorMap = (issue2, _ctx) => {
 };
 var en_default2 = errorMap;
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
 var overrideErrorMap = en_default2;
 function setErrorMap2(map2) {
   overrideErrorMap = map2;
@@ -15698,7 +15698,7 @@ function getErrorMap2() {
   return overrideErrorMap;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...issueData.path || []];
@@ -15808,14 +15808,14 @@ var isDirty = (x) => x.status === "dirty";
 var isValid = (x) => x.status === "valid";
 var isAsync = (x) => typeof Promise !== "undefined" && x instanceof Promise;
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
 var errorUtil;
 (function(errorUtil2) {
   errorUtil2.errToObj = (message) => typeof message === "string" ? { message } : message || {};
   errorUtil2.toString = (message) => typeof message === "string" ? message : message?.message;
 })(errorUtil || (errorUtil = {}));
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
   constructor(parent, value, path, key) {
     this._cachedPath = [];
@@ -19263,7 +19263,7 @@ var coerce = {
 };
 var NEVER2 = INVALID;
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/pricing-schema.ts
+// artifacts/api-server/src/lib/pricing-schema.ts
 var materialSchema = external_exports2.object({
   id: external_exports2.string(),
   name: external_exports2.string(),
@@ -19307,7 +19307,7 @@ var projectRequestSchema = external_exports2.object({
   options: optionsSchema
 });
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/pricing-serialize.ts
+// artifacts/api-server/src/lib/pricing-serialize.ts
 function serializeProduct(product) {
   return {
     ...product.imageUrl ? { imageUrl: product.imageUrl } : {},
@@ -19507,7 +19507,7 @@ function serializeProject(project) {
   };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-catalog.ts
+// artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
   {
     id: "castorama-sniezka-5l",
@@ -20515,9 +20515,12 @@ var RETAIL_SOURCES = [
   // source: https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291
   { "id": "northbud-ferro-one-bfo7", "ean": "5902194954525", "name": "FERRO Bateria prysznicowa Ferro One bez prysznica chrom BFO7", "category": "faucet", "brand": "Ferro", "packageSize": 1, "unit": "szt", "store": "Northbud", "format": "jsonld", "variant": ["BFO7", "chrom"], "url": "https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291" },
   // source: https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka
-  { "id": "kronodom-arbiton-secura-thermo-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele ARBITON SECURA THERMO AQUASTOP SMART 1,6mm (1opk.=6m2) czerwona harmonijka", "category": "underlay", "brand": "Arbiton", "packageSize": 6, "unit": "m2", "store": "Kronodom", "format": "abstore", "productId": 423, "apiPurchaseUnit": "m2", "variant": ["Secura", "Thermo", "Aquastop", "Smart", "1,6mm", "6m2"], "url": "https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka" }
+  { "id": "kronodom-arbiton-secura-thermo-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele ARBITON SECURA THERMO AQUASTOP SMART 1,6mm (1opk.=6m2) czerwona harmonijka", "category": "underlay", "brand": "Arbiton", "packageSize": 6, "unit": "m2", "store": "Kronodom", "format": "abstore", "productId": 423, "apiPurchaseUnit": "m2", "variant": ["Secura", "Thermo", "Aquastop", "Smart", "1,6mm", "6m2"], "url": "https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka" },
+  // source: https://hipper.pl/klamka-do-drzwi-wewnetrznych-lucy-zlota-r-schaffner-3069808860
+  { "id": "hipper-schaffner-lucy-gold", "ean": "5907467760698", "name": "Klamka do drzwi wewn\u0119trznych Lucy z\u0142ota R Schaffner", "category": "door-handle", "brand": "Schaffner", "packageSize": 1, "unit": "szt", "store": "HIPPER", "format": "certusoft", "productId": 3069808860, "retailerUnitId": 3069809346, "apiPurchaseUnit": "szt", "variant": ["Lucy", "z\u0142ota", "Schaffner"], "url": "https://hipper.pl/klamka-do-drzwi-wewnetrznych-lucy-zlota-r-schaffner-3069808860" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Klamka drzwiowa Schaffner Lucy na rozecie (komplet dwustronny)": "5907467760698",
   "Bateria natryskowa \u015Bcienna Ferro One (chrom, BFO7)": "5902194954525",
   "Gniazdo pojedyncze z uziemieniem Kontakt-Simon Basic (bia\u0142e, BMGZ1Z.01/11)": "5902787568238",
   "Listwa przypod\u0142ogowa PCV Arbiton Indo bia\u0142y po\u0142ysk 01, 2500 mm": "5905167725719",
@@ -20583,14 +20586,14 @@ var RETAIL_NAME_ALIASES = {
   "Profil naro\u017Cny do glazury Cezar aluminiowy 8 mm, tytan szczotkowany mat, 2,5 m": "5904584853500"
 };
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/delivery-limits.ts
+// lib/pricing-service/src/delivery-limits.ts
 var DELIVERY_LIMITS = {
   products: 200,
   stores: 64,
   packagesPerProduct: 1e4
 };
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/delivery.ts
+// lib/pricing-service/src/delivery.ts
 function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, policies = [], now = /* @__PURE__ */ new Date()) {
   const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
   const missingProductCount = stages.flatMap((stage) => stage.lines).filter((line2) => !line2.resolved && line2.quantity > 0).length;
@@ -20710,7 +20713,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   return result;
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/automatic-delivery.ts
+// lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
 var MAX_PROPOSED = 256;
@@ -20986,18 +20989,18 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   return result;
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto8 = require("node:crypto");
+// artifacts/api-server/src/lib/retailer-delivery.ts
+var import_node_crypto9 = require("node:crypto");
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-http.ts
+// artifacts/api-server/src/lib/retailer-http.ts
 var MAX_RETAIL_PACKAGES = DELIVERY_LIMITS.packagesPerProduct;
 function retailerRequestBudget(productCount) {
   if (!Number.isSafeInteger(productCount) || productCount < 1 || productCount > DELIVERY_LIMITS.products) throw Error("invalid_basket");
   return Math.min(1e3, (productCount * 2 + 10) * 4);
 }
 var AnonymousShop = class {
-  constructor(origin2, fetchImpl, signal, maxCalls = 30) {
-    this.origin = origin2;
+  constructor(origin3, fetchImpl, signal, maxCalls = 30) {
+    this.origin = origin3;
     this.fetchImpl = fetchImpl;
     this.signal = signal;
     this.maxCalls = maxCalls;
@@ -21011,6 +21014,19 @@ var AnonymousShop = class {
   async text(path, form) {
     return this.read(path, form ? new URLSearchParams(form).toString() : void 0, false);
   }
+  /** Reviewed HIPPER anonymous-cart actions only. The generic action endpoint
+   * also places orders, so reject every other action, field and namespace here.
+   * source: https://hipper.pl/dist/app.4bb46b097031e5eba47f.js
+   */
+  async certusoftAction(body) {
+    const allowedKeys = ["csAppNameSpacesG", "appWindowIdent", "dataSetIdent", "actionIdent", "sessionId", "row", "path", "addRequestData", "onCFDataFieldIdent"];
+    if (this.origin !== "https://hipper.pl" || Object.keys(body).some((key) => !allowedKeys.includes(key)) || typeof body.csAppNameSpacesG !== "string" || body.csAppNameSpacesG.toLowerCase() !== "800db636-13cf-4b3b-a705-06e7b2a426e9" || !body.row || typeof body.row !== "object") throw Error("invalid_cart_action");
+    const add = body.appWindowIdent === "csB2BItemCard" && body.dataSetIdent === "itemCard" && body.actionIdent === "cartAdd" && !body.onCFDataFieldIdent;
+    const select = body.appWindowIdent === "csB2BCart" && body.dataSetIdent === "csB2BCartHeader" && body.actionIdent === "csNGOnCFB2BCartHeader" && ["csB2BPortalsDeliveryMethodsId", "csPaymentsTypesId"].includes(body.onCFDataFieldIdent) && body.path === "/koszyk";
+    const rowKeys = add ? ["csItemsId", "csItemsUnitsId", "cUnitPrice", "discount", "quantityUnits"] : ["csDocsHeadersId", "csB2BPortalsDeliveryMethodsId", "csPaymentsTypesId"];
+    if (!(add || select) || Object.keys(body.row).some((key) => !rowKeys.includes(key)) || Object.keys(body.addRequestData ?? {}).some((key) => key !== "appWindowUniqIdent") || body.addRequestData?.appWindowUniqIdent !== body.appWindowIdent || typeof body.sessionId !== "string" || !/^[a-f0-9-]{36}$/i.test(body.sessionId)) throw Error("invalid_cart_action");
+    return JSON.parse(await this.read("/csAPIServer_Hipper/invokeAction", JSON.stringify(body), true, false, true));
+  }
   /** WooCommerce anonymous-cart token stays private to this one shop session.
    * Only the reviewed cart/read and add-item routes are allowed, never checkout. */
   async cartJson(path, body) {
@@ -21020,7 +21036,7 @@ var AnonymousShop = class {
     if (!this.storeCartToken) throw Error("cart_session_not_confirmed");
     return JSON.parse(raw);
   }
-  async read(path, payload, json3, storeCart = false) {
+  async read(path, payload, json3, storeCart = false, rawJson = false) {
     let url2 = new URL(path, this.origin), method = payload ? "POST" : "GET";
     for (let i = 0; i < 4; i++) {
       if (url2.origin !== this.origin) throw Error("invalid_redirect");
@@ -21037,7 +21053,7 @@ var AnonymousShop = class {
           Accept: json3 ? "application/json" : "text/html, application/json",
           Cookie: cookie,
           ...storeCart && this.storeCartToken ? { "Cart-Token": this.storeCartToken } : {},
-          ...payload ? { "Content-Type": storeCart ? "application/json" : "application/x-www-form-urlencoded" } : {}
+          ...payload ? { "Content-Type": storeCart || rawJson ? "application/json" : "application/x-www-form-urlencoded" } : {}
         }
       });
       for (const entry of r.headers.getSetCookie()) {
@@ -21095,13 +21111,13 @@ var AnonymousShop = class {
   }
 };
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
+// artifacts/api-server/src/lib/retailer-checkouts.ts
 var import_node_crypto4 = require("node:crypto");
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
+// artifacts/api-server/src/lib/retail-pages.ts
 var import_node_crypto3 = require("node:crypto");
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-microdata.ts
+// artifacts/api-server/src/lib/retail-microdata.ts
 var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
 var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
 var decode = (text3) => text3.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
@@ -21235,7 +21251,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
   };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/shopify-product.ts
+// artifacts/api-server/src/lib/shopify-product.ts
 function confirmShopifyProduct(product, source) {
   if (!Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.variantId) || product.id !== source.productId || !Array.isArray(product.variants)) throw Error("product_id_not_confirmed");
   const matches = product.variants.filter((v) => v.id === source.variantId && String(v.barcode) === source.ean);
@@ -21248,7 +21264,7 @@ function confirmShopifyProduct(product, source) {
   return { variantId: variant.id, priceGrosze: variant.price, name: product.title, imageUrl: typeof image === "string" ? new URL(image, source.url).href : source.imageUrl };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-identity.ts
+// artifacts/api-server/src/lib/retail-identity.ts
 function only(values, reason) {
   if (values.length !== 1) throw Error(reason);
   return values[0];
@@ -21302,7 +21318,7 @@ function confirmRetailIdentity(html, product, source) {
   return { ...product, gtin13: code, brand, image };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/woocommerce-product.ts
+// artifacts/api-server/src/lib/woocommerce-product.ts
 var import_node_crypto = require("node:crypto");
 var cls = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var one2 = (values, reason) => {
@@ -21362,7 +21378,7 @@ async function readWooProduct(source, fetchImpl) {
   return { name: card.name, priceGrosze: amount, imageUrl, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify([raw, cart])).digest("hex") };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/topboden-product.ts
+// artifacts/api-server/src/lib/topboden-product.ts
 var import_node_crypto2 = require("node:crypto");
 var TOPBODEN_API = "https://api.topboden.pl";
 function confirmTopbodenProduct(product, source, count = source.purchaseMultiple ?? 1) {
@@ -21410,7 +21426,7 @@ async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMul
   return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/prestashop-product.ts
+// artifacts/api-server/src/lib/prestashop-product.ts
 var opening = (element) => element.match(/^<[^>]+>/)?.[0] ?? "";
 function exactlyOne(elements2, reason) {
   if (elements2.length !== 1) throw Error(reason);
@@ -21431,9 +21447,9 @@ function readPrestashopProduct(html, source) {
   const byId = (id) => exactlyOne(elements(product, (a) => a.id === id), "product_identity_ambiguous");
   const identityValue = (id) => {
     const field = exactlyOne(elements(byId(id), (a) => a.itemprop === "sku"), "product_identity_ambiguous");
-    const attrs4 = attrs(opening(field));
-    if (attrs4.content !== text2(field)) throw Error("product_identity_mismatch");
-    return attrs4.content;
+    const attrs5 = attrs(opening(field));
+    if (attrs5.content !== text2(field)) throw Error("product_identity_mismatch");
+    return attrs5.content;
   };
   if (identityValue("product_ean") !== source.ean || !source.retailerSku || identityValue("product_reference") !== source.retailerSku) throw Error("product_identity_mismatch");
   if (source.packageSize !== 1 || source.unit !== "szt") throw Error("retailer_unit_not_confirmed");
@@ -21483,7 +21499,7 @@ function readPrestashopProduct(html, source) {
   };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/abstore-product.ts
+// artifacts/api-server/src/lib/abstore-product.ts
 var one3 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
   return values[0];
@@ -21535,7 +21551,65 @@ function readAbstoreProduct(html, source) {
   };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
+// artifacts/api-server/src/lib/certusoft-product.ts
+var only2 = (values, reason) => {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+};
+var byClass2 = (html, name) => elements(html, (a) => a.class?.split(/\s+/).includes(name) ?? false);
+var attrs3 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+function readCertusoftState(html) {
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  const script = only2(scripts.filter((s) => /^\s*window\.__INITIAL_STATE__=/.test(s)), "retailer_state_ambiguous");
+  const literal2 = script.match(/^\s*window\.__INITIAL_STATE__=(\{[\s\S]*\});\(function\(\)\{var s;/)?.[1];
+  if (!literal2) throw Error("retailer_state_not_confirmed");
+  return JSON.parse(literal2);
+}
+function readCertusoftProduct(html, source) {
+  const url2 = new URL(source.url);
+  if (url2.origin !== "https://hipper.pl" || !Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.retailerUnitId)) throw Error("product_id_not_confirmed");
+  if (source.unit !== "szt" || source.packageSize !== 1 || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  const state = readCertusoftState(html), card = state.csAppWindowsUtils?.csAppWindows?.csB2BItemCard;
+  const rows = card?.dataSets?.itemCard?.rows;
+  if (!Array.isArray(rows) || rows.length !== 1) throw Error("product_identity_ambiguous");
+  const row = rows[0], schema = JSON.parse(row.structuredData ?? "null");
+  if (row.EAN !== source.ean || schema?.sku !== source.ean || schema.mpn !== String(source.productId) || row.csItemsId !== source.productId || row.csItemsUnitsId !== source.retailerUnitId) throw Error("product_ean_not_confirmed");
+  if (row.itemName !== schema.name || schema.brand?.name !== source.brand || "/" + row.appWindowIdentRoute !== url2.pathname) throw Error("product_identity_not_confirmed");
+  if (row.stockUnit !== "szt" || row.quantityUnits !== 1 || row.isNegative !== 0) throw Error("purchase_rules_changed");
+  const maxPackages = row.qStockAv;
+  if (!Number.isSafeInteger(maxPackages) || maxPackages < 1 || schema.offers?.availability !== "InStock") throw Error("retailer_out_of_stock");
+  const priceGrosze = parsePriceToGrosze(row.cUnitPriceADis);
+  if (row.discount !== 0 || schema.offers?.priceCurrency !== "PLN" || !priceGrosze || parsePriceToGrosze(row.cUnitPrice) !== priceGrosze || parsePriceToGrosze(schema.offers.price) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  const primary = only2(elements(clean(html), (a, tag) => tag === "section" && a.id === "item"), "product_identity_ambiguous");
+  const name = text2(only2(elements(primary, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
+  const ean = text2(only2(byClass2(primary, "c-ean"), "product_identity_ambiguous"));
+  if (name !== row.itemName || ean !== `(Kod produktu: ${source.ean})`) throw Error("product_identity_not_confirmed");
+  const price = text2(only2(byClass2(only2(byClass2(primary, "c-prc"), "product_price_ambiguous"), "c-upad"), "product_price_ambiguous"));
+  if (!/^\d[\d\s]*,\d{2} zł$/.test(price) || parsePriceToGrosze(price.replace(/ zł$/, "")) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  const stock = text2(only2(byClass2(primary, "c-itm-s"), "retailer_stock_not_confirmed"));
+  if (stock !== `W magazynie ${maxPackages} szt`) throw Error("retailer_stock_not_confirmed");
+  const quantity = attrs3(only2(elements(primary, (a, tag) => tag === "input" && a.type === "quantity"), "product_form_ambiguous"));
+  const button = attrs3(only2(byClass2(primary, "cartAdd"), "product_form_ambiguous"));
+  if (quantity.value !== "1" || !quantity.class?.split(/\s+/).includes("c-ft-integer") || "disabled" in button) throw Error("purchase_rules_changed");
+  const images = schema.image;
+  if (!Array.isArray(images) || typeof images[0] !== "string" || new URL(images[0]).origin !== url2.origin || !new URL(images[0]).pathname.startsWith("/api/attachment/get/")) throw Error("product_image_not_confirmed");
+  return {
+    state,
+    maxPackages,
+    priceGrosze,
+    product: {
+      "@type": "Product",
+      name,
+      brand: source.brand,
+      gtin13: source.ean,
+      image: new URL(images[0]).href,
+      description: row.itemDesc,
+      offers: { "@type": "Offer", price: (priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url }
+    }
+  };
+}
+
+// artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
   if (!value || typeof value !== "object") return [];
@@ -21547,6 +21621,7 @@ function parseRetailPage(html, source, observedAt) {
   const products = [];
   if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
   else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
+  else if (source.format === "certusoft") products.push(readCertusoftProduct(html, source).product);
   else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
@@ -21690,7 +21765,7 @@ function shoperProductId(source) {
   return id;
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/quote-queue.ts
+// artifacts/api-server/src/lib/quote-queue.ts
 var QuoteQueue = class {
   constructor(concurrency = 3, maxQueued = 12, maxWaitMs = 15e3) {
     this.concurrency = concurrency;
@@ -21728,7 +21803,7 @@ var QuoteQueue = class {
   }
 };
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
+// artifacts/api-server/src/lib/retailer-checkouts.ts
 var cls2 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var attr = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
 var one4 = (values) => {
@@ -21947,15 +22022,15 @@ async function quoteBuduj24(order, fetchImpl) {
   return quote(order, sum.shipping, active.name, activePayment.name, { expected, sum, delivery: active, payment: activePayment });
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/cezar-delivery.ts
+// artifacts/api-server/src/lib/cezar-delivery.ts
 var import_node_crypto5 = require("node:crypto");
 async function quoteCezar(order, postalCode, fetchImpl) {
-  const origin2 = "https://cezar.eu";
-  const client = new AnonymousShop(origin2, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const origin3 = "https://cezar.eu";
+  const client = new AnonymousShop(origin3, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === "Cezar" && s.format === "shopify-api");
-    if (!source || new URL(source.url).origin !== origin2 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
+    if (!source || new URL(source.url).origin !== origin3 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const product = confirmShopifyProduct(JSON.parse(await client.text(new URL(source.url).pathname + ".js")), source);
     if (product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
     if (expected.has(product.variantId)) throw Error("invalid_basket");
@@ -21990,7 +22065,7 @@ async function quoteCezar(order, postalCode, fetchImpl) {
     payment: "P\u0142atno\u015B\u0107 z g\xF3ry",
     checkedAt: checkedAt.toISOString(),
     expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(),
-    sourceUrl: origin2 + "/cart",
+    sourceUrl: origin3 + "/cart",
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
@@ -21998,7 +22073,7 @@ async function quoteCezar(order, postalCode, fetchImpl) {
   } };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/topboden-delivery.ts
+// artifacts/api-server/src/lib/topboden-delivery.ts
 var import_node_crypto6 = require("node:crypto");
 async function quoteTopboden(order, fetchImpl) {
   const signal = AbortSignal.timeout(12e3), client = new AnonymousShop(TOPBODEN_API, fetchImpl, signal, retailerRequestBudget(order.lines.length));
@@ -22034,11 +22109,11 @@ async function quoteTopboden(order, fetchImpl) {
   return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/prestashop-delivery.ts
+// artifacts/api-server/src/lib/prestashop-delivery.ts
 var import_node_crypto7 = require("node:crypto");
 var origin = "https://www.eelektryka.com";
-var attrs3 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
-var input = (html, name) => attrs3(exactlyOne(elements(html, (a, tag) => tag === "input" && a.name === name), "basket_not_confirmed"));
+var attrs4 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+var input = (html, name) => attrs4(exactlyOne(elements(html, (a, tag) => tag === "input" && a.name === name), "basket_not_confirmed"));
 async function quotePrestashop(order, fetchImpl) {
   const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
@@ -22060,7 +22135,7 @@ async function quotePrestashop(order, fetchImpl) {
   const verified = [];
   let subtotal = 0;
   for (const row of rows) {
-    const a = attrs3(row), id = a["data-id-product"], wanted = expected.get(id);
+    const a = attrs4(row), id = a["data-id-product"], wanted = expected.get(id);
     if (!wanted || a["data-id-product-attribute"] !== "0" || input(row, `product_qt[${id}][0]`).value !== String(wanted.count)) throw Error("basket_not_confirmed");
     const unit = prestashopMoney(text2(exactlyOne(classElements(row, "price_unit"), "basket_not_confirmed")));
     const total = prestashopMoney(text2(exactlyOne(classElements(row, "total_price"), "basket_not_confirmed")));
@@ -22078,13 +22153,13 @@ async function quotePrestashop(order, fetchImpl) {
   const form = exactlyOne(elements(checkout, (a, tag) => tag === "form" && a.id === "cart_form"), "basket_not_confirmed");
   const country = exactlyOne(elements(form, (a, tag) => tag === "select" && a.name === "individual[country]"), "country_not_confirmed");
   const countries = elements(country, (_a, tag) => tag === "option");
-  if (!countries.length || attrs3(countries[0]).value !== "Poland" || text2(countries[0]) !== "Polska" || countries.slice(1).some((node) => /\bselected\b/i.test(node.match(/^<[^>]+>/)?.[0] ?? ""))) throw Error("country_not_confirmed");
+  if (!countries.length || attrs4(countries[0]).value !== "Poland" || text2(countries[0]) !== "Polska" || countries.slice(1).some((node) => /\bselected\b/i.test(node.match(/^<[^>]+>/)?.[0] ?? ""))) throw Error("country_not_confirmed");
   const prepaid = exactlyOne(classElements(form, "prepay"), "no_home_delivery");
   const methods = classElements(prepaid, "payment_option").flatMap((node) => {
     const carrier = text2(exactlyOne(classElements(node, "delivery-title"), "no_home_delivery"));
     if (!/kurier/i.test(carrier) || /pobran|punkt|automat|paczkomat|odbiór|odbior|indywidual|zapytani/i.test(carrier)) return [];
     const priceNode = exactlyOne(classElements(node, "price"), "invalid_money");
-    const price = prestashopMoney(text2(priceNode)), numeric2 = attrs3(priceNode)["data-price"];
+    const price = prestashopMoney(text2(priceNode)), numeric2 = attrs4(priceNode)["data-price"];
     if (!/^\d+\.\d{2}$/.test(numeric2 ?? "") || Math.abs(Number(numeric2) * 100 - price) > 1e-5) throw Error("invalid_money");
     const id = input(node, "id_carrier_real").value;
     if (!/^\d+$/.test(id ?? "")) throw Error("no_home_delivery");
@@ -22111,7 +22186,101 @@ async function quotePrestashop(order, fetchImpl) {
   } };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
+// artifacts/api-server/src/lib/certusoft-delivery.ts
+var import_node_crypto8 = require("node:crypto");
+var origin2 = "https://hipper.pl";
+var money = (value) => {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw Error("invalid_money");
+  const cents2 = Math.round(value * 100);
+  if (!Number.isSafeInteger(cents2) || Math.abs(value * 100 - cents2) > 1e-5) throw Error("invalid_money");
+  return cents2;
+};
+function confirmedCart(raw, expected, subtotal) {
+  const state = readCertusoftState(raw), cart = state.csAppWindowsUtils?.csAppWindows?.csB2BCart, ds = cart?.dataSets;
+  const positions = ds?.csB2BCartPositions?.rows, headers = ds?.csB2BCartHeader?.rows;
+  if (!expected.size || !Array.isArray(positions) || positions.length !== expected.size || !Array.isArray(headers) || headers.length !== 1) throw Error("basket_not_confirmed");
+  const seen = /* @__PURE__ */ new Set();
+  let sum = 0;
+  for (const row of positions) {
+    const wanted = expected.get(row.csItemsId);
+    if (!wanted || seen.has(row.csItemsId) || row.csItemsUnitsId !== wanted.unitId || row.quantityUnits !== wanted.count || row.unit !== "szt" || row.itemDesc !== wanted.name || row.menuPath !== wanted.path || row.isStock !== 1 || row.discount !== 0 || money(row.cUnitPrice) !== wanted.price || money(row.cUnitPriceADis) !== wanted.price || money(row.cGAmount) !== wanted.price * wanted.count) throw Error("basket_not_confirmed");
+    seen.add(row.csItemsId);
+    sum += wanted.price * wanted.count;
+  }
+  const header = headers[0];
+  if (sum !== subtotal || money(header.cGAmount) !== subtotal || header.sumDiscountValue !== 0 || !Number.isSafeInteger(header.csDocsHeadersId)) throw Error("basket_not_confirmed");
+  if (header.isRegulationsAccepted !== 0 || header.isProcessingPersonalDataAccepted !== 0 || header.doRegisterAccount !== 0) throw Error("invalid_cart_session");
+  return { state, cart, ds, header };
+}
+async function quoteCertusoft(order, fetchImpl) {
+  const client = new AnonymousShop(origin2, fetchImpl, AbortSignal.timeout(15e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const expected = /* @__PURE__ */ new Map();
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store && s.format === "certusoft");
+    if (!source || order.store !== "HIPPER" || new URL(source.url).origin !== origin2 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
+    const path = new URL(source.url).pathname, raw = await client.text(path), product = readCertusoftProduct(raw, source);
+    if (parseRetailPage(raw, source, /* @__PURE__ */ new Date()).priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (product.maxPackages < pack.count) throw Error("insufficient_stock");
+    if (expected.has(source.productId)) throw Error("invalid_basket");
+    expected.set(source.productId, { count: pack.count, price: product.priceGrosze, unitId: source.retailerUnitId, name: product.product.name, path });
+    const response2 = await client.certusoftAction({
+      csAppNameSpacesG: product.state.csAppWindowsUtils.csAppWindows.csB2BItemCard.csAppNameSpacesG,
+      appWindowIdent: "csB2BItemCard",
+      dataSetIdent: "itemCard",
+      actionIdent: "cartAdd",
+      sessionId: product.state.csAppWindowsUtils.sessionId,
+      row: { csItemsId: source.productId, csItemsUnitsId: source.retailerUnitId, cUnitPrice: product.priceGrosze / 100, discount: 0, quantityUnits: pack.count },
+      path,
+      addRequestData: { appWindowUniqIdent: "csB2BItemCard" }
+    });
+    if (response2.errors?.length || response2.data?.errors?.length || !Array.isArray(response2.commands)) throw Error("basket_not_confirmed");
+  }
+  const initial = confirmedCart(await client.text("/koszyk"), expected, order.materialsGrosze);
+  const methods = initial.ds.deliveryMethods?.rows, payments = initial.ds.paymentMethods?.rows;
+  if (!Array.isArray(methods) || !Array.isArray(payments)) throw Error("no_home_delivery");
+  const payment = payments.find((p) => p.csPaymentsTypesId === initial.header.csPaymentsTypesId && p.isAvailable === 1 && p.priceListType === 0 && /PayU|Przelew/i.test(p.paymentTypeTranslatedDesc) && !/pobran/i.test(p.paymentTypeTranslatedDesc) && (p.cUnitPrice === null || p.cUnitPrice === 0));
+  if (!payment) throw Error("no_prepaid_payment");
+  const carriers = methods.flatMap((m) => {
+    if (m.isAvailable !== 1 || m.isCollectionInPerson !== 0 || !Number.isSafeInteger(m.csB2BPortalsDeliveryMethodsId) || typeof m.deliveryMethod !== "string" || !/kurier/i.test(m.deliveryMethod) || /pobran|punkt|paczkomat|automat|odbiór|odbior|indywidual|zapytani/i.test(m.deliveryMethod) || m.currencyIdent !== "z\u0142") return [];
+    const cost = money(m.cUnitPrice), threshold = money(m.freeDeliveryFrom);
+    return [{ id: m.csB2BPortalsDeliveryMethodsId, carrier: m.deliveryMethod, cost: order.materialsGrosze >= threshold ? 0 : cost }];
+  }).sort((a, b) => a.cost - b.cost);
+  const best = carriers[0];
+  if (!best) throw Error("no_home_delivery");
+  const response = await client.certusoftAction({
+    csAppNameSpacesG: initial.cart.csAppNameSpacesG,
+    appWindowIdent: "csB2BCart",
+    dataSetIdent: "csB2BCartHeader",
+    actionIdent: "csNGOnCFB2BCartHeader",
+    onCFDataFieldIdent: "csB2BPortalsDeliveryMethodsId",
+    sessionId: initial.state.csAppWindowsUtils.sessionId,
+    row: { csDocsHeadersId: initial.header.csDocsHeadersId, csB2BPortalsDeliveryMethodsId: best.id, csPaymentsTypesId: payment.csPaymentsTypesId },
+    path: "/koszyk",
+    addRequestData: { appWindowUniqIdent: "csB2BCart" }
+  });
+  if (response.errors?.length || response.data?.errors?.length || !Array.isArray(response.commands)) throw Error("basket_not_confirmed");
+  const finalRaw = await client.text("/koszyk"), final = confirmedCart(finalRaw, expected, order.materialsGrosze), h = final.header;
+  if (h.csB2BPortalsDeliveryMethodsId !== best.id || h.csPaymentsTypesId !== payment.csPaymentsTypesId || money(h.deliveryMethodsCUnitPrice) !== best.cost || money(h.paymentsTypesCUnitPrice) !== 0 || h.isReceptionPoint !== 0) throw Error("basket_not_confirmed");
+  const summaries = elements(clean(finalRaw), (a) => a.class?.split(/\s+/).includes("c-sum-in") ?? false);
+  if (summaries.length !== 1) throw Error("basket_not_confirmed");
+  const values = text2(summaries[0]).match(/^Wartość produktów: ([\d\s,.]+) zł Sposób płatności: ([\d\s,.]+) zł Sposób dostawy: ([\d\s,.]+) zł Razem do zapłaty: ([\d\s,.]+) zł Do zapłaty po rabacie: ([\d\s,.]+) zł$/);
+  const total = order.materialsGrosze + best.cost;
+  if (!values || !Number.isSafeInteger(total) || values.slice(1).some((v, i) => parsePriceToGrosze(v.trim()) !== [order.materialsGrosze, 0, best.cost, total, total][i])) throw Error("basket_not_confirmed");
+  const now = /* @__PURE__ */ new Date();
+  return { quote: {
+    costGrosze: best.cost,
+    carrier: best.carrier,
+    payment: payment.paymentTypeTranslatedDesc,
+    checkedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 6e5).toISOString(),
+    sourceUrl: origin2 + "/koszyk",
+    basis: "retailer_basket_national",
+    destinationScope: "PL",
+    evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
+  } };
+}
+
+// artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
   "Rab-Dom": "https://www.rabdom.pl",
   Realbud: "https://realbud.com",
@@ -22128,12 +22297,12 @@ var TTL = 10 * 6e4;
 function unavailableReason(store) {
   const sources = RETAIL_SOURCES.filter((source) => source.store === store);
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
-  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka"].includes(store)) return void 0;
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER"].includes(store)) return void 0;
   return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
-    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
     postcodeStores: ["Sewera", "Cezar"],
@@ -22189,13 +22358,13 @@ function selectHomeDelivery(basket) {
   return best;
 }
 async function quoteShoper(order, fetchImpl) {
-  const origin2 = ORIGINS[order.store];
-  if (!origin2) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
-  const client = new AnonymousShop(origin2, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const origin3 = ORIGINS[order.store];
+  if (!origin3) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
+  const client = new AnonymousShop(origin3, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
-    if (!source || new URL(source.url).origin !== origin2 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
+    if (!source || new URL(source.url).origin !== origin3 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const id = shoperProductId(source);
     const product = await client.json(`/webapi/front/pl_PL/products/PLN/${id}`);
     if (String(product.ean) !== source.ean || String(product.id) !== id || !product.can_buy || !Number.isSafeInteger(product.stockId)) throw Error("product_unavailable");
@@ -22221,10 +22390,10 @@ async function quoteShoper(order, fetchImpl) {
     ...shipping,
     checkedAt: checkedAt.toISOString(),
     expiresAt: new Date(checkedAt.getTime() + TTL).toISOString(),
-    sourceUrl: `${origin2}/pl/basket`,
+    sourceUrl: `${origin3}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto9.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
@@ -22243,7 +22412,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
-        return await (order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
+        return await (order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
       } catch (error40) {
         return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed"].includes(error40.message) ? error40.message : "quote_unavailable" };
       } finally {
@@ -22260,7 +22429,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
   };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/store-delivery.ts
+// artifacts/api-server/src/lib/store-delivery.ts
 var STORE_DELIVERY_POLICIES = [
   {
     store: "Zino",
@@ -22316,7 +22485,7 @@ var STORE_DELIVERY_POLICIES = [
   }
 ];
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/shared-backend.ts
+// artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value] ?? value;
 function createRemontService(options = {}) {

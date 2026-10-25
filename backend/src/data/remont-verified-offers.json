@@ -1165,5 +1165,18 @@
     "sourceUrl": "https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka",
     "evidenceSha256": "8e58d5dafc62fddb7ced3754c7cedadc132a918ead9002650d914528795a907a",
     "validUntil": "2027-10-25"
+  },
+  {
+    "sourceId": "hipper-schaffner-lucy-gold",
+    "ean": "5907467760698",
+    "name": "Klamka do drzwi wewnętrznych Lucy złota R Schaffner",
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|CAE8B284-A426-4F37-9916-7AC893514364|1/Klamka%20do%20drzwi%20wewn%C4%99trznych%20Lucy%20z%C5%82ota%20R%20Schaffner.webp",
+    "priceGrosze": 5799,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T19:38:21.848Z",
+    "sourceUrl": "https://hipper.pl/klamka-do-drzwi-wewnetrznych-lucy-zlota-r-schaffner-3069808860",
+    "evidenceSha256": "c41a42fb70fa8045a6f385f74772b870935040fcca9cc84da5065eb40db4d142",
+    "validUntil": null
   }
 ]
