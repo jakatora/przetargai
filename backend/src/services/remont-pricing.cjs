@@ -19683,6 +19683,76 @@ var RETAIL_SOURCES = [
     // source: https://sklep.zino.pl/pl/p/Barwy-Natury-173-Bialy-5l/2842
     url: "https://sklep.zino.pl/pl/p/Barwy-Natury-173-Bialy-5l/2842",
     imageUrl: "https://sklep.zino.pl/userdata/public/gfx/7713/173-biala-majowa-konwalia.png"
+  },
+  {
+    id: "sewera-atlas-unigrunt-5kg",
+    ean: "5905400520026",
+    name: "Atlas Uni-Grunt 5kg emulsja gruntuj\u0105ca",
+    category: "primer",
+    brand: "Atlas",
+    packageSize: 5,
+    unit: "kg",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/atlas-uni-grunt-5kg-emulsja-gruntujaca-p9772
+    // source: https://www.abud.pl/product-pol-1121-Preparat-gruntujacy-Atlas-Uni-Grunt-5kg.html
+    url: "https://sklep.sewera.pl/atlas-uni-grunt-5kg-emulsja-gruntujaca-p9772"
+  },
+  {
+    id: "sewera-acrylputz-fs20-27kg",
+    ean: "5903973104544",
+    name: "Acryl Putz FS20 Finisz 27kg",
+    category: "skim-coat",
+    brand: "\u015Anie\u017Cka",
+    packageSize: 27,
+    unit: "kg",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/acryl-putz-fs20-finisz-27kg-p6114
+    // source: https://mrowka.com.pl/produkt/gladz-szpachlowa-finisz-fs20-27-kg-acryl-putz-5903973104544.html
+    url: "https://sklep.sewera.pl/acryl-putz-fs20-finisz-27kg-p6114"
+  },
+  {
+    id: "sewera-atlas-sam100-25kg",
+    ean: "5905400279245",
+    name: "Atlas SAM 100 25kg szybkowi\u0105\u017C\u0105cy samopoziomuj\u0105cy podk\u0142ad pod\u0142ogowy",
+    category: "screed",
+    brand: "Atlas",
+    packageSize: 25,
+    unit: "kg",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/atlas-sam-100-25kg-szybkowiazacy-samopoziomujacy-podklad-podlogowy-p9811
+    // source: https://www.bricomarche.pl/szybkowiazacy-samopoziomujacy-podklad-podlogowy-sam-100-25-kg-atlas
+    url: "https://sklep.sewera.pl/atlas-sam-100-25kg-szybkowiazacy-samopoziomujacy-podklad-podlogowy-p9811"
+  },
+  {
+    id: "sewera-atlas-sam200-25kg",
+    ean: "5905400279269",
+    name: "Atlas SAM 200 25kg samopoziomuj\u0105cy podk\u0142ad pod\u0142ogowy",
+    category: "screed",
+    brand: "Atlas",
+    packageSize: 25,
+    unit: "kg",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/atlas-sam-200-25kg-samopoziomujacy-podklad-podlogowy-p9795
+    // source: https://b2c.makchemia.pl/wylewki-samopoziomujace/5233-atlas-sam-200-25kg-2560mm-folia-5905400279269.html
+    url: "https://sklep.sewera.pl/atlas-sam-200-25kg-samopoziomujacy-podklad-podlogowy-p9795"
+  },
+  {
+    id: "sewera-atlas-cerplast-15kg",
+    ean: "5905400530032",
+    name: "Podk\u0142adowa masa tynkarska Cerplast 15kg Atlas",
+    category: "primer",
+    brand: "Atlas",
+    packageSize: 15,
+    unit: "kg",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/podkladowa-masa-tynkarska-cerplast-15kg-atlas-p9884
+    // source: https://ekobudsklep.pl/Tynki/3323-srodek-gruntujacy-podklad-tynkarski-cerplast-15kg-atlas-5905400530032.html
+    url: "https://sklep.sewera.pl/podkladowa-masa-tynkarska-cerplast-15kg-atlas-p9884"
   }
 ];
 var RETAIL_NAME_ALIASES = {
@@ -19692,7 +19762,12 @@ var RETAIL_NAME_ALIASES = {
   "Folia malarska gruba Blue Dolphin 4 x 5 m": "5907758504932",
   "Farba lateksowa Dulux EasyCare Nieskazitelna Biel 9 l": "5904078198759",
   "Gotowa g\u0142ad\u017A polimerowa Atlas GTA 18 kg": "5905400542509",
-  "G\u0142ad\u017A gipsowa startowa Acryl-Putz ST10 START 20 kg": "5903973104421"
+  "G\u0142ad\u017A gipsowa startowa Acryl-Putz ST10 START 20 kg": "5903973104421",
+  "Grunt g\u0142\u0119boko penetruj\u0105cy Atlas Uni-Grunt 5 kg": "5905400520026",
+  "G\u0142ad\u017A szpachlowa wyko\u0144czeniowa Acryl-Putz FS20 Finisz 27 kg": "5903973104544",
+  "Samopoziomuj\u0105cy podk\u0142ad pod\u0142ogowy Atlas SAM 100 25 kg (5\u201330 mm)": "5905400279245",
+  "Samopoziomuj\u0105cy podk\u0142ad pod\u0142ogowy Atlas SAM 200 25 kg (25\u201360 mm)": "5905400279269",
+  "Podk\u0142ad / kontakt pod tynki Atlas Cerplast 15 kg": "5905400530032"
 };
 
 // D:/projekty/remont_assistance/lib/pricing-service/src/delivery.ts
@@ -19875,7 +19950,8 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     };
     visit(0, count, []);
     candidateCount *= variants.length;
-    if (!variants.length || candidateCount > MAX_CANDIDATES) return tooLarge();
+    if (!variants.length) return tooLarge();
+    if (candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now);
     choices.push(variants);
   }
   const candidates = [], unique = /* @__PURE__ */ new Map();
@@ -19905,7 +19981,62 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     candidates.push(actual);
   }
   enumerate(0, []);
-  if (unique.size > MAX_STORE_BASKETS) return tooLarge();
+  if (unique.size > MAX_STORE_BASKETS) return compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now);
+  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now);
+}
+async function compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now) {
+  const options = groups.map((group) => {
+    const offers = group.offers.filter((offer) => isComparableOffer(offer, now.getTime()));
+    const sizes = offers.map((offer) => Number(offer.packageSize ?? group.product.packageSize));
+    if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return null;
+    const count = Math.ceil(group.totalQuantity / sizes[0]);
+    if (!Number.isSafeInteger(count) || count < 1 || count > 60) return null;
+    return offers.flatMap((offer) => {
+      const price = parsePriceToGrosze(offer.promoPrice ?? offer.price);
+      return price === null || price <= 0 || !Number.isSafeInteger(price * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count, unitPriceGrosze: price, lineCostGrosze: count * price }];
+    });
+  });
+  if (options.some((option) => !option?.length)) {
+    result.status = "limit_exceeded";
+    return result;
+  }
+  const proposed = /* @__PURE__ */ new Map();
+  for (let subset = 1; subset < 1 << stores.length; subset++) {
+    const allowed = new Set(stores.filter((_store, index2) => subset & 1 << index2));
+    const selected = options.map((option) => option.filter((pack) => allowed.has(pack.store)).sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId))[0]);
+    if (selected.some((pack) => !pack)) continue;
+    const orders = /* @__PURE__ */ new Map();
+    for (let i = 0; i < groups.length; i++) {
+      const pack = selected[i], group = groups[i];
+      let order = orders.get(pack.store);
+      if (!order) {
+        order = { store: pack.store, materialsGrosze: 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown", lines: [] };
+        orders.set(pack.store, order);
+      }
+      order.materialsGrosze += pack.lineCostGrosze;
+      order.lines.push({ product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [pack] });
+    }
+    const actual = [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
+    proposed.set(actual.map(signature).join(";"), actual);
+  }
+  const sum = (orders) => orders.reduce((total, order) => total + order.materialsGrosze, 0);
+  const ordered = [...proposed.values()].sort((a, b) => Number(b.length === 1) - Number(a.length === 1) || sum(a) - sum(b));
+  const unique = /* @__PURE__ */ new Map(), candidates = [];
+  for (const orders of ordered) {
+    const additional = orders.filter((order) => !unique.has(signature(order))).length;
+    if (unique.size + additional > MAX_STORE_BASKETS) continue;
+    candidates.push(orders);
+    orders.forEach((order) => unique.set(signature(order), order));
+    if (candidates.length >= 24) break;
+  }
+  result.searchLimited = true;
+  if (!candidates.length) {
+    result.status = "limit_exceeded";
+    return result;
+  }
+  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now);
+}
+async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now) {
   const failures = /* @__PURE__ */ new Map();
   const ordered = [...unique.entries()].sort((a, b) => b[1].lines.length - a[1].lines.length || b[1].materialsGrosze - a[1].materialsGrosze);
   const first = /* @__PURE__ */ new Map();
@@ -19943,6 +20074,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     };
   }).filter((b) => [b.materialsGrosze, b.lowerBoundGrosze, b.totalGrosze ?? 0].every(Number.isSafeInteger));
   const known = baskets.filter((b) => b.totalGrosze !== null).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
+  result.comparedBasketCount = known.length;
   result.best = known[0] ?? null;
   result.alternatives = known.slice(1, 4);
   result.lowerBound = baskets.sort((a, b) => a.lowerBoundGrosze - b.lowerBoundGrosze)[0] ?? null;
