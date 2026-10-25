@@ -20,7 +20,7 @@ test('część zaznaczona → procent; komplet → 100% i gotowe', () => {
 });
 
 test('kroki z linkiem wskazują istniejący ekran', () => {
-  const EKRANY = new Set(['Sejf', 'Account']);
+  const EKRANY = new Set(['Sejf', 'Account', 'KartaFirmy']);
   for (const k of KROKI_STARTU) {
     if (k.ekran) assert.ok(EKRANY.has(k.ekran), `nieznany ekran: ${k.ekran}`);
   }

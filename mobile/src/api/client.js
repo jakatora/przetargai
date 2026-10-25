@@ -177,6 +177,23 @@ export const api = {
   setNotatka: (id, notatka) => request(`/matches/${id}/notatka`, { method: 'PUT', body: { notatka } }),
   sendFeedback: (id, helpful) =>
     request(`/matches/${id}/feedback`, { method: 'POST', body: { helpful } }),
+  // Selekcja pod klienta — ekran „Twoje przetargi” (plans/PRACOWNIK-PROJEKT-2026-10-23.md §9).
+  pracownikDzien: () => request('/pracownik/dzien'),
+  pracownikOdrzucone: ({ przyczyna, before } = {}) => {
+    const q = new URLSearchParams();
+    if (przyczyna) q.set('przyczyna', przyczyna);
+    if (before) q.set('before', before);
+    const s = q.toString();
+    return request(`/pracownik/odrzucone${s ? `?${s}` : ''}`);
+  },
+  pracownikOdrzuc: (matchId, przyczyna, komentarz) =>
+    request(`/pracownik/odrzuc/${encodeURIComponent(matchId)}`, { method: 'POST', body: { przyczyna, ...(komentarz ? { komentarz } : {}) } }),
+  pracownikPrzywroc: (tenderId) => request(`/pracownik/przywroc/${encodeURIComponent(tenderId)}`, { method: 'POST', body: {} }),
+  kartaFirmy: () => request('/pracownik/karta'),
+  zapiszKarteFirmy: (body) => request('/pracownik/karta', { method: 'PUT', body }),
+  propozycjaKarty: (klucz, akcja) => request(`/pracownik/propozycje/${encodeURIComponent(klucz)}`, { method: 'POST', body: { akcja } }),
+  warunkiUdzialu: (matchId) => request(`/matches/${encodeURIComponent(matchId)}/warunki`),
+  ustawMaileSelekcji: (wlaczone) => request('/auth/me', { method: 'PATCH', body: { powiadomienia_pracownik_email: wlaczone } }),
 
   // ----- Zapisane przetargi (zakładki) + przypomnienia o terminie -----
   // PUT wysyła `body: {}` celowo: bezcielesny PUT/POST do Cloud Functions

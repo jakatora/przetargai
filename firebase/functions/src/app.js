@@ -22,6 +22,7 @@ import kalendarzRouter from './routes/kalendarz.js';
 import wygrywalnoscRouter from './routes/wygrywalnosc.js';
 import radarPlanowRouter from './routes/radarPlanow.js';
 import eksportRouter from './routes/eksport.js';
+import pracownikRouter, { wypisRouter } from './routes/pracownik.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -89,6 +90,9 @@ export function createApp() {
   app.use('/auth', apiLimiter, authRouter);
 
   app.use('/matches', apiLimiter, matchesRouter);
+  // Selekcja pod klienta (ekran „Twoje przetargi”); `/pracownik/wypisz` działa bez logowania.
+  app.use('/pracownik', apiLimiter, pracownikRouter);
+  app.use('/maile', apiLimiter, wypisRouter);
   /*
    * Katalog calego rynku (P1-1) — tryb „Wszystkie" na glownej liscie. Osobny od
    * /matches, bo /matches z definicji pokazuje WYCINEK przyciety profilem i planem.

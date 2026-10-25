@@ -143,7 +143,7 @@ export default function RadarPlanowScreen({ navigation }) {
         <View style={[styles.podpowiedz, { backgroundColor: kolory.neutralneTlo }]}>
           <Text style={styles.podpowiedzTekst}>{t(dane.podpowiedz.pl, dane.podpowiedz.en)}</Text>
           {dane.podpowiedz.kod === 'uzupelnij_profil' ? (
-            <Pressable onPress={() => navigation.navigate('Account')} accessibilityRole="button">
+            <Pressable onPress={() => navigation.navigate('KartaFirmy')} accessibilityRole="button">
               <Text style={[styles.link, { color: kolory.blue }]}>{t('Uzupełnij profil →', 'Complete your profile →')}</Text>
             </Pressable>
           ) : null}

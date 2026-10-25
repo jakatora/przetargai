@@ -11,6 +11,8 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import MatchFeedScreen from '../screens/MatchFeedScreen';
 import MatchDetailScreen from '../screens/MatchDetailScreen';
+import KartaFirmyScreen from '../screens/KartaFirmyScreen';
+import OdrzuconeScreen from '../screens/OdrzuconeScreen';
 import WynikKontroliScreen from '../screens/WynikKontroliScreen';
 import PrzeswietlenieUmowyScreen from '../screens/PrzeswietlenieUmowyScreen';
 import RadarSwzScreen from '../screens/RadarSwzScreen';
@@ -126,6 +128,16 @@ export default function RootNavigator() {
               name="MatchDetail"
               component={MatchDetailScreen}
               options={{ title: 'Szczegóły przetargu' }}
+            />
+            <Stack.Screen
+              name="KartaFirmy"
+              component={KartaFirmyScreen}
+              options={{ title: 'Karta firmy' }}
+            />
+            <Stack.Screen
+              name="Odrzucone"
+              component={OdrzuconeScreen}
+              options={{ title: 'Odrzucone przetargi' }}
             />
             <Stack.Screen
               name="WynikKontroli"

@@ -14,6 +14,7 @@ await polaczZEmulatorem();
 
 const { tenders, matches, users } = await import('../src/db/repos.js');
 const { createApp } = await import('../src/app.js');
+const { getFirestore } = await import('firebase-admin/firestore');
 
 const app = await createApp();
 const serwer = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
@@ -40,9 +41,14 @@ async function dodajDopasowania(uid, ile) {
   }
 }
 
+/** Rejestracja daje 7 dni próby Standard (spec §15) — testy zachowania Free kończą ją od razu. */
+const bezProby = (uid) => getFirestore().collection('users').doc(uid).update({ proba_do: null });
+
 test('Free z osiągniętym dziennym limitem → zachęta „limit”', async () => {
   const token = await konto();
-  await dodajDopasowania(await userId(token), 5);
+  const uid = await userId(token);
+  await bezProby(uid);
+  await dodajDopasowania(uid, 5);
 
   const dane = await (await fetch(`${BAZA}/matches/statystyki`, { headers: auth(token) })).json();
   assert.equal(dane.dzis, 5);
@@ -67,4 +73,11 @@ test('nowe konto Free bez aktywności → bez natrętnej zachęty', async () => 
   const dane = await (await fetch(`${BAZA}/matches/statystyki`, { headers: auth(token) })).json();
   assert.equal(dane.dzis, 0);
   assert.equal(dane.zacheta.pokaz, false);
+});
+
+test('w próbie Standard zachęta do zakupu jest ukryta (spec §15)', async () => {
+  const token = await konto();
+  await dodajDopasowania(await userId(token), 5);
+  const dane = await (await fetch(`${BAZA}/matches/statystyki`, { headers: auth(token) })).json();
+  assert.equal(dane.zacheta?.pokaz ?? false, false);
 });

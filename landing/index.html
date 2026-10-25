@@ -63,7 +63,7 @@
             "name": "Standard",
             "price": "99",
             "priceCurrency": "PLN",
-            "description": "Nielimitowane dopasowane przetargi i powiadomienia push, miesięcznie brutto."
+            "description": "Wybór przetargów bez dziennego limitu, przegląd co 3 godziny i powiadomienia od razu, sprawdzanie warunków udziału i plan działania do oferty, miesięcznie brutto. 7 dni próby bez karty."
           }
         ]
       },
@@ -78,7 +78,7 @@
           {
             "@type": "Question",
             "name": "Jak działa dopasowanie AI?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Na podstawie profilu Twojej firmy — słów kluczowych i kodów CPV — sztuczna inteligencja ocenia trafność każdego ogłoszenia w skali 0–100 i podaje krótkie uzasadnienie." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Opisujesz firmę w karcie: zakres i kody CPV, czego nie bierzesz, teren, kwoty zamówień i czas na ofertę. Ogłoszenia spoza karty odpadają od razu, a resztę AI ocenia pod kątem Twojej firmy. Dostajesz tylko te, na które realnie możesz startować — z uzasadnieniem i licznikiem odrzuconych z przyczynami." }
           },
           {
             "@type": "Question",
@@ -94,6 +94,11 @@
             "@type": "Question",
             "name": "Czy mogę zrezygnować w dowolnym momencie?",
             "acceptedAnswer": { "@type": "Answer", "text": "Tak, subskrypcja jest miesięczna i możesz ją anulować w każdej chwili. Po rezygnacji konto wraca do planu Free." }
+          },
+          {
+            "@type": "Question",
+            "name": "Czy mogę wypróbować plan Standard?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Tak. Każde nowe konto ma przez 7 dni pełny plan Standard, bez karty. Potem konto samo wraca do planu Free." }
           }
         ]
       }
@@ -369,13 +374,15 @@
             <p class="plan__desc">Dla firm, które aktywnie startują w przetargach.</p>
             <ul class="plan__list">
               <li><strong>Nielimitowane</strong> dopasowane przetargi</li>
-              <li><strong>Powiadomienia push</strong> o nowych przetargach</li>
+              <li>Przegląd co 3 godziny i <strong>powiadomienia od razu</strong></li>
+              <li>Sprawdzanie warunków udziału z Twoją firmą</li>
+              <li>Plan działania krok po kroku do oferty</li>
               <li>Codzienna analiza ogłoszeń BZP</li>
               <li>Dopasowanie i uzasadnienie AI</li>
               <li>Pierwszeństwo we wsparciu</li>
             </ul>
             <a class="btn btn--primary btn--block" href="#pobierz">Wybierz Standard</a>
-            <p class="plan__fineprint">Subskrypcję aktywujesz z poziomu aplikacji. Faktura VAT automatycznie.</p>
+            <p class="plan__fineprint">7 dni Standard za darmo po rejestracji — bez karty. Subskrypcję aktywujesz z poziomu aplikacji. Faktura VAT automatycznie.</p>
           </div>
         </div>
       </div>
@@ -391,7 +398,7 @@
         </details>
         <details class="faq">
           <summary>Jak działa dopasowanie AI?</summary>
-          <p>Na podstawie profilu Twojej firmy — słów kluczowych i kodów CPV — sztuczna inteligencja ocenia trafność każdego ogłoszenia w skali 0–100 i podaje krótkie uzasadnienie.</p>
+          <p>Opisujesz firmę w karcie: zakres i kody CPV, czego nie bierzesz, teren, kwoty zamówień i czas na ofertę. Ogłoszenia spoza karty odpadają od razu, a resztę AI ocenia pod kątem Twojej firmy. Dostajesz tylko te, na które realnie możesz startować — z uzasadnieniem i licznikiem odrzuconych z przyczynami.</p>
         </details>
         <details class="faq">
           <summary>Czy mogę korzystać za darmo?</summary>
@@ -404,6 +411,10 @@
         <details class="faq">
           <summary>Czy mogę zrezygnować w dowolnym momencie?</summary>
           <p>Tak, subskrypcja jest miesięczna i możesz ją anulować w każdej chwili. Po rezygnacji konto wraca do planu Free.</p>
+        </details>
+        <details class="faq">
+          <summary>Czy mogę wypróbować plan Standard?</summary>
+          <p>Tak. Każde nowe konto ma przez 7 dni pełny plan Standard, bez karty. Potem konto samo wraca do planu Free.</p>
         </details>
       </div>
     </section>

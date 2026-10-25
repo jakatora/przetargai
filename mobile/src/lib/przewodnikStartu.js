@@ -18,7 +18,7 @@ export const KROKI_STARTU = [
     opis: 'Kanał korespondencji z zamawiającym — coraz częściej wymagany do doręczeń.' },
   { klucz: 'dokumenty', tytul: 'Świeże dokumenty pod ręką', ekran: 'Sejf',
     opis: 'Zaświadczenia US/ZUS/KRK, odpis KRS/CEIDG, referencje. Trzymaj je w Sejfie z licznikiem ważności — urząd nie wyda ich w 5 dni.' },
-  { klucz: 'profil', tytul: 'Ustawiony profil firmy w aplikacji', ekran: 'Account',
+  { klucz: 'profil', tytul: 'Ustawiony profil firmy w aplikacji', ekran: 'KartaFirmy',
     opis: 'Słowa kluczowe i kody CPV — dzięki nim AI dopasowuje trafne przetargi do Twojej firmy.' },
 ];
 

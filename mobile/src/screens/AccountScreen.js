@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Linking } from 'react-native';
+import { View, Text, Pressable, Linking, Switch } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { useAuth } from '../context/AuthContext';
@@ -7,20 +7,15 @@ import { api } from '../api/client';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
-import CpvPicker from '../components/CpvPicker';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PREFERENCJE, ETYKIETY_PREFERENCJI } from '../lib/motyw';
 import { spacing, radius } from '../theme';
 import { potwierdzAkcje } from '../lib/potwierdzenie';
 import { srodowiskoPotwierdzen, komunikat } from '../services/srodowiskoPotwierdzen';
 
-function parseList(text) {
-  return text.split(',').map((s) => s.trim()).filter(Boolean);
-}
-
 // Ten sam adres, co w Polityce prywatności i Regulaminie (docs/*.html) — spójny kanał kontaktu.
 import { useJezyk } from '../context/JezykContext';
-import { WOJEWODZTWA } from '../lib/wojewodztwa';
+import { opisProby } from '../lib/selekcja';
 
 const KONTAKT_EMAIL = 'jakatora68@gmail.com';
 
@@ -29,29 +24,15 @@ export default function AccountScreen({ navigation }) {
   const { preferencja, ustawPreferencje } = useTheme();
   const { t, jezyk, jezyki, etykiety: etykietyJezykow, ustawJezyk } = useJezyk();
   const styles = useStyle(tworzStyleKonta);
-  const [keywords, setKeywords] = useState((user.keywords || []).join(', '));
-  const [cpv, setCpv] = useState((user.cpv_codes || []).join(', '));
-  /*
-   * Region i największy obsługiwany kontrakt (P1-4). Te dwa pola NIE wchodzą do
-   * silnika dopasowań — służą wyjaśnieniu („to poza Twoim terenem", „to ponad
-   * Twoją skalę, rozważ konsorcjum") i podpowiedzi przy pustym feedzie.
-   */
-  const [regiony, setRegiony] = useState(user.regiony || []);
-  const [wartoscMax, setWartoscMax] = useState(user.wartosc_max ? String(user.wartosc_max) : '');
-  const [saving, setSaving] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
   const [rezygnacja, setRezygnacja] = useState(false);
   const [haslo, setHaslo] = useState('');
   const [usuwanie, setUsuwanie] = useState(false);
-  const [sciagaOtwarta, setSciagaOtwarta] = useState(false);
   const [demoInfo, setDemoInfo] = useState(null);
   const [demoBusy, setDemoBusy] = useState(false);
-  // Onboarding AI (rundy 9-10): opis firmy → słowa kluczowe + CPV.
-  const [opisFirmy, setOpisFirmy] = useState('');
-  const [dobieranie, setDobieranie] = useState(false);
-  const [dobierInfo, setDobierInfo] = useState(null);
-
   const isStandard = user.premium_tier === 'standard';
+  // Próba Standard (spec §15) — z API; stary zapis użytkownika bez pola `proba` = brak paska.
+  const proba = opisProby(user.proba);
   const wersjaApp = Constants.expoConfig?.version ?? '—';
 
   /** Otwiera klienta poczty z tematem zawierającym wersję (ułatwia diagnozę zgłoszeń). */
@@ -60,52 +41,6 @@ export default function AccountScreen({ navigation }) {
     Linking.openURL(`mailto:${KONTAKT_EMAIL}?subject=${temat}`).catch(() => {
       komunikat('Kontakt', `Napisz do nas na adres:\n${KONTAKT_EMAIL}`);
     });
-  }
-
-  async function dobierzProfil() {
-    if (!opisFirmy.trim() || dobieranie) return;
-    setDobieranie(true);
-    setDobierInfo(null);
-    try {
-      const s = await api.suggestProfile(opisFirmy.trim());
-      if (!s.keywords) {
-        setDobierInfo(s.komunikat || 'Nie udało się dobrać podpowiedzi.');
-        return;
-      }
-      // Dokładamy do istniejących (nie kasujemy tego, co user już wpisał), bez duplikatów.
-      // Cap 30 = limit backendu (profileSchema) — bez tego scalona lista mogłaby go
-      // przekroczyć i zapis profilu wróciłby z 400 (audyt R13).
-      const scal = (biezace, nowe) => {
-        const lista = [...parseList(biezace), ...nowe];
-        return [...new Set(lista.map((x) => x.trim()).filter(Boolean))].slice(0, 30).join(', ');
-      };
-      if (s.keywords.length) setKeywords((b) => scal(b, s.keywords));
-      if (s.cpv.length) setCpv((b) => scal(b, s.cpv));
-      setDobierInfo(`Dobrano ${s.keywords.length} słów i ${s.cpv.length} kodów CPV. Sprawdź i zapisz profil.`);
-    } catch (err) {
-      setDobierInfo(err.message);
-    } finally {
-      setDobieranie(false);
-    }
-  }
-
-  async function handleSave() {
-    setSaving(true);
-    try {
-      const data = await api.updateProfile({
-        keywords: parseList(keywords),
-        cpv_codes: parseList(cpv),
-        regiony,
-        // Puste pole znaczy „wycofuję deklarację", a nie „zostaw jak było".
-        wartosc_max: wartoscMax.trim() ? Number(wartoscMax.replace(/[^\d]/g, '')) : null,
-      });
-      setUser(data.user);
-      komunikat('Zapisano', 'Profil firmy został zaktualizowany.');
-    } catch (err) {
-      komunikat('Błąd', err.message);
-    } finally {
-      setSaving(false);
-    }
   }
 
   /**
@@ -276,11 +211,18 @@ export default function AccountScreen({ navigation }) {
         style={styles.gap}
       />
 
+      {proba ? (
+        <View style={styles.proba}>
+          <Text style={styles.probaTekst}>{t(proba)}</Text>
+          <Text style={styles.sectionHint}>{t('Po próbie konto wróci do planu Free: 5 przetargów dziennie, jeden mail dziennie.', 'After the trial your account returns to Free: 5 tenders a day, one email a day.')}</Text>
+        </View>
+      ) : null}
+
       {isStandard ? (
         <View style={styles.upgradeCard}>
           <Text style={styles.upgradeTitle}>Plan Standard aktywny ✓</Text>
           <Text style={styles.upgradeText}>
-            Masz nielimitowane dopasowania przetargów oraz powiadomienia push.
+            {t('Bez dziennego limitu, przegląd co 3 godziny i powiadomienia od razu, sprawdzanie warunków udziału, plan działania do oferty.', 'No daily limit, reviews every 3 hours with instant alerts, participation condition checks, an action plan to your bid.')}
           </Text>
           <Button
             title="Zrezygnuj z subskrypcji"
@@ -294,8 +236,7 @@ export default function AccountScreen({ navigation }) {
         <View style={styles.upgradeCard}>
           <Text style={styles.upgradeTitle}>Przejdź na Standard</Text>
           <Text style={styles.upgradeText}>
-            Nielimitowane dopasowania i powiadomienia push o nowych przetargach
-            — 99 zł / miesiąc.
+            {t('Bez dziennego limitu, przegląd co 3 godziny i powiadomienia od razu, sprawdzanie warunków udziału, plan działania do oferty — 99 zł / miesiąc.', 'No daily limit, reviews every 3 hours with instant alerts, participation condition checks, an action plan to your bid — PLN 99 / month.')}
           </Text>
           <Button
             title="Przejdź na Standard"
@@ -337,90 +278,21 @@ export default function AccountScreen({ navigation }) {
         </View>
       ) : null}
 
-      <Text style={styles.sectionTitle}>Profil firmy</Text>
+      <Text style={styles.sectionTitle}>{t('Karta firmy', 'Company card')}</Text>
       <Text style={styles.sectionHint}>
-        Na podstawie tych danych AI dopasowuje przetargi do Twojej firmy.
+        {t('Czym się zajmujesz, czego nie bierzesz, gdzie pracujesz, jakie kwoty — na tej podstawie wybieramy przetargi dla Ciebie.',
+          'What you do, what you do not take on, where you work and what contract sizes — we pick tenders for you based on this.')}
       </Text>
+      <Button title={t('Otwórz kartę firmy', 'Open company card')} variant="ghost" onPress={() => navigation.navigate('KartaFirmy')} style={styles.gap} />
 
-      {/* Onboarding AI (rundy 9-10): nie wiesz jakie słowa/CPV? Opisz firmę. */}
-      <View style={styles.dobierzCard}>
-        <Text style={styles.dobierzTytul}>Nie wiesz, co wpisać?</Text>
-        <Text style={styles.dobierzOpis}>
-          Opisz jednym zdaniem, czym się zajmujesz — AI dobierze słowa kluczowe i kody CPV.
-        </Text>
-        <TextField
-          value={opisFirmy}
-          onChangeText={setOpisFirmy}
-          placeholder="np. Kładę kostkę brukową i buduję ogrodzenia"
-          multiline
+      <View style={styles.przelacznik}>
+        <Text style={styles.przelacznikTekst}>{t('Maile o nowych przetargach', 'Emails about new tenders')}</Text>
+        <Switch
+          value={user.powiadomienia_pracownik_email !== false}
+          onValueChange={async (wl) => { await api.ustawMaileSelekcji(wl).catch(() => {}); await refreshUser?.().catch(() => {}); }}
+          accessibilityLabel={t('Maile o nowych przetargach', 'Emails about new tenders')}
         />
-        <Button
-          title="Dobierz słowa i CPV"
-          onPress={dobierzProfil}
-          loading={dobieranie}
-          variant="ghost"
-          style={styles.gap}
-        />
-        {dobierInfo ? <Text style={styles.dobierzInfo}>{dobierInfo}</Text> : null}
       </View>
-
-      <TextField
-        label="Słowa kluczowe"
-        value={keywords}
-        onChangeText={setKeywords}
-        placeholder="remont, budowa drogi, instalacje"
-        hint="Po przecinku"
-        multiline
-      />
-      <TextField
-        label="Kody CPV"
-        value={cpv}
-        onChangeText={setCpv}
-        placeholder="45000000, 45300000"
-        hint="Po przecinku"
-        style={styles.poleCpv}
-      />
-      <Pressable onPress={() => setSciagaOtwarta(true)} hitSlop={8} accessibilityRole="button">
-        <Text style={styles.linkSciagi}>Nie znasz kodów? Otwórz ściągę CPV →</Text>
-      </Pressable>
-
-      <Text style={styles.sectionTitle}>{t('Gdzie pracujesz', 'Where you work')}</Text>
-      <Text style={styles.sectionHint}>
-        {t(
-          'Zaznacz województwa, w których realnie startujesz. Nie zawężają one dopasowań — pokazujemy dzięki nim, czy ogłoszenie jest na Twoim terenie.',
-          'Pick the voivodeships you actually bid in. They do not narrow your matches — they let us show whether a notice is in your area.',
-        )}
-      </Text>
-      <View style={styles.regionRzad} accessibilityRole="list">
-        {Object.entries(WOJEWODZTWA).map(([kod, nazwa]) => {
-          const wybrane = regiony.includes(kod);
-          return (
-            <Pressable
-              key={kod}
-              onPress={() => setRegiony((p) => (wybrane ? p.filter((r) => r !== kod) : [...p, kod]))}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: wybrane }}
-              accessibilityLabel={nazwa}
-              style={[styles.regionChip, wybrane && styles.regionChipOn]}
-            >
-              <Text style={[styles.regionTekst, wybrane && styles.regionTekstOn]}>
-                {wybrane ? '\u2713 ' : ''}{nazwa}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <TextField
-        label={t('Największy kontrakt, jaki udźwigniesz (zł)', 'Largest contract you can handle (PLN)')}
-        value={wartoscMax}
-        onChangeText={setWartoscMax}
-        placeholder="2000000"
-        hint={t('Zostaw puste, jeśli nie chcesz deklarować', 'Leave empty if you prefer not to declare')}
-        keyboardType="number-pad"
-      />
-
-      <Button title="Zapisz profil" onPress={handleSave} loading={saving} />
 
       <Text style={styles.sectionTitle}>Narzędzia firmy</Text>
       <Text style={styles.sectionHint}>
@@ -473,13 +345,6 @@ export default function AccountScreen({ navigation }) {
         variant="ghost"
         onPress={() => navigation.navigate('KalkulatorOdsetek')}
         style={styles.gap}
-      />
-
-      <CpvPicker
-        widoczny={sciagaOtwarta}
-        onClose={() => setSciagaOtwarta(false)}
-        wartosc={cpv}
-        onChange={setCpv}
       />
 
       <Text style={styles.sectionTitle}>{t('Zakres danych', 'Data coverage')}</Text>
@@ -614,18 +479,6 @@ export default function AccountScreen({ navigation }) {
 }
 
 const tworzStyleKonta = tworzStyle((k) => ({
-  regionRzad: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  regionChip: {
-    borderWidth: 1,
-    borderColor: k.border,
-    backgroundColor: k.surface,
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-  },
-  regionChipOn: { backgroundColor: k.blue, borderColor: k.blue },
-  regionTekst: { fontSize: 13, color: k.text, fontWeight: '600' },
-  regionTekstOn: { color: k.white, fontWeight: '800' },
   strefaNiebezpieczna: {
     marginTop: spacing.xl,
     paddingTop: spacing.lg,
@@ -667,15 +520,10 @@ const tworzStyleKonta = tworzStyle((k) => ({
   gap: { marginTop: spacing.md },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: k.text, marginTop: spacing.lg },
   sectionHint: { fontSize: 13, color: k.textMuted, marginTop: 4, marginBottom: spacing.md },
-  poleCpv: { marginBottom: spacing.xs },
-  dobierzCard: {
-    backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border,
-    padding: spacing.md, marginBottom: spacing.md,
-  },
-  dobierzTytul: { fontSize: 15, fontWeight: '800', color: k.text },
-  dobierzOpis: { fontSize: 13, color: k.textMuted, marginTop: 2, marginBottom: spacing.sm, lineHeight: 18 },
-  dobierzInfo: { fontSize: 13, color: k.blue, fontWeight: '600', marginTop: spacing.sm, lineHeight: 18 },
-  linkSciagi: { color: k.blue, fontSize: 14, fontWeight: '600', marginBottom: spacing.md },
+  przelacznik: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.sm },
+  przelacznikTekst: { fontSize: 15, color: k.text, flex: 1, marginRight: spacing.sm },
+  proba: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: k.sukcesTlo, marginBottom: spacing.md },
+  probaTekst: { fontSize: 15, fontWeight: '700', color: k.sukcesAkcent },
   demoCard: {
     backgroundColor: k.ostrzezenieTlo,
     borderRadius: radius.lg,

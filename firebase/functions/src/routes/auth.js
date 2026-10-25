@@ -14,7 +14,9 @@ import { publicUser } from '../lib/serialize.js';
 import { createUpgradeLink } from '../services/magicLink.js';
 import { anulujSubskrypcje } from '../services/stripe.js';
 import { sendEmail, welcomeEmail, resetPasswordEmail } from '../services/email.js';
-import { backfillUser } from '../services/matching.js';
+import { przeliczProfil } from '../services/pracownik.js';
+import { PROBA_DNI } from '../lib/plan.js';
+import { wersjaKarty } from '../lib/kartaFirmy.js';
 import { usunKontoPomostowe } from '../services/mostRailway.js';
 import { logger } from '../lib/logger.js';
 
@@ -85,6 +87,8 @@ router.post('/register', ah(async (req, res) => {
       passwordHash,
       keywords: data.keywords,
       cpvCodes: data.cpv_codes,
+      // Tydzień próbny Standard bez karty dla nowych kont (spec §15).
+      probaDni: PROBA_DNI,
     });
   } catch (err) {
     if (err.code === 'DUPLICATE_EMAIL') throw conflict('Konto z tym adresem email już istnieje');
@@ -105,7 +109,7 @@ router.post('/register', ah(async (req, res) => {
   const [mail, onboarding] = await Promise.allSettled([
     sendEmail({ to: email, ...welcomeEmail(user.company_name) }),
     (user.keywords.length || user.cpv_codes.length)
-      ? backfillUser(user, { wymus: true })
+      ? przeliczProfil(user, { wymus: true })
       : Promise.resolve(null),
   ]);
   if (mail.status === 'rejected') {
@@ -236,6 +240,8 @@ const profileSchema = z.object({
    */
   regiony: z.array(z.string().min(1).max(40)).max(16).optional(),
   wartosc_max: z.number().positive().max(1e12).nullable().optional(),
+  // Maile o wybranych przetargach (spec §7) — przełącznik w Koncie.
+  powiadomienia_pracownik_email: z.boolean().optional(),
 });
 
 /**
@@ -287,12 +293,14 @@ router.patch('/me', authRequired, ah(async (req, res) => {
   // AWAIT przed odpowiedzią (D-044): Functions zamrażają tło po response —
   // fire-and-forget nigdy nie kończył pracy na produkcji. Cooldown backfillu
   // (10 min) nadal chroni przed lawiną odczytów puli przy klikaniu w kółko.
-  const criteriaChanged =
-    (data.keywords && JSON.stringify(data.keywords) !== JSON.stringify(req.user.keywords))
-    || (data.cpv_codes && JSON.stringify(data.cpv_codes) !== JSON.stringify(req.user.cpv_codes));
+  if (data.powiadomienia_pracownik_email !== undefined) {
+    await users.ustawPowiadomieniaEmail(req.user.id, data.powiadomienia_pracownik_email);
+  }
+  // Wersja karty (spec §3.2) obejmuje też regiony i wartość „do” — zmiana każdej twardej reguły przelicza pulę.
+  const criteriaChanged = wersjaKarty(updated) !== wersjaKarty(req.user);
   if (criteriaChanged) {
     try {
-      const wynik = await backfillUser(updated);
+      const wynik = await przeliczProfil(updated);
       logger.info({ userId: updated.id, ...wynik }, 'Re-matching po zmianie profilu zakończony');
     } catch (err) {
       // Profil już zapisany — feed dogoni przy najbliższym cronie.
@@ -300,7 +308,7 @@ router.patch('/me', authRequired, ah(async (req, res) => {
     }
   }
 
-  res.json({ user: publicUser(updated) });
+  res.json({ user: publicUser(await users.findById(req.user.id)) });
 }));
 
 const pushTokenSchema = z.object({ push_token: z.string().min(1).max(300) });

@@ -202,6 +202,32 @@ export const bkOknoFetch = onSchedule(
 );
 
 /**
+ * Selekcja przetargów pod klienta co 3 h — TYLKO plan Standard (także 7-dniowa próba).
+ * Godziny 2:10, 5:10 … 23:10 czasu polskiego, czyli po oknach BZP (:20) i BK (:50)
+ * z poprzedniej godziny. Free dostaje przebieg raz dziennie w dailyTenderFetch.
+ * Idempotencja: decyzje mają ślad w `evaluations`, powiadomienia — `notified` i klucz alertu.
+ */
+export const pracownikCo3h = onSchedule(
+  {
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '10 2-23/3 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY],
+  },
+  async () => {
+    const { runSelekcjaCo3h } = await import('./src/jobs/selekcjaCo3h.js');
+    const wynik = await runSelekcjaCo3h();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'pracownikCo3h NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`pracownikCo3h: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'pracownikCo3h zakończony', ...wynik }));
+  },
+);
+
+/**
  * Przypomnienia o terminach składania ofert dla ZAPISANYCH przetargów (D-050).
  * Co 6 godzin — częściej niż cykl dobowy, bo terminy „za kilka godzin" muszą
  * zdążyć. Push idzie tylko do użytkowników z tokenem; etap rezerwowany w transakcji

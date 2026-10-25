@@ -134,6 +134,14 @@ const schema = z.object({
 
   MATCH_CONFIDENCE_THRESHOLD: z.coerce.number().int().min(0).max(100).default(60),
   FREE_TIER_DAILY_MATCH_LIMIT: z.coerce.number().int().positive().default(5),
+  /*
+   * Selekcja pod klienta (plans/PRACOWNIK-PROJEKT-2026-10-23.md). 'false' przywraca
+   * dotychczasowe dopasowanie (services/matching.js) bez zmiany kodu: zmienna w
+   * firebase/functions/.env + ponowne wdrożenie funkcji.
+   */
+  PRACOWNIK_ENABLED: z.enum(['true', 'false']).default('true'),
+  // Dokąd prowadzą maile (wybrane przetargi, próba). Maile nie niosą magic linku zakupu (żyje 10 min).
+  APP_LINK_URL: z.string().url().default('https://przetarg-ai.pl'),
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(10),
 });
 

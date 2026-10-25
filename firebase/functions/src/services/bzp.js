@@ -3,6 +3,7 @@ import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
 import { parsujWadium } from '../lib/wadium.js';
 import { parsujKryterium, parsujCzesci } from '../lib/ogloszenieMeta.js';
+import { warunkiZBzp } from '../lib/warunkiUdzialu.js';
 import { stanTempa, pobierzZPonowieniem, TEMPO_DOMYSLNE } from '../lib/tempoZapytan.js';
 
 /*
@@ -96,6 +97,7 @@ export function normalizeNotice(raw) {
   const wadium = parsujWadium(htmlBody);
   const kryterium = parsujKryterium(htmlBody);
   const liczbaCzesci = parsujCzesci(htmlBody);
+  const warunki = warunkiZBzp(htmlBody);
 
   const tenderId = firstOf(raw, ['tenderId']);
   const url = firstOf(raw, ['htmlUrl', 'url', 'link', 'noticeUrl'])
@@ -120,6 +122,7 @@ export function normalizeNotice(raw) {
     // Meta z htmlBody (rundy 5-6): kryterium oceny + liczba części.
     kryterium_oceny: kryterium,
     liczba_czesci: liczbaCzesci,
+    warunki_udzialu: warunki,
     // Wymiary do statystyk wyników (R17): rodzaj + województwo (PL+TERYT).
     rodzaj: firstOf(raw, ['orderType']),
     wojewodztwo: firstOf(raw, ['organizationProvince']),
