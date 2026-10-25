@@ -32,8 +32,10 @@ Teksty sklepowe: `store/whats-new-1.1.6.md`.
 - [ ] Po wdrożeniu: `/health` 200, `POST /api/przetarg/swz/postepowania/:id/analiza` z `swz_pdf_base64` → 201 (token usera testowego) — most z Functions 401 bez tokenu.
 
 ## 3. Cloud Functions (zmiany: `parseScore`, `/health zrodla_cicho_puste`, pracownik)
-- [ ] Z worktree wydania: `cd firebase && FUNCTIONS_DISCOVERY_TIMEOUT=120 firebase deploy --only functions:przetargai:api[,functions:przetargai:<nowe funkcje pracownika>] --project przetargai`
-      (+ `firestore:indexes`, jeśli pracownik dodał indeksy).
+- [ ] Z worktree wydania: `cd firebase && FUNCTIONS_DISCOVERY_TIMEOUT=120 firebase deploy --only functions,firestore:indexes --project przetargai`
+      Pracownik dodał funkcję `pracownikCo3h` (harmonogram 10 2-23/3, sekrety JWT_SECRET/ANTHROPIC_API_KEY/RESEND_API_KEY — wszystkie już są w Secret Manager, sprawdzone 25.10)
+      i 2 indeksy złożone na `evaluations` (decyzja+evaluated_at, decyzja+przyczyna+evaluated_at). Zmienna `PRACOWNIK_ENABLED` ma domyślnie `true` — nic nie ustawiać;
+      `false` = wyłącznik awaryjny selekcji (job pomija przebieg, API odpowiada `niedostepne`). Wdrożone dotąd (bez pracownika): aggregateResults api benchmarkPrzelicz bkOknoFetch bzpOknoFetch dailyTenderFetch monitorWyszukiwan planyOknoFetch remindDeadlines weeklyDigest wynikiOknoFetch.
 - [ ] `/health` → `wersja` = nowa rewizja, `status ok`, sekcja `ai` i `cron.zrodla_cicho_puste` obecne.
 - [ ] Hosting (`przetarg-ai.pl`) tylko jeśli zmieniono landing: deploy z `D:\projekty\przetarg-ai\firebase` (gitignorowany `hosting/`).
 
