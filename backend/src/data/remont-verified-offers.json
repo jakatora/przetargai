@@ -1087,5 +1087,44 @@
     "sourceUrl": "https://domat24.pl/produkt/plyta-gipsowa-gkb-12-5-12002600-biala/",
     "evidenceSha256": "7e31ab934dfe54cefc9ba338f57b56fc53563bc0582b8d3d1796f1c97e59a3bf",
     "validUntil": null
+  },
+  {
+    "sourceId": "topboden-indo-gloss-25m",
+    "ean": "5905167725719",
+    "name": "Listwa przypodłogowa PCV Arbiton INDO - biały połysk 01",
+    "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167725719_P_02.webp",
+    "priceGrosze": 3198,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T17:43:11.235Z",
+    "sourceUrl": "https://topboden.pl/listwy-przypodlogowe/listwa-przypodlogowa-arbiton-indo-bialy-polysk-1",
+    "evidenceSha256": "99b699a723bd9980961dab107c9085f5ed9b2b8b639c486c7d2c058df860ce38",
+    "validUntil": "2026-10-27"
+  },
+  {
+    "sourceId": "bricoman-soudal-26a-5kg",
+    "ean": "5411183028395",
+    "name": "Klej do wykładzin Soudal 26A 5kg",
+    "imageUrl": "https://media.adeo.com/media/5600934/media.jpg",
+    "priceGrosze": 11700,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T17:43:11.536Z",
+    "sourceUrl": "https://www.bricoman.pl/produkty/klej-do-wykladzin-soudal-26a-5kg-20484681.html",
+    "evidenceSha256": "4fc27b3e52f35e6b6384c2b9b0d5175de44e022cdda84471f3c92a45add63b32",
+    "validUntil": null
+  },
+  {
+    "sourceId": "chemiadoparkietu-soudal-26a-5kg",
+    "ean": "5411183028395",
+    "name": "Soudal 26A klej do wykładzin PCV winylu linoleum dywanowych 5 kg",
+    "imageUrl": "https://media.adeo.com/media/5600934/media.jpg",
+    "priceGrosze": 9350,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T17:30:57.007Z",
+    "sourceUrl": "https://chemiadoparkietu25.pl/product-pol-25914-Soudal-26A-klej-do-wykladzin-PCV-winylu-linoleum-dywanowych-5-kg.html",
+    "evidenceSha256": "1b301f9582f3dadb675b8317813e7930e73a25a4e0db594bd575ba31b8a5d4c0",
+    "validUntil": null
   }
 ]
