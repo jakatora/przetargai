@@ -89,13 +89,13 @@ function is(value, type) {
       `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`
     );
   }
-  let cls = Object.getPrototypeOf(value).constructor;
-  if (cls) {
-    while (cls) {
-      if (entityKind in cls && cls[entityKind] === type[entityKind]) {
+  let cls2 = Object.getPrototypeOf(value).constructor;
+  if (cls2) {
+    while (cls2) {
+      if (entityKind in cls2 && cls2[entityKind] === type[entityKind]) {
         return true;
       }
-      cls = Object.getPrototypeOf(cls);
+      cls2 = Object.getPrototypeOf(cls2);
     }
   }
   return false;
@@ -6590,7 +6590,7 @@ function az_default() {
 }
 
 // D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count, one2, few, many) {
+function getBelarusianPlural(count, one3, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -6598,7 +6598,7 @@ function getBelarusianPlural(count, one2, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one2;
+    return one3;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -9736,7 +9736,7 @@ function pt_default() {
 }
 
 // D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count, one2, few, many) {
+function getRussianPlural(count, one3, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -9744,7 +9744,7 @@ function getRussianPlural(count, one2, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one2;
+    return one3;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -13814,17 +13814,17 @@ function superRefine(fn) {
   });
   return ch;
 }
-function _instanceof(cls, params = {
-  error: `Input not instance of ${cls.name}`
+function _instanceof(cls2, params = {
+  error: `Input not instance of ${cls2.name}`
 }) {
   const inst = new ZodCustom({
     type: "custom",
     check: "custom",
-    fn: (data) => data instanceof cls,
+    fn: (data) => data instanceof cls2,
     abort: true,
     ...util_exports.normalizeParams(params)
   });
-  inst._zod.bag.Class = cls;
+  inst._zod.bag.Class = cls2;
   return inst;
 }
 var stringbool = (...args) => _stringbool({
@@ -19201,9 +19201,9 @@ var ZodFirstPartyTypeKind;
   ZodFirstPartyTypeKind2["ZodPipeline"] = "ZodPipeline";
   ZodFirstPartyTypeKind2["ZodReadonly"] = "ZodReadonly";
 })(ZodFirstPartyTypeKind || (ZodFirstPartyTypeKind = {}));
-var instanceOfType = (cls, params = {
-  message: `Input not instance of ${cls.name}`
-}) => custom2((data) => data instanceof cls, params);
+var instanceOfType = (cls2, params = {
+  message: `Input not instance of ${cls2.name}`
+}) => custom2((data) => data instanceof cls2, params);
 var stringType = ZodString2.create;
 var numberType = ZodNumber2.create;
 var nanType = ZodNaN2.create;
@@ -19280,6 +19280,7 @@ var stageResultSchema = external_exports2.object({
 var optionsSchema = external_exports2.object({
   region: external_exports2.string().nullish(),
   store: external_exports2.string().nullish(),
+  refreshPrices: external_exports2.boolean().optional(),
   delivery: external_exports2.object({
     mode: external_exports2.enum(["shipping", "pickup"]),
     method: external_exports2.enum(["automatic", "manual"]).optional(),
@@ -19311,6 +19312,7 @@ function serializeProduct(product) {
 }
 function serializeProductOffer(offer) {
   return {
+    packageSize: offer.packageSize,
     offerId: offer.id,
     store: offer.store,
     url: offer.productUrl,
@@ -19904,14 +19906,19 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   }
   enumerate(0, []);
   if (unique.size > MAX_STORE_BASKETS) return tooLarge();
-  const failures = /* @__PURE__ */ new Map(), keys = [...unique.keys()];
+  const failures = /* @__PURE__ */ new Map();
+  const ordered = [...unique.entries()].sort((a, b) => b[1].lines.length - a[1].lines.length || b[1].materialsGrosze - a[1].materialsGrosze);
+  const first = /* @__PURE__ */ new Map();
+  for (const [key, order] of ordered) if (!first.has(order.store)) first.set(order.store, key);
+  const priority = new Set(first.values());
+  const keys = [...priority, ...ordered.map(([key]) => key).filter((key) => !priority.has(key))];
   let cursor = 0;
   await Promise.all(Array.from({ length: Math.min(3, keys.length) }, async () => {
     while (cursor < keys.length) {
       const key = keys[cursor++], order = unique.get(key);
       try {
         const outcome = await quoteBasket(order, settings.postalCode);
-        if ("quote" in outcome && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
+        if ("quote" in outcome && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && (outcome.quote.destinationScope === "PL" || outcome.quote.postalCode === settings.postalCode) && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
           order.deliveryGrosze = outcome.quote.costGrosze;
           order.quote = outcome.quote;
           order.deliveryMinimumGrosze = outcome.quote.costGrosze;
@@ -19939,28 +19946,18 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   result.best = known[0] ?? null;
   result.alternatives = known.slice(1, 4);
   result.lowerBound = baskets.sort((a, b) => a.lowerBoundGrosze - b.lowerBoundGrosze)[0] ?? null;
-  result.missingDeliveryStores = [...failures.keys()].sort();
-  result.unavailableStores = [...failures].map(([store, reason]) => ({ store, reason }));
+  const quotedStores = new Set([...unique.values()].filter((o) => o.quote).map((o) => o.store));
+  result.missingDeliveryStores = [...failures.keys()].filter((store) => !quotedStores.has(store)).sort();
+  result.partiallyQuotedStores = [...failures.keys()].filter((store) => quotedStores.has(store)).sort();
+  result.unavailableStores = [...failures].map(([store, reason]) => ({ store, reason, ...quotedStores.has(store) ? { partial: true } : {} }));
   result.status = result.best && !failures.size ? "compared" : "needs_delivery_costs";
   return result;
 }
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto = require("node:crypto");
-var ORIGINS = {
-  "Rab-Dom": "https://www.rabdom.pl",
-  Realbud: "https://realbud.com",
-  Zino: "https://sklep.zino.pl"
-};
-var TTL = 10 * 6e4;
-function confirmedMoney(text3, numeric2) {
-  if (typeof text3 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
-  const match = text3.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
-  if (!match) throw Error("invalid_money");
-  const cents = Number(match[1]) * 100 + Number(match[2]);
-  if (!Number.isSafeInteger(cents) || cents < 0 || Math.abs(numeric2 * 100 - cents) > 1e-5) throw Error("invalid_money");
-  return cents;
-}
+var import_node_crypto3 = require("node:crypto");
+
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-http.ts
 var AnonymousShop = class {
   constructor(origin, fetchImpl, signal) {
     this.origin = origin;
@@ -19968,13 +19965,20 @@ var AnonymousShop = class {
     this.signal = signal;
   }
   cookies = /* @__PURE__ */ new Map();
+  calls = 0;
   async json(path, body) {
-    let url2 = new URL(path, this.origin), method = body ? "POST" : "GET";
-    let payload = body ? JSON.stringify(body) : void 0;
+    return JSON.parse(await this.read(path, body ? JSON.stringify(body) : void 0, true));
+  }
+  async text(path, form) {
+    return this.read(path, form ? new URLSearchParams(form).toString() : void 0, false);
+  }
+  async read(path, payload, json3) {
+    let url2 = new URL(path, this.origin), method = payload ? "POST" : "GET";
     for (let i = 0; i < 4; i++) {
       if (url2.origin !== this.origin) throw Error("invalid_redirect");
+      if (++this.calls > 30) throw Error("request_limit");
       const cookie = [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; ");
-      if (cookie.length > 8192) throw Error("invalid_cookie_size");
+      if (cookie.length > 8192 || this.cookies.size > 64) throw Error("invalid_cookie_size");
       const r = await this.fetchImpl(url2, {
         method,
         body: payload,
@@ -19982,7 +19986,7 @@ var AnonymousShop = class {
         redirect: "manual",
         headers: {
           "User-Agent": "AsystentRemontu/1.0",
-          Accept: "application/json",
+          Accept: json3 ? "application/json" : "text/html, application/json",
           Cookie: cookie,
           ...payload ? { "Content-Type": "application/x-www-form-urlencoded" } : {}
         }
@@ -20006,7 +20010,7 @@ var AnonymousShop = class {
         await r.body?.cancel();
         throw Error("retailer_unavailable");
       }
-      if (!r.headers.get("content-type")?.includes("json")) {
+      if (json3 && !r.headers.get("content-type")?.includes("json")) {
         await r.body?.cancel();
         throw Error("invalid_response");
       }
@@ -20026,163 +20030,17 @@ var AnonymousShop = class {
         await reader.cancel().catch(() => {
         });
       }
-      return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      return Buffer.concat(chunks).toString("utf8");
     }
     throw Error("invalid_redirect");
   }
 };
-function selectHomeDelivery(basket) {
-  if (!Array.isArray(basket.countries) || !basket.countries.some((c) => c.id === 179 && c.name === "Polska" && c.selected === true)) throw Error("country_not_confirmed");
-  if (!Array.isArray(basket.shippings) || !Array.isArray(basket.payments)) throw Error("invalid_response");
-  const options = [];
-  for (const shipping of basket.shippings) {
-    if (shipping.engine !== "" || typeof shipping.title !== "string" || !/kurier|kurierska/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`)) continue;
-    const country = shipping.countries?.find((c) => c.id === 179);
-    if (!country) continue;
-    let cost;
-    try {
-      cost = confirmedMoney(country.cost, country.cost_float);
-      if (cost !== confirmedMoney(shipping.cost, shipping.cost_float)) continue;
-    } catch {
-      continue;
-    }
-    for (const method of shipping.payments ?? []) {
-      const payment = basket.payments.find((p) => p.payment_id === method.payment_id);
-      if (!payment || !["onlinePayment", "transfer", "przelewy24.pl"].includes(payment.name)) continue;
-      let surcharge = 0;
-      try {
-        if (method.additional_cost !== void 0 || method.additional_cost_float !== void 0) surcharge += confirmedMoney(method.additional_cost, method.additional_cost_float);
-        if (payment.additional_cost !== void 0 || payment.additional_cost_float !== void 0) surcharge += confirmedMoney(payment.additional_cost, payment.additional_cost_float);
-      } catch {
-        continue;
-      }
-      options.push({ costGrosze: cost + surcharge, carrier: shipping.title, payment: payment.title });
-    }
-  }
-  const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
-  if (!best) throw Error("no_home_delivery");
-  return best;
-}
-async function quoteShoper(order, fetchImpl) {
-  const origin = ORIGINS[order.store];
-  if (!origin) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
-  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3));
-  const expected = /* @__PURE__ */ new Map();
-  for (const line2 of order.lines) for (const pack of line2.packages) {
-    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
-    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
-    const id = source.url.match(/\/(\d+)$/)?.[1];
-    if (!id) throw Error("invalid_basket");
-    const product = await client.json(`/webapi/front/pl_PL/products/PLN/${id}`);
-    if (String(product.ean) !== source.ean || String(product.id) !== id || !product.can_buy || !Number.isSafeInteger(product.stockId)) throw Error("product_unavailable");
-    const price = confirmedMoney(product.price?.gross?.final, product.price?.gross?.final_float);
-    if (price !== pack.unitPriceGrosze) throw Error("price_changed");
-    if (expected.has(product.stockId)) throw Error("invalid_basket");
-    expected.set(product.stockId, { count: pack.count, price });
-    await client.json("/webapi/front/pl_PL/basket/PLN/", { stock_id: product.stockId, quantity: pack.count });
-  }
-  const basket = await client.json("/webapi/front/pl_PL/basket/PLN/");
-  if (!Array.isArray(basket.products) || basket.products.length !== expected.size || basket._flash_messenger?.error?.length) throw Error("basket_not_confirmed");
-  let total = 0;
-  for (const p of basket.products) {
-    const wanted = expected.get(p.stock_id);
-    if (!wanted || p.quantity !== wanted.count || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
-    expected.delete(p.stock_id);
-    total += wanted.count * wanted.price;
-  }
-  if (expected.size || total !== order.materialsGrosze || confirmedMoney(basket.basket?.sum_products, basket.basket?.sum_products_float) !== total) throw Error("basket_not_confirmed");
-  const shipping = selectHomeDelivery(basket), checkedAt = /* @__PURE__ */ new Date();
-  const evidence = { products: basket.products.map((p) => ({ stock: p.stock_id, count: p.quantity, price: p.price_float })), shippings: basket.shippings, payments: basket.payments, countries: basket.countries };
-  return { quote: {
-    ...shipping,
-    checkedAt: checkedAt.toISOString(),
-    expiresAt: new Date(checkedAt.getTime() + TTL).toISOString(),
-    sourceUrl: `${origin}/pl/basket`,
-    basis: "retailer_basket_national",
-    destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
-  } };
-}
-function createRetailerQuoter(fetchImpl = fetch) {
-  const cache = /* @__PURE__ */ new Map();
-  let active = 0;
-  return async (order, postalCode) => {
-    if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
-    if (!ORIGINS[order.store]) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
-    const key = JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
-    const cached2 = cache.get(key);
-    if (cached2 && cached2.until > Date.now()) return cached2.result;
-    if (active >= 3) return { reason: "quote_busy" };
-    if (cache.size >= 256) cache.delete(cache.keys().next().value);
-    active++;
-    const pending = quoteShoper(order, fetchImpl).catch((error40) => ({ reason: error40 instanceof Error && ["price_changed", "product_unavailable", "basket_not_confirmed", "no_home_delivery"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
-      active--;
-    });
-    cache.set(key, { until: Date.now() + TTL, result: pending });
-    const result = await pending;
-    if ("reason" in result) cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
-    return result;
-  };
-}
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/store-delivery.ts
-var STORE_DELIVERY_POLICIES = [
-  {
-    store: "Zino",
-    minimumGrosze: null,
-    checkedAt: null,
-    // source: https://sklep.zino.pl/pl/basket
-    sourceUrl: "https://sklep.zino.pl/pl/basket"
-  },
-  {
-    store: "Sewera",
-    minimumGrosze: 1990,
-    checkedAt: "2026-10-25T10:22:27.530Z",
-    // source: https://sklep.sewera.pl/warunki-i-koszty-dostaw
-    sourceUrl: "https://sklep.sewera.pl/warunki-i-koszty-dostaw"
-  },
-  {
-    store: "Rab-Dom",
-    minimumGrosze: 1799,
-    freeFromGrosze: 50001,
-    checkedAt: "2026-10-25T10:14:54.450Z",
-    // source: https://www.rabdom.pl/czas-i-koszt-dostawy
-    sourceUrl: "https://www.rabdom.pl/czas-i-koszt-dostawy"
-  },
-  {
-    store: "Buduj24",
-    minimumGrosze: 1500,
-    freeFromGrosze: 29900,
-    checkedAt: "2026-10-25T10:14:55.448Z",
-    // source: https://buduj24.pl/dostawa-i-platnosc
-    sourceUrl: "https://buduj24.pl/dostawa-i-platnosc"
-  },
-  {
-    store: "Realbud",
-    minimumGrosze: null,
-    checkedAt: "2026-10-25T10:14:55.052Z",
-    // source: https://realbud.com/koszty-transportu
-    sourceUrl: "https://realbud.com/koszty-transportu"
-  },
-  {
-    store: "Castorama",
-    minimumGrosze: null,
-    checkedAt: null,
-    // source: https://www.castorama.pl/informacje/zamow-z-dostawa
-    sourceUrl: "https://www.castorama.pl/informacje/zamow-z-dostawa"
-  },
-  {
-    store: "OBI",
-    minimumGrosze: null,
-    checkedAt: null,
-    // Delivery must be checked for this actual product and destination.
-    // source: https://www.obi.pl/p/6314371/farba-sniezka-barwy-natury-biala-5-l
-    sourceUrl: "https://www.obi.pl/p/6314371/farba-sniezka-barwy-natury-biala-5-l"
-  }
-];
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
+var import_node_crypto2 = require("node:crypto");
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
-var import_node_crypto2 = require("node:crypto");
+var import_node_crypto = require("node:crypto");
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-microdata.ts
 var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
@@ -20197,7 +20055,7 @@ function attrs(tag) {
 function elements(html, predicate) {
   const result = [];
   for (const match of html.matchAll(TAG)) {
-    if (match[0].startsWith("</") || !predicate(attrs(match[0]))) continue;
+    if (match[0].startsWith("</") || !predicate(attrs(match[0]), match[1].toLowerCase())) continue;
     if (["meta", "link", "img", "input", "br"].includes(match[1].toLowerCase()) || /\/>$/.test(match[0])) {
       result.push(match[0]);
       continue;
@@ -20353,7 +20211,7 @@ function parseRetailPage(html, source, observedAt) {
     availability: "in_stock",
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
-    evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(html).digest("hex"),
+    evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(html).digest("hex"),
     validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value) => typeof value === "string").sort()[0] ?? null
   };
 }
@@ -20404,10 +20262,368 @@ async function readRetailSource(source, fetchImpl = fetch) {
       offers: { "@type": "Offer", price: gross.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
     })}</script>`;
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
-    return { ...observation, evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(raw).digest("hex") };
+    return { ...observation, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(raw).digest("hex") };
   }
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
+
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
+var cls = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
+var attr = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
+var one2 = (values) => {
+  if (values.length !== 1) throw Error("basket_not_confirmed");
+  return values[0];
+};
+function createCheckoutPageReader() {
+  const cache = /* @__PURE__ */ new Map();
+  return (url2, price, client) => {
+    const key = JSON.stringify([url2, price]), previous = cache.get(key);
+    if (previous && previous.until > Date.now()) return previous.value;
+    if (cache.size >= 32) cache.delete(cache.keys().next().value);
+    const value = client.text(url2);
+    cache.set(key, { until: Date.now() + 6e4, value });
+    void value.catch(() => {
+      if (cache.get(key)?.value === value) cache.delete(key);
+    });
+    return value;
+  };
+}
+var withoutOld = (html) => html.replace(/<del\b[^>]*>[\s\S]*?<\/del>/gi, "").replace(/<div\b[^>]*class=["']price-old["'][^>]*>[\s\S]*?<\/div>/gi, "");
+function checkoutMoney(value) {
+  const match = text2(value).replace(/[\s\u00a0]/g, "").match(/^(\d+)(?:,(\d{2}))?zł$/);
+  if (!match) throw Error("invalid_money");
+  const result = Number(match[1]) * 100 + Number(match[2] ?? 0);
+  if (!Number.isSafeInteger(result) || result < 0) throw Error("invalid_money");
+  return result;
+}
+function quote(order, costGrosze, carrier, payment, evidence, postalCode) {
+  const now = /* @__PURE__ */ new Date();
+  return { quote: {
+    costGrosze,
+    carrier,
+    payment,
+    checkedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 6e5).toISOString(),
+    sourceUrl: order.store === "Sewera" ? "https://sklep.sewera.pl/zamowienie" : "https://buduj24.pl/cart",
+    basis: postalCode ? "retailer_basket_postcode" : "retailer_basket_national",
+    destinationScope: postalCode ? "postal_code" : "PL",
+    ...postalCode ? { postalCode, dispatchFrom: "Katowice" } : {},
+    evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+  } };
+}
+function expectedPacks(order) {
+  return order.lines.flatMap((line2) => line2.packages.map((pack) => {
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
+    if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    return { source, pack };
+  }));
+}
+function tdValue(html, label) {
+  const cells = elements(html, (_, tag) => tag === "td");
+  const values = cells.flatMap((cell, i) => text2(cell) === label && cells[i + 1] ? [withoutOld(cells[i + 1])] : []);
+  return one2(values);
+}
+function confirmSeweraBasket(html, expected, total) {
+  const table = one2(elements(clean(html), (a) => cls(a, "basket-product")));
+  const body = one2(elements(table, (_, tag) => tag === "tbody"));
+  const rows = elements(body, (_, tag) => tag === "tr").filter((row) => elements(row, (a) => a.name === "amount").length === 1);
+  if (rows.length !== expected.length || !/Twój sklep to Katowice/.test(text2(html))) throw Error("basket_not_confirmed");
+  for (const wanted of expected) {
+    const row = one2(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
+    const input = attr(one2(elements(row, (a) => a.name === "amount")));
+    const pid = attr(one2(elements(row, (a) => a.wybierz !== void 0))).wybierz;
+    if (Number(input.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+  }
+  const sum = text2(one2(elements(table, (a) => cls(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
+  if (checkoutMoney(sum) !== total) throw Error("basket_not_confirmed");
+}
+function readSeweraPayment(html) {
+  const safe = clean(html);
+  if (elements(safe, (a) => a.id === "block_order" && a.value !== "0").length || /nie potrafił ustalić kosztu|wycena indywidualna/i.test(text2(safe))) return null;
+  const options = elements(safe, (a) => cls(a, "radio")).flatMap((row) => {
+    const inputs = elements(row, (a2) => a2.name === "platnosc" && ["P\u0142atno\u015B\u0107 online", "Przelew tradycyjny"].includes(a2["data-name"]));
+    if (inputs.length !== 1 || /\sdisabled(?:\s|=|>)/i.test(inputs[0])) return [];
+    const a = attr(inputs[0]);
+    const value = a.onclick?.match(/\('#koszt_dostawy'\)\.val\('([\d,]+)'\)/)?.[1];
+    const visible = one2(elements(row, (b) => cls(b, "dictionary-icon-additional")));
+    const cost = checkoutMoney(visible);
+    if (!value || checkoutMoney(`${value} z\u0142`) !== cost) throw Error("invalid_money");
+    return [{ costGrosze: cost, payment: a["data-name"] }];
+  });
+  return options.sort((a, b) => a.costGrosze - b.costGrosze)[0] ?? null;
+}
+async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price, client) => client.text(_url2)) {
+  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4));
+  if ((await client.text("/ajax/ax_execute.php?operation=setDepartment", { model: "department", department: "1" })).trim() !== "1") throw Error("basket_not_confirmed");
+  const expected = [];
+  for (const { source, pack } of expectedPacks(order)) {
+    const page = await pages(source.url, pack.unitPriceGrosze, client);
+    const observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
+    if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    const pid = attr(one2(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
+    if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
+    await client.text("/ajax/ax_execute.php?operation=addToBasket", { pid, count: String(pack.count) });
+    expected.push({ url: source.url, pid, count: pack.count, price: pack.unitPriceGrosze });
+  }
+  const basket = await client.text("/index.php?page=koszyk");
+  confirmSeweraBasket(basket, expected, order.materialsGrosze);
+  const checkout = clean(await client.text("/zamowienie"));
+  const country = one2(elements(checkout, (a) => a.id === "selectCountryUser"));
+  if (!elements(country, (a) => a.value === "1").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
+  const methods = elements(checkout, (a) => a.name === "dostawa" && a["data-personal-collection"] === "0" && /kurier/i.test(a["data-name"] ?? "") && !/indywidual|zapytani|odbiór|paczkomat/i.test(a["data-name"])).map(attr);
+  if (!methods.length || methods.length > 5) throw Error("no_home_delivery");
+  const options = [];
+  for (const method of methods) {
+    const response = await client.text("/ajax/ax_default.php?operation=get_order_delivery_cost", {
+      model: "deliveryPayment",
+      mode: "radio",
+      typ_of_pay: method.value,
+      offer_id: "",
+      post_code: postalCode,
+      country: "1",
+      street: "",
+      city: "",
+      personal_collection: "0"
+    });
+    const price = readSeweraPayment(response);
+    if (price) options.push({ ...price, carrier: method["data-name"], hash: (0, import_node_crypto2.createHash)("sha256").update(response).digest("hex") });
+  }
+  const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
+  if (!best) throw Error("no_home_delivery");
+  return quote(order, best.costGrosze, best.carrier, best.payment, { expected, postalCode, options }, postalCode);
+}
+function budujItemPrice(row) {
+  return elements(row, (a) => cls(a, "item") && cls(a, "price")).map((p) => checkoutMoney(withoutOld(p)));
+}
+function confirmBudujBasket(html, expected, total) {
+  const products = one2(elements(clean(html), (a) => a.id === "cart-products"));
+  const rows = elements(products, (a) => cls(a, "cart-product") && !cls(a, "headers") && !cls(a, "summary"));
+  if (rows.length !== expected.length) throw Error("basket_not_confirmed");
+  for (const wanted of expected) {
+    const row = one2(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
+    const qty = attr(one2(elements(row, (a) => a.name === "count"))).value;
+    const prices = budujItemPrice(row);
+    if (Number(qty) !== wanted.count || prices.length !== 2 || prices[0] !== wanted.price || prices[1] !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+  }
+  if (budujSummary(html).materials !== total) throw Error("basket_not_confirmed");
+}
+function budujSummary(html) {
+  const scope = one2(elements(clean(html), (a) => a.id === "cart-summary"));
+  const fields = elements(scope, (a) => cls(a, "label"));
+  const values = elements(scope, (a) => cls(a, "value"));
+  if (fields.length !== 3 || values.length !== 3 || text2(fields[0]) !== "Suma koszyka:" || text2(fields[1]) !== "Koszt dostawy:" || !/Kwota zawiera podatek VAT/.test(text2(scope))) throw Error("basket_not_confirmed");
+  const [materials, shipping, total] = values.map(checkoutMoney);
+  if (materials + shipping !== total) throw Error("basket_not_confirmed");
+  return { materials, shipping, total };
+}
+function budujOptions(html, kind) {
+  return elements(clean(html), (a) => cls(a, "item") && cls(a, kind)).map((row) => {
+    const name = text2(one2(elements(row, (a) => cls(a, "name"))));
+    const click = attr(one2(elements(row, (a) => cls(a, "icnt")))).onclick;
+    const id = click?.match(new RegExp(`cart\\.${kind}_select\\((\\d+)`))?.[1];
+    if (!id) throw Error("basket_not_confirmed");
+    return { id, name, active: cls(attr(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one2(elements(row, (a) => cls(a, "price")))) } : {} };
+  });
+}
+function decodeBudujDetails(response) {
+  const parts = [...response.matchAll(/\$\('#(cart-details|cart-summary)'\)\.replaceWith\(decodeURIComponent\('([^']*)'\)\);/g)];
+  if (parts.length !== 2 || new Set(parts.map((p) => p[1])).size !== 2) throw Error("basket_not_confirmed");
+  return parts.map((p) => decodeURIComponent(p[2])).join("\n");
+}
+async function quoteBuduj24(order, fetchImpl) {
+  const client = new AnonymousShop("https://buduj24.pl", fetchImpl, AbortSignal.timeout(12e3));
+  const expected = [];
+  for (const { source, pack } of expectedPacks(order)) {
+    const page = await client.text(source.url), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
+    if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    const id = source.url.match(/\/produkt\/(\d+),/)?.[1];
+    if (!id) throw Error("invalid_basket");
+    await client.text(`/ajax/cart/add?lang=pl&add=${id}&count=${pack.count}`);
+    expected.push({ url: source.url, count: pack.count, price: pack.unitPriceGrosze });
+  }
+  const basket = await client.text("/cart");
+  confirmBudujBasket(basket, expected, order.materialsGrosze);
+  const countries = one2(elements(clean(basket), (a) => a.id === "sel_country"));
+  if (!elements(countries, (a) => a.value === "PL").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
+  const country = decodeBudujDetails(await client.text("/ajax/cart/details?lang=pl&country=PL"));
+  const delivery = budujOptions(country, "delivery").filter((d) => /^Kurier\b/i.test(d.name) && !/pobran|zapytani|indywidual/i.test(d.name)).sort((a, b) => a.cost - b.cost)[0];
+  if (!delivery) throw Error("no_home_delivery");
+  const selected = decodeBudujDetails(await client.text(`/ajax/cart/details?lang=pl&delivery=${delivery.id}`));
+  const payment = budujOptions(selected, "payment").find((p) => /^(Przelewy24|Blik|Przelew bankowy)$/.test(p.name));
+  if (!payment) throw Error("no_home_delivery");
+  const confirmed = decodeBudujDetails(await client.text(`/ajax/cart/details?lang=pl&payment=${payment.id}`));
+  const active = budujOptions(confirmed, "delivery").find((d) => d.active && d.id === delivery.id);
+  const activePayment = budujOptions(confirmed, "payment").find((p) => p.active && p.id === payment.id);
+  const sum = budujSummary(confirmed);
+  if (!active || !activePayment || sum.materials !== order.materialsGrosze || sum.shipping !== active.cost) throw Error("basket_not_confirmed");
+  return quote(order, sum.shipping, active.name, activePayment.name, { expected, sum, delivery: active, payment: activePayment });
+}
+
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
+var ORIGINS = {
+  "Rab-Dom": "https://www.rabdom.pl",
+  Realbud: "https://realbud.com",
+  Zino: "https://sklep.zino.pl"
+};
+var TTL = 10 * 6e4;
+function confirmedMoney(text3, numeric2) {
+  if (typeof text3 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
+  const match = text3.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
+  if (!match) throw Error("invalid_money");
+  const cents = Number(match[1]) * 100 + Number(match[2]);
+  if (!Number.isSafeInteger(cents) || cents < 0 || Math.abs(numeric2 * 100 - cents) > 1e-5) throw Error("invalid_money");
+  return cents;
+}
+function selectHomeDelivery(basket) {
+  if (!Array.isArray(basket.countries) || !basket.countries.some((c) => c.id === 179 && c.name === "Polska" && c.selected === true)) throw Error("country_not_confirmed");
+  if (!Array.isArray(basket.shippings) || !Array.isArray(basket.payments)) throw Error("invalid_response");
+  const options = [];
+  for (const shipping of basket.shippings) {
+    if (shipping.engine !== "" || typeof shipping.title !== "string" || !/kurier|kurierska/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`)) continue;
+    const country = shipping.countries?.find((c) => c.id === 179);
+    if (!country) continue;
+    let cost;
+    try {
+      cost = confirmedMoney(country.cost, country.cost_float);
+      if (cost !== confirmedMoney(shipping.cost, shipping.cost_float)) continue;
+    } catch {
+      continue;
+    }
+    for (const method of shipping.payments ?? []) {
+      const payment = basket.payments.find((p) => p.payment_id === method.payment_id);
+      if (!payment || !["onlinePayment", "transfer", "przelewy24.pl"].includes(payment.name)) continue;
+      let surcharge = 0;
+      try {
+        if (method.additional_cost !== void 0 || method.additional_cost_float !== void 0) surcharge += confirmedMoney(method.additional_cost, method.additional_cost_float);
+        if (payment.additional_cost !== void 0 || payment.additional_cost_float !== void 0) surcharge += confirmedMoney(payment.additional_cost, payment.additional_cost_float);
+      } catch {
+        continue;
+      }
+      options.push({ costGrosze: cost + surcharge, carrier: shipping.title, payment: payment.title });
+    }
+  }
+  const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
+  if (!best) throw Error("no_home_delivery");
+  return best;
+}
+async function quoteShoper(order, fetchImpl) {
+  const origin = ORIGINS[order.store];
+  if (!origin) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
+  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3));
+  const expected = /* @__PURE__ */ new Map();
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
+    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    const id = source.url.match(/\/(\d+)$/)?.[1];
+    if (!id) throw Error("invalid_basket");
+    const product = await client.json(`/webapi/front/pl_PL/products/PLN/${id}`);
+    if (String(product.ean) !== source.ean || String(product.id) !== id || !product.can_buy || !Number.isSafeInteger(product.stockId)) throw Error("product_unavailable");
+    const price = confirmedMoney(product.price?.gross?.final, product.price?.gross?.final_float);
+    if (price !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (expected.has(product.stockId)) throw Error("invalid_basket");
+    expected.set(product.stockId, { count: pack.count, price });
+    await client.json("/webapi/front/pl_PL/basket/PLN/", { stock_id: product.stockId, quantity: pack.count });
+  }
+  const basket = await client.json("/webapi/front/pl_PL/basket/PLN/");
+  if (!Array.isArray(basket.products) || basket.products.length !== expected.size || basket._flash_messenger?.error?.length) throw Error("basket_not_confirmed");
+  let total = 0;
+  for (const p of basket.products) {
+    const wanted = expected.get(p.stock_id);
+    if (!wanted || p.quantity !== wanted.count || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    expected.delete(p.stock_id);
+    total += wanted.count * wanted.price;
+  }
+  if (expected.size || total !== order.materialsGrosze || confirmedMoney(basket.basket?.sum_products, basket.basket?.sum_products_float) !== total) throw Error("basket_not_confirmed");
+  const shipping = selectHomeDelivery(basket), checkedAt = /* @__PURE__ */ new Date();
+  const evidence = { products: basket.products.map((p) => ({ stock: p.stock_id, count: p.quantity, price: p.price_float })), shippings: basket.shippings, payments: basket.payments, countries: basket.countries };
+  return { quote: {
+    ...shipping,
+    checkedAt: checkedAt.toISOString(),
+    expiresAt: new Date(checkedAt.getTime() + TTL).toISOString(),
+    sourceUrl: `${origin}/pl/basket`,
+    basis: "retailer_basket_national",
+    destinationScope: "PL",
+    evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+  } };
+}
+function createRetailerQuoter(fetchImpl = fetch) {
+  const pages = createCheckoutPageReader();
+  const cache = /* @__PURE__ */ new Map();
+  let active = 0;
+  return async (order, postalCode) => {
+    if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
+    if (!ORIGINS[order.store] && !["Sewera", "Buduj24"].includes(order.store)) return { reason: ["Castorama", "OBI"].includes(order.store) ? "retailer_access_required" : "integration_unavailable" };
+    const key = JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
+    const cached2 = cache.get(key);
+    if (cached2 && cached2.until > Date.now()) return cached2.result;
+    if (active >= 3) return { reason: "quote_busy" };
+    if (cache.size >= 256) cache.delete(cache.keys().next().value);
+    active++;
+    const pending = (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : quoteShoper(order, fetchImpl)).catch((error40) => ({ reason: error40 instanceof Error && ["price_changed", "product_unavailable", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
+      active--;
+    });
+    cache.set(key, { until: Date.now() + TTL, result: pending });
+    const result = await pending;
+    if ("reason" in result && cache.get(key)?.result === pending) cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
+    return result;
+  };
+}
+
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/store-delivery.ts
+var STORE_DELIVERY_POLICIES = [
+  {
+    store: "Zino",
+    minimumGrosze: null,
+    checkedAt: null,
+    // source: https://sklep.zino.pl/pl/basket
+    sourceUrl: "https://sklep.zino.pl/pl/basket"
+  },
+  {
+    store: "Sewera",
+    minimumGrosze: 1990,
+    checkedAt: "2026-10-25T10:22:27.530Z",
+    // source: https://sklep.sewera.pl/warunki-i-koszty-dostaw
+    sourceUrl: "https://sklep.sewera.pl/warunki-i-koszty-dostaw"
+  },
+  {
+    store: "Rab-Dom",
+    minimumGrosze: 1799,
+    freeFromGrosze: 50001,
+    checkedAt: "2026-10-25T10:14:54.450Z",
+    // source: https://www.rabdom.pl/czas-i-koszt-dostawy
+    sourceUrl: "https://www.rabdom.pl/czas-i-koszt-dostawy"
+  },
+  {
+    store: "Buduj24",
+    minimumGrosze: 1500,
+    freeFromGrosze: 29900,
+    checkedAt: "2026-10-25T10:14:55.448Z",
+    // source: https://buduj24.pl/dostawa-i-platnosc
+    sourceUrl: "https://buduj24.pl/dostawa-i-platnosc"
+  },
+  {
+    store: "Realbud",
+    minimumGrosze: null,
+    checkedAt: "2026-10-25T10:14:55.052Z",
+    // source: https://realbud.com/koszty-transportu
+    sourceUrl: "https://realbud.com/koszty-transportu"
+  },
+  {
+    store: "Castorama",
+    minimumGrosze: null,
+    checkedAt: null,
+    // source: https://www.castorama.pl/informacje/zamow-z-dostawa
+    sourceUrl: "https://www.castorama.pl/informacje/zamow-z-dostawa"
+  },
+  {
+    store: "OBI",
+    minimumGrosze: null,
+    checkedAt: null,
+    // Delivery must be checked for this actual product and destination.
+    // source: https://www.obi.pl/p/6314371/farba-sniezka-barwy-natury-biala-5-l
+    sourceUrl: "https://www.obi.pl/p/6314371/farba-sniezka-barwy-natury-biala-5-l"
+  }
+];
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
@@ -20418,6 +20634,9 @@ function createRemontService(options = {}) {
   const errors = /* @__PURE__ */ new Map();
   const withdrawnAt = /* @__PURE__ */ new Map();
   let running = false;
+  let refreshPromise = null;
+  let refreshedAt = 0;
+  let refreshResult = { confirmedOfferIds: [], failedOfferIds: [] };
   let lastAttemptAt = null;
   const accept = (observation) => {
     if (!observation || typeof observation !== "object") return;
@@ -20497,34 +20716,47 @@ function createRemontService(options = {}) {
     };
     return { products, offers, deps };
   }
-  async function refresh() {
-    if (running) return;
+  function refresh() {
+    if (refreshPromise) return refreshPromise;
     running = true;
     lastAttemptAt = (/* @__PURE__ */ new Date()).toISOString();
-    try {
-      for (const source of RETAIL_SOURCES) {
-        try {
-          accept(await readRetailSource(source, options.fetchImpl));
-          errors.delete(source.id);
-        } catch (error40) {
-          const message = error40 instanceof Error ? error40.message : "retailer_read_failed";
-          errors.set(source.id, message);
-          if (message === "retailer_out_of_stock") withdrawnAt.set(source.id, (/* @__PURE__ */ new Date()).toISOString());
+    const confirmedOfferIds = [], failedOfferIds = [];
+    refreshPromise = (async () => {
+      try {
+        let cursor = 0;
+        await Promise.all(Array.from({ length: 3 }, async () => {
+          while (cursor < RETAIL_SOURCES.length) {
+            const source = RETAIL_SOURCES[cursor++];
+            try {
+              accept(await readRetailSource(source, options.fetchImpl));
+              errors.delete(source.id);
+              confirmedOfferIds.push(source.id);
+            } catch (error40) {
+              failedOfferIds.push(source.id);
+              const message = error40 instanceof Error ? error40.message : "retailer_read_failed";
+              errors.set(source.id, message);
+              if (message === "retailer_out_of_stock") withdrawnAt.set(source.id, (/* @__PURE__ */ new Date()).toISOString());
+            }
+          }
+        }));
+        if (options.cachePath) {
+          try {
+            (0, import_node_fs.mkdirSync)((0, import_node_path.dirname)(options.cachePath), { recursive: true });
+            (0, import_node_fs.writeFileSync)(`${options.cachePath}.tmp`, JSON.stringify({ version: 2, observations: [...observations.values()], withdrawnAt: Object.fromEntries(withdrawnAt) }));
+            (0, import_node_fs.renameSync)(`${options.cachePath}.tmp`, options.cachePath);
+            errors.delete("cache");
+          } catch {
+            errors.set("cache", "cache_write_failed");
+          }
         }
+      } finally {
+        running = false;
+        refreshedAt = Date.now();
+        refreshResult = { confirmedOfferIds, failedOfferIds };
+        refreshPromise = null;
       }
-      if (options.cachePath) {
-        try {
-          (0, import_node_fs.mkdirSync)((0, import_node_path.dirname)(options.cachePath), { recursive: true });
-          (0, import_node_fs.writeFileSync)(`${options.cachePath}.tmp`, JSON.stringify({ version: 2, observations: [...observations.values()], withdrawnAt: Object.fromEntries(withdrawnAt) }));
-          (0, import_node_fs.renameSync)(`${options.cachePath}.tmp`, options.cachePath);
-          errors.delete("cache");
-        } catch {
-          errors.set("cache", "cache_write_failed");
-        }
-      }
-    } finally {
-      running = false;
-    }
+    })();
+    return refreshPromise;
   }
   function status() {
     const { offers } = catalog();
@@ -20537,7 +20769,13 @@ function createRemontService(options = {}) {
       running,
       lastAttemptAt,
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
-      delivery: { automaticStores: ["Rab-Dom", "Realbud", "Zino"], basis: "retailer_basket_national", country: "PL", quoteTtlSeconds: 600 },
+      delivery: {
+        automaticStores: ["Rab-Dom", "Realbud", "Zino", "Sewera", "Buduj24"],
+        country: "PL",
+        quoteTtlSeconds: 600,
+        postcodeStores: ["Sewera"],
+        accessRequiredStores: ["Castorama", "OBI"]
+      },
       sources: RETAIL_SOURCES.map((source) => ({
         id: source.id,
         store: source.store,
@@ -20570,6 +20808,17 @@ function createRemontService(options = {}) {
       }
     }
     try {
+      let priceRefresh;
+      if (parsed.data.options?.refreshPrices) {
+        const recent = !running && Date.now() - refreshedAt < 6e4;
+        if (!recent) await refresh();
+        priceRefresh = {
+          status: recent ? "recent" : "updated",
+          checkedAt: lastAttemptAt,
+          ...refreshResult,
+          retryAfterSeconds: Math.max(0, Math.ceil((refreshedAt + 6e4 - Date.now()) / 1e3))
+        };
+      }
       const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog().deps);
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
@@ -20577,12 +20826,13 @@ function createRemontService(options = {}) {
       const deliveryComparison = stageOnly ? void 0 : await compareAutomaticDelivery(
         estimate.stages,
         parsed.data.options?.delivery ?? { mode: "shipping" },
-        (order, postalCode) => Date.now() < deadline ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
+        (order, postalCode) => Date.now() < deadline || ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
         STORE_DELIVERY_POLICIES
       );
       res.json(stageOnly ? serialized.stages[0] : {
         ...serialized,
         coverage: status(),
+        priceRefresh,
         deliveryComparison
       });
     } catch {
