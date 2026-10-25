@@ -28,6 +28,8 @@ export default function KartaFirmyScreen({ route, navigation }) {
   const styles = useStyle(tworzStyleKarty);
   const { user, setUser } = useAuth();
   const [krok, setKrok] = useState(Math.min(5, Math.max(1, Number(route?.params?.krok) || 1)));
+  // Wejście zaraz po ekranie powitalnym (lib/onboarding.js): po zapisie albo pominięciu idziemy na listę, nie „wstecz".
+  const poStarcie = Boolean(route?.params?.poStarcie);
   const [form, setForm] = useState(null);
   const [uproszczony, setUproszczony] = useState(false);
   const [blad, setBlad] = useState(null);
@@ -127,7 +129,7 @@ export default function KartaFirmyScreen({ route, navigation }) {
         : await api.zapiszKarteFirmy(karta);
       // Odpowiedź niesie świeżego użytkownika — bez drugiego żądania, które mogłoby się nie udać po udanym zapisie.
       if (d?.user) setUser?.(d.user);
-      navigation.goBack();
+      if (poStarcie) navigation.replace('MatchFeed'); else navigation.goBack();
     } catch (err) {
       setBlad(err.message);
     } finally {
@@ -153,6 +155,11 @@ export default function KartaFirmyScreen({ route, navigation }) {
       {uproszczony ? (
         <Text style={styles.uwaga}>
           {t('Część karty jest chwilowo niedostępna. Możesz zmienić zakres, teren i największą kwotę.', 'Part of the card is temporarily unavailable. You can change scope, area and the largest value.')}
+        </Text>
+      ) : null}
+      {poStarcie ? (
+        <Text style={styles.uwaga}>
+          {t('Jeszcze minuta: NIP, teren i kwoty — selekcja przetargów będzie trafniejsza. Każdy krok możesz pominąć.', 'One more minute: tax ID, area and contract sizes — tender selection gets more accurate. You can skip any step.')}
         </Text>
       ) : null}
       <Text style={styles.licznik}>{t(`Krok ${pozycja + 1} z ${kroki.length}`, `Step ${pozycja + 1} of ${kroki.length}`)}</Text>
@@ -230,6 +237,7 @@ export default function KartaFirmyScreen({ route, navigation }) {
         onPress={zapisz}
         style={styles.zapisz}
       />
+      {poStarcie ? <Button title={t('Pomiń, pokaż przetargi', 'Skip, show tenders')} variant="ghost" onPress={() => navigation.replace('MatchFeed')} /> : null}
     </Screen>
   );
 }

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { StackRouter } from '@react-navigation/routers';
 import {
+  celPoOnboardingu,
+  PARAMY_KARTY_PO_STARCIE,
   profilPusty, czyPokazacOnboarding, trasaStartowa, kluczNawigatora,
 } from '../src/lib/onboarding.js';
 
@@ -103,4 +105,12 @@ test('wylogowanie: ekran logowania, stos zalogowanego znika', () => {
 test('RootNavigator: Stack.Navigator dostaje klucz sesji', () => {
   const zrodlo = readFileSync(new URL('../src/navigation/RootNavigator.js', import.meta.url), 'utf8');
   assert.match(zrodlo, /<Stack\.Navigator\s[^>]*key=\{kluczNawigatora\(user\)\}/);
+});
+
+test('celPoOnboardingu: zapis profilu prowadzi do Karty firmy (krok 1, poStarcie), „pomiń" prosto na listę', () => {
+  assert.deepEqual(celPoOnboardingu(false), { trasa: 'KartaFirmy', params: { krok: 1, poStarcie: true } });
+  assert.deepEqual(celPoOnboardingu(true), { trasa: 'MatchFeed' });
+  assert.ok(Object.isFrozen(PARAMY_KARTY_PO_STARCIE));
+  const nawigator = readFileSync(new URL('../src/navigation/RootNavigator.js', import.meta.url), 'utf8');
+  for (const trasa of ['KartaFirmy', 'MatchFeed']) assert.ok(nawigator.includes(`name="${trasa}"`), `trasa ${trasa} istnieje`);
 });

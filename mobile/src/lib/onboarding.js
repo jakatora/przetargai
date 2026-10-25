@@ -46,6 +46,22 @@ export function trasaStartowa(user, pokazOnboarding) {
 }
 
 /**
+ * Dokąd po zapisaniu profilu na ekranie powitalnym (2026-10-25, spec pracownika §3.3):
+ * do Karty firmy, nie od razu na listę. Słowa i CPV to za mało, żeby selekcja była
+ * trafna — teren, kwoty i NIP (nazwa + województwo z Białej listy) robią różnicę,
+ * a nowe konto ma 7-dniową próbę Standard, więc opłaca się dać kartę od razu.
+ * „Pomiń" na ekranie powitalnym dalej prowadzi prosto na listę.
+ *
+ * @param {boolean} pominieto użytkownik wybrał „Pomiń na razie"
+ * @returns {{trasa: string, params?: object}}
+ */
+export const PARAMY_KARTY_PO_STARCIE = Object.freeze({ krok: 1, poStarcie: true });
+
+export function celPoOnboardingu(pominieto) {
+  return pominieto ? { trasa: 'MatchFeed' } : { trasa: 'KartaFirmy', params: PARAMY_KARTY_PO_STARCIE };
+}
+
+/**
  * Klucz nawigatora = tożsamość sesji (audyt 2026-09-29).
  *
  * React Navigation tworzy router RAZ, z `initialRouteName` z chwili montażu. Dla gościa

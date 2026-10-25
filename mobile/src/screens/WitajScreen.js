@@ -8,6 +8,7 @@ import Button from '../components/Button';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
+import { celPoOnboardingu } from '../lib/onboarding';
 
 /**
  * Ekran powitalny (first-run onboarding). Pokazywany, gdy zalogowany użytkownik ma
@@ -87,7 +88,9 @@ export default function WitajScreen({ navigation }) {
     try {
       const data = await api.updateProfile({ keywords: kw, cpv_codes: cp });
       setUser(data.user); // profil niepusty → onboarding już się nie pokaże
-      idzDoFeeda();
+      // Dalej do Karty firmy (NIP, teren, kwoty) — reguła w lib/onboarding.js; „Pomiń" idzie prosto na listę.
+      const cel = celPoOnboardingu(false);
+      navigation.replace(cel.trasa, cel.params);
     } catch (err) {
       setInfo(err.message);
     } finally {
