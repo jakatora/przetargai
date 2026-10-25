@@ -89,13 +89,13 @@ function is(value, type) {
       `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`
     );
   }
-  let cls2 = Object.getPrototypeOf(value).constructor;
-  if (cls2) {
-    while (cls2) {
-      if (entityKind in cls2 && cls2[entityKind] === type[entityKind]) {
+  let cls3 = Object.getPrototypeOf(value).constructor;
+  if (cls3) {
+    while (cls3) {
+      if (entityKind in cls3 && cls3[entityKind] === type[entityKind]) {
         return true;
       }
-      cls2 = Object.getPrototypeOf(cls2);
+      cls3 = Object.getPrototypeOf(cls3);
     }
   }
   return false;
@@ -6590,7 +6590,7 @@ function az_default() {
 }
 
 // D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count, one3, few, many) {
+function getBelarusianPlural(count, one4, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -6598,7 +6598,7 @@ function getBelarusianPlural(count, one3, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one3;
+    return one4;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -9736,7 +9736,7 @@ function pt_default() {
 }
 
 // D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count, one3, few, many) {
+function getRussianPlural(count, one4, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -9744,7 +9744,7 @@ function getRussianPlural(count, one3, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one3;
+    return one4;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -13814,17 +13814,17 @@ function superRefine(fn) {
   });
   return ch;
 }
-function _instanceof(cls2, params = {
-  error: `Input not instance of ${cls2.name}`
+function _instanceof(cls3, params = {
+  error: `Input not instance of ${cls3.name}`
 }) {
   const inst = new ZodCustom({
     type: "custom",
     check: "custom",
-    fn: (data) => data instanceof cls2,
+    fn: (data) => data instanceof cls3,
     abort: true,
     ...util_exports.normalizeParams(params)
   });
-  inst._zod.bag.Class = cls2;
+  inst._zod.bag.Class = cls3;
   return inst;
 }
 var stringbool = (...args) => _stringbool({
@@ -19201,9 +19201,9 @@ var ZodFirstPartyTypeKind;
   ZodFirstPartyTypeKind2["ZodPipeline"] = "ZodPipeline";
   ZodFirstPartyTypeKind2["ZodReadonly"] = "ZodReadonly";
 })(ZodFirstPartyTypeKind || (ZodFirstPartyTypeKind = {}));
-var instanceOfType = (cls2, params = {
-  message: `Input not instance of ${cls2.name}`
-}) => custom2((data) => data instanceof cls2, params);
+var instanceOfType = (cls3, params = {
+  message: `Input not instance of ${cls3.name}`
+}) => custom2((data) => data instanceof cls3, params);
 var stringType = ZodString2.create;
 var numberType = ZodNumber2.create;
 var nanType = ZodNaN2.create;
@@ -20452,9 +20452,10 @@ var RETAIL_SOURCES = [
     "url": "https://cezar.eu/products/profil-do-glazury-narozny-aluminiowy-8mm-cezar-tytan-szczotkowany-mat-2-5m"
   },
   // source: https://rodimax.pl/P%C5%82yta-gipsowa-zwyk%C5%82a-Norgips-1200-x-2600-x-12%2C5-mm-3%2C12-m2.html
-  { "id": "rodimax-board-gkb", "ean": "5907651690442", "name": "P\u0142yta gipsowa zwyk\u0142a Norgips 1200 x 2600 x 12,5 mm 3,12 m2", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/P%C5%82yta-gipsowa-zwyk%C5%82a-Norgips-1200-x-2600-x-12%2C5-mm-3%2C12-m2.html", "brand": "Norgips", "format": "rodimax" },
+  // source: https://rodimax.pl/ (service unavailable notice); cart action in /js/main.min.js only opens a demo popup, checked 2026-10-25.
+  { "id": "rodimax-board-gkb", "ean": "5907651690442", "name": "P\u0142yta gipsowa zwyk\u0142a Norgips 1200 x 2600 x 12,5 mm 3,12 m2", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/P%C5%82yta-gipsowa-zwyk%C5%82a-Norgips-1200-x-2600-x-12%2C5-mm-3%2C12-m2.html", "brand": "Norgips", "format": "rodimax", "disabledReason": "retailer_checkout_unconfirmed" },
   // source: https://rodimax.pl/Podk%C5%82ad-pod-panele-Arbiton-XPS-Smart-Aquastop-Thermo-1%2C6-mm-6-m2.html
-  { "id": "rodimax-arbiton-aquastop-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele Arbiton XPS Smart Aquastop Thermo 1,6 mm 6 m2", "category": "underlay", "packageSize": 6, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/Podk%C5%82ad-pod-panele-Arbiton-XPS-Smart-Aquastop-Thermo-1%2C6-mm-6-m2.html", "brand": "Arbiton", "format": "rodimax" },
+  { "id": "rodimax-arbiton-aquastop-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele Arbiton XPS Smart Aquastop Thermo 1,6 mm 6 m2", "category": "underlay", "packageSize": 6, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/Podk%C5%82ad-pod-panele-Arbiton-XPS-Smart-Aquastop-Thermo-1%2C6-mm-6-m2.html", "brand": "Arbiton", "format": "rodimax", "disabledReason": "retailer_checkout_unconfirmed" },
   // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-wewnetrzny/3089
   { "id": "winbud-mapei-corner-internal", "ean": "8022452113802", "name": "Mapei Mapeband W - naro\u017Cnik wewn\u0119trzny", "category": "sealing-corner", "packageSize": 1, "unit": "szt", "store": "WinBud", "url": "https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-wewnetrzny/3089", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_2b7ab43567ae0046ace4d10d419a36f5_500_500.jpg", "brand": "Mapei", "format": "shoper-api", "productId": 3089, "apiPurchaseUnit": "szt.", "variant": ["wewn\u0119trzny"] },
   // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-zewnetrzny/3090
@@ -20476,9 +20477,32 @@ var RETAIL_SOURCES = [
   // source: https://www.abud.pl/product-pol-64835-Kolanko-zaciskowe-PEX-16x16mm-Tycner.html
   { "id": "abud-pex-elbow-16x16", "ean": "5901095521003", "name": "Kolanko zaciskowe PEX 16x16mm Tycner", "category": "fitting", "packageSize": 1, "unit": "szt", "store": "ABUD", "url": "https://www.abud.pl/product-pol-64835-Kolanko-zaciskowe-PEX-16x16mm-Tycner.html", "imageUrl": "https://mrowka.com.pl/files/InfoverProduct/vu/t7atm0ht029g/Photos/cumrci10no4fac/ShowWebp_kolanko-zaciskowe-pex-16x16-mm-tycner_1.webp", "brand": "Tycner", "format": "idosell", "productId": 64835, "apiPurchaseUnit": "szt.", "variant": ["16x16mm"] },
   // source: https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html
-  { "id": "fixero-graphite-mesh-10", "ean": "5902062502735", "name": "Siatka \u015Bcierna na rzep, 225 mm, K180, do szlifierki 59G260, 59G264, 59G265, 10 szt. 55H746", "category": "abrasive", "packageSize": 10, "unit": "szt", "store": "Fixero", "url": "https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html", "imageUrl": "https://fixero.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/5/1596484200_55H746__BGH_TGL_U90.jpg", "brand": "Graphite", "format": "fixero", "productId": 1956, "variant": ["225mm", "K180", "10szt", "55H746"] }
+  { "id": "fixero-graphite-mesh-10", "ean": "5902062502735", "name": "Siatka \u015Bcierna na rzep, 225 mm, K180, do szlifierki 59G260, 59G264, 59G265, 10 szt. 55H746", "category": "abrasive", "packageSize": 10, "unit": "szt", "store": "Fixero", "url": "https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html", "imageUrl": "https://fixero.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/5/1596484200_55H746__BGH_TGL_U90.jpg", "brand": "Graphite", "format": "fixero", "productId": 1956, "variant": ["225mm", "K180", "10szt", "55H746"] },
+  // source: https://listwy.sklep.pl/pl/p/Klips-montazowy-z-podkladka-dystansowa-do-montazu-listew-1opak25szt-MASTER-LINE-CEZAR/687
+  { "id": "kelot-clips-25", "ean": "5907684672217", "name": "Klips monta\u017Cowy z podk\u0142adk\u0105 dystansow\u0105 do monta\u017Cu listew 1opak=25szt  MASTER LINE CEZAR", "category": "skirting-clip", "packageSize": 25, "unit": "szt", "store": "KELOT", "url": "https://listwy.sklep.pl/pl/p/Klips-montazowy-z-podkladka-dystansowa-do-montazu-listew-1opak25szt-MASTER-LINE-CEZAR/687", "imageUrl": "https://listwy.sklep.pl/environment/cache/images/productGfx_3487_500_500/klips-do-montowania-listew-przypodlogowych.jpg", "brand": "Cezar", "format": "shoper-api", "productId": 687, "apiPurchaseUnit": "szt.", "variant": ["25szt"] },
+  // source: https://liderzycen.pl/pl/p/Kliny-montazowe-Floorpol-30-x-150-mm-10-szt./31651
+  { "id": "liderzy-wedges-10", "ean": "5907508719289", "name": "Kliny monta\u017Cowe Floorpol 30 x 150 mm 10 szt.", "category": "mounting-wedge", "packageSize": 10, "unit": "szt", "store": "LiderzyCen", "url": "https://liderzycen.pl/pl/p/Kliny-montazowe-Floorpol-30-x-150-mm-10-szt./31651", "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52309_500_500/8fc1fd3c8fa7d0b098f9b17c9b091da3.jpg", "brand": "Floorpol", "format": "shoper-api", "productId": 31651, "apiPurchaseUnit": "szt.", "variant": ["30x150mm", "10szt"] },
+  // source: https://tgs.pl/pl/p/Ferro-Stillo-bateria-umywalkowa-stojaca-chrom/44
+  { "id": "tgs-ferro-stillo", "ean": "5902194929837", "name": "Ferro Stillo bateria umywalkowa stoj\u0105ca chrom", "category": "faucet", "packageSize": 1, "unit": "szt", "store": "TGS", "url": "https://tgs.pl/pl/p/Ferro-Stillo-bateria-umywalkowa-stojaca-chrom/44", "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_56358_500_500/Ferro-Stillo-bateria-umywalkowa-stojaca-chrom.jpg", "brand": "Ferro", "format": "shoper-api", "productId": 44, "apiPurchaseUnit": "szt.", "variant": ["Stillo", "chrom"] },
+  // source: https://cezar.eu/products/listwa-progowa-owalna-aluminiowa-szeroka-40mm-cezar-srebrny-mat-1m
+  { "id": "cezar-threshold-40mm-1m", "ean": "5904584845215", "name": "Profil progowy aluminiowy owalny szeroki 40mm Cezar Srebrny Mat 1m", "category": "threshold", "packageSize": 1, "unit": "szt", "store": "Cezar", "url": "https://cezar.eu/products/listwa-progowa-owalna-aluminiowa-szeroka-40mm-cezar-srebrny-mat-1m", "imageUrl": "https://cezar.eu/cdn/shop/files/c505b58a71683c0e135cf53f166408a7.webp?v=1769675117", "brand": "Cezar", "format": "shopify-api", "productId": 10292397769045, "variantId": 52008642773333, "variant": ["40mm", "srebrny", "1m"] },
+  // source: https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html
+  { "id": "unimet-corner-mesh-25m", "ean": "5900308102411", "name": "NARO\u017BNIK ALUMINIOWY Z SIATK\u0104 70*70 - 250CM", "category": "plaster-corner", "packageSize": 2.5, "unit": "mb", "store": "Unimet", "url": "https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html", "imageUrl": "https://www.unimet.pl/2006367-large_default/naroznik-aluminiowy-z-siatka-7070-250cm.webp", "brand": "Budmat", "format": "unimet", "variant": ["250cm"] },
+  // source: https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383
+  { "id": "krasny-goldband-25kg", "ean": "5902367206383", "name": "GIPS GOLDBAND 25 Gips tynkarski GOLDBAND 25kg", "category": "plaster", "packageSize": 25, "unit": "kg", "store": "Krasny", "url": "https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383", "imageUrl": "https://static.krasny.pl/59/02/36/72/06/38/3/0/SMALL_100.webp?hash=d61d71b4ff1c4592683b9ceecda29fca", "brand": "Knauf", "format": "jsonld" },
+  // source: https://domat24.pl/produkt/plyta-gipsowa-gkbi-12-5-12002600-zielona/
+  { "id": "domat-board-gkbi", "ean": "5907651691616", "name": "P\u0142yta gipsowa GKBI 12.5 1200*2600 ZIELONA", "brand": "Norgips", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Domat", "url": "https://domat24.pl/produkt/plyta-gipsowa-gkbi-12-5-12002600-zielona/", "format": "woocommerce", "productId": 29071, "variant": ["GKBI", "12.5", "1200", "2600"] },
+  // source: https://domat24.pl/produkt/plyta-gipsowa-gkb-12-5-12002600-biala/
+  { "id": "domat-board-gkb", "ean": "5907651690442", "name": "P\u0142yta gipsowa GKB 12.5 1200*2600 BIA\u0141A", "brand": "Norgips", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Domat", "url": "https://domat24.pl/produkt/plyta-gipsowa-gkb-12-5-12002600-biala/", "format": "woocommerce", "productId": 29078, "variant": ["GKB", "12.5", "1200", "2600"] }
 ];
 var RETAIL_NAME_ALIASES = {
+  "P\u0142yta gipsowo-kartonowa impregnowana Norgips GKBI typ H2 1200\xD72600\xD712,5 mm": "5907651691616",
+  "Klipsy monta\u017Cowe do listew Cezar (25 szt.)": "5907684672217",
+  "Kliny monta\u017Cowe Floorpol 30 x 150 mm, 10 szt. (drewno)": "5907508719289",
+  "Bateria umywalkowa stoj\u0105ca Ferro Stillo (chrom, BSL2)": "5902194929837",
+  "Profil progowy aluminiowy Cezar 40 mm srebrny 1 m": "5904584845215",
+  "Naro\u017Cnik tynkarski aluminiowy z siatk\u0105 2,5 mb": "5900308102411",
+  "Tynk gipsowy r\u0119czny Knauf Goldband 25 kg": "5902367206383",
   "P\u0142yta gipsowo-kartonowa zwyk\u0142a Norgips GKB typ A 1200\xD72600\xD712,5 mm": "5907651690442",
   "Podk\u0142ad Arbiton XPS Smart Aquastop Thermo 1,6 mm (6 m\xB2)": "5905167826942",
   "Naro\u017Cnik uszczelniaj\u0105cy wewn\u0119trzny Mapei Mapeband W (90\xB0)": "8022452113802",
@@ -20532,6 +20556,13 @@ var RETAIL_NAME_ALIASES = {
   "Profil naro\u017Cny do glazury Cezar aluminiowy 8 mm, tytan szczotkowany mat, 2,5 m": "5904584853500"
 };
 
+// D:/projekty/remont_assistance/lib/pricing-service/src/delivery-limits.ts
+var DELIVERY_LIMITS = {
+  products: 200,
+  stores: 64,
+  packagesPerProduct: 1e4
+};
+
 // D:/projekty/remont_assistance/lib/pricing-service/src/delivery.ts
 function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, policies = [], now = /* @__PURE__ */ new Date()) {
   const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
@@ -20571,14 +20602,14 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
     return result;
   }
   if (!groups.length) return result;
-  if (names.length > 10 || groups.length > 50) {
+  if (settings.mode === "pickup" ? names.length > DELIVERY_LIMITS.stores || groups.length > DELIVERY_LIMITS.products : names.length > 10 || groups.length > 50) {
     result.status = "limit_exceeded";
     return result;
   }
   const candidates = /* @__PURE__ */ new Map();
   const cached2 = groups.map(() => /* @__PURE__ */ new Map());
-  for (let mask = 1; mask < 2 ** names.length; mask++) {
-    const selected = names.filter((_, index2) => mask & 2 ** index2);
+  const selectedSets = settings.mode === "pickup" ? [names] : Array.from({ length: 2 ** names.length - 1 }, (_, index2) => names.filter((_store, bit2) => index2 + 1 & 2 ** bit2));
+  for (const selected of selectedSets) {
     const orders = /* @__PURE__ */ new Map();
     let valid = true;
     for (let index2 = 0; index2 < groups.length; index2++) {
@@ -20655,6 +20686,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
 // D:/projekty/remont_assistance/lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
+var MAX_PROPOSED = 256;
 var signature = (order) => order.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}:${pack.unitPriceGrosze}`)).sort().join("|");
 async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
@@ -20694,7 +20726,9 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     result.status = "limit_exceeded";
     return result;
   };
-  if (groups.length > 20 || stores.length > 10) return tooLarge();
+  const activeStores = [...new Set(groups.flatMap((group) => group.offers.filter((offer) => isComparableOffer(offer, now.getTime())).map((offer) => offer.store)))].sort();
+  if (groups.length > DELIVERY_LIMITS.products || activeStores.length > DELIVERY_LIMITS.stores) return tooLarge();
+  if (groups.length > 20 || activeStores.length > 10) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
   const choices = [];
   let candidateCount = 1;
   for (const group of groups) {
@@ -20702,7 +20736,8 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     const sizes = offers.map((o) => Number(o.packageSize ?? group.product.packageSize));
     if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return tooLarge();
     const count = Math.ceil(group.totalQuantity / sizes[0]);
-    if (!Number.isSafeInteger(count) || count > 60) return tooLarge();
+    if (!Number.isSafeInteger(count) || count > DELIVERY_LIMITS.packagesPerProduct) return tooLarge();
+    if (count > 60) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
     const variants = [];
     const visit = (index2, remaining, packs) => {
       if (variants.length > MAX_CANDIDATES) return;
@@ -20719,7 +20754,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     visit(0, count, []);
     candidateCount *= variants.length;
     if (!variants.length) return tooLarge();
-    if (candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now);
+    if (candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
     choices.push(variants);
   }
   const candidates = [], unique = /* @__PURE__ */ new Map();
@@ -20749,7 +20784,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     candidates.push(actual);
   }
   enumerate(0, []);
-  if (unique.size > MAX_STORE_BASKETS) return compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now);
+  if (unique.size > MAX_STORE_BASKETS) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
   return quoteAndRank(candidates, unique, result, settings, quoteBasket, now);
 }
 async function compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now) {
@@ -20758,7 +20793,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     const sizes = offers.map((offer) => Number(offer.packageSize ?? group.product.packageSize));
     if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return null;
     const count = Math.ceil(group.totalQuantity / sizes[0]);
-    if (!Number.isSafeInteger(count) || count < 1 || count > 60) return null;
+    if (!Number.isSafeInteger(count) || count < 1 || count > DELIVERY_LIMITS.packagesPerProduct) return null;
     return offers.flatMap((offer) => {
       const price = parsePriceToGrosze(offer.promoPrice ?? offer.price);
       return price === null || price <= 0 || !Number.isSafeInteger(price * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count, unitPriceGrosze: price, lineCostGrosze: count * price }];
@@ -20772,6 +20807,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
   const wholePlans = /* @__PURE__ */ new Set();
   const basePlans = /* @__PURE__ */ new Map();
   function addPlan(selected, split) {
+    if (proposed.size >= MAX_PROPOSED) return;
     const orders = /* @__PURE__ */ new Map();
     for (let i = 0; i < groups.length; i++) {
       const group = groups[i];
@@ -20790,15 +20826,30 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     proposed.set(key, actual);
     if (!split) wholePlans.add(key);
   }
-  for (let subset = 1; subset < 1 << stores.length; subset++) {
-    const allowed = new Set(stores.filter((_store, index2) => subset & 1 << index2));
-    const selected = options.map((option) => option.filter((pack) => allowed.has(pack.store)).sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId))[0]);
+  const orderedOptions = options.map((option) => option.sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId)));
+  function addBase(selected) {
+    if (selected.some((pack) => !pack)) return;
+    const complete = selected;
+    basePlans.set(complete.map((pack) => pack.offerId).join("|"), complete);
+    addPlan(complete);
+  }
+  for (const store of stores) addBase(orderedOptions.map((option) => option.find((pack) => pack.store === store)));
+  addBase(orderedOptions.map((option) => option[0]));
+  for (const store of stores) addBase(orderedOptions.map((option) => option.find((pack) => pack.store === store) ?? option[0]));
+  const subsets = [];
+  if (stores.length <= 10) {
+    for (let subset = 1; subset < 2 ** stores.length; subset++) subsets.push(new Set(stores.filter((_store, index2) => subset & 2 ** index2)));
+  } else {
+    for (let first = 0; first < stores.length; first++) for (let second = first + 1; second < stores.length; second++) subsets.push(/* @__PURE__ */ new Set([stores[first], stores[second]]));
+  }
+  for (const allowed of subsets) {
+    const selected = orderedOptions.map((option) => option.find((pack) => allowed.has(pack.store)));
     if (selected.some((pack) => !pack)) continue;
-    basePlans.set(selected.map((pack) => pack.offerId).join("|"), selected);
-    addPlan(selected);
+    addBase(selected);
   }
   const seeds = [...basePlans.values()].sort((a, b) => a.reduce((sum2, p) => sum2 + p.lineCostGrosze, 0) - b.reduce((sum2, p) => sum2 + p.lineCostGrosze, 0)).slice(0, 24);
-  for (const seed of seeds) for (let index2 = 0; index2 < options.length; index2++) for (const alternative of options[index2]) {
+  expandPlans: for (const seed of seeds) for (let index2 = 0; index2 < options.length; index2++) for (const alternative of options[index2]) {
+    if (proposed.size >= MAX_PROPOSED) break expandPlans;
     if (alternative.offerId === seed[index2].offerId) continue;
     const changed = [...seed];
     changed[index2] = alternative;
@@ -20814,16 +20865,25 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
   }
   const sum = (orders) => orders.reduce((total, order) => total + order.materialsGrosze, 0);
   const ordered = [...proposed.values()].sort((a, b) => Number(b.length === 1) - Number(a.length === 1) || sum(a) - sum(b));
-  const whole = ordered.filter((orders) => wholePlans.has(orders.map(signature).join(";"))).slice(0, 16);
-  const splits = ordered.filter((orders) => !wholePlans.has(orders.map(signature).join(";"))).slice(0, 24 - whole.length);
-  const selectedOrders = [...whole, ...splits];
+  const single = ordered.filter((orders) => orders.length === 1);
+  const wholeOptions = ordered.filter((orders) => orders.length > 1 && wholePlans.has(orders.map(signature).join(";")));
+  const fewerOrders = [...wholeOptions].sort((a, b) => a.length - b.length || sum(a) - sum(b));
+  const cheaperMaterials = [...wholeOptions].sort((a, b) => sum(a) - sum(b));
+  const diverse = /* @__PURE__ */ new Map();
+  for (const plan of [...fewerOrders.slice(0, 8), ...cheaperMaterials.slice(0, 8), ...fewerOrders, ...cheaperMaterials]) {
+    diverse.set(plan.map(signature).join(";"), plan);
+    if (diverse.size >= 16) break;
+  }
+  const whole = [...diverse.values()];
+  const splits = ordered.filter((orders) => !wholePlans.has(orders.map(signature).join(";"))).slice(0, 8);
+  const selectedOrders = [...single, ...whole, ...splits];
   const unique = /* @__PURE__ */ new Map(), candidates = [];
   for (const orders of selectedOrders) {
     const additional = orders.filter((order) => !unique.has(signature(order))).length;
     if (unique.size + additional > MAX_STORE_BASKETS) continue;
     candidates.push(orders);
     orders.forEach((order) => unique.set(signature(order), order));
-    if (candidates.length >= 24) break;
+    if (candidates.length >= MAX_STORE_BASKETS) break;
   }
   result.searchLimited = true;
   if (!candidates.length) {
@@ -20837,7 +20897,8 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   const ordered = [...unique.entries()].sort((a, b) => b[1].lines.length - a[1].lines.length || b[1].materialsGrosze - a[1].materialsGrosze);
   const first = /* @__PURE__ */ new Map();
   for (const [key, order] of ordered) if (!first.has(order.store)) first.set(order.store, key);
-  const priority = new Set(first.values());
+  const priority = new Set(candidates.slice(0, 3).flatMap((orders) => orders.map(signature)));
+  for (const key of first.values()) priority.add(key);
   const smallest = /* @__PURE__ */ new Map();
   for (const [key, order] of [...ordered].reverse()) if (!smallest.has(order.store)) smallest.set(order.store, key);
   for (const key of smallest.values()) priority.add(key);
@@ -20886,28 +20947,44 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
 }
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto4 = require("node:crypto");
+var import_node_crypto5 = require("node:crypto");
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-http.ts
+var MAX_RETAIL_PACKAGES = DELIVERY_LIMITS.packagesPerProduct;
+function retailerRequestBudget(productCount) {
+  if (!Number.isSafeInteger(productCount) || productCount < 1 || productCount > DELIVERY_LIMITS.products) throw Error("invalid_basket");
+  return Math.min(1e3, (productCount * 2 + 10) * 4);
+}
 var AnonymousShop = class {
-  constructor(origin, fetchImpl, signal) {
+  constructor(origin, fetchImpl, signal, maxCalls = 30) {
     this.origin = origin;
     this.fetchImpl = fetchImpl;
     this.signal = signal;
+    this.maxCalls = maxCalls;
   }
   cookies = /* @__PURE__ */ new Map();
   calls = 0;
+  storeCartToken = null;
   async json(path, body) {
     return JSON.parse(await this.read(path, body ? JSON.stringify(body) : void 0, true));
   }
   async text(path, form) {
     return this.read(path, form ? new URLSearchParams(form).toString() : void 0, false);
   }
-  async read(path, payload, json3) {
+  /** WooCommerce anonymous-cart token stays private to this one shop session.
+   * Only the reviewed cart/read and add-item routes are allowed, never checkout. */
+  async cartJson(path, body) {
+    if (!["/wp-json/wc/store/v1/cart", "/wp-json/wc/store/v1/cart/add-item"].includes(path)) throw Error("invalid_cart_route");
+    if (body && !this.storeCartToken) throw Error("cart_session_not_confirmed");
+    const raw = await this.read(path, body ? JSON.stringify(body) : void 0, true, true);
+    if (!this.storeCartToken) throw Error("cart_session_not_confirmed");
+    return JSON.parse(raw);
+  }
+  async read(path, payload, json3, storeCart = false) {
     let url2 = new URL(path, this.origin), method = payload ? "POST" : "GET";
     for (let i = 0; i < 4; i++) {
       if (url2.origin !== this.origin) throw Error("invalid_redirect");
-      if (++this.calls > 30) throw Error("request_limit");
+      if (++this.calls > this.maxCalls) throw Error("request_limit");
       const cookie = [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; ");
       if (cookie.length > 8192 || this.cookies.size > 64) throw Error("invalid_cookie_size");
       const r = await this.fetchImpl(url2, {
@@ -20919,7 +20996,8 @@ var AnonymousShop = class {
           "User-Agent": "AsystentRemontu/1.0",
           Accept: json3 ? "application/json" : "text/html, application/json",
           Cookie: cookie,
-          ...payload ? { "Content-Type": "application/x-www-form-urlencoded" } : {}
+          ...storeCart && this.storeCartToken ? { "Cart-Token": this.storeCartToken } : {},
+          ...payload ? { "Content-Type": storeCart ? "application/json" : "application/x-www-form-urlencoded" } : {}
         }
       });
       for (const entry of r.headers.getSetCookie()) {
@@ -20945,6 +21023,16 @@ var AnonymousShop = class {
         await r.body?.cancel();
         throw Error("invalid_response");
       }
+      if (storeCart) {
+        const token = r.headers.get("Cart-Token");
+        if (token) {
+          if (token.length > 4096 || !/^[A-Za-z0-9._~-]+$/.test(token)) {
+            await r.body?.cancel();
+            throw Error("invalid_cart_session");
+          }
+          this.storeCartToken = token;
+        }
+      }
       const reader = r.body?.getReader();
       if (!reader) throw Error("invalid_response");
       const chunks = [];
@@ -20968,10 +21056,10 @@ var AnonymousShop = class {
 };
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
-var import_node_crypto2 = require("node:crypto");
+var import_node_crypto3 = require("node:crypto");
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
-var import_node_crypto = require("node:crypto");
+var import_node_crypto2 = require("node:crypto");
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-microdata.ts
 var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
@@ -21022,7 +21110,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
   const product = one(elements(safe, (a) => /\/Product$/.test(a.itemtype ?? "")), "microdata_product_ambiguous");
   const offer = one(elements(product, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "microdata_offer_ambiguous");
   const price = property(offer, "price");
-  const currency = property(offer, "priceCurrency");
+  const currency2 = property(offer, "priceCurrency");
   const name = format === "unimet" ? text2(one(elements(product, (a, tag) => a.itemprop === "name" && tag === "h1"), "microdata_name_ambiguous")) : property(product, "name");
   const images = elements(product, (a) => a.itemprop === "image").map((element) => {
     const a = attrs(element.match(TAG)?.[0] ?? "");
@@ -21040,7 +21128,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
       gtin13: property(product, "gtin13"),
       brand,
       image,
-      offers: { "@type": "Offer", price, priceCurrency: currency, url: property(offer, "url"), availability: property(offer, "availability") }
+      offers: { "@type": "Offer", price, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
     };
   }
   if (format === "shoper" || format === "buduj24") {
@@ -21060,7 +21148,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
       offers: {
         "@type": "Offer",
         price,
-        priceCurrency: currency,
+        priceCurrency: currency2,
         url: url2,
         availability: property(offer, "availability"),
         ...expiry.length ? { priceValidUntil: property(offer, "priceValidUntil") } : {}
@@ -21088,7 +21176,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
       offers: {
         "@type": "Offer",
         price,
-        priceCurrency: currency,
+        priceCurrency: currency2,
         url: url2,
         availability: Number(stockCount[1]) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
       }
@@ -21103,7 +21191,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
     name,
     gtin13: ean,
     image,
-    offers: { "@type": "Offer", price, priceCurrency: currency, url: property(offer, "url"), availability: property(offer, "availability") }
+    offers: { "@type": "Offer", price, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
   };
 }
 
@@ -21174,6 +21262,66 @@ function confirmRetailIdentity(html, product, source) {
   return { ...product, gtin13: code, brand, image };
 }
 
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/woocommerce-product.ts
+var import_node_crypto = require("node:crypto");
+var cls = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
+var one2 = (values, reason) => {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+};
+var attrs2 = (value) => attrs(value.match(/^<[^>]+>/)?.[0] ?? "");
+var cents = (value) => {
+  if (typeof value !== "string" || !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) throw Error("invalid_money");
+  return Number(value);
+};
+var currency = (value) => {
+  if (value?.currency_code !== "PLN" || value.currency_minor_unit !== 2) throw Error("retailer_currency_not_confirmed");
+};
+function inspectWooProductCard(html, source) {
+  if (!Number.isSafeInteger(source.productId) || source.productId < 1) throw Error("product_id_not_confirmed");
+  const main = one2(elements(clean(html), (a) => a.id === `product-${source.productId}`), "product_id_not_confirmed");
+  const meta = one2(elements(main, (a) => cls(a, "product_meta")), "product_code_not_confirmed");
+  const barcode = text2(one2(elements(meta, (a) => cls(a, "hwp-gtin")), "product_code_not_confirmed")).match(/^EAN:\s*(\d{13})$/)?.[1];
+  if (barcode !== source.ean) throw Error("product_ean_not_confirmed");
+  const sku = text2(one2(elements(meta, (a) => cls(a, "sku")), "product_code_not_confirmed"));
+  if (!sku || sku.length > 100) throw Error("product_code_not_confirmed");
+  const form = one2(elements(main, (a, tag) => tag === "form" && cls(a, "cart")), "product_id_not_confirmed");
+  const add = one2(elements(form, (a) => a.name === "add-to-cart"), "product_id_not_confirmed");
+  if (attrs2(add).value !== String(source.productId) || /\sdisabled(?:\s|=|>)/i.test(add)) throw Error("product_id_not_confirmed");
+  const quantity = attrs2(one2(elements(form, (a) => a.name === "quantity"), "retailer_unit_not_confirmed"));
+  if (quantity.step !== "1" || quantity.min !== "1") throw Error("retailer_unit_not_confirmed");
+  const stock = one2(elements(main, (a) => cls(a, "stock")), "retailer_stock_not_confirmed");
+  if (cls(attrs2(stock), "out-of-stock")) throw Error("retailer_out_of_stock");
+  if (!cls(attrs2(stock), "in-stock")) throw Error("retailer_stock_not_confirmed");
+  const scope = one2(elements(main, (a) => a["data-widget_type"] === "riode_sproduct_price.default"), "retailer_price_not_confirmed");
+  const price = text2(one2(elements(scope, (a) => cls(a, "price")), "retailer_price_not_confirmed").replace(/&#(?:122|x7a);/gi, "z").replace(/&#(?:322|x142);/gi, "\u0142")).match(/^([\d ,]+)\s*zł$/)?.[1];
+  const priceGrosze = price ? parsePriceToGrosze(price) : null;
+  if (!priceGrosze) throw Error("retailer_price_not_confirmed");
+  const name = text2(one2(elements(main, (a) => cls(a, "product_title")), "product_name_not_confirmed"));
+  return { sku, name, priceGrosze };
+}
+async function readWooProduct(source, fetchImpl) {
+  const client = new AnonymousShop(new URL(source.url).origin, fetchImpl, AbortSignal.timeout(12e3));
+  const raw = await client.text(source.url), card = inspectWooProductCard(raw, source);
+  const empty = await client.cartJson("/wp-json/wc/store/v1/cart");
+  if (!Array.isArray(empty.items) || empty.items.length || empty.items_count !== 0) throw Error("basket_not_confirmed");
+  const cart = await client.cartJson("/wp-json/wc/store/v1/cart/add-item", { id: source.productId, quantity: 1 });
+  if (!Array.isArray(cart.items) || cart.items.length !== 1 || cart.items_count !== 1 || cart.errors?.length) throw Error("basket_not_confirmed");
+  const item = cart.items[0];
+  currency(item.prices);
+  currency(item.totals);
+  currency(cart.totals);
+  if (cart.shipping_address?.country !== "PL") throw Error("country_not_confirmed");
+  if (item.id !== source.productId || item.quantity !== 1 || item.sku !== card.sku || item.name !== card.name || item.show_backorder_badge === true) throw Error("basket_not_confirmed");
+  const totals = item.totals, amount = cents(totals.line_total) + cents(totals.line_total_tax);
+  if (amount !== card.priceGrosze || cents(item.prices.price) !== amount || cents(totals.line_subtotal) + cents(totals.line_subtotal_tax) !== amount) throw Error("retailer_gross_price_mismatch");
+  const all = cart.totals;
+  if (cents(all.total_items) + cents(all.total_items_tax) !== amount || cents(all.total_discount) !== 0 || cents(all.total_discount_tax) !== 0 || cents(all.total_fees) !== 0 || cents(all.total_fees_tax) !== 0 || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
+  const imageUrl = item.images?.[0]?.src;
+  if (typeof imageUrl !== "string" || !imageUrl.startsWith("https://")) throw Error("product_photo_not_confirmed");
+  return { name: card.name, priceGrosze: amount, imageUrl, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify([raw, cart])).digest("hex") };
+}
+
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
@@ -21182,6 +21330,7 @@ function objects(value) {
   return [item, ...objects(item["@graph"])];
 }
 function parseRetailPage(html, source, observedAt) {
+  if (source.disabledReason) throw Error(source.disabledReason);
   const products = [];
   if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
@@ -21200,7 +21349,8 @@ function parseRetailPage(html, source, observedAt) {
   const normalize = (value) => normalizeProductName(value.replace(/(\d|mm|cm|m)\s*[x×/]\s*(?=\d)/gi, "$1 x ").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
   const normalized = normalize(name);
   const packagePattern = new RegExp(`(?:^| )${String(source.packageSize).replace(".", " ")} (?:${source.unit === "l" ? "l|litrow|litry" : source.unit})(?: |$)`);
-  const brand = normalizeProductName(typeof product.brand === "string" ? product.brand : product.brand?.name ?? "");
+  const explicitBrand = typeof product.brand === "string" ? product.brand : product.brand?.name;
+  const brand = normalizeProductName(explicitBrand || (typeof product.manufacturer === "string" ? product.manufacturer : product.manufacturer?.name) || "");
   const variantMatches = source.variant?.every((value) => new RegExp(`(?:^| )${normalize(value)}(?: |$)`).test(normalized));
   if (source.packageDescription && !normalize(String(product.description ?? "")).includes(normalize(source.packageDescription))) throw new Error("product_package_not_confirmed");
   if (!(normalized.includes(normalizeProductName(source.brand)) || brand.includes(normalizeProductName(source.brand))) || !(source.variant ? variantMatches : packagePattern.test(normalized))) throw new Error("product_variant_mismatch");
@@ -21234,7 +21384,7 @@ function parseRetailPage(html, source, observedAt) {
     availability: "in_stock",
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
-    evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(html).digest("hex"),
+    evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(html).digest("hex"),
     validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value) => typeof value === "string").sort()[0] ?? null
   };
 }
@@ -21244,6 +21394,12 @@ function retailPriceIsValid(validUntil, now) {
   return Date.parse(validUntil) >= now.getTime();
 }
 async function readRetailSource(source, fetchImpl = fetch) {
+  if (source.disabledReason) throw Error(source.disabledReason);
+  if (source.format === "woocommerce") {
+    const product = await readWooProduct(source, fetchImpl);
+    const html = `<script type="application/ld+json">${JSON.stringify({ "@type": "Product", name: product.name, gtin13: source.ean, brand: source.brand, image: product.imageUrl, offers: { "@type": "Offer", price: (product.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } })}</script>`;
+    return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), evidenceSha256: product.evidenceSha256 };
+  }
   if (source.format === "shopify-api") {
     const client = new AnonymousShop(new URL(source.url).origin, fetchImpl, AbortSignal.timeout(8e3));
     const raw2 = await client.text(new URL(source.url).pathname + ".js");
@@ -21257,7 +21413,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       image: item.imageUrl,
       offers: { "@type": "Offer", price: (item.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", url: source.url, availability: "https://schema.org/InStock" }
     })}</script>`;
-    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
+    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
   }
   const api = source.format === "shoper-api";
   const requestUrl = api ? `${new URL(source.url).origin}/webapi/front/pl_PL/products/PLN/${shoperProductId(source)}` : source.url;
@@ -21302,7 +21458,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       offers: { "@type": "Offer", price: gross.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
     })}</script>`;
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
-    return { ...observation, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(raw).digest("hex") };
+    return { ...observation, evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(raw).digest("hex") };
   }
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
@@ -21314,20 +21470,67 @@ function shoperProductId(source) {
   return id;
 }
 
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/quote-queue.ts
+var QuoteQueue = class {
+  constructor(concurrency = 3, maxQueued = 12, maxWaitMs = 15e3) {
+    this.concurrency = concurrency;
+    this.maxQueued = maxQueued;
+    this.maxWaitMs = maxWaitMs;
+  }
+  active = 0;
+  waiting = [];
+  acquire() {
+    if (this.active < this.concurrency) {
+      this.active++;
+      return Promise.resolve(this.releasePermit());
+    }
+    if (this.waiting.length >= this.maxQueued) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const waiter = { resolve, timer: setTimeout(() => {
+        const index2 = this.waiting.indexOf(waiter);
+        if (index2 >= 0) this.waiting.splice(index2, 1);
+        resolve(null);
+      }, this.maxWaitMs) };
+      this.waiting.push(waiter);
+    });
+  }
+  releasePermit() {
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const next = this.waiting.shift();
+      if (next) {
+        clearTimeout(next.timer);
+        next.resolve(this.releasePermit());
+      } else this.active--;
+    };
+  }
+};
+
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
-var cls = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
+var cls2 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var attr = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
-var one2 = (values) => {
+var one3 = (values) => {
   if (values.length !== 1) throw Error("basket_not_confirmed");
   return values[0];
 };
 function createCheckoutPageReader() {
   const cache = /* @__PURE__ */ new Map();
+  const reads = new QuoteQueue(3, 12, 15e3);
   return (url2, price, client) => {
     const key = JSON.stringify([url2, price]), previous = cache.get(key);
     if (previous && previous.until > Date.now()) return previous.value;
     if (cache.size >= 32) cache.delete(cache.keys().next().value);
-    const value = client.text(url2);
+    const value = (async () => {
+      const release = await reads.acquire();
+      if (!release) throw Error("quote_busy");
+      try {
+        return await client.text(url2);
+      } finally {
+        release();
+      }
+    })();
     cache.set(key, { until: Date.now() + 6e4, value });
     void value.catch(() => {
       if (cache.get(key)?.value === value) cache.delete(key);
@@ -21355,46 +21558,46 @@ function quote(order, costGrosze, carrier, payment, evidence, postalCode) {
     basis: postalCode ? "retailer_basket_postcode" : "retailer_basket_national",
     destinationScope: postalCode ? "postal_code" : "PL",
     ...postalCode ? { postalCode, dispatchFrom: "Katowice" } : {},
-    evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function expectedPacks(order) {
   return order.lines.flatMap((line2) => line2.packages.map((pack) => {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
-    if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     return { source, pack };
   }));
 }
 function tdValue(html, label) {
   const cells = elements(html, (_, tag) => tag === "td");
   const values = cells.flatMap((cell, i) => text2(cell) === label && cells[i + 1] ? [withoutOld(cells[i + 1])] : []);
-  return one2(values);
+  return one3(values);
 }
 function confirmSeweraBasket(html, expected, total) {
-  const table = one2(elements(clean(html), (a) => cls(a, "basket-product")));
-  const body = one2(elements(table, (_, tag) => tag === "tbody"));
+  const table = one3(elements(clean(html), (a) => cls2(a, "basket-product")));
+  const body = one3(elements(table, (_, tag) => tag === "tbody"));
   const rows = elements(body, (_, tag) => tag === "tr").filter((row) => elements(row, (a) => a.name === "amount").length === 1);
   if (rows.length !== expected.length || !/Twój sklep to Katowice/.test(text2(html))) throw Error("basket_not_confirmed");
   for (const wanted of expected) {
-    const row = one2(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
+    const row = one3(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
     const stock = text2(row).match(/W magazynie znajdują się jedynie (\d+(?:[.,]\d+)?)\s+(SZT|OPA)/i);
     if (stock && (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || Number(stock[1].replace(",", ".")) < wanted.count)) throw Error("insufficient_stock");
-    const input = attr(one2(elements(row, (a) => a.name === "amount")));
-    const pid = attr(one2(elements(row, (a) => a.wybierz !== void 0))).wybierz;
+    const input = attr(one3(elements(row, (a) => a.name === "amount")));
+    const pid = attr(one3(elements(row, (a) => a.wybierz !== void 0))).wybierz;
     if (Number(input.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
   }
-  const sum = text2(one2(elements(table, (a) => cls(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
+  const sum = text2(one3(elements(table, (a) => cls2(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
   if (checkoutMoney(sum) !== total) throw Error("basket_not_confirmed");
 }
 function readSeweraPayment(html) {
   const safe = clean(html);
   if (elements(safe, (a) => a.id === "block_order" && a.value !== "0").length || /nie potrafił ustalić kosztu|wycena indywidualna/i.test(text2(safe))) return null;
-  const options = elements(safe, (a) => cls(a, "radio")).flatMap((row) => {
+  const options = elements(safe, (a) => cls2(a, "radio")).flatMap((row) => {
     const inputs = elements(row, (a2) => a2.name === "platnosc" && ["P\u0142atno\u015B\u0107 online", "Przelew tradycyjny"].includes(a2["data-name"]));
     if (inputs.length !== 1 || /\sdisabled(?:\s|=|>)/i.test(inputs[0])) return [];
     const a = attr(inputs[0]);
     const value = a.onclick?.match(/\('#koszt_dostawy'\)\.val\('([\d,]+)'\)/)?.[1];
-    const visible = one2(elements(row, (b) => cls(b, "dictionary-icon-additional")));
+    const visible = one3(elements(row, (b) => cls2(b, "dictionary-icon-additional")));
     const cost = checkoutMoney(visible);
     if (!value || checkoutMoney(`${value} z\u0142`) !== cost) throw Error("invalid_money");
     return [{ costGrosze: cost, payment: a["data-name"] }];
@@ -21402,22 +21605,38 @@ function readSeweraPayment(html) {
   return options.sort((a, b) => a.costGrosze - b.costGrosze)[0] ?? null;
 }
 async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price, client) => client.text(_url2)) {
-  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4));
+  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   if ((await client.text("/ajax/ax_execute.php?operation=setDepartment", { model: "department", department: "1" })).trim() !== "1") throw Error("basket_not_confirmed");
   const expected = [];
-  for (const { source, pack } of expectedPacks(order)) {
-    const page = await pages(source.url, pack.unitPriceGrosze, client);
-    const observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
-    if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-    const pid = attr(one2(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
-    if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
+  const packs = expectedPacks(order), prepared = [];
+  let next = 0, hasFailure = false;
+  let failure;
+  await Promise.all(Array.from({ length: Math.min(3, packs.length) }, async () => {
+    while (next < packs.length && !hasFailure) {
+      try {
+        const index2 = next++, { source, pack } = packs[index2];
+        const page = await pages(source.url, pack.unitPriceGrosze, client), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
+        if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+        const pid = attr(one3(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
+        if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
+        prepared[index2] = { source, pack, pid };
+      } catch (error40) {
+        if (!hasFailure) {
+          hasFailure = true;
+          failure = error40;
+        }
+      }
+    }
+  }));
+  if (hasFailure) throw failure;
+  for (const { source, pack, pid } of prepared) {
     await client.text("/ajax/ax_execute.php?operation=addToBasket", { pid, count: String(pack.count) });
     expected.push({ url: source.url, pid, count: pack.count, price: pack.unitPriceGrosze, retailUnit: source.retailUnit });
   }
   const basket = await client.text("/index.php?page=koszyk");
   confirmSeweraBasket(basket, expected, order.materialsGrosze);
   const checkout = clean(await client.text("/zamowienie"));
-  const country = one2(elements(checkout, (a) => a.id === "selectCountryUser"));
+  const country = one3(elements(checkout, (a) => a.id === "selectCountryUser"));
   if (!elements(country, (a) => a.value === "1").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
   const methods = elements(checkout, (a) => a.name === "dostawa" && a["data-personal-collection"] === "0" && /kurier/i.test(a["data-name"] ?? "") && !/indywidual|zapytani|odbiór|paczkomat/i.test(a["data-name"])).map(attr);
   if (!methods.length || methods.length > 5) throw Error("no_home_delivery");
@@ -21435,43 +21654,43 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
       personal_collection: "0"
     });
     const price = readSeweraPayment(response);
-    if (price) options.push({ ...price, carrier: method["data-name"], hash: (0, import_node_crypto2.createHash)("sha256").update(response).digest("hex") });
+    if (price) options.push({ ...price, carrier: method["data-name"], hash: (0, import_node_crypto3.createHash)("sha256").update(response).digest("hex") });
   }
   const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
   if (!best) throw Error("no_home_delivery");
   return quote(order, best.costGrosze, best.carrier, best.payment, { expected, postalCode, options }, postalCode);
 }
 function budujItemPrice(row) {
-  return elements(row, (a) => cls(a, "item") && cls(a, "price")).map((p) => checkoutMoney(withoutOld(p)));
+  return elements(row, (a) => cls2(a, "item") && cls2(a, "price")).map((p) => checkoutMoney(withoutOld(p)));
 }
 function confirmBudujBasket(html, expected, total) {
-  const products = one2(elements(clean(html), (a) => a.id === "cart-products"));
-  const rows = elements(products, (a) => cls(a, "cart-product") && !cls(a, "headers") && !cls(a, "summary"));
+  const products = one3(elements(clean(html), (a) => a.id === "cart-products"));
+  const rows = elements(products, (a) => cls2(a, "cart-product") && !cls2(a, "headers") && !cls2(a, "summary"));
   if (rows.length !== expected.length) throw Error("basket_not_confirmed");
   for (const wanted of expected) {
-    const row = one2(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
-    const qty = attr(one2(elements(row, (a) => a.name === "count"))).value;
+    const row = one3(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
+    const qty = attr(one3(elements(row, (a) => a.name === "count"))).value;
     const prices = budujItemPrice(row);
     if (Number(qty) !== wanted.count || prices.length !== 2 || prices[0] !== wanted.price || prices[1] !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
   }
   if (budujSummary(html).materials !== total) throw Error("basket_not_confirmed");
 }
 function budujSummary(html) {
-  const scope = one2(elements(clean(html), (a) => a.id === "cart-summary"));
-  const fields = elements(scope, (a) => cls(a, "label"));
-  const values = elements(scope, (a) => cls(a, "value"));
+  const scope = one3(elements(clean(html), (a) => a.id === "cart-summary"));
+  const fields = elements(scope, (a) => cls2(a, "label"));
+  const values = elements(scope, (a) => cls2(a, "value"));
   if (fields.length !== 3 || values.length !== 3 || text2(fields[0]) !== "Suma koszyka:" || text2(fields[1]) !== "Koszt dostawy:" || !/Kwota zawiera podatek VAT/.test(text2(scope))) throw Error("basket_not_confirmed");
   const [materials, shipping, total] = values.map(checkoutMoney);
   if (materials + shipping !== total) throw Error("basket_not_confirmed");
   return { materials, shipping, total };
 }
 function budujOptions(html, kind) {
-  return elements(clean(html), (a) => cls(a, "item") && cls(a, kind)).map((row) => {
-    const name = text2(one2(elements(row, (a) => cls(a, "name"))));
-    const click = attr(one2(elements(row, (a) => cls(a, "icnt")))).onclick;
+  return elements(clean(html), (a) => cls2(a, "item") && cls2(a, kind)).map((row) => {
+    const name = text2(one3(elements(row, (a) => cls2(a, "name"))));
+    const click = attr(one3(elements(row, (a) => cls2(a, "icnt")))).onclick;
     const id = click?.match(new RegExp(`cart\\.${kind}_select\\((\\d+)`))?.[1];
     if (!id) throw Error("basket_not_confirmed");
-    return { id, name, active: cls(attr(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one2(elements(row, (a) => cls(a, "price")))) } : {} };
+    return { id, name, active: cls2(attr(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one3(elements(row, (a) => cls2(a, "price")))) } : {} };
   });
 }
 function decodeBudujDetails(response) {
@@ -21480,7 +21699,7 @@ function decodeBudujDetails(response) {
   return parts.map((p) => decodeURIComponent(p[2])).join("\n");
 }
 async function quoteBuduj24(order, fetchImpl) {
-  const client = new AnonymousShop("https://buduj24.pl", fetchImpl, AbortSignal.timeout(12e3));
+  const client = new AnonymousShop("https://buduj24.pl", fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = [];
   for (const { source, pack } of expectedPacks(order)) {
     const page = await client.text(source.url), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
@@ -21492,7 +21711,7 @@ async function quoteBuduj24(order, fetchImpl) {
   }
   const basket = await client.text("/cart");
   confirmBudujBasket(basket, expected, order.materialsGrosze);
-  const countries = one2(elements(clean(basket), (a) => a.id === "sel_country"));
+  const countries = one3(elements(clean(basket), (a) => a.id === "sel_country"));
   if (!elements(countries, (a) => a.value === "PL").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
   const country = decodeBudujDetails(await client.text("/ajax/cart/details?lang=pl&country=PL"));
   const delivery = budujOptions(country, "delivery").filter((d) => /^Kurier\b/i.test(d.name) && !/pobran|zapytani|indywidual/i.test(d.name)).sort((a, b) => a.cost - b.cost)[0];
@@ -21509,14 +21728,14 @@ async function quoteBuduj24(order, fetchImpl) {
 }
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/cezar-delivery.ts
-var import_node_crypto3 = require("node:crypto");
+var import_node_crypto4 = require("node:crypto");
 async function quoteCezar(order, postalCode, fetchImpl) {
   const origin = "https://cezar.eu";
-  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3));
+  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === "Cezar" && s.format === "shopify-api");
-    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const product = confirmShopifyProduct(JSON.parse(await client.text(new URL(source.url).pathname + ".js")), source);
     if (product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
     if (expected.has(product.variantId)) throw Error("invalid_basket");
@@ -21555,7 +21774,7 @@ async function quoteCezar(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
+    evidenceSha256: (0, import_node_crypto4.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
   } };
 }
 
@@ -21567,16 +21786,42 @@ var ORIGINS = {
   Prescot: "https://www.prescot.com.pl",
   WinBud: "https://winbud24.pl",
   "Dam-Bud": "https://salonbudowlanydambud.pl",
-  "Plus-Market": "https://www.plus-market.pl"
+  "Plus-Market": "https://www.plus-market.pl",
+  KELOT: "https://listwy.sklep.pl",
+  LiderzyCen: "https://liderzycen.pl",
+  TGS: "https://tgs.pl"
 };
 var TTL = 10 * 6e4;
+function unavailableReason(store) {
+  const sources = RETAIL_SOURCES.filter((source) => source.store === store);
+  if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar"].includes(store)) return void 0;
+  return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
+}
+function retailerDeliveryCapabilities() {
+  return {
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    country: "PL",
+    quoteTtlSeconds: 600,
+    postcodeStores: ["Sewera", "Cezar"],
+    accessRequiredStores: ["Castorama", "OBI"]
+  };
+}
+function knownUnavailableRetailers() {
+  const result = {};
+  for (const store of new Set(RETAIL_SOURCES.map((source) => source.store))) {
+    const reason = unavailableReason(store);
+    if (reason) result[store] = reason;
+  }
+  return result;
+}
 function confirmedMoney(text3, numeric2) {
   if (typeof text3 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
   const match = text3.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
   if (!match) throw Error("invalid_money");
-  const cents = Number(match[1]) * 100 + Number(match[2]);
-  if (!Number.isSafeInteger(cents) || cents < 0 || Math.abs(numeric2 * 100 - cents) > 1e-5) throw Error("invalid_money");
-  return cents;
+  const cents2 = Number(match[1]) * 100 + Number(match[2]);
+  if (!Number.isSafeInteger(cents2) || cents2 < 0 || Math.abs(numeric2 * 100 - cents2) > 1e-5) throw Error("invalid_money");
+  return cents2;
 }
 function selectHomeDelivery(basket) {
   if (!Array.isArray(basket.countries) || !basket.countries.some((c) => c.id === 179 && c.name === "Polska" && c.selected === true)) throw Error("country_not_confirmed");
@@ -21613,11 +21858,11 @@ function selectHomeDelivery(basket) {
 async function quoteShoper(order, fetchImpl) {
   const origin = ORIGINS[order.store];
   if (!origin) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
-  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3));
+  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
-    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const id = shoperProductId(source);
     const product = await client.json(`/webapi/front/pl_PL/products/PLN/${id}`);
     if (String(product.ean) !== source.ean || String(product.id) !== id || !product.can_buy || !Number.isSafeInteger(product.stockId)) throw Error("product_unavailable");
@@ -21646,28 +21891,38 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto4.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
   const pages = createCheckoutPageReader();
   const cache = /* @__PURE__ */ new Map();
-  let active = 0;
+  const queue = new QuoteQueue();
   return async (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
-    if (!ORIGINS[order.store] && !["Sewera", "Buduj24", "Cezar"].includes(order.store)) return { reason: ["Castorama", "OBI"].includes(order.store) ? "retailer_access_required" : "integration_unavailable" };
+    const unsupported = unavailableReason(order.store);
+    if (unsupported) return { reason: unsupported };
     const key = JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
     const cached2 = cache.get(key);
     if (cached2 && cached2.until > Date.now()) return cached2.result;
-    if (active >= 3) return { reason: "quote_busy" };
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
-    active++;
-    const pending = (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl)).catch((error40) => ({ reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
-      active--;
-    });
+    const pending = (async () => {
+      const release = await queue.acquire();
+      if (!release) return { reason: "quote_busy" };
+      try {
+        return await (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
+      } catch (error40) {
+        return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" };
+      } finally {
+        release();
+      }
+    })();
     cache.set(key, { until: Date.now() + TTL, result: pending });
     const result = await pending;
-    if ("reason" in result && cache.get(key)?.result === pending) cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
+    if ("reason" in result && cache.get(key)?.result === pending) {
+      if (result.reason === "quote_busy") cache.delete(key);
+      else cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
+    }
     return result;
   };
 }
@@ -21744,7 +21999,7 @@ function createRemontService(options = {}) {
   const accept = (observation) => {
     if (!observation || typeof observation !== "object") return;
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
-    if (!source || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
+    if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
     const previous = observations.get(source.id);
     if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
     if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
@@ -21872,19 +22127,13 @@ function createRemontService(options = {}) {
       running,
       lastAttemptAt,
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
-      delivery: {
-        automaticStores: ["Rab-Dom", "Realbud", "Zino", "Sewera", "Buduj24"],
-        country: "PL",
-        quoteTtlSeconds: 600,
-        postcodeStores: ["Sewera"],
-        accessRequiredStores: ["Castorama", "OBI"]
-      },
+      delivery: retailerDeliveryCapabilities(),
       sources: RETAIL_SOURCES.map((source) => ({
         id: source.id,
         store: source.store,
         checkedAt: observations.get(source.id)?.observedAt ?? null,
         active: eligible.some((offer) => offer.id === source.id),
-        error: errors.get(source.id) ?? null
+        error: source.disabledReason ?? errors.get(source.id) ?? null
       }))
     };
   }
@@ -21932,7 +22181,7 @@ function createRemontService(options = {}) {
         (order, postalCode) => Date.now() < deadline || ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
         STORE_DELIVERY_POLICIES,
         /* @__PURE__ */ new Date(),
-        { Castorama: "retailer_access_required", OBI: "retailer_access_required" }
+        knownUnavailableRetailers()
       );
       res.json(stageOnly ? serialized.stages[0] : {
         ...serialized,
