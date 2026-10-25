@@ -4,6 +4,7 @@ import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
+import PrzyciskWord from '../components/PrzyciskWord';
 import { useAuth } from '../context/AuthContext';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
@@ -314,6 +315,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
           {dok.braki?.length ? <Text style={styles.kartaUwaga}>Brakuje: {dok.braki.join(', ')} — uzupełnij w punkcie 2.</Text> : null}
           <Text style={styles.podglad} numberOfLines={6}>{dok.tresc}</Text>
           <Button title="Udostępnij / skopiuj" onPress={() => udostepnij(dok)} variant="ghost" />
+          <PrzyciskWord nazwa={dok.nazwa} tresc={dok.tresc} poWyslaniu={() => setUdostepnione((s) => new Set(s).add(dok.id))} />
         </View>
       ))}
 

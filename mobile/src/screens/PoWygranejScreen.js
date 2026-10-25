@@ -4,6 +4,7 @@ import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
+import PrzyciskWord from '../components/PrzyciskWord';
 import { useAuth } from '../context/AuthContext';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
@@ -169,6 +170,7 @@ export default function PoWygranejScreen({ route, navigation }) {
         <Text style={styles.podglad}>{dok.tresc}</Text>
       </View>
       <Button title="Udostępnij / skopiuj pismo" onPress={udostepnij} />
+      <PrzyciskWord nazwa={dok.nazwa} tresc={dok.tresc} />
       <Text style={styles.stopka}>Dane firmy bierzemy z „Dokumentów do oferty". Pisma to szkice wg Pzp — przed wysłaniem sprawdź zapisy swojej umowy.</Text>
     </Screen>
   );

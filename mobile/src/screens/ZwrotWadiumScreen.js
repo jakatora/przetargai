@@ -4,6 +4,7 @@ import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
+import PrzyciskWord from '../components/PrzyciskWord';
 import { useAuth } from '../context/AuthContext';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
@@ -128,6 +129,7 @@ export default function ZwrotWadiumScreen({ route }) {
         <Text style={styles.podglad}>{pismo.tresc}</Text>
       </View>
       <Button title="Udostępnij / skopiuj wniosek" onPress={udostepnij} />
+      <PrzyciskWord nazwa={pismo.nazwa} tresc={pismo.tresc} poWyslaniu={() => setUdostepniono(true)} />
       {udostepniono ? <Text style={styles.ok}>Udostępniono. Podpisz elektronicznie i wyślij przez platformę postępowania — 7 dni liczy się od wpływu.</Text> : null}
       <Text style={styles.stopka}>Dane firmy bierzemy z „Dokumentów do oferty" — jeśli są puste, uzupełnij je tam raz.</Text>
     </Screen>

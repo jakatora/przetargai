@@ -4,6 +4,7 @@ import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
+import PrzyciskWord from '../components/PrzyciskWord';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import * as storage from '../lib/storage';
@@ -349,6 +350,7 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
         <Text style={styles.podglad}>{pismo.tresc}</Text>
       </View>
       <Button title="Udostępnij / skopiuj pismo" onPress={udostepnij} />
+      <PrzyciskWord nazwa={pismo.nazwa} tresc={pismo.tresc} />
       {udostepniono ? <Text style={styles.ok}>Udostępniono. Podpisz elektronicznie pismo i każdy załącznik, potem wyślij tam, gdzie wskazuje wezwanie.</Text> : null}
       <Text style={styles.stopka}>To pismo przewodnie wg Pzp — treść merytoryczną wyjaśnień i same dokumenty dostarczasz Ty. Niczego nie wysyłamy do zamawiającego.</Text>
     </Screen>

@@ -12,6 +12,8 @@ import {
 } from '../lib/eksportCsv.js';
 import { sendEmail } from '../services/email.js';
 import { doIcs } from '../lib/kalendarzPrzetargu.js';
+import { zbudujDocx, nazwaPlikuDocx, TYP_MIME_DOCX } from '../lib/docx.js';
+import { esc } from '../lib/html.js';
 import { kalendarzeUzytkownika } from './kalendarz.js';
 
 /*
@@ -166,3 +168,35 @@ router.post('/wyslij', ah(async (req, res) => {
 }));
 
 export default router;
+
+/**
+ * Pismo z aplikacji (odpowiedź na wezwanie, wniosek o zwrot wadium, dokumenty do oferty…)
+ * jako plik WORD na e-mail właściciela konta (2026-10-25). Treść składa telefon (czyste
+ * biblioteki `mobile/src/lib/*`), tu tylko .docx (lib/docx.js) i wysyłka — adres z konta,
+ * nigdy z żądania; ten sam dzienny limit co eksporty.
+ */
+export const MAKS_DL_PISMA = 60_000;
+const pismoSchema = z.object({
+  nazwa: z.string().trim().min(1).max(120),
+  tresc: z.string().min(1).max(MAKS_DL_PISMA),
+});
+
+router.post('/pismo', ah(async (req, res) => {
+  const parsed = pismoSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Niepoprawne pismo', parsed.error.issues);
+  if (!req.user.email) throw badRequest('Konto nie ma adresu e-mail.');
+  if (!(await limitEksportu.zarezerwuj(req.user.id, LIMIT_WYSYLEK_DZIENNIE))) {
+    throw tooMany(`Dzienny limit wysyłek (${LIMIT_WYSYLEK_DZIENNIE}) wyczerpany — spróbuj jutro.`);
+  }
+  const { nazwa, tresc } = parsed.data;
+  const plik = nazwaPlikuDocx(nazwa);
+  const wynik = await sendEmail({
+    to: req.user.email,
+    subject: `${nazwa} — plik Word do podpisu`,
+    text: `W załączniku pismo „${nazwa}” jako plik Word (${plik}). Otwórz na komputerze, sprawdź dane, podpisz kwalifikowanym podpisem i złóż na platformie postępowania.`,
+    html: `<p>W załączniku pismo <b>${esc(nazwa)}</b> jako plik Word (${esc(plik)}).</p><p>Otwórz na komputerze, sprawdź dane, podpisz kwalifikowanym podpisem i złóż na platformie postępowania.</p>`,
+    attachments: [{ filename: plik, content: zbudujDocx({ nazwa, tresc, teraz: new Date(nowIso()) }), contentType: TYP_MIME_DOCX }],
+  });
+  if (!wynik.sent && !wynik.degraded) throw serviceUnavailable('Nie udało się wysłać e-maila — spróbuj za chwilę.');
+  res.json({ wyslano: Boolean(wynik.sent), tryb_degradacji: Boolean(wynik.degraded), do: req.user.email, plik });
+}));

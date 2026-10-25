@@ -166,3 +166,25 @@ test('eksport przerwany sufitem skanu mówi prawdę: `obciety: true`', async () 
   assert.ok(wywolan * 1200 >= MAKS_SKANU_EKSPORTU && wywolan * 1200 < MAKS_SKANU_EKSPORTU + 1200,
     'pętla kończy się na budżecie skanu, nie wcześniej i nie w nieskończoność');
 });
+
+describe('POST /eksport/pismo — pismo jako Word na e-mail konta', () => {
+  test('poprawne pismo → plik .docx na adres z konta (w testach tryb degradacji), ignoruje `to` z żądania', async () => {
+    const { token } = await konto();
+    const odp = await fetch(`${BAZA}/eksport/pismo`, {
+      method: 'POST', headers: naglowki(token),
+      body: JSON.stringify({ nazwa: 'Wniosek o zwrot wadium', tresc: 'Treść\nlinia 2', to: 'obcy@example.com' }),
+    });
+    assert.equal(odp.status, 200);
+    const dane = await odp.json();
+    assert.match(dane.do, /@t\.pl$/);
+    assert.equal(dane.plik, 'Wniosek o zwrot wadium.docx');
+    assert.equal(dane.tryb_degradacji, true);
+  });
+
+  test('brak treści albo za długa nazwa → 400; bez tokenu → 401', async () => {
+    const { token } = await konto();
+    assert.equal((await fetch(`${BAZA}/eksport/pismo`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ nazwa: 'x', tresc: '' }) })).status, 400);
+    assert.equal((await fetch(`${BAZA}/eksport/pismo`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ nazwa: 'x'.repeat(121), tresc: 'a' }) })).status, 400);
+    assert.equal((await fetch(`${BAZA}/eksport/pismo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nazwa: 'x', tresc: 'a' }) })).status, 401);
+  });
+});

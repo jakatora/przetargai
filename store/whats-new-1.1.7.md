@@ -11,6 +11,7 @@ Numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ android/
 • Przetargi unijne (TED): teren liczymy z miejsca wykonania zamówienia, nie z siedziby zamawiającego — roboty ogłaszane z Warszawy na Twoje województwo już nie odpadają jako „poza terenem”.
 • Gdy zamawiający przedłuży termin składania ofert, przetarg odrzucony wcześniej jako „za mało dni na ofertę” wraca do selekcji.
 • Zamówienia w częściach: o tym, czy przetarg jest „za duży”, decyduje średnia część, nie suma — a wadium podane osobno dla części nie odrzuca.
+• Każde pismo (odpowiedź na wezwanie, wniosek o zwrot wadium, dokumenty do oferty, pisma po wygranej) wyślesz jednym dotknięciem jako plik Word na swój e-mail — do podpisu na komputerze.
 ```
 
 ## What's New — EN
@@ -21,4 +22,5 @@ Numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ android/
 • EU tenders (TED): the area is taken from the place of performance, not the buyer's seat — works announced from Warsaw for your voivodeship no longer drop out as “outside your area”.
 • When the buyer extends the submission deadline, a tender previously set aside as “too few days to bid” comes back into selection.
 • Contracts split into lots: whether a tender is “too big” is judged by the average lot, not the total — and a bid bond listed per lot no longer rejects.
+• Every letter (reply to a buyer's request, bid bond return request, bid documents, post-award letters) can be sent with one tap as a Word file to your e-mail — ready to sign on your computer.
 ```

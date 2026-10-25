@@ -436,4 +436,6 @@ export const api = {
    */
   eksportWyslij: ({ rodzaj, filtry } = {}) =>
     request('/eksport/wyslij', { method: 'POST', body: { rodzaj, ...(filtry ? { filtry } : {}) } }),
+  /** Pismo jako plik Word (.docx) na e-mail właściciela konta (adres z konta, nie z żądania). */
+  wyslijPismoWord: ({ nazwa, tresc }) => request('/eksport/pismo', { method: 'POST', body: { nazwa, tresc } }),
 };
