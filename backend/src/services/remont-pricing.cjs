@@ -20452,9 +20452,10 @@ var RETAIL_SOURCES = [
     "url": "https://cezar.eu/products/profil-do-glazury-narozny-aluminiowy-8mm-cezar-tytan-szczotkowany-mat-2-5m"
   },
   // source: https://rodimax.pl/P%C5%82yta-gipsowa-zwyk%C5%82a-Norgips-1200-x-2600-x-12%2C5-mm-3%2C12-m2.html
-  { "id": "rodimax-board-gkb", "ean": "5907651690442", "name": "P\u0142yta gipsowa zwyk\u0142a Norgips 1200 x 2600 x 12,5 mm 3,12 m2", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/P%C5%82yta-gipsowa-zwyk%C5%82a-Norgips-1200-x-2600-x-12%2C5-mm-3%2C12-m2.html", "brand": "Norgips", "format": "rodimax" },
+  // source: https://rodimax.pl/ (service unavailable notice); cart action in /js/main.min.js only opens a demo popup, checked 2026-10-25.
+  { "id": "rodimax-board-gkb", "ean": "5907651690442", "name": "P\u0142yta gipsowa zwyk\u0142a Norgips 1200 x 2600 x 12,5 mm 3,12 m2", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/P%C5%82yta-gipsowa-zwyk%C5%82a-Norgips-1200-x-2600-x-12%2C5-mm-3%2C12-m2.html", "brand": "Norgips", "format": "rodimax", "disabledReason": "retailer_checkout_unconfirmed" },
   // source: https://rodimax.pl/Podk%C5%82ad-pod-panele-Arbiton-XPS-Smart-Aquastop-Thermo-1%2C6-mm-6-m2.html
-  { "id": "rodimax-arbiton-aquastop-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele Arbiton XPS Smart Aquastop Thermo 1,6 mm 6 m2", "category": "underlay", "packageSize": 6, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/Podk%C5%82ad-pod-panele-Arbiton-XPS-Smart-Aquastop-Thermo-1%2C6-mm-6-m2.html", "brand": "Arbiton", "format": "rodimax" },
+  { "id": "rodimax-arbiton-aquastop-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele Arbiton XPS Smart Aquastop Thermo 1,6 mm 6 m2", "category": "underlay", "packageSize": 6, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/Podk%C5%82ad-pod-panele-Arbiton-XPS-Smart-Aquastop-Thermo-1%2C6-mm-6-m2.html", "brand": "Arbiton", "format": "rodimax", "disabledReason": "retailer_checkout_unconfirmed" },
   // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-wewnetrzny/3089
   { "id": "winbud-mapei-corner-internal", "ean": "8022452113802", "name": "Mapei Mapeband W - naro\u017Cnik wewn\u0119trzny", "category": "sealing-corner", "packageSize": 1, "unit": "szt", "store": "WinBud", "url": "https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-wewnetrzny/3089", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_2b7ab43567ae0046ace4d10d419a36f5_500_500.jpg", "brand": "Mapei", "format": "shoper-api", "productId": 3089, "apiPurchaseUnit": "szt.", "variant": ["wewn\u0119trzny"] },
   // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-zewnetrzny/3090
@@ -20476,9 +20477,27 @@ var RETAIL_SOURCES = [
   // source: https://www.abud.pl/product-pol-64835-Kolanko-zaciskowe-PEX-16x16mm-Tycner.html
   { "id": "abud-pex-elbow-16x16", "ean": "5901095521003", "name": "Kolanko zaciskowe PEX 16x16mm Tycner", "category": "fitting", "packageSize": 1, "unit": "szt", "store": "ABUD", "url": "https://www.abud.pl/product-pol-64835-Kolanko-zaciskowe-PEX-16x16mm-Tycner.html", "imageUrl": "https://mrowka.com.pl/files/InfoverProduct/vu/t7atm0ht029g/Photos/cumrci10no4fac/ShowWebp_kolanko-zaciskowe-pex-16x16-mm-tycner_1.webp", "brand": "Tycner", "format": "idosell", "productId": 64835, "apiPurchaseUnit": "szt.", "variant": ["16x16mm"] },
   // source: https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html
-  { "id": "fixero-graphite-mesh-10", "ean": "5902062502735", "name": "Siatka \u015Bcierna na rzep, 225 mm, K180, do szlifierki 59G260, 59G264, 59G265, 10 szt. 55H746", "category": "abrasive", "packageSize": 10, "unit": "szt", "store": "Fixero", "url": "https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html", "imageUrl": "https://fixero.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/5/1596484200_55H746__BGH_TGL_U90.jpg", "brand": "Graphite", "format": "fixero", "productId": 1956, "variant": ["225mm", "K180", "10szt", "55H746"] }
+  { "id": "fixero-graphite-mesh-10", "ean": "5902062502735", "name": "Siatka \u015Bcierna na rzep, 225 mm, K180, do szlifierki 59G260, 59G264, 59G265, 10 szt. 55H746", "category": "abrasive", "packageSize": 10, "unit": "szt", "store": "Fixero", "url": "https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html", "imageUrl": "https://fixero.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/5/1596484200_55H746__BGH_TGL_U90.jpg", "brand": "Graphite", "format": "fixero", "productId": 1956, "variant": ["225mm", "K180", "10szt", "55H746"] },
+  // source: https://listwy.sklep.pl/pl/p/Klips-montazowy-z-podkladka-dystansowa-do-montazu-listew-1opak25szt-MASTER-LINE-CEZAR/687
+  { "id": "kelot-clips-25", "ean": "5907684672217", "name": "Klips monta\u017Cowy z podk\u0142adk\u0105 dystansow\u0105 do monta\u017Cu listew 1opak=25szt  MASTER LINE CEZAR", "category": "skirting-clip", "packageSize": 25, "unit": "szt", "store": "KELOT", "url": "https://listwy.sklep.pl/pl/p/Klips-montazowy-z-podkladka-dystansowa-do-montazu-listew-1opak25szt-MASTER-LINE-CEZAR/687", "imageUrl": "https://listwy.sklep.pl/environment/cache/images/productGfx_3487_500_500/klips-do-montowania-listew-przypodlogowych.jpg", "brand": "Cezar", "format": "shoper-api", "productId": 687, "apiPurchaseUnit": "szt.", "variant": ["25szt"] },
+  // source: https://liderzycen.pl/pl/p/Kliny-montazowe-Floorpol-30-x-150-mm-10-szt./31651
+  { "id": "liderzy-wedges-10", "ean": "5907508719289", "name": "Kliny monta\u017Cowe Floorpol 30 x 150 mm 10 szt.", "category": "mounting-wedge", "packageSize": 10, "unit": "szt", "store": "LiderzyCen", "url": "https://liderzycen.pl/pl/p/Kliny-montazowe-Floorpol-30-x-150-mm-10-szt./31651", "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52309_500_500/8fc1fd3c8fa7d0b098f9b17c9b091da3.jpg", "brand": "Floorpol", "format": "shoper-api", "productId": 31651, "apiPurchaseUnit": "szt.", "variant": ["30x150mm", "10szt"] },
+  // source: https://tgs.pl/pl/p/Ferro-Stillo-bateria-umywalkowa-stojaca-chrom/44
+  { "id": "tgs-ferro-stillo", "ean": "5902194929837", "name": "Ferro Stillo bateria umywalkowa stoj\u0105ca chrom", "category": "faucet", "packageSize": 1, "unit": "szt", "store": "TGS", "url": "https://tgs.pl/pl/p/Ferro-Stillo-bateria-umywalkowa-stojaca-chrom/44", "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_56358_500_500/Ferro-Stillo-bateria-umywalkowa-stojaca-chrom.jpg", "brand": "Ferro", "format": "shoper-api", "productId": 44, "apiPurchaseUnit": "szt.", "variant": ["Stillo", "chrom"] },
+  // source: https://cezar.eu/products/listwa-progowa-owalna-aluminiowa-szeroka-40mm-cezar-srebrny-mat-1m
+  { "id": "cezar-threshold-40mm-1m", "ean": "5904584845215", "name": "Profil progowy aluminiowy owalny szeroki 40mm Cezar Srebrny Mat 1m", "category": "threshold", "packageSize": 1, "unit": "szt", "store": "Cezar", "url": "https://cezar.eu/products/listwa-progowa-owalna-aluminiowa-szeroka-40mm-cezar-srebrny-mat-1m", "imageUrl": "https://cezar.eu/cdn/shop/files/c505b58a71683c0e135cf53f166408a7.webp?v=1769675117", "brand": "Cezar", "format": "shopify-api", "productId": 10292397769045, "variantId": 52008642773333, "variant": ["40mm", "srebrny", "1m"] },
+  // source: https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html
+  { "id": "unimet-corner-mesh-25m", "ean": "5900308102411", "name": "NARO\u017BNIK ALUMINIOWY Z SIATK\u0104 70*70 - 250CM", "category": "plaster-corner", "packageSize": 2.5, "unit": "mb", "store": "Unimet", "url": "https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html", "imageUrl": "https://www.unimet.pl/2006367-large_default/naroznik-aluminiowy-z-siatka-7070-250cm.webp", "brand": "Budmat", "format": "unimet", "variant": ["250cm"] },
+  // source: https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383
+  { "id": "krasny-goldband-25kg", "ean": "5902367206383", "name": "GIPS GOLDBAND 25 Gips tynkarski GOLDBAND 25kg", "category": "plaster", "packageSize": 25, "unit": "kg", "store": "Krasny", "url": "https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383", "imageUrl": "https://static.krasny.pl/59/02/36/72/06/38/3/0/SMALL_100.webp?hash=d61d71b4ff1c4592683b9ceecda29fca", "brand": "Knauf", "format": "jsonld" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Klipsy monta\u017Cowe do listew Cezar (25 szt.)": "5907684672217",
+  "Kliny monta\u017Cowe Floorpol 30 x 150 mm, 10 szt. (drewno)": "5907508719289",
+  "Bateria umywalkowa stoj\u0105ca Ferro Stillo (chrom, BSL2)": "5902194929837",
+  "Profil progowy aluminiowy Cezar 40 mm srebrny 1 m": "5904584845215",
+  "Naro\u017Cnik tynkarski aluminiowy z siatk\u0105 2,5 mb": "5900308102411",
+  "Tynk gipsowy r\u0119czny Knauf Goldband 25 kg": "5902367206383",
   "P\u0142yta gipsowo-kartonowa zwyk\u0142a Norgips GKB typ A 1200\xD72600\xD712,5 mm": "5907651690442",
   "Podk\u0142ad Arbiton XPS Smart Aquastop Thermo 1,6 mm (6 m\xB2)": "5905167826942",
   "Naro\u017Cnik uszczelniaj\u0105cy wewn\u0119trzny Mapei Mapeband W (90\xB0)": "8022452113802",
@@ -21225,6 +21244,7 @@ function objects(value) {
   return [item, ...objects(item["@graph"])];
 }
 function parseRetailPage(html, source, observedAt) {
+  if (source.disabledReason) throw Error(source.disabledReason);
   const products = [];
   if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
@@ -21243,7 +21263,8 @@ function parseRetailPage(html, source, observedAt) {
   const normalize = (value) => normalizeProductName(value.replace(/(\d|mm|cm|m)\s*[x×/]\s*(?=\d)/gi, "$1 x ").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
   const normalized = normalize(name);
   const packagePattern = new RegExp(`(?:^| )${String(source.packageSize).replace(".", " ")} (?:${source.unit === "l" ? "l|litrow|litry" : source.unit})(?: |$)`);
-  const brand = normalizeProductName(typeof product.brand === "string" ? product.brand : product.brand?.name ?? "");
+  const explicitBrand = typeof product.brand === "string" ? product.brand : product.brand?.name;
+  const brand = normalizeProductName(explicitBrand || (typeof product.manufacturer === "string" ? product.manufacturer : product.manufacturer?.name) || "");
   const variantMatches = source.variant?.every((value) => new RegExp(`(?:^| )${normalize(value)}(?: |$)`).test(normalized));
   if (source.packageDescription && !normalize(String(product.description ?? "")).includes(normalize(source.packageDescription))) throw new Error("product_package_not_confirmed");
   if (!(normalized.includes(normalizeProductName(source.brand)) || brand.includes(normalizeProductName(source.brand))) || !(source.variant ? variantMatches : packagePattern.test(normalized))) throw new Error("product_variant_mismatch");
@@ -21287,6 +21308,7 @@ function retailPriceIsValid(validUntil, now) {
   return Date.parse(validUntil) >= now.getTime();
 }
 async function readRetailSource(source, fetchImpl = fetch) {
+  if (source.disabledReason) throw Error(source.disabledReason);
   if (source.format === "shopify-api") {
     const client = new AnonymousShop(new URL(source.url).origin, fetchImpl, AbortSignal.timeout(8e3));
     const raw2 = await client.text(new URL(source.url).pathname + ".js");
@@ -21673,12 +21695,26 @@ var ORIGINS = {
   Prescot: "https://www.prescot.com.pl",
   WinBud: "https://winbud24.pl",
   "Dam-Bud": "https://salonbudowlanydambud.pl",
-  "Plus-Market": "https://www.plus-market.pl"
+  "Plus-Market": "https://www.plus-market.pl",
+  KELOT: "https://listwy.sklep.pl",
+  LiderzyCen: "https://liderzycen.pl",
+  TGS: "https://tgs.pl"
 };
 var TTL = 10 * 6e4;
 function unavailableReason(store) {
+  const sources = RETAIL_SOURCES.filter((source) => source.store === store);
+  if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
   if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar"].includes(store)) return void 0;
   return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
+}
+function retailerDeliveryCapabilities() {
+  return {
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    country: "PL",
+    quoteTtlSeconds: 600,
+    postcodeStores: ["Sewera", "Cezar"],
+    accessRequiredStores: ["Castorama", "OBI"]
+  };
 }
 function knownUnavailableRetailers() {
   const result = {};
@@ -21872,7 +21908,7 @@ function createRemontService(options = {}) {
   const accept = (observation) => {
     if (!observation || typeof observation !== "object") return;
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
-    if (!source || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
+    if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
     const previous = observations.get(source.id);
     if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
     if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
@@ -22000,19 +22036,13 @@ function createRemontService(options = {}) {
       running,
       lastAttemptAt,
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
-      delivery: {
-        automaticStores: ["Rab-Dom", "Realbud", "Zino", "Sewera", "Buduj24"],
-        country: "PL",
-        quoteTtlSeconds: 600,
-        postcodeStores: ["Sewera"],
-        accessRequiredStores: ["Castorama", "OBI"]
-      },
+      delivery: retailerDeliveryCapabilities(),
       sources: RETAIL_SOURCES.map((source) => ({
         id: source.id,
         store: source.store,
         checkedAt: observations.get(source.id)?.observedAt ?? null,
         active: eligible.some((offer) => offer.id === source.id),
-        error: errors.get(source.id) ?? null
+        error: source.disabledReason ?? errors.get(source.id) ?? null
       }))
     };
   }
