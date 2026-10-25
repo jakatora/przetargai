@@ -2,7 +2,7 @@ import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
 import { wyciagnijNip } from '../lib/nip.js';
-import { kodWojewodztwaZNuts } from '../lib/nuts.js';
+import { wojewodztwoRealizacji } from '../lib/nuts.js';
 import { warunkiZTed } from '../lib/warunkiUdzialu.js';
 
 /*
@@ -90,9 +90,10 @@ export function mapujOgloszenieTed(notice) {
     postepowanie_id: pierwszaWartosc(notice['procedure-identifier']),
     zamawiajacy_nip: wyciagnijNip(notice['buyer-identifier']),
     // Zapisujemy tylko pobrane pola (nie pełny XML) — raw służy podglądowi.
-    // Ta sama kolejność co w Radarze planów (services/tedPlany.js): siedziba zamawiającego, potem miejsce realizacji.
-    wojewodztwo: kodWojewodztwaZNuts(pierwszaWartosc(notice['buyer-country-sub']))
-      ?? kodWojewodztwaZNuts(pierwszaWartosc(notice['place-of-performance-subdiv-lot'])),
+    // Pod selekcję liczy się MIEJSCE REALIZACJI (reguła „teren"), siedziba tylko gdy go brak;
+    // kilka regionów / cały kraj → null, żeby reguła nie odrzucała. Radar planów (tedPlany.js)
+    // zostaje przy siedzibie — tam chodzi o to, KTO planuje. Logika: lib/nuts.js.
+    wojewodztwo: wojewodztwoRealizacji({ miejsca: notice['place-of-performance-subdiv-lot'], siedziba: notice['buyer-country-sub'] }),
     warunki_udzialu: warunkiZTed(notice),
     raw: notice,
   };

@@ -163,3 +163,16 @@ test('zapytanie TED prosi o buyer-identifier', async () => {
   const kod = readFileSync(new URL('../src/services/ted.js', import.meta.url), 'utf8');
   assert.match(kod.slice(0, kod.indexOf('];')), /'buyer-identifier'/);
 });
+
+test('mapowanie: województwo z MIEJSCA REALIZACJI, nie z siedziby zamawiającego (GDDKiA z Warszawy, roboty na Podkarpaciu)', () => {
+  const t = mapujOgloszenieTed({ ...NOTICE, 'buyer-country-sub': ['PL911'], 'place-of-performance-subdiv-lot': ['PL821'] });
+  assert.equal(t.wojewodztwo, '18');
+});
+
+test('mapowanie: bez miejsca realizacji województwo z siedziby; kilka regionów albo cały kraj → null (reguła terenu nie odrzuca)', () => {
+  assert.equal(mapujOgloszenieTed({ ...NOTICE, 'buyer-country-sub': ['PL911'] }).wojewodztwo, '14');
+  assert.equal(mapujOgloszenieTed({ ...NOTICE, 'buyer-country-sub': ['PL911'], 'place-of-performance-subdiv-lot': ['PL821', 'PL225'] }).wojewodztwo, null);
+  assert.equal(mapujOgloszenieTed({ ...NOTICE, 'buyer-country-sub': ['PL911'], 'place-of-performance-subdiv-lot': ['PL'] }).wojewodztwo, null);
+  assert.equal(mapujOgloszenieTed({ ...NOTICE, 'buyer-country-sub': ['PL911'], 'place-of-performance-subdiv-lot': ['PL821', 'PL82'] }).wojewodztwo, '18', 'ten sam region na dwóch poziomach NUTS = jedno województwo');
+  assert.equal(mapujOgloszenieTed({ ...NOTICE }).wojewodztwo, null);
+});

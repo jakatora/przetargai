@@ -52,3 +52,27 @@ export function kodWojewodztwaZNuts(nuts) {
 
 /** Same kody NUTS2, do testów i diagnostyki. */
 export const NUTS2_POLSKA = Object.keys(NUTS2_NA_TERYT);
+
+/**
+ * Województwo OGŁOSZENIA pod selekcję (2026-10-25, follow-up pracownika): liczy się
+ * miejsce realizacji, nie siedziba zamawiającego — GDDKiA czy ministerstwo z Warszawy
+ * zamawiają roboty w całej Polsce, a twarda reguła „teren" odrzucałaby je mazowieckim.
+ *
+ * - jedno województwo z miejsc realizacji → ono;
+ * - miejsca podane, ale bez jednego województwa (kilka regionów, cały kraj `PL`,
+ *   zagranica) → null: reguła terenu NIE odrzuca (zasada „brak danych nie odrzuca");
+ * - brak miejsc realizacji w ogłoszeniu → siedziba zamawiającego (jak dotąd).
+ *
+ * @param {{miejsca?: string[]|string|null, siedziba?: string[]|string|null}} w kody NUTS z TED
+ * @returns {string|null} dwucyfrowy TERYT albo null
+ */
+export function wojewodztwoRealizacji({ miejsca, siedziba } = {}) {
+  const lista = (Array.isArray(miejsca) ? miejsca : [miejsca])
+    .filter((m) => m !== null && m !== undefined && String(m).trim() !== '');
+  if (lista.length) {
+    const rozne = [...new Set(lista.map(kodWojewodztwaZNuts).filter(Boolean))];
+    return rozne.length === 1 ? rozne[0] : null;
+  }
+  const s = Array.isArray(siedziba) ? siedziba[0] : siedziba;
+  return kodWojewodztwaZNuts(s);
+}
