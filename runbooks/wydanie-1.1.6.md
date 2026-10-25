@@ -45,6 +45,7 @@ Teksty sklepowe: `store/whats-new-1.1.6.md`.
 - Windows: `cd desktop && node skrypty/eksportWeb.js && (unset ELECTRON_RUN_AS_NODE; npx electron-builder --win nsis portable)`;
   smoke `node skrypty/smoke.js <exe>` (flaky UnknownVizError → powtórz). Kopie do `D:\projekty\PrzetargAI-Windows`.
 - APK na stronę pobierania: `firebase/hosting/PrzetargAI.apk` + SHA-256 + wersja w `pobierz.html` (patrz commit f76261a dla 1.1.5).
+  Do tego momentu test `mobile/test/landingStrona.test.js` „wersja APK = wersja aplikacji” jest CZERWONY (1.1.5 ≠ 1.1.6) — to bramka wydania, nie regresja; po wgraniu APK wpisać nową sumę, rozmiar i wersję.
 
 ## 5. Sklepy (ręka właściciela)
 - [ ] Play Console: AAB vc18 → produkcja; „Informacje o wersji” z `whats-new-1.1.6.md` (bez emoji).
