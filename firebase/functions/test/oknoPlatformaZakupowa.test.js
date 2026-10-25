@@ -53,3 +53,20 @@ test('403 ze źródła: przebieg ok=false, kursor zostaje, ślad z błędem', as
   assert.equal(w.nastepna_strona, 3);
   assert.equal((await oknoPz.wczytaj()).nastepna_strona, 3);
 });
+
+test('przetarg obecny już w BZP (ten sam tytuł, zamawiający, dzień terminu): bez kopii, link platformy dopisany do wpisu BZP', async () => {
+  const { tender: bzp } = await tenders.upsert({ externalId: `bzp-pz-${ZNAK}`, title: 'Fartuchy foliowe do branży spożywczej', organization: 'Zakłady Mięsne Skiba S.A.', deadline: '2026-10-25T14:00:00.000Z', source: 'bzp', url: 'https://ezamowienia.gov.pl/x' });
+  await oknoPz.zapisz({ nastepna_strona: 1 });
+  const w = await runOknoPz({ fetchFn: async () => ({ ok: true, text: async () => fixtureZ(5000) }), odstepMs: 0 });
+  assert.equal(w.ok, true);
+  assert.equal(w.scalone_z_rejestrem, 1, 'fartuchy = kopia wpisu BZP');
+  assert.equal(w.nowe, 2, 'pozostałe dwie pozycje wchodzą normalnie');
+  assert.equal(await tenders.findById(`pz:${ZNAK}${1390256 + 5000}`), null, 'kopia z platformy NIE powstała');
+  const poZmianie = await tenders.findById(bzp.id);
+  assert.deepEqual(poZmianie.zrodla_alternatywne.map((z) => z.source), ['platformazakupowa']);
+  assert.equal(poZmianie.zrodla_alternatywne[0].url, `https://platformazakupowa.pl/transakcja/${ZNAK}${1390256 + 5000}`);
+  // Drugi przebieg nie dubluje linku.
+  await oknoPz.zapisz({ nastepna_strona: 1 });
+  await runOknoPz({ fetchFn: async () => ({ ok: true, text: async () => fixtureZ(5000) }), odstepMs: 0 });
+  assert.equal((await tenders.findById(bzp.id)).zrodla_alternatywne.length, 1);
+});

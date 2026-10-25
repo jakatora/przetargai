@@ -7,7 +7,7 @@ import { wyslijMaileProby } from '../services/mailProby.js';
 import { pobierzBkZWznowieniem, zatwierdzCheckpointBk } from './oknoBk.js';
 import { tenders, cykl } from '../db/repos.js';
 import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
-import { scalMiedzyZrodlami } from '../lib/dedupZrodel.js';
+import { scalMiedzyZrodlami, kluczOgloszenia } from '../lib/dedupZrodel.js';
 import { pustyLicznikAi, zbierajStatystykiAi, ocenStanAi } from '../lib/stanAi.js';
 import { alarmujAwarieAi } from './alarmAi.js';
 import { alarmujCichePusteZrodla } from './alarmZrodla.js';
@@ -230,6 +230,28 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     if (statystyki[nazwa]) statystyki[nazwa].zduplikowane_miedzy_zrodlami = ile;
   }
 
+  /*
+   * Kopie z platformazakupowa.pl (osobny job, co godzinę) mogły wejść PRZED ogłoszeniem
+   * z rejestru wiodącego. Rejestr wiodący wygrywa: jego wpis dostaje link platformy jako
+   * źródło poboczne, a kopia platformy po zapisie schodzi z puli (`zastapiony_przez`).
+   */
+  const kopiePlatformy = new Map();
+  try {
+    const klucze = scalone.ogloszenia.map((n) => kluczOgloszenia(n)).filter(Boolean);
+    const znalezione = await tenders.poKluczuDedup(klucze);
+    for (const n of scalone.ogloszenia) {
+      const klucz = kluczOgloszenia(n);
+      const kopia = klucz ? (znalezione.get(klucz) ?? []).find((d) => d.source === 'platformazakupowa' && !d.zastapiony_przez) : null;
+      if (!kopia) continue;
+      kopiePlatformy.set(String(n.externalId), kopia);
+      const juz = (n.zrodla_alternatywne ?? []).some((z) => z?.source === 'platformazakupowa');
+      if (!juz) n.zrodla_alternatywne = [...(n.zrodla_alternatywne ?? []), { source: 'platformazakupowa', externalId: kopia.bzp_external_id, url: kopia.url }];
+    }
+  } catch (err) {
+    logger.warn({ err: err.message }, 'cykl: sprawdzenie kopii z platformazakupowa.pl nie powiodło się — zapis bez scalania');
+  }
+  let zastapioneKopie = 0;
+
   /* ── FAZA 3: zapis ──────────────────────────────────────────────────────── */
 
   /*
@@ -245,10 +267,16 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     // kto je realnie przyniósł.
     const nazwa = pochodzenie.get(String(notice?.externalId)) ?? notice?.source ?? 'bzp';
     try {
-      const { created } = await tenders.upsert(notice);
+      const { created, tender } = await tenders.upsert(notice);
       if (created) {
         noweTenders += 1;
         if (statystyki[nazwa]) statystyki[nazwa].newTenders += 1;
+      }
+      const kopia = kopiePlatformy.get(String(notice?.externalId));
+      if (kopia && tender?.id && kopia.id !== tender.id) {
+        await tenders.oznaczZastapiony(kopia.id, tender.id).then(() => { zastapioneKopie += 1; }).catch((err) => {
+          logger.warn({ err: err.message, kopia: kopia.id }, 'cykl: nie udało się oznaczyć kopii z platformy jako zastąpionej');
+        });
       }
     } catch (err) {
       pominiete += 1;
@@ -319,6 +347,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     logger.error({ err: err.message }, 'fetchTenders: cykl dopasowań nie powiódł się');
     return zapiszSladZAi({
       ok: false, error: err.message, fetched, newTenders: noweTenders,
+    zastapione_kopie_platformy: zastapioneKopie,
       skipped: pominiete, zduplikowane_miedzy_zrodlami: scalone.duplikaty,
       matchesCreated: 0, durationMs: Date.now() - startedAt,
       zrodla: statystyki, ai: statystykiAi(),
@@ -329,7 +358,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
   await wyslijMaileProby().catch((err) => logger.error({ err: err.message }, 'fetchTenders: maile próby nie wysłane'));
 
   return zapiszSladZAi({
-    ok: true, fetched, newTenders: noweTenders, skipped: pominiete,
+    ok: true, fetched, newTenders: noweTenders, skipped: pominiete, zastapione_kopie_platformy: zastapioneKopie,
     /*
      * Utracone zapisy NIE dają czystego sukcesu (2026-09-25), ale też nie `ok: false`:
      * to wywróciłoby cały dzienny cykl razem z policzonymi już dopasowaniami, a dane

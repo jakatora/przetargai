@@ -2,6 +2,7 @@ import { logger } from '../lib/logger.js';
 import { oknoPz as repoOkna, tenders } from '../db/repos.js';
 import { pustyLicznik } from '../lib/licznikZrodla.js';
 import { ZRODLO, POZYCJI_NA_STRONE, pobierzStrone, normalizujOgloszeniePz } from '../services/platformaZakupowa.js';
+import { kluczOgloszenia, PRIORYTET_ZRODEL } from '../lib/dedupZrodel.js';
 
 /*
  * OKNO PLATFORMAZAKUPOWA.PL (2026-10-25). Co godzinę 2 strony listy po 100 pozycji; kursor
@@ -29,7 +30,7 @@ export async function runOknoPz({
 } = {}) {
   const start = Date.now();
   const licznik = pustyLicznik();
-  const wynik = { ok: true, zrodlo: ZRODLO, strony: [], nowe: 0, zaktualizowane: 0, bez_zmian: 0, bledy_zapisu: 0, ...licznik };
+  const wynik = { ok: true, zrodlo: ZRODLO, strony: [], nowe: 0, zaktualizowane: 0, bez_zmian: 0, scalone_z_rejestrem: 0, bledy_zapisu: 0, ...licznik };
   const checkpoint = await repoOkna.wczytaj().catch((err) => {
     logger.error({ err: err.message }, 'platformazakupowa: nie udało się wczytać checkpointu');
     return null;
@@ -45,9 +46,24 @@ export async function runOknoPz({
       licznik.surowe += pozycje.length + odrzucone;
       licznik.odrzucone += odrzucone;
       wynik.strony.push(strona);
-      for (const poz of pozycje) {
-        const t = normalizujOgloszeniePz(poz);
+      // Ten sam przetarg mógł już wejść z BZP/TED/BK (cykl dobowy) — wtedy nie tworzymy kopii,
+      // tylko dopisujemy link platformy jako rejestr poboczny (lib/dedupZrodel: klucz tożsamości).
+      const znormalizowane = pozycje.map((poz) => normalizujOgloszeniePz(poz));
+      const istniejace = await tenders.poKluczuDedup(znormalizowane.map((t) => (t ? kluczOgloszenia(t) : null)).filter(Boolean)).catch(() => new Map());
+      for (const t of znormalizowane) {
         if (!t) { licznik.odrzucone++; continue; }
+        const poz = { id: t.externalId.replace(/^pz:/, '') };
+        const klucz = kluczOgloszenia(t);
+        const wiodacy = klucz ? (istniejace.get(klucz) ?? []).find((d) => d.source !== ZRODLO && PRIORYTET_ZRODEL.indexOf(d.source) < PRIORYTET_ZRODEL.indexOf(ZRODLO)) : null;
+        if (wiodacy) {
+          try {
+            await tenders.dodajZrodloAlternatywne(wiodacy.id, { source: ZRODLO, externalId: t.externalId, url: t.url });
+            wynik.scalone_z_rejestrem++;
+          } catch (err) {
+            logger.warn({ err: err.message, id: poz.id }, 'platformazakupowa: dopisanie linku do rejestru wiodącego nie powiodło się');
+          }
+          continue;
+        }
         try {
           const { created, tender } = await tenders.upsert(t);
           if (created) { wynik.nowe++; continue; }

@@ -9,6 +9,7 @@ import {
   planZapytania, pasujeDoFiltrow, rozmiarPobrania, SKAN_STRONA, SKAN_MAKS,
 } from '../lib/katalogPrzetargow.js';
 import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
+import { kluczOgloszenia } from '../lib/dedupZrodel.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
 /*
@@ -488,7 +489,7 @@ function zapiszPuleWCache(limit, pula) {
 const POLA_PULI = [
   'title', 'organization', 'budget', 'currency', 'deadline', 'url', 'cpv_main',
   'source', 'wojewodztwo', 'wadium_wymagane', 'wadium_kwota', 'wadium_wiele_czesci',
-  'kryterium_oceny', 'liczba_czesci', 'pz_szczegol', 'bzp_external_id',
+  'kryterium_oceny', 'liczba_czesci', 'pz_szczegol', 'bzp_external_id', 'zastapiony_przez',
   /*
    * Znacznik anulowania (etap 3, Baza Konkurencyjności). Odsiew robimy W PAMIĘCI,
    * a nie zapytaniem `where('anulowany','!=',true)`: nierówność na innym polu niż
@@ -659,6 +660,9 @@ export const tenders = {
       wadium_wymagane: t.wadium_wymagane ?? null,
       wadium_kwota: t.wadium_kwota ?? null,
       wadium_wiele_czesci: t.wadium_wiele_czesci ?? false,
+      // Klucz tożsamości postępowania między rejestrami (lib/dedupZrodel) — do łączenia ogłoszeń
+      // zapisywanych przez RÓŻNE joby (platformazakupowa co godzinę vs cykl dobowy BZP/TED/BK).
+      klucz_dedup: kluczOgloszenia(t),
       // Meta z htmlBody (rundy 5-6).
       kryterium_oceny: t.kryterium_oceny ?? null,
       liczba_czesci: t.liczba_czesci ?? null,
@@ -874,6 +878,43 @@ export const tenders = {
     return userSnap(await db().collection('tenders').doc(id).get());
   },
 
+  /**
+   * Ogłoszenia o podanych kluczach tożsamości (`klucz_dedup`), w porcjach po 30 (limit `in`).
+   * @returns {Promise<Map<string, {id: string, source: string, url: string|null, bzp_external_id: string|null, zrodla_alternatywne: object[]|null}[]>>}
+   */
+  async poKluczuDedup(klucze) {
+    const unikalne = [...new Set((klucze ?? []).filter((k) => typeof k === 'string' && k))];
+    const wynik = new Map();
+    for (let i = 0; i < unikalne.length; i += 30) {
+      const porcja = unikalne.slice(i, i + 30);
+      const snap = await db().collection('tenders').where('klucz_dedup', 'in', porcja)
+        .select('source', 'url', 'bzp_external_id', 'zrodla_alternatywne', 'klucz_dedup', 'zastapiony_przez').get();
+      for (const d of snap.docs) {
+        const dane = d.data();
+        const lista = wynik.get(dane.klucz_dedup) ?? [];
+        lista.push({ id: d.id, source: dane.source ?? 'bzp', url: dane.url ?? null, bzp_external_id: dane.bzp_external_id ?? null, zrodla_alternatywne: dane.zrodla_alternatywne ?? null, zastapiony_przez: dane.zastapiony_przez ?? null });
+        wynik.set(dane.klucz_dedup, lista);
+      }
+    }
+    return wynik;
+  },
+
+  /** Kopia z rejestru pobocznego ustępuje wpisowi wiodącemu — znika z puli dopasowań, dokument zostaje. */
+  async oznaczZastapiony(id, przezId, teraz = nowIso()) {
+    await db().collection('tenders').doc(id).update({ zastapiony_przez: przezId, zastapiony_o: teraz });
+  },
+
+  /** Dopisuje link do rejestru pobocznego, jeśli jeszcze go nie ma (po źródle + externalId). */
+  async dodajZrodloAlternatywne(id, wpis) {
+    const ref = db().collection('tenders').doc(id);
+    const snap = await ref.get();
+    if (!snap.exists) return false;
+    const lista = Array.isArray(snap.data().zrodla_alternatywne) ? snap.data().zrodla_alternatywne : [];
+    if (lista.some((z) => z?.source === wpis.source && (z?.externalId ?? null) === (wpis.externalId ?? null))) return false;
+    await ref.update({ zrodla_alternatywne: [...lista, { source: wpis.source, externalId: wpis.externalId ?? null, url: wpis.url ?? null }] });
+    return true;
+  },
+
   /** Szczegół z platformazakupowa.pl pobrany na żądanie (tryb, załączniki…) — cache przy ogłoszeniu. */
   async zapiszSzczegolPz(id, szczegol, teraz = nowIso()) {
     await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz });
@@ -960,7 +1001,8 @@ export const tenders = {
     // Anulowane ogłoszenie ma wciąż otwarty termin, więc zapytanie je zwraca.
     // Zostawienie go w puli kosztowałoby płatne wywołanie AI i wprowadzało
     // użytkownika w błąd — postępowanie już nie istnieje.
-    const pula = wszystkie.filter((t) => t.anulowany !== true);
+    // Zastąpione = ten sam przetarg wszedł z rejestru wiodącego (BZP/TED/BK) — kopia z platformy schodzi z puli.
+    const pula = wszystkie.filter((t) => t.anulowany !== true && !t.zastapiony_przez);
     statystykiOstatniejPuli = {
       pobrane: pula.length,
       anulowane_odsiane: wszystkie.length - pula.length,
