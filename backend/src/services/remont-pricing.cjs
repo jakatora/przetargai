@@ -20519,9 +20519,27 @@ var RETAIL_SOURCES = [
   // source: https://hipper.pl/klamka-do-drzwi-wewnetrznych-lucy-zlota-r-schaffner-3069808860
   { "id": "hipper-schaffner-lucy-gold", "ean": "5907467760698", "name": "Klamka do drzwi wewn\u0119trznych Lucy z\u0142ota R Schaffner", "category": "door-handle", "brand": "Schaffner", "packageSize": 1, "unit": "szt", "store": "HIPPER", "format": "certusoft", "productId": 3069808860, "retailerUnitId": 3069809346, "apiPurchaseUnit": "szt", "variant": ["Lucy", "z\u0142ota", "Schaffner"], "url": "https://hipper.pl/klamka-do-drzwi-wewnetrznych-lucy-zlota-r-schaffner-3069808860" },
   // source: https://modnalazienka.pl/u117-grey-gres-szkl-rekt-mat-598x598-34158
-  { "id": "modna-paradyz-u117-grey-143m2", "ean": "5904584158261", "name": "U117 GREY GRES SZKL. REKT. MAT. 59,8X59,8", "category": "tile", "brand": "Parady\u017C", "packageSize": 1.43, "unit": "m2", "store": "Modna \u0141azienka", "format": "modna", "productId": 34158, "apiPurchaseUnit": "m2", "variant": ["U117", "GREY", "REKT", "MAT", "59,8X59,8"], "url": "https://modnalazienka.pl/u117-grey-gres-szkl-rekt-mat-598x598-34158" }
+  { "id": "modna-paradyz-u117-grey-143m2", "ean": "5904584158261", "name": "U117 GREY GRES SZKL. REKT. MAT. 59,8X59,8", "category": "tile", "brand": "Parady\u017C", "packageSize": 1.43, "unit": "m2", "store": "Modna \u0141azienka", "format": "modna", "productId": 34158, "apiPurchaseUnit": "m2", "variant": ["U117", "GREY", "REKT", "MAT", "59,8X59,8"], "url": "https://modnalazienka.pl/u117-grey-gres-szkl-rekt-mat-598x598-34158" },
+  // source: https://liderzycen.pl/pl/p/Panele-podlogowe-laminowane-wodoodporne-Classen-Dab-Niasa-AC5-1%2C973-m2/31535
+  { "id": "liderzy-classen-niasa-1973m2", "ean": "4003992571974", "name": "Panele pod\u0142ogowe laminowane wodoodporne Classen D\u0105b Niasa AC5 1,973 m2", "category": "laminate", "brand": "Classen", "packageSize": 1.973, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 31535, "retailerSku": "ctma_4003992571974", "apiPurchaseUnit": "szt.", "packageDescription": "Ilo\u015B\u0107 m2 w opakowaniu: 1,973 m2", "variant": ["D\u0105b", "Niasa", "AC5", "1,973 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52181_500_500/54fce513642c640c65a2c6dfb09f14a0.jpg", "url": "https://liderzycen.pl/pl/p/Panele-podlogowe-laminowane-wodoodporne-Classen-Dab-Niasa-AC5-1%2C973-m2/31535" },
+  // source: https://liderzycen.pl/pl/p/Panele-laminowane-Oakland-wodoodporne-AC4-2%2C51-m2/185472
+  { "id": "liderzy-oakland-ac4-251m2", "ean": "5063022887917", "name": "Panele laminowane Oakland wodoodporne AC4 2,51 m2", "category": "laminate", "brand": "kronospan", "packageSize": 2.51, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 185472, "retailerSku": "ctma_5063022887917", "apiPurchaseUnit": "szt.", "variant": ["Oakland", "AC4", "2,51 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_385924_500_500/0fc09fb9f3eda5be184e7dac0f2f6e76.jpg", "url": "https://liderzycen.pl/pl/p/Panele-laminowane-Oakland-wodoodporne-AC4-2%2C51-m2/185472" },
+  // source: https://liderzycen.pl/pl/p/Podklad-podlogowy-pod-panele-laminowane-Volden-XPS-Smart-3-mm-10-m2/31327
+  { "id": "liderzy-volden-xps-smart-10m2", "ean": "5063022038289", "name": "Podk\u0142ad pod\u0142ogowy pod panele laminowane Volden XPS Smart 3 mm 10 m2", "category": "underlay", "brand": "Volden", "packageSize": 10, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 31327, "retailerSku": "ctma_5063022038289", "apiPurchaseUnit": "szt.", "variant": ["XPS", "Smart", "3 mm", "10 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_51942_500_500/e236d745fb2303be7b2fb68575842e4a.jpg", "url": "https://liderzycen.pl/pl/p/Podklad-podlogowy-pod-panele-laminowane-Volden-XPS-Smart-3-mm-10-m2/31327" },
+  // source: https://liderzycen.pl/pl/p/Gres-mrozoodporny-szkliwiony-Guigliano-GoodHome-18%2C5-x-59%2C8-cm-beige-1-m2/31407
+  { "id": "liderzy-goodhome-guigliano-1m2", "ean": "3663602870821", "name": "Gres mrozoodporny szkliwiony Guigliano GoodHome 18,5 x 59,8 cm beige 1 m2", "category": "tile", "brand": "GoodHome", "packageSize": 1, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 31407, "retailerSku": "ctma_3663602870821", "apiPurchaseUnit": "szt.", "packageDescription": "Ilo\u015B\u0107 m2 w opakowaniu: 1 m2", "variant": ["Guigliano", "18,5 x 59,8", "beige", "1 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52024_500_500/d715e779aa0887d53ec108d0e9616438.jpg", "url": "https://liderzycen.pl/pl/p/Gres-mrozoodporny-szkliwiony-Guigliano-GoodHome-18%2C5-x-59%2C8-cm-beige-1-m2/31407" },
+  // source: https://liderzycen.pl/pl/p/Zawor-katowy-z-filtrem-Ferro-12-x-38/49055
+  { "id": "liderzy-ferro-angle-valve-z270e", "ean": "5901095614033", "name": 'Zaw\xF3r k\u0105towy z filtrem Ferro 1/2" x 3/8"', "category": "valve", "brand": "Ferro", "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 49055, "retailerSku": "ctma_5901095614033", "apiPurchaseUnit": "szt.", "packageDescription": "Kolor producenta: chrom", "variant": ["z filtrem", "1/2", "3/8"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_70333_500_500/1831d737608977a2a1b38c23f5417c16.jpg", "url": "https://liderzycen.pl/pl/p/Zawor-katowy-z-filtrem-Ferro-12-x-38/49055" },
+  // source: https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474
+  { "id": "liderzy-goodhome-marvo-2235m2", "ean": "5063022676757", "name": "Panele pod\u0142ogowe winylowe GoodHome SPC Marvo 2,235 m2", "category": "vinyl-panel", "brand": "GoodHome", "packageSize": 2.235, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 185474, "retailerSku": "ctma_5063022676757", "apiPurchaseUnit": "szt.", "variant": ["SPC", "Marvo", "2,235 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_385938_500_500/fc6886e524d877060a0d12ba4742f75e.jpg", "url": "https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Panele laminowane Oakland wodoodporne AC4 2.51 m\xB2": "5063022887917",
+  "Podk\u0142ad pod\u0142ogowy Volden XPS Smart 3 mm 10 m\xB2": "5063022038289",
+  "Gres Guigliano GoodHome 1 m\xB2": "3663602870821",
+  'Zaw\xF3r k\u0105towy z filtrem Ferro 1/2" \xD7 3/8" (chrom)': "5901095614033",
+  "Panele winylowe GoodHome SPC Marvo click 2,235 m\xB2": "5063022676757",
+  "Panele laminowane wodoodporne AC5 8 mm Classen D\u0105b Niasa (1,973 m\xB2/paczka)": "4003992571974",
   "Gres szkliwiony rektyfikowany Parady\u017C U117 (Ennis) Grey mat 59,8\xD759,8 cm": "5904584158261",
   "Klamka drzwiowa Schaffner Lucy na rozecie (komplet dwustronny)": "5907467760698",
   "Bateria natryskowa \u015Bcienna Ferro One (chrom, BFO7)": "5902194954525",
@@ -21810,7 +21828,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   if (api) {
     const item = JSON.parse(raw);
     if (String(item.id) !== shoperProductId(source)) throw new Error("product_id_not_confirmed");
-    if (source.apiPurchaseUnit && item.unit?.name !== source.apiPurchaseUnit) throw new Error("retailer_unit_not_confirmed");
+    confirmShoperPurchaseUnit(item, source);
     if (!item.can_buy) throw new Error("retailer_out_of_stock");
     const gross = item.price?.gross;
     const formatted = String(gross?.final ?? "").replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
@@ -21821,12 +21839,19 @@ async function readRetailSource(source, fetchImpl = fetch) {
       gtin13: item.ean,
       brand: item.producer?.name,
       image: source.imageUrl,
+      description: item.description,
       offers: { "@type": "Offer", price: gross.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
     })}</script>`;
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
     return { ...observation, evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(raw).digest("hex") };
   }
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
+}
+function confirmShoperPurchaseUnit(item, source) {
+  if (String(item.id) !== shoperProductId(source)) throw Error("product_id_not_confirmed");
+  if (source.apiPurchaseUnit && (item.unit?.name !== source.apiPurchaseUnit || item.unit?.floating_point !== false)) throw Error("retailer_unit_not_confirmed");
+  if (source.retailerSku && item.code !== source.retailerSku) throw Error("product_identity_not_confirmed");
+  if (source.packageDescription && !normalizeProductName(text2(String(item.description ?? ""))).includes(normalizeProductName(source.packageDescription))) throw Error("product_package_not_confirmed");
 }
 function shoperProductId(source) {
   const fromUrl = source.url.match(/\/(\d+)$/)?.[1];
@@ -22508,11 +22533,12 @@ async function quoteShoper(order, fetchImpl) {
     if (!source || new URL(source.url).origin !== origin3 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const id = shoperProductId(source);
     const product = await client.json(`/webapi/front/pl_PL/products/PLN/${id}`);
+    confirmShoperPurchaseUnit(product, source);
     if (String(product.ean) !== source.ean || String(product.id) !== id || !product.can_buy || !Number.isSafeInteger(product.stockId)) throw Error("product_unavailable");
     const price = confirmedMoney(product.price?.gross?.final, product.price?.gross?.final_float);
     if (price !== pack.unitPriceGrosze) throw Error("price_changed");
     if (expected.has(product.stockId)) throw Error("invalid_basket");
-    expected.set(product.stockId, { count: pack.count, price });
+    expected.set(product.stockId, { count: pack.count, price, unitName: source.apiPurchaseUnit });
     await client.json("/webapi/front/pl_PL/basket/PLN/", { stock_id: product.stockId, quantity: pack.count });
   }
   const basket = await client.json("/webapi/front/pl_PL/basket/PLN/");
@@ -22520,7 +22546,7 @@ async function quoteShoper(order, fetchImpl) {
   let total = 0;
   for (const p of basket.products) {
     const wanted = expected.get(p.stock_id);
-    if (!wanted || p.quantity !== wanted.count || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    if (!wanted || p.quantity !== wanted.count || wanted.unitName && (p.unit?.name !== wanted.unitName || p.unit?.floating_point !== false) || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
     expected.delete(p.stock_id);
     total += wanted.count * wanted.price;
   }
