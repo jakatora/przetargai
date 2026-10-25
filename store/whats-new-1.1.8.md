@@ -1,4 +1,6 @@
-# PrzetargAI — teksty wydania 1.1.8 (szkic, rozpoczęty 2026-10-25)
+# PrzetargAI — teksty wydania 1.1.8
+
+Wersja: **1.1.8** · Android `versionCode 20` (poprzednio 1.1.7 / 19) · Data: 2026-10-25
 
 Zasady jak w `whats-new-1.1.7.md`: bez emoji (bullet `•` dozwolony), opis = faktyczne działanie.
 Przy wydaniu podbić: `mobile/app.json` (1.1.8 / versionCode 20), `android/app/build.gradle`, `desktop/package.json` ORAZ `landing/wersja.json` (test `landingStrona` tego pilnuje).
