@@ -1,5 +1,6 @@
 import { matchKeywords } from './textNorm.js';
 import { cpvAffinity, parseCpvCodes } from './cpv.js';
+import { slowaZNazwCpv, trafioneSlowaNazw } from './cpvSlowa.js';
 
 /**
  * Heurystyczny scoring dopasowania przetargu do profilu firmy.
@@ -54,6 +55,13 @@ const KEYWORD_DECAY = 0.38;
 const CPV_WEIGHT = 70;
 
 /**
+ * Ogłoszenie BEZ kodów CPV (platformazakupowa.pl, e-ProPublico), a tytuł trafia w słowo z NAZWY
+ * kodu CPV firmy (2026-10-25): zgodność jak przy luźnym prefiksie (0.6 → 42 pkt). Wpuszcza do
+ * oceny AI, nie tworzy dopasowania samo z siebie — nazwa klasy to słabsza deklaracja niż kod.
+ */
+const AFINICZNOSC_Z_NAZWY = 0.6;
+
+/**
  * Zwraca wynik 0–100, listę trafionych słów kluczowych oraz stopień zgodności CPV.
  *
  * Sygnały łączą się probabilistycznie (`1 − (1−a)(1−b)`), nie przez dodawanie:
@@ -62,7 +70,7 @@ const CPV_WEIGHT = 70;
  *
  * @param {{keywords?: string[], cpv_codes?: string[]}} company
  * @param {{title?: string, organization?: string, cpv_main?: string, cpvMain?: string}} tender
- * @returns {{score: number, matchedKeywords: string[], cpvMatched: boolean, cpvAffinity: number}}
+ * @returns {{score: number, matchedKeywords: string[], cpvMatched: boolean, cpvAffinity: number, cpvZNazw: string[]}}
  */
 export function heuristicScore(company, tender) {
   const keywords = company.keywords ?? [];
@@ -78,7 +86,12 @@ export function heuristicScore(company, tender) {
   // Wszystkie kody przetargu, nie tylko pierwszy.
   const tenderCodes = parseCpvCodes(tender.cpv_main ?? tender.cpvMain);
   const affinity = cpvAffinity(company.cpv_codes ?? [], tenderCodes);
-  const cpvSignal = (CPV_WEIGHT / 100) * affinity;
+  let cpvSignal = (CPV_WEIGHT / 100) * affinity;
+  let cpvZNazw = [];
+  if (!tenderCodes.length && company.cpv_codes?.length) {
+    cpvZNazw = trafioneSlowaNazw(slowaZNazwCpv(company.cpv_codes), tender.title ?? '');
+    if (cpvZNazw.length) cpvSignal = (CPV_WEIGHT / 100) * AFINICZNOSC_Z_NAZWY;
+  }
 
   const combined = 1 - (1 - keywordSignal) * (1 - cpvSignal);
 
@@ -88,5 +101,7 @@ export function heuristicScore(company, tender) {
     cpvMatched: affinity > 0,
     // Stopień (0..1), nie tylko flaga — wejście dla ważonego scoringu.
     cpvAffinity: affinity,
+    // Słowa z nazw kodów CPV firmy trafione w tytule ogłoszenia bez kodów (wyjaśnienie dla usera).
+    cpvZNazw,
   };
 }

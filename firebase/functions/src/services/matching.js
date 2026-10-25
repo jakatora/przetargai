@@ -45,6 +45,7 @@ function heuristicReasoning(h) {
   const parts = [];
   if (h.matchedKeywords.length) parts.push(`Trafione słowa kluczowe: ${h.matchedKeywords.join(', ')}.`);
   if (h.cpvMatched) parts.push('Zgodność kodu CPV z profilem firmy.');
+  if (h.cpvZNazw?.length) parts.push(`Ogłoszenie bez kodów CPV; tytuł pasuje do nazwy kodu z profilu: ${h.cpvZNazw.join(', ')}.`);
   return parts.join(' ') || 'Brak wyraźnych trafień w profilu firmy.';
 }
 

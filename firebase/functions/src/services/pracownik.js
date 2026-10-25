@@ -42,6 +42,7 @@ function punktyZHeurystyki(h) {
   const punkty = [];
   if (h.matchedKeywords.length) punkty.push(`Tytuł trafia w Twoje słowa: ${h.matchedKeywords.join(', ')}.`);
   if (h.cpvMatched) punkty.push('Kod CPV zgodny z Twoim profilem.');
+  if (h.cpvZNazw?.length) punkty.push(`Ogłoszenie bez kodów CPV, ale tytuł pasuje do nazwy Twojego kodu: ${h.cpvZNazw.join(', ')}.`);
   return punkty.length ? punkty : ['Słaby sygnał z profilu.'];
 }
 
