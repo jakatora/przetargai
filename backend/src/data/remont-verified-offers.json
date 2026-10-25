@@ -983,5 +983,83 @@
     "sourceUrl": "https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html",
     "evidenceSha256": "9369575700f1f9a9b903f90c240d1d7dafd6d9a8cb0ba7073a170c84aca57864",
     "validUntil": null
+  },
+  {
+    "sourceId": "kelot-clips-25",
+    "ean": "5907684672217",
+    "name": "Klips montażowy z podkładką dystansową do montażu listew 1opak=25szt  MASTER LINE CEZAR",
+    "imageUrl": "https://listwy.sklep.pl/environment/cache/images/productGfx_3487_500_500/klips-do-montowania-listew-przypodlogowych.jpg",
+    "priceGrosze": 3800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T16:39:02.235Z",
+    "sourceUrl": "https://listwy.sklep.pl/pl/p/Klips-montazowy-z-podkladka-dystansowa-do-montazu-listew-1opak25szt-MASTER-LINE-CEZAR/687",
+    "evidenceSha256": "181c6ce24b58d24677a549db8234d46f52dd10f89700300793ecf76dd2139ebf",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-wedges-10",
+    "ean": "5907508719289",
+    "name": "Kliny montażowe Floorpol 30 x 150 mm 10 szt.",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52309_500_500/8fc1fd3c8fa7d0b098f9b17c9b091da3.jpg",
+    "priceGrosze": 1898,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T16:39:02.603Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Kliny-montazowe-Floorpol-30-x-150-mm-10-szt./31651",
+    "evidenceSha256": "5211f1bdab0d8543028c8e3c2f72471ddb50a61e4112d7e27a3231d9fbdf93e0",
+    "validUntil": null
+  },
+  {
+    "sourceId": "tgs-ferro-stillo",
+    "ean": "5902194929837",
+    "name": "Ferro Stillo bateria umywalkowa stojąca chrom",
+    "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_56358_500_500/Ferro-Stillo-bateria-umywalkowa-stojaca-chrom.jpg",
+    "priceGrosze": 12998,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T16:39:03.001Z",
+    "sourceUrl": "https://tgs.pl/pl/p/Ferro-Stillo-bateria-umywalkowa-stojaca-chrom/44",
+    "evidenceSha256": "6dc48546b470c28435e217661ae3f3e162e9646272512c57e88df3c1a32a7c59",
+    "validUntil": null
+  },
+  {
+    "sourceId": "cezar-threshold-40mm-1m",
+    "ean": "5904584845215",
+    "name": "Profil progowy aluminiowy owalny szeroki 40mm Cezar Srebrny Mat 1m",
+    "imageUrl": "https://cezar.eu/cdn/shop/files/c505b58a71683c0e135cf53f166408a7.webp?v=1769675117",
+    "priceGrosze": 1955,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T16:39:03.306Z",
+    "sourceUrl": "https://cezar.eu/products/listwa-progowa-owalna-aluminiowa-szeroka-40mm-cezar-srebrny-mat-1m",
+    "evidenceSha256": "695bec56c71b5f5d7530b9bf805ffb48fe92e4f3853a903623cd3de481731c39",
+    "validUntil": null
+  },
+  {
+    "sourceId": "unimet-corner-mesh-25m",
+    "ean": "5900308102411",
+    "name": "NAROŻNIK ALUMINIOWY Z SIATKĄ 70*70 - 250CM",
+    "imageUrl": "https://www.unimet.pl/2006367-large_default/naroznik-aluminiowy-z-siatka-7070-250cm.webp",
+    "priceGrosze": 635,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T16:39:03.639Z",
+    "sourceUrl": "https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html",
+    "evidenceSha256": "98f0cd30063aedeac73a2cd5dbf57a1e0adcfddf7347cfb0287e000466458767",
+    "validUntil": null
+  },
+  {
+    "sourceId": "krasny-goldband-25kg",
+    "ean": "5902367206383",
+    "name": "GIPS GOLDBAND 25 Gips tynkarski GOLDBAND 25kg",
+    "imageUrl": "https://static.krasny.pl/59/02/36/72/06/38/3/0/SMALL_100.webp?hash=d61d71b4ff1c4592683b9ceecda29fca",
+    "priceGrosze": 4989,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T16:39:04.349Z",
+    "sourceUrl": "https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383",
+    "evidenceSha256": "91da0a55d8cc3f5a56adcea436cc536568a8fcc49b9038a3453453c254658c24",
+    "validUntil": null
   }
 ]
