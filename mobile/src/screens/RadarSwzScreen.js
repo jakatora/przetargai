@@ -37,8 +37,9 @@ import { opisStatusu, etykietaLicznika } from '../lib/sejf';
  * Spina w jeden ekran trzy rzeczy, które backend już liczy dla obserwowanego
  * postępowania:
  *   1. listę WYGENEROWANYCH PYTAŃ do SWZ z ODLICZANIEM do terminu ich składania
- *      (koniec dnia połowy terminu składania ofert — po nim zamawiający może je
- *      zignorować),
+ *      (ustawowy: art. 284 ust. 2 Pzp — 4 dni przed składaniem w trybie podstawowym,
+ *      art. 135 ust. 2 — 14 dni powyżej progów UE; liczy backend — po nim zamawiający
+ *      może je zignorować),
  *   2. TIMELINE opublikowanych zmian SWZ z czytelnym diffem i opisem skutku
  *      („termin 60→45 dni — przelicz harmonogram i cenę") + odznaczaniem „uwzględniono",
  *   3. CHECKLISTĘ przedwysyłkową z werdyktem bramki: blokada przy nieuwzględnionych
@@ -385,8 +386,9 @@ export default function RadarSwzScreen({ route, navigation }) {
     return (
       <Screen scroll>
         <Text style={styles.wstep}>
-          Radar SWZ pilnuje dwóch rzeczy: terminu na pytania do treści SWZ (koniec dnia,
-          w którym mija połowa terminu składania ofert) oraz zmian, które zamawiający
+          Radar SWZ pilnuje dwóch rzeczy: ustawowego terminu na pytania do treści SWZ
+          (4 dni przed składaniem w trybie podstawowym, 14 dni powyżej progów UE — po nim
+          zamawiający może pytanie zignorować) oraz zmian, które zamawiający
           publikuje aż do składania — i sprawdza, czy uwzględniłeś je przed wysłaniem oferty.
         </Text>
 
