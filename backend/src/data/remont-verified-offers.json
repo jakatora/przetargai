@@ -1308,5 +1308,18 @@
     "sourceUrl": "https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489",
     "evidenceSha256": "423e120ca78604de77bb2f3185785a2680525a99da18d0daa491b2ac61fdbd51",
     "validUntil": null
+  },
+  {
+    "sourceId": "betterial-atlas-stopter-k20-25kg",
+    "ean": "5905400160253",
+    "name": "Atlas - zaprawa klejąca do styropianu Stopter K-20",
+    "imageUrl": "https://betterial.pl/52078-product_main_2x/atlas-zaprawa-klejaca-do-styropianu-stopter-k-20.jpg",
+    "priceGrosze": 5255,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T22:33:02.916Z",
+    "sourceUrl": "https://betterial.pl/kleje-do-styropianu/8679-atlas-zaprawa-klejaca-do-styropianu-stopter-k-20.html",
+    "evidenceSha256": "eaf27dd4aab56c1797ecd973da6191d348a006f254ee8df9da1e45058e16aea7",
+    "validUntil": "2026-11-09"
   }
 ]
