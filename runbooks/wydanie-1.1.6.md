@@ -59,3 +59,6 @@ Teksty sklepowe: `store/whats-new-1.1.6.md`.
 - [x] `git push origin main` (lub integ → main) — `GITHUB_TOKEN` z vaulta. ZROBIONE 25.10: origin/main = 1d3c9e7 (integ + modul remont); Codemagic ios-release build #21 `6addcc154a02b7f35d2acfe3` (IPA OK, publishing).
 - [ ] STAN w pamięci projektu: wersja, rewizje Functions, deployment Railway, buildy.
 - [ ] Sprzątanie: worktree `D:\wt\przetargai-robi` i `D:\wt\przetargai-pracownik` po scaleniu.
+
+## 7. Po wydaniu (25.10 po południu)
+- Functions `api-00052-yoz`: poprawki selekcji (TED teren z miejsca realizacji, „termin” wygasa po przedłużeniu, zamówienia w częściach, ucięte werdykty AI). Hosting: strony prawne z repo (gałąź `chore/landing-strony-prawne`). Zmiany mobile zebrane w `store/whats-new-1.1.7.md`.
