@@ -74,13 +74,13 @@ export default function AccountScreen({ navigation }) {
       const aktywny = await poczekajNaAktywacjePlanu();
       if (!aktywny) {
         komunikat(
-          'Płatność w toku',
-          'Jeśli płatność się powiodła, plan aktywuje się w ciągu kilku minut. '
-          + 'Odśwież ten ekran lub sprawdź skrzynkę e-mail.',
+          t('Płatność w toku', 'Payment in progress'),
+          t('Jeśli płatność się powiodła, plan aktywuje się w ciągu kilku minut. Odśwież ten ekran lub sprawdź skrzynkę e-mail.',
+            'If the payment went through, the plan activates within a few minutes. Refresh this screen or check your e-mail.'),
         );
       }
     } catch (err) {
-      komunikat('Błąd', err.message);
+      komunikat(t('Błąd', 'Error'), err.message);
     } finally {
       setUpgrading(false);
     }
@@ -94,11 +94,11 @@ export default function AccountScreen({ navigation }) {
   async function potwierdzRezygnacje() {
     // Na webie Alert.alert jest pusty — potwierdzAkcje pyta przez window.confirm.
     potwierdzAkcje({
-      tytul: 'Zrezygnować z subskrypcji?',
-      tresc: 'Standard będzie działać do końca opłaconego okresu, a potem konto wróci na plan Free. '
-        + 'Nie pobierzemy kolejnej opłaty. W każdej chwili możesz wznowić subskrypcję.',
-      etykietaTak: 'Rezygnuję',
-      etykietaNie: 'Zostaję',
+      tytul: t('Zrezygnować z subskrypcji?', 'Cancel the subscription?'),
+      tresc: t('Standard będzie działać do końca opłaconego okresu, a potem konto wróci na plan Free. Nie pobierzemy kolejnej opłaty. W każdej chwili możesz wznowić subskrypcję.',
+        'Standard keeps working until the end of the paid period, then the account returns to Free. We will not charge again. You can resume any time.'),
+      etykietaTak: t('Rezygnuję', 'Cancel it'),
+      etykietaNie: t('Zostaję', 'Keep it'),
       onTak: () => anulujSubskrypcje(),
     }, srodowiskoPotwierdzen());
   }
@@ -110,9 +110,9 @@ export default function AccountScreen({ navigation }) {
       // Odświeżamy usera — plan nie zmienia się od razu (Standard do końca okresu),
       // ale gdyby backend zaktualizował cokolwiek, chcemy to zobaczyć.
       await refreshUser().catch(() => {});
-      komunikat('Rezygnacja przyjęta', wynik.komunikat || 'Subskrypcja nie odnowi się.');
+      komunikat(t('Rezygnacja przyjęta', 'Cancellation accepted'), wynik.komunikat || t('Subskrypcja nie odnowi się.', 'The subscription will not renew.'));
     } catch (err) {
-      komunikat('Nie udało się zrezygnować', err.message);
+      komunikat(t('Nie udało się zrezygnować', 'Could not cancel'), err.message);
     } finally {
       setRezygnacja(false);
     }
@@ -146,9 +146,9 @@ export default function AccountScreen({ navigation }) {
   function confirmSignOut() {
     // Na webie Alert.alert jest pusty — potwierdzAkcje pyta tam przez window.confirm.
     potwierdzAkcje({
-      tytul: 'Wylogowanie',
-      tresc: 'Czy na pewno chcesz się wylogować?',
-      etykietaTak: 'Wyloguj',
+      tytul: t('Wylogowanie', 'Sign out'),
+      tresc: t('Czy na pewno chcesz się wylogować?', 'Are you sure you want to sign out?'),
+      etykietaTak: t('Wyloguj', 'Sign out'),
       // Bez przekazywania argumentów — signOut przyjmuje opcje (2026-09-25).
       onTak: () => signOut(),
     }, srodowiskoPotwierdzen());
@@ -160,7 +160,7 @@ export default function AccountScreen({ navigation }) {
    */
   async function usunKonto() {
     if (!haslo) {
-      komunikat('Podaj hasło', 'Wpisz hasło, aby potwierdzić usunięcie konta.');
+      komunikat(t('Podaj hasło', 'Enter your password'), t('Wpisz hasło, aby potwierdzić usunięcie konta.', 'Enter your password to confirm account deletion.'));
       return;
     }
     setUsuwanie(true);
@@ -172,7 +172,7 @@ export default function AccountScreen({ navigation }) {
       // skasowanym kontem i tak dostałoby 401 (2026-09-25).
       await signOut({ wyrejestrujPush: false });
     } catch (err) {
-      komunikat('Nie udało się usunąć konta', err.message);
+      komunikat(t('Nie udało się usunąć konta', 'Could not delete the account'), err.message);
     } finally {
       setUsuwanie(false);
     }
@@ -180,10 +180,10 @@ export default function AccountScreen({ navigation }) {
 
   function potwierdzUsuniecie() {
     potwierdzAkcje({
-      tytul: 'Usunąć konto na zawsze?',
-      tresc: 'Stracisz wszystkie dopasowane przetargi i ustawienia profilu. Tej operacji nie da się cofnąć.'
-        + (isStandard ? '\n\nSubskrypcja Standard zostanie anulowana.' : ''),
-      etykietaTak: 'Usuń konto',
+      tytul: t('Usunąć konto na zawsze?', 'Delete the account forever?'),
+      tresc: t('Stracisz wszystkie dopasowane przetargi i ustawienia profilu. Tej operacji nie da się cofnąć.', 'You will lose all matched tenders and profile settings. This cannot be undone.')
+        + (isStandard ? t('\n\nSubskrypcja Standard zostanie anulowana.', '\n\nThe Standard subscription will be cancelled.') : ''),
+      etykietaTak: t('Usuń konto', 'Delete account'),
       onTak: () => usunKonto(),
     }, srodowiskoPotwierdzen());
   }
@@ -191,21 +191,21 @@ export default function AccountScreen({ navigation }) {
   return (
     <Screen scroll>
       <View style={styles.card}>
-        <Text style={styles.company}>{user.company_name || 'Moje konto'}</Text>
+        <Text style={styles.company}>{user.company_name || t('Moje konto', 'My account')}</Text>
         {user.company_nip ? <Text style={styles.muted}>NIP: {user.company_nip}</Text> : null}
         <Text style={styles.muted}>{user.email}</Text>
         <View style={[styles.badge, isStandard ? styles.badgeStandard : styles.badgeFree]}>
-          <Text style={styles.badgeText}>Plan {isStandard ? 'Standard' : 'Free'}</Text>
+          <Text style={styles.badgeText}>{t('Plan', 'Plan')} {isStandard ? 'Standard' : 'Free'}</Text>
         </View>
       </View>
 
       <Button
-        title="🧰  Wszystkie narzędzia"
+        title={t('🧰  Wszystkie narzędzia', '🧰  All tools')}
         onPress={() => navigation.navigate('Narzedzia')}
         style={styles.gap}
       />
       <Button
-        title="🚀  Przewodnik startu — czy jesteś gotowy?"
+        title={t('🚀  Przewodnik startu — czy jesteś gotowy?', '🚀  Getting-started guide — are you ready?')}
         variant="ghost"
         onPress={() => navigation.navigate('PrzewodnikStartu')}
         style={styles.gap}
@@ -220,12 +220,12 @@ export default function AccountScreen({ navigation }) {
 
       {isStandard ? (
         <View style={styles.upgradeCard}>
-          <Text style={styles.upgradeTitle}>Plan Standard aktywny ✓</Text>
+          <Text style={styles.upgradeTitle}>{t('Plan Standard aktywny ✓', 'Standard plan active ✓')}</Text>
           <Text style={styles.upgradeText}>
             {t('Bez dziennego limitu, przegląd co 3 godziny i powiadomienia od razu, sprawdzanie warunków udziału, plan działania do oferty.', 'No daily limit, reviews every 3 hours with instant alerts, participation condition checks, an action plan to your bid.')}
           </Text>
           <Button
-            title="Zrezygnuj z subskrypcji"
+            title={t('Zrezygnuj z subskrypcji', 'Cancel subscription')}
             variant="ghost"
             onPress={potwierdzRezygnacje}
             loading={rezygnacja}
@@ -234,12 +234,12 @@ export default function AccountScreen({ navigation }) {
         </View>
       ) : (
         <View style={styles.upgradeCard}>
-          <Text style={styles.upgradeTitle}>Przejdź na Standard</Text>
+          <Text style={styles.upgradeTitle}>{t('Przejdź na Standard', 'Upgrade to Standard')}</Text>
           <Text style={styles.upgradeText}>
             {t('Bez dziennego limitu, przegląd co 3 godziny i powiadomienia od razu, sprawdzanie warunków udziału, plan działania do oferty — 99 zł / miesiąc.', 'No daily limit, reviews every 3 hours with instant alerts, participation condition checks, an action plan to your bid — PLN 99 / month.')}
           </Text>
           <Button
-            title="Przejdź na Standard"
+            title={t('Przejdź na Standard', 'Upgrade to Standard')}
             onPress={handleUpgrade}
             loading={upgrading}
             style={styles.gap}
@@ -249,10 +249,10 @@ export default function AccountScreen({ navigation }) {
 
       {__DEV__ ? (
         <View style={styles.demoCard}>
-          <Text style={styles.demoTytul}>TRYB DEMO — porównaj pakiety</Text>
+          <Text style={styles.demoTytul}>{t('TRYB DEMO — porównaj pakiety', 'DEMO MODE — compare plans')}</Text>
           <Text style={styles.demoOpis}>
-            Przełącza plan bez płatności i od razu przelicza dopasowania.
-            Widoczne tylko w buildzie deweloperskim.
+            {t('Przełącza plan bez płatności i od razu przelicza dopasowania. Widoczne tylko w buildzie deweloperskim.',
+              'Switches the plan without payment and recalculates matches right away. Visible only in development builds.')}
           </Text>
           <View style={styles.demoPrzyciski}>
             {['free', 'standard'].map((tier) => {
@@ -273,7 +273,7 @@ export default function AccountScreen({ navigation }) {
               );
             })}
           </View>
-          {demoBusy ? <Text style={styles.demoInfo}>Przełączam…</Text> : null}
+          {demoBusy ? <Text style={styles.demoInfo}>{t('Przełączam…', 'Switching…')}</Text> : null}
           {demoInfo ? <Text style={styles.demoInfo}>{demoInfo}</Text> : null}
         </View>
       ) : null}
@@ -294,54 +294,53 @@ export default function AccountScreen({ navigation }) {
         />
       </View>
 
-      <Text style={styles.sectionTitle}>Narzędzia firmy</Text>
+      <Text style={styles.sectionTitle}>{t('Narzędzia firmy', 'Company tools')}</Text>
       <Text style={styles.sectionHint}>
-        Bank referencji pilnuje „terminu przydatności” Twojego doświadczenia (roboty 5 lat,
-        dostawy i usługi 3 lata) — żebyś nie odkrył w dniu składania, że kluczowa robota już
-        się nie liczy.
+        {t('Bank referencji pilnuje „terminu przydatności” Twojego doświadczenia (roboty 5 lat, dostawy i usługi 3 lata) — żebyś nie odkrył w dniu składania, że kluczowa robota już się nie liczy.',
+          'The reference bank tracks the “shelf life” of your experience (works 5 years, supplies and services 3 years) — so you do not find out on submission day that a key project no longer counts.')}
       </Text>
       <Button
-        title="Otwórz bank referencji"
+        title={t('Otwórz bank referencji', 'Open reference bank')}
         variant="ghost"
         onPress={() => navigation.navigate('BankReferencji')}
       />
       <Button
-        title="Certyfikat wykonawcy — czy się opłaca?"
+        title={t('Certyfikat wykonawcy — czy się opłaca?', 'Contractor certificate — is it worth it?')}
         variant="ghost"
         onPress={() => navigation.navigate('CertyfikatWykonawcy')}
       />
       <Button
-        title="Kalkulator terminów Pzp"
+        title={t('Kalkulator terminów Pzp', 'Procurement deadline calculator')}
         variant="ghost"
         onPress={() => navigation.navigate('KalkulatorTerminow')}
         style={styles.gap}
       />
       <Button
-        title="Kalkulator ceny ofertowej"
+        title={t('Kalkulator ceny ofertowej', 'Bid price calculator')}
         variant="ghost"
         onPress={() => navigation.navigate('KalkulatorCeny')}
         style={styles.gap}
       />
       <Button
-        title="Sprawdzarka formularza cenowego"
+        title={t('Sprawdzarka formularza cenowego', 'Price form checker')}
         variant="ghost"
         onPress={() => navigation.navigate('SprawdzarkaCeny')}
         style={styles.gap}
       />
       <Button
-        title="Symulator punktacji oferty"
+        title={t('Symulator punktacji oferty', 'Bid scoring simulator')}
         variant="ghost"
         onPress={() => navigation.navigate('SymulatorPunktacji')}
         style={styles.gap}
       />
       <Button
-        title="Kalkulator kar umownych"
+        title={t('Kalkulator kar umownych', 'Contractual penalty calculator')}
         variant="ghost"
         onPress={() => navigation.navigate('KaryUmowne')}
         style={styles.gap}
       />
       <Button
-        title="Odsetki za opóźnienie + rekompensata"
+        title={t('Odsetki za opóźnienie + rekompensata', 'Late-payment interest + compensation')}
         variant="ghost"
         onPress={() => navigation.navigate('KalkulatorOdsetek')}
         style={styles.gap}
@@ -379,9 +378,9 @@ export default function AccountScreen({ navigation }) {
         })}
       </View>
 
-      <Text style={styles.sectionTitle}>Wygląd</Text>
+      <Text style={styles.sectionTitle}>{t('Wygląd', 'Appearance')}</Text>
       <Text style={styles.sectionHint}>
-        „Systemowy” podąża za ustawieniem telefonu.
+        {t('„Systemowy” podąża za ustawieniem telefonu.', '“System” follows your phone setting.')}
       </Text>
       <View style={styles.motywy} accessibilityRole="radiogroup">
         {PREFERENCJE.map((opcja) => {
@@ -402,13 +401,13 @@ export default function AccountScreen({ navigation }) {
         })}
       </View>
 
-      <Text style={styles.sectionTitle}>Pomoc i kontakt</Text>
+      <Text style={styles.sectionTitle}>{t('Pomoc i kontakt', 'Help and contact')}</Text>
       <View style={styles.zrodlaCard}>
         <Text style={styles.zrodlaOpis}>
-          Masz pytanie albo problem z kontem lub płatnością? Napisz do nas — pomożemy.
+          {t('Masz pytanie albo problem z kontem lub płatnością? Napisz do nas — pomożemy.', 'Have a question or a problem with your account or payment? Write to us — we will help.')}
         </Text>
         <Pressable onPress={otworzKontakt} accessibilityRole="button" hitSlop={8}>
-          <Text style={styles.zrodloLink}>Napisz do nas: {KONTAKT_EMAIL} →</Text>
+          <Text style={styles.zrodloLink}>{t('Napisz do nas', 'Write to us')}: {KONTAKT_EMAIL} →</Text>
         </Pressable>
 
         {/*
@@ -423,7 +422,7 @@ export default function AccountScreen({ navigation }) {
             accessibilityRole="link"
             hitSlop={8}
           >
-            <Text style={styles.linkPrawny}>Polityka prywatności</Text>
+            <Text style={styles.linkPrawny}>{t('Polityka prywatności', 'Privacy policy')}</Text>
           </Pressable>
           <Text style={styles.zrodloPodpis}>·</Text>
           <Pressable
@@ -431,44 +430,44 @@ export default function AccountScreen({ navigation }) {
             accessibilityRole="link"
             hitSlop={8}
           >
-            <Text style={styles.linkPrawny}>Regulamin</Text>
+            <Text style={styles.linkPrawny}>{t('Regulamin', 'Terms of service')}</Text>
           </Pressable>
         </View>
 
-        <Text style={styles.wersja}>PrzetargAI · wersja {wersjaApp}</Text>
+        <Text style={styles.wersja}>PrzetargAI · {t('wersja', 'version')} {wersjaApp}</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Bezpieczeństwo konta</Text>
+      <Text style={styles.sectionTitle}>{t('Bezpieczeństwo konta', 'Account security')}</Text>
       <Text style={styles.sectionHint}>
-        Zmień hasło albo adres e-mail, na który się logujesz.
+        {t('Zmień hasło albo adres e-mail, na który się logujesz.', 'Change the password or the e-mail address you sign in with.')}
       </Text>
       <Button
-        title="Zmień hasło lub e-mail"
+        title={t('Zmień hasło lub e-mail', 'Change password or e-mail')}
         variant="ghost"
         onPress={() => navigation.navigate('BezpieczenstwoKonta')}
       />
 
       <View style={styles.signOut}>
-        <Button title="Wyloguj się" variant="ghost" onPress={confirmSignOut} />
+        <Button title={t('Wyloguj się', 'Sign out')} variant="ghost" onPress={confirmSignOut} />
       </View>
 
       <View style={styles.strefaNiebezpieczna}>
-        <Text style={styles.naglowekNiebezpieczny}>Usunięcie konta</Text>
+        <Text style={styles.naglowekNiebezpieczny}>{t('Usunięcie konta', 'Delete account')}</Text>
         <Text style={styles.opisNiebezpieczny}>
-          Trwale usuwamy Twoje konto, profil i wszystkie dopasowane przetargi.
+          {t('Trwale usuwamy Twoje konto, profil i wszystkie dopasowane przetargi.', 'We permanently delete your account, profile and all matched tenders.')}
           {isStandard
-            ? ' Subskrypcję Standard anulujemy automatycznie — karta nie zostanie już obciążona.'
-            : ' Tej operacji nie da się cofnąć.'}
+            ? t(' Subskrypcję Standard anulujemy automatycznie — karta nie zostanie już obciążona.', ' The Standard subscription is cancelled automatically — your card will not be charged again.')
+            : t(' Tej operacji nie da się cofnąć.', ' This cannot be undone.')}
         </Text>
         <TextField
-          label="Potwierdź hasłem"
+          label={t('Potwierdź hasłem', 'Confirm with your password')}
           value={haslo}
           onChangeText={setHaslo}
           secureTextEntry
           placeholder="••••••••"
         />
         <Button
-          title="Usuń konto na zawsze"
+          title={t('Usuń konto na zawsze', 'Delete account forever')}
           variant="danger"
           onPress={potwierdzUsuniecie}
           loading={usuwanie}
