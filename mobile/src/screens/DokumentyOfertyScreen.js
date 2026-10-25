@@ -350,6 +350,15 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
 
       {/* ── 5. Co jeszcze ── */}
       <Text style={styles.sectionTitle}>5. Co jeszcze dołączyć</Text>
+      {tenderId ? (
+        <View style={styles.karta}>
+          <Text style={styles.kartaTytul}>Podmiotowe środki dowodowe z SWZ</Text>
+          <Text style={styles.kartaOpis}>
+            Zaświadczenia (US, ZUS, KRK, polisa, wykazy) wynikają z SWZ tego przetargu — checklista porównuje je z Twoim Sejfem na dzień składania.
+          </Text>
+          <Button title="Co muszę mieć do dnia składania" variant="ghost" onPress={() => navigation.navigate('ChecklistaOferty', { tenderId, tytul: przetarg.tytul ?? undefined })} />
+        </View>
+      ) : null}
       {dodatkowe.map((p) => (
         <View key={p.id} style={styles.karta}>
           <Text style={styles.kartaTytul}>{p.tytul}</Text>
