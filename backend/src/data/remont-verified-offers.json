@@ -177,5 +177,70 @@
     "sourceUrl": "https://sklep.zino.pl/pl/p/Barwy-Natury-173-Bialy-5l/2842",
     "evidenceSha256": "6863c4b2a86eb0352fd419f7a4514e14abd0e37e897a4979d8520d2beb2a645f",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-unigrunt-5kg",
+    "ean": "5905400520026",
+    "name": "Atlas Uni-Grunt 5kg emulsja gruntująca",
+    "imageUrl": "https://sklep.sewera.pl/photo/313998/atlas-uni-grunt-5kg-emulsja-gruntujaca.webp",
+    "priceGrosze": 3850,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T12:40:41.835Z",
+    "sourceUrl": "https://sklep.sewera.pl/atlas-uni-grunt-5kg-emulsja-gruntujaca-p9772",
+    "evidenceSha256": "383f8b292fabfa41559a9cc6b7455911b2c198eb85ecce37be829da010f9101a",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-acrylputz-fs20-27kg",
+    "ean": "5903973104544",
+    "name": "Acryl Putz FS20 Finisz 27kg",
+    "imageUrl": "https://sklep.sewera.pl/photo/259046/acryl-putz-fs20-finisz-27kg.webp",
+    "priceGrosze": 6644,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T12:40:43.168Z",
+    "sourceUrl": "https://sklep.sewera.pl/acryl-putz-fs20-finisz-27kg-p6114",
+    "evidenceSha256": "2db299d364c92a355c6eb1e356398cb06b9c3db9f6b546746723836080f64ca3",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-sam100-25kg",
+    "ean": "5905400279245",
+    "name": "Atlas SAM 100 25kg szybkowiążący samopoziomujący podkład podłogowy",
+    "imageUrl": "https://sklep.sewera.pl/photo/92586/atlas-sam-100-25kg-szybkowiazacy-samopoziomujacy-podklad-podlogowy.webp",
+    "priceGrosze": 4141,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T12:40:44.571Z",
+    "sourceUrl": "https://sklep.sewera.pl/atlas-sam-100-25kg-szybkowiazacy-samopoziomujacy-podklad-podlogowy-p9811",
+    "evidenceSha256": "ffed898e576f80e482e3f0fbc0f6aaf391de2e76fd7c3a61ece9efd3c596de6f",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-sam200-25kg",
+    "ean": "5905400279269",
+    "name": "Atlas SAM 200 25kg samopoziomujący podkład podłogowy",
+    "imageUrl": "https://sklep.sewera.pl/photo/92590/atlas-sam-200-25kg-samopoziomujacy-podklad-podlogowy.webp",
+    "priceGrosze": 3015,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T12:40:45.868Z",
+    "sourceUrl": "https://sklep.sewera.pl/atlas-sam-200-25kg-samopoziomujacy-podklad-podlogowy-p9795",
+    "evidenceSha256": "9420b08ca722f1f366d3930cdc0f4e78c62cf9f4595d82e867fcfd7ba5fee508",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-cerplast-15kg",
+    "ean": "5905400530032",
+    "name": "Podkładowa masa tynkarska Cerplast 15kg Atlas",
+    "imageUrl": "https://sklep.sewera.pl/photo/92128/podkladowa-masa-tynkarska-cerplast-15kg-atlas.webp",
+    "priceGrosze": 12000,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T12:40:49.324Z",
+    "sourceUrl": "https://sklep.sewera.pl/podkladowa-masa-tynkarska-cerplast-15kg-atlas-p9884",
+    "evidenceSha256": "64121c21754aab65650da67109b0f9c8b0f06f9847d3190f866b7fee0d100ed9",
+    "validUntil": null
   }
 ]
