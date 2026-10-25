@@ -20531,9 +20531,22 @@ var RETAIL_SOURCES = [
   // source: https://liderzycen.pl/pl/p/Zawor-katowy-z-filtrem-Ferro-12-x-38/49055
   { "id": "liderzy-ferro-angle-valve-z270e", "ean": "5901095614033", "name": 'Zaw\xF3r k\u0105towy z filtrem Ferro 1/2" x 3/8"', "category": "valve", "brand": "Ferro", "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 49055, "retailerSku": "ctma_5901095614033", "apiPurchaseUnit": "szt.", "packageDescription": "Kolor producenta: chrom", "variant": ["z filtrem", "1/2", "3/8"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_70333_500_500/1831d737608977a2a1b38c23f5417c16.jpg", "url": "https://liderzycen.pl/pl/p/Zawor-katowy-z-filtrem-Ferro-12-x-38/49055" },
   // source: https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474
-  { "id": "liderzy-goodhome-marvo-2235m2", "ean": "5063022676757", "name": "Panele pod\u0142ogowe winylowe GoodHome SPC Marvo 2,235 m2", "category": "vinyl-panel", "brand": "GoodHome", "packageSize": 2.235, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 185474, "retailerSku": "ctma_5063022676757", "apiPurchaseUnit": "szt.", "variant": ["SPC", "Marvo", "2,235 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_385938_500_500/fc6886e524d877060a0d12ba4742f75e.jpg", "url": "https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474" }
+  { "id": "liderzy-goodhome-marvo-2235m2", "ean": "5063022676757", "name": "Panele pod\u0142ogowe winylowe GoodHome SPC Marvo 2,235 m2", "category": "vinyl-panel", "brand": "GoodHome", "packageSize": 2.235, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 185474, "retailerSku": "ctma_5063022676757", "apiPurchaseUnit": "szt.", "variant": ["SPC", "Marvo", "2,235 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_385938_500_500/fc6886e524d877060a0d12ba4742f75e.jpg", "url": "https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474" },
+  // source: https://www.castorama.pl/kotwa-montazowa-do-oscieznic-10-x-182-mm/5905458019787_CAPL.prd
+  // source: https://liderzycen.pl/pl/p/Kotwa-montazowa-do-oscieznic-10-x-182-mm/21842
+  { "id": "liderzy-frame-anchor-10x182", "ean": "5905458019787", "name": "Kotwa monta\u017Cowa do o\u015Bcie\u017Cnic 10 x 182 mm", "category": "anchor", "brand": "Kingfisher International Products B.V.", "brandReference": { "url": "https://www.castorama.pl/kotwa-montazowa-do-oscieznic-10-x-182-mm/5905458019787_CAPL.prd", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 21842, "retailerSku": "ctma_5905458019787", "apiPurchaseUnit": "szt.", "variant": ["10 x 182 mm"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_42043_500_500/141eb368955c6aeb6e1e7b6e42ac9af7.jpg", "url": "https://liderzycen.pl/pl/p/Kotwa-montazowa-do-oscieznic-10-x-182-mm/21842" },
+  // source: https://www.grupapsb.com.pl/produkt/zawias-wkrecany-regulowany-3d-14-mm-ocynkowany-metro-5906711270471.html
+  // source: https://liderzycen.pl/pl/p/Zawias-regulowany-3D-14-mm-ocynkowany/22128
+  { "id": "liderzy-metro-hinge-3d-14mm", "ean": "5906711270471", "name": "Zawias regulowany 3D 14 mm ocynkowany", "category": "door-hinge", "brand": "Metro", "brandReference": { "url": "https://www.grupapsb.com.pl/produkt/zawias-wkrecany-regulowany-3d-14-mm-ocynkowany-metro-5906711270471.html", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 22128, "retailerSku": "ctma_5906711270471", "apiPurchaseUnit": "szt.", "variant": ["3D", "14 mm", "ocynkowany"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_42329_500_500/19ba2fb309a7adcf2859ffa72b746764.jpg", "url": "https://liderzycen.pl/pl/p/Zawias-regulowany-3D-14-mm-ocynkowany/22128", "packageDescription": "Nr referencyjny: ZAW-0091-0" },
+  // source: https://www.castorama.pl/drzwi-pokojowe-credis-80-lewe-biale/5900378219590_CAPL.prd
+  // source: https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489
+  { "id": "liderzy-erkado-credis-80-left-white", "ean": "5900378219590", "name": "Drzwi pokojowe Credis 80 lewe bia\u0142e", "category": "door-leaf", "brand": "Erkado", "brandReference": { "url": "https://www.castorama.pl/drzwi-pokojowe-credis-80-lewe-biale/5900378219590_CAPL.prd", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 30489, "retailerSku": "ctma_5900378219590", "apiPurchaseUnit": "szt.", "variant": ["Credis", "80", "lewe", "bia\u0142e"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_50898_500_500/a79eaa09c570422baee6412157b93d28.jpg", "url": "https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489", "packageDescription": "przeszklenia o mlecznym wyko\u0144czeniu" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Skrzyd\u0142o drzwiowe pokojowe Erkado Credis 80 lewe bia\u0142e przylgowe przeszklone": "5900378219590",
+  "Kotwa monta\u017Cowa do o\u015Bcie\u017Cnic (rama okienna) 10 \xD7 182 mm": "5905458019787",
+  "Zawias wkr\u0119cany regulowany 3D 14 mm ocynkowany Metro": "5906711270471",
+  "Skrzyd\u0142o drzwiowe pokojowe Erkado Credis 80 bia\u0142e przylgowe przeszklone": "5900378219590",
   "Panele laminowane Oakland wodoodporne AC4 2.51 m\xB2": "5063022887917",
   "Podk\u0142ad pod\u0142ogowy Volden XPS Smart 3 mm 10 m\xB2": "5063022038289",
   "Gres Guigliano GoodHome 1 m\xB2": "3663602870821",
@@ -21837,7 +21850,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       "@type": "Product",
       name: item.name,
       gtin13: item.ean,
-      brand: item.producer?.name,
+      brand: source.brandReference ? source.brand : item.producer?.name,
       image: source.imageUrl,
       description: item.description,
       offers: { "@type": "Offer", price: gross.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
@@ -21852,6 +21865,16 @@ function confirmShoperPurchaseUnit(item, source) {
   if (source.apiPurchaseUnit && (item.unit?.name !== source.apiPurchaseUnit || item.unit?.floating_point !== false)) throw Error("retailer_unit_not_confirmed");
   if (source.retailerSku && item.code !== source.retailerSku) throw Error("product_identity_not_confirmed");
   if (source.packageDescription && !normalizeProductName(text2(String(item.description ?? ""))).includes(normalizeProductName(source.packageDescription))) throw Error("product_package_not_confirmed");
+  if (source.brandReference) {
+    const reference = source.brandReference;
+    let url2;
+    try {
+      url2 = new URL(reference.url);
+    } catch {
+      throw Error("product_brand_not_confirmed");
+    }
+    if (source.format !== "shoper-api" || !source.brand.trim() || !source.retailerSku || !source.apiPurchaseUnit || !source.variant?.length || url2.protocol !== "https:" || url2.username || url2.password || url2.hostname === new URL(source.url).hostname || normalizeProductName(reference.retailerValue) !== normalizeProductName(source.store) || !Number.isSafeInteger(reference.retailerId) || reference.retailerId < 1 || item.ean !== source.ean || item.name !== source.name || item.producer?.name !== reference.retailerValue || item.producer?.id !== reference.retailerId) throw Error("product_brand_not_confirmed");
+  }
 }
 function shoperProductId(source) {
   const fromUrl = source.url.match(/\/(\d+)$/)?.[1];
