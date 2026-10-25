@@ -18,7 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// artifacts/api-server/src/shared-backend.ts
+// D:/projekty/remont_assistance/artifacts/api-server/src/shared-backend.ts
 var shared_backend_exports = {};
 __export(shared_backend_exports, {
   RETAIL_SOURCES: () => RETAIL_SOURCES,
@@ -30,7 +30,7 @@ var import_express = require("express");
 var import_node_fs = require("node:fs");
 var import_node_path = require("node:path");
 
-// lib/db/src/repositories/helpers.ts
+// D:/projekty/remont_assistance/lib/db/src/repositories/helpers.ts
 function normalizeProductName(name) {
   return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]+/g, " ").trim();
 }
@@ -75,7 +75,7 @@ function priceToGrosze(raw) {
   return Math.round(n * 100);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/entity.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/entity.js
 var entityKind = /* @__PURE__ */ Symbol.for("drizzle:entityKind");
 function is(value, type) {
   if (!value || typeof value !== "object") {
@@ -101,7 +101,7 @@ function is(value, type) {
   return false;
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column.js
 var Column = class {
   constructor(table, config2) {
     this.table = table;
@@ -152,7 +152,7 @@ var Column = class {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column-builder.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column-builder.js
 var ColumnBuilder = class {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -255,10 +255,10 @@ var ColumnBuilder = class {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.utils.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.utils.js
 var TableName = /* @__PURE__ */ Symbol.for("drizzle:Name");
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/foreign-keys.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/foreign-keys.js
 var ForeignKeyBuilder = class {
   static [entityKind] = "PgForeignKeyBuilder";
   /** @internal */
@@ -315,12 +315,12 @@ var ForeignKey = class {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing-utils.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/unique-constraint.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
@@ -370,7 +370,7 @@ var UniqueConstraint = class {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/utils/array.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/utils/array.js
 function parsePgArrayValue(arrayString, startFrom, inQuotes) {
   for (let i = startFrom; i < arrayString.length; i++) {
     const char2 = arrayString[i];
@@ -446,7 +446,7 @@ function makePgArray(array2) {
   }).join(",")}}`;
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/common.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/common.js
 var PgColumnBuilder = class extends ColumnBuilder {
   foreignKeyConfigs = [];
   static [entityKind] = "PgColumnBuilder";
@@ -630,7 +630,7 @@ var PgArray = class _PgArray extends PgColumn {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/enum.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/enum.js
 var PgEnumObjectColumnBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgEnumObjectColumnBuilder";
   constructor(name, enumInstance) {
@@ -688,7 +688,7 @@ var PgEnumColumn = class extends PgColumn {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/subquery.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/subquery.js
 var Subquery = class {
   static [entityKind] = "Subquery";
   constructor(sql2, fields, alias, isWith = false, usedTables = []) {
@@ -709,10 +709,10 @@ var WithSubquery = class extends Subquery {
   static [entityKind] = "WithSubquery";
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/version.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/version.js
 var version = "0.45.1";
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -747,10 +747,10 @@ var tracer = {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/view-common.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = /* @__PURE__ */ Symbol.for("drizzle:ViewBaseConfig");
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.js
 var Schema = /* @__PURE__ */ Symbol.for("drizzle:Schema");
 var Columns = /* @__PURE__ */ Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = /* @__PURE__ */ Symbol.for("drizzle:ExtraConfigColumns");
@@ -809,7 +809,7 @@ function isTable(table) {
   return typeof table === "object" && table !== null && IsDrizzleTable in table;
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/sql.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/sql.js
 var FakePrimitiveParam = class {
   static [entityKind] = "FakePrimitiveParam";
 };
@@ -1189,7 +1189,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/utils.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/utils.js
 function getTableColumns(table) {
   return table[Table.Symbol.Columns];
 }
@@ -1204,7 +1204,7 @@ function getColumnNameAndConfig(a, b) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder();
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/int.common.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/int.common.js
 var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgIntColumnBaseBuilder";
   generatedAlwaysAsIdentity(sequence) {
@@ -1243,7 +1243,7 @@ var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigint.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigint.js
 var PgBigInt53Builder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgBigInt53Builder";
   constructor(name) {
@@ -1297,7 +1297,7 @@ function bigint(a, b) {
   return new PgBigInt64Builder(name);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigserial.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigserial.js
 var PgBigSerial53Builder = class extends PgColumnBuilder {
   static [entityKind] = "PgBigSerial53Builder";
   constructor(name) {
@@ -1357,7 +1357,7 @@ function bigserial(a, b) {
   return new PgBigSerial64Builder(name);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/boolean.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/boolean.js
 var PgBooleanBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBooleanBuilder";
   constructor(name) {
@@ -1378,7 +1378,7 @@ function boolean(name) {
   return new PgBooleanBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/char.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/char.js
 var PgCharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCharBuilder";
   constructor(name, config2) {
@@ -1407,7 +1407,7 @@ function char(a, b = {}) {
   return new PgCharBuilder(name, config2);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/cidr.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/cidr.js
 var PgCidrBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCidrBuilder";
   constructor(name) {
@@ -1428,7 +1428,7 @@ function cidr(name) {
   return new PgCidrBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/custom.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/custom.js
 var PgCustomColumnBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -1472,7 +1472,7 @@ function customType(customTypeParams) {
   };
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.common.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.common.js
 var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgDateColumnBaseBuilder";
   defaultNow() {
@@ -1480,7 +1480,7 @@ var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
   }
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.js
 var PgDateBuilder = class extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgDateBuilder";
   constructor(name) {
@@ -1535,7 +1535,7 @@ function date(a, b) {
   return new PgDateStringBuilder(name);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/double-precision.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/double-precision.js
 var PgDoublePrecisionBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgDoublePrecisionBuilder";
   constructor(name) {
@@ -1565,7 +1565,7 @@ function doublePrecision(name) {
   return new PgDoublePrecisionBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/inet.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/inet.js
 var PgInetBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgInetBuilder";
   constructor(name) {
@@ -1586,7 +1586,7 @@ function inet(name) {
   return new PgInetBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/integer.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/integer.js
 var PgIntegerBuilder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgIntegerBuilder";
   constructor(name) {
@@ -1613,7 +1613,7 @@ function integer(name) {
   return new PgIntegerBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/interval.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/interval.js
 var PgIntervalBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgIntervalBuilder";
   constructor(name, intervalConfig) {
@@ -1640,7 +1640,7 @@ function interval(a, b = {}) {
   return new PgIntervalBuilder(name, config2);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/json.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/json.js
 var PgJsonBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgJsonBuilder";
   constructor(name) {
@@ -1677,7 +1677,7 @@ function json(name) {
   return new PgJsonBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/jsonb.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/jsonb.js
 var PgJsonbBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgJsonbBuilder";
   constructor(name) {
@@ -1714,7 +1714,7 @@ function jsonb(name) {
   return new PgJsonbBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/line.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/line.js
 var PgLineBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgLineBuilder";
   constructor(name) {
@@ -1775,7 +1775,7 @@ function line(a, b) {
   return new PgLineABCBuilder(name);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr.js
 var PgMacaddrBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgMacaddrBuilder";
   constructor(name) {
@@ -1796,7 +1796,7 @@ function macaddr(name) {
   return new PgMacaddrBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
 var PgMacaddr8Builder = class extends PgColumnBuilder {
   static [entityKind] = "PgMacaddr8Builder";
   constructor(name) {
@@ -1817,7 +1817,7 @@ function macaddr8(name) {
   return new PgMacaddr8Builder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/numeric.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/numeric.js
 var PgNumericBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgNumericBuilder";
   constructor(name, precision, scale) {
@@ -1934,7 +1934,7 @@ function numeric(a, b) {
   return mode === "number" ? new PgNumericNumberBuilder(name, config2?.precision, config2?.scale) : mode === "bigint" ? new PgNumericBigIntBuilder(name, config2?.precision, config2?.scale) : new PgNumericBuilder(name, config2?.precision, config2?.scale);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/point.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/point.js
 var PgPointTupleBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgPointTupleBuilder";
   constructor(name) {
@@ -2001,7 +2001,7 @@ function point(a, b) {
   return new PgPointObjectBuilder(name);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
 function hexToBytes(hex) {
   const bytes = [];
   for (let c = 0; c < hex.length; c += 2) {
@@ -2040,7 +2040,7 @@ function parseEWKB(hex) {
   throw new Error("Unsupported geometry type");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
 var PgGeometryBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgGeometryBuilder";
   constructor(name) {
@@ -2100,7 +2100,7 @@ function geometry(a, b) {
   return new PgGeometryObjectBuilder(name);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/real.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/real.js
 var PgRealBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgRealBuilder";
   constructor(name, length) {
@@ -2131,7 +2131,7 @@ function real(name) {
   return new PgRealBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/serial.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/serial.js
 var PgSerialBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSerialBuilder";
   constructor(name) {
@@ -2154,7 +2154,7 @@ function serial(name) {
   return new PgSerialBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallint.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallint.js
 var PgSmallIntBuilder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgSmallIntBuilder";
   constructor(name) {
@@ -2181,7 +2181,7 @@ function smallint(name) {
   return new PgSmallIntBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallserial.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallserial.js
 var PgSmallSerialBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSmallSerialBuilder";
   constructor(name) {
@@ -2207,7 +2207,7 @@ function smallserial(name) {
   return new PgSmallSerialBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/text.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/text.js
 var PgTextBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgTextBuilder";
   constructor(name, config2) {
@@ -2231,7 +2231,7 @@ function text(a, b = {}) {
   return new PgTextBuilder(name, config2);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/time.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/time.js
 var PgTimeBuilder = class extends PgDateColumnBaseBuilder {
   constructor(name, withTimezone, precision) {
     super(name, "string", "PgTime");
@@ -2265,7 +2265,7 @@ function time(a, b = {}) {
   return new PgTimeBuilder(name, config2.withTimezone ?? false, config2.precision);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/timestamp.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/timestamp.js
 var PgTimestampBuilder = class extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgTimestampBuilder";
   constructor(name, withTimezone, precision) {
@@ -2346,7 +2346,7 @@ function timestamp(a, b = {}) {
   return new PgTimestampBuilder(name, config2?.withTimezone ?? false, config2?.precision);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/uuid.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/uuid.js
 var PgUUIDBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgUUIDBuilder";
   constructor(name) {
@@ -2373,7 +2373,7 @@ function uuid(name) {
   return new PgUUIDBuilder(name ?? "");
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/varchar.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/varchar.js
 var PgVarcharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVarcharBuilder";
   constructor(name, config2) {
@@ -2402,7 +2402,7 @@ function varchar(a, b = {}) {
   return new PgVarcharBuilder(name, config2);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
 var PgBinaryVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBinaryVectorBuilder";
   constructor(name, config2) {
@@ -2429,7 +2429,7 @@ function bit(a, b) {
   return new PgBinaryVectorBuilder(name, config2);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
 var PgHalfVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgHalfVectorBuilder";
   constructor(name, config2) {
@@ -2462,7 +2462,7 @@ function halfvec(a, b) {
   return new PgHalfVectorBuilder(name, config2);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
 var PgSparseVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSparseVectorBuilder";
   constructor(name, config2) {
@@ -2489,7 +2489,7 @@ function sparsevec(a, b) {
   return new PgSparseVectorBuilder(name, config2);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
 var PgVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVectorBuilder";
   constructor(name, config2) {
@@ -2522,7 +2522,7 @@ function vector(a, b) {
   return new PgVectorBuilder(name, config2);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/all.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/all.js
 function getPgColumnBuilders() {
   return {
     bigint,
@@ -2560,7 +2560,7 @@ function getPgColumnBuilders() {
   };
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/table.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/table.js
 var InlineForeignKeys = /* @__PURE__ */ Symbol.for("drizzle:PgInlineForeignKeys");
 var EnableRLS = /* @__PURE__ */ Symbol.for("drizzle:EnableRLS");
 var PgTable = class extends Table {
@@ -2616,7 +2616,7 @@ var pgTable = (name, columns, extraConfig) => {
   return pgTableWithSchema(name, columns, extraConfig, void 0);
 };
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/expressions/conditions.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -2643,7 +2643,7 @@ function and(...unfilteredConditions) {
   ]);
 }
 
-// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/indexes.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/indexes.js
 var IndexBuilderOn = class {
   constructor(unique, name) {
     this.unique = unique;
@@ -2755,7 +2755,7 @@ function uniqueIndex(name) {
   return new IndexBuilderOn(true, name);
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
 var external_exports = {};
 __export(external_exports, {
   $brand: () => $brand,
@@ -2967,7 +2967,7 @@ __export(external_exports, {
   xid: () => xid2
 });
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/index.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/index.js
 var core_exports2 = {};
 __export(core_exports2, {
   $ZodAny: () => $ZodAny,
@@ -3211,7 +3211,7 @@ __export(core_exports2, {
   version: () => version2
 });
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/core.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/core.js
 var NEVER = Object.freeze({
   status: "aborted"
 });
@@ -3271,7 +3271,7 @@ function config(newConfig) {
   return globalConfig;
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/util.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/util.js
 var util_exports = {};
 __export(util_exports, {
   BIGINT_FORMAT_RANGES: () => BIGINT_FORMAT_RANGES,
@@ -3792,7 +3792,7 @@ var Class = class {
   }
 };
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/errors.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -3939,7 +3939,7 @@ function prettifyError(error40) {
   return lines.join("\n");
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/parse.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -3991,7 +3991,7 @@ var _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
 };
 var safeParseAsync = /* @__PURE__ */ _safeParseAsync($ZodRealError);
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/regexes.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/regexes.js
 var regexes_exports = {};
 __export(regexes_exports, {
   _emoji: () => _emoji,
@@ -4104,7 +4104,7 @@ var _undefined = /undefined/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/checks.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a;
   inst._zod ?? (inst._zod = {});
@@ -4642,7 +4642,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/doc.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/doc.js
 var Doc = class {
   constructor(args = []) {
     this.content = [];
@@ -4678,14 +4678,14 @@ var Doc = class {
   }
 };
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/versions.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/versions.js
 var version2 = {
   major: 4,
   minor: 0,
   patch: 0
 };
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/schemas.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a;
   inst ?? (inst = {});
@@ -6312,7 +6312,7 @@ function handleRefineResult(result, payload, input, inst) {
   }
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/index.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/index.js
 var locales_exports = {};
 __export(locales_exports, {
   ar: () => ar_default,
@@ -6356,7 +6356,7 @@ __export(locales_exports, {
   zhTW: () => zh_TW_default
 });
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ar.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ar.js
 var error = () => {
   const Sizable = {
     string: { unit: "\u062D\u0631\u0641", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
@@ -6473,7 +6473,7 @@ function ar_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/az.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/az.js
 var error2 = () => {
   const Sizable = {
     string: { unit: "simvol", verb: "olmal\u0131d\u0131r" },
@@ -6589,7 +6589,7 @@ function az_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
 function getBelarusianPlural(count, one2, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
@@ -6754,7 +6754,7 @@ function be_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ca.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ca.js
 var error4 = () => {
   const Sizable = {
     string: { unit: "car\xE0cters", verb: "contenir" },
@@ -6874,7 +6874,7 @@ function ca_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/cs.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/cs.js
 var error5 = () => {
   const Sizable = {
     string: { unit: "znak\u016F", verb: "m\xEDt" },
@@ -7010,7 +7010,7 @@ function cs_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/de.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/de.js
 var error6 = () => {
   const Sizable = {
     string: { unit: "Zeichen", verb: "zu haben" },
@@ -7127,7 +7127,7 @@ function de_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/en.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/en.js
 var parsedType = (data) => {
   const t = typeof data;
   switch (t) {
@@ -7245,7 +7245,7 @@ function en_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/eo.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/eo.js
 var parsedType2 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -7362,7 +7362,7 @@ function eo_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/es.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/es.js
 var error9 = () => {
   const Sizable = {
     string: { unit: "caracteres", verb: "tener" },
@@ -7480,7 +7480,7 @@ function es_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fa.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fa.js
 var error10 = () => {
   const Sizable = {
     string: { unit: "\u06A9\u0627\u0631\u0627\u06A9\u062A\u0631", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
@@ -7603,7 +7603,7 @@ function fa_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fi.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fi.js
 var error11 = () => {
   const Sizable = {
     string: { unit: "merkki\xE4", subject: "merkkijonon" },
@@ -7726,7 +7726,7 @@ function fi_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr.js
 var error12 = () => {
   const Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -7843,7 +7843,7 @@ function fr_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr-CA.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr-CA.js
 var error13 = () => {
   const Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -7961,7 +7961,7 @@ function fr_CA_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/he.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/he.js
 var error14 = () => {
   const Sizable = {
     string: { unit: "\u05D0\u05D5\u05EA\u05D9\u05D5\u05EA", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" },
@@ -8079,7 +8079,7 @@ function he_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/hu.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/hu.js
 var error15 = () => {
   const Sizable = {
     string: { unit: "karakter", verb: "legyen" },
@@ -8197,7 +8197,7 @@ function hu_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/id.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/id.js
 var error16 = () => {
   const Sizable = {
     string: { unit: "karakter", verb: "memiliki" },
@@ -8314,7 +8314,7 @@ function id_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/it.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/it.js
 var error17 = () => {
   const Sizable = {
     string: { unit: "caratteri", verb: "avere" },
@@ -8432,7 +8432,7 @@ function it_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ja.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ja.js
 var error18 = () => {
   const Sizable = {
     string: { unit: "\u6587\u5B57", verb: "\u3067\u3042\u308B" },
@@ -8548,7 +8548,7 @@ function ja_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/kh.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/kh.js
 var error19 = () => {
   const Sizable = {
     string: { unit: "\u178F\u17BD\u17A2\u1780\u17D2\u179F\u179A", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
@@ -8666,7 +8666,7 @@ function kh_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ko.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ko.js
 var error20 = () => {
   const Sizable = {
     string: { unit: "\uBB38\uC790", verb: "to have" },
@@ -8788,7 +8788,7 @@ function ko_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/mk.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/mk.js
 var error21 = () => {
   const Sizable = {
     string: { unit: "\u0437\u043D\u0430\u0446\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
@@ -8907,7 +8907,7 @@ function mk_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ms.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ms.js
 var error22 = () => {
   const Sizable = {
     string: { unit: "aksara", verb: "mempunyai" },
@@ -9024,7 +9024,7 @@ function ms_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/nl.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/nl.js
 var error23 = () => {
   const Sizable = {
     string: { unit: "tekens" },
@@ -9142,7 +9142,7 @@ function nl_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/no.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/no.js
 var error24 = () => {
   const Sizable = {
     string: { unit: "tegn", verb: "\xE5 ha" },
@@ -9259,7 +9259,7 @@ function no_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ota.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ota.js
 var error25 = () => {
   const Sizable = {
     string: { unit: "harf", verb: "olmal\u0131d\u0131r" },
@@ -9377,7 +9377,7 @@ function ota_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ps.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ps.js
 var error26 = () => {
   const Sizable = {
     string: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" },
@@ -9500,7 +9500,7 @@ function ps_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pl.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pl.js
 var error27 = () => {
   const Sizable = {
     string: { unit: "znak\xF3w", verb: "mie\u0107" },
@@ -9618,7 +9618,7 @@ function pl_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pt.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pt.js
 var error28 = () => {
   const Sizable = {
     string: { unit: "caracteres", verb: "ter" },
@@ -9735,7 +9735,7 @@ function pt_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
 function getRussianPlural(count, one2, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
@@ -9900,7 +9900,7 @@ function ru_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sl.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sl.js
 var error30 = () => {
   const Sizable = {
     string: { unit: "znakov", verb: "imeti" },
@@ -10018,7 +10018,7 @@ function sl_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sv.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sv.js
 var error31 = () => {
   const Sizable = {
     string: { unit: "tecken", verb: "att ha" },
@@ -10137,7 +10137,7 @@ function sv_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ta.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ta.js
 var error32 = () => {
   const Sizable = {
     string: { unit: "\u0B8E\u0BB4\u0BC1\u0BA4\u0BCD\u0BA4\u0BC1\u0B95\u0BCD\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
@@ -10255,7 +10255,7 @@ function ta_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/th.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/th.js
 var error33 = () => {
   const Sizable = {
     string: { unit: "\u0E15\u0E31\u0E27\u0E2D\u0E31\u0E01\u0E29\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
@@ -10373,7 +10373,7 @@ function th_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/tr.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/tr.js
 var parsedType3 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -10489,7 +10489,7 @@ function tr_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ua.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ua.js
 var error35 = () => {
   const Sizable = {
     string: { unit: "\u0441\u0438\u043C\u0432\u043E\u043B\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
@@ -10607,7 +10607,7 @@ function ua_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ur.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ur.js
 var error36 = () => {
   const Sizable = {
     string: { unit: "\u062D\u0631\u0648\u0641", verb: "\u06C1\u0648\u0646\u0627" },
@@ -10725,7 +10725,7 @@ function ur_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/vi.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/vi.js
 var error37 = () => {
   const Sizable = {
     string: { unit: "k\xFD t\u1EF1", verb: "c\xF3" },
@@ -10842,7 +10842,7 @@ function vi_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-CN.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-CN.js
 var error38 = () => {
   const Sizable = {
     string: { unit: "\u5B57\u7B26", verb: "\u5305\u542B" },
@@ -10959,7 +10959,7 @@ function zh_CN_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-TW.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-TW.js
 var error39 = () => {
   const Sizable = {
     string: { unit: "\u5B57\u5143", verb: "\u64C1\u6709" },
@@ -11077,7 +11077,7 @@ function zh_TW_default() {
   };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/registries.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/registries.js
 var $output = /* @__PURE__ */ Symbol("ZodOutput");
 var $input = /* @__PURE__ */ Symbol("ZodInput");
 var $ZodRegistry = class {
@@ -11127,7 +11127,7 @@ function registry() {
 }
 var globalRegistry = /* @__PURE__ */ registry();
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/api.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/api.js
 function _string(Class2, params) {
   return new Class2({
     type: "string",
@@ -11985,7 +11985,7 @@ function _stringFormat(Class2, format, fnOrRegex, _params = {}) {
   return inst;
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/function.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/function.js
 var $ZodFunction = class {
   constructor(def) {
     this._def = def;
@@ -12055,7 +12055,7 @@ function _function(params) {
   });
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/to-json-schema.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/to-json-schema.js
 var JSONSchemaGenerator = class {
   constructor(params) {
     this.counter = 0;
@@ -12822,10 +12822,10 @@ function isTransforming(_schema, _ctx) {
   throw new Error(`Unknown schema type: ${def.type}`);
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/json-schema.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/json-schema.js
 var json_schema_exports = {};
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/iso.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/iso.js
 var iso_exports = {};
 __export(iso_exports, {
   ZodISODate: () => ZodISODate,
@@ -12866,7 +12866,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/errors.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -12900,13 +12900,13 @@ var ZodRealError = $constructor("ZodError", initializer2, {
   Parent: Error
 });
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/parse.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/parse.js
 var parse2 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
 var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/schemas.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/schemas.js
 var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
   $ZodType.init(inst, def);
   inst.def = def;
@@ -13843,7 +13843,7 @@ function preprocess(fn, schema) {
   return pipe(transform(fn), schema);
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/compat.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/compat.js
 var ZodIssueCode = {
   invalid_type: "invalid_type",
   too_big: "too_big",
@@ -13866,7 +13866,7 @@ function getErrorMap() {
   return config().customError;
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/coerce.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/coerce.js
 var coerce_exports = {};
 __export(coerce_exports, {
   bigint: () => bigint4,
@@ -13891,10 +13891,10 @@ function date5(params) {
   return _coercedDate(ZodDate, params);
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
 config(en_default());
 
-// node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-o_d17bd9588130032e68d017cd2cdc66e3/node_modules/drizzle-zod/index.mjs
+// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-o_d17bd9588130032e68d017cd2cdc66e3/node_modules/drizzle-zod/index.mjs
 var CONSTANTS = {
   INT8_MIN: -128,
   INT8_MAX: 127,
@@ -14141,7 +14141,7 @@ var createInsertSchema = (entity, refine2) => {
   return handleColumns(columns, refine2 ?? {}, insertConditions);
 };
 
-// lib/db/src/schema/products.ts
+// D:/projekty/remont_assistance/lib/db/src/schema/products.ts
 var productsTable = pgTable(
   "products",
   {
@@ -14176,7 +14176,7 @@ var insertProductSchema = createInsertSchema(productsTable).omit({
   updatedAt: true
 });
 
-// lib/db/src/repositories/products.repo.ts
+// D:/projekty/remont_assistance/lib/db/src/repositories/products.repo.ts
 var upsertProductInput = insertProductSchema.partial({ normalizedName: true });
 async function findByColumn(db, field, value) {
   const col = field === "ean" ? productsTable.ean : productsTable.gtin;
@@ -14201,7 +14201,7 @@ async function findByNormalizedNameAndCategory(db, name, category) {
   return rows[0];
 }
 
-// lib/db/src/schema/product-offers.ts
+// D:/projekty/remont_assistance/lib/db/src/schema/product-offers.ts
 var productOffersTable = pgTable(
   "product_offers",
   {
@@ -14231,7 +14231,7 @@ var insertProductOfferSchema = createInsertSchema(
   fetchedAt: true
 });
 
-// lib/db/src/schema/price-history.ts
+// D:/projekty/remont_assistance/lib/db/src/schema/price-history.ts
 var priceHistoryTable = pgTable(
   "price_history",
   {
@@ -14258,13 +14258,13 @@ var insertPriceHistorySchema = createInsertSchema(
   id: true
 });
 
-// lib/db/src/repositories/product-offers.repo.ts
+// D:/projekty/remont_assistance/lib/db/src/repositories/product-offers.repo.ts
 async function listOffersForProduct(db, productId) {
   const rows = await db.select().from(productOffersTable).where(eq(productOffersTable.productId, productId));
   return sortOffersWithCheapest(rows);
 }
 
-// lib/price-collector/src/normalize.ts
+// D:/projekty/remont_assistance/lib/price-collector/src/normalize.ts
 function parsePriceToGrosze(raw) {
   if (raw === null || raw === void 0) return null;
   let amount;
@@ -14291,7 +14291,7 @@ function parsePriceToGrosze(raw) {
   return Math.round(amount * 100);
 }
 
-// lib/pricing-service/src/package-optimizer.ts
+// D:/projekty/remont_assistance/lib/pricing-service/src/package-optimizer.ts
 var MAX_GRID = 2e6;
 function decimalPlaces(n) {
   if (!Number.isFinite(n) || Number.isInteger(n)) return 0;
@@ -14417,7 +14417,7 @@ function optimizePackages(requiredQuantity, variants) {
   };
 }
 
-// lib/pricing-service/src/estimate.ts
+// D:/projekty/remont_assistance/lib/pricing-service/src/estimate.ts
 var defaultDeps = {
   findProductByCode: async (db, code) => await findByEanOrGtin(db, code) ?? null,
   findProductByNameAndCategory: async (db, q) => await findByNormalizedNameAndCategory(db, q.normalizedName, q.category) ?? null,
@@ -14709,7 +14709,7 @@ function estimateProjectCost(stages) {
   };
 }
 
-// lib/pricing-service/src/labor-data.ts
+// D:/projekty/remont_assistance/lib/pricing-service/src/labor-data.ts
 var REGION_CODE = "lodzkie";
 var REGION_LABEL = "\u0141\xF3d\u017A / \u0142\xF3dzkie";
 var LABOR_RATES = [
@@ -15065,7 +15065,7 @@ function getLaborRateIdsForJob(jobId) {
   return LABOR_IDS_BY_JOB.get(jobId) ?? [];
 }
 
-// lib/pricing-service/src/labor.ts
+// D:/projekty/remont_assistance/lib/pricing-service/src/labor.ts
 function primaryArea(m) {
   if (m.wallArea) return m.wallArea;
   if (m.floorArea) return m.floorArea;
@@ -15165,7 +15165,7 @@ function estimateStageLabor(jobId, measurements, options = {}) {
   };
 }
 
-// lib/pricing-service/src/from-calculator.ts
+// D:/projekty/remont_assistance/lib/pricing-service/src/from-calculator.ts
 function withLabor(stage, jobId, measurements, options) {
   const labor = estimateStageLabor(jobId, measurements, options);
   const materialsTotalGrosze = stage.stageTotalGrosze;
@@ -15212,7 +15212,7 @@ async function estimateProjectCostFromCalculation(db, jobResults, options = {}, 
   return { ...project, stages };
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
 var external_exports2 = {};
 __export(external_exports2, {
   BRAND: () => BRAND,
@@ -15324,7 +15324,7 @@ __export(external_exports2, {
   void: () => voidType
 });
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
 var util;
 (function(util2) {
   util2.assertEqual = (_) => {
@@ -15458,7 +15458,7 @@ var getParsedType2 = (data) => {
   }
 };
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
 var ZodIssueCode2 = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
@@ -15576,7 +15576,7 @@ ZodError2.create = (issues) => {
   return error40;
 };
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
 var errorMap = (issue2, _ctx) => {
   let message;
   switch (issue2.code) {
@@ -15679,7 +15679,7 @@ var errorMap = (issue2, _ctx) => {
 };
 var en_default2 = errorMap;
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
 var overrideErrorMap = en_default2;
 function setErrorMap2(map2) {
   overrideErrorMap = map2;
@@ -15688,7 +15688,7 @@ function getErrorMap2() {
   return overrideErrorMap;
 }
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...issueData.path || []];
@@ -15798,14 +15798,14 @@ var isDirty = (x) => x.status === "dirty";
 var isValid = (x) => x.status === "valid";
 var isAsync = (x) => typeof Promise !== "undefined" && x instanceof Promise;
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
 var errorUtil;
 (function(errorUtil2) {
   errorUtil2.errToObj = (message) => typeof message === "string" ? { message } : message || {};
   errorUtil2.toString = (message) => typeof message === "string" ? message : message?.message;
 })(errorUtil || (errorUtil = {}));
 
-// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
+// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
   constructor(parent, value, path, key) {
     this._cachedPath = [];
@@ -19253,7 +19253,7 @@ var coerce = {
 };
 var NEVER2 = INVALID;
 
-// artifacts/api-server/src/lib/pricing-schema.ts
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/pricing-schema.ts
 var materialSchema = external_exports2.object({
   id: external_exports2.string(),
   name: external_exports2.string(),
@@ -19282,6 +19282,7 @@ var optionsSchema = external_exports2.object({
   store: external_exports2.string().nullish(),
   delivery: external_exports2.object({
     mode: external_exports2.enum(["shipping", "pickup"]),
+    method: external_exports2.enum(["automatic", "manual"]).optional(),
     postalCode: external_exports2.string().regex(/^\d{2}-\d{3}$/).optional(),
     costsGrosze: external_exports2.record(external_exports2.string().min(1).max(80), external_exports2.number().int().min(0).max(1e7)).refine((value) => Object.keys(value).length <= 20).optional()
   }).optional()
@@ -19295,7 +19296,7 @@ var projectRequestSchema = external_exports2.object({
   options: optionsSchema
 });
 
-// artifacts/api-server/src/lib/pricing-serialize.ts
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/pricing-serialize.ts
 function serializeProduct(product) {
   return {
     ...product.imageUrl ? { imageUrl: product.imageUrl } : {},
@@ -19494,7 +19495,7 @@ function serializeProject(project) {
   };
 }
 
-// artifacts/api-server/src/lib/retail-catalog.ts
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
   {
     id: "castorama-sniezka-5l",
@@ -19666,6 +19667,20 @@ var RETAIL_SOURCES = [
     format: "sewera",
     // source: https://sklep.sewera.pl/acryl-putz-st10-start-20kg-p6107
     url: "https://sklep.sewera.pl/acryl-putz-st10-start-20kg-p6107"
+  },
+  {
+    id: "zino-sniezka-5l",
+    ean: "5903973139188",
+    name: "Barwy Natury 173 Bia\u0142y 5l",
+    category: "paint",
+    brand: "\u015Anie\u017Cka",
+    packageSize: 5,
+    unit: "l",
+    store: "Zino",
+    format: "shoper-api",
+    // source: https://sklep.zino.pl/pl/p/Barwy-Natury-173-Bialy-5l/2842
+    url: "https://sklep.zino.pl/pl/p/Barwy-Natury-173-Bialy-5l/2842",
+    imageUrl: "https://sklep.zino.pl/userdata/public/gfx/7713/173-biala-majowa-konwalia.png"
   }
 ];
 var RETAIL_NAME_ALIASES = {
@@ -19678,7 +19693,7 @@ var RETAIL_NAME_ALIASES = {
   "G\u0142ad\u017A gipsowa startowa Acryl-Putz ST10 START 20 kg": "5903973104421"
 };
 
-// lib/pricing-service/src/delivery.ts
+// D:/projekty/remont_assistance/lib/pricing-service/src/delivery.ts
 function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, policies = [], now = /* @__PURE__ */ new Date()) {
   const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
   const missingProductCount = stages.flatMap((stage) => stage.lines).filter((line2) => !line2.resolved && line2.quantity > 0).length;
@@ -19786,8 +19801,8 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
     const lowerBoundGrosze = materialsGrosze + stores.reduce((sum, store) => sum + store.deliveryMinimumGrosze, 0);
     if (![materialsGrosze, lowerBoundGrosze, materialsGrosze + (deliveryGrosze ?? 0)].every(Number.isSafeInteger)) continue;
     const basket = { materialsGrosze, deliveryGrosze, lowerBoundGrosze, totalGrosze: deliveryGrosze === null ? null : materialsGrosze + deliveryGrosze, stores };
-    const signature = stores.flatMap((store) => store.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}`))).sort().join("|");
-    candidates.set(signature, basket);
+    const signature2 = stores.flatMap((store) => store.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}`))).sort().join("|");
+    candidates.set(signature2, basket);
   }
   const baskets = [...candidates.values()];
   const known = baskets.filter((basket) => basket.totalGrosze !== null).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
@@ -19798,8 +19813,327 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   return result;
 }
 
-// artifacts/api-server/src/lib/store-delivery.ts
+// D:/projekty/remont_assistance/lib/pricing-service/src/automatic-delivery.ts
+var MAX_CANDIDATES = 4096;
+var MAX_STORE_BASKETS = 80;
+var signature = (order) => order.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}:${pack.unitPriceGrosze}`)).sort().join("|");
+async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date()) {
+  if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
+  const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
+  const stores = [...new Set(groups.flatMap((g) => g.offers.filter((o) => isComparableOffer(o, now.getTime())).map((o) => o.store)))].sort();
+  const result = {
+    method: "automatic",
+    comparisonScope: "quoted_baskets",
+    mode: "shipping",
+    postalCode: settings.postalCode ?? null,
+    status: "empty",
+    productCount: groups.length,
+    missingProductCount: stages.flatMap((s) => s.lines).filter((l) => !l.resolved && l.quantity > 0).length,
+    best: null,
+    lowerBound: null,
+    alternatives: [],
+    missingDeliveryStores: stores,
+    policies: policies.filter((p) => stores.includes(p.store)),
+    unavailableStores: []
+  };
+  if (result.missingProductCount) {
+    result.status = "partial";
+    return result;
+  }
+  if (!groups.length) return result;
+  if (!settings.postalCode || !/^\d{2}-\d{3}$/.test(settings.postalCode)) {
+    result.status = "needs_postal_code";
+    return result;
+  }
+  const tooLarge = () => {
+    result.status = "limit_exceeded";
+    return result;
+  };
+  if (groups.length > 20 || stores.length > 10) return tooLarge();
+  const choices = [];
+  let candidateCount = 1;
+  for (const group of groups) {
+    const offers = group.offers.filter((o) => isComparableOffer(o, now.getTime()));
+    const sizes = offers.map((o) => Number(o.packageSize ?? group.product.packageSize));
+    if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return tooLarge();
+    const count = Math.ceil(group.totalQuantity / sizes[0]);
+    if (!Number.isSafeInteger(count) || count > 60) return tooLarge();
+    const variants = [];
+    const visit = (index2, remaining, packs) => {
+      if (variants.length > MAX_CANDIDATES) return;
+      if (index2 === offers.length) {
+        if (remaining === 0) variants.push(packs);
+        return;
+      }
+      const offer = offers[index2], price = parsePriceToGrosze(offer.promoPrice ?? offer.price);
+      if (price === null || !Number.isSafeInteger(price) || price <= 0) return;
+      for (let n = index2 === offers.length - 1 ? remaining : 0; n <= remaining; n++) {
+        visit(index2 + 1, remaining - n, n ? [...packs, { offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count: n, unitPriceGrosze: price, lineCostGrosze: n * price }] : packs);
+      }
+    };
+    visit(0, count, []);
+    candidateCount *= variants.length;
+    if (!variants.length || candidateCount > MAX_CANDIDATES) return tooLarge();
+    choices.push(variants);
+  }
+  const candidates = [], unique = /* @__PURE__ */ new Map();
+  function enumerate(index2, selected) {
+    if (index2 < groups.length) {
+      for (const option of choices[index2]) enumerate(index2 + 1, [...selected, option]);
+      return;
+    }
+    const orders = /* @__PURE__ */ new Map();
+    for (let i = 0; i < groups.length; i++) for (const pack of selected[i]) {
+      const group = groups[i];
+      let order = orders.get(pack.store);
+      if (!order) {
+        order = { store: pack.store, materialsGrosze: 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown", lines: [] };
+        orders.set(pack.store, order);
+      }
+      order.materialsGrosze += pack.lineCostGrosze;
+      let line2 = order.lines.find((l) => l.product.id === group.product.id);
+      if (!line2) {
+        line2 = { product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
+        order.lines.push(line2);
+      }
+      line2.packages.push(pack);
+    }
+    const actual = [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
+    for (const order of actual) unique.set(signature(order), order);
+    candidates.push(actual);
+  }
+  enumerate(0, []);
+  if (unique.size > MAX_STORE_BASKETS) return tooLarge();
+  const failures = /* @__PURE__ */ new Map(), keys = [...unique.keys()];
+  let cursor = 0;
+  await Promise.all(Array.from({ length: Math.min(3, keys.length) }, async () => {
+    while (cursor < keys.length) {
+      const key = keys[cursor++], order = unique.get(key);
+      try {
+        const outcome = await quoteBasket(order, settings.postalCode);
+        if ("quote" in outcome && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
+          order.deliveryGrosze = outcome.quote.costGrosze;
+          order.quote = outcome.quote;
+          order.deliveryMinimumGrosze = outcome.quote.costGrosze;
+          order.totalGrosze = order.materialsGrosze + outcome.quote.costGrosze;
+          order.source = "retailer";
+        } else failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
+      } catch {
+        failures.set(order.store, "quote_unavailable");
+      }
+    }
+  }));
+  const baskets = candidates.map((orders) => {
+    const actual = orders.map((o) => unique.get(signature(o)));
+    const materialsGrosze = actual.reduce((sum, o) => sum + o.materialsGrosze, 0);
+    const deliveryGrosze = actual.every((o) => o.deliveryGrosze !== null) ? actual.reduce((sum, o) => sum + o.deliveryGrosze, 0) : null;
+    return {
+      stores: actual,
+      materialsGrosze,
+      deliveryGrosze,
+      totalGrosze: deliveryGrosze === null ? null : materialsGrosze + deliveryGrosze,
+      lowerBoundGrosze: materialsGrosze + actual.reduce((sum, o) => sum + (o.deliveryGrosze ?? 0), 0)
+    };
+  }).filter((b) => [b.materialsGrosze, b.lowerBoundGrosze, b.totalGrosze ?? 0].every(Number.isSafeInteger));
+  const known = baskets.filter((b) => b.totalGrosze !== null).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
+  result.best = known[0] ?? null;
+  result.alternatives = known.slice(1, 4);
+  result.lowerBound = baskets.sort((a, b) => a.lowerBoundGrosze - b.lowerBoundGrosze)[0] ?? null;
+  result.missingDeliveryStores = [...failures.keys()].sort();
+  result.unavailableStores = [...failures].map(([store, reason]) => ({ store, reason }));
+  result.status = result.best && !failures.size ? "compared" : "needs_delivery_costs";
+  return result;
+}
+
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
+var import_node_crypto = require("node:crypto");
+var ORIGINS = {
+  "Rab-Dom": "https://www.rabdom.pl",
+  Realbud: "https://realbud.com",
+  Zino: "https://sklep.zino.pl"
+};
+var TTL = 10 * 6e4;
+function confirmedMoney(text3, numeric2) {
+  if (typeof text3 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
+  const match = text3.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
+  if (!match) throw Error("invalid_money");
+  const cents = Number(match[1]) * 100 + Number(match[2]);
+  if (!Number.isSafeInteger(cents) || cents < 0 || Math.abs(numeric2 * 100 - cents) > 1e-5) throw Error("invalid_money");
+  return cents;
+}
+var AnonymousShop = class {
+  constructor(origin, fetchImpl, signal) {
+    this.origin = origin;
+    this.fetchImpl = fetchImpl;
+    this.signal = signal;
+  }
+  cookies = /* @__PURE__ */ new Map();
+  async json(path, body) {
+    let url2 = new URL(path, this.origin), method = body ? "POST" : "GET";
+    let payload = body ? JSON.stringify(body) : void 0;
+    for (let i = 0; i < 4; i++) {
+      if (url2.origin !== this.origin) throw Error("invalid_redirect");
+      const cookie = [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; ");
+      if (cookie.length > 8192) throw Error("invalid_cookie_size");
+      const r = await this.fetchImpl(url2, {
+        method,
+        body: payload,
+        signal: this.signal,
+        redirect: "manual",
+        headers: {
+          "User-Agent": "AsystentRemontu/1.0",
+          Accept: "application/json",
+          Cookie: cookie,
+          ...payload ? { "Content-Type": "application/x-www-form-urlencoded" } : {}
+        }
+      });
+      for (const entry of r.headers.getSetCookie()) {
+        const pair = entry.split(";")[0], eq2 = pair.indexOf("=");
+        if (eq2 > 0) this.cookies.set(pair.slice(0, eq2), pair.slice(eq2 + 1));
+      }
+      if ([301, 302, 303, 307, 308].includes(r.status)) {
+        const target = r.headers.get("location");
+        await r.body?.cancel();
+        if (!target) throw Error("invalid_redirect");
+        url2 = new URL(target, url2);
+        if ([301, 302, 303].includes(r.status)) {
+          method = "GET";
+          payload = void 0;
+        }
+        continue;
+      }
+      if (!r.ok) {
+        await r.body?.cancel();
+        throw Error("retailer_unavailable");
+      }
+      if (!r.headers.get("content-type")?.includes("json")) {
+        await r.body?.cancel();
+        throw Error("invalid_response");
+      }
+      const reader = r.body?.getReader();
+      if (!reader) throw Error("invalid_response");
+      const chunks = [];
+      let size = 0;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          size += value.byteLength;
+          if (size > 1e6) throw Error("response_too_large");
+          chunks.push(value);
+        }
+      } finally {
+        await reader.cancel().catch(() => {
+        });
+      }
+      return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    }
+    throw Error("invalid_redirect");
+  }
+};
+function selectHomeDelivery(basket) {
+  if (!Array.isArray(basket.countries) || !basket.countries.some((c) => c.id === 179 && c.name === "Polska" && c.selected === true)) throw Error("country_not_confirmed");
+  if (!Array.isArray(basket.shippings) || !Array.isArray(basket.payments)) throw Error("invalid_response");
+  const options = [];
+  for (const shipping of basket.shippings) {
+    if (shipping.engine !== "" || typeof shipping.title !== "string" || !/kurier|kurierska/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`)) continue;
+    const country = shipping.countries?.find((c) => c.id === 179);
+    if (!country) continue;
+    let cost;
+    try {
+      cost = confirmedMoney(country.cost, country.cost_float);
+      if (cost !== confirmedMoney(shipping.cost, shipping.cost_float)) continue;
+    } catch {
+      continue;
+    }
+    for (const method of shipping.payments ?? []) {
+      const payment = basket.payments.find((p) => p.payment_id === method.payment_id);
+      if (!payment || !["onlinePayment", "transfer", "przelewy24.pl"].includes(payment.name)) continue;
+      let surcharge = 0;
+      try {
+        if (method.additional_cost !== void 0 || method.additional_cost_float !== void 0) surcharge += confirmedMoney(method.additional_cost, method.additional_cost_float);
+        if (payment.additional_cost !== void 0 || payment.additional_cost_float !== void 0) surcharge += confirmedMoney(payment.additional_cost, payment.additional_cost_float);
+      } catch {
+        continue;
+      }
+      options.push({ costGrosze: cost + surcharge, carrier: shipping.title, payment: payment.title });
+    }
+  }
+  const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
+  if (!best) throw Error("no_home_delivery");
+  return best;
+}
+async function quoteShoper(order, fetchImpl) {
+  const origin = ORIGINS[order.store];
+  if (!origin) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
+  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3));
+  const expected = /* @__PURE__ */ new Map();
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
+    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    const id = source.url.match(/\/(\d+)$/)?.[1];
+    if (!id) throw Error("invalid_basket");
+    const product = await client.json(`/webapi/front/pl_PL/products/PLN/${id}`);
+    if (String(product.ean) !== source.ean || String(product.id) !== id || !product.can_buy || !Number.isSafeInteger(product.stockId)) throw Error("product_unavailable");
+    const price = confirmedMoney(product.price?.gross?.final, product.price?.gross?.final_float);
+    if (price !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (expected.has(product.stockId)) throw Error("invalid_basket");
+    expected.set(product.stockId, { count: pack.count, price });
+    await client.json("/webapi/front/pl_PL/basket/PLN/", { stock_id: product.stockId, quantity: pack.count });
+  }
+  const basket = await client.json("/webapi/front/pl_PL/basket/PLN/");
+  if (!Array.isArray(basket.products) || basket.products.length !== expected.size || basket._flash_messenger?.error?.length) throw Error("basket_not_confirmed");
+  let total = 0;
+  for (const p of basket.products) {
+    const wanted = expected.get(p.stock_id);
+    if (!wanted || p.quantity !== wanted.count || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    expected.delete(p.stock_id);
+    total += wanted.count * wanted.price;
+  }
+  if (expected.size || total !== order.materialsGrosze || confirmedMoney(basket.basket?.sum_products, basket.basket?.sum_products_float) !== total) throw Error("basket_not_confirmed");
+  const shipping = selectHomeDelivery(basket), checkedAt = /* @__PURE__ */ new Date();
+  const evidence = { products: basket.products.map((p) => ({ stock: p.stock_id, count: p.quantity, price: p.price_float })), shippings: basket.shippings, payments: basket.payments, countries: basket.countries };
+  return { quote: {
+    ...shipping,
+    checkedAt: checkedAt.toISOString(),
+    expiresAt: new Date(checkedAt.getTime() + TTL).toISOString(),
+    sourceUrl: `${origin}/pl/basket`,
+    basis: "retailer_basket_national",
+    destinationScope: "PL",
+    evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+  } };
+}
+function createRetailerQuoter(fetchImpl = fetch) {
+  const cache = /* @__PURE__ */ new Map();
+  let active = 0;
+  return async (order, postalCode) => {
+    if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
+    if (!ORIGINS[order.store]) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
+    const key = JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
+    const cached2 = cache.get(key);
+    if (cached2 && cached2.until > Date.now()) return cached2.result;
+    if (active >= 3) return { reason: "quote_busy" };
+    if (cache.size >= 256) cache.delete(cache.keys().next().value);
+    active++;
+    const pending = quoteShoper(order, fetchImpl).catch((error40) => ({ reason: error40 instanceof Error && ["price_changed", "product_unavailable", "basket_not_confirmed", "no_home_delivery"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
+      active--;
+    });
+    cache.set(key, { until: Date.now() + TTL, result: pending });
+    const result = await pending;
+    if ("reason" in result) cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
+    return result;
+  };
+}
+
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/store-delivery.ts
 var STORE_DELIVERY_POLICIES = [
+  {
+    store: "Zino",
+    minimumGrosze: null,
+    checkedAt: null,
+    // source: https://sklep.zino.pl/pl/basket
+    sourceUrl: "https://sklep.zino.pl/pl/basket"
+  },
   {
     store: "Sewera",
     minimumGrosze: 1990,
@@ -19847,10 +20181,10 @@ var STORE_DELIVERY_POLICIES = [
   }
 ];
 
-// artifacts/api-server/src/lib/retail-pages.ts
-var import_node_crypto = require("node:crypto");
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
+var import_node_crypto2 = require("node:crypto");
 
-// artifacts/api-server/src/lib/retail-microdata.ts
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-microdata.ts
 var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
 var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
 var decode = (text3) => text3.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
@@ -19964,7 +20298,7 @@ function readRetailMicrodata(html, format, url2) {
   };
 }
 
-// artifacts/api-server/src/lib/retail-pages.ts
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
   if (!value || typeof value !== "object") return [];
@@ -19973,7 +20307,7 @@ function objects(value) {
 }
 function parseRetailPage(html, source, observedAt) {
   const products = [];
-  if (source.format && source.format !== "jsonld") products.push(readRetailMicrodata(html, source.format, source.url));
+  if (source.format && source.format !== "jsonld" && source.format !== "shoper-api") products.push(readRetailMicrodata(html, source.format, source.url));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
@@ -20019,7 +20353,7 @@ function parseRetailPage(html, source, observedAt) {
     availability: "in_stock",
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
-    evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(html).digest("hex"),
+    evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(html).digest("hex"),
     validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value) => typeof value === "string").sort()[0] ?? null
   };
 }
@@ -20029,13 +20363,15 @@ function retailPriceIsValid(validUntil, now) {
   return Date.parse(validUntil) >= now.getTime();
 }
 async function readRetailSource(source, fetchImpl = fetch) {
-  const response = await fetchImpl(source.url, {
+  const api = source.format === "shoper-api";
+  const requestUrl = api ? `${new URL(source.url).origin}/webapi/front/pl_PL/products/PLN/${source.url.match(/\/(\d+)$/)?.[1]}` : source.url;
+  const response = await fetchImpl(requestUrl, {
     signal: AbortSignal.timeout(8e3),
     redirect: "error",
     headers: { "User-Agent": "AsystentRemontu/1.0", Accept: "text/html", "Accept-Language": "pl-PL" }
   });
   if (!response.ok) throw new Error(`retailer_http_${response.status}`);
-  if (!response.headers.get("content-type")?.includes("text/html")) throw new Error("retailer_invalid_content_type");
+  if (!response.headers.get("content-type")?.includes(api ? "json" : "text/html")) throw new Error("retailer_invalid_content_type");
   const reader = response.body?.getReader();
   if (!reader) throw new Error("retailer_empty_body");
   const chunks = [];
@@ -20052,13 +20388,32 @@ async function readRetailSource(source, fetchImpl = fetch) {
     await reader.cancel().catch(() => {
     });
   }
-  return parseRetailPage(Buffer.concat(chunks).toString("utf8"), source, /* @__PURE__ */ new Date());
+  const raw = Buffer.concat(chunks).toString("utf8");
+  if (api) {
+    const item = JSON.parse(raw);
+    if (!item.can_buy) throw new Error("retailer_out_of_stock");
+    const gross = item.price?.gross;
+    const formatted = String(gross?.final ?? "").replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
+    if (!formatted || typeof gross.final_float !== "number" || Math.abs(Number(formatted[1]) * 100 + Number(formatted[2]) - gross.final_float * 100) > 1e-5) throw new Error("retailer_gross_price_mismatch");
+    const html = `<script type="application/ld+json">${JSON.stringify({
+      "@type": "Product",
+      name: item.name,
+      gtin13: item.ean,
+      brand: item.producer?.name,
+      image: source.imageUrl,
+      offers: { "@type": "Offer", price: gross.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
+    })}</script>`;
+    const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
+    return { ...observation, evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(raw).digest("hex") };
+  }
+  return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 
-// artifacts/api-server/src/shared-backend.ts
+// D:/projekty/remont_assistance/artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value] ?? value;
 function createRemontService(options = {}) {
+  const quoteBasket = options.basketQuoter ?? createRetailerQuoter(options.fetchImpl);
   const observations = /* @__PURE__ */ new Map();
   const errors = /* @__PURE__ */ new Map();
   const withdrawnAt = /* @__PURE__ */ new Map();
@@ -20182,6 +20537,7 @@ function createRemontService(options = {}) {
       running,
       lastAttemptAt,
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
+      delivery: { automaticStores: ["Rab-Dom", "Realbud", "Zino"], basis: "retailer_basket_national", country: "PL", quoteTtlSeconds: 600 },
       sources: RETAIL_SOURCES.map((source) => ({
         id: source.id,
         store: source.store,
@@ -20217,10 +20573,17 @@ function createRemontService(options = {}) {
       const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog().deps);
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
+      const deadline = Date.now() + 2e4;
+      const deliveryComparison = stageOnly ? void 0 : await compareAutomaticDelivery(
+        estimate.stages,
+        parsed.data.options?.delivery ?? { mode: "shipping" },
+        (order, postalCode) => Date.now() < deadline ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
+        STORE_DELIVERY_POLICIES
+      );
       res.json(stageOnly ? serialized.stages[0] : {
         ...serialized,
         coverage: status(),
-        deliveryComparison: compareDeliveredBaskets(estimate.stages, parsed.data.options?.delivery, STORE_DELIVERY_POLICIES)
+        deliveryComparison
       });
     } catch {
       res.status(503).json({ error: "pricing_unavailable" });

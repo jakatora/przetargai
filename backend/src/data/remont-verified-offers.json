@@ -82,9 +82,9 @@
     "priceGrosze": 4392,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T09:37:09.349Z",
+    "observedAt": "2026-10-25T11:12:16.953Z",
     "sourceUrl": "https://realbud.com/pl/p/Grunt-KNAUF-Universalgrund-5-L-Srodek-gleboko-gruntujacy/75056675",
-    "evidenceSha256": "7bef715dd91e695f9a0248f14ea17d8ef8deda756a541c7d4a7406e862a859a5",
+    "evidenceSha256": "56ecb3434f611739c55095a88d0b49962a0228091273e13d7fc73a3b48332b37",
     "validUntil": null
   },
   {
@@ -95,9 +95,9 @@
     "priceGrosze": 1199,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T10:19:50.666Z",
+    "observedAt": "2026-10-25T11:12:17.569Z",
     "sourceUrl": "https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zewnatrz-30mm-x-50m-niebieska/2526",
-    "evidenceSha256": "d46a684cf82cab3ac1f35ce679c76cd3f72421c22a8d0797ebebec7bc954280f",
+    "evidenceSha256": "eb2674a7f72bb97dd07ea27df196b778f6970c8521bfdc6b009af342ecb192c5",
     "validUntil": null
   },
   {
@@ -108,9 +108,9 @@
     "priceGrosze": 450,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T10:19:50.919Z",
+    "observedAt": "2026-10-25T11:12:18.052Z",
     "sourceUrl": "https://www.rabdom.pl/pl/p/Folia-ochronna-malarska-Blue-Dolphin-GRUBA-4m-x-5m/3751",
-    "evidenceSha256": "201ad96ed9d313eb23ef179fb8a2a5e852e4d2ef2fc09c4ea8468cd42104a0c3",
+    "evidenceSha256": "0aa9619cbd858d1d2cff97e2f4531c74c282b3fd4f1f56637fb3cd63a2e72e7b",
     "validUntil": null
   },
   {
@@ -163,6 +163,19 @@
     "observedAt": "2026-10-25T10:19:56.950Z",
     "sourceUrl": "https://sklep.sewera.pl/acryl-putz-st10-start-20kg-p6107",
     "evidenceSha256": "858fd177ff3e56302c7a2b0d448e1756cc2783ca5b4b7137c7b8bf8fbb1ea3a2",
+    "validUntil": null
+  },
+  {
+    "sourceId": "zino-sniezka-5l",
+    "ean": "5903973139188",
+    "name": "Barwy Natury 173 Biały 5l",
+    "imageUrl": "https://sklep.zino.pl/userdata/public/gfx/7713/173-biala-majowa-konwalia.png",
+    "priceGrosze": 10681,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T11:12:18.243Z",
+    "sourceUrl": "https://sklep.zino.pl/pl/p/Barwy-Natury-173-Bialy-5l/2842",
+    "evidenceSha256": "6863c4b2a86eb0352fd419f7a4514e14abd0e37e897a4979d8520d2beb2a645f",
     "validUntil": null
   }
 ]
