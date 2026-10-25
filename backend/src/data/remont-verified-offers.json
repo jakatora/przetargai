@@ -82,9 +82,9 @@
     "priceGrosze": 4392,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T11:12:16.953Z",
+    "observedAt": "2026-10-25T12:16:58.827Z",
     "sourceUrl": "https://realbud.com/pl/p/Grunt-KNAUF-Universalgrund-5-L-Srodek-gleboko-gruntujacy/75056675",
-    "evidenceSha256": "56ecb3434f611739c55095a88d0b49962a0228091273e13d7fc73a3b48332b37",
+    "evidenceSha256": "b40e28a70a691c054f5ac38c8cf223e4c06c99772fd88796b3de07bf5f9af9d7",
     "validUntil": null
   },
   {
@@ -95,9 +95,9 @@
     "priceGrosze": 1199,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T11:12:17.569Z",
+    "observedAt": "2026-10-25T12:16:59.126Z",
     "sourceUrl": "https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zewnatrz-30mm-x-50m-niebieska/2526",
-    "evidenceSha256": "eb2674a7f72bb97dd07ea27df196b778f6970c8521bfdc6b009af342ecb192c5",
+    "evidenceSha256": "b2400b629f6c375b190d8309bf077a76b6878a985d6c97414b58145073fe42f6",
     "validUntil": null
   },
   {
@@ -108,9 +108,9 @@
     "priceGrosze": 450,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T11:12:18.052Z",
+    "observedAt": "2026-10-25T12:16:59.253Z",
     "sourceUrl": "https://www.rabdom.pl/pl/p/Folia-ochronna-malarska-Blue-Dolphin-GRUBA-4m-x-5m/3751",
-    "evidenceSha256": "0aa9619cbd858d1d2cff97e2f4531c74c282b3fd4f1f56637fb3cd63a2e72e7b",
+    "evidenceSha256": "45aff2e95bf05cf274b0b73581965e0d357dc3a6a9ea0e37edee9b4d611135a7",
     "validUntil": null
   },
   {
@@ -173,7 +173,7 @@
     "priceGrosze": 10681,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T11:12:18.243Z",
+    "observedAt": "2026-10-25T12:16:59.457Z",
     "sourceUrl": "https://sklep.zino.pl/pl/p/Barwy-Natury-173-Bialy-5l/2842",
     "evidenceSha256": "6863c4b2a86eb0352fd419f7a4514e14abd0e37e897a4979d8520d2beb2a645f",
     "validUntil": null
