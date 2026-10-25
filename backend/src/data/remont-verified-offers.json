@@ -1178,5 +1178,18 @@
     "sourceUrl": "https://hipper.pl/klamka-do-drzwi-wewnetrznych-lucy-zlota-r-schaffner-3069808860",
     "evidenceSha256": "c41a42fb70fa8045a6f385f74772b870935040fcca9cc84da5065eb40db4d142",
     "validUntil": null
+  },
+  {
+    "sourceId": "modna-paradyz-u117-grey-143m2",
+    "ean": "5904584158261",
+    "name": "U117 GREY GRES SZKL. REKT. MAT. 59,8X59,8",
+    "imageUrl": "https://modnalazienka.pl/images/thumbnails/paradyz//u117-grey-gres-szkl-rekt-mat-598x598.jpg",
+    "priceGrosze": 10729,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T20:35:39.695Z",
+    "sourceUrl": "https://modnalazienka.pl/u117-grey-gres-szkl-rekt-mat-598x598-34158",
+    "evidenceSha256": "1e5e771ae9973f4d06143f106ed9ec938b3a132853d6fabe9089bf099d0f4f60",
+    "validUntil": null
   }
 ]
