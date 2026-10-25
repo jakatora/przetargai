@@ -749,5 +749,70 @@
     "sourceUrl": "https://sklep.sewera.pl/soudal-akryl-bialy-280ml-p10680",
     "evidenceSha256": "43557914ab9f211e18708d339b713a591729270be251c189cb72bbe5d4c0c62e",
     "validUntil": null
+  },
+  {
+    "sourceId": "unimet-fixall-290ml",
+    "ean": "5411183045620",
+    "name": "USZCZELNIACZ HYBRYDOWY FIX ALL HIGH TACK BIAŁY 290ML",
+    "imageUrl": "https://www.unimet.pl/2244944-large_default/uszczelniacz-hybrydowy-fix-all-high-tack-bialy-290ml.webp",
+    "priceGrosze": 3150,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T14:34:58.538Z",
+    "sourceUrl": "https://www.unimet.pl/uszczelniacze-58/259045-uszczelniacz-hybrydowy-fix-all-high-tack-bialy-290ml-5411183045620.html",
+    "evidenceSha256": "029611b49952188a3b90973034a936957fdee52d25caceabe55ca5a2c6b46a8b",
+    "validUntil": null
+  },
+  {
+    "sourceId": "unimet-wc-mounting-set",
+    "ean": "5901095514395",
+    "name": "ZESTAW PRZYŁĄCZENIOWO-MOCUJĄCY WC",
+    "imageUrl": "https://www.unimet.pl/2023449-large_default/zestaw-przylaczeniowo-mocujacy-wc.webp",
+    "priceGrosze": 4995,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T14:34:58.924Z",
+    "sourceUrl": "https://www.unimet.pl/pozostale-18/3744291-zestaw-przylaczeniowo-mocujacy-wc-5901095514395.html",
+    "evidenceSha256": "3a5ac7ac09d3eb132cdd8439fd6435063e51617fad5447b8b82c12eadba88290",
+    "validUntil": null
+  },
+  {
+    "sourceId": "bestbudowa-soudal-inside-90mm",
+    "ean": "5411183151178",
+    "name": "Taśma okienna wewnętrzna SOUDAL SWS BASIC PLUS 90 Inside 90mmx30m",
+    "imageUrl": "https://bestbudowa.pl/5742-home_default/soudal-tasma-okienna-sws-basic-plus-90-inside-90mmx30m.jpg",
+    "priceGrosze": 17160,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T14:34:59.756Z",
+    "sourceUrl": "https://bestbudowa.pl/tasmy-uszczelniajace-/8055-soudal-tasma-okienna-sws-basic-plus-90-inside-90mmx30m-5411183151178.html",
+    "evidenceSha256": "330f9b4b5f0eede0c5e5c7392d00597048c20a799ececac8c6e9042b0d1309e9",
+    "validUntil": "2026-11-09"
+  },
+  {
+    "sourceId": "prescot-wago-221413",
+    "ean": "4050821808442",
+    "name": "ZŁĄCZKA WAGO 221-413 3X4mm LINKA/DRUT NO WA",
+    "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_45208_500_500/221-413.jpg",
+    "priceGrosze": 275,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T14:35:00.395Z",
+    "sourceUrl": "https://www.prescot.com.pl/pl/p/ZLACZKA-WAGO-221-413-3X4mm-LINKADRUT-NO-WA/11528",
+    "evidenceSha256": "279f128919a178b514394d04d5ebef9b36417c21ae224f0947d652d226d06e57",
+    "validUntil": null
+  },
+  {
+    "sourceId": "cezar-tile-trim-8mm-25m",
+    "ean": "5904584853500",
+    "name": "Profil do glazury aluminiowy narożny 8mm Cezar Tytan Szczotkowany mat 2,50m",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0977/5221/9989/files/f3af291d90963eeb125a6e5cb54a3887_9d9ddc5e-8cc3-42ba-b7e6-bd37c74886eb.png?v=1791543548",
+    "priceGrosze": 2732,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T14:35:00.958Z",
+    "sourceUrl": "https://cezar.eu/products/profil-do-glazury-narozny-aluminiowy-8mm-cezar-tytan-szczotkowany-mat-2-5m",
+    "evidenceSha256": "16994918d727a58da72f9487063e80037c104a966efa9f4b490897c322cf6df8",
+    "validUntil": null
   }
 ]

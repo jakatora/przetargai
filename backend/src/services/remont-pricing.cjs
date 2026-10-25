@@ -20367,6 +20367,89 @@ var RETAIL_SOURCES = [
     "store": "Sewera",
     "format": "sewera",
     "url": "https://sklep.sewera.pl/soudal-akryl-bialy-280ml-p10680"
+  },
+  // source: https://www.unimet.pl/uszczelniacze-58/259045-uszczelniacz-hybrydowy-fix-all-high-tack-bialy-290ml-5411183045620.html
+  {
+    "id": "unimet-fixall-290ml",
+    "ean": "5411183045620",
+    "name": "USZCZELNIACZ HYBRYDOWY FIX ALL HIGH TACK BIA\u0141Y 290ML",
+    "brand": "Soudal",
+    "category": "mounting-adhesive",
+    "packageSize": 290,
+    "unit": "ml",
+    "store": "Unimet",
+    "format": "unimet",
+    "url": "https://www.unimet.pl/uszczelniacze-58/259045-uszczelniacz-hybrydowy-fix-all-high-tack-bialy-290ml-5411183045620.html"
+  },
+  // source: https://www.unimet.pl/pozostale-18/3744291-zestaw-przylaczeniowo-mocujacy-wc-5901095514395.html
+  {
+    "id": "unimet-wc-mounting-set",
+    "ean": "5901095514395",
+    "name": "ZESTAW PRZY\u0141\u0104CZENIOWO-MOCUJ\u0104CY WC",
+    "brand": "UN",
+    "category": "mounting-set",
+    "packageSize": 1,
+    "unit": "szt",
+    "variant": [
+      "WC"
+    ],
+    "store": "Unimet",
+    "format": "unimet",
+    "url": "https://www.unimet.pl/pozostale-18/3744291-zestaw-przylaczeniowo-mocujacy-wc-5901095514395.html"
+  },
+  // source: https://bestbudowa.pl/tasmy-uszczelniajace-/8055-soudal-tasma-okienna-sws-basic-plus-90-inside-90mmx30m-5411183151178.html
+  {
+    "id": "bestbudowa-soudal-inside-90mm",
+    "ean": "5411183151178",
+    "name": "Ta\u015Bma okienna wewn\u0119trzna SOUDAL SWS BASIC PLUS 90 Inside 90mmx30m",
+    "brand": "Soudal",
+    "category": "window-tape",
+    "packageSize": 30,
+    "unit": "m",
+    "variant": [
+      "90mmx30m"
+    ],
+    "store": "BestBudowa",
+    "format": "jsonld",
+    "url": "https://bestbudowa.pl/tasmy-uszczelniajace-/8055-soudal-tasma-okienna-sws-basic-plus-90-inside-90mmx30m-5411183151178.html"
+  },
+  // source: https://www.prescot.com.pl/pl/p/ZLACZKA-WAGO-221-413-3X4mm-LINKADRUT-NO-WA/11528
+  {
+    "id": "prescot-wago-221413",
+    "ean": "4050821808442",
+    "name": "Z\u0141\u0104CZKA WAGO 221-413 3X4mm LINKA/DRUT NO WA",
+    "brand": "WAGO",
+    "category": "wire-connector",
+    "packageSize": 1,
+    "unit": "szt",
+    "variant": [
+      "221-413"
+    ],
+    "productId": 11528,
+    "apiPurchaseUnit": "szt.",
+    "store": "Prescot",
+    "format": "shoper-api",
+    "url": "https://www.prescot.com.pl/pl/p/ZLACZKA-WAGO-221-413-3X4mm-LINKADRUT-NO-WA/11528",
+    "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_45208_500_500/221-413.jpg"
+  },
+  // source: https://cezar.eu/products/profil-do-glazury-narozny-aluminiowy-8mm-cezar-tytan-szczotkowany-mat-2-5m
+  {
+    "id": "cezar-tile-trim-8mm-25m",
+    "ean": "5904584853500",
+    "name": "Profil do glazury aluminiowy naro\u017Cny 8mm Cezar Tytan Szczotkowany mat 2,50m",
+    "brand": "Cezar",
+    "category": "tile-trim",
+    "packageSize": 2.5,
+    "unit": "mb",
+    "variant": [
+      "8mm",
+      "2,50m"
+    ],
+    "productId": 10292567572821,
+    "variantId": 52009135210837,
+    "store": "Cezar",
+    "format": "shopify-api",
+    "url": "https://cezar.eu/products/profil-do-glazury-narozny-aluminiowy-8mm-cezar-tytan-szczotkowany-mat-2-5m"
   }
 ];
 var RETAIL_NAME_ALIASES = {
@@ -20404,7 +20487,12 @@ var RETAIL_NAME_ALIASES = {
   "Tynk cienkowarstwowy silikatowo-silikonowy Ceresit CT 174 baranek 1,5 mm baza bia\u0142a 25 kg": "9000101109733",
   "Tynk cementowo-wapienny maszynowy Baumit MPI 25 30 kg": "5907534261158",
   "Akryl uniwersalny Soudal bia\u0142y 280 ml (malowalny)": "5411183157538",
-  "Siatka zbroj\u0105ca z w\u0142\xF3kna szklanego Atlas 150 g/m\xB2 (rolka 50 m\xB2)": "5905400196993"
+  "Siatka zbroj\u0105ca z w\u0142\xF3kna szklanego Atlas 150 g/m\xB2 (rolka 50 m\xB2)": "5905400196993",
+  "Klej-uszczelniacz hybrydowy Soudal Fix All High Tack 290 ml bia\u0142y": "5411183045620",
+  "Zestaw przy\u0142\u0105czeniowo-mocuj\u0105cy WC Tycner (rury, uszczelki i akcesoria)": "5901095514395",
+  "Ta\u015Bma paroszczelna okienna Soudal SWS Basic Plus Inside 90 mm \xD7 30 m": "5411183151178",
+  "Szybkoz\u0142\u0105czka uniwersalna WAGO 221-413 3\xD70,2-4 mm\xB2 (1 szt.)": "4050821808442",
+  "Profil naro\u017Cny do glazury Cezar aluminiowy 8 mm, tytan szczotkowany mat, 2,5 m": "5904584853500"
 };
 
 // D:/projekty/remont_assistance/lib/pricing-service/src/delivery.ts
@@ -20761,7 +20849,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
 }
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto3 = require("node:crypto");
+var import_node_crypto4 = require("node:crypto");
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-http.ts
 var AnonymousShop = class {
@@ -20898,12 +20986,26 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
   const offer = one(elements(product, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "microdata_offer_ambiguous");
   const price = property(offer, "price");
   const currency = property(offer, "priceCurrency");
-  const name = property(product, "name");
+  const name = format === "unimet" ? text2(one(elements(product, (a, tag) => a.itemprop === "name" && tag === "h1"), "microdata_name_ambiguous")) : property(product, "name");
   const images = elements(product, (a) => a.itemprop === "image").map((element) => {
     const a = attrs(element.match(TAG)?.[0] ?? "");
     return a.content ?? a.src ?? a.href;
   }).filter((value) => Boolean(value));
   const image = images[0] ? new URL(decodeURIComponent(images[0]), url2).href : null;
+  if (format === "unimet") {
+    const visible = text2(one(elements(offer, (a) => a.itemprop === "price"), "retailer_gross_price_not_confirmed"));
+    const grossLabel = text2(one(elements(product, (a) => a.class === "tax-shipping-delivery-label"), "retailer_gross_price_not_confirmed"));
+    if (grossLabel !== "SZT Brutto" || Number(visible.replace(/\s|zł/g, "").replace(",", ".")) !== Number(price)) throw Error("retailer_gross_price_mismatch");
+    const brand = text2(one(elements(product, (a) => a.itemprop === "brand"), "microdata_brand_ambiguous")).replace(/^Marka\s*/, "");
+    return {
+      "@type": "Product",
+      name,
+      gtin13: property(product, "gtin13"),
+      brand,
+      image,
+      offers: { "@type": "Offer", price, priceCurrency: currency, url: property(offer, "url"), availability: property(offer, "availability") }
+    };
+  }
   if (format === "shoper" || format === "buduj24") {
     const ean2 = property(product, "gtin");
     const gross2 = format === "shoper" ? text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false), "retailer_gross_price_not_confirmed")) : text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("product-price-gross") ?? false), "retailer_gross_price_not_confirmed"));
@@ -20965,6 +21067,19 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
   };
 }
 
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/shopify-product.ts
+function confirmShopifyProduct(product, source) {
+  if (!Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.variantId) || product.id !== source.productId || !Array.isArray(product.variants)) throw Error("product_id_not_confirmed");
+  const matches = product.variants.filter((v) => v.id === source.variantId && String(v.barcode) === source.ean);
+  if (matches.length !== 1) throw Error("product_ean_not_confirmed");
+  const variant = matches[0];
+  if (variant.available !== true || product.available !== true) throw Error("retailer_out_of_stock");
+  if (!Number.isSafeInteger(variant.price) || variant.price <= 0 || typeof product.title !== "string") throw Error("invalid_money");
+  if (variant.quantity_rule && (variant.quantity_rule.min !== 1 || variant.quantity_rule.increment !== 1)) throw Error("retailer_unit_not_confirmed");
+  const image = variant.featured_image?.src ?? product.featured_image;
+  return { variantId: variant.id, priceGrosze: variant.price, name: product.title, imageUrl: typeof image === "string" ? new URL(image, source.url).href : source.imageUrl };
+}
+
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
@@ -20974,7 +21089,7 @@ function objects(value) {
 }
 function parseRetailPage(html, source, observedAt) {
   const products = [];
-  if (source.format && source.format !== "jsonld" && source.format !== "shoper-api") products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
+  if (source.format && !["jsonld", "shoper-api", "shopify-api"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
@@ -21031,6 +21146,21 @@ function retailPriceIsValid(validUntil, now) {
   return Date.parse(validUntil) >= now.getTime();
 }
 async function readRetailSource(source, fetchImpl = fetch) {
+  if (source.format === "shopify-api") {
+    const client = new AnonymousShop(new URL(source.url).origin, fetchImpl, AbortSignal.timeout(8e3));
+    const raw2 = await client.text(new URL(source.url).pathname + ".js");
+    const item = confirmShopifyProduct(JSON.parse(raw2), source);
+    const cart = JSON.parse(await client.text("/cart.js"));
+    if (cart.currency !== "PLN") throw Error("retailer_currency_not_confirmed");
+    const html = `<script type="application/ld+json">${JSON.stringify({
+      "@type": "Product",
+      name: item.name,
+      gtin13: source.ean,
+      image: item.imageUrl,
+      offers: { "@type": "Offer", price: (item.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", url: source.url, availability: "https://schema.org/InStock" }
+    })}</script>`;
+    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
+  }
   const api = source.format === "shoper-api";
   const requestUrl = api ? `${new URL(source.url).origin}/webapi/front/pl_PL/products/PLN/${shoperProductId(source)}` : source.url;
   const response = await fetchImpl(requestUrl, {
@@ -21060,6 +21190,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   if (api) {
     const item = JSON.parse(raw);
     if (String(item.id) !== shoperProductId(source)) throw new Error("product_id_not_confirmed");
+    if (source.apiPurchaseUnit && item.unit?.name !== source.apiPurchaseUnit) throw new Error("retailer_unit_not_confirmed");
     if (!item.can_buy) throw new Error("retailer_out_of_stock");
     const gross = item.price?.gross;
     const formatted = String(gross?.final ?? "").replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
@@ -21279,11 +21410,63 @@ async function quoteBuduj24(order, fetchImpl) {
   return quote(order, sum.shipping, active.name, activePayment.name, { expected, sum, delivery: active, payment: activePayment });
 }
 
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/cezar-delivery.ts
+var import_node_crypto3 = require("node:crypto");
+async function quoteCezar(order, postalCode, fetchImpl) {
+  const origin = "https://cezar.eu";
+  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3));
+  const expected = /* @__PURE__ */ new Map();
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === "Cezar" && s.format === "shopify-api");
+    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    const product = confirmShopifyProduct(JSON.parse(await client.text(new URL(source.url).pathname + ".js")), source);
+    if (product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (expected.has(product.variantId)) throw Error("invalid_basket");
+    expected.set(product.variantId, { count: pack.count, price: product.priceGrosze });
+    await client.text("/cart/add.js", { id: String(product.variantId), quantity: String(pack.count) });
+  }
+  const cart = JSON.parse(await client.text("/cart.js"));
+  if (cart.currency !== "PLN" || !Array.isArray(cart.items) || cart.items.length !== expected.size) throw Error("basket_not_confirmed");
+  let total = 0, count = 0;
+  for (const item of cart.items) {
+    const wanted = expected.get(item.id);
+    if (!wanted || item.quantity !== wanted.count || item.price !== wanted.price || item.final_price !== wanted.price || item.final_line_price !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    total += wanted.count * wanted.price;
+    count += wanted.count;
+    expected.delete(item.id);
+  }
+  if (expected.size || cart.item_count !== count || cart.items_subtotal_price !== total || cart.total_price !== total || total !== order.materialsGrosze) throw Error("basket_not_confirmed");
+  const address = new URLSearchParams({ "shipping_address[zip]": postalCode, "shipping_address[country]": "Poland" });
+  const rates = JSON.parse(await client.text("/cart/shipping_rates.json?" + address));
+  const available = (Array.isArray(rates.shipping_rates) ? rates.shipping_rates : []).flatMap((rate) => {
+    const free = rate.name === "Gratis" && rate.source === "shopify" && rate.price === "0.00" && total >= 5e4;
+    if (rate.currency !== "PLN" || typeof rate.name !== "string" || !/DPD.*Kurier|Raben/i.test(rate.name) && !free || /pobran|punkt|automat|zapytani|indywidual/i.test(rate.name)) return [];
+    const price = typeof rate.price === "string" && /^\d+\.\d{2}$/.test(rate.price) ? parsePriceToGrosze(rate.price) : null;
+    if (price === null || !Number.isSafeInteger(price) || price < 0) return [];
+    return [{ costGrosze: price, carrier: rate.name }];
+  }).sort((a, b) => a.costGrosze - b.costGrosze);
+  const best = available[0];
+  if (!best) throw Error("no_home_delivery");
+  const checkedAt = /* @__PURE__ */ new Date();
+  return { quote: {
+    ...best,
+    payment: "P\u0142atno\u015B\u0107 z g\xF3ry",
+    checkedAt: checkedAt.toISOString(),
+    expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(),
+    sourceUrl: origin + "/cart",
+    basis: "retailer_basket_postcode",
+    destinationScope: "postal_code",
+    postalCode,
+    evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
+  } };
+}
+
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
   "Rab-Dom": "https://www.rabdom.pl",
   Realbud: "https://realbud.com",
-  Zino: "https://sklep.zino.pl"
+  Zino: "https://sklep.zino.pl",
+  Prescot: "https://www.prescot.com.pl"
 };
 var TTL = 10 * 6e4;
 function confirmedMoney(text3, numeric2) {
@@ -21299,7 +21482,7 @@ function selectHomeDelivery(basket) {
   if (!Array.isArray(basket.shippings) || !Array.isArray(basket.payments)) throw Error("invalid_response");
   const options = [];
   for (const shipping of basket.shippings) {
-    if (shipping.engine !== "" || typeof shipping.title !== "string" || !/kurier|kurierska/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`)) continue;
+    if (shipping.engine !== "" || typeof shipping.title !== "string" || !/kurier|kurierska|^Transport DPD$/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`)) continue;
     const country = shipping.countries?.find((c) => c.id === 179);
     if (!country) continue;
     let cost;
@@ -21362,7 +21545,7 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto4.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
@@ -21371,14 +21554,14 @@ function createRetailerQuoter(fetchImpl = fetch) {
   let active = 0;
   return async (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
-    if (!ORIGINS[order.store] && !["Sewera", "Buduj24"].includes(order.store)) return { reason: ["Castorama", "OBI"].includes(order.store) ? "retailer_access_required" : "integration_unavailable" };
+    if (!ORIGINS[order.store] && !["Sewera", "Buduj24", "Cezar"].includes(order.store)) return { reason: ["Castorama", "OBI"].includes(order.store) ? "retailer_access_required" : "integration_unavailable" };
     const key = JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
     const cached2 = cache.get(key);
     if (cached2 && cached2.until > Date.now()) return cached2.result;
     if (active >= 3) return { reason: "quote_busy" };
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
     active++;
-    const pending = (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : quoteShoper(order, fetchImpl)).catch((error40) => ({ reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
+    const pending = (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl)).catch((error40) => ({ reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
       active--;
     });
     cache.set(key, { until: Date.now() + TTL, result: pending });
