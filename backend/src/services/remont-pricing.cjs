@@ -6590,7 +6590,7 @@ function az_default() {
 }
 
 // D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count, one4, few, many) {
+function getBelarusianPlural(count, one5, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -6598,7 +6598,7 @@ function getBelarusianPlural(count, one4, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one4;
+    return one5;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -9736,7 +9736,7 @@ function pt_default() {
 }
 
 // D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count, one4, few, many) {
+function getRussianPlural(count, one5, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -9744,7 +9744,7 @@ function getRussianPlural(count, one4, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one4;
+    return one5;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -20513,7 +20513,9 @@ var RETAIL_SOURCES = [
   // source: https://www.eelektryka.com/simon-basic/3975-simon-basic-gniazdo-pojedyncze-zu-i-przes%C5%82onami-do-ramki-bia%C5%82e-bmgz1z0111-5902787568238.html
   { "id": "eelektryka-simon-basic-socket-white", "ean": "5902787568238", "name": "SIMON BASIC Gniazdo pojedyncze z/u i przes\u0142onami do ramki bia\u0142e BMGZ1z.01/11", "category": "socket", "brand": "Simon", "packageSize": 1, "unit": "szt", "store": "Eelektryka", "format": "prestashop", "productId": 3975, "retailerSku": "SI427", "variant": ["BMGZ1z.01/11", "bia\u0142e"], "url": "https://www.eelektryka.com/simon-basic/3975-simon-basic-gniazdo-pojedyncze-zu-i-przes%C5%82onami-do-ramki-bia%C5%82e-bmgz1z0111-5902787568238.html" },
   // source: https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291
-  { "id": "northbud-ferro-one-bfo7", "ean": "5902194954525", "name": "FERRO Bateria prysznicowa Ferro One bez prysznica chrom BFO7", "category": "faucet", "brand": "Ferro", "packageSize": 1, "unit": "szt", "store": "Northbud", "format": "jsonld", "variant": ["BFO7", "chrom"], "url": "https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291" }
+  { "id": "northbud-ferro-one-bfo7", "ean": "5902194954525", "name": "FERRO Bateria prysznicowa Ferro One bez prysznica chrom BFO7", "category": "faucet", "brand": "Ferro", "packageSize": 1, "unit": "szt", "store": "Northbud", "format": "jsonld", "variant": ["BFO7", "chrom"], "url": "https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291" },
+  // source: https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka
+  { "id": "kronodom-arbiton-secura-thermo-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele ARBITON SECURA THERMO AQUASTOP SMART 1,6mm (1opk.=6m2) czerwona harmonijka", "category": "underlay", "brand": "Arbiton", "packageSize": 6, "unit": "m2", "store": "Kronodom", "format": "abstore", "productId": 423, "apiPurchaseUnit": "m2", "variant": ["Secura", "Thermo", "Aquastop", "Smart", "1,6mm", "6m2"], "url": "https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka" }
 ];
 var RETAIL_NAME_ALIASES = {
   "Bateria natryskowa \u015Bcienna Ferro One (chrom, BFO7)": "5902194954525",
@@ -21481,6 +21483,58 @@ function readPrestashopProduct(html, source) {
   };
 }
 
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/abstore-product.ts
+var one3 = (values, reason) => {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+};
+var opening2 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+var byClass = (html, name) => elements(html, (a) => a.class?.split(/\s+/).includes(name) ?? false);
+function readAbstoreProduct(html, source) {
+  if (new URL(source.url).origin !== "https://kronodom.pl") throw Error("invalid_retailer_origin");
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((match2) => match2[1]);
+  const raw = one3(scripts.filter((script) => /^\s*const productData = /.test(script)), "product_identity_ambiguous");
+  const literal2 = raw.match(/^\s*const productData = ([\s\S]*);\s*$/)?.[1];
+  if (!literal2) throw Error("product_identity_not_confirmed");
+  const data = JSON.parse(literal2), schema = JSON.parse(data.schemaOrg?.jsonld ?? "null");
+  if (!Number.isSafeInteger(source.productId) || data.id !== source.productId || data.positionOfferId !== source.productId || data.indexCatalogue !== source.ean || schema?.mpn !== source.ean || schema.sku !== source.ean) throw Error("product_ean_not_confirmed");
+  if (data.name !== schema.name || data.h1 !== data.name || schema.manufacturer?.name !== source.brand || new URL(schema.offers?.url).href !== source.url) throw Error("product_identity_not_confirmed");
+  if (data.stockState !== "IN_STOCK" || data.canBeSold !== true || data.availability?.productAvailable !== true) throw Error("retailer_out_of_stock");
+  if (data.hideProductPrice !== false || data.hidePriceForAnon !== false || data.hideCart !== false || data.invertedVat !== false || data.personalOffer !== false || data.offerDTO?.available !== true || data.offerDTO.addToCartDisabled !== false || data.offerDTO.anyInvalidCondition !== false || data.offerDTO.setOfProducts !== false) throw Error("conditional_price_not_supported");
+  const unit = data.clientSaleUnit, reference = data.referenceUnit;
+  if (source.unit !== "m2" || source.apiPurchaseUnit !== "m2" || !Number.isSafeInteger(source.packageSize) || source.packageSize < 1 || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  if (Number(unit?.minQnt) !== source.packageSize || Number(unit?.stepQnt) !== source.packageSize) throw Error("purchase_rules_changed");
+  if (unit?.unit !== "m2" || unit.atomic !== true || unit.canBeSold !== true || reference?.qty !== 1 || reference.unit !== "m2" || unit.unitId !== reference.unitId || unit.baseUnitRate !== 1 || unit.id !== source.productId) throw Error("retailer_unit_not_confirmed");
+  if (!Number.isFinite(unit.availQnt) || unit.availQnt < source.packageSize) throw Error("retailer_out_of_stock");
+  const price = unit.priceForUnit, gross = typeof price?.finalGross === "string" ? price.finalGross.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/) : null;
+  const unitGrosze = gross ? Number(gross[1]) * 100 + Number(gross[2]) : NaN;
+  if (price?.currency !== "PLN" || price.currencyValue !== "PLN" || schema.offers.priceCurrency !== "PLN" || !Number.isSafeInteger(unitGrosze) || unitGrosze <= 0 || parsePriceToGrosze(price.finalGrossValue) !== unitGrosze || parsePriceToGrosze(data.price?.finalGrossValue) !== unitGrosze || parsePriceToGrosze(schema.offers.price) !== unitGrosze) throw Error("retailer_gross_price_mismatch");
+  const safe = clean(html), primary = one3(elements(safe, (a) => a.id === "product-details-div"), "product_identity_ambiguous");
+  const name = text2(one3(elements(primary, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
+  if (name !== data.name || !text2(primary).includes(`Indeks katalogowy: ${source.ean}`)) throw Error("product_identity_not_confirmed");
+  const input2 = opening2(one3(elements(primary, (a, tag) => tag === "input" && a.class?.split(/\s+/).includes("touch-spin")), "product_form_ambiguous"));
+  const button = opening2(one3(elements(primary, (a, tag) => tag === "button" && a["data-module"] === "cart/cartButton"), "product_form_ambiguous"));
+  if (input2["data-product-id"] !== String(source.productId) || input2["data-offer-pos-id"] !== String(source.productId) || input2["data-unitid"] !== String(unit.unitId) || input2["data-unitsc"] !== "m2" || button["data-product-id"] !== String(source.productId) || button["data-sale-unit-id"] !== String(unit.unitId) || button["data-unitsc"] !== "m2") throw Error("product_form_ambiguous");
+  if (Number(input2["data-step"]) !== source.packageSize || Number(input2["data-min"]) !== source.packageSize || Number(button["data-qty"]) !== source.packageSize) throw Error("purchase_rules_changed");
+  const visible = text2(one3(byClass(one3(byClass(primary, "abs-product-header-price"), "product_price_ambiguous"), "abs-item-price-final"), "product_price_ambiguous"));
+  const match = visible.match(/^([\d\s,.]+)\s*zł\s*brutto\s*\/\s*m2$/);
+  if (!match || parsePriceToGrosze(match[1].trim().replace(",", ".")) !== unitGrosze) throw Error("retailer_gross_price_mismatch");
+  if (schema.offers.availability !== "InStock") throw Error("retailer_out_of_stock");
+  const packGrosze = unitGrosze * source.packageSize;
+  if (!Number.isSafeInteger(packGrosze)) throw Error("invalid_money");
+  const image = Array.isArray(schema.image) ? schema.image[0] : null;
+  if (typeof image !== "string" || new URL(image).origin !== "https://a.assecobs.com") throw Error("product_image_not_confirmed");
+  return {
+    "@type": "Product",
+    name,
+    gtin13: source.ean,
+    brand: source.brand,
+    image,
+    description: schema.description,
+    offers: { "@type": "Offer", price: (packGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", priceValidUntil: schema.offers.priceValidUntil, url: source.url }
+  };
+}
+
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
@@ -21492,6 +21546,7 @@ function parseRetailPage(html, source, observedAt) {
   if (source.disabledReason) throw Error(source.disabledReason);
   const products = [];
   if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
+  else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
   else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
@@ -21676,7 +21731,7 @@ var QuoteQueue = class {
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
 var cls2 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var attr = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
-var one3 = (values) => {
+var one4 = (values) => {
   if (values.length !== 1) throw Error("basket_not_confirmed");
   return values[0];
 };
@@ -21736,22 +21791,22 @@ function expectedPacks(order) {
 function tdValue(html, label) {
   const cells = elements(html, (_, tag) => tag === "td");
   const values = cells.flatMap((cell, i) => text2(cell) === label && cells[i + 1] ? [withoutOld(cells[i + 1])] : []);
-  return one3(values);
+  return one4(values);
 }
 function confirmSeweraBasket(html, expected, total) {
-  const table = one3(elements(clean(html), (a) => cls2(a, "basket-product")));
-  const body = one3(elements(table, (_, tag) => tag === "tbody"));
+  const table = one4(elements(clean(html), (a) => cls2(a, "basket-product")));
+  const body = one4(elements(table, (_, tag) => tag === "tbody"));
   const rows = elements(body, (_, tag) => tag === "tr").filter((row) => elements(row, (a) => a.name === "amount").length === 1);
   if (rows.length !== expected.length || !/Twój sklep to Katowice/.test(text2(html))) throw Error("basket_not_confirmed");
   for (const wanted of expected) {
-    const row = one3(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
+    const row = one4(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
     const stock = text2(row).match(/W magazynie znajdują się jedynie (\d+(?:[.,]\d+)?)\s+(SZT|OPA)/i);
     if (stock && (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || Number(stock[1].replace(",", ".")) < wanted.count)) throw Error("insufficient_stock");
-    const input2 = attr(one3(elements(row, (a) => a.name === "amount")));
-    const pid = attr(one3(elements(row, (a) => a.wybierz !== void 0))).wybierz;
+    const input2 = attr(one4(elements(row, (a) => a.name === "amount")));
+    const pid = attr(one4(elements(row, (a) => a.wybierz !== void 0))).wybierz;
     if (Number(input2.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
   }
-  const sum = text2(one3(elements(table, (a) => cls2(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
+  const sum = text2(one4(elements(table, (a) => cls2(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
   if (checkoutMoney(sum) !== total) throw Error("basket_not_confirmed");
 }
 function readSeweraPayment(html) {
@@ -21762,7 +21817,7 @@ function readSeweraPayment(html) {
     if (inputs.length !== 1 || /\sdisabled(?:\s|=|>)/i.test(inputs[0])) return [];
     const a = attr(inputs[0]);
     const value = a.onclick?.match(/\('#koszt_dostawy'\)\.val\('([\d,]+)'\)/)?.[1];
-    const visible = one3(elements(row, (b) => cls2(b, "dictionary-icon-additional")));
+    const visible = one4(elements(row, (b) => cls2(b, "dictionary-icon-additional")));
     const cost = checkoutMoney(visible);
     if (!value || checkoutMoney(`${value} z\u0142`) !== cost) throw Error("invalid_money");
     return [{ costGrosze: cost, payment: a["data-name"] }];
@@ -21782,7 +21837,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
         const index2 = next++, { source, pack } = packs[index2];
         const page = await pages(source.url, pack.unitPriceGrosze, client), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
         if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-        const pid = attr(one3(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
+        const pid = attr(one4(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
         if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
         prepared[index2] = { source, pack, pid };
       } catch (error40) {
@@ -21801,7 +21856,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
   const basket = await client.text("/index.php?page=koszyk");
   confirmSeweraBasket(basket, expected, order.materialsGrosze);
   const checkout = clean(await client.text("/zamowienie"));
-  const country = one3(elements(checkout, (a) => a.id === "selectCountryUser"));
+  const country = one4(elements(checkout, (a) => a.id === "selectCountryUser"));
   if (!elements(country, (a) => a.value === "1").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
   const methods = elements(checkout, (a) => a.name === "dostawa" && a["data-personal-collection"] === "0" && /kurier/i.test(a["data-name"] ?? "") && !/indywidual|zapytani|odbiór|paczkomat/i.test(a["data-name"])).map(attr);
   if (!methods.length || methods.length > 5) throw Error("no_home_delivery");
@@ -21829,19 +21884,19 @@ function budujItemPrice(row) {
   return elements(row, (a) => cls2(a, "item") && cls2(a, "price")).map((p) => checkoutMoney(withoutOld(p)));
 }
 function confirmBudujBasket(html, expected, total) {
-  const products = one3(elements(clean(html), (a) => a.id === "cart-products"));
+  const products = one4(elements(clean(html), (a) => a.id === "cart-products"));
   const rows = elements(products, (a) => cls2(a, "cart-product") && !cls2(a, "headers") && !cls2(a, "summary"));
   if (rows.length !== expected.length) throw Error("basket_not_confirmed");
   for (const wanted of expected) {
-    const row = one3(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
-    const qty = attr(one3(elements(row, (a) => a.name === "count"))).value;
+    const row = one4(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
+    const qty = attr(one4(elements(row, (a) => a.name === "count"))).value;
     const prices = budujItemPrice(row);
     if (Number(qty) !== wanted.count || prices.length !== 2 || prices[0] !== wanted.price || prices[1] !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
   }
   if (budujSummary(html).materials !== total) throw Error("basket_not_confirmed");
 }
 function budujSummary(html) {
-  const scope = one3(elements(clean(html), (a) => a.id === "cart-summary"));
+  const scope = one4(elements(clean(html), (a) => a.id === "cart-summary"));
   const fields = elements(scope, (a) => cls2(a, "label"));
   const values = elements(scope, (a) => cls2(a, "value"));
   if (fields.length !== 3 || values.length !== 3 || text2(fields[0]) !== "Suma koszyka:" || text2(fields[1]) !== "Koszt dostawy:" || !/Kwota zawiera podatek VAT/.test(text2(scope))) throw Error("basket_not_confirmed");
@@ -21851,11 +21906,11 @@ function budujSummary(html) {
 }
 function budujOptions(html, kind) {
   return elements(clean(html), (a) => cls2(a, "item") && cls2(a, kind)).map((row) => {
-    const name = text2(one3(elements(row, (a) => cls2(a, "name"))));
-    const click = attr(one3(elements(row, (a) => cls2(a, "icnt")))).onclick;
+    const name = text2(one4(elements(row, (a) => cls2(a, "name"))));
+    const click = attr(one4(elements(row, (a) => cls2(a, "icnt")))).onclick;
     const id = click?.match(new RegExp(`cart\\.${kind}_select\\((\\d+)`))?.[1];
     if (!id) throw Error("basket_not_confirmed");
-    return { id, name, active: cls2(attr(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one3(elements(row, (a) => cls2(a, "price")))) } : {} };
+    return { id, name, active: cls2(attr(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one4(elements(row, (a) => cls2(a, "price")))) } : {} };
   });
 }
 function decodeBudujDetails(response) {
@@ -21876,7 +21931,7 @@ async function quoteBuduj24(order, fetchImpl) {
   }
   const basket = await client.text("/cart");
   confirmBudujBasket(basket, expected, order.materialsGrosze);
-  const countries = one3(elements(clean(basket), (a) => a.id === "sel_country"));
+  const countries = one4(elements(clean(basket), (a) => a.id === "sel_country"));
   if (!elements(countries, (a) => a.value === "PL").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
   const country = decodeBudujDetails(await client.text("/ajax/cart/details?lang=pl&country=PL"));
   const delivery = budujOptions(country, "delivery").filter((d) => /^Kurier\b/i.test(d.name) && !/pobran|zapytani|indywidual/i.test(d.name)).sort((a, b) => a.cost - b.cost)[0];
