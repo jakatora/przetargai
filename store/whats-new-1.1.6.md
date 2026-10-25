@@ -1,13 +1,13 @@
 # PrzetargAI — teksty wydania 1.1.6 (App Store + Google Play)
 
-Wersja: **1.1.6** · Android `versionCode 18` (poprzednio 1.1.5 / 17) · Data przygotowania: 2026-10-24 (szkic)
+Wersja: **1.1.6** · Android `versionCode 18` (poprzednio 1.1.5 / 17) · Data przygotowania: 2026-10-24, uzupełnione o selekcję pod klienta 2026-10-25
 
 Zasady jak w `whats-new-1.1.1.md`: bez emoji (bullet `•` dozwolony), opis = faktyczne działanie,
 żadnej obietnicy wygranej ani „szansy w procentach".
 
 Zakres wydania: „aplikacja robi papiery za Ciebie" — dane firmy wpisujesz raz, resztę dokumentów
 oferty, odpowiedzi na wezwania i pism do zamawiającego dostajesz gotowe do podpisu. Prawie wszystko
-liczy się na telefonie; SWZ z pliku PDF wymaga wdrożenia backendu Railway (gałąź zawiera zmianę trasy /swz/.../analiza). Gałąź `feat/robi-za-ciebie`.
+liczy się na telefonie; SWZ z pliku PDF wymaga wdrożenia backendu Railway (gałąź zawiera zmianę trasy /swz/.../analiza). Gałęzie `feat/robi-za-ciebie` + `feat/pracownik` (selekcja pod klienta, scalone 2026-10-25 do integ/1.1.2).
 Uwaga: numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ android/app/build.gradle).
 
 ## What's New — PL (App Store „Co nowego" / Google Play „Informacje o wersji")
@@ -28,6 +28,12 @@ Uwaga: numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ a
 • Dla przetargów unijnych: ściąga do JEDZ z danymi firmy, sekcja po sekcji.
 • Aktywne wezwanie zamawiającego widoczne w Kalendarzu terminów.
 • Przypomnienia o terminie składania przychodzą e-mailem, gdy powiadomienia push nie są włączone.
+• Twoje przetargi: aplikacja sama wybiera z nowych ogłoszeń te, które pasują do Twojej firmy, i mówi dlaczego — resztę odkłada z podaną przyczyną.
+• Karta firmy w 5 krokach: czym się zajmujesz, gdzie działasz, jakie zlecenia Ci odpowiadają; selekcja uczy się z Twoich zapisów i odrzuceń.
+• Warunki udziału przy każdym wybranym przetargu porównane z Twoją kartą oraz plan działania krok po kroku do terminu złożenia.
+• Powiadomienia o wybranych przetargach: w planie Standard od razu, w planie Free raz dziennie, nigdy w nocy.
+• E-mail z wybranymi przetargami i 7-dniowa próba planu Standard po rejestracji.
+• Lista odrzuconych z możliwością przywrócenia jednym dotknięciem.
 ```
 
 ## What's New — EN
@@ -48,6 +54,12 @@ Uwaga: numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ a
 • For EU tenders: an ESPD cheat sheet with your company details, section by section.
 • An active buyer's request is visible in the deadline calendar.
 • Submission deadline reminders arrive by e-mail when push notifications are not enabled.
+• Your tenders: the app picks the new notices that fit your company and says why — the rest is set aside with a stated reason.
+• Company card in 5 steps: what you do, where you work, which jobs suit you; the selection learns from what you save and reject.
+• Participation conditions for every selected tender compared with your card, plus a step-by-step action plan up to the submission deadline.
+• Notifications about selected tenders: immediately on Standard, once a day on Free, never at night.
+• E-mail with selected tenders and a 7-day Standard trial after sign-up.
+• List of rejected tenders with one-tap restore.
 ```
 
 ## Sklepowe pola bez zmian
