@@ -59,3 +59,9 @@ test('adresListy i pobierzStrone: strona 1 bez parametru, UA PrzetargAI, błąd 
   assert.match(zadanie.opcje.headers['User-Agent'], /PrzetargAI/);
   await assert.rejects(pobierzStrone(1, { fetchFn: async () => ({ ok: false, status: 503, text: async () => '' }) }), /503/);
 });
+
+test('błąd sieci: komunikat niesie przyczynę z `cause` (kod i opis)', async () => {
+  const blad = new TypeError('fetch failed');
+  blad.cause = Object.assign(new Error('certificate has expired'), { code: 'CERT_HAS_EXPIRED' });
+  await assert.rejects(pobierzStrone(1, { fetchFn: async () => { throw blad; } }), /fetch failed \(CERT_HAS_EXPIRED certificate has expired\)/);
+});

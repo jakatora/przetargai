@@ -115,7 +115,14 @@ async function pobierz(url, { fetchFn = fetch, limitMs = LIMIT_ODCZYTU_MS } = {}
   const kontroler = new AbortController();
   const zegar = setTimeout(() => kontroler.abort(), limitMs);
   try {
-    const res = await fetchFn(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'text/html' }, signal: kontroler.signal });
+    let res;
+    try {
+      res = await fetchFn(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'text/html' }, signal: kontroler.signal });
+    } catch (err) {
+      // Node chowa przyczynę sieciową w `cause` („fetch failed") — bez niej ślad przebiegu nic nie mówi.
+      const przyczyna = err?.cause ? ` (${err.cause.code ?? ''} ${err.cause.message ?? ''}`.trimEnd() + ')' : '';
+      throw new Error(`e-ProPublico: ${err?.message ?? err}${przyczyna}`, { cause: err });
+    }
     if (!res.ok) throw new Error(`e-ProPublico odpowiedziało ${res.status}`);
     return await res.text();
   } finally {
