@@ -15,6 +15,7 @@ import {
   generujWniosekOZmianeTerminu,
   generujWniosekOZwrotZabezpieczenia,
 } from '../lib/pismaPoWygranej';
+import { KLUCZE_STANU_EKRANU, wczytajStanEkranu, zapiszStanEkranu } from '../lib/stanEkranu';
 
 /**
  * „PO WYGRANEJ" — checklista pierwszych dni kontraktu i trzy pisma w 1 klik:
@@ -36,6 +37,32 @@ export default function PoWygranejScreen({ route, navigation }) {
   const [termin, setTermin] = useState({ podstawa: 'klauzula', nowyTermin: '', uzasadnienie: '', paragrafKlauzuli: '' });
   const [zabezp, setZabezp] = useState({ etap: 'po_odbiorze', kwotaZabezpieczenia: '', dataOdbioru: '', dataKoncaRekojmi: '', rachunek: '' });
   const [odhaczone, setOdhaczone] = useState(() => new Set());
+
+  // Stan ekranu per przetarg — dane umowy, pismo i checklista wracają po ponownym otwarciu.
+  const tenderId = match?.tender?.id ?? null;
+  const [stanWczytany, setStanWczytany] = useState(!tenderId);
+  useEffect(() => {
+    if (!tenderId) return undefined;
+    let aktywny = true;
+    wczytajStanEkranu(storage, KLUCZE_STANU_EKRANU.poWygranej, tenderId).then((z) => {
+      if (!aktywny) return;
+      if (z) {
+        if (z.umowa) setUmowa((u) => ({ ...u, ...z.umowa }));
+        if (typeof z.pismo === 'string') setPismo(z.pismo);
+        if (z.podwykonawca) setPodwykonawca((p) => ({ ...p, ...z.podwykonawca }));
+        if (typeof z.rodzaj === 'string') setRodzaj(z.rodzaj);
+        if (z.termin) setTermin((t) => ({ ...t, ...z.termin }));
+        if (z.zabezp) setZabezp((s) => ({ ...s, ...z.zabezp }));
+        if (Array.isArray(z.odhaczone)) setOdhaczone(new Set(z.odhaczone));
+      }
+      setStanWczytany(true);
+    });
+    return () => { aktywny = false; };
+  }, [tenderId]);
+  useEffect(() => {
+    if (!tenderId || !stanWczytany) return;
+    zapiszStanEkranu(storage, KLUCZE_STANU_EKRANU.poWygranej, tenderId, { umowa, pismo, podwykonawca, rodzaj, termin, zabezp, odhaczone: [...odhaczone] }).catch(() => {});
+  }, [tenderId, stanWczytany, umowa, pismo, podwykonawca, rodzaj, termin, zabezp, odhaczone]);
 
   useEffect(() => {
     let aktywny = true;

@@ -56,6 +56,8 @@ export const PREFIKSY_KONTA = Object.freeze([
   'przetargai.kontrola-oferty.', // lib/kontrolaOferty — checklista przed złożeniem
   'przetargai.dokumenty-oferty.', // lib/dokumentyOferty — cena/termin/sytuacja tej oferty
   'przetargai.wezwanie-odpowiedz.', // lib/odpowiedzNaWezwanie — stan pisma do wezwania
+  'przetargai.po-wygranej.', // lib/stanEkranu — dane umowy i pism po wygranej
+  'przetargai.zwrot-wadium.', // lib/stanEkranu — wniosek o zwrot wadium
   'przetargai.sciezka.', // lib/sciezkaDoOferty — ukończone kroki ścieżki
   'przetargai.kontrola-poprzetargowa.', // lib/poprzetargowaKontrola — kontrola po przegranej
 ]);

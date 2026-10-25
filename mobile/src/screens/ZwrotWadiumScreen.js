@@ -10,6 +10,7 @@ import { spacing, radius } from '../theme';
 import * as storage from '../lib/storage';
 import { KLUCZ_DANYCH_WYKONAWCY, szablonDanychWykonawcy, daneZOgloszenia } from '../lib/dokumentyOferty';
 import { PODSTAWY_ZWROTU, FORMY_WADIUM, kwotaWadiumZOgloszenia, generujWniosekOZwrotWadium } from '../lib/wniosekZwrotWadium';
+import { KLUCZE_STANU_EKRANU, wczytajStanEkranu, zapiszStanEkranu } from '../lib/stanEkranu';
 
 /**
  * „WNIOSEK O ZWROT WADIUM W 1 KLIK" (art. 98 ust. 2 Pzp). Po przegranej, odrzuceniu
@@ -31,6 +32,32 @@ export default function ZwrotWadiumScreen({ route }) {
   const [gwarant, setGwarant] = useState('');
   const [numerGwarancji, setNumerGwarancji] = useState('');
   const [udostepniono, setUdostepniono] = useState(false);
+
+  // Stan wniosku per przetarg — rachunek, forma i podstawa wracają po ponownym otwarciu.
+  const tenderId = match?.tender?.id ?? null;
+  const [stanWczytany, setStanWczytany] = useState(!tenderId);
+  useEffect(() => {
+    if (!tenderId) return undefined;
+    let aktywny = true;
+    wczytajStanEkranu(storage, KLUCZE_STANU_EKRANU.zwrotWadium, tenderId).then((z) => {
+      if (!aktywny) return;
+      if (z) {
+        if (typeof z.podstawa === 'string') setPodstawa(z.podstawa);
+        if (typeof z.forma === 'string') setForma(z.forma);
+        if (typeof z.kwota === 'string' && z.kwota) setKwota(z.kwota);
+        if (typeof z.rachunek === 'string') setRachunek(z.rachunek);
+        if (typeof z.bank === 'string') setBank(z.bank);
+        if (typeof z.gwarant === 'string') setGwarant(z.gwarant);
+        if (typeof z.numerGwarancji === 'string') setNumerGwarancji(z.numerGwarancji);
+      }
+      setStanWczytany(true);
+    });
+    return () => { aktywny = false; };
+  }, [tenderId]);
+  useEffect(() => {
+    if (!tenderId || !stanWczytany) return;
+    zapiszStanEkranu(storage, KLUCZE_STANU_EKRANU.zwrotWadium, tenderId, { podstawa, forma, kwota, rachunek, bank, gwarant, numerGwarancji }).catch(() => {});
+  }, [tenderId, stanWczytany, podstawa, forma, kwota, rachunek, bank, gwarant, numerGwarancji]);
 
   useEffect(() => {
     let aktywny = true;
