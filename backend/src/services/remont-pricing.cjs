@@ -19894,9 +19894,9 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
 var signature = (order) => order.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}:${pack.unitPriceGrosze}`)).sort().join("|");
-async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date()) {
+async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
-  const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
+  let groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
   const stores = [...new Set(groups.flatMap((g) => g.offers.filter((o) => isComparableOffer(o, now.getTime())).map((o) => o.store)))].sort();
   const result = {
     method: "automatic",
@@ -19920,6 +19920,12 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   if (!groups.length) return result;
   if (!settings.postalCode || !/^\d{2}-\d{3}$/.test(settings.postalCode)) {
     result.status = "needs_postal_code";
+    return result;
+  }
+  result.unavailableStores = stores.filter((store) => knownUnavailableStores[store]).map((store) => ({ store, reason: knownUnavailableStores[store] }));
+  groups = groups.map((group) => ({ ...group, offers: group.offers.filter((offer) => !knownUnavailableStores[offer.store]) }));
+  if (groups.some((group) => !group.offers.length)) {
+    result.status = "needs_delivery_costs";
     return result;
   }
   const tooLarge = () => {
@@ -20001,23 +20007,45 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     return result;
   }
   const proposed = /* @__PURE__ */ new Map();
+  const basePlans = /* @__PURE__ */ new Map();
+  function addPlan(selected, split) {
+    const orders = /* @__PURE__ */ new Map();
+    for (let i = 0; i < groups.length; i++) {
+      const group = groups[i];
+      for (const pack of split?.index === i ? split.packs : [selected[i]]) {
+        let order = orders.get(pack.store);
+        if (!order) {
+          order = { store: pack.store, materialsGrosze: 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown", lines: [] };
+          orders.set(pack.store, order);
+        }
+        order.materialsGrosze += pack.lineCostGrosze;
+        order.lines.push({ product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [pack] });
+      }
+    }
+    const actual = [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
+    proposed.set(actual.map(signature).join(";"), actual);
+  }
   for (let subset = 1; subset < 1 << stores.length; subset++) {
     const allowed = new Set(stores.filter((_store, index2) => subset & 1 << index2));
     const selected = options.map((option) => option.filter((pack) => allowed.has(pack.store)).sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId))[0]);
     if (selected.some((pack) => !pack)) continue;
-    const orders = /* @__PURE__ */ new Map();
-    for (let i = 0; i < groups.length; i++) {
-      const pack = selected[i], group = groups[i];
-      let order = orders.get(pack.store);
-      if (!order) {
-        order = { store: pack.store, materialsGrosze: 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown", lines: [] };
-        orders.set(pack.store, order);
+    basePlans.set(selected.map((pack) => pack.offerId).join("|"), selected);
+    addPlan(selected);
+  }
+  const seeds = [...basePlans.values()].sort((a, b) => a.reduce((sum2, p) => sum2 + p.lineCostGrosze, 0) - b.reduce((sum2, p) => sum2 + p.lineCostGrosze, 0)).slice(0, 24);
+  for (const seed of seeds) for (let index2 = 0; index2 < options.length; index2++) for (const alternative of options[index2]) {
+    if (alternative.offerId === seed[index2].offerId) continue;
+    const changed = [...seed];
+    changed[index2] = alternative;
+    addPlan(changed);
+    if (alternative.store !== seed[index2].store && seed[index2].count > 1) {
+      const count = seed[index2].count;
+      for (const firstCount of /* @__PURE__ */ new Set([1, Math.floor(count / 2), count - 1])) {
+        const first = { ...seed[index2], count: firstCount, lineCostGrosze: firstCount * seed[index2].unitPriceGrosze };
+        const second = { ...alternative, count: count - firstCount, lineCostGrosze: (count - firstCount) * alternative.unitPriceGrosze };
+        addPlan(seed, { index: index2, packs: [first, second] });
       }
-      order.materialsGrosze += pack.lineCostGrosze;
-      order.lines.push({ product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [pack] });
     }
-    const actual = [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
-    proposed.set(actual.map(signature).join(";"), actual);
   }
   const sum = (orders) => orders.reduce((total, order) => total + order.materialsGrosze, 0);
   const ordered = [...proposed.values()].sort((a, b) => Number(b.length === 1) - Number(a.length === 1) || sum(a) - sum(b));
@@ -20037,7 +20065,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
   return quoteAndRank(candidates, unique, result, settings, quoteBasket, now);
 }
 async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now) {
-  const failures = /* @__PURE__ */ new Map();
+  const failures = new Map((result.unavailableStores ?? []).map((item) => [item.store, item.reason]));
   const ordered = [...unique.entries()].sort((a, b) => b[1].lines.length - a[1].lines.length || b[1].materialsGrosze - a[1].materialsGrosze);
   const first = /* @__PURE__ */ new Map();
   for (const [key, order] of ordered) if (!first.has(order.store)) first.set(order.store, key);
@@ -20961,7 +20989,9 @@ function createRemontService(options = {}) {
         estimate.stages,
         parsed.data.options?.delivery ?? { mode: "shipping" },
         (order, postalCode) => Date.now() < deadline || ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
-        STORE_DELIVERY_POLICIES
+        STORE_DELIVERY_POLICIES,
+        /* @__PURE__ */ new Date(),
+        { Castorama: "retailer_access_required", OBI: "retailer_access_required" }
       );
       res.json(stageOnly ? serialized.stages[0] : {
         ...serialized,
