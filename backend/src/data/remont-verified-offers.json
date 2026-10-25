@@ -86,5 +86,83 @@
     "sourceUrl": "https://realbud.com/pl/p/Grunt-KNAUF-Universalgrund-5-L-Srodek-gleboko-gruntujacy/75056675",
     "evidenceSha256": "7bef715dd91e695f9a0248f14ea17d8ef8deda756a541c7d4a7406e862a859a5",
     "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-tape-30mm",
+    "ean": "5907758515952",
+    "name": "BLUE DOLPHIN Taśma malarska papierowa do wnętrz i na zewnątrz 30mm x 50m niebieska",
+    "imageUrl": "https://www.rabdom.pl/userdata/public/gfx/58880/Blue-Dolphin-tasma-malarska-papierowa-niebieska-30-mm-na-50-metrow..png",
+    "priceGrosze": 1199,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T10:19:50.666Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zewnatrz-30mm-x-50m-niebieska/2526",
+    "evidenceSha256": "d46a684cf82cab3ac1f35ce679c76cd3f72421c22a8d0797ebebec7bc954280f",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-film-20m2",
+    "ean": "5907758504932",
+    "name": "Folia ochronna malarska Blue Dolphin GRUBA 4m x 5m",
+    "imageUrl": "https://www.rabdom.pl/userdata/public/gfx/49335/Folia-malarska-gruba.png",
+    "priceGrosze": 450,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T10:19:50.919Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/Folia-ochronna-malarska-Blue-Dolphin-GRUBA-4m-x-5m/3751",
+    "evidenceSha256": "201ad96ed9d313eb23ef179fb8a2a5e852e4d2ef2fc09c4ea8468cd42104a0c3",
+    "validUntil": null
+  },
+  {
+    "sourceId": "buduj24-tape-30mm",
+    "ean": "5907758515952",
+    "name": "BLUE DOLPHIN Taśma malarska 30MM X 50M NIEBIESKA MASKUJĄCA do odcinania 1 SZTUKA",
+    "imageUrl": "https://buduj24.pl/files/_product/10647/5907758515952_1.webp",
+    "priceGrosze": 1135,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T10:19:51.548Z",
+    "sourceUrl": "https://buduj24.pl/produkt/10647,blue-dolphin-tasma-malarska-30mm-x-50m-niebieska-maskujaca-do-odcinania-1-sztuka",
+    "evidenceSha256": "54871ad780ded0eb49a6d529cdcf1008d61bdc00add1677edf77744b8f371fbb",
+    "validUntil": "2026-11-08"
+  },
+  {
+    "sourceId": "sewera-dulux-9l",
+    "ean": "5904078198759",
+    "name": "Farba wewnętrzna biała Easycare nieskazitelna biel 9l mat Dulux",
+    "imageUrl": "https://sklep.sewera.pl/photo/346399/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux.webp",
+    "priceGrosze": 27989,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T10:19:53.398Z",
+    "sourceUrl": "https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385",
+    "evidenceSha256": "771540686b9908d7911c57e5f297007607404cde75b675be626e848d7940604a",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-gta-18kg",
+    "ean": "5905400542509",
+    "name": "Atlas GTA gotowa gładź polimerowa 18kg",
+    "imageUrl": "https://sklep.sewera.pl/photo/92375/atlas-gta-gotowa-gladz-polimerowa-18kg.webp",
+    "priceGrosze": 6590,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T10:19:55.520Z",
+    "sourceUrl": "https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321",
+    "evidenceSha256": "077d6c530dcde514dbb349d28b74a73314dba558a52413acbfdba13ba6d22c09",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-acrylputz-st10-20kg",
+    "ean": "5903973104421",
+    "name": "Acryl Putz ST10 Start 20kg",
+    "imageUrl": "https://sklep.sewera.pl/photo/34282/acryl-putz-st10-start-20kg.webp",
+    "priceGrosze": 4177,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T10:19:56.950Z",
+    "sourceUrl": "https://sklep.sewera.pl/acryl-putz-st10-start-20kg-p6107",
+    "evidenceSha256": "858fd177ff3e56302c7a2b0d448e1756cc2783ca5b4b7137c7b8bf8fbb1ea3a2",
+    "validUntil": null
   }
 ]

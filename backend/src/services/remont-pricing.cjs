@@ -19279,7 +19279,12 @@ var stageResultSchema = external_exports2.object({
 });
 var optionsSchema = external_exports2.object({
   region: external_exports2.string().nullish(),
-  store: external_exports2.string().nullish()
+  store: external_exports2.string().nullish(),
+  delivery: external_exports2.object({
+    mode: external_exports2.enum(["shipping", "pickup"]),
+    postalCode: external_exports2.string().regex(/^\d{2}-\d{3}$/).optional(),
+    costsGrosze: external_exports2.record(external_exports2.string().min(1).max(80), external_exports2.number().int().min(0).max(1e7)).refine((value) => Object.keys(value).length <= 20).optional()
+  }).optional()
 }).optional();
 var stageRequestSchema = external_exports2.object({
   job: stageResultSchema,
@@ -19580,14 +19585,267 @@ var RETAIL_SOURCES = [
     format: "realbud",
     // source: https://realbud.com/pl/p/Grunt-KNAUF-Universalgrund-5-L-Srodek-gleboko-gruntujacy/75056675
     url: "https://realbud.com/pl/p/Grunt-KNAUF-Universalgrund-5-L-Srodek-gleboko-gruntujacy/75056675"
+  },
+  {
+    id: "rabdom-tape-30mm",
+    ean: "5907758515952",
+    name: "BLUE DOLPHIN Ta\u015Bma malarska papierowa do wn\u0119trz i na zewn\u0105trz 30mm x 50m niebieska",
+    category: "masking-tape",
+    brand: "Blue Dolphin",
+    packageSize: 50,
+    unit: "mb",
+    store: "Rab-Dom",
+    format: "shoper",
+    variant: ["30mmx50m"],
+    // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zewnatrz-30mm-x-50m-niebieska/2526
+    url: "https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zewnatrz-30mm-x-50m-niebieska/2526"
+  },
+  {
+    id: "rabdom-film-20m2",
+    ean: "5907758504932",
+    name: "Folia ochronna malarska Blue Dolphin GRUBA 4m x 5m",
+    category: "protective-film",
+    brand: "Blue Dolphin",
+    packageSize: 20,
+    unit: "m2",
+    store: "Rab-Dom",
+    format: "shoper",
+    variant: ["4mx5m"],
+    // source: https://www.rabdom.pl/pl/p/Folia-ochronna-malarska-Blue-Dolphin-GRUBA-4m-x-5m/3751
+    url: "https://www.rabdom.pl/pl/p/Folia-ochronna-malarska-Blue-Dolphin-GRUBA-4m-x-5m/3751"
+  },
+  {
+    id: "buduj24-tape-30mm",
+    ean: "5907758515952",
+    name: "BLUE DOLPHIN Ta\u015Bma malarska 30MM X 50M NIEBIESKA MASKUJ\u0104CA do odcinania 1 SZTUKA",
+    category: "masking-tape",
+    brand: "Blue Dolphin",
+    packageSize: 50,
+    unit: "mb",
+    store: "Buduj24",
+    format: "buduj24",
+    variant: ["30mmx50m"],
+    // source: https://buduj24.pl/produkt/10647,blue-dolphin-tasma-malarska-30mm-x-50m-niebieska-maskujaca-do-odcinania-1-sztuka
+    url: "https://buduj24.pl/produkt/10647,blue-dolphin-tasma-malarska-30mm-x-50m-niebieska-maskujaca-do-odcinania-1-sztuka"
+  },
+  {
+    id: "sewera-dulux-9l",
+    ean: "5904078198759",
+    name: "Farba wewn\u0119trzna bia\u0142a Easycare nieskazitelna biel 9l mat Dulux",
+    category: "paint",
+    brand: "Dulux",
+    packageSize: 9,
+    unit: "l",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385
+    url: "https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385"
+  },
+  {
+    id: "sewera-atlas-gta-18kg",
+    ean: "5905400542509",
+    name: "Atlas GTA gotowa g\u0142ad\u017A polimerowa 18kg",
+    category: "skim-coat",
+    brand: "Atlas",
+    packageSize: 18,
+    unit: "kg",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321
+    url: "https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321"
+  },
+  {
+    id: "sewera-acrylputz-st10-20kg",
+    ean: "5903973104421",
+    name: "Acryl Putz ST10 Start 20kg",
+    category: "skim-coat",
+    brand: "\u015Anie\u017Cka",
+    packageSize: 20,
+    unit: "kg",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/acryl-putz-st10-start-20kg-p6107
+    url: "https://sklep.sewera.pl/acryl-putz-st10-start-20kg-p6107"
   }
 ];
 var RETAIL_NAME_ALIASES = {
   "Farba lateksowa \u015Anie\u017Cka Barwy Natury bia\u0142a 5 l": "5903973139188",
   "Grunt uniwersalny Knauf 5 l": "5901793357737",
   "Ta\u015Bma malarska Blue Dolphin niebieska 30 mm x 50 m": "5907758515952",
-  "Folia malarska gruba Blue Dolphin 4 x 5 m": "5907758504932"
+  "Folia malarska gruba Blue Dolphin 4 x 5 m": "5907758504932",
+  "Farba lateksowa Dulux EasyCare Nieskazitelna Biel 9 l": "5904078198759",
+  "Gotowa g\u0142ad\u017A polimerowa Atlas GTA 18 kg": "5905400542509",
+  "G\u0142ad\u017A gipsowa startowa Acryl-Putz ST10 START 20 kg": "5903973104421"
 };
+
+// lib/pricing-service/src/delivery.ts
+function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, policies = [], now = /* @__PURE__ */ new Date()) {
+  const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
+  const missingProductCount = stages.flatMap((stage) => stage.lines).filter((line2) => !line2.resolved && line2.quantity > 0).length;
+  const names = [...new Set(groups.flatMap((group) => group.offers.filter((offer) => isComparableOffer(offer, now.getTime())).map((offer) => offer.store)))].sort();
+  const currentPolicies = names.map((store) => {
+    const policy = policies.find((policy2) => policy2.store === store);
+    const time4 = policy?.checkedAt ? Date.parse(policy.checkedAt) : NaN;
+    const current = Number.isFinite(time4) && now.getTime() - time4 <= 7 * 864e5 && time4 <= now.getTime();
+    return {
+      store,
+      sourceUrl: policy?.sourceUrl ?? null,
+      checkedAt: policy?.checkedAt ?? null,
+      minimumGrosze: current ? policy?.minimumGrosze ?? null : null,
+      ...current && policy?.freeFromGrosze ? { freeFromGrosze: policy.freeFromGrosze } : {}
+    };
+  });
+  const knownFee = (store) => {
+    if (settings.mode === "pickup") return 0;
+    const value = Object.hasOwn(settings.costsGrosze ?? {}, store) ? settings.costsGrosze[store] : void 0;
+    return Number.isSafeInteger(value) && value >= 0 && value <= 1e7 ? value : null;
+  };
+  const result = {
+    mode: settings.mode,
+    postalCode: settings.mode === "shipping" ? settings.postalCode ?? null : null,
+    status: "empty",
+    productCount: groups.length,
+    missingProductCount,
+    best: null,
+    lowerBound: null,
+    alternatives: [],
+    missingDeliveryStores: names.filter((store) => knownFee(store) === null),
+    policies: currentPolicies
+  };
+  if (missingProductCount) {
+    result.status = "partial";
+    return result;
+  }
+  if (!groups.length) return result;
+  if (names.length > 10 || groups.length > 50) {
+    result.status = "limit_exceeded";
+    return result;
+  }
+  const candidates = /* @__PURE__ */ new Map();
+  const cached2 = groups.map(() => /* @__PURE__ */ new Map());
+  for (let mask = 1; mask < 2 ** names.length; mask++) {
+    const selected = names.filter((_, index2) => mask & 2 ** index2);
+    const orders = /* @__PURE__ */ new Map();
+    let valid = true;
+    for (let index2 = 0; index2 < groups.length; index2++) {
+      const group = groups[index2];
+      const offers = group.offers.filter((offer) => selected.includes(offer.store));
+      const key = offers.map((offer) => offer.id).sort().join("|");
+      if (!cached2[index2].has(key)) {
+        const variants = buildPackageVariants(offers, group.product);
+        let plan2;
+        if (variants.length === 1) {
+          const variant = variants[0], count = Math.ceil(group.totalQuantity / variant.packageSize);
+          const total = count * variant.unitPriceGrosze;
+          plan2 = {
+            requiredQuantity: group.totalQuantity,
+            coveredQuantity: count * variant.packageSize,
+            overage: count * variant.packageSize - group.totalQuantity,
+            totalGrosze: total,
+            packages: [{ ...variant, count, lineCostGrosze: total }]
+          };
+        } else plan2 = optimizePackages(group.totalQuantity, variants);
+        cached2[index2].set(key, plan2);
+      }
+      const plan = cached2[index2].get(key);
+      if (!plan || !Number.isSafeInteger(plan.totalGrosze)) {
+        valid = false;
+        break;
+      }
+      for (const entry of plan.packages) {
+        let order = orders.get(entry.store);
+        if (!order) {
+          order = {
+            store: entry.store,
+            materialsGrosze: 0,
+            deliveryGrosze: knownFee(entry.store),
+            deliveryMinimumGrosze: 0,
+            totalGrosze: null,
+            source: settings.mode === "pickup" ? "pickup" : knownFee(entry.store) === null ? "unknown" : "entered",
+            lines: []
+          };
+          orders.set(entry.store, order);
+        }
+        order.materialsGrosze += entry.lineCostGrosze;
+        let line2 = order.lines.find((line3) => line3.product.id === group.product.id);
+        if (!line2) {
+          line2 = { product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
+          order.lines.push(line2);
+        }
+        line2.packages.push(entry);
+      }
+    }
+    if (!valid) continue;
+    const stores = [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
+    for (const order of stores) {
+      order.deliveryMinimumGrosze = order.deliveryGrosze ?? 0;
+      order.totalGrosze = order.deliveryGrosze === null ? null : order.materialsGrosze + order.deliveryGrosze;
+    }
+    const materialsGrosze = stores.reduce((sum, store) => sum + store.materialsGrosze, 0);
+    const deliveryGrosze = stores.every((store) => store.deliveryGrosze !== null) ? stores.reduce((sum, store) => sum + store.deliveryGrosze, 0) : null;
+    const lowerBoundGrosze = materialsGrosze + stores.reduce((sum, store) => sum + store.deliveryMinimumGrosze, 0);
+    if (![materialsGrosze, lowerBoundGrosze, materialsGrosze + (deliveryGrosze ?? 0)].every(Number.isSafeInteger)) continue;
+    const basket = { materialsGrosze, deliveryGrosze, lowerBoundGrosze, totalGrosze: deliveryGrosze === null ? null : materialsGrosze + deliveryGrosze, stores };
+    const signature = stores.flatMap((store) => store.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}`))).sort().join("|");
+    candidates.set(signature, basket);
+  }
+  const baskets = [...candidates.values()];
+  const known = baskets.filter((basket) => basket.totalGrosze !== null).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
+  result.best = known[0] ?? null;
+  result.alternatives = known.slice(1, 4);
+  result.lowerBound = baskets.sort((a, b) => a.lowerBoundGrosze - b.lowerBoundGrosze || a.stores.length - b.stores.length)[0] ?? null;
+  result.status = result.best && (!result.lowerBound || result.best.totalGrosze <= result.lowerBound.lowerBoundGrosze) ? "compared" : "needs_delivery_costs";
+  return result;
+}
+
+// artifacts/api-server/src/lib/store-delivery.ts
+var STORE_DELIVERY_POLICIES = [
+  {
+    store: "Sewera",
+    minimumGrosze: 1990,
+    checkedAt: "2026-10-25T10:22:27.530Z",
+    // source: https://sklep.sewera.pl/warunki-i-koszty-dostaw
+    sourceUrl: "https://sklep.sewera.pl/warunki-i-koszty-dostaw"
+  },
+  {
+    store: "Rab-Dom",
+    minimumGrosze: 1799,
+    freeFromGrosze: 50001,
+    checkedAt: "2026-10-25T10:14:54.450Z",
+    // source: https://www.rabdom.pl/czas-i-koszt-dostawy
+    sourceUrl: "https://www.rabdom.pl/czas-i-koszt-dostawy"
+  },
+  {
+    store: "Buduj24",
+    minimumGrosze: 1500,
+    freeFromGrosze: 29900,
+    checkedAt: "2026-10-25T10:14:55.448Z",
+    // source: https://buduj24.pl/dostawa-i-platnosc
+    sourceUrl: "https://buduj24.pl/dostawa-i-platnosc"
+  },
+  {
+    store: "Realbud",
+    minimumGrosze: null,
+    checkedAt: "2026-10-25T10:14:55.052Z",
+    // source: https://realbud.com/koszty-transportu
+    sourceUrl: "https://realbud.com/koszty-transportu"
+  },
+  {
+    store: "Castorama",
+    minimumGrosze: null,
+    checkedAt: null,
+    // source: https://www.castorama.pl/informacje/zamow-z-dostawa
+    sourceUrl: "https://www.castorama.pl/informacje/zamow-z-dostawa"
+  },
+  {
+    store: "OBI",
+    minimumGrosze: null,
+    checkedAt: null,
+    // Delivery must be checked for this actual product and destination.
+    // source: https://www.obi.pl/p/6314371/farba-sniezka-barwy-natury-biala-5-l
+    sourceUrl: "https://www.obi.pl/p/6314371/farba-sniezka-barwy-natury-biala-5-l"
+  }
+];
 
 // artifacts/api-server/src/lib/retail-pages.ts
 var import_node_crypto = require("node:crypto");
@@ -19643,7 +19901,32 @@ function readRetailMicrodata(html, format, url2) {
   const price = property(offer, "price");
   const currency = property(offer, "priceCurrency");
   const name = property(product, "name");
-  const image = new URL(property(product, "image"), url2).href;
+  const images = elements(product, (a) => a.itemprop === "image").map((element) => {
+    const a = attrs(element.match(TAG)?.[0] ?? "");
+    return a.content ?? a.src ?? a.href;
+  }).filter((value) => Boolean(value));
+  const image = images[0] ? new URL(decodeURIComponent(images[0]), url2).href : null;
+  if (format === "shoper" || format === "buduj24") {
+    const ean2 = property(product, "gtin");
+    const gross2 = format === "shoper" ? text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false), "retailer_gross_price_not_confirmed")) : text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("product-price-gross") ?? false), "retailer_gross_price_not_confirmed"));
+    const amount2 = gross2.replace(/\s|zł/g, "").replace(",", ".");
+    if (Number(amount2) !== Number(price)) throw new Error("retailer_gross_price_mismatch");
+    const expiry = elements(offer, (a) => a.itemprop === "priceValidUntil");
+    return {
+      "@type": "Product",
+      name,
+      gtin13: ean2,
+      image,
+      offers: {
+        "@type": "Offer",
+        price,
+        priceCurrency: currency,
+        url: url2,
+        availability: property(offer, "availability"),
+        ...expiry.length ? { priceValidUntil: property(offer, "priceValidUntil") } : {}
+      }
+    };
+  }
   if (format === "sewera") {
     const ean2 = labelled(product, "Kod kreskowy:", "strong");
     const brand = labelled(product, "Producent:", "strong");
@@ -19690,7 +19973,7 @@ function objects(value) {
 }
 function parseRetailPage(html, source, observedAt) {
   const products = [];
-  if (source.format === "sewera" || source.format === "realbud") products.push(readRetailMicrodata(html, source.format, source.url));
+  if (source.format && source.format !== "jsonld") products.push(readRetailMicrodata(html, source.format, source.url));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
@@ -19700,7 +19983,7 @@ function parseRetailPage(html, source, observedAt) {
   const product = products.find((item) => String(item.gtin13 ?? item.gtin ?? "") === source.ean);
   if (!product) throw new Error("product_ean_not_confirmed");
   const name = String(product.name ?? "");
-  const normalize = (value) => normalizeProductName(value.replace(/(\d)\s*[x×/]\s*(\d)/g, "$1 x $2").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
+  const normalize = (value) => normalizeProductName(value.replace(/(\d|mm|cm|m)\s*[x×/]\s*(?=\d)/gi, "$1 x ").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
   const normalized = normalize(name);
   const packagePattern = new RegExp(`(?:^| )${String(source.packageSize).replace(".", " ")} (?:${source.unit === "l" ? "l|litrow|litry" : source.unit})(?: |$)`);
   const brand = normalizeProductName(typeof product.brand === "string" ? product.brand : product.brand?.name ?? "");
@@ -19934,7 +20217,11 @@ function createRemontService(options = {}) {
       const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog().deps);
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
-      res.json(stageOnly ? serialized.stages[0] : { ...serialized, coverage: status() });
+      res.json(stageOnly ? serialized.stages[0] : {
+        ...serialized,
+        coverage: status(),
+        deliveryComparison: compareDeliveredBaskets(estimate.stages, parsed.data.options?.delivery, STORE_DELIVERY_POLICIES)
+      });
     } catch {
       res.status(503).json({ error: "pricing_unavailable" });
     }
