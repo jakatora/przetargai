@@ -107,7 +107,7 @@ const PONOWIENIA_IDEMPOTENTNE = { retryCount: 2, minBackoffSeconds: 300 };
  */
 export const dailyTenderFetch = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 12 * * *',
     timeZone: 'Europe/Warsaw',
@@ -147,7 +147,7 @@ export const dailyTenderFetch = onSchedule(
  */
 export const bzpOknoFetch = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '20 */3 * * *',
     timeZone: 'Europe/Warsaw',
@@ -184,7 +184,7 @@ export const bzpOknoFetch = onSchedule(
  */
 export const bkOknoFetch = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '50 */3 * * *',
     timeZone: 'Europe/Warsaw',
@@ -212,7 +212,7 @@ export const bkOknoFetch = onSchedule(
  */
 export const pzOknoFetch = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '35 * * * *',
     timeZone: 'Europe/Warsaw',
@@ -238,7 +238,7 @@ export const pzOknoFetch = onSchedule(
  */
 export const eppOknoFetch = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '5 */6 * * *',
     timeZone: 'Europe/Warsaw',
@@ -265,7 +265,7 @@ export const eppOknoFetch = onSchedule(
  */
 export const pracownikCo3h = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '10 2-23/3 * * *',
     timeZone: 'Europe/Warsaw',
@@ -298,7 +298,7 @@ export const pracownikCo3h = onSchedule(
  */
 export const remindDeadlines = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 */6 * * *',
     timeZone: 'Europe/Warsaw',
@@ -343,7 +343,7 @@ export const remindDeadlines = onSchedule(
  */
 export const monitorWyszukiwan = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '35 */2 * * *',
     timeZone: 'Europe/Warsaw',
@@ -388,7 +388,7 @@ export const monitorWyszukiwan = onSchedule(
  */
 export const weeklyDigest = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 8 * * 1',
     timeZone: 'Europe/Warsaw',
@@ -423,7 +423,7 @@ export const weeklyDigest = onSchedule(
  */
 export const wynikiOknoFetch = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     schedule: '5 */6 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 1800,
@@ -451,7 +451,7 @@ export const wynikiOknoFetch = onSchedule(
  */
 export const planyOknoFetch = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     schedule: '15 6 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 540,
@@ -479,7 +479,7 @@ export const planyOknoFetch = onSchedule(
  */
 export const benchmarkPrzelicz = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     schedule: '40 3 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 1800,
@@ -500,7 +500,7 @@ export const benchmarkPrzelicz = onSchedule(
  */
 export const aggregateResults = onSchedule(
   {
-    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25)
+    maxInstances: 1, // zadanie cykliczne = jedna instancja; limit CPU Cloud Run w regionie blokował rollout (2026-10-25, wdrażać partiami)
     schedule: '0 4 * * 0',
     timeZone: 'Europe/Warsaw',
     // Gen2 dopuszcza do 3600 s. Budżet POBIERANIA i tak tnie się na 420 s w kodzie —
