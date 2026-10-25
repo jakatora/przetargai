@@ -4599,9 +4599,9 @@ var $ZodCheckEndsWith = /* @__PURE__ */ $constructor("$ZodCheckEndsWith", (inst,
     });
   };
 });
-function handleCheckPropertyResult(result, payload, property) {
+function handleCheckPropertyResult(result, payload, property2) {
   if (result.issues.length) {
-    payload.issues.push(...prefixIssues(property, result.issues));
+    payload.issues.push(...prefixIssues(property2, result.issues));
   }
 }
 var $ZodCheckProperty = /* @__PURE__ */ $constructor("$ZodCheckProperty", (inst, def) => {
@@ -6590,7 +6590,7 @@ function az_default() {
 }
 
 // node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count, one, few, many) {
+function getBelarusianPlural(count, one2, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -6598,7 +6598,7 @@ function getBelarusianPlural(count, one, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one;
+    return one2;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -9736,7 +9736,7 @@ function pt_default() {
 }
 
 // node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count, one, few, many) {
+function getRussianPlural(count, one2, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -9744,7 +9744,7 @@ function getRussianPlural(count, one, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one;
+    return one2;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -11688,10 +11688,10 @@ function _endsWith(suffix, params) {
     suffix
   });
 }
-function _property(property, schema, params) {
+function _property(property2, schema, params) {
   return new $ZodCheckProperty({
     check: "property",
-    property,
+    property: property2,
     schema,
     ...normalizeParams(params)
   });
@@ -18432,9 +18432,9 @@ var ZodSet2 = class _ZodSet extends ZodType2 {
       }
     }
     const valueType = this._def.valueType;
-    function finalizeSet(elements2) {
+    function finalizeSet(elements3) {
       const parsedSet = /* @__PURE__ */ new Set();
-      for (const element of elements2) {
+      for (const element of elements3) {
         if (element.status === "aborted")
           return INVALID;
         if (element.status === "dirty")
@@ -18443,11 +18443,11 @@ var ZodSet2 = class _ZodSet extends ZodType2 {
       }
       return { status: status.value, value: parsedSet };
     }
-    const elements = [...ctx.data.values()].map((item, i) => valueType._parse(new ParseInputLazyPath(ctx, item, ctx.path, i)));
+    const elements2 = [...ctx.data.values()].map((item, i) => valueType._parse(new ParseInputLazyPath(ctx, item, ctx.path, i)));
     if (ctx.common.async) {
-      return Promise.all(elements).then((elements2) => finalizeSet(elements2));
+      return Promise.all(elements2).then((elements3) => finalizeSet(elements3));
     } else {
-      return finalizeSet(elements);
+      return finalizeSet(elements2);
     }
   }
   min(minSize, message) {
@@ -19526,15 +19526,162 @@ var RETAIL_SOURCES = [
     store: "Castorama",
     // source: https://www.castorama.pl/grunt-uniwersalny-knauf-5-l/5901793357737_CAPL.prd
     url: "https://www.castorama.pl/grunt-uniwersalny-knauf-5-l/5901793357737_CAPL.prd"
+  },
+  {
+    id: "sewera-sniezka-5l",
+    ean: "5903973139188",
+    name: "Barwy Natury 173 majowa konwalia 5l",
+    category: "paint",
+    brand: "\u015Anie\u017Cka",
+    packageSize: 5,
+    unit: "l",
+    store: "Sewera",
+    format: "sewera",
+    // source: https://sklep.sewera.pl/barwy-natury-173-majowa-konwalia-5l-p7136
+    url: "https://sklep.sewera.pl/barwy-natury-173-majowa-konwalia-5l-p7136"
+  },
+  {
+    id: "sewera-tape-30mm",
+    ean: "5907758515952",
+    name: "Ta\u015Bma malarska niebieska 30mmx50m",
+    category: "masking-tape",
+    brand: "Blue Dolphin",
+    packageSize: 50,
+    unit: "mb",
+    store: "Sewera",
+    format: "sewera",
+    variant: ["30mmx50m"],
+    // source: https://sklep.sewera.pl/tasma-malarska-niebieska-30mmx50m-p6966
+    url: "https://sklep.sewera.pl/tasma-malarska-niebieska-30mmx50m-p6966"
+  },
+  {
+    id: "sewera-film-20m2",
+    ean: "5907758504932",
+    name: "Folia malarska gruba 4x5m CF_EP20_04932 Blue Dolphin",
+    category: "protective-film",
+    brand: "Blue Dolphin",
+    packageSize: 20,
+    unit: "m2",
+    store: "Sewera",
+    format: "sewera",
+    variant: ["4x5m"],
+    // source: https://sklep.sewera.pl/folia-malarska-gruba-4x5m-cfep2004932-blue-dolphin-p21034
+    url: "https://sklep.sewera.pl/folia-malarska-gruba-4x5m-cfep2004932-blue-dolphin-p21034"
+  },
+  {
+    id: "realbud-knauf-5l",
+    ean: "5901793357737",
+    name: "Grunt KNAUF Universalgrund 5 L \u015Arodek g\u0142\u0119boko gruntuj\u0105cy",
+    category: "primer",
+    brand: "Knauf",
+    packageSize: 5,
+    unit: "l",
+    store: "Realbud",
+    format: "realbud",
+    // source: https://realbud.com/pl/p/Grunt-KNAUF-Universalgrund-5-L-Srodek-gleboko-gruntujacy/75056675
+    url: "https://realbud.com/pl/p/Grunt-KNAUF-Universalgrund-5-L-Srodek-gleboko-gruntujacy/75056675"
   }
 ];
 var RETAIL_NAME_ALIASES = {
   "Farba lateksowa \u015Anie\u017Cka Barwy Natury bia\u0142a 5 l": "5903973139188",
-  "Grunt uniwersalny Knauf 5 l": "5901793357737"
+  "Grunt uniwersalny Knauf 5 l": "5901793357737",
+  "Ta\u015Bma malarska Blue Dolphin niebieska 30 mm x 50 m": "5907758515952",
+  "Folia malarska gruba Blue Dolphin 4 x 5 m": "5907758504932"
 };
 
 // artifacts/api-server/src/lib/retail-pages.ts
 var import_node_crypto = require("node:crypto");
+
+// artifacts/api-server/src/lib/retail-microdata.ts
+var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+var decode = (text3) => text3.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+var text2 = (html) => decode(html.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+function attrs(tag) {
+  const result = {};
+  for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) result[match[1].toLowerCase()] = decode(match[2] ?? match[3]);
+  return result;
+}
+function elements(html, predicate) {
+  const result = [];
+  for (const match of html.matchAll(TAG)) {
+    if (match[0].startsWith("</") || !predicate(attrs(match[0]))) continue;
+    if (["meta", "link", "img", "input", "br"].includes(match[1].toLowerCase()) || /\/>$/.test(match[0])) {
+      result.push(match[0]);
+      continue;
+    }
+    let depth = 1;
+    for (const next of html.slice(match.index + match[0].length).matchAll(TAG)) {
+      if (next[1].toLowerCase() !== match[1].toLowerCase()) continue;
+      depth += next[0].startsWith("</") ? -1 : 1;
+      if (depth === 0) {
+        result.push(html.slice(match.index, match.index + match[0].length + next.index + next[0].length));
+        break;
+      }
+    }
+  }
+  return result;
+}
+function one(values, error40) {
+  if (values.length !== 1) throw new Error(error40);
+  return values[0];
+}
+function property(html, key) {
+  const value = one(elements(html, (a2) => a2.itemprop === key), `microdata_${key}_ambiguous`);
+  const a = attrs(value.match(TAG)?.[0] ?? "");
+  return a.content ?? a.href ?? a.src ?? text2(value);
+}
+function labelled(html, label, tag) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`<${tag}\\b[^>]*>\\s*${escaped}\\s*<\\/${tag}>([\\s\\S]*?)<\\/div>`, "gi");
+  return text2(one([...html.matchAll(regex)].map((match) => match[1]), "microdata_identity_ambiguous"));
+}
+function readRetailMicrodata(html, format, url2) {
+  const safe = clean(html);
+  const product = one(elements(safe, (a) => /\/Product$/.test(a.itemtype ?? "")), "microdata_product_ambiguous");
+  const offer = one(elements(product, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "microdata_offer_ambiguous");
+  const price = property(offer, "price");
+  const currency = property(offer, "priceCurrency");
+  const name = property(product, "name");
+  const image = new URL(property(product, "image"), url2).href;
+  if (format === "sewera") {
+    const ean2 = labelled(product, "Kod kreskowy:", "strong");
+    const brand = labelled(product, "Producent:", "strong");
+    const stock = labelled(product, "Dost\u0119pne:", "strong");
+    const stockCount = stock.match(/^([0-9]+)\s+SZT$/i);
+    if (!stockCount) throw new Error("retailer_stock_not_confirmed");
+    const gross2 = text2(one(elements(offer, (a) => a.class === "priceShow"), "retailer_gross_price_not_confirmed"));
+    const amount2 = gross2.match(/^([\d ,.]+)\s*zł\s*brutto\s*\/\s*SZT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
+    if (amount2 === void 0 || Number(amount2) !== Number(price)) throw new Error("retailer_gross_price_mismatch");
+    return {
+      "@type": "Product",
+      name,
+      gtin13: ean2,
+      brand: { name: brand },
+      image,
+      offers: {
+        "@type": "Offer",
+        price,
+        priceCurrency: currency,
+        url: url2,
+        availability: Number(stockCount[1]) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+      }
+    };
+  }
+  const ean = labelled(product, "Kod EAN:", "em");
+  const gross = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value) => /z VAT/i.test(value)), "retailer_gross_price_not_confirmed");
+  const amount = gross.match(/^([\d ,.]+)\s*zł\s*z VAT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
+  if (amount === void 0 || Number(amount) !== Number(price)) throw new Error("retailer_gross_price_mismatch");
+  return {
+    "@type": "Product",
+    name,
+    gtin13: ean,
+    image,
+    offers: { "@type": "Offer", price, priceCurrency: currency, url: property(offer, "url"), availability: property(offer, "availability") }
+  };
+}
+
+// artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
   if (!value || typeof value !== "object") return [];
@@ -19543,6 +19690,7 @@ function objects(value) {
 }
 function parseRetailPage(html, source, observedAt) {
   const products = [];
+  if (source.format === "sewera" || source.format === "realbud") products.push(readRetailMicrodata(html, source.format, source.url));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
@@ -19552,21 +19700,28 @@ function parseRetailPage(html, source, observedAt) {
   const product = products.find((item) => String(item.gtin13 ?? item.gtin ?? "") === source.ean);
   if (!product) throw new Error("product_ean_not_confirmed");
   const name = String(product.name ?? "");
-  const normalized = normalizeProductName(name);
+  const normalize = (value) => normalizeProductName(value.replace(/(\d)\s*[x×/]\s*(\d)/g, "$1 x $2").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
+  const normalized = normalize(name);
   const packagePattern = new RegExp(`(?:^| )${String(source.packageSize).replace(".", " ")} (?:${source.unit === "l" ? "l|litrow|litry" : source.unit})(?: |$)`);
-  if (!normalized.includes(normalizeProductName(source.brand)) || !packagePattern.test(normalized)) throw new Error("product_variant_mismatch");
-  if (!normalizeProductName(source.name).split(" ").filter((token) => token.length > 3).every((token) => normalized.includes(token))) throw new Error("product_name_mismatch");
-  const prices = objects(product.offers).filter((offer) => {
+  const brand = normalizeProductName(typeof product.brand === "string" ? product.brand : product.brand?.name ?? "");
+  const variantMatches = source.variant?.every((value) => new RegExp(`(?:^| )${normalize(value)}(?: |$)`).test(normalized));
+  if (!(normalized.includes(normalizeProductName(source.brand)) || brand.includes(normalizeProductName(source.brand))) || !(source.variant ? variantMatches : packagePattern.test(normalized))) throw new Error("product_variant_mismatch");
+  if (!normalize(source.name).split(" ").filter((token) => token.length > 3).every((token) => normalized.includes(token))) throw new Error("product_name_mismatch");
+  const allOffers = objects(product.offers);
+  if (allOffers.some((offer) => /\/OutOfStock$|\/Discontinued$/.test(String(offer.availability))) && !allOffers.some((offer) => /\/InStock$/.test(String(offer.availability)))) throw new Error("retailer_out_of_stock");
+  const eligibleOffers = allOffers.filter((offer) => {
     if (![offer["@type"]].flat().includes("Offer")) return false;
     if (offer.priceCurrency !== "PLN" || !/\/InStock$/.test(String(offer.availability))) return false;
     if (/OnSitePickup$/.test(String(offer.availableDeliveryMethod))) return false;
+    if (offer.priceValidUntil && !retailPriceIsValid(offer.priceValidUntil, observedAt)) return false;
     try {
       if (new URL(offer.url ?? source.url).hostname !== new URL(source.url).hostname) return false;
     } catch {
       return false;
     }
     return true;
-  }).map((offer) => parsePriceToGrosze(offer.price)).filter((price) => price !== null && price > 0 && Number.isSafeInteger(price));
+  });
+  const prices = eligibleOffers.map((offer) => parsePriceToGrosze(offer.price)).filter((price) => price !== null && price > 0 && Number.isSafeInteger(price));
   if (prices.length === 0) throw new Error("no_confirmed_online_pln_offer");
   if (new Set(prices).size !== 1) throw new Error("ambiguous_online_price");
   const firstImage = [product.image].flat()[0];
@@ -19581,8 +19736,14 @@ function parseRetailPage(html, source, observedAt) {
     availability: "in_stock",
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
-    evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(html).digest("hex")
+    evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(html).digest("hex"),
+    validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value) => typeof value === "string").sort()[0] ?? null
   };
+}
+function retailPriceIsValid(validUntil, now) {
+  if (typeof validUntil !== "string" || !Number.isFinite(Date.parse(validUntil))) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(validUntil)) return new Date(validUntil).toISOString().slice(0, 10) === validUntil && new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw" }).format(now) <= validUntil;
+  return Date.parse(validUntil) >= now.getTime();
 }
 async function readRetailSource(source, fetchImpl = fetch) {
   const response = await fetchImpl(source.url, {
@@ -19617,19 +19778,28 @@ var normalUnit = (value) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "sz
 function createRemontService(options = {}) {
   const observations = /* @__PURE__ */ new Map();
   const errors = /* @__PURE__ */ new Map();
+  const withdrawnAt = /* @__PURE__ */ new Map();
   let running = false;
   let lastAttemptAt = null;
   const accept = (observation) => {
+    if (!observation || typeof observation !== "object") return;
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
     if (!source || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
     const previous = observations.get(source.id);
     if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
+    if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
   };
   options.initialObservations?.forEach(accept);
   if (options.cachePath && (0, import_node_fs.existsSync)(options.cachePath)) {
     try {
       const cache = JSON.parse((0, import_node_fs.readFileSync)(options.cachePath, "utf8"));
       if (Array.isArray(cache)) cache.forEach(accept);
+      else if (cache?.version === 2 && Array.isArray(cache.observations)) {
+        cache.observations.forEach(accept);
+        for (const [id, date6] of Object.entries(cache.withdrawnAt ?? {})) {
+          if (typeof date6 === "string" && Number.isFinite(Date.parse(date6)) && RETAIL_SOURCES.some((source) => source.id === id)) withdrawnAt.set(id, date6);
+        }
+      }
     } catch {
       errors.set("cache", "cache_read_failed");
     }
@@ -19640,6 +19810,8 @@ function createRemontService(options = {}) {
     for (const source of RETAIL_SOURCES) {
       const observation = observations.get(source.id);
       if (!observation) continue;
+      if (withdrawnAt.has(source.id) && Date.parse(withdrawnAt.get(source.id)) >= Date.parse(observation.observedAt)) continue;
+      if (observation.validUntil && !retailPriceIsValid(observation.validUntil, /* @__PURE__ */ new Date())) continue;
       const productId = `remont-${source.ean}`;
       if (!products.some((product) => product.id === productId)) products.push({
         id: productId,
@@ -19673,7 +19845,7 @@ function createRemontService(options = {}) {
         productUrl: source.url,
         availability: observation.availability,
         fetchedAt: new Date(observation.observedAt),
-        source: "retailer-page-jsonld"
+        source: source.format && source.format !== "jsonld" ? "retailer-page-microdata" : "retailer-page-jsonld"
       });
     }
     const aliases = Object.entries(RETAIL_NAME_ALIASES).map(([name, ean]) => [normalizeProductName(name), ean]);
@@ -19697,13 +19869,15 @@ function createRemontService(options = {}) {
           accept(await readRetailSource(source, options.fetchImpl));
           errors.delete(source.id);
         } catch (error40) {
-          errors.set(source.id, error40 instanceof Error ? error40.message : "retailer_read_failed");
+          const message = error40 instanceof Error ? error40.message : "retailer_read_failed";
+          errors.set(source.id, message);
+          if (message === "retailer_out_of_stock") withdrawnAt.set(source.id, (/* @__PURE__ */ new Date()).toISOString());
         }
       }
       if (options.cachePath) {
         try {
           (0, import_node_fs.mkdirSync)((0, import_node_path.dirname)(options.cachePath), { recursive: true });
-          (0, import_node_fs.writeFileSync)(`${options.cachePath}.tmp`, JSON.stringify([...observations.values()]));
+          (0, import_node_fs.writeFileSync)(`${options.cachePath}.tmp`, JSON.stringify({ version: 2, observations: [...observations.values()], withdrawnAt: Object.fromEntries(withdrawnAt) }));
           (0, import_node_fs.renameSync)(`${options.cachePath}.tmp`, options.cachePath);
           errors.delete("cache");
         } catch {
@@ -19729,6 +19903,7 @@ function createRemontService(options = {}) {
         id: source.id,
         store: source.store,
         checkedAt: observations.get(source.id)?.observedAt ?? null,
+        active: eligible.some((offer) => offer.id === source.id),
         error: errors.get(source.id) ?? null
       }))
     };
