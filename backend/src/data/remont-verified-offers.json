@@ -1126,5 +1126,31 @@
     "sourceUrl": "https://chemiadoparkietu25.pl/product-pol-25914-Soudal-26A-klej-do-wykladzin-PCV-winylu-linoleum-dywanowych-5-kg.html",
     "evidenceSha256": "1b301f9582f3dadb675b8317813e7930e73a25a4e0db594bd575ba31b8a5d4c0",
     "validUntil": null
+  },
+  {
+    "sourceId": "eelektryka-simon-basic-socket-white",
+    "ean": "5902787568238",
+    "name": "SIMON BASIC Gniazdo pojedyncze z/u i przesłonami do ramki białe BMGZ1z.01/11",
+    "imageUrl": "https://www.eelektryka.com/11095-large_default/simon-basic-gniazdo-pojedyncze-zu-i-przes%C5%82onami-do-ramki-bia%C5%82e-bmgz1z0111.jpg",
+    "priceGrosze": 1656,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T18:41:40.632Z",
+    "sourceUrl": "https://www.eelektryka.com/simon-basic/3975-simon-basic-gniazdo-pojedyncze-zu-i-przes%C5%82onami-do-ramki-bia%C5%82e-bmgz1z0111-5902787568238.html",
+    "evidenceSha256": "9b72134a9e84659aa42f08315ce45bcd6486abd0a87e080e2e91a3947728ae05",
+    "validUntil": null
+  },
+  {
+    "sourceId": "northbud-ferro-one-bfo7",
+    "ean": "5902194954525",
+    "name": "FERRO Bateria prysznicowa Ferro One bez prysznica chrom BFO7",
+    "imageUrl": "https://northbud.pl/images/full/1e9b01b770f801be0857841c1ae715fa.jpg",
+    "priceGrosze": 19480,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T18:43:42.347Z",
+    "sourceUrl": "https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291",
+    "evidenceSha256": "a261204aba6664b623d557366f510aebbd6ee00be44b8e4d7f5b5bd626cefa35",
+    "validUntil": "2026-10-26"
   }
 ]
