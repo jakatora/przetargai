@@ -153,6 +153,8 @@ export const api = {
   },
   /** Słowniki filtrów (źródła, województwa, sortowania) z etykietami PL/EN. */
   getTenderFiltry: () => request('/tenders/filtry'),
+  /** Szczegół z platformazakupowa.pl na żądanie (tryb, załączniki) — backend cache'uje przy ogłoszeniu. */
+  szczegolPlatformy: (id) => request(`/tenders/${encodeURIComponent(id)}/szczegol-platformy`, { method: 'POST' }),
   /** Zakres danych: obsługiwane rejestry, ostatni sukces/błąd per źródło, czego NIE obejmujemy. */
   getZakresDanych: () => request('/tenders/zakres-danych'),
 

@@ -874,6 +874,11 @@ export const tenders = {
     return userSnap(await db().collection('tenders').doc(id).get());
   },
 
+  /** Szczegół z platformazakupowa.pl pobrany na żądanie (tryb, załączniki…) — cache przy ogłoszeniu. */
+  async zapiszSzczegolPz(id, szczegol, teraz = nowIso()) {
+    await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz });
+  },
+
   /**
    * Ogłoszenia jednego zamawiającego (po NIP-ie) — Radar planów sprawdza, czy plan
    * zamienił się już w przetarg. Samo porównanie równościowe, BEZ orderBy: mieści

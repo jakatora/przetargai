@@ -7,6 +7,8 @@ import { nowIso } from '../lib/ids.js';
 import { publicTender } from '../lib/serialize.js';
 import { pobierzZakresDanych, pobierzZnacznikiZrodel } from '../services/zakresZrodel.js';
 import { WOJEWODZTWA } from '../lib/wojewodztwa.js';
+import { notFound } from '../lib/errors.js';
+import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from '../services/platformaZakupowa.js';
 import {
   ZRODLA, SORTOWANIA, STATUSY_TERMINU, LIMIT_MAKS,
   normalizujFiltry, odciskFiltrow, kodujKursor, dekodujKursor, opisFiltrow,
@@ -105,3 +107,30 @@ router.get('/', ah(async (req, res) => {
 }));
 
 export default router;
+
+/*
+ * Szczegół postępowania z platformazakupowa.pl NA ŻĄDANIE (2026-10-25). Lista platformy daje
+ * tytuł/zamawiającego/termin; tryb, rodzaj, wymagania i ZAŁĄCZNIKI dociągamy dopiero, gdy ktoś
+ * otworzy ogłoszenie — i zapisujemy przy ogłoszeniu na dobę, żeby kolejni oglądający (i kolejne
+ * dotknięcia) nie szły do platformy. Żądań jest tyle, ilu zainteresowanych — nie crawl.
+ */
+export const CACHE_SZCZEGOLU_PZ_MS = 24 * 60 * 60 * 1000;
+let pobierzSzczegolPz = pobierzSzczegolPzDomyslnie;
+/** Tylko dla testów: podmiana pobierania (bez sieci). */
+export function _ustawPobieranieSzczegoluPz(fn) { pobierzSzczegolPz = fn ?? pobierzSzczegolPzDomyslnie; }
+
+router.post('/:id/szczegol-platformy', ah(async (req, res) => {
+  const tender = await tenders.findById(req.params.id);
+  if (!tender) throw notFound('Ogłoszenie nie zostało znalezione');
+  if (tender.source !== ZRODLO_PZ) throw badRequest('To ogłoszenie nie pochodzi z platformazakupowa.pl');
+  const teraz = nowIso();
+  const swiezy = tender.pz_szczegol && tender.pz_szczegol_o && (Date.parse(teraz) - Date.parse(tender.pz_szczegol_o)) < CACHE_SZCZEGOLU_PZ_MS;
+  if (swiezy) {
+    res.json({ szczegol: tender.pz_szczegol, pobrano_o: tender.pz_szczegol_o, cached: true });
+    return;
+  }
+  const idPlatformy = String(tender.bzp_external_id ?? tender.id).replace(/^pz:/, '');
+  const szczegol = await pobierzSzczegolPz(idPlatformy);
+  await tenders.zapiszSzczegolPz(tender.id, szczegol, teraz);
+  res.json({ szczegol, pobrano_o: teraz, cached: false });
+}));

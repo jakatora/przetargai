@@ -105,3 +105,135 @@ export async function pobierzStrone(strona, { fetchFn = fetch, limitMs = LIMIT_O
     clearTimeout(zegar);
   }
 }
+
+/*
+ * SZCZEGÓŁ POSTĘPOWANIA `/transakcja/<id>` — NA ŻĄDANIE (2026-10-25). Strona bez ciasteczek
+ * zwraca meta refresh do cichego SSO Open Nexus; po przejściu łańcucha (refresh → 302
+ * `login_required` → 302 z powrotem) ten sam słoik ciasteczek dostaje pełną stronę. Pobieramy
+ * tylko to, czego lista nie ma: tryb (odsiewa prywatne „zapytania ofertowe” od Pzp), rodzaj,
+ * datę publikacji, wymagania (skrót) i LISTĘ załączników z linkami — plików nie ściągamy
+ * (robots: `Disallow: /file/get_new/*`), użytkownik otwiera je sam. Wołane z trasy, nie z crona,
+ * więc liczba żądań = liczba zainteresowanych użytkowników, a wynik jest cache'owany na ogłoszeniu.
+ */
+export const MAKS_DL_WYMAGAN = 3000;
+export const MAKS_ZALACZNIKOW = 40;
+
+const tekstBezTagow = (html) => odkoduj(String(html ?? '').replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, ' ').replace(/<br\s*\/?>|<\/p>|<\/li>|<\/div>/gi, '\n').replace(/<[^>]+>/g, ' ')).replace(/ *\n */g, '\n');
+
+/** Wartość pozycji „<div>Etykieta</div><div>wartość</div>" z listy informacji o postępowaniu. */
+function polePostepowania(html, etykieta) {
+  const re = new RegExp(`<li class="proceeding-info-list-item">\\s*<div>\\s*${etykieta}[\\s\\S]*?</div>\\s*<div[^>]*>([\\s\\S]*?)</div>\\s*</li>`, 'i');
+  const m = String(html ?? '').match(re);
+  return m ? odkoduj(m[1].replace(/<[^>]+>/g, ' ')) : null;
+}
+
+/** Data + czas z pozycji listy („2026-10-20 21:33:00" w <span>ach) → ISO UTC albo null. */
+function dataZPozycji(tekst) {
+  const m = String(tekst ?? '').match(/(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/);
+  return m ? doUtcIso(`${m[1]} ${m[2]}`) : null;
+}
+
+/**
+ * @returns {{tryb: string|null, rodzaj: string|null, opublikowano: string|null, termin: string|null,
+ *   wymagania: string|null, zalaczniki: {nazwa: string, rozszerzenie: string|null, rozmiar_kb: number|null, opublikowano: string|null, url: string|null}[]}}
+ */
+export function parsujSzczegol(html) {
+  const s = String(html ?? '');
+  const tryb = polePostepowania(s, 'Tryb');
+  const rodzaj = polePostepowania(s, 'Rodzaj');
+  const opublikowano = dataZPozycji(polePostepowania(s, 'Zamieszczenia'));
+  const termin = dataZPozycji(polePostepowania(s, 'Składania'));
+  const wymM = s.match(/<!-- REQUIREMENTS & SPECIFICATION -->([\s\S]*?)(?:<!-- ATTACHMENTS TABLE -->|$)/);
+  const wymagania = wymM ? tekstBezTagow(wymM[1]).replace(/^\s*Wymagania i specyfikacja\s*/i, '').trim().slice(0, MAKS_DL_WYMAGAN) || null : null;
+  const zalaczniki = [];
+  const tabM = s.match(/id="allAttachmentsTable"[\s\S]*?<tbody>([\s\S]*?)<\/tbody>/);
+  if (tabM) {
+    for (const wiersz of tabM[1].split(/<tr[\s>]/).slice(1)) {
+      const komorki = [...wiersz.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => m[1]);
+      if (komorki.length < 3) continue;
+      const nazwa = odkoduj(komorki[0].replace(/<[^>]+>/g, ' '));
+      if (!nazwa) continue;
+      const linkM = wiersz.match(/href="(\/\/[^"]+|https?:\/\/[^"]+|\/file\/[^"]+)"/);
+      const url = linkM ? (linkM[1].startsWith('//') ? `https:${linkM[1]}` : linkM[1].startsWith('/') ? `${BAZA}${linkM[1]}` : linkM[1]) : null;
+      const rozmiar = Number.parseFloat(odkoduj(komorki[2].replace(/<[^>]+>/g, ' ')).replace(',', '.'));
+      zalaczniki.push({
+        nazwa,
+        rozszerzenie: odkoduj(komorki[1].replace(/<[^>]+>/g, ' ')).toLowerCase() || null,
+        rozmiar_kb: Number.isFinite(rozmiar) ? Math.round(rozmiar) : null,
+        opublikowano: komorki[3] ? dataZPozycji(odkoduj(komorki[3].replace(/<[^>]+>/g, ' '))) : null,
+        url,
+      });
+      if (zalaczniki.length >= MAKS_ZALACZNIKOW) break;
+    }
+  }
+  return { tryb, rodzaj, opublikowano, termin, wymagania, zalaczniki };
+}
+
+/** Słoik ciasteczek do łańcucha SSO: zbiera `Set-Cookie` z odpowiedzi, oddaje nagłówek `Cookie`. */
+export function sloikCiasteczek() {
+  const mapa = new Map();
+  return {
+    zbierz(res) {
+      const lista = typeof res?.headers?.getSetCookie === 'function' ? res.headers.getSetCookie() : [];
+      for (const c of lista) {
+        const [para] = String(c).split(';');
+        const i = para.indexOf('=');
+        if (i > 0) mapa.set(para.slice(0, i).trim(), para.slice(i + 1).trim());
+      }
+    },
+    naglowek() {
+      return [...mapa].map(([k, v]) => `${k}=${v}`).join('; ');
+    },
+    rozmiar() { return mapa.size; },
+  };
+}
+
+const MAKS_PRZEKIEROWAN = 8;
+
+async function pobierzZCiasteczkami(url, sloik, fetchFn, signal) {
+  let adres = url;
+  for (let i = 0; i <= MAKS_PRZEKIEROWAN; i++) {
+    const res = await fetchFn(adres, { headers: { 'User-Agent': USER_AGENT, Accept: 'text/html', ...(sloik.rozmiar() ? { Cookie: sloik.naglowek() } : {}) }, redirect: 'manual', signal });
+    sloik.zbierz(res);
+    if (res.status >= 300 && res.status < 400) {
+      const dokad = res.headers.get('location');
+      if (!dokad) return res;
+      adres = new URL(dokad, adres).toString();
+      continue;
+    }
+    return res;
+  }
+  throw new Error('platformazakupowa: za dużo przekierowań w łańcuchu SSO');
+}
+
+/**
+ * Pełna strona szczegółu po cichym SSO. Zwraca HTML albo rzuca (403/5xx/za dużo przekierowań).
+ * @param {string} id
+ * @param {{fetchFn?: Function, limitMs?: number}} [opcje]
+ */
+export async function pobierzSzczegolHtml(id, { fetchFn = fetch, limitMs = LIMIT_ODCZYTU_MS } = {}) {
+  const kontroler = new AbortController();
+  const zegar = setTimeout(() => kontroler.abort(), limitMs);
+  const sloik = sloikCiasteczek();
+  try {
+    const adres = linkOgloszenia(id);
+    let res = await pobierzZCiasteczkami(adres, sloik, fetchFn, kontroler.signal);
+    let html = res.ok ? await res.text() : '';
+    const refresh = html.match(/http-equiv="refresh"[^>]*url='([^']+)'/i) ?? html.match(/http-equiv="refresh"[^>]*url=([^"'>\s]+)/i);
+    if (refresh) {
+      const sso = refresh[1].replace(/&amp;/g, '&');
+      await pobierzZCiasteczkami(sso, sloik, fetchFn, kontroler.signal); // 302 login_required → 302 z powrotem
+      res = await pobierzZCiasteczkami(adres, sloik, fetchFn, kontroler.signal);
+      html = res.ok ? await res.text() : '';
+    }
+    if (!res.ok) throw new Error(`platformazakupowa odpowiedziała ${res.status} na szczegół`);
+    if (/http-equiv="refresh"/i.test(html)) throw new Error('platformazakupowa: szczegół nadal za przekierowaniem SSO');
+    return html;
+  } finally {
+    clearTimeout(zegar);
+  }
+}
+
+export async function pobierzSzczegol(id, opcje) {
+  return parsujSzczegol(await pobierzSzczegolHtml(id, opcje));
+}

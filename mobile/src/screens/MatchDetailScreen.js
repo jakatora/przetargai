@@ -29,6 +29,7 @@ import { nazwaWojewodztwa } from '../lib/wojewodztwa';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { opisWyniki } from '../lib/wyniki';
 import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
+import SzczegolPlatformy from '../components/SzczegolPlatformy';
 import Wyjasnienie from '../components/Wyjasnienie';
 import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
 import { parametryNarzedzia } from '../lib/sciezkaDoOferty';
@@ -873,6 +874,7 @@ export default function MatchDetailScreen({ route, navigation }) {
         <Text style={styles.zrodloNazwaRejestru}>{t(pelnaNazwaZrodla(tender.zrodlo?.kod ?? tender.source))}</Text>
         <PodpisZrodla zrodlo={tender.zrodlo ?? { kod: tender.source }} />
         <PrzyciskOryginalu tender={tender} />
+        <SzczegolPlatformy tender={tender} />
       </View>
       <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />
 

@@ -2,6 +2,7 @@ import { View, Text } from 'react-native';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
 import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
+import SzczegolPlatformy from '../components/SzczegolPlatformy';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
@@ -75,6 +76,7 @@ export default function KatalogDetailScreen({ route, navigation }) {
           </Text>
         )}
         <PrzyciskOryginalu tender={tender} />
+        <SzczegolPlatformy tender={tender} />
       </View>
 
       <View style={styles.karta}>
