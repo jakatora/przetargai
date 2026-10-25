@@ -93,7 +93,14 @@ describe('GET /radar-planow', () => {
     const dane = await (await fetch(`${BAZA}/radar-planow`, { headers: auth(token) })).json();
     assert.equal(dane.tryb, 'wszystkie');
     assert.equal(dane.podpowiedz.kod, 'uzupelnij_profil');
-    assert.ok(dane.pozycje.some((p) => p.id === OBCY.id));
+    assert.ok(dane.pozycje.length > 0, 'pusty profil widzi rynek planów, nie pusty ekran');
+    // Emulator jest wspólny dla całego zestawu (oknoPlanow zostawia 400+ planów „MASA-"),
+    // a lista „wszystkie" ma LIMIT_DOMYSLNY=30 — obecności OBCEGO planu nie wolno
+    // sprawdzać na pierwszej stronie bez filtra (flaky od 2026-10-03). Z filtrem regionu
+    // ten sam pusty profil nadal ląduje w trybie „wszystkie".
+    const zRegionem = await (await fetch(`${BAZA}/radar-planow?region=PL02`, { headers: auth(token) })).json();
+    assert.equal(zRegionem.tryb, 'wszystkie');
+    assert.ok(zRegionem.pozycje.some((p) => p.id === OBCY.id));
   });
 
   test('tryb wszystkie z filtrem regionu', async () => {
