@@ -23,3 +23,4 @@ Procedura jak w `runbooks/wydanie-1.1.6.md` (pułapki: `JAVA_TOOL_OPTIONS=-Djdk.
 
 ## Po wydaniu 1.1.7 (25.10 po południu)
 - Functions `api-00054-xaq`: nowe źródło platformazakupowa.pl (`pzOknoFetch`, co godz. :35, 2 strony × 100). Pierwszy przebieg ręczny: 200 nowych ogłoszeń, 0 błędów. Ręczne wyzwolenie zaplanowanej funkcji: Cloud Scheduler API `jobs/firebase-schedule-<fn>-europe-central2:run` z poświadczeniami firebase-tools (`apiv2` + `requireAuth`).
+- Functions `api-00055-gaf`: trasa `POST /tenders/:id/szczegol-platformy` (szczegół platformazakupowa.pl na żądanie, cache 24 h). Przycisk w apce od 1.1.8 (`store/whats-new-1.1.8.md`).
