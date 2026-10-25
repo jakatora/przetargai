@@ -2715,12 +2715,12 @@ var IndexBuilder = class {
   static [entityKind] = "PgIndexBuilder";
   /** @internal */
   config;
-  constructor(columns, unique, only, name, method = "btree") {
+  constructor(columns, unique, only2, name, method = "btree") {
     this.config = {
       name,
       columns,
       unique,
-      only,
+      only: only2,
       method
     };
   }
@@ -20450,9 +20450,46 @@ var RETAIL_SOURCES = [
     "store": "Cezar",
     "format": "shopify-api",
     "url": "https://cezar.eu/products/profil-do-glazury-narozny-aluminiowy-8mm-cezar-tytan-szczotkowany-mat-2-5m"
-  }
+  },
+  // source: https://rodimax.pl/P%C5%82yta-gipsowa-zwyk%C5%82a-Norgips-1200-x-2600-x-12%2C5-mm-3%2C12-m2.html
+  { "id": "rodimax-board-gkb", "ean": "5907651690442", "name": "P\u0142yta gipsowa zwyk\u0142a Norgips 1200 x 2600 x 12,5 mm 3,12 m2", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/P%C5%82yta-gipsowa-zwyk%C5%82a-Norgips-1200-x-2600-x-12%2C5-mm-3%2C12-m2.html", "brand": "Norgips", "format": "rodimax" },
+  // source: https://rodimax.pl/Podk%C5%82ad-pod-panele-Arbiton-XPS-Smart-Aquastop-Thermo-1%2C6-mm-6-m2.html
+  { "id": "rodimax-arbiton-aquastop-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele Arbiton XPS Smart Aquastop Thermo 1,6 mm 6 m2", "category": "underlay", "packageSize": 6, "unit": "m2", "store": "Rodimax", "url": "https://rodimax.pl/Podk%C5%82ad-pod-panele-Arbiton-XPS-Smart-Aquastop-Thermo-1%2C6-mm-6-m2.html", "brand": "Arbiton", "format": "rodimax" },
+  // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-wewnetrzny/3089
+  { "id": "winbud-mapei-corner-internal", "ean": "8022452113802", "name": "Mapei Mapeband W - naro\u017Cnik wewn\u0119trzny", "category": "sealing-corner", "packageSize": 1, "unit": "szt", "store": "WinBud", "url": "https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-wewnetrzny/3089", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_2b7ab43567ae0046ace4d10d419a36f5_500_500.jpg", "brand": "Mapei", "format": "shoper-api", "productId": 3089, "apiPurchaseUnit": "szt.", "variant": ["wewn\u0119trzny"] },
+  // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-zewnetrzny/3090
+  { "id": "winbud-mapei-corner-external", "ean": "8022452113789", "name": "Mapei Mapeband W - naro\u017Cnik zewn\u0119trzny", "category": "sealing-corner", "packageSize": 1, "unit": "szt", "store": "WinBud", "url": "https://winbud24.pl/pl/p/Mapei-Mapeband-W-naroznik-zewnetrzny/3090", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_21ecda93953e59915e1391c9a417afc1_500_500.jpg", "brand": "Mapei", "format": "shoper-api", "productId": 3090, "apiPurchaseUnit": "szt.", "variant": ["zewn\u0119trzny"] },
+  // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-mankiet-120-x120mm%2C-scienny/3092
+  { "id": "winbud-mapei-cuff-2", "ean": "8022452113925", "name": "Mapei Mapeband W - mankiet 120 x120mm, \u015Bcienny", "category": "sealing-cuff", "packageSize": 2, "unit": "szt", "store": "WinBud", "url": "https://winbud24.pl/pl/p/Mapei-Mapeband-W-mankiet-120-x120mm%2C-scienny/3092", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_ff01451250ec0b1f56f25dda8bf32eca_500_500.jpg", "brand": "Mapei", "format": "shoper", "productId": 3092, "variant": ["120x120mm"], "packageDescription": "2 sztuki w opakowaniu" },
+  // source: https://salonbudowlanydambud.pl/pl/p/MAPEI-NAROZNIK-USZCZELNIAJACY-WEWNETRZNY-MAPEBAND-W/768
+  { "id": "dambud-mapei-corner-internal", "ean": "8022452113802", "name": "MAPEI NARO\u017BNIK USZCZELNIAJ\u0104CY WEWN\u0118TRZNY MAPEBAND W", "category": "sealing-corner", "packageSize": 1, "unit": "szt", "store": "Dam-Bud", "url": "https://salonbudowlanydambud.pl/pl/p/MAPEI-NAROZNIK-USZCZELNIAJACY-WEWNETRZNY-MAPEBAND-W/768", "imageUrl": "https://salonbudowlanydambud.pl/environment/cache/images/productGfx_2307_500_500/MAPEBAND-W-NAR-WEW.jpg", "brand": "Mapei", "format": "shoper-api", "productId": 768, "apiPurchaseUnit": "szt.", "variant": ["wewn\u0119trzny"] },
+  // source: https://salonbudowlanydambud.pl/pl/p/MAPEI-NAROZNIK-USZCZELNIAJACY-ZEWNETRZNY-MAPEBAND-W/769
+  { "id": "dambud-mapei-corner-external", "ean": "8022452113789", "name": "MAPEI NARO\u017BNIK USZCZELNIAJ\u0104CY ZEWN\u0118TRZNY MAPEBAND W", "category": "sealing-corner", "packageSize": 1, "unit": "szt", "store": "Dam-Bud", "url": "https://salonbudowlanydambud.pl/pl/p/MAPEI-NAROZNIK-USZCZELNIAJACY-ZEWNETRZNY-MAPEBAND-W/769", "imageUrl": "https://salonbudowlanydambud.pl/environment/cache/images/productGfx_2310_500_500/MAPEBAND-W-NAR-ZEWNETRZNY.jpg", "brand": "Mapei", "format": "shoper-api", "productId": 769, "apiPurchaseUnit": "szt.", "variant": ["zewn\u0119trzny"] },
+  // source: https://www.plus-market.pl/pl/p/Rura-pexalpex-16-mmx2-1mb/12990
+  { "id": "plusmarket-pex-pipe-16x2", "ean": "5901095517976", "name": "Rura pex/al/pex/ 16 mmx2 - 1mb", "category": "pipe", "packageSize": 1, "unit": "mb", "store": "Plus-Market", "url": "https://www.plus-market.pl/pl/p/Rura-pexalpex-16-mmx2-1mb/12990", "imageUrl": "https://www.plus-market.pl/environment/cache/images/productGfx_19878_500_500/2024-09-27_16h57_16.webp", "brand": "PLUS-MARKET", "format": "shoper-api", "productId": 12990, "apiPurchaseUnit": "mb", "variant": ["16mmx2", "1mb"] },
+  // source: https://www.blu.com.pl/syfony-i-polsyfony-do-umywalek/29748-mcalpine-whb1-32-5036484088390.html
+  { "id": "blu-mcalpine-whb132", "ean": "5036484088390", "name": "McAlpine WHB1-32", "category": "trap", "packageSize": 1, "unit": "szt", "store": "BLU", "url": "https://www.blu.com.pl/syfony-i-polsyfony-do-umywalek/29748-mcalpine-whb1-32-5036484088390.html", "imageUrl": "https://cdn.blu.com.pl/large_default/5036484088390_383553_McAlpine_WHB1-32_MR-SY-WHB132_Zdjecie_produktu.jpg?ver=1742976674_1744096667_1742976689_1747816989_1747816981_1742976708_1743066628__1765797618", "brand": "McAlpine", "format": "jsonld", "variant": ["WHB1-32"] },
+  // source: https://www.elektryknet.pl/produkt/simon-basic-lacznik-jednobiegunowy-bialy-bmw101-11
+  { "id": "elektryknet-simon-bmw1", "ean": "5902787568177", "name": "Simon Basic \u0141\u0105cznik jednobiegunowy bia\u0142y BMW1.01/11", "category": "switch", "packageSize": 1, "unit": "szt", "store": "ElektrykNet", "url": "https://www.elektryknet.pl/produkt/simon-basic-lacznik-jednobiegunowy-bialy-bmw101-11", "imageUrl": "https://www.elektryknet.pl/static/thumbnail/product/facebook/60955.webp", "brand": "Kontakt Simon", "format": "jsonld", "variant": ["BMW1.01/11", "bia\u0142y"] },
+  // source: https://www.abud.pl/product-pol-6204-Tasma-teflonowa-12mm-x-10m-x-0-075mm-Tycner.html
+  { "id": "abud-teflon-12x10", "ean": "5900950618100", "name": "Ta\u015Bma teflonowa 12mm x 10m x 0.075mm Tycner", "category": "sealing-tape", "packageSize": 1, "unit": "szt", "store": "ABUD", "url": "https://www.abud.pl/product-pol-6204-Tasma-teflonowa-12mm-x-10m-x-0-075mm-Tycner.html", "imageUrl": "https://mrowka.com.pl/files/InfoverProduct/mu/q7rvc0igoa6f/Photos/q96euhr0ml7hr0/ShowWebp_tasma-teflonowa-12-mm-x-10-m-x-0-075-mm-tycner_1.webp", "brand": "Tycner", "format": "idosell", "productId": 6204, "apiPurchaseUnit": "szt.", "variant": ["12mm", "10m", "0.075mm"] },
+  // source: https://www.abud.pl/product-pol-64835-Kolanko-zaciskowe-PEX-16x16mm-Tycner.html
+  { "id": "abud-pex-elbow-16x16", "ean": "5901095521003", "name": "Kolanko zaciskowe PEX 16x16mm Tycner", "category": "fitting", "packageSize": 1, "unit": "szt", "store": "ABUD", "url": "https://www.abud.pl/product-pol-64835-Kolanko-zaciskowe-PEX-16x16mm-Tycner.html", "imageUrl": "https://mrowka.com.pl/files/InfoverProduct/vu/t7atm0ht029g/Photos/cumrci10no4fac/ShowWebp_kolanko-zaciskowe-pex-16x16-mm-tycner_1.webp", "brand": "Tycner", "format": "idosell", "productId": 64835, "apiPurchaseUnit": "szt.", "variant": ["16x16mm"] },
+  // source: https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html
+  { "id": "fixero-graphite-mesh-10", "ean": "5902062502735", "name": "Siatka \u015Bcierna na rzep, 225 mm, K180, do szlifierki 59G260, 59G264, 59G265, 10 szt. 55H746", "category": "abrasive", "packageSize": 10, "unit": "szt", "store": "Fixero", "url": "https://fixero.com/siatka-scierna-na-rzep-225-mm-k180-do-szlifierki-59g260-59g264-59g265-10-szt-55h746.html", "imageUrl": "https://fixero.com/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/1/5/1596484200_55H746__BGH_TGL_U90.jpg", "brand": "Graphite", "format": "fixero", "productId": 1956, "variant": ["225mm", "K180", "10szt", "55H746"] }
 ];
 var RETAIL_NAME_ALIASES = {
+  "P\u0142yta gipsowo-kartonowa zwyk\u0142a Norgips GKB typ A 1200\xD72600\xD712,5 mm": "5907651690442",
+  "Podk\u0142ad Arbiton XPS Smart Aquastop Thermo 1,6 mm (6 m\xB2)": "5905167826942",
+  "Naro\u017Cnik uszczelniaj\u0105cy wewn\u0119trzny Mapei Mapeband W (90\xB0)": "8022452113802",
+  "Naro\u017Cnik uszczelniaj\u0105cy zewn\u0119trzny Mapei Mapeband W (270\xB0)": "8022452113789",
+  "Mankiet uszczelniaj\u0105cy \u015Bcienny Mapei Mapeband W 12\xD712 cm, 2 szt.": "8022452113925",
+  "Rura PEX-AL/PEX Tycner 16\xD72 mm (na metry)": "5901095517976",
+  "Syfon umywalkowy butelkowy niski McAlpine WHB1-32 (z membran\u0105)": "5036484088390",
+  "\u0141\u0105cznik pojedynczy jednobiegunowy Kontakt-Simon Basic (bia\u0142y, BMW1.01/11)": "5902787568177",
+  "Ta\u015Bma teflonowa uszczelniaj\u0105ca Tycner 12 mm \xD7 10 m": "5900950618100",
+  "Kolanko zaciskowe PEX Tycner 16\xD716 mm": "5901095521003",
+  "Siatka \u015Bcierna na rzep GRAPHITE 225 mm K180, 10 szt.": "5902062502735",
   "Farba lateksowa \u015Anie\u017Cka Barwy Natury bia\u0142a 5 l": "5903973139188",
   "Grunt uniwersalny Knauf 5 l": "5901793357737",
   "Ta\u015Bma malarska Blue Dolphin niebieska 30 mm x 50 m": "5907758515952",
@@ -21012,11 +21049,14 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
     const amount2 = gross2.replace(/\s|zł/g, "").replace(",", ".");
     if (Number(amount2) !== Number(price)) throw new Error("retailer_gross_price_mismatch");
     const expiry = elements(offer, (a) => a.itemprop === "priceValidUntil");
+    const descriptions = elements(product, (a) => a.itemprop === "description");
+    const description = descriptions.length === 1 ? text2(descriptions[0]) : "";
     return {
       "@type": "Product",
       name,
       gtin13: ean2,
       image,
+      description,
       offers: {
         "@type": "Offer",
         price,
@@ -21080,6 +21120,60 @@ function confirmShopifyProduct(product, source) {
   return { variantId: variant.id, priceGrosze: variant.price, name: product.title, imageUrl: typeof image === "string" ? new URL(image, source.url).href : source.imageUrl };
 }
 
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-identity.ts
+function only(values, reason) {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+}
+function attribute(element, name) {
+  return attrs(element.match(/^<[^>]+>/)?.[0] ?? "")[name];
+}
+function confirmRetailIdentity(html, product, source) {
+  const safe = clean(html);
+  if (source.format !== "rodimax" && (!Number.isSafeInteger(source.productId) || source.productId < 1)) throw Error("product_id_not_confirmed");
+  let code, price, brand = product.brand, image = product.image;
+  if (source.format === "rodimax") {
+    code = text2(only(elements(safe, (a) => a.id === "sku"), "product_code_not_confirmed"));
+    if (product.gtin13 !== code) throw Error("product_ean_not_confirmed");
+    const gross = text2(only(elements(safe, (a) => a.id === "cena"), "retailer_gross_price_not_confirmed"));
+    const match = gross.match(/^([\d ,.]+)\s*zł\s+brutto\s*\(\s*Z VAT 23%\s*\)$/i);
+    if (!match) throw Error("retailer_gross_price_not_confirmed");
+    price = match[1];
+    const figure = only(elements(safe, (a) => a.id === "zdj"), "product_photo_not_confirmed");
+    const photo = only(elements(figure, (_a, tag) => tag === "img"), "product_photo_not_confirmed");
+    if (attribute(photo, "alt") !== product.name || !attribute(photo, "src")) throw Error("product_photo_not_confirmed");
+    image = new URL(attribute(photo, "src"), source.url).href;
+  } else if (source.format === "idosell") {
+    const form = only(elements(safe, (a, tag) => tag === "form" && a["data-product_id"] === String(source.productId)), "product_id_not_confirmed");
+    const hidden = only(elements(form, (a) => a.id === "projector_product_hidden"), "product_id_not_confirmed");
+    if (attribute(hidden, "value") !== String(source.productId)) throw Error("product_id_not_confirmed");
+    const dictionary = only(elements(safe, (a) => a["data-producer_code"] === "true"), "product_code_not_confirmed");
+    code = text2(only(elements(dictionary, (a) => a.class?.split(/\s+/).includes("dictionary__producer_code") ?? false), "product_code_not_confirmed"));
+    price = text2(only(elements(form, (a) => a.id === "projector_price_value"), "retailer_gross_price_not_confirmed"));
+    const tax = text2(only(elements(form, (a) => a.class === "price_vat"), "retailer_gross_price_not_confirmed"));
+    const unit = text2(only(elements(form, (a) => a.id === "projector_price_unit"), "retailer_unit_not_confirmed"));
+    const quantity = only(elements(form, (a) => a.id === "projector_number"), "retailer_unit_not_confirmed");
+    if (tax !== "brutto" || unit !== source.apiPurchaseUnit || attribute(quantity, "data-sellby") !== "1" || attribute(quantity, "step") !== "1") throw Error("retailer_unit_or_gross_not_confirmed");
+    const offers2 = [product.offers].flat();
+    if (offers2.length !== 1 || offers2[0]?.eligibleQuantity?.value !== "1" || offers2[0]?.eligibleQuantity?.unitCode !== unit) throw Error("retailer_unit_not_confirmed");
+  } else if (source.format === "fixero") {
+    const form = only(elements(safe, (a) => a.id === "product_addtocart_form"), "product_id_not_confirmed");
+    const hidden = only(elements(form, (a) => a.name === "product"), "product_id_not_confirmed");
+    if (attribute(hidden, "value") !== String(source.productId)) throw Error("product_id_not_confirmed");
+    const table = only(elements(safe, (a, tag) => tag === "table" && (a.class?.split(/\s+/).includes("additional-attributes") ?? false)), "product_code_not_confirmed");
+    code = text2(only(elements(table, (a) => a["data-th"] === "EAN"), "product_code_not_confirmed"));
+    const offer = only(elements(safe, (a) => a.class === "final-price" && a.itemprop === "offers"), "retailer_price_not_confirmed");
+    price = text2(only(elements(offer, (a) => a.id === `product-price-${source.productId}`), "retailer_price_not_confirmed"));
+    const logo = only(elements(safe, (a) => a.class === "product-brand-image"), "product_brand_not_confirmed");
+    brand = attribute(logo, "alt");
+  } else throw Error("unsupported_identity_template");
+  if (code !== source.ean || !/^\d{13}$/.test(code)) throw Error("product_ean_not_confirmed");
+  const offers = [product.offers].flat();
+  const visible = parsePriceToGrosze(price.replace(/\s*zł\s*$/, ""));
+  if (visible === null || visible <= 0 || offers.length !== 1 || parsePriceToGrosze(offers[0]?.price) !== visible) throw Error("retailer_gross_price_mismatch");
+  return { ...product, gtin13: code, brand, image };
+}
+
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
@@ -21089,12 +21183,16 @@ function objects(value) {
 }
 function parseRetailPage(html, source, observedAt) {
   const products = [];
-  if (source.format && !["jsonld", "shoper-api", "shopify-api"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
+  if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
     } catch {
     }
+  }
+  if (source.format === "idosell" || source.format === "fixero" || source.format === "rodimax") {
+    if (products.length !== 1) throw Error("product_identity_ambiguous");
+    products[0] = confirmRetailIdentity(html, products[0], source);
   }
   const product = products.find((item) => String(item.gtin13 ?? item.gtin ?? "") === source.ean);
   if (!product) throw new Error("product_ean_not_confirmed");
@@ -21124,7 +21222,7 @@ function parseRetailPage(html, source, observedAt) {
   const prices = eligibleOffers.map((offer) => parsePriceToGrosze(offer.price)).filter((price) => price !== null && price > 0 && Number.isSafeInteger(price));
   if (prices.length === 0) throw new Error("no_confirmed_online_pln_offer");
   if (new Set(prices).size !== 1) throw new Error("ambiguous_online_price");
-  const firstImage = [product.image].flat()[0];
+  const firstImage = [source.imageUrl ?? product.image ?? eligibleOffers.find((offer) => offer.image)?.image].flat()[0];
   const imageUrl = typeof firstImage === "string" ? firstImage : firstImage?.url;
   return {
     sourceId: source.id,
@@ -21164,7 +21262,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   const api = source.format === "shoper-api";
   const requestUrl = api ? `${new URL(source.url).origin}/webapi/front/pl_PL/products/PLN/${shoperProductId(source)}` : source.url;
   const response = await fetchImpl(requestUrl, {
-    signal: AbortSignal.timeout(8e3),
+    signal: AbortSignal.timeout(["idosell", "fixero"].includes(source.format ?? "") ? 12e3 : 8e3),
     redirect: "error",
     headers: { "User-Agent": "AsystentRemontu/1.0", Accept: "text/html", "Accept-Language": "pl-PL" }
   });
@@ -21466,7 +21564,10 @@ var ORIGINS = {
   "Rab-Dom": "https://www.rabdom.pl",
   Realbud: "https://realbud.com",
   Zino: "https://sklep.zino.pl",
-  Prescot: "https://www.prescot.com.pl"
+  Prescot: "https://www.prescot.com.pl",
+  WinBud: "https://winbud24.pl",
+  "Dam-Bud": "https://salonbudowlanydambud.pl",
+  "Plus-Market": "https://www.plus-market.pl"
 };
 var TTL = 10 * 6e4;
 function confirmedMoney(text3, numeric2) {
@@ -21482,7 +21583,7 @@ function selectHomeDelivery(basket) {
   if (!Array.isArray(basket.shippings) || !Array.isArray(basket.payments)) throw Error("invalid_response");
   const options = [];
   for (const shipping of basket.shippings) {
-    if (shipping.engine !== "" || typeof shipping.title !== "string" || !/kurier|kurierska|^Transport DPD$/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`)) continue;
+    if (!["", "ShoperShipment"].includes(shipping.engine) || typeof shipping.title !== "string" || !/kurier|kurierska|^Transport DPD$/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`)) continue;
     const country = shipping.countries?.find((c) => c.id === 179);
     if (!country) continue;
     let cost;
@@ -21494,7 +21595,7 @@ function selectHomeDelivery(basket) {
     }
     for (const method of shipping.payments ?? []) {
       const payment = basket.payments.find((p) => p.payment_id === method.payment_id);
-      if (!payment || !["onlinePayment", "transfer", "przelewy24.pl"].includes(payment.name)) continue;
+      if (!payment || !["onlinePayment", "transfer", "przelewy24.pl", "shoperP24"].includes(payment.name)) continue;
       let surcharge = 0;
       try {
         if (method.additional_cost !== void 0 || method.additional_cost_float !== void 0) surcharge += confirmedMoney(method.additional_cost, method.additional_cost_float);
