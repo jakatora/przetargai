@@ -344,7 +344,11 @@ async function wywolajSelekcje({ operation, system, prompt, maxTokens, userId, p
     const text = resp.content?.find((block) => block.type === 'text')?.text ?? '';
     const wynik = parsuj(text);
     if (wynik) zglosSukcesAi();
-    else zglosNiepowodzenieAi({ typ: 'nieczytelna_odpowiedz', komunikat: text || '(pusta odpowiedź modelu)' });
+    else {
+      // Ucięcie limitem tokenów to inna choroba niż bełkot — w /health ma mieć własną etykietę.
+      const typ = resp.stop_reason === 'max_tokens' ? 'odpowiedz_ucieta' : 'nieczytelna_odpowiedz';
+      zglosNiepowodzenieAi({ typ, komunikat: text || '(pusta odpowiedź modelu)' });
+    }
     return wynik;
   } catch (err) {
     const blad = klasyfikujBladAi(err);
@@ -360,7 +364,7 @@ export function ocenDlaKlienta(user, tender, przyklady, { teraz = new Date().toI
     operation: 'pracownik_ocena',
     system: SYSTEM_PROMPT_SELEKCJI,
     prompt: zbudujPromptSelekcji({ user, tender, przyklady: przyklady ?? { zapisane: [], odrzucone: [] }, teraz }),
-    maxTokens: 400,
+    maxTokens: 500, // 400 ucinało 3 z 184 ocen dnia (25.10) na rozpisanych `punkty`
     userId: user?.id,
     parsuj: parsujWerdykt,
   });

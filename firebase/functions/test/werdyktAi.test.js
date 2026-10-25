@@ -53,6 +53,25 @@ test('parsujWerdykt: biore ma zawsze przyczynę null', () => {
   assert.equal(parsujWerdykt('{"decyzja":"biore","przyczyna":"teren","punkty":[],"score":70}').przyczyna, null);
 });
 
+test('odpowiedź UCIĘTA limitem tokenów (produkcja 25.10): decyzja i score uratowane, tylko domknięte punkty', () => {
+  // Stary format (score na końcu) ucięty w punktach — score przepadł → null (dlatego prompt stawia score przed punkty).
+  const stary = '```json\n{\n  "decyzja": "biore",\n  "przyczyna": null,\n  "punkty": [\n    "Zakres prac (roboty wodno-kanalizacyjne) w pełni pokrywa się",\n    "Teren (województwo Świętokrzyskie) mieści się';
+  assert.equal(parsujWerdykt(stary), null);
+  // Nowy format: score przed punktami — ucięcie w punktach nie gubi werdyktu.
+  const nowy = '{"decyzja":"biore","przyczyna":null,"score":84,"punkty":["Zakres: roboty wod-kan","Teren: Świętokrzyskie","Termin 9 dni wyst';
+  assert.deepEqual(parsujWerdykt(nowy), { decyzja: 'biore', przyczyna: null, punkty: ['Zakres: roboty wod-kan', 'Teren: Świętokrzyskie'], score: 84 });
+  const odrzut = '{"decyzja":"odrzucam","przyczyna":"teren","score":12,"punkty":["Woj. mazowieckie poza terenem", "Dru';
+  assert.deepEqual(parsujWerdykt(odrzut), { decyzja: 'odrzucam', przyczyna: 'teren', punkty: ['Woj. mazowieckie poza terenem'], score: 12 });
+  assert.deepEqual(parsujWerdykt('{"decyzja":"biore","przyczyna":null,"score":77,"punkty":[').punkty, []);
+  assert.equal(parsujWerdykt('{"decyzja":"biore","przyczyna":null,"punkty":["a","b"], "sco'), null, 'bez score nie zgadujemy');
+  // Punkt z cudzysłowem w środku (escape) nie rozbija listy.
+  assert.deepEqual(parsujWerdykt('{"decyzja":"biore","przyczyna":null,"score":60,"punkty":["Zakres \\"dachy\\" pasuje","Teren OK","Ter').punkty, ['Zakres "dachy" pasuje', 'Teren OK']);
+});
+
+test('prompt każe podać score PRZED punktami (ucięcie trafia w punkty, nie w werdykt)', () => {
+  assert.ok(SYSTEM_PROMPT_SELEKCJI.indexOf('"score"') < SYSTEM_PROMPT_SELEKCJI.indexOf('"punkty"'));
+});
+
 test('REVIEW FOCUS 4: śmieci → null (degradacja do heurystyki)', () => {
   for (const zly of ['', 'brak json', '{nie json}', '{"decyzja":"moze","score":50}', '{"decyzja":"biore","score":"dużo"}', null]) {
     assert.equal(parsujWerdykt(zly), null, String(zly));
