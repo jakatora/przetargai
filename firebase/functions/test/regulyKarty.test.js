@@ -56,7 +56,27 @@ test('karta bez reguł (stare konto) niczego nie odrzuca', () => {
 });
 
 test('dolnaGranicaWartosci', () => {
-  assert.deepEqual(dolnaGranicaWartosci({ budget: 100 }), { kwota: 100, zrodlo: 'wartosc' });
-  assert.deepEqual(dolnaGranicaWartosci({ budget: null, wadium_kwota: 3000 }), { kwota: 100_000, zrodlo: 'wadium' });
+  assert.deepEqual(dolnaGranicaWartosci({ budget: 100 }), { kwota: 100, zrodlo: 'wartosc', czesci: 1 });
+  assert.deepEqual(dolnaGranicaWartosci({ budget: null, wadium_kwota: 3000 }), { kwota: 100_000, zrodlo: 'wadium', czesci: 1 });
   assert.equal(dolnaGranicaWartosci({}), null);
+});
+
+test('zamówienie w częściach: granica = średnia część; wadium dla kilku części nie odrzuca (parser zna tylko pierwszą kwotę)', () => {
+  // 3 mln w 4 częściach → średnio 750 tys. — mieści się w „do” 1 mln, choć całość nie.
+  assert.deepEqual(dolnaGranicaWartosci({ budget: 3_000_000, liczba_czesci: 4 }), { kwota: 750_000, zrodlo: 'wartosc', czesci: 4 });
+  assert.equal(sprawdzReguly(USER, T({ budget: 3_000_000, liczba_czesci: 4 }), TERAZ), null);
+  const zaDuze = sprawdzReguly(USER, T({ budget: 9_000_000, liczba_czesci: 4 }), TERAZ);
+  assert.equal(zaDuze.przyczyna, 'za_duze');
+  assert.match(zaDuze.szczegol.pl, /4 częściach, średnio 2\D250\D000 zł na część/); // pl-PL dzieli tysiące twardą spacją
+  // Jedna kwota wadium przy 3 częściach: 45 000 / 0,03 / 3 = 500 tys. — mieści się.
+  assert.equal(sprawdzReguly(USER, T({ budget: null, wadium_kwota: 45_000, liczba_czesci: 3 }), TERAZ), null);
+  const wadiumCzesci = sprawdzReguly(USER, T({ budget: null, wadium_kwota: 150_000, liczba_czesci: 3 }), TERAZ);
+  assert.equal(wadiumCzesci.przyczyna, 'za_duze');
+  assert.match(wadiumCzesci.szczegol.pl, /przy 3 częściach/);
+  // Wadium wymienione osobno dla kilku części — brak wiarygodnej granicy, nie odrzucamy.
+  assert.equal(dolnaGranicaWartosci({ budget: null, wadium_kwota: 450_000, wadium_wiele_czesci: true }), null);
+  assert.equal(sprawdzReguly(USER, T({ budget: null, wadium_kwota: 450_000, wadium_wiele_czesci: true }), TERAZ), null);
+  // liczba_czesci 1/null/śmieć = jak dotąd.
+  assert.deepEqual(dolnaGranicaWartosci({ budget: 100, liczba_czesci: 1 }), { kwota: 100, zrodlo: 'wartosc', czesci: 1 });
+  assert.deepEqual(dolnaGranicaWartosci({ budget: 100, liczba_czesci: 'x' }), { kwota: 100, zrodlo: 'wartosc', czesci: 1 });
 });

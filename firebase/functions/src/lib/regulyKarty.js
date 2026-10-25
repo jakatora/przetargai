@@ -16,10 +16,23 @@ const DOBA_MS = 86_400_000;
 const zl = (k) => `${Math.round(k).toLocaleString('pl-PL')} zł`;
 const pln = (k) => `PLN ${Math.round(k).toLocaleString('en-GB')}`;
 
+/**
+ * Dolna granica wartości ZAMÓWIENIA, NA KTÓRE FIRMA REALNIE STARTUJE (2026-10-25, follow-up
+ * „wadium wieloczęściowe"). Zamówienie w częściach można wziąć w jednej części, więc:
+ *  • wartość całości dzielimy przez liczbę części (średnia część — przybliżenie w dół, bo
+ *    najmniejsza część nie przekracza średniej);
+ *  • wadium podane osobno dla kilku części (`wadium_wiele_czesci`) NIE daje granicy —
+ *    parser zna tylko pierwszą kwotę, a najmniejsza część może mieć wadium wielokrotnie niższe;
+ *  • jedna kwota wadium przy zamówieniu w częściach jest dzielona przez liczbę części.
+ * Zasada nadrzędna: wątpliwe dane nie odrzucają.
+ * @returns {{kwota: number, zrodlo: 'wartosc'|'wadium', czesci: number}|null}
+ */
 export function dolnaGranicaWartosci(tender) {
-  if (typeof tender?.budget === 'number' && tender.budget > 0) return { kwota: tender.budget, zrodlo: 'wartosc' };
+  const czesci = Number.isInteger(tender?.liczba_czesci) && tender.liczba_czesci > 1 ? tender.liczba_czesci : 1;
+  if (typeof tender?.budget === 'number' && tender.budget > 0) return { kwota: tender.budget / czesci, zrodlo: 'wartosc', czesci };
+  if (tender?.wadium_wiele_czesci === true) return null;
   if (typeof tender?.wadium_kwota === 'number' && tender.wadium_kwota > 0) {
-    return { kwota: tender.wadium_kwota / WADIUM_MAKS_UDZIAL, zrodlo: 'wadium' };
+    return { kwota: tender.wadium_kwota / WADIUM_MAKS_UDZIAL / czesci, zrodlo: 'wadium', czesci };
   }
   return null;
 }
@@ -47,11 +60,22 @@ export function sprawdzReguly(user, tender, teraz) {
   const maks = typeof user?.wartosc_max === 'number' ? user.wartosc_max : null;
   const granica = dolnaGranicaWartosci(tender);
   if (maks !== null && granica && granica.kwota > maks) {
-    return { przyczyna: 'za_duze', szczegol: granica.zrodlo === 'wartosc'
-      ? { pl: `Wartość ${zl(granica.kwota)} przekracza Twoje „do” ${zl(maks)}.`,
-        en: `The value of ${pln(granica.kwota)} exceeds your maximum of ${pln(maks)}.` }
-      : { pl: `Wadium ${zl(tender.wadium_kwota)} oznacza zamówienie warte co najmniej ${zl(granica.kwota)} — ponad Twoje „do” ${zl(maks)}.`,
-        en: `A bid bond of ${pln(tender.wadium_kwota)} means a contract worth at least ${pln(granica.kwota)} — above your maximum of ${pln(maks)}.` } };
+    const wCzesciach = granica.czesci > 1;
+    let szczegol;
+    if (granica.zrodlo === 'wartosc') {
+      szczegol = wCzesciach
+        ? { pl: `Zamówienie w ${granica.czesci} częściach, średnio ${zl(granica.kwota)} na część — ponad Twoje „do” ${zl(maks)}.`,
+          en: `A contract in ${granica.czesci} lots, on average ${pln(granica.kwota)} per lot — above your maximum of ${pln(maks)}.` }
+        : { pl: `Wartość ${zl(granica.kwota)} przekracza Twoje „do” ${zl(maks)}.`,
+          en: `The value of ${pln(granica.kwota)} exceeds your maximum of ${pln(maks)}.` };
+    } else {
+      szczegol = wCzesciach
+        ? { pl: `Wadium ${zl(tender.wadium_kwota)} przy ${granica.czesci} częściach oznacza średnio co najmniej ${zl(granica.kwota)} na część — ponad Twoje „do” ${zl(maks)}.`,
+          en: `A bid bond of ${pln(tender.wadium_kwota)} across ${granica.czesci} lots means at least ${pln(granica.kwota)} per lot on average — above your maximum of ${pln(maks)}.` }
+        : { pl: `Wadium ${zl(tender.wadium_kwota)} oznacza zamówienie warte co najmniej ${zl(granica.kwota)} — ponad Twoje „do” ${zl(maks)}.`,
+          en: `A bid bond of ${pln(tender.wadium_kwota)} means a contract worth at least ${pln(granica.kwota)} — above your maximum of ${pln(maks)}.` };
+    }
+    return { przyczyna: 'za_duze', szczegol };
   }
 
   if (karta.wartosc_min !== null && typeof tender?.budget === 'number' && tender.budget < karta.wartosc_min) {

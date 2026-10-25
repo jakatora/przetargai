@@ -10,6 +10,7 @@ Numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ android/
 • Po założeniu konta od razu prowadzimy do Karty firmy (NIP, teren, kwoty) — selekcja przetargów jest trafna od pierwszego dnia; każdy krok można pominąć.
 • Przetargi unijne (TED): teren liczymy z miejsca wykonania zamówienia, nie z siedziby zamawiającego — roboty ogłaszane z Warszawy na Twoje województwo już nie odpadają jako „poza terenem”.
 • Gdy zamawiający przedłuży termin składania ofert, przetarg odrzucony wcześniej jako „za mało dni na ofertę” wraca do selekcji.
+• Zamówienia w częściach: o tym, czy przetarg jest „za duży”, decyduje średnia część, nie suma — a wadium podane osobno dla części nie odrzuca.
 ```
 
 ## What's New — EN
@@ -19,4 +20,5 @@ Numer wersji i versionCode podbić dopiero przy buildzie (app.json ORAZ android/
 • Right after sign-up we take you to the company card (tax ID, area, contract sizes) so tender selection is accurate from day one; every step can be skipped.
 • EU tenders (TED): the area is taken from the place of performance, not the buyer's seat — works announced from Warsaw for your voivodeship no longer drop out as “outside your area”.
 • When the buyer extends the submission deadline, a tender previously set aside as “too few days to bid” comes back into selection.
+• Contracts split into lots: whether a tender is “too big” is judged by the average lot, not the total — and a bid bond listed per lot no longer rejects.
 ```
