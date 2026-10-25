@@ -92,8 +92,8 @@ export function generujZgloszeniePodwykonawcy({ wykonawca, umowa, podwykonawca, 
     `Wartość umowy o podwykonawstwo: ${wart ? formatujPLN(wart) + ' netto' : '…'}`,
     '',
     roboty
-      ? 'Wnoszę o zgłoszenie ewentualnych zastrzeżeń do projektu w terminie 14 dni od dnia jego przedłożenia (art. 464 ust. 3 i 4 ustawy Pzp). Brak zastrzeżeń w tym terminie oznacza akceptację projektu. Po zawarciu umowy przedłożę jej poświadczoną kopię w terminie 7 dni.'
-      : 'Umowa nie podlega obowiązkowi przedłożenia, jeżeli jej wartość jest mniejsza niż 0,5 % wartości umowy w sprawie zamówienia publicznego albo dotyczy dostaw / usług wyłączonych w SWZ (art. 464 ust. 8) — zgłoszenie składam z ostrożności.',
+      ? 'Wnoszę o zgłoszenie ewentualnych zastrzeżeń do projektu w terminie określonym w umowie w sprawie zamówienia publicznego, nie dłuższym niż 14 dni od dnia jego przedłożenia (art. 464 ust. 3 i 4 ustawy Pzp). Brak zastrzeżeń w tym terminie oznacza akceptację projektu. Po zawarciu umowy przedłożę jej poświadczoną kopię w terminie 7 dni (art. 464 ust. 5).'
+      : 'Obowiązek przedłożenia nie dotyczy umów o wartości mniejszej niż 0,5 % wartości umowy w sprawie zamówienia publicznego oraz umów o wartości mniejszej niż 50 000 zł, a także dostaw / usług wyłączonych przez Zamawiającego w SWZ (art. 464 ust. 8) — zgłoszenie składam z ostrożności.',
     '',
     'Oświadczam, że termin zapłaty wynagrodzenia podwykonawcy nie przekracza 30 dni od dnia doręczenia faktury (art. 464 ust. 2 ustawy Pzp).',
     '',
