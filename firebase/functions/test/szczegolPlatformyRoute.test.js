@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
-const { tenders } = await import('../src/db/repos.js');
+const { tenders, matches } = await import('../src/db/repos.js');
 const { createApp } = await import('../src/app.js');
 const { _ustawPobieranieSzczegoluPz } = await import('../src/routes/tenders.js');
 
@@ -13,13 +13,15 @@ const BAZA = `http://127.0.0.1:${serwer.address().port}`;
 test.after(() => serwer.close());
 
 const ZNAK = `${process.pid}${Date.now()}`.slice(-7);
-async function token() {
+let seq = 0;
+async function konto() {
   const odp = await fetch(`${BAZA}/auth/register`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: `szpz-${ZNAK}@t.pl`, password: 'tajnehaslo123' }),
+    body: JSON.stringify({ email: `szpz-${ZNAK}-${++seq}@t.pl`, password: 'tajnehaslo123' }),
   });
-  return (await odp.json()).token;
+  return odp.json();
 }
+async function token() { return (await konto()).token; }
 const SZCZEGOL = { tryb: 'Tryb podstawowy', rodzaj: 'Robota budowlana', opublikowano: '2026-10-20T19:33:00.000Z', termin: '2026-11-05T09:00:00.000Z', wymagania: 'Remont dachu szkoły', zalaczniki: [{ nazwa: 'SWZ.pdf', rozszerzenie: 'pdf', rozmiar_kb: 320, opublikowano: null, url: 'https://platformazakupowa.pl/file/get_new/abc.pdf' }] };
 
 test('POST /tenders/:id/szczegol-platformy: pobiera raz, zapisuje przy ogłoszeniu, drugi raz oddaje cache; obce źródło → 400; brak → 404', async () => {
@@ -48,4 +50,17 @@ test('POST /tenders/:id/szczegol-platformy: pobiera raz, zapisuje przy ogłoszen
   } finally {
     _ustawPobieranieSzczegoluPz(null);
   }
+});
+
+test('GET /matches/:id dla ogłoszenia z platformy niesie zapisany pz_szczegol (bez dotknięcia); bez szczegółu → null', async () => {
+  const { token: t, user } = await konto();
+  const { tender } = await tenders.upsert({ externalId: `pz:${ZNAK}88`, title: 'Remont dachu hali', organization: 'Gmina', deadline: '2099-01-01T00:00:00.000Z', source: 'platformazakupowa', url: `https://platformazakupowa.pl/transakcja/${ZNAK}88` });
+  await matches.createWithEvaluation({ userId: user.id, tenderId: tender.id, score: 80, reasoning: 'dach', tender });
+  const przed = await (await fetch(`${BAZA}/matches/${encodeURIComponent(tender.id)}`, { headers: { Authorization: `Bearer ${t}` } })).json();
+  assert.equal(przed.match.tender.source, 'platformazakupowa');
+  assert.equal(przed.match.tender.pz_szczegol, null);
+  await tenders.zapiszSzczegolPz(tender.id, SZCZEGOL);
+  const po = await (await fetch(`${BAZA}/matches/${encodeURIComponent(tender.id)}`, { headers: { Authorization: `Bearer ${t}` } })).json();
+  assert.equal(po.match.tender.pz_szczegol.tryb, 'Tryb podstawowy');
+  assert.equal(po.match.tender.pz_szczegol.zalaczniki[0].nazwa, 'SWZ.pdf');
 });

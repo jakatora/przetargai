@@ -17,7 +17,8 @@ import { formatDate } from '../lib/format';
 export default function SzczegolPlatformy({ tender }) {
   const styles = useStyle(tworzStyleSzczegolu);
   const { t } = useJezyk();
-  const [stan, setStan] = useState({ laduje: false, szczegol: null, blad: null });
+  // Szczegół już zapisany przy ogłoszeniu (selekcja albo wcześniejsze dotknięcie) pokazuje się od razu.
+  const [stan, setStan] = useState({ laduje: false, szczegol: tender?.pz_szczegol ?? null, blad: null });
   const kod = tender?.zrodlo?.kod ?? tender?.source;
   if (kod !== 'platformazakupowa' || !tender?.id) return null;
 

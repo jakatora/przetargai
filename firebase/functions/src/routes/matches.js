@@ -309,9 +309,16 @@ router.get('/:id', ah(async (req, res) => {
   const row = await matches.detail(req.user.id, req.params.id);
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
   audit({ userId: req.user.id, action: 'view_match', detail: { matchId: row.id }, ip: req.ip });
+  const publiczne = publicMatch(row, await pobierzZnacznikiZrodel());
+  // platformazakupowa.pl: szczegół (tryb, załączniki) żyje na ogłoszeniu, nie na kopii w dopasowaniu —
+  // jeśli selekcja albo ktoś już go dociągnął, ekran dostaje go od razu, bez dotknięcia.
+  if (row.tender_source === 'platformazakupowa') {
+    const ogloszenie = await tenders.findById(row.tender_id).catch(() => null);
+    publiczne.tender.pz_szczegol = ogloszenie?.pz_szczegol ?? null;
+  }
   res.json({
     match: {
-      ...publicMatch(row, await pobierzZnacznikiZrodel()),
+      ...publiczne,
       wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
       // Termin pytań do SWZ (ten sam przepis co kalendarz) — plan działania w aplikacji (spec §6.3).
       termin_pytan: terminPytan({ id: row.tender_id, source: row.tender_source, deadline: row.tender_deadline },

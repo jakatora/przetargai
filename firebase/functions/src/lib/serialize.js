@@ -66,6 +66,8 @@ export function publicTender(row, znaczniki = {}) {
      * trafia i do BZP, i do Bazy Konkurencyjności), a ofertę składa się tam,
      * gdzie wskazuje ogłoszenie. Wykonawca musi widzieć oba adresy.
      */
+    // Szczegół platformazakupowa.pl (tryb, wymagania, załączniki) — gdy już dociągnięty (selekcja / na żądanie).
+    pz_szczegol: row.pz_szczegol ?? null,
     zrodla_alternatywne: (row.zrodla_alternatywne ?? []).map((z) => ({
       ...metryczkaZrodla(z.source, znaczniki),
       url: z.url ?? null,
