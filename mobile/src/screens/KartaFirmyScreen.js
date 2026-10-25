@@ -13,7 +13,7 @@ import { KROKI_KREATORA, kartaDoFormularza, formularzDoKarty, walidujFormularz, 
 import * as storage from '../lib/storage';
 import { KLUCZ_DANYCH_WYKONAWCY } from '../lib/dokumentyOferty';
 import { pobierzDanePoNip } from '../lib/danePoNip';
-import { prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu } from '../lib/kartaZNip';
+import { prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu, tekstDoPodpowiedzi } from '../lib/kartaZNip';
 
 /** Selekcja wyłączona po stronie serwera (`PRACOWNIK_ENABLED=false`) — zostają pola profilu z `PATCH /auth/me`. */
 const KROKI_UPROSZCZONE = [1, 3, 4];
@@ -73,7 +73,13 @@ export default function KartaFirmyScreen({ route, navigation }) {
       const s = await storage.getItem(KLUCZ_DANYCH_WYKONAWCY);
       await storage.setItem(KLUCZ_DANYCH_WYKONAWCY, JSON.stringify(scalDaneWykonawcy(s ? JSON.parse(s) : null, dane)));
     } catch { /* magazyn niedostępny — karta i tak wypełniona */ }
-    setNipStan({ laduje: false, komunikat: komunikatPrefillu(wynik, jezyk), ok: true });
+    let komunikat = komunikatPrefillu(wynik, jezyk);
+    // Leniwy start: karta bez słów i CPV → dobieramy je od razu z nazwy firmy (albo z opisu), bez klikania.
+    const tekst = tekstDoPodpowiedzi({ opis: form.opis, nazwa: dane.nazwa, keywords: form.keywords, cpv_codes: form.cpv_codes });
+    if (tekst && (await dobierzZ(tekst))) {
+      komunikat += t(' Dobraliśmy też słowa i kody CPV z nazwy firmy — sprawdź je niżej.', ' We also picked keywords and CPV codes from the company name — check them below.');
+    }
+    setNipStan({ laduje: false, komunikat, ok: true });
   }
 
   if (!form) {
@@ -94,25 +100,32 @@ export default function KartaFirmyScreen({ route, navigation }) {
   const ustaw = (pole) => (wartosc) => setForm((f) => ({ ...f, [pole]: wartosc }));
   const opisKroku = KROKI_KREATORA[krok - 1];
 
-  async function podpowiedz() {
-    if (form.opis.trim().length < 3) return;
+  /** Dobiera słowa i CPV z tekstu i dokleja do formularza; zwraca liczbę dodanych słów albo null przy braku podpowiedzi. */
+  async function dobierzZ(tekst) {
     setPodpowiadanie(true);
     try {
-      const s = await api.suggestProfile(form.opis.trim());
+      const s = await api.suggestProfile(tekst);
       if (s.keywords) {
         setForm((f) => ({
           ...f,
           keywords: parsujListe(`${f.keywords},${s.keywords.join(',')}`).join(', '),
           cpv_codes: parsujListe(`${f.cpv_codes},${(s.cpv ?? []).join(',')}`).join(', '),
         }));
-      } else if (s.komunikat) {
-        setBlad(s.komunikat);
+        return s.keywords.length + (s.cpv ?? []).length;
       }
+      if (s.komunikat) setBlad(s.komunikat);
+      return null;
     } catch (err) {
       setBlad(err.message);
+      return null;
     } finally {
       setPodpowiadanie(false);
     }
+  }
+
+  async function podpowiedz() {
+    if (form.opis.trim().length < 3) return;
+    await dobierzZ(form.opis.trim());
   }
 
   async function zapisz() {

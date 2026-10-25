@@ -98,3 +98,26 @@ export function komunikatPrefillu({ zmiany, wojewodztwo }, jezyk = 'pl') {
     ? `Wstawiono ${czesci.join(' i ')}. Dane firmy trafiły też do dokumentów oferty.`
     : `Filled in ${czesci.join(' and ')}. Company details were also saved for bid documents.`;
 }
+
+/** Formy prawne i ogólniki, które nic nie mówią o branży — wycinane z nazwy przed podpowiedzią. */
+const FORMY_PRAWNE = /\b(sp(ółka)?\.?\s*z\s*o\.?\s*o\.?|spółka z ograniczoną odpowiedzialnością|s\.?\s*a\.?|spółka akcyjna|sp\.?\s*j\.?|spółka jawna|sp\.?\s*k\.?|spółka komandytowa|s\.?\s*c\.?|spółka cywilna|sp\.?\s*z\s*o\.?\s*o\.?\s*sp\.?\s*k\.?|p\.?p\.?h\.?u\.?|f\.?h\.?u\.?|p\.?h\.?u\.?|firma|przedsiębiorstwo|zakład)\b/gi;
+
+/**
+ * Tekst do automatycznej podpowiedzi słów i CPV zaraz po wypełnieniu z NIP (użytkownik nic
+ * jeszcze nie napisał): własny opis, jeśli jest; inaczej nazwa firmy bez form prawnych
+ * („DACHY KOWALSKI SP. Z O.O." → „DACHY KOWALSKI"). Zwraca null, gdy po oczyszczeniu
+ * zostaje za mało (samo „Sp. z o.o." albo nazwisko bez branży nic nie wnosi), a także
+ * gdy karta ma już słowa lub kody — wtedy nie ruszamy tego, co użytkownik ustawił.
+ */
+export function tekstDoPodpowiedzi({ opis, nazwa, keywords, cpv_codes } = {}) {
+  if (String(keywords ?? '').trim() || String(cpv_codes ?? '').trim()) return null;
+  const wlasny = String(opis ?? '').trim();
+  if (wlasny.length >= 3) return wlasny;
+  const zNazwy = String(nazwa ?? '')
+    .replace(FORMY_PRAWNE, ' ')
+    .replace(/[„”"]/g, ' ')
+    .replace(/(^|\s)[.,;:\-–]+(?=\s|$)/g, ' ') // osierocone kropki po „SP. Z O.O." i „P.P.H.U."
+    .replace(/\s+/g, ' ')
+    .trim();
+  return zNazwy.replace(/[^\p{L}\p{N}]/gu, '').length >= 3 ? zNazwy : null;
+}

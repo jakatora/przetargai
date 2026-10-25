@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { kodPocztowyZAdresu, wojewodztwoZAdresu, prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu } from '../src/lib/kartaZNip.js';
+import { kodPocztowyZAdresu, wojewodztwoZAdresu, prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu, tekstDoPodpowiedzi } from '../src/lib/kartaZNip.js';
 import { kartaDoFormularza } from '../src/lib/kartaFirmy.js';
 import { WOJEWODZTWA } from '../src/lib/wojewodztwa.js';
 
@@ -67,4 +67,17 @@ test('komunikat mówi, co wstawiono, i że dane poszły do dokumentów oferty', 
   assert.match(komunikatPrefillu({ zmiany: ['teren'], wojewodztwo: '14' }, 'en'), /Mazowieckie voivodeship/);
   assert.match(komunikatPrefillu({ zmiany: [], wojewodztwo: null }), /nic nie zmieniłem/);
   assert.match(komunikatPrefillu({ zmiany: ['nazwa'], wojewodztwo: null }), /dokumentów oferty/);
+});
+
+test('tekst do automatycznej podpowiedzi: własny opis > nazwa bez form prawnych; nic, gdy słowa/CPV już są albo zostaje sama forma', () => {
+  assert.equal(tekstDoPodpowiedzi({ opis: 'remonty dachów', nazwa: 'X SP. Z O.O.' }), 'remonty dachów');
+  assert.equal(tekstDoPodpowiedzi({ opis: '', nazwa: 'DACHY KOWALSKI SP. Z O.O.' }), 'DACHY KOWALSKI');
+  assert.equal(tekstDoPodpowiedzi({ nazwa: 'Zakład Remontowo-Budowlany "BUDMAX" Jan Nowak' }), 'Remontowo-Budowlany BUDMAX Jan Nowak');
+  assert.equal(tekstDoPodpowiedzi({ nazwa: 'P.P.H.U. ELEKTRO-INSTAL S.C.' }), 'ELEKTRO-INSTAL');
+  assert.equal(tekstDoPodpowiedzi({ nazwa: 'ABC Spółka Akcyjna' }), 'ABC');
+  assert.equal(tekstDoPodpowiedzi({ nazwa: 'Sp. z o.o.' }), null);
+  assert.equal(tekstDoPodpowiedzi({ nazwa: 'AB' }), null);
+  assert.equal(tekstDoPodpowiedzi({ nazwa: 'DACHY KOWALSKI', keywords: 'dach' }), null, 'słowa już są — nie ruszamy');
+  assert.equal(tekstDoPodpowiedzi({ nazwa: 'DACHY KOWALSKI', cpv_codes: '45261000' }), null);
+  assert.equal(tekstDoPodpowiedzi({}), null);
 });
