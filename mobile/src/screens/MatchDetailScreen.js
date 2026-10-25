@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, Alert, Pressable, Switch, ActivityIndicator, TextInput, Share } from 'react-native';
+import { udostepnijTekst } from '../lib/udostepnianie';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -270,7 +271,7 @@ export default function MatchDetailScreen({ route, navigation }) {
       ),
     ].filter(Boolean);
     try {
-      await Share.share({ message: linie.join('\n'), url: tender.url || undefined, title: tender.title });
+      await udostepnijTekst({ message: linie.join('\n'), url: tender.url || undefined, title: tender.title });
     } catch {
       /* użytkownik anulował udostępnianie — nic nie robimy */
     }

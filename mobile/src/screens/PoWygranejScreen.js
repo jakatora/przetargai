@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, Share } from 'react-native';
+import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -52,7 +53,7 @@ export default function PoWygranejScreen({ route, navigation }) {
   }, [pismo, wykonawca, umowa, podwykonawca, rodzaj, termin, zabezp, dzisiaj]);
 
   async function udostepnij() {
-    try { await Share.share({ message: dok.tresc, title: dok.nazwa }); } catch { /* anulowane */ }
+    try { await udostepnijTekst({ message: dok.tresc, title: dok.nazwa }); } catch { /* anulowane */ }
   }
 
   const Chipy = ({ lista, wartosc, ustaw }) => (

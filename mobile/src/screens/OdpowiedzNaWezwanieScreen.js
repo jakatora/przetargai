@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, Share } from 'react-native';
+import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -119,7 +120,7 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
 
   async function udostepnij() {
     try {
-      await Share.share({ message: pismo.tresc, title: pismo.nazwa });
+      await udostepnijTekst({ message: pismo.tresc, title: pismo.nazwa });
       setUdostepniono(true);
     } catch {
       /* anulowane */
@@ -150,7 +151,7 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
       ? generujOswiadczenieGrupaKapitalowa({ ...wspolne, nalezy: false })
       : generujOswiadczenieAktualnosci(wspolne);
     try {
-      await Share.share({ message: dok.tresc, title: dok.nazwa });
+      await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
     } catch {
       /* anulowane */
     }
@@ -167,7 +168,7 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
     }
     const dok = generujWykaz({ wykonawca, przetarg, referencje, rodzaj: rodzajWykazu, dzisiaj: new Date().toISOString() });
     try {
-      await Share.share({ message: dok.tresc, title: dok.nazwa });
+      await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
     } catch {
       /* anulowane */
     }

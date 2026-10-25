@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, Share } from 'react-native';
+import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -46,7 +47,7 @@ export default function ZwrotWadiumScreen({ route }) {
 
   async function udostepnij() {
     try {
-      await Share.share({ message: pismo.tresc, title: pismo.nazwa });
+      await udostepnijTekst({ message: pismo.tresc, title: pismo.nazwa });
       setUdostepniono(true);
     } catch {
       /* anulowane */

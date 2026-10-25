@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View, Text, Share } from 'react-native';
+import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -61,7 +62,7 @@ export default function KrokDanePodmiotuScreen() {
     setZatwierdzono(true);
     const dok = generujTrescZobowiazania(draft);
     try {
-      await Share.share({ message: dok.tresc, title: dok.nazwa });
+      await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
     } catch {
       /* użytkownik anulował udostępnianie — nic nie robimy */
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, Share } from 'react-native';
+import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
 import TextField from '../components/TextField';
@@ -62,7 +63,7 @@ async function udostepnijWykaz(referencje, rodzaj) {
   }
   const dok = generujWykaz({ wykonawca, referencje, rodzaj, dzisiaj: new Date().toISOString() });
   try {
-    await Share.share({ message: dok.tresc, title: dok.nazwa });
+    await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
   } catch {
     /* anulowane */
   }

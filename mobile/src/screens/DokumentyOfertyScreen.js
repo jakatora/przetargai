@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, Share, Switch } from 'react-native';
+import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -165,7 +166,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
 
   async function udostepnij(dok) {
     try {
-      await Share.share({ message: dok.tresc, title: dok.nazwa });
+      await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
       setUdostepnione((s) => new Set(s).add(dok.id));
       await odhaczKontrole(kluczeKontroliDla(dok.id));
     } catch {
@@ -328,7 +329,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
             variant="ghost"
             onPress={async () => {
               const s = generujSciageJedz({ wykonawca, przetarg, sytuacja: { polegaNaZasobach: sytuacja.polegaNaZasobach, podwykonawcy: oferta.podwykonawcy, konsorcjum: sytuacja.konsorcjum } });
-              try { await Share.share({ message: s.tresc, title: s.nazwa }); } catch { /* anulowane */ }
+              try { await udostepnijTekst({ message: s.tresc, title: s.nazwa }); } catch { /* anulowane */ }
             }}
           />
         </View>
@@ -339,7 +340,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
         onPress={async () => {
           const calosc = pakiet.map((d) => `=== ${d.nazwa} (${ETYKIETY_KIEDY[d.kiedy]}) ===\n\n${d.tresc}`).join('\n\n\n');
           try {
-            await Share.share({ message: calosc, title: `Dokumenty do oferty — ${przetarg.tytul ?? 'pakiet'}` });
+            await udostepnijTekst({ message: calosc, title: `Dokumenty do oferty — ${przetarg.tytul ?? 'pakiet'}` });
             setUdostepnione(new Set(pakiet.map((d) => d.id)));
             await odhaczKontrole(pakiet.flatMap((d) => kluczeKontroliDla(d.id)));
           } catch {

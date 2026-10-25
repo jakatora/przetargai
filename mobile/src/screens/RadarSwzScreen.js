@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Share } from 'react-native';
+import { udostepnijTekst } from '../lib/udostepnianie';
 import { useFocusEffect } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
 import * as DocumentPicker from 'expo-document-picker';
@@ -97,9 +98,9 @@ export default function RadarSwzScreen({ route, navigation }) {
     const dok = generujWniosekOWyjasnienie({ wykonawca, postepowanie, pytania, dzisiaj: new Date().toISOString() });
     let udostepniono = false;
     try {
-      const wynik = await Share.share({ message: dok.tresc, title: dok.nazwa });
+      const wynik = await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
       // iOS mówi „dismissedAction" przy anulowaniu; Android zawsze „sharedAction" — traktujemy jako wysłane.
-      udostepniono = !wynik || wynik.action !== Share.dismissedAction;
+      udostepniono = !wynik?.anulowano;
     } catch {
       /* anulowane */
     }
