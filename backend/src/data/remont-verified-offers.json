@@ -34,5 +34,57 @@
     "observedAt": "2026-10-24T20:36:15.829Z",
     "sourceUrl": "https://www.castorama.pl/grunt-uniwersalny-knauf-5-l/5901793357737_CAPL.prd",
     "evidenceSha256": "6f2725aced4827e52690aeaadbbff623aeb48b095dfe14fe17b5995a9be41f73"
+  },
+  {
+    "sourceId": "sewera-sniezka-5l",
+    "ean": "5903973139188",
+    "name": "Barwy Natury 173 majowa konwalia 5l",
+    "imageUrl": "https://sklep.sewera.pl/photo/259511/barwy-natury-173-majowa-konwalia-5l.webp",
+    "priceGrosze": 9850,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T09:37:05.601Z",
+    "sourceUrl": "https://sklep.sewera.pl/barwy-natury-173-majowa-konwalia-5l-p7136",
+    "evidenceSha256": "486031c27f67f35da0c970f255fd1208e5cdcba823c309fc77679ac252de407c",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-tape-30mm",
+    "ean": "5907758515952",
+    "name": "Taśma malarska niebieska 30mmx50m",
+    "imageUrl": "https://sklep.sewera.pl/photo/23077/tasma-malarska-niebieska-30mmx50m.webp",
+    "priceGrosze": 1472,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T09:37:07.161Z",
+    "sourceUrl": "https://sklep.sewera.pl/tasma-malarska-niebieska-30mmx50m-p6966",
+    "evidenceSha256": "02d9896b791e08790e66cd0e8379aa08247cdfc974124b8e637aa189114ff81d",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-film-20m2",
+    "ean": "5907758504932",
+    "name": "Folia malarska gruba 4x5m CF_EP20_04932 Blue Dolphin",
+    "imageUrl": "https://sklep.sewera.pl/photo/23165/folia-malarska-gruba-4x5m-cfep2004932-blue-dolphin.webp",
+    "priceGrosze": 845,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T09:37:08.688Z",
+    "sourceUrl": "https://sklep.sewera.pl/folia-malarska-gruba-4x5m-cfep2004932-blue-dolphin-p21034",
+    "evidenceSha256": "34f848de7cb6b3c0539427f53ce51f59bd3df052c39ad40f8e984c0bfe31c386",
+    "validUntil": null
+  },
+  {
+    "sourceId": "realbud-knauf-5l",
+    "ean": "5901793357737",
+    "name": "Grunt KNAUF Universalgrund 5 L Środek głęboko gruntujący",
+    "imageUrl": "https://realbud.com/userdata/public/gfx/22865/9e27cdcd70b1c2f5d0b55ec1935ddbbe.jpg",
+    "priceGrosze": 4392,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T09:37:09.349Z",
+    "sourceUrl": "https://realbud.com/pl/p/Grunt-KNAUF-Universalgrund-5-L-Srodek-gleboko-gruntujacy/75056675",
+    "evidenceSha256": "7bef715dd91e695f9a0248f14ea17d8ef8deda756a541c7d4a7406e862a859a5",
+    "validUntil": null
   }
 ]
