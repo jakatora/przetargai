@@ -14523,7 +14523,7 @@ async function estimateLine(db, deps, item, options) {
     const reason = hadCriteria ? "no-product" : "no-query";
     return { resolved: false, ...base, reason, lineCost: 0 };
   }
-  const offers = (await deps.listOffers(db, product.id)).filter((offer) => isComparableOffer(offer));
+  const offers = (await deps.listOffers(db, product.id)).filter((offer) => isComparableOffer(offer) && (!options.store || offer.store === options.store));
   const cheapestOffer = selectCheapestOffer(offers, options.store, { quantity: item.quantity, product });
   if (!cheapestOffer) {
     return { resolved: false, ...base, reason: "no-offer", lineCost: 0 };
