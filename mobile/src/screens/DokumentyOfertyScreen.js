@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useJezyk } from '../context/JezykContext';
 import { View, Text, Pressable, Share, Switch } from 'react-native';
 import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
@@ -40,6 +41,7 @@ import { wczytajKontroleOferty, zapiszKontroleOferty } from '../lib/kontrolaOfer
  */
 export default function DokumentyOfertyScreen({ route, navigation }) {
   const styles = useStyle(tworzStyleDokumentow);
+  const { t } = useJezyk();
   const { user } = useAuth();
   const match = route?.params?.match ?? null;
   const przetarg = useMemo(() => daneZOgloszenia(match?.tender), [match]);
@@ -188,7 +190,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
         </Text>
         {przetarg.zamawiajacy ? <Text style={styles.heroMeta}>Zamawiający: {przetarg.zamawiajacy}</Text> : null}
         {!match ? (
-          <Text style={styles.heroMeta}>Otwórz z karty przetargu, a nazwę zamawiającego i numer postępowania wstawi za Ciebie.</Text>
+          <Text style={styles.heroMeta}>{t('Otwórz z karty przetargu, a nazwę zamawiającego i numer postępowania wstawi za Ciebie.', 'Open it from a tender page and the buyer name and procedure number are filled in for you.')}</Text>
         ) : null}
       </View>
 
@@ -226,7 +228,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
             ) : null}
             </Fragment>
           ))}
-          <Text style={styles.label}>Wielkość firmy (oświadczenie MŚP)</Text>
+          <Text style={styles.label}>{t('Wielkość firmy (oświadczenie MŚP)', 'Company size (SME statement)')}</Text>
           <View style={styles.chipy}>
             {WIELKOSCI_FIRMY.map((wlk) => {
               const aktywna = wykonawca.wielkosc === wlk.id;
@@ -248,8 +250,8 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
 
       {/* ── 2. Ta oferta ── */}
       <Text style={styles.sectionTitle}>2. Ta oferta</Text>
-      <Text style={styles.sectionOpis}>Uzupełnij to, co zależy od tego przetargu. Co puste — w dokumencie zostanie kropkowane miejsce.</Text>
-      <TextField label="Cena netto (zł)" value={oferta.cenaNetto} onChangeText={(v) => setOferta((o) => ({ ...o, cenaNetto: v }))} keyboardType="decimal-pad" hint="VAT i brutto policzą się same" />
+      <Text style={styles.sectionOpis}>{t('Uzupełnij to, co zależy od tego przetargu. Co puste — w dokumencie zostanie kropkowane miejsce.', 'Fill in what depends on this tender. Anything left blank stays as a dotted line in the document.')}</Text>
+      <TextField label={t('Cena netto (zł)', 'Net price (PLN)')} value={oferta.cenaNetto} onChangeText={(v) => setOferta((o) => ({ ...o, cenaNetto: v }))} keyboardType="decimal-pad" hint={t('VAT i brutto policzą się same', 'VAT and gross are computed automatically')} />
       <Text style={styles.label}>Stawka VAT</Text>
       <View style={styles.chipy}>
         {STAWKI_VAT.map((s) => {
@@ -262,11 +264,11 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
         })}
       </View>
       <TextField label="Termin wykonania" value={oferta.terminWykonania} onChangeText={(v) => setOferta((o) => ({ ...o, terminWykonania: v }))} hint="np. 90 dni od podpisania umowy — tak jak wymaga SWZ" />
-      <TextField label="Okres gwarancji (miesiące)" value={oferta.gwarancjaMies} onChangeText={(v) => setOferta((o) => ({ ...o, gwarancjaMies: v }))} keyboardType="number-pad" />
-      <TextField label="Części dla podwykonawców" value={oferta.podwykonawcy} onChangeText={(v) => setOferta((o) => ({ ...o, podwykonawcy: v }))} hint="Puste = wykonujesz samodzielnie" multiline />
+      <TextField label={t('Okres gwarancji (miesiące)', 'Warranty period (months)')} value={oferta.gwarancjaMies} onChangeText={(v) => setOferta((o) => ({ ...o, gwarancjaMies: v }))} keyboardType="number-pad" />
+      <TextField label={t('Części dla podwykonawców', 'Parts for subcontractors')} value={oferta.podwykonawcy} onChangeText={(v) => setOferta((o) => ({ ...o, podwykonawcy: v }))} hint="Puste = wykonujesz samodzielnie" multiline />
 
       <View style={styles.przelacznik}>
-        <Text style={styles.przelacznikTekst}>Zastrzegam tajemnicę przedsiębiorstwa w części oferty</Text>
+        <Text style={styles.przelacznikTekst}>{t('Zastrzegam tajemnicę przedsiębiorstwa w części oferty', 'I mark part of the bid as a trade secret')}</Text>
         <Switch value={oferta.tajemnica} onValueChange={(v) => setOferta((o) => ({ ...o, tajemnica: v }))} />
       </View>
       {oferta.tajemnica ? (
@@ -275,7 +277,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
 
       {/* ── 3. Sytuacja wykonawcy ── */}
       <Text style={styles.sectionTitle}>3. Twoja sytuacja</Text>
-      <Text style={styles.sectionOpis}>Od tego zależy treść oświadczeń i lista dodatkowych załączników.</Text>
+      <Text style={styles.sectionOpis}>{t('Od tego zależy treść oświadczeń i lista dodatkowych załączników.', 'This determines the statements and the list of extra attachments.')}</Text>
       {[
         ['art109', 'Zamawiający przewidział w SWZ wykluczenie z art. 109 ust. 1'],
         ['grupaKapitalowa', 'Należę do grupy kapitałowej z innym oferentem'],
@@ -291,8 +293,8 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
           </View>
           {klucz === 'pelnomocnik' && sytuacja.pelnomocnik ? (
             <View>
-              <TextField label="Pełnomocnik — imię i nazwisko" value={pelnomocnik.imie} onChangeText={(v) => setPelnomocnik((p) => ({ ...p, imie: v }))} hint="Pełnomocnictwo dojdzie do pakietu; podpisuje je mocodawca z rejestru" />
-              <TextField label="Stanowisko pełnomocnika (opcjonalnie)" value={pelnomocnik.stanowisko} onChangeText={(v) => setPelnomocnik((p) => ({ ...p, stanowisko: v }))} />
+              <TextField label={t('Pełnomocnik — imię i nazwisko', 'Proxy — full name')} value={pelnomocnik.imie} onChangeText={(v) => setPelnomocnik((p) => ({ ...p, imie: v }))} hint={t('Pełnomocnictwo dojdzie do pakietu; podpisuje je mocodawca z rejestru', 'The power of attorney joins the pack; the registered principal signs it')} />
+              <TextField label={t('Stanowisko pełnomocnika (opcjonalnie)', 'Proxy’s position (optional)')} value={pelnomocnik.stanowisko} onChangeText={(v) => setPelnomocnik((p) => ({ ...p, stanowisko: v }))} />
             </View>
           ) : null}
         </View>
@@ -301,33 +303,33 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
       {/* ── 4. Pakiet ── */}
       <Text style={styles.sectionTitle}>4. Gotowe dokumenty</Text>
       {!walidacja.kompletne ? (
-        <Text style={styles.ostrzezenie}>Dane firmy są niekompletne — dokumenty wygenerują się z kropkami w brakujących miejscach. Uzupełnij i zapisz w punkcie 1.</Text>
+        <Text style={styles.ostrzezenie}>{t('Dane firmy są niekompletne — dokumenty wygenerują się z kropkami w brakujących miejscach. Uzupełnij i zapisz w punkcie 1.', 'Company details are incomplete — documents will have dotted gaps. Fill them in and save in step 1.')}</Text>
       ) : null}
       {pakiet.map((dok) => (
         <View key={dok.id} style={styles.karta}>
           <View style={styles.kartaNaglowek}>
             <Text style={styles.kartaTytul}>{dok.nazwa}</Text>
-            {udostepnione.has(dok.id) ? <Text style={styles.kartaOk}>udostępniono</Text> : null}
+            {udostepnione.has(dok.id) ? <Text style={styles.kartaOk}>{t('udostępniono', 'shared')}</Text> : null}
           </View>
           <Text style={styles.kartaKiedy}>{ETYKIETY_KIEDY[dok.kiedy]}</Text>
           <Text style={styles.kartaPodstawa}>{dok.podstawa}</Text>
           {dok.uwaga ? <Text style={styles.kartaUwaga}>{dok.uwaga}</Text> : null}
           {dok.braki?.length ? <Text style={styles.kartaUwaga}>Brakuje: {dok.braki.join(', ')} — uzupełnij w punkcie 2.</Text> : null}
           <Text style={styles.podglad} numberOfLines={6}>{dok.tresc}</Text>
-          <Button title="Udostępnij / skopiuj" onPress={() => udostepnij(dok)} variant="ghost" />
+          <Button title={t('Udostępnij / skopiuj', 'Share / copy')} onPress={() => udostepnij(dok)} variant="ghost" />
           <PrzyciskWord nazwa={dok.nazwa} tresc={dok.tresc} poWyslaniu={() => setUdostepnione((s) => new Set(s).add(dok.id))} />
         </View>
       ))}
 
       {przetarg.zrodlo === 'ted' ? (
         <View style={styles.karta}>
-          <Text style={styles.kartaTytul}>Przetarg unijny: zamiast oświadczenia — JEDZ (ESPD)</Text>
+          <Text style={styles.kartaTytul}>{t('Przetarg unijny: zamiast oświadczenia — JEDZ (ESPD)', 'EU tender: ESPD instead of the statement')}</Text>
           <Text style={styles.kartaOpis}>
             Powyżej progów UE oświadczenie wstępne składasz na formularzu JEDZ. Ściąga mówi sekcja po sekcji,
             co wpisać i co zaznaczyć — z Twoimi danymi już wstawionymi.
           </Text>
           <Button
-            title="Ściąga do JEDZ — udostępnij"
+            title={t('Ściąga do JEDZ — udostępnij', 'ESPD cheat sheet — share')}
             variant="ghost"
             onPress={async () => {
               const s = generujSciageJedz({ wykonawca, przetarg, sytuacja: { polegaNaZasobach: sytuacja.polegaNaZasobach, podwykonawcy: oferta.podwykonawcy, konsorcjum: sytuacja.konsorcjum } });
@@ -338,7 +340,7 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
       ) : null}
 
       <Button
-        title="Udostępnij cały pakiet jednym ruchem"
+        title={t('Udostępnij cały pakiet jednym ruchem', 'Share the whole pack in one go')}
         onPress={async () => {
           const calosc = pakiet.map((d) => `=== ${d.nazwa} (${ETYKIETY_KIEDY[d.kiedy]}) ===\n\n${d.tresc}`).join('\n\n\n');
           try {
@@ -360,21 +362,21 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
       />
 
       {/* ── 5. Co jeszcze ── */}
-      <Text style={styles.sectionTitle}>5. Co jeszcze dołączyć</Text>
+      <Text style={styles.sectionTitle}>{t('5. Co jeszcze dołączyć', '5. What else to attach')}</Text>
       {tenderId ? (
         <View style={styles.karta}>
-          <Text style={styles.kartaTytul}>Podmiotowe środki dowodowe z SWZ</Text>
+          <Text style={styles.kartaTytul}>{t('Podmiotowe środki dowodowe z SWZ', 'Qualification evidence from the tender documents')}</Text>
           <Text style={styles.kartaOpis}>
             Zaświadczenia (US, ZUS, KRK, polisa, wykazy) wynikają z SWZ tego przetargu — checklista porównuje je z Twoim Sejfem na dzień składania.
           </Text>
-          <Button title="Co muszę mieć do dnia składania" variant="ghost" onPress={() => navigation.navigate('ChecklistaOferty', { tenderId, tytul: przetarg.tytul ?? undefined })} />
+          <Button title={t('Co muszę mieć do dnia składania', 'What I need by submission day')} variant="ghost" onPress={() => navigation.navigate('ChecklistaOferty', { tenderId, tytul: przetarg.tytul ?? undefined })} />
         </View>
       ) : null}
       {dodatkowe.map((p) => (
         <View key={p.id} style={styles.karta}>
           <Text style={styles.kartaTytul}>{p.tytul}</Text>
           <Text style={styles.kartaOpis}>{p.opis}</Text>
-          {p.ekran ? <Button title="Otwórz narzędzie" onPress={() => navigation.navigate(p.ekran, match ? { match } : undefined)} variant="ghost" /> : null}
+          {p.ekran ? <Button title={t('Otwórz narzędzie', 'Open the tool')} onPress={() => navigation.navigate(p.ekran, match ? { match } : undefined)} variant="ghost" /> : null}
         </View>
       ))}
       <Text style={styles.stopka}>

@@ -357,8 +357,8 @@ test('Radar SWZ: po utworzeniu analizy z przetargu wiąże ją i potwierdza wyni
   assert.match(powiaz, /if \(wstepne\.tenderId === null \|\| !postepowanieId\) return;/);
 
   // Odczyt stanu i ponowienie są na ekranie; sprawdzenie nie zapisuje ponownie.
-  assert.match(ekran, /title="Sprawdź powiązanie"[^\n]*onPress=\{\(\) => sprawdzStanPowiazania\(wybraneId\)\}/);
-  assert.match(ekran, /title="Ponów powiązanie"[^\n]*onPress=\{\(\) => powiazZPrzetargiem\(wybraneId\)\}/);
+  assert.match(ekran, /title=\{t\('Sprawdź powiązanie'[^\n]*onPress=\{\(\) => sprawdzStanPowiazania\(wybraneId\)\}/);
+  assert.match(ekran, /title=\{t\('Ponów powiązanie'[^\n]*onPress=\{\(\) => powiazZPrzetargiem\(wybraneId\)\}/);
   const sprawdz = ekran.slice(ekran.indexOf('async function sprawdzStanPowiazania'), ekran.indexOf('function otworzCheckliste'));
   assert.match(sprawdz, /sprawdzPowiazanie\(\{/);
   assert.doesNotMatch(sprawdz, /api\.powiazSwz/);

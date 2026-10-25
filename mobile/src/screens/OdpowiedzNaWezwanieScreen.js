@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useJezyk } from '../context/JezykContext';
 import { View, Text, Pressable, Share } from 'react-native';
 import { udostepnijTekst } from '../lib/udostepnianie';
 import Screen from '../components/Screen';
@@ -53,6 +54,7 @@ function tonNaTokeny(ton, k) {
 export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleOdpowiedzi);
+  const { t } = useJezyk();
   const { user } = useAuth();
   const match = route?.params?.match ?? null;
   const przetarg = useMemo(() => {
@@ -206,7 +208,7 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
   return (
     <Screen scroll>
       <View style={styles.hero}>
-        <Text style={styles.heroEtykieta}>Odpowiedź na wezwanie w 1 klik</Text>
+        <Text style={styles.heroEtykieta}>{t('Odpowiedź na wezwanie w 1 klik', 'Reply to a buyer’s request in one tap')}</Text>
         <Text style={styles.heroTytul}>{przetarg.tytul ?? 'Pismo do zamawiającego z listą załączników'}</Text>
         <Text style={styles.heroWstep}>
           Wklej treść wezwania — rozpoznamy podstawę prawną, termin i znak pisma, a Ty dostaniesz gotową
@@ -214,9 +216,9 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
         </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>1. Treść wezwania</Text>
+      <Text style={styles.sectionTitle}>{t('1. Treść wezwania', '1. The request')}</Text>
       <TextField
-        label="Wklej treść wezwania (e-mail lub pismo z platformy)"
+        label={t('Wklej treść wezwania (e-mail lub pismo z platformy)', 'Paste the request (e-mail or letter from the platform)')}
         value={tekstWezwania}
         onChangeText={(v) => { setTekstWezwania(v); setRozpoznano(false); }}
         multiline
@@ -251,15 +253,15 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
       ) : null}
 
       <Text style={styles.sectionTitle}>3. Dane z wezwania</Text>
-      <TextField label="Znak / numer pisma zamawiającego" value={znak} onChangeText={setZnak} autoCapitalize="characters" />
+      <TextField label={t('Znak / numer pisma zamawiającego', 'Buyer’s reference / letter number')} value={znak} onChangeText={setZnak} autoCapitalize="characters" />
       <TextField label="Data wezwania" value={dataWezwania} onChangeText={setDataWezwania} hint="np. 2026-10-22 albo 22.10.2026" />
       <TextField label="Termin odpowiedzi" value={termin} onChangeText={setTermin} hint="RRRR-MM-DD — z wezwania" />
-      <TextField label="Godzina (jeśli podana)" value={godzina} onChangeText={setGodzina} hint="np. 10:00" keyboardType="numbers-and-punctuation" />
+      <TextField label={t('Godzina (jeśli podana)', 'Time (if given)')} value={godzina} onChangeText={setGodzina} hint="np. 10:00" keyboardType="numbers-and-punctuation" />
 
       {rodzajInfo.zalacznikiWymagane || dokumenty.length ? (
         <View>
-          <Text style={styles.sectionTitle}>4. Załączniki</Text>
-          <Text style={styles.sectionOpis}>Zaznacz, co dołączasz — trafią do numerowanej listy w piśmie.</Text>
+          <Text style={styles.sectionTitle}>{t('4. Załączniki', '4. Attachments')}</Text>
+          <Text style={styles.sectionOpis}>{t('Zaznacz, co dołączasz — trafią do numerowanej listy w piśmie.', 'Tick what you attach — it goes into the numbered list in the letter.')}</Text>
           <View style={styles.chipy}>
             {TYPOWE_DOKUMENTY.map((nazwa) => {
               const aktywny = dokumenty.includes(nazwa);
@@ -285,29 +287,29 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
                   </Text>
                 );
               })}
-              <Button title="Otwórz Sejf dokumentów" variant="ghost" onPress={() => navigation.navigate('Sejf')} />
+              <Button title={t('Otwórz Sejf dokumentów', 'Open the document vault')} variant="ghost" onPress={() => navigation.navigate('Sejf')} />
             </View>
           ) : null}
           {dokumenty.includes(CHIP_AKTUALNOSC) || dokumenty.includes(CHIP_GRUPA) ? (
             <View style={styles.wykazBlok}>
-              <Text style={styles.wykazOpis}>Te oświadczenia napiszemy za Ciebie z danych firmy — podpisz i dołącz:</Text>
-              {dokumenty.includes(CHIP_AKTUALNOSC) ? <Button title="Oświadczenie o aktualności informacji" variant="ghost" onPress={() => udostepnijOswiadczenie('aktualnosc')} /> : null}
-              {dokumenty.includes(CHIP_GRUPA) ? <Button title="Oświadczenie o grupie kapitałowej (nie należę)" variant="ghost" onPress={() => udostepnijOswiadczenie('grupa')} /> : null}
-              {dokumenty.includes(CHIP_GRUPA) ? <Text style={styles.wykazOpis}>Należysz do grupy z innym oferentem? Wariant z listą wygenerujesz w „Dokumentach do oferty".</Text> : null}
+              <Text style={styles.wykazOpis}>{t('Te oświadczenia napiszemy za Ciebie z danych firmy — podpisz i dołącz:', 'We write these statements for you from your company details — sign and attach:')}</Text>
+              {dokumenty.includes(CHIP_AKTUALNOSC) ? <Button title={t('Oświadczenie o aktualności informacji', 'Statement on currency of information')} variant="ghost" onPress={() => udostepnijOswiadczenie('aktualnosc')} /> : null}
+              {dokumenty.includes(CHIP_GRUPA) ? <Button title={t('Oświadczenie o grupie kapitałowej (nie należę)', 'Capital group statement (not a member)')} variant="ghost" onPress={() => udostepnijOswiadczenie('grupa')} /> : null}
+              {dokumenty.includes(CHIP_GRUPA) ? <Text style={styles.wykazOpis}>{t('Należysz do grupy z innym oferentem? Wariant z listą wygenerujesz w „Dokumentach do oferty".', 'In a capital group with another bidder? Generate the variant with the list in “Bid documents”.')}</Text> : null}
             </View>
           ) : null}
           {dokumenty.includes(CHIP_WYKAZU) ? (
             <View style={styles.wykazBlok}>
-              <Text style={styles.wykazOpis}>Wykaz złożymy z Twojego Banku referencji (tylko doświadczenie aktualne na dziś):</Text>
-              <Button title="Wykaz robót budowlanych" variant="ghost" onPress={() => udostepnijWykaz('roboty')} />
-              <Button title="Wykaz usług" variant="ghost" onPress={() => udostepnijWykaz('uslugi')} />
+              <Text style={styles.wykazOpis}>{t('Wykaz złożymy z Twojego Banku referencji (tylko doświadczenie aktualne na dziś):', 'We build the list from your reference bank (only experience still valid today):')}</Text>
+              <Button title={t('Wykaz robót budowlanych', 'List of construction works')} variant="ghost" onPress={() => udostepnijWykaz('roboty')} />
+              <Button title={t('Wykaz usług', 'List of services')} variant="ghost" onPress={() => udostepnijWykaz('uslugi')} />
               <Button title="Wykaz dostaw" variant="ghost" onPress={() => udostepnijWykaz('dostawy')} />
             </View>
           ) : null}
           {dokumenty.filter((d) => !TYPOWE_DOKUMENTY.includes(d)).map((d) => (
             <Pressable key={d} onPress={() => przelaczDokument(d)} style={styles.wlasny} accessibilityRole="button" accessibilityLabel={`Usuń ${d}`}>
               <Text style={styles.wlasnyTekst}>• {d}</Text>
-              <Text style={styles.wlasnyUsun}>usuń</Text>
+              <Text style={styles.wlasnyUsun}>{t('usuń', 'remove')}</Text>
             </Pressable>
           ))}
         </View>
@@ -328,13 +330,13 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
       ) : null}
 
       <Button
-        title="Ustaw odliczanie i checklistę w Strażniku wezwania"
+        title={t('Ustaw odliczanie i checklistę w Strażniku wezwania', 'Set the countdown and checklist in the Request Guard')}
         variant="ghost"
         onPress={ustawStraznika}
         disabled={!termin && !dokumenty.length}
       />
 
-      <Text style={styles.sectionTitle}>Kontrola przed wysłaniem</Text>
+      <Text style={styles.sectionTitle}>{t('Kontrola przed wysłaniem', 'Pre-send check')}</Text>
       {kontrola.map((p) => {
         const t = tonNaTokeny(p.ton, kolory);
         return (
@@ -349,10 +351,10 @@ export default function OdpowiedzNaWezwanieScreen({ route, navigation }) {
         <Text style={styles.kartaTytul}>{pismo.nazwa}</Text>
         <Text style={styles.podglad}>{pismo.tresc}</Text>
       </View>
-      <Button title="Udostępnij / skopiuj pismo" onPress={udostepnij} />
+      <Button title={t('Udostępnij / skopiuj pismo', 'Share / copy the letter')} onPress={udostepnij} />
       <PrzyciskWord nazwa={pismo.nazwa} tresc={pismo.tresc} />
-      {udostepniono ? <Text style={styles.ok}>Udostępniono. Podpisz elektronicznie pismo i każdy załącznik, potem wyślij tam, gdzie wskazuje wezwanie.</Text> : null}
-      <Text style={styles.stopka}>To pismo przewodnie wg Pzp — treść merytoryczną wyjaśnień i same dokumenty dostarczasz Ty. Niczego nie wysyłamy do zamawiającego.</Text>
+      {udostepniono ? <Text style={styles.ok}>{t('Udostępniono. Podpisz elektronicznie pismo i każdy załącznik, potem wyślij tam, gdzie wskazuje wezwanie.', 'Shared. Sign the letter and every attachment electronically, then send them where the request says.')}</Text> : null}
+      <Text style={styles.stopka}>{t('To pismo przewodnie wg Pzp — treść merytoryczną wyjaśnień i same dokumenty dostarczasz Ty. Niczego nie wysyłamy do zamawiającego.', 'This is the cover letter under the procurement law — you provide the substance and the documents. We send nothing to the buyer.')}</Text>
     </Screen>
   );
 }

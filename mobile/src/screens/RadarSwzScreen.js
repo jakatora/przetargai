@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useJezyk } from '../context/JezykContext';
 import { View, Text, Pressable, ActivityIndicator, Share } from 'react-native';
 import { udostepnijTekst } from '../lib/udostepnianie';
 import { useFocusEffect } from '@react-navigation/native';
@@ -85,6 +86,7 @@ function tonNaTokeny(ton, k) {
 export default function RadarSwzScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleRadaru);
+  const { t } = useJezyk();
 
   // Pytania → formalny wniosek (art. 135/284) w 1 klik; dane firmy z magazynu dokumentów do oferty.
   async function udostepnijWniosek(postepowanie, pytania) {
@@ -394,7 +396,7 @@ export default function RadarSwzScreen({ route, navigation }) {
         </Text>
 
         <View style={styles.card}>
-          <Text style={styles.sekcjaTytul}>Weź postępowanie pod radar</Text>
+          <Text style={styles.sekcjaTytul}>{t('Weź postępowanie pod radar', 'Put a procedure on the radar')}</Text>
           {wstepne.zPrzetargu ? (
             <Text style={styles.kartaOpis}>
               Pola wypełniliśmy danymi z ogłoszenia wybranego przetargu. Sprawdź je i popraw,
@@ -405,25 +407,25 @@ export default function RadarSwzScreen({ route, navigation }) {
             </Text>
           ) : null}
           <TextField
-            label="Nazwa postępowania"
+            label={t('Nazwa postępowania', 'Procedure name')}
             value={nowaNazwa}
             onChangeText={setNowaNazwa}
             placeholder="np. Budowa drogi gminnej"
           />
           <TextField
-            label="Data ogłoszenia"
+            label={t('Data ogłoszenia', 'Notice date')}
             value={nowaOgloszenie}
             onChangeText={setNowaOgloszenie}
             placeholder="RRRR-MM-DD"
-            hint="Opcjonalnie. Razem z terminem składania wyznacza termin pytań."
+            hint={t('Opcjonalnie. Razem z terminem składania wyznacza termin pytań.', 'Optional. Together with the submission deadline it sets the question deadline.')}
             autoCapitalize="none"
           />
           <TextField
-            label="Termin składania ofert"
+            label={t('Termin składania ofert', 'Bid submission deadline')}
             value={nowyTermin}
             onChangeText={setNowyTermin}
             placeholder="RRRR-MM-DD"
-            hint="Opcjonalnie. Bez niego nie policzymy terminu pytań."
+            hint={t('Opcjonalnie. Bez niego nie policzymy terminu pytań.', 'Optional. Without it we cannot compute the question deadline.')}
             autoCapitalize="none"
           />
           <Button title="Dodaj do radaru" onPress={utworz} loading={tworze} disabled={!nowaNazwa.trim()} />
@@ -436,7 +438,7 @@ export default function RadarSwzScreen({ route, navigation }) {
         {lista === null ? (
           <ActivityIndicator color={kolory.blue} style={styles.spinner} />
         ) : lista.length === 0 ? (
-          <Text style={styles.pusto}>Nie masz jeszcze żadnego postępowania pod radarem.</Text>
+          <Text style={styles.pusto}>{t('Nie masz jeszcze żadnego postępowania pod radarem.', 'No procedure is on the radar yet.')}</Text>
         ) : (
           lista.map((p) => {
             const o = odliczaniePytan(p.termin_pytania);
@@ -471,9 +473,9 @@ export default function RadarSwzScreen({ route, navigation }) {
   if (bladDetal && !detal) {
     return (
       <Screen scroll>
-        <Pressable accessibilityRole="button" onPress={wroc} hitSlop={8}><Text style={styles.powrot}>← Wszystkie postępowania</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={wroc} hitSlop={8}><Text style={styles.powrot}>{t('← Wszystkie postępowania', '← All procedures')}</Text></Pressable>
         <View style={styles.bladCard}><Text style={styles.bladText}>{bladDetal}</Text></View>
-        <Button title="Spróbuj ponownie" variant="ghost" onPress={() => wczytajDetal(wybraneId)} />
+        <Button title={t('Spróbuj ponownie', 'Try again')} variant="ghost" onPress={() => wczytajDetal(wybraneId)} />
       </Screen>
     );
   }
@@ -491,7 +493,7 @@ export default function RadarSwzScreen({ route, navigation }) {
 
   return (
     <Screen scroll>
-      <Pressable accessibilityRole="button" onPress={wroc} hitSlop={8}><Text style={styles.powrot}>← Wszystkie postępowania</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={wroc} hitSlop={8}><Text style={styles.powrot}>{t('← Wszystkie postępowania', '← All procedures')}</Text></Pressable>
       <Text style={styles.tytul}>{postepowanie.nazwa}</Text>
       <Text style={styles.podtytul}>
         Termin składania ofert: {postepowanie.termin_skladania_ofert ? formatDate(postepowanie.termin_skladania_ofert) : 'nieznany'}
@@ -504,7 +506,7 @@ export default function RadarSwzScreen({ route, navigation }) {
       {/* ── Powiązanie z przetargiem, z którego otwarto Radar ── */}
       {kartaPowiazania ? (
         <View style={[styles.card, { borderColor: tonNaTokeny(kartaPowiazania.ton, kolory).tekst }]}>
-          <Text style={styles.kartaTytul}>Przetarg i checklista dokumentów</Text>
+          <Text style={styles.kartaTytul}>{t('Przetarg i checklista dokumentów', 'Tender and document checklist')}</Text>
           {wstepne.nazwa ? <Text style={styles.kartaOpis}>{wstepne.nazwa}</Text> : null}
           <Text style={[styles.powiazanieTekst, { color: tonNaTokeny(kartaPowiazania.ton, kolory).tekst }]}>
             {kartaPowiazania.tekst}
@@ -514,15 +516,15 @@ export default function RadarSwzScreen({ route, navigation }) {
           {kartaPowiazania.akcje.map((akcja, i) => {
             const wariant = i === 0 && akcja !== 'checklista' && akcja !== 'powiaz' ? 'primary' : 'ghost';
             if (akcja === 'sprawdz') {
-              return <Button key={akcja} title="Sprawdź powiązanie" variant={wariant} onPress={() => sprawdzStanPowiazania(wybraneId)} style={styles.powiazaniePrzycisk} />;
+              return <Button key={akcja} title={t('Sprawdź powiązanie', 'Check the link')} variant={wariant} onPress={() => sprawdzStanPowiazania(wybraneId)} style={styles.powiazaniePrzycisk} />;
             }
             if (akcja === 'ponow') {
-              return <Button key={akcja} title="Ponów powiązanie" variant={wariant} onPress={() => powiazZPrzetargiem(wybraneId)} style={styles.powiazaniePrzycisk} />;
+              return <Button key={akcja} title={t('Ponów powiązanie', 'Retry linking')} variant={wariant} onPress={() => powiazZPrzetargiem(wybraneId)} style={styles.powiazaniePrzycisk} />;
             }
             if (akcja === 'powiaz') {
-              return <Button key={akcja} title="Powiąż z przetargiem" variant="ghost" onPress={() => powiazZPrzetargiem(wybraneId)} style={styles.powiazaniePrzycisk} />;
+              return <Button key={akcja} title={t('Powiąż z przetargiem', 'Link to a tender')} variant="ghost" onPress={() => powiazZPrzetargiem(wybraneId)} style={styles.powiazaniePrzycisk} />;
             }
-            return <Button key={akcja} title="Otwórz checklistę dokumentów" variant="ghost" onPress={otworzCheckliste} style={styles.powiazaniePrzycisk} />;
+            return <Button key={akcja} title={t('Otwórz checklistę dokumentów', 'Open the document checklist')} variant="ghost" onPress={otworzCheckliste} style={styles.powiazaniePrzycisk} />;
           })}
         </View>
       ) : null}
@@ -533,13 +535,13 @@ export default function RadarSwzScreen({ route, navigation }) {
         {terminPytania?.terminPytan ? (
           <Text style={styles.banerMeta}>Pytania do SWZ złóż do końca dnia {formatDate(terminPytania.terminPytan)}.</Text>
         ) : (
-          <Text style={styles.banerMeta}>Uzupełnij daty postępowania, żeby policzyć termin pytań.</Text>
+          <Text style={styles.banerMeta}>{t('Uzupełnij daty postępowania, żeby policzyć termin pytań.', 'Fill in the procedure dates to compute the question deadline.')}</Text>
         )}
       </View>
 
       <Text style={styles.sekcjaTytul}>Pytania do SWZ ({pytania.length})</Text>
       {pytania.length === 0 ? (
-        <Text style={styles.pusto}>Brak pytań. Wygeneruj je z treści SWZ poniżej.</Text>
+        <Text style={styles.pusto}>{t('Brak pytań. Wygeneruj je z treści SWZ poniżej.', 'No questions yet. Generate them from the tender documents below.')}</Text>
       ) : (
         pytania.map((p) => (
           <View key={p.id} style={styles.pozycja}>
@@ -553,14 +555,14 @@ export default function RadarSwzScreen({ route, navigation }) {
       )}
       {pytania.length > 0 ? (
         <Button
-          title="Złóż wniosek o wyjaśnienie SWZ (pismo w 1 klik)"
+          title={t('Złóż wniosek o wyjaśnienie SWZ (pismo w 1 klik)', 'Request clarification of the tender documents (one-tap letter)')}
           variant="ghost"
           onPress={() => udostepnijWniosek(postepowanie, pytania)}
         />
       ) : null}
 
       <View style={styles.card}>
-        <Text style={styles.kartaTytul}>Wygeneruj pytania z treści SWZ</Text>
+        <Text style={styles.kartaTytul}>{t('Wygeneruj pytania z treści SWZ', 'Generate questions from the tender documents')}</Text>
         <Text style={styles.kartaOpis}>
           Wklej treść SWZ — wykryjemy niejasności, sprzeczności i braki parametrów i zapiszemy je jako gotowe szkice pytań.
         </Text>
@@ -578,7 +580,7 @@ export default function RadarSwzScreen({ route, navigation }) {
         <TextField
           value={swzTekst}
           onChangeText={setSwzTekst}
-          placeholder="Wklej tu treść SWZ…"
+          placeholder={t('Wklej tu treść SWZ…', 'Paste the tender documents here…')}
           multiline
           numberOfLines={6}
           inputStyle={styles.inputWielo}
@@ -595,7 +597,7 @@ export default function RadarSwzScreen({ route, navigation }) {
       {/* ── 2. Timeline zmian ── */}
       <Text style={styles.sekcjaTytul}>Opublikowane zmiany ({zmiany.length})</Text>
       {zmiany.length === 0 ? (
-        <Text style={styles.pusto}>Zamawiający nie opublikował jeszcze żadnej zmiany.</Text>
+        <Text style={styles.pusto}>{t('Zamawiający nie opublikował jeszcze żadnej zmiany.', 'The buyer has not published any change yet.')}</Text>
       ) : (
         zmiany.map((z) => {
           const linie = parsujDiff(z.diff);
@@ -609,7 +611,7 @@ export default function RadarSwzScreen({ route, navigation }) {
               {z.opis_skutku ? (
                 <Text style={styles.zmianaOpis}>{z.opis_skutku}</Text>
               ) : (
-                <Text style={styles.zmianaOpisBrak}>Opis skutku niedostępny — zobacz różnicę poniżej.</Text>
+                <Text style={styles.zmianaOpisBrak}>{t('Opis skutku niedostępny — zobacz różnicę poniżej.', 'Impact description unavailable — see the difference below.')}</Text>
               )}
 
               {linie.length > 0 ? (
@@ -645,23 +647,23 @@ export default function RadarSwzScreen({ route, navigation }) {
       )}
 
       <View style={styles.card}>
-        <Text style={styles.kartaTytul}>Sprawdź publikacje zamawiającego</Text>
+        <Text style={styles.kartaTytul}>{t('Sprawdź publikacje zamawiającego', 'Check the buyer’s publications')}</Text>
         <Text style={styles.kartaOpis}>
           Wklej nowo opublikowaną wersję SWZ — porównamy ją z poprzednią i pokażemy różnicę oraz jej skutek.
         </Text>
         <TextField
           value={nowaWersja}
           onChangeText={setNowaWersja}
-          placeholder="Wklej treść nowej wersji SWZ…"
+          placeholder={t('Wklej treść nowej wersji SWZ…', 'Paste the new version of the tender documents…')}
           multiline
           numberOfLines={6}
           inputStyle={styles.inputWielo}
         />
-        <Button title="Sprawdź zmiany" onPress={odswiez} loading={odswiezam} disabled={!nowaWersja.trim()} />
+        <Button title={t('Sprawdź zmiany', 'Check changes')} onPress={odswiez} loading={odswiezam} disabled={!nowaWersja.trim()} />
       </View>
 
       {/* ── 3. Checklista przedwysyłkowa + bramka ── */}
-      <Text style={styles.sekcjaTytul}>Przed wysłaniem oferty</Text>
+      <Text style={styles.sekcjaTytul}>{t('Przed wysłaniem oferty', 'Before sending the bid')}</Text>
       <View style={styles.sekcjeRzad}>
         {checklista.sekcje.map((s) => (
           <Text
@@ -684,10 +686,10 @@ export default function RadarSwzScreen({ route, navigation }) {
       </View>
 
       {checklista.gotowa_do_wyslania ? (
-        <Button title="Wyślij ofertę" onPress={() => wyslij(false)} loading={wysylam} />
+        <Button title={t('Wyślij ofertę', 'Send the bid')} onPress={() => wyslij(false)} loading={wysylam} />
       ) : (
         <Button
-          title="Wyślij mimo to (z ostrzeżeniem)"
+          title={t('Wyślij mimo to (z ostrzeżeniem)', 'Send anyway (with a warning)')}
           variant="danger"
           onPress={() => wyslij(true)}
           loading={wysylam}
@@ -695,7 +697,7 @@ export default function RadarSwzScreen({ route, navigation }) {
       )}
 
       {/* ── Sejf dokumentów vs to postępowanie (sejf 7/7) ── */}
-      <Text style={styles.sekcjaTytul}>Twój sejf vs to postępowanie</Text>
+      <Text style={styles.sekcjaTytul}>{t('Twój sejf vs to postępowanie', 'Your vault vs this procedure')}</Text>
       <View style={styles.card}>
         <Text style={styles.kartaOpis}>
           Porównaj podmiotowe środki dowodowe z sejfu z wymaganiami SWZ tego postępowania —
@@ -779,7 +781,7 @@ export default function RadarSwzScreen({ route, navigation }) {
                           <Text style={styles.wpisLink}>{w.online.nazwa} →</Text>
                         </Pressable>
                       ) : (
-                        <Text style={styles.wpisBrakOnline}>brak e-usługi</Text>
+                        <Text style={styles.wpisBrakOnline}>{t('brak e-usługi', 'no e-service')}</Text>
                       )}
                     </View>
                   ))
@@ -788,7 +790,7 @@ export default function RadarSwzScreen({ route, navigation }) {
             )}
 
             <Button
-              title="Sprawdź ponownie"
+              title={t('Sprawdź ponownie', 'Check again')}
               variant="ghost"
               onPress={sprawdzSejf}
               loading={ladujeDopasowanie}
@@ -797,7 +799,7 @@ export default function RadarSwzScreen({ route, navigation }) {
           </>
         ) : (
           <Button
-            title="Sprawdź dokumenty w sejfie"
+            title={t('Sprawdź dokumenty w sejfie', 'Check documents in the vault')}
             onPress={sprawdzSejf}
             loading={ladujeDopasowanie}
           />
