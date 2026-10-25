@@ -10,6 +10,10 @@ import { useAuth } from '../context/AuthContext';
 import { spacing, radius } from '../theme';
 import { WOJEWODZTWA } from '../lib/wojewodztwa';
 import { KROKI_KREATORA, kartaDoFormularza, formularzDoKarty, walidujFormularz, parsujListe } from '../lib/kartaFirmy';
+import * as storage from '../lib/storage';
+import { KLUCZ_DANYCH_WYKONAWCY } from '../lib/dokumentyOferty';
+import { pobierzDanePoNip } from '../lib/danePoNip';
+import { prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu } from '../lib/kartaZNip';
 
 /** Selekcja wyłączona po stronie serwera (`PRACOWNIK_ENABLED=false`) — zostają pola profilu z `PATCH /auth/me`. */
 const KROKI_UPROSZCZONE = [1, 3, 4];
@@ -20,7 +24,7 @@ const KROKI_PELNE = [1, 2, 3, 4, 5];
  * serwer przelicza otwarte przetargi, gdy zmieniły się reguły.
  */
 export default function KartaFirmyScreen({ route, navigation }) {
-  const { t } = useJezyk();
+  const { t, jezyk } = useJezyk();
   const styles = useStyle(tworzStyleKarty);
   const { user, setUser } = useAuth();
   const [krok, setKrok] = useState(Math.min(5, Math.max(1, Number(route?.params?.krok) || 1)));
@@ -29,6 +33,10 @@ export default function KartaFirmyScreen({ route, navigation }) {
   const [blad, setBlad] = useState(null);
   const [zapisywanie, setZapisywanie] = useState(false);
   const [podpowiadanie, setPodpowiadanie] = useState(false);
+  // „Wpisz NIP — resztę wstawimy": nazwa i województwo z Białej listy VAT (logika w lib/kartaZNip.js);
+  // te same dane firmy lądują w magazynie Dokumentów do oferty, więc NIP wpisuje się RAZ.
+  const [nip, setNip] = useState('');
+  const [nipStan, setNipStan] = useState({ laduje: false, komunikat: null, ok: false });
 
   const wczytaj = useCallback(() => {
     setBlad(null);
@@ -44,6 +52,27 @@ export default function KartaFirmyScreen({ route, navigation }) {
   }, [user]);
 
   useEffect(() => { wczytaj(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let aktywny = true;
+    storage.getItem(KLUCZ_DANYCH_WYKONAWCY)
+      .then((s) => { const d = s ? JSON.parse(s) : null; if (aktywny && d?.nip) setNip(String(d.nip)); })
+      .catch(() => {});
+    return () => { aktywny = false; };
+  }, []);
+
+  async function wypelnijZNip() {
+    setNipStan({ laduje: true, komunikat: null, ok: false });
+    const { dane, blad } = await pobierzDanePoNip(nip);
+    if (!dane) { setNipStan({ laduje: false, komunikat: blad, ok: false }); return; }
+    const wynik = prefillKartyZDanychFirmy(form, dane);
+    setForm(wynik.form);
+    try {
+      const s = await storage.getItem(KLUCZ_DANYCH_WYKONAWCY);
+      await storage.setItem(KLUCZ_DANYCH_WYKONAWCY, JSON.stringify(scalDaneWykonawcy(s ? JSON.parse(s) : null, dane)));
+    } catch { /* magazyn niedostępny — karta i tak wypełniona */ }
+    setNipStan({ laduje: false, komunikat: komunikatPrefillu(wynik, jezyk), ok: true });
+  }
 
   if (!form) {
     return (
@@ -132,6 +161,17 @@ export default function KartaFirmyScreen({ route, navigation }) {
 
       {krok === 1 ? (
         <View>
+          <TextField
+            label={t('NIP firmy', 'Company tax ID (NIP)')}
+            value={nip}
+            onChangeText={setNip}
+            placeholder="7941844550"
+            keyboardType="numeric"
+            maxLength={13}
+            hint={t('Wpisz NIP, a nazwę i województwo wstawimy z Białej listy VAT', 'Enter your NIP and we fill in the name and voivodeship from the VAT register')}
+          />
+          <Button title={t('Wypełnij z Białej listy', 'Fill in from the VAT register')} variant="ghost" loading={nipStan.laduje} onPress={wypelnijZNip} />
+          {nipStan.komunikat ? <Text style={nipStan.ok ? styles.ok : styles.blad}>{nipStan.komunikat}</Text> : null}
           {pole(form.opis, ustaw('opis'), t('Czym się zajmujesz', 'What you do'), t('Np. remonty i wymiana pokryć dachowych na Podkarpaciu', 'E.g. roof repairs and replacement in Subcarpathia'), { wieloliniowe: true, maks: 600 })}
           <Button title={t('Podpowiedz słowa i kody CPV', 'Suggest keywords and CPV codes')} variant="ghost" loading={podpowiadanie} onPress={podpowiedz} />
           {pole(form.keywords, ustaw('keywords'), t('Słowa kluczowe, po przecinku', 'Keywords, comma separated'), t('Np. dach, pokrycie dachowe', 'E.g. roof, roofing'))}
@@ -197,6 +237,7 @@ export default function KartaFirmyScreen({ route, navigation }) {
 const tworzStyleKarty = tworzStyle((k) => ({
   uwaga: { fontSize: 13, color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo, padding: spacing.sm, borderRadius: radius.md, marginBottom: spacing.sm },
   licznik: { fontSize: 13, color: k.textMuted },
+  ok: { fontSize: 13, color: k.green, fontWeight: '600', marginBottom: spacing.sm, lineHeight: 18 },
   tytul: { fontSize: 20, fontWeight: '700', color: k.text, marginTop: spacing.xs },
   opis: { fontSize: 14, color: k.textMuted, marginVertical: spacing.sm, lineHeight: 20 },
   poleWysokie: { minHeight: 96, textAlignVertical: 'top' },
