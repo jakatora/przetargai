@@ -20462,6 +20462,8 @@ function confirmSeweraBasket(html, expected, total) {
   if (rows.length !== expected.length || !/Twój sklep to Katowice/.test(text2(html))) throw Error("basket_not_confirmed");
   for (const wanted of expected) {
     const row = one2(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
+    const stock = text2(row).match(/W magazynie znajdują się jedynie (\d+(?:[.,]\d+)?)\s+SZT/i);
+    if (stock && Number(stock[1].replace(",", ".")) < wanted.count) throw Error("insufficient_stock");
     const input = attr(one2(elements(row, (a) => a.name === "amount")));
     const pid = attr(one2(elements(row, (a) => a.wybierz !== void 0))).wybierz;
     if (Number(input.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
@@ -20691,7 +20693,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
     if (active >= 3) return { reason: "quote_busy" };
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
     active++;
-    const pending = (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : quoteShoper(order, fetchImpl)).catch((error40) => ({ reason: error40 instanceof Error && ["price_changed", "product_unavailable", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
+    const pending = (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : quoteShoper(order, fetchImpl)).catch((error40) => ({ reason: error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
       active--;
     });
     cache.set(key, { until: Date.now() + TTL, result: pending });
