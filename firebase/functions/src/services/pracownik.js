@@ -109,11 +109,12 @@ export async function pracujDlaUzytkownika(user, pool, {
   }
   ranked.sort((a, b) => b.h.score - a.h.score);
 
-  // Świeży = bez decyzji przy tej wersji karty. Oknami — jak w services/matching.js.
+  // Świeży = bez AKTUALNEJ decyzji przy tej wersji karty (odrzucenie „termin” sprzed przedłużenia
+  // terminu nie liczy się — lib/swiezoscOceny.js). Oknami — jak w services/matching.js.
   const swiezi = [];
   for (let start = 0; start < ranked.length && swiezi.length < CANDIDATE_HEAD; start += OKNO_KANDYDATOW) {
     const okno = ranked.slice(start, start + OKNO_KANDYDATOW);
-    const ocenione = await evaluations.idsAmong(user.id, okno.map((x) => x.tender.id), wersja);
+    const ocenione = await evaluations.idsAktualne(user.id, okno.map((x) => x.tender), wersja);
     for (const k of okno) if (!ocenione.has(k.tender.id)) swiezi.push(k);
     if (start + OKNO_KANDYDATOW >= MAKS_PRZEJRZANYCH) break;
   }

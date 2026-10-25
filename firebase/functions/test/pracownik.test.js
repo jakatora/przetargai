@@ -72,3 +72,23 @@ test('klient bez słów i CPV — nic nie robimy (pusty wynik, bez dziennika)', 
   const w = await pracujDlaUzytkownika(u, [await przetarg('Remont dachu')], { teraz: teraz() });
   assert.equal(w.przejrzane, 0);
 });
+
+test('odrzucenie „termin” nie jest wieczne: po PRZEDŁUŻENIU terminu przez zamawiającego przetarg wraca i zostaje wybrany', async () => {
+  const u = await klient();
+  const zaDni = (n) => new Date(Date.now() + n * 86_400_000).toISOString();
+  const krotki = await przetarg('Remont dachu przedszkola', { deadline: zaDni(2) });
+  const w1 = await pracujDlaUzytkownika(u, [krotki], { teraz: teraz() });
+  assert.deepEqual([w1.wybrane, w1.odrzucone.termin], [0, 1]);
+  assert.equal((await evaluations.pobierz(u.id, krotki.id)).przyczyna, 'termin');
+
+  const bezZmian = await pracujDlaUzytkownika(await users.findById(u.id), [krotki], { teraz: teraz() });
+  assert.deepEqual([bezZmian.wybrane, bezZmian.odrzucone.termin], [0, 0], 'ten sam termin = ta sama decyzja, bez ponownej oceny');
+
+  // BK wydaje kolejną WERSJĘ ogłoszenia z nowym terminem — `upsert` jest create-only, zmianę niesie `zaktualizujZeZrodla`.
+  const { zmienione } = await tenders.zaktualizujZeZrodla({ externalId: krotki.bzp_external_id, deadline: zaDni(30) });
+  assert.equal(zmienione, true);
+  const przedluzony = { ...krotki, deadline: zaDni(30) };
+  const w3 = await pracujDlaUzytkownika(await users.findById(u.id), [przedluzony], { teraz: teraz() });
+  assert.deepEqual([w3.wybrane, w3.odrzucone.termin], [1, 0], 'przedłużony termin → ocena od nowa → wybrany');
+  assert.equal((await evaluations.pobierz(u.id, krotki.id)).decyzja, 'wybrany');
+});

@@ -1,6 +1,7 @@
 import { getFirestore, FieldValue, FieldPath } from 'firebase-admin/firestore';
 import { env } from '../config.js';
 import { newId, nowIso, startOfTodayIso } from '../lib/ids.js';
+import { ocenaAktualna } from '../lib/swiezoscOceny.js';
 import { probaDo } from '../lib/plan.js';
 import { dodajSygnal as dolozSygnal } from '../lib/sygnaly.js';
 import { obliczRemindAt, nastepneRemind } from '../lib/przypomnienia.js';
@@ -1846,6 +1847,23 @@ export const evaluations = {
         .filter((s) => s.exists && (criteriaHash === undefined || s.data().criteria_hash === criteriaHash))
         .map((s) => s.id),
     );
+  },
+
+  /**
+   * Zbiór tenderId z AKTUALNĄ decyzją przy tej wersji karty (lib/swiezoscOceny.js):
+   * jak `idsAmong`, ale odrzucenie „termin” sprzed PRZEDŁUŻENIA terminu nie liczy się
+   * za ocenę — Baza Konkurencyjności i BZP regularnie przedłużają, a klient nie powinien
+   * przez to stracić przetargu, na który teraz zdąży.
+   * @param {object[]} lista przetargi (potrzebne `id` i `deadline`)
+   */
+  async idsAktualne(userId, lista, criteriaHash) {
+    if (!lista.length) return new Set();
+    const snaps = await db().getAll(...lista.map((t) => evalCol(userId).doc(t.id)));
+    const wynik = new Set();
+    snaps.forEach((s, i) => {
+      if (s.exists && ocenaAktualna(s.data(), { tender: lista[i], criteriaHash })) wynik.add(s.id);
+    });
+    return wynik;
   },
 
   /** Decyzja selekcji (spec §4.5). Odrzucony niesie dane przetargu — lista odrzuconych bez JOIN-a. */
