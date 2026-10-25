@@ -40,7 +40,8 @@ Teksty sklepowe: `store/whats-new-1.1.6.md`.
 - [ ] Hosting (`przetarg-ai.pl`) tylko jeśli zmieniono landing: deploy z `D:\projekty\przetarg-ai\firebase` (gitignorowany `hosting/`).
 
 ## 4. Buildy
-- Android (lokalnie, ~4 min): `cd mobile/android && JAVA_HOME=~/.jdks/jdk-21.0.12.1+1 ANDROID_HOME=~/AppData/Local/Android/sdk ./gradlew.bat bundleRelease assembleRelease`
+- Android (lokalnie, ~4 min): `cd mobile/android && JAVA_HOME=~/.jdks/jdk-21.0.12.1+1 ANDROID_HOME=~/AppData/Local/Android/sdk JAVA_TOOL_OPTIONS="-Djdk.net.unixdomain.tmpdir=C:\jtmp" ./gradlew.bat bundleRelease assembleRelease`
+  (bez `JAVA_TOOL_OPTIONS` gradle pada na „Unable to establish loopback connection / Invalid argument: connect” — JDK 21 na Windows robi pipe przez gniazdo unixowe w TEMP; ten sam fix co dla emulatora Firestore, 25.10.2026)
   → `app-release.aab` (podpis B6:6E:24) + APK. **Nie robić `expo prebuild --clean`** (skasuje signingConfig). Kopie do `Documents\PrzetargAI-1.1.6*.{aab,apk}`.
 - iOS: push `main` na GitHub (`GITHUB_TOKEN` z vaulta) → `POST api.codemagic.io/builds {appId 6a136b1f4213f9c57af79f5b, workflowId ios-release}` → TestFlight.
   `version` musi być wyższa niż ostatnia zatwierdzona (błąd 90062).
