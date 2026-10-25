@@ -254,3 +254,11 @@ test('treści z żywej strony nie zostały cofnięte', () => {
   assert.match(html, /href="https:\/\/ezamowienia\.gov\.pl"/);
   assert.match(html, /href="https:\/\/ted\.europa\.eu"/);
 });
+
+test('wersja.json na stronie = wersja aplikacji (baner „jest nowa wersja” dla APK/Windows)', () => {
+  const wersjaAplikacji = JSON.parse(fs.readFileSync(path.join(LANDING, '..', 'mobile', 'app.json'), 'utf8')).expo.version;
+  const plik = JSON.parse(fs.readFileSync(path.join(LANDING, 'wersja.json'), 'utf8'));
+  assert.equal(plik.wersja, wersjaAplikacji, 'landing/wersja.json musi być podbijane razem z app.json');
+  assert.equal(plik.pobierz, 'https://przetarg-ai.pl/pobierz');
+  assert.match(plik.data, /^\d{4}-\d{2}-\d{2}$/);
+});

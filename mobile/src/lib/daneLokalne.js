@@ -72,6 +72,7 @@ export const KLUCZE_URZADZENIA = Object.freeze([
   'przetargai.minimalnyProcent', // próg filtra feedu
   'przetargai.sortFeedu', // sortowanie feedu
   'przetargai.feed_status_terminu', // filtr terminu feedu
+  'przetargai.aktualizacja_odlozona', // „później” dla banera nowej wersji (APK/Windows) — dotyczy urządzenia, nie konta
 ]);
 
 const KLUCZ_SECURESTORE = /^[\w.-]+$/;

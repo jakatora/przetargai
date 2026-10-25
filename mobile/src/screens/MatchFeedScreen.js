@@ -1,16 +1,9 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
-import {
-  SectionList,
-  ScrollView,
-  View,
-  Text,
-  TextInput,
-  RefreshControl,
-  ActivityIndicator,
-  Pressable,
-} from 'react-native';
+import { SectionList, ScrollView, View, Text, TextInput, RefreshControl, ActivityIndicator, Pressable, Linking, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { komunikatPrzerwyZrodel } from '../lib/stanZrodel';
+import { decyzjaAktualizacji, KLUCZ_ODLOZONEJ_AKTUALIZACJI } from '../lib/aktualizacja';
+import { pobierzNajnowszaWersje } from '../services/aktualizacja';
 import * as WebBrowser from 'expo-web-browser';
 import { api } from '../api/client';
 import MatchCard from '../components/MatchCard';
@@ -26,6 +19,7 @@ import {
   normalizujStatusTerminu, filtrujStatusTerminu, policzPoTerminie,
 } from '../lib/filtrTerminu';
 import * as storage from '../lib/storage';
+import Constants from 'expo-constants';
 import { spacing, radius } from '../theme';
 import { useJezyk } from '../context/JezykContext';
 import KatalogWszystkich from '../components/KatalogWszystkich';
@@ -94,6 +88,7 @@ export default function MatchFeedScreen({ navigation }) {
   // Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free).
   const [zacheta, setZacheta] = useState(null);
   const [przerwaZrodel, setPrzerwaZrodel] = useState(null); // komunikat o przerwie BZP/TED z /health
+  const [aktualizacja, setAktualizacja] = useState(null); // baner „jest nowa wersja” (APK ze strony / Windows)
   const [upgrading, setUpgrading] = useState(false);
   // Radar zamówień podprogowych (panel 7/7): scalony strumień „obok" dużych przetargów.
   // `null` = jeszcze nie wiadomo, czy user ma ustawiony radar (band się nie miga).
@@ -227,6 +222,13 @@ export default function MatchFeedScreen({ navigation }) {
       api.getStatystyki().then((s) => setZacheta(s.zacheta)).catch(() => {});
       // Przerwa źródła (e-Zamówienia 23–25.10): pusty feed ≠ awaria apki — mówimy to wprost.
       api.health().then((h) => setPrzerwaZrodel(komunikatPrzerwyZrodel(h, 'pl').pokaz ? h : null)).catch(() => setPrzerwaZrodel(null));
+      // Nowa wersja dla instalacji poza sklepami — czysta decyzja w lib/aktualizacja.js, best-effort.
+      Promise.all([pobierzNajnowszaWersje(), storage.getItem(KLUCZ_ODLOZONEJ_AKTUALIZACJI).catch(() => null)])
+        .then(([najnowsza, odlozona]) => {
+          const d = decyzjaAktualizacji({ biezaca: Constants.expoConfig?.version, najnowsza, platforma: Platform.OS, odlozona });
+          setAktualizacja(d.pokaz ? d : null);
+        })
+        .catch(() => setAktualizacja(null));
       // Radar podprogowy — poboczny strumień; błąd NIE może wywalić głównego feedu.
       // Zbieramy ogłoszenia dla PIERWSZEJ (nadrzędnej) preferencji użytkownika; resztą
       // obszarów zarządza ekran ustawień. Bez preferencji band pokazuje zaproszenie.
@@ -593,6 +595,20 @@ export default function MatchFeedScreen({ navigation }) {
               Mamy starsze dane, ale odświeżenie się nie powiodło — mówimy o tym
               wprost, zamiast udawać, że lista jest aktualna.
             */}
+            {aktualizacja ? (
+              <View style={styles.pasekAktualizacji}>
+                <Pressable accessibilityRole="link" onPress={() => Linking.openURL(aktualizacja.url).catch(() => {})} style={styles.pasekAktualizacjiTresc}>
+                  <Text style={styles.pasekAktualizacjiTekst}>{t(aktualizacja.komunikat.pl, aktualizacja.komunikat.en)}</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => { storage.setItem(KLUCZ_ODLOZONEJ_AKTUALIZACJI, aktualizacja.najnowsza).catch(() => {}); setAktualizacja(null); }}
+                >
+                  <Text style={styles.pasekAktualizacjiPozniej}>{t('Później', 'Later')}</Text>
+                </Pressable>
+              </View>
+            ) : null}
             {przerwaZrodel ? (
               <View style={styles.pasekBledu}>
                 <Text style={styles.pasekBleduTekst}>
@@ -898,6 +914,10 @@ const tworzStyleFeedu = tworzStyle((k) => ({
     marginBottom: spacing.md,
   },
   pasekBleduTekst: { color: k.ostrzezenieTekst, fontSize: 13, lineHeight: 18 },
+  pasekAktualizacji: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: k.wyroznienie, borderWidth: 1, borderColor: k.border, borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm },
+  pasekAktualizacjiTresc: { flex: 1 },
+  pasekAktualizacjiTekst: { color: k.text, fontSize: 13, lineHeight: 18 },
+  pasekAktualizacjiPozniej: { color: k.blue, fontSize: 13, fontWeight: '700', paddingHorizontal: spacing.xs },
   stopka: { paddingVertical: spacing.lg },
   headerAkcje: { flexDirection: 'row', alignItems: 'center', gap: 18, marginRight: 16 },
   headerGwiazdka: { color: k.white, fontSize: 22, lineHeight: 24, fontWeight: '700' },

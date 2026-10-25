@@ -17,3 +17,6 @@ Procedura jak w `runbooks/wydanie-1.1.6.md` (pułapki: `JAVA_TOOL_OPTIONS=-Djdk.
 - [x] origin/main = `5c898ec`; Codemagic `ios-release` #22 `6addfe191fa8aa2bcd4c12b6` — finished, Publishing success (TestFlight).
 - [ ] Sklepy (user): Play Console AAB vc19 + „Informacje o wersji”; ASC po TestFlight; konta recenzji (`play-review@przetargai.demo` free/pusty profil).
 - [ ] STAN w pamięci projektu.
+
+## Następne wydanie — pamiętać
+- `landing/wersja.json` podbić razem z `app.json` (test `landingStrona` wymusza) i wdrożyć hosting — baner „jest nowa wersja” (APK ze strony / Windows) czyta ten plik.
