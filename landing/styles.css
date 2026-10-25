@@ -472,4 +472,12 @@ section[id], main[id] { scroll-margin-top: 84px; }
   margin: 18px 0;
 }
 .legal-page .note strong { color: #92670c; }
+.legal-page .legal-footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
 

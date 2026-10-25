@@ -223,6 +223,28 @@ test('strona pobierania: wersja APK = wersja aplikacji, a suma SHA-256 to suma w
   }
 });
 
+test('strony prawne: dane usługodawcy zamiast szablonu, z datą aktualizacji', () => {
+  // Do 25.10.2026 repo miało tu szablony z „[PEŁNA NAZWA FIRMY]", a wersje z danymi żyły tylko
+  // na hostingu — deploy z repo cofnąłby je bez żadnego błędu. Od wniesienia wersji live
+  // ten test pilnuje, że szablon nie wróci (np. przez przywrócenie starego pliku).
+  for (const plik of ['regulamin.html', 'polityka-prywatnosci.html']) {
+    const strona = fs.readFileSync(path.join(LANDING, plik), 'utf8');
+    const tekst = czysty(strona.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<!--[\s\S]*?-->/g, ''));
+    for (const szablon of [/\[PEŁNA NAZWA/, /\[ADRES/, /\[NIP\]/, /support@przetargai\.pl/, /dokument jest wzorem/i]) {
+      assert.doesNotMatch(strona, szablon, `${plik}: pozostałość szablonu`);
+    }
+    assert.match(
+      strona,
+      /<p class="updated">Ostatnia aktualizacja: \d{1,2} [a-ząćęłńóśźż]+ 20\d{2} r\.<\/p>/,
+      `${plik}: data ostatniej aktualizacji`,
+    );
+    // Usługodawca/administrator jest wskazany z NIP-em i działającym adresem kontaktowym.
+    assert.match(tekst, /NIP \d{10}/, `${plik}: NIP usługodawcy`);
+    assert.match(strona, /href="mailto:[^"@\s]+@[^"\s]+"/, `${plik}: adres e-mail do kontaktu`);
+    assert.match(strona, /<link rel="stylesheet" href="styles\.css" \/>/, `${plik}: wspólny arkusz stylów landingu`);
+  }
+});
+
 test('treści z żywej strony nie zostały cofnięte', () => {
   assert.match(html, /<section class="section section--soft" id="narzedzia">/);
   assert.match(html, /data-stat="nowe24h"/);
