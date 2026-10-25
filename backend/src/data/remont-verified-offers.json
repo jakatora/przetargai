@@ -1269,5 +1269,44 @@
     "sourceUrl": "https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474",
     "evidenceSha256": "ad349f6a7d90ba8892a181500e5381a520fc9c8432bd4c13fba7d75635cbe9fc",
     "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-frame-anchor-10x182",
+    "ean": "5905458019787",
+    "name": "Kotwa montażowa do ościeżnic 10 x 182 mm",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_42043_500_500/141eb368955c6aeb6e1e7b6e42ac9af7.jpg",
+    "priceGrosze": 512,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T21:29:16.926Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Kotwa-montazowa-do-oscieznic-10-x-182-mm/21842",
+    "evidenceSha256": "dd0e3a5e7de4dd85d817d622e62202cbd8f9115af8274807afc2d4dd3b832581",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-metro-hinge-3d-14mm",
+    "ean": "5906711270471",
+    "name": "Zawias regulowany 3D 14 mm ocynkowany",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_42329_500_500/19ba2fb309a7adcf2859ffa72b746764.jpg",
+    "priceGrosze": 1566,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T21:29:17.131Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Zawias-regulowany-3D-14-mm-ocynkowany/22128",
+    "evidenceSha256": "60f4106c704bd1727c4739f0df38290e26bb83dabf955c1aa00067a1e16ba415",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-erkado-credis-80-left-white",
+    "ean": "5900378219590",
+    "name": "Drzwi pokojowe Credis 80 lewe białe",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_50898_500_500/a79eaa09c570422baee6412157b93d28.jpg",
+    "priceGrosze": 27936,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T21:29:17.176Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489",
+    "evidenceSha256": "423e120ca78604de77bb2f3185785a2680525a99da18d0daa491b2ac61fdbd51",
+    "validUntil": null
   }
 ]
