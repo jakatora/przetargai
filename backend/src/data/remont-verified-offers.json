@@ -1061,5 +1061,31 @@
     "sourceUrl": "https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383",
     "evidenceSha256": "91da0a55d8cc3f5a56adcea436cc536568a8fcc49b9038a3453453c254658c24",
     "validUntil": null
+  },
+  {
+    "sourceId": "domat-board-gkbi",
+    "ean": "5907651691616",
+    "name": "Płyta gipsowa GKBI 12.5 1200*2600 ZIELONA",
+    "imageUrl": "https://domat24.pl/wp-content/uploads/2021/09/Plyta-gipsowa-GKBI-12.5-12002600-ZIELONA.jpg",
+    "priceGrosze": 5712,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T17:15:50.250Z",
+    "sourceUrl": "https://domat24.pl/produkt/plyta-gipsowa-gkbi-12-5-12002600-zielona/",
+    "evidenceSha256": "fa3a463dc8bd26258caece28fdb972609ce49d6506711b6a3f5b62361565d4b0",
+    "validUntil": null
+  },
+  {
+    "sourceId": "domat-board-gkb",
+    "ean": "5907651690442",
+    "name": "Płyta gipsowa GKB 12.5 1200*2600 BIAŁA",
+    "imageUrl": "https://domat24.pl/wp-content/uploads/2021/09/Plyta-gipsowa-GKB-12.5-12002600-BIALA.jpg",
+    "priceGrosze": 3590,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T17:15:52.753Z",
+    "sourceUrl": "https://domat24.pl/produkt/plyta-gipsowa-gkb-12-5-12002600-biala/",
+    "evidenceSha256": "7e31ab934dfe54cefc9ba338f57b56fc53563bc0582b8d3d1796f1c97e59a3bf",
+    "validUntil": null
   }
 ]
