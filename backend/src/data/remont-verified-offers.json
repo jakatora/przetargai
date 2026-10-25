@@ -1191,5 +1191,83 @@
     "sourceUrl": "https://modnalazienka.pl/u117-grey-gres-szkl-rekt-mat-598x598-34158",
     "evidenceSha256": "1e5e771ae9973f4d06143f106ed9ec938b3a132853d6fabe9089bf099d0f4f60",
     "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-classen-niasa-1973m2",
+    "ean": "4003992571974",
+    "name": "Panele podłogowe laminowane wodoodporne Classen Dąb Niasa AC5 1,973 m2",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52181_500_500/54fce513642c640c65a2c6dfb09f14a0.jpg",
+    "priceGrosze": 11242,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T20:58:53.720Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Panele-podlogowe-laminowane-wodoodporne-Classen-Dab-Niasa-AC5-1%2C973-m2/31535",
+    "evidenceSha256": "1acac5577c8f771670f90e191adcb0ee9936f20ea1860dd8db592f72604b17fb",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-oakland-ac4-251m2",
+    "ean": "5063022887917",
+    "name": "Panele laminowane Oakland wodoodporne AC4 2,51 m2",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_385924_500_500/0fc09fb9f3eda5be184e7dac0f2f6e76.jpg",
+    "priceGrosze": 6569,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T21:08:16.416Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Panele-laminowane-Oakland-wodoodporne-AC4-2%2C51-m2/185472",
+    "evidenceSha256": "4b71a74cd985627c92c250d70052450fc95c816a4bd1f30452c14fc7f39b2d7d",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-volden-xps-smart-10m2",
+    "ean": "5063022038289",
+    "name": "Podkład podłogowy pod panele laminowane Volden XPS Smart 3 mm 10 m2",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_51942_500_500/e236d745fb2303be7b2fb68575842e4a.jpg",
+    "priceGrosze": 7106,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T21:08:16.964Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Podklad-podlogowy-pod-panele-laminowane-Volden-XPS-Smart-3-mm-10-m2/31327",
+    "evidenceSha256": "842424eedc92a265ac7ad24823e747071b397b2626d402d9cfbd6693bd8f07f7",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-goodhome-guigliano-1m2",
+    "ean": "3663602870821",
+    "name": "Gres mrozoodporny szkliwiony Guigliano GoodHome 18,5 x 59,8 cm beige 1 m2",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52024_500_500/d715e779aa0887d53ec108d0e9616438.jpg",
+    "priceGrosze": 7102,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T21:08:17.549Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Gres-mrozoodporny-szkliwiony-Guigliano-GoodHome-18%2C5-x-59%2C8-cm-beige-1-m2/31407",
+    "evidenceSha256": "dce5f52949f0750cc7ce229825474d434e7c606ccd914dc642874e14a81e8fa9",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-ferro-angle-valve-z270e",
+    "ean": "5901095614033",
+    "name": "Zawór kątowy z filtrem Ferro 1/2\" x 3/8\"",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_70333_500_500/1831d737608977a2a1b38c23f5417c16.jpg",
+    "priceGrosze": 3454,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T21:08:18.096Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Zawor-katowy-z-filtrem-Ferro-12-x-38/49055",
+    "evidenceSha256": "35ce73c4b18b91d6676f66a870cbaf3cc76d228dbfa797726b881e66faad913f",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-goodhome-marvo-2235m2",
+    "ean": "5063022676757",
+    "name": "Panele podłogowe winylowe GoodHome SPC Marvo 2,235 m2",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_385938_500_500/fc6886e524d877060a0d12ba4742f75e.jpg",
+    "priceGrosze": 15082,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T21:08:18.598Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474",
+    "evidenceSha256": "ad349f6a7d90ba8892a181500e5381a520fc9c8432bd4c13fba7d75635cbe9fc",
+    "validUntil": null
   }
 ]
