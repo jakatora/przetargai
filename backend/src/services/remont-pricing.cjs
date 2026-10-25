@@ -20540,9 +20540,13 @@ var RETAIL_SOURCES = [
   { "id": "liderzy-metro-hinge-3d-14mm", "ean": "5906711270471", "name": "Zawias regulowany 3D 14 mm ocynkowany", "category": "door-hinge", "brand": "Metro", "brandReference": { "url": "https://www.grupapsb.com.pl/produkt/zawias-wkrecany-regulowany-3d-14-mm-ocynkowany-metro-5906711270471.html", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 22128, "retailerSku": "ctma_5906711270471", "apiPurchaseUnit": "szt.", "variant": ["3D", "14 mm", "ocynkowany"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_42329_500_500/19ba2fb309a7adcf2859ffa72b746764.jpg", "url": "https://liderzycen.pl/pl/p/Zawias-regulowany-3D-14-mm-ocynkowany/22128", "packageDescription": "Nr referencyjny: ZAW-0091-0" },
   // source: https://www.castorama.pl/drzwi-pokojowe-credis-80-lewe-biale/5900378219590_CAPL.prd
   // source: https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489
-  { "id": "liderzy-erkado-credis-80-left-white", "ean": "5900378219590", "name": "Drzwi pokojowe Credis 80 lewe bia\u0142e", "category": "door-leaf", "brand": "Erkado", "brandReference": { "url": "https://www.castorama.pl/drzwi-pokojowe-credis-80-lewe-biale/5900378219590_CAPL.prd", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 30489, "retailerSku": "ctma_5900378219590", "apiPurchaseUnit": "szt.", "variant": ["Credis", "80", "lewe", "bia\u0142e"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_50898_500_500/a79eaa09c570422baee6412157b93d28.jpg", "url": "https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489", "packageDescription": "przeszklenia o mlecznym wyko\u0144czeniu" }
+  { "id": "liderzy-erkado-credis-80-left-white", "ean": "5900378219590", "name": "Drzwi pokojowe Credis 80 lewe bia\u0142e", "category": "door-leaf", "brand": "Erkado", "brandReference": { "url": "https://www.castorama.pl/drzwi-pokojowe-credis-80-lewe-biale/5900378219590_CAPL.prd", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 30489, "retailerSku": "ctma_5900378219590", "apiPurchaseUnit": "szt.", "variant": ["Credis", "80", "lewe", "bia\u0142e"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_50898_500_500/a79eaa09c570422baee6412157b93d28.jpg", "url": "https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489", "packageDescription": "przeszklenia o mlecznym wyko\u0144czeniu" },
+  // source: https://betterial.pl/kleje-do-styropianu/8679-atlas-zaprawa-klejaca-do-styropianu-stopter-k-20.html
+  // source: https://betterial.pl/content/4-transport
+  { id: "betterial-atlas-stopter-k20-25kg", ean: "5905400160253", name: "Atlas - zaprawa klej\u0105ca do styropianu Stopter K-20", category: "adhesive-eps", brand: "Atlas", packageSize: 25, unit: "kg", store: "Betterial", format: "betterial", productId: 8679, variantId: 3816, retailerSku: "8679-86310", purchaseMultiple: 42, pickupRequiresConfirmation: true, variant: ["Stopter", "K-20"], url: "https://betterial.pl/kleje-do-styropianu/8679-atlas-zaprawa-klejaca-do-styropianu-stopter-k-20.html" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Zaprawa klej\u0105ca do styropianu i siatki Atlas Stopter K-20 2w1 25 kg": "5905400160253",
   "Skrzyd\u0142o drzwiowe pokojowe Erkado Credis 80 lewe bia\u0142e przylgowe przeszklone": "5900378219590",
   "Kotwa monta\u017Cowa do o\u015Bcie\u017Cnic (rama okienna) 10 \xD7 182 mm": "5905458019787",
   "Zawias wkr\u0119cany regulowany 3D 14 mm ocynkowany Metro": "5906711270471",
@@ -21710,6 +21714,57 @@ function readModnaProduct(html, source) {
   };
 }
 
+// artifacts/api-server/src/lib/betterial-product.ts
+var opening3 = (element) => element.match(/^<[^>]+>/)?.[0] ?? "";
+function readBetterialProduct(html, source) {
+  const safe = clean(html);
+  const details = exactlyOne(elements(safe, (a) => a.class?.split(/\s+/).includes("js-product-details") ?? false), "product_identity_ambiguous");
+  const item = JSON.parse(attrs(opening3(details))["data-product"]);
+  if (!Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.variantId) || item.id !== source.productId || item.id_product !== source.productId || item.id_product_attribute !== source.variantId) throw Error("product_id_not_confirmed");
+  const attributes = Object.entries(item.attributes ?? {});
+  if (attributes.length !== 1) throw Error("product_variant_mismatch");
+  const [groupId, attribute2] = attributes[0];
+  const packName = `${source.packageSize} ${source.unit}`;
+  if (!source.retailerSku || attribute2.ean13 !== source.ean || attribute2.reference !== source.retailerSku || attribute2.group !== "opakowanie" || attribute2.name !== packName) throw Error("product_identity_mismatch");
+  if (item.unity !== "opakowanie" || item.unit_price_ratio !== 1 || item.nopackprice !== null || item.pack !== 0 || item.is_customizable !== false) throw Error("retailer_unit_not_confirmed");
+  const form = exactlyOne(elements(safe, (a) => a.id === "add-to-cart-or-refresh"), "product_form_ambiguous");
+  const formAttrs = attrs(opening3(form));
+  const action = new URL(formAttrs.action, source.url);
+  if (action.origin !== new URL(source.url).origin || action.pathname !== "/koszyk" || action.search || formAttrs.method !== "post") throw Error("invalid_cart_route");
+  const input2 = (name2) => attrs(opening3(exactlyOne(elements(form, (a, tag) => tag === "input" && a.name === name2), "product_form_ambiguous")));
+  if (input2("id_product").value !== String(source.productId) || input2("id_customization").value !== "0") throw Error("product_id_not_confirmed");
+  const select = exactlyOne(elements(form, (a, tag) => tag === "select" && a.name === `group[${groupId}]`), "product_variant_mismatch");
+  const selected = exactlyOne(elements(select, (a, tag) => tag === "option" && a.selected !== void 0), "product_variant_mismatch");
+  if (attrs(opening3(selected)).value !== String(attribute2.id_attribute) || text2(selected) !== packName) throw Error("product_variant_mismatch");
+  const multiple = source.purchaseMultiple ?? 1;
+  const marker = attrs(opening3(exactlyOne(elements(form, (a) => a["data-xplo-order-multiple"] !== void 0), "purchase_rules_changed")));
+  if (item.minimal_quantity !== multiple || input2("qty").min !== String(multiple) || marker["data-xplo-order-multiple"] !== String(multiple) || marker["data-xplo-product-id"] !== String(source.productId) || marker["data-xplo-product-attribute-id"] !== String(source.variantId)) throw Error("purchase_rules_changed");
+  const button = exactlyOne(elements(form, (a, tag) => tag === "button" && a["data-button-action"] === "add-to-cart"), "product_form_ambiguous");
+  if (item.active !== "1" || item.available_for_order !== "1" || item.availability !== "in_stock" || item.allow_oosp !== 0 || /\bdisabled\b/i.test(opening3(button))) throw Error("retailer_out_of_stock");
+  const name = text2(exactlyOne(elements(safe, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
+  if (name !== source.name || item.name !== name || item.manufacturer_name !== source.brand) throw Error("product_name_mismatch");
+  const products = [...html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].flatMap((match) => {
+    try {
+      const value = JSON.parse(match[1]);
+      return Array.isArray(value) ? value : [value];
+    } catch {
+      return [];
+    }
+  }).filter((value) => value?.["@type"] === "Product");
+  if (products.length !== 1) throw Error("product_identity_ambiguous");
+  const product = products[0], offer = product.offers;
+  if (product.name !== name || product.url !== source.url || product.brand?.name !== source.brand || offer?.["@type"] !== "Offer" || offer.url !== source.url || offer.priceCurrency !== "PLN") throw Error("product_identity_mismatch");
+  const priceGrosze = prestashopMoney(item.price);
+  const priceNodes = elements(safe, (a) => a.class?.split(/\s+/).includes("product__price") ?? false);
+  if (priceNodes.length !== 1 || prestashopMoney(text2(priceNodes[0]).replace(/^Cena:\s*/, "")) !== priceGrosze || parsePriceToGrosze(offer.price) !== priceGrosze || parsePriceToGrosze(item.price_amount) !== priceGrosze || prestashopMoney(item.unit_price) !== priceGrosze || !priceGrosze) throw Error("retailer_gross_price_mismatch");
+  const grossLabels = elements(safe, (a) => a.class?.split(/\s+/).includes("product__tax-label") ?? false).map(text2);
+  if (grossLabels.length !== 1 || grossLabels[0] !== "Brutto") throw Error("retailer_gross_price_not_confirmed");
+  if (offer.availability !== "https://schema.org/InStock") throw Error("retailer_out_of_stock");
+  const image = Array.isArray(product.image) && product.image.length === 1 ? product.image[0] : null;
+  if (typeof image !== "string" || !image.startsWith(action.origin + "/")) throw Error("product_image_not_confirmed");
+  return { ...product, gtin13: attribute2.ean13, description: `${text2(item.description ?? "")} ${packName}`, image };
+}
+
 // artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
@@ -21720,7 +21775,8 @@ function objects(value) {
 function parseRetailPage(html, source, observedAt) {
   if (source.disabledReason) throw Error(source.disabledReason);
   const products = [];
-  if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
+  if (source.format === "betterial") products.push(readBetterialProduct(html, source));
+  else if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
   else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
   else if (source.format === "certusoft") products.push(readCertusoftProduct(html, source).product);
   else if (source.format === "modna") products.push(readModnaProduct(html, source).product);
@@ -22485,6 +22541,7 @@ var ORIGINS = {
 var TTL = 10 * 6e4;
 function unavailableReason(store) {
   const sources = RETAIL_SOURCES.filter((source) => source.store === store);
+  if (sources.length && sources.every((source) => source.format === "betterial")) return "retailer_transport_quote_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
   if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka"].includes(store)) return void 0;
   return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
@@ -22622,6 +22679,13 @@ function createRetailerQuoter(fetchImpl = fetch) {
 // artifacts/api-server/src/lib/store-delivery.ts
 var STORE_DELIVERY_POLICIES = [
   {
+    store: "Betterial",
+    minimumGrosze: null,
+    checkedAt: null,
+    // source: https://betterial.pl/content/4-transport
+    sourceUrl: "https://betterial.pl/content/4-transport"
+  },
+  {
     store: "Zino",
     minimumGrosze: null,
     checkedAt: null,
@@ -22711,7 +22775,7 @@ function createRemontService(options = {}) {
       errors.set("cache", "cache_read_failed");
     }
   }
-  function catalog() {
+  function catalog(pickup = false) {
     const products = [];
     const offers = [];
     for (const source of RETAIL_SOURCES) {
@@ -22763,7 +22827,7 @@ function createRemontService(options = {}) {
         const alias = aliases.find(([name]) => name === query.normalizedName)?.[1];
         return products.find((product) => product.category === query.category && (product.normalizedName === query.normalizedName || product.ean === alias)) ?? null;
       },
-      listOffers: async (_db, id) => offers.filter((offer) => offer.productId === id)
+      listOffers: async (_db, id) => offers.filter((offer) => offer.productId === id && (!pickup || !RETAIL_SOURCES.find((source) => source.id === offer.id)?.pickupRequiresConfirmation))
     };
     return { products, offers, deps };
   }
@@ -22819,6 +22883,7 @@ function createRemontService(options = {}) {
       stores: [...new Set(eligible.map((offer) => offer.store))],
       running,
       lastAttemptAt,
+      pickupConfirmationStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupRequiresConfirmation).map((source) => source.store))],
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
       delivery: retailerDeliveryCapabilities(),
       sources: RETAIL_SOURCES.map((source) => ({
@@ -22864,7 +22929,7 @@ function createRemontService(options = {}) {
           retryAfterSeconds: Math.max(0, Math.ceil((refreshedAt + 6e4 - Date.now()) / 1e3))
         };
       }
-      const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog().deps);
+      const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog(parsed.data.options?.delivery?.mode === "pickup").deps);
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
       const deadline = Date.now() + 2e4;
