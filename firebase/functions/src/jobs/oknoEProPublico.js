@@ -2,7 +2,7 @@ import { logger } from '../lib/logger.js';
 import { oknoEpp as repoOkna, tenders } from '../db/repos.js';
 import { pustyLicznik } from '../lib/licznikZrodla.js';
 import { kluczOgloszenia, PRIORYTET_ZRODEL } from '../lib/dedupZrodel.js';
-import { ZRODLO, pobierzStrone, pobierzSzczegol, normalizujOgloszenieEpp } from '../services/eProPublico.js';
+import { ZRODLO, pobierzStrone, pobierzSzczegol, normalizujOgloszenieEpp, fetchHttps } from '../services/eProPublico.js';
 
 /*
  * OKNO E-PROPUBLICO (2026-10-25). Co 6 h cała lista (strona po stronie, aż do pustej; sufit 100),
@@ -16,7 +16,7 @@ export const MAKS_SZCZEGOLOW_NA_PRZEBIEG = 150;
 export const ODSTEP_MS = 1_000;
 
 export async function runOknoEpp({
-  fetchFn = fetch, teraz = () => new Date().toISOString(), maksStron = MAKS_STRON, maksSzczegolow = MAKS_SZCZEGOLOW_NA_PRZEBIEG,
+  fetchFn = fetchHttps, teraz = () => new Date().toISOString(), maksStron = MAKS_STRON, maksSzczegolow = MAKS_SZCZEGOLOW_NA_PRZEBIEG,
   odstepMs = ODSTEP_MS, czekaj = (ms) => new Promise((r) => setTimeout(r, ms)), budzetMs = 480_000,
 } = {}) {
   const start = Date.now();
