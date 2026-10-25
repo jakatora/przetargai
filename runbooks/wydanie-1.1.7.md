@@ -14,6 +14,6 @@ Procedura jak w `runbooks/wydanie-1.1.6.md` (pułapki: `JAVA_TOOL_OPTIONS=-Djdk.
 - [x] Android: gradle `bundleRelease assembleRelease` → `Documents\PrzetargAI-1.1.7.aab/.apk` (vc19, CN=PrzetargAI, O=Jakatora; APK 67 907 123 B, SHA-256 aaa26fbe…).
 - [x] Windows: eksport web + electron-builder, smoke OK → `D:\projekty\PrzetargAI-Windows\PrzetargAI-Setup-1.1.7.exe`, `-przenosna.exe`.
 - [x] Strona pobierania: `landing/pobierz.html` + test (commit `5c898ec`); hosting wdrożony — live „Pobierz APK 1.1.7”, 67 907 123 B.
-- [x] origin/main = `5c898ec`; Codemagic `ios-release` build `6addfe191fa8aa2bcd4c12b6` (start 25.10 ~14:05).
+- [x] origin/main = `5c898ec`; Codemagic `ios-release` #22 `6addfe191fa8aa2bcd4c12b6` — finished, Publishing success (TestFlight).
 - [ ] Sklepy (user): Play Console AAB vc19 + „Informacje o wersji”; ASC po TestFlight; konta recenzji (`play-review@przetargai.demo` free/pusty profil).
 - [ ] STAN w pamięci projektu.
