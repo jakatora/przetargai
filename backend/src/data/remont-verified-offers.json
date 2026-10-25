@@ -1152,5 +1152,18 @@
     "sourceUrl": "https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291",
     "evidenceSha256": "a261204aba6664b623d557366f510aebbd6ee00be44b8e4d7f5b5bd626cefa35",
     "validUntil": "2026-10-26"
+  },
+  {
+    "sourceId": "kronodom-arbiton-secura-thermo-6m2",
+    "ean": "5905167826942",
+    "name": "Podkład pod panele ARBITON SECURA THERMO AQUASTOP SMART 1,6mm (1opk.=6m2) czerwona harmonijka",
+    "imageUrl": "https://a.assecobs.com/_img/sklepkronodom/3097bab5-5609-4e24-aa08-b8440b55b4fa/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-1-6mm-1opk-6m2-czerwona-harmonijka.jpg",
+    "priceGrosze": 6198,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-25T19:11:03.326Z",
+    "sourceUrl": "https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka",
+    "evidenceSha256": "8e58d5dafc62fddb7ced3754c7cedadc132a918ead9002650d914528795a907a",
+    "validUntil": "2027-10-25"
   }
 ]
