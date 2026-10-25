@@ -19322,6 +19322,7 @@ function serializeProduct(product) {
 }
 function serializeProductOffer(offer) {
   return {
+    ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {},
     packageSize: offer.packageSize,
     offerId: offer.id,
     store: offer.store,
@@ -19374,6 +19375,7 @@ function serializeLine(line2) {
     packageSize: line2.packageSize,
     packagesNeeded: line2.packagesNeeded,
     packages: line2.packagePlan.packages.map((p) => ({
+      ...p.purchaseMultiple ? { purchaseMultiple: p.purchaseMultiple } : {},
       packageSize: p.packageSize,
       count: p.count,
       unitPriceGrosze: p.unitPriceGrosze,
@@ -19437,6 +19439,7 @@ function serializeStage(stage) {
 function serializeConsolidatedLine(line2) {
   return {
     ...line2.packagePlan ? { packages: line2.packagePlan.packages.map((entry) => ({
+      ...entry.purchaseMultiple ? { purchaseMultiple: entry.purchaseMultiple } : {},
       packageSize: entry.packageSize,
       count: entry.count,
       unitPriceGrosze: entry.unitPriceGrosze,
