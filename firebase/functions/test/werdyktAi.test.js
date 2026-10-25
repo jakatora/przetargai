@@ -77,3 +77,13 @@ test('REVIEW FOCUS 4: śmieci → null (degradacja do heurystyki)', () => {
     assert.equal(parsujWerdykt(zly), null, String(zly));
   }
 });
+
+test('prompt: szczegół platformazakupowa.pl (tryb, wymagania) wchodzi do danych przetargu, przycięty', () => {
+  const t = { ...TENDER, rodzaj: null, pz_szczegol: { tryb: 'Tryb podstawowy', rodzaj: 'Robota budowlana', wymagania: 'Remont dachu szkoły '.repeat(200) } };
+  const p = zbudujPromptSelekcji({ user: USER, tender: t, teraz: TERAZ });
+  assert.ok(p.includes('Tryb postępowania: Tryb podstawowy'));
+  assert.ok(p.includes('Rodzaj: Robota budowlana'), 'rodzaj ze szczegółu, gdy ogłoszenie go nie ma');
+  const wym = p.match(/Wymagania \(skrót\): (.*)/)[1];
+  assert.ok(wym.length <= 1200 && wym.startsWith('Remont dachu szkoły'));
+  assert.ok(!zbudujPromptSelekcji({ user: USER, tender: TENDER, teraz: TERAZ }).includes('Tryb postępowania'), 'bez szczegółu nic nie dopisujemy');
+});

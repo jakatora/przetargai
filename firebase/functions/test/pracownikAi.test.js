@@ -157,3 +157,28 @@ test('przykłady z sygnałów klienta trafiają do oceny AI', async () => {
     teraz: teraz(), ocen: async (_u, _t, p) => { przyklady = p; return null; } });
   assert.deepEqual(przyklady.odrzucone, [{ tytul: 'Odśnieżanie dachów', przyczyna: 'branza' }]);
 });
+
+test('kandydat z platformazakupowa.pl: przed oceną AI dociągany szczegół (cache przy ogłoszeniu, budżet na przebieg, błąd nie blokuje)', async () => {
+  const u = await klient();
+  const pz = await przetarg('Remont dachu przedszkola (platforma)', { source: 'platformazakupowa' });
+  const widzianePrzezAi = [];
+  let pobran = 0;
+  const szczegolPz = async (id) => { pobran++; assert.equal(id, pz.bzp_external_id.replace(/^pz:/, '')); return { tryb: 'Tryb podstawowy', rodzaj: 'Robota budowlana', wymagania: 'Dach 1200 m²', zalaczniki: [] }; };
+  const w = await pracujDlaUzytkownika(u, [pz], { teraz: teraz(), szczegolPz, ocen: async (_u, t) => { widzianePrzezAi.push(t.pz_szczegol?.tryb ?? null); return biore(['Pasuje'])(); } });
+  assert.equal(w.wybrane, 1);
+  assert.deepEqual(widzianePrzezAi, ['Tryb podstawowy'], 'AI widzi tryb ze szczegółu');
+  assert.equal(pobran, 1);
+  assert.equal((await tenders.findById(pz.id)).pz_szczegol.tryb, 'Tryb podstawowy', 'cache przy ogłoszeniu');
+
+  // Błąd platformy: ocena idzie dalej bez szczegółu.
+  const pz2 = await przetarg('Remont dachu żłobka (platforma)', { source: 'platformazakupowa' });
+  const u2 = await klient();
+  const w2 = await pracujDlaUzytkownika(u2, [pz2], { teraz: teraz(), szczegolPz: async () => { throw new Error('403'); }, ocen: async () => biore(['Pasuje'])() });
+  assert.equal(w2.wybrane, 1);
+
+  // Budżet 0 → bez żądania.
+  const u3 = await klient();
+  let pobran3 = 0;
+  await pracujDlaUzytkownika(u3, [await przetarg('Remont dachu szkoły (platforma)', { source: 'platformazakupowa' })], { teraz: teraz(), szczegolPz: async () => { pobran3++; return null; }, budzetSzczegolowPz: { pozostalo: 0 }, ocen: async () => biore(['Pasuje'])() });
+  assert.equal(pobran3, 0);
+});

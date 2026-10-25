@@ -15,6 +15,10 @@ import { users, tenders, matches, evaluations, aiQuota, dziennik, warunkiQuota, 
 import { ocenDlaKlienta, porownajWarunki } from './ai.js';
 import { backfillUser, generateMatchesForAllUsers } from './matching.js';
 import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
+import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from './platformaZakupowa.js';
+
+/** Ile szczegółów platformazakupowa.pl dociągamy w JEDNYM przebiegu (żądania do obcego serwisu). */
+export const MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG = 10;
 
 /*
  * Selekcja przetargów pod klienta (plans/PRACOWNIK-PROJEKT-2026-10-23.md §4).
@@ -72,6 +76,7 @@ async function odpadaNaWarunkach(user, tenderId, { porownaj, teraz, wersja }) {
  */
 export async function pracujDlaUzytkownika(user, pool, {
   teraz = nowIso(), ocen = ocenDlaKlienta, porownaj = porownajWarunki, stanAi = { kolejneBledy: 0 }, budzetMs = Infinity,
+  szczegolPz = pobierzSzczegolPzDomyslnie, budzetSzczegolowPz = { pozostalo: MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG },
 } = {}) {
   const koniec = Date.now() + budzetMs;
   const poCzasie = () => Date.now() >= koniec;
@@ -176,6 +181,20 @@ export async function pracujDlaUzytkownika(user, pool, {
     }
     budzetAi--;
     wynik.aiCalls++;
+    // Kandydat z platformazakupowa.pl: lista nie ma CPV ani wartości — przed oceną dociągamy tryb
+    // i wymagania (cache przy ogłoszeniu, budżet żądań na przebieg; błąd = oceniamy bez szczegółu).
+    if (tender.source === ZRODLO_PZ && !tender.pz_szczegol && budzetSzczegolowPz.pozostalo > 0) {
+      budzetSzczegolowPz.pozostalo--;
+      try {
+        const sz = await szczegolPz(String(tender.bzp_external_id ?? tender.id).replace(/^pz:/, ''));
+        if (sz) {
+          tender.pz_szczegol = sz;
+          await tenders.zapiszSzczegolPz(tender.id, sz, teraz);
+        }
+      } catch (err) {
+        logger.warn({ err: err.message, id: tender.id }, 'platformazakupowa: szczegół przed oceną nie powiódł się');
+      }
+    }
     const werdykt = await ocen(user, tender, przyklady, { teraz });
     stanAi.kolejneBledy = werdykt ? 0 : stanAi.kolejneBledy + 1;
 

@@ -21,6 +21,7 @@ export const SYSTEM_PROMPT_SELEKCJI = [
 ].join(' ');
 
 const MAKS_PUNKTOW = 3;
+export const MAKS_DL_WYMAGAN_W_PROMPCIE = 1200;
 const MAKS_DL_PUNKTU = 160;
 const DOBA_MS = 86_400_000;
 
@@ -59,8 +60,12 @@ export function zbudujPromptSelekcji({ user, tender, przyklady = { zapisane: [],
     `Wartość: ${kwota(tender?.budget ?? null)}`,
     `Wadium: ${kwota(tender?.wadium_kwota ?? null)}`,
     `Województwo: ${woj}`,
-    `Rodzaj: ${dane(tender?.rodzaj) || '(brak)'}`,
+    `Rodzaj: ${dane(tender?.rodzaj) || dane(tender?.pz_szczegol?.rodzaj) || '(brak)'}`,
     `Dni do terminu ofert: ${dni ?? 'nieznane'}`,
+    // Szczegół platformazakupowa.pl (gdy dociągnięty): tryb mówi, czy to Pzp czy prywatne zapytanie,
+    // a skrót wymagań zastępuje brakujące CPV i wartość.
+    ...(tender?.pz_szczegol?.tryb ? [`Tryb postępowania: ${dane(tender.pz_szczegol.tryb)}`] : []),
+    ...(tender?.pz_szczegol?.wymagania ? [`Wymagania (skrót): ${dane(tender.pz_szczegol.wymagania).slice(0, MAKS_DL_WYMAGAN_W_PROMPCIE)}`] : []),
     '</przetarg>',
     '',
     'Zdecyduj i zwróć wyłącznie JSON.',

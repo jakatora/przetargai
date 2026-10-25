@@ -488,7 +488,7 @@ function zapiszPuleWCache(limit, pula) {
 const POLA_PULI = [
   'title', 'organization', 'budget', 'currency', 'deadline', 'url', 'cpv_main',
   'source', 'wojewodztwo', 'wadium_wymagane', 'wadium_kwota', 'wadium_wiele_czesci',
-  'kryterium_oceny', 'liczba_czesci',
+  'kryterium_oceny', 'liczba_czesci', 'pz_szczegol', 'bzp_external_id',
   /*
    * Znacznik anulowania (etap 3, Baza Konkurencyjności). Odsiew robimy W PAMIĘCI,
    * a nie zapytaniem `where('anulowany','!=',true)`: nierówność na innym polu niż
