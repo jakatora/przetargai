@@ -176,10 +176,27 @@ export default router;
  * nigdy z żądania; ten sam dzienny limit co eksporty.
  */
 export const MAKS_DL_PISMA = 60_000;
-const pismoSchema = z.object({
+export const MAKS_PISM_W_PAKIECIE = 8;
+const jednoPismo = z.object({
   nazwa: z.string().trim().min(1).max(120),
   tresc: z.string().min(1).max(MAKS_DL_PISMA),
 });
+// Jedno pismo ({nazwa, tresc}) albo PAKIET ({pisma: [...], tytul?}) — jeden e-mail, osobny .docx na pismo.
+const pismoSchema = z.union([
+  jednoPismo,
+  z.object({ pisma: z.array(jednoPismo).min(1).max(MAKS_PISM_W_PAKIECIE), tytul: z.string().trim().min(1).max(160).optional() }),
+]);
+
+/** Nazwy plików w pakiecie muszą być różne — dwa „Oświadczenie.docx” w jednym mailu to jeden plik dla odbiorcy. */
+export function nazwyPlikowPakietu(pisma) {
+  const uzyte = new Map();
+  return pisma.map((p) => {
+    const baza = nazwaPlikuDocx(p.nazwa);
+    const n = (uzyte.get(baza) ?? 0) + 1;
+    uzyte.set(baza, n);
+    return n === 1 ? baza : baza.replace(/\.docx$/, ` (${n}).docx`);
+  });
+}
 
 router.post('/pismo', ah(async (req, res) => {
   const parsed = pismoSchema.safeParse(req.body ?? {});
@@ -188,15 +205,21 @@ router.post('/pismo', ah(async (req, res) => {
   if (!(await limitEksportu.zarezerwuj(req.user.id, LIMIT_WYSYLEK_DZIENNIE))) {
     throw tooMany(`Dzienny limit wysyłek (${LIMIT_WYSYLEK_DZIENNIE}) wyczerpany — spróbuj jutro.`);
   }
-  const { nazwa, tresc } = parsed.data;
-  const plik = nazwaPlikuDocx(nazwa);
+  const pisma = 'pisma' in parsed.data ? parsed.data.pisma : [parsed.data];
+  const pliki = nazwyPlikowPakietu(pisma);
+  const teraz = new Date(nowIso());
+  const temat = 'pisma' in parsed.data
+    ? `${parsed.data.tytul ?? 'Dokumenty do oferty'} — ${pliki.length} ${pliki.length === 1 ? 'plik Word' : 'pliki Word'} do podpisu`
+    : `${pisma[0].nazwa} — plik Word do podpisu`;
+  const listaTekst = pliki.map((p) => `• ${p}`).join('\n');
+  const listaHtml = `<ul>${pliki.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>`;
   const wynik = await sendEmail({
     to: req.user.email,
-    subject: `${nazwa} — plik Word do podpisu`,
-    text: `W załączniku pismo „${nazwa}” jako plik Word (${plik}). Otwórz na komputerze, sprawdź dane, podpisz kwalifikowanym podpisem i złóż na platformie postępowania.`,
-    html: `<p>W załączniku pismo <b>${esc(nazwa)}</b> jako plik Word (${esc(plik)}).</p><p>Otwórz na komputerze, sprawdź dane, podpisz kwalifikowanym podpisem i złóż na platformie postępowania.</p>`,
-    attachments: [{ filename: plik, content: zbudujDocx({ nazwa, tresc, teraz: new Date(nowIso()) }), contentType: TYP_MIME_DOCX }],
+    subject: temat,
+    text: `W załączniku ${pliki.length === 1 ? 'pismo jako plik Word' : `${pliki.length} pism jako pliki Word`}:\n${listaTekst}\n\nOtwórz na komputerze, sprawdź dane, podpisz kwalifikowanym podpisem i złóż na platformie postępowania.`,
+    html: `<p>W załączniku ${pliki.length === 1 ? 'pismo jako plik Word' : `${pliki.length} pism jako pliki Word`}:</p>${listaHtml}<p>Otwórz na komputerze, sprawdź dane, podpisz kwalifikowanym podpisem i złóż na platformie postępowania.</p>`,
+    attachments: pisma.map((p, i) => ({ filename: pliki[i], content: zbudujDocx({ nazwa: p.nazwa, tresc: p.tresc, teraz }), contentType: TYP_MIME_DOCX })),
   });
   if (!wynik.sent && !wynik.degraded) throw serviceUnavailable('Nie udało się wysłać e-maila — spróbuj za chwilę.');
-  res.json({ wyslano: Boolean(wynik.sent), tryb_degradacji: Boolean(wynik.degraded), do: req.user.email, plik });
+  res.json({ wyslano: Boolean(wynik.sent), tryb_degradacji: Boolean(wynik.degraded), do: req.user.email, plik: pliki[0], pliki });
 }));

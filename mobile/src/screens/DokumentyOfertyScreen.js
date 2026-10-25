@@ -350,6 +350,14 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
           }
         }}
       />
+      <PrzyciskWord
+        pisma={pakiet.map((d) => ({ nazwa: d.nazwa, tresc: d.tresc }))}
+        tytul={`Dokumenty do oferty — ${przetarg.tytul ?? 'pakiet'}`}
+        poWyslaniu={async () => {
+          setUdostepnione(new Set(pakiet.map((d) => d.id)));
+          await odhaczKontrole(pakiet.flatMap((d) => kluczeKontroliDla(d.id)));
+        }}
+      />
 
       {/* ── 5. Co jeszcze ── */}
       <Text style={styles.sectionTitle}>5. Co jeszcze dołączyć</Text>

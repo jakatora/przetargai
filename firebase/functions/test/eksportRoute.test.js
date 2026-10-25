@@ -13,7 +13,7 @@ await polaczZEmulatorem();
 
 const { saved, tenders } = await import('../src/db/repos.js');
 const { createApp } = await import('../src/app.js');
-const { LIMIT_WYSYLEK_DZIENNIE, eksportKatalogu, MAKS_SKANU_EKSPORTU } = await import('../src/routes/eksport.js');
+const { LIMIT_WYSYLEK_DZIENNIE, eksportKatalogu, MAKS_SKANU_EKSPORTU, MAKS_PISM_W_PAKIECIE } = await import('../src/routes/eksport.js');
 const { BOM } = await import('../src/lib/eksportCsv.js');
 
 const app = await createApp();
@@ -179,6 +179,23 @@ describe('POST /eksport/pismo — pismo jako Word na e-mail konta', () => {
     assert.match(dane.do, /@t\.pl$/);
     assert.equal(dane.plik, 'Wniosek o zwrot wadium.docx');
     assert.equal(dane.tryb_degradacji, true);
+  });
+
+  test('pakiet pism → jeden e-mail, osobne pliki, powtórzone nazwy numerowane; pusty albo za duży pakiet → 400', async () => {
+    const { token } = await konto();
+    const odp = await fetch(`${BAZA}/eksport/pismo`, {
+      method: 'POST', headers: naglowki(token),
+      body: JSON.stringify({ tytul: 'Dokumenty do oferty — Remont dachu', pisma: [
+        { nazwa: 'Formularz ofertowy', tresc: 'a' }, { nazwa: 'Oświadczenie', tresc: 'b' }, { nazwa: 'Oświadczenie', tresc: 'c' },
+      ] }),
+    });
+    assert.equal(odp.status, 200);
+    const dane = await odp.json();
+    assert.deepEqual(dane.pliki, ['Formularz ofertowy.docx', 'Oświadczenie.docx', 'Oświadczenie (2).docx']);
+    assert.equal(dane.plik, 'Formularz ofertowy.docx');
+    assert.equal((await fetch(`${BAZA}/eksport/pismo`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ pisma: [] }) })).status, 400);
+    const zaDuzo = Array.from({ length: MAKS_PISM_W_PAKIECIE + 1 }, (_, i) => ({ nazwa: `P${i}`, tresc: 'x' }));
+    assert.equal((await fetch(`${BAZA}/eksport/pismo`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ pisma: zaDuzo }) })).status, 400);
   });
 
   test('brak treści albo za długa nazwa → 400; bez tokenu → 401', async () => {
