@@ -20532,6 +20532,13 @@ var RETAIL_NAME_ALIASES = {
   "Profil naro\u017Cny do glazury Cezar aluminiowy 8 mm, tytan szczotkowany mat, 2,5 m": "5904584853500"
 };
 
+// D:/projekty/remont_assistance/lib/pricing-service/src/delivery-limits.ts
+var DELIVERY_LIMITS = {
+  products: 200,
+  stores: 64,
+  packagesPerProduct: 1e4
+};
+
 // D:/projekty/remont_assistance/lib/pricing-service/src/delivery.ts
 function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, policies = [], now = /* @__PURE__ */ new Date()) {
   const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
@@ -20571,14 +20578,14 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
     return result;
   }
   if (!groups.length) return result;
-  if (names.length > 10 || groups.length > 50) {
+  if (settings.mode === "pickup" ? names.length > DELIVERY_LIMITS.stores || groups.length > DELIVERY_LIMITS.products : names.length > 10 || groups.length > 50) {
     result.status = "limit_exceeded";
     return result;
   }
   const candidates = /* @__PURE__ */ new Map();
   const cached2 = groups.map(() => /* @__PURE__ */ new Map());
-  for (let mask = 1; mask < 2 ** names.length; mask++) {
-    const selected = names.filter((_, index2) => mask & 2 ** index2);
+  const selectedSets = settings.mode === "pickup" ? [names] : Array.from({ length: 2 ** names.length - 1 }, (_, index2) => names.filter((_store, bit2) => index2 + 1 & 2 ** bit2));
+  for (const selected of selectedSets) {
     const orders = /* @__PURE__ */ new Map();
     let valid = true;
     for (let index2 = 0; index2 < groups.length; index2++) {
@@ -20655,6 +20662,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
 // D:/projekty/remont_assistance/lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
+var MAX_PROPOSED = 256;
 var signature = (order) => order.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}:${pack.unitPriceGrosze}`)).sort().join("|");
 async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
@@ -20694,7 +20702,9 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     result.status = "limit_exceeded";
     return result;
   };
-  if (groups.length > 20 || stores.length > 10) return tooLarge();
+  const activeStores = [...new Set(groups.flatMap((group) => group.offers.filter((offer) => isComparableOffer(offer, now.getTime())).map((offer) => offer.store)))].sort();
+  if (groups.length > DELIVERY_LIMITS.products || activeStores.length > DELIVERY_LIMITS.stores) return tooLarge();
+  if (groups.length > 20 || activeStores.length > 10) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
   const choices = [];
   let candidateCount = 1;
   for (const group of groups) {
@@ -20702,7 +20712,8 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     const sizes = offers.map((o) => Number(o.packageSize ?? group.product.packageSize));
     if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return tooLarge();
     const count = Math.ceil(group.totalQuantity / sizes[0]);
-    if (!Number.isSafeInteger(count) || count > 60) return tooLarge();
+    if (!Number.isSafeInteger(count) || count > DELIVERY_LIMITS.packagesPerProduct) return tooLarge();
+    if (count > 60) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
     const variants = [];
     const visit = (index2, remaining, packs) => {
       if (variants.length > MAX_CANDIDATES) return;
@@ -20719,7 +20730,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     visit(0, count, []);
     candidateCount *= variants.length;
     if (!variants.length) return tooLarge();
-    if (candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now);
+    if (candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
     choices.push(variants);
   }
   const candidates = [], unique = /* @__PURE__ */ new Map();
@@ -20749,7 +20760,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     candidates.push(actual);
   }
   enumerate(0, []);
-  if (unique.size > MAX_STORE_BASKETS) return compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now);
+  if (unique.size > MAX_STORE_BASKETS) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
   return quoteAndRank(candidates, unique, result, settings, quoteBasket, now);
 }
 async function compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now) {
@@ -20758,7 +20769,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     const sizes = offers.map((offer) => Number(offer.packageSize ?? group.product.packageSize));
     if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return null;
     const count = Math.ceil(group.totalQuantity / sizes[0]);
-    if (!Number.isSafeInteger(count) || count < 1 || count > 60) return null;
+    if (!Number.isSafeInteger(count) || count < 1 || count > DELIVERY_LIMITS.packagesPerProduct) return null;
     return offers.flatMap((offer) => {
       const price = parsePriceToGrosze(offer.promoPrice ?? offer.price);
       return price === null || price <= 0 || !Number.isSafeInteger(price * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count, unitPriceGrosze: price, lineCostGrosze: count * price }];
@@ -20772,6 +20783,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
   const wholePlans = /* @__PURE__ */ new Set();
   const basePlans = /* @__PURE__ */ new Map();
   function addPlan(selected, split) {
+    if (proposed.size >= MAX_PROPOSED) return;
     const orders = /* @__PURE__ */ new Map();
     for (let i = 0; i < groups.length; i++) {
       const group = groups[i];
@@ -20790,15 +20802,30 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     proposed.set(key, actual);
     if (!split) wholePlans.add(key);
   }
-  for (let subset = 1; subset < 1 << stores.length; subset++) {
-    const allowed = new Set(stores.filter((_store, index2) => subset & 1 << index2));
-    const selected = options.map((option) => option.filter((pack) => allowed.has(pack.store)).sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId))[0]);
+  const orderedOptions = options.map((option) => option.sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId)));
+  function addBase(selected) {
+    if (selected.some((pack) => !pack)) return;
+    const complete = selected;
+    basePlans.set(complete.map((pack) => pack.offerId).join("|"), complete);
+    addPlan(complete);
+  }
+  for (const store of stores) addBase(orderedOptions.map((option) => option.find((pack) => pack.store === store)));
+  addBase(orderedOptions.map((option) => option[0]));
+  for (const store of stores) addBase(orderedOptions.map((option) => option.find((pack) => pack.store === store) ?? option[0]));
+  const subsets = [];
+  if (stores.length <= 10) {
+    for (let subset = 1; subset < 2 ** stores.length; subset++) subsets.push(new Set(stores.filter((_store, index2) => subset & 2 ** index2)));
+  } else {
+    for (let first = 0; first < stores.length; first++) for (let second = first + 1; second < stores.length; second++) subsets.push(/* @__PURE__ */ new Set([stores[first], stores[second]]));
+  }
+  for (const allowed of subsets) {
+    const selected = orderedOptions.map((option) => option.find((pack) => allowed.has(pack.store)));
     if (selected.some((pack) => !pack)) continue;
-    basePlans.set(selected.map((pack) => pack.offerId).join("|"), selected);
-    addPlan(selected);
+    addBase(selected);
   }
   const seeds = [...basePlans.values()].sort((a, b) => a.reduce((sum2, p) => sum2 + p.lineCostGrosze, 0) - b.reduce((sum2, p) => sum2 + p.lineCostGrosze, 0)).slice(0, 24);
-  for (const seed of seeds) for (let index2 = 0; index2 < options.length; index2++) for (const alternative of options[index2]) {
+  expandPlans: for (const seed of seeds) for (let index2 = 0; index2 < options.length; index2++) for (const alternative of options[index2]) {
+    if (proposed.size >= MAX_PROPOSED) break expandPlans;
     if (alternative.offerId === seed[index2].offerId) continue;
     const changed = [...seed];
     changed[index2] = alternative;
@@ -20814,16 +20841,25 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
   }
   const sum = (orders) => orders.reduce((total, order) => total + order.materialsGrosze, 0);
   const ordered = [...proposed.values()].sort((a, b) => Number(b.length === 1) - Number(a.length === 1) || sum(a) - sum(b));
-  const whole = ordered.filter((orders) => wholePlans.has(orders.map(signature).join(";"))).slice(0, 16);
-  const splits = ordered.filter((orders) => !wholePlans.has(orders.map(signature).join(";"))).slice(0, 24 - whole.length);
-  const selectedOrders = [...whole, ...splits];
+  const single = ordered.filter((orders) => orders.length === 1);
+  const wholeOptions = ordered.filter((orders) => orders.length > 1 && wholePlans.has(orders.map(signature).join(";")));
+  const fewerOrders = [...wholeOptions].sort((a, b) => a.length - b.length || sum(a) - sum(b));
+  const cheaperMaterials = [...wholeOptions].sort((a, b) => sum(a) - sum(b));
+  const diverse = /* @__PURE__ */ new Map();
+  for (const plan of [...fewerOrders.slice(0, 8), ...cheaperMaterials.slice(0, 8), ...fewerOrders, ...cheaperMaterials]) {
+    diverse.set(plan.map(signature).join(";"), plan);
+    if (diverse.size >= 16) break;
+  }
+  const whole = [...diverse.values()];
+  const splits = ordered.filter((orders) => !wholePlans.has(orders.map(signature).join(";"))).slice(0, 8);
+  const selectedOrders = [...single, ...whole, ...splits];
   const unique = /* @__PURE__ */ new Map(), candidates = [];
   for (const orders of selectedOrders) {
     const additional = orders.filter((order) => !unique.has(signature(order))).length;
     if (unique.size + additional > MAX_STORE_BASKETS) continue;
     candidates.push(orders);
     orders.forEach((order) => unique.set(signature(order), order));
-    if (candidates.length >= 24) break;
+    if (candidates.length >= MAX_STORE_BASKETS) break;
   }
   result.searchLimited = true;
   if (!candidates.length) {
@@ -20837,7 +20873,8 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   const ordered = [...unique.entries()].sort((a, b) => b[1].lines.length - a[1].lines.length || b[1].materialsGrosze - a[1].materialsGrosze);
   const first = /* @__PURE__ */ new Map();
   for (const [key, order] of ordered) if (!first.has(order.store)) first.set(order.store, key);
-  const priority = new Set(first.values());
+  const priority = new Set(candidates.slice(0, 3).flatMap((orders) => orders.map(signature)));
+  for (const key of first.values()) priority.add(key);
   const smallest = /* @__PURE__ */ new Map();
   for (const [key, order] of [...ordered].reverse()) if (!smallest.has(order.store)) smallest.set(order.store, key);
   for (const key of smallest.values()) priority.add(key);
@@ -20889,11 +20926,17 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
 var import_node_crypto4 = require("node:crypto");
 
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-http.ts
+var MAX_RETAIL_PACKAGES = DELIVERY_LIMITS.packagesPerProduct;
+function retailerRequestBudget(productCount) {
+  if (!Number.isSafeInteger(productCount) || productCount < 1 || productCount > DELIVERY_LIMITS.products) throw Error("invalid_basket");
+  return Math.min(1e3, (productCount * 2 + 10) * 4);
+}
 var AnonymousShop = class {
-  constructor(origin, fetchImpl, signal) {
+  constructor(origin, fetchImpl, signal, maxCalls = 30) {
     this.origin = origin;
     this.fetchImpl = fetchImpl;
     this.signal = signal;
+    this.maxCalls = maxCalls;
   }
   cookies = /* @__PURE__ */ new Map();
   calls = 0;
@@ -20907,7 +20950,7 @@ var AnonymousShop = class {
     let url2 = new URL(path, this.origin), method = payload ? "POST" : "GET";
     for (let i = 0; i < 4; i++) {
       if (url2.origin !== this.origin) throw Error("invalid_redirect");
-      if (++this.calls > 30) throw Error("request_limit");
+      if (++this.calls > this.maxCalls) throw Error("request_limit");
       const cookie = [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; ");
       if (cookie.length > 8192 || this.cookies.size > 64) throw Error("invalid_cookie_size");
       const r = await this.fetchImpl(url2, {
@@ -21314,6 +21357,44 @@ function shoperProductId(source) {
   return id;
 }
 
+// D:/projekty/remont_assistance/artifacts/api-server/src/lib/quote-queue.ts
+var QuoteQueue = class {
+  constructor(concurrency = 3, maxQueued = 12, maxWaitMs = 15e3) {
+    this.concurrency = concurrency;
+    this.maxQueued = maxQueued;
+    this.maxWaitMs = maxWaitMs;
+  }
+  active = 0;
+  waiting = [];
+  acquire() {
+    if (this.active < this.concurrency) {
+      this.active++;
+      return Promise.resolve(this.releasePermit());
+    }
+    if (this.waiting.length >= this.maxQueued) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const waiter = { resolve, timer: setTimeout(() => {
+        const index2 = this.waiting.indexOf(waiter);
+        if (index2 >= 0) this.waiting.splice(index2, 1);
+        resolve(null);
+      }, this.maxWaitMs) };
+      this.waiting.push(waiter);
+    });
+  }
+  releasePermit() {
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const next = this.waiting.shift();
+      if (next) {
+        clearTimeout(next.timer);
+        next.resolve(this.releasePermit());
+      } else this.active--;
+    };
+  }
+};
+
 // D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
 var cls = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var attr = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
@@ -21323,11 +21404,20 @@ var one2 = (values) => {
 };
 function createCheckoutPageReader() {
   const cache = /* @__PURE__ */ new Map();
+  const reads = new QuoteQueue(3, 12, 15e3);
   return (url2, price, client) => {
     const key = JSON.stringify([url2, price]), previous = cache.get(key);
     if (previous && previous.until > Date.now()) return previous.value;
     if (cache.size >= 32) cache.delete(cache.keys().next().value);
-    const value = client.text(url2);
+    const value = (async () => {
+      const release = await reads.acquire();
+      if (!release) throw Error("quote_busy");
+      try {
+        return await client.text(url2);
+      } finally {
+        release();
+      }
+    })();
     cache.set(key, { until: Date.now() + 6e4, value });
     void value.catch(() => {
       if (cache.get(key)?.value === value) cache.delete(key);
@@ -21361,7 +21451,7 @@ function quote(order, costGrosze, carrier, payment, evidence, postalCode) {
 function expectedPacks(order) {
   return order.lines.flatMap((line2) => line2.packages.map((pack) => {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
-    if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     return { source, pack };
   }));
 }
@@ -21402,15 +21492,31 @@ function readSeweraPayment(html) {
   return options.sort((a, b) => a.costGrosze - b.costGrosze)[0] ?? null;
 }
 async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price, client) => client.text(_url2)) {
-  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4));
+  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   if ((await client.text("/ajax/ax_execute.php?operation=setDepartment", { model: "department", department: "1" })).trim() !== "1") throw Error("basket_not_confirmed");
   const expected = [];
-  for (const { source, pack } of expectedPacks(order)) {
-    const page = await pages(source.url, pack.unitPriceGrosze, client);
-    const observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
-    if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-    const pid = attr(one2(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
-    if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
+  const packs = expectedPacks(order), prepared = [];
+  let next = 0, hasFailure = false;
+  let failure;
+  await Promise.all(Array.from({ length: Math.min(3, packs.length) }, async () => {
+    while (next < packs.length && !hasFailure) {
+      try {
+        const index2 = next++, { source, pack } = packs[index2];
+        const page = await pages(source.url, pack.unitPriceGrosze, client), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
+        if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+        const pid = attr(one2(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
+        if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
+        prepared[index2] = { source, pack, pid };
+      } catch (error40) {
+        if (!hasFailure) {
+          hasFailure = true;
+          failure = error40;
+        }
+      }
+    }
+  }));
+  if (hasFailure) throw failure;
+  for (const { source, pack, pid } of prepared) {
     await client.text("/ajax/ax_execute.php?operation=addToBasket", { pid, count: String(pack.count) });
     expected.push({ url: source.url, pid, count: pack.count, price: pack.unitPriceGrosze, retailUnit: source.retailUnit });
   }
@@ -21480,7 +21586,7 @@ function decodeBudujDetails(response) {
   return parts.map((p) => decodeURIComponent(p[2])).join("\n");
 }
 async function quoteBuduj24(order, fetchImpl) {
-  const client = new AnonymousShop("https://buduj24.pl", fetchImpl, AbortSignal.timeout(12e3));
+  const client = new AnonymousShop("https://buduj24.pl", fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = [];
   for (const { source, pack } of expectedPacks(order)) {
     const page = await client.text(source.url), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
@@ -21512,11 +21618,11 @@ async function quoteBuduj24(order, fetchImpl) {
 var import_node_crypto3 = require("node:crypto");
 async function quoteCezar(order, postalCode, fetchImpl) {
   const origin = "https://cezar.eu";
-  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3));
+  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === "Cezar" && s.format === "shopify-api");
-    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const product = confirmShopifyProduct(JSON.parse(await client.text(new URL(source.url).pathname + ".js")), source);
     if (product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
     if (expected.has(product.variantId)) throw Error("invalid_basket");
@@ -21570,6 +21676,18 @@ var ORIGINS = {
   "Plus-Market": "https://www.plus-market.pl"
 };
 var TTL = 10 * 6e4;
+function unavailableReason(store) {
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar"].includes(store)) return void 0;
+  return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
+}
+function knownUnavailableRetailers() {
+  const result = {};
+  for (const store of new Set(RETAIL_SOURCES.map((source) => source.store))) {
+    const reason = unavailableReason(store);
+    if (reason) result[store] = reason;
+  }
+  return result;
+}
 function confirmedMoney(text3, numeric2) {
   if (typeof text3 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
   const match = text3.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
@@ -21613,11 +21731,11 @@ function selectHomeDelivery(basket) {
 async function quoteShoper(order, fetchImpl) {
   const origin = ORIGINS[order.store];
   if (!origin) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
-  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3));
+  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
-    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 60) throw Error("invalid_basket");
+    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const id = shoperProductId(source);
     const product = await client.json(`/webapi/front/pl_PL/products/PLN/${id}`);
     if (String(product.ean) !== source.ean || String(product.id) !== id || !product.can_buy || !Number.isSafeInteger(product.stockId)) throw Error("product_unavailable");
@@ -21652,22 +21770,32 @@ async function quoteShoper(order, fetchImpl) {
 function createRetailerQuoter(fetchImpl = fetch) {
   const pages = createCheckoutPageReader();
   const cache = /* @__PURE__ */ new Map();
-  let active = 0;
+  const queue = new QuoteQueue();
   return async (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
-    if (!ORIGINS[order.store] && !["Sewera", "Buduj24", "Cezar"].includes(order.store)) return { reason: ["Castorama", "OBI"].includes(order.store) ? "retailer_access_required" : "integration_unavailable" };
+    const unsupported = unavailableReason(order.store);
+    if (unsupported) return { reason: unsupported };
     const key = JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
     const cached2 = cache.get(key);
     if (cached2 && cached2.until > Date.now()) return cached2.result;
-    if (active >= 3) return { reason: "quote_busy" };
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
-    active++;
-    const pending = (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl)).catch((error40) => ({ reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" })).finally(() => {
-      active--;
-    });
+    const pending = (async () => {
+      const release = await queue.acquire();
+      if (!release) return { reason: "quote_busy" };
+      try {
+        return await (order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
+      } catch (error40) {
+        return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required"].includes(error40.message) ? error40.message : "quote_unavailable" };
+      } finally {
+        release();
+      }
+    })();
     cache.set(key, { until: Date.now() + TTL, result: pending });
     const result = await pending;
-    if ("reason" in result && cache.get(key)?.result === pending) cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
+    if ("reason" in result && cache.get(key)?.result === pending) {
+      if (result.reason === "quote_busy") cache.delete(key);
+      else cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
+    }
     return result;
   };
 }
@@ -21932,7 +22060,7 @@ function createRemontService(options = {}) {
         (order, postalCode) => Date.now() < deadline || ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
         STORE_DELIVERY_POLICIES,
         /* @__PURE__ */ new Date(),
-        { Castorama: "retailer_access_required", OBI: "retailer_access_required" }
+        knownUnavailableRetailers()
       );
       res.json(stageOnly ? serialized.stages[0] : {
         ...serialized,
