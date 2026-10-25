@@ -10,6 +10,7 @@ const NAZWY = Object.freeze({
   bzp: 'Biuletyn Zamówień Publicznych (e-Zamówienia)',
   ted: 'TED (ogłoszenia unijne)',
   baza_konkurencyjnosci: 'Baza Konkurencyjności',
+  platformazakupowa: 'platformazakupowa.pl',
 });
 
 /**

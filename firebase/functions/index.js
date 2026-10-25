@@ -202,6 +202,32 @@ export const bkOknoFetch = onSchedule(
 );
 
 /**
+ * Okno platformazakupowa.pl (2026-10-25) — co godzinę o :35 (między oknami BZP :20 i BK :50),
+ * 2 strony listy po 100 pozycji z kursorem w checkpoincie; pełne przejście listy ~co dobę.
+ * Zapas na przerwy e-Zamówienia i postępowania prowadzone tylko na platformie.
+ * Idempotencja: docId = `pz:<id>`.
+ */
+export const pzOknoFetch = onSchedule(
+  {
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '35 * * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 300,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runOknoPz } = await import('./src/jobs/oknoPlatformaZakupowa.js');
+    const wynik = await runOknoPz();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'pzOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`pzOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'pzOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Selekcja przetargów pod klienta co 3 h — TYLKO plan Standard (także 7-dniowa próba).
  * Godziny 2:10, 5:10 … 23:10 czasu polskiego, czyli po oknach BZP (:20) i BK (:50)
  * z poprzedniej godziny. Free dostaje przebieg raz dziennie w dailyTenderFetch.

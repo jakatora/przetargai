@@ -30,9 +30,9 @@ const wejscie = (nad = {}) => ({
   ...nad,
 });
 
-test('opisuje wszystkie trzy obsługiwane rejestry, po polsku i po angielsku', () => {
+test('opisuje wszystkie cztery obsługiwane rejestry, po polsku i po angielsku', () => {
   const z = zbudujZakresDanych(wejscie());
-  assert.deepEqual(z.zrodla.map((s) => s.kod), ['bzp', 'ted', 'baza_konkurencyjnosci']);
+  assert.deepEqual(z.zrodla.map((s) => s.kod), ['bzp', 'ted', 'baza_konkurencyjnosci', 'platformazakupowa']);
   for (const s of z.zrodla) {
     assert.ok(s.nazwa.pl && s.nazwa.en, `${s.kod} bez nazwy PL/EN`);
     assert.ok(s.zakres.pl && s.zakres.en, `${s.kod} bez opisu zakresu PL/EN`);

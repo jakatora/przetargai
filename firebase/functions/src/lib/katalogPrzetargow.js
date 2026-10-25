@@ -69,6 +69,19 @@ export const ZRODLA = [
       en: 'Requests for proposals from EU fund beneficiaries — including ones absent from BZP.',
     },
   },
+  {
+    kod: 'platformazakupowa',
+    etykieta: { pl: 'platformazakupowa.pl', en: 'platformazakupowa.pl' },
+    nazwa: {
+      pl: 'platformazakupowa.pl (Open Nexus)',
+      en: 'platformazakupowa.pl (Open Nexus)',
+    },
+    rejestr: 'https://platformazakupowa.pl',
+    zakres: {
+      pl: 'Postępowania prowadzone na platformie zakupowej Open Nexus — publiczne i firmowe; z listy znamy tytuł, zamawiającego i termin (bez CPV i województwa).',
+      en: 'Procedures run on the Open Nexus purchasing platform — public and corporate; from the listing we know the title, buyer and deadline (no CPV or region).',
+    },
+  },
 ];
 
 const KODY_ZRODEL = new Set(ZRODLA.map((z) => z.kod));

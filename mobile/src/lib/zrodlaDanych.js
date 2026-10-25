@@ -32,6 +32,11 @@ const NAZWY = {
     pelna: { pl: 'Baza Konkurencyjności (fundusze UE)', en: 'Baza Konkurencyjności (EU funds)' },
     rejestr: 'https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl',
   },
+  platformazakupowa: {
+    etykieta: { pl: 'platformazakupowa.pl', en: 'platformazakupowa.pl' },
+    pelna: { pl: 'platformazakupowa.pl (Open Nexus)', en: 'platformazakupowa.pl (Open Nexus)' },
+    rejestr: 'https://platformazakupowa.pl',
+  },
 };
 
 /**

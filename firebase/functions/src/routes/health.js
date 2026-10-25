@@ -2,7 +2,7 @@ import { zrodlaCichoPusteWCyklu } from '../lib/zrodlaCichoPuste.js';
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow } from '../db/repos.js';
+import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz } from '../db/repos.js';
 import { logger } from '../lib/logger.js';
 import { ocenStanAi } from '../lib/stanAi.js';
 
@@ -46,15 +46,16 @@ router.get('/', async (_req, res) => {
   let otwartePrzetargi = null;
   let stanOkna = null;
   let stanOknaBk = null;
+  let stanOknaPz = null;
   let stanOknaWynikow = null;
   let stanOknaPlanow = null;
 
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow] = await Promise.all([
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz] = await Promise.all([
       cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
-      oknoPlanow.wczytaj(),
+      oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null),
     ]);
   } catch { /* zgłoszone w polu db */ }
 
@@ -196,6 +197,22 @@ router.get('/', async (_req, res) => {
         skipped: stanOknaBk.ostatni_przebieg.skipped ?? null,
         bledy_zapisu: stanOknaBk.ostatni_przebieg.bledy_zapisu ?? null,
         error: stanOknaBk.ostatni_przebieg.error ?? null,
+      }
+      : null,
+    /* Okno platformazakupowa.pl (2026-10-25): kursor stron i bilans ostatniego przebiegu. */
+    pz_okno: stanOknaPz?.ostatni_przebieg
+      ? {
+        zakonczony_o: stanOknaPz.ostatni_przebieg.zakonczony_o ?? null,
+        strony: stanOknaPz.ostatni_przebieg.strony ?? null,
+        nastepna_strona: stanOknaPz.nastepna_strona ?? null,
+        nowe: stanOknaPz.ostatni_przebieg.nowe ?? null,
+        zaktualizowane: stanOknaPz.ostatni_przebieg.zaktualizowane ?? null,
+        bez_zmian: stanOknaPz.ostatni_przebieg.bez_zmian ?? null,
+        surowe: stanOknaPz.ostatni_przebieg.surowe ?? null,
+        zapytania: stanOknaPz.ostatni_przebieg.zapytania ?? null,
+        bledy_zapisu: stanOknaPz.ostatni_przebieg.bledy_zapisu ?? null,
+        ok: stanOknaPz.ostatni_przebieg.ok ?? null,
+        error: stanOknaPz.ostatni_przebieg.error ?? null,
       }
       : null,
     /*

@@ -24,7 +24,7 @@ export const KLUCZ_FILTROW = 'przetargai.katalog_filtry';
 
 export const SORTOWANIA = ['najnowsze', 'termin'];
 export const STATUSY_TERMINU = ['aktywne', 'poterminie', 'wszystkie'];
-export const ZRODLA = ['bzp', 'ted', 'baza_konkurencyjnosci'];
+export const ZRODLA = ['bzp', 'ted', 'baza_konkurencyjnosci', 'platformazakupowa'];
 
 /**
  * Domyślny zestaw filtrów katalogu.

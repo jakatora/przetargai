@@ -223,8 +223,8 @@ function pokrycieBk(okno) {
  * @param {object|null} [wejscie.oknoBzp] ostatni przebieg okna BZP
  * @param {object|null} [wejscie.oknoBk] ostatni przebieg okna Bazy Konkurencyjności
  */
-export function zbudujZakresDanych({ teraz, wlaczone = {}, zrodlaCyklu = {}, oknoBzp = null, oknoBk = null }) {
-  const okna = { bzp: oknoBzp, baza_konkurencyjnosci: oknoBk };
+export function zbudujZakresDanych({ teraz, wlaczone = {}, zrodlaCyklu = {}, oknoBzp = null, oknoBk = null, oknoPz = null }) {
+  const okna = { bzp: oknoBzp, baza_konkurencyjnosci: oknoBk, platformazakupowa: oknoPz };
 
   const zrodla = ZRODLA.map((z) => {
     const slad = sladZrodla(zrodlaCyklu?.[z.kod], okna[z.kod]);

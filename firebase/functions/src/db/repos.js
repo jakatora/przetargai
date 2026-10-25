@@ -2487,6 +2487,26 @@ export const oknoBk = {
   },
 };
 
+/**
+ * Checkpoint okna platformazakupowa.pl (2026-10-25): tylko kursor strony listy
+ * (`nastepna_strona`) i ślad ostatniego przebiegu. Lista jest sortowana po terminie,
+ * więc nie ma sensu trzymać odcisków — każde przejście i tak czyta wszystkie strony.
+ */
+const OKNO_PZ_REF = () => db().collection('_health').doc('pz_okno');
+
+export const oknoPz = {
+  async wczytaj() {
+    const doc = await OKNO_PZ_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+  async zapisz(stan) {
+    await OKNO_PZ_REF().set({ nastepna_strona: Math.max(1, Number(stan?.nastepna_strona) || 1) }, { mergeFields: ['nastepna_strona'] });
+  },
+  async zapiszPrzebieg(wynik) {
+    await OKNO_PZ_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
 export const cykl = {
   /**
    * Zapisuje ślad JEDNEGO przebiegu — nadpisując poprzedni wynik w całości.
