@@ -1695,5 +1695,41 @@
       "checkedAt": "2026-10-26T07:36:19.342Z",
       "expiresAt": "2026-10-27T07:36:19.342Z"
     }
+  },
+  {
+    "sourceId": "castorama-budmat-ud27-3m",
+    "ean": "5907738940163",
+    "name": "Profil sufitowy Budmat UD27 3 m",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/profil-sufitowy-budmat-ud27-3-m~5907738940163_01c?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 598,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T07:56:16.087Z",
+    "sourceUrl": "https://www.castorama.pl/profil-sufitowy-budmat-ud27-3-m/5907738940163_CAPL.prd",
+    "evidenceSha256": "469451114d06fc3e209fb3874a063173676cbec74bfee70e79e77efcc724e54f",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T07:56:16.087Z",
+      "expiresAt": "2026-10-27T07:56:16.087Z"
+    }
+  },
+  {
+    "sourceId": "bricomarche-poznan-budmat-ud27-3m",
+    "ean": "5907738940163",
+    "name": "Kształtownik sufitowy UD30 300 cm srebrny",
+    "imageUrl": "https://www.bricomarche.pl/media/cache/resolve/gallery/images/41/41187/ksztaltownik-sufitowy-ud30-300-cm-srebrny-543268.png",
+    "priceGrosze": 999,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T07:58:28.431Z",
+    "sourceUrl": "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny",
+    "evidenceSha256": "361ca34e076c65769606f0a068279e318b0ef213a01e213cacb295e80383a9b6",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T07:58:28.431Z",
+      "expiresAt": "2026-10-27T07:58:28.431Z"
+    }
   }
 ]
