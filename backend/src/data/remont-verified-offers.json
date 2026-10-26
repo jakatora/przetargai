@@ -1605,5 +1605,77 @@
       "checkedAt": "2026-10-26T06:34:36.671Z",
       "expiresAt": "2026-10-27T06:34:36.671Z"
     }
+  },
+  {
+    "sourceId": "castorama-goodhome-arilla-25m2",
+    "ean": "5059340969756",
+    "name": "Panele podłogowe winylowe GoodHome SPC Arilla Dark Grey 2,5 m2",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/panele-podlogowe-winylowe-goodhome-spc-arilla-dark-grey-2-5-m2~5059340969756_02c_PL_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 13245,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T07:12:02.842Z",
+    "sourceUrl": "https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-spc-arilla-dark-grey-2-5-m2/5059340969756_CAPL.prd",
+    "evidenceSha256": "2064bce5150ef96c3f7fc6fc22c06bfb7e1d2d5c3dd0ec72a40b3c29c2db53fe",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T07:12:02.842Z",
+      "expiresAt": "2026-10-27T07:12:02.842Z"
+    }
+  },
+  {
+    "sourceId": "castorama-goodhome-ragga-13m2",
+    "ean": "5059340802435",
+    "name": "Panele podłogowe winylowe GoodHome Ragga Ele Marble 1,3 m2",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/panele-podlogowe-winylowe-goodhome-ragga-ele-marble-1-3-m2~5059340802435_02c?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 6497,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T07:12:15.709Z",
+    "sourceUrl": "https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-ragga-ele-marble-1-3-m2/5059340802435_CAPL.prd",
+    "evidenceSha256": "8f53b8fa91073ac3c082ae57dfe33861ff2c844c6cfee597d7cf89d4a3443971",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T07:12:15.709Z",
+      "expiresAt": "2026-10-27T07:12:15.709Z"
+    }
+  },
+  {
+    "sourceId": "castorama-fola-50mb",
+    "ean": "5906725207227",
+    "name": "Taśma brzegowa Fola 5 mm x 10 cm x 50 mb 5 m2",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/tasma-brzegowa-fola-5-mm-x-10-cm-x-50-mb-5-m2~5906725207227_03c_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 3548,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T07:16:15.115Z",
+    "sourceUrl": "https://www.castorama.pl/tasma-brzegowa-fola-5-mm-x-10-cm-x-50-mb-5-m2/5906725207227_CAPL.prd",
+    "evidenceSha256": "d78b19013e9bef37b9f116ac93371b03d43f0cf3000706490075e31793e87fe9",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T07:16:15.115Z",
+      "expiresAt": "2026-10-27T07:16:15.115Z"
+    }
+  },
+  {
+    "sourceId": "castorama-form-30x216",
+    "ean": "5906725219640",
+    "name": "Parapet wewnętrzny PCV Form 30 x 216 cm biały",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy~5906725219640_01c_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 17800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T07:14:35.197Z",
+    "sourceUrl": "https://www.castorama.pl/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy/5906725219640_CAPL.prd",
+    "evidenceSha256": "dbaf5c7713e230722ca37eb65619e971b7ed01ee6e20153044df11bc6d1dc6f5",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T07:14:35.197Z",
+      "expiresAt": "2026-10-27T07:14:35.197Z"
+    }
   }
 ]
