@@ -1360,5 +1360,18 @@
     "sourceUrl": "https://centrummatbud.pl/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729",
     "evidenceSha256": "8f5b602e872cceb2746e1061766ce922301164781e45e023d3fd7df7dfea9059",
     "validUntil": null
+  },
+  {
+    "sourceId": "matbud-yetico-gamma-passive-033-15cm",
+    "ean": "5902578307268",
+    "name": "Styropian grafitowy 15cm Yetico Gama Passive Fasada 033",
+    "imageUrl": "https://centrummatbud.pl/images/bum/307000-308000/Styropian-elewacyjny-grafitowy-15-cm-Yetico-Gama-Passive-Fasada-033_%5B307747%5D_1200.jpg",
+    "priceGrosze": 5998,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T03:48:25.858Z",
+    "sourceUrl": "https://centrummatbud.pl/Styropian-grafitowy-15cm-Yetico-Gama-Passive-Fasada-033-p131345",
+    "evidenceSha256": "d213a9f9751e5f1a0196832b132ad0968f2f8fee3f86c350c4c084088b2707d8",
+    "validUntil": null
   }
 ]

@@ -20640,9 +20640,16 @@ var RETAIL_SOURCES = [
   // source: https://yetico.com/wp-content/uploads/2022/06/karta_tech_gamma_fasada_pl.pdf
   // source: https://centrummatbud.pl/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729
   // Dispatch is on order; the anonymous pickup method does not confirm a local pickup date or branch inventory.
-  { id: "matbud-yetico-gamma-fasada-044-10cm", ean: "5902578301976", name: "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op", category: "insulation", brand: "Yetico", packageSize: 3, unit: "m2", store: "Centrum Matbud", format: "skyshop", productId: 96729, retailerSku: "FASADA 044 10CM", minimumPackages: 50, pickupRequiresConfirmation: true, variant: ["Gamma", "Fasada", "044", "10 cm"], url: "https://centrummatbud.pl/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729" }
+  { id: "matbud-yetico-gamma-fasada-044-10cm", ean: "5902578301976", name: "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op", category: "insulation", brand: "Yetico", packageSize: 3, unit: "m2", store: "Centrum Matbud", format: "skyshop", productId: 96729, retailerSku: "FASADA 044 10CM", minimumPackages: 50, pickupRequiresConfirmation: true, variant: ["Gamma", "Fasada", "044", "10 cm"], url: "https://centrummatbud.pl/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729" },
+  // Manufacturer crosswalk p.34 row752; smooth 4-board/0.3m3/2m2 pack.
+  // Native M2 price is multiplied by2 only after verifying tick2/box2 and the actual cart.
+  // source: https://yetico.com/wp-content/uploads/2026/01/ecommerce_regulamin-programu-motywacyjnego_jubileuszowa-ekstraklasa-yetico_aktualizacja.pdf
+  // source: https://yetico.com/wp-content/uploads/2022/09/karta_tech_gamma_passive_fasada.pdf
+  // source: https://centrummatbud.pl/Styropian-grafitowy-15cm-Yetico-Gama-Passive-Fasada-033-p131345
+  { id: "matbud-yetico-gamma-passive-033-15cm", ean: "5902578307268", name: "Styropian grafitowy 15cm Yetico Gama Passive Fasada 033", category: "insulation", brand: "Yetico", packageSize: 2, unit: "m2", store: "Centrum Matbud", format: "skyshop", productId: 131345, retailerSku: "FASADA 033 15CM", minimumPackages: 50, pickupRequiresConfirmation: true, variant: ["Gama", "Passive", "Fasada", "033", "15 cm"], url: "https://centrummatbud.pl/Styropian-grafitowy-15cm-Yetico-Gama-Passive-Fasada-033-p131345" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Styropian fasadowy grafitowy Yetico Gamma Passive EPS 033 150 mm (2 m\xB2)": "5902578307268",
   "Styropian fasadowy bia\u0142y Yetico Gamma Fasada 044 100 mm (3 m\xB2)": "5902578301976",
   "Listwa przypod\u0142ogowa MDF bia\u0142a Krono Original LK100F (2,4 mb)": "5907555424969",
   "Pianka monta\u017Cowa Soudal Low Expansion pistoletowa zimowa 750 ml": "5411183048522",
@@ -21187,16 +21194,18 @@ var AnonymousShop = class {
     if (!this.storeCartToken) throw Error("cart_session_not_confirmed");
     return JSON.parse(raw);
   }
-  /** Reviewed Sky-Shop operations for the single Matbud product. Cart IDs are
+  /** Reviewed Sky-Shop operations for two pinned Matbud products. Cart IDs are
    * obtained from this fresh session, never supplied by the app or browser.
    * The order json=1 routes calculate shipping; no final order/customer route.
    * source: https://centrummatbud.pl/view/new/userContent/bum/script.js?v=699 */
-  async skyshop(action, count) {
+  async skyshop(action, count, productId = 96729) {
     if (this.origin !== "https://centrummatbud.pl") throw Error("invalid_cart_action");
+    if (![96729, 131345].includes(productId)) throw Error("invalid_cart_action");
+    const nativePerPack = productId === 131345 ? 2 : 1;
     const prefix = "/proxy_public_api?endpoint=/sky2/api-public";
     if (action === "product" || action === "parameters") {
       if (count !== void 0) throw Error("invalid_cart_action");
-      return JSON.parse(await this.read(prefix + "/products/96729" + (action === "parameters" ? "/choosable-parameters?" : ""), void 0, true));
+      return JSON.parse(await this.read(prefix + "/products/" + productId + (action === "parameters" ? "/choosable-parameters?" : ""), void 0, true));
     }
     if (action === "create-cart") {
       if (count !== void 0 || this.skyshopCartId) throw Error("invalid_cart_action");
@@ -21208,8 +21217,8 @@ var AnonymousShop = class {
     }
     if (!this.skyshopCartId) throw Error("cart_session_not_confirmed");
     if (action === "add") {
-      if (count === void 0 || !Number.isSafeInteger(count) || count < 50 || count > MAX_RETAIL_PACKAGES) throw Error("invalid_cart_action");
-      return JSON.parse(await this.read(prefix + "/carts/" + this.skyshopCartId + "/items", JSON.stringify({ productId: 96729, quantity: count, parameters: [] }), true, false, true));
+      if (count === void 0 || !Number.isSafeInteger(count) || count < 50 * nativePerPack || count > MAX_RETAIL_PACKAGES * nativePerPack || count % nativePerPack) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read(prefix + "/carts/" + this.skyshopCartId + "/items", JSON.stringify({ productId, quantity: count, parameters: [] }), true, false, true));
     }
     if (count !== void 0) throw Error("invalid_cart_action");
     if (action === "cart") return JSON.parse(await this.read(prefix + "/carts/" + this.skyshopCartId, void 0, true));
@@ -22008,6 +22017,23 @@ var MATBUD_ORIGIN = "https://centrummatbud.pl";
 var MATBUD_URL = MATBUD_ORIGIN + "/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729";
 var MATBUD_NAME = "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op";
 var MATBUD_PRODUCER = "YETICO - PRODECENT SYSTEMU DOCIEPLE\u0143";
+var MATBUD_PASSIVE_URL = MATBUD_ORIGIN + "/Styropian-grafitowy-15cm-Yetico-Gama-Passive-Fasada-033-p131345";
+var MATBUD_PASSIVE_NAME = "Styropian grafitowy 15cm Yetico Gama Passive Fasada 033";
+var reviews = [
+  { id: 96729, url: MATBUD_URL, name: MATBUD_NAME, ean: "5902578301976", sku: "FASADA 044 10CM", area: 3, nativePerPack: 1, nativeUnit: "OP", precision: 1, color: "bia\u0142y", lambda: "0,044", thickness: 10, boards: 6, photo: "241757" },
+  { id: 131345, url: MATBUD_PASSIVE_URL, name: MATBUD_PASSIVE_NAME, ean: "5902578307268", sku: "FASADA 033 15CM", area: 2, nativePerPack: 2, nativeUnit: "M2", precision: 2, color: "grafitowy", lambda: "0,033", thickness: 15, boards: 4, photo: "307747" }
+];
+function skyshopReview(id) {
+  const review = reviews.find((row) => row.id === id);
+  if (!review) throw Error("product_identity_not_confirmed");
+  return review;
+}
+function reviewedSkyshopSource(source) {
+  const review = skyshopReview(source.productId);
+  if (source.format !== "skyshop" || source.store !== "Centrum Matbud" || source.url !== review.url || source.ean !== review.ean || source.brand !== "Yetico" || source.name !== review.name || source.retailerSku !== review.sku || source.packageSize !== review.area || source.unit !== "m2") throw Error("product_identity_not_confirmed");
+  if (source.minimumPackages !== 50 || (source.purchaseMultiple ?? 1) !== 1) throw Error("purchase_rules_changed");
+  return review;
+}
 var only3 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
   return values[0];
@@ -22020,31 +22046,31 @@ var price = (value) => {
   return number4;
 };
 function inspectSkyshopProduct(html, api, parameters, source) {
-  if (source.format !== "skyshop" || source.store !== "Centrum Matbud" || source.productId !== 96729 || source.url !== MATBUD_URL || source.ean !== "5902578301976" || source.brand !== "Yetico" || source.name !== MATBUD_NAME || source.retailerSku !== "FASADA 044 10CM" || source.packageSize !== 3 || source.unit !== "m2") throw Error("product_identity_not_confirmed");
-  if (source.minimumPackages !== 50 || (source.purchaseMultiple ?? 1) !== 1) throw Error("purchase_rules_changed");
+  const review = reviewedSkyshopSource(source), minimum = 50 * review.nativePerPack;
   const safe = clean(html), heading = only3(elements(safe, (a) => a.id === "product-name-information"), "product_identity_not_confirmed");
-  if (text2(heading) !== MATBUD_NAME) throw Error("product_identity_not_confirmed");
+  if (text2(heading) !== review.name) throw Error("product_identity_not_confirmed");
   const add = only3(elements(safe, (a) => a["data-cy"] === "addToCartButton" && a["aria-label"] === "Dodaj do koszyka"), "product_form_not_confirmed");
-  if (attribute2(add, "data-product-id") !== "96729") throw Error("product_form_not_confirmed");
+  if (attribute2(add, "data-product-id") !== String(review.id)) throw Error("product_form_not_confirmed");
   const producer = only3(elements(safe, (_a, tag) => tag === "a").filter((el) => attribute2(el, "href") === "/YETICO-PRODECENT-SYSTEMU-DOCIEPLEN/pr/982"), "product_manufacturer_not_confirmed");
   if (!text2(producer).includes(MATBUD_PRODUCER)) throw Error("product_manufacturer_not_confirmed");
   const description = only3(elements(safe, (a) => a.id === "product_description"), "product_variant_mismatch");
   const facts = elements(description, (_a, tag) => tag === "li").map(text2);
-  for (const fact of ["sk\u0142ad: polistyren", "kolor: bia\u0142y", "lambda: 0,044 W/mK", "grubo\u015B\u0107 p\u0142yty: 10 cm", "wymiar p\u0142yty: 100 x 50 cm", "ilo\u015B\u0107 p\u0142yt w opakowaniu: 6 szt", "obj\u0119to\u015B\u0107 opakowania: 0,3 m3", "powierzchnia p\u0142yt: 3 m2", "Euroklasa: E"]) if (facts.filter((value) => value === fact).length !== 1) throw Error("product_variant_mismatch");
+  for (const fact of ["sk\u0142ad: polistyren", "kolor: " + review.color, "lambda: " + review.lambda + " W/mK", "grubo\u015B\u0107 p\u0142yty: " + review.thickness + " cm", "wymiar p\u0142yty: 100 x 50 cm", "ilo\u015B\u0107 p\u0142yt w opakowaniu: " + review.boards + " szt", "obj\u0119to\u015B\u0107 opakowania: 0,3 m3", "powierzchnia p\u0142yt: " + review.area + " m2", "Euroklasa: E"]) if (facts.filter((value) => value === fact).length !== 1) throw Error("product_variant_mismatch");
   if (!text2(description).includes("Wysy\u0142ka GRATIS od 50 paczek w ka\u017Cde dowolne miejsce Polski.")) throw Error("purchase_rules_changed");
   const counter = only3(elements(safe, (a) => a.id === "product_counter"), "purchase_rules_changed");
-  for (const [key, value] of Object.entries({ "data-real-min": "50", "data-min": "50", "data-tick": "1", "data-boxamount": "1", "data-boxrestrict": "1", "data-boxrestrict-whole": "true" })) if (attribute2(counter, key) !== value) throw Error("purchase_rules_changed");
-  if (api?.id !== 96729 || api.name !== MATBUD_NAME || api.url !== MATBUD_URL || api.symbol !== "FASADA 044 10CM" || api.type !== "product" || api.ean !== null || api.barCode !== null || !Array.isArray(api.setItems) || api.setItems.length) throw Error("product_identity_not_confirmed");
+  for (const [key, value] of Object.entries({ "data-real-min": String(minimum), "data-min": String(minimum), "data-tick": String(review.nativePerPack), "data-boxamount": String(review.nativePerPack), "data-boxrestrict": String(review.nativePerPack), "data-boxrestrict-whole": "true" })) if (attribute2(counter, key) !== value) throw Error("purchase_rules_changed");
+  if (api?.id !== review.id || api.name !== review.name || api.url !== review.url || api.symbol !== review.sku || api.type !== "product" || api.ean !== null || api.barCode !== null || !Array.isArray(api.setItems) || api.setItems.length) throw Error("product_identity_not_confirmed");
   const native = api.amount;
-  if (native?.minAmount !== 50 || native.tick !== 1 || native.isBox !== true || native.unit !== "OP" || api.amountPrecision !== 1) throw Error("purchase_rules_changed");
-  if (native.availability?.type !== "amount" || !amount(native.availability.amount) || native.availability.amount < 50 || attribute2(counter, "data-max") !== String(native.availability.amount)) throw Error("retailer_out_of_stock");
-  if (!Array.isArray(parameters) || parameters.length !== 1 || parameters[0].productId !== 96729 || parameters[0].symbol !== api.symbol || parameters[0].ean !== null || parameters[0].barCode !== null) throw Error("product_variant_mismatch");
+  if (native?.minAmount !== minimum || native.tick !== review.nativePerPack || native.isBox !== true || native.unit !== review.nativeUnit || api.amountPrecision !== review.precision) throw Error("purchase_rules_changed");
+  if (native.availability?.type !== "amount" || !amount(native.availability.amount) || native.availability.amount < minimum || attribute2(counter, "data-max") !== String(native.availability.amount)) throw Error("retailer_out_of_stock");
+  if (!Array.isArray(parameters) || parameters.length !== 1 || parameters[0].productId !== review.id || parameters[0].symbol !== api.symbol || parameters[0].ean !== null || parameters[0].barCode !== null) throw Error("product_variant_mismatch");
   for (const list of [api.parameters, parameters[0].parameters]) {
     if (!Array.isArray(list) || list.length !== 1 || list[0].id !== 20 || list[0].type !== "info" || list[0].required !== false || !Array.isArray(list[0].values) || list[0].values.length !== 2) throw Error("product_variant_mismatch");
-    const minimum = list[0].values.find((value) => value.id === 214), free = list[0].values.find((value) => value.id === 228);
-    if (!minimum?.name.includes("poni\u017Cej 50op=15m3") || !free?.name.includes("Styropian DARMOWA WYSY\u0141KA !") || list[0].values.some((value) => value.changePrice !== 0)) throw Error("purchase_rules_changed");
+    const minimum2 = list[0].values.find((value) => value.id === 214), free = list[0].values.find((value) => value.id === 228);
+    if (!minimum2?.name.includes("poni\u017Cej 50op=15m3") || !free?.name.includes("Styropian DARMOWA WYSY\u0141KA !") || list[0].values.some((value) => value.changePrice !== 0)) throw Error("purchase_rules_changed");
   }
-  const priceGrosze = price(api.price), products = [];
+  const nativePriceGrosze = price(api.price), priceGrosze = nativePriceGrosze * review.nativePerPack, products = [];
+  if (!Number.isSafeInteger(priceGrosze)) throw Error("retailer_gross_price_not_confirmed");
   for (const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       const value = JSON.parse(match[1]);
@@ -22054,27 +22080,38 @@ function inspectSkyshopProduct(html, api, parameters, source) {
   }
   if (products.length !== 1) throw Error("product_identity_not_confirmed");
   const product = products[0], offer = product.offers;
-  if (product.name !== MATBUD_NAME || product.brand?.name !== MATBUD_PRODUCER || ["gtin", "gtin13", "gtin14"].some((key) => product[key] !== void 0 && product[key] !== source.ean)) throw Error("product_identity_not_confirmed");
+  if (product.name !== review.name || product.brand?.name !== MATBUD_PRODUCER || ["gtin", "gtin13", "gtin14"].some((key) => product[key] !== void 0 && product[key] !== source.ean)) throw Error("product_identity_not_confirmed");
   if (offer?.["@type"] !== "Offer" || offer.priceCurrency !== "PLN" || !/^https?:\/\/schema.org\/InStock$/.test(offer.availability)) throw Error("retailer_out_of_stock");
-  if (parsePriceToGrosze(offer.price) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  if (parsePriceToGrosze(offer.price) !== nativePriceGrosze) throw Error("retailer_gross_price_mismatch");
   const imageUrl = new URL(product.image, MATBUD_ORIGIN).href;
-  if (new URL(imageUrl).origin !== MATBUD_ORIGIN || !imageUrl.includes("241757")) throw Error("product_photo_not_confirmed");
-  return { priceGrosze, stock: native.availability.amount, imageUrl, product: { ...product, gtin13: source.ean, image: imageUrl, offers: { ...offer, url: source.url } } };
+  if (new URL(imageUrl).origin !== MATBUD_ORIGIN || !imageUrl.includes(review.photo)) throw Error("product_photo_not_confirmed");
+  return { priceGrosze, nativePriceGrosze, stock: Math.floor(native.availability.amount / review.nativePerPack), imageUrl, product: { ...product, gtin13: source.ean, image: imageUrl, offers: { ...offer, price: (priceGrosze / 100).toFixed(2), url: source.url } } };
 }
 async function readSkyshopProduct(source, client) {
-  const html = await client.text(source.url), api = await client.skyshop("product"), parameters = await client.skyshop("parameters");
+  reviewedSkyshopSource(source);
+  const html = await client.text(source.url), api = await client.skyshop("product", void 0, source.productId), parameters = await client.skyshop("parameters", void 0, source.productId);
   return { ...inspectSkyshopProduct(html, api, parameters, source), evidence: [html, api, parameters] };
 }
-function confirmSkyshopCart(cart, count, unitPriceGrosze) {
-  if (cart?.canBuy !== true || !Array.isArray(cart.items) || cart.items.length !== 1 || cart.discountCode !== null || cart.loyaltyPoints !== null) throw Error("basket_not_confirmed");
+function confirmSkyshopBasket(cart, expected) {
+  if (!expected.length || expected.length > reviews.length || new Set(expected.map((row) => row.productId)).size !== expected.length) throw Error("invalid_basket");
+  if (cart?.canBuy !== true || !Array.isArray(cart.items) || cart.items.length !== expected.length || cart.discountCode !== null || cart.loyaltyPoints !== null) throw Error("basket_not_confirmed");
   if (!Array.isArray(cart.warnings) || cart.warnings.some((warning) => warning.type !== "MINIMUM_ORDER_PRICE" || warning.context?.minimumPrice !== 0)) throw Error("basket_not_confirmed");
-  const item = cart.items[0], product = item.product;
-  if (product?.id !== 96729 || product.name !== MATBUD_NAME || product.symbol !== "FASADA 044 10CM" || product.producerId !== 982 || product.producerName !== MATBUD_PRODUCER || product.url !== MATBUD_URL || item.type !== "ORDINARY_PRODUCT" || !Array.isArray(item.parameters) || item.parameters.length) throw Error("basket_not_confirmed");
-  if (item.quantity !== count) throw Error("insufficient_stock");
-  if (price(item.unitPriceSummary?.final) !== unitPriceGrosze || price(item.unitPriceSummary?.base) !== unitPriceGrosze || item.unitPriceSummary.discounts?.length || item.priceSummary?.discounts?.length || cart.priceSummary?.discounts?.length) throw Error("price_changed");
-  for (const value of [item.priceSummary?.base, item.priceSummary?.final]) if (price(value) !== count * unitPriceGrosze) throw Error("price_changed");
+  let total = 0;
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of cart.items) {
+    const product = item.product, line2 = expected.find((row) => row.productId === product?.id);
+    if (!line2 || seen.has(line2.productId)) throw Error("basket_not_confirmed");
+    seen.add(line2.productId);
+    const review = skyshopReview(line2.productId), { count, unitPriceGrosze } = line2;
+    if (!Number.isSafeInteger(count) || count < 50 * review.nativePerPack || count % review.nativePerPack || !Number.isSafeInteger(unitPriceGrosze) || unitPriceGrosze < 1 || !Number.isSafeInteger(count * unitPriceGrosze)) throw Error("invalid_basket");
+    if (product.name !== review.name || product.symbol !== review.sku || product.producerId !== 982 || product.producerName !== MATBUD_PRODUCER || product.url !== review.url || item.type !== "ORDINARY_PRODUCT" || !Array.isArray(item.parameters) || item.parameters.length) throw Error("basket_not_confirmed");
+    if (item.quantity !== count) throw Error("insufficient_stock");
+    if (price(item.unitPriceSummary?.final) !== unitPriceGrosze || price(item.unitPriceSummary?.base) !== unitPriceGrosze || item.unitPriceSummary.discounts?.length || item.priceSummary?.discounts?.length || cart.priceSummary?.discounts?.length) throw Error("price_changed");
+    for (const value of [item.priceSummary?.base, item.priceSummary?.final]) if (price(value) !== count * unitPriceGrosze) throw Error("price_changed");
+    total += count * unitPriceGrosze;
+  }
   for (const value of [cart.priceSummary?.base, cart.priceSummary?.final]) {
-    if (value?.currency !== "PLN" || parsePriceToGrosze(value.gross) !== count * unitPriceGrosze || parsePriceToGrosze(String(value.grossDisplay ?? "").replace(/\s*zł$/, "")) !== count * unitPriceGrosze) throw Error("basket_not_confirmed");
+    if (value?.currency !== "PLN" || parsePriceToGrosze(value.gross) !== total || parsePriceToGrosze(String(value.grossDisplay ?? "").replace(/\s*zł$/, "")) !== total) throw Error("basket_not_confirmed");
   }
   return cart;
 }
@@ -22161,10 +22198,11 @@ function retailPriceIsValid(validUntil, now) {
 async function readRetailSource(source, fetchImpl = fetch) {
   if (source.disabledReason) throw Error(source.disabledReason);
   if (source.format === "skyshop") {
+    const review = reviewedSkyshopSource(source), nativeCount = source.minimumPackages * review.nativePerPack;
     const client = new AnonymousShop(MATBUD_ORIGIN, fetchImpl, AbortSignal.timeout(15e3), 12), current = await readSkyshopProduct(source, client);
-    const empty = await client.skyshop("create-cart"), added = await client.skyshop("add", source.minimumPackages);
-    if (added?.id !== empty.id || added.addedCartItem?.quantity !== source.minimumPackages) throw Error("insufficient_stock");
-    const cart = confirmSkyshopCart(await client.skyshop("cart"), source.minimumPackages, current.priceGrosze);
+    const empty = await client.skyshop("create-cart"), added = await client.skyshop("add", nativeCount, review.id);
+    if (added?.id !== empty.id || added.addedCartItem?.quantity !== nativeCount) throw Error("insufficient_stock");
+    const cart = confirmSkyshopBasket(await client.skyshop("cart"), [{ productId: review.id, count: nativeCount, unitPriceGrosze: current.nativePriceGrosze }]);
     if (cart.id !== empty.id) throw Error("basket_not_confirmed");
     const html = `<script type="application/ld+json">${JSON.stringify(current.product)}</script>`;
     return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), evidenceSha256: skyshopEvidenceHash([...current.evidence, cart]) };
@@ -22980,18 +23018,28 @@ async function quoteKronosfera(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/skyshop-delivery.ts
-function confirmSkyshopCalculation(value, count, unitPriceGrosze, itemId, selected = false) {
-  const total = count * unitPriceGrosze;
-  if (value?.baseCurrency !== "PLN" || value.orderCurrency !== "PLN" || value.isWdt !== false || value.coupon !== null || value.gratisId !== null || ![null, 0].includes(value.orderPaymentOverhead) || !Array.isArray(value.products) || value.products.length !== 1) throw Error("basket_not_confirmed");
-  const product = value.products[0];
-  if (product.id !== 96729 || product.name !== MATBUD_NAME || product.producerName !== MATBUD_PRODUCER || product.tax !== "23" || product.hash !== itemId || !Array.isArray(product.options) || product.options.length) throw Error("basket_not_confirmed");
-  if (product.amount !== count) throw Error("insufficient_stock");
-  if (parsePriceToGrosze(product.price) !== unitPriceGrosze || parsePriceToGrosze(product.priceInOrderCurrency) !== unitPriceGrosze || [value.orderProductsPricesSum, value.orderProductsPricesSumInOrderCurrency, value.orderPriceTotal].some((amount2) => parsePriceToGrosze(amount2) !== total)) throw Error("price_changed");
+function confirmSkyshopBasketCalculation(value, expected, selected = false) {
+  if (!expected.length || expected.length > 2 || new Set(expected.map((row) => row.productId)).size !== expected.length) throw Error("invalid_basket");
+  if (value?.baseCurrency !== "PLN" || value.orderCurrency !== "PLN" || value.isWdt !== false || value.coupon !== null || value.gratisId !== null || ![null, 0].includes(value.orderPaymentOverhead) || !Array.isArray(value.products) || value.products.length !== expected.length) throw Error("basket_not_confirmed");
+  let total = 0;
+  const seen = /* @__PURE__ */ new Set();
+  for (const product of value.products) {
+    const line2 = expected.find((row) => row.productId === product?.id);
+    if (!line2 || seen.has(line2.productId)) throw Error("basket_not_confirmed");
+    seen.add(line2.productId);
+    const review = skyshopReview(line2.productId);
+    if (!Number.isSafeInteger(line2.count) || line2.count < 50 * review.nativePerPack || line2.count % review.nativePerPack || !Number.isSafeInteger(line2.unitPriceGrosze) || line2.unitPriceGrosze < 1 || !Number.isSafeInteger(line2.count * line2.unitPriceGrosze) || !line2.itemId) throw Error("invalid_basket");
+    if (product.name !== review.name || product.producerName !== MATBUD_PRODUCER || product.tax !== "23" || product.hash !== line2.itemId || !Array.isArray(product.options) || product.options.length) throw Error("basket_not_confirmed");
+    if (product.amount !== line2.count) throw Error("insufficient_stock");
+    if (parsePriceToGrosze(product.price) !== line2.unitPriceGrosze || parsePriceToGrosze(product.priceInOrderCurrency) !== line2.unitPriceGrosze) throw Error("price_changed");
+    total += line2.count * line2.unitPriceGrosze;
+  }
+  if (!Number.isSafeInteger(total) || [value.orderProductsPricesSum, value.orderProductsPricesSumInOrderCurrency, value.orderPriceTotal].some((amount2) => parsePriceToGrosze(amount2) !== total)) throw Error("price_changed");
   if (value.orderPriceShipment !== 0) throw Error("no_home_delivery");
   if (selected && (value.payment?.name !== "Wp\u0142ata na konto bankowe" || value.shipment?.name !== "Styropian, DARMOWA DOSTAWA !")) throw Error("no_home_delivery");
   return value;
 }
-function confirmSkyshopShipping(html, methods, count, unitPriceGrosze, itemId) {
+function confirmSkyshopBasketShipping(html, methods, expected) {
   const safe = clean(html), orders = elements(safe, (a) => a.class?.split(/\s+/).includes("order") ?? false);
   if (orders.length !== 1) throw Error("basket_not_confirmed");
   const attrs6 = attrs(orders[0].match(/^<[^>]+>/)?.[0] ?? "");
@@ -23001,27 +23049,42 @@ function confirmSkyshopShipping(html, methods, count, unitPriceGrosze, itemId) {
   } catch {
     throw Error("basket_not_confirmed");
   }
-  confirmSkyshopCalculation(initial, count, unitPriceGrosze, itemId);
+  confirmSkyshopBasketCalculation(initial, expected);
   if (!methods || typeof methods !== "object" || Array.isArray(methods) || methods.user_error) throw Error("no_home_delivery");
   const shipping = methods.s182be0c5c;
   if (shipping?.name !== "Styropian, DARMOWA DOSTAWA !" || shipping.personal !== "no" || shipping.function !== "none" || shipping.pay_delivery !== "no" || shipping.require_address !== "yes" || shipping.price !== 0 || shipping.price_net !== 0 || shipping.postal_codes !== null || shipping.cities !== null || shipping.streets !== null || !Array.isArray(shipping.methods) || shipping.methods.length) throw Error("no_home_delivery");
   return shipping;
 }
 async function quoteSkyshop(order, fetchImpl) {
-  if (order.store !== "Centrum Matbud" || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
-  const pack = order.lines[0].packages[0], source = RETAIL_SOURCES.find((row) => row.id === pack.offerId && row.store === order.store && row.format === "skyshop");
-  if (!source || !Number.isSafeInteger(pack.count) || pack.count < 50 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || !Number.isSafeInteger(pack.lineCostGrosze) || pack.packageSize !== 3 || pack.minimumPackages !== 50 || (pack.purchaseMultiple ?? 1) !== 1 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || order.materialsGrosze !== pack.lineCostGrosze) throw Error("invalid_basket");
-  const client = new AnonymousShop(MATBUD_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), 20), current = await readSkyshopProduct(source, client);
-  if (current.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-  if (current.stock < pack.count) throw Error("insufficient_stock");
-  const empty = await client.skyshop("create-cart"), added = await client.skyshop("add", pack.count);
-  if (added?.id !== empty.id || added.addedCartItem?.quantity !== pack.count) throw Error("insufficient_stock");
-  const cart = confirmSkyshopCart(await client.skyshop("cart"), pack.count, current.priceGrosze);
+  const packs = order.lines.flatMap((line2) => line2.packages);
+  if (order.store !== "Centrum Matbud" || !packs.length || packs.length > 2 || new Set(packs.map((pack) => pack.offerId)).size !== packs.length) throw Error("invalid_basket");
+  const wanted = packs.map((pack) => {
+    const source = RETAIL_SOURCES.find((row) => row.id === pack.offerId && row.store === order.store && row.format === "skyshop");
+    if (!source) throw Error("invalid_basket");
+    const review = reviewedSkyshopSource(source);
+    if (!Number.isSafeInteger(pack.count) || pack.count < 50 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze < 1 || !Number.isSafeInteger(pack.lineCostGrosze) || pack.packageSize !== review.area || pack.minimumPackages !== 50 || (pack.purchaseMultiple ?? 1) !== 1 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze) throw Error("invalid_basket");
+    return { source, review, pack };
+  });
+  if (wanted.reduce((sum, row) => sum + row.pack.lineCostGrosze, 0) !== order.materialsGrosze) throw Error("invalid_basket");
+  const client = new AnonymousShop(MATBUD_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), 32), expected = [], evidence = [];
+  for (const { source, review, pack } of wanted) {
+    const current = await readSkyshopProduct(source, client);
+    if (current.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (current.stock < pack.count) throw Error("insufficient_stock");
+    expected.push({ productId: review.id, count: pack.count * review.nativePerPack, unitPriceGrosze: current.nativePriceGrosze });
+    evidence.push(...current.evidence);
+  }
+  const empty = await client.skyshop("create-cart");
+  for (const line2 of expected) {
+    const added = await client.skyshop("add", line2.count, line2.productId);
+    if (added?.id !== empty.id || added.addedCartItem?.quantity !== line2.count) throw Error("insufficient_stock");
+  }
+  const cart = confirmSkyshopBasket(await client.skyshop("cart"), expected);
   if (cart.id !== empty.id) throw Error("basket_not_confirmed");
-  const shipping = await client.skyshop("shipping");
-  const method = confirmSkyshopShipping(shipping.html, shipping.methods, pack.count, current.priceGrosze, cart.items[0].id);
-  const calculation = confirmSkyshopCalculation(await client.skyshop("calculate"), pack.count, current.priceGrosze, cart.items[0].id, true), now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: 0, carrier: method.name, payment: calculation.payment.name, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: MATBUD_URL, destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: skyshopEvidenceHash([...current.evidence, cart, shipping.html, shipping.methods, calculation]) } };
+  for (const line2 of expected) line2.itemId = cart.items.find((item) => item.product.id === line2.productId).id;
+  const shipping = await client.skyshop("shipping"), method = confirmSkyshopBasketShipping(shipping.html, shipping.methods, expected);
+  const calculation = confirmSkyshopBasketCalculation(await client.skyshop("calculate"), expected, true), now = /* @__PURE__ */ new Date();
+  return { quote: { costGrosze: 0, carrier: method.name, payment: calculation.payment.name, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: wanted.length === 1 ? wanted[0].source.url : MATBUD_ORIGIN + "/order", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: skyshopEvidenceHash([...evidence, cart, shipping.html, shipping.methods, calculation]) } };
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
