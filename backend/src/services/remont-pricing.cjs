@@ -20785,9 +20785,15 @@ var RETAIL_SOURCES = [
   { id: "folnet-conpar-100m2", ean: "5902096430103", name: "Folia paroizolacyjna \u017C\xF3\u0142ta Conpar 0,20 mm", category: "vapor-barrier", brand: "Conkret", packageSize: 100, unit: "m2", store: "Folnet", format: "folnet", productId: 10288, retailerSku: "12-021", variant: ["Conpar", "0,20 mm"], url: "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html" },
   // Separate current model, not an alias for discontinued EAN 5903917782364.
   // source: https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd
-  { id: "castorama-opp-archi-full-80-left", ean: "5063022524263", name: "Drzwi pe\u0142ne OPP Archi 80 lewe bia\u0142e", category: "door-leaf", brand: "OPP", packageSize: 1, unit: "szt", store: "Castorama", browserReviewAllowed: true, variant: ["Archi", "80", "lewe", "bia\u0142e"], url: "https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd" }
+  { id: "castorama-opp-archi-full-80-left", ean: "5063022524263", name: "Drzwi pe\u0142ne OPP Archi 80 lewe bia\u0142e", category: "door-leaf", brand: "OPP", packageSize: 1, unit: "szt", store: "Castorama", browserReviewAllowed: true, variant: ["Archi", "80", "lewe", "bia\u0142e"], url: "https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd" },
+  // Same EAN as manufacturer Ovida K36-031; never alias the old Facile SKU.
+  // source: https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd
+  // source: https://www.cersanit.com.pl/lazienka/umywalka-wiszaca-ovida-50,3252.html
+  { id: "castorama-cersanit-atlantic-new-50", ean: "5901771226987", name: "Umywalka Cersanit Atlantic New 50 cm", category: "washbasin", brand: "Cersanit", packageSize: 1, unit: "szt", store: "Castorama", browserReviewAllowed: true, variant: ["Atlantic", "New", "50"], url: "https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd" }
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd
+  "Umywalka \u015Bcienna Cersanit Atlantic New 50 (50,5 \xD7 40 cm, z otworem i przelewem)": "5901771226987",
   // source: https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd
   "Skrzyd\u0142o drzwiowe pe\u0142ne OPP Archi 80 lewe bia\u0142e (2035 \xD7 844 mm)": "5063022524263",
   // source: https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html
