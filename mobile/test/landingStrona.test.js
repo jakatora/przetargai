@@ -262,3 +262,12 @@ test('wersja.json na stronie = wersja aplikacji (baner „jest nowa wersja” dl
   assert.equal(plik.pobierz, 'https://przetarg-ai.pl/pobierz');
   assert.match(plik.data, /^\d{4}-\d{2}-\d{2}$/);
 });
+
+test('hosting oddaje wersja.json z CORS (baner „jest nowa wersja” w apce Windows ma origin app://przetargai — smoke 2026-10-26)', () => {
+  const firebase = JSON.parse(fs.readFileSync(path.join(LANDING, '..', 'firebase', 'firebase.json'), 'utf8'));
+  const hosting = Array.isArray(firebase.hosting) ? firebase.hosting[0] : firebase.hosting;
+  const regula = (hosting.headers ?? []).find((h) => h.source === '/wersja.json');
+  assert.ok(regula, 'firebase.json: brak nagłówków dla /wersja.json');
+  const cors = regula.headers.find((h) => h.key === 'Access-Control-Allow-Origin');
+  assert.equal(cors?.value, '*');
+});

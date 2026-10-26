@@ -7,16 +7,42 @@
   "hosting": {
     "public": "hosting",
     "cleanUrls": true,
-    "ignore": ["vercel.json", "README.md", "**/.*"]
+    "ignore": [
+      "vercel.json",
+      "README.md",
+      "**/.*"
+    ],
+    "headers": [
+      {
+        "source": "/wersja.json",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=300"
+          }
+        ]
+      }
+    ]
   },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
   "emulators": {
-    "functions": { "port": 5001 },
-    "firestore": { "port": 8081 },
-    "ui": { "enabled": true, "port": 4001 },
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8081
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4001
+    },
     "singleProjectMode": true
   }
 }
