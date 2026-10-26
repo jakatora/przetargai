@@ -23,6 +23,7 @@ niezacommitowany WIP na innej gałęzi.
 - [x] Android: gradle 3 min 38 s → `C:\Users\Startklaar\Documents\PrzetargAI-1.1.9.apk` (67 931 119 B, SHA-256 cd637872…, apksigner: CN=PrzetargAI, SHA-1 b66e24…, vc21/1.1.9) i `PrzetargAI-1.1.9.aab` (46 628 411 B).
 - [x] Windows: `D:\projekty\PrzetargAI-Windows\PrzetargAI-Setup-1.1.9.exe`, `-przenosna.exe` (smoke OK, 26.10 19:25).
 - [x] Strona pobierania + hosting wdrożone z worktree 26.10 ~20:08 PL: live „Pobierz APK 1.1.9” (67 931 119 B), `wersja.json` 1.1.9 z `Access-Control-Allow-Origin: *` (sprawdzone curlem).
-- [x] origin/main = `ade56ed`; Codemagic `ios-release` build `6adf988c7896d4618b67a2f3` (start 26.10 ~20:16 PL).
+- [x] origin/main = `ade56ed`; Codemagic `ios-release` build #24 `6adf988c7896d4618b67a2f3` — finished 26.10 18:34 UTC, publishing OK (`PrzetargAI.ipa` → TestFlight).
 - [ ] Sklepy (user): Play Console AAB vc21 + „Informacje o wersji" z `store/whats-new-1.1.9.md`; ASC po TestFlight.
-- [ ] STAN w pamięci projektu.
+- [x] Produkcja po deployu: `pracownikCo3h` wyzwolony ręcznie 26.10 19:26 UTC — pula 14 812, 1 użytkownik Standard, 0 nowych wyborów → gałąź dociągania dokumentów e-Zamówień nie miała kandydata (API e-Zamówień i trasa sprawdzone curlem/testami; 11 678 otwartych ogłoszeń ma `postepowanie_id`). Pierwszy dowód z danych: `ez_dokumenty_o` w `tenders` po kolejnym nowym dopasowaniu z BZP.
+- [x] STAN w pamięci projektu.
