@@ -1781,5 +1781,23 @@
       "checkedAt": "2026-10-26T19:31:10.236Z",
       "expiresAt": "2026-10-27T19:31:10.236Z"
     }
+  },
+  {
+    "sourceId": "castorama-tamara-white-15m2",
+    "ean": "5907518303911",
+    "name": "Glazura Tamara 25 x 40 cm white 1,5 m2",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/glazura-tamara-25-x-40-cm-white-1-5-m2~5907518303911_02c_PL_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 5997,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T19:58:26.512Z",
+    "sourceUrl": "https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd",
+    "evidenceSha256": "c85a5dab656449da1219fa8fcdaa0c5bec43afd5c88897f8390c81db1adf17c0",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T19:58:26.512Z",
+      "expiresAt": "2026-10-27T19:58:26.512Z"
+    }
   }
 ]

@@ -20789,9 +20789,13 @@ var RETAIL_SOURCES = [
   // Same EAN as manufacturer Ovida K36-031; never alias the old Facile SKU.
   // source: https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd
   // source: https://www.cersanit.com.pl/lazienka/umywalka-wiszaca-ovida-50,3252.html
-  { id: "castorama-cersanit-atlantic-new-50", ean: "5901771226987", name: "Umywalka Cersanit Atlantic New 50 cm", category: "washbasin", brand: "Cersanit", packageSize: 1, unit: "szt", store: "Castorama", browserReviewAllowed: true, variant: ["Atlantic", "New", "50"], url: "https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd" }
+  { id: "castorama-cersanit-atlantic-new-50", ean: "5901771226987", name: "Umywalka Cersanit Atlantic New 50 cm", category: "washbasin", brand: "Cersanit", packageSize: 1, unit: "szt", store: "Castorama", browserReviewAllowed: true, variant: ["Atlantic", "New", "50"], url: "https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd" },
+  // source: https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd
+  { id: "castorama-tamara-white-15m2", ean: "5907518303911", name: "Glazura Tamara 25 x 40 cm white 1,5 m2", category: "tile", brand: "Ceramika Color", packageSize: 1.5, unit: "m2", store: "Castorama", browserReviewAllowed: true, variant: ["Tamara", "25 x 40", "white", "1,5 m2"], url: "https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd" }
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd
+  "Glazura \u015Bcienna Ceramika Color Tamara white 25\xD740 cm (1,5 m\xB2)": "5907518303911",
   // source: https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd
   "Umywalka \u015Bcienna Cersanit Atlantic New 50 (50,5 \xD7 40 cm, z otworem i przelewem)": "5901771226987",
   // source: https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd
