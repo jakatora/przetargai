@@ -1677,5 +1677,23 @@
       "checkedAt": "2026-10-26T07:14:35.197Z",
       "expiresAt": "2026-10-27T07:14:35.197Z"
     }
+  },
+  {
+    "sourceId": "castorama-marketplace-corksystem-lvt-6m2",
+    "ean": "5061092900925",
+    "name": "Podkład podłogowy Corksystem LVT 1.5 mm pod panele winylowe 6 m2 1 op.",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-~5061092900925_01c_MP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 7399,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T07:36:19.342Z",
+    "sourceUrl": "https://www.castorama.pl/departments/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-/5061092900925_CAPL.prd",
+    "evidenceSha256": "66b7fdd4997c1ff025c5589272f6faf5ceec6cff86f2141c3da277bd49b3f392",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T07:36:19.342Z",
+      "expiresAt": "2026-10-27T07:36:19.342Z"
+    }
   }
 ]
