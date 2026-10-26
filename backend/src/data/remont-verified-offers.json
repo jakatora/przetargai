@@ -1745,5 +1745,23 @@
     "sourceUrl": "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html",
     "evidenceSha256": "a65a3b27839621a4856af885891fcd521d2dcdc862f347b5956cf1c0aa8fd262",
     "validUntil": null
+  },
+  {
+    "sourceId": "castorama-opp-archi-full-80-left",
+    "ean": "5063022524263",
+    "name": "Drzwi pełne OPP Archi 80 lewe białe",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/drzwi-pelne-opp-archi-80-lewe-biale~5063022524263_02c?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 35800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T18:21:43.632Z",
+    "sourceUrl": "https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd",
+    "evidenceSha256": "4e358b8eb5b7063c3199f2c24863c90c390dcba41df1b03296df114b72182ea2",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T18:21:43.632Z",
+      "expiresAt": "2026-10-27T18:21:43.632Z"
+    }
   }
 ]
