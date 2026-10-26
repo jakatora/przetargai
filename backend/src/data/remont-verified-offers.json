@@ -1731,5 +1731,19 @@
       "checkedAt": "2026-10-26T07:58:28.431Z",
       "expiresAt": "2026-10-27T07:58:28.431Z"
     }
+  },
+  {
+    "sourceId": "folnet-conpar-100m2",
+    "ean": "5902096430103",
+    "name": "Folia paroizolacyjna żółta Conpar 0,20 mm",
+    "stockPackages": 124,
+    "imageUrl": "https://folnet.pl//hpeciai/b0c6dff0e137deefa069c72377d924d0/pol_pl_Folia-paroizolacyjna-zolta-Conpar-0-20-mm-10288_1.jpg",
+    "priceGrosze": 11950,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T17:28:08.834Z",
+    "sourceUrl": "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html",
+    "evidenceSha256": "a65a3b27839621a4856af885891fcd521d2dcdc862f347b5956cf1c0aa8fd262",
+    "validUntil": null
   }
 ]
