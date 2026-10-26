@@ -20774,9 +20774,16 @@ var RETAIL_SOURCES = [
   // Actual marketplace merchant: this does not belong to Castorama's own basket
   // or physical pickup network. One sealed 6m² pack, not a multi-pack bundle.
   // source: https://www.castorama.pl/departments/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-/5061092900925_CAPL.prd
-  { id: "castorama-marketplace-corksystem-lvt-6m2", ean: "5061092900925", name: "Podk\u0142ad pod\u0142ogowy Corksystem LVT 1.5 mm pod panele winylowe 6 m2 1 op.", category: "underlay", brand: "Corksystem", packageSize: 6, unit: "m2", variant: ["LVT", "1.5 mm", "6 m2", "1 op."], store: "Corksystem (Castorama)", marketplaceSeller: { name: "Corksystem", id: 2601 }, pickupUnavailable: true, browserReviewAllowed: true, url: "https://www.castorama.pl/departments/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-/5061092900925_CAPL.prd" }
+  { id: "castorama-marketplace-corksystem-lvt-6m2", ean: "5061092900925", name: "Podk\u0142ad pod\u0142ogowy Corksystem LVT 1.5 mm pod panele winylowe 6 m2 1 op.", category: "underlay", brand: "Corksystem", packageSize: 6, unit: "m2", variant: ["LVT", "1.5 mm", "6 m2", "1 op."], store: "Corksystem (Castorama)", marketplaceSeller: { name: "Corksystem", id: 2601 }, pickupUnavailable: true, browserReviewAllowed: true, url: "https://www.castorama.pl/departments/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-/5061092900925_CAPL.prd" },
+  // One three-metre piece, not its per-metre advert or the wholesale pack of192.
+  // source: https://www.castorama.pl/profil-sufitowy-budmat-ud27-3-m/5907738940163_CAPL.prd
+  { id: "castorama-budmat-ud27-3m", ean: "5907738940163", name: "Profil sufitowy Budmat UD27 3 m", category: "profile", brand: "Budmat", packageSize: 3, unit: "mb", variant: ["UD27", "3 m"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/profil-sufitowy-budmat-ud27-3-m/5907738940163_CAPL.prd" },
+  // Current branch-specific collection price. Other branches need their own proof.
+  // source: https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny
+  { id: "bricomarche-poznan-budmat-ud27-3m", ean: "5907738940163", name: "Kszta\u0142townik sufitowy UD30 300 cm srebrny", category: "profile", brand: "Budmat", packageSize: 3, unit: "mb", variant: ["UD30", "300 cm", "srebrny"], store: "Bricomarch\xE9 Pozna\u0144 (Al. Solidarno\u015Bci)", pickupOnly: true, browserReviewAllowed: true, url: "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Profil przy\u015Bcienny Budmat UD27 0,5 mm 3 m": "5907738940163",
   "Podk\u0142ad pod panele winylowe Corksystem LVT 1,5 mm 6 m\xB2": "5061092900925",
   "Panele winylowe GoodHome SPC Arilla Dark Grey click 2,5 m\xB2": "5059340969756",
   "Panele winylowe klejone (samoprzylepne LVT) GoodHome Ragga Ele Marble 1,3 m\xB2": "5059340802435",
@@ -22510,6 +22517,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
     return { ...observation, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(raw).digest("hex") };
   }
+  if (source.pickupOnly && source.browserReviewAllowed) throw Error("browser_location_review_required");
   if (source.browserReviewAllowed && new URL(source.url).origin === "https://www.castorama.pl" && ["m2", "m"].includes(source.unit)) throw Error("browser_package_review_required");
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
@@ -23336,6 +23344,7 @@ var ORIGINS = {
 var TTL = 10 * 6e4;
 function unavailableReason(store) {
   const sources = RETAIL_SOURCES.filter((source) => source.store === store);
+  if (sources.some((source) => source.pickupOnly)) return "retailer_transport_quote_required";
   if (sources.some((source) => source.marketplaceSeller)) return "retailer_access_required";
   if (sources.length && sources.every((source) => source.format === "betterial")) return "retailer_transport_quote_required";
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
@@ -23556,6 +23565,12 @@ function isCastoramaBrowserSource(source) {
   return source.id === "castorama-marketplace-corksystem-lvt-6m2" && source.ean === "5061092900925" && source.store === "Corksystem (Castorama)" && source.marketplaceSeller.name === "Corksystem" && source.marketplaceSeller.id === 2601 && source.pickupUnavailable === true && source.packageSize === 6 && source.unit === "m2";
 }
 
+// artifacts/api-server/src/lib/bricomarche-browser-observation.ts
+var BRICO_POZNAN = "Bricomarch\xE9 Pozna\u0144 (Al. Solidarno\u015Bci)";
+function isBricomarcheBrowserSource(source) {
+  return source.id === "bricomarche-poznan-budmat-ud27-3m" && source.ean === "5907738940163" && source.store === BRICO_POZNAN && source.browserReviewAllowed === true && source.pickupOnly === true && source.packageSize === 3 && source.unit === "mb" && source.url === "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny";
+}
+
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value] ?? value;
@@ -23574,10 +23589,10 @@ function createRemontService(options = {}) {
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
     if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || observation.stockPackages !== void 0 && (!Number.isSafeInteger(observation.stockPackages) || observation.stockPackages < 0 || observation.stockPackages > 1e9) || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
     const previous = observations.get(source.id);
-    if (isCastoramaBrowserSource(source) && ["m2", "m"].includes(source.unit) && !observation.verification) return;
+    if ((isBricomarcheBrowserSource(source) || isCastoramaBrowserSource(source) && ["m2", "m"].includes(source.unit)) && !observation.verification) return;
     if (observation.verification !== void 0) {
       const v = observation.verification;
-      if (!v || v.method !== "browser" || !isCastoramaBrowserSource(source) || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
+      if (!v || v.method !== "browser" || !(isCastoramaBrowserSource(source) || isBricomarcheBrowserSource(source)) || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
     }
     if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
     if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
@@ -23652,7 +23667,10 @@ function createRemontService(options = {}) {
         const alias = aliases.find(([name]) => name === query.normalizedName)?.[1];
         return products.find((product) => product.category === query.category && (product.normalizedName === query.normalizedName || product.ean === alias)) ?? null;
       },
-      listOffers: async (_db, id) => offers.filter((offer) => offer.productId === id && (!pickup || ![RETAIL_SOURCES.find((source) => source.id === offer.id)?.pickupRequiresConfirmation, RETAIL_SOURCES.find((source) => source.id === offer.id)?.pickupUnavailable].some(Boolean)))
+      listOffers: async (_db, id) => offers.filter((offer) => {
+        const source = RETAIL_SOURCES.find((source2) => source2.id === offer.id);
+        return offer.productId === id && (pickup ? ![source?.pickupRequiresConfirmation, source?.pickupUnavailable].some(Boolean) : !source?.pickupOnly);
+      })
     };
     return { products, offers, deps };
   }
@@ -23711,6 +23729,7 @@ function createRemontService(options = {}) {
       lastAttemptAt,
       pickupConfirmationStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupRequiresConfirmation).map((source) => source.store))],
       pickupUnavailableStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupUnavailable).map((source) => source.store))],
+      pickupOnlyStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupOnly).map((source) => source.store))],
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
       delivery: retailerDeliveryCapabilities(),
       sources: RETAIL_SOURCES.map((source) => ({
