@@ -1334,5 +1334,18 @@
     "sourceUrl": "https://folnet.pl/pl/products/chemia-tasmy-mocowania/chemia-budowlana-soudal/pianki-pistoletowe/pianka-pistoletowa-soudafoam-low-expansion-10-8372.html",
     "evidenceSha256": "78f556de5d99aff4e15a2bc25afb5e283b96076ffe18e06fdb023b4e5a656f78",
     "validUntil": null
+  },
+  {
+    "sourceId": "kronosfera-skirting-lk100f-240",
+    "ean": "5907555424969",
+    "name": "Listwa przypodłogowa LK100F24 9002",
+    "imageUrl": "https://kronosfera.pl/storage/image/core_files/2022/10/11/38726212a7cb17d5f09cba96abe907b9/jpg/listwa_LK100F.jpg",
+    "priceGrosze": 3199,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T01:36:11.761Z",
+    "sourceUrl": "https://kronosfera.pl/k/listwa-przypodlogowa-lk100f24-9002,2068",
+    "evidenceSha256": "b51ac3ef0b3b5855448174b5e660c8056e5564ea37ea6f3f6cd1ef8b540ec5c2",
+    "validUntil": null
   }
 ]
