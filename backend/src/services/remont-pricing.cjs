@@ -20780,9 +20780,13 @@ var RETAIL_SOURCES = [
   { id: "castorama-budmat-ud27-3m", ean: "5907738940163", name: "Profil sufitowy Budmat UD27 3 m", category: "profile", brand: "Budmat", packageSize: 3, unit: "mb", variant: ["UD27", "3 m"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/profil-sufitowy-budmat-ud27-3-m/5907738940163_CAPL.prd" },
   // Current branch-specific collection price. Other branches need their own proof.
   // source: https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny
-  { id: "bricomarche-poznan-budmat-ud27-3m", ean: "5907738940163", name: "Kszta\u0142townik sufitowy UD30 300 cm srebrny", category: "profile", brand: "Budmat", packageSize: 3, unit: "mb", variant: ["UD30", "300 cm", "srebrny"], store: "Bricomarch\xE9 Pozna\u0144 (Al. Solidarno\u015Bci)", pickupOnly: true, browserReviewAllowed: true, url: "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny" }
+  { id: "bricomarche-poznan-budmat-ud27-3m", ean: "5907738940163", name: "Kszta\u0142townik sufitowy UD30 300 cm srebrny", category: "profile", brand: "Budmat", packageSize: 3, unit: "mb", variant: ["UD30", "300 cm", "srebrny"], store: "Bricomarch\xE9 Pozna\u0144 (Al. Solidarno\u015Bci)", pickupOnly: true, browserReviewAllowed: true, url: "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny" },
+  // source: https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html
+  { id: "folnet-conpar-100m2", ean: "5902096430103", name: "Folia paroizolacyjna \u017C\xF3\u0142ta Conpar 0,20 mm", category: "vapor-barrier", brand: "Conkret", packageSize: 100, unit: "m2", store: "Folnet", format: "folnet", productId: 10288, retailerSku: "12-021", variant: ["Conpar", "0,20 mm"], url: "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html" }
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html
+  "Folia paroizolacyjna Conkret Conpar 0,20 mm (100 m\xB2)": "5902096430103",
   "Profil przy\u015Bcienny Budmat UD27 0,5 mm 3 m": "5907738940163",
   "Podk\u0142ad pod panele winylowe Corksystem LVT 1,5 mm 6 m\xB2": "5061092900925",
   "Panele winylowe GoodHome SPC Arilla Dark Grey click 2,5 m\xB2": "5059340969756",
@@ -22160,11 +22164,15 @@ var gross = (value) => {
 };
 function inspectFolnetProduct(html, source) {
   if (new URL(source.url).origin !== "https://folnet.pl" || !Number.isSafeInteger(source.productId) || !source.retailerSku) throw Error("invalid_retailer_origin");
+  const conpar = source.id === "folnet-conpar-100m2" && source.ean === "5902096430103" && source.productId === 10288 && source.retailerSku === "12-021" && source.brand === "Conkret" && source.category === "vapor-barrier" && source.unit === "m2" && source.packageSize === 100 && source.url === "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html";
+  const foam = source.id === "folnet-soudal-low-expansion-winter-750ml" && source.ean === "5411183048522" && source.productId === 8372 && source.retailerSku === "112583" && source.brand === "Soudal" && source.unit === "ml" && source.packageSize === 750;
+  if (!conpar && !foam) throw Error("unreviewed_folnet_product");
+  const nativeUnit = conpar ? "rolka" : "szt.";
   const literals = [...html.matchAll(/\bvar\s+product_data\s*=\s*(\{[\s\S]*?\})\s*;?\s*<\/script>/gi)];
   if (literals.length !== 1) throw Error("product_identity_ambiguous");
   const data = JSON.parse(literals[0][1]), size = data.sizes?.onesize;
-  if (Object.keys(data.sizes ?? {}).join(",") !== "onesize" || size?.type !== "onesize" || size.name !== "uniw" || size.code_producer !== source.ean || size.code_extern !== `SOU.${source.retailerSku}`) throw Error("product_ean_not_confirmed");
-  if (data.product_type !== "product_item" || data.currency !== "z\u0142" || data.unit !== "szt." || data.unit_sellby !== "1" || data.unit_precision !== "0") throw Error("retailer_unit_not_confirmed");
+  if (Object.keys(data.sizes ?? {}).join(",") !== "onesize" || size?.type !== "onesize" || size.name !== "uniw" || size.code_producer !== source.ean || size.code_extern !== (conpar ? source.retailerSku : `SOU.${source.retailerSku}`)) throw Error("product_ean_not_confirmed");
+  if (data.product_type !== "product_item" || data.currency !== "z\u0142" || data.unit !== nativeUnit || data.unit_sellby !== "1" || data.unit_precision !== "0") throw Error("retailer_unit_not_confirmed");
   if (size.availability?.status !== "enable" || size.availability.visible !== "y" || !/^\d+$/.test(size.availability.sum) || !Number.isSafeInteger(Number(size.availability.sum)) || Number(size.availability.sum) < 1) throw Error("retailer_out_of_stock");
   for (const price2 of [data.base_price, size.price]) if (price2?.basket_enable !== "y" || price2.rebate_code_active !== "n" || price2.priceformula_error !== "false" || price2.vat !== "23") throw Error("conditional_price_not_supported");
   const amount2 = gross(size.price.value);
@@ -22172,7 +22180,7 @@ function inspectFolnetProduct(html, source) {
   if (amount2 <= 0 || gross(data.base_price.value) !== amount2 || gross(data.base_price.price_unit_sellby) !== amount2) throw Error("retailer_gross_price_mismatch");
   const safe = clean(html), form = byId(safe, "projector_form");
   if (attrs5(form).action !== "/basketchange.php" || attrs5(form).method !== "post" || attrs5(form)["data-product_id"] !== String(source.productId) || attrs5(byId(form, "projector_product_hidden")).value !== String(source.productId) || attrs5(byId(form, "projector_size_hidden")).value !== "onesize" || attrs5(byId(form, "projector_mode_hidden")).value !== "1") throw Error("product_id_not_confirmed");
-  if (text2(byId(form, "projector_code")) !== `Symbol: ${source.retailerSku}` || text2(byId(form, "projector_price_unit")) !== "szt." || text2(byId(form, "projector_price_format")) !== "brutto") throw Error("retailer_unit_or_gross_not_confirmed");
+  if (text2(byId(form, "projector_code")) !== `Symbol: ${source.retailerSku}` || text2(byId(form, "projector_price_unit")) !== nativeUnit || text2(byId(form, "projector_price_format")) !== "brutto") throw Error("retailer_unit_or_gross_not_confirmed");
   if (parsePriceToGrosze(text2(byId(form, "projector_price_value")).replace(/\s*zł$/, "")) !== amount2) throw Error("retailer_gross_price_mismatch");
   const name = text2(one5(elements(form, (_a, tag) => tag === "h1"), "product_name_not_confirmed"));
   const records = [...html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].flatMap((m) => {
@@ -22185,12 +22193,16 @@ function inspectFolnetProduct(html, source) {
   if (records.length !== 1) throw Error("product_identity_ambiguous");
   const product = records[0], offers = [product.offers].flat();
   const brand = text2(one5(elements(form, (a) => a.class === "brand"), "product_brand_not_confirmed"));
-  if (product.name !== name || product.brand !== "Soudal" || brand !== product.brand || product.productID !== `mpn:${source.retailerSku}` || offers.length !== 1) throw Error("product_identity_not_confirmed");
+  if (product.name !== name || product.brand !== source.brand || brand !== product.brand || product.productID !== `mpn:${source.retailerSku}` || offers.length !== 1) throw Error("product_identity_not_confirmed");
   const url2 = new URL(offers[0]?.url, source.url);
   if (url2.origin !== "https://folnet.pl" || url2.pathname !== new URL(source.url).pathname || url2.searchParams.get("selected_size") !== "onesize" || offers[0]?.priceCurrency !== "PLN" || offers[0]?.availability !== "http://schema.org/InStock" || gross(offers[0]?.price) !== amount2) throw Error("retailer_gross_price_mismatch");
   const dictionary = one5(elements(safe, (a) => a.class === "n54117_dictionary"), "product_package_not_confirmed");
   const pack = text2(one5(elements(dictionary, (_a, tag) => tag === "tr").filter((row) => text2(row).startsWith("Wymiar :")), "product_package_not_confirmed"));
-  if (source.unit !== "ml" || source.packageSize !== 750 || pack !== "Wymiar : 750 ml") throw Error("product_package_not_confirmed");
+  if (pack !== (conpar ? "Wymiar : 2 m x 50 m" : "Wymiar : 750 ml")) throw Error("product_package_not_confirmed");
+  if (conpar) {
+    const thickness = text2(one5(elements(dictionary, (_a, tag) => tag === "tr").filter((row) => text2(row).startsWith("Grubo\u015B\u0107 :")), "product_package_not_confirmed"));
+    if (thickness !== "Grubo\u015B\u0107 : 0,2 mm \xB1 30%") throw Error("product_package_not_confirmed");
+  }
   if (typeof product.image !== "string" || new URL(product.image).origin !== "https://folnet.pl") throw Error("product_photo_not_confirmed");
   const polish = elements(safe, (a, tag) => tag === "a" && a.class === "checked" && a.href === "/settings.php?curr=PLN&lang=pol&country=1143020003");
   if (polish.length !== 1) throw Error("country_not_confirmed");
@@ -22358,9 +22370,13 @@ function objects(value) {
 function parseRetailPage(html, source, observedAt) {
   if (source.disabledReason) throw Error(source.disabledReason);
   const products = [];
+  let stockPackages;
   if (source.format === "kronosfera") products.push(inspectKronosferaProduct(html, source).product);
-  else if (source.format === "folnet") products.push(inspectFolnetProduct(html, source).product);
-  else if (source.format === "betterial") products.push(readBetterialProduct(html, source));
+  else if (source.format === "folnet") {
+    const reviewed = inspectFolnetProduct(html, source);
+    products.push(reviewed.product);
+    stockPackages = reviewed.stock;
+  } else if (source.format === "betterial") products.push(readBetterialProduct(html, source));
   else if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
   else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
   else if (source.format === "certusoft") products.push(readCertusoftProduct(html, source).product);
@@ -22415,6 +22431,7 @@ function parseRetailPage(html, source, observedAt) {
     sourceId: source.id,
     ean: source.ean,
     name,
+    ...stockPackages === void 0 ? {} : { stockPackages },
     imageUrl: typeof imageUrl === "string" && imageUrl.startsWith("https://") ? imageUrl.replace(/&amp;/g, "&") : null,
     priceGrosze: prices[0],
     currency: "PLN",
