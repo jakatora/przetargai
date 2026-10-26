@@ -1373,5 +1373,18 @@
     "sourceUrl": "https://centrummatbud.pl/Styropian-grafitowy-15cm-Yetico-Gama-Passive-Fasada-033-p131345",
     "evidenceSha256": "d213a9f9751e5f1a0196832b132ad0968f2f8fee3f86c350c4c084088b2707d8",
     "validUntil": null
+  },
+  {
+    "sourceId": "tokmet-invena-ws20-030",
+    "ean": "5907798716258",
+    "name": "WĘŻYK DO BATERII STOJĄCEJ 3/8\" x M10*1 L - 30 CM DŁUGA KOŃCÓWKA",
+    "imageUrl": "https://sklep.tokmet.pl/picturesbig/xpic81087437639.jpg.pagespeed.ic.mhMX9l5zcR.jpg",
+    "priceGrosze": 1114,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T04:56:13.033Z",
+    "sourceUrl": "https://sklep.tokmet.pl/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i",
+    "evidenceSha256": "b88e026d0b10f15eefc2fd3374e8f383a413eaeca2f9ce421adc1ffdc559b516",
+    "validUntil": null
   }
 ]
