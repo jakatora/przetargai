@@ -20770,9 +20770,14 @@ var RETAIL_SOURCES = [
   { id: "castorama-fola-50mb", ean: "5906725207227", name: "Ta\u015Bma brzegowa Fola 5 mm x 10 cm x 50 mb 5 m2", category: "expansion-tape", brand: "Fola", packageSize: 50, unit: "mb", variant: ["5 mm", "10 cm", "50 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/tasma-brzegowa-fola-5-mm-x-10-cm-x-50-mb-5-m2/5906725207227_CAPL.prd" },
   // 178 PLN buys the entire 216cm piece; 82.41 PLN/m is not its purchase price.
   // source: https://www.castorama.pl/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy/5906725219640_CAPL.prd
-  { id: "castorama-form-30x216", ean: "5906725219640", name: "Parapet wewn\u0119trzny PCV Form 30 x 216 cm bia\u0142y", category: "windowsill", brand: "Form", packageSize: 2.16, unit: "m", variant: ["30 x 216 cm", "bia\u0142y"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy/5906725219640_CAPL.prd" }
+  { id: "castorama-form-30x216", ean: "5906725219640", name: "Parapet wewn\u0119trzny PCV Form 30 x 216 cm bia\u0142y", category: "windowsill", brand: "Form", packageSize: 2.16, unit: "m", variant: ["30 x 216 cm", "bia\u0142y"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy/5906725219640_CAPL.prd" },
+  // Actual marketplace merchant: this does not belong to Castorama's own basket
+  // or physical pickup network. One sealed 6m² pack, not a multi-pack bundle.
+  // source: https://www.castorama.pl/departments/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-/5061092900925_CAPL.prd
+  { id: "castorama-marketplace-corksystem-lvt-6m2", ean: "5061092900925", name: "Podk\u0142ad pod\u0142ogowy Corksystem LVT 1.5 mm pod panele winylowe 6 m2 1 op.", category: "underlay", brand: "Corksystem", packageSize: 6, unit: "m2", variant: ["LVT", "1.5 mm", "6 m2", "1 op."], store: "Corksystem (Castorama)", marketplaceSeller: { name: "Corksystem", id: 2601 }, pickupUnavailable: true, browserReviewAllowed: true, url: "https://www.castorama.pl/departments/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-/5061092900925_CAPL.prd" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Podk\u0142ad pod panele winylowe Corksystem LVT 1,5 mm 6 m\xB2": "5061092900925",
   "Panele winylowe GoodHome SPC Arilla Dark Grey click 2,5 m\xB2": "5059340969756",
   "Panele winylowe klejone (samoprzylepne LVT) GoodHome Ragga Ele Marble 1,3 m\xB2": "5059340802435",
   "Ta\u015Bma brzegowa dylatacyjna Fola 5 mm \xD7 100 mm \xD7 50 mb": "5906725207227",
@@ -22394,6 +22399,7 @@ function parseRetailPage(html, source, observedAt) {
     return true;
   });
   const prices = eligibleOffers.map((offer) => parsePriceToGrosze(offer.price)).filter((price2) => price2 !== null && price2 > 0 && Number.isSafeInteger(price2));
+  if (source.marketplaceSeller && eligibleOffers.some((offer) => offer.seller?.name !== source.marketplaceSeller.name)) throw Error("retailer_seller_not_confirmed");
   if (prices.length === 0) throw new Error("no_confirmed_online_pln_offer");
   if (new Set(prices).size !== 1) throw new Error("ambiguous_online_price");
   const firstImage = [source.imageUrl ?? product.image ?? eligibleOffers.find((offer) => offer.image)?.image].flat()[0];
@@ -22504,7 +22510,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
     return { ...observation, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(raw).digest("hex") };
   }
-  if (source.store === "Castorama" && source.browserReviewAllowed && ["m2", "m"].includes(source.unit)) throw Error("browser_package_review_required");
+  if (source.browserReviewAllowed && new URL(source.url).origin === "https://www.castorama.pl" && ["m2", "m"].includes(source.unit)) throw Error("browser_package_review_required");
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
@@ -23330,6 +23336,7 @@ var ORIGINS = {
 var TTL = 10 * 6e4;
 function unavailableReason(store) {
   const sources = RETAIL_SOURCES.filter((source) => source.store === store);
+  if (sources.some((source) => source.marketplaceSeller)) return "retailer_access_required";
   if (sources.length && sources.every((source) => source.format === "betterial")) return "retailer_transport_quote_required";
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
@@ -23342,7 +23349,7 @@ function retailerDeliveryCapabilities() {
     country: "PL",
     quoteTtlSeconds: 600,
     postcodeStores: ["Sewera", "Cezar"],
-    accessRequiredStores: ["Castorama", "OBI"]
+    accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
   };
 }
 function knownUnavailableRetailers() {
@@ -23469,6 +23476,9 @@ function createRetailerQuoter(fetchImpl = fetch) {
 
 // artifacts/api-server/src/lib/store-delivery.ts
 var STORE_DELIVERY_POLICIES = [
+  // Separate seller and checkout shipping; do not inherit Castorama's tariff.
+  // source: https://www.castorama.pl/verified-sellers/seller/2601
+  { store: "Corksystem (Castorama)", minimumGrosze: null, checkedAt: null, sourceUrl: "https://www.castorama.pl/verified-sellers/seller/2601" },
   { store: "Kronosfera", minimumGrosze: null, checkedAt: null, sourceUrl: "https://kronosfera.pl/dostawa" },
   // Current native delivery quotes supersede the older amounts on this page.
   { store: "Folnet", minimumGrosze: null, checkedAt: null, sourceUrl: "https://folnet.pl/pl/delivery.html" },
@@ -23533,6 +23543,19 @@ var STORE_DELIVERY_POLICIES = [
   }
 ];
 
+// artifacts/api-server/src/lib/castorama-browser-observation.ts
+function isCastoramaBrowserSource(source) {
+  if (source.browserReviewAllowed !== true) return false;
+  try {
+    const url2 = new URL(source.url);
+    if (url2.origin !== "https://www.castorama.pl" || url2.username || url2.password) return false;
+  } catch {
+    return false;
+  }
+  if (!source.marketplaceSeller) return source.store === "Castorama";
+  return source.id === "castorama-marketplace-corksystem-lvt-6m2" && source.ean === "5061092900925" && source.store === "Corksystem (Castorama)" && source.marketplaceSeller.name === "Corksystem" && source.marketplaceSeller.id === 2601 && source.pickupUnavailable === true && source.packageSize === 6 && source.unit === "m2";
+}
+
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value] ?? value;
@@ -23551,9 +23574,10 @@ function createRemontService(options = {}) {
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
     if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || observation.stockPackages !== void 0 && (!Number.isSafeInteger(observation.stockPackages) || observation.stockPackages < 0 || observation.stockPackages > 1e9) || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
     const previous = observations.get(source.id);
+    if (isCastoramaBrowserSource(source) && ["m2", "m"].includes(source.unit) && !observation.verification) return;
     if (observation.verification !== void 0) {
       const v = observation.verification;
-      if (!v || v.method !== "browser" || source.store !== "Castorama" || source.browserReviewAllowed !== true || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
+      if (!v || v.method !== "browser" || !isCastoramaBrowserSource(source) || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
     }
     if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
     if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
