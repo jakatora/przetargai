@@ -1799,5 +1799,31 @@
       "checkedAt": "2026-10-26T19:58:26.512Z",
       "expiresAt": "2026-10-27T19:58:26.512Z"
     }
+  },
+  {
+    "sourceId": "sewera-tile-spacers-hardy-3mm-150",
+    "ean": "5905061016869",
+    "name": "Krzyżyki dystansowe 3mm 150szt.",
+    "imageUrl": "https://sklep.sewera.pl/photo/310569/krzyzyki-dystansowe-3mm-150szt-.webp",
+    "priceGrosze": 346,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T20:27:17.254Z",
+    "sourceUrl": "https://sklep.sewera.pl/krzyzyki-dystansowe-3mm-150szt--p12505",
+    "evidenceSha256": "0d6d8ba75c405cc5306e8a284ae24c7241e2eb550ffabe6d5b076a736fe8bb40",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-tile-spacers-hardy-4mm-100",
+    "ean": "5905061016876",
+    "name": "Krzyżyki dystansowe 4mm 100szt.",
+    "imageUrl": "https://sklep.sewera.pl/photo/310568/krzyzyki-dystansowe-4mm-100szt-.webp",
+    "priceGrosze": 346,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T20:27:18.347Z",
+    "sourceUrl": "https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506",
+    "evidenceSha256": "75865993eee5066c59416f3bd8774b3d700a6028baa9fdef12d8d7c7ad563047",
+    "validUntil": null
   }
 ]
