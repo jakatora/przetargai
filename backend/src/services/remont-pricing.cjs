@@ -18,7 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/shared-backend.ts
+// artifacts/api-server/src/shared-backend.ts
 var shared_backend_exports = {};
 __export(shared_backend_exports, {
   RETAIL_SOURCES: () => RETAIL_SOURCES,
@@ -30,14 +30,14 @@ var import_express = require("express");
 var import_node_fs = require("node:fs");
 var import_node_path = require("node:path");
 
-// D:/projekty/remont_assistance/lib/db/src/repositories/helpers.ts
+// lib/db/src/repositories/helpers.ts
 function normalizeProductName(name) {
   return name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]+/g, " ").trim();
 }
-function resolveUpsertKey(input) {
-  const ean = input.ean?.trim();
+function resolveUpsertKey(input2) {
+  const ean = input2.ean?.trim();
   if (ean) return { field: "ean", value: ean };
-  const gtin = input.gtin?.trim();
+  const gtin = input2.gtin?.trim();
   if (gtin) return { field: "gtin", value: gtin };
   return null;
 }
@@ -75,7 +75,7 @@ function priceToGrosze(raw) {
   return Math.round(n * 100);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/entity.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/entity.js
 var entityKind = /* @__PURE__ */ Symbol.for("drizzle:entityKind");
 function is(value, type) {
   if (!value || typeof value !== "object") {
@@ -89,19 +89,19 @@ function is(value, type) {
       `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`
     );
   }
-  let cls3 = Object.getPrototypeOf(value).constructor;
-  if (cls3) {
-    while (cls3) {
-      if (entityKind in cls3 && cls3[entityKind] === type[entityKind]) {
+  let cls4 = Object.getPrototypeOf(value).constructor;
+  if (cls4) {
+    while (cls4) {
+      if (entityKind in cls4 && cls4[entityKind] === type[entityKind]) {
         return true;
       }
-      cls3 = Object.getPrototypeOf(cls3);
+      cls4 = Object.getPrototypeOf(cls4);
     }
   }
   return false;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column.js
 var Column = class {
   constructor(table, config2) {
     this.table = table;
@@ -152,7 +152,7 @@ var Column = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column-builder.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/column-builder.js
 var ColumnBuilder = class {
   static [entityKind] = "ColumnBuilder";
   config;
@@ -255,10 +255,10 @@ var ColumnBuilder = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.utils.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.utils.js
 var TableName = /* @__PURE__ */ Symbol.for("drizzle:Name");
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/foreign-keys.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/foreign-keys.js
 var ForeignKeyBuilder = class {
   static [entityKind] = "PgForeignKeyBuilder";
   /** @internal */
@@ -315,12 +315,12 @@ var ForeignKey = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing-utils.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing-utils.js
 function iife(fn, ...args) {
   return fn(...args);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/unique-constraint.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/unique-constraint.js
 function uniqueKeyName(table, columns) {
   return `${table[TableName]}_${columns.join("_")}_unique`;
 }
@@ -370,7 +370,7 @@ var UniqueConstraint = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/utils/array.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/utils/array.js
 function parsePgArrayValue(arrayString, startFrom, inQuotes) {
   for (let i = startFrom; i < arrayString.length; i++) {
     const char2 = arrayString[i];
@@ -446,7 +446,7 @@ function makePgArray(array2) {
   }).join(",")}}`;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/common.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/common.js
 var PgColumnBuilder = class extends ColumnBuilder {
   foreignKeyConfigs = [];
   static [entityKind] = "PgColumnBuilder";
@@ -630,7 +630,7 @@ var PgArray = class _PgArray extends PgColumn {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/enum.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/enum.js
 var PgEnumObjectColumnBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgEnumObjectColumnBuilder";
   constructor(name, enumInstance) {
@@ -688,7 +688,7 @@ var PgEnumColumn = class extends PgColumn {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/subquery.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/subquery.js
 var Subquery = class {
   static [entityKind] = "Subquery";
   constructor(sql2, fields, alias, isWith = false, usedTables = []) {
@@ -709,10 +709,10 @@ var WithSubquery = class extends Subquery {
   static [entityKind] = "WithSubquery";
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/version.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/version.js
 var version = "0.45.1";
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/tracing.js
 var otel;
 var rawTracer;
 var tracer = {
@@ -747,10 +747,10 @@ var tracer = {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/view-common.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/view-common.js
 var ViewBaseConfig = /* @__PURE__ */ Symbol.for("drizzle:ViewBaseConfig");
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/table.js
 var Schema = /* @__PURE__ */ Symbol.for("drizzle:Schema");
 var Columns = /* @__PURE__ */ Symbol.for("drizzle:Columns");
 var ExtraConfigColumns = /* @__PURE__ */ Symbol.for("drizzle:ExtraConfigColumns");
@@ -809,7 +809,7 @@ function isTable(table) {
   return typeof table === "object" && table !== null && IsDrizzleTable in table;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/sql.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/sql.js
 var FakePrimitiveParam = class {
   static [entityKind] = "FakePrimitiveParam";
 };
@@ -1189,7 +1189,7 @@ Subquery.prototype.getSQL = function() {
   return new SQL([this]);
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/utils.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/utils.js
 function getTableColumns(table) {
   return table[Table.Symbol.Columns];
 }
@@ -1204,7 +1204,7 @@ function getColumnNameAndConfig(a, b) {
 }
 var textDecoder = typeof TextDecoder === "undefined" ? null : new TextDecoder();
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/int.common.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/int.common.js
 var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgIntColumnBaseBuilder";
   generatedAlwaysAsIdentity(sequence) {
@@ -1243,7 +1243,7 @@ var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigint.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigint.js
 var PgBigInt53Builder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgBigInt53Builder";
   constructor(name) {
@@ -1297,7 +1297,7 @@ function bigint(a, b) {
   return new PgBigInt64Builder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigserial.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/bigserial.js
 var PgBigSerial53Builder = class extends PgColumnBuilder {
   static [entityKind] = "PgBigSerial53Builder";
   constructor(name) {
@@ -1357,7 +1357,7 @@ function bigserial(a, b) {
   return new PgBigSerial64Builder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/boolean.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/boolean.js
 var PgBooleanBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBooleanBuilder";
   constructor(name) {
@@ -1378,7 +1378,7 @@ function boolean(name) {
   return new PgBooleanBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/char.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/char.js
 var PgCharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCharBuilder";
   constructor(name, config2) {
@@ -1407,7 +1407,7 @@ function char(a, b = {}) {
   return new PgCharBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/cidr.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/cidr.js
 var PgCidrBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCidrBuilder";
   constructor(name) {
@@ -1428,7 +1428,7 @@ function cidr(name) {
   return new PgCidrBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/custom.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/custom.js
 var PgCustomColumnBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgCustomColumnBuilder";
   constructor(name, fieldConfig, customTypeParams) {
@@ -1472,7 +1472,7 @@ function customType(customTypeParams) {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.common.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.common.js
 var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgDateColumnBaseBuilder";
   defaultNow() {
@@ -1480,7 +1480,7 @@ var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/date.js
 var PgDateBuilder = class extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgDateBuilder";
   constructor(name) {
@@ -1535,7 +1535,7 @@ function date(a, b) {
   return new PgDateStringBuilder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/double-precision.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/double-precision.js
 var PgDoublePrecisionBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgDoublePrecisionBuilder";
   constructor(name) {
@@ -1565,7 +1565,7 @@ function doublePrecision(name) {
   return new PgDoublePrecisionBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/inet.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/inet.js
 var PgInetBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgInetBuilder";
   constructor(name) {
@@ -1586,7 +1586,7 @@ function inet(name) {
   return new PgInetBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/integer.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/integer.js
 var PgIntegerBuilder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgIntegerBuilder";
   constructor(name) {
@@ -1613,7 +1613,7 @@ function integer(name) {
   return new PgIntegerBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/interval.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/interval.js
 var PgIntervalBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgIntervalBuilder";
   constructor(name, intervalConfig) {
@@ -1640,7 +1640,7 @@ function interval(a, b = {}) {
   return new PgIntervalBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/json.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/json.js
 var PgJsonBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgJsonBuilder";
   constructor(name) {
@@ -1677,7 +1677,7 @@ function json(name) {
   return new PgJsonBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/jsonb.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/jsonb.js
 var PgJsonbBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgJsonbBuilder";
   constructor(name) {
@@ -1714,7 +1714,7 @@ function jsonb(name) {
   return new PgJsonbBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/line.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/line.js
 var PgLineBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgLineBuilder";
   constructor(name) {
@@ -1775,7 +1775,7 @@ function line(a, b) {
   return new PgLineABCBuilder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr.js
 var PgMacaddrBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgMacaddrBuilder";
   constructor(name) {
@@ -1796,7 +1796,7 @@ function macaddr(name) {
   return new PgMacaddrBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/macaddr8.js
 var PgMacaddr8Builder = class extends PgColumnBuilder {
   static [entityKind] = "PgMacaddr8Builder";
   constructor(name) {
@@ -1817,7 +1817,7 @@ function macaddr8(name) {
   return new PgMacaddr8Builder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/numeric.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/numeric.js
 var PgNumericBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgNumericBuilder";
   constructor(name, precision, scale) {
@@ -1934,7 +1934,7 @@ function numeric(a, b) {
   return mode === "number" ? new PgNumericNumberBuilder(name, config2?.precision, config2?.scale) : mode === "bigint" ? new PgNumericBigIntBuilder(name, config2?.precision, config2?.scale) : new PgNumericBuilder(name, config2?.precision, config2?.scale);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/point.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/point.js
 var PgPointTupleBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgPointTupleBuilder";
   constructor(name) {
@@ -2001,7 +2001,7 @@ function point(a, b) {
   return new PgPointObjectBuilder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
 function hexToBytes(hex) {
   const bytes = [];
   for (let c = 0; c < hex.length; c += 2) {
@@ -2040,7 +2040,7 @@ function parseEWKB(hex) {
   throw new Error("Unsupported geometry type");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
 var PgGeometryBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgGeometryBuilder";
   constructor(name) {
@@ -2100,7 +2100,7 @@ function geometry(a, b) {
   return new PgGeometryObjectBuilder(name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/real.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/real.js
 var PgRealBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgRealBuilder";
   constructor(name, length) {
@@ -2131,7 +2131,7 @@ function real(name) {
   return new PgRealBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/serial.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/serial.js
 var PgSerialBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSerialBuilder";
   constructor(name) {
@@ -2154,7 +2154,7 @@ function serial(name) {
   return new PgSerialBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallint.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallint.js
 var PgSmallIntBuilder = class extends PgIntColumnBaseBuilder {
   static [entityKind] = "PgSmallIntBuilder";
   constructor(name) {
@@ -2181,7 +2181,7 @@ function smallint(name) {
   return new PgSmallIntBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallserial.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/smallserial.js
 var PgSmallSerialBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSmallSerialBuilder";
   constructor(name) {
@@ -2207,7 +2207,7 @@ function smallserial(name) {
   return new PgSmallSerialBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/text.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/text.js
 var PgTextBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgTextBuilder";
   constructor(name, config2) {
@@ -2231,7 +2231,7 @@ function text(a, b = {}) {
   return new PgTextBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/time.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/time.js
 var PgTimeBuilder = class extends PgDateColumnBaseBuilder {
   constructor(name, withTimezone, precision) {
     super(name, "string", "PgTime");
@@ -2265,7 +2265,7 @@ function time(a, b = {}) {
   return new PgTimeBuilder(name, config2.withTimezone ?? false, config2.precision);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/timestamp.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/timestamp.js
 var PgTimestampBuilder = class extends PgDateColumnBaseBuilder {
   static [entityKind] = "PgTimestampBuilder";
   constructor(name, withTimezone, precision) {
@@ -2346,7 +2346,7 @@ function timestamp(a, b = {}) {
   return new PgTimestampBuilder(name, config2?.withTimezone ?? false, config2?.precision);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/uuid.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/uuid.js
 var PgUUIDBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgUUIDBuilder";
   constructor(name) {
@@ -2373,7 +2373,7 @@ function uuid(name) {
   return new PgUUIDBuilder(name ?? "");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/varchar.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/varchar.js
 var PgVarcharBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVarcharBuilder";
   constructor(name, config2) {
@@ -2402,7 +2402,7 @@ function varchar(a, b = {}) {
   return new PgVarcharBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
 var PgBinaryVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgBinaryVectorBuilder";
   constructor(name, config2) {
@@ -2429,7 +2429,7 @@ function bit(a, b) {
   return new PgBinaryVectorBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
 var PgHalfVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgHalfVectorBuilder";
   constructor(name, config2) {
@@ -2462,7 +2462,7 @@ function halfvec(a, b) {
   return new PgHalfVectorBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
 var PgSparseVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgSparseVectorBuilder";
   constructor(name, config2) {
@@ -2489,7 +2489,7 @@ function sparsevec(a, b) {
   return new PgSparseVectorBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
 var PgVectorBuilder = class extends PgColumnBuilder {
   static [entityKind] = "PgVectorBuilder";
   constructor(name, config2) {
@@ -2522,7 +2522,7 @@ function vector(a, b) {
   return new PgVectorBuilder(name, config2);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/all.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/columns/all.js
 function getPgColumnBuilders() {
   return {
     bigint,
@@ -2560,7 +2560,7 @@ function getPgColumnBuilders() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/table.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/table.js
 var InlineForeignKeys = /* @__PURE__ */ Symbol.for("drizzle:PgInlineForeignKeys");
 var EnableRLS = /* @__PURE__ */ Symbol.for("drizzle:EnableRLS");
 var PgTable = class extends Table {
@@ -2616,7 +2616,7 @@ var pgTable = (name, columns, extraConfig) => {
   return pgTableWithSchema(name, columns, extraConfig, void 0);
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/expressions/conditions.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/expressions/conditions.js
 function bindIfParam(value, column) {
   if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
     return new Param(value, column);
@@ -2643,7 +2643,7 @@ function and(...unfilteredConditions) {
   ]);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/indexes.js
+// node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/pg-core/indexes.js
 var IndexBuilderOn = class {
   constructor(unique, name) {
     this.unique = unique;
@@ -2715,12 +2715,12 @@ var IndexBuilder = class {
   static [entityKind] = "PgIndexBuilder";
   /** @internal */
   config;
-  constructor(columns, unique, only2, name, method = "btree") {
+  constructor(columns, unique, only5, name, method = "btree") {
     this.config = {
       name,
       columns,
       unique,
-      only: only2,
+      only: only5,
       method
     };
   }
@@ -2755,7 +2755,7 @@ function uniqueIndex(name) {
   return new IndexBuilderOn(true, name);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
 var external_exports = {};
 __export(external_exports, {
   $brand: () => $brand,
@@ -2967,7 +2967,7 @@ __export(external_exports, {
   xid: () => xid2
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/index.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/index.js
 var core_exports2 = {};
 __export(core_exports2, {
   $ZodAny: () => $ZodAny,
@@ -3211,7 +3211,7 @@ __export(core_exports2, {
   version: () => version2
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/core.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/core.js
 var NEVER = Object.freeze({
   status: "aborted"
 });
@@ -3271,7 +3271,7 @@ function config(newConfig) {
   return globalConfig;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/util.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/util.js
 var util_exports = {};
 __export(util_exports, {
   BIGINT_FORMAT_RANGES: () => BIGINT_FORMAT_RANGES,
@@ -3363,8 +3363,8 @@ function cached(getter) {
     }
   };
 }
-function nullish(input) {
-  return input === null || input === void 0;
+function nullish(input2) {
+  return input2 === null || input2 === void 0;
 }
 function cleanRegex(source) {
   const start = source.startsWith("^") ? 1 : 0;
@@ -3754,29 +3754,29 @@ function finalizeIssue(iss, ctx, config2) {
   }
   return full;
 }
-function getSizableOrigin(input) {
-  if (input instanceof Set)
+function getSizableOrigin(input2) {
+  if (input2 instanceof Set)
     return "set";
-  if (input instanceof Map)
+  if (input2 instanceof Map)
     return "map";
-  if (input instanceof File)
+  if (input2 instanceof File)
     return "file";
   return "unknown";
 }
-function getLengthableOrigin(input) {
-  if (Array.isArray(input))
+function getLengthableOrigin(input2) {
+  if (Array.isArray(input2))
     return "array";
-  if (typeof input === "string")
+  if (typeof input2 === "string")
     return "string";
   return "unknown";
 }
 function issue(...args) {
-  const [iss, input, inst] = args;
+  const [iss, input2, inst] = args;
   if (typeof iss === "string") {
     return {
       message: iss,
       code: "custom",
-      input,
+      input: input2,
       inst
     };
   }
@@ -3792,7 +3792,7 @@ var Class = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/errors.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -3939,7 +3939,7 @@ function prettifyError(error40) {
   return lines.join("\n");
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/parse.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -3991,7 +3991,7 @@ var _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
 };
 var safeParseAsync = /* @__PURE__ */ _safeParseAsync($ZodRealError);
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/regexes.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/regexes.js
 var regexes_exports = {};
 __export(regexes_exports, {
   _emoji: () => _emoji,
@@ -4104,7 +4104,7 @@ var _undefined = /undefined/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/checks.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a;
   inst._zod ?? (inst._zod = {});
@@ -4118,7 +4118,7 @@ var numericOriginMap = {
 };
 var $ZodCheckLessThan = /* @__PURE__ */ $constructor("$ZodCheckLessThan", (inst, def) => {
   $ZodCheck.init(inst, def);
-  const origin = numericOriginMap[typeof def.value];
+  const origin3 = numericOriginMap[typeof def.value];
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
     const curr = (def.inclusive ? bag.maximum : bag.exclusiveMaximum) ?? Number.POSITIVE_INFINITY;
@@ -4134,7 +4134,7 @@ var $ZodCheckLessThan = /* @__PURE__ */ $constructor("$ZodCheckLessThan", (inst,
       return;
     }
     payload.issues.push({
-      origin,
+      origin: origin3,
       code: "too_big",
       maximum: def.value,
       input: payload.value,
@@ -4146,7 +4146,7 @@ var $ZodCheckLessThan = /* @__PURE__ */ $constructor("$ZodCheckLessThan", (inst,
 });
 var $ZodCheckGreaterThan = /* @__PURE__ */ $constructor("$ZodCheckGreaterThan", (inst, def) => {
   $ZodCheck.init(inst, def);
-  const origin = numericOriginMap[typeof def.value];
+  const origin3 = numericOriginMap[typeof def.value];
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
     const curr = (def.inclusive ? bag.minimum : bag.exclusiveMinimum) ?? Number.NEGATIVE_INFINITY;
@@ -4162,7 +4162,7 @@ var $ZodCheckGreaterThan = /* @__PURE__ */ $constructor("$ZodCheckGreaterThan", 
       return;
     }
     payload.issues.push({
-      origin,
+      origin: origin3,
       code: "too_small",
       minimum: def.value,
       input: payload.value,
@@ -4198,7 +4198,7 @@ var $ZodCheckNumberFormat = /* @__PURE__ */ $constructor("$ZodCheckNumberFormat"
   $ZodCheck.init(inst, def);
   def.format = def.format || "float64";
   const isInt = def.format?.includes("int");
-  const origin = isInt ? "int" : "number";
+  const origin3 = isInt ? "int" : "number";
   const [minimum, maximum] = NUMBER_FORMAT_RANGES[def.format];
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
@@ -4209,47 +4209,47 @@ var $ZodCheckNumberFormat = /* @__PURE__ */ $constructor("$ZodCheckNumberFormat"
       bag.pattern = integer2;
   });
   inst._zod.check = (payload) => {
-    const input = payload.value;
+    const input2 = payload.value;
     if (isInt) {
-      if (!Number.isInteger(input)) {
+      if (!Number.isInteger(input2)) {
         payload.issues.push({
-          expected: origin,
+          expected: origin3,
           format: def.format,
           code: "invalid_type",
-          input,
+          input: input2,
           inst
         });
         return;
       }
-      if (!Number.isSafeInteger(input)) {
-        if (input > 0) {
+      if (!Number.isSafeInteger(input2)) {
+        if (input2 > 0) {
           payload.issues.push({
-            input,
+            input: input2,
             code: "too_big",
             maximum: Number.MAX_SAFE_INTEGER,
             note: "Integers must be within the safe integer range.",
             inst,
-            origin,
+            origin: origin3,
             continue: !def.abort
           });
         } else {
           payload.issues.push({
-            input,
+            input: input2,
             code: "too_small",
             minimum: Number.MIN_SAFE_INTEGER,
             note: "Integers must be within the safe integer range.",
             inst,
-            origin,
+            origin: origin3,
             continue: !def.abort
           });
         }
         return;
       }
     }
-    if (input < minimum) {
+    if (input2 < minimum) {
       payload.issues.push({
         origin: "number",
-        input,
+        input: input2,
         code: "too_small",
         minimum,
         inclusive: true,
@@ -4257,10 +4257,10 @@ var $ZodCheckNumberFormat = /* @__PURE__ */ $constructor("$ZodCheckNumberFormat"
         continue: !def.abort
       });
     }
-    if (input > maximum) {
+    if (input2 > maximum) {
       payload.issues.push({
         origin: "number",
-        input,
+        input: input2,
         code: "too_big",
         maximum,
         inst
@@ -4278,11 +4278,11 @@ var $ZodCheckBigIntFormat = /* @__PURE__ */ $constructor("$ZodCheckBigIntFormat"
     bag.maximum = maximum;
   });
   inst._zod.check = (payload) => {
-    const input = payload.value;
-    if (input < minimum) {
+    const input2 = payload.value;
+    if (input2 < minimum) {
       payload.issues.push({
         origin: "bigint",
-        input,
+        input: input2,
         code: "too_small",
         minimum,
         inclusive: true,
@@ -4290,10 +4290,10 @@ var $ZodCheckBigIntFormat = /* @__PURE__ */ $constructor("$ZodCheckBigIntFormat"
         continue: !def.abort
       });
     }
-    if (input > maximum) {
+    if (input2 > maximum) {
       payload.issues.push({
         origin: "bigint",
-        input,
+        input: input2,
         code: "too_big",
         maximum,
         inst
@@ -4314,15 +4314,15 @@ var $ZodCheckMaxSize = /* @__PURE__ */ $constructor("$ZodCheckMaxSize", (inst, d
       inst2._zod.bag.maximum = def.maximum;
   });
   inst._zod.check = (payload) => {
-    const input = payload.value;
-    const size = input.size;
+    const input2 = payload.value;
+    const size = input2.size;
     if (size <= def.maximum)
       return;
     payload.issues.push({
-      origin: getSizableOrigin(input),
+      origin: getSizableOrigin(input2),
       code: "too_big",
       maximum: def.maximum,
-      input,
+      input: input2,
       inst,
       continue: !def.abort
     });
@@ -4341,15 +4341,15 @@ var $ZodCheckMinSize = /* @__PURE__ */ $constructor("$ZodCheckMinSize", (inst, d
       inst2._zod.bag.minimum = def.minimum;
   });
   inst._zod.check = (payload) => {
-    const input = payload.value;
-    const size = input.size;
+    const input2 = payload.value;
+    const size = input2.size;
     if (size >= def.minimum)
       return;
     payload.issues.push({
-      origin: getSizableOrigin(input),
+      origin: getSizableOrigin(input2),
       code: "too_small",
       minimum: def.minimum,
-      input,
+      input: input2,
       inst,
       continue: !def.abort
     });
@@ -4369,13 +4369,13 @@ var $ZodCheckSizeEquals = /* @__PURE__ */ $constructor("$ZodCheckSizeEquals", (i
     bag.size = def.size;
   });
   inst._zod.check = (payload) => {
-    const input = payload.value;
-    const size = input.size;
+    const input2 = payload.value;
+    const size = input2.size;
     if (size === def.size)
       return;
     const tooBig = size > def.size;
     payload.issues.push({
-      origin: getSizableOrigin(input),
+      origin: getSizableOrigin(input2),
       ...tooBig ? { code: "too_big", maximum: def.size } : { code: "too_small", minimum: def.size },
       inclusive: true,
       exact: true,
@@ -4398,17 +4398,17 @@ var $ZodCheckMaxLength = /* @__PURE__ */ $constructor("$ZodCheckMaxLength", (ins
       inst2._zod.bag.maximum = def.maximum;
   });
   inst._zod.check = (payload) => {
-    const input = payload.value;
-    const length = input.length;
+    const input2 = payload.value;
+    const length = input2.length;
     if (length <= def.maximum)
       return;
-    const origin = getLengthableOrigin(input);
+    const origin3 = getLengthableOrigin(input2);
     payload.issues.push({
-      origin,
+      origin: origin3,
       code: "too_big",
       maximum: def.maximum,
       inclusive: true,
-      input,
+      input: input2,
       inst,
       continue: !def.abort
     });
@@ -4427,17 +4427,17 @@ var $ZodCheckMinLength = /* @__PURE__ */ $constructor("$ZodCheckMinLength", (ins
       inst2._zod.bag.minimum = def.minimum;
   });
   inst._zod.check = (payload) => {
-    const input = payload.value;
-    const length = input.length;
+    const input2 = payload.value;
+    const length = input2.length;
     if (length >= def.minimum)
       return;
-    const origin = getLengthableOrigin(input);
+    const origin3 = getLengthableOrigin(input2);
     payload.issues.push({
-      origin,
+      origin: origin3,
       code: "too_small",
       minimum: def.minimum,
       inclusive: true,
-      input,
+      input: input2,
       inst,
       continue: !def.abort
     });
@@ -4457,14 +4457,14 @@ var $ZodCheckLengthEquals = /* @__PURE__ */ $constructor("$ZodCheckLengthEquals"
     bag.length = def.length;
   });
   inst._zod.check = (payload) => {
-    const input = payload.value;
-    const length = input.length;
+    const input2 = payload.value;
+    const length = input2.length;
     if (length === def.length)
       return;
-    const origin = getLengthableOrigin(input);
+    const origin3 = getLengthableOrigin(input2);
     const tooBig = length > def.length;
     payload.issues.push({
-      origin,
+      origin: origin3,
       ...tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length },
       inclusive: true,
       exact: true,
@@ -4642,7 +4642,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/doc.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/doc.js
 var Doc = class {
   constructor(args = []) {
     this.content = [];
@@ -4678,14 +4678,14 @@ var Doc = class {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/versions.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/versions.js
 var version2 = {
   major: 4,
   minor: 0,
   patch: 0
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/schemas.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a;
   inst ?? (inst = {});
@@ -5092,15 +5092,15 @@ var $ZodNumber = /* @__PURE__ */ $constructor("$ZodNumber", (inst, def) => {
         payload.value = Number(payload.value);
       } catch (_) {
       }
-    const input = payload.value;
-    if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
+    const input2 = payload.value;
+    if (typeof input2 === "number" && !Number.isNaN(input2) && Number.isFinite(input2)) {
       return payload;
     }
-    const received = typeof input === "number" ? Number.isNaN(input) ? "NaN" : !Number.isFinite(input) ? "Infinity" : void 0 : void 0;
+    const received = typeof input2 === "number" ? Number.isNaN(input2) ? "NaN" : !Number.isFinite(input2) ? "Infinity" : void 0 : void 0;
     payload.issues.push({
       expected: "number",
       code: "invalid_type",
-      input,
+      input: input2,
       inst,
       ...received ? { received } : {}
     });
@@ -5120,13 +5120,13 @@ var $ZodBoolean = /* @__PURE__ */ $constructor("$ZodBoolean", (inst, def) => {
         payload.value = Boolean(payload.value);
       } catch (_) {
       }
-    const input = payload.value;
-    if (typeof input === "boolean")
+    const input2 = payload.value;
+    if (typeof input2 === "boolean")
       return payload;
     payload.issues.push({
       expected: "boolean",
       code: "invalid_type",
-      input,
+      input: input2,
       inst
     });
     return payload;
@@ -5159,13 +5159,13 @@ var $ZodBigIntFormat = /* @__PURE__ */ $constructor("$ZodBigInt", (inst, def) =>
 var $ZodSymbol = /* @__PURE__ */ $constructor("$ZodSymbol", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
-    if (typeof input === "symbol")
+    const input2 = payload.value;
+    if (typeof input2 === "symbol")
       return payload;
     payload.issues.push({
       expected: "symbol",
       code: "invalid_type",
-      input,
+      input: input2,
       inst
     });
     return payload;
@@ -5178,13 +5178,13 @@ var $ZodUndefined = /* @__PURE__ */ $constructor("$ZodUndefined", (inst, def) =>
   inst._zod.optin = "optional";
   inst._zod.optout = "optional";
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
-    if (typeof input === "undefined")
+    const input2 = payload.value;
+    if (typeof input2 === "undefined")
       return payload;
     payload.issues.push({
       expected: "undefined",
       code: "invalid_type",
-      input,
+      input: input2,
       inst
     });
     return payload;
@@ -5195,13 +5195,13 @@ var $ZodNull = /* @__PURE__ */ $constructor("$ZodNull", (inst, def) => {
   inst._zod.pattern = _null;
   inst._zod.values = /* @__PURE__ */ new Set([null]);
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
-    if (input === null)
+    const input2 = payload.value;
+    if (input2 === null)
       return payload;
     payload.issues.push({
       expected: "null",
       code: "invalid_type",
-      input,
+      input: input2,
       inst
     });
     return payload;
@@ -5230,13 +5230,13 @@ var $ZodNever = /* @__PURE__ */ $constructor("$ZodNever", (inst, def) => {
 var $ZodVoid = /* @__PURE__ */ $constructor("$ZodVoid", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
-    if (typeof input === "undefined")
+    const input2 = payload.value;
+    if (typeof input2 === "undefined")
       return payload;
     payload.issues.push({
       expected: "void",
       code: "invalid_type",
-      input,
+      input: input2,
       inst
     });
     return payload;
@@ -5251,15 +5251,15 @@ var $ZodDate = /* @__PURE__ */ $constructor("$ZodDate", (inst, def) => {
       } catch (_err) {
       }
     }
-    const input = payload.value;
-    const isDate = input instanceof Date;
-    const isValidDate = isDate && !Number.isNaN(input.getTime());
+    const input2 = payload.value;
+    const isDate = input2 instanceof Date;
+    const isValidDate = isDate && !Number.isNaN(input2.getTime());
     if (isValidDate)
       return payload;
     payload.issues.push({
       expected: "date",
       code: "invalid_type",
-      input,
+      input: input2,
       ...isDate ? { received: "Invalid Date" } : {},
       inst
     });
@@ -5275,20 +5275,20 @@ function handleArrayResult(result, final, index2) {
 var $ZodArray = /* @__PURE__ */ $constructor("$ZodArray", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.parse = (payload, ctx) => {
-    const input = payload.value;
-    if (!Array.isArray(input)) {
+    const input2 = payload.value;
+    if (!Array.isArray(input2)) {
       payload.issues.push({
         expected: "array",
         code: "invalid_type",
-        input,
+        input: input2,
         inst
       });
       return payload;
     }
-    payload.value = Array(input.length);
+    payload.value = Array(input2.length);
     const proms = [];
-    for (let i = 0; i < input.length; i++) {
-      const item = input[i];
+    for (let i = 0; i < input2.length; i++) {
+      const item = input2[i];
       const result = def.element._zod.run({
         value: item,
         issues: []
@@ -5311,10 +5311,10 @@ function handleObjectResult(result, final, key) {
   }
   final.value[key] = result.value;
 }
-function handleOptionalObjectResult(result, final, key, input) {
+function handleOptionalObjectResult(result, final, key, input2) {
   if (result.issues.length) {
-    if (input[key] === void 0) {
-      if (key in input) {
+    if (input2[key] === void 0) {
+      if (key in input2) {
         final.value[key] = void 0;
       } else {
         final.value[key] = result.value;
@@ -5323,7 +5323,7 @@ function handleOptionalObjectResult(result, final, key, input) {
       final.issues.push(...prefixIssues(key, result.issues));
     }
   } else if (result.value === void 0) {
-    if (key in input)
+    if (key in input2)
       final.value[key] = void 0;
   } else {
     final.value[key] = result.value;
@@ -5424,12 +5424,12 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
   let value;
   inst._zod.parse = (payload, ctx) => {
     value ?? (value = _normalized.value);
-    const input = payload.value;
-    if (!isObject2(input)) {
+    const input2 = payload.value;
+    if (!isObject2(input2)) {
       payload.issues.push({
         expected: "object",
         code: "invalid_type",
-        input,
+        input: input2,
         inst
       });
       return payload;
@@ -5444,12 +5444,12 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
       const shape = value.shape;
       for (const key of value.keys) {
         const el = shape[key];
-        const r = el._zod.run({ value: input[key], issues: [] }, ctx);
+        const r = el._zod.run({ value: input2[key], issues: [] }, ctx);
         const isOptional = el._zod.optin === "optional" && el._zod.optout === "optional";
         if (r instanceof Promise) {
-          proms.push(r.then((r2) => isOptional ? handleOptionalObjectResult(r2, payload, key, input) : handleObjectResult(r2, payload, key)));
+          proms.push(r.then((r2) => isOptional ? handleOptionalObjectResult(r2, payload, key, input2) : handleObjectResult(r2, payload, key)));
         } else if (isOptional) {
-          handleOptionalObjectResult(r, payload, key, input);
+          handleOptionalObjectResult(r, payload, key, input2);
         } else {
           handleObjectResult(r, payload, key);
         }
@@ -5462,14 +5462,14 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     const keySet = value.keySet;
     const _catchall = catchall._zod;
     const t = _catchall.def.type;
-    for (const key of Object.keys(input)) {
+    for (const key of Object.keys(input2)) {
       if (keySet.has(key))
         continue;
       if (t === "never") {
         unrecognized.push(key);
         continue;
       }
-      const r = _catchall.run({ value: input[key], issues: [] }, ctx);
+      const r = _catchall.run({ value: input2[key], issues: [] }, ctx);
       if (r instanceof Promise) {
         proms.push(r.then((r2) => handleObjectResult(r2, payload, key)));
       } else {
@@ -5480,7 +5480,7 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
       payload.issues.push({
         code: "unrecognized_keys",
         keys: unrecognized,
-        input,
+        input: input2,
         inst
       });
     }
@@ -5583,17 +5583,17 @@ var $ZodDiscriminatedUnion = /* @__PURE__ */ $constructor("$ZodDiscriminatedUnio
     return map2;
   });
   inst._zod.parse = (payload, ctx) => {
-    const input = payload.value;
-    if (!isObject(input)) {
+    const input2 = payload.value;
+    if (!isObject(input2)) {
       payload.issues.push({
         code: "invalid_type",
         expected: "object",
-        input,
+        input: input2,
         inst
       });
       return payload;
     }
-    const opt = disc.value.get(input?.[def.discriminator]);
+    const opt = disc.value.get(input2?.[def.discriminator]);
     if (opt) {
       return opt._zod.run(payload, ctx);
     }
@@ -5604,7 +5604,7 @@ var $ZodDiscriminatedUnion = /* @__PURE__ */ $constructor("$ZodDiscriminatedUnio
       code: "invalid_union",
       errors: [],
       note: "No matching discriminator",
-      input,
+      input: input2,
       path: [def.discriminator],
       inst
     });
@@ -5614,9 +5614,9 @@ var $ZodDiscriminatedUnion = /* @__PURE__ */ $constructor("$ZodDiscriminatedUnio
 var $ZodIntersection = /* @__PURE__ */ $constructor("$ZodIntersection", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.parse = (payload, ctx) => {
-    const input = payload.value;
-    const left = def.left._zod.run({ value: input, issues: [] }, ctx);
-    const right = def.right._zod.run({ value: input, issues: [] }, ctx);
+    const input2 = payload.value;
+    const left = def.left._zod.run({ value: input2, issues: [] }, ctx);
+    const right = def.right._zod.run({ value: input2, issues: [] }, ctx);
     const async = left instanceof Promise || right instanceof Promise;
     if (async) {
       return Promise.all([left, right]).then(([left2, right2]) => {
@@ -5691,10 +5691,10 @@ var $ZodTuple = /* @__PURE__ */ $constructor("$ZodTuple", (inst, def) => {
   const items = def.items;
   const optStart = items.length - [...items].reverse().findIndex((item) => item._zod.optin !== "optional");
   inst._zod.parse = (payload, ctx) => {
-    const input = payload.value;
-    if (!Array.isArray(input)) {
+    const input2 = payload.value;
+    if (!Array.isArray(input2)) {
       payload.issues.push({
-        input,
+        input: input2,
         inst,
         expected: "tuple",
         code: "invalid_type"
@@ -5704,11 +5704,11 @@ var $ZodTuple = /* @__PURE__ */ $constructor("$ZodTuple", (inst, def) => {
     payload.value = [];
     const proms = [];
     if (!def.rest) {
-      const tooBig = input.length > items.length;
-      const tooSmall = input.length < optStart - 1;
+      const tooBig = input2.length > items.length;
+      const tooSmall = input2.length < optStart - 1;
       if (tooBig || tooSmall) {
         payload.issues.push({
-          input,
+          input: input2,
           inst,
           origin: "array",
           ...tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }
@@ -5719,12 +5719,12 @@ var $ZodTuple = /* @__PURE__ */ $constructor("$ZodTuple", (inst, def) => {
     let i = -1;
     for (const item of items) {
       i++;
-      if (i >= input.length) {
+      if (i >= input2.length) {
         if (i >= optStart)
           continue;
       }
       const result = item._zod.run({
-        value: input[i],
+        value: input2[i],
         issues: []
       }, ctx);
       if (result instanceof Promise) {
@@ -5734,7 +5734,7 @@ var $ZodTuple = /* @__PURE__ */ $constructor("$ZodTuple", (inst, def) => {
       }
     }
     if (def.rest) {
-      const rest = input.slice(items.length);
+      const rest = input2.slice(items.length);
       for (const el of rest) {
         i++;
         const result = def.rest._zod.run({
@@ -5762,12 +5762,12 @@ function handleTupleResult(result, final, index2) {
 var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.parse = (payload, ctx) => {
-    const input = payload.value;
-    if (!isPlainObject(input)) {
+    const input2 = payload.value;
+    if (!isPlainObject(input2)) {
       payload.issues.push({
         expected: "record",
         code: "invalid_type",
-        input,
+        input: input2,
         inst
       });
       return payload;
@@ -5778,7 +5778,7 @@ var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
       payload.value = {};
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
-          const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
+          const result = def.valueType._zod.run({ value: input2[key], issues: [] }, ctx);
           if (result instanceof Promise) {
             proms.push(result.then((result2) => {
               if (result2.issues.length) {
@@ -5795,7 +5795,7 @@ var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
         }
       }
       let unrecognized;
-      for (const key in input) {
+      for (const key in input2) {
         if (!values.has(key)) {
           unrecognized = unrecognized ?? [];
           unrecognized.push(key);
@@ -5804,14 +5804,14 @@ var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
       if (unrecognized && unrecognized.length > 0) {
         payload.issues.push({
           code: "unrecognized_keys",
-          input,
+          input: input2,
           inst,
           keys: unrecognized
         });
       }
     } else {
       payload.value = {};
-      for (const key of Reflect.ownKeys(input)) {
+      for (const key of Reflect.ownKeys(input2)) {
         if (key === "__proto__")
           continue;
         const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
@@ -5830,7 +5830,7 @@ var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
           payload.value[keyResult.value] = keyResult.value;
           continue;
         }
-        const result = def.valueType._zod.run({ value: input[key], issues: [] }, ctx);
+        const result = def.valueType._zod.run({ value: input2[key], issues: [] }, ctx);
         if (result instanceof Promise) {
           proms.push(result.then((result2) => {
             if (result2.issues.length) {
@@ -5855,27 +5855,27 @@ var $ZodRecord = /* @__PURE__ */ $constructor("$ZodRecord", (inst, def) => {
 var $ZodMap = /* @__PURE__ */ $constructor("$ZodMap", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.parse = (payload, ctx) => {
-    const input = payload.value;
-    if (!(input instanceof Map)) {
+    const input2 = payload.value;
+    if (!(input2 instanceof Map)) {
       payload.issues.push({
         expected: "map",
         code: "invalid_type",
-        input,
+        input: input2,
         inst
       });
       return payload;
     }
     const proms = [];
     payload.value = /* @__PURE__ */ new Map();
-    for (const [key, value] of input) {
+    for (const [key, value] of input2) {
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
       const valueResult = def.valueType._zod.run({ value, issues: [] }, ctx);
       if (keyResult instanceof Promise || valueResult instanceof Promise) {
         proms.push(Promise.all([keyResult, valueResult]).then(([keyResult2, valueResult2]) => {
-          handleMapResult(keyResult2, valueResult2, payload, key, input, inst, ctx);
+          handleMapResult(keyResult2, valueResult2, payload, key, input2, inst, ctx);
         }));
       } else {
-        handleMapResult(keyResult, valueResult, payload, key, input, inst, ctx);
+        handleMapResult(keyResult, valueResult, payload, key, input2, inst, ctx);
       }
     }
     if (proms.length)
@@ -5883,7 +5883,7 @@ var $ZodMap = /* @__PURE__ */ $constructor("$ZodMap", (inst, def) => {
     return payload;
   };
 });
-function handleMapResult(keyResult, valueResult, final, key, input, inst, ctx) {
+function handleMapResult(keyResult, valueResult, final, key, input2, inst, ctx) {
   if (keyResult.issues.length) {
     if (propertyKeyTypes.has(typeof key)) {
       final.issues.push(...prefixIssues(key, keyResult.issues));
@@ -5891,7 +5891,7 @@ function handleMapResult(keyResult, valueResult, final, key, input, inst, ctx) {
       final.issues.push({
         origin: "map",
         code: "invalid_key",
-        input,
+        input: input2,
         inst,
         issues: keyResult.issues.map((iss) => finalizeIssue(iss, ctx, config()))
       });
@@ -5904,7 +5904,7 @@ function handleMapResult(keyResult, valueResult, final, key, input, inst, ctx) {
       final.issues.push({
         origin: "map",
         code: "invalid_element",
-        input,
+        input: input2,
         inst,
         key,
         issues: valueResult.issues.map((iss) => finalizeIssue(iss, ctx, config()))
@@ -5916,10 +5916,10 @@ function handleMapResult(keyResult, valueResult, final, key, input, inst, ctx) {
 var $ZodSet = /* @__PURE__ */ $constructor("$ZodSet", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.parse = (payload, ctx) => {
-    const input = payload.value;
-    if (!(input instanceof Set)) {
+    const input2 = payload.value;
+    if (!(input2 instanceof Set)) {
       payload.issues.push({
-        input,
+        input: input2,
         inst,
         expected: "set",
         code: "invalid_type"
@@ -5928,7 +5928,7 @@ var $ZodSet = /* @__PURE__ */ $constructor("$ZodSet", (inst, def) => {
     }
     const proms = [];
     payload.value = /* @__PURE__ */ new Set();
-    for (const item of input) {
+    for (const item of input2) {
       const result = def.valueType._zod.run({ value: item, issues: [] }, ctx);
       if (result instanceof Promise) {
         proms.push(result.then((result2) => handleSetResult(result2, payload)));
@@ -5952,14 +5952,14 @@ var $ZodEnum = /* @__PURE__ */ $constructor("$ZodEnum", (inst, def) => {
   inst._zod.values = new Set(values);
   inst._zod.pattern = new RegExp(`^(${values.filter((k) => propertyKeyTypes.has(typeof k)).map((o) => typeof o === "string" ? escapeRegex(o) : o.toString()).join("|")})$`);
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
-    if (inst._zod.values.has(input)) {
+    const input2 = payload.value;
+    if (inst._zod.values.has(input2)) {
       return payload;
     }
     payload.issues.push({
       code: "invalid_value",
       values,
-      input,
+      input: input2,
       inst
     });
     return payload;
@@ -5970,14 +5970,14 @@ var $ZodLiteral = /* @__PURE__ */ $constructor("$ZodLiteral", (inst, def) => {
   inst._zod.values = new Set(def.values);
   inst._zod.pattern = new RegExp(`^(${def.values.map((o) => typeof o === "string" ? escapeRegex(o) : o ? o.toString() : String(o)).join("|")})$`);
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
-    if (inst._zod.values.has(input)) {
+    const input2 = payload.value;
+    if (inst._zod.values.has(input2)) {
       return payload;
     }
     payload.issues.push({
       code: "invalid_value",
       values: def.values,
-      input,
+      input: input2,
       inst
     });
     return payload;
@@ -5986,13 +5986,13 @@ var $ZodLiteral = /* @__PURE__ */ $constructor("$ZodLiteral", (inst, def) => {
 var $ZodFile = /* @__PURE__ */ $constructor("$ZodFile", (inst, def) => {
   $ZodType.init(inst, def);
   inst._zod.parse = (payload, _ctx) => {
-    const input = payload.value;
-    if (input instanceof File)
+    const input2 = payload.value;
+    if (input2 instanceof File)
       return payload;
     payload.issues.push({
       expected: "file",
       code: "invalid_type",
-      input,
+      input: input2,
       inst
     });
     return payload;
@@ -6285,20 +6285,20 @@ var $ZodCustom = /* @__PURE__ */ $constructor("$ZodCustom", (inst, def) => {
     return payload;
   };
   inst._zod.check = (payload) => {
-    const input = payload.value;
-    const r = def.fn(input);
+    const input2 = payload.value;
+    const r = def.fn(input2);
     if (r instanceof Promise) {
-      return r.then((r2) => handleRefineResult(r2, payload, input, inst));
+      return r.then((r2) => handleRefineResult(r2, payload, input2, inst));
     }
-    handleRefineResult(r, payload, input, inst);
+    handleRefineResult(r, payload, input2, inst);
     return;
   };
 });
-function handleRefineResult(result, payload, input, inst) {
+function handleRefineResult(result, payload, input2, inst) {
   if (!result) {
     const _iss = {
       code: "custom",
-      input,
+      input: input2,
       inst,
       // incorporates params.error into issue reporting
       path: [...inst._zod.def.path ?? []],
@@ -6312,7 +6312,7 @@ function handleRefineResult(result, payload, input, inst) {
   }
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/index.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/index.js
 var locales_exports = {};
 __export(locales_exports, {
   ar: () => ar_default,
@@ -6356,7 +6356,7 @@ __export(locales_exports, {
   zhTW: () => zh_TW_default
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ar.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ar.js
 var error = () => {
   const Sizable = {
     string: { unit: "\u062D\u0631\u0641", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
@@ -6364,8 +6364,8 @@ var error = () => {
     array: { unit: "\u0639\u0646\u0635\u0631", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" },
     set: { unit: "\u0639\u0646\u0635\u0631", verb: "\u0623\u0646 \u064A\u062D\u0648\u064A" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -6473,7 +6473,7 @@ function ar_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/az.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/az.js
 var error2 = () => {
   const Sizable = {
     string: { unit: "simvol", verb: "olmal\u0131d\u0131r" },
@@ -6481,8 +6481,8 @@ var error2 = () => {
     array: { unit: "element", verb: "olmal\u0131d\u0131r" },
     set: { unit: "element", verb: "olmal\u0131d\u0131r" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -6589,8 +6589,8 @@ function az_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count, one4, few, many) {
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
+function getBelarusianPlural(count, one8, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -6598,7 +6598,7 @@ function getBelarusianPlural(count, one4, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one4;
+    return one8;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -6640,8 +6640,8 @@ var error3 = () => {
       verb: "\u043C\u0435\u0446\u044C"
     }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -6754,7 +6754,7 @@ function be_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ca.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ca.js
 var error4 = () => {
   const Sizable = {
     string: { unit: "car\xE0cters", verb: "contenir" },
@@ -6762,8 +6762,8 @@ var error4 = () => {
     array: { unit: "elements", verb: "contenir" },
     set: { unit: "elements", verb: "contenir" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -6874,7 +6874,7 @@ function ca_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/cs.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/cs.js
 var error5 = () => {
   const Sizable = {
     string: { unit: "znak\u016F", verb: "m\xEDt" },
@@ -6882,8 +6882,8 @@ var error5 = () => {
     array: { unit: "prvk\u016F", verb: "m\xEDt" },
     set: { unit: "prvk\u016F", verb: "m\xEDt" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7010,7 +7010,7 @@ function cs_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/de.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/de.js
 var error6 = () => {
   const Sizable = {
     string: { unit: "Zeichen", verb: "zu haben" },
@@ -7018,8 +7018,8 @@ var error6 = () => {
     array: { unit: "Elemente", verb: "zu haben" },
     set: { unit: "Elemente", verb: "zu haben" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7127,7 +7127,7 @@ function de_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/en.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/en.js
 var parsedType = (data) => {
   const t = typeof data;
   switch (t) {
@@ -7155,8 +7155,8 @@ var error7 = () => {
     array: { unit: "items", verb: "to have" },
     set: { unit: "items", verb: "to have" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const Nouns = {
     regex: "input",
@@ -7245,7 +7245,7 @@ function en_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/eo.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/eo.js
 var parsedType2 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -7273,8 +7273,8 @@ var error8 = () => {
     array: { unit: "elementojn", verb: "havi" },
     set: { unit: "elementojn", verb: "havi" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const Nouns = {
     regex: "enigo",
@@ -7362,7 +7362,7 @@ function eo_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/es.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/es.js
 var error9 = () => {
   const Sizable = {
     string: { unit: "caracteres", verb: "tener" },
@@ -7370,8 +7370,8 @@ var error9 = () => {
     array: { unit: "elementos", verb: "tener" },
     set: { unit: "elementos", verb: "tener" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7480,7 +7480,7 @@ function es_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fa.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fa.js
 var error10 = () => {
   const Sizable = {
     string: { unit: "\u06A9\u0627\u0631\u0627\u06A9\u062A\u0631", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
@@ -7488,8 +7488,8 @@ var error10 = () => {
     array: { unit: "\u0622\u06CC\u062A\u0645", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" },
     set: { unit: "\u0622\u06CC\u062A\u0645", verb: "\u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7603,7 +7603,7 @@ function fa_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fi.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fi.js
 var error11 = () => {
   const Sizable = {
     string: { unit: "merkki\xE4", subject: "merkkijonon" },
@@ -7615,8 +7615,8 @@ var error11 = () => {
     int: { unit: "", subject: "kokonaisluvun" },
     date: { unit: "", subject: "p\xE4iv\xE4m\xE4\xE4r\xE4n" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7726,7 +7726,7 @@ function fi_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr.js
 var error12 = () => {
   const Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -7734,8 +7734,8 @@ var error12 = () => {
     array: { unit: "\xE9l\xE9ments", verb: "avoir" },
     set: { unit: "\xE9l\xE9ments", verb: "avoir" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7843,7 +7843,7 @@ function fr_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr-CA.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/fr-CA.js
 var error13 = () => {
   const Sizable = {
     string: { unit: "caract\xE8res", verb: "avoir" },
@@ -7851,8 +7851,8 @@ var error13 = () => {
     array: { unit: "\xE9l\xE9ments", verb: "avoir" },
     set: { unit: "\xE9l\xE9ments", verb: "avoir" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -7961,7 +7961,7 @@ function fr_CA_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/he.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/he.js
 var error14 = () => {
   const Sizable = {
     string: { unit: "\u05D0\u05D5\u05EA\u05D9\u05D5\u05EA", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" },
@@ -7969,8 +7969,8 @@ var error14 = () => {
     array: { unit: "\u05E4\u05E8\u05D9\u05D8\u05D9\u05DD", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" },
     set: { unit: "\u05E4\u05E8\u05D9\u05D8\u05D9\u05DD", verb: "\u05DC\u05DB\u05DC\u05D5\u05DC" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8079,7 +8079,7 @@ function he_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/hu.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/hu.js
 var error15 = () => {
   const Sizable = {
     string: { unit: "karakter", verb: "legyen" },
@@ -8087,8 +8087,8 @@ var error15 = () => {
     array: { unit: "elem", verb: "legyen" },
     set: { unit: "elem", verb: "legyen" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8197,7 +8197,7 @@ function hu_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/id.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/id.js
 var error16 = () => {
   const Sizable = {
     string: { unit: "karakter", verb: "memiliki" },
@@ -8205,8 +8205,8 @@ var error16 = () => {
     array: { unit: "item", verb: "memiliki" },
     set: { unit: "item", verb: "memiliki" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8314,7 +8314,7 @@ function id_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/it.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/it.js
 var error17 = () => {
   const Sizable = {
     string: { unit: "caratteri", verb: "avere" },
@@ -8322,8 +8322,8 @@ var error17 = () => {
     array: { unit: "elementi", verb: "avere" },
     set: { unit: "elementi", verb: "avere" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8432,7 +8432,7 @@ function it_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ja.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ja.js
 var error18 = () => {
   const Sizable = {
     string: { unit: "\u6587\u5B57", verb: "\u3067\u3042\u308B" },
@@ -8440,8 +8440,8 @@ var error18 = () => {
     array: { unit: "\u8981\u7D20", verb: "\u3067\u3042\u308B" },
     set: { unit: "\u8981\u7D20", verb: "\u3067\u3042\u308B" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8548,7 +8548,7 @@ function ja_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/kh.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/kh.js
 var error19 = () => {
   const Sizable = {
     string: { unit: "\u178F\u17BD\u17A2\u1780\u17D2\u179F\u179A", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
@@ -8556,8 +8556,8 @@ var error19 = () => {
     array: { unit: "\u1792\u17B6\u178F\u17BB", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" },
     set: { unit: "\u1792\u17B6\u178F\u17BB", verb: "\u1782\u17BD\u179A\u1798\u17B6\u1793" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8666,7 +8666,7 @@ function kh_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ko.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ko.js
 var error20 = () => {
   const Sizable = {
     string: { unit: "\uBB38\uC790", verb: "to have" },
@@ -8674,8 +8674,8 @@ var error20 = () => {
     array: { unit: "\uAC1C", verb: "to have" },
     set: { unit: "\uAC1C", verb: "to have" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8788,7 +8788,7 @@ function ko_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/mk.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/mk.js
 var error21 = () => {
   const Sizable = {
     string: { unit: "\u0437\u043D\u0430\u0446\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
@@ -8796,8 +8796,8 @@ var error21 = () => {
     array: { unit: "\u0441\u0442\u0430\u0432\u043A\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" },
     set: { unit: "\u0441\u0442\u0430\u0432\u043A\u0438", verb: "\u0434\u0430 \u0438\u043C\u0430\u0430\u0442" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -8907,7 +8907,7 @@ function mk_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ms.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ms.js
 var error22 = () => {
   const Sizable = {
     string: { unit: "aksara", verb: "mempunyai" },
@@ -8915,8 +8915,8 @@ var error22 = () => {
     array: { unit: "elemen", verb: "mempunyai" },
     set: { unit: "elemen", verb: "mempunyai" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9024,7 +9024,7 @@ function ms_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/nl.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/nl.js
 var error23 = () => {
   const Sizable = {
     string: { unit: "tekens" },
@@ -9032,8 +9032,8 @@ var error23 = () => {
     array: { unit: "elementen" },
     set: { unit: "elementen" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9142,7 +9142,7 @@ function nl_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/no.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/no.js
 var error24 = () => {
   const Sizable = {
     string: { unit: "tegn", verb: "\xE5 ha" },
@@ -9150,8 +9150,8 @@ var error24 = () => {
     array: { unit: "elementer", verb: "\xE5 inneholde" },
     set: { unit: "elementer", verb: "\xE5 inneholde" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9259,7 +9259,7 @@ function no_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ota.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ota.js
 var error25 = () => {
   const Sizable = {
     string: { unit: "harf", verb: "olmal\u0131d\u0131r" },
@@ -9267,8 +9267,8 @@ var error25 = () => {
     array: { unit: "unsur", verb: "olmal\u0131d\u0131r" },
     set: { unit: "unsur", verb: "olmal\u0131d\u0131r" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9377,7 +9377,7 @@ function ota_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ps.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ps.js
 var error26 = () => {
   const Sizable = {
     string: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" },
@@ -9385,8 +9385,8 @@ var error26 = () => {
     array: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" },
     set: { unit: "\u062A\u0648\u06A9\u064A", verb: "\u0648\u0644\u0631\u064A" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9500,7 +9500,7 @@ function ps_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pl.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pl.js
 var error27 = () => {
   const Sizable = {
     string: { unit: "znak\xF3w", verb: "mie\u0107" },
@@ -9508,8 +9508,8 @@ var error27 = () => {
     array: { unit: "element\xF3w", verb: "mie\u0107" },
     set: { unit: "element\xF3w", verb: "mie\u0107" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9618,7 +9618,7 @@ function pl_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pt.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/pt.js
 var error28 = () => {
   const Sizable = {
     string: { unit: "caracteres", verb: "ter" },
@@ -9626,8 +9626,8 @@ var error28 = () => {
     array: { unit: "itens", verb: "ter" },
     set: { unit: "itens", verb: "ter" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9735,8 +9735,8 @@ function pt_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count, one4, few, many) {
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
+function getRussianPlural(count, one8, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -9744,7 +9744,7 @@ function getRussianPlural(count, one4, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one4;
+    return one8;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -9786,8 +9786,8 @@ var error29 = () => {
       verb: "\u0438\u043C\u0435\u0442\u044C"
     }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -9900,7 +9900,7 @@ function ru_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sl.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sl.js
 var error30 = () => {
   const Sizable = {
     string: { unit: "znakov", verb: "imeti" },
@@ -9908,8 +9908,8 @@ var error30 = () => {
     array: { unit: "elementov", verb: "imeti" },
     set: { unit: "elementov", verb: "imeti" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10018,7 +10018,7 @@ function sl_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sv.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/sv.js
 var error31 = () => {
   const Sizable = {
     string: { unit: "tecken", verb: "att ha" },
@@ -10026,8 +10026,8 @@ var error31 = () => {
     array: { unit: "objekt", verb: "att inneh\xE5lla" },
     set: { unit: "objekt", verb: "att inneh\xE5lla" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10137,7 +10137,7 @@ function sv_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ta.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ta.js
 var error32 = () => {
   const Sizable = {
     string: { unit: "\u0B8E\u0BB4\u0BC1\u0BA4\u0BCD\u0BA4\u0BC1\u0B95\u0BCD\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
@@ -10145,8 +10145,8 @@ var error32 = () => {
     array: { unit: "\u0B89\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BC1\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" },
     set: { unit: "\u0B89\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BC1\u0B95\u0BB3\u0BCD", verb: "\u0B95\u0BCA\u0BA3\u0BCD\u0B9F\u0BBF\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10255,7 +10255,7 @@ function ta_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/th.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/th.js
 var error33 = () => {
   const Sizable = {
     string: { unit: "\u0E15\u0E31\u0E27\u0E2D\u0E31\u0E01\u0E29\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
@@ -10263,8 +10263,8 @@ var error33 = () => {
     array: { unit: "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" },
     set: { unit: "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23", verb: "\u0E04\u0E27\u0E23\u0E21\u0E35" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10373,7 +10373,7 @@ function th_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/tr.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/tr.js
 var parsedType3 = (data) => {
   const t = typeof data;
   switch (t) {
@@ -10401,8 +10401,8 @@ var error34 = () => {
     array: { unit: "\xF6\u011Fe", verb: "olmal\u0131" },
     set: { unit: "\xF6\u011Fe", verb: "olmal\u0131" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const Nouns = {
     regex: "girdi",
@@ -10489,7 +10489,7 @@ function tr_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ua.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ua.js
 var error35 = () => {
   const Sizable = {
     string: { unit: "\u0441\u0438\u043C\u0432\u043E\u043B\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
@@ -10497,8 +10497,8 @@ var error35 = () => {
     array: { unit: "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" },
     set: { unit: "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0456\u0432", verb: "\u043C\u0430\u0442\u0438\u043C\u0435" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10607,7 +10607,7 @@ function ua_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ur.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ur.js
 var error36 = () => {
   const Sizable = {
     string: { unit: "\u062D\u0631\u0648\u0641", verb: "\u06C1\u0648\u0646\u0627" },
@@ -10615,8 +10615,8 @@ var error36 = () => {
     array: { unit: "\u0622\u0626\u0679\u0645\u0632", verb: "\u06C1\u0648\u0646\u0627" },
     set: { unit: "\u0622\u0626\u0679\u0645\u0632", verb: "\u06C1\u0648\u0646\u0627" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10725,7 +10725,7 @@ function ur_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/vi.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/vi.js
 var error37 = () => {
   const Sizable = {
     string: { unit: "k\xFD t\u1EF1", verb: "c\xF3" },
@@ -10733,8 +10733,8 @@ var error37 = () => {
     array: { unit: "ph\u1EA7n t\u1EED", verb: "c\xF3" },
     set: { unit: "ph\u1EA7n t\u1EED", verb: "c\xF3" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10842,7 +10842,7 @@ function vi_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-CN.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-CN.js
 var error38 = () => {
   const Sizable = {
     string: { unit: "\u5B57\u7B26", verb: "\u5305\u542B" },
@@ -10850,8 +10850,8 @@ var error38 = () => {
     array: { unit: "\u9879", verb: "\u5305\u542B" },
     set: { unit: "\u9879", verb: "\u5305\u542B" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -10959,7 +10959,7 @@ function zh_CN_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-TW.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/zh-TW.js
 var error39 = () => {
   const Sizable = {
     string: { unit: "\u5B57\u5143", verb: "\u64C1\u6709" },
@@ -10967,8 +10967,8 @@ var error39 = () => {
     array: { unit: "\u9805\u76EE", verb: "\u64C1\u6709" },
     set: { unit: "\u9805\u76EE", verb: "\u64C1\u6709" }
   };
-  function getSizing(origin) {
-    return Sizable[origin] ?? null;
+  function getSizing(origin3) {
+    return Sizable[origin3] ?? null;
   }
   const parsedType4 = (data) => {
     const t = typeof data;
@@ -11077,7 +11077,7 @@ function zh_TW_default() {
   };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/registries.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/registries.js
 var $output = /* @__PURE__ */ Symbol("ZodOutput");
 var $input = /* @__PURE__ */ Symbol("ZodInput");
 var $ZodRegistry = class {
@@ -11127,7 +11127,7 @@ function registry() {
 }
 var globalRegistry = /* @__PURE__ */ registry();
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/api.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/api.js
 function _string(Class2, params) {
   return new Class2({
     type: "string",
@@ -11710,16 +11710,16 @@ function _overwrite(tx) {
   });
 }
 function _normalize(form) {
-  return _overwrite((input) => input.normalize(form));
+  return _overwrite((input2) => input2.normalize(form));
 }
 function _trim() {
-  return _overwrite((input) => input.trim());
+  return _overwrite((input2) => input2.trim());
 }
 function _toLowerCase() {
-  return _overwrite((input) => input.toLowerCase());
+  return _overwrite((input2) => input2.toLowerCase());
 }
 function _toUpperCase() {
-  return _overwrite((input) => input.toUpperCase());
+  return _overwrite((input2) => input2.toUpperCase());
 }
 function _array(Class2, element, params) {
   return new Class2({
@@ -11930,8 +11930,8 @@ function _stringbool(Classes, _params) {
   const _Transform = Classes.Transform ?? $ZodTransform;
   const tx = new _Transform({
     type: "transform",
-    transform: (input, payload) => {
-      let data = input;
+    transform: (input2, payload) => {
+      let data = input2;
       if (params.case !== "sensitive")
         data = data.toLowerCase();
       if (truthySet.has(data)) {
@@ -11985,7 +11985,7 @@ function _stringFormat(Class2, format, fnOrRegex, _params = {}) {
   return inst;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/function.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/function.js
 var $ZodFunction = class {
   constructor(def) {
     this._def = def;
@@ -12055,7 +12055,7 @@ function _function(params) {
   });
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/to-json-schema.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/to-json-schema.js
 var JSONSchemaGenerator = class {
   constructor(params) {
     this.counter = 0;
@@ -12689,21 +12689,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
   }
 };
-function toJSONSchema(input, _params) {
-  if (input instanceof $ZodRegistry) {
+function toJSONSchema(input2, _params) {
+  if (input2 instanceof $ZodRegistry) {
     const gen2 = new JSONSchemaGenerator(_params);
     const defs = {};
-    for (const entry of input._idmap.entries()) {
+    for (const entry of input2._idmap.entries()) {
       const [_, schema] = entry;
       gen2.process(schema);
     }
     const schemas = {};
     const external = {
-      registry: input,
+      registry: input2,
       uri: _params?.uri,
       defs
     };
-    for (const entry of input._idmap.entries()) {
+    for (const entry of input2._idmap.entries()) {
       const [key, schema] = entry;
       schemas[key] = gen2.emit(schema, {
         ..._params,
@@ -12719,8 +12719,8 @@ function toJSONSchema(input, _params) {
     return { schemas };
   }
   const gen = new JSONSchemaGenerator(_params);
-  gen.process(input);
-  return gen.emit(input, _params);
+  gen.process(input2);
+  return gen.emit(input2, _params);
 }
 function isTransforming(_schema, _ctx) {
   const ctx = _ctx ?? { seen: /* @__PURE__ */ new Set() };
@@ -12822,10 +12822,10 @@ function isTransforming(_schema, _ctx) {
   throw new Error(`Unknown schema type: ${def.type}`);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/json-schema.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/json-schema.js
 var json_schema_exports = {};
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/iso.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/iso.js
 var iso_exports = {};
 __export(iso_exports, {
   ZodISODate: () => ZodISODate,
@@ -12866,7 +12866,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/errors.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -12900,13 +12900,13 @@ var ZodRealError = $constructor("ZodError", initializer2, {
   Parent: Error
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/parse.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/parse.js
 var parse2 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse2 = /* @__PURE__ */ _safeParse(ZodRealError);
 var safeParseAsync2 = /* @__PURE__ */ _safeParseAsync(ZodRealError);
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/schemas.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/schemas.js
 var ZodType = /* @__PURE__ */ $constructor("ZodType", (inst, def) => {
   $ZodType.init(inst, def);
   inst.def = def;
@@ -13814,17 +13814,17 @@ function superRefine(fn) {
   });
   return ch;
 }
-function _instanceof(cls3, params = {
-  error: `Input not instance of ${cls3.name}`
+function _instanceof(cls4, params = {
+  error: `Input not instance of ${cls4.name}`
 }) {
   const inst = new ZodCustom({
     type: "custom",
     check: "custom",
-    fn: (data) => data instanceof cls3,
+    fn: (data) => data instanceof cls4,
     abort: true,
     ...util_exports.normalizeParams(params)
   });
-  inst._zod.bag.Class = cls3;
+  inst._zod.bag.Class = cls4;
   return inst;
 }
 var stringbool = (...args) => _stringbool({
@@ -13843,7 +13843,7 @@ function preprocess(fn, schema) {
   return pipe(transform(fn), schema);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/compat.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/compat.js
 var ZodIssueCode = {
   invalid_type: "invalid_type",
   too_big: "too_big",
@@ -13866,7 +13866,7 @@ function getErrorMap() {
   return config().customError;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/coerce.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/coerce.js
 var coerce_exports = {};
 __export(coerce_exports, {
   bigint: () => bigint4,
@@ -13891,10 +13891,10 @@ function date5(params) {
   return _coercedDate(ZodDate, params);
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/classic/external.js
 config(en_default());
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-o_d17bd9588130032e68d017cd2cdc66e3/node_modules/drizzle-zod/index.mjs
+// node_modules/.pnpm/drizzle-zod@0.8.3_drizzle-o_d17bd9588130032e68d017cd2cdc66e3/node_modules/drizzle-zod/index.mjs
 var CONSTANTS = {
   INT8_MIN: -128,
   INT8_MAX: 127,
@@ -14141,7 +14141,7 @@ var createInsertSchema = (entity, refine2) => {
   return handleColumns(columns, refine2 ?? {}, insertConditions);
 };
 
-// D:/projekty/remont_assistance/lib/db/src/schema/products.ts
+// lib/db/src/schema/products.ts
 var productsTable = pgTable(
   "products",
   {
@@ -14176,7 +14176,7 @@ var insertProductSchema = createInsertSchema(productsTable).omit({
   updatedAt: true
 });
 
-// D:/projekty/remont_assistance/lib/db/src/repositories/products.repo.ts
+// lib/db/src/repositories/products.repo.ts
 var upsertProductInput = insertProductSchema.partial({ normalizedName: true });
 async function findByColumn(db, field, value) {
   const col = field === "ean" ? productsTable.ean : productsTable.gtin;
@@ -14201,7 +14201,7 @@ async function findByNormalizedNameAndCategory(db, name, category) {
   return rows[0];
 }
 
-// D:/projekty/remont_assistance/lib/db/src/schema/product-offers.ts
+// lib/db/src/schema/product-offers.ts
 var productOffersTable = pgTable(
   "product_offers",
   {
@@ -14231,7 +14231,7 @@ var insertProductOfferSchema = createInsertSchema(
   fetchedAt: true
 });
 
-// D:/projekty/remont_assistance/lib/db/src/schema/price-history.ts
+// lib/db/src/schema/price-history.ts
 var priceHistoryTable = pgTable(
   "price_history",
   {
@@ -14258,18 +14258,18 @@ var insertPriceHistorySchema = createInsertSchema(
   id: true
 });
 
-// D:/projekty/remont_assistance/lib/db/src/repositories/product-offers.repo.ts
+// lib/db/src/repositories/product-offers.repo.ts
 async function listOffersForProduct(db, productId) {
   const rows = await db.select().from(productOffersTable).where(eq(productOffersTable.productId, productId));
   return sortOffersWithCheapest(rows);
 }
 
-// D:/projekty/remont_assistance/lib/price-collector/src/normalize.ts
+// lib/price-collector/src/normalize.ts
 function parsePriceToGrosze(raw) {
   if (raw === null || raw === void 0) return null;
-  let amount;
+  let amount2;
   if (typeof raw === "number") {
-    amount = raw;
+    amount2 = raw;
   } else {
     const cleaned = raw.replace(/[^\d.,-]/g, "");
     if (cleaned === "") return null;
@@ -14285,13 +14285,24 @@ function parsePriceToGrosze(raw) {
     } else {
       normalized = cleaned;
     }
-    amount = Number(normalized);
+    amount2 = Number(normalized);
   }
-  if (!Number.isFinite(amount) || amount < 0) return null;
-  return Math.round(amount * 100);
+  if (!Number.isFinite(amount2) || amount2 < 0) return null;
+  return Math.round(amount2 * 100);
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/package-optimizer.ts
+// lib/pricing-service/src/purchase-quantity.ts
+function computePackagesNeeded(quantity, packageSize, purchaseMultiple = 1, minimumPackages = 1) {
+  if (!(quantity > 0)) return 0;
+  const size = packageSize > 0 ? packageSize : 1;
+  if (!Number.isSafeInteger(purchaseMultiple) || purchaseMultiple < 1 || purchaseMultiple > 1e4) throw Error("invalid_purchase_multiple");
+  if (!Number.isSafeInteger(minimumPackages) || minimumPackages < 1 || minimumPackages > 1e4) throw Error("invalid_minimum_packages");
+  const ratio = quantity / (size * purchaseMultiple), nearest = Math.round(ratio);
+  const exact = nearest > 0 && Math.abs(ratio - nearest) <= Number.EPSILON * Math.max(1, Math.abs(ratio)) * 4;
+  return Math.max(Math.ceil(minimumPackages / purchaseMultiple), Math.ceil(exact ? nearest : ratio)) * purchaseMultiple;
+}
+
+// lib/pricing-service/src/package-optimizer.ts
 var MAX_GRID = 2e6;
 function decimalPlaces(n) {
   if (!Number.isFinite(n) || Number.isInteger(n)) return 0;
@@ -14309,8 +14320,7 @@ function buildEntries(chosen) {
   const byKey = /* @__PURE__ */ new Map();
   let totalGrosze = 0;
   let coverage = 0;
-  for (const v of chosen) {
-    const count = v.purchaseMultiple ?? 1;
+  for (const { variant: v, count } of chosen) {
     coverage += v.packageSize * count;
     totalGrosze += v.unitPriceGrosze * count;
     const key = v.offerId;
@@ -14324,7 +14334,10 @@ function buildEntries(chosen) {
         count,
         unitPriceGrosze: v.unitPriceGrosze,
         lineCostGrosze: v.unitPriceGrosze * count,
-        ...count > 1 ? { purchaseMultiple: count } : {},
+        ...(v.purchaseMultiple ?? 1) > 1 ? { purchaseMultiple: v.purchaseMultiple } : {},
+        ...(v.minimumPackages ?? 1) > 1 ? { minimumPackages: v.minimumPackages } : {},
+        ...v.maxPackages !== void 0 ? { maxPackages: v.maxPackages } : {},
+        ...v.verification ? { verification: v.verification } : {},
         store: v.store,
         url: v.url,
         offerId: v.offerId
@@ -14337,13 +14350,13 @@ function buildEntries(chosen) {
   return { packages, totalGrosze, coverage };
 }
 function fallbackSingleVariant(requiredQuantity, variants) {
-  const cost = (v) => Math.ceil(requiredQuantity / (v.packageSize * (v.purchaseMultiple ?? 1))) * (v.purchaseMultiple ?? 1) * v.unitPriceGrosze;
-  const best = [...variants].sort(
+  const cost = (v) => computePackagesNeeded(requiredQuantity, v.packageSize, v.purchaseMultiple, v.minimumPackages) * v.unitPriceGrosze;
+  const best = variants.filter((v) => v.maxPackages === void 0 || computePackagesNeeded(requiredQuantity, v.packageSize, v.purchaseMultiple, v.minimumPackages) <= v.maxPackages).sort(
     (a, b) => cost(a) - cost(b) || a.packageSize - b.packageSize
   )[0];
-  const count = Math.ceil(requiredQuantity / (best.packageSize * (best.purchaseMultiple ?? 1)));
-  const chosen = Array.from({ length: count }, () => best);
-  const { packages, totalGrosze, coverage } = buildEntries(chosen);
+  if (!best) return null;
+  const count = computePackagesNeeded(requiredQuantity, best.packageSize, best.purchaseMultiple, best.minimumPackages);
+  const { packages, totalGrosze, coverage } = buildEntries([{ variant: best, count }]);
   return {
     packages,
     totalGrosze,
@@ -14351,6 +14364,122 @@ function fallbackSingleVariant(requiredQuantity, variants) {
     coveredQuantity: coverage,
     overage: coverage - requiredQuantity
   };
+}
+function optimizeWithMinimums(requiredQuantity, variants, target, scale) {
+  if (variants.length * (target + 1) > MAX_GRID) return fallbackSingleVariant(requiredQuantity, variants);
+  let costs = new Float64Array(target + 1).fill(Infinity);
+  let coverages = new Float64Array(target + 1).fill(Infinity);
+  costs[0] = coverages[0] = 0;
+  const choices = [];
+  const grids = [];
+  for (const variant of variants) {
+    const multiple = variant.purchaseMultiple ?? 1;
+    const minimum = Math.ceil((variant.minimumPackages ?? 1) / multiple) * multiple;
+    const grid = Math.max(1, Math.round(variant.packageSize * multiple * scale));
+    const minimumGrid = grid * (minimum / multiple);
+    const stepCost = variant.unitPriceGrosze * multiple;
+    const minimumCost = variant.unitPriceGrosze * minimum;
+    const usedCosts = new Float64Array(target + 1);
+    const usedCoverages = new Float64Array(target + 1);
+    const usedCounts = new Uint32Array(target + 1);
+    const nextCosts = new Float64Array(target + 1);
+    const nextCoverages = new Float64Array(target + 1);
+    const counts = new Uint32Array(target + 1);
+    for (let q2 = 0; q2 <= target; q2++) {
+      const beforeMinimum = Math.max(0, q2 - minimumGrid);
+      let cost = costs[beforeMinimum] + minimumCost;
+      let coverage2 = coverages[beforeMinimum] + minimumGrid;
+      let count = minimum;
+      if (q2 > 0) {
+        const beforeStep = Math.max(0, q2 - grid);
+        const extendedCost = usedCosts[beforeStep] + stepCost;
+        const extendedCoverage = usedCoverages[beforeStep] + grid;
+        if (extendedCost < cost || extendedCost === cost && extendedCoverage < coverage2) {
+          cost = extendedCost;
+          coverage2 = extendedCoverage;
+          count = usedCounts[beforeStep] + multiple;
+        }
+      }
+      usedCosts[q2] = cost;
+      usedCoverages[q2] = coverage2;
+      usedCounts[q2] = count;
+      const use = cost < costs[q2] || cost === costs[q2] && coverage2 < coverages[q2];
+      nextCosts[q2] = use ? cost : costs[q2];
+      nextCoverages[q2] = use ? coverage2 : coverages[q2];
+      counts[q2] = use ? count : 0;
+    }
+    costs = nextCosts;
+    coverages = nextCoverages;
+    choices.push(counts);
+    grids.push(grid);
+  }
+  const chosen = [];
+  let q = target;
+  for (let index2 = variants.length - 1; index2 >= 0; index2--) {
+    const count = choices[index2][q];
+    if (!count) continue;
+    const variant = variants[index2];
+    chosen.push({ variant, count });
+    q = Math.max(0, q - grids[index2] * (count / (variant.purchaseMultiple ?? 1)));
+  }
+  const { packages, totalGrosze, coverage } = buildEntries(chosen);
+  return { packages, totalGrosze, requiredQuantity, coveredQuantity: coverage, overage: coverage - requiredQuantity };
+}
+function optimizeWithStock(requiredQuantity, variants, target, scale) {
+  if (variants.length * (target + 1) > MAX_GRID) throw Error("stock_planning_limit");
+  let costs = new Float64Array(target + 1).fill(Infinity), coverages = new Float64Array(target + 1).fill(Infinity);
+  costs[0] = coverages[0] = 0;
+  const choices = [], grids = [];
+  for (const variant of variants) {
+    const multiple = variant.purchaseMultiple ?? 1, minimumLots = Math.ceil((variant.minimumPackages ?? 1) / multiple);
+    const grid = Math.max(1, Math.round(variant.packageSize * multiple * scale));
+    const usefulLots = Math.max(minimumLots, Math.ceil(target / grid));
+    const maxLots = Math.min(usefulLots, variant.maxPackages === void 0 ? usefulLots : Math.floor(variant.maxPackages / multiple));
+    const stepCost = variant.unitPriceGrosze * multiple;
+    const usedCosts = new Float64Array(target + 1).fill(Infinity), usedCoverages = new Float64Array(target + 1).fill(Infinity), usedCounts = new Uint32Array(target + 1);
+    if (maxLots >= minimumLots) {
+      for (let q2 = 0; q2 <= target; q2++) {
+        const before = Math.max(0, q2 - minimumLots * grid);
+        usedCosts[q2] = costs[before] + minimumLots * stepCost;
+        usedCoverages[q2] = coverages[before] + minimumLots * grid;
+        usedCounts[q2] = minimumLots * multiple;
+      }
+      let left = maxLots - minimumLots;
+      for (let batch = 1; left > 0; batch *= 2) {
+        const lots = Math.min(batch, left);
+        left -= lots;
+        for (let q2 = target; q2 >= 0; q2--) {
+          const before = Math.max(0, q2 - lots * grid), cost = usedCosts[before] + lots * stepCost, coverage2 = usedCoverages[before] + lots * grid;
+          if (cost < usedCosts[q2] || cost === usedCosts[q2] && coverage2 < usedCoverages[q2]) {
+            usedCosts[q2] = cost;
+            usedCoverages[q2] = coverage2;
+            usedCounts[q2] = usedCounts[before] + lots * multiple;
+          }
+        }
+      }
+    }
+    const counts = new Uint32Array(target + 1);
+    for (let q2 = 0; q2 <= target; q2++) if (usedCosts[q2] < costs[q2] || usedCosts[q2] === costs[q2] && usedCoverages[q2] < coverages[q2]) {
+      costs[q2] = usedCosts[q2];
+      coverages[q2] = usedCoverages[q2];
+      counts[q2] = usedCounts[q2];
+    }
+    choices.push(counts);
+    grids.push(grid);
+  }
+  if (!Number.isFinite(costs[target])) return null;
+  const chosen = [];
+  let q = target;
+  for (let i = variants.length - 1; i >= 0; i--) {
+    const count = choices[i][q];
+    if (count) {
+      const variant = variants[i];
+      chosen.push({ variant, count });
+      q = Math.max(0, q - grids[i] * (count / (variant.purchaseMultiple ?? 1)));
+    }
+  }
+  const { packages, totalGrosze, coverage } = buildEntries(chosen);
+  return { packages, totalGrosze, requiredQuantity, coveredQuantity: coverage, overage: coverage - requiredQuantity };
 }
 function optimizePackages(requiredQuantity, variants) {
   if (!(requiredQuantity > 0)) {
@@ -14363,21 +14492,18 @@ function optimizePackages(requiredQuantity, variants) {
     };
   }
   const usable = variants.filter(
-    (v) => v.packageSize > 0 && Number.isFinite(v.packageSize) && Number.isFinite(v.unitPriceGrosze) && Number.isSafeInteger(v.unitPriceGrosze) && v.unitPriceGrosze >= 0 && Number.isSafeInteger(v.purchaseMultiple ?? 1) && (v.purchaseMultiple ?? 1) >= 1 && (v.purchaseMultiple ?? 1) <= 1e4 && Number.isSafeInteger(v.unitPriceGrosze * (v.purchaseMultiple ?? 1))
+    (v) => v.packageSize > 0 && Number.isFinite(v.packageSize) && Number.isFinite(v.unitPriceGrosze) && Number.isSafeInteger(v.unitPriceGrosze) && v.unitPriceGrosze >= 0 && Number.isSafeInteger(v.purchaseMultiple ?? 1) && (v.purchaseMultiple ?? 1) >= 1 && (v.purchaseMultiple ?? 1) <= 1e4 && Number.isSafeInteger(v.minimumPackages ?? 1) && (v.minimumPackages ?? 1) >= 1 && (v.minimumPackages ?? 1) <= 1e4 && (v.maxPackages === void 0 || Number.isSafeInteger(v.maxPackages) && v.maxPackages >= 0 && v.maxPackages <= 1e9) && Number.isSafeInteger(v.unitPriceGrosze * Math.max(v.purchaseMultiple ?? 1, Math.ceil((v.minimumPackages ?? 1) / (v.purchaseMultiple ?? 1)) * (v.purchaseMultiple ?? 1)))
   );
   if (usable.length === 0) return null;
+  if (usable.length === 1) return fallbackSingleVariant(requiredQuantity, usable);
   const scale = resolveScale([requiredQuantity, ...usable.map((v) => v.packageSize * (v.purchaseMultiple ?? 1))]);
-  const target = Math.ceil(requiredQuantity * scale - 1e-9);
-  if (target <= 0) {
-    return {
-      packages: [],
-      totalGrosze: 0,
-      requiredQuantity,
-      coveredQuantity: 0,
-      overage: 0
-    };
+  const target = Math.max(1, Math.ceil(requiredQuantity * scale - 1e-9));
+  if (usable.some((v) => v.maxPackages !== void 0)) {
+    if (target > MAX_GRID) throw Error("stock_planning_limit");
+    return optimizeWithStock(requiredQuantity, usable, target, scale);
   }
   if (target > MAX_GRID) return fallbackSingleVariant(requiredQuantity, usable);
+  if (usable.some((v) => (v.minimumPackages ?? 1) > 1)) return optimizeWithMinimums(requiredQuantity, usable, target, scale);
   const items = usable.map((v) => ({
     variant: v,
     grid: Math.max(1, Math.round(v.packageSize * (v.purchaseMultiple ?? 1) * scale))
@@ -14407,7 +14533,8 @@ function optimizePackages(requiredQuantity, variants) {
   while (q > 0 && guard-- > 0) {
     const cell = dp[q];
     if (!cell || cell.choice < 0) break;
-    chosen.push(items[cell.choice].variant);
+    const variant = items[cell.choice].variant;
+    chosen.push({ variant, count: variant.purchaseMultiple ?? 1 });
     q = cell.prev;
   }
   const { packages, totalGrosze, coverage } = buildEntries(chosen);
@@ -14420,15 +14547,7 @@ function optimizePackages(requiredQuantity, variants) {
   };
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/purchase-quantity.ts
-function computePackagesNeeded(quantity, packageSize, purchaseMultiple = 1) {
-  if (!(quantity > 0)) return 0;
-  const size = packageSize > 0 ? packageSize : 1;
-  if (!Number.isSafeInteger(purchaseMultiple) || purchaseMultiple < 1 || purchaseMultiple > 1e4) throw Error("invalid_purchase_multiple");
-  return Math.ceil(quantity / (size * purchaseMultiple)) * purchaseMultiple;
-}
-
-// D:/projekty/remont_assistance/lib/pricing-service/src/estimate.ts
+// lib/pricing-service/src/estimate.ts
 var defaultDeps = {
   findProductByCode: async (db, code) => await findByEanOrGtin(db, code) ?? null,
   findProductByNameAndCategory: async (db, q) => await findByNormalizedNameAndCategory(db, q.normalizedName, q.category) ?? null,
@@ -14437,13 +14556,19 @@ var defaultDeps = {
 var MAX_COMPARABLE_OFFER_AGE_MS = 7 * 24 * 60 * 60 * 1e3;
 function isComparableOffer(offer, now = Date.now()) {
   if (offer.purchaseMultiple !== void 0 && (!Number.isSafeInteger(offer.purchaseMultiple) || offer.purchaseMultiple < 1 || offer.purchaseMultiple > 1e4)) return false;
+  if (offer.minimumPackages !== void 0 && (!Number.isSafeInteger(offer.minimumPackages) || offer.minimumPackages < 1 || offer.minimumPackages > 1e4)) return false;
+  if (offer.maxPackages !== void 0 && (!Number.isSafeInteger(offer.maxPackages) || offer.maxPackages < Math.ceil((offer.minimumPackages ?? 1) / (offer.purchaseMultiple ?? 1)) * (offer.purchaseMultiple ?? 1) || offer.maxPackages > 1e9)) return false;
+  if (offer.verification) {
+    const { method, checkedAt, expiresAt } = offer.verification, checked = Date.parse(checkedAt), expires = Date.parse(expiresAt);
+    if (method !== "browser" || !Number.isFinite(checked) || !Number.isFinite(expires) || expires !== checked + 864e5 || expires <= now || checked > now + 3e5 || !(offer.fetchedAt instanceof Date) || checked !== offer.fetchedAt.getTime()) return false;
+  }
   if (!offer.source || /seed|fixture|mock|demo|reference/i.test(offer.source)) return false;
   const availability = (offer.availability ?? "").replace(/[\s_-]/g, "");
   if (/outofstock|unavailable|niedost[eę]pn|brak|preorder|backorder/i.test(availability)) return false;
   const fetched = offer.fetchedAt instanceof Date ? offer.fetchedAt.getTime() : NaN;
   if (!Number.isFinite(fetched) || fetched > now + 5 * 60 * 1e3 || now - fetched > MAX_COMPARABLE_OFFER_AGE_MS) return false;
-  const price = parsePriceToGrosze(offer.promoPrice ?? offer.price);
-  return price !== null && price > 0;
+  const price2 = parsePriceToGrosze(offer.promoPrice ?? offer.price);
+  return price2 !== null && price2 > 0;
 }
 function selectCheapestOffer(offers, store, purchase) {
   let best = null;
@@ -14453,7 +14578,9 @@ function selectCheapestOffer(offers, store, purchase) {
     if (store && offer.store !== store) continue;
     const unitPriceGrosze = parsePriceToGrosze(offer.promoPrice ?? offer.price);
     if (unitPriceGrosze === null) continue;
-    const total = purchase ? computePackagesNeeded(purchase.quantity, resolvePackageSize(offer, purchase.product), offer.purchaseMultiple) * unitPriceGrosze : unitPriceGrosze;
+    const count = purchase ? computePackagesNeeded(purchase.quantity, resolvePackageSize(offer, purchase.product), offer.purchaseMultiple, offer.minimumPackages) : 1;
+    if (purchase && offer.maxPackages !== void 0 && count > offer.maxPackages) continue;
+    const total = count * unitPriceGrosze;
     if (best === null || total < bestTotal || total === bestTotal && unitPriceGrosze < best.unitPriceGrosze) {
       bestTotal = total;
       best = {
@@ -14480,12 +14607,16 @@ function buildPackageVariants(offers, product, store) {
     if (unitPriceGrosze === null) continue;
     const packageSize = resolvePackageSize(offer, product);
     const purchaseMultiple = offer.purchaseMultiple ?? 1;
-    const key = `${packageSize}:${purchaseMultiple}`;
+    const minimumPackages = offer.minimumPackages ?? 1;
+    const key = offer.maxPackages === void 0 ? `${packageSize}:${purchaseMultiple}:${minimumPackages}` : `stock:${offer.id}`;
     const existing = bySize.get(key);
     if (existing === void 0 || unitPriceGrosze < existing.unitPriceGrosze) {
       bySize.set(key, {
         packageSize,
         ...purchaseMultiple > 1 ? { purchaseMultiple } : {},
+        ...minimumPackages > 1 ? { minimumPackages } : {},
+        ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {},
+        ...offer.verification ? { verification: offer.verification } : {},
         unitPriceGrosze,
         store: offer.store,
         url: offer.productUrl,
@@ -14523,16 +14654,18 @@ async function estimateLine(db, deps, item, options) {
     const reason = hadCriteria ? "no-product" : "no-query";
     return { resolved: false, ...base, reason, lineCost: 0 };
   }
-  const offers = (await deps.listOffers(db, product.id)).filter((offer) => isComparableOffer(offer));
-  const cheapestOffer = selectCheapestOffer(offers, options.store, { quantity: item.quantity, product });
-  if (!cheapestOffer) {
+  const offers = (await deps.listOffers(db, product.id)).filter((offer) => isComparableOffer(offer) && (!options.store || offer.store === options.store));
+  if (!offers.length) {
     return { resolved: false, ...base, reason: "no-offer", lineCost: 0 };
   }
-  const packageSize = resolvePackageSize(cheapestOffer.offer, product);
-  const packagesNeeded = computePackagesNeeded(item.quantity, packageSize, cheapestOffer.offer.purchaseMultiple);
-  const lineCost = packagesNeeded * cheapestOffer.unitPriceGrosze;
   const variants = buildPackageVariants(offers, product, options.store);
-  const packagePlan = optimizePackages(item.quantity, variants) ?? singleSizePlan(item.quantity, packageSize, packagesNeeded, cheapestOffer);
+  const packagePlan = optimizePackages(item.quantity, variants);
+  if (!packagePlan) return { resolved: false, ...base, reason: offers.some((o) => o.maxPackages !== void 0) ? "insufficient-stock" : "no-offer", lineCost: 0 };
+  const wholeOffer = selectCheapestOffer(offers, options.store, { quantity: item.quantity, product });
+  const cheapestOffer = wholeOffer ?? selectCheapestOffer(offers, options.store);
+  const packageSize = resolvePackageSize(cheapestOffer.offer, product);
+  const packagesNeeded = wholeOffer ? computePackagesNeeded(item.quantity, packageSize, cheapestOffer.offer.purchaseMultiple, cheapestOffer.offer.minimumPackages) : packagePlan.packages.reduce((sum, entry) => sum + entry.count, 0);
+  const lineCost = wholeOffer ? packagesNeeded * cheapestOffer.unitPriceGrosze : packagePlan.totalGrosze;
   return {
     resolved: true,
     ...base,
@@ -14545,36 +14678,17 @@ async function estimateLine(db, deps, item, options) {
     packagePlan
   };
 }
-function singleSizePlan(quantity, packageSize, packagesNeeded, cheapestOffer) {
-  const coveredQuantity = packagesNeeded * packageSize;
-  return {
-    packages: packagesNeeded > 0 ? [
-      {
-        packageSize,
-        count: packagesNeeded,
-        unitPriceGrosze: cheapestOffer.unitPriceGrosze,
-        lineCostGrosze: packagesNeeded * cheapestOffer.unitPriceGrosze,
-        store: cheapestOffer.store,
-        url: cheapestOffer.url,
-        offerId: cheapestOffer.offer.id
-      }
-    ] : [],
-    totalGrosze: packagesNeeded * cheapestOffer.unitPriceGrosze,
-    requiredQuantity: quantity > 0 ? quantity : 0,
-    coveredQuantity,
-    overage: coveredQuantity - (quantity > 0 ? quantity : 0)
-  };
-}
 async function estimateStageCost(db, items, options = {}, deps = defaultDeps) {
   const lines = [];
   for (const item of items) {
     lines.push(await estimateLine(db, deps, item, options));
   }
-  const unresolved = lines.filter(
+  const reconciled = reconcileStock([{ lines, unresolved: [], stageTotalGrosze: 0 }])[0];
+  const unresolved = reconciled.lines.filter(
     (l) => !l.resolved
   );
-  const stageTotalGrosze = lines.reduce((sum, l) => sum + l.lineCost, 0);
-  return { lines, unresolved, stageTotalGrosze };
+  const stageTotalGrosze = reconciled.lines.reduce((sum, l) => sum + l.lineCost, 0);
+  return { lines: reconciled.lines, unresolved, stageTotalGrosze };
 }
 function groupProjectByProduct(stages) {
   const groups = /* @__PURE__ */ new Map();
@@ -14610,6 +14724,7 @@ function consolidateProject(stages) {
   const lines = [];
   for (const g of groups) {
     const packagePlan = optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product));
+    if (!packagePlan) continue;
     const packagesNeeded = packagePlan?.packages.reduce((sum, entry) => sum + entry.count, 0) ?? computePackagesNeeded(g.totalQuantity, g.packageSize);
     const lineCostGrosze = packagePlan?.totalGrosze ?? packagesNeeded * g.cheapestOffer.unitPriceGrosze;
     lines.push({
@@ -14700,6 +14815,7 @@ function compareStores(stages) {
   };
 }
 function estimateProjectCost(stages) {
+  stages = reconcileStock(stages);
   const projectTotalGrosze = stages.reduce(
     (sum, s) => sum + s.stageTotalGrosze,
     0
@@ -14718,8 +14834,24 @@ function estimateProjectCost(stages) {
     storeComparison: compareStores(stages)
   };
 }
+function reconcileStock(stages) {
+  const missing = new Set(groupProjectByProduct(stages).filter((g) => g.offers.some((o) => o.maxPackages !== void 0) && !optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product))).map((g) => g.product.id));
+  if (!missing.size) return [...stages];
+  return stages.map((stage) => {
+    const lines = stage.lines.map((line2) => line2.resolved && missing.has(line2.product.id) ? { resolved: false, query: line2.query, quantity: line2.quantity, unit: line2.unit, reason: "insufficient-stock", lineCost: 0 } : line2);
+    const stageTotalGrosze = lines.reduce((sum, line2) => sum + line2.lineCost, 0);
+    return {
+      ...stage,
+      lines,
+      unresolved: lines.filter((l) => !l.resolved),
+      stageTotalGrosze,
+      ..."materialsTotalGrosze" in stage ? { materialsTotalGrosze: stageTotalGrosze } : {},
+      ..."stageTotalWithLaborGrosze" in stage ? { stageTotalWithLaborGrosze: stageTotalGrosze + (stage.laborTotalGrosze ?? 0) } : {}
+    };
+  });
+}
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/labor-data.ts
+// lib/pricing-service/src/labor-data.ts
 var REGION_CODE = "lodzkie";
 var REGION_LABEL = "\u0141\xF3d\u017A / \u0142\xF3dzkie";
 var LABOR_RATES = [
@@ -15075,7 +15207,7 @@ function getLaborRateIdsForJob(jobId) {
   return LABOR_IDS_BY_JOB.get(jobId) ?? [];
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/labor.ts
+// lib/pricing-service/src/labor.ts
 function primaryArea(m) {
   if (m.wallArea) return m.wallArea;
   if (m.floorArea) return m.floorArea;
@@ -15175,7 +15307,7 @@ function estimateStageLabor(jobId, measurements, options = {}) {
   };
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/from-calculator.ts
+// lib/pricing-service/src/from-calculator.ts
 function withLabor(stage, jobId, measurements, options) {
   const labor = estimateStageLabor(jobId, measurements, options);
   const materialsTotalGrosze = stage.stageTotalGrosze;
@@ -15219,10 +15351,10 @@ async function estimateProjectCostFromCalculation(db, jobResults, options = {}, 
     );
   }
   const project = estimateProjectCost(stages);
-  return { ...project, stages };
+  return { ...project, stages: project.stages };
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
 var external_exports2 = {};
 __export(external_exports2, {
   BRAND: () => BRAND,
@@ -15334,7 +15466,7 @@ __export(external_exports2, {
   void: () => voidType
 });
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
 var util;
 (function(util2) {
   util2.assertEqual = (_) => {
@@ -15468,7 +15600,7 @@ var getParsedType2 = (data) => {
   }
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
 var ZodIssueCode2 = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
@@ -15586,7 +15718,7 @@ ZodError2.create = (issues) => {
   return error40;
 };
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
 var errorMap = (issue2, _ctx) => {
   let message;
   switch (issue2.code) {
@@ -15689,7 +15821,7 @@ var errorMap = (issue2, _ctx) => {
 };
 var en_default2 = errorMap;
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
 var overrideErrorMap = en_default2;
 function setErrorMap2(map2) {
   overrideErrorMap = map2;
@@ -15698,7 +15830,7 @@ function getErrorMap2() {
   return overrideErrorMap;
 }
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...issueData.path || []];
@@ -15808,14 +15940,14 @@ var isDirty = (x) => x.status === "dirty";
 var isValid = (x) => x.status === "valid";
 var isAsync = (x) => typeof Promise !== "undefined" && x instanceof Promise;
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
 var errorUtil;
 (function(errorUtil2) {
   errorUtil2.errToObj = (message) => typeof message === "string" ? { message } : message || {};
   errorUtil2.toString = (message) => typeof message === "string" ? message : message?.message;
 })(errorUtil || (errorUtil = {}));
 
-// D:/projekty/remont_assistance/node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
   constructor(parent, value, path, key) {
     this._cachedPath = [];
@@ -15881,41 +16013,41 @@ var ZodType2 = class {
   get description() {
     return this._def.description;
   }
-  _getType(input) {
-    return getParsedType2(input.data);
+  _getType(input2) {
+    return getParsedType2(input2.data);
   }
-  _getOrReturnCtx(input, ctx) {
+  _getOrReturnCtx(input2, ctx) {
     return ctx || {
-      common: input.parent.common,
-      data: input.data,
-      parsedType: getParsedType2(input.data),
+      common: input2.parent.common,
+      data: input2.data,
+      parsedType: getParsedType2(input2.data),
       schemaErrorMap: this._def.errorMap,
-      path: input.path,
-      parent: input.parent
+      path: input2.path,
+      parent: input2.parent
     };
   }
-  _processInputParams(input) {
+  _processInputParams(input2) {
     return {
       status: new ParseStatus(),
       ctx: {
-        common: input.parent.common,
-        data: input.data,
-        parsedType: getParsedType2(input.data),
+        common: input2.parent.common,
+        data: input2.data,
+        parsedType: getParsedType2(input2.data),
         schemaErrorMap: this._def.errorMap,
-        path: input.path,
-        parent: input.parent
+        path: input2.path,
+        parent: input2.parent
       }
     };
   }
-  _parseSync(input) {
-    const result = this._parse(input);
+  _parseSync(input2) {
+    const result = this._parse(input2);
     if (isAsync(result)) {
       throw new Error("Synchronous parse encountered promise.");
     }
     return result;
   }
-  _parseAsync(input) {
-    const result = this._parse(input);
+  _parseAsync(input2) {
+    const result = this._parse(input2);
     return Promise.resolve(result);
   }
   parse(data, params) {
@@ -16241,13 +16373,13 @@ function isValidCidr(ip, version3) {
   return false;
 }
 var ZodString2 = class _ZodString2 extends ZodType2 {
-  _parse(input) {
+  _parse(input2) {
     if (this._def.coerce) {
-      input.data = String(input.data);
+      input2.data = String(input2.data);
     }
-    const parsedType4 = this._getType(input);
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.string) {
-      const ctx2 = this._getOrReturnCtx(input);
+      const ctx2 = this._getOrReturnCtx(input2);
       addIssueToContext(ctx2, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.string,
@@ -16259,8 +16391,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
     let ctx = void 0;
     for (const check2 of this._def.checks) {
       if (check2.kind === "min") {
-        if (input.data.length < check2.value) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (input2.data.length < check2.value) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.too_small,
             minimum: check2.value,
@@ -16272,8 +16404,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "max") {
-        if (input.data.length > check2.value) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (input2.data.length > check2.value) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.too_big,
             maximum: check2.value,
@@ -16285,10 +16417,10 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "length") {
-        const tooBig = input.data.length > check2.value;
-        const tooSmall = input.data.length < check2.value;
+        const tooBig = input2.data.length > check2.value;
+        const tooSmall = input2.data.length < check2.value;
         if (tooBig || tooSmall) {
-          ctx = this._getOrReturnCtx(input, ctx);
+          ctx = this._getOrReturnCtx(input2, ctx);
           if (tooBig) {
             addIssueToContext(ctx, {
               code: ZodIssueCode2.too_big,
@@ -16311,8 +16443,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "email") {
-        if (!emailRegex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!emailRegex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "email",
             code: ZodIssueCode2.invalid_string,
@@ -16324,8 +16456,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
         if (!emojiRegex) {
           emojiRegex = new RegExp(_emojiRegex, "u");
         }
-        if (!emojiRegex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!emojiRegex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "emoji",
             code: ZodIssueCode2.invalid_string,
@@ -16334,8 +16466,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "uuid") {
-        if (!uuidRegex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!uuidRegex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "uuid",
             code: ZodIssueCode2.invalid_string,
@@ -16344,8 +16476,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "nanoid") {
-        if (!nanoidRegex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!nanoidRegex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "nanoid",
             code: ZodIssueCode2.invalid_string,
@@ -16354,8 +16486,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "cuid") {
-        if (!cuidRegex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!cuidRegex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "cuid",
             code: ZodIssueCode2.invalid_string,
@@ -16364,8 +16496,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "cuid2") {
-        if (!cuid2Regex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!cuid2Regex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "cuid2",
             code: ZodIssueCode2.invalid_string,
@@ -16374,8 +16506,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "ulid") {
-        if (!ulidRegex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!ulidRegex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "ulid",
             code: ZodIssueCode2.invalid_string,
@@ -16385,9 +16517,9 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
         }
       } else if (check2.kind === "url") {
         try {
-          new URL(input.data);
+          new URL(input2.data);
         } catch {
-          ctx = this._getOrReturnCtx(input, ctx);
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "url",
             code: ZodIssueCode2.invalid_string,
@@ -16397,9 +16529,9 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
         }
       } else if (check2.kind === "regex") {
         check2.regex.lastIndex = 0;
-        const testResult = check2.regex.test(input.data);
+        const testResult = check2.regex.test(input2.data);
         if (!testResult) {
-          ctx = this._getOrReturnCtx(input, ctx);
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "regex",
             code: ZodIssueCode2.invalid_string,
@@ -16408,10 +16540,10 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "trim") {
-        input.data = input.data.trim();
+        input2.data = input2.data.trim();
       } else if (check2.kind === "includes") {
-        if (!input.data.includes(check2.value, check2.position)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!input2.data.includes(check2.value, check2.position)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.invalid_string,
             validation: { includes: check2.value, position: check2.position },
@@ -16420,12 +16552,12 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "toLowerCase") {
-        input.data = input.data.toLowerCase();
+        input2.data = input2.data.toLowerCase();
       } else if (check2.kind === "toUpperCase") {
-        input.data = input.data.toUpperCase();
+        input2.data = input2.data.toUpperCase();
       } else if (check2.kind === "startsWith") {
-        if (!input.data.startsWith(check2.value)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!input2.data.startsWith(check2.value)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.invalid_string,
             validation: { startsWith: check2.value },
@@ -16434,8 +16566,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "endsWith") {
-        if (!input.data.endsWith(check2.value)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!input2.data.endsWith(check2.value)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.invalid_string,
             validation: { endsWith: check2.value },
@@ -16445,8 +16577,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
         }
       } else if (check2.kind === "datetime") {
         const regex = datetimeRegex(check2);
-        if (!regex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!regex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.invalid_string,
             validation: "datetime",
@@ -16456,8 +16588,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
         }
       } else if (check2.kind === "date") {
         const regex = dateRegex;
-        if (!regex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!regex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.invalid_string,
             validation: "date",
@@ -16467,8 +16599,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
         }
       } else if (check2.kind === "time") {
         const regex = timeRegex(check2);
-        if (!regex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!regex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.invalid_string,
             validation: "time",
@@ -16477,8 +16609,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "duration") {
-        if (!durationRegex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!durationRegex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "duration",
             code: ZodIssueCode2.invalid_string,
@@ -16487,8 +16619,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "ip") {
-        if (!isValidIP(input.data, check2.version)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!isValidIP(input2.data, check2.version)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "ip",
             code: ZodIssueCode2.invalid_string,
@@ -16497,8 +16629,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "jwt") {
-        if (!isValidJWT2(input.data, check2.alg)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!isValidJWT2(input2.data, check2.alg)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "jwt",
             code: ZodIssueCode2.invalid_string,
@@ -16507,8 +16639,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "cidr") {
-        if (!isValidCidr(input.data, check2.version)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!isValidCidr(input2.data, check2.version)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "cidr",
             code: ZodIssueCode2.invalid_string,
@@ -16517,8 +16649,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "base64") {
-        if (!base64Regex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!base64Regex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "base64",
             code: ZodIssueCode2.invalid_string,
@@ -16527,8 +16659,8 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "base64url") {
-        if (!base64urlRegex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!base64urlRegex.test(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             validation: "base64url",
             code: ZodIssueCode2.invalid_string,
@@ -16540,7 +16672,7 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
         util.assertNever(check2);
       }
     }
-    return { status: status.value, value: input.data };
+    return { status: status.value, value: input2.data };
   }
   _regex(regex, validation, message) {
     return this.refinement((data) => regex.test(data), {
@@ -16801,13 +16933,13 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
     this.max = this.lte;
     this.step = this.multipleOf;
   }
-  _parse(input) {
+  _parse(input2) {
     if (this._def.coerce) {
-      input.data = Number(input.data);
+      input2.data = Number(input2.data);
     }
-    const parsedType4 = this._getType(input);
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.number) {
-      const ctx2 = this._getOrReturnCtx(input);
+      const ctx2 = this._getOrReturnCtx(input2);
       addIssueToContext(ctx2, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.number,
@@ -16819,8 +16951,8 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
     const status = new ParseStatus();
     for (const check2 of this._def.checks) {
       if (check2.kind === "int") {
-        if (!util.isInteger(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!util.isInteger(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.invalid_type,
             expected: "integer",
@@ -16830,9 +16962,9 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "min") {
-        const tooSmall = check2.inclusive ? input.data < check2.value : input.data <= check2.value;
+        const tooSmall = check2.inclusive ? input2.data < check2.value : input2.data <= check2.value;
         if (tooSmall) {
-          ctx = this._getOrReturnCtx(input, ctx);
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.too_small,
             minimum: check2.value,
@@ -16844,9 +16976,9 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "max") {
-        const tooBig = check2.inclusive ? input.data > check2.value : input.data >= check2.value;
+        const tooBig = check2.inclusive ? input2.data > check2.value : input2.data >= check2.value;
         if (tooBig) {
-          ctx = this._getOrReturnCtx(input, ctx);
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.too_big,
             maximum: check2.value,
@@ -16858,8 +16990,8 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "multipleOf") {
-        if (floatSafeRemainder2(input.data, check2.value) !== 0) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (floatSafeRemainder2(input2.data, check2.value) !== 0) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.not_multiple_of,
             multipleOf: check2.value,
@@ -16868,8 +17000,8 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "finite") {
-        if (!Number.isFinite(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (!Number.isFinite(input2.data)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.not_finite,
             message: check2.message
@@ -16880,7 +17012,7 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
         util.assertNever(check2);
       }
     }
-    return { status: status.value, value: input.data };
+    return { status: status.value, value: input2.data };
   }
   gte(value, message) {
     return this.setLimit("min", value, true, errorUtil.toString(message));
@@ -17032,25 +17164,25 @@ var ZodBigInt2 = class _ZodBigInt extends ZodType2 {
     this.min = this.gte;
     this.max = this.lte;
   }
-  _parse(input) {
+  _parse(input2) {
     if (this._def.coerce) {
       try {
-        input.data = BigInt(input.data);
+        input2.data = BigInt(input2.data);
       } catch {
-        return this._getInvalidInput(input);
+        return this._getInvalidInput(input2);
       }
     }
-    const parsedType4 = this._getType(input);
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.bigint) {
-      return this._getInvalidInput(input);
+      return this._getInvalidInput(input2);
     }
     let ctx = void 0;
     const status = new ParseStatus();
     for (const check2 of this._def.checks) {
       if (check2.kind === "min") {
-        const tooSmall = check2.inclusive ? input.data < check2.value : input.data <= check2.value;
+        const tooSmall = check2.inclusive ? input2.data < check2.value : input2.data <= check2.value;
         if (tooSmall) {
-          ctx = this._getOrReturnCtx(input, ctx);
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.too_small,
             type: "bigint",
@@ -17061,9 +17193,9 @@ var ZodBigInt2 = class _ZodBigInt extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "max") {
-        const tooBig = check2.inclusive ? input.data > check2.value : input.data >= check2.value;
+        const tooBig = check2.inclusive ? input2.data > check2.value : input2.data >= check2.value;
         if (tooBig) {
-          ctx = this._getOrReturnCtx(input, ctx);
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.too_big,
             type: "bigint",
@@ -17074,8 +17206,8 @@ var ZodBigInt2 = class _ZodBigInt extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "multipleOf") {
-        if (input.data % check2.value !== BigInt(0)) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (input2.data % check2.value !== BigInt(0)) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.not_multiple_of,
             multipleOf: check2.value,
@@ -17087,10 +17219,10 @@ var ZodBigInt2 = class _ZodBigInt extends ZodType2 {
         util.assertNever(check2);
       }
     }
-    return { status: status.value, value: input.data };
+    return { status: status.value, value: input2.data };
   }
-  _getInvalidInput(input) {
-    const ctx = this._getOrReturnCtx(input);
+  _getInvalidInput(input2) {
+    const ctx = this._getOrReturnCtx(input2);
     addIssueToContext(ctx, {
       code: ZodIssueCode2.invalid_type,
       expected: ZodParsedType.bigint,
@@ -17199,13 +17331,13 @@ ZodBigInt2.create = (params) => {
   });
 };
 var ZodBoolean2 = class extends ZodType2 {
-  _parse(input) {
+  _parse(input2) {
     if (this._def.coerce) {
-      input.data = Boolean(input.data);
+      input2.data = Boolean(input2.data);
     }
-    const parsedType4 = this._getType(input);
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.boolean) {
-      const ctx = this._getOrReturnCtx(input);
+      const ctx = this._getOrReturnCtx(input2);
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.boolean,
@@ -17213,7 +17345,7 @@ var ZodBoolean2 = class extends ZodType2 {
       });
       return INVALID;
     }
-    return OK(input.data);
+    return OK(input2.data);
   }
 };
 ZodBoolean2.create = (params) => {
@@ -17224,13 +17356,13 @@ ZodBoolean2.create = (params) => {
   });
 };
 var ZodDate2 = class _ZodDate extends ZodType2 {
-  _parse(input) {
+  _parse(input2) {
     if (this._def.coerce) {
-      input.data = new Date(input.data);
+      input2.data = new Date(input2.data);
     }
-    const parsedType4 = this._getType(input);
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.date) {
-      const ctx2 = this._getOrReturnCtx(input);
+      const ctx2 = this._getOrReturnCtx(input2);
       addIssueToContext(ctx2, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.date,
@@ -17238,8 +17370,8 @@ var ZodDate2 = class _ZodDate extends ZodType2 {
       });
       return INVALID;
     }
-    if (Number.isNaN(input.data.getTime())) {
-      const ctx2 = this._getOrReturnCtx(input);
+    if (Number.isNaN(input2.data.getTime())) {
+      const ctx2 = this._getOrReturnCtx(input2);
       addIssueToContext(ctx2, {
         code: ZodIssueCode2.invalid_date
       });
@@ -17249,8 +17381,8 @@ var ZodDate2 = class _ZodDate extends ZodType2 {
     let ctx = void 0;
     for (const check2 of this._def.checks) {
       if (check2.kind === "min") {
-        if (input.data.getTime() < check2.value) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (input2.data.getTime() < check2.value) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.too_small,
             message: check2.message,
@@ -17262,8 +17394,8 @@ var ZodDate2 = class _ZodDate extends ZodType2 {
           status.dirty();
         }
       } else if (check2.kind === "max") {
-        if (input.data.getTime() > check2.value) {
-          ctx = this._getOrReturnCtx(input, ctx);
+        if (input2.data.getTime() > check2.value) {
+          ctx = this._getOrReturnCtx(input2, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode2.too_big,
             message: check2.message,
@@ -17280,7 +17412,7 @@ var ZodDate2 = class _ZodDate extends ZodType2 {
     }
     return {
       status: status.value,
-      value: new Date(input.data.getTime())
+      value: new Date(input2.data.getTime())
     };
   }
   _addCheck(check2) {
@@ -17333,10 +17465,10 @@ ZodDate2.create = (params) => {
   });
 };
 var ZodSymbol2 = class extends ZodType2 {
-  _parse(input) {
-    const parsedType4 = this._getType(input);
+  _parse(input2) {
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.symbol) {
-      const ctx = this._getOrReturnCtx(input);
+      const ctx = this._getOrReturnCtx(input2);
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.symbol,
@@ -17344,7 +17476,7 @@ var ZodSymbol2 = class extends ZodType2 {
       });
       return INVALID;
     }
-    return OK(input.data);
+    return OK(input2.data);
   }
 };
 ZodSymbol2.create = (params) => {
@@ -17354,10 +17486,10 @@ ZodSymbol2.create = (params) => {
   });
 };
 var ZodUndefined2 = class extends ZodType2 {
-  _parse(input) {
-    const parsedType4 = this._getType(input);
+  _parse(input2) {
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.undefined) {
-      const ctx = this._getOrReturnCtx(input);
+      const ctx = this._getOrReturnCtx(input2);
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.undefined,
@@ -17365,7 +17497,7 @@ var ZodUndefined2 = class extends ZodType2 {
       });
       return INVALID;
     }
-    return OK(input.data);
+    return OK(input2.data);
   }
 };
 ZodUndefined2.create = (params) => {
@@ -17375,10 +17507,10 @@ ZodUndefined2.create = (params) => {
   });
 };
 var ZodNull2 = class extends ZodType2 {
-  _parse(input) {
-    const parsedType4 = this._getType(input);
+  _parse(input2) {
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.null) {
-      const ctx = this._getOrReturnCtx(input);
+      const ctx = this._getOrReturnCtx(input2);
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.null,
@@ -17386,7 +17518,7 @@ var ZodNull2 = class extends ZodType2 {
       });
       return INVALID;
     }
-    return OK(input.data);
+    return OK(input2.data);
   }
 };
 ZodNull2.create = (params) => {
@@ -17400,8 +17532,8 @@ var ZodAny2 = class extends ZodType2 {
     super(...arguments);
     this._any = true;
   }
-  _parse(input) {
-    return OK(input.data);
+  _parse(input2) {
+    return OK(input2.data);
   }
 };
 ZodAny2.create = (params) => {
@@ -17415,8 +17547,8 @@ var ZodUnknown2 = class extends ZodType2 {
     super(...arguments);
     this._unknown = true;
   }
-  _parse(input) {
-    return OK(input.data);
+  _parse(input2) {
+    return OK(input2.data);
   }
 };
 ZodUnknown2.create = (params) => {
@@ -17426,8 +17558,8 @@ ZodUnknown2.create = (params) => {
   });
 };
 var ZodNever2 = class extends ZodType2 {
-  _parse(input) {
-    const ctx = this._getOrReturnCtx(input);
+  _parse(input2) {
+    const ctx = this._getOrReturnCtx(input2);
     addIssueToContext(ctx, {
       code: ZodIssueCode2.invalid_type,
       expected: ZodParsedType.never,
@@ -17443,10 +17575,10 @@ ZodNever2.create = (params) => {
   });
 };
 var ZodVoid2 = class extends ZodType2 {
-  _parse(input) {
-    const parsedType4 = this._getType(input);
+  _parse(input2) {
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.undefined) {
-      const ctx = this._getOrReturnCtx(input);
+      const ctx = this._getOrReturnCtx(input2);
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.void,
@@ -17454,7 +17586,7 @@ var ZodVoid2 = class extends ZodType2 {
       });
       return INVALID;
     }
-    return OK(input.data);
+    return OK(input2.data);
   }
 };
 ZodVoid2.create = (params) => {
@@ -17464,8 +17596,8 @@ ZodVoid2.create = (params) => {
   });
 };
 var ZodArray2 = class _ZodArray extends ZodType2 {
-  _parse(input) {
-    const { ctx, status } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx, status } = this._processInputParams(input2);
     const def = this._def;
     if (ctx.parsedType !== ZodParsedType.array) {
       addIssueToContext(ctx, {
@@ -17605,10 +17737,10 @@ var ZodObject2 = class _ZodObject extends ZodType2 {
     this._cached = { shape, keys };
     return this._cached;
   }
-  _parse(input) {
-    const parsedType4 = this._getType(input);
+  _parse(input2) {
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.object) {
-      const ctx2 = this._getOrReturnCtx(input);
+      const ctx2 = this._getOrReturnCtx(input2);
       addIssueToContext(ctx2, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.object,
@@ -17616,7 +17748,7 @@ var ZodObject2 = class _ZodObject extends ZodType2 {
       });
       return INVALID;
     }
-    const { status, ctx } = this._processInputParams(input);
+    const { status, ctx } = this._processInputParams(input2);
     const { shape, keys: shapeKeys } = this._getCached();
     const extraKeys = [];
     if (!(this._def.catchall instanceof ZodNever2 && this._def.unknownKeys === "strip")) {
@@ -17929,8 +18061,8 @@ ZodObject2.lazycreate = (shape, params) => {
   });
 };
 var ZodUnion2 = class extends ZodType2 {
-  _parse(input) {
-    const { ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx } = this._processInputParams(input2);
     const options = this._def.options;
     function handleResults(results) {
       for (const result of results) {
@@ -18051,8 +18183,8 @@ var getDiscriminator = (type) => {
   }
 };
 var ZodDiscriminatedUnion2 = class _ZodDiscriminatedUnion extends ZodType2 {
-  _parse(input) {
-    const { ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx } = this._processInputParams(input2);
     if (ctx.parsedType !== ZodParsedType.object) {
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
@@ -18165,8 +18297,8 @@ function mergeValues2(a, b) {
   }
 }
 var ZodIntersection2 = class extends ZodType2 {
-  _parse(input) {
-    const { status, ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { status, ctx } = this._processInputParams(input2);
     const handleParsed = (parsedLeft, parsedRight) => {
       if (isAborted(parsedLeft) || isAborted(parsedRight)) {
         return INVALID;
@@ -18218,8 +18350,8 @@ ZodIntersection2.create = (left, right, params) => {
   });
 };
 var ZodTuple2 = class _ZodTuple extends ZodType2 {
-  _parse(input) {
-    const { status, ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { status, ctx } = this._processInputParams(input2);
     if (ctx.parsedType !== ZodParsedType.array) {
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
@@ -18291,8 +18423,8 @@ var ZodRecord2 = class _ZodRecord extends ZodType2 {
   get valueSchema() {
     return this._def.valueType;
   }
-  _parse(input) {
-    const { status, ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { status, ctx } = this._processInputParams(input2);
     if (ctx.parsedType !== ZodParsedType.object) {
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
@@ -18344,8 +18476,8 @@ var ZodMap2 = class extends ZodType2 {
   get valueSchema() {
     return this._def.valueType;
   }
-  _parse(input) {
-    const { status, ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { status, ctx } = this._processInputParams(input2);
     if (ctx.parsedType !== ZodParsedType.map) {
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
@@ -18404,8 +18536,8 @@ ZodMap2.create = (keyType, valueType, params) => {
   });
 };
 var ZodSet2 = class _ZodSet extends ZodType2 {
-  _parse(input) {
-    const { status, ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { status, ctx } = this._processInputParams(input2);
     if (ctx.parsedType !== ZodParsedType.set) {
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
@@ -18493,8 +18625,8 @@ var ZodFunction = class _ZodFunction extends ZodType2 {
     super(...arguments);
     this.validate = this.implement;
   }
-  _parse(input) {
-    const { ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx } = this._processInputParams(input2);
     if (ctx.parsedType !== ZodParsedType.function) {
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
@@ -18597,8 +18729,8 @@ var ZodLazy2 = class extends ZodType2 {
   get schema() {
     return this._def.getter();
   }
-  _parse(input) {
-    const { ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx } = this._processInputParams(input2);
     const lazySchema = this._def.getter();
     return lazySchema._parse({ data: ctx.data, path: ctx.path, parent: ctx });
   }
@@ -18611,9 +18743,9 @@ ZodLazy2.create = (getter, params) => {
   });
 };
 var ZodLiteral2 = class extends ZodType2 {
-  _parse(input) {
-    if (input.data !== this._def.value) {
-      const ctx = this._getOrReturnCtx(input);
+  _parse(input2) {
+    if (input2.data !== this._def.value) {
+      const ctx = this._getOrReturnCtx(input2);
       addIssueToContext(ctx, {
         received: ctx.data,
         code: ZodIssueCode2.invalid_literal,
@@ -18621,7 +18753,7 @@ var ZodLiteral2 = class extends ZodType2 {
       });
       return INVALID;
     }
-    return { status: "valid", value: input.data };
+    return { status: "valid", value: input2.data };
   }
   get value() {
     return this._def.value;
@@ -18642,9 +18774,9 @@ function createZodEnum(values, params) {
   });
 }
 var ZodEnum2 = class _ZodEnum extends ZodType2 {
-  _parse(input) {
-    if (typeof input.data !== "string") {
-      const ctx = this._getOrReturnCtx(input);
+  _parse(input2) {
+    if (typeof input2.data !== "string") {
+      const ctx = this._getOrReturnCtx(input2);
       const expectedValues = this._def.values;
       addIssueToContext(ctx, {
         expected: util.joinValues(expectedValues),
@@ -18656,8 +18788,8 @@ var ZodEnum2 = class _ZodEnum extends ZodType2 {
     if (!this._cache) {
       this._cache = new Set(this._def.values);
     }
-    if (!this._cache.has(input.data)) {
-      const ctx = this._getOrReturnCtx(input);
+    if (!this._cache.has(input2.data)) {
+      const ctx = this._getOrReturnCtx(input2);
       const expectedValues = this._def.values;
       addIssueToContext(ctx, {
         received: ctx.data,
@@ -18666,7 +18798,7 @@ var ZodEnum2 = class _ZodEnum extends ZodType2 {
       });
       return INVALID;
     }
-    return OK(input.data);
+    return OK(input2.data);
   }
   get options() {
     return this._def.values;
@@ -18707,9 +18839,9 @@ var ZodEnum2 = class _ZodEnum extends ZodType2 {
 };
 ZodEnum2.create = createZodEnum;
 var ZodNativeEnum = class extends ZodType2 {
-  _parse(input) {
+  _parse(input2) {
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
-    const ctx = this._getOrReturnCtx(input);
+    const ctx = this._getOrReturnCtx(input2);
     if (ctx.parsedType !== ZodParsedType.string && ctx.parsedType !== ZodParsedType.number) {
       const expectedValues = util.objectValues(nativeEnumValues);
       addIssueToContext(ctx, {
@@ -18722,7 +18854,7 @@ var ZodNativeEnum = class extends ZodType2 {
     if (!this._cache) {
       this._cache = new Set(util.getValidEnumValues(this._def.values));
     }
-    if (!this._cache.has(input.data)) {
+    if (!this._cache.has(input2.data)) {
       const expectedValues = util.objectValues(nativeEnumValues);
       addIssueToContext(ctx, {
         received: ctx.data,
@@ -18731,7 +18863,7 @@ var ZodNativeEnum = class extends ZodType2 {
       });
       return INVALID;
     }
-    return OK(input.data);
+    return OK(input2.data);
   }
   get enum() {
     return this._def.values;
@@ -18748,8 +18880,8 @@ var ZodPromise2 = class extends ZodType2 {
   unwrap() {
     return this._def.type;
   }
-  _parse(input) {
-    const { ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx } = this._processInputParams(input2);
     if (ctx.parsedType !== ZodParsedType.promise && ctx.common.async === false) {
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
@@ -18781,8 +18913,8 @@ var ZodEffects = class extends ZodType2 {
   sourceType() {
     return this._def.schema._def.typeName === ZodFirstPartyTypeKind.ZodEffects ? this._def.schema.sourceType() : this._def.schema;
   }
-  _parse(input) {
-    const { status, ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { status, ctx } = this._processInputParams(input2);
     const effect = this._def.effect || null;
     const checkCtx = {
       addIssue: (arg) => {
@@ -18914,12 +19046,12 @@ ZodEffects.createWithPreprocess = (preprocess2, schema, params) => {
   });
 };
 var ZodOptional2 = class extends ZodType2 {
-  _parse(input) {
-    const parsedType4 = this._getType(input);
+  _parse(input2) {
+    const parsedType4 = this._getType(input2);
     if (parsedType4 === ZodParsedType.undefined) {
       return OK(void 0);
     }
-    return this._def.innerType._parse(input);
+    return this._def.innerType._parse(input2);
   }
   unwrap() {
     return this._def.innerType;
@@ -18933,12 +19065,12 @@ ZodOptional2.create = (type, params) => {
   });
 };
 var ZodNullable2 = class extends ZodType2 {
-  _parse(input) {
-    const parsedType4 = this._getType(input);
+  _parse(input2) {
+    const parsedType4 = this._getType(input2);
     if (parsedType4 === ZodParsedType.null) {
       return OK(null);
     }
-    return this._def.innerType._parse(input);
+    return this._def.innerType._parse(input2);
   }
   unwrap() {
     return this._def.innerType;
@@ -18952,8 +19084,8 @@ ZodNullable2.create = (type, params) => {
   });
 };
 var ZodDefault2 = class extends ZodType2 {
-  _parse(input) {
-    const { ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx } = this._processInputParams(input2);
     let data = ctx.data;
     if (ctx.parsedType === ZodParsedType.undefined) {
       data = this._def.defaultValue();
@@ -18977,8 +19109,8 @@ ZodDefault2.create = (type, params) => {
   });
 };
 var ZodCatch2 = class extends ZodType2 {
-  _parse(input) {
-    const { ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx } = this._processInputParams(input2);
     const newCtx = {
       ...ctx,
       common: {
@@ -19030,10 +19162,10 @@ ZodCatch2.create = (type, params) => {
   });
 };
 var ZodNaN2 = class extends ZodType2 {
-  _parse(input) {
-    const parsedType4 = this._getType(input);
+  _parse(input2) {
+    const parsedType4 = this._getType(input2);
     if (parsedType4 !== ZodParsedType.nan) {
-      const ctx = this._getOrReturnCtx(input);
+      const ctx = this._getOrReturnCtx(input2);
       addIssueToContext(ctx, {
         code: ZodIssueCode2.invalid_type,
         expected: ZodParsedType.nan,
@@ -19041,7 +19173,7 @@ var ZodNaN2 = class extends ZodType2 {
       });
       return INVALID;
     }
-    return { status: "valid", value: input.data };
+    return { status: "valid", value: input2.data };
   }
 };
 ZodNaN2.create = (params) => {
@@ -19052,8 +19184,8 @@ ZodNaN2.create = (params) => {
 };
 var BRAND = /* @__PURE__ */ Symbol("zod_brand");
 var ZodBranded = class extends ZodType2 {
-  _parse(input) {
-    const { ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { ctx } = this._processInputParams(input2);
     const data = ctx.data;
     return this._def.type._parse({
       data,
@@ -19066,8 +19198,8 @@ var ZodBranded = class extends ZodType2 {
   }
 };
 var ZodPipeline = class _ZodPipeline extends ZodType2 {
-  _parse(input) {
-    const { status, ctx } = this._processInputParams(input);
+  _parse(input2) {
+    const { status, ctx } = this._processInputParams(input2);
     if (ctx.common.async) {
       const handleAsync = async () => {
         const inResult = await this._def.in._parseAsync({
@@ -19121,8 +19253,8 @@ var ZodPipeline = class _ZodPipeline extends ZodType2 {
   }
 };
 var ZodReadonly2 = class extends ZodType2 {
-  _parse(input) {
-    const result = this._def.innerType._parse(input);
+  _parse(input2) {
+    const result = this._def.innerType._parse(input2);
     const freeze = (data) => {
       if (isValid(data)) {
         data.value = Object.freeze(data.value);
@@ -19211,9 +19343,9 @@ var ZodFirstPartyTypeKind;
   ZodFirstPartyTypeKind2["ZodPipeline"] = "ZodPipeline";
   ZodFirstPartyTypeKind2["ZodReadonly"] = "ZodReadonly";
 })(ZodFirstPartyTypeKind || (ZodFirstPartyTypeKind = {}));
-var instanceOfType = (cls3, params = {
-  message: `Input not instance of ${cls3.name}`
-}) => custom2((data) => data instanceof cls3, params);
+var instanceOfType = (cls4, params = {
+  message: `Input not instance of ${cls4.name}`
+}) => custom2((data) => data instanceof cls4, params);
 var stringType = ZodString2.create;
 var numberType = ZodNumber2.create;
 var nanType = ZodNaN2.create;
@@ -19263,7 +19395,7 @@ var coerce = {
 };
 var NEVER2 = INVALID;
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/pricing-schema.ts
+// artifacts/api-server/src/lib/pricing-schema.ts
 var materialSchema = external_exports2.object({
   id: external_exports2.string(),
   name: external_exports2.string(),
@@ -19307,7 +19439,7 @@ var projectRequestSchema = external_exports2.object({
   options: optionsSchema
 });
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/pricing-serialize.ts
+// artifacts/api-server/src/lib/pricing-serialize.ts
 function serializeProduct(product) {
   return {
     ...product.imageUrl ? { imageUrl: product.imageUrl } : {},
@@ -19322,6 +19454,10 @@ function serializeProduct(product) {
 }
 function serializeProductOffer(offer) {
   return {
+    ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {},
+    ...offer.minimumPackages ? { minimumPackages: offer.minimumPackages } : {},
+    ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {},
+    ...offer.verification ? { verification: offer.verification } : {},
     packageSize: offer.packageSize,
     offerId: offer.id,
     store: offer.store,
@@ -19374,6 +19510,10 @@ function serializeLine(line2) {
     packageSize: line2.packageSize,
     packagesNeeded: line2.packagesNeeded,
     packages: line2.packagePlan.packages.map((p) => ({
+      ...p.purchaseMultiple ? { purchaseMultiple: p.purchaseMultiple } : {},
+      ...p.minimumPackages ? { minimumPackages: p.minimumPackages } : {},
+      ...p.maxPackages !== void 0 ? { maxPackages: p.maxPackages } : {},
+      ...p.verification ? { verification: p.verification } : {},
       packageSize: p.packageSize,
       count: p.count,
       unitPriceGrosze: p.unitPriceGrosze,
@@ -19437,6 +19577,10 @@ function serializeStage(stage) {
 function serializeConsolidatedLine(line2) {
   return {
     ...line2.packagePlan ? { packages: line2.packagePlan.packages.map((entry) => ({
+      ...entry.purchaseMultiple ? { purchaseMultiple: entry.purchaseMultiple } : {},
+      ...entry.minimumPackages ? { minimumPackages: entry.minimumPackages } : {},
+      ...entry.maxPackages !== void 0 ? { maxPackages: entry.maxPackages } : {},
+      ...entry.verification ? { verification: entry.verification } : {},
       packageSize: entry.packageSize,
       count: entry.count,
       unitPriceGrosze: entry.unitPriceGrosze,
@@ -19507,7 +19651,7 @@ function serializeProject(project) {
   };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-catalog.ts
+// artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
   {
     id: "castorama-sniezka-5l",
@@ -20509,9 +20653,178 @@ var RETAIL_SOURCES = [
   // source: https://www.bricoman.pl/produkty/klej-do-wykladzin-soudal-26a-5kg-20484681.html
   { "category": "adhesive", "packageSize": 5, "unit": "kg", "id": "bricoman-soudal-26a-5kg", "ean": "5411183028395", "brand": "Soudal", "store": "Bricoman", "format": "jsonld", "variant": ["26A", "5kg"], "name": "Klej do wyk\u0142adzin Soudal 26A 5kg", "url": "https://www.bricoman.pl/produkty/klej-do-wykladzin-soudal-26a-5kg-20484681.html" },
   // source: https://chemiadoparkietu25.pl/product-pol-25914-Soudal-26A-klej-do-wykladzin-PCV-winylu-linoleum-dywanowych-5-kg.html
-  { "category": "adhesive", "packageSize": 5, "unit": "kg", "id": "chemiadoparkietu-soudal-26a-5kg", "ean": "5411183028395", "name": "Soudal 26A klej do wyk\u0142adzin PCV winylu linoleum dywanowych 5 kg", "brand": "Soudal", "store": "ChemiaDoParkietu25", "url": "https://chemiadoparkietu25.pl/product-pol-25914-Soudal-26A-klej-do-wykladzin-PCV-winylu-linoleum-dywanowych-5-kg.html", "format": "idosell", "productId": 25914, "apiPurchaseUnit": "szt.", "variant": ["26A", "5kg"], "imageUrl": "https://media.adeo.com/media/5600934/media.jpg" }
+  { "category": "adhesive", "packageSize": 5, "unit": "kg", "id": "chemiadoparkietu-soudal-26a-5kg", "ean": "5411183028395", "name": "Soudal 26A klej do wyk\u0142adzin PCV winylu linoleum dywanowych 5 kg", "brand": "Soudal", "store": "ChemiaDoParkietu25", "url": "https://chemiadoparkietu25.pl/product-pol-25914-Soudal-26A-klej-do-wykladzin-PCV-winylu-linoleum-dywanowych-5-kg.html", "format": "idosell", "productId": 25914, "apiPurchaseUnit": "szt.", "variant": ["26A", "5kg"], "imageUrl": "https://media.adeo.com/media/5600934/media.jpg" },
+  // source: https://www.eelektryka.com/simon-basic/3975-simon-basic-gniazdo-pojedyncze-zu-i-przes%C5%82onami-do-ramki-bia%C5%82e-bmgz1z0111-5902787568238.html
+  { "id": "eelektryka-simon-basic-socket-white", "ean": "5902787568238", "name": "SIMON BASIC Gniazdo pojedyncze z/u i przes\u0142onami do ramki bia\u0142e BMGZ1z.01/11", "category": "socket", "brand": "Simon", "packageSize": 1, "unit": "szt", "store": "Eelektryka", "format": "prestashop", "productId": 3975, "retailerSku": "SI427", "variant": ["BMGZ1z.01/11", "bia\u0142e"], "url": "https://www.eelektryka.com/simon-basic/3975-simon-basic-gniazdo-pojedyncze-zu-i-przes%C5%82onami-do-ramki-bia%C5%82e-bmgz1z0111-5902787568238.html" },
+  // source: https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291
+  { "id": "northbud-ferro-one-bfo7", "ean": "5902194954525", "name": "FERRO Bateria prysznicowa Ferro One bez prysznica chrom BFO7", "category": "faucet", "brand": "Ferro", "packageSize": 1, "unit": "szt", "store": "Northbud", "format": "jsonld", "variant": ["BFO7", "chrom"], "url": "https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291" },
+  // source: https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka
+  { "id": "kronodom-arbiton-secura-thermo-6m2", "ean": "5905167826942", "name": "Podk\u0142ad pod panele ARBITON SECURA THERMO AQUASTOP SMART 1,6mm (1opk.=6m2) czerwona harmonijka", "category": "underlay", "brand": "Arbiton", "packageSize": 6, "unit": "m2", "store": "Kronodom", "format": "abstore", "productId": 423, "apiPurchaseUnit": "m2", "variant": ["Secura", "Thermo", "Aquastop", "Smart", "1,6mm", "6m2"], "url": "https://kronodom.pl/podklad-pod-panele-arbiton-secura-thermo-aquastop-smart-16mm-1opk.6m2-czerwona-harmonijka" },
+  // source: https://hipper.pl/klamka-do-drzwi-wewnetrznych-lucy-zlota-r-schaffner-3069808860
+  { "id": "hipper-schaffner-lucy-gold", "ean": "5907467760698", "name": "Klamka do drzwi wewn\u0119trznych Lucy z\u0142ota R Schaffner", "category": "door-handle", "brand": "Schaffner", "packageSize": 1, "unit": "szt", "store": "HIPPER", "format": "certusoft", "productId": 3069808860, "retailerUnitId": 3069809346, "apiPurchaseUnit": "szt", "variant": ["Lucy", "z\u0142ota", "Schaffner"], "url": "https://hipper.pl/klamka-do-drzwi-wewnetrznych-lucy-zlota-r-schaffner-3069808860" },
+  // source: https://modnalazienka.pl/u117-grey-gres-szkl-rekt-mat-598x598-34158
+  { "id": "modna-paradyz-u117-grey-143m2", "ean": "5904584158261", "name": "U117 GREY GRES SZKL. REKT. MAT. 59,8X59,8", "category": "tile", "brand": "Parady\u017C", "packageSize": 1.43, "unit": "m2", "store": "Modna \u0141azienka", "format": "modna", "productId": 34158, "apiPurchaseUnit": "m2", "variant": ["U117", "GREY", "REKT", "MAT", "59,8X59,8"], "url": "https://modnalazienka.pl/u117-grey-gres-szkl-rekt-mat-598x598-34158" },
+  // source: https://liderzycen.pl/pl/p/Panele-podlogowe-laminowane-wodoodporne-Classen-Dab-Niasa-AC5-1%2C973-m2/31535
+  { "id": "liderzy-classen-niasa-1973m2", "ean": "4003992571974", "name": "Panele pod\u0142ogowe laminowane wodoodporne Classen D\u0105b Niasa AC5 1,973 m2", "category": "laminate", "brand": "Classen", "packageSize": 1.973, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 31535, "retailerSku": "ctma_4003992571974", "apiPurchaseUnit": "szt.", "packageDescription": "Ilo\u015B\u0107 m2 w opakowaniu: 1,973 m2", "variant": ["D\u0105b", "Niasa", "AC5", "1,973 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52181_500_500/54fce513642c640c65a2c6dfb09f14a0.jpg", "url": "https://liderzycen.pl/pl/p/Panele-podlogowe-laminowane-wodoodporne-Classen-Dab-Niasa-AC5-1%2C973-m2/31535" },
+  // source: https://liderzycen.pl/pl/p/Panele-laminowane-Oakland-wodoodporne-AC4-2%2C51-m2/185472
+  { "id": "liderzy-oakland-ac4-251m2", "ean": "5063022887917", "name": "Panele laminowane Oakland wodoodporne AC4 2,51 m2", "category": "laminate", "brand": "kronospan", "packageSize": 2.51, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 185472, "retailerSku": "ctma_5063022887917", "apiPurchaseUnit": "szt.", "variant": ["Oakland", "AC4", "2,51 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_385924_500_500/0fc09fb9f3eda5be184e7dac0f2f6e76.jpg", "url": "https://liderzycen.pl/pl/p/Panele-laminowane-Oakland-wodoodporne-AC4-2%2C51-m2/185472" },
+  // source: https://liderzycen.pl/pl/p/Podklad-podlogowy-pod-panele-laminowane-Volden-XPS-Smart-3-mm-10-m2/31327
+  { "id": "liderzy-volden-xps-smart-10m2", "ean": "5063022038289", "name": "Podk\u0142ad pod\u0142ogowy pod panele laminowane Volden XPS Smart 3 mm 10 m2", "category": "underlay", "brand": "Volden", "packageSize": 10, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 31327, "retailerSku": "ctma_5063022038289", "apiPurchaseUnit": "szt.", "variant": ["XPS", "Smart", "3 mm", "10 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_51942_500_500/e236d745fb2303be7b2fb68575842e4a.jpg", "url": "https://liderzycen.pl/pl/p/Podklad-podlogowy-pod-panele-laminowane-Volden-XPS-Smart-3-mm-10-m2/31327" },
+  // source: https://liderzycen.pl/pl/p/Gres-mrozoodporny-szkliwiony-Guigliano-GoodHome-18%2C5-x-59%2C8-cm-beige-1-m2/31407
+  { "id": "liderzy-goodhome-guigliano-1m2", "ean": "3663602870821", "name": "Gres mrozoodporny szkliwiony Guigliano GoodHome 18,5 x 59,8 cm beige 1 m2", "category": "tile", "brand": "GoodHome", "packageSize": 1, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 31407, "retailerSku": "ctma_3663602870821", "apiPurchaseUnit": "szt.", "packageDescription": "Ilo\u015B\u0107 m2 w opakowaniu: 1 m2", "variant": ["Guigliano", "18,5 x 59,8", "beige", "1 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_52024_500_500/d715e779aa0887d53ec108d0e9616438.jpg", "url": "https://liderzycen.pl/pl/p/Gres-mrozoodporny-szkliwiony-Guigliano-GoodHome-18%2C5-x-59%2C8-cm-beige-1-m2/31407" },
+  // source: https://liderzycen.pl/pl/p/Zawor-katowy-z-filtrem-Ferro-12-x-38/49055
+  { "id": "liderzy-ferro-angle-valve-z270e", "ean": "5901095614033", "name": 'Zaw\xF3r k\u0105towy z filtrem Ferro 1/2" x 3/8"', "category": "valve", "brand": "Ferro", "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 49055, "retailerSku": "ctma_5901095614033", "apiPurchaseUnit": "szt.", "packageDescription": "Kolor producenta: chrom", "variant": ["z filtrem", "1/2", "3/8"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_70333_500_500/1831d737608977a2a1b38c23f5417c16.jpg", "url": "https://liderzycen.pl/pl/p/Zawor-katowy-z-filtrem-Ferro-12-x-38/49055" },
+  // source: https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474
+  { "id": "liderzy-goodhome-marvo-2235m2", "ean": "5063022676757", "name": "Panele pod\u0142ogowe winylowe GoodHome SPC Marvo 2,235 m2", "category": "vinyl-panel", "brand": "GoodHome", "packageSize": 2.235, "unit": "m2", "store": "LiderzyCen", "format": "shoper-api", "productId": 185474, "retailerSku": "ctma_5063022676757", "apiPurchaseUnit": "szt.", "variant": ["SPC", "Marvo", "2,235 m2"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_385938_500_500/fc6886e524d877060a0d12ba4742f75e.jpg", "url": "https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Marvo-2%2C235-m2/185474" },
+  // source: https://www.castorama.pl/kotwa-montazowa-do-oscieznic-10-x-182-mm/5905458019787_CAPL.prd
+  // source: https://liderzycen.pl/pl/p/Kotwa-montazowa-do-oscieznic-10-x-182-mm/21842
+  { "id": "liderzy-frame-anchor-10x182", "ean": "5905458019787", "name": "Kotwa monta\u017Cowa do o\u015Bcie\u017Cnic 10 x 182 mm", "category": "anchor", "brand": "Kingfisher International Products B.V.", "brandReference": { "url": "https://www.castorama.pl/kotwa-montazowa-do-oscieznic-10-x-182-mm/5905458019787_CAPL.prd", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 21842, "retailerSku": "ctma_5905458019787", "apiPurchaseUnit": "szt.", "variant": ["10 x 182 mm"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_42043_500_500/141eb368955c6aeb6e1e7b6e42ac9af7.jpg", "url": "https://liderzycen.pl/pl/p/Kotwa-montazowa-do-oscieznic-10-x-182-mm/21842" },
+  // source: https://www.grupapsb.com.pl/produkt/zawias-wkrecany-regulowany-3d-14-mm-ocynkowany-metro-5906711270471.html
+  // source: https://liderzycen.pl/pl/p/Zawias-regulowany-3D-14-mm-ocynkowany/22128
+  { "id": "liderzy-metro-hinge-3d-14mm", "ean": "5906711270471", "name": "Zawias regulowany 3D 14 mm ocynkowany", "category": "door-hinge", "brand": "Metro", "brandReference": { "url": "https://www.grupapsb.com.pl/produkt/zawias-wkrecany-regulowany-3d-14-mm-ocynkowany-metro-5906711270471.html", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 22128, "retailerSku": "ctma_5906711270471", "apiPurchaseUnit": "szt.", "variant": ["3D", "14 mm", "ocynkowany"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_42329_500_500/19ba2fb309a7adcf2859ffa72b746764.jpg", "url": "https://liderzycen.pl/pl/p/Zawias-regulowany-3D-14-mm-ocynkowany/22128", "packageDescription": "Nr referencyjny: ZAW-0091-0" },
+  // source: https://www.castorama.pl/drzwi-pokojowe-credis-80-lewe-biale/5900378219590_CAPL.prd
+  // source: https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489
+  { "id": "liderzy-erkado-credis-80-left-white", "ean": "5900378219590", "name": "Drzwi pokojowe Credis 80 lewe bia\u0142e", "category": "door-leaf", "brand": "Erkado", "brandReference": { "url": "https://www.castorama.pl/drzwi-pokojowe-credis-80-lewe-biale/5900378219590_CAPL.prd", "retailerValue": "liderzycen", "retailerId": 50 }, "packageSize": 1, "unit": "szt", "store": "LiderzyCen", "format": "shoper-api", "productId": 30489, "retailerSku": "ctma_5900378219590", "apiPurchaseUnit": "szt.", "variant": ["Credis", "80", "lewe", "bia\u0142e"], "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_50898_500_500/a79eaa09c570422baee6412157b93d28.jpg", "url": "https://liderzycen.pl/pl/p/Drzwi-pokojowe-Credis-80-lewe-biale/30489", "packageDescription": "przeszklenia o mlecznym wyko\u0144czeniu" },
+  // source: https://betterial.pl/kleje-do-styropianu/8679-atlas-zaprawa-klejaca-do-styropianu-stopter-k-20.html
+  // source: https://betterial.pl/content/4-transport
+  { id: "betterial-atlas-stopter-k20-25kg", ean: "5905400160253", name: "Atlas - zaprawa klej\u0105ca do styropianu Stopter K-20", category: "adhesive-eps", brand: "Atlas", packageSize: 25, unit: "kg", store: "Betterial", format: "betterial", productId: 8679, variantId: 3816, retailerSku: "8679-86310", purchaseMultiple: 42, pickupRequiresConfirmation: true, variant: ["Stopter", "K-20"], url: "https://betterial.pl/kleje-do-styropianu/8679-atlas-zaprawa-klejaca-do-styropianu-stopter-k-20.html" },
+  // source: https://folnet.pl/pl/products/chemia-tasmy-mocowania/chemia-budowlana-soudal/pianki-pistoletowe/pianka-pistoletowa-soudafoam-low-expansion-10-8372.html
+  { id: "folnet-soudal-low-expansion-winter-750ml", ean: "5411183048522", name: "Pianka pistoletowa Soudafoam Low Expansion -10", brand: "Soudal", category: "foam", packageSize: 750, unit: "ml", store: "Folnet", format: "folnet", productId: 8372, retailerSku: "112583", variant: ["Low Expansion", "10"], url: "https://folnet.pl/pl/products/chemia-tasmy-mocowania/chemia-budowlana-soudal/pianki-pistoletowe/pianka-pistoletowa-soudafoam-low-expansion-10-8372.html" },
+  // Manufacturer SKU crosswalk, not a barcode published by this storefront.
+  // source: https://kronosfera.pl/storage/file/core_files/2025/8/28/b4e17905d0344c0061ea8e07ee80bb72/KRONOSTEP_2025_22072025_PL_EN_web.pdf
+  // source: https://www.obi.pl/p/7240922/kronospan-listwa-przypodlogowa-biala-lk100f-frez
+  // source: https://kronosfera.pl/k/listwa-przypodlogowa-lk100f24-9002,2068
+  // No self collection for flooring and accessories.
+  // source: https://kronosfera.pl/dostawa
+  {
+    id: "kronosfera-skirting-lk100f-240",
+    ean: "5907555424969",
+    name: "Listwa przypod\u0142ogowa LK100F24 9002",
+    category: "skirting",
+    brand: "KronoOriginal",
+    packageSize: 2.4,
+    unit: "mb",
+    store: "Kronosfera",
+    format: "kronosfera",
+    productId: 2068,
+    retailerSku: "LK100F24-9002",
+    pickupUnavailable: true,
+    variant: ["LK100F24", "9002"],
+    url: "https://kronosfera.pl/k/listwa-przypodlogowa-lk100f24-9002,2068"
+  },
+  // Reviewed manufacturer EAN and physical-pack crosswalk; the shop publishes SKU, not GTIN.
+  // source: https://yetico.com/wp-content/uploads/2026/01/ecommerce_regulamin-programu-motywacyjnego_jubileuszowa-ekstraklasa-yetico_aktualizacja.pdf
+  // source: https://yetico.com/wp-content/uploads/2022/06/karta_tech_gamma_fasada_pl.pdf
+  // source: https://centrummatbud.pl/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729
+  // Dispatch is on order; the anonymous pickup method does not confirm a local pickup date or branch inventory.
+  { id: "matbud-yetico-gamma-fasada-044-10cm", ean: "5902578301976", name: "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op", category: "insulation", brand: "Yetico", packageSize: 3, unit: "m2", store: "Centrum Matbud", format: "skyshop", productId: 96729, retailerSku: "FASADA 044 10CM", minimumPackages: 50, pickupRequiresConfirmation: true, variant: ["Gamma", "Fasada", "044", "10 cm"], url: "https://centrummatbud.pl/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729" },
+  // Manufacturer crosswalk p.34 row752; smooth 4-board/0.3m3/2m2 pack.
+  // Native M2 price is multiplied by2 only after verifying tick2/box2 and the actual cart.
+  // source: https://yetico.com/wp-content/uploads/2026/01/ecommerce_regulamin-programu-motywacyjnego_jubileuszowa-ekstraklasa-yetico_aktualizacja.pdf
+  // source: https://yetico.com/wp-content/uploads/2022/09/karta_tech_gamma_passive_fasada.pdf
+  // source: https://centrummatbud.pl/Styropian-grafitowy-15cm-Yetico-Gama-Passive-Fasada-033-p131345
+  { id: "matbud-yetico-gamma-passive-033-15cm", ean: "5902578307268", name: "Styropian grafitowy 15cm Yetico Gama Passive Fasada 033", category: "insulation", brand: "Yetico", packageSize: 2, unit: "m2", store: "Centrum Matbud", format: "skyshop", productId: 131345, retailerSku: "FASADA 033 15CM", minimumPackages: 50, pickupRequiresConfirmation: true, variant: ["Gama", "Passive", "Fasada", "033", "15 cm"], url: "https://centrummatbud.pl/Styropian-grafitowy-15cm-Yetico-Gama-Passive-Fasada-033-p131345" },
+  // Reviewed SKU crosswalk: the shop publishes WS-20-030-G, not an EAN.
+  // source: https://invena.pl/produkt/wezyk-do-bat-w-opl-stal-3-8-dl-konc-30cm-3559
+  // source: https://www.csmegastore.se/i/5469388/invena-anslutningsslang-f%C3%B6r-kranar-l%C3%A5ng-%C3%A4nde-3-8-x-m10-ws-20-030
+  // source: https://sklep.tokmet.pl/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i
+  { id: "tokmet-invena-ws20-030", ean: "5907798716258", name: 'W\u0118\u017BYK DO BATERII STOJ\u0104CEJ 3/8" x M10*1 L - 30 CM D\u0141UGA KO\u0143C\xD3WKA', category: "hose", brand: "Invena", packageSize: 1, unit: "szt", store: "TOK-MET", format: "qshop", productId: 2806, retailerSku: "WS-20-030-G", variant: ["3/8", "M10", "30 cm", "d\u0142uga"], url: "https://sklep.tokmet.pl/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i" },
+  // These exact public cards have a current, explicitly labelled browser read.
+  // HTTP refresh still runs; a failure never extends a browser verification.
+  // source: https://www.castorama.pl/farba-biala-mat-10-l/3663602567240_CAPL.prd
+  { id: "castorama-paint-economy-10l", ean: "3663602567240", name: "Farba bia\u0142a mat 10 l", category: "paint", brand: "", unbranded: true, packageSize: 10, unit: "l", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/farba-biala-mat-10-l/3663602567240_CAPL.prd" },
+  // source: https://www.castorama.pl/farba-goodhome-sciany-i-sufit-bialy-mat-10-l/5059340271620_CAPL.prd
+  { id: "castorama-paint-goodhome-10l", ean: "5059340271620", name: "Farba GoodHome \u015Aciany i Sufit bia\u0142y mat 10 l", category: "paint", brand: "GoodHome", packageSize: 10, unit: "l", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/farba-goodhome-sciany-i-sufit-bialy-mat-10-l/5059340271620_CAPL.prd" },
+  // source: https://www.castorama.pl/gladz-pod-walek-gw180-20-kg/5907418038791_CAPL.prd
+  { id: "castorama-kreisel-gw180-20kg", ean: "5907418038791", name: "G\u0142ad\u017A pod wa\u0142ek Kreisel GW180 gotowa polimerowa 20 kg", category: "skim-coat", brand: "Kreisel", packageSize: 20, unit: "kg", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/gladz-pod-walek-gw180-20-kg/5907418038791_CAPL.prd" },
+  // source: https://www.castorama.pl/profil-sufitowy-norgips-cd60-0-6-mm-3-mb/5907651698899_CAPL.prd
+  { id: "castorama-norgips-cd60-3m", ean: "5907651698899", name: "Profil sufitowy Norgips CD60 0,6 mm 3 mb", category: "profile", brand: "Norgips", packageSize: 3, unit: "mb", variant: ["CD60", "0,6 mm", "3 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/profil-sufitowy-norgips-cd60-0-6-mm-3-mb/5907651698899_CAPL.prd" },
+  // Exact 25kg promotion EAN, not the ordinary 20kg bag.
+  // source: https://www.castorama.pl/klej-wysokoelastyczny-atlas-plus-odksztalcalny-25-kg/5905400658866_CAPL.prd
+  { id: "castorama-atlas-plus-promo-25kg", ean: "5905400658866", name: "Klej wysokoelastyczny Atlas Plus odkszta\u0142calny 25 kg", category: "adhesive", brand: "Atlas", packageSize: 25, unit: "kg", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/klej-wysokoelastyczny-atlas-plus-odksztalcalny-25-kg/5905400658866_CAPL.prd" },
+  // One complete WC with seat, not a litre-priced item.
+  // source: https://www.castorama.pl/kompakt-wc-cersanit-seno-bezkolnierzowy-3-5-l-z-deska-wolnoopadajaca/5902115720833_CAPL.prd
+  { id: "castorama-cersanit-seno", ean: "5902115720833", name: "Kompakt WC Cersanit Seno bezko\u0142nierzowy 3/5 l z desk\u0105 wolnoopadaj\u0105c\u0105", category: "toilet", brand: "Cersanit", packageSize: 1, unit: "szt", variant: ["Seno", "3/5 l"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/kompakt-wc-cersanit-seno-bezkolnierzowy-3-5-l-z-deska-wolnoopadajaca/5902115720833_CAPL.prd" },
+  // source: https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-1-5-mm2-450-750-v-100-mb/5904617573771_CAPL.prd
+  { id: "castorama-aks-ydyp-3x15-100m", ean: "5904617573771", name: "Przew\xF3d AKS Zielonka YDYp 3 x 1,5 mm2 450/750 V 100 mb", category: "wire", brand: "AKS Zielonka", packageSize: 100, unit: "mb", variant: ["3 x 1,5 mm2", "450/750 V", "100 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-1-5-mm2-450-750-v-100-mb/5904617573771_CAPL.prd" },
+  // source: https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-2-5-mm2-450-750-v-100-mb/5904617573764_CAPL.prd
+  { id: "castorama-aks-ydyp-3x25-100m", ean: "5904617573764", name: "Przew\xF3d AKS Zielonka YDYp 3 x 2,5 mm2 450/750 V 100 mb", category: "wire", brand: "AKS Zielonka", packageSize: 100, unit: "mb", variant: ["3 x 2,5 mm2", "450/750 V", "100 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-2-5-mm2-450-750-v-100-mb/5904617573764_CAPL.prd" },
+  // The barcode and gross price identify one sealed ten-piece pack.
+  // source: https://www.castorama.pl/puszka-podtynkowa-elektro-plast-60-gleboka-laczeniowa-z-wkretem-10-szt-/5901752637337_CAPL.prd
+  { id: "castorama-elektroplast-pk60-10", ean: "5901752637337", name: "Puszka podtynkowa Elektro-Plast 60 g\u0142\u0119boka \u0142\u0105czeniowa z wkr\u0119tem 10 szt.", category: "flush-box", brand: "Elektro-Plast", packageSize: 10, unit: "szt", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/puszka-podtynkowa-elektro-plast-60-gleboka-laczeniowa-z-wkretem-10-szt-/5901752637337_CAPL.prd" },
+  // The plain MP75 25kg barcode; not MP75L or a 20kg/30kg pack.
+  // source: https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd
+  { id: "castorama-knauf-mp75-25kg", ean: "5902367206352", name: "Tynk maszynowy Knauf MP 75 25 kg", category: "plaster", brand: "Knauf", packageSize: 25, unit: "kg", variant: ["Tynk maszynowy Knauf MP 75 25 kg"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd" },
+  // Explicit right 70cm leaf; it must not replace the user's left/80cm choice.
+  // source: https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd
+  { id: "castorama-opp-klasyk-70-right", ean: "5063022524034", name: "Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e", category: "door-leaf", brand: "OPP", packageSize: 1, unit: "szt", variant: ["Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd" },
+  // One base, not an invented complete frame or its separate trim pieces.
+  // source: https://www.castorama.pl/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma/5902659279118_CAPL.prd
+  { id: "castorama-perfectdoor-base-80-100-right", ean: "5902659279118", name: "Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma", category: "door-frame", brand: "PerfectDoor", packageSize: 1, unit: "szt", variant: ["Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma/5902659279118_CAPL.prd" },
+  // Whole-pack prices independently visible beside the per-m² adverts.
+  // source: https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-spc-arilla-dark-grey-2-5-m2/5059340969756_CAPL.prd
+  { id: "castorama-goodhome-arilla-25m2", ean: "5059340969756", name: "Panele pod\u0142ogowe winylowe GoodHome SPC Arilla Dark Grey 2,5 m2", category: "vinyl-panel", brand: "GoodHome", packageSize: 2.5, unit: "m2", variant: ["SPC", "Arilla", "Dark Grey", "2,5 m2"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-spc-arilla-dark-grey-2-5-m2/5059340969756_CAPL.prd" },
+  // source: https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-ragga-ele-marble-1-3-m2/5059340802435_CAPL.prd
+  { id: "castorama-goodhome-ragga-13m2", ean: "5059340802435", name: "Panele pod\u0142ogowe winylowe GoodHome Ragga Ele Marble 1,3 m2", category: "vinyl-panel", brand: "GoodHome", packageSize: 1.3, unit: "m2", variant: ["Ragga", "Ele Marble", "1,3 m2"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-ragga-ele-marble-1-3-m2/5059340802435_CAPL.prd" },
+  // source: https://www.castorama.pl/tasma-brzegowa-fola-5-mm-x-10-cm-x-50-mb-5-m2/5906725207227_CAPL.prd
+  { id: "castorama-fola-50mb", ean: "5906725207227", name: "Ta\u015Bma brzegowa Fola 5 mm x 10 cm x 50 mb 5 m2", category: "expansion-tape", brand: "Fola", packageSize: 50, unit: "mb", variant: ["5 mm", "10 cm", "50 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/tasma-brzegowa-fola-5-mm-x-10-cm-x-50-mb-5-m2/5906725207227_CAPL.prd" },
+  // 178 PLN buys the entire 216cm piece; 82.41 PLN/m is not its purchase price.
+  // source: https://www.castorama.pl/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy/5906725219640_CAPL.prd
+  { id: "castorama-form-30x216", ean: "5906725219640", name: "Parapet wewn\u0119trzny PCV Form 30 x 216 cm bia\u0142y", category: "windowsill", brand: "Form", packageSize: 2.16, unit: "m", variant: ["30 x 216 cm", "bia\u0142y"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy/5906725219640_CAPL.prd" },
+  // Actual marketplace merchant: this does not belong to Castorama's own basket
+  // or physical pickup network. One sealed 6m² pack, not a multi-pack bundle.
+  // source: https://www.castorama.pl/departments/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-/5061092900925_CAPL.prd
+  { id: "castorama-marketplace-corksystem-lvt-6m2", ean: "5061092900925", name: "Podk\u0142ad pod\u0142ogowy Corksystem LVT 1.5 mm pod panele winylowe 6 m2 1 op.", category: "underlay", brand: "Corksystem", packageSize: 6, unit: "m2", variant: ["LVT", "1.5 mm", "6 m2", "1 op."], store: "Corksystem (Castorama)", marketplaceSeller: { name: "Corksystem", id: 2601 }, pickupUnavailable: true, browserReviewAllowed: true, url: "https://www.castorama.pl/departments/podk-ad-pod-ogowy-corksystem-lvt-1-5-mm-pod-panele-winylowe-6-m2-1-op-/5061092900925_CAPL.prd" },
+  // One three-metre piece, not its per-metre advert or the wholesale pack of192.
+  // source: https://www.castorama.pl/profil-sufitowy-budmat-ud27-3-m/5907738940163_CAPL.prd
+  { id: "castorama-budmat-ud27-3m", ean: "5907738940163", name: "Profil sufitowy Budmat UD27 3 m", category: "profile", brand: "Budmat", packageSize: 3, unit: "mb", variant: ["UD27", "3 m"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/profil-sufitowy-budmat-ud27-3-m/5907738940163_CAPL.prd" },
+  // Current branch-specific collection price. Other branches need their own proof.
+  // source: https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny
+  { id: "bricomarche-poznan-budmat-ud27-3m", ean: "5907738940163", name: "Kszta\u0142townik sufitowy UD30 300 cm srebrny", category: "profile", brand: "Budmat", packageSize: 3, unit: "mb", variant: ["UD30", "300 cm", "srebrny"], store: "Bricomarch\xE9 Pozna\u0144 (Al. Solidarno\u015Bci)", pickupOnly: true, browserReviewAllowed: true, url: "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny" },
+  // source: https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html
+  { id: "folnet-conpar-100m2", ean: "5902096430103", name: "Folia paroizolacyjna \u017C\xF3\u0142ta Conpar 0,20 mm", category: "vapor-barrier", brand: "Conkret", packageSize: 100, unit: "m2", store: "Folnet", format: "folnet", productId: 10288, retailerSku: "12-021", variant: ["Conpar", "0,20 mm"], url: "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html" }
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html
+  "Folia paroizolacyjna Conkret Conpar 0,20 mm (100 m\xB2)": "5902096430103",
+  "Profil przy\u015Bcienny Budmat UD27 0,5 mm 3 m": "5907738940163",
+  "Podk\u0142ad pod panele winylowe Corksystem LVT 1,5 mm 6 m\xB2": "5061092900925",
+  "Panele winylowe GoodHome SPC Arilla Dark Grey click 2,5 m\xB2": "5059340969756",
+  "Panele winylowe klejone (samoprzylepne LVT) GoodHome Ragga Ele Marble 1,3 m\xB2": "5059340802435",
+  "Ta\u015Bma brzegowa dylatacyjna Fola 5 mm \xD7 100 mm \xD7 50 mb": "5906725207227",
+  "Parapet wewn\u0119trzny PCV Form 30 \xD7 216 cm bia\u0142y": "5906725219640",
+  "Farba bia\u0142a mat 10 l": "3663602567240",
+  "Farba GoodHome \u015Aciany i Sufit bia\u0142y mat 10 l": "5059340271620",
+  "G\u0142ad\u017A pod wa\u0142ek GW180 gotowa polimerowa 20 kg": "5907418038791",
+  "Profil sufitowy Norgips CD60 0,6 mm 3 m": "5907651698899",
+  "Klej wysokoelastyczny Atlas Plus odkszta\u0142calny 25 kg": "5905400658866",
+  "Kompakt WC Cersanit Seno bezko\u0142nierzowy 3/5 l z desk\u0105 wolnoopadaj\u0105c\u0105": "5902115720833",
+  "Przew\xF3d YDYp 3\xD71,5 mm\xB2 450/750 V AKS Zielonka (kr\u0105g 100 mb)": "5904617573771",
+  "Przew\xF3d YDYp 3\xD72,5 mm\xB2 450/750 V AKS Zielonka (kr\u0105g 100 mb)": "5904617573764",
+  "Puszka podtynkowa fi60 g\u0142\u0119boka \u0142\u0105czeniowa z wkr\u0119tem Elektro-Plast (10 szt.)": "5901752637337",
+  "Tynk gipsowy maszynowy Knauf MP 75 25 kg": "5902367206352",
+  "Skrzyd\u0142o drzwiowe OPP Klasyk 70 bia\u0142e z podci\u0119ciem (przylgowe)": "5063022524034",
+  "Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma (drzwi wewn\u0119trzne)": "5902659279118",
+  'W\u0119\u017Cyk przy\u0142\u0105czeniowy w oplocie Invena 3/8"\xD7M10 30 cm': "5907798716258",
+  "Styropian fasadowy grafitowy Yetico Gamma Passive EPS 033 150 mm (2 m\xB2)": "5902578307268",
+  "Styropian fasadowy bia\u0142y Yetico Gamma Fasada 044 100 mm (3 m\xB2)": "5902578301976",
+  "Listwa przypod\u0142ogowa MDF bia\u0142a Krono Original LK100F (2,4 mb)": "5907555424969",
+  "Pianka monta\u017Cowa Soudal Low Expansion pistoletowa zimowa 750 ml": "5411183048522",
+  "Zaprawa klej\u0105ca do styropianu i siatki Atlas Stopter K-20 2w1 25 kg": "5905400160253",
+  "Skrzyd\u0142o drzwiowe pokojowe Erkado Credis 80 lewe bia\u0142e przylgowe przeszklone": "5900378219590",
+  "Kotwa monta\u017Cowa do o\u015Bcie\u017Cnic (rama okienna) 10 \xD7 182 mm": "5905458019787",
+  "Zawias wkr\u0119cany regulowany 3D 14 mm ocynkowany Metro": "5906711270471",
+  "Skrzyd\u0142o drzwiowe pokojowe Erkado Credis 80 bia\u0142e przylgowe przeszklone": "5900378219590",
+  "Panele laminowane Oakland wodoodporne AC4 2.51 m\xB2": "5063022887917",
+  "Podk\u0142ad pod\u0142ogowy Volden XPS Smart 3 mm 10 m\xB2": "5063022038289",
+  "Gres Guigliano GoodHome 1 m\xB2": "3663602870821",
+  'Zaw\xF3r k\u0105towy z filtrem Ferro 1/2" \xD7 3/8" (chrom)': "5901095614033",
+  "Panele winylowe GoodHome SPC Marvo click 2,235 m\xB2": "5063022676757",
+  "Panele laminowane wodoodporne AC5 8 mm Classen D\u0105b Niasa (1,973 m\xB2/paczka)": "4003992571974",
+  "Gres szkliwiony rektyfikowany Parady\u017C U117 (Ennis) Grey mat 59,8\xD759,8 cm": "5904584158261",
+  "Klamka drzwiowa Schaffner Lucy na rozecie (komplet dwustronny)": "5907467760698",
+  "Bateria natryskowa \u015Bcienna Ferro One (chrom, BFO7)": "5902194954525",
+  "Gniazdo pojedyncze z uziemieniem Kontakt-Simon Basic (bia\u0142e, BMGZ1Z.01/11)": "5902787568238",
   "Listwa przypod\u0142ogowa PCV Arbiton Indo bia\u0142y po\u0142ysk 01, 2500 mm": "5905167725719",
   "Listwa przypod\u0142ogowa PCV Arbiton Indo 2500 mm": "5905167725719",
   "Klej do wyk\u0142adzin (winyl/LVT/PCV) Soudal 26A 5 kg": "5411183028395",
@@ -20575,17 +20888,17 @@ var RETAIL_NAME_ALIASES = {
   "Profil naro\u017Cny do glazury Cezar aluminiowy 8 mm, tytan szczotkowany mat, 2,5 m": "5904584853500"
 };
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/delivery-limits.ts
+// lib/pricing-service/src/delivery-limits.ts
 var DELIVERY_LIMITS = {
   products: 200,
   stores: 64,
   packagesPerProduct: 1e4
 };
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/delivery.ts
+// lib/pricing-service/src/delivery.ts
 function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, policies = [], now = /* @__PURE__ */ new Date()) {
   const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
-  const missingProductCount = stages.flatMap((stage) => stage.lines).filter((line2) => !line2.resolved && line2.quantity > 0).length;
+  const missingProductCount = stages.flatMap((stage) => stage.lines).filter((line2) => !line2.resolved && line2.quantity > 0).length + groups.filter((group) => !optimizePackages(group.totalQuantity, buildPackageVariants(group.offers, group.product))).length;
   const names = [...new Set(groups.flatMap((group) => group.offers.filter((offer) => isComparableOffer(offer, now.getTime())).map((offer) => offer.store)))].sort();
   const currentPolicies = names.map((store) => {
     const policy = policies.find((policy2) => policy2.store === store);
@@ -20638,8 +20951,8 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
       if (!cached2[index2].has(key)) {
         const variants = buildPackageVariants(offers, group.product);
         let plan2;
-        if (variants.length === 1) {
-          const variant = variants[0], count = computePackagesNeeded(group.totalQuantity, variant.packageSize, variant.purchaseMultiple);
+        if (variants.length === 1 && variants[0].maxPackages === void 0) {
+          const variant = variants[0], count = computePackagesNeeded(group.totalQuantity, variant.packageSize, variant.purchaseMultiple, variant.minimumPackages);
           const total = count * variant.unitPriceGrosze;
           plan2 = {
             requiredQuantity: group.totalQuantity,
@@ -20702,11 +21015,12 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   return result;
 }
 
-// D:/projekty/remont_assistance/lib/pricing-service/src/automatic-delivery.ts
+// lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
 var MAX_PROPOSED = 256;
 var signature = (order) => order.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}:${pack.unitPriceGrosze}`)).sort().join("|");
+var removable = (pack) => pack.count - (pack.purchaseMultiple ?? 1) >= (pack.minimumPackages ?? 1) ? pack.purchaseMultiple ?? 1 : pack.count;
 async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   let groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
@@ -20718,7 +21032,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     postalCode: settings.postalCode ?? null,
     status: "empty",
     productCount: groups.length,
-    missingProductCount: stages.flatMap((s) => s.lines).filter((l) => !l.resolved && l.quantity > 0).length,
+    missingProductCount: stages.flatMap((s) => s.lines).filter((l) => !l.resolved && l.quantity > 0).length + groups.filter((g) => !optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product))).length,
     best: null,
     lowerBound: null,
     alternatives: [],
@@ -20737,7 +21051,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   }
   result.unavailableStores = stores.filter((store) => knownUnavailableStores[store]).map((store) => ({ store, reason: knownUnavailableStores[store] }));
   groups = groups.map((group) => ({ ...group, offers: group.offers.filter((offer) => !knownUnavailableStores[offer.store]) }));
-  if (groups.some((group) => !group.offers.length)) {
+  if (groups.some((group) => !group.offers.length || !optimizePackages(group.totalQuantity, buildPackageVariants(group.offers, group.product)))) {
     result.status = "needs_delivery_costs";
     return result;
   }
@@ -20754,7 +21068,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     const offers = group.offers.filter((o) => isComparableOffer(o, now.getTime()));
     const sizes = offers.map((o) => Number(o.packageSize ?? group.product.packageSize));
     if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return tooLarge();
-    const count = Math.ceil(group.totalQuantity / sizes[0]);
+    const count = computePackagesNeeded(group.totalQuantity, sizes[0]);
     if (!Number.isSafeInteger(count) || count > DELIVERY_LIMITS.packagesPerProduct) return tooLarge();
     if (count > 60) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
     const variants = [];
@@ -20763,16 +21077,19 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
       if (index2 === offers.length) {
         if (remaining === 0) {
           const coverage = packs.reduce((sum, pack) => sum + pack.count, 0);
-          if (!packs.some((pack) => coverage - (pack.purchaseMultiple ?? 1) >= count)) variants.push(packs);
+          if (!packs.some((pack) => coverage - removable(pack) >= count)) variants.push(packs);
         }
         return;
       }
-      const offer = offers[index2], price = parsePriceToGrosze(offer.promoPrice ?? offer.price);
-      if (price === null || !Number.isSafeInteger(price) || price <= 0) return;
-      const multiple = offer.purchaseMultiple ?? 1, max = Math.ceil(remaining / multiple) * multiple;
+      const offer = offers[index2], price2 = parsePriceToGrosze(offer.promoPrice ?? offer.price);
+      if (price2 === null || !Number.isSafeInteger(price2) || price2 <= 0) return;
+      const multiple = offer.purchaseMultiple ?? 1, minimum = offer.minimumPackages ?? 1;
+      const useful = remaining > 0 ? Math.max(Math.ceil(remaining / multiple), Math.ceil(minimum / multiple)) * multiple : 0;
+      const max = Math.min(useful, offer.maxPackages === void 0 ? useful : Math.floor(offer.maxPackages / multiple) * multiple);
       if (max > DELIVERY_LIMITS.packagesPerProduct) return;
       for (let n = index2 === offers.length - 1 ? max : 0; n <= max; n += multiple) {
-        visit(index2 + 1, Math.max(0, remaining - n), n ? [...packs, { offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count: n, unitPriceGrosze: price, lineCostGrosze: n * price, ...multiple > 1 ? { purchaseMultiple: multiple } : {} }] : packs);
+        if (n > 0 && n < minimum) continue;
+        visit(index2 + 1, Math.max(0, remaining - n), n ? [...packs, { offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count: n, unitPriceGrosze: price2, lineCostGrosze: n * price2, ...multiple > 1 ? { purchaseMultiple: multiple } : {}, ...minimum > 1 ? { minimumPackages: minimum } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {}, ...offer.verification ? { verification: offer.verification } : {} }] : packs);
       }
     };
     visit(0, count, []);
@@ -20817,13 +21134,13 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     const sizes = offers.map((offer) => Number(offer.packageSize ?? group.product.packageSize));
     if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return null;
     return offers.flatMap((offer) => {
-      const count = computePackagesNeeded(group.totalQuantity, sizes[0], offer.purchaseMultiple);
-      if (!Number.isSafeInteger(count) || count < 1 || count > DELIVERY_LIMITS.packagesPerProduct) return [];
-      const price = parsePriceToGrosze(offer.promoPrice ?? offer.price);
-      return price === null || price <= 0 || !Number.isSafeInteger(price * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count, unitPriceGrosze: price, lineCostGrosze: count * price, ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {} }];
+      const count = computePackagesNeeded(group.totalQuantity, sizes[0], offer.purchaseMultiple, offer.minimumPackages);
+      if (!Number.isSafeInteger(count) || count < 1 || count > DELIVERY_LIMITS.packagesPerProduct || offer.maxPackages !== void 0 && count > offer.maxPackages) return [];
+      const price2 = parsePriceToGrosze(offer.promoPrice ?? offer.price);
+      return price2 === null || price2 <= 0 || !Number.isSafeInteger(price2 * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count, unitPriceGrosze: price2, lineCostGrosze: count * price2, ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {}, ...offer.minimumPackages ? { minimumPackages: offer.minimumPackages } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {}, ...offer.verification ? { verification: offer.verification } : {} }];
     });
   });
-  if (options.some((option) => !option?.length)) {
+  if (options.some((option) => !option)) {
     result.status = "limit_exceeded";
     return result;
   }
@@ -20831,25 +21148,36 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
   const wholePlans = /* @__PURE__ */ new Set();
   const basePlans = /* @__PURE__ */ new Map();
   function addPlan(selected, split) {
+    addGroupedPlan(selected.map((pack, index2) => split?.index === index2 ? split.packs : [pack]), !split);
+  }
+  function addGroupedPlan(selected, whole2) {
     if (proposed.size >= MAX_PROPOSED) return;
     const orders = /* @__PURE__ */ new Map();
     for (let i = 0; i < groups.length; i++) {
       const group = groups[i];
-      for (const pack of split?.index === i ? split.packs : [selected[i]]) {
+      for (const pack of selected[i]) {
+        if (pack.count > (pack.maxPackages ?? Infinity) || pack.count > DELIVERY_LIMITS.packagesPerProduct) return;
         let order = orders.get(pack.store);
         if (!order) {
           order = { store: pack.store, materialsGrosze: 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown", lines: [] };
           orders.set(pack.store, order);
         }
         order.materialsGrosze += pack.lineCostGrosze;
-        order.lines.push({ product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [pack] });
+        let line2 = order.lines.find((line3) => line3.product.id === group.product.id);
+        if (!line2) {
+          line2 = { product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
+          order.lines.push(line2);
+        }
+        line2.packages.push(pack);
       }
     }
     const actual = [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
     const key = actual.map(signature).join(";");
     proposed.set(key, actual);
-    if (!split) wholePlans.add(key);
+    if (whole2) wholePlans.add(key);
   }
+  const materialPlans = groups.map((g) => optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product)));
+  if (materialPlans.every(Boolean)) addGroupedPlan(materialPlans.map((plan) => plan.packages), materialPlans.every((plan) => plan.packages.length === 1));
   const orderedOptions = options.map((option) => option.sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId)));
   function addBase(selected) {
     if (selected.some((pack) => !pack)) return;
@@ -20881,14 +21209,15 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     if (alternative.store !== seed[index2].store && seed[index2].count > 1) {
       const count = seed[index2].count;
       const multiple = seed[index2].purchaseMultiple ?? 1;
-      for (const firstCount of /* @__PURE__ */ new Set([multiple, Math.floor(count / 2 / multiple) * multiple, count - multiple])) {
-        if (firstCount < 1 || firstCount % multiple) continue;
+      const minimum = Math.ceil((seed[index2].minimumPackages ?? 1) / multiple) * multiple;
+      for (const firstCount of /* @__PURE__ */ new Set([minimum, Math.floor(count / 2 / multiple) * multiple, count - multiple])) {
+        if (firstCount < (seed[index2].minimumPackages ?? 1) || firstCount % multiple) continue;
         const remaining = groups[index2].totalQuantity - firstCount * seed[index2].packageSize;
         if (!(remaining > 0)) continue;
-        const secondCount = computePackagesNeeded(remaining, alternative.packageSize, alternative.purchaseMultiple);
+        const secondCount = computePackagesNeeded(remaining, alternative.packageSize, alternative.purchaseMultiple, alternative.minimumPackages);
         if (secondCount > DELIVERY_LIMITS.packagesPerProduct) continue;
-        const needed = Math.ceil(groups[index2].totalQuantity / seed[index2].packageSize), coverage = firstCount + secondCount;
-        if (coverage - multiple >= needed || coverage - (alternative.purchaseMultiple ?? 1) >= needed) continue;
+        const needed = computePackagesNeeded(groups[index2].totalQuantity, seed[index2].packageSize), coverage = firstCount + secondCount;
+        if (coverage - removable({ ...seed[index2], count: firstCount }) >= needed || coverage - removable({ ...alternative, count: secondCount }) >= needed) continue;
         const first = { ...seed[index2], count: firstCount, lineCostGrosze: firstCount * seed[index2].unitPriceGrosze };
         const second = { ...alternative, count: secondCount, lineCostGrosze: secondCount * alternative.unitPriceGrosze };
         addPlan(seed, { index: index2, packs: [first, second] });
@@ -20978,30 +21307,54 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   return result;
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto7 = require("node:crypto");
+// artifacts/api-server/src/lib/retailer-delivery.ts
+var import_node_crypto14 = require("node:crypto");
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-http.ts
+// artifacts/api-server/src/lib/retailer-http.ts
 var MAX_RETAIL_PACKAGES = DELIVERY_LIMITS.packagesPerProduct;
 function retailerRequestBudget(productCount) {
   if (!Number.isSafeInteger(productCount) || productCount < 1 || productCount > DELIVERY_LIMITS.products) throw Error("invalid_basket");
   return Math.min(1e3, (productCount * 2 + 10) * 4);
 }
 var AnonymousShop = class {
-  constructor(origin, fetchImpl, signal, maxCalls = 30) {
-    this.origin = origin;
+  constructor(origin3, fetchImpl, signal, maxCalls = 30, encoding = "utf-8") {
+    this.origin = origin3;
     this.fetchImpl = fetchImpl;
     this.signal = signal;
     this.maxCalls = maxCalls;
+    this.encoding = encoding;
+    if (encoding !== "utf-8" && origin3 !== "https://sklep.tokmet.pl") throw Error("unsupported_retailer_encoding");
   }
   cookies = /* @__PURE__ */ new Map();
   calls = 0;
   storeCartToken = null;
+  skyshopCartId = null;
   async json(path, body) {
     return JSON.parse(await this.read(path, body ? JSON.stringify(body) : void 0, true));
   }
   async text(path, form) {
     return this.read(path, form ? new URLSearchParams(form).toString() : void 0, false);
+  }
+  /** Only this storefront's anonymous quantity update, never its order form.
+   * source: https://modnalazienka.pl/static_files/js/update_cart.js?x=1792224600
+   */
+  async modnaCart(productId, quantityM2, csrfToken) {
+    if (this.origin !== "https://modnalazienka.pl" || !Number.isSafeInteger(productId) || productId < 1 || !/^\d+\.\d{2}$/.test(quantityM2) || Number(quantityM2) <= 0 || Number(quantityM2) > MAX_RETAIL_PACKAGES * 100 || !/^[A-Za-z0-9._-]{32,256}$/.test(csrfToken)) throw Error("invalid_cart_action");
+    const id = String(productId);
+    return this.read("/cart_edit", new URLSearchParams({ update_cart: "", product_id: id, ["cart_quantity_real_unit_" + id]: quantityM2, ["product_single_set_" + id]: "true" }).toString(), false, false, false, csrfToken);
+  }
+  /** Reviewed HIPPER anonymous-cart actions only. The generic action endpoint
+   * also places orders, so reject every other action, field and namespace here.
+   * source: https://hipper.pl/dist/app.4bb46b097031e5eba47f.js
+   */
+  async certusoftAction(body) {
+    const allowedKeys = ["csAppNameSpacesG", "appWindowIdent", "dataSetIdent", "actionIdent", "sessionId", "row", "path", "addRequestData", "onCFDataFieldIdent"];
+    if (this.origin !== "https://hipper.pl" || Object.keys(body).some((key) => !allowedKeys.includes(key)) || typeof body.csAppNameSpacesG !== "string" || body.csAppNameSpacesG.toLowerCase() !== "800db636-13cf-4b3b-a705-06e7b2a426e9" || !body.row || typeof body.row !== "object") throw Error("invalid_cart_action");
+    const add = body.appWindowIdent === "csB2BItemCard" && body.dataSetIdent === "itemCard" && body.actionIdent === "cartAdd" && !body.onCFDataFieldIdent;
+    const select = body.appWindowIdent === "csB2BCart" && body.dataSetIdent === "csB2BCartHeader" && body.actionIdent === "csNGOnCFB2BCartHeader" && ["csB2BPortalsDeliveryMethodsId", "csPaymentsTypesId"].includes(body.onCFDataFieldIdent) && body.path === "/koszyk";
+    const rowKeys = add ? ["csItemsId", "csItemsUnitsId", "cUnitPrice", "discount", "quantityUnits"] : ["csDocsHeadersId", "csB2BPortalsDeliveryMethodsId", "csPaymentsTypesId"];
+    if (!(add || select) || Object.keys(body.row).some((key) => !rowKeys.includes(key)) || Object.keys(body.addRequestData ?? {}).some((key) => key !== "appWindowUniqIdent") || body.addRequestData?.appWindowUniqIdent !== body.appWindowIdent || typeof body.sessionId !== "string" || !/^[a-f0-9-]{36}$/i.test(body.sessionId)) throw Error("invalid_cart_action");
+    return JSON.parse(await this.read("/csAPIServer_Hipper/invokeAction", JSON.stringify(body), true, false, true));
   }
   /** WooCommerce anonymous-cart token stays private to this one shop session.
    * Only the reviewed cart/read and add-item routes are allowed, never checkout. */
@@ -21012,8 +21365,45 @@ var AnonymousShop = class {
     if (!this.storeCartToken) throw Error("cart_session_not_confirmed");
     return JSON.parse(raw);
   }
-  async read(path, payload, json3, storeCart = false) {
-    let url2 = new URL(path, this.origin), method = payload ? "POST" : "GET";
+  /** Reviewed Sky-Shop operations for two pinned Matbud products. Cart IDs are
+   * obtained from this fresh session, never supplied by the app or browser.
+   * The order json=1 routes calculate shipping; no final order/customer route.
+   * source: https://centrummatbud.pl/view/new/userContent/bum/script.js?v=699 */
+  async skyshop(action, count, productId = 96729) {
+    if (this.origin !== "https://centrummatbud.pl") throw Error("invalid_cart_action");
+    if (![96729, 131345].includes(productId)) throw Error("invalid_cart_action");
+    const nativePerPack = productId === 131345 ? 2 : 1;
+    const prefix = "/proxy_public_api?endpoint=/sky2/api-public";
+    if (action === "product" || action === "parameters") {
+      if (count !== void 0) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read(prefix + "/products/" + productId + (action === "parameters" ? "/choosable-parameters?" : ""), void 0, true));
+    }
+    if (action === "create-cart") {
+      if (count !== void 0 || this.skyshopCartId) throw Error("invalid_cart_action");
+      const cart = JSON.parse(await this.read(prefix + "/carts/latest", void 0, true));
+      if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(cart?.id ?? "") || !Array.isArray(cart.items) || cart.items.length) throw Error("basket_not_confirmed");
+      this.skyshopCartId = cart.id;
+      this.cookies.set("sky2_cart_id", cart.id);
+      return cart;
+    }
+    if (!this.skyshopCartId) throw Error("cart_session_not_confirmed");
+    if (action === "add") {
+      if (count === void 0 || !Number.isSafeInteger(count) || count < 50 * nativePerPack || count > MAX_RETAIL_PACKAGES * nativePerPack || count % nativePerPack) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read(prefix + "/carts/" + this.skyshopCartId + "/items", JSON.stringify({ productId, quantity: count, parameters: [] }), true, false, true));
+    }
+    if (count !== void 0) throw Error("invalid_cart_action");
+    if (action === "cart") return JSON.parse(await this.read(prefix + "/carts/" + this.skyshopCartId, void 0, true));
+    if (action === "shipping") {
+      await this.read("/cart", void 0, false);
+      const html = await this.read("/order", void 0, false);
+      const methods = JSON.parse(await this.read("/order/?json=1&pay_id=5&c=PL&sel=&wdt=0", "", true, false, false, void 0, true));
+      return { html, methods };
+    }
+    if (action === "calculate") return JSON.parse(await this.read("/order/?json=1&recalculate=1&c=PL&pay_id=5&shipment=s182be0c5c&wdt=0&gratis=", void 0, true));
+    throw Error("invalid_cart_action");
+  }
+  async read(path, payload, json3, storeCart = false, rawJson = false, modnaCsrf, forcePost = false) {
+    let url2 = new URL(path, this.origin), method = payload || forcePost ? "POST" : "GET";
     for (let i = 0; i < 4; i++) {
       if (url2.origin !== this.origin) throw Error("invalid_redirect");
       if (++this.calls > this.maxCalls) throw Error("request_limit");
@@ -21029,7 +21419,8 @@ var AnonymousShop = class {
           Accept: json3 ? "application/json" : "text/html, application/json",
           Cookie: cookie,
           ...storeCart && this.storeCartToken ? { "Cart-Token": this.storeCartToken } : {},
-          ...payload ? { "Content-Type": storeCart ? "application/json" : "application/x-www-form-urlencoded" } : {}
+          ...modnaCsrf ? { "X-CSRF-Token": modnaCsrf, "X-Requested-With": "XMLHttpRequest", Origin: this.origin, Referer: this.origin + "/" } : {},
+          ...payload || forcePost ? { "Content-Type": storeCart || rawJson ? "application/json" : "application/x-www-form-urlencoded" } : {}
         }
       });
       for (const entry of r.headers.getSetCookie()) {
@@ -21081,22 +21472,23 @@ var AnonymousShop = class {
         await reader.cancel().catch(() => {
         });
       }
-      return Buffer.concat(chunks).toString("utf8");
+      const bytes = Buffer.concat(chunks);
+      return this.encoding === "iso-8859-2" ? new TextDecoder("iso-8859-2").decode(bytes) : bytes.toString("utf8");
     }
     throw Error("invalid_redirect");
   }
 };
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
-var import_node_crypto4 = require("node:crypto");
+// artifacts/api-server/src/lib/retailer-checkouts.ts
+var import_node_crypto6 = require("node:crypto");
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
-var import_node_crypto3 = require("node:crypto");
+// artifacts/api-server/src/lib/retail-pages.ts
+var import_node_crypto5 = require("node:crypto");
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-microdata.ts
+// artifacts/api-server/src/lib/retail-microdata.ts
 var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
 var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
-var decode = (text3) => text3.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+var decode = (text4) => text4.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 var text2 = (html) => decode(html.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
 function attrs(tag) {
   const result = {};
@@ -21141,7 +21533,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
   const safe = clean(html);
   const product = one(elements(safe, (a) => /\/Product$/.test(a.itemtype ?? "")), "microdata_product_ambiguous");
   const offer = one(elements(product, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "microdata_offer_ambiguous");
-  const price = property(offer, "price");
+  const price2 = property(offer, "price");
   const currency2 = property(offer, "priceCurrency");
   const name = format === "unimet" ? text2(one(elements(product, (a, tag) => a.itemprop === "name" && tag === "h1"), "microdata_name_ambiguous")) : property(product, "name");
   const images = elements(product, (a) => a.itemprop === "image").map((element) => {
@@ -21152,7 +21544,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
   if (format === "unimet") {
     const visible = text2(one(elements(offer, (a) => a.itemprop === "price"), "retailer_gross_price_not_confirmed"));
     const grossLabel = text2(one(elements(product, (a) => a.class === "tax-shipping-delivery-label"), "retailer_gross_price_not_confirmed"));
-    if (grossLabel !== "SZT Brutto" || Number(visible.replace(/\s|zł/g, "").replace(",", ".")) !== Number(price)) throw Error("retailer_gross_price_mismatch");
+    if (grossLabel !== "SZT Brutto" || Number(visible.replace(/\s|zł/g, "").replace(",", ".")) !== Number(price2)) throw Error("retailer_gross_price_mismatch");
     const brand = text2(one(elements(product, (a) => a.itemprop === "brand"), "microdata_brand_ambiguous")).replace(/^Marka\s*/, "");
     return {
       "@type": "Product",
@@ -21160,14 +21552,14 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
       gtin13: property(product, "gtin13"),
       brand,
       image,
-      offers: { "@type": "Offer", price, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
+      offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
     };
   }
   if (format === "shoper" || format === "buduj24") {
     const ean2 = property(product, "gtin");
-    const gross2 = format === "shoper" ? text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false), "retailer_gross_price_not_confirmed")) : text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("product-price-gross") ?? false), "retailer_gross_price_not_confirmed"));
-    const amount2 = gross2.replace(/\s|zł/g, "").replace(",", ".");
-    if (Number(amount2) !== Number(price)) throw new Error("retailer_gross_price_mismatch");
+    const gross3 = format === "shoper" ? text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false), "retailer_gross_price_not_confirmed")) : text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("product-price-gross") ?? false), "retailer_gross_price_not_confirmed"));
+    const amount3 = gross3.replace(/\s|zł/g, "").replace(",", ".");
+    if (Number(amount3) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
     const expiry = elements(offer, (a) => a.itemprop === "priceValidUntil");
     const descriptions = elements(product, (a) => a.itemprop === "description");
     const description = descriptions.length === 1 ? text2(descriptions[0]) : "";
@@ -21179,7 +21571,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
       description,
       offers: {
         "@type": "Offer",
-        price,
+        price: price2,
         priceCurrency: currency2,
         url: url2,
         availability: property(offer, "availability"),
@@ -21193,10 +21585,10 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
     const stock = labelled(product, "Dost\u0119pne:", "strong");
     const stockCount = stock.match(/^([0-9]+)\s+(SZT|OPA)$/i);
     if (!stockCount || stockCount[2].toUpperCase() !== retailUnit) throw new Error("retailer_stock_not_confirmed");
-    const gross2 = text2(one(elements(offer, (a) => a.class === "priceShow"), "retailer_gross_price_not_confirmed"));
-    const grossMatch = gross2.match(/^([\d ,.]+)\s*zł\s*brutto\s*\/\s*(SZT|OPA)$/i);
-    const amount2 = grossMatch?.[2].toUpperCase() === retailUnit ? grossMatch[1].replace(/\s/g, "").replace(",", ".") : void 0;
-    if (amount2 === void 0 || Number(amount2) !== Number(price)) throw new Error("retailer_gross_price_mismatch");
+    const gross3 = text2(one(elements(offer, (a) => a.class === "priceShow"), "retailer_gross_price_not_confirmed"));
+    const grossMatch = gross3.match(/^([\d ,.]+)\s*zł\s*brutto\s*\/\s*(SZT|OPA)$/i);
+    const amount3 = grossMatch?.[2].toUpperCase() === retailUnit ? grossMatch[1].replace(/\s/g, "").replace(",", ".") : void 0;
+    if (amount3 === void 0 || Number(amount3) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
     const description = elements(product, (a) => a.itemprop === "description").length ? property(product, "description") : "";
     return {
       "@type": "Product",
@@ -21207,7 +21599,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
       image,
       offers: {
         "@type": "Offer",
-        price,
+        price: price2,
         priceCurrency: currency2,
         url: url2,
         availability: Number(stockCount[1]) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
@@ -21215,19 +21607,19 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
     };
   }
   const ean = labelled(product, "Kod EAN:", "em");
-  const gross = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value) => /z VAT/i.test(value)), "retailer_gross_price_not_confirmed");
-  const amount = gross.match(/^([\d ,.]+)\s*zł\s*z VAT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
-  if (amount === void 0 || Number(amount) !== Number(price)) throw new Error("retailer_gross_price_mismatch");
+  const gross2 = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value) => /z VAT/i.test(value)), "retailer_gross_price_not_confirmed");
+  const amount2 = gross2.match(/^([\d ,.]+)\s*zł\s*z VAT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
+  if (amount2 === void 0 || Number(amount2) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
   return {
     "@type": "Product",
     name,
     gtin13: ean,
     image,
-    offers: { "@type": "Offer", price, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
+    offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
   };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/shopify-product.ts
+// artifacts/api-server/src/lib/shopify-product.ts
 function confirmShopifyProduct(product, source) {
   if (!Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.variantId) || product.id !== source.productId || !Array.isArray(product.variants)) throw Error("product_id_not_confirmed");
   const matches = product.variants.filter((v) => v.id === source.variantId && String(v.barcode) === source.ean);
@@ -21240,7 +21632,7 @@ function confirmShopifyProduct(product, source) {
   return { variantId: variant.id, priceGrosze: variant.price, name: product.title, imageUrl: typeof image === "string" ? new URL(image, source.url).href : source.imageUrl };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-identity.ts
+// artifacts/api-server/src/lib/retail-identity.ts
 function only(values, reason) {
   if (values.length !== 1) throw Error(reason);
   return values[0];
@@ -21251,14 +21643,14 @@ function attribute(element, name) {
 function confirmRetailIdentity(html, product, source) {
   const safe = clean(html);
   if (source.format !== "rodimax" && (!Number.isSafeInteger(source.productId) || source.productId < 1)) throw Error("product_id_not_confirmed");
-  let code, price, brand = product.brand, image = product.image;
+  let code, price2, brand = product.brand, image = product.image;
   if (source.format === "rodimax") {
     code = text2(only(elements(safe, (a) => a.id === "sku"), "product_code_not_confirmed"));
     if (product.gtin13 !== code) throw Error("product_ean_not_confirmed");
-    const gross = text2(only(elements(safe, (a) => a.id === "cena"), "retailer_gross_price_not_confirmed"));
-    const match = gross.match(/^([\d ,.]+)\s*zł\s+brutto\s*\(\s*Z VAT 23%\s*\)$/i);
+    const gross2 = text2(only(elements(safe, (a) => a.id === "cena"), "retailer_gross_price_not_confirmed"));
+    const match = gross2.match(/^([\d ,.]+)\s*zł\s+brutto\s*\(\s*Z VAT 23%\s*\)$/i);
     if (!match) throw Error("retailer_gross_price_not_confirmed");
-    price = match[1];
+    price2 = match[1];
     const figure = only(elements(safe, (a) => a.id === "zdj"), "product_photo_not_confirmed");
     const photo = only(elements(figure, (_a, tag) => tag === "img"), "product_photo_not_confirmed");
     if (attribute(photo, "alt") !== product.name || !attribute(photo, "src")) throw Error("product_photo_not_confirmed");
@@ -21269,7 +21661,7 @@ function confirmRetailIdentity(html, product, source) {
     if (attribute(hidden, "value") !== String(source.productId)) throw Error("product_id_not_confirmed");
     const dictionary = only(elements(safe, (a) => a["data-producer_code"] === "true"), "product_code_not_confirmed");
     code = text2(only(elements(dictionary, (a) => a.class?.split(/\s+/).includes("dictionary__producer_code") ?? false), "product_code_not_confirmed"));
-    price = text2(only(elements(form, (a) => a.id === "projector_price_value"), "retailer_gross_price_not_confirmed"));
+    price2 = text2(only(elements(form, (a) => a.id === "projector_price_value"), "retailer_gross_price_not_confirmed"));
     const tax = text2(only(elements(form, (a) => a.class === "price_vat"), "retailer_gross_price_not_confirmed"));
     const unit = text2(only(elements(form, (a) => a.id === "projector_price_unit"), "retailer_unit_not_confirmed"));
     const quantity = only(elements(form, (a) => a.id === "projector_number"), "retailer_unit_not_confirmed");
@@ -21283,18 +21675,18 @@ function confirmRetailIdentity(html, product, source) {
     const table = only(elements(safe, (a, tag) => tag === "table" && (a.class?.split(/\s+/).includes("additional-attributes") ?? false)), "product_code_not_confirmed");
     code = text2(only(elements(table, (a) => a["data-th"] === "EAN"), "product_code_not_confirmed"));
     const offer = only(elements(safe, (a) => a.class === "final-price" && a.itemprop === "offers"), "retailer_price_not_confirmed");
-    price = text2(only(elements(offer, (a) => a.id === `product-price-${source.productId}`), "retailer_price_not_confirmed"));
+    price2 = text2(only(elements(offer, (a) => a.id === `product-price-${source.productId}`), "retailer_price_not_confirmed"));
     const logo = only(elements(safe, (a) => a.class === "product-brand-image"), "product_brand_not_confirmed");
     brand = attribute(logo, "alt");
   } else throw Error("unsupported_identity_template");
   if (code !== source.ean || !/^\d{13}$/.test(code)) throw Error("product_ean_not_confirmed");
   const offers = [product.offers].flat();
-  const visible = parsePriceToGrosze(price.replace(/\s*zł\s*$/, ""));
+  const visible = parsePriceToGrosze(price2.replace(/\s*zł\s*$/, ""));
   if (visible === null || visible <= 0 || offers.length !== 1 || parsePriceToGrosze(offers[0]?.price) !== visible) throw Error("retailer_gross_price_mismatch");
   return { ...product, gtin13: code, brand, image };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/woocommerce-product.ts
+// artifacts/api-server/src/lib/woocommerce-product.ts
 var import_node_crypto = require("node:crypto");
 var cls = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var one2 = (values, reason) => {
@@ -21326,8 +21718,8 @@ function inspectWooProductCard(html, source) {
   if (cls(attrs2(stock), "out-of-stock")) throw Error("retailer_out_of_stock");
   if (!cls(attrs2(stock), "in-stock")) throw Error("retailer_stock_not_confirmed");
   const scope = one2(elements(main, (a) => a["data-widget_type"] === "riode_sproduct_price.default"), "retailer_price_not_confirmed");
-  const price = text2(one2(elements(scope, (a) => cls(a, "price")), "retailer_price_not_confirmed").replace(/&#(?:122|x7a);/gi, "z").replace(/&#(?:322|x142);/gi, "\u0142")).match(/^([\d ,]+)\s*zł$/)?.[1];
-  const priceGrosze = price ? parsePriceToGrosze(price) : null;
+  const price2 = text2(one2(elements(scope, (a) => cls(a, "price")), "retailer_price_not_confirmed").replace(/&#(?:122|x7a);/gi, "z").replace(/&#(?:322|x142);/gi, "\u0142")).match(/^([\d ,]+)\s*zł$/)?.[1];
+  const priceGrosze = price2 ? parsePriceToGrosze(price2) : null;
   if (!priceGrosze) throw Error("retailer_price_not_confirmed");
   const name = text2(one2(elements(main, (a) => cls(a, "product_title")), "product_name_not_confirmed"));
   return { sku, name, priceGrosze };
@@ -21345,17 +21737,80 @@ async function readWooProduct(source, fetchImpl) {
   currency(cart.totals);
   if (cart.shipping_address?.country !== "PL") throw Error("country_not_confirmed");
   if (item.id !== source.productId || item.quantity !== 1 || item.sku !== card.sku || item.name !== card.name || item.show_backorder_badge === true) throw Error("basket_not_confirmed");
-  const totals = item.totals, amount = cents(totals.line_total) + cents(totals.line_total_tax);
-  if (amount !== card.priceGrosze || cents(item.prices.price) !== amount || cents(totals.line_subtotal) + cents(totals.line_subtotal_tax) !== amount) throw Error("retailer_gross_price_mismatch");
+  const totals = item.totals, amount2 = cents(totals.line_total) + cents(totals.line_total_tax);
+  if (amount2 !== card.priceGrosze || cents(item.prices.price) !== amount2 || cents(totals.line_subtotal) + cents(totals.line_subtotal_tax) !== amount2) throw Error("retailer_gross_price_mismatch");
   const all = cart.totals;
-  if (cents(all.total_items) + cents(all.total_items_tax) !== amount || cents(all.total_discount) !== 0 || cents(all.total_discount_tax) !== 0 || cents(all.total_fees) !== 0 || cents(all.total_fees_tax) !== 0 || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
+  if (cents(all.total_items) + cents(all.total_items_tax) !== amount2 || cents(all.total_discount) !== 0 || cents(all.total_discount_tax) !== 0 || cents(all.total_fees) !== 0 || cents(all.total_fees_tax) !== 0 || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
   const imageUrl = item.images?.[0]?.src;
   if (typeof imageUrl !== "string" || !imageUrl.startsWith("https://")) throw Error("product_photo_not_confirmed");
-  return { name: card.name, priceGrosze: amount, imageUrl, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify([raw, cart])).digest("hex") };
+  return { name: card.name, priceGrosze: amount2, imageUrl, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify([raw, cart])).digest("hex") };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/topboden-product.ts
+// artifacts/api-server/src/lib/qshop-product.ts
 var import_node_crypto2 = require("node:crypto");
+var TOKMET_ORIGIN = "https://sklep.tokmet.pl";
+var TOKMET_URL = TOKMET_ORIGIN + "/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i";
+var TOKMET_NAME = 'W\u0118\u017BYK DO BATERII STOJ\u0104CEJ 3/8" x M10*1 L - 30 CM D\u0141UGA KO\u0143C\xD3WKA';
+var one3 = (rows, reason) => {
+  if (rows.length !== 1) throw Error(reason);
+  return rows[0];
+};
+var attrs3 = (el) => attrs(el.match(/^<[^>]+>/)?.[0] ?? "");
+var text3 = (el) => text2(el).replace(/&#47;/g, "/");
+var money = (el) => {
+  const amount2 = text3(el).match(/^([\d ,.]+)\s*zł$/)?.[1], value = amount2 ? parsePriceToGrosze(amount2) : null;
+  if (!value || !Number.isSafeInteger(value)) throw Error("retailer_gross_price_not_confirmed");
+  return value;
+};
+function review(source) {
+  if (source.format !== "qshop" || source.id !== "tokmet-invena-ws20-030" || source.store !== "TOK-MET" || source.productId !== 2806 || source.retailerSku !== "WS-20-030-G" || source.ean !== "5907798716258" || source.brand !== "Invena" || source.name !== TOKMET_NAME || source.url !== TOKMET_URL || source.packageSize !== 1 || source.unit !== "szt" || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1) throw Error("product_identity_not_confirmed");
+}
+function inspectTokmetProduct(listHtml, cardHtml, source) {
+  review(source);
+  const list = clean(listHtml), card = clean(cardHtml);
+  if (!text3(card).includes("Obecna waluta: PL")) throw Error("retailer_currency_not_confirmed");
+  const row = one3(elements(list, (_a, tag) => tag === "figure").filter((el) => elements(el, (a) => a.class === "rwd-item-name" && /\-2806i$/.test(a.href ?? "")).length), "product_identity_not_confirmed");
+  if (text3(one3(elements(row, (a) => a.class === "rwd-product-list-sign"), "product_identity_not_confirmed")) !== "Symbol: WS-20-030-G") throw Error("product_identity_not_confirmed");
+  const anchor = one3(elements(row, (a) => a.class === "rwd-item-name"), "product_identity_not_confirmed");
+  if (new URL(attrs3(anchor).href, TOKMET_ORIGIN).href !== source.url || text3(anchor) !== source.name) throw Error("product_variant_mismatch");
+  if (text3(one3(elements(card, (_a, t) => t === "h1"), "product_identity_not_confirmed")) !== source.name.replace('3/8"', "3/8")) throw Error("product_variant_mismatch");
+  if (elements(card, (a, t) => t === "a" && a.href === "invena-INVENA.html").map(text3).join("|") !== "INVENA") throw Error("product_brand_not_confirmed");
+  const id = one3(elements(card, (a) => a.id === "product-cart-itemId"), "product_identity_not_confirmed");
+  if (attrs3(id).value !== "2806") throw Error("product_identity_not_confirmed");
+  if (!elements(card, (_a, t) => t === "button").some((el) => attrs3(el).onclick === "dynamic_cart.add_content('2806');" && text3(el) === "shopping_cart Dodaj do koszyka")) throw Error("product_form_not_confirmed");
+  const priceGrosze = money(one3(elements(card, (a) => a.id === "product_price_simple_brutto1"), "retailer_gross_price_not_confirmed"));
+  if (money(one3(elements(row, (a) => a.class === "product_price_simple"), "retailer_gross_price_not_confirmed")) !== priceGrosze || parsePriceToGrosze(attrs3(one3(elements(card, (a) => a.id === "product-cart-price"), "retailer_gross_price_not_confirmed")).value) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  if (!/^VAT: 23 % - [\d .]+ zł netto$/.test(text3(one3(elements(card, (a) => a.class === "rwd_show_item_price_netto"), "retailer_gross_price_not_confirmed")))) throw Error("retailer_gross_price_not_confirmed");
+  const stock = text3(one3(elements(row, (a) => a.class === "rwd-avl-b"), "retailer_stock_not_confirmed")).match(/^Dostępność: (\d+) szt\.$/)?.[1];
+  if (!stock || Number(stock) < 1) throw Error("retailer_out_of_stock");
+  if (!Number.isSafeInteger(Number(stock)) || Number(stock) > 1e9) throw Error("retailer_stock_not_confirmed");
+  if (text3(one3(elements(card, (a) => a.id === "rwd-avl"), "retailer_stock_not_confirmed")) !== `Dost\u0119pno\u015B\u0107: ${stock} szt. Dost\u0119pne natychmiast!`) throw Error("retailer_stock_not_confirmed");
+  const image = one3(elements(card, (a, t) => t === "img" && a.id === "picture"), "product_photo_not_confirmed"), imageUrl = new URL(attrs3(image).src, TOKMET_ORIGIN).href;
+  if (new URL(imageUrl).origin !== TOKMET_ORIGIN || !imageUrl.includes("pic81087437639.jpg")) throw Error("product_photo_not_confirmed");
+  return { priceGrosze, stock: Number(stock), imageUrl };
+}
+function confirmTokmetCart(html, priceGrosze) {
+  const safe = clean(html), quantities = elements(safe, (a) => /^qty\[/.test(a.id ?? "")), ids = elements(safe, (a) => /^cart_qty_type\[/.test(a.id ?? ""));
+  if (quantities.length !== 1 || attrs3(quantities[0]).id !== "qty[1]" || attrs3(quantities[0]).value !== "1" || !/^cart_operate\.UpdateQty\(event,'1','2806','\d+'\)$/.test(attrs3(quantities[0]).onkeyup ?? "") || ids.length !== 1 || attrs3(ids[0]).id !== "cart_qty_type[2806]" || attrs3(ids[0]).value !== "0") throw Error("basket_not_confirmed");
+  const links = elements(safe, (a, t) => t === "a" && a.href === "cart.php?action=remove_item&id=2806");
+  if (links.length !== 1) throw Error("basket_not_confirmed");
+  const prices = elements(safe, (a) => a.class === "step3_data").map(text3).filter((s) => /^\d[\d ,.]*zł$/.test(s));
+  if (prices.length !== 2 || prices.some((value) => money(value) !== priceGrosze) || money(one3(elements(safe, (a) => a.class === "simple_cart_step_1_sum_netto"), "basket_not_confirmed")) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  if (!text3(safe).includes(TOKMET_NAME) || !elements(safe, (a) => a.id === "submit" && a.onclick === "__cart_form.Send('buyall.php')").length) throw Error("basket_not_confirmed");
+}
+async function readTokmetProduct(source, fetchImpl) {
+  review(source);
+  const client = new AnonymousShop(TOKMET_ORIGIN, fetchImpl, AbortSignal.timeout(15e3), 8, "iso-8859-2");
+  const list = await client.text("/94,wezyki_w_oplocie_stalowym.html"), card = await client.text(source.url), current = inspectTokmetProduct(list, card, source);
+  const empty = await client.text("/cart.php");
+  if (!text3(clean(empty)).includes("Tw\xF3j koszyk jest pusty") || elements(empty, (a) => /^qty\[|^cart_qty_type\[/.test(a.id ?? "")).length) throw Error("basket_not_confirmed");
+  const added = await client.text("/_dynamic_cart.php?action=add&itemId=2806&qty=1&dbv=&view_only_price=false"), cart = await client.text("/cart.php");
+  confirmTokmetCart(cart, current.priceGrosze);
+  return { stock: current.stock, product: { "@type": "Product", name: source.name, gtin13: source.ean, brand: source.brand, image: current.imageUrl, offers: { "@type": "Offer", price: (current.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify([list, card, empty, added, cart])).digest("hex") };
+}
+
+// artifacts/api-server/src/lib/topboden-product.ts
+var import_node_crypto3 = require("node:crypto");
 var TOPBODEN_API = "https://api.topboden.pl";
 function confirmTopbodenProduct(product, source, count = source.purchaseMultiple ?? 1) {
   if (!source.productUuid || !/^[a-f0-9-]{36}$/.test(source.productUuid) || product?.uuid !== source.productUuid || product.ean !== source.ean || product.data?.logisticData?.ean !== source.ean) throw Error("product_ean_not_confirmed");
@@ -21367,9 +21822,9 @@ function confirmTopbodenProduct(product, source, count = source.purchaseMultiple
   if (product.available === false) throw Error("retailer_out_of_stock");
   if (product.available !== true || !Number.isFinite(product.baseUnitStock)) throw Error("retailer_stock_not_confirmed");
   if (product.baseUnitStock < count * source.packageSize) throw Error(count === multiple ? "retailer_out_of_stock" : "insufficient_stock");
-  const price = product.price;
-  if (!price || typeof price.isDiscount !== "boolean" || product.promotionCode) throw Error("conditional_price_not_supported");
-  const priceGrosze = price.isDiscount ? price.discountPackageGrossPrice : price.packageGrossPrice;
+  const price2 = product.price;
+  if (!price2 || typeof price2.isDiscount !== "boolean" || product.promotionCode) throw Error("conditional_price_not_supported");
+  const priceGrosze = price2.isDiscount ? price2.discountPackageGrossPrice : price2.packageGrossPrice;
   if (!Number.isSafeInteger(priceGrosze) || priceGrosze <= 0) throw Error("retailer_gross_price_not_confirmed");
   const photo = product.images?.find((image) => image.category === "Packshot") ?? product.images?.[0];
   const path = photo?.resized?.gallery?.webp;
@@ -21399,10 +21854,513 @@ async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMul
   if (records.length !== 1 || !records[0].name?.startsWith(product.name)) throw Error("product_identity_not_confirmed");
   const offer = records[0].offers;
   if (offer?.priceCurrency !== "PLN" || parsePriceToGrosze(offer.price) !== confirmed.priceGrosze || !/\/InStock$/.test(String(offer.availability))) throw Error("retailer_gross_price_not_confirmed");
-  return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
+  return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retail-pages.ts
+// artifacts/api-server/src/lib/prestashop-product.ts
+var opening = (element) => element.match(/^<[^>]+>/)?.[0] ?? "";
+function exactlyOne(elements2, reason) {
+  if (elements2.length !== 1) throw Error(reason);
+  return elements2[0];
+}
+function classElements(html, name) {
+  return elements(html, (a) => a.class?.split(/\s+/).includes(name) ?? false);
+}
+function prestashopMoney(value) {
+  const match = value.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
+  const cents2 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
+  if (!Number.isSafeInteger(cents2) || cents2 < 0) throw Error("invalid_money");
+  return cents2;
+}
+function readPrestashopProduct(html, source) {
+  const safe = clean(html);
+  const product = exactlyOne(elements(safe, (a) => /\/Product$/.test(a.itemtype ?? "")), "product_identity_ambiguous");
+  const byId2 = (id) => exactlyOne(elements(product, (a) => a.id === id), "product_identity_ambiguous");
+  const identityValue = (id) => {
+    const field = exactlyOne(elements(byId2(id), (a) => a.itemprop === "sku"), "product_identity_ambiguous");
+    const attrs7 = attrs(opening(field));
+    if (attrs7.content !== text2(field)) throw Error("product_identity_mismatch");
+    return attrs7.content;
+  };
+  if (identityValue("product_ean") !== source.ean || !source.retailerSku || identityValue("product_reference") !== source.retailerSku) throw Error("product_identity_mismatch");
+  if (source.packageSize !== 1 || source.unit !== "szt") throw Error("retailer_unit_not_confirmed");
+  const name = text2(exactlyOne(elements(product, (a, tag) => tag === "h1" && a.itemprop === "name"), "product_name_ambiguous"));
+  const brand = attrs(opening(exactlyOne(elements(product, (a, tag) => tag === "meta" && a.itemprop === "brand"), "product_brand_ambiguous"))).content;
+  const form = byId2("buy_block"), formAttrs = attrs(opening(form));
+  const action = new URL(formAttrs.action, source.url);
+  if (action.origin !== new URL(source.url).origin || action.pathname !== "/koszyk" || action.search || formAttrs.method?.toLowerCase() !== "post") throw Error("invalid_cart_route");
+  const input2 = (name2) => attrs(opening(exactlyOne(elements(form, (a, tag) => tag === "input" && a.name === name2), "product_form_ambiguous")));
+  if (!Number.isSafeInteger(source.productId) || source.productId < 1 || input2("id_product").value !== String(source.productId) || !["", "0"].includes(input2("id_product_attribute").value)) throw Error("product_id_not_confirmed");
+  if (input2("add").value !== "1") throw Error("invalid_cart_route");
+  const quantity = input2("qty"), maxPackages = Number(quantity.max);
+  if (quantity.min !== "1" || quantity.step !== "1") throw Error("purchase_rules_changed");
+  if (!/^\d+$/.test(quantity.max ?? "") || !Number.isSafeInteger(maxPackages) || maxPackages < 1) throw Error("retailer_out_of_stock");
+  const button = exactlyOne(elements(form, (a, tag) => tag === "button" && a.type === "submit" && a.name === "Submit"), "product_form_ambiguous");
+  if (/\bdisabled\b/i.test(opening(button))) throw Error("retailer_out_of_stock");
+  const offer = exactlyOne(elements(form, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "product_offer_ambiguous");
+  const availability = attrs(opening(exactlyOne(elements(offer, (a) => a.itemprop === "availability"), "product_stock_ambiguous"))).href;
+  if (!/^https?:\/\/schema.org\/InStock$/.test(availability)) throw Error("retailer_out_of_stock");
+  const priceNode = exactlyOne(elements(offer, (a) => a.id === "our_price_display" && a.itemprop === "price"), "product_price_ambiguous");
+  const priceGrosze = prestashopMoney(text2(priceNode));
+  if (!priceGrosze || parsePriceToGrosze(attrs(opening(priceNode)).content) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  const taxLabels = classElements(offer, "tax-label").map(text2);
+  if (taxLabels.filter((label) => label === "brutto").length !== 1) throw Error("retailer_gross_price_not_confirmed");
+  const currency2 = attrs(opening(exactlyOne(elements(offer, (a) => a.itemprop === "priceCurrency"), "product_currency_ambiguous"))).content;
+  if (currency2 !== "PLN") throw Error("retailer_currency_not_confirmed");
+  const image = attrs(opening(byId2("bigpic")));
+  if (image.itemprop !== "image" || image.alt !== name) throw Error("product_image_not_confirmed");
+  const imageUrl = new URL(image.src, source.url);
+  if (imageUrl.protocol !== "https:" || imageUrl.origin !== action.origin) throw Error("product_image_not_confirmed");
+  const token = input2("token").value;
+  if (!/^[a-f0-9]{32}$/i.test(token ?? "")) throw Error("cart_session_not_confirmed");
+  return {
+    product: {
+      "@type": "Product",
+      name,
+      brand,
+      gtin13: source.ean,
+      image: imageUrl.href,
+      offers: { "@type": "Offer", price: (priceGrosze / 100).toFixed(2), priceCurrency: currency2, availability, url: source.url }
+    },
+    priceGrosze,
+    maxPackages,
+    addPath: action.pathname,
+    // Only anonymous product-add fields. Never serialize a checkout form.
+    addFields: { token, id_product: String(source.productId), add: "1", id_product_attribute: "0", Submit: "Dodaj do koszyka" }
+  };
+}
+
+// artifacts/api-server/src/lib/abstore-product.ts
+var one4 = (values, reason) => {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+};
+var opening2 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+var byClass = (html, name) => elements(html, (a) => a.class?.split(/\s+/).includes(name) ?? false);
+function readAbstoreProduct(html, source) {
+  if (new URL(source.url).origin !== "https://kronodom.pl") throw Error("invalid_retailer_origin");
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((match2) => match2[1]);
+  const raw = one4(scripts.filter((script) => /^\s*const productData = /.test(script)), "product_identity_ambiguous");
+  const literal2 = raw.match(/^\s*const productData = ([\s\S]*);\s*$/)?.[1];
+  if (!literal2) throw Error("product_identity_not_confirmed");
+  const data = JSON.parse(literal2), schema = JSON.parse(data.schemaOrg?.jsonld ?? "null");
+  if (!Number.isSafeInteger(source.productId) || data.id !== source.productId || data.positionOfferId !== source.productId || data.indexCatalogue !== source.ean || schema?.mpn !== source.ean || schema.sku !== source.ean) throw Error("product_ean_not_confirmed");
+  if (data.name !== schema.name || data.h1 !== data.name || schema.manufacturer?.name !== source.brand || new URL(schema.offers?.url).href !== source.url) throw Error("product_identity_not_confirmed");
+  if (data.stockState !== "IN_STOCK" || data.canBeSold !== true || data.availability?.productAvailable !== true) throw Error("retailer_out_of_stock");
+  if (data.hideProductPrice !== false || data.hidePriceForAnon !== false || data.hideCart !== false || data.invertedVat !== false || data.personalOffer !== false || data.offerDTO?.available !== true || data.offerDTO.addToCartDisabled !== false || data.offerDTO.anyInvalidCondition !== false || data.offerDTO.setOfProducts !== false) throw Error("conditional_price_not_supported");
+  const unit = data.clientSaleUnit, reference = data.referenceUnit;
+  if (source.unit !== "m2" || source.apiPurchaseUnit !== "m2" || !Number.isSafeInteger(source.packageSize) || source.packageSize < 1 || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  if (Number(unit?.minQnt) !== source.packageSize || Number(unit?.stepQnt) !== source.packageSize) throw Error("purchase_rules_changed");
+  if (unit?.unit !== "m2" || unit.atomic !== true || unit.canBeSold !== true || reference?.qty !== 1 || reference.unit !== "m2" || unit.unitId !== reference.unitId || unit.baseUnitRate !== 1 || unit.id !== source.productId) throw Error("retailer_unit_not_confirmed");
+  if (!Number.isFinite(unit.availQnt) || unit.availQnt < source.packageSize) throw Error("retailer_out_of_stock");
+  const price2 = unit.priceForUnit, gross2 = typeof price2?.finalGross === "string" ? price2.finalGross.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/) : null;
+  const unitGrosze = gross2 ? Number(gross2[1]) * 100 + Number(gross2[2]) : NaN;
+  if (price2?.currency !== "PLN" || price2.currencyValue !== "PLN" || schema.offers.priceCurrency !== "PLN" || !Number.isSafeInteger(unitGrosze) || unitGrosze <= 0 || parsePriceToGrosze(price2.finalGrossValue) !== unitGrosze || parsePriceToGrosze(data.price?.finalGrossValue) !== unitGrosze || parsePriceToGrosze(schema.offers.price) !== unitGrosze) throw Error("retailer_gross_price_mismatch");
+  const safe = clean(html), primary = one4(elements(safe, (a) => a.id === "product-details-div"), "product_identity_ambiguous");
+  const name = text2(one4(elements(primary, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
+  if (name !== data.name || !text2(primary).includes(`Indeks katalogowy: ${source.ean}`)) throw Error("product_identity_not_confirmed");
+  const input2 = opening2(one4(elements(primary, (a, tag) => tag === "input" && a.class?.split(/\s+/).includes("touch-spin")), "product_form_ambiguous"));
+  const button = opening2(one4(elements(primary, (a, tag) => tag === "button" && a["data-module"] === "cart/cartButton"), "product_form_ambiguous"));
+  if (input2["data-product-id"] !== String(source.productId) || input2["data-offer-pos-id"] !== String(source.productId) || input2["data-unitid"] !== String(unit.unitId) || input2["data-unitsc"] !== "m2" || button["data-product-id"] !== String(source.productId) || button["data-sale-unit-id"] !== String(unit.unitId) || button["data-unitsc"] !== "m2") throw Error("product_form_ambiguous");
+  if (Number(input2["data-step"]) !== source.packageSize || Number(input2["data-min"]) !== source.packageSize || Number(button["data-qty"]) !== source.packageSize) throw Error("purchase_rules_changed");
+  const visible = text2(one4(byClass(one4(byClass(primary, "abs-product-header-price"), "product_price_ambiguous"), "abs-item-price-final"), "product_price_ambiguous"));
+  const match = visible.match(/^([\d\s,.]+)\s*zł\s*brutto\s*\/\s*m2$/);
+  if (!match || parsePriceToGrosze(match[1].trim().replace(",", ".")) !== unitGrosze) throw Error("retailer_gross_price_mismatch");
+  if (schema.offers.availability !== "InStock") throw Error("retailer_out_of_stock");
+  const packGrosze = unitGrosze * source.packageSize;
+  if (!Number.isSafeInteger(packGrosze)) throw Error("invalid_money");
+  const image = Array.isArray(schema.image) ? schema.image[0] : null;
+  if (typeof image !== "string" || new URL(image).origin !== "https://a.assecobs.com") throw Error("product_image_not_confirmed");
+  return {
+    "@type": "Product",
+    name,
+    gtin13: source.ean,
+    brand: source.brand,
+    image,
+    description: schema.description,
+    offers: { "@type": "Offer", price: (packGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", priceValidUntil: schema.offers.priceValidUntil, url: source.url }
+  };
+}
+
+// artifacts/api-server/src/lib/certusoft-product.ts
+var only2 = (values, reason) => {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+};
+var byClass2 = (html, name) => elements(html, (a) => a.class?.split(/\s+/).includes(name) ?? false);
+var attrs4 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+function readCertusoftState(html) {
+  const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  const script = only2(scripts.filter((s) => /^\s*window\.__INITIAL_STATE__=/.test(s)), "retailer_state_ambiguous");
+  const literal2 = script.match(/^\s*window\.__INITIAL_STATE__=(\{[\s\S]*\});\(function\(\)\{var s;/)?.[1];
+  if (!literal2) throw Error("retailer_state_not_confirmed");
+  return JSON.parse(literal2);
+}
+function readCertusoftProduct(html, source) {
+  const url2 = new URL(source.url);
+  if (url2.origin !== "https://hipper.pl" || !Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.retailerUnitId)) throw Error("product_id_not_confirmed");
+  if (source.unit !== "szt" || source.packageSize !== 1 || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  const state = readCertusoftState(html), card = state.csAppWindowsUtils?.csAppWindows?.csB2BItemCard;
+  const rows = card?.dataSets?.itemCard?.rows;
+  if (!Array.isArray(rows) || rows.length !== 1) throw Error("product_identity_ambiguous");
+  const row = rows[0], schema = JSON.parse(row.structuredData ?? "null");
+  if (row.EAN !== source.ean || schema?.sku !== source.ean || schema.mpn !== String(source.productId) || row.csItemsId !== source.productId || row.csItemsUnitsId !== source.retailerUnitId) throw Error("product_ean_not_confirmed");
+  if (row.itemName !== schema.name || schema.brand?.name !== source.brand || "/" + row.appWindowIdentRoute !== url2.pathname) throw Error("product_identity_not_confirmed");
+  if (row.stockUnit !== "szt" || row.quantityUnits !== 1 || row.isNegative !== 0) throw Error("purchase_rules_changed");
+  const maxPackages = row.qStockAv;
+  if (!Number.isSafeInteger(maxPackages) || maxPackages < 1 || schema.offers?.availability !== "InStock") throw Error("retailer_out_of_stock");
+  const priceGrosze = parsePriceToGrosze(row.cUnitPriceADis);
+  if (row.discount !== 0 || schema.offers?.priceCurrency !== "PLN" || !priceGrosze || parsePriceToGrosze(row.cUnitPrice) !== priceGrosze || parsePriceToGrosze(schema.offers.price) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  const primary = only2(elements(clean(html), (a, tag) => tag === "section" && a.id === "item"), "product_identity_ambiguous");
+  const name = text2(only2(elements(primary, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
+  const ean = text2(only2(byClass2(primary, "c-ean"), "product_identity_ambiguous"));
+  if (name !== row.itemName || ean !== `(Kod produktu: ${source.ean})`) throw Error("product_identity_not_confirmed");
+  const price2 = text2(only2(byClass2(only2(byClass2(primary, "c-prc"), "product_price_ambiguous"), "c-upad"), "product_price_ambiguous"));
+  if (!/^\d[\d\s]*,\d{2} zł$/.test(price2) || parsePriceToGrosze(price2.replace(/ zł$/, "")) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  const stock = text2(only2(byClass2(primary, "c-itm-s"), "retailer_stock_not_confirmed"));
+  if (stock !== `W magazynie ${maxPackages} szt`) throw Error("retailer_stock_not_confirmed");
+  const quantity = attrs4(only2(elements(primary, (a, tag) => tag === "input" && a.type === "quantity"), "product_form_ambiguous"));
+  const button = attrs4(only2(byClass2(primary, "cartAdd"), "product_form_ambiguous"));
+  if (quantity.value !== "1" || !quantity.class?.split(/\s+/).includes("c-ft-integer") || "disabled" in button) throw Error("purchase_rules_changed");
+  const images = schema.image;
+  if (!Array.isArray(images) || typeof images[0] !== "string" || new URL(images[0]).origin !== url2.origin || !new URL(images[0]).pathname.startsWith("/api/attachment/get/")) throw Error("product_image_not_confirmed");
+  return {
+    state,
+    maxPackages,
+    priceGrosze,
+    product: {
+      "@type": "Product",
+      name,
+      brand: source.brand,
+      gtin13: source.ean,
+      image: new URL(images[0]).href,
+      description: row.itemDesc,
+      offers: { "@type": "Offer", price: (priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url }
+    }
+  };
+}
+
+// artifacts/api-server/src/lib/modna-product.ts
+var MODNA_ORIGIN = "https://modnalazienka.pl";
+var modnaOne = (values, error40 = "product_identity_ambiguous") => {
+  if (values.length !== 1) throw Error(error40);
+  return values[0];
+};
+var modnaAttrs = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+var modnaById = (html, id, tag) => modnaOne(elements(html, (a, t) => a.id === id && (!tag || t === tag)));
+function modnaMoney(value) {
+  const match = value.replace(/\s/g, "").match(/^(\d+(?:[.,]\d{1,2})?)(?:zł)?$/);
+  const result = match ? parsePriceToGrosze(match[1].replace(",", ".")) : null;
+  if (!Number.isSafeInteger(result) || result === null || result <= 0) throw Error("invalid_money");
+  return result;
+}
+function readModnaProduct(html, source) {
+  if (new URL(source.url).origin !== MODNA_ORIGIN || source.format !== "modna" || !Number.isSafeInteger(source.productId) || source.unit !== "m2" || source.apiPurchaseUnit !== "m2" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  const size = Math.round(source.packageSize * 100);
+  if (size <= 0 || !Number.isSafeInteger(size) || Math.abs(source.packageSize * 100 - size) > 1e-6) throw Error("retailer_unit_not_confirmed");
+  const safe = clean(html), primary = modnaById(safe, "product_data"), buy = modnaById(safe, "add_product_cart"), id = String(source.productId);
+  const canonical = modnaOne(elements(safe, (a, t) => t === "link" && a.rel === "canonical"));
+  if (modnaAttrs(canonical).href !== source.url) throw Error("product_identity_not_confirmed");
+  const name = text2(modnaById(primary, "product_name_" + id, "h1")), ean = modnaById(primary, "product_ean_" + id);
+  if (modnaAttrs(ean).value !== source.ean || text2(ean) !== "EAN: " + source.ean) throw Error("product_ean_not_confirmed");
+  const records = [...html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map((m) => JSON.parse(m[1])).filter((p) => p["@type"] === "Product");
+  if (records.length !== 1 || records[0].mpn !== id || records[0].name.trim() !== name || records[0].brand?.name !== source.brand) throw Error("product_identity_not_confirmed");
+  const schema = records[0];
+  const literal2 = modnaOne([...html.matchAll(/\bvar product_json = (\{[^\n;]+\});/g)].map((m) => m[1]));
+  const number4 = (key) => Number(modnaOne([...literal2.matchAll(new RegExp("'" + key + "': (\\d+(?:\\.\\d+)?)(?=,|})", "g"))].map((m) => m[1])));
+  if (number4("id") !== source.productId || number4("minimum") !== 1 || number4("minimum_packages") !== 1 || number4("minimum_meters") !== source.packageSize || number4("quantity") !== source.packageSize || number4("unit") !== source.packageSize || number4("pieces") !== 4 || number4("square_meter") !== 1) throw Error("purchase_rules_changed");
+  const stock = text2(primary).match(/Stan magazynowy: (\d+) paczek \[([\d,]+) m 2 \]/);
+  const maxPackages = Number(stock?.[1]);
+  if (!stock || !Number.isSafeInteger(maxPackages) || maxPackages < 1 || Math.round(Number(stock[2].replace(",", ".")) * 100) !== maxPackages * size || !text2(primary).includes("Dost\u0119pno\u015B\u0107: gotowe do wysy\u0142ki")) throw Error("retailer_out_of_stock");
+  if (!text2(primary).includes(`Min. zam\xF3wienie: 1 paczka [${String(source.packageSize).replace(".", ",")} m 2 ]`) || !text2(primary).includes("Jednostka sprzeda\u017Cy: paczka W paczce: 4 szt.")) throw Error("product_package_not_confirmed");
+  const input2 = (field) => modnaAttrs(modnaById(buy, field, "input"));
+  const packs = input2("cart_quantity_" + id), meters = input2("cart_quantity_real_unit_" + id);
+  if (input2("product_id").value !== id || input2("product_manufacturer_" + id).value !== source.brand || Number(input2("product_minimum_" + id).value) !== 1 || packs.name !== "pack" || packs.step !== "1" || packs.value !== "1" || Number(packs.min) !== source.packageSize || meters.name !== "meters" || Number(meters.value) !== source.packageSize || Number(meters.step) !== source.packageSize || Number(meters.minimum) !== source.packageSize) throw Error("purchase_rules_changed");
+  const button = modnaById(buy, "add_to_basket", "button");
+  if (modnaAttrs(button).onclick !== `addToCart(${id})` || /\bdisabled\b/i.test(button.match(/^<[^>]+>/)?.[0] ?? "") || text2(button) !== "Dodaj do koszyka") throw Error("retailer_out_of_stock");
+  const priceGrosze = modnaMoney(text2(modnaById(modnaById(buy, "price_net"), "product_price_" + id, "span")));
+  const unitPrice = text2(modnaById(buy, "product_price", "p")).replace(/\s/g, "").match(/^([\d,]+)zł\/m2$/);
+  if (!unitPrice || modnaMoney(unitPrice[1]) !== parsePriceToGrosze(String(number4("price"))) || number4("real_price") !== number4("price") || Math.round(modnaMoney(unitPrice[1]) * size / 100) !== priceGrosze || parsePriceToGrosze(input2("product_price_" + id).value) !== priceGrosze || parsePriceToGrosze(schema.offers?.price) !== priceGrosze || schema.offers?.priceCurrency !== "PLN") throw Error("retailer_gross_price_mismatch");
+  if (!/^https?:\/\/schema.org\/InStock$/.test(schema.offers?.availability ?? "")) throw Error("retailer_out_of_stock");
+  const photo = modnaOne(elements(safe, (a, t) => t === "img" && a.class?.split(/\s+/).includes("thumbnail_image") === true));
+  const image = new URL(modnaAttrs(photo).src), structuredImage = new URL(schema.image);
+  const stem = (url2) => url2.pathname.replace("/images/thumbnails/", "/images/").replace(/\.(jpg|png|webp)$/, "").replace(/\/{2,}/g, "/");
+  if (image.origin !== MODNA_ORIGIN || structuredImage.origin !== image.origin || stem(image) !== stem(structuredImage)) throw Error("product_image_not_confirmed");
+  const token = modnaAttrs(modnaById(safe, "csrf_token", "input")).value;
+  if (!/^[A-Za-z0-9._-]{32,256}$/.test(token ?? "")) throw Error("cart_session_not_confirmed");
+  return {
+    priceGrosze,
+    maxPackages,
+    token,
+    name,
+    imageUrl: image.href,
+    product: { "@type": "Product", name, gtin13: source.ean, brand: source.brand, image: image.href, offers: { "@type": "Offer", price: (priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }
+  };
+}
+
+// artifacts/api-server/src/lib/betterial-product.ts
+var opening3 = (element) => element.match(/^<[^>]+>/)?.[0] ?? "";
+function readBetterialProduct(html, source) {
+  const safe = clean(html);
+  const details = exactlyOne(elements(safe, (a) => a.class?.split(/\s+/).includes("js-product-details") ?? false), "product_identity_ambiguous");
+  const item = JSON.parse(attrs(opening3(details))["data-product"]);
+  if (!Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.variantId) || item.id !== source.productId || item.id_product !== source.productId || item.id_product_attribute !== source.variantId) throw Error("product_id_not_confirmed");
+  const attributes = Object.entries(item.attributes ?? {});
+  if (attributes.length !== 1) throw Error("product_variant_mismatch");
+  const [groupId, attribute4] = attributes[0];
+  const packName = `${source.packageSize} ${source.unit}`;
+  if (!source.retailerSku || attribute4.ean13 !== source.ean || attribute4.reference !== source.retailerSku || attribute4.group !== "opakowanie" || attribute4.name !== packName) throw Error("product_identity_mismatch");
+  if (item.unity !== "opakowanie" || item.unit_price_ratio !== 1 || item.nopackprice !== null || item.pack !== 0 || item.is_customizable !== false) throw Error("retailer_unit_not_confirmed");
+  const form = exactlyOne(elements(safe, (a) => a.id === "add-to-cart-or-refresh"), "product_form_ambiguous");
+  const formAttrs = attrs(opening3(form));
+  const action = new URL(formAttrs.action, source.url);
+  if (action.origin !== new URL(source.url).origin || action.pathname !== "/koszyk" || action.search || formAttrs.method !== "post") throw Error("invalid_cart_route");
+  const input2 = (name2) => attrs(opening3(exactlyOne(elements(form, (a, tag) => tag === "input" && a.name === name2), "product_form_ambiguous")));
+  if (input2("id_product").value !== String(source.productId) || input2("id_customization").value !== "0") throw Error("product_id_not_confirmed");
+  const select = exactlyOne(elements(form, (a, tag) => tag === "select" && a.name === `group[${groupId}]`), "product_variant_mismatch");
+  const selected = exactlyOne(elements(select, (a, tag) => tag === "option" && a.selected !== void 0), "product_variant_mismatch");
+  if (attrs(opening3(selected)).value !== String(attribute4.id_attribute) || text2(selected) !== packName) throw Error("product_variant_mismatch");
+  const multiple = source.purchaseMultiple ?? 1;
+  const marker = attrs(opening3(exactlyOne(elements(form, (a) => a["data-xplo-order-multiple"] !== void 0), "purchase_rules_changed")));
+  if (item.minimal_quantity !== multiple || input2("qty").min !== String(multiple) || marker["data-xplo-order-multiple"] !== String(multiple) || marker["data-xplo-product-id"] !== String(source.productId) || marker["data-xplo-product-attribute-id"] !== String(source.variantId)) throw Error("purchase_rules_changed");
+  const button = exactlyOne(elements(form, (a, tag) => tag === "button" && a["data-button-action"] === "add-to-cart"), "product_form_ambiguous");
+  if (item.active !== "1" || item.available_for_order !== "1" || item.availability !== "in_stock" || item.allow_oosp !== 0 || /\bdisabled\b/i.test(opening3(button))) throw Error("retailer_out_of_stock");
+  const name = text2(exactlyOne(elements(safe, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
+  if (name !== source.name || item.name !== name || item.manufacturer_name !== source.brand) throw Error("product_name_mismatch");
+  const products = [...html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].flatMap((match) => {
+    try {
+      const value = JSON.parse(match[1]);
+      return Array.isArray(value) ? value : [value];
+    } catch {
+      return [];
+    }
+  }).filter((value) => value?.["@type"] === "Product");
+  if (products.length !== 1) throw Error("product_identity_ambiguous");
+  const product = products[0], offer = product.offers;
+  if (product.name !== name || product.url !== source.url || product.brand?.name !== source.brand || offer?.["@type"] !== "Offer" || offer.url !== source.url || offer.priceCurrency !== "PLN") throw Error("product_identity_mismatch");
+  const priceGrosze = prestashopMoney(item.price);
+  const priceNodes = elements(safe, (a) => a.class?.split(/\s+/).includes("product__price") ?? false);
+  if (priceNodes.length !== 1 || prestashopMoney(text2(priceNodes[0]).replace(/^Cena:\s*/, "")) !== priceGrosze || parsePriceToGrosze(offer.price) !== priceGrosze || parsePriceToGrosze(item.price_amount) !== priceGrosze || prestashopMoney(item.unit_price) !== priceGrosze || !priceGrosze) throw Error("retailer_gross_price_mismatch");
+  const grossLabels = elements(safe, (a) => a.class?.split(/\s+/).includes("product__tax-label") ?? false).map(text2);
+  if (grossLabels.length !== 1 || grossLabels[0] !== "Brutto") throw Error("retailer_gross_price_not_confirmed");
+  if (offer.availability !== "https://schema.org/InStock") throw Error("retailer_out_of_stock");
+  const image = Array.isArray(product.image) && product.image.length === 1 ? product.image[0] : null;
+  if (typeof image !== "string" || !image.startsWith(action.origin + "/")) throw Error("product_image_not_confirmed");
+  return { ...product, gtin13: attribute4.ean13, description: `${text2(item.description ?? "")} ${packName}`, image };
+}
+
+// artifacts/api-server/src/lib/folnet-product.ts
+var one5 = (values, reason) => {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+};
+var attrs5 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+var byId = (html, id) => one5(elements(html, (a) => a.id === id), "product_identity_not_confirmed");
+var gross = (value) => {
+  if (typeof value !== "string" || !/^\d+\.\d{2}$/.test(value)) throw Error("retailer_gross_price_mismatch");
+  const price2 = parsePriceToGrosze(value);
+  if (price2 === null || price2 < 0) throw Error("retailer_gross_price_mismatch");
+  return price2;
+};
+function inspectFolnetProduct(html, source) {
+  if (new URL(source.url).origin !== "https://folnet.pl" || !Number.isSafeInteger(source.productId) || !source.retailerSku) throw Error("invalid_retailer_origin");
+  const conpar = source.id === "folnet-conpar-100m2" && source.ean === "5902096430103" && source.productId === 10288 && source.retailerSku === "12-021" && source.brand === "Conkret" && source.category === "vapor-barrier" && source.unit === "m2" && source.packageSize === 100 && source.url === "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html";
+  const foam = source.id === "folnet-soudal-low-expansion-winter-750ml" && source.ean === "5411183048522" && source.productId === 8372 && source.retailerSku === "112583" && source.brand === "Soudal" && source.unit === "ml" && source.packageSize === 750;
+  if (!conpar && !foam) throw Error("unreviewed_folnet_product");
+  const nativeUnit = conpar ? "rolka" : "szt.";
+  const literals = [...html.matchAll(/\bvar\s+product_data\s*=\s*(\{[\s\S]*?\})\s*;?\s*<\/script>/gi)];
+  if (literals.length !== 1) throw Error("product_identity_ambiguous");
+  const data = JSON.parse(literals[0][1]), size = data.sizes?.onesize;
+  if (Object.keys(data.sizes ?? {}).join(",") !== "onesize" || size?.type !== "onesize" || size.name !== "uniw" || size.code_producer !== source.ean || size.code_extern !== (conpar ? source.retailerSku : `SOU.${source.retailerSku}`)) throw Error("product_ean_not_confirmed");
+  if (data.product_type !== "product_item" || data.currency !== "z\u0142" || data.unit !== nativeUnit || data.unit_sellby !== "1" || data.unit_precision !== "0") throw Error("retailer_unit_not_confirmed");
+  if (size.availability?.status !== "enable" || size.availability.visible !== "y" || !/^\d+$/.test(size.availability.sum) || !Number.isSafeInteger(Number(size.availability.sum)) || Number(size.availability.sum) < 1) throw Error("retailer_out_of_stock");
+  for (const price2 of [data.base_price, size.price]) if (price2?.basket_enable !== "y" || price2.rebate_code_active !== "n" || price2.priceformula_error !== "false" || price2.vat !== "23") throw Error("conditional_price_not_supported");
+  const amount2 = gross(size.price.value);
+  if (Object.keys(data.order_quantity_range ?? {}).length) throw Error("purchase_rules_changed");
+  if (amount2 <= 0 || gross(data.base_price.value) !== amount2 || gross(data.base_price.price_unit_sellby) !== amount2) throw Error("retailer_gross_price_mismatch");
+  const safe = clean(html), form = byId(safe, "projector_form");
+  if (attrs5(form).action !== "/basketchange.php" || attrs5(form).method !== "post" || attrs5(form)["data-product_id"] !== String(source.productId) || attrs5(byId(form, "projector_product_hidden")).value !== String(source.productId) || attrs5(byId(form, "projector_size_hidden")).value !== "onesize" || attrs5(byId(form, "projector_mode_hidden")).value !== "1") throw Error("product_id_not_confirmed");
+  if (text2(byId(form, "projector_code")) !== `Symbol: ${source.retailerSku}` || text2(byId(form, "projector_price_unit")) !== nativeUnit || text2(byId(form, "projector_price_format")) !== "brutto") throw Error("retailer_unit_or_gross_not_confirmed");
+  if (parsePriceToGrosze(text2(byId(form, "projector_price_value")).replace(/\s*zł$/, "")) !== amount2) throw Error("retailer_gross_price_mismatch");
+  const name = text2(one5(elements(form, (_a, tag) => tag === "h1"), "product_name_not_confirmed"));
+  const records = [...html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].flatMap((m) => {
+    try {
+      return [JSON.parse(m[1])].flat();
+    } catch {
+      return [];
+    }
+  }).filter((p) => p?.["@type"] === "Product");
+  if (records.length !== 1) throw Error("product_identity_ambiguous");
+  const product = records[0], offers = [product.offers].flat();
+  const brand = text2(one5(elements(form, (a) => a.class === "brand"), "product_brand_not_confirmed"));
+  if (product.name !== name || product.brand !== source.brand || brand !== product.brand || product.productID !== `mpn:${source.retailerSku}` || offers.length !== 1) throw Error("product_identity_not_confirmed");
+  const url2 = new URL(offers[0]?.url, source.url);
+  if (url2.origin !== "https://folnet.pl" || url2.pathname !== new URL(source.url).pathname || url2.searchParams.get("selected_size") !== "onesize" || offers[0]?.priceCurrency !== "PLN" || offers[0]?.availability !== "http://schema.org/InStock" || gross(offers[0]?.price) !== amount2) throw Error("retailer_gross_price_mismatch");
+  const dictionary = one5(elements(safe, (a) => a.class === "n54117_dictionary"), "product_package_not_confirmed");
+  const pack = text2(one5(elements(dictionary, (_a, tag) => tag === "tr").filter((row) => text2(row).startsWith("Wymiar :")), "product_package_not_confirmed"));
+  if (pack !== (conpar ? "Wymiar : 2 m x 50 m" : "Wymiar : 750 ml")) throw Error("product_package_not_confirmed");
+  if (conpar) {
+    const thickness = text2(one5(elements(dictionary, (_a, tag) => tag === "tr").filter((row) => text2(row).startsWith("Grubo\u015B\u0107 :")), "product_package_not_confirmed"));
+    if (thickness !== "Grubo\u015B\u0107 : 0,2 mm \xB1 30%") throw Error("product_package_not_confirmed");
+  }
+  if (typeof product.image !== "string" || new URL(product.image).origin !== "https://folnet.pl") throw Error("product_photo_not_confirmed");
+  const polish = elements(safe, (a, tag) => tag === "a" && a.class === "checked" && a.href === "/settings.php?curr=PLN&lang=pol&country=1143020003");
+  if (polish.length !== 1) throw Error("country_not_confirmed");
+  return { product: { ...product, gtin13: source.ean, description: text2(dictionary), offers: { ...offers[0], url: url2.href } }, amount: amount2, stock: Number(size.availability.sum) };
+}
+
+// artifacts/api-server/src/lib/kronosfera-product.ts
+var hasClass = (attributes, name) => attributes.class?.split(/\s+/).includes(name) ?? false;
+var one6 = (values, reason) => {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+};
+var attr = (element, name) => attrs(element.match(/^<[^>]+>/)?.[0] ?? "")[name];
+function inspectKronosferaProduct(html, source) {
+  if (source.format !== "kronosfera" || source.store !== "Kronosfera" || source.productId !== 2068 || source.retailerSku !== "LK100F24-9002" || source.ean !== "5907555424969" || source.packageSize !== 2.4 || source.unit !== "mb" || source.url !== "https://kronosfera.pl/k/listwa-przypodlogowa-lk100f24-9002,2068") throw Error("product_identity_not_confirmed");
+  const products = [];
+  for (const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    let value;
+    try {
+      value = JSON.parse(match[1]);
+    } catch {
+      continue;
+    }
+    if (value?.["@type"] === "Product") products.push(value);
+  }
+  if (products.length !== 1) throw Error("product_identity_not_confirmed");
+  const product = products[0], offer = product.offers;
+  if (product.sku !== source.retailerSku || product.name !== source.name || product.brand !== "KronoOriginal" || ["gtin", "gtin8", "gtin12", "gtin13", "gtin14"].some((key) => product[key] !== void 0 && product[key] !== source.ean)) throw Error("product_identity_not_confirmed");
+  if (!offer || Array.isArray(offer) || offer["@type"] !== "Offer" || offer.priceCurrency !== "PLN" || !/^https?:\/\/schema.org\/InStock$/.test(offer.availability) || new URL(offer.url, source.url).href !== source.url) throw Error("retailer_out_of_stock");
+  const safe = clean(html);
+  if (text2(one6(elements(safe, (_a, tag) => tag === "h1"), "product_identity_not_confirmed")) !== source.name) throw Error("product_identity_not_confirmed");
+  const main = one6(elements(safe, (a) => a.id === "product"), "product_identity_not_confirmed");
+  const form = one6(elements(main, (a, tag) => tag === "form" && a.id === "customizable"), "product_form_not_confirmed");
+  if (attr(form, "action") !== "https://kronosfera.pl/ajax/store/product/purchase/1/pl/2068" || attr(form, "method") !== "POST") throw Error("product_form_not_confirmed");
+  const converter = one6(elements(form, (_a, tag) => tag === "price-converter"), "retailer_unit_not_confirmed");
+  for (const [key, value] of Object.entries({ "main-unit-type": "szt", "unit-value": "1.00000", "units-in-outer": "1", min: "1", step: "1" })) if (attr(converter, key) !== value) throw Error("retailer_unit_not_confirmed");
+  const visible = text2(one6(elements(form, (a) => hasClass(a, "product-buy-config__price-value")), "retailer_gross_price_not_confirmed"));
+  const unit = text2(one6(elements(form, (a) => hasClass(a, "product-buy-config__price-currency")), "retailer_unit_not_confirmed"));
+  const amount2 = parsePriceToGrosze(visible);
+  if (unit !== "z\u0142 za sztuk\u0119" || !amount2 || amount2 !== parsePriceToGrosze(offer.price) || amount2 !== parsePriceToGrosze(attr(converter, "price-pack") ?? "")) throw Error("retailer_gross_price_mismatch");
+  const params = new Map(elements(main, (a) => hasClass(a, "product-params__item")).map((row) => [
+    text2(one6(elements(row, (a) => hasClass(a, "product-params__name")), "product_variant_mismatch")),
+    text2(one6(elements(row, (a) => hasClass(a, "product-params__value")), "product_variant_mismatch"))
+  ]));
+  for (const [key, value] of Object.entries({ "Kolor listwy": "bia\u0142y", "D\u0142ugo\u015B\u0107 listwy (mm)": "2400", "Wysoko\u015B\u0107 listwy (mm)": "100", "Grubo\u015B\u0107 listwy (mm)": "14" })) if (params.get(key) !== value) throw Error("product_variant_mismatch");
+  if (!/Produkt z oferty Kronospan KO Sp\. z\.o\.o\./.test(text2(form))) throw Error("product_manufacturer_not_confirmed");
+  const token = attr(one6(elements(form, (a) => a.name === "_token"), "anonymous_form_not_confirmed"), "value");
+  if (!token || !/^[A-Za-z0-9]{40}$/.test(token)) throw Error("anonymous_form_not_confirmed");
+  return { amount: amount2, token, product: { ...product, gtin13: source.ean, offers: { ...offer, url: source.url } } };
+}
+
+// artifacts/api-server/src/lib/skyshop-product.ts
+var import_node_crypto4 = require("node:crypto");
+var MATBUD_ORIGIN = "https://centrummatbud.pl";
+var MATBUD_URL = MATBUD_ORIGIN + "/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729";
+var MATBUD_NAME = "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op";
+var MATBUD_PRODUCER = "YETICO - PRODECENT SYSTEMU DOCIEPLE\u0143";
+var MATBUD_PASSIVE_URL = MATBUD_ORIGIN + "/Styropian-grafitowy-15cm-Yetico-Gama-Passive-Fasada-033-p131345";
+var MATBUD_PASSIVE_NAME = "Styropian grafitowy 15cm Yetico Gama Passive Fasada 033";
+var reviews = [
+  { id: 96729, url: MATBUD_URL, name: MATBUD_NAME, ean: "5902578301976", sku: "FASADA 044 10CM", area: 3, nativePerPack: 1, nativeUnit: "OP", precision: 1, color: "bia\u0142y", lambda: "0,044", thickness: 10, boards: 6, photo: "241757" },
+  { id: 131345, url: MATBUD_PASSIVE_URL, name: MATBUD_PASSIVE_NAME, ean: "5902578307268", sku: "FASADA 033 15CM", area: 2, nativePerPack: 2, nativeUnit: "M2", precision: 2, color: "grafitowy", lambda: "0,033", thickness: 15, boards: 4, photo: "307747" }
+];
+function skyshopReview(id) {
+  const review2 = reviews.find((row) => row.id === id);
+  if (!review2) throw Error("product_identity_not_confirmed");
+  return review2;
+}
+function reviewedSkyshopSource(source) {
+  const review2 = skyshopReview(source.productId);
+  if (source.format !== "skyshop" || source.store !== "Centrum Matbud" || source.url !== review2.url || source.ean !== review2.ean || source.brand !== "Yetico" || source.name !== review2.name || source.retailerSku !== review2.sku || source.packageSize !== review2.area || source.unit !== "m2") throw Error("product_identity_not_confirmed");
+  if (source.minimumPackages !== 50 || (source.purchaseMultiple ?? 1) !== 1) throw Error("purchase_rules_changed");
+  return review2;
+}
+var only3 = (values, reason) => {
+  if (values.length !== 1) throw Error(reason);
+  return values[0];
+};
+var attribute2 = (element, key) => attrs(element.match(/^<[^>]+>/)?.[0] ?? "")[key];
+var amount = (value) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+var price = (value) => {
+  const number4 = parsePriceToGrosze(value?.gross), display = parsePriceToGrosze(String(value?.grossDisplay ?? "").replace(/\s*zł$/, ""));
+  if (value?.currency !== "PLN" || value.tax?.percent !== 23 || !number4 || !Number.isSafeInteger(number4) || number4 !== display) throw Error("retailer_gross_price_not_confirmed");
+  return number4;
+};
+function inspectSkyshopProduct(html, api, parameters, source) {
+  const review2 = reviewedSkyshopSource(source), minimum = 50 * review2.nativePerPack;
+  const safe = clean(html), heading = only3(elements(safe, (a) => a.id === "product-name-information"), "product_identity_not_confirmed");
+  if (text2(heading) !== review2.name) throw Error("product_identity_not_confirmed");
+  const add = only3(elements(safe, (a) => a["data-cy"] === "addToCartButton" && a["aria-label"] === "Dodaj do koszyka"), "product_form_not_confirmed");
+  if (attribute2(add, "data-product-id") !== String(review2.id)) throw Error("product_form_not_confirmed");
+  const producer = only3(elements(safe, (_a, tag) => tag === "a").filter((el) => attribute2(el, "href") === "/YETICO-PRODECENT-SYSTEMU-DOCIEPLEN/pr/982"), "product_manufacturer_not_confirmed");
+  if (!text2(producer).includes(MATBUD_PRODUCER)) throw Error("product_manufacturer_not_confirmed");
+  const description = only3(elements(safe, (a) => a.id === "product_description"), "product_variant_mismatch");
+  const facts = elements(description, (_a, tag) => tag === "li").map(text2);
+  for (const fact of ["sk\u0142ad: polistyren", "kolor: " + review2.color, "lambda: " + review2.lambda + " W/mK", "grubo\u015B\u0107 p\u0142yty: " + review2.thickness + " cm", "wymiar p\u0142yty: 100 x 50 cm", "ilo\u015B\u0107 p\u0142yt w opakowaniu: " + review2.boards + " szt", "obj\u0119to\u015B\u0107 opakowania: 0,3 m3", "powierzchnia p\u0142yt: " + review2.area + " m2", "Euroklasa: E"]) if (facts.filter((value) => value === fact).length !== 1) throw Error("product_variant_mismatch");
+  if (!text2(description).includes("Wysy\u0142ka GRATIS od 50 paczek w ka\u017Cde dowolne miejsce Polski.")) throw Error("purchase_rules_changed");
+  const counter = only3(elements(safe, (a) => a.id === "product_counter"), "purchase_rules_changed");
+  for (const [key, value] of Object.entries({ "data-real-min": String(minimum), "data-min": String(minimum), "data-tick": String(review2.nativePerPack), "data-boxamount": String(review2.nativePerPack), "data-boxrestrict": String(review2.nativePerPack), "data-boxrestrict-whole": "true" })) if (attribute2(counter, key) !== value) throw Error("purchase_rules_changed");
+  if (api?.id !== review2.id || api.name !== review2.name || api.url !== review2.url || api.symbol !== review2.sku || api.type !== "product" || api.ean !== null || api.barCode !== null || !Array.isArray(api.setItems) || api.setItems.length) throw Error("product_identity_not_confirmed");
+  const native = api.amount;
+  if (native?.minAmount !== minimum || native.tick !== review2.nativePerPack || native.isBox !== true || native.unit !== review2.nativeUnit || api.amountPrecision !== review2.precision) throw Error("purchase_rules_changed");
+  if (native.availability?.type !== "amount" || !amount(native.availability.amount) || native.availability.amount < minimum || attribute2(counter, "data-max") !== String(native.availability.amount)) throw Error("retailer_out_of_stock");
+  if (!Array.isArray(parameters) || parameters.length !== 1 || parameters[0].productId !== review2.id || parameters[0].symbol !== api.symbol || parameters[0].ean !== null || parameters[0].barCode !== null) throw Error("product_variant_mismatch");
+  for (const list of [api.parameters, parameters[0].parameters]) {
+    if (!Array.isArray(list) || list.length !== 1 || list[0].id !== 20 || list[0].type !== "info" || list[0].required !== false || !Array.isArray(list[0].values) || list[0].values.length !== 2) throw Error("product_variant_mismatch");
+    const minimum2 = list[0].values.find((value) => value.id === 214), free = list[0].values.find((value) => value.id === 228);
+    if (!minimum2?.name.includes("poni\u017Cej 50op=15m3") || !free?.name.includes("Styropian DARMOWA WYSY\u0141KA !") || list[0].values.some((value) => value.changePrice !== 0)) throw Error("purchase_rules_changed");
+  }
+  const nativePriceGrosze = price(api.price), priceGrosze = nativePriceGrosze * review2.nativePerPack, products = [];
+  if (!Number.isSafeInteger(priceGrosze)) throw Error("retailer_gross_price_not_confirmed");
+  for (const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const value = JSON.parse(match[1]);
+      if (value?.["@type"] === "Product") products.push(value);
+    } catch {
+    }
+  }
+  if (products.length !== 1) throw Error("product_identity_not_confirmed");
+  const product = products[0], offer = product.offers;
+  if (product.name !== review2.name || product.brand?.name !== MATBUD_PRODUCER || ["gtin", "gtin13", "gtin14"].some((key) => product[key] !== void 0 && product[key] !== source.ean)) throw Error("product_identity_not_confirmed");
+  if (offer?.["@type"] !== "Offer" || offer.priceCurrency !== "PLN" || !/^https?:\/\/schema.org\/InStock$/.test(offer.availability)) throw Error("retailer_out_of_stock");
+  if (parsePriceToGrosze(offer.price) !== nativePriceGrosze) throw Error("retailer_gross_price_mismatch");
+  const imageUrl = new URL(product.image, MATBUD_ORIGIN).href;
+  if (new URL(imageUrl).origin !== MATBUD_ORIGIN || !imageUrl.includes(review2.photo)) throw Error("product_photo_not_confirmed");
+  return { priceGrosze, nativePriceGrosze, stock: Math.floor(native.availability.amount / review2.nativePerPack), imageUrl, product: { ...product, gtin13: source.ean, image: imageUrl, offers: { ...offer, price: (priceGrosze / 100).toFixed(2), url: source.url } } };
+}
+async function readSkyshopProduct(source, client) {
+  reviewedSkyshopSource(source);
+  const html = await client.text(source.url), api = await client.skyshop("product", void 0, source.productId), parameters = await client.skyshop("parameters", void 0, source.productId);
+  return { ...inspectSkyshopProduct(html, api, parameters, source), evidence: [html, api, parameters] };
+}
+function confirmSkyshopBasket(cart, expected) {
+  if (!expected.length || expected.length > reviews.length || new Set(expected.map((row) => row.productId)).size !== expected.length) throw Error("invalid_basket");
+  if (cart?.canBuy !== true || !Array.isArray(cart.items) || cart.items.length !== expected.length || cart.discountCode !== null || cart.loyaltyPoints !== null) throw Error("basket_not_confirmed");
+  if (!Array.isArray(cart.warnings) || cart.warnings.some((warning) => warning.type !== "MINIMUM_ORDER_PRICE" || warning.context?.minimumPrice !== 0)) throw Error("basket_not_confirmed");
+  let total = 0;
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of cart.items) {
+    const product = item.product, line2 = expected.find((row) => row.productId === product?.id);
+    if (!line2 || seen.has(line2.productId)) throw Error("basket_not_confirmed");
+    seen.add(line2.productId);
+    const review2 = skyshopReview(line2.productId), { count, unitPriceGrosze } = line2;
+    if (!Number.isSafeInteger(count) || count < 50 * review2.nativePerPack || count % review2.nativePerPack || !Number.isSafeInteger(unitPriceGrosze) || unitPriceGrosze < 1 || !Number.isSafeInteger(count * unitPriceGrosze)) throw Error("invalid_basket");
+    if (product.name !== review2.name || product.symbol !== review2.sku || product.producerId !== 982 || product.producerName !== MATBUD_PRODUCER || product.url !== review2.url || item.type !== "ORDINARY_PRODUCT" || !Array.isArray(item.parameters) || item.parameters.length) throw Error("basket_not_confirmed");
+    if (item.quantity !== count) throw Error("insufficient_stock");
+    if (price(item.unitPriceSummary?.final) !== unitPriceGrosze || price(item.unitPriceSummary?.base) !== unitPriceGrosze || item.unitPriceSummary.discounts?.length || item.priceSummary?.discounts?.length || cart.priceSummary?.discounts?.length) throw Error("price_changed");
+    for (const value of [item.priceSummary?.base, item.priceSummary?.final]) if (price(value) !== count * unitPriceGrosze) throw Error("price_changed");
+    total += count * unitPriceGrosze;
+  }
+  for (const value of [cart.priceSummary?.base, cart.priceSummary?.final]) {
+    if (value?.currency !== "PLN" || parsePriceToGrosze(value.gross) !== total || parsePriceToGrosze(String(value.grossDisplay ?? "").replace(/\s*zł$/, "")) !== total) throw Error("basket_not_confirmed");
+  }
+  return cart;
+}
+var skyshopEvidenceHash = (evidence) => (0, import_node_crypto4.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex");
+
+// artifacts/api-server/src/lib/retail-pages.ts
 function objects(value) {
   if (Array.isArray(value)) return value.flatMap(objects);
   if (!value || typeof value !== "object") return [];
@@ -21412,7 +22370,18 @@ function objects(value) {
 function parseRetailPage(html, source, observedAt) {
   if (source.disabledReason) throw Error(source.disabledReason);
   const products = [];
-  if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
+  let stockPackages;
+  if (source.format === "kronosfera") products.push(inspectKronosferaProduct(html, source).product);
+  else if (source.format === "folnet") {
+    const reviewed = inspectFolnetProduct(html, source);
+    products.push(reviewed.product);
+    stockPackages = reviewed.stock;
+  } else if (source.format === "betterial") products.push(readBetterialProduct(html, source));
+  else if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
+  else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
+  else if (source.format === "certusoft") products.push(readCertusoftProduct(html, source).product);
+  else if (source.format === "modna") products.push(readModnaProduct(html, source).product);
+  else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
@@ -21433,7 +22402,10 @@ function parseRetailPage(html, source, observedAt) {
   const brand = normalizeProductName(explicitBrand || (typeof product.manufacturer === "string" ? product.manufacturer : product.manufacturer?.name) || "");
   const variantMatches = source.variant?.every((value) => new RegExp(`(?:^| )${normalize(value)}(?: |$)`).test(normalized));
   if (source.packageDescription && !normalize(String(product.description ?? "")).includes(normalize(source.packageDescription))) throw new Error("product_package_not_confirmed");
-  if (!(normalized.includes(normalizeProductName(source.brand)) || brand.includes(normalizeProductName(source.brand))) || !(source.variant ? variantMatches : packagePattern.test(normalized))) throw new Error("product_variant_mismatch");
+  const sourceBrand = normalizeProductName(source.brand);
+  const unbranded = source.unbranded === true && source.id === "castorama-paint-economy-10l" && source.store === "Castorama" && source.ean === "3663602567240" && source.name === "Farba bia\u0142a mat 10 l" && sourceBrand === "";
+  if (!sourceBrand && !unbranded) throw Error("product_brand_not_confirmed");
+  if ((unbranded ? Boolean(brand) : !(normalized.includes(sourceBrand) || brand.includes(sourceBrand))) || !(source.variant ? variantMatches : packagePattern.test(normalized))) throw new Error("product_variant_mismatch");
   if (!normalize(source.name).split(" ").filter((token) => token.length > 3).every((token) => normalized.includes(token))) throw new Error("product_name_mismatch");
   const allOffers = objects(product.offers);
   if (allOffers.some((offer) => /\/OutOfStock$|\/Discontinued$/.test(String(offer.availability))) && !allOffers.some((offer) => /\/InStock$/.test(String(offer.availability)))) throw new Error("retailer_out_of_stock");
@@ -21449,7 +22421,8 @@ function parseRetailPage(html, source, observedAt) {
     }
     return true;
   });
-  const prices = eligibleOffers.map((offer) => parsePriceToGrosze(offer.price)).filter((price) => price !== null && price > 0 && Number.isSafeInteger(price));
+  const prices = eligibleOffers.map((offer) => parsePriceToGrosze(offer.price)).filter((price2) => price2 !== null && price2 > 0 && Number.isSafeInteger(price2));
+  if (source.marketplaceSeller && eligibleOffers.some((offer) => offer.seller?.name !== source.marketplaceSeller.name)) throw Error("retailer_seller_not_confirmed");
   if (prices.length === 0) throw new Error("no_confirmed_online_pln_offer");
   if (new Set(prices).size !== 1) throw new Error("ambiguous_online_price");
   const firstImage = [source.imageUrl ?? product.image ?? eligibleOffers.find((offer) => offer.image)?.image].flat()[0];
@@ -21458,13 +22431,14 @@ function parseRetailPage(html, source, observedAt) {
     sourceId: source.id,
     ean: source.ean,
     name,
+    ...stockPackages === void 0 ? {} : { stockPackages },
     imageUrl: typeof imageUrl === "string" && imageUrl.startsWith("https://") ? imageUrl.replace(/&amp;/g, "&") : null,
     priceGrosze: prices[0],
     currency: "PLN",
     availability: "in_stock",
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
-    evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(html).digest("hex"),
+    evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(html).digest("hex"),
     validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value) => typeof value === "string").sort()[0] ?? null
   };
 }
@@ -21475,6 +22449,20 @@ function retailPriceIsValid(validUntil, now) {
 }
 async function readRetailSource(source, fetchImpl = fetch) {
   if (source.disabledReason) throw Error(source.disabledReason);
+  if (source.format === "qshop") {
+    const current = await readTokmetProduct(source, fetchImpl);
+    return { ...parseRetailPage(`<script type="application/ld+json">${JSON.stringify(current.product)}</script>`, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: current.stock, evidenceSha256: current.evidenceSha256 };
+  }
+  if (source.format === "skyshop") {
+    const review2 = reviewedSkyshopSource(source), nativeCount = source.minimumPackages * review2.nativePerPack;
+    const client = new AnonymousShop(MATBUD_ORIGIN, fetchImpl, AbortSignal.timeout(15e3), 12), current = await readSkyshopProduct(source, client);
+    const empty = await client.skyshop("create-cart"), added = await client.skyshop("add", nativeCount, review2.id);
+    if (added?.id !== empty.id || added.addedCartItem?.quantity !== nativeCount) throw Error("insufficient_stock");
+    const cart = confirmSkyshopBasket(await client.skyshop("cart"), [{ productId: review2.id, count: nativeCount, unitPriceGrosze: current.nativePriceGrosze }]);
+    if (cart.id !== empty.id) throw Error("basket_not_confirmed");
+    const html = `<script type="application/ld+json">${JSON.stringify(current.product)}</script>`;
+    return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: current.stock, evidenceSha256: skyshopEvidenceHash([...current.evidence, cart]) };
+  }
   if (source.format === "topboden-api") {
     const product = await readTopbodenProduct(source, fetchImpl);
     const html = `<script type="application/ld+json">${JSON.stringify({ "@type": "Product", name: product.name, gtin13: source.ean, brand: source.brand, image: product.imageUrl, offers: { "@type": "Offer", price: (product.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url, priceValidUntil: product.validUntil } })}</script>`;
@@ -21498,7 +22486,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       image: item.imageUrl,
       offers: { "@type": "Offer", price: (item.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", url: source.url, availability: "https://schema.org/InStock" }
     })}</script>`;
-    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
+    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
   }
   const api = source.format === "shoper-api";
   const requestUrl = api ? `${new URL(source.url).origin}/webapi/front/pl_PL/products/PLN/${shoperProductId(source)}` : source.url;
@@ -21529,23 +22517,42 @@ async function readRetailSource(source, fetchImpl = fetch) {
   if (api) {
     const item = JSON.parse(raw);
     if (String(item.id) !== shoperProductId(source)) throw new Error("product_id_not_confirmed");
-    if (source.apiPurchaseUnit && item.unit?.name !== source.apiPurchaseUnit) throw new Error("retailer_unit_not_confirmed");
+    confirmShoperPurchaseUnit(item, source);
     if (!item.can_buy) throw new Error("retailer_out_of_stock");
-    const gross = item.price?.gross;
-    const formatted = String(gross?.final ?? "").replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
-    if (!formatted || typeof gross.final_float !== "number" || Math.abs(Number(formatted[1]) * 100 + Number(formatted[2]) - gross.final_float * 100) > 1e-5) throw new Error("retailer_gross_price_mismatch");
+    const gross2 = item.price?.gross;
+    const formatted = String(gross2?.final ?? "").replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
+    if (!formatted || typeof gross2.final_float !== "number" || Math.abs(Number(formatted[1]) * 100 + Number(formatted[2]) - gross2.final_float * 100) > 1e-5) throw new Error("retailer_gross_price_mismatch");
     const html = `<script type="application/ld+json">${JSON.stringify({
       "@type": "Product",
       name: item.name,
       gtin13: item.ean,
-      brand: item.producer?.name,
+      brand: source.brandReference ? source.brand : item.producer?.name,
       image: source.imageUrl,
-      offers: { "@type": "Offer", price: gross.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
+      description: item.description,
+      offers: { "@type": "Offer", price: gross2.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
     })}</script>`;
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
-    return { ...observation, evidenceSha256: (0, import_node_crypto3.createHash)("sha256").update(raw).digest("hex") };
+    return { ...observation, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(raw).digest("hex") };
   }
+  if (source.pickupOnly && source.browserReviewAllowed) throw Error("browser_location_review_required");
+  if (source.browserReviewAllowed && new URL(source.url).origin === "https://www.castorama.pl" && ["m2", "m"].includes(source.unit)) throw Error("browser_package_review_required");
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
+}
+function confirmShoperPurchaseUnit(item, source) {
+  if (String(item.id) !== shoperProductId(source)) throw Error("product_id_not_confirmed");
+  if (source.apiPurchaseUnit && (item.unit?.name !== source.apiPurchaseUnit || item.unit?.floating_point !== false)) throw Error("retailer_unit_not_confirmed");
+  if (source.retailerSku && item.code !== source.retailerSku) throw Error("product_identity_not_confirmed");
+  if (source.packageDescription && !normalizeProductName(text2(String(item.description ?? ""))).includes(normalizeProductName(source.packageDescription))) throw Error("product_package_not_confirmed");
+  if (source.brandReference) {
+    const reference = source.brandReference;
+    let url2;
+    try {
+      url2 = new URL(reference.url);
+    } catch {
+      throw Error("product_brand_not_confirmed");
+    }
+    if (source.format !== "shoper-api" || !source.brand.trim() || !source.retailerSku || !source.apiPurchaseUnit || !source.variant?.length || url2.protocol !== "https:" || url2.username || url2.password || url2.hostname === new URL(source.url).hostname || normalizeProductName(reference.retailerValue) !== normalizeProductName(source.store) || !Number.isSafeInteger(reference.retailerId) || reference.retailerId < 1 || item.ean !== source.ean || item.name !== source.name || item.producer?.name !== reference.retailerValue || item.producer?.id !== reference.retailerId) throw Error("product_brand_not_confirmed");
+  }
 }
 function shoperProductId(source) {
   const fromUrl = source.url.match(/\/(\d+)$/)?.[1];
@@ -21555,7 +22562,7 @@ function shoperProductId(source) {
   return id;
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/quote-queue.ts
+// artifacts/api-server/src/lib/quote-queue.ts
 var QuoteQueue = class {
   constructor(concurrency = 3, maxQueued = 12, maxWaitMs = 15e3) {
     this.concurrency = concurrency;
@@ -21593,18 +22600,18 @@ var QuoteQueue = class {
   }
 };
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-checkouts.ts
+// artifacts/api-server/src/lib/retailer-checkouts.ts
 var cls2 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
-var attr = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
-var one3 = (values) => {
+var attr2 = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
+var one7 = (values) => {
   if (values.length !== 1) throw Error("basket_not_confirmed");
   return values[0];
 };
 function createCheckoutPageReader() {
   const cache = /* @__PURE__ */ new Map();
   const reads = new QuoteQueue(3, 12, 15e3);
-  return (url2, price, client) => {
-    const key = JSON.stringify([url2, price]), previous = cache.get(key);
+  return (url2, price2, client) => {
+    const key = JSON.stringify([url2, price2]), previous = cache.get(key);
     if (previous && previous.until > Date.now()) return previous.value;
     if (cache.size >= 32) cache.delete(cache.keys().next().value);
     const value = (async () => {
@@ -21643,7 +22650,7 @@ function quote(order, costGrosze, carrier, payment, evidence, postalCode) {
     basis: postalCode ? "retailer_basket_postcode" : "retailer_basket_national",
     destinationScope: postalCode ? "postal_code" : "PL",
     ...postalCode ? { postalCode, dispatchFrom: "Katowice" } : {},
-    evidenceSha256: (0, import_node_crypto4.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function expectedPacks(order) {
@@ -21656,22 +22663,22 @@ function expectedPacks(order) {
 function tdValue(html, label) {
   const cells = elements(html, (_, tag) => tag === "td");
   const values = cells.flatMap((cell, i) => text2(cell) === label && cells[i + 1] ? [withoutOld(cells[i + 1])] : []);
-  return one3(values);
+  return one7(values);
 }
 function confirmSeweraBasket(html, expected, total) {
-  const table = one3(elements(clean(html), (a) => cls2(a, "basket-product")));
-  const body = one3(elements(table, (_, tag) => tag === "tbody"));
+  const table = one7(elements(clean(html), (a) => cls2(a, "basket-product")));
+  const body = one7(elements(table, (_, tag) => tag === "tbody"));
   const rows = elements(body, (_, tag) => tag === "tr").filter((row) => elements(row, (a) => a.name === "amount").length === 1);
   if (rows.length !== expected.length || !/Twój sklep to Katowice/.test(text2(html))) throw Error("basket_not_confirmed");
   for (const wanted of expected) {
-    const row = one3(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
+    const row = one7(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
     const stock = text2(row).match(/W magazynie znajdują się jedynie (\d+(?:[.,]\d+)?)\s+(SZT|OPA)/i);
     if (stock && (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || Number(stock[1].replace(",", ".")) < wanted.count)) throw Error("insufficient_stock");
-    const input = attr(one3(elements(row, (a) => a.name === "amount")));
-    const pid = attr(one3(elements(row, (a) => a.wybierz !== void 0))).wybierz;
-    if (Number(input.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    const input2 = attr2(one7(elements(row, (a) => a.name === "amount")));
+    const pid = attr2(one7(elements(row, (a) => a.wybierz !== void 0))).wybierz;
+    if (Number(input2.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
   }
-  const sum = text2(one3(elements(table, (a) => cls2(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
+  const sum = text2(one7(elements(table, (a) => cls2(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
   if (checkoutMoney(sum) !== total) throw Error("basket_not_confirmed");
 }
 function readSeweraPayment(html) {
@@ -21680,9 +22687,9 @@ function readSeweraPayment(html) {
   const options = elements(safe, (a) => cls2(a, "radio")).flatMap((row) => {
     const inputs = elements(row, (a2) => a2.name === "platnosc" && ["P\u0142atno\u015B\u0107 online", "Przelew tradycyjny"].includes(a2["data-name"]));
     if (inputs.length !== 1 || /\sdisabled(?:\s|=|>)/i.test(inputs[0])) return [];
-    const a = attr(inputs[0]);
+    const a = attr2(inputs[0]);
     const value = a.onclick?.match(/\('#koszt_dostawy'\)\.val\('([\d,]+)'\)/)?.[1];
-    const visible = one3(elements(row, (b) => cls2(b, "dictionary-icon-additional")));
+    const visible = one7(elements(row, (b) => cls2(b, "dictionary-icon-additional")));
     const cost = checkoutMoney(visible);
     if (!value || checkoutMoney(`${value} z\u0142`) !== cost) throw Error("invalid_money");
     return [{ costGrosze: cost, payment: a["data-name"] }];
@@ -21702,7 +22709,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
         const index2 = next++, { source, pack } = packs[index2];
         const page = await pages(source.url, pack.unitPriceGrosze, client), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
         if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-        const pid = attr(one3(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
+        const pid = attr2(one7(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
         if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
         prepared[index2] = { source, pack, pid };
       } catch (error40) {
@@ -21721,9 +22728,9 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
   const basket = await client.text("/index.php?page=koszyk");
   confirmSeweraBasket(basket, expected, order.materialsGrosze);
   const checkout = clean(await client.text("/zamowienie"));
-  const country = one3(elements(checkout, (a) => a.id === "selectCountryUser"));
+  const country = one7(elements(checkout, (a) => a.id === "selectCountryUser"));
   if (!elements(country, (a) => a.value === "1").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
-  const methods = elements(checkout, (a) => a.name === "dostawa" && a["data-personal-collection"] === "0" && /kurier/i.test(a["data-name"] ?? "") && !/indywidual|zapytani|odbiór|paczkomat/i.test(a["data-name"])).map(attr);
+  const methods = elements(checkout, (a) => a.name === "dostawa" && a["data-personal-collection"] === "0" && /kurier/i.test(a["data-name"] ?? "") && !/indywidual|zapytani|odbiór|paczkomat/i.test(a["data-name"])).map(attr2);
   if (!methods.length || methods.length > 5) throw Error("no_home_delivery");
   const options = [];
   for (const method of methods) {
@@ -21738,8 +22745,8 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
       city: "",
       personal_collection: "0"
     });
-    const price = readSeweraPayment(response);
-    if (price) options.push({ ...price, carrier: method["data-name"], hash: (0, import_node_crypto4.createHash)("sha256").update(response).digest("hex") });
+    const price2 = readSeweraPayment(response);
+    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto6.createHash)("sha256").update(response).digest("hex") });
   }
   const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
   if (!best) throw Error("no_home_delivery");
@@ -21749,19 +22756,19 @@ function budujItemPrice(row) {
   return elements(row, (a) => cls2(a, "item") && cls2(a, "price")).map((p) => checkoutMoney(withoutOld(p)));
 }
 function confirmBudujBasket(html, expected, total) {
-  const products = one3(elements(clean(html), (a) => a.id === "cart-products"));
+  const products = one7(elements(clean(html), (a) => a.id === "cart-products"));
   const rows = elements(products, (a) => cls2(a, "cart-product") && !cls2(a, "headers") && !cls2(a, "summary"));
   if (rows.length !== expected.length) throw Error("basket_not_confirmed");
   for (const wanted of expected) {
-    const row = one3(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
-    const qty = attr(one3(elements(row, (a) => a.name === "count"))).value;
+    const row = one7(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
+    const qty = attr2(one7(elements(row, (a) => a.name === "count"))).value;
     const prices = budujItemPrice(row);
     if (Number(qty) !== wanted.count || prices.length !== 2 || prices[0] !== wanted.price || prices[1] !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
   }
   if (budujSummary(html).materials !== total) throw Error("basket_not_confirmed");
 }
 function budujSummary(html) {
-  const scope = one3(elements(clean(html), (a) => a.id === "cart-summary"));
+  const scope = one7(elements(clean(html), (a) => a.id === "cart-summary"));
   const fields = elements(scope, (a) => cls2(a, "label"));
   const values = elements(scope, (a) => cls2(a, "value"));
   if (fields.length !== 3 || values.length !== 3 || text2(fields[0]) !== "Suma koszyka:" || text2(fields[1]) !== "Koszt dostawy:" || !/Kwota zawiera podatek VAT/.test(text2(scope))) throw Error("basket_not_confirmed");
@@ -21771,11 +22778,11 @@ function budujSummary(html) {
 }
 function budujOptions(html, kind) {
   return elements(clean(html), (a) => cls2(a, "item") && cls2(a, kind)).map((row) => {
-    const name = text2(one3(elements(row, (a) => cls2(a, "name"))));
-    const click = attr(one3(elements(row, (a) => cls2(a, "icnt")))).onclick;
+    const name = text2(one7(elements(row, (a) => cls2(a, "name"))));
+    const click = attr2(one7(elements(row, (a) => cls2(a, "icnt")))).onclick;
     const id = click?.match(new RegExp(`cart\\.${kind}_select\\((\\d+)`))?.[1];
     if (!id) throw Error("basket_not_confirmed");
-    return { id, name, active: cls2(attr(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one3(elements(row, (a) => cls2(a, "price")))) } : {} };
+    return { id, name, active: cls2(attr2(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one7(elements(row, (a) => cls2(a, "price")))) } : {} };
   });
 }
 function decodeBudujDetails(response) {
@@ -21796,7 +22803,7 @@ async function quoteBuduj24(order, fetchImpl) {
   }
   const basket = await client.text("/cart");
   confirmBudujBasket(basket, expected, order.materialsGrosze);
-  const countries = one3(elements(clean(basket), (a) => a.id === "sel_country"));
+  const countries = one7(elements(clean(basket), (a) => a.id === "sel_country"));
   if (!elements(countries, (a) => a.value === "PL").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
   const country = decodeBudujDetails(await client.text("/ajax/cart/details?lang=pl&country=PL"));
   const delivery = budujOptions(country, "delivery").filter((d) => /^Kurier\b/i.test(d.name) && !/pobran|zapytani|indywidual/i.test(d.name)).sort((a, b) => a.cost - b.cost)[0];
@@ -21812,15 +22819,15 @@ async function quoteBuduj24(order, fetchImpl) {
   return quote(order, sum.shipping, active.name, activePayment.name, { expected, sum, delivery: active, payment: activePayment });
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/cezar-delivery.ts
-var import_node_crypto5 = require("node:crypto");
+// artifacts/api-server/src/lib/cezar-delivery.ts
+var import_node_crypto7 = require("node:crypto");
 async function quoteCezar(order, postalCode, fetchImpl) {
-  const origin = "https://cezar.eu";
-  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const origin3 = "https://cezar.eu";
+  const client = new AnonymousShop(origin3, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === "Cezar" && s.format === "shopify-api");
-    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
+    if (!source || new URL(source.url).origin !== origin3 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const product = confirmShopifyProduct(JSON.parse(await client.text(new URL(source.url).pathname + ".js")), source);
     if (product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
     if (expected.has(product.variantId)) throw Error("invalid_basket");
@@ -21843,9 +22850,9 @@ async function quoteCezar(order, postalCode, fetchImpl) {
   const available = (Array.isArray(rates.shipping_rates) ? rates.shipping_rates : []).flatMap((rate) => {
     const free = rate.name === "Gratis" && rate.source === "shopify" && rate.price === "0.00" && total >= 5e4;
     if (rate.currency !== "PLN" || typeof rate.name !== "string" || !/DPD.*Kurier|Raben/i.test(rate.name) && !free || /pobran|punkt|automat|zapytani|indywidual/i.test(rate.name)) return [];
-    const price = typeof rate.price === "string" && /^\d+\.\d{2}$/.test(rate.price) ? parsePriceToGrosze(rate.price) : null;
-    if (price === null || !Number.isSafeInteger(price) || price < 0) return [];
-    return [{ costGrosze: price, carrier: rate.name }];
+    const price2 = typeof rate.price === "string" && /^\d+\.\d{2}$/.test(rate.price) ? parsePriceToGrosze(rate.price) : null;
+    if (price2 === null || !Number.isSafeInteger(price2) || price2 < 0) return [];
+    return [{ costGrosze: price2, carrier: rate.name }];
   }).sort((a, b) => a.costGrosze - b.costGrosze);
   const best = available[0];
   if (!best) throw Error("no_home_delivery");
@@ -21855,16 +22862,16 @@ async function quoteCezar(order, postalCode, fetchImpl) {
     payment: "P\u0142atno\u015B\u0107 z g\xF3ry",
     checkedAt: checkedAt.toISOString(),
     expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(),
-    sourceUrl: origin + "/cart",
+    sourceUrl: origin3 + "/cart",
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
+    evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
   } };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/topboden-delivery.ts
-var import_node_crypto6 = require("node:crypto");
+// artifacts/api-server/src/lib/topboden-delivery.ts
+var import_node_crypto8 = require("node:crypto");
 async function quoteTopboden(order, fetchImpl) {
   const signal = AbortSignal.timeout(12e3), client = new AnonymousShop(TOPBODEN_API, fetchImpl, signal, retailerRequestBudget(order.lines.length));
   const proofs = [], categories = [], seen = /* @__PURE__ */ new Set();
@@ -21896,10 +22903,449 @@ async function quoteTopboden(order, fetchImpl) {
     return Math.max(...applicable);
   });
   const costGrosze = materials >= Math.round(rate.minOrderValue * 100) ? 0 : Math.max(...prices), checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/retailer-delivery.ts
+// artifacts/api-server/src/lib/prestashop-delivery.ts
+var import_node_crypto9 = require("node:crypto");
+var origin = "https://www.eelektryka.com";
+var attrs6 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+var input = (html, name) => attrs6(exactlyOne(elements(html, (a, tag) => tag === "input" && a.name === name), "basket_not_confirmed"));
+async function quotePrestashop(order, fetchImpl) {
+  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const expected = /* @__PURE__ */ new Map();
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store && s.format === "prestashop");
+    if (!source || order.store !== "Eelektryka" || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
+    const page = await client.text(new URL(source.url).pathname), product = readPrestashopProduct(page, source);
+    const observation = parseRetailPage(page, source, /* @__PURE__ */ new Date());
+    if (observation.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (pack.count > product.maxPackages) throw Error("insufficient_stock");
+    const id = String(source.productId);
+    if (expected.has(id)) throw Error("invalid_basket");
+    expected.set(id, { count: pack.count, price: product.priceGrosze, sku: source.retailerSku });
+    await client.text(product.addPath, { ...product.addFields, qty: String(pack.count) });
+  }
+  const cartRaw = await client.text("/index.php?controller=specialorder"), cart = clean(cartRaw);
+  const rows = elements(cart, (a) => a["data-id-product"] !== void 0);
+  if (!expected.size || rows.length !== expected.size) throw Error("basket_not_confirmed");
+  const verified = [];
+  let subtotal = 0;
+  for (const row of rows) {
+    const a = attrs6(row), id = a["data-id-product"], wanted = expected.get(id);
+    if (!wanted || a["data-id-product-attribute"] !== "0" || input(row, `product_qt[${id}][0]`).value !== String(wanted.count)) throw Error("basket_not_confirmed");
+    const unit = prestashopMoney(text2(exactlyOne(classElements(row, "price_unit"), "basket_not_confirmed")));
+    const total = prestashopMoney(text2(exactlyOne(classElements(row, "total_price"), "basket_not_confirmed")));
+    const stock = text2(exactlyOne(elements(row, (a2) => a2.id === `span_me_1_${id}`), "basket_not_confirmed"));
+    const stockCount = stock.match(/^Kod produktu: (\S+) Dostępna ilość \(szacowana\): (\d+)$/);
+    if (!stockCount || stockCount[1] !== wanted.sku || Number(stockCount[2]) < wanted.count || unit !== wanted.price || total !== unit * wanted.count) throw Error("basket_not_confirmed");
+    subtotal += total;
+    verified.push({ id, count: wanted.count, price: unit });
+    expected.delete(id);
+  }
+  const summary = exactlyOne(classElements(cart, "final_summary"), "basket_not_confirmed");
+  const materialCell = exactlyOne(classElements(summary, "total_without_delivery").filter((node) => classElements(node, "amount").length), "basket_not_confirmed");
+  if (expected.size || subtotal !== order.materialsGrosze || prestashopMoney(text2(exactlyOne(classElements(materialCell, "amount"), "basket_not_confirmed"))) !== subtotal) throw Error("basket_not_confirmed");
+  const checkoutRaw = await client.text("/index.php?controller=specialorderpayment"), checkout = clean(checkoutRaw);
+  const form = exactlyOne(elements(checkout, (a, tag) => tag === "form" && a.id === "cart_form"), "basket_not_confirmed");
+  const country = exactlyOne(elements(form, (a, tag) => tag === "select" && a.name === "individual[country]"), "country_not_confirmed");
+  const countries = elements(country, (_a, tag) => tag === "option");
+  if (!countries.length || attrs6(countries[0]).value !== "Poland" || text2(countries[0]) !== "Polska" || countries.slice(1).some((node) => /\bselected\b/i.test(node.match(/^<[^>]+>/)?.[0] ?? ""))) throw Error("country_not_confirmed");
+  const prepaid = exactlyOne(classElements(form, "prepay"), "no_home_delivery");
+  const methods = classElements(prepaid, "payment_option").flatMap((node) => {
+    const carrier = text2(exactlyOne(classElements(node, "delivery-title"), "no_home_delivery"));
+    if (!/kurier/i.test(carrier) || /pobran|punkt|automat|paczkomat|odbiór|odbior|indywidual|zapytani/i.test(carrier)) return [];
+    const priceNode = exactlyOne(classElements(node, "price"), "invalid_money");
+    const price2 = prestashopMoney(text2(priceNode)), numeric2 = attrs6(priceNode)["data-price"];
+    if (!/^\d+\.\d{2}$/.test(numeric2 ?? "") || Math.abs(Number(numeric2) * 100 - price2) > 1e-5) throw Error("invalid_money");
+    const id = input(node, "id_carrier_real").value;
+    if (!/^\d+$/.test(id ?? "")) throw Error("no_home_delivery");
+    return [{ carrier, costGrosze: price2, id }];
+  }).sort((a, b) => a.costGrosze - b.costGrosze);
+  const best = methods[0];
+  if (!best || elements(form, (a) => a.name === "payMethod" && a.value === "bankwire").length !== 1) throw Error("no_home_delivery");
+  const token = input(checkout, "token").value;
+  if (!/^[a-f0-9]{32}$/i.test(token ?? "")) throw Error("cart_session_not_confirmed");
+  const raw = await client.text("/", { controller: "specialorderpayment", ajax: "1", id_carrier_real: best.id, update_delivery: "1", token });
+  const selected = JSON.parse(raw);
+  if (prestashopMoney(selected.order_total_delivery) !== best.costGrosze || prestashopMoney(selected.order_total_final) !== subtotal + best.costGrosze) throw Error("basket_not_confirmed");
+  const now = /* @__PURE__ */ new Date();
+  return { quote: {
+    costGrosze: best.costGrosze,
+    carrier: best.carrier,
+    payment: "Przelew tradycyjny",
+    checkedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 6e5).toISOString(),
+    sourceUrl: origin + "/index.php?controller=specialorderpayment",
+    basis: "retailer_basket_national",
+    destinationScope: "PL",
+    evidenceSha256: (0, import_node_crypto9.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
+  } };
+}
+
+// artifacts/api-server/src/lib/certusoft-delivery.ts
+var import_node_crypto10 = require("node:crypto");
+var origin2 = "https://hipper.pl";
+var money2 = (value) => {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw Error("invalid_money");
+  const cents2 = Math.round(value * 100);
+  if (!Number.isSafeInteger(cents2) || Math.abs(value * 100 - cents2) > 1e-5) throw Error("invalid_money");
+  return cents2;
+};
+function confirmedCart(raw, expected, subtotal) {
+  const state = readCertusoftState(raw), cart = state.csAppWindowsUtils?.csAppWindows?.csB2BCart, ds = cart?.dataSets;
+  const positions = ds?.csB2BCartPositions?.rows, headers = ds?.csB2BCartHeader?.rows;
+  if (!expected.size || !Array.isArray(positions) || positions.length !== expected.size || !Array.isArray(headers) || headers.length !== 1) throw Error("basket_not_confirmed");
+  const seen = /* @__PURE__ */ new Set();
+  let sum = 0;
+  for (const row of positions) {
+    const wanted = expected.get(row.csItemsId);
+    if (!wanted || seen.has(row.csItemsId) || row.csItemsUnitsId !== wanted.unitId || row.quantityUnits !== wanted.count || row.unit !== "szt" || row.itemDesc !== wanted.name || row.menuPath !== wanted.path || row.isStock !== 1 || row.discount !== 0 || money2(row.cUnitPrice) !== wanted.price || money2(row.cUnitPriceADis) !== wanted.price || money2(row.cGAmount) !== wanted.price * wanted.count) throw Error("basket_not_confirmed");
+    seen.add(row.csItemsId);
+    sum += wanted.price * wanted.count;
+  }
+  const header = headers[0];
+  if (sum !== subtotal || money2(header.cGAmount) !== subtotal || header.sumDiscountValue !== 0 || !Number.isSafeInteger(header.csDocsHeadersId)) throw Error("basket_not_confirmed");
+  if (header.isRegulationsAccepted !== 0 || header.isProcessingPersonalDataAccepted !== 0 || header.doRegisterAccount !== 0) throw Error("invalid_cart_session");
+  return { state, cart, ds, header };
+}
+async function quoteCertusoft(order, fetchImpl) {
+  const client = new AnonymousShop(origin2, fetchImpl, AbortSignal.timeout(15e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const expected = /* @__PURE__ */ new Map();
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store && s.format === "certusoft");
+    if (!source || order.store !== "HIPPER" || new URL(source.url).origin !== origin2 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
+    const path = new URL(source.url).pathname, raw = await client.text(path), product = readCertusoftProduct(raw, source);
+    if (parseRetailPage(raw, source, /* @__PURE__ */ new Date()).priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (product.maxPackages < pack.count) throw Error("insufficient_stock");
+    if (expected.has(source.productId)) throw Error("invalid_basket");
+    expected.set(source.productId, { count: pack.count, price: product.priceGrosze, unitId: source.retailerUnitId, name: product.product.name, path });
+    const response2 = await client.certusoftAction({
+      csAppNameSpacesG: product.state.csAppWindowsUtils.csAppWindows.csB2BItemCard.csAppNameSpacesG,
+      appWindowIdent: "csB2BItemCard",
+      dataSetIdent: "itemCard",
+      actionIdent: "cartAdd",
+      sessionId: product.state.csAppWindowsUtils.sessionId,
+      row: { csItemsId: source.productId, csItemsUnitsId: source.retailerUnitId, cUnitPrice: product.priceGrosze / 100, discount: 0, quantityUnits: pack.count },
+      path,
+      addRequestData: { appWindowUniqIdent: "csB2BItemCard" }
+    });
+    if (response2.errors?.length || response2.data?.errors?.length || !Array.isArray(response2.commands)) throw Error("basket_not_confirmed");
+  }
+  const initial = confirmedCart(await client.text("/koszyk"), expected, order.materialsGrosze);
+  const methods = initial.ds.deliveryMethods?.rows, payments = initial.ds.paymentMethods?.rows;
+  if (!Array.isArray(methods) || !Array.isArray(payments)) throw Error("no_home_delivery");
+  const payment = payments.find((p) => p.csPaymentsTypesId === initial.header.csPaymentsTypesId && p.isAvailable === 1 && p.priceListType === 0 && /PayU|Przelew/i.test(p.paymentTypeTranslatedDesc) && !/pobran/i.test(p.paymentTypeTranslatedDesc) && (p.cUnitPrice === null || p.cUnitPrice === 0));
+  if (!payment) throw Error("no_prepaid_payment");
+  const carriers = methods.flatMap((m) => {
+    if (m.isAvailable !== 1 || m.isCollectionInPerson !== 0 || !Number.isSafeInteger(m.csB2BPortalsDeliveryMethodsId) || typeof m.deliveryMethod !== "string" || !/kurier/i.test(m.deliveryMethod) || /pobran|punkt|paczkomat|automat|odbiór|odbior|indywidual|zapytani/i.test(m.deliveryMethod) || m.currencyIdent !== "z\u0142") return [];
+    const cost = money2(m.cUnitPrice), threshold = money2(m.freeDeliveryFrom);
+    return [{ id: m.csB2BPortalsDeliveryMethodsId, carrier: m.deliveryMethod, cost: order.materialsGrosze >= threshold ? 0 : cost }];
+  }).sort((a, b) => a.cost - b.cost);
+  const best = carriers[0];
+  if (!best) throw Error("no_home_delivery");
+  const response = await client.certusoftAction({
+    csAppNameSpacesG: initial.cart.csAppNameSpacesG,
+    appWindowIdent: "csB2BCart",
+    dataSetIdent: "csB2BCartHeader",
+    actionIdent: "csNGOnCFB2BCartHeader",
+    onCFDataFieldIdent: "csB2BPortalsDeliveryMethodsId",
+    sessionId: initial.state.csAppWindowsUtils.sessionId,
+    row: { csDocsHeadersId: initial.header.csDocsHeadersId, csB2BPortalsDeliveryMethodsId: best.id, csPaymentsTypesId: payment.csPaymentsTypesId },
+    path: "/koszyk",
+    addRequestData: { appWindowUniqIdent: "csB2BCart" }
+  });
+  if (response.errors?.length || response.data?.errors?.length || !Array.isArray(response.commands)) throw Error("basket_not_confirmed");
+  const finalRaw = await client.text("/koszyk"), final = confirmedCart(finalRaw, expected, order.materialsGrosze), h = final.header;
+  if (h.csB2BPortalsDeliveryMethodsId !== best.id || h.csPaymentsTypesId !== payment.csPaymentsTypesId || money2(h.deliveryMethodsCUnitPrice) !== best.cost || money2(h.paymentsTypesCUnitPrice) !== 0 || h.isReceptionPoint !== 0) throw Error("basket_not_confirmed");
+  const summaries = elements(clean(finalRaw), (a) => a.class?.split(/\s+/).includes("c-sum-in") ?? false);
+  if (summaries.length !== 1) throw Error("basket_not_confirmed");
+  const values = text2(summaries[0]).match(/^Wartość produktów: ([\d\s,.]+) zł Sposób płatności: ([\d\s,.]+) zł Sposób dostawy: ([\d\s,.]+) zł Razem do zapłaty: ([\d\s,.]+) zł Do zapłaty po rabacie: ([\d\s,.]+) zł$/);
+  const total = order.materialsGrosze + best.cost;
+  if (!values || !Number.isSafeInteger(total) || values.slice(1).some((v, i) => parsePriceToGrosze(v.trim()) !== [order.materialsGrosze, 0, best.cost, total, total][i])) throw Error("basket_not_confirmed");
+  const now = /* @__PURE__ */ new Date();
+  return { quote: {
+    costGrosze: best.cost,
+    carrier: best.carrier,
+    payment: payment.paymentTypeTranslatedDesc,
+    checkedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 6e5).toISOString(),
+    sourceUrl: origin2 + "/koszyk",
+    basis: "retailer_basket_national",
+    destinationScope: "PL",
+    evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
+  } };
+}
+
+// artifacts/api-server/src/lib/modna-delivery.ts
+var import_node_crypto11 = require("node:crypto");
+function confirmModnaCart(html, orderHtml, expected, materials) {
+  const safe = clean(html), cart = modnaById(safe, "cart_summary_block");
+  if (text2(modnaById(cart, "currency")) !== "PLN") throw Error("retailer_currency_not_confirmed");
+  const links = elements(cart, (a, t) => t === "a" && /^product_name_\d+$/.test(a.id ?? ""));
+  if (links.length !== expected.length) throw Error("basket_not_confirmed");
+  const rows = elements(cart, (a) => a.class?.split(/\s+/).includes("tr") === true).filter((row) => elements(row, (a) => /^product_name_\d+$/.test(a.id ?? "")).length > 0);
+  if (rows.length !== expected.length) throw Error("basket_not_confirmed");
+  const remaining = new Map(expected.map((row) => [row.id, row]));
+  let sum = 0;
+  for (const row of rows) {
+    const link = modnaOne(elements(row, (a, t) => t === "a" && /^product_name_\d+$/.test(a.id ?? "")), "basket_not_confirmed");
+    const id = Number(modnaAttrs(link).id.slice("product_name_".length)), wanted = remaining.get(id);
+    if (!wanted || text2(link) !== wanted.name || modnaAttrs(link).href !== wanted.url) throw Error("basket_not_confirmed");
+    const input2 = (name) => modnaAttrs(modnaOne(elements(row, (a, t) => t === "input" && a.name === name), "basket_not_confirmed"));
+    const packs = input2(id + "_pack"), meters = input2(id + "_meters");
+    const quantity = wanted.count * Math.round(wanted.size * 100);
+    if (Number(packs.value) !== wanted.count || packs.step !== "1" || Number(packs.minimum) !== 1 || Math.round(Number(meters.value) * 100) !== quantity || Number(meters.unit) !== wanted.size || Number(meters.step) !== wanted.size || Math.round(Number(input2(id + "_quantity").value) * 100) !== quantity || Number(input2(id + "_unit").value) !== wanted.size || Number(input2(id + "_minimum").value) !== 1) throw Error("basket_not_confirmed");
+    if (modnaMoney(text2(modnaById(row, "product_price_" + id, "span"))) !== wanted.price) throw Error("price_changed");
+    const lineTotal = modnaMoney(text2(modnaOne(elements(row, (_a, t) => t === "h5"), "basket_not_confirmed")));
+    if (lineTotal !== wanted.price * wanted.count) throw Error("basket_not_confirmed");
+    const stocks = [...text2(row).matchAll(/Stan magazynowy: (\d+) paczek/g)];
+    if (!stocks.length || stocks.some((match2) => Number(match2[1]) < wanted.count)) throw Error("insufficient_stock");
+    if (wanted.count > 1) {
+      const sameSeries = modnaById(row, "single_set_" + id, "input");
+      if (!/\bchecked(?:\s|=|>)/.test(sameSeries.match(/^<[^>]+>/)?.[0] ?? "")) throw Error("basket_not_confirmed");
+    }
+    remaining.delete(id);
+    sum += lineTotal;
+  }
+  if (remaining.size || sum !== materials) throw Error("basket_not_confirmed");
+  const summary = text2(modnaById(safe, "order_summary", "span"));
+  const match = summary.match(/^Do zapłaty ([\d ,]+ zł) \+ dostawa: Kurier ([\d ,]+ zł) (\d+) x paleta Dostawa i płatność$/);
+  if (!match || modnaMoney(match[1]) !== materials || Number(match[3]) < 1) throw Error("basket_not_confirmed");
+  const costGrosze = modnaMoney(match[2]);
+  const form = modnaById(clean(orderHtml), "order_summary", "form");
+  const country = modnaById(form, "country", "select"), countries = elements(country, (_a, t) => t === "option");
+  if (countries.length !== 1 || modnaAttrs(countries[0]).value !== "PL" || text2(countries[0]) !== "Polska") throw Error("country_not_confirmed");
+  const transport = modnaById(form, "transport_1", "label"), transportAttrs = modnaAttrs(transport);
+  const allowed = JSON.parse((transportAttrs["data-allowed_country"] ?? "").replace(/&#34;/g, '"'));
+  const forbidden = JSON.parse((transportAttrs["data-forbidden_country"] ?? "").replace(/&#34;/g, '"'));
+  if (transportAttrs["data-module_name"] !== "courier" || !Array.isArray(allowed) || !allowed.includes("PL") || !(forbidden === "" || Array.isArray(forbidden) && !forbidden.includes("PL")) || text2(transport) !== `Kurier + ${match[2].replace(/ zł$/, "")} z\u0142 (${match[3]} x paleta)`) throw Error("no_home_delivery");
+  const radio = modnaById(transport, "delivery_method_1", "input");
+  if (modnaAttrs(radio).name !== "physical_delivery_method" || modnaAttrs(radio).value !== "1" || /\bdisabled\b/.test(radio)) throw Error("no_home_delivery");
+  const payment = modnaOne(elements(form, (_a, t) => t === "label").filter((node) => elements(node, (a) => a.id === "payment_method_2").length === 1), "no_prepayment");
+  const paymentInput = modnaById(payment, "payment_method_2", "input");
+  if (text2(payment) !== "Przelew bankowy" || modnaAttrs(paymentInput).name !== "payment_method" || modnaAttrs(paymentInput).value !== "2" || /\bdisabled\b/.test(paymentInput)) throw Error("no_prepayment");
+  return { costGrosze, carrier: `Kurier (${match[3]} \xD7 paleta)`, payment: "Przelew bankowy" };
+}
+async function quoteModna(order, fetchImpl) {
+  if (order.store !== "Modna \u0141azienka") throw Error("invalid_basket");
+  const client = new AnonymousShop(MODNA_ORIGIN, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.length));
+  const expected = [];
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store && s.format === "modna");
+    if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || expected.some((row) => row.id === source.productId) || source.packageSize !== pack.packageSize || source.unit !== line2.unit) throw Error("invalid_basket");
+    const product = readModnaProduct(await client.text(new URL(source.url).pathname), source);
+    if (product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (pack.count > product.maxPackages) throw Error("insufficient_stock");
+    const quantity = pack.count * Math.round(source.packageSize * 100);
+    await client.modnaCart(source.productId, (quantity / 100).toFixed(2), product.token);
+    expected.push({ id: source.productId, name: product.name, url: source.url, size: source.packageSize, count: pack.count, price: product.priceGrosze });
+  }
+  if (!expected.length) throw Error("invalid_basket");
+  const confirmed = confirmModnaCart(await client.text("/cart/"), await client.text("/order/"), expected, order.materialsGrosze);
+  const checkedAt = /* @__PURE__ */ new Date();
+  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
+}
+
+// artifacts/api-server/src/lib/folnet-delivery.ts
+var import_node_crypto12 = require("node:crypto");
+var money3 = (value, formatted) => {
+  if (typeof value !== "string" || !/^\d+\.\d{2}$/.test(value) || typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted)) throw Error("invalid_money");
+  const amount2 = parsePriceToGrosze(value), visible = parsePriceToGrosze(formatted.replace(/\s*zł$/, ""));
+  if (amount2 === null || amount2 < 0 || amount2 !== visible) throw Error("invalid_money");
+  return amount2;
+};
+function selectFolnetHomeRate(data, materialsGrosze) {
+  if (!Array.isArray(data?.prepaid) || !Array.isArray(data.dvp)) throw Error("invalid_response");
+  const candidates = [];
+  for (const rate of data.prepaid) {
+    if (!rate || { "85-1": "Kurier GLS", "100163-1": "Kurier DPD" }[rate.id] !== rate.name || rate.pickuppoint !== "n" || rate.minworthreached !== "true" || rate.calendar !== "n" || !rate.additional_services_cost) continue;
+    try {
+      const cost = money3(rate.cost, rate.cost_formatted);
+      const extras = Object.values(rate.additional_services_cost ?? {});
+      if (!extras.length || extras.some((extra) => extra?.gross !== "0.00")) continue;
+      if (cost === 0) {
+        const threshold = money3(rate.limitfree, rate.limitfree_formatted);
+        if (threshold <= 0 || materialsGrosze < threshold) continue;
+      }
+      candidates.push({ costGrosze: cost, carrier: rate.name, payment: "Przedp\u0142ata" });
+    } catch {
+    }
+  }
+  const best = candidates.sort((a, b) => a.costGrosze - b.costGrosze)[0];
+  if (!best) throw Error("no_home_delivery");
+  return best;
+}
+async function quoteFolnet(order, fetchImpl) {
+  if (order.store !== "Folnet" || !order.lines.length) throw Error("invalid_basket");
+  const client = new AnonymousShop("https://folnet.pl", fetchImpl, AbortSignal.timeout(15e3), retailerRequestBudget(order.lines.length));
+  const wanted = /* @__PURE__ */ new Map();
+  let materials = 0;
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === "Folnet" && source2.format === "folnet");
+    if (!source || !source.productId || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || wanted.has(source.productId)) throw Error("invalid_basket");
+    const raw2 = await client.text(source.url), current = inspectFolnetProduct(raw2, source);
+    if (elements(clean(raw2), (a) => a.id === "menu_basket" && (a.class?.split(/\s+/).includes("empty_bsket") ?? false)).length !== 1) throw Error("basket_not_confirmed");
+    if (current.amount !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (pack.count > current.stock) throw Error("product_unavailable");
+    wanted.set(source.productId, { count: pack.count, price: current.amount });
+    materials += current.amount * pack.count;
+  }
+  if (!Number.isSafeInteger(materials) || materials !== order.materialsGrosze || !wanted.size) throw Error("basket_not_confirmed");
+  const query = new URLSearchParams({ mode: "productAndBasket" });
+  for (const [id, item] of wanted) query.set(`products[${id}][uniw][quantity]`, String(item.count));
+  const raw = await client.text("/ajax/get-deliveries.php?" + query, { getAjax: "true" });
+  const response = JSON.parse(raw), best = selectFolnetHomeRate(response, materials), now = /* @__PURE__ */ new Date();
+  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
+}
+
+// artifacts/api-server/src/lib/kronosfera-delivery.ts
+var import_node_crypto13 = require("node:crypto");
+var cls3 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
+var only4 = (values) => {
+  if (values.length !== 1) throw Error("basket_not_confirmed");
+  return values[0];
+};
+var attribute3 = (element, key) => attrs(element.match(/^<[^>]+>/)?.[0] ?? "")[key];
+var money4 = (text4) => {
+  const match = /^([\d\s,.]+)\s*zł(?:\/szt\.)?$/.exec(text4);
+  const amount2 = match ? parsePriceToGrosze(match[1].trim()) : null;
+  if (amount2 === null || amount2 < 0) throw Error("invalid_money");
+  return amount2;
+};
+function confirmKronosferaCart(raw, wanted, materialsGrosze) {
+  const html = clean(raw), form = only4(elements(html, (a, tag) => tag === "form" && cls3(a, "cart-module__form")));
+  const rows = elements(form, (a) => cls3(a, "cart-module__row"));
+  if (rows.length !== wanted.size) throw Error("basket_not_confirmed");
+  let total = 0;
+  const seen = /* @__PURE__ */ new Set();
+  for (const row of rows) {
+    const title = only4(elements(row, (a) => cls3(a, "cart-module__title"))), url2 = new URL(attribute3(title, "href") ?? "", "https://kronosfera.pl").href, item = wanted.get(url2);
+    if (!item || seen.has(url2) || text2(title) !== "Listwa przypod\u0142ogowa LK100F24 9002") throw Error("basket_not_confirmed");
+    seen.add(url2);
+    const quantity = only4(elements(row, (a) => /^carts\[1_1\]\[quantity\]\[\d+\]$/.test(a.name ?? "")));
+    if (attribute3(quantity, "value") !== String(item.count)) throw Error("product_unavailable");
+    const price2 = only4(elements(row, (a) => cls3(a, "cart-module__price-col") && !cls3(a, "d-none")));
+    if (money4(text2(only4(elements(price2, (a) => cls3(a, "cart-module__price"))))) !== item.price) throw Error("price_changed");
+    const line2 = money4(text2(only4(elements(only4(elements(row, (a) => cls3(a, "cart-module__total-price-col"))), (a) => cls3(a, "cart-module__price")))));
+    if (line2 !== item.count * item.price) throw Error("price_changed");
+    total += line2;
+  }
+  if (total !== materialsGrosze || !Number.isSafeInteger(total)) throw Error("basket_not_confirmed");
+  const summary = (label) => {
+    const values = elements(form, (a) => cls3(a, "cart-module__prices-list-item")).filter((item) => text2(only4(elements(item, (a) => cls3(a, "cart-module__label")))) === label).map((item) => money4(text2(only4(elements(item, (a) => cls3(a, "cart-module__price"))))));
+    if (!values.length || new Set(values).size !== 1) throw Error("basket_not_confirmed");
+    return values[0];
+  };
+  const materials = summary("Warto\u015B\u0107:"), delivery = summary("Koszt dostawy:"), paymentFee = summary("Koszt p\u0142atno\u015Bci:"), final = summary("Do zap\u0142aty:");
+  if (materials !== total || paymentFee !== 0 || final !== total + delivery) throw Error("basket_not_confirmed");
+  const section = (label) => only4(elements(form, (a) => cls3(a, "cart-module__options-section")).filter((item) => text2(only4(elements(item, (a) => cls3(a, "cart-module__label")))) === label));
+  const selected = (part, type) => only4(elements(part, (_a, tag) => tag === "label").filter((label) => elements(label, (a, tag) => tag === "input" && a.type === type).some((input2) => /\schecked(?:\s|=|>)/.test(input2))));
+  const shipping = selected(section("Wyznaczone formy dostawy:"), "checkbox");
+  const carrier = text2(only4(elements(shipping, (a) => cls3(a, "name"))));
+  if (carrier !== "Przesy\u0142ka kurierska (paczka 2620x300x300mm, 30kg)") throw Error("no_home_delivery");
+  let shippingValue = only4(elements(shipping, (a) => cls3(a, "value"))).replace(/<(del|s)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  for (const old of elements(shippingValue, (a) => cls3(a, "cart-module__price--old"))) shippingValue = shippingValue.replace(old, "");
+  if (money4(text2(shippingValue)) !== delivery) throw Error("basket_not_confirmed");
+  const payment = selected(section("Rodzaj p\u0142atno\u015Bci:"), "radio");
+  const paymentName = text2(only4(elements(payment, (a) => cls3(a, "name"))));
+  if (paymentName !== "P\u0142atno\u015Bci elektroniczne Przelewy24" || money4(text2(only4(elements(payment, (a) => cls3(a, "value"))))) !== 0) throw Error("no_home_delivery");
+  if (delivery === 0 && total <= 25e4) throw Error("no_home_delivery");
+  return { costGrosze: delivery, carrier, payment: paymentName };
+}
+async function quoteKronosfera(order, fetchImpl) {
+  if (order.store !== "Kronosfera" || !order.lines.length) throw Error("invalid_basket");
+  const client = new AnonymousShop("https://kronosfera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.length));
+  const empty = clean(await client.text("/koszyk"));
+  if (elements(empty, (a) => cls3(a, "cart-module__row")).length || !text2(empty).includes("W Twoim koszyku nie znale\u017Ali\u015Bmy \u017Cadnych produkt\xF3w.")) throw Error("basket_not_confirmed");
+  const wanted = /* @__PURE__ */ new Map();
+  let materials = 0;
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === "Kronosfera" && source2.format === "kronosfera");
+    if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || wanted.has(source.url)) throw Error("invalid_basket");
+    const current = inspectKronosferaProduct(await client.text(source.url), source);
+    if (current.amount !== pack.unitPriceGrosze) throw Error("price_changed");
+    const response = JSON.parse(await client.text("/ajax/store/product/purchase/1/pl/" + source.productId, { _token: current.token, quantity: String(pack.count) }));
+    if (response.quantity !== String(pack.count) && response.quantity !== pack.count) throw Error("product_unavailable");
+    wanted.set(source.url, { count: pack.count, price: current.amount });
+    materials += current.amount * pack.count;
+  }
+  if (materials !== order.materialsGrosze) throw Error("basket_not_confirmed");
+  const raw = await client.text("/koszyk"), selected = confirmKronosferaCart(raw, wanted, materials), now = /* @__PURE__ */ new Date();
+  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(raw).digest("hex") } };
+}
+
+// artifacts/api-server/src/lib/skyshop-delivery.ts
+function confirmSkyshopBasketCalculation(value, expected, selected = false) {
+  if (!expected.length || expected.length > 2 || new Set(expected.map((row) => row.productId)).size !== expected.length) throw Error("invalid_basket");
+  if (value?.baseCurrency !== "PLN" || value.orderCurrency !== "PLN" || value.isWdt !== false || value.coupon !== null || value.gratisId !== null || ![null, 0].includes(value.orderPaymentOverhead) || !Array.isArray(value.products) || value.products.length !== expected.length) throw Error("basket_not_confirmed");
+  let total = 0;
+  const seen = /* @__PURE__ */ new Set();
+  for (const product of value.products) {
+    const line2 = expected.find((row) => row.productId === product?.id);
+    if (!line2 || seen.has(line2.productId)) throw Error("basket_not_confirmed");
+    seen.add(line2.productId);
+    const review2 = skyshopReview(line2.productId);
+    if (!Number.isSafeInteger(line2.count) || line2.count < 50 * review2.nativePerPack || line2.count % review2.nativePerPack || !Number.isSafeInteger(line2.unitPriceGrosze) || line2.unitPriceGrosze < 1 || !Number.isSafeInteger(line2.count * line2.unitPriceGrosze) || !line2.itemId) throw Error("invalid_basket");
+    if (product.name !== review2.name || product.producerName !== MATBUD_PRODUCER || product.tax !== "23" || product.hash !== line2.itemId || !Array.isArray(product.options) || product.options.length) throw Error("basket_not_confirmed");
+    if (product.amount !== line2.count) throw Error("insufficient_stock");
+    if (parsePriceToGrosze(product.price) !== line2.unitPriceGrosze || parsePriceToGrosze(product.priceInOrderCurrency) !== line2.unitPriceGrosze) throw Error("price_changed");
+    total += line2.count * line2.unitPriceGrosze;
+  }
+  if (!Number.isSafeInteger(total) || [value.orderProductsPricesSum, value.orderProductsPricesSumInOrderCurrency, value.orderPriceTotal].some((amount2) => parsePriceToGrosze(amount2) !== total)) throw Error("price_changed");
+  if (value.orderPriceShipment !== 0) throw Error("no_home_delivery");
+  if (selected && (value.payment?.name !== "Wp\u0142ata na konto bankowe" || value.shipment?.name !== "Styropian, DARMOWA DOSTAWA !")) throw Error("no_home_delivery");
+  return value;
+}
+function confirmSkyshopBasketShipping(html, methods, expected) {
+  const safe = clean(html), orders = elements(safe, (a) => a.class?.split(/\s+/).includes("order") ?? false);
+  if (orders.length !== 1) throw Error("basket_not_confirmed");
+  const attrs7 = attrs(orders[0].match(/^<[^>]+>/)?.[0] ?? "");
+  let initial;
+  try {
+    initial = JSON.parse(Buffer.from(attrs7["data-calc"] ?? "", "base64").toString());
+  } catch {
+    throw Error("basket_not_confirmed");
+  }
+  confirmSkyshopBasketCalculation(initial, expected);
+  if (!methods || typeof methods !== "object" || Array.isArray(methods) || methods.user_error) throw Error("no_home_delivery");
+  const shipping = methods.s182be0c5c;
+  if (shipping?.name !== "Styropian, DARMOWA DOSTAWA !" || shipping.personal !== "no" || shipping.function !== "none" || shipping.pay_delivery !== "no" || shipping.require_address !== "yes" || shipping.price !== 0 || shipping.price_net !== 0 || shipping.postal_codes !== null || shipping.cities !== null || shipping.streets !== null || !Array.isArray(shipping.methods) || shipping.methods.length) throw Error("no_home_delivery");
+  return shipping;
+}
+async function quoteSkyshop(order, fetchImpl) {
+  const packs = order.lines.flatMap((line2) => line2.packages);
+  if (order.store !== "Centrum Matbud" || !packs.length || packs.length > 2 || new Set(packs.map((pack) => pack.offerId)).size !== packs.length) throw Error("invalid_basket");
+  const wanted = packs.map((pack) => {
+    const source = RETAIL_SOURCES.find((row) => row.id === pack.offerId && row.store === order.store && row.format === "skyshop");
+    if (!source) throw Error("invalid_basket");
+    const review2 = reviewedSkyshopSource(source);
+    if (!Number.isSafeInteger(pack.count) || pack.count < 50 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze < 1 || !Number.isSafeInteger(pack.lineCostGrosze) || pack.packageSize !== review2.area || pack.minimumPackages !== 50 || (pack.purchaseMultiple ?? 1) !== 1 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze) throw Error("invalid_basket");
+    return { source, review: review2, pack };
+  });
+  if (wanted.reduce((sum, row) => sum + row.pack.lineCostGrosze, 0) !== order.materialsGrosze) throw Error("invalid_basket");
+  const client = new AnonymousShop(MATBUD_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), 32), expected = [], evidence = [];
+  for (const { source, review: review2, pack } of wanted) {
+    const current = await readSkyshopProduct(source, client);
+    if (current.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (current.stock < pack.count) throw Error("insufficient_stock");
+    expected.push({ productId: review2.id, count: pack.count * review2.nativePerPack, unitPriceGrosze: current.nativePriceGrosze });
+    evidence.push(...current.evidence);
+  }
+  const empty = await client.skyshop("create-cart");
+  for (const line2 of expected) {
+    const added = await client.skyshop("add", line2.count, line2.productId);
+    if (added?.id !== empty.id || added.addedCartItem?.quantity !== line2.count) throw Error("insufficient_stock");
+  }
+  const cart = confirmSkyshopBasket(await client.skyshop("cart"), expected);
+  if (cart.id !== empty.id) throw Error("basket_not_confirmed");
+  for (const line2 of expected) line2.itemId = cart.items.find((item) => item.product.id === line2.productId).id;
+  const shipping = await client.skyshop("shipping"), method = confirmSkyshopBasketShipping(shipping.html, shipping.methods, expected);
+  const calculation = confirmSkyshopBasketCalculation(await client.skyshop("calculate"), expected, true), now = /* @__PURE__ */ new Date();
+  return { quote: { costGrosze: 0, carrier: method.name, payment: calculation.payment.name, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: wanted.length === 1 ? wanted[0].source.url : MATBUD_ORIGIN + "/order", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: skyshopEvidenceHash([...evidence, cart, shipping.html, shipping.methods, calculation]) } };
+}
+
+// artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
   "Rab-Dom": "https://www.rabdom.pl",
   Realbud: "https://realbud.com",
@@ -21915,17 +23361,21 @@ var ORIGINS = {
 var TTL = 10 * 6e4;
 function unavailableReason(store) {
   const sources = RETAIL_SOURCES.filter((source) => source.store === store);
+  if (sources.some((source) => source.pickupOnly)) return "retailer_transport_quote_required";
+  if (sources.some((source) => source.marketplaceSeller)) return "retailer_access_required";
+  if (sources.length && sources.every((source) => source.format === "betterial")) return "retailer_transport_quote_required";
+  if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
-  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden"].includes(store)) return void 0;
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud"].includes(store)) return void 0;
   return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
-    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
     postcodeStores: ["Sewera", "Cezar"],
-    accessRequiredStores: ["Castorama", "OBI"]
+    accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
   };
 }
 function knownUnavailableRetailers() {
@@ -21936,9 +23386,9 @@ function knownUnavailableRetailers() {
   }
   return result;
 }
-function confirmedMoney(text3, numeric2) {
-  if (typeof text3 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
-  const match = text3.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
+function confirmedMoney(text4, numeric2) {
+  if (typeof text4 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
+  const match = text4.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
   if (!match) throw Error("invalid_money");
   const cents2 = Number(match[1]) * 100 + Number(match[2]);
   if (!Number.isSafeInteger(cents2) || cents2 < 0 || Math.abs(numeric2 * 100 - cents2) > 1e-5) throw Error("invalid_money");
@@ -21977,20 +23427,21 @@ function selectHomeDelivery(basket) {
   return best;
 }
 async function quoteShoper(order, fetchImpl) {
-  const origin = ORIGINS[order.store];
-  if (!origin) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
-  const client = new AnonymousShop(origin, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const origin3 = ORIGINS[order.store];
+  if (!origin3) return { reason: order.store === "Sewera" ? "branch_and_address_required" : "integration_unavailable" };
+  const client = new AnonymousShop(origin3, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   const expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
-    if (!source || new URL(source.url).origin !== origin || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
+    if (!source || new URL(source.url).origin !== origin3 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze * pack.count)) throw Error("invalid_basket");
     const id = shoperProductId(source);
     const product = await client.json(`/webapi/front/pl_PL/products/PLN/${id}`);
+    confirmShoperPurchaseUnit(product, source);
     if (String(product.ean) !== source.ean || String(product.id) !== id || !product.can_buy || !Number.isSafeInteger(product.stockId)) throw Error("product_unavailable");
-    const price = confirmedMoney(product.price?.gross?.final, product.price?.gross?.final_float);
-    if (price !== pack.unitPriceGrosze) throw Error("price_changed");
+    const price2 = confirmedMoney(product.price?.gross?.final, product.price?.gross?.final_float);
+    if (price2 !== pack.unitPriceGrosze) throw Error("price_changed");
     if (expected.has(product.stockId)) throw Error("invalid_basket");
-    expected.set(product.stockId, { count: pack.count, price });
+    expected.set(product.stockId, { count: pack.count, price: price2, unitName: source.apiPurchaseUnit });
     await client.json("/webapi/front/pl_PL/basket/PLN/", { stock_id: product.stockId, quantity: pack.count });
   }
   const basket = await client.json("/webapi/front/pl_PL/basket/PLN/");
@@ -21998,7 +23449,7 @@ async function quoteShoper(order, fetchImpl) {
   let total = 0;
   for (const p of basket.products) {
     const wanted = expected.get(p.stock_id);
-    if (!wanted || p.quantity !== wanted.count || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    if (!wanted || p.quantity !== wanted.count || wanted.unitName && (p.unit?.name !== wanted.unitName || p.unit?.floating_point !== false) || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
     expected.delete(p.stock_id);
     total += wanted.count * wanted.price;
   }
@@ -22009,10 +23460,10 @@ async function quoteShoper(order, fetchImpl) {
     ...shipping,
     checkedAt: checkedAt.toISOString(),
     expiresAt: new Date(checkedAt.getTime() + TTL).toISOString(),
-    sourceUrl: `${origin}/pl/basket`,
+    sourceUrl: `${origin3}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
@@ -22031,7 +23482,8 @@ function createRetailerQuoter(fetchImpl = fetch) {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
-        return await (order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
+        if (order.store === "Centrum Matbud") return await quoteSkyshop(order, fetchImpl);
+        return await (order.store === "Kronosfera" ? quoteKronosfera(order, fetchImpl) : order.store === "Folnet" ? quoteFolnet(order, fetchImpl) : order.store === "Modna \u0141azienka" ? quoteModna(order, fetchImpl) : order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
       } catch (error40) {
         return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed"].includes(error40.message) ? error40.message : "quote_unavailable" };
       } finally {
@@ -22048,8 +23500,21 @@ function createRetailerQuoter(fetchImpl = fetch) {
   };
 }
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/lib/store-delivery.ts
+// artifacts/api-server/src/lib/store-delivery.ts
 var STORE_DELIVERY_POLICIES = [
+  // Separate seller and checkout shipping; do not inherit Castorama's tariff.
+  // source: https://www.castorama.pl/verified-sellers/seller/2601
+  { store: "Corksystem (Castorama)", minimumGrosze: null, checkedAt: null, sourceUrl: "https://www.castorama.pl/verified-sellers/seller/2601" },
+  { store: "Kronosfera", minimumGrosze: null, checkedAt: null, sourceUrl: "https://kronosfera.pl/dostawa" },
+  // Current native delivery quotes supersede the older amounts on this page.
+  { store: "Folnet", minimumGrosze: null, checkedAt: null, sourceUrl: "https://folnet.pl/pl/delivery.html" },
+  {
+    store: "Betterial",
+    minimumGrosze: null,
+    checkedAt: null,
+    // source: https://betterial.pl/content/4-transport
+    sourceUrl: "https://betterial.pl/content/4-transport"
+  },
   {
     store: "Zino",
     minimumGrosze: null,
@@ -22104,7 +23569,26 @@ var STORE_DELIVERY_POLICIES = [
   }
 ];
 
-// D:/projekty/remont_assistance/artifacts/api-server/src/shared-backend.ts
+// artifacts/api-server/src/lib/castorama-browser-observation.ts
+function isCastoramaBrowserSource(source) {
+  if (source.browserReviewAllowed !== true) return false;
+  try {
+    const url2 = new URL(source.url);
+    if (url2.origin !== "https://www.castorama.pl" || url2.username || url2.password) return false;
+  } catch {
+    return false;
+  }
+  if (!source.marketplaceSeller) return source.store === "Castorama";
+  return source.id === "castorama-marketplace-corksystem-lvt-6m2" && source.ean === "5061092900925" && source.store === "Corksystem (Castorama)" && source.marketplaceSeller.name === "Corksystem" && source.marketplaceSeller.id === 2601 && source.pickupUnavailable === true && source.packageSize === 6 && source.unit === "m2";
+}
+
+// artifacts/api-server/src/lib/bricomarche-browser-observation.ts
+var BRICO_POZNAN = "Bricomarch\xE9 Pozna\u0144 (Al. Solidarno\u015Bci)";
+function isBricomarcheBrowserSource(source) {
+  return source.id === "bricomarche-poznan-budmat-ud27-3m" && source.ean === "5907738940163" && source.store === BRICO_POZNAN && source.browserReviewAllowed === true && source.pickupOnly === true && source.packageSize === 3 && source.unit === "mb" && source.url === "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny";
+}
+
+// artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value] ?? value;
 function createRemontService(options = {}) {
@@ -22120,8 +23604,13 @@ function createRemontService(options = {}) {
   const accept = (observation) => {
     if (!observation || typeof observation !== "object") return;
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
-    if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
+    if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || observation.stockPackages !== void 0 && (!Number.isSafeInteger(observation.stockPackages) || observation.stockPackages < 0 || observation.stockPackages > 1e9) || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
     const previous = observations.get(source.id);
+    if ((isBricomarcheBrowserSource(source) || isCastoramaBrowserSource(source) && ["m2", "m"].includes(source.unit)) && !observation.verification) return;
+    if (observation.verification !== void 0) {
+      const v = observation.verification;
+      if (!v || v.method !== "browser" || !(isCastoramaBrowserSource(source) || isBricomarcheBrowserSource(source)) || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
+    }
     if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
     if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
   };
@@ -22140,7 +23629,7 @@ function createRemontService(options = {}) {
       errors.set("cache", "cache_read_failed");
     }
   }
-  function catalog() {
+  function catalog(pickup = false) {
     const products = [];
     const offers = [];
     for (const source of RETAIL_SOURCES) {
@@ -22155,8 +23644,8 @@ function createRemontService(options = {}) {
         normalizedName: normalizeProductName(source.name),
         ean: source.ean,
         gtin: null,
-        manufacturer: source.brand,
-        brand: source.brand,
+        manufacturer: source.brand || null,
+        brand: source.brand || null,
         category: source.category,
         subcategory: null,
         variant: null,
@@ -22178,11 +23667,14 @@ function createRemontService(options = {}) {
         unit: source.unit,
         packageSize: String(source.packageSize),
         ...source.purchaseMultiple ? { purchaseMultiple: source.purchaseMultiple } : {},
+        ...source.minimumPackages ? { minimumPackages: source.minimumPackages } : {},
+        ...observation.stockPackages !== void 0 ? { maxPackages: observation.stockPackages } : {},
+        ...observation.verification ? { verification: observation.verification } : {},
         pricePerUnit: (observation.priceGrosze / 100 / source.packageSize).toFixed(4),
         productUrl: source.url,
         availability: observation.availability,
         fetchedAt: new Date(observation.observedAt),
-        source: source.format && source.format !== "jsonld" ? "retailer-page-microdata" : "retailer-page-jsonld"
+        source: observation.verification ? "retailer-page-browser-snapshot" : source.format && source.format !== "jsonld" ? "retailer-page-microdata" : "retailer-page-jsonld"
       });
     }
     const aliases = Object.entries(RETAIL_NAME_ALIASES).map(([name, ean]) => [normalizeProductName(name), ean]);
@@ -22192,7 +23684,10 @@ function createRemontService(options = {}) {
         const alias = aliases.find(([name]) => name === query.normalizedName)?.[1];
         return products.find((product) => product.category === query.category && (product.normalizedName === query.normalizedName || product.ean === alias)) ?? null;
       },
-      listOffers: async (_db, id) => offers.filter((offer) => offer.productId === id)
+      listOffers: async (_db, id) => offers.filter((offer) => {
+        const source = RETAIL_SOURCES.find((source2) => source2.id === offer.id);
+        return offer.productId === id && (pickup ? ![source?.pickupRequiresConfirmation, source?.pickupUnavailable].some(Boolean) : !source?.pickupOnly);
+      })
     };
     return { products, offers, deps };
   }
@@ -22245,9 +23740,13 @@ function createRemontService(options = {}) {
       status: eligible.length > 0 ? "ok" : "no-current-offers",
       offers: eligible.length,
       products: new Set(eligible.map((offer) => offer.productId)).size,
+      browserVerifiedOffers: eligible.filter((offer) => offer.verification?.method === "browser").length,
       stores: [...new Set(eligible.map((offer) => offer.store))],
       running,
       lastAttemptAt,
+      pickupConfirmationStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupRequiresConfirmation).map((source) => source.store))],
+      pickupUnavailableStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupUnavailable).map((source) => source.store))],
+      pickupOnlyStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupOnly).map((source) => source.store))],
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
       delivery: retailerDeliveryCapabilities(),
       sources: RETAIL_SOURCES.map((source) => ({
@@ -22255,7 +23754,9 @@ function createRemontService(options = {}) {
         store: source.store,
         checkedAt: observations.get(source.id)?.observedAt ?? null,
         active: eligible.some((offer) => offer.id === source.id),
-        error: source.disabledReason ?? errors.get(source.id) ?? null
+        error: source.disabledReason ?? errors.get(source.id) ?? null,
+        ...observations.get(source.id)?.stockPackages !== void 0 ? { stockPackages: observations.get(source.id).stockPackages } : {},
+        ...observations.get(source.id)?.verification ? { verification: observations.get(source.id).verification } : {}
       }))
     };
   }
@@ -22269,7 +23770,7 @@ function createRemontService(options = {}) {
   async function handleEstimate(req, res) {
     const stageOnly = req.path.endsWith("/stage");
     const parsed = projectRequestSchema.safeParse(stageOnly ? { jobs: [req.body?.job], options: req.body?.options } : req.body);
-    if (!parsed.success || parsed.data.jobs.length > 20 || parsed.data.jobs.some((job) => job.materials.length > 100 || job.materials.some((line2) => line2.quantity > 1e5))) {
+    if (!parsed.success || parsed.data.jobs.length > 20 || parsed.data.jobs.some((job) => job.materials.length > DELIVERY_LIMITS.products || job.materials.some((line2) => line2.quantity > 1e5))) {
       res.status(400).json({ error: "invalid_request" });
       return;
     }
@@ -22293,7 +23794,7 @@ function createRemontService(options = {}) {
           retryAfterSeconds: Math.max(0, Math.ceil((refreshedAt + 6e4 - Date.now()) / 1e3))
         };
       }
-      const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog().deps);
+      const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog(parsed.data.options?.delivery?.mode === "pickup").deps);
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
       const deadline = Date.now() + 2e4;
