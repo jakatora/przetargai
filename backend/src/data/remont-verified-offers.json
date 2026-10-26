@@ -1389,5 +1389,221 @@
     "evidenceSha256": "e2f98ff571a71f211b04400adf8a74c18c197068297972f6b60d250f6d55093e",
     "validUntil": null,
     "stockPackages": 54
+  },
+  {
+    "sourceId": "castorama-paint-economy-10l",
+    "ean": "3663602567240",
+    "name": "Farba biała mat 10 l",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/farba-biala-mat-10-l~3663602567240_02c_PL_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 5498,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:04:22.567Z",
+    "sourceUrl": "https://www.castorama.pl/farba-biala-mat-10-l/3663602567240_CAPL.prd",
+    "evidenceSha256": "f1ae483d591a673da5ddca76b06a5fc778b59f7483e4fc23c64b467308360232",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:04:22.567Z",
+      "expiresAt": "2026-10-27T06:04:22.567Z"
+    }
+  },
+  {
+    "sourceId": "castorama-paint-goodhome-10l",
+    "ean": "5059340271620",
+    "name": "Farba GoodHome Ściany i Sufit biały mat 10 l",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/farba-goodhome-sciany-i-sufit-bialy-mat-10-l~5059340271620_02c_PL_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 7998,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:06:12.185Z",
+    "sourceUrl": "https://www.castorama.pl/farba-goodhome-sciany-i-sufit-bialy-mat-10-l/5059340271620_CAPL.prd",
+    "evidenceSha256": "0d05c0ee5834fc5108f62062dc6551fba2725bba60c844317c1e07fbf4d72a8b",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:06:12.185Z",
+      "expiresAt": "2026-10-27T06:06:12.185Z"
+    }
+  },
+  {
+    "sourceId": "castorama-kreisel-gw180-20kg",
+    "ean": "5907418038791",
+    "name": "Gładź pod wałek Kreisel GW180 gotowa polimerowa 20 kg",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/gladz-pod-walek-kreisel-gw180-gotowa-polimerowa-20-kg~5907418038791_21c_PL_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 3848,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:07:40.029Z",
+    "sourceUrl": "https://www.castorama.pl/gladz-pod-walek-gw180-20-kg/5907418038791_CAPL.prd",
+    "evidenceSha256": "358580f1271295d4365223d455d8d626bfc456a15aa7260e64f4bcc0dbcd63d7",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:07:40.029Z",
+      "expiresAt": "2026-10-27T06:07:40.029Z"
+    }
+  },
+  {
+    "sourceId": "castorama-norgips-cd60-3m",
+    "ean": "5907651698899",
+    "name": "Profil sufitowy Norgips CD60 0,6 mm 3 mb",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/profil-sufitowy-norgips-cd60-0-6-mm-3-mb~5907651698899_01c_PL_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 2098,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:11:04.395Z",
+    "sourceUrl": "https://www.castorama.pl/profil-sufitowy-norgips-cd60-0-6-mm-3-mb/5907651698899_CAPL.prd",
+    "evidenceSha256": "d52128e9b69d3ef7ca78cca64cf921facdc91de47e48de645eac92e9d0b53ab4",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:11:04.395Z",
+      "expiresAt": "2026-10-27T06:11:04.395Z"
+    }
+  },
+  {
+    "sourceId": "castorama-atlas-plus-promo-25kg",
+    "ean": "5905400658866",
+    "name": "Klej wysokoelastyczny Atlas Plus odkształcalny 25 kg",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/klej-wysokoelastyczny-atlas-plus-odksztalcalny-25-kg~5905400658866_22c_PL_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 6398,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:15:24.072Z",
+    "sourceUrl": "https://www.castorama.pl/klej-wysokoelastyczny-atlas-plus-odksztalcalny-25-kg/5905400658866_CAPL.prd",
+    "evidenceSha256": "0e388a63b0a2d17100baa3c0c26f6168ac6527c72b2fd2e348a2d0df53dae573",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:15:24.072Z",
+      "expiresAt": "2026-10-27T06:15:24.072Z"
+    }
+  },
+  {
+    "sourceId": "castorama-cersanit-seno",
+    "ean": "5902115720833",
+    "name": "Kompakt WC Cersanit Seno bezkołnierzowy 3/5 l z deską wolnoopadającą",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/kompakt-wc-cersanit-seno-bezkolnierzowy-3-5-l-z-deska-wolnoopadajaca~5902115720833_01c?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 48800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:26:17.651Z",
+    "sourceUrl": "https://www.castorama.pl/kompakt-wc-cersanit-seno-bezkolnierzowy-3-5-l-z-deska-wolnoopadajaca/5902115720833_CAPL.prd",
+    "evidenceSha256": "208f62a6f6db0ad0f36022203c7ededca8afce6e7534ce6a5a314c69ad429090",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:26:17.651Z",
+      "expiresAt": "2026-10-27T06:26:17.651Z"
+    }
+  },
+  {
+    "sourceId": "castorama-aks-ydyp-3x15-100m",
+    "ean": "5904617573771",
+    "name": "Przewód AKS Zielonka YDYp 3 x 1,5 mm2 450/750 V 100 mb",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/przewod-aks-zielonka-ydyp-3-x-1-5-mm2-450-750-v-100-mb~5904617573771_02c_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 38800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:28:51.728Z",
+    "sourceUrl": "https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-1-5-mm2-450-750-v-100-mb/5904617573771_CAPL.prd",
+    "evidenceSha256": "c22e5bf0feb1f3fb23ffd1babcb56c2415f8046a3cd10fb800f208b8b1987032",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:28:51.728Z",
+      "expiresAt": "2026-10-27T06:28:51.728Z"
+    }
+  },
+  {
+    "sourceId": "castorama-aks-ydyp-3x25-100m",
+    "ean": "5904617573764",
+    "name": "Przewód AKS Zielonka YDYp 3 x 2,5 mm2 450/750 V 100 mb",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/przewod-aks-zielonka-ydyp-3-x-2-5-mm2-450-750-v-100-mb~5904617573764_02c_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 59800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:29:31.705Z",
+    "sourceUrl": "https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-2-5-mm2-450-750-v-100-mb/5904617573764_CAPL.prd",
+    "evidenceSha256": "4571444323716450ce7f3144ae773d3f006abb5d8362afb243332dcba5566cf9",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:29:31.705Z",
+      "expiresAt": "2026-10-27T06:29:31.705Z"
+    }
+  },
+  {
+    "sourceId": "castorama-elektroplast-pk60-10",
+    "ean": "5901752637337",
+    "name": "Puszka podtynkowa Elektro-Plast 60 głęboka łączeniowa z wkrętem 10 szt.",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/puszka-podtynkowa-elektro-plast-60-gleboka-laczeniowa-z-wkretem-10-szt-~5901752637337_01c_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 1524,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:30:49.885Z",
+    "sourceUrl": "https://www.castorama.pl/puszka-podtynkowa-elektro-plast-60-gleboka-laczeniowa-z-wkretem-10-szt-/5901752637337_CAPL.prd",
+    "evidenceSha256": "d9e12ef4cae385c5af6e37987e65dadfe6bc2b4f99beee6a2600570d605b1c41",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:30:49.885Z",
+      "expiresAt": "2026-10-27T06:30:49.885Z"
+    }
+  },
+  {
+    "sourceId": "castorama-knauf-mp75-25kg",
+    "ean": "5902367206352",
+    "name": "Tynk maszynowy Knauf MP 75 25 kg",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/tynk-maszynowy-knauf-mp-75-25-kg~5902367206352_03c_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 2548,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:31:59.630Z",
+    "sourceUrl": "https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd",
+    "evidenceSha256": "ae2a5e02f91e711619a84ff86ffa02df45bba798b3b0a28b0e701ab5595e7ee3",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:31:59.630Z",
+      "expiresAt": "2026-10-27T06:31:59.630Z"
+    }
+  },
+  {
+    "sourceId": "castorama-opp-klasyk-70-right",
+    "ean": "5063022524034",
+    "name": "Drzwi z podcięciem OPP Klasyk 70 prawe białe",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale~5063022524034_02c?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 20800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:33:02.731Z",
+    "sourceUrl": "https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd",
+    "evidenceSha256": "66d1852442f84795740c9fdb0eac1b0cd10946da9dd12ceaaddb787e0e2cf3b2",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:33:02.731Z",
+      "expiresAt": "2026-10-27T06:33:02.731Z"
+    }
+  },
+  {
+    "sourceId": "castorama-perfectdoor-base-80-100-right",
+    "ean": "5902659279118",
+    "name": "Baza ościeżnicy regulowana PerfectDoor 80-100 mm prawa dąb sonoma",
+    "imageUrl": "https://media2.castorama.pl/is/image/CastoramaPL/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma~5902659279118_03c_CP?$MOB_PREV$&$width=284&$height=284",
+    "priceGrosze": 41800,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T06:34:36.671Z",
+    "sourceUrl": "https://www.castorama.pl/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma/5902659279118_CAPL.prd",
+    "evidenceSha256": "96b7eb1d1cc55ac95a12336e1bd80848d0b0efc0ea61c4ff321aa52ce5d5a1e6",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-26T06:34:36.671Z",
+      "expiresAt": "2026-10-27T06:34:36.671Z"
+    }
   }
 ]

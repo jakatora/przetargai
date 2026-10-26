@@ -14337,6 +14337,7 @@ function buildEntries(chosen) {
         ...(v.purchaseMultiple ?? 1) > 1 ? { purchaseMultiple: v.purchaseMultiple } : {},
         ...(v.minimumPackages ?? 1) > 1 ? { minimumPackages: v.minimumPackages } : {},
         ...v.maxPackages !== void 0 ? { maxPackages: v.maxPackages } : {},
+        ...v.verification ? { verification: v.verification } : {},
         store: v.store,
         url: v.url,
         offerId: v.offerId
@@ -14557,6 +14558,10 @@ function isComparableOffer(offer, now = Date.now()) {
   if (offer.purchaseMultiple !== void 0 && (!Number.isSafeInteger(offer.purchaseMultiple) || offer.purchaseMultiple < 1 || offer.purchaseMultiple > 1e4)) return false;
   if (offer.minimumPackages !== void 0 && (!Number.isSafeInteger(offer.minimumPackages) || offer.minimumPackages < 1 || offer.minimumPackages > 1e4)) return false;
   if (offer.maxPackages !== void 0 && (!Number.isSafeInteger(offer.maxPackages) || offer.maxPackages < Math.ceil((offer.minimumPackages ?? 1) / (offer.purchaseMultiple ?? 1)) * (offer.purchaseMultiple ?? 1) || offer.maxPackages > 1e9)) return false;
+  if (offer.verification) {
+    const { method, checkedAt, expiresAt } = offer.verification, checked = Date.parse(checkedAt), expires = Date.parse(expiresAt);
+    if (method !== "browser" || !Number.isFinite(checked) || !Number.isFinite(expires) || expires !== checked + 864e5 || expires <= now || checked > now + 3e5 || !(offer.fetchedAt instanceof Date) || checked !== offer.fetchedAt.getTime()) return false;
+  }
   if (!offer.source || /seed|fixture|mock|demo|reference/i.test(offer.source)) return false;
   const availability = (offer.availability ?? "").replace(/[\s_-]/g, "");
   if (/outofstock|unavailable|niedost[eę]pn|brak|preorder|backorder/i.test(availability)) return false;
@@ -14611,6 +14616,7 @@ function buildPackageVariants(offers, product, store) {
         ...purchaseMultiple > 1 ? { purchaseMultiple } : {},
         ...minimumPackages > 1 ? { minimumPackages } : {},
         ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {},
+        ...offer.verification ? { verification: offer.verification } : {},
         unitPriceGrosze,
         store: offer.store,
         url: offer.productUrl,
@@ -19451,6 +19457,7 @@ function serializeProductOffer(offer) {
     ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {},
     ...offer.minimumPackages ? { minimumPackages: offer.minimumPackages } : {},
     ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {},
+    ...offer.verification ? { verification: offer.verification } : {},
     packageSize: offer.packageSize,
     offerId: offer.id,
     store: offer.store,
@@ -19506,6 +19513,7 @@ function serializeLine(line2) {
       ...p.purchaseMultiple ? { purchaseMultiple: p.purchaseMultiple } : {},
       ...p.minimumPackages ? { minimumPackages: p.minimumPackages } : {},
       ...p.maxPackages !== void 0 ? { maxPackages: p.maxPackages } : {},
+      ...p.verification ? { verification: p.verification } : {},
       packageSize: p.packageSize,
       count: p.count,
       unitPriceGrosze: p.unitPriceGrosze,
@@ -19572,6 +19580,7 @@ function serializeConsolidatedLine(line2) {
       ...entry.purchaseMultiple ? { purchaseMultiple: entry.purchaseMultiple } : {},
       ...entry.minimumPackages ? { minimumPackages: entry.minimumPackages } : {},
       ...entry.maxPackages !== void 0 ? { maxPackages: entry.maxPackages } : {},
+      ...entry.verification ? { verification: entry.verification } : {},
       packageSize: entry.packageSize,
       count: entry.count,
       unitPriceGrosze: entry.unitPriceGrosze,
@@ -20719,9 +20728,53 @@ var RETAIL_SOURCES = [
   // source: https://invena.pl/produkt/wezyk-do-bat-w-opl-stal-3-8-dl-konc-30cm-3559
   // source: https://www.csmegastore.se/i/5469388/invena-anslutningsslang-f%C3%B6r-kranar-l%C3%A5ng-%C3%A4nde-3-8-x-m10-ws-20-030
   // source: https://sklep.tokmet.pl/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i
-  { id: "tokmet-invena-ws20-030", ean: "5907798716258", name: 'W\u0118\u017BYK DO BATERII STOJ\u0104CEJ 3/8" x M10*1 L - 30 CM D\u0141UGA KO\u0143C\xD3WKA', category: "hose", brand: "Invena", packageSize: 1, unit: "szt", store: "TOK-MET", format: "qshop", productId: 2806, retailerSku: "WS-20-030-G", variant: ["3/8", "M10", "30 cm", "d\u0142uga"], url: "https://sklep.tokmet.pl/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i" }
+  { id: "tokmet-invena-ws20-030", ean: "5907798716258", name: 'W\u0118\u017BYK DO BATERII STOJ\u0104CEJ 3/8" x M10*1 L - 30 CM D\u0141UGA KO\u0143C\xD3WKA', category: "hose", brand: "Invena", packageSize: 1, unit: "szt", store: "TOK-MET", format: "qshop", productId: 2806, retailerSku: "WS-20-030-G", variant: ["3/8", "M10", "30 cm", "d\u0142uga"], url: "https://sklep.tokmet.pl/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i" },
+  // These exact public cards have a current, explicitly labelled browser read.
+  // HTTP refresh still runs; a failure never extends a browser verification.
+  // source: https://www.castorama.pl/farba-biala-mat-10-l/3663602567240_CAPL.prd
+  { id: "castorama-paint-economy-10l", ean: "3663602567240", name: "Farba bia\u0142a mat 10 l", category: "paint", brand: "", unbranded: true, packageSize: 10, unit: "l", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/farba-biala-mat-10-l/3663602567240_CAPL.prd" },
+  // source: https://www.castorama.pl/farba-goodhome-sciany-i-sufit-bialy-mat-10-l/5059340271620_CAPL.prd
+  { id: "castorama-paint-goodhome-10l", ean: "5059340271620", name: "Farba GoodHome \u015Aciany i Sufit bia\u0142y mat 10 l", category: "paint", brand: "GoodHome", packageSize: 10, unit: "l", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/farba-goodhome-sciany-i-sufit-bialy-mat-10-l/5059340271620_CAPL.prd" },
+  // source: https://www.castorama.pl/gladz-pod-walek-gw180-20-kg/5907418038791_CAPL.prd
+  { id: "castorama-kreisel-gw180-20kg", ean: "5907418038791", name: "G\u0142ad\u017A pod wa\u0142ek Kreisel GW180 gotowa polimerowa 20 kg", category: "skim-coat", brand: "Kreisel", packageSize: 20, unit: "kg", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/gladz-pod-walek-gw180-20-kg/5907418038791_CAPL.prd" },
+  // source: https://www.castorama.pl/profil-sufitowy-norgips-cd60-0-6-mm-3-mb/5907651698899_CAPL.prd
+  { id: "castorama-norgips-cd60-3m", ean: "5907651698899", name: "Profil sufitowy Norgips CD60 0,6 mm 3 mb", category: "profile", brand: "Norgips", packageSize: 3, unit: "mb", variant: ["CD60", "0,6 mm", "3 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/profil-sufitowy-norgips-cd60-0-6-mm-3-mb/5907651698899_CAPL.prd" },
+  // Exact 25kg promotion EAN, not the ordinary 20kg bag.
+  // source: https://www.castorama.pl/klej-wysokoelastyczny-atlas-plus-odksztalcalny-25-kg/5905400658866_CAPL.prd
+  { id: "castorama-atlas-plus-promo-25kg", ean: "5905400658866", name: "Klej wysokoelastyczny Atlas Plus odkszta\u0142calny 25 kg", category: "adhesive", brand: "Atlas", packageSize: 25, unit: "kg", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/klej-wysokoelastyczny-atlas-plus-odksztalcalny-25-kg/5905400658866_CAPL.prd" },
+  // One complete WC with seat, not a litre-priced item.
+  // source: https://www.castorama.pl/kompakt-wc-cersanit-seno-bezkolnierzowy-3-5-l-z-deska-wolnoopadajaca/5902115720833_CAPL.prd
+  { id: "castorama-cersanit-seno", ean: "5902115720833", name: "Kompakt WC Cersanit Seno bezko\u0142nierzowy 3/5 l z desk\u0105 wolnoopadaj\u0105c\u0105", category: "toilet", brand: "Cersanit", packageSize: 1, unit: "szt", variant: ["Seno", "3/5 l"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/kompakt-wc-cersanit-seno-bezkolnierzowy-3-5-l-z-deska-wolnoopadajaca/5902115720833_CAPL.prd" },
+  // source: https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-1-5-mm2-450-750-v-100-mb/5904617573771_CAPL.prd
+  { id: "castorama-aks-ydyp-3x15-100m", ean: "5904617573771", name: "Przew\xF3d AKS Zielonka YDYp 3 x 1,5 mm2 450/750 V 100 mb", category: "wire", brand: "AKS Zielonka", packageSize: 100, unit: "mb", variant: ["3 x 1,5 mm2", "450/750 V", "100 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-1-5-mm2-450-750-v-100-mb/5904617573771_CAPL.prd" },
+  // source: https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-2-5-mm2-450-750-v-100-mb/5904617573764_CAPL.prd
+  { id: "castorama-aks-ydyp-3x25-100m", ean: "5904617573764", name: "Przew\xF3d AKS Zielonka YDYp 3 x 2,5 mm2 450/750 V 100 mb", category: "wire", brand: "AKS Zielonka", packageSize: 100, unit: "mb", variant: ["3 x 2,5 mm2", "450/750 V", "100 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/przewod-aks-zielonka-ydyp-3-x-2-5-mm2-450-750-v-100-mb/5904617573764_CAPL.prd" },
+  // The barcode and gross price identify one sealed ten-piece pack.
+  // source: https://www.castorama.pl/puszka-podtynkowa-elektro-plast-60-gleboka-laczeniowa-z-wkretem-10-szt-/5901752637337_CAPL.prd
+  { id: "castorama-elektroplast-pk60-10", ean: "5901752637337", name: "Puszka podtynkowa Elektro-Plast 60 g\u0142\u0119boka \u0142\u0105czeniowa z wkr\u0119tem 10 szt.", category: "flush-box", brand: "Elektro-Plast", packageSize: 10, unit: "szt", store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/puszka-podtynkowa-elektro-plast-60-gleboka-laczeniowa-z-wkretem-10-szt-/5901752637337_CAPL.prd" },
+  // The plain MP75 25kg barcode; not MP75L or a 20kg/30kg pack.
+  // source: https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd
+  { id: "castorama-knauf-mp75-25kg", ean: "5902367206352", name: "Tynk maszynowy Knauf MP 75 25 kg", category: "plaster", brand: "Knauf", packageSize: 25, unit: "kg", variant: ["Tynk maszynowy Knauf MP 75 25 kg"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd" },
+  // Explicit right 70cm leaf; it must not replace the user's left/80cm choice.
+  // source: https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd
+  { id: "castorama-opp-klasyk-70-right", ean: "5063022524034", name: "Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e", category: "door-leaf", brand: "OPP", packageSize: 1, unit: "szt", variant: ["Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd" },
+  // One base, not an invented complete frame or its separate trim pieces.
+  // source: https://www.castorama.pl/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma/5902659279118_CAPL.prd
+  { id: "castorama-perfectdoor-base-80-100-right", ean: "5902659279118", name: "Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma", category: "door-frame", brand: "PerfectDoor", packageSize: 1, unit: "szt", variant: ["Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma/5902659279118_CAPL.prd" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Farba bia\u0142a mat 10 l": "3663602567240",
+  "Farba GoodHome \u015Aciany i Sufit bia\u0142y mat 10 l": "5059340271620",
+  "G\u0142ad\u017A pod wa\u0142ek GW180 gotowa polimerowa 20 kg": "5907418038791",
+  "Profil sufitowy Norgips CD60 0,6 mm 3 m": "5907651698899",
+  "Klej wysokoelastyczny Atlas Plus odkszta\u0142calny 25 kg": "5905400658866",
+  "Kompakt WC Cersanit Seno bezko\u0142nierzowy 3/5 l z desk\u0105 wolnoopadaj\u0105c\u0105": "5902115720833",
+  "Przew\xF3d YDYp 3\xD71,5 mm\xB2 450/750 V AKS Zielonka (kr\u0105g 100 mb)": "5904617573771",
+  "Przew\xF3d YDYp 3\xD72,5 mm\xB2 450/750 V AKS Zielonka (kr\u0105g 100 mb)": "5904617573764",
+  "Puszka podtynkowa fi60 g\u0142\u0119boka \u0142\u0105czeniowa z wkr\u0119tem Elektro-Plast (10 szt.)": "5901752637337",
+  "Tynk gipsowy maszynowy Knauf MP 75 25 kg": "5902367206352",
+  "Skrzyd\u0142o drzwiowe OPP Klasyk 70 bia\u0142e z podci\u0119ciem (przylgowe)": "5063022524034",
+  "Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma (drzwi wewn\u0119trzne)": "5902659279118",
   'W\u0119\u017Cyk przy\u0142\u0105czeniowy w oplocie Invena 3/8"\xD7M10 30 cm': "5907798716258",
   "Styropian fasadowy grafitowy Yetico Gamma Passive EPS 033 150 mm (2 m\xB2)": "5902578307268",
   "Styropian fasadowy bia\u0142y Yetico Gamma Fasada 044 100 mm (3 m\xB2)": "5902578301976",
@@ -21006,7 +21059,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
       if (max > DELIVERY_LIMITS.packagesPerProduct) return;
       for (let n = index2 === offers.length - 1 ? max : 0; n <= max; n += multiple) {
         if (n > 0 && n < minimum) continue;
-        visit(index2 + 1, Math.max(0, remaining - n), n ? [...packs, { offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count: n, unitPriceGrosze: price2, lineCostGrosze: n * price2, ...multiple > 1 ? { purchaseMultiple: multiple } : {}, ...minimum > 1 ? { minimumPackages: minimum } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {} }] : packs);
+        visit(index2 + 1, Math.max(0, remaining - n), n ? [...packs, { offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count: n, unitPriceGrosze: price2, lineCostGrosze: n * price2, ...multiple > 1 ? { purchaseMultiple: multiple } : {}, ...minimum > 1 ? { minimumPackages: minimum } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {}, ...offer.verification ? { verification: offer.verification } : {} }] : packs);
       }
     };
     visit(0, count, []);
@@ -21054,7 +21107,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
       const count = computePackagesNeeded(group.totalQuantity, sizes[0], offer.purchaseMultiple, offer.minimumPackages);
       if (!Number.isSafeInteger(count) || count < 1 || count > DELIVERY_LIMITS.packagesPerProduct || offer.maxPackages !== void 0 && count > offer.maxPackages) return [];
       const price2 = parsePriceToGrosze(offer.promoPrice ?? offer.price);
-      return price2 === null || price2 <= 0 || !Number.isSafeInteger(price2 * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count, unitPriceGrosze: price2, lineCostGrosze: count * price2, ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {}, ...offer.minimumPackages ? { minimumPackages: offer.minimumPackages } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {} }];
+      return price2 === null || price2 <= 0 || !Number.isSafeInteger(price2 * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count, unitPriceGrosze: price2, lineCostGrosze: count * price2, ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {}, ...offer.minimumPackages ? { minimumPackages: offer.minimumPackages } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {}, ...offer.verification ? { verification: offer.verification } : {} }];
     });
   });
   if (options.some((option) => !option)) {
@@ -22307,7 +22360,10 @@ function parseRetailPage(html, source, observedAt) {
   const brand = normalizeProductName(explicitBrand || (typeof product.manufacturer === "string" ? product.manufacturer : product.manufacturer?.name) || "");
   const variantMatches = source.variant?.every((value) => new RegExp(`(?:^| )${normalize(value)}(?: |$)`).test(normalized));
   if (source.packageDescription && !normalize(String(product.description ?? "")).includes(normalize(source.packageDescription))) throw new Error("product_package_not_confirmed");
-  if (!(normalized.includes(normalizeProductName(source.brand)) || brand.includes(normalizeProductName(source.brand))) || !(source.variant ? variantMatches : packagePattern.test(normalized))) throw new Error("product_variant_mismatch");
+  const sourceBrand = normalizeProductName(source.brand);
+  const unbranded = source.unbranded === true && source.id === "castorama-paint-economy-10l" && source.store === "Castorama" && source.ean === "3663602567240" && source.name === "Farba bia\u0142a mat 10 l" && sourceBrand === "";
+  if (!sourceBrand && !unbranded) throw Error("product_brand_not_confirmed");
+  if ((unbranded ? Boolean(brand) : !(normalized.includes(sourceBrand) || brand.includes(sourceBrand))) || !(source.variant ? variantMatches : packagePattern.test(normalized))) throw new Error("product_variant_mismatch");
   if (!normalize(source.name).split(" ").filter((token) => token.length > 3).every((token) => normalized.includes(token))) throw new Error("product_name_mismatch");
   const allOffers = objects(product.offers);
   if (allOffers.some((offer) => /\/OutOfStock$|\/Discontinued$/.test(String(offer.availability))) && !allOffers.some((offer) => /\/InStock$/.test(String(offer.availability)))) throw new Error("retailer_out_of_stock");
@@ -23480,6 +23536,10 @@ function createRemontService(options = {}) {
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
     if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || observation.stockPackages !== void 0 && (!Number.isSafeInteger(observation.stockPackages) || observation.stockPackages < 0 || observation.stockPackages > 1e9) || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
     const previous = observations.get(source.id);
+    if (observation.verification !== void 0) {
+      const v = observation.verification;
+      if (!v || v.method !== "browser" || source.store !== "Castorama" || source.browserReviewAllowed !== true || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
+    }
     if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
     if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
   };
@@ -23513,8 +23573,8 @@ function createRemontService(options = {}) {
         normalizedName: normalizeProductName(source.name),
         ean: source.ean,
         gtin: null,
-        manufacturer: source.brand,
-        brand: source.brand,
+        manufacturer: source.brand || null,
+        brand: source.brand || null,
         category: source.category,
         subcategory: null,
         variant: null,
@@ -23538,11 +23598,12 @@ function createRemontService(options = {}) {
         ...source.purchaseMultiple ? { purchaseMultiple: source.purchaseMultiple } : {},
         ...source.minimumPackages ? { minimumPackages: source.minimumPackages } : {},
         ...observation.stockPackages !== void 0 ? { maxPackages: observation.stockPackages } : {},
+        ...observation.verification ? { verification: observation.verification } : {},
         pricePerUnit: (observation.priceGrosze / 100 / source.packageSize).toFixed(4),
         productUrl: source.url,
         availability: observation.availability,
         fetchedAt: new Date(observation.observedAt),
-        source: source.format && source.format !== "jsonld" ? "retailer-page-microdata" : "retailer-page-jsonld"
+        source: observation.verification ? "retailer-page-browser-snapshot" : source.format && source.format !== "jsonld" ? "retailer-page-microdata" : "retailer-page-jsonld"
       });
     }
     const aliases = Object.entries(RETAIL_NAME_ALIASES).map(([name, ean]) => [normalizeProductName(name), ean]);
@@ -23605,6 +23666,7 @@ function createRemontService(options = {}) {
       status: eligible.length > 0 ? "ok" : "no-current-offers",
       offers: eligible.length,
       products: new Set(eligible.map((offer) => offer.productId)).size,
+      browserVerifiedOffers: eligible.filter((offer) => offer.verification?.method === "browser").length,
       stores: [...new Set(eligible.map((offer) => offer.store))],
       running,
       lastAttemptAt,
@@ -23618,7 +23680,8 @@ function createRemontService(options = {}) {
         checkedAt: observations.get(source.id)?.observedAt ?? null,
         active: eligible.some((offer) => offer.id === source.id),
         error: source.disabledReason ?? errors.get(source.id) ?? null,
-        ...observations.get(source.id)?.stockPackages !== void 0 ? { stockPackages: observations.get(source.id).stockPackages } : {}
+        ...observations.get(source.id)?.stockPackages !== void 0 ? { stockPackages: observations.get(source.id).stockPackages } : {},
+        ...observations.get(source.id)?.verification ? { verification: observations.get(source.id).verification } : {}
       }))
     };
   }
