@@ -17,12 +17,12 @@ niezacommitowany WIP na innej gałęzi.
 - Baner „jest nowa wersja" na Windows: `wersja.json` musi mieć CORS (`firebase.json` → headers; test `landingStrona`).
 
 ## Przebieg
-- [ ] Testy po scaleniu origin/main: Functions, mobile (landingStrona czerwony do wgrania APK — bramka), backend.
+- [x] Testy po scaleniu origin/main (`a8093c3`): Functions 1493/1493, mobile 1291/1291 (bramka strony pobierania zielona po wgraniu APK), backend 1054/1054.
 - [x] Wersja: `mobile/app.json` 1.1.9 / versionCode 21; gitignorowany `build.gradle` 21 / "1.1.9"; `desktop/package.json` 1.1.9 (`156d5a6`); `landing/wersja.json` 1.1.9.
 - [x] Functions: `api-00064-def`, `pracownikco3h-00012-rop` (dokumenty e-Zamówień), wcześniej e-ProPublico i sygnał nazw CPV.
-- [ ] Android: gradle `bundleRelease assembleRelease` → `Documents\PrzetargAI-1.1.9.aab/.apk` (vc21, podpis B6:6E:24).
+- [x] Android: gradle 3 min 38 s → `C:\Users\Startklaar\Documents\PrzetargAI-1.1.9.apk` (67 931 119 B, SHA-256 cd637872…, apksigner: CN=PrzetargAI, SHA-1 b66e24…, vc21/1.1.9) i `PrzetargAI-1.1.9.aab` (46 628 411 B).
 - [x] Windows: `D:\projekty\PrzetargAI-Windows\PrzetargAI-Setup-1.1.9.exe`, `-przenosna.exe` (smoke OK, 26.10 19:25).
-- [ ] Strona pobierania: `landing/pobierz.html` (APK 1.1.9, rozmiar, SHA-256) + test; hosting z CORS dla `wersja.json`.
-- [ ] origin/main = integ; Codemagic `ios-release` (TestFlight).
+- [x] Strona pobierania + hosting wdrożone z worktree 26.10 ~20:08 PL: live „Pobierz APK 1.1.9” (67 931 119 B), `wersja.json` 1.1.9 z `Access-Control-Allow-Origin: *` (sprawdzone curlem).
+- [x] origin/main = `ade56ed`; Codemagic `ios-release` build `6adf988c7896d4618b67a2f3` (start 26.10 ~20:16 PL).
 - [ ] Sklepy (user): Play Console AAB vc21 + „Informacje o wersji" z `store/whats-new-1.1.9.md`; ASC po TestFlight.
 - [ ] STAN w pamięci projektu.
