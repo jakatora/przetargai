@@ -44,3 +44,20 @@ test('parametryRadaruZPlatformy + wstepneDaneRadaru: link do PDF i nazwa przecho
   assert.equal(wstepneDaneRadaru({}).pdfUrl ?? null, null);
   assert.equal(parametryRadaruZPlatformy({ tender, zalacznik: Z('SWZ.pdf', { url: 'https://evil.example/a.pdf' }) }), null);
 });
+
+test('e-Zamówienia (2026-10-26): link DownloadDocument przechodzi jak załącznik platformy, SWZ.pdf trafia do Radaru', () => {
+  const ID = 'ocds-148610-16f1c19e-be85-4853-82f5-171345acf01b';
+  const url = `https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/${ID}/${ID}_2`;
+  assert.equal(linkPlatformy(url), true);
+  assert.equal(linkPlatformy('https://ezamowienia.gov.pl.evil.com/x.pdf'), false);
+  const dokumenty = [
+    { id: `${ID}_1`, nazwa: 'Załącznik Nr 1 - 10', plik: 'Załączniki 1-10.zip', rozszerzenie: 'zip', url: `https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/${ID}/${ID}_1` },
+    { id: `${ID}_2`, nazwa: 'Specyfikacja Warunków Zamówienia', plik: 'SWZ.pdf', rozszerzenie: 'pdf', url },
+  ];
+  const swz = swzZZalacznikow(dokumenty);
+  assert.deepEqual(swz.map((z) => z.id), [`${ID}_2`]);
+  const tender = { id: '2026~BZP_00321077', title: 'Cyberbezpieczny wodociąg', deadline: '2026-11-02T08:00:00.000Z' };
+  const params = parametryRadaruZPlatformy({ tender, zalacznik: swz[0] });
+  assert.equal(params.pdfUrl, url);
+  assert.equal(wstepneDaneRadaru(params).pdfUrl, url, 'Radar przyjmuje host ezamowienia.gov.pl');
+});

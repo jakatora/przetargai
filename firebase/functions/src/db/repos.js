@@ -932,6 +932,11 @@ export const tenders = {
     await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz });
   },
 
+  /** Dokumenty postępowania z e-Zamówień (SWZ, załączniki z linkami) — cache 24 h przy ogłoszeniu (2026-10-26). */
+  async zapiszDokumentyEz(id, dokumenty, teraz = nowIso()) {
+    await db().collection('tenders').doc(id).update({ ez_dokumenty: Array.isArray(dokumenty) ? dokumenty : [], ez_dokumenty_o: teraz });
+  },
+
   /**
    * Ogłoszenia jednego zamawiającego (po NIP-ie) — Radar planów sprawdza, czy plan
    * zamienił się już w przetarg. Samo porównanie równościowe, BEZ orderBy: mieści

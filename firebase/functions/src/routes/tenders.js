@@ -9,6 +9,7 @@ import { pobierzZakresDanych, pobierzZnacznikiZrodel } from '../services/zakresZ
 import { WOJEWODZTWA } from '../lib/wojewodztwa.js';
 import { notFound } from '../lib/errors.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from '../services/platformaZakupowa.js';
+import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, czyIdPostepowania } from '../services/eZamowieniaDokumenty.js';
 import {
   ZRODLA, SORTOWANIA, STATUSY_TERMINU, LIMIT_MAKS,
   normalizujFiltry, odciskFiltrow, kodujKursor, dekodujKursor, opisFiltrow,
@@ -116,6 +117,9 @@ export default router;
  */
 export const CACHE_SZCZEGOLU_PZ_MS = 24 * 60 * 60 * 1000;
 let pobierzSzczegolPz = pobierzSzczegolPzDomyslnie;
+let pobierzDokumentyEz = pobierzDokumentyEzDomyslnie;
+/** Test: podmiana pobierania dokumentów z e-Zamówień (null = domyślne). */
+export function _ustawPobieranieDokumentowEz(fn) { pobierzDokumentyEz = fn ?? pobierzDokumentyEzDomyslnie; }
 /** Tylko dla testów: podmiana pobierania (bez sieci). */
 export function _ustawPobieranieSzczegoluPz(fn) { pobierzSzczegolPz = fn ?? pobierzSzczegolPzDomyslnie; }
 
@@ -133,4 +137,26 @@ router.post('/:id/szczegol-platformy', ah(async (req, res) => {
   const szczegol = await pobierzSzczegolPz(idPlatformy);
   await tenders.zapiszSzczegolPz(tender.id, szczegol, teraz);
   res.json({ szczegol, pobrano_o: teraz, cached: false });
+}));
+
+/**
+ * Dokumenty postępowania z e-Zamówień NA ŻĄDANIE (2026-10-26): ogłoszenie BZP zna `postepowanie_id`,
+ * portal oddaje publicznie listę plików (SWZ, załączniki) z linkami do pobrania. Cache 24 h przy
+ * ogłoszeniu (`ez_dokumenty`), jak szczegół platformazakupowa. Postępowanie prowadzone poza platformą
+ * → pusta lista (to też odpowiedź, nie błąd).
+ */
+router.post('/:id/dokumenty-ezamowienia', ah(async (req, res) => {
+  const tender = await tenders.findById(req.params.id);
+  if (!tender) throw notFound('Ogłoszenie nie zostało znalezione');
+  if (tender.source !== 'bzp') throw badRequest('To ogłoszenie nie pochodzi z BZP / e-Zamówień');
+  if (!czyIdPostepowania(tender.postepowanie_id)) throw badRequest('Ogłoszenie nie ma identyfikatora postępowania na e-Zamówieniach');
+  const teraz = nowIso();
+  const swiezy = Array.isArray(tender.ez_dokumenty) && tender.ez_dokumenty_o && (Date.parse(teraz) - Date.parse(tender.ez_dokumenty_o)) < CACHE_SZCZEGOLU_PZ_MS;
+  if (swiezy) {
+    res.json({ dokumenty: tender.ez_dokumenty, pobrano_o: tender.ez_dokumenty_o, cached: true });
+    return;
+  }
+  const dokumenty = await pobierzDokumentyEz(tender.postepowanie_id);
+  await tenders.zapiszDokumentyEz(tender.id, dokumenty, teraz);
+  res.json({ dokumenty, pobrano_o: teraz, cached: false });
 }));

@@ -7,10 +7,11 @@ import { MAKS_BAJTOW_PLIKU_SWZ } from './plikBase64.js';
  * Czysta logika: które załączniki to kandydaci na SWZ i jakie parametry dostaje Radar.
  */
 const WZORZEC_SWZ = /\b(swz|siwz|specyfikacj|warunk[oó]w zam[oó]wienia|opz|opis przedmiotu)/i;
-const DOMENA = /^https:\/\/([a-z0-9-]+\.)*platformazakupowa\.pl\//i;
+// platformazakupowa.pl (załączniki) i ezamowienia.gov.pl (DownloadDocument, 2026-10-26) — tylko te hosty.
+const DOMENA = /^https:\/\/([a-z0-9-]+\.)*(platformazakupowa\.pl|ezamowienia\.gov\.pl)\//i;
 export const MAKS_KANDYDATOW_SWZ = 3;
 
-/** Czy link do pliku prowadzi na platformę (inne hosty odrzucamy — nie ściągamy z dowolnego adresu). */
+/** Czy link do pliku prowadzi na platformę zakupową albo e-Zamówienia (inne hosty odrzucamy — nie ściągamy z dowolnego adresu). */
 export function linkPlatformy(url) {
   return typeof url === 'string' && DOMENA.test(url);
 }

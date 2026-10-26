@@ -182,3 +182,30 @@ test('kandydat z platformazakupowa.pl: przed oceną AI dociągany szczegół (ca
   await pracujDlaUzytkownika(u3, [await przetarg('Remont dachu szkoły (platforma)', { source: 'platformazakupowa' })], { teraz: teraz(), szczegolPz: async () => { pobran3++; return null; }, budzetSzczegolowPz: { pozostalo: 0 }, ocen: async () => biore(['Pasuje'])() });
   assert.equal(pobran3, 0);
 });
+
+test('wybrany z BZP: po wyborze dociągane dokumenty z e-Zamówień (SWZ z linkiem) — cache przy ogłoszeniu, budżet, błąd nie blokuje, bez postepowanie_id bez żądania', async () => {
+  const ID = `ocds-148610-16f1c19e-be85-4853-82f5-${String(process.pid).padStart(12, '0').slice(-12)}`;
+  const DOK = [{ id: `${ID}_2`, nazwa: 'Specyfikacja Warunków Zamówienia', plik: 'SWZ.pdf', rozszerzenie: 'pdf', url: `https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/${ID}/${ID}_2`, opublikowano: null }];
+  const u = await klient();
+  const bzp = await przetarg('Remont dachu urzędu (BZP)', { source: 'bzp', postepowanie_id: ID });
+  const wywolania = [];
+  const w = await pracujDlaUzytkownika(u, [bzp], { teraz: teraz(), dokumentyEz: async (id) => { wywolania.push(id); return DOK; }, ocen: biore(['Pasuje']) });
+  assert.equal(w.wybrane, 1);
+  assert.deepEqual(wywolania, [ID]);
+  assert.equal(w.dokumentyEz, 1);
+  assert.equal((await tenders.findById(bzp.id)).ez_dokumenty[0].plik, 'SWZ.pdf', 'cache przy ogłoszeniu');
+
+  // Błąd portalu: wybór zostaje, dokumenty dociągnie później przycisk na ekranie.
+  const u2 = await klient();
+  const w2 = await pracujDlaUzytkownika(u2, [await przetarg('Remont dachu biblioteki (BZP)', { source: 'bzp', postepowanie_id: ID })], { teraz: teraz(), dokumentyEz: async () => { throw new Error('403'); }, ocen: biore(['Pasuje']) });
+  assert.equal(w2.wybrane, 1);
+  assert.equal(w2.dokumentyEz ?? 0, 0);
+
+  // Bez identyfikatora postępowania i przy budżecie 0 — zero żądań.
+  let pobran3 = 0;
+  const u3 = await klient();
+  await pracujDlaUzytkownika(u3, [await przetarg('Remont dachu szkoły (BZP, stare ogłoszenie)', { source: 'bzp' })], { teraz: teraz(), dokumentyEz: async () => { pobran3++; return DOK; }, ocen: biore(['Pasuje']) });
+  const u4 = await klient();
+  await pracujDlaUzytkownika(u4, [await przetarg('Remont dachu hali (BZP)', { source: 'bzp', postepowanie_id: ID })], { teraz: teraz(), dokumentyEz: async () => { pobran3++; return DOK; }, budzetDokumentowEz: { pozostalo: 0 }, ocen: biore(['Pasuje']) });
+  assert.equal(pobran3, 0);
+});

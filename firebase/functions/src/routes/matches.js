@@ -312,9 +312,12 @@ router.get('/:id', ah(async (req, res) => {
   const publiczne = publicMatch(row, await pobierzZnacznikiZrodel());
   // platformazakupowa.pl: szczegół (tryb, załączniki) żyje na ogłoszeniu, nie na kopii w dopasowaniu —
   // jeśli selekcja albo ktoś już go dociągnął, ekran dostaje go od razu, bez dotknięcia.
-  if (row.tender_source === 'platformazakupowa') {
+  if (row.tender_source === 'platformazakupowa' || row.tender_source === 'bzp') {
     const ogloszenie = await tenders.findById(row.tender_id).catch(() => null);
     publiczne.tender.pz_szczegol = ogloszenie?.pz_szczegol ?? null;
+    // e-Zamówienia: dokumenty (SWZ) dociągnięte przez selekcję albo wcześniejsze dotknięcie.
+    publiczne.tender.ez_dokumenty = Array.isArray(ogloszenie?.ez_dokumenty) ? ogloszenie.ez_dokumenty : null;
+    publiczne.tender.postepowanie_id = ogloszenie?.postepowanie_id ?? publiczne.tender.postepowanie_id ?? null;
   }
   res.json({
     match: {

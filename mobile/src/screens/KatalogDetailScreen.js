@@ -3,6 +3,7 @@ import Screen from '../components/Screen';
 import Button from '../components/Button';
 import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
 import SzczegolPlatformy from '../components/SzczegolPlatformy';
+import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
@@ -77,6 +78,7 @@ export default function KatalogDetailScreen({ route, navigation }) {
         )}
         <PrzyciskOryginalu tender={tender} />
         <SzczegolPlatformy tender={tender} navigation={navigation} />
+        <DokumentyEZamowienia tender={tender} navigation={navigation} />
       </View>
 
       <View style={styles.karta}>

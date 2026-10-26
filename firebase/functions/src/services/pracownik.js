@@ -16,9 +16,12 @@ import { ocenDlaKlienta, porownajWarunki } from './ai.js';
 import { backfillUser, generateMatchesForAllUsers } from './matching.js';
 import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from './platformaZakupowa.js';
+import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, czyIdPostepowania } from './eZamowieniaDokumenty.js';
 
 /** Ile szczegółów platformazakupowa.pl dociągamy w JEDNYM przebiegu (żądania do obcego serwisu). */
 export const MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG = 10;
+/** Nowo wybrane ogłoszenia BZP dostają od razu listę dokumentów z e-Zamówień (SWZ gotowy do Radaru) — budżet żądań na przebieg. */
+export const MAKS_DOKUMENTOW_EZ_NA_PRZEBIEG = 10;
 
 /*
  * Selekcja przetargów pod klienta (plans/PRACOWNIK-PROJEKT-2026-10-23.md §4).
@@ -78,6 +81,7 @@ async function odpadaNaWarunkach(user, tenderId, { porownaj, teraz, wersja }) {
 export async function pracujDlaUzytkownika(user, pool, {
   teraz = nowIso(), ocen = ocenDlaKlienta, porownaj = porownajWarunki, stanAi = { kolejneBledy: 0 }, budzetMs = Infinity,
   szczegolPz = pobierzSzczegolPzDomyslnie, budzetSzczegolowPz = { pozostalo: MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG },
+  dokumentyEz = pobierzDokumentyEzDomyslnie, budzetDokumentowEz = { pozostalo: MAKS_DOKUMENTOW_EZ_NA_PRZEBIEG },
 } = {}) {
   const koniec = Date.now() + budzetMs;
   const poCzasie = () => Date.now() >= koniec;
@@ -153,6 +157,21 @@ export async function pracujDlaUzytkownika(user, pool, {
     wynik.wybrane++;
     budzetWybranych--;
     wynik.nowe.push(tender.id);
+    // Wybrany z BZP: dociągamy listę dokumentów z e-Zamówień (SWZ z linkiem), żeby klient otworzył
+    // Radar SWZ bez szukania pliku. Błąd = cicho, przycisk na ekranie dociągnie później.
+    if (tender.source === 'bzp' && czyIdPostepowania(tender.postepowanie_id) && !Array.isArray(tender.ez_dokumenty) && budzetDokumentowEz.pozostalo > 0) {
+      budzetDokumentowEz.pozostalo--;
+      try {
+        const dokumenty = await dokumentyEz(tender.postepowanie_id);
+        if (Array.isArray(dokumenty)) {
+          tender.ez_dokumenty = dokumenty;
+          await tenders.zapiszDokumentyEz(tender.id, dokumenty, teraz);
+          wynik.dokumentyEz = (wynik.dokumentyEz ?? 0) + 1;
+        }
+      } catch (err) {
+        logger.warn({ err: err.message, id: tender.id }, 'e-Zamówienia: dokumenty po wyborze nie powiodły się');
+      }
+    }
   };
 
   for (const { tender, h } of swiezi) {

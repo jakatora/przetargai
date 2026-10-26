@@ -30,6 +30,7 @@ import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { opisWyniki } from '../lib/wyniki';
 import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
 import SzczegolPlatformy from '../components/SzczegolPlatformy';
+import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
 import Wyjasnienie from '../components/Wyjasnienie';
 import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
 import { parametryNarzedzia } from '../lib/sciezkaDoOferty';
@@ -875,6 +876,7 @@ export default function MatchDetailScreen({ route, navigation }) {
         <PodpisZrodla zrodlo={tender.zrodlo ?? { kod: tender.source }} />
         <PrzyciskOryginalu tender={tender} />
         <SzczegolPlatformy tender={tender} navigation={navigation} />
+        <DokumentyEZamowienia tender={tender} navigation={navigation} />
       </View>
       <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />
 

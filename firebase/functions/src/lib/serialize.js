@@ -68,6 +68,9 @@ export function publicTender(row, znaczniki = {}) {
      */
     // Szczegół platformazakupowa.pl (tryb, wymagania, załączniki) — gdy już dociągnięty (selekcja / na żądanie).
     pz_szczegol: row.pz_szczegol ?? null,
+    // e-Zamówienia (BZP): identyfikator postępowania i dociągnięte dokumenty (SWZ z linkiem) — 2026-10-26.
+    postepowanie_id: row.postepowanie_id ?? null,
+    ez_dokumenty: Array.isArray(row.ez_dokumenty) ? row.ez_dokumenty : null,
     zrodla_alternatywne: (row.zrodla_alternatywne ?? []).map((z) => ({
       ...metryczkaZrodla(z.source, znaczniki),
       url: z.url ?? null,
