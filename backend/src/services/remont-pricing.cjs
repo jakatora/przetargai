@@ -20782,9 +20782,14 @@ var RETAIL_SOURCES = [
   // source: https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny
   { id: "bricomarche-poznan-budmat-ud27-3m", ean: "5907738940163", name: "Kszta\u0142townik sufitowy UD30 300 cm srebrny", category: "profile", brand: "Budmat", packageSize: 3, unit: "mb", variant: ["UD30", "300 cm", "srebrny"], store: "Bricomarch\xE9 Pozna\u0144 (Al. Solidarno\u015Bci)", pickupOnly: true, browserReviewAllowed: true, url: "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny" },
   // source: https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html
-  { id: "folnet-conpar-100m2", ean: "5902096430103", name: "Folia paroizolacyjna \u017C\xF3\u0142ta Conpar 0,20 mm", category: "vapor-barrier", brand: "Conkret", packageSize: 100, unit: "m2", store: "Folnet", format: "folnet", productId: 10288, retailerSku: "12-021", variant: ["Conpar", "0,20 mm"], url: "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html" }
+  { id: "folnet-conpar-100m2", ean: "5902096430103", name: "Folia paroizolacyjna \u017C\xF3\u0142ta Conpar 0,20 mm", category: "vapor-barrier", brand: "Conkret", packageSize: 100, unit: "m2", store: "Folnet", format: "folnet", productId: 10288, retailerSku: "12-021", variant: ["Conpar", "0,20 mm"], url: "https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html" },
+  // Separate current model, not an alias for discontinued EAN 5903917782364.
+  // source: https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd
+  { id: "castorama-opp-archi-full-80-left", ean: "5063022524263", name: "Drzwi pe\u0142ne OPP Archi 80 lewe bia\u0142e", category: "door-leaf", brand: "OPP", packageSize: 1, unit: "szt", store: "Castorama", browserReviewAllowed: true, variant: ["Archi", "80", "lewe", "bia\u0142e"], url: "https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd" }
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://www.castorama.pl/drzwi-pelne-opp-archi-80-lewe-biale/5063022524263_CAPL.prd
+  "Skrzyd\u0142o drzwiowe pe\u0142ne OPP Archi 80 lewe bia\u0142e (2035 \xD7 844 mm)": "5063022524263",
   // source: https://folnet.pl/pl/products/paroizolacje-i-hydroizolacje/folie-paroizolacyjne/folie-paroizolacyjne-z-polietylenu-pe/folia-paroizolacyjna-zolta-conpar-0-20-mm-10288.html
   "Folia paroizolacyjna Conkret Conpar 0,20 mm (100 m\xB2)": "5902096430103",
   "Profil przy\u015Bcienny Budmat UD27 0,5 mm 3 m": "5907738940163",
