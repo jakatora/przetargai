@@ -1347,5 +1347,18 @@
     "sourceUrl": "https://kronosfera.pl/k/listwa-przypodlogowa-lk100f24-9002,2068",
     "evidenceSha256": "b51ac3ef0b3b5855448174b5e660c8056e5564ea37ea6f3f6cd1ef8b540ec5c2",
     "validUntil": null
+  },
+  {
+    "sourceId": "matbud-yetico-gamma-fasada-044-10cm",
+    "ean": "5902578301976",
+    "name": "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op",
+    "imageUrl": "https://centrummatbud.pl/images/bum/241000-242000/Styropian-Yetico-Gama-Fasada-044-100-mm_%5B241757%5D_1200.jpg",
+    "priceGrosze": 6974,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T03:03:53.377Z",
+    "sourceUrl": "https://centrummatbud.pl/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729",
+    "evidenceSha256": "8f5b602e872cceb2746e1061766ce922301164781e45e023d3fd7df7dfea9059",
+    "validUntil": null
   }
 ]
