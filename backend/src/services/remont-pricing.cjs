@@ -20760,9 +20760,23 @@ var RETAIL_SOURCES = [
   { id: "castorama-opp-klasyk-70-right", ean: "5063022524034", name: "Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e", category: "door-leaf", brand: "OPP", packageSize: 1, unit: "szt", variant: ["Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd" },
   // One base, not an invented complete frame or its separate trim pieces.
   // source: https://www.castorama.pl/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma/5902659279118_CAPL.prd
-  { id: "castorama-perfectdoor-base-80-100-right", ean: "5902659279118", name: "Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma", category: "door-frame", brand: "PerfectDoor", packageSize: 1, unit: "szt", variant: ["Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma/5902659279118_CAPL.prd" }
+  { id: "castorama-perfectdoor-base-80-100-right", ean: "5902659279118", name: "Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma", category: "door-frame", brand: "PerfectDoor", packageSize: 1, unit: "szt", variant: ["Baza o\u015Bcie\u017Cnicy regulowana PerfectDoor 80-100 mm prawa d\u0105b sonoma"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/baza-oscieznicy-regulowana-perfectdoor-80-100-mm-prawa-dab-sonoma/5902659279118_CAPL.prd" },
+  // Whole-pack prices independently visible beside the per-m² adverts.
+  // source: https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-spc-arilla-dark-grey-2-5-m2/5059340969756_CAPL.prd
+  { id: "castorama-goodhome-arilla-25m2", ean: "5059340969756", name: "Panele pod\u0142ogowe winylowe GoodHome SPC Arilla Dark Grey 2,5 m2", category: "vinyl-panel", brand: "GoodHome", packageSize: 2.5, unit: "m2", variant: ["SPC", "Arilla", "Dark Grey", "2,5 m2"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-spc-arilla-dark-grey-2-5-m2/5059340969756_CAPL.prd" },
+  // source: https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-ragga-ele-marble-1-3-m2/5059340802435_CAPL.prd
+  { id: "castorama-goodhome-ragga-13m2", ean: "5059340802435", name: "Panele pod\u0142ogowe winylowe GoodHome Ragga Ele Marble 1,3 m2", category: "vinyl-panel", brand: "GoodHome", packageSize: 1.3, unit: "m2", variant: ["Ragga", "Ele Marble", "1,3 m2"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/panele-podlogowe-winylowe-goodhome-ragga-ele-marble-1-3-m2/5059340802435_CAPL.prd" },
+  // source: https://www.castorama.pl/tasma-brzegowa-fola-5-mm-x-10-cm-x-50-mb-5-m2/5906725207227_CAPL.prd
+  { id: "castorama-fola-50mb", ean: "5906725207227", name: "Ta\u015Bma brzegowa Fola 5 mm x 10 cm x 50 mb 5 m2", category: "expansion-tape", brand: "Fola", packageSize: 50, unit: "mb", variant: ["5 mm", "10 cm", "50 mb"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/tasma-brzegowa-fola-5-mm-x-10-cm-x-50-mb-5-m2/5906725207227_CAPL.prd" },
+  // 178 PLN buys the entire 216cm piece; 82.41 PLN/m is not its purchase price.
+  // source: https://www.castorama.pl/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy/5906725219640_CAPL.prd
+  { id: "castorama-form-30x216", ean: "5906725219640", name: "Parapet wewn\u0119trzny PCV Form 30 x 216 cm bia\u0142y", category: "windowsill", brand: "Form", packageSize: 2.16, unit: "m", variant: ["30 x 216 cm", "bia\u0142y"], store: "Castorama", browserReviewAllowed: true, url: "https://www.castorama.pl/parapet-wewnetrzny-pcv-form-30-x-216-cm-bialy/5906725219640_CAPL.prd" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Panele winylowe GoodHome SPC Arilla Dark Grey click 2,5 m\xB2": "5059340969756",
+  "Panele winylowe klejone (samoprzylepne LVT) GoodHome Ragga Ele Marble 1,3 m\xB2": "5059340802435",
+  "Ta\u015Bma brzegowa dylatacyjna Fola 5 mm \xD7 100 mm \xD7 50 mb": "5906725207227",
+  "Parapet wewn\u0119trzny PCV Form 30 \xD7 216 cm bia\u0142y": "5906725219640",
   "Farba bia\u0142a mat 10 l": "3663602567240",
   "Farba GoodHome \u015Aciany i Sufit bia\u0142y mat 10 l": "5059340271620",
   "G\u0142ad\u017A pod wa\u0142ek GW180 gotowa polimerowa 20 kg": "5907418038791",
@@ -22490,6 +22504,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
     return { ...observation, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(raw).digest("hex") };
   }
+  if (source.store === "Castorama" && source.browserReviewAllowed && ["m2", "m"].includes(source.unit)) throw Error("browser_package_review_required");
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
