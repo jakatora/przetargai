@@ -20791,9 +20791,17 @@ var RETAIL_SOURCES = [
   // source: https://www.cersanit.com.pl/lazienka/umywalka-wiszaca-ovida-50,3252.html
   { id: "castorama-cersanit-atlantic-new-50", ean: "5901771226987", name: "Umywalka Cersanit Atlantic New 50 cm", category: "washbasin", brand: "Cersanit", packageSize: 1, unit: "szt", store: "Castorama", browserReviewAllowed: true, variant: ["Atlantic", "New", "50"], url: "https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd" },
   // source: https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd
-  { id: "castorama-tamara-white-15m2", ean: "5907518303911", name: "Glazura Tamara 25 x 40 cm white 1,5 m2", category: "tile", brand: "Ceramika Color", packageSize: 1.5, unit: "m2", store: "Castorama", browserReviewAllowed: true, variant: ["Tamara", "25 x 40", "white", "1,5 m2"], url: "https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd" }
+  { id: "castorama-tamara-white-15m2", ean: "5907518303911", name: "Glazura Tamara 25 x 40 cm white 1,5 m2", category: "tile", brand: "Ceramika Color", packageSize: 1.5, unit: "m2", store: "Castorama", browserReviewAllowed: true, variant: ["Tamara", "25 x 40", "white", "1,5 m2"], url: "https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd" },
+  // source: https://sklep.sewera.pl/krzyzyki-dystansowe-3mm-150szt--p12505
+  // source: https://mrowka.com.pl/produkt/krzyzyki-dystansowe-3-mm-150-szt-hardy-5905061016869.html
+  { id: "sewera-tile-spacers-hardy-3mm-150", ean: "5905061016869", name: "Krzy\u017Cyki dystansowe 3mm 150szt.", category: "tile-spacer", brand: "KAEM", packageSize: 150, unit: "szt", store: "Sewera", format: "sewera", retailUnit: "OPA", variant: ["3mm", "150szt"], url: "https://sklep.sewera.pl/krzyzyki-dystansowe-3mm-150szt--p12505" },
+  // source: https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506
+  // source: https://www.bricomarche.pl/krzyzyki-dystansowe-do-glazury-4-mm-biale-woreczek-100-sztuk-hardy
+  { id: "sewera-tile-spacers-hardy-4mm-100", ean: "5905061016876", name: "Krzy\u017Cyki dystansowe 4mm 100szt.", category: "tile-spacer", brand: "KAEM", packageSize: 100, unit: "szt", store: "Sewera", format: "sewera", retailUnit: "OPA", variant: ["4mm", "100szt"], url: "https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Krzy\u017Cyki dystansowe do p\u0142ytek Hardy 3 mm (150 szt.)": "5905061016869",
+  "Krzy\u017Cyki dystansowe do p\u0142ytek Hardy 4 mm (100 szt.)": "5905061016876",
   // source: https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd
   "Glazura \u015Bcienna Ceramika Color Tamara white 25\xD740 cm (1,5 m\xB2)": "5907518303911",
   // source: https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd
