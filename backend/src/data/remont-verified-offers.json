@@ -1825,5 +1825,18 @@
     "sourceUrl": "https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506",
     "evidenceSha256": "75865993eee5066c59416f3bd8774b3d700a6028baa9fdef12d8d7c7ad563047",
     "validUntil": null
+  },
+  {
+    "sourceId": "abud-fischer-wst140k-2",
+    "ean": "8590369454948",
+    "name": "Mocowanie umywalki WST 10x140 Fischer 2 sztuki",
+    "imageUrl": "https://www.abud.pl/hpeciai/cb2a8ab7ed9adcb860b818b21d8ad413/pol_pl_Mocowanie-umywalki-WST-10x140-Fischer-2-sztuki-17848_1.webp",
+    "priceGrosze": 2450,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T22:19:50.486Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-17848-Mocowanie-umywalki-WST-10x140-Fischer-2-sztuki.html",
+    "evidenceSha256": "0f65219bbea9ff0712110f6664363de6d45183bc8ae4a9c47aa46df21aa9f7ad",
+    "validUntil": null
   }
 ]

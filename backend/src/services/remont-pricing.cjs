@@ -20797,9 +20797,13 @@ var RETAIL_SOURCES = [
   { id: "sewera-tile-spacers-hardy-3mm-150", ean: "5905061016869", name: "Krzy\u017Cyki dystansowe 3mm 150szt.", category: "tile-spacer", brand: "KAEM", packageSize: 150, unit: "szt", store: "Sewera", format: "sewera", retailUnit: "OPA", variant: ["3mm", "150szt"], url: "https://sklep.sewera.pl/krzyzyki-dystansowe-3mm-150szt--p12505" },
   // source: https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506
   // source: https://www.bricomarche.pl/krzyzyki-dystansowe-do-glazury-4-mm-biale-woreczek-100-sztuk-hardy
-  { id: "sewera-tile-spacers-hardy-4mm-100", ean: "5905061016876", name: "Krzy\u017Cyki dystansowe 4mm 100szt.", category: "tile-spacer", brand: "KAEM", packageSize: 100, unit: "szt", store: "Sewera", format: "sewera", retailUnit: "OPA", variant: ["4mm", "100szt"], url: "https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506" }
+  { id: "sewera-tile-spacers-hardy-4mm-100", ean: "5905061016876", name: "Krzy\u017Cyki dystansowe 4mm 100szt.", category: "tile-spacer", brand: "KAEM", packageSize: 100, unit: "szt", store: "Sewera", format: "sewera", retailUnit: "OPA", variant: ["4mm", "100szt"], url: "https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506" },
+  // source: https://www.abud.pl/product-pol-17848-Mocowanie-umywalki-WST-10x140-Fischer-2-sztuki.html
+  // source: https://www.fischerdanmark.dk/da/produkter/sanitetsbefaestigelse/keramiske-handvaske-urinaler-og-sanitaere-installationer/fastgorelse-af-vask-wst/45494-wst-140-k-nv
+  { id: "abud-fischer-wst140k-2", ean: "8590369454948", name: "Mocowanie umywalki WST 10x140 Fischer 2 sztuki", category: "basin-fixings", brand: "Fischer", packageSize: 2, unit: "szt", store: "ABUD", format: "idosell", productId: 17848, apiPurchaseUnit: "op.", variant: ["WST", "10x140", "2sztuki"], url: "https://www.abud.pl/product-pol-17848-Mocowanie-umywalki-WST-10x140-Fischer-2-sztuki.html" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Mocowanie umywalki Fischer WST 140 K NV M10\xD7140 (2 mocowania)": "8590369454948",
   "Krzy\u017Cyki dystansowe do p\u0142ytek Hardy 3 mm (150 szt.)": "5905061016869",
   "Krzy\u017Cyki dystansowe do p\u0142ytek Hardy 4 mm (100 szt.)": "5905061016876",
   // source: https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd
