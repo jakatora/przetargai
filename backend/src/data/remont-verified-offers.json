@@ -1838,5 +1838,44 @@
     "sourceUrl": "https://www.abud.pl/product-pol-17848-Mocowanie-umywalki-WST-10x140-Fischer-2-sztuki.html",
     "evidenceSha256": "0f65219bbea9ff0712110f6664363de6d45183bc8ae4a9c47aa46df21aa9f7ad",
     "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-kerapoxy-easy-design-100-3kg",
+    "ean": "8022452132940",
+    "name": "Mapei Kerapoxy Easy Design - Uniwersalna fuga epoksydowa 3kg Biały 100",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_35202_500_500/Opakowanie-fugi-Mapei-o-gramaturze-3-kg..webp",
+    "priceGrosze": 20900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T23:28:18.597Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/Mapei-Kerapoxy-Easy-Design-Uniwersalna-fuga-epoksydowa-3kg-Bialy-100/14527",
+    "evidenceSha256": "80af30cd1345d63860fd45dde8439038481ab92826e8bcc7c052bd96ef627d5c",
+    "validUntil": null
+  },
+  {
+    "sourceId": "winbud-kerapoxy-easy-design-100-3kg",
+    "ean": "8022452132940",
+    "name": "Mapei Kerapoxy Easy Design 100 3kg biała - fuga epoksydowa",
+    "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_10732_500_500/Mapei-Kerapoxy-Easy-Design-100-3kg-biala---fuga-epoksydowa.jpg",
+    "priceGrosze": 21597,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T23:28:18.751Z",
+    "sourceUrl": "https://winbud24.pl/pl/p/Mapei-Kerapoxy-Easy-Design-100-3kg-biala-fuga-epoksydowa/3748",
+    "evidenceSha256": "54c0b292549b86d3826936491bf93ac8cef04add813a36262733edf58cf0ce3a",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-plus-white-25kg",
+    "ean": "5905400313390",
+    "name": "Atlas Plus klej do płytek biały 25kg",
+    "imageUrl": "https://sklep.sewera.pl/photo/38873/atlas-plus-klej-do-plytek-bialy-25kg.webp",
+    "priceGrosze": 9636,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-26T23:28:20.037Z",
+    "sourceUrl": "https://sklep.sewera.pl/atlas-plus-klej-do-plytek-bialy-25kg-p8896",
+    "evidenceSha256": "6ca2970d86b11cd806ca60a5d3e02d5291e1518861669651c7c885ca8ecee05a",
+    "validUntil": null
   }
 ]
