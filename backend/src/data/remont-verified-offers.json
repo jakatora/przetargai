@@ -1148,10 +1148,10 @@
     "priceGrosze": 19480,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T18:43:42.347Z",
+    "observedAt": "2026-10-26T23:07:06.477Z",
     "sourceUrl": "https://northbud.pl/ferro-bateria-prysznicowa-ferro-one-bez-prysznica-chrom-bfo7-p70291",
-    "evidenceSha256": "a261204aba6664b623d557366f510aebbd6ee00be44b8e4d7f5b5bd626cefa35",
-    "validUntil": "2026-10-26"
+    "evidenceSha256": "3b3f5ce71777bd15e952022b2ffbca0c7920a775bd804bdbb50db2ee9ebc1cd7",
+    "validUntil": "2026-10-28"
   },
   {
     "sourceId": "kronodom-arbiton-secura-thermo-6m2",

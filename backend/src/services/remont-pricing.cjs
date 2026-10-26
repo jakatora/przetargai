@@ -21335,7 +21335,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto14 = require("node:crypto");
+var import_node_crypto15 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retailer-http.ts
 var MAX_RETAIL_PACKAGES = DELIVERY_LIMITS.packagesPerProduct;
@@ -21361,6 +21361,25 @@ var AnonymousShop = class {
   }
   async text(path, form) {
     return this.read(path, form ? new URLSearchParams(form).toString() : void 0, false);
+  }
+  /** Only ABUD's public postcode check, anonymous add and basket-rate query.
+   * The client-new endpoint is restricted to its postcode-only check; no
+   * registration/customer submission, payment or order action is exposed.
+   * source: https://www.abud.pl/gfx/pol/shop.js.gzip?r=1792053849
+   */
+  async abud(action, args = {}) {
+    if (this.origin !== "https://www.abud.pl" || Object.keys(args).some((key) => !["postalCode", "productId", "count"].includes(key))) throw Error("invalid_cart_action");
+    if (action === "destination") {
+      if (!/^\d{2}-\d{3}$/.test(args.postalCode ?? "") || args.productId !== void 0 || args.count !== void 0) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
+    }
+    if (action === "add") {
+      if (![6204, 64835, 17848].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read("/basketchange.php", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
+    }
+    if (action !== "shipping" || Object.keys(args).length) throw Error("invalid_cart_action");
+    const query = "query { shipping(ShippingInput: { mode: basket }) { shipping { courier { id name icon } prepaid cost { value formatted } deliveryTime { weekDay } } } }";
+    return JSON.parse(await this.read("/graphql/v1/", JSON.stringify({ query }), true, false, true));
   }
   /** Only this storefront's anonymous quantity update, never its order form.
    * source: https://modnalazienka.pl/static_files/js/update_cart.js?x=1792224600
@@ -23372,6 +23391,101 @@ async function quoteSkyshop(order, fetchImpl) {
   return { quote: { costGrosze: 0, carrier: method.name, payment: calculation.payment.name, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: wanted.length === 1 ? wanted[0].source.url : MATBUD_ORIGIN + "/order", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: skyshopEvidenceHash([...evidence, cart, shipping.html, shipping.methods, calculation]) } };
 }
 
+// artifacts/api-server/src/lib/abud-delivery.ts
+var import_node_crypto14 = require("node:crypto");
+var ORIGIN = "https://www.abud.pl";
+var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2"];
+function money5(value, formatted) {
+  if (!["string", "number"].includes(typeof value)) throw Error("invalid_money");
+  const amount2 = parsePriceToGrosze(value);
+  if (amount2 === null || !Number.isSafeInteger(amount2) || amount2 < 0) throw Error("invalid_money");
+  if (formatted !== void 0 && (typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted) || parsePriceToGrosze(formatted.replace(/\s*zł$/, "")) !== amount2)) throw Error("invalid_money");
+  return amount2;
+}
+function selectAbudHomeRate(response) {
+  const rates = response?.data?.shipping?.shipping;
+  if (response?.errors?.length || !Array.isArray(rates) || !rates.length || rates.length > 100) throw Error("invalid_response");
+  const names = { 100037: "Pocztex Kurier 24", 85: "Paczka GLS", 100336: "Pocztex Kurier XXL dor\u0119czenie pod wskazany adres", 30: "DPD Paczka - niestandard" };
+  const candidates = [], seen = /* @__PURE__ */ new Set();
+  for (const rate of rates) {
+    const id = rate?.courier?.id;
+    if (rate?.prepaid !== "prepaid" || !Number.isSafeInteger(id) || names[id] !== rate.courier.name) continue;
+    if (seen.has(id)) throw Error("invalid_response");
+    seen.add(id);
+    if (rate.cost?.value === void 0 || rate.cost?.formatted === void 0) throw Error("invalid_money");
+    candidates.push({ costGrosze: money5(rate.cost.value, rate.cost.formatted), carrier: rate.courier.name, payment: "P\u0142atno\u015B\u0107 z g\xF3ry" });
+  }
+  const best = candidates.sort((a, b) => a.costGrosze - b.costGrosze)[0];
+  if (!best) throw Error("no_home_delivery");
+  return best;
+}
+function confirmAbudDestination(response) {
+  const regions = response?.valid_region?.["1"];
+  if (response?.error || response?.errors?.length || response?.valid !== true || Object.keys(response.valid_region ?? {}).length !== 1 || !Array.isArray(regions) || regions.length !== 1 || regions[0]?.shop_id !== "1" || !/^\d+$/.test(regions[0].id_region ?? "") || regions[0].url !== ORIGIN) throw Error("address_required");
+  const region = regions[0];
+  if (!(region.id_region === "1143020003" && region.parent === "0" || region.id_region !== "1143020003" && region.parent === "1143020003")) throw Error("address_required");
+}
+function confirmVariant(html, source) {
+  const form = elements(clean(html), (a, tag) => tag === "form" && a["data-product_id"] === String(source.productId));
+  if (form.length !== 1) throw Error("product_unavailable");
+  for (const [id, value] of [["projector_size_hidden", "onesize"], ["projector_mode_hidden", "1"]]) {
+    const inputs = elements(form[0], (a) => a.id === id);
+    if (inputs.length !== 1 || attrs(inputs[0].match(/^<[^>]+>/)?.[0] ?? "").value !== value) throw Error("product_unavailable");
+  }
+}
+function confirmAbudBasket(response, expected, materialsGrosze) {
+  const basket = response?.basket;
+  if (response?.error || response?.errors?.length || !basket || basket.error || basket.errors?.length || basket.shipping_exists !== true || basket.currency !== "PLN" || basket.total_deposit !== 0 || basket.total_deposit_net !== 0 || !Array.isArray(basket.products) || basket.products.length !== expected.length || !expected.length) throw Error("basket_not_confirmed");
+  const remaining = new Map(expected.map((wanted) => [String(wanted.source.productId), wanted]));
+  if (remaining.size !== expected.length) throw Error("invalid_basket");
+  let total = 0, count = 0;
+  for (const row of basket.products) {
+    const wanted = remaining.get(row?.id);
+    if (!wanted || row.size !== "uniw" || row.price_unit !== wanted.source.apiPurchaseUnit || row.worth_unit !== wanted.source.apiPurchaseUnit || row.name !== wanted.source.name || new URL(row.link, ORIGIN).href !== wanted.source.url || row.bonus !== "n" || row.product_type !== "product_item" || row.bundle !== 0 || !Array.isArray(row.bundled) || row.bundled.length || row.subscription_period !== "0") throw Error("basket_not_confirmed");
+    if (!Number.isSafeInteger(row.reservation_stocksown) || row.reservation_stocksown < 0) throw Error("product_unavailable");
+    if (wanted.count > row.reservation_stocksown) throw Error("insufficient_stock");
+    if (row.count !== wanted.count) throw Error("basket_not_confirmed");
+    if (typeof row.prices?.gros_formatted !== "string" || typeof row.prices?.worth_gros_formatted !== "string") throw Error("basket_not_confirmed");
+    if (money5(row.prices?.gros, row.prices?.gros_formatted) !== wanted.price || money5(row.prices?.worth_gros, row.prices?.worth_gros_formatted) !== wanted.count * wanted.price) throw Error("price_changed");
+    total += wanted.count * wanted.price;
+    count += wanted.count;
+    remaining.delete(row.id);
+  }
+  if (remaining.size || !Number.isSafeInteger(total) || total !== materialsGrosze || money5(basket.worth) !== total || basket.productsNumber !== count) throw Error("basket_not_confirmed");
+  return basket;
+}
+async function quoteAbud(order, postalCode, fetchImpl) {
+  if (order.store !== "ABUD" || !order.lines.length || !/^\d{2}-\d{3}$/.test(postalCode) || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze <= 0) throw Error("invalid_basket");
+  const client = new AnonymousShop(ORIGIN, fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.length));
+  const expected = [], observations = [];
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === "ABUD" && source2.format === "idosell");
+    if (!source || !IDS.includes(source.id) || new URL(source.url).origin !== ORIGIN || pack.store !== "ABUD" || pack.url !== source.url || pack.packageSize !== source.packageSize || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze <= 0 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || expected.some((row) => row.source.productId === source.productId)) throw Error("invalid_basket");
+    const html = await client.text(source.url), observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
+    confirmVariant(html, source);
+    if (observation.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    expected.push({ source, count: pack.count, price: observation.priceGrosze });
+    observations.push(observation.evidenceSha256);
+  }
+  if (!expected.length || expected.reduce((sum, row) => sum + row.count * row.price, 0) !== order.materialsGrosze) throw Error("invalid_basket");
+  const destination = await client.abud("destination", { postalCode });
+  confirmAbudDestination(destination);
+  let added;
+  for (const row of expected) added = await client.abud("add", { productId: row.source.productId, count: row.count });
+  const basket = confirmAbudBasket(added, expected, order.materialsGrosze);
+  const shipping = await client.abud("shipping"), best = selectAbudHomeRate(shipping), now = /* @__PURE__ */ new Date();
+  return { quote: {
+    ...best,
+    checkedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 6e5).toISOString(),
+    sourceUrl: ORIGIN + "/basketedit.php",
+    basis: "retailer_basket_postcode",
+    destinationScope: "postal_code",
+    postalCode,
+    evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify({ observations, destination, postalCode, basket, shipping })).digest("hex")
+  } };
+}
+
 // artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
   "Rab-Dom": "https://www.rabdom.pl",
@@ -23393,15 +23507,15 @@ function unavailableReason(store) {
   if (sources.length && sources.every((source) => source.format === "betterial")) return "retailer_transport_quote_required";
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
-  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud"].includes(store)) return void 0;
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD"].includes(store)) return void 0;
   return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
-    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
-    postcodeStores: ["Sewera", "Cezar"],
+    postcodeStores: ["Sewera", "Cezar", "ABUD"],
     accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
   };
 }
@@ -23490,7 +23604,7 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin3}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto15.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
@@ -23510,6 +23624,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
       if (!release) return { reason: "quote_busy" };
       try {
         if (order.store === "Centrum Matbud") return await quoteSkyshop(order, fetchImpl);
+        if (order.store === "ABUD") return await quoteAbud(order, postalCode, fetchImpl);
         return await (order.store === "Kronosfera" ? quoteKronosfera(order, fetchImpl) : order.store === "Folnet" ? quoteFolnet(order, fetchImpl) : order.store === "Modna \u0141azienka" ? quoteModna(order, fetchImpl) : order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
       } catch (error40) {
         return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed"].includes(error40.message) ? error40.message : "quote_unavailable" };
