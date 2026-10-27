@@ -13983,11 +13983,11 @@ function numberColumnToSchema(column, z, coerce2) {
   let unsigned = column.getSQLType().includes("unsigned");
   let min;
   let max;
-  let integer3 = false;
+  let integer4 = false;
   if (isColumnType(column, ["MySqlTinyInt", "SingleStoreTinyInt"])) {
     min = unsigned ? 0 : CONSTANTS.INT8_MIN;
     max = unsigned ? CONSTANTS.INT8_UNSIGNED_MAX : CONSTANTS.INT8_MAX;
-    integer3 = true;
+    integer4 = true;
   } else if (isColumnType(column, [
     "PgSmallInt",
     "PgSmallSerial",
@@ -13996,7 +13996,7 @@ function numberColumnToSchema(column, z, coerce2) {
   ])) {
     min = unsigned ? 0 : CONSTANTS.INT16_MIN;
     max = unsigned ? CONSTANTS.INT16_UNSIGNED_MAX : CONSTANTS.INT16_MAX;
-    integer3 = true;
+    integer4 = true;
   } else if (isColumnType(column, [
     "PgReal",
     "MySqlFloat",
@@ -14006,7 +14006,7 @@ function numberColumnToSchema(column, z, coerce2) {
   ])) {
     min = unsigned ? 0 : CONSTANTS.INT24_MIN;
     max = unsigned ? CONSTANTS.INT24_UNSIGNED_MAX : CONSTANTS.INT24_MAX;
-    integer3 = isColumnType(column, ["MySqlMediumInt", "SingleStoreMediumInt"]);
+    integer4 = isColumnType(column, ["MySqlMediumInt", "SingleStoreMediumInt"]);
   } else if (isColumnType(column, [
     "PgInteger",
     "PgSerial",
@@ -14015,7 +14015,7 @@ function numberColumnToSchema(column, z, coerce2) {
   ])) {
     min = unsigned ? 0 : CONSTANTS.INT32_MIN;
     max = unsigned ? CONSTANTS.INT32_UNSIGNED_MAX : CONSTANTS.INT32_MAX;
-    integer3 = true;
+    integer4 = true;
   } else if (isColumnType(column, [
     "PgDoublePrecision",
     "MySqlReal",
@@ -14038,16 +14038,16 @@ function numberColumnToSchema(column, z, coerce2) {
     unsigned = unsigned || isColumnType(column, ["MySqlSerial", "SingleStoreSerial"]);
     min = unsigned ? 0 : Number.MIN_SAFE_INTEGER;
     max = Number.MAX_SAFE_INTEGER;
-    integer3 = true;
+    integer4 = true;
   } else if (isColumnType(column, ["MySqlYear", "SingleStoreYear"])) {
     min = 1901;
     max = 2155;
-    integer3 = true;
+    integer4 = true;
   } else {
     min = Number.MIN_SAFE_INTEGER;
     max = Number.MAX_SAFE_INTEGER;
   }
-  let schema = coerce2 === true || coerce2?.number ? integer3 ? z.coerce.number() : z.coerce.number().int() : integer3 ? z.int() : z.number();
+  let schema = coerce2 === true || coerce2?.number ? integer4 ? z.coerce.number() : z.coerce.number().int() : integer4 ? z.int() : z.number();
   schema = schema.gte(min).lte(max);
   return schema;
 }
@@ -14547,6 +14547,88 @@ function optimizePackages(requiredQuantity, variants) {
   };
 }
 
+// lib/pricing-service/src/wallpaper-rolls.ts
+var ERISMANN_3333_5_EAN = "4002790333357";
+var ERISMANN_3333_5_ROLL = { widthMm: 750, lengthMm: 25e3 };
+var MAX_STRIPS = 2e3;
+var MAX_SEARCH_NODES = 5e4;
+var integer3 = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
+function planPlainWallpaperPanels(panels, spec) {
+  if (!integer3(spec.widthMm, 100, 3e3) || panels.length === 0 || panels.length > 100) return null;
+  const groups = [];
+  for (const panel of panels) {
+    if (!integer3(panel.widthMm, 1, 1e5) || !integer3(panel.heightMm, 100, 3e4) || !integer3(panel.allowanceMm, 0, 1e3)) return null;
+    groups.push({ id: panel.id, lengthMm: panel.heightMm + panel.allowanceMm, count: Math.ceil(panel.widthMm / spec.widthMm) });
+  }
+  return planPlainWallpaperCuts(groups, spec.lengthMm);
+}
+function planPlainWallpaperCuts(groups, rollLengthMm) {
+  if (!integer3(rollLengthMm, 1e3, 1e5) || groups.length === 0 || groups.length > 100) return null;
+  const pieces = [], stripsByPanel = /* @__PURE__ */ Object.create(null);
+  for (const group of groups) {
+    if (typeof group.id !== "string" || !group.id || group.id.length > 200 || !integer3(group.count, 1, MAX_STRIPS) || !integer3(group.lengthMm, 1, rollLengthMm) || pieces.length + group.count > MAX_STRIPS) return null;
+    stripsByPanel[group.id] = (stripsByPanel[group.id] ?? 0) + group.count;
+    for (let i = 0; i < group.count; i++) pieces.push({ panelId: group.id, lengthMm: group.lengthMm });
+  }
+  pieces.sort((a, b) => b.lengthMm - a.lengthMm || a.panelId.localeCompare(b.panelId));
+  const totalCutLengthMm = pieces.reduce((sum, piece) => sum + piece.lengthMm, 0);
+  const pack = (assignments2) => assignments2.map((indices) => {
+    const strips = indices.map((index2) => ({ ...pieces[index2] })), usedMm = strips.reduce((sum, strip) => sum + strip.lengthMm, 0);
+    return { strips, usedMm, remainingMm: rollLengthMm - usedMm };
+  });
+  let assignments = [], used = [];
+  for (const [index2, piece] of pieces.entries()) {
+    let bin = used.findIndex((value) => value + piece.lengthMm <= rollLengthMm);
+    if (bin < 0) {
+      bin = used.length;
+      used.push(0);
+      assignments.push([]);
+    }
+    used[bin] += piece.lengthMm;
+    assignments[bin].push(index2);
+  }
+  const lowerBound = Math.max(Math.ceil(totalCutLengthMm / rollLengthMm), pieces.filter((piece) => piece.lengthMm > rollLengthMm / 2).length);
+  const singleLength = pieces.every((piece) => piece.lengthMm === pieces[0].lengthMm);
+  let optimal = assignments.length === lowerBound || singleLength, searchLimited = false, nodes = 0;
+  if (!optimal && pieces.length <= 80 && new Set(pieces.map((piece) => piece.lengthMm)).size <= 10) {
+    for (let target = lowerBound; target < assignments.length; target++) {
+      const candidate = Array.from({ length: target }, () => []), capacities = Array(target).fill(0), failed = /* @__PURE__ */ new Set();
+      const search = (position) => {
+        if (position === pieces.length) return true;
+        if (++nodes > MAX_SEARCH_NODES) {
+          searchLimited = true;
+          return false;
+        }
+        const key = position + ":" + capacities.slice().sort((a, b) => a - b).join(",");
+        if (failed.has(key)) return false;
+        const seen = /* @__PURE__ */ new Set(), length = pieces[position].lengthMm;
+        for (let bin = 0; bin < target; bin++) {
+          const before = capacities[bin];
+          if (seen.has(before) || before + length > rollLengthMm) continue;
+          seen.add(before);
+          capacities[bin] += length;
+          candidate[bin].push(position);
+          if (search(position + 1)) return true;
+          capacities[bin] = before;
+          candidate[bin].pop();
+          if (searchLimited || before === 0) break;
+        }
+        failed.add(key);
+        return false;
+      };
+      if (search(0)) {
+        assignments = candidate.filter((bin) => bin.length);
+        optimal = true;
+        break;
+      }
+      if (searchLimited) break;
+      if (target === assignments.length - 1) optimal = true;
+    }
+  } else if (!optimal) searchLimited = true;
+  const rolls = pack(assignments);
+  return { rollsNeeded: rolls.length, rolls, stripCount: pieces.length, totalCutLengthMm, totalUnusedLengthMm: rolls.length * rollLengthMm - totalCutLengthMm, optimal, searchLimited, stripsByPanel };
+}
+
 // lib/pricing-service/src/estimate.ts
 var defaultDeps = {
   findProductByCode: async (db, code) => await findByEanOrGtin(db, code) ?? null,
@@ -14692,10 +14774,17 @@ async function estimateStageCost(db, items, options = {}, deps = defaultDeps) {
 }
 function groupProjectByProduct(stages) {
   const groups = /* @__PURE__ */ new Map();
-  for (const stage of stages) {
+  const cuts = /* @__PURE__ */ new Map();
+  for (const [stageIndex, stage] of stages.entries()) {
     for (const line2 of stage.lines) {
       if (!line2.resolved) continue;
       const key = line2.product.id;
+      if (line2.plainWallpaper && line2.product.ean === ERISMANN_3333_5_EAN && line2.unit === "szt" && line2.packageSize === 1) {
+        const entry = cuts.get(key) ?? { panels: [], quantity: 0 };
+        entry.quantity += line2.quantity;
+        entry.panels.push(...line2.plainWallpaper.panels.map((panel) => ({ ...panel, id: `${stageIndex}:${panel.id}` })));
+        cuts.set(key, entry);
+      }
       const existing = groups.get(key);
       if (existing) {
         existing.totalQuantity += line2.quantity;
@@ -14715,6 +14804,8 @@ function groupProjectByProduct(stages) {
     }
   }
   return [...groups.values()].map((group) => {
+    const request = cuts.get(group.product.id), plan = request && planPlainWallpaperPanels(request.panels, ERISMANN_3333_5_ROLL);
+    if (plan && plan.rollsNeeded <= request.quantity) group = { ...group, totalQuantity: group.totalQuantity - request.quantity + plan.rollsNeeded, wallpaperCutPlan: plan };
     const cheapest = selectCheapestOffer(group.offers, void 0, { quantity: group.totalQuantity, product: group.product });
     return cheapest ? { ...group, cheapestOffer: cheapest, packageSize: resolvePackageSize(cheapest.offer, group.product) } : group;
   });
@@ -14728,6 +14819,7 @@ function consolidateProject(stages) {
     const packagesNeeded = packagePlan?.packages.reduce((sum, entry) => sum + entry.count, 0) ?? computePackagesNeeded(g.totalQuantity, g.packageSize);
     const lineCostGrosze = packagePlan?.totalGrosze ?? packagesNeeded * g.cheapestOffer.unitPriceGrosze;
     lines.push({
+      ...g.wallpaperCutPlan ? { wallpaperCutPlan: g.wallpaperCutPlan } : {},
       ...packagePlan ? { packagePlan } : {},
       product: g.product,
       cheapestOffer: g.cheapestOffer,
@@ -15341,6 +15433,12 @@ function toEstimateItems(jobResult) {
 async function estimateStageCostFromCalculation(db, jobResult, options = {}, deps) {
   const items = toEstimateItems(jobResult);
   const stage = await estimateStageCost(db, items, options, deps);
+  for (const [index2, line2] of stage.lines.entries()) {
+    const input2 = jobResult.materials[index2], cut = input2?.plainWallpaper;
+    if (!line2.resolved || line2.product.ean !== ERISMANN_3333_5_EAN || input2.material.ean !== ERISMANN_3333_5_EAN || line2.unit !== "szt" || line2.packageSize !== 1 || cut?.version !== 1 || !Array.isArray(cut.panels)) continue;
+    const plan = planPlainWallpaperPanels(cut.panels, ERISMANN_3333_5_ROLL);
+    if (plan && input2.quantity === plan.rollsNeeded) line2.plainWallpaper = { version: 1, panels: cut.panels.map((panel) => ({ ...panel })) };
+  }
   return withLabor(stage, jobResult.jobId, jobResult.measurements ?? {}, options);
 }
 async function estimateProjectCostFromCalculation(db, jobResults, options = {}, deps) {
@@ -19405,6 +19503,7 @@ var materialSchema = external_exports2.object({
   gtin: external_exports2.string().nullish()
 });
 var materialLineSchema = external_exports2.object({
+  plainWallpaper: external_exports2.object({ version: external_exports2.literal(1), panels: external_exports2.array(external_exports2.object({ id: external_exports2.string().min(1).max(200), widthMm: external_exports2.number().int().min(1).max(1e5), heightMm: external_exports2.number().int().min(100).max(3e4), allowanceMm: external_exports2.number().int().min(0).max(1e3) })).min(1).max(100) }).optional(),
   material: materialSchema,
   // Ilość natywna materiału policzona przez silnik — nieujemna i skończona.
   quantity: external_exports2.number().finite().nonnegative(),
@@ -19577,6 +19676,7 @@ function serializeStage(stage) {
 }
 function serializeConsolidatedLine(line2) {
   return {
+    ...line2.wallpaperCutPlan ? { wallpaperCutPlan: line2.wallpaperCutPlan } : {},
     ...line2.packagePlan ? { packages: line2.packagePlan.packages.map((entry) => ({
       ...entry.purchaseMultiple ? { purchaseMultiple: entry.purchaseMultiple } : {},
       ...entry.minimumPackages ? { minimumPackages: entry.minimumPackages } : {},
@@ -20927,9 +21027,13 @@ var RETAIL_SOURCES = [
   // source: https://swiatsieklei.pl/pl/p/METYLAN-Direct-200g-klej-do-tapet-24119/104
   { "id": "swiat-metylan-direct-200g", "ean": "4015000402019", "name": "METYLAN Direct 200g klej do tapet 24119", "brand": "Metylan", "category": "wallpaper-adhesive", "packageSize": 200, "unit": "g", "store": "\u015Awiat Si\u0119 Klei", "url": "https://swiatsieklei.pl/pl/p/METYLAN-Direct-200g-klej-do-tapet-24119/104", "format": "shoper-api", "productId": 104, "retailerSku": "N-29", "apiPurchaseUnit": "szt.", "variant": ["direct", "200g"], "imageUrl": "https://swiatsieklei.pl/environment/cache/images/productGfx_8cf3f0b127670f2cfdd5620ec59b3e3e_500_500.webp", "pickupRequiresConfirmation": true },
   // source: https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101
-  { "id": "swiat-metylan-normal-125g", "ean": "4015000095266", "name": "METYLAN Normal 125g klej do tapet 24122", "brand": "Metylan", "category": "wallpaper-adhesive", "packageSize": 125, "unit": "g", "store": "\u015Awiat Si\u0119 Klei", "url": "https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101", "format": "shoper-api", "productId": 101, "retailerSku": "N-26", "apiPurchaseUnit": "szt.", "variant": ["normal", "125g"], "imageUrl": "https://swiatsieklei.pl/environment/cache/images/productGfx_a44f7b5fc0ca152dba8e53e1ccae43fa_500_500.webp", "pickupRequiresConfirmation": true }
+  { "id": "swiat-metylan-normal-125g", "ean": "4015000095266", "name": "METYLAN Normal 125g klej do tapet 24122", "brand": "Metylan", "category": "wallpaper-adhesive", "packageSize": 125, "unit": "g", "store": "\u015Awiat Si\u0119 Klei", "url": "https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101", "format": "shoper-api", "productId": 101, "retailerSku": "N-26", "apiPurchaseUnit": "szt.", "variant": ["normal", "125g"], "imageUrl": "https://swiatsieklei.pl/environment/cache/images/productGfx_a44f7b5fc0ca152dba8e53e1ccae43fa_500_500.webp", "pickupRequiresConfirmation": true },
+  // source: https://plejadatapet.pl/pl/p/Gladka-tapeta-flizelinowa-150gm2-25m-0%2C75m-3333-5-Erismann-RollOver/23972
+  // source: https://www.erismann.de/en/collection/rollover-27
+  { "id": "plejada-erismann-rollover-3333-5", "ean": "4002790333357", "name": "G\u0142adka tapeta flizelinowa 150g/m2 25m * 0,75m 3333-5 Erismann RollOver", "brand": "Erismann", "category": "wallpaper", "packageSize": 1, "unit": "szt", "store": "Plejada Tapet", "url": "https://plejadatapet.pl/pl/p/Gladka-tapeta-flizelinowa-150gm2-25m-0%2C75m-3333-5-Erismann-RollOver/23972", "format": "shoper-api", "productId": 23972, "retailerSku": "ER 3333-5", "apiPurchaseUnit": "szt.", "variant": ["3333-5", "rollover"], "packageDescription": "25.00m * 0.75m", "imageUrl": "https://plejadatapet.pl/environment/cache/images/productGfx_92091_500_500/Gladka-tapeta-flizelinowa-150gm2-25m--0%2C75m-3333-5-Erismann-RollOver.jpg", "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Erismann RollOver 3333-5 \u2014 flizelina do malowania, rolka 0,75 \xD7 25 m": "4002790333357",
   "Metylan Direct \u2014 klej do tapet flizelinowych 200 g": "4015000402019",
   "Metylan Normal \u2014 klej do tapet papierowych 125 g": "4015000095266",
   "Kotwa stalowa sufitowa Rawlplug R-GS-06040 (100 szt.)": "5906675169347",
@@ -23346,6 +23450,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  if (source.id === "plejada-erismann-rollover-3333-5" && (source.ean !== "4002790333357" || source.packageSize !== 1 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt." || source.productId !== 23972 || source.retailerSku !== "ER 3333-5")) throw Error("product_package_not_confirmed");
   const gluePacks = {
     "plejada-metylan-direct-200g": ["4015000402019", 200],
     "swiat-metylan-direct-200g": ["4015000402019", 200],
