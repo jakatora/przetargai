@@ -21044,7 +21044,19 @@ var RETAIL_SOURCES = [
   // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-1l-KONCENTRAT-GRUNTUJACY-GRUNT/10970
   { "id": "rabdom-primer-g-pro-1l", "ean": "8022452241123", "name": "MAPEI PRIMER G PRO 1l KONCENTRAT GRUNTUJ\u0104CY GRUNT", "category": "primer", "brand": "Mapei", "packageSize": 1, "unit": "l", "store": "Rab-Dom", "format": "shoper-api", "url": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-1l-KONCENTRAT-GRUNTUJACY-GRUNT/10970", "productId": 10970, "retailerSku": "37969", "apiPurchaseUnit": "szt.", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_19574_500_500/4_primer-g-pro_1l_pl_2c7d4435f6894c59b7f19830a10992cc.webp", "variant": ["1l"], "pickupRequiresConfirmation": true },
   // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-5l-KONCENTRAT-GRUNTUJACY-GRUNT/10969
-  { "id": "rabdom-primer-g-pro-5l", "ean": "8022452241130", "name": "MAPEI PRIMER G PRO 5l KONCENTRAT GRUNTUJ\u0104CY GRUNT", "category": "primer", "brand": "Mapei", "packageSize": 5, "unit": "l", "store": "Rab-Dom", "format": "shoper-api", "url": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-5l-KONCENTRAT-GRUNTUJACY-GRUNT/10969", "productId": 10969, "retailerSku": "37970", "apiPurchaseUnit": "szt.", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_19572_500_500/4_primer-g-pro_5l_pl_ea1ad0866a074cc2a5352b1844b10324.webp", "variant": ["5l"], "pickupRequiresConfirmation": true }
+  { "id": "rabdom-primer-g-pro-5l", "ean": "8022452241130", "name": "MAPEI PRIMER G PRO 5l KONCENTRAT GRUNTUJ\u0104CY GRUNT", "category": "primer", "brand": "Mapei", "packageSize": 5, "unit": "l", "store": "Rab-Dom", "format": "shoper-api", "url": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-5l-KONCENTRAT-GRUNTUJACY-GRUNT/10969", "productId": 10969, "retailerSku": "37970", "apiPurchaseUnit": "szt.", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_19572_500_500/4_primer-g-pro_5l_pl_ea1ad0866a074cc2a5352b1844b10324.webp", "variant": ["5l"], "pickupRequiresConfirmation": true },
+  // source: https://topboden.pl/listwy-przypodlogowe/indo-naroznik-wewnetrzny-bialy-polysk-01-opakowanie-foliowe
+  // source: https://arbiton.com/pl/listwy-przypodlogowe/akcesoria/naroznik-wew-indo-bialy-polysk-1-arbiton
+  { "id": "topboden-indo-inside-gloss-2", "ean": "5905167726037", "name": "Naro\u017Cniki do listew przypod\u0142ogowych Arbiton INDO - bia\u0142y po\u0142ysk 01 - wewn\u0119trzne - 2 szt.", "brand": "Arbiton", "category": "skirting-accessory", "packageSize": 2, "unit": "szt", "store": "TopBoden", "format": "topboden-api", "productUuid": "9d18849b-1174-4fb0-a0ef-f78e5ee3e03f", "apiPurchaseUnit": "opk.", "variant": ["INDO", "bia\u0142y po\u0142ysk", "2 szt"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/indo-naroznik-wewnetrzny-bialy-polysk-01-opakowanie-foliowe", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167726037_P_01.webp" },
+  // source: https://topboden.pl/listwy-przypodlogowe/indo-naroznik-zewnetrzny-bialy-polysk-01-opakowanie-foliowe
+  // source: https://arbiton.com/pl/listwy-przypodlogowe/akcesoria/naroznik-zew-indo-bialy-polysk-1-arbiton
+  { "id": "topboden-indo-outside-gloss-2", "ean": "5905167726198", "name": "Naro\u017Cniki do listew przypod\u0142ogowych Arbiton INDO - bia\u0142y po\u0142ysk 01 - zewn\u0119trzne - 2 szt.", "brand": "Arbiton", "category": "skirting-accessory", "packageSize": 2, "unit": "szt", "store": "TopBoden", "format": "topboden-api", "productUuid": "6d0e4dc7-6cc8-4f8a-bd57-4d5f7f634c62", "apiPurchaseUnit": "opk.", "variant": ["INDO", "bia\u0142y po\u0142ysk", "2 szt"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/indo-naroznik-zewnetrzny-bialy-polysk-01-opakowanie-foliowe", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167726198_P_02.webp" },
+  // source: https://topboden.pl/listwy-przypodlogowe/indo-lacznik-bialy-polysk-01-opakowanie-foliowe
+  // source: https://arbiton.com/pl/listwy-przypodlogowe/akcesoria/lacznik-indo-bialy-polysk-1-arbiton
+  { "id": "topboden-indo-connector-gloss-2", "ean": "5905167725870", "name": "\u0141\u0105czniki do listew przypod\u0142ogowych Arbiton INDO - bia\u0142y po\u0142ysk 01 - 2 szt.", "brand": "Arbiton", "category": "skirting-accessory", "packageSize": 2, "unit": "szt", "store": "TopBoden", "format": "topboden-api", "productUuid": "46e7fec7-9ef8-4fb3-95c5-29c0b52b7f32", "apiPurchaseUnit": "opk.", "variant": ["INDO", "bia\u0142y po\u0142ysk", "2 szt"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/indo-lacznik-bialy-polysk-01-opakowanie-foliowe", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167725870_P_01.webp" },
+  // source: https://topboden.pl/listwy-przypodlogowe/indo-zakonczenie-prawe-lewe-bialy-polysk-01-opakowanie-foliowe
+  // source: https://arbiton.com/pl/listwy-przypodlogowe/akcesoria/zakonczenie-l-p-indo-bialy-polysk-1-arbiton
+  { "id": "topboden-indo-endcaps-gloss-pair", "ean": "5905167726358", "name": "Zako\u0144czenie listwy przypod\u0142ogowej Arbiton INDO - bia\u0142y po\u0142ysk 01 - lewe i prawe - 2 szt.", "brand": "Arbiton", "category": "skirting-accessory", "packageSize": 1, "unit": "kpl", "store": "TopBoden", "format": "topboden-api", "productUuid": "7e8bcf6a-8e26-4f27-9785-8bb7d087ba48", "apiPurchaseUnit": "opk.", "variant": ["INDO", "bia\u0142y po\u0142ysk", "2 szt"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/indo-zakonczenie-prawe-lewe-bialy-polysk-01-opakowanie-foliowe", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167726358_P_03.webp" }
 ];
 var RETAIL_NAME_ALIASES = {
   "Erismann RollOver 3333-5 \u2014 flizelina do malowania, rolka 0,75 \xD7 25 m": "4002790333357",
@@ -21232,7 +21244,11 @@ var RETAIL_NAME_ALIASES = {
   "Mapei Mapeband W \u2014 ta\u015Bma uszczelniaj\u0105ca 120 mm \xD7 10 m": "8022452113932",
   "Mapei Mapeband W \u2014 mankiet pod\u0142ogowy 300 \xD7 300 mm (1 szt.)": "8022452113895",
   "Mapei Primer G Pro \u2014 koncentrat gruntuj\u0105cy 1 l": "8022452241123",
-  "Mapei Primer G Pro \u2014 koncentrat gruntuj\u0105cy 5 l": "8022452241130"
+  "Mapei Primer G Pro \u2014 koncentrat gruntuj\u0105cy 5 l": "8022452241130",
+  "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 naro\u017Cniki wewn\u0119trzne (2 szt.)": "5905167726037",
+  "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 naro\u017Cniki zewn\u0119trzne (2 szt.)": "5905167726198",
+  "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 \u0142\u0105czniki (2 szt.)": "5905167725870",
+  "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 zako\u0144czenia lewe + prawe (1 para)": "5905167726358"
 };
 
 // artifacts/api-server/src/lib/retail-microdata.ts
@@ -22727,12 +22743,21 @@ function confirmTopbodenProduct(product, source, count = source.purchaseMultiple
   if (!source.productUuid || !/^[a-f0-9-]{36}$/.test(source.productUuid) || product?.uuid !== source.productUuid || product.ean !== source.ean || product.data?.logisticData?.ean !== source.ean) throw Error("product_ean_not_confirmed");
   if (product.brand?.name !== source.brand || typeof product.name !== "string") throw Error("product_brand_not_confirmed");
   const units = product.units, multiple = source.purchaseMultiple ?? 1;
+  const accessoryPacks = {
+    "topboden-indo-inside-gloss-2": ["5905167726037", "9d18849b-1174-4fb0-a0ef-f78e5ee3e03f", 2, "szt"],
+    "topboden-indo-outside-gloss-2": ["5905167726198", "6d0e4dc7-6cc8-4f8a-bd57-4d5f7f634c62", 2, "szt"],
+    "topboden-indo-connector-gloss-2": ["5905167725870", "46e7fec7-9ef8-4fb3-95c5-29c0b52b7f32", 2, "szt"],
+    "topboden-indo-endcaps-gloss-pair": ["5905167726358", "7e8bcf6a-8e26-4f27-9785-8bb7d087ba48", 1, "kpl"]
+  };
+  const accessory = accessoryPacks[source.id];
+  if (accessory && (source.ean !== accessory[0] || source.productUuid !== accessory[1] || source.packageSize !== accessory[2] || source.unit !== accessory[3] || source.apiPurchaseUnit !== "opk." || multiple !== 1)) throw Error("product_package_not_confirmed");
   if (units && Number.isSafeInteger(units.multiple) && Number.isSafeInteger(units.minOrderQuantity) && (units.multiple !== multiple || units.minOrderQuantity !== multiple)) throw Error("purchase_rules_changed");
-  if (!Number.isSafeInteger(multiple) || multiple < 1 || multiple > 1e4 || !units || units.orderUnit !== "szt." || units.priceListUnit !== source.unit || units.basicUnit !== source.unit || !Number.isFinite(units.numerator) || !Number.isFinite(units.denominator) || units.denominator <= 0 || units.numerator / units.denominator !== source.packageSize || units.multiple !== multiple || units.minOrderQuantity !== multiple) throw Error("retailer_unit_not_confirmed");
+  const nativeUnit = accessory ? "opk." : source.unit, nativeOrderUnit = accessory ? "opk." : "szt.", nativePackSize = accessory ? 1 : source.packageSize;
+  if (!Number.isSafeInteger(multiple) || multiple < 1 || multiple > 1e4 || !units || units.orderUnit !== nativeOrderUnit || units.priceListUnit !== nativeUnit || units.basicUnit !== nativeUnit || !Number.isFinite(units.numerator) || !Number.isFinite(units.denominator) || units.denominator <= 0 || units.numerator / units.denominator !== nativePackSize || units.multiple !== multiple || units.minOrderQuantity !== multiple) throw Error("retailer_unit_not_confirmed");
   if (!Number.isSafeInteger(count) || count < multiple || count % multiple || count > 1e4) throw Error("purchase_multiple_required");
   if (product.available === false) throw Error("retailer_out_of_stock");
   if (product.available !== true || !Number.isFinite(product.baseUnitStock)) throw Error("retailer_stock_not_confirmed");
-  if (product.baseUnitStock < count * source.packageSize) throw Error(count === multiple ? "retailer_out_of_stock" : "insufficient_stock");
+  if (product.baseUnitStock < count * nativePackSize) throw Error(count === multiple ? "retailer_out_of_stock" : "insufficient_stock");
   const price2 = product.price;
   if (!price2 || typeof price2.isDiscount !== "boolean" || product.promotionCode) throw Error("conditional_price_not_supported");
   const priceGrosze = price2.isDiscount ? price2.discountPackageGrossPrice : price2.packageGrossPrice;
@@ -22762,7 +22787,8 @@ async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMul
       return [];
     }
   }).filter((item) => item?.["@type"] === "Product");
-  if (records.length !== 1 || !records[0].name?.startsWith(product.name)) throw Error("product_identity_not_confirmed");
+  const accessoryIdentity = source.apiPurchaseUnit === "opk." && records.length === 1 && typeof product.metaTitle === "string" && product.metaTitle.length > 0 && card.metaTitle === product.metaTitle && records[0].name === product.metaTitle && records[0].brand === source.brand && typeof records[0].image === "string" && records[0].image.includes(source.ean);
+  if (records.length !== 1 || !(source.apiPurchaseUnit === "opk." ? accessoryIdentity : records[0].name?.startsWith(product.name))) throw Error("product_identity_not_confirmed");
   const offer = records[0].offers;
   if (offer?.priceCurrency !== "PLN" || parsePriceToGrosze(offer.price) !== confirmed.priceGrosze || !/\/InStock$/.test(String(offer.availability))) throw Error("retailer_gross_price_not_confirmed");
   return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
