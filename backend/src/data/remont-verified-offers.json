@@ -2202,5 +2202,177 @@
     "sourceUrl": "https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977",
     "evidenceSha256": "36fb30cecf82d880fc4519bb5d9c24cbc8b5814acf3b213a30371ea1bbd2a607",
     "validUntil": null
+  },
+  {
+    "sourceId": "leroy-norgips-paper-50x75",
+    "ean": "5907651699933",
+    "name": "Taśma papierowa 50mm 75 mb NORGIPS",
+    "imageUrl": "https://media.adeo.com/media/2629682/media.jpg",
+    "priceGrosze": 5499,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:39:56.843Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/tasma-papierowa-50mm-75-mb-norgips-43912694.html",
+    "evidenceSha256": "9e4904f7b1ebadbff6ff3648dc706ea1b4d1bd6dd40da654d87dac6b7bd7554c",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-27T05:39:56.843Z",
+      "expiresAt": "2026-10-28T05:39:56.843Z"
+    }
+  },
+  {
+    "sourceId": "leroy-norgips-acoustic-50x30",
+    "ean": "5907651698004",
+    "name": "Taśma uszczelniająca akustyczna 50 mm/30 mb NORGIPS",
+    "imageUrl": "https://media.adeo.com/media/2631597/media.jpg",
+    "priceGrosze": 5199,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:39:56.843Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-50-mm-30-mb-norgips-43912722.html",
+    "evidenceSha256": "08b0efae22a35c8739a163cd25482fab38cb2394a2cf057aea6eae2650dc51ba",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-27T05:39:56.843Z",
+      "expiresAt": "2026-10-28T05:39:56.843Z"
+    }
+  },
+  {
+    "sourceId": "leroy-norgips-acoustic-30x30",
+    "ean": "5907651698851",
+    "name": "Taśma uszczelniająca akustyczna 30 mm/30 mb NORGIPS",
+    "imageUrl": "https://media.adeo.com/media/2629693/media.jpg",
+    "priceGrosze": 3649,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:39:56.843Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-30-mm-30-mb-norgips-44420222.html",
+    "evidenceSha256": "53059d60f308553d44457c4028f8f24b97023e74357d94ad4729b1eb0375ceea",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-27T05:39:56.843Z",
+      "expiresAt": "2026-10-28T05:39:56.843Z"
+    }
+  },
+  {
+    "sourceId": "leroy-norgips-cw50-06-3m",
+    "ean": "5907651698912",
+    "name": "Profil ścienny CW50 3 m.b. Super Norgips",
+    "imageUrl": "https://media.adeo.com/media/3186925/media.png",
+    "priceGrosze": 2999,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:39:56.843Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/profil-scienny-cw50-3-m-b-super-norgips-44604350.html",
+    "evidenceSha256": "e324344f3c51813ae7f1b574f4e171576cdc6d61ce45f3afb00663cfe154bbae",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-27T05:39:56.843Z",
+      "expiresAt": "2026-10-28T05:39:56.843Z"
+    }
+  },
+  {
+    "sourceId": "leroy-norgips-uw50-06-3m",
+    "ean": "5907651698547",
+    "name": "Profil ścienny UW50 3 m.b. Super Norgips",
+    "imageUrl": "https://media.adeo.com/media/3191881/media.png",
+    "priceGrosze": 2799,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:39:56.843Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/profil-scienny-uw50-3-m-b-super-norgips-45191853.html",
+    "evidenceSha256": "eca46bc999b43e3ff80f6b5c6a02e325365fa4041200a669852f65c8c855a4e4",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-27T05:39:56.843Z",
+      "expiresAt": "2026-10-28T05:39:56.843Z"
+    }
+  },
+  {
+    "sourceId": "leroy-norgips-ud30-06-3m",
+    "ean": "5907651698905",
+    "name": "Profil sufitowy UD30 3 m.b. Super Norgips",
+    "imageUrl": "https://media.adeo.com/media/3196086/media.png",
+    "priceGrosze": 1119,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:39:56.843Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/profil-sufitowy-ud30-3-m-b-super-norgips-44604343.html",
+    "evidenceSha256": "d0d6031a7409bfeea00c73d2fe4e3c33a1bfc9b36149dd068cfd8fed4bc8fce8",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-27T05:39:56.843Z",
+      "expiresAt": "2026-10-28T05:39:56.843Z"
+    }
+  },
+  {
+    "sourceId": "leroy-norgips-es6075",
+    "ean": "5907651699650",
+    "name": "Wieszak płaski ES 60/75 mm NORGIPS",
+    "imageUrl": "https://media.adeo.com/media/2629673/media.jpg",
+    "priceGrosze": 199,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:39:56.843Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/wieszak-plaski-es-60-75-mm-norgips-43912435.html",
+    "evidenceSha256": "a195239fe87477eaf94f358677a80ef585504d678c6ead1970476cbf67007679",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-27T05:39:56.843Z",
+      "expiresAt": "2026-10-28T05:39:56.843Z"
+    }
+  },
+  {
+    "sourceId": "leroy-norgips-board-gkb-2600",
+    "ean": "5907651690442",
+    "name": "Płyta gipsowa GKB TYP A 2600 x 1200 x 12.5 mm Norgips",
+    "imageUrl": "https://media.adeo.com/media/4754081/media.png",
+    "priceGrosze": 3028,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:39:56.843Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/plyta-gipsowa-gkb-typ-a-2600-x-1200-x-12-5-mm-norgips-41661683.html",
+    "evidenceSha256": "2540bc5769da5b90f931f1886e903c7d6d39474f00e36f300a0128a22728a9b7",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-27T05:39:56.843Z",
+      "expiresAt": "2026-10-28T05:39:56.843Z"
+    }
+  },
+  {
+    "sourceId": "hipper-norgips-fleece-50x25",
+    "ean": "5907651699926",
+    "name": "Taśma flizelinowa z włókna szklanego 50 mm Norgips",
+    "stockPackages": 243,
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|1403C532-C046-4095-BC51-32C96B8A2610|1/Ta%C5%9Bma%20flizelinowa%20z%20w%C5%82%C3%B3kna%20szklanego%2050%20mm%20Norgips.webp",
+    "priceGrosze": 1099,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:21:04.794Z",
+    "sourceUrl": "https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570",
+    "evidenceSha256": "d861d377e9abd235130729d4df36b19da23a9e12deae2ab0da9fcab9683769e1",
+    "validUntil": null
+  },
+  {
+    "sourceId": "hipper-norgips-longitudinal-cd60",
+    "ean": "5907651699674",
+    "name": "Łącznik wzdłużny 60 x 110 mm 1 szt. Norgips",
+    "stockPackages": 1344,
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|D09C4503-BAF4-43AE-A75D-C7A89B98C9B0|1/%C5%81%C4%85cznik%20wzd%C5%82u%C5%BCny%20%2060%20x%20110%20mm%201%20szt.%20Norgips.webp",
+    "priceGrosze": 309,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T05:21:06.297Z",
+    "sourceUrl": "https://hipper.pl/lacznik-wzdluzny-60-x-110-mm-1-szt-norgips-2682631077",
+    "evidenceSha256": "dd9773883f41c090bfd6bf55d0b71bb7606351bdab41250da78b32de4b129edb",
+    "validUntil": null
   }
 ]

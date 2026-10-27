@@ -20856,9 +20856,46 @@ var RETAIL_SOURCES = [
   // source: https://marbet24.pl/plyty-karton-gips/1126-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm-5907651690879.html
   { "id": "marbet-norgips-board-gkb-2000", "ean": "5907651690879", "name": "NORGIPS P\u0142yta gipsowo-kartonowa standardowa \u2013 do wn\u0119trz o normalnej wilgotno\u015Bci S GKB 12,5 mm typ A (1200 x 2000 mm)", "brand": "Norgips", "category": "gypsum-board", "packageSize": 2.4, "unit": "m2", "store": "Marbet24", "format": "jsonld", "variant": ["GKB", "12,5", "1200", "2000"], "url": "https://marbet24.pl/plyty-karton-gips/1126-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm-5907651690879.html", "imageUrl": "https://marbet24.pl/1126-home_default/norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm.jpg", "pickupRequiresConfirmation": true },
   // source: https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977
-  { "id": "sewera-isover-aku-plyta-50mm", "ean": "5901644653131", "name": "Isover we\u0142na mineralna Aku-P\u0142yta 037 5cm we\u0142na szklana", "brand": "Isover", "category": "partition-wool-50mm", "packageSize": 14.4, "unit": "m2", "store": "Sewera", "format": "sewera", "retailUnit": "OPA", "variant": ["5cm"], "packageDescription": "14,4m2", "url": "https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977", "imageUrl": "https://sklep.sewera.pl/photo/190047/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana.webp" }
+  { "id": "sewera-isover-aku-plyta-50mm", "ean": "5901644653131", "name": "Isover we\u0142na mineralna Aku-P\u0142yta 037 5cm we\u0142na szklana", "brand": "Isover", "category": "partition-wool-50mm", "packageSize": 14.4, "unit": "m2", "store": "Sewera", "format": "sewera", "retailUnit": "OPA", "variant": ["5cm"], "packageDescription": "14,4m2", "url": "https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977", "imageUrl": "https://sklep.sewera.pl/photo/190047/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana.webp" },
+  // source: https://www.leroymerlin.pl/produkty/tasma-papierowa-50mm-75-mb-norgips-43912694.html
+  { "id": "leroy-norgips-paper-50x75", "ean": "5907651699933", "name": "Ta\u015Bma papierowa 50mm 75 mb NORGIPS", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 75, "unit": "m", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/tasma-papierowa-50mm-75-mb-norgips-43912694.html", "retailerSku": "43912694", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/2629682/media.jpg", "variant": ["Norgips"] },
+  // source: https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-50-mm-30-mb-norgips-43912722.html
+  { "id": "leroy-norgips-acoustic-50x30", "ean": "5907651698004", "name": "Ta\u015Bma uszczelniaj\u0105ca akustyczna 50 mm/30 mb NORGIPS", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 30, "unit": "m", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-50-mm-30-mb-norgips-43912722.html", "retailerSku": "43912722", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/2631597/media.jpg", "variant": ["Norgips"] },
+  // source: https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-30-mm-30-mb-norgips-44420222.html
+  { "id": "leroy-norgips-acoustic-30x30", "ean": "5907651698851", "name": "Ta\u015Bma uszczelniaj\u0105ca akustyczna 30 mm/30 mb NORGIPS", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 30, "unit": "m", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-30-mm-30-mb-norgips-44420222.html", "retailerSku": "44420222", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/2629693/media.jpg", "variant": ["Norgips"] },
+  // source: https://www.leroymerlin.pl/produkty/profil-scienny-cw50-3-m-b-super-norgips-44604350.html
+  { "id": "leroy-norgips-cw50-06-3m", "ean": "5907651698912", "name": "Profil \u015Bcienny CW50 3 m.b. Super Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 3, "unit": "mb", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/profil-scienny-cw50-3-m-b-super-norgips-44604350.html", "retailerSku": "44604350", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/3186925/media.png", "variant": ["Norgips"] },
+  // source: https://www.leroymerlin.pl/produkty/profil-scienny-uw50-3-m-b-super-norgips-45191853.html
+  { "id": "leroy-norgips-uw50-06-3m", "ean": "5907651698547", "name": "Profil \u015Bcienny UW50 3 m.b. Super Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 3, "unit": "mb", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/profil-scienny-uw50-3-m-b-super-norgips-45191853.html", "retailerSku": "45191853", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/3191881/media.png", "variant": ["Norgips"] },
+  // source: https://www.leroymerlin.pl/produkty/profil-sufitowy-ud30-3-m-b-super-norgips-44604343.html
+  { "id": "leroy-norgips-ud30-06-3m", "ean": "5907651698905", "name": "Profil sufitowy UD30 3 m.b. Super Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 3, "unit": "mb", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/profil-sufitowy-ud30-3-m-b-super-norgips-44604343.html", "retailerSku": "44604343", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/3196086/media.png", "variant": ["Norgips"] },
+  // source: https://www.leroymerlin.pl/produkty/wieszak-plaski-es-60-75-mm-norgips-43912435.html
+  { "id": "leroy-norgips-es6075", "ean": "5907651699650", "name": "Wieszak p\u0142aski ES 60/75 mm NORGIPS", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 1, "unit": "szt", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/wieszak-plaski-es-60-75-mm-norgips-43912435.html", "retailerSku": "43912435", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/2629673/media.jpg", "variant": ["Norgips"] },
+  // source: https://www.leroymerlin.pl/produkty/plyta-gipsowa-gkb-typ-a-2600-x-1200-x-12-5-mm-norgips-41661683.html
+  { "id": "leroy-norgips-board-gkb-2600", "ean": "5907651690442", "name": "P\u0142yta gipsowa GKB TYP A 2600 x 1200 x 12.5 mm Norgips", "brand": "Norgips", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/plyta-gipsowa-gkb-typ-a-2600-x-1200-x-12-5-mm-norgips-41661683.html", "retailerSku": "41661683", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/4754081/media.png", "variant": ["Norgips"] },
+  // source: https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570
+  { "id": "hipper-norgips-fleece-50x25", "ean": "5907651699926", "name": "Ta\u015Bma flizelinowa z w\u0142\xF3kna szklanego 50 mm Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 25, "unit": "m", "store": "HIPPER", "format": "certusoft", "productId": 2682507570, "retailerUnitId": 2682507597, "apiPurchaseUnit": "szt", "variant": ["50mm"], "url": "https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|1403C532-C046-4095-BC51-32C96B8A2610|1/Ta%C5%9Bma%20flizelinowa%20z%20w%C5%82%C3%B3kna%20szklanego%2050%20mm%20Norgips.webp" },
+  // source: https://hipper.pl/lacznik-wzdluzny-60-x-110-mm-1-szt-norgips-2682631077
+  { "id": "hipper-norgips-longitudinal-cd60", "ean": "5907651699674", "name": "\u0141\u0105cznik wzd\u0142u\u017Cny 60 x 110 mm 1 szt. Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 1, "unit": "szt", "store": "HIPPER", "format": "certusoft", "productId": 2682631077, "retailerUnitId": 2682631104, "apiPurchaseUnit": "szt", "variant": ["wzd\u0142u\u017Cny", "60", "110"], "url": "https://hipper.pl/lacznik-wzdluzny-60-x-110-mm-1-szt-norgips-2682631077", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|D09C4503-BAF4-43AE-A75D-C7A89B98C9B0|1/%C5%81%C4%85cznik%20wzd%C5%82u%C5%BCny%20%2060%20x%20110%20mm%201%20szt.%20Norgips.webp" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Ta\u015Bma papierowa Norgips 50 mm \xD7 75 m": "5907651699933",
+  "Ta\u015Bma uszczelniaj\u0105ca Norgips 50 mm \xD7 30 m": "5907651698004",
+  "Ta\u015Bma uszczelniaj\u0105ca Norgips 30 mm \xD7 30 m": "5907651698851",
+  "Profil Norgips CW 50, 0,6 mm, 3 m (EAN 8912)": "5907651698912",
+  "Profil Norgips UW 50 Super, 0,6 mm, 3 m": "5907651698547",
+  "Profil Norgips UD 30, 0,6 mm, 3 m (EAN 8905)": "5907651698905",
+  "Wieszak p\u0142aski Norgips ES 60/75, 1 szt.": "5907651699650",
+  "Ta\u015Bma fizelinowa Norgips 50 mm \xD7 25 m": "5907651699926",
+  "\u0141\u0105cznik wzd\u0142u\u017Cny Norgips CD 60, 60\xD7110 mm, 1 szt.": "5907651699674",
+  "Ta\u015Bma papierowa Norgips 50 mm \u2014 spoiny \u015Bcianki": "5907651699933",
+  "Ta\u015Bma papierowa Norgips 50 mm \u2014 spoiny sufitu": "5907651699933",
+  "Ta\u015Bma uszczelniaj\u0105ca Norgips 50 mm pod UW i skrajne CW": "5907651698004",
+  "Ta\u015Bma uszczelniaj\u0105ca Norgips 30 mm pod UD": "5907651698851",
+  "Wieszak bezpo\u015Bredni Norgips ES 60/75": "5907651699650",
+  "\u0141\u0105cznik wzd\u0142u\u017Cny Norgips CD 60": "5907651699674",
+  "Profil Norgips UW 50, 0,6 mm \u2014 pod\u0142oga i sufit": "5907651698547",
+  "Profil Norgips UD 30, 0,6 mm \u2014 obw\xF3d sufitu": "5907651698905",
   // source: https://marbet24.pl/gladzie/1288-norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg-5907651699056.html
   "Gotowa masa do spoin Norgips Start & Finish 20 kg": "5907651699056",
   // source: https://marbet24.pl/gladzie/1363-norgips-gips-szpachlowy-do-spoinowania-polaczen-plyt-gipsowo-kartonowych-start-25-kg-5907651693818.html
@@ -22212,6 +22249,7 @@ var only2 = (values, reason) => {
 };
 var byClass2 = (html, name) => elements(html, (a) => a.class?.split(/\s+/).includes(name) ?? false);
 var attrs4 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+var nameText = (value) => value.trim().replace(/\s+/g, " ");
 function readCertusoftState(html) {
   const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
   const script = only2(scripts.filter((s) => /^\s*window\.__INITIAL_STATE__=/.test(s)), "retailer_state_ambiguous");
@@ -22222,13 +22260,15 @@ function readCertusoftState(html) {
 function readCertusoftProduct(html, source) {
   const url2 = new URL(source.url);
   if (url2.origin !== "https://hipper.pl" || !Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.retailerUnitId)) throw Error("product_id_not_confirmed");
-  if (source.unit !== "szt" || source.packageSize !== 1 || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  const reviewedRoll = source.id === "hipper-norgips-fleece-50x25" && source.ean === "5907651699926" && source.brand === "Norgips" && source.productId === 2682507570 && source.retailerUnitId === 2682507597 && source.url === "https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570" && source.unit === "m" && source.packageSize === 25;
+  const singlePiece = source.unit === "szt" && source.packageSize === 1;
+  if (!singlePiece && !reviewedRoll || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
   const state = readCertusoftState(html), card = state.csAppWindowsUtils?.csAppWindows?.csB2BItemCard;
   const rows = card?.dataSets?.itemCard?.rows;
   if (!Array.isArray(rows) || rows.length !== 1) throw Error("product_identity_ambiguous");
   const row = rows[0], schema = JSON.parse(row.structuredData ?? "null");
   if (row.EAN !== source.ean || schema?.sku !== source.ean || schema.mpn !== String(source.productId) || row.csItemsId !== source.productId || row.csItemsUnitsId !== source.retailerUnitId) throw Error("product_ean_not_confirmed");
-  if (row.itemName !== schema.name || schema.brand?.name !== source.brand || "/" + row.appWindowIdentRoute !== url2.pathname) throw Error("product_identity_not_confirmed");
+  if (typeof row.itemName !== "string" || typeof schema.name !== "string" || nameText(row.itemName) !== nameText(schema.name) || schema.brand?.name !== source.brand || "/" + row.appWindowIdentRoute !== url2.pathname) throw Error("product_identity_not_confirmed");
   if (row.stockUnit !== "szt" || row.quantityUnits !== 1 || row.isNegative !== 0) throw Error("purchase_rules_changed");
   const maxPackages = row.qStockAv;
   if (!Number.isSafeInteger(maxPackages) || maxPackages < 1 || schema.offers?.availability !== "InStock") throw Error("retailer_out_of_stock");
@@ -22237,7 +22277,7 @@ function readCertusoftProduct(html, source) {
   const primary = only2(elements(clean(html), (a, tag) => tag === "section" && a.id === "item"), "product_identity_ambiguous");
   const name = text2(only2(elements(primary, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
   const ean = text2(only2(byClass2(primary, "c-ean"), "product_identity_ambiguous"));
-  if (name !== row.itemName || ean !== `(Kod produktu: ${source.ean})`) throw Error("product_identity_not_confirmed");
+  if (nameText(name) !== nameText(row.itemName) || ean !== `(Kod produktu: ${source.ean})`) throw Error("product_identity_not_confirmed");
   const price2 = text2(only2(byClass2(only2(byClass2(primary, "c-prc"), "product_price_ambiguous"), "c-upad"), "product_price_ambiguous"));
   if (!/^\d[\d\s]*,\d{2} zł$/.test(price2) || parsePriceToGrosze(price2.replace(/ zł$/, "")) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
   const stock = text2(only2(byClass2(primary, "c-itm-s"), "retailer_stock_not_confirmed"));
@@ -22604,8 +22644,11 @@ function parseRetailPage(html, source, observedAt) {
   } else if (source.format === "betterial") products.push(readBetterialProduct(html, source));
   else if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
   else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
-  else if (source.format === "certusoft") products.push(readCertusoftProduct(html, source).product);
-  else if (source.format === "modna") products.push(readModnaProduct(html, source).product);
+  else if (source.format === "certusoft") {
+    const reviewed = readCertusoftProduct(html, source);
+    products.push(reviewed.product);
+    stockPackages = reviewed.maxPackages;
+  } else if (source.format === "modna") products.push(readModnaProduct(html, source).product);
   else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
@@ -22674,6 +22717,7 @@ function retailPriceIsValid(validUntil, now) {
 }
 async function readRetailSource(source, fetchImpl = fetch) {
   if (source.disabledReason) throw Error(source.disabledReason);
+  if (source.store === "Leroy Merlin" && source.browserReviewAllowed) throw Error("browser_refresh_required");
   if (source.format === "qshop") {
     const current = await readTokmetProduct(source, fetchImpl);
     return { ...parseRetailPage(`<script type="application/ld+json">${JSON.stringify(current.product)}</script>`, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: current.stock, evidenceSha256: current.evidenceSha256 };
@@ -23274,7 +23318,7 @@ function confirmedCart(raw, expected, subtotal) {
   let sum = 0;
   for (const row of positions) {
     const wanted = expected.get(row.csItemsId);
-    if (!wanted || seen.has(row.csItemsId) || row.csItemsUnitsId !== wanted.unitId || row.quantityUnits !== wanted.count || row.unit !== "szt" || row.itemDesc !== wanted.name || row.menuPath !== wanted.path || row.isStock !== 1 || row.discount !== 0 || money2(row.cUnitPrice) !== wanted.price || money2(row.cUnitPriceADis) !== wanted.price || money2(row.cGAmount) !== wanted.price * wanted.count) throw Error("basket_not_confirmed");
+    if (!wanted || seen.has(row.csItemsId) || row.csItemsUnitsId !== wanted.unitId || row.quantityUnits !== wanted.count || row.unit !== "szt" || typeof row.itemDesc !== "string" || row.itemDesc.trim().replace(/\s+/g, " ") !== wanted.name.trim().replace(/\s+/g, " ") || row.menuPath !== wanted.path || row.isStock !== 1 || row.discount !== 0 || money2(row.cUnitPrice) !== wanted.price || money2(row.cUnitPriceADis) !== wanted.price || money2(row.cGAmount) !== wanted.price * wanted.count) throw Error("basket_not_confirmed");
     seen.add(row.csItemsId);
     sum += wanted.price * wanted.count;
   }
@@ -23736,7 +23780,7 @@ function unavailableReason(store) {
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
   if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD"].includes(store)) return void 0;
-  return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
+  return ["Castorama", "OBI", "Leroy Merlin"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
@@ -23744,7 +23788,7 @@ function retailerDeliveryCapabilities() {
     country: "PL",
     quoteTtlSeconds: 600,
     postcodeStores: ["Sewera", "Cezar", "ABUD"],
-    accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
+    accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", "Leroy Merlin", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
   };
 }
 function knownUnavailableRetailers() {
@@ -23958,6 +24002,28 @@ function isBricomarcheBrowserSource(source) {
   return source.id === "bricomarche-poznan-budmat-ud27-3m" && source.ean === "5907738940163" && source.store === BRICO_POZNAN && source.browserReviewAllowed === true && source.pickupOnly === true && source.packageSize === 3 && source.unit === "mb" && source.url === "https://www.bricomarche.pl/ksztaltownik-sufitowy-ud30-300-cm-srebrny";
 }
 
+// artifacts/api-server/src/lib/leroy-browser-observation.ts
+var PRODUCTS = {
+  "leroy-norgips-paper-50x75": { sku: "43912694", ean: "5907651699933", unit: "m", size: 75, facts: { "D\u0142ugo\u015B\u0107 (w m)": "75", "Szeroko\u015B\u0107 (w mm)": "50", "Materia\u0142 g\u0142\xF3wny w ca\u0142kowitej masie produktu": "Papier", "Rodzaj opakowania": "Szpula" } },
+  "leroy-norgips-acoustic-50x30": { sku: "43912722", ean: "5907651698004", unit: "m", size: 30, facts: { "D\u0142ugo\u015B\u0107 (w m)": "30", "Szeroko\u015B\u0107 (w mm)": "50", "Rodzaj opakowania": "Szpula" } },
+  "leroy-norgips-acoustic-30x30": { sku: "44420222", ean: "5907651698851", unit: "m", size: 30, facts: { "D\u0142ugo\u015B\u0107 (w m)": "30", "Szeroko\u015B\u0107 (w mm)": "30", "Rodzaj opakowania": "Szpula" } },
+  "leroy-norgips-cw50-06-3m": { sku: "44604350", ean: "5907651698912", unit: "mb", size: 3, facts: { "D\u0142ugo\u015B\u0107 (w m)": "3", "Szeroko\u015B\u0107 (w mm)": "50", "Grubo\u015B\u0107 (w mm)": "0.6 \xB1 0.05" } },
+  "leroy-norgips-uw50-06-3m": { sku: "45191853", ean: "5907651698547", unit: "mb", size: 3, facts: { "D\u0142ugo\u015B\u0107 (w m)": "3", "Szeroko\u015B\u0107 (w mm)": "50", "Grubo\u015B\u0107 (w mm)": "0.6 \xB1 0.05" } },
+  "leroy-norgips-ud30-06-3m": { sku: "44604343", ean: "5907651698905", unit: "mb", size: 3, facts: { "D\u0142ugo\u015B\u0107 (w m)": "3", "Szeroko\u015B\u0107 (w mm)": "30", "Grubo\u015B\u0107 (w mm)": "0.6 \xB1 0.05" } },
+  "leroy-norgips-es6075": { sku: "43912435", ean: "5907651699650", unit: "szt", size: 1, facts: { "Model produktu": "ES 60/75 MM", "D\u0142ugo\u015B\u0107 (w mm)": "75" } },
+  "leroy-norgips-board-gkb-2600": { sku: "41661683", ean: "5907651690442", unit: "m2", size: 3.12, facts: { "Powierzchnia pokryta przez produkt (w m\xB2)": "3.12", "D\u0142ugo\u015B\u0107 (w cm)": "260", "Szeroko\u015B\u0107 (w cm)": "120", "Grubo\u015B\u0107 (w mm)": "12.5" } }
+};
+function isLeroyBrowserSource(source) {
+  const p = PRODUCTS[source.id];
+  if (!p || source.store !== "Leroy Merlin" || source.brand !== "Norgips" || source.browserReviewAllowed !== true || source.pickupRequiresConfirmation !== true || source.ean !== p.ean || source.unit !== p.unit || source.packageSize !== p.size || source.retailerSku !== p.sku || source.marketplaceSeller || source.pickupOnly || source.pickupUnavailable) return false;
+  try {
+    const u = new URL(source.url);
+    return u.origin === "https://www.leroymerlin.pl" && !u.username && !u.password && !u.search && !u.hash && /^\/produkty\/[a-z0-9-]+\.html$/.test(u.pathname) && u.pathname.endsWith("-" + p.sku + ".html");
+  } catch {
+    return false;
+  }
+}
+
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value] ?? value;
@@ -23976,10 +24042,10 @@ function createRemontService(options = {}) {
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
     if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || observation.stockPackages !== void 0 && (!Number.isSafeInteger(observation.stockPackages) || observation.stockPackages < 0 || observation.stockPackages > 1e9) || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
     const previous = observations.get(source.id);
-    if ((isBricomarcheBrowserSource(source) || isCastoramaBrowserSource(source) && ["m2", "m"].includes(source.unit)) && !observation.verification) return;
+    if ((source.store === "Leroy Merlin" || isBricomarcheBrowserSource(source) || isCastoramaBrowserSource(source) && ["m2", "m"].includes(source.unit)) && !observation.verification) return;
     if (observation.verification !== void 0) {
       const v = observation.verification;
-      if (!v || v.method !== "browser" || !(isCastoramaBrowserSource(source) || isBricomarcheBrowserSource(source)) || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
+      if (!v || v.method !== "browser" || !(isCastoramaBrowserSource(source) || isBricomarcheBrowserSource(source) || isLeroyBrowserSource(source)) || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
     }
     if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
     if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
