@@ -20896,9 +20896,14 @@ var RETAIL_SOURCES = [
   // source: https://www.mensura.pl/zestaw-do-ukladania-paneli-wolfcraft-6931000
   { "id": "mensura-wolfcraft-6931000-kit", "ean": "4006885693104", "name": "WOLFCRAFT Zestaw do uk\u0142adania paneli pod\u0142ogowych 22 el. 6931000", "brand": "Wolfcraft", "category": "laminate-installation-kit", "packageSize": 1, "unit": "szt", "store": "Mensura", "format": "shoper-api", "productId": 17167, "retailerSku": "WF6931000", "apiPurchaseUnit": "szt", "variant": ["6931000"], "packageDescription": "20 x kliny dylatacyjne", "url": "https://www.mensura.pl/zestaw-do-ukladania-paneli-wolfcraft-6931000", "imageUrl": "https://www.mensura.pl/environment/cache/images/productGfx_102546_0_0/Zestaw-do-ukladania-paneli-22el.-Wolfcraft-6931000.jpg", "pickupRequiresConfirmation": true },
   // source: https://liderzycen.pl/pl/p/Tasma-aluminiowa-do-laczenia-podkladow-Arbiton-Izo-Floor-Tape-25-m/31334
-  { "id": "liderzy-arbiton-izo-floor-tape-25m", "ean": "5905167698778", "name": "Ta\u015Bma aluminiowa do \u0142\u0105czenia podk\u0142ad\xF3w Arbiton Izo Floor Tape 25 m", "brand": "Arbiton", "category": "underlay-joint-tape", "packageSize": 25, "unit": "m", "store": "LiderzyCen", "format": "shoper-api", "productId": 31334, "retailerSku": "ctma_5905167698778", "apiPurchaseUnit": "szt.", "variant": ["25 m"], "packageDescription": "Wymiary produktu: d\u0142. 25 m", "url": "https://liderzycen.pl/pl/p/Tasma-aluminiowa-do-laczenia-podkladow-Arbiton-Izo-Floor-Tape-25-m/31334", "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_51949_500_500/7eb856643e33613605516b295006cacd.jpg", "pickupRequiresConfirmation": true }
+  { "id": "liderzy-arbiton-izo-floor-tape-25m", "ean": "5905167698778", "name": "Ta\u015Bma aluminiowa do \u0142\u0105czenia podk\u0142ad\xF3w Arbiton Izo Floor Tape 25 m", "brand": "Arbiton", "category": "underlay-joint-tape", "packageSize": 25, "unit": "m", "store": "LiderzyCen", "format": "shoper-api", "productId": 31334, "retailerSku": "ctma_5905167698778", "apiPurchaseUnit": "szt.", "variant": ["25 m"], "packageDescription": "Wymiary produktu: d\u0142. 25 m", "url": "https://liderzycen.pl/pl/p/Tasma-aluminiowa-do-laczenia-podkladow-Arbiton-Izo-Floor-Tape-25-m/31334", "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_51949_500_500/7eb856643e33613605516b295006cacd.jpg", "pickupRequiresConfirmation": true },
+  // source: https://ebardo.pl/pl/p/Folia-paroizolacyjna-Conpar-0%2C2mm-2mx50m/86
+  { "id": "ebardo-conpar-100m2", "ean": "5902096430103", "name": "Folia paroizolacyjna Conpar 0,2mm 2mx50m", "retailerSku": "FPAR-02C", "brand": "Conkret", "category": "vapor-barrier", "packageSize": 100, "unit": "m2", "store": "eBardo", "format": "shoper-api", "productId": 86, "apiPurchaseUnit": "szt.", "variant": ["2mx50m"], "url": "https://ebardo.pl/pl/p/Folia-paroizolacyjna-Conpar-0%2C2mm-2mx50m/86", "imageUrl": "https://ebardo.pl/environment/cache/images/productGfx_2143_500_500/Folia-paroizolacyjna-Conpar-0%2C2mm-2mx50m.jpg", "pickupRequiresConfirmation": true },
+  // source: https://ebardo.pl/pl/p/Folia-paroizolacyjna-Ecovil-0%2C2mm-2mx50m-100m2/534
+  { "id": "ebardo-ecovil-p-100m2", "ean": "5902096431131", "name": "Folia paroizolacyjna Ecovil 0,2mm 2mx50m 100m2", "retailerSku": "11-01", "brand": "Conkret", "category": "vapor-barrier", "packageSize": 100, "unit": "m2", "store": "eBardo", "format": "shoper-api", "productId": 534, "apiPurchaseUnit": "szt.", "variant": ["2mx50m"], "url": "https://ebardo.pl/pl/p/Folia-paroizolacyjna-Ecovil-0%2C2mm-2mx50m-100m2/534", "imageUrl": "https://ebardo.pl/environment/cache/images/productGfx_2142_500_500/Folia-paroizolacyjna-Ecovil-0%2C2mm-2mx50m-100m2.jpg", "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Folia paroizolacyjna Conkret Ecovil P 0,20 mm (100 m\xB2)": "5902096431131",
   "Zestaw do uk\u0142adania paneli Wolfcraft 6931000 \u2014 22 elementy": "4006885693104",
   "Ta\u015Bma aluminiowa Arbiton Izo Floor Tape 50 mm \xD7 25 m": "5905167698778",
   "Metylan Remover \u2014 koncentrat do usuwania tapet 500 ml": "9000100222969",
@@ -23795,6 +23800,8 @@ var ORIGINS = {
   "Dam-Bud": "https://salonbudowlanydambud.pl",
   "Plus-Market": "https://www.plus-market.pl",
   // source: https://www.mensura.pl/zestaw-do-ukladania-paneli-wolfcraft-6931000
+  // source: https://ebardo.pl/pl/p/Folia-paroizolacyjna-Conpar-0%2C2mm-2mx50m/86
+  eBardo: "https://ebardo.pl",
   Mensura: "https://www.mensura.pl",
   KELOT: "https://listwy.sklep.pl",
   LiderzyCen: "https://liderzycen.pl",
