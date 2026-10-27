@@ -2137,5 +2137,70 @@
     "sourceUrl": "https://www.abud.pl/product-pol-63790-Dulux-do-drewna-i-metalu-RAPIDRY-Bialy-1L-matowa.html",
     "evidenceSha256": "e841cc58bdc56538fda502dabf1784cef81e17060220fc430456880c9f5c63ca",
     "validUntil": null
+  },
+  {
+    "sourceId": "marbet-norgips-startfinish-20kg",
+    "ean": "5907651699056",
+    "name": "NORGIPS Gotowa dwufunkcyjna masa szpachlowa Start &amp; Finish (20 kg)",
+    "imageUrl": "https://marbet24.pl/6085-home_default/norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg.jpg",
+    "priceGrosze": 9628,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T04:33:00.360Z",
+    "sourceUrl": "https://marbet24.pl/gladzie/1288-norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg-5907651699056.html",
+    "evidenceSha256": "2d5c81d06584ebd5f6e681e69a894b4cbf13c0ee08da9375793054dea0ee77b1",
+    "validUntil": "2026-11-11"
+  },
+  {
+    "sourceId": "marbet-norgips-start-25kg",
+    "ean": "5907651693818",
+    "name": "NORGIPS Gips szpachlowy do spoinowania połączeń płyt gipsowo-kartonowych Start (25 kg)",
+    "imageUrl": "https://marbet24.pl/1363-home_default/norgips-gips-szpachlowy-do-spoinowania-polaczen-plyt-gipsowo-kartonowych-start-25-kg.jpg",
+    "priceGrosze": 4700,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T04:33:01.071Z",
+    "sourceUrl": "https://marbet24.pl/gladzie/1363-norgips-gips-szpachlowy-do-spoinowania-polaczen-plyt-gipsowo-kartonowych-start-25-kg-5907651693818.html",
+    "evidenceSha256": "8c66601d752dcb51d993026e6fe27785fb8cfa065075da33239a88c470d5e8da",
+    "validUntil": "2026-11-11"
+  },
+  {
+    "sourceId": "marbet-norgips-board-gkb-2600",
+    "ean": "5907651690442",
+    "name": "NORGIPS Płyta gipsowo-kartonowa standardowa – do wnętrz o normalnej wilgotności S GKB 12,5 mm typ A (1200 x 2600 mm)",
+    "imageUrl": "https://marbet24.pl/1555-home_default/norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2600-mm.jpg",
+    "priceGrosze": 3848,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T04:33:01.770Z",
+    "sourceUrl": "https://marbet24.pl/plyty-karton-gips/1555-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2600-mm-5907651690442.html",
+    "evidenceSha256": "8ed34881611859201889d9fd7d680a20b099929a20a82f272c700c411a5b9a50",
+    "validUntil": "2026-11-11"
+  },
+  {
+    "sourceId": "marbet-norgips-board-gkb-2000",
+    "ean": "5907651690879",
+    "name": "NORGIPS Płyta gipsowo-kartonowa standardowa – do wnętrz o normalnej wilgotności S GKB 12,5 mm typ A (1200 x 2000 mm)",
+    "imageUrl": "https://marbet24.pl/1126-home_default/norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm.jpg",
+    "priceGrosze": 2908,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T04:33:02.475Z",
+    "sourceUrl": "https://marbet24.pl/plyty-karton-gips/1126-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm-5907651690879.html",
+    "evidenceSha256": "c7216d4a53e800d862792ffb00d857fce915511e0792972c29fec64a45dc858c",
+    "validUntil": "2026-11-11"
+  },
+  {
+    "sourceId": "sewera-isover-aku-plyta-50mm",
+    "ean": "5901644653131",
+    "name": "Isover wełna mineralna Aku-Płyta 037 5cm wełna szklana",
+    "imageUrl": "https://sklep.sewera.pl/photo/190047/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana.webp",
+    "priceGrosze": 12202,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T04:33:04.246Z",
+    "sourceUrl": "https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977",
+    "evidenceSha256": "36fb30cecf82d880fc4519bb5d9c24cbc8b5814acf3b213a30371ea1bbd2a607",
+    "validUntil": null
   }
 ]
