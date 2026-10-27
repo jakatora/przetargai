@@ -21303,7 +21303,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   const selectedSets = settings.mode === "pickup" ? [names] : Array.from({ length: 2 ** names.length - 1 }, (_, index2) => names.filter((_store, bit2) => index2 + 1 & 2 ** bit2));
   for (const selected of selectedSets) {
     const orders = /* @__PURE__ */ new Map();
-    let valid = true;
+    let valid2 = true;
     for (let index2 = 0; index2 < groups.length; index2++) {
       const group = groups[index2];
       const offers = group.offers.filter((offer) => selected.includes(offer.store));
@@ -21326,7 +21326,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
       }
       const plan = cached2[index2].get(key);
       if (!plan || !Number.isSafeInteger(plan.totalGrosze)) {
-        valid = false;
+        valid2 = false;
         break;
       }
       for (const entry of plan.packages) {
@@ -21352,7 +21352,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
         line2.packages.push(entry);
       }
     }
-    if (!valid) continue;
+    if (!valid2) continue;
     const stores = [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
     for (const order of stores) {
       order.deliveryMinimumGrosze = order.deliveryGrosze ?? 0;
@@ -21375,6 +21375,86 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   return result;
 }
 
+// lib/pricing-service/src/order-partitions.ts
+var valid = (quote2, postcode) => Number.isSafeInteger(quote2.costGrosze) && quote2.costGrosze >= 0 && Date.parse(quote2.expiresAt) > Date.now() && Date.parse(quote2.checkedAt) <= Date.now() && Date.parse(quote2.checkedAt) >= Date.now() - 6e5 && Date.parse(quote2.expiresAt) <= Date.parse(quote2.checkedAt) + 6e5 && /^[a-f0-9]{64}$/.test(quote2.evidenceSha256) && (quote2.destinationScope === "PL" || quote2.destinationScope === "postal_code" && quote2.postalCode === postcode);
+function withOrderPartitions(atomic, limited) {
+  return async (order, postcode) => {
+    const base = await atomic(order, postcode), count = order.lines.length;
+    if (!("quote" in base) || !valid(base.quote, postcode) || base.quote.orders || !base.quote.costGrosze || count < 2) return base;
+    if (new Set(order.lines.map((line2) => line2.product.id)).size !== count) {
+      limited();
+      return base;
+    }
+    const make = (indices) => {
+      const lines = indices.map((i) => order.lines[i]);
+      return { ...order, lines, materialsGrosze: lines.reduce((n, line2) => n + line2.packages.reduce((s, p) => s + p.lineCostGrosze, 0), 0), quote: void 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown" };
+    };
+    const read = async (indices) => {
+      const basket = make(indices);
+      try {
+        const result = await atomic(basket, postcode);
+        if ("quote" in result && !result.quote.orders && valid(result.quote, postcode)) return { order: basket, quote: result.quote };
+        if (!("reason" in result) || !["no_home_delivery", "product_unavailable", "purchase_rules_changed"].includes(result.reason)) limited();
+      } catch {
+        limited();
+      }
+      return null;
+    };
+    let best = [{ order, quote: base.quote }];
+    const fee = (parts) => parts.reduce((n, p) => n + p.quote.costGrosze, 0);
+    if (count <= 5) {
+      const all = (1 << count) - 1, parts = /* @__PURE__ */ new Map([[all, best[0]]]);
+      const masks = [.../* @__PURE__ */ new Set([...Array.from({ length: count }, (_, i) => 1 << i), ...Array.from({ length: count }, (_, i) => all ^ 1 << i), ...Array.from({ length: all - 1 }, (_, i) => i + 1)])];
+      for (const mask of masks) {
+        if (mask === all) continue;
+        const part = await read(Array.from({ length: count }, (_, i) => i).filter((i) => mask & 1 << i));
+        if (part) parts.set(mask, part);
+      }
+      const memo = /* @__PURE__ */ new Map([[0, []]]);
+      const solve = (mask) => {
+        if (memo.has(mask)) return memo.get(mask);
+        let chosen = parts.has(mask) ? [parts.get(mask)] : null;
+        const first = mask & -mask;
+        for (let sub = mask - 1 & mask; sub; sub = sub - 1 & mask) {
+          if (!(sub & first) || !parts.has(sub)) continue;
+          const rest = solve(mask ^ sub);
+          if (!rest) continue;
+          const candidate = [parts.get(sub), ...rest];
+          if (!chosen || fee(candidate) < fee(chosen) || fee(candidate) === fee(chosen) && candidate.length < chosen.length) chosen = candidate;
+        }
+        memo.set(mask, chosen);
+        return chosen;
+      };
+      best = solve(all) ?? best;
+    } else {
+      limited();
+      for (let i = 0; i < Math.min(count, 8); i++) {
+        const one8 = await read([i]), rest = await read(Array.from({ length: count }, (_, j) => j).filter((j) => j !== i));
+        if (one8 && rest && fee([one8, rest]) < fee(best)) best = [one8, rest];
+      }
+    }
+    const costGrosze = fee(best);
+    if (best.length < 2 || costGrosze >= base.quote.costGrosze || !Number.isSafeInteger(costGrosze) || best.some((part) => !valid(part.quote, postcode)) || best.reduce((n, p) => n + p.order.materialsGrosze, 0) !== order.materialsGrosze) return base;
+    const orders = best.map((part) => ({ materialsGrosze: part.order.materialsGrosze, lines: part.order.lines, quote: part.quote }));
+    const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(orders)));
+    return { quote: {
+      ...base.quote,
+      costGrosze,
+      orders,
+      singleOrderCostGrosze: base.quote.costGrosze,
+      carrier: [...new Set(best.map((p) => p.quote.carrier))].join(" + "),
+      payment: [...new Set(best.map((p) => p.quote.payment))].join(" + "),
+      checkedAt: new Date(Math.min(...best.map((p) => Date.parse(p.quote.checkedAt)))).toISOString(),
+      expiresAt: new Date(Math.min(...best.map((p) => Date.parse(p.quote.expiresAt)))).toISOString(),
+      evidenceSha256: Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join(""),
+      destinationScope: best.some((p) => p.quote.destinationScope === "postal_code") ? "postal_code" : "PL",
+      basis: best.some((p) => p.quote.destinationScope === "postal_code") ? "retailer_basket_postcode" : best.every((p) => p.quote.basis === "retailer_tariff_national") ? "retailer_tariff_national" : "retailer_basket_national",
+      dispatchFrom: best.every((p) => p.quote.dispatchFrom === best[0].quote.dispatchFrom) ? best[0].quote.dispatchFrom : void 0,
+      ...best.some((p) => p.quote.destinationScope === "postal_code") ? { postalCode: postcode } : {}
+    } };
+  };
+}
+
 // lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
@@ -21384,11 +21464,14 @@ var removable = (pack) => pack.count - (pack.purchaseMultiple ?? 1) >= (pack.min
 async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   const limits = /* @__PURE__ */ new Map(), cache = /* @__PURE__ */ new Map();
-  let allowNewQuotes = true;
+  let allowNewQuotes = true, partitionSearchLimited = false;
   const quoteWithStock = async (order, postalCode) => {
     const key = JSON.stringify([order.store, signature(order)]);
     if (cache.has(key)) return cache.get(key);
-    if (!allowNewQuotes || cache.size >= MAX_STORE_BASKETS) return { reason: "quote_limit" };
+    if (!allowNewQuotes || cache.size >= MAX_STORE_BASKETS) {
+      partitionSearchLimited = true;
+      return { reason: "quote_limit" };
+    }
     const pending = (async () => {
       const outcome = await quoteBasket(order, postalCode);
       if (!("reason" in outcome) || outcome.reason !== "insufficient_stock" || !outcome.stockLimits) return outcome;
@@ -21407,6 +21490,9 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     cache.set(key, pending);
     return pending;
   };
+  const quoteOrders = withOrderPartitions(quoteWithStock, () => {
+    partitionSearchLimited = true;
+  });
   let result;
   for (let attempt = 0; attempt < 4; attempt++) {
     allowNewQuotes = attempt < 3;
@@ -21417,11 +21503,12 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
       if (limit.maxPackages === 0) return [];
       return [{ ...offer, maxPackages: Math.min(offer.maxPackages ?? Infinity, limit.maxPackages) }];
     }) }) }));
-    result = await compareAutomaticDeliveryOnce(constrained, settings, quoteWithStock, policies, now, knownUnavailableStores);
+    result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
     const next = [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|");
     if (revision === next) break;
   }
   if (limits.size) result.stockLimits = [...limits.values()];
+  if (partitionSearchLimited) result.searchLimited = true;
   return result;
 }
 async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
