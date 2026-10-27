@@ -66,12 +66,12 @@
     "ean": "5907758504932",
     "name": "Folia malarska gruba 4x5m CF_EP20_04932 Blue Dolphin",
     "imageUrl": "https://sklep.sewera.pl/photo/23165/folia-malarska-gruba-4x5m-cfep2004932-blue-dolphin.webp",
-    "priceGrosze": 845,
+    "priceGrosze": 790,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T09:37:08.688Z",
+    "observedAt": "2026-10-27T00:25:09.165Z",
     "sourceUrl": "https://sklep.sewera.pl/folia-malarska-gruba-4x5m-cfep2004932-blue-dolphin-p21034",
-    "evidenceSha256": "34f848de7cb6b3c0539427f53ce51f59bd3df052c39ad40f8e984c0bfe31c386",
+    "evidenceSha256": "4ae6504e83e477b3a9dd3ffb32e1a05286ec9ba1e0b9d4b6e6d9d43a2afda95e",
     "validUntil": null
   },
   {
@@ -1876,6 +1876,32 @@
     "observedAt": "2026-10-26T23:28:20.037Z",
     "sourceUrl": "https://sklep.sewera.pl/atlas-plus-klej-do-plytek-bialy-25kg-p8896",
     "evidenceSha256": "6ca2970d86b11cd806ca60a5d3e02d5291e1518861669651c7c885ca8ecee05a",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-sniezka-undercoat-5l",
+    "ean": "5903973000235",
+    "name": "Śnieżka Grunt - biała farba podkładowa 5l",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_10843_500_500/SNIEZKA.webp",
+    "priceGrosze": 5990,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T00:18:30.863Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/Sniezka-Grunt-biala-farba-podkladowa-5l/97",
+    "evidenceSha256": "c5f5966ec482df0ac6ca02342ac65224210d2a4b9ef89d382c91e135c0889033",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-sniezka-undercoat-5l",
+    "ean": "5903973000235",
+    "name": "Śnieżka grunt 5l",
+    "imageUrl": "https://sklep.sewera.pl/photo/72152/sniezka-grunt-5l.webp",
+    "priceGrosze": 5610,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T00:18:32.273Z",
+    "sourceUrl": "https://sklep.sewera.pl/sniezka-grunt-5l-p6153",
+    "evidenceSha256": "e469fd3d84565bda605dc0cb347271206b3b1c7a3481b8946997b6a58242d73c",
     "validUntil": null
   }
 ]
