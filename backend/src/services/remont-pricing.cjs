@@ -20876,9 +20876,20 @@ var RETAIL_SOURCES = [
   // source: https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570
   { "id": "hipper-norgips-fleece-50x25", "ean": "5907651699926", "name": "Ta\u015Bma flizelinowa z w\u0142\xF3kna szklanego 50 mm Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 25, "unit": "m", "store": "HIPPER", "format": "certusoft", "productId": 2682507570, "retailerUnitId": 2682507597, "apiPurchaseUnit": "szt", "variant": ["50mm"], "url": "https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|1403C532-C046-4095-BC51-32C96B8A2610|1/Ta%C5%9Bma%20flizelinowa%20z%20w%C5%82%C3%B3kna%20szklanego%2050%20mm%20Norgips.webp" },
   // source: https://hipper.pl/lacznik-wzdluzny-60-x-110-mm-1-szt-norgips-2682631077
-  { "id": "hipper-norgips-longitudinal-cd60", "ean": "5907651699674", "name": "\u0141\u0105cznik wzd\u0142u\u017Cny 60 x 110 mm 1 szt. Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 1, "unit": "szt", "store": "HIPPER", "format": "certusoft", "productId": 2682631077, "retailerUnitId": 2682631104, "apiPurchaseUnit": "szt", "variant": ["wzd\u0142u\u017Cny", "60", "110"], "url": "https://hipper.pl/lacznik-wzdluzny-60-x-110-mm-1-szt-norgips-2682631077", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|D09C4503-BAF4-43AE-A75D-C7A89B98C9B0|1/%C5%81%C4%85cznik%20wzd%C5%82u%C5%BCny%20%2060%20x%20110%20mm%201%20szt.%20Norgips.webp" }
+  { "id": "hipper-norgips-longitudinal-cd60", "ean": "5907651699674", "name": "\u0141\u0105cznik wzd\u0142u\u017Cny 60 x 110 mm 1 szt. Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 1, "unit": "szt", "store": "HIPPER", "format": "certusoft", "productId": 2682631077, "retailerUnitId": 2682631104, "apiPurchaseUnit": "szt", "variant": ["wzd\u0142u\u017Cny", "60", "110"], "url": "https://hipper.pl/lacznik-wzdluzny-60-x-110-mm-1-szt-norgips-2682631077", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|D09C4503-BAF4-43AE-A75D-C7A89B98C9B0|1/%C5%81%C4%85cznik%20wzd%C5%82u%C5%BCny%20%2060%20x%20110%20mm%201%20szt.%20Norgips.webp" },
+  // source: https://buduj24.pl/produkt/14398,koelner-wkret-fs-z-drobnym-gwintem-do-mocowania-plyt-gk-do-blach-3-5x25mm-1000szt-opak
+  { "id": "buduj24-koelner-fs3525-1000", "ean": "5906675305127", "name": "KOELNER Wkr\u0119t FS z drobnym gwintem do mocowania p\u0142yt GK, do blach 3,5x25MM 1000szt./opak", "category": "drywall-accessory", "brand": "Koelner", "packageSize": 1e3, "unit": "szt", "store": "Buduj24", "format": "buduj24", "productId": 14398, "url": "https://buduj24.pl/produkt/14398,koelner-wkret-fs-z-drobnym-gwintem-do-mocowania-plyt-gk-do-blach-3-5x25mm-1000szt-opak", "variant": ["3,5x25MM", "1000szt"], "packageDescription": "Ilo\u015B\u0107 sztuk w opakowaniu: 1000szt.", "imageUrl": "https://buduj24.pl/files/_product/14398/5906675305127_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.abud.pl/product-pol-63463-Wkret-samowiercacy-3-5x9-5mm-1000-szt.html
+  { "id": "abud-koelner-ws3595-1000", "ean": "5906675303024", "name": "Wkr\u0119t samowierc\u0105cy 3,5x9,5mm 1000 szt", "category": "drywall-accessory", "brand": "Koelner", "packageSize": 1e3, "unit": "szt", "store": "ABUD", "format": "idosell", "productId": 63463, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-63463-Wkret-samowiercacy-3-5x9-5mm-1000-szt.html", "variant": ["3,5x9,5mm", "1000szt"], "imageUrl": "https://www.abud.pl/hpeciai/c13753752e4f9725fd61b84075871cd7/pol_pl_Wkret-samowiercacy-3-5x9-5mm-1000-szt-63463_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.abud.pl/product-pol-1456-Wkrety-do-blachy-KOELNER-FS-3525-1000szt.html
+  { "id": "abud-koelner-fs3525-1000", "ean": "5906675305127", "name": "Wkr\u0119ty do blachy KOELNER FS-3525 (1000szt.)", "category": "drywall-accessory", "brand": "Koelner", "packageSize": 1e3, "unit": "szt", "store": "ABUD", "format": "idosell", "productId": 1456, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-1456-Wkrety-do-blachy-KOELNER-FS-3525-1000szt.html", "variant": ["FS-3525", "1000szt"], "imageUrl": "https://www.abud.pl/hpeciai/f598fd825346cdd294a6ccccd65f764b/pol_pl_Wkrety-do-blachy-KOELNER-FS-3525-1000szt-1456_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.abud.pl/product-pol-1452-Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt.html
+  { "id": "abud-koelner-fx06k040-200", "ean": "5906675107622", "name": "Ko\u0142ek szybki monta\u017C ko\u0142nierz 6x40 KOELNER 200 szt", "category": "drywall-accessory", "brand": "Koelner", "packageSize": 200, "unit": "szt", "store": "ABUD", "format": "idosell", "productId": 1452, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-1452-Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt.html", "variant": ["6x40", "200szt"], "imageUrl": "https://www.abud.pl/hpeciai/a6c8238c098e65717875db7b7bcedfc1/pol_pl_Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt-1452_2.webp", "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Wkr\u0119ty do p\u0142yt GK Koelner FS 3,5\xD725 mm, 1000 szt.": "5906675305127",
+  "Wkr\u0119ty do profili Koelner WS 3,5\xD79,5 mm, 1000 szt.": "5906675303024",
+  "Ko\u0142ki do profili Koelner FX-06K040, 6\xD740 mm, 200 szt.": "5906675107622",
   "Ta\u015Bma papierowa Norgips 50 mm \xD7 75 m": "5907651699933",
   "Ta\u015Bma uszczelniaj\u0105ca Norgips 50 mm \xD7 30 m": "5907651698004",
   "Ta\u015Bma uszczelniaj\u0105ca Norgips 30 mm \xD7 30 m": "5907651698851",
@@ -21722,7 +21733,7 @@ var AnonymousShop = class {
       return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
     }
     if (action === "add") {
-      if (![6204, 64835, 17848, 63790].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
+      if (![6204, 64835, 17848, 63790, 1456, 63463, 1452].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
       return JSON.parse(await this.read("/basketchange.php", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
     }
     if (action !== "shipping" || Object.keys(args).length) throw Error("invalid_cart_action");
@@ -23666,7 +23677,7 @@ async function quoteSkyshop(order, fetchImpl) {
 // artifacts/api-server/src/lib/abud-delivery.ts
 var import_node_crypto14 = require("node:crypto");
 var ORIGIN = "https://www.abud.pl";
-var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l"];
+var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200"];
 function money5(value, formatted) {
   if (!["string", "number"].includes(typeof value)) throw Error("invalid_money");
   const amount2 = parsePriceToGrosze(value);
