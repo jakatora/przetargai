@@ -21060,6 +21060,49 @@ var signature = (order) => order.lines.flatMap((line2) => line2.packages.map((pa
 var removable = (pack) => pack.count - (pack.purchaseMultiple ?? 1) >= (pack.minimumPackages ?? 1) ? pack.purchaseMultiple ?? 1 : pack.count;
 async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
+  const limits = /* @__PURE__ */ new Map(), cache = /* @__PURE__ */ new Map();
+  let allowNewQuotes = true;
+  const quoteWithStock = async (order, postalCode) => {
+    const key = JSON.stringify([order.store, signature(order)]);
+    if (cache.has(key)) return cache.get(key);
+    if (!allowNewQuotes || cache.size >= MAX_STORE_BASKETS) return { reason: "quote_limit" };
+    const pending = (async () => {
+      const outcome = await quoteBasket(order, postalCode);
+      if (!("reason" in outcome) || outcome.reason !== "insufficient_stock" || !outcome.stockLimits) return outcome;
+      const accepted = outcome.stockLimits.filter((limit) => {
+        const line2 = order.lines.find((line3) => line3.packages.some((pack2) => pack2.offerId === limit.offerId));
+        const pack = line2?.packages.find((pack2) => pack2.offerId === limit.offerId);
+        const checked = Date.parse(limit.checkedAt), expires = Date.parse(limit.expiresAt);
+        return pack && limit.productId === line2.product.id && limit.store === order.store && limit.postalCode === postalCode && Boolean(limit.dispatchFrom) && limit.unitPriceGrosze === pack.unitPriceGrosze && limit.requestedPackages === pack.count && Number.isSafeInteger(limit.maxPackages) && limit.maxPackages >= 0 && limit.maxPackages < pack.count && Number.isFinite(checked) && checked <= Date.now() && Date.now() - checked <= 6e5 && expires > Date.now() && expires <= checked + 6e5 && /^https:\/\//.test(limit.sourceUrl) && /^[a-f0-9]{64}$/.test(limit.evidenceSha256);
+      });
+      for (const limit of accepted) {
+        const previous = limits.get(limit.offerId);
+        if (!previous || limit.maxPackages < previous.maxPackages) limits.set(limit.offerId, limit);
+      }
+      return { reason: outcome.reason, ...accepted.length ? { stockLimits: accepted } : {} };
+    })();
+    cache.set(key, pending);
+    return pending;
+  };
+  let result;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    allowNewQuotes = attempt < 3;
+    const revision = [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|");
+    const constrained = stages.map((stage) => ({ ...stage, lines: stage.lines.map((line2) => !line2.resolved ? line2 : { ...line2, offers: line2.offers.flatMap((offer) => {
+      const limit = limits.get(offer.id);
+      if (!limit || limit.store !== offer.store) return [offer];
+      if (limit.maxPackages === 0) return [];
+      return [{ ...offer, maxPackages: Math.min(offer.maxPackages ?? Infinity, limit.maxPackages) }];
+    }) }) }));
+    result = await compareAutomaticDeliveryOnce(constrained, settings, quoteWithStock, policies, now, knownUnavailableStores);
+    const next = [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|");
+    if (revision === next) break;
+  }
+  if (limits.size) result.stockLimits = [...limits.values()];
+  return result;
+}
+async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
+  if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   let groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
   const stores = [...new Set(groups.flatMap((g) => g.offers.filter((o) => isComparableOffer(o, now.getTime())).map((o) => o.store)))].sort();
   const result = {
@@ -21301,9 +21344,9 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   for (const [key, order] of [...ordered].reverse()) if (!smallest.has(order.store)) smallest.set(order.store, key);
   for (const key of smallest.values()) priority.add(key);
   const keys = [...priority, ...ordered.map(([key]) => key).filter((key) => !priority.has(key))];
-  let cursor = 0;
+  let cursor = 0, stockChanged = false;
   await Promise.all(Array.from({ length: Math.min(3, keys.length) }, async () => {
-    while (cursor < keys.length) {
+    while (cursor < keys.length && !stockChanged) {
       const key = keys[cursor++], order = unique.get(key);
       try {
         const outcome = await quoteBasket(order, settings.postalCode);
@@ -21313,7 +21356,10 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
           order.deliveryMinimumGrosze = outcome.quote.costGrosze;
           order.totalGrosze = order.materialsGrosze + outcome.quote.costGrosze;
           order.source = "retailer";
-        } else failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
+        } else {
+          failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
+          if ("reason" in outcome && outcome.reason === "insufficient_stock" && outcome.stockLimits?.length) stockChanged = true;
+        }
       } catch {
         failures.set(order.store, "quote_unavailable");
       }
@@ -22726,17 +22772,29 @@ function confirmSeweraBasket(html, expected, total) {
   const body = one7(elements(table, (_, tag) => tag === "tbody"));
   const rows = elements(body, (_, tag) => tag === "tr").filter((row) => elements(row, (a) => a.name === "amount").length === 1);
   if (rows.length !== expected.length || !/Twój sklep to Katowice/.test(text2(html))) throw Error("basket_not_confirmed");
+  const shortages = [];
   for (const wanted of expected) {
     const row = one7(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
     const stock = text2(row).match(/W magazynie znajdują się jedynie (\d+(?:[.,]\d+)?)\s+(SZT|OPA)/i);
-    if (stock && (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || Number(stock[1].replace(",", ".")) < wanted.count)) throw Error("insufficient_stock");
     const input2 = attr2(one7(elements(row, (a) => a.name === "amount")));
     const pid = attr2(one7(elements(row, (a) => a.wybierz !== void 0))).wybierz;
     if (Number(input2.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    if (stock) {
+      const maxPackages = Number(stock[1].replace(",", "."));
+      if (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || !Number.isSafeInteger(maxPackages) || maxPackages < 0) throw Error("basket_not_confirmed");
+      if (maxPackages < wanted.count) shortages.push({ url: wanted.url, count: wanted.count, price: wanted.price, maxPackages });
+    }
   }
   const sum = text2(one7(elements(table, (a) => cls2(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
   if (checkoutMoney(sum) !== total) throw Error("basket_not_confirmed");
+  if (shortages.length) throw new SeweraStockError(shortages);
 }
+var SeweraStockError = class extends Error {
+  constructor(shortages) {
+    super("insufficient_stock");
+    this.shortages = shortages;
+  }
+};
 function readSeweraPayment(html) {
   const safe = clean(html);
   if (elements(safe, (a) => a.id === "block_order" && a.value !== "0").length || /nie potrafił ustalić kosztu|wycena indywidualna/i.test(text2(safe))) return null;
@@ -22782,7 +22840,31 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
     expected.push({ url: source.url, pid, count: pack.count, price: pack.unitPriceGrosze, retailUnit: source.retailUnit });
   }
   const basket = await client.text("/index.php?page=koszyk");
-  confirmSeweraBasket(basket, expected, order.materialsGrosze);
+  try {
+    confirmSeweraBasket(basket, expected, order.materialsGrosze);
+  } catch (error40) {
+    if (!(error40 instanceof SeweraStockError)) throw error40;
+    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto6.createHash)("sha256").update(basket).digest("hex");
+    return { reason: "insufficient_stock", stockLimits: error40.shortages.map((shortage) => {
+      const { pack } = prepared.find((item) => item.source.url === shortage.url);
+      const product = order.lines.find((line2) => line2.packages.some((item) => item.offerId === pack.offerId)).product;
+      return {
+        offerId: pack.offerId,
+        store: order.store,
+        productId: product.id,
+        productName: product.name,
+        maxPackages: shortage.maxPackages,
+        requestedPackages: shortage.count,
+        unitPriceGrosze: shortage.price,
+        postalCode,
+        dispatchFrom: "Katowice",
+        checkedAt: checkedAt.toISOString(),
+        expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(),
+        sourceUrl: "https://sklep.sewera.pl/index.php?page=koszyk",
+        evidenceSha256
+      };
+    }) };
+  }
   const checkout = clean(await client.text("/zamowienie"));
   const country = one7(elements(checkout, (a) => a.id === "selectCountryUser"));
   if (!elements(country, (a) => a.value === "1").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
