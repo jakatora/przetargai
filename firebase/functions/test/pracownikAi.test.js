@@ -188,8 +188,13 @@ test('wybrany z BZP: po wyborze dociągane dokumenty z e-Zamówień (SWZ z linki
   const DOK = [{ id: `${ID}_2`, nazwa: 'Specyfikacja Warunków Zamówienia', plik: 'SWZ.pdf', rozszerzenie: 'pdf', url: `https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/${ID}/${ID}_2`, opublikowano: null }];
   const u = await klient();
   const bzp = await przetarg('Remont dachu urzędu (BZP)', { source: 'bzp', postepowanie_id: ID });
+  // Z PRAWDZIWEJ puli (projekcja POLA_PULI), nie z pełnego dokumentu — 27.10 na produkcji pula nie niosła
+  // `postepowanie_id` i dokumenty nigdy nie były dociągane.
+  const zPuli = (await tenders.openPool()).filter((t) => t.id === bzp.id);
+  assert.equal(zPuli.length, 1, 'ogłoszenie jest w puli');
+  assert.equal(zPuli[0].postepowanie_id, ID, 'pula niesie postepowanie_id');
   const wywolania = [];
-  const w = await pracujDlaUzytkownika(u, [bzp], { teraz: teraz(), dokumentyEz: async (id) => { wywolania.push(id); return DOK; }, ocen: biore(['Pasuje']) });
+  const w = await pracujDlaUzytkownika(u, zPuli, { teraz: teraz(), dokumentyEz: async (id) => { wywolania.push(id); return DOK; }, ocen: biore(['Pasuje']) });
   assert.equal(w.wybrane, 1);
   assert.deepEqual(wywolania, [ID]);
   assert.equal(w.dokumentyEz, 1);

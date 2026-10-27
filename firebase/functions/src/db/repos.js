@@ -490,6 +490,9 @@ const POLA_PULI = [
   'title', 'organization', 'budget', 'currency', 'deadline', 'url', 'cpv_main',
   'source', 'wojewodztwo', 'wadium_wymagane', 'wadium_kwota', 'wadium_wiele_czesci',
   'kryterium_oceny', 'liczba_czesci', 'pz_szczegol', 'bzp_external_id', 'zastapiony_przez',
+  // e-Zamówienia (2026-10-27): bez `postepowanie_id` w puli selekcja NIGDY nie dociągała dokumentów po wyborze
+  // (warunek cicho fałszywy — bug znaleziony na produkcji 27.10). `ez_dokumenty` chroni przed powtórnym żądaniem.
+  'postepowanie_id', 'ez_dokumenty',
   /*
    * Znacznik anulowania (etap 3, Baza Konkurencyjności). Odsiew robimy W PAMIĘCI,
    * a nie zapytaniem `where('anulowany','!=',true)`: nierówność na innym polu niż
