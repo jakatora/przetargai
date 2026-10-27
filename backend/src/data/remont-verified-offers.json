@@ -2558,5 +2558,44 @@
     "sourceUrl": "https://ebardo.pl/pl/p/Lacznik-krzyzowy-GK-do-profil-CD60-100szt-BUDMAT-0%2C8mm/138",
     "evidenceSha256": "70fd05a6d5ad807d5ca70570436ba046c8b3895735cf310bd6053e87f61cd43a",
     "validUntil": null
+  },
+  {
+    "sourceId": "ehw-rawlplug-gs-100",
+    "ean": "5906675169347",
+    "name": "RAWLPLUG R-GS-06040 Kotwa do sufitów podwieszanych 6x40 mm",
+    "imageUrl": "https://sklep.ehw.com.pl/environment/cache/images/productGfx_21763_500_500/858bd3358fa32304143b7a47e27c63b67c2f8593_0904f920e7ad3435db4d6ef5dd9e21e4a1468024_2a57cf4d4f4f771f6aaa3b51711fe54a3e05a012_GS_product__p.webp",
+    "priceGrosze": 4954,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T10:33:37.045Z",
+    "sourceUrl": "https://sklep.ehw.com.pl/osprzet-laczeniowy/rawlplug-r-gs-06040-kotwa-do-sufitow-podwieszanych-6x40-mm",
+    "evidenceSha256": "2272e7d1ddf45ca76a6c5fd5ba22d209fc74af413f66396acfaf1da7f0667dfa",
+    "validUntil": null
+  },
+  {
+    "sourceId": "zpradem-rawlplug-gs-100",
+    "ean": "5906675169347",
+    "name": "Kotwa do sufitów podwieszanych 6x40mm R-GS-06040 /100szt./",
+    "imageUrl": "https://sklep.ehw.com.pl/environment/cache/images/productGfx_21763_500_500/858bd3358fa32304143b7a47e27c63b67c2f8593_0904f920e7ad3435db4d6ef5dd9e21e4a1468024_2a57cf4d4f4f771f6aaa3b51711fe54a3e05a012_GS_product__p.webp",
+    "priceGrosze": 11310,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T10:33:37.924Z",
+    "sourceUrl": "https://zpradem.pl/kotwa-do-sufitow-podwieszanych-6x40mm-r-gs-06040-100szt/836377",
+    "evidenceSha256": "454ffbd8e4d33c039a4ab6345ece766e3e3a59b05eacce42a7cc2b5bfdce3ba0",
+    "validUntil": null
+  },
+  {
+    "sourceId": "irbud-norgips-cd60-06-3m",
+    "ean": "",
+    "name": "Profil główny sufitowy CD60 3 MB / 0,6",
+    "imageUrl": "https://irbudsklep.pl/wp-content/uploads/2023/11/Zrzut-ekranu-2025-09-05-114945.png",
+    "priceGrosze": 1145,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T10:33:39.981Z",
+    "sourceUrl": "https://irbudsklep.pl/produkt/profil-glowny-sufitowy-cd60-3-mb-06/",
+    "evidenceSha256": "f185d865d13e7d13d21ce69c6265b2f37db9123f67d3f086d2cea1371b110602",
+    "validUntil": null
   }
 ]
