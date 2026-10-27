@@ -20791,9 +20791,116 @@ var RETAIL_SOURCES = [
   // source: https://www.cersanit.com.pl/lazienka/umywalka-wiszaca-ovida-50,3252.html
   { id: "castorama-cersanit-atlantic-new-50", ean: "5901771226987", name: "Umywalka Cersanit Atlantic New 50 cm", category: "washbasin", brand: "Cersanit", packageSize: 1, unit: "szt", store: "Castorama", browserReviewAllowed: true, variant: ["Atlantic", "New", "50"], url: "https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd" },
   // source: https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd
-  { id: "castorama-tamara-white-15m2", ean: "5907518303911", name: "Glazura Tamara 25 x 40 cm white 1,5 m2", category: "tile", brand: "Ceramika Color", packageSize: 1.5, unit: "m2", store: "Castorama", browserReviewAllowed: true, variant: ["Tamara", "25 x 40", "white", "1,5 m2"], url: "https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd" }
+  { id: "castorama-tamara-white-15m2", ean: "5907518303911", name: "Glazura Tamara 25 x 40 cm white 1,5 m2", category: "tile", brand: "Ceramika Color", packageSize: 1.5, unit: "m2", store: "Castorama", browserReviewAllowed: true, variant: ["Tamara", "25 x 40", "white", "1,5 m2"], url: "https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd" },
+  // source: https://sklep.sewera.pl/krzyzyki-dystansowe-3mm-150szt--p12505
+  // source: https://mrowka.com.pl/produkt/krzyzyki-dystansowe-3-mm-150-szt-hardy-5905061016869.html
+  { id: "sewera-tile-spacers-hardy-3mm-150", ean: "5905061016869", name: "Krzy\u017Cyki dystansowe 3mm 150szt.", category: "tile-spacer", brand: "KAEM", packageSize: 150, unit: "szt", store: "Sewera", format: "sewera", retailUnit: "OPA", variant: ["3mm", "150szt"], url: "https://sklep.sewera.pl/krzyzyki-dystansowe-3mm-150szt--p12505" },
+  // source: https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506
+  // source: https://www.bricomarche.pl/krzyzyki-dystansowe-do-glazury-4-mm-biale-woreczek-100-sztuk-hardy
+  { id: "sewera-tile-spacers-hardy-4mm-100", ean: "5905061016876", name: "Krzy\u017Cyki dystansowe 4mm 100szt.", category: "tile-spacer", brand: "KAEM", packageSize: 100, unit: "szt", store: "Sewera", format: "sewera", retailUnit: "OPA", variant: ["4mm", "100szt"], url: "https://sklep.sewera.pl/krzyzyki-dystansowe-4mm-100szt--p12506" },
+  // source: https://www.abud.pl/product-pol-17848-Mocowanie-umywalki-WST-10x140-Fischer-2-sztuki.html
+  // source: https://www.fischerdanmark.dk/da/produkter/sanitetsbefaestigelse/keramiske-handvaske-urinaler-og-sanitaere-installationer/fastgorelse-af-vask-wst/45494-wst-140-k-nv
+  { id: "abud-fischer-wst140k-2", ean: "8590369454948", name: "Mocowanie umywalki WST 10x140 Fischer 2 sztuki", category: "basin-fixings", brand: "Fischer", packageSize: 2, unit: "szt", store: "ABUD", format: "idosell", productId: 17848, apiPurchaseUnit: "op.", variant: ["WST", "10x140", "2sztuki"], url: "https://www.abud.pl/product-pol-17848-Mocowanie-umywalki-WST-10x140-Fischer-2-sztuki.html" },
+  // source: https://www.rabdom.pl/pl/p/Mapei-Kerapoxy-Easy-Design-Uniwersalna-fuga-epoksydowa-3kg-Bialy-100/14527
+  { "id": "rabdom-kerapoxy-easy-design-100-3kg", "ean": "8022452132940", "name": "Mapei Kerapoxy Easy Design - Uniwersalna fuga epoksydowa 3kg Bia\u0142y 100", "category": "epoxy-grout", "brand": "Mapei", "packageSize": 3, "unit": "kg", "store": "Rab-Dom", "format": "shoper-api", "productId": 14527, "retailerSku": "3771", "apiPurchaseUnit": "szt.", "variant": ["Kerapoxy", "Easy Design", "3kg", "Bia\u0142y", "100"], "url": "https://www.rabdom.pl/pl/p/Mapei-Kerapoxy-Easy-Design-Uniwersalna-fuga-epoksydowa-3kg-Bialy-100/14527", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_35202_500_500/Opakowanie-fugi-Mapei-o-gramaturze-3-kg..webp" },
+  // source: https://winbud24.pl/pl/p/Mapei-Kerapoxy-Easy-Design-100-3kg-biala-fuga-epoksydowa/3748
+  { "id": "winbud-kerapoxy-easy-design-100-3kg", "ean": "8022452132940", "name": "Mapei Kerapoxy Easy Design 100 3kg bia\u0142a - fuga epoksydowa", "category": "epoxy-grout", "brand": "Mapei", "packageSize": 3, "unit": "kg", "store": "WinBud", "format": "shoper-api", "productId": 3748, "retailerSku": "8022452132940", "apiPurchaseUnit": "szt.", "variant": ["Kerapoxy", "Easy Design", "100", "3kg", "bia\u0142a"], "url": "https://winbud24.pl/pl/p/Mapei-Kerapoxy-Easy-Design-100-3kg-biala-fuga-epoksydowa/3748", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_10732_500_500/Mapei-Kerapoxy-Easy-Design-100-3kg-biala---fuga-epoksydowa.jpg" },
+  // source: https://sklep.sewera.pl/atlas-plus-klej-do-plytek-bialy-25kg-p8896
+  { "id": "sewera-atlas-plus-white-25kg", "ean": "5905400313390", "name": "Atlas Plus klej do p\u0142ytek bia\u0142y 25kg", "category": "white-tile-adhesive", "brand": "Atlas", "packageSize": 25, "unit": "kg", "store": "Sewera", "format": "sewera", "variant": ["Atlas Plus", "bia\u0142y", "25kg"], "retailUnit": "SZT", "url": "https://sklep.sewera.pl/atlas-plus-klej-do-plytek-bialy-25kg-p8896", "imageUrl": "https://sklep.sewera.pl/photo/38873/atlas-plus-klej-do-plytek-bialy-25kg.webp" },
+  // source: https://www.rabdom.pl/pl/p/Sniezka-Grunt-biala-farba-podkladowa-5l/97
+  { "id": "rabdom-sniezka-undercoat-5l", "ean": "5903973000235", "name": "\u015Anie\u017Cka Grunt - bia\u0142a farba podk\u0142adowa 5l", "category": "paint-undercoat", "brand": "\u015Anie\u017Cka", "packageSize": 5, "unit": "l", "store": "Rab-Dom", "format": "shoper-api", "productId": 97, "retailerSku": "0109", "apiPurchaseUnit": "szt.", "variant": ["\u015Anie\u017Cka", "Grunt", "bia\u0142a", "5l"], "url": "https://www.rabdom.pl/pl/p/Sniezka-Grunt-biala-farba-podkladowa-5l/97", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_10843_500_500/SNIEZKA.webp" },
+  // source: https://sklep.sewera.pl/sniezka-grunt-5l-p6153
+  { "id": "sewera-sniezka-undercoat-5l", "ean": "5903973000235", "name": "\u015Anie\u017Cka grunt 5l", "category": "paint-undercoat", "brand": "\u015Anie\u017Cka", "packageSize": 5, "unit": "l", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["\u015Anie\u017Cka", "grunt", "5l"], "url": "https://sklep.sewera.pl/sniezka-grunt-5l-p6153", "imageUrl": "https://sklep.sewera.pl/photo/72152/sniezka-grunt-5l.webp" },
+  // source: https://sklep.sewera.pl/tasma-dylatacyjna-5mm-x-10cm-x-50m-p23282
+  { "id": "sewera-packcenter-edge-tape-50m", "ean": "", "name": "Ta\u015Bma dylatacyjna 5mm x 10cm x 50m", "category": "expansion-tape", "brand": "Pack-Center", "packageSize": 50, "unit": "mb", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["5mm", "10cm", "50m"], "url": "https://sklep.sewera.pl/tasma-dylatacyjna-5mm-x-10cm-x-50m-p23282", "skuIdentity": { "catalogKey": "sewera-465325", "manufacturerSku": "TB-FB00202", "merchantProductId": "465325", "pageBarcode": "465325" }, "imageUrl": "https://sklep.sewera.pl/photo/364366/tasma-dylatacyjna-5mm-x-10cm-x-50m.webp", "dispatchDepartment": { "id": "3", "name": "Gliwice" } },
+  // source: https://sklep.sewera.pl/srodek-do-usuwania-silikonu-silicone-remover-100ml-soudal-p21277
+  { "id": "sewera-soudal-silicone-remover-100ml", "ean": "5411183041899", "name": "\u015Arodek do usuwania silikonu Silicone Remover 100ml Soudal", "category": "silicone-remover", "brand": "Soudal", "packageSize": 100, "unit": "ml", "store": "Sewera", "format": "sewera", "url": "https://sklep.sewera.pl/srodek-do-usuwania-silikonu-silicone-remover-100ml-soudal-p21277", "imageUrl": "https://sklep.sewera.pl/photo/343512/srodek-do-usuwania-silikonu-silicone-remover-100ml-soudal.webp" },
+  // source: https://www.rabdom.pl/pl/p/SOUDAL-SRODEK-DO-USUWANIA-SILIKONU-100ml/12481
+  { "id": "rabdom-soudal-silicone-remover-100ml", "ean": "5411183041899", "name": "SOUDAL \u015ARODEK DO USUWANIA SILIKONU 100ml", "category": "silicone-remover", "brand": "Soudal", "packageSize": 100, "unit": "ml", "store": "Rab-Dom", "format": "shoper-api", "productId": 12481, "url": "https://www.rabdom.pl/pl/p/SOUDAL-SRODEK-DO-USUWANIA-SILIKONU-100ml/12481", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_24083_500_500/full_srodek-do-usuwania-silikonu-1366719941.webp" },
+  // source: https://realbud.com/pl/p/SOUDAL-SILIKON-SANITARNY-KUCHNIA-LAZIENKA-PLESN-STOP-BIALY-280ml/75056922
+  { "id": "realbud-soudal-sanitary-stop-white-280ml", "ean": "5411183200326", "name": "SOUDAL SILIKON SANITARNY KUCHNIA \u0141AZIENKA PLE\u015A\u0143 STOP BIA\u0141Y 280ml", "category": "silicone", "brand": "Soudal", "packageSize": 280, "unit": "ml", "store": "Realbud", "format": "shoper-api", "productId": 75056922, "url": "https://realbud.com/pl/p/SOUDAL-SILIKON-SANITARNY-KUCHNIA-LAZIENKA-PLESN-STOP-BIALY-280ml/75056922", "imageUrl": "https://realbud.com/environment/cache/images/productGfx_23109_500_500/5daa6a798ad6adc9e8224e3b5a646bb7.jpg" },
+  // source: https://sklep.sewera.pl/acryl-putz-st10-start-gladz-szpachlowa-sypka-5kg-p13308
+  { "id": "sewera-acrylputz-st10-5kg", "ean": "5903973104414", "brand": "\u015ANIE\u017BKA", "packageSize": 5, "unit": "kg", "category": "skim-coat", "name": "Acryl Putz ST10 Start g\u0142ad\u017A szpachlowa sypka 5kg", "url": "https://sklep.sewera.pl/acryl-putz-st10-start-gladz-szpachlowa-sypka-5kg-p13308", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/34284/acryl-putz-st10-start-gladz-szpachlowa-sypka-5kg.webp" },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-120-arkusz-230x280mm-p6899
+  { "id": "sewera-klingspor-pl28c-p120-sheet", "ean": "5907560017644", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-120", "name": "Papier \u015Bcierny gr.120 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-120-arkusz-230x280mm-p6899", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56971/papier-scierny-gr-120-arkusz-230x280mm.webp", "variant": ["120", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-150-arkusz-230x280mm-p6900
+  { "id": "sewera-klingspor-pl28c-p150-sheet", "ean": "5907560023553", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-150", "name": "Papier \u015Bcierny gr.150 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-150-arkusz-230x280mm-p6900", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56973/papier-scierny-gr-150-arkusz-230x280mm.webp", "variant": ["150", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-240-arkusz-230x280mm-p6903
+  { "id": "sewera-klingspor-pl28c-p240-sheet", "ean": "5907560039820", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-240", "name": "Papier \u015Bcierny gr.240 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-240-arkusz-230x280mm-p6903", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56979/papier-scierny-gr-240-arkusz-230x280mm.webp", "variant": ["240", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://sklep.sewera.pl/tasma-spoinowa-z-wlokna-szklanego-48mm-x-20m-blue-dolphin-p22044
+  { "id": "sewera-bluedolphin-fsh-48mm-20m", "ean": "5907758504369", "brand": "Blue Dolphin", "packageSize": 20, "unit": "m", "category": "joint-tape", "name": "Ta\u015Bma spoinowa z w\u0142\xF3kna szklanego 48mm x 20m Blue Dolphin", "url": "https://sklep.sewera.pl/tasma-spoinowa-z-wlokna-szklanego-48mm-x-20m-blue-dolphin-p22044", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/355803/tasma-spoinowa-z-wlokna-szklanego-48mm-x-20m-blue-dolphin.webp", "variant": ["48mm", "20m"] },
+  // source: https://www.rabdom.pl/pl/p/SNIEZKA-ACRYL-PUTZ-ST10-Gladz-szpachlowa-START-FINISZ-5kg/1882
+  { "id": "rabdom-acrylputz-st10-5kg", "ean": "5903973104414", "brand": "\u015Anie\u017Cka", "packageSize": 5, "unit": "kg", "category": "skim-coat", "name": "\u015ANIE\u017BKA ACRYL PUTZ ST10 G\u0142ad\u017A szpachlowa START FINISZ 5kg", "url": "https://www.rabdom.pl/pl/p/SNIEZKA-ACRYL-PUTZ-ST10-Gladz-szpachlowa-START-FINISZ-5kg/1882", "format": "shoper-api", "productId": 1882, "store": "Rab-Dom", "imageUrl": "https://sklep.sewera.pl/photo/34284/acryl-putz-st10-start-gladz-szpachlowa-sypka-5kg.webp" },
+  // source: https://realbud.com/Bandaz-z-wlokna-szklanego-8-cm-x-20-m
+  { "id": "realbud-bluedolphin-fsh-48mm-20m", "ean": "5907758504369", "name": "Banda\u017C z w\u0142\xF3kna szklanego 48mm x 20 m BLUE DOLPHIN", "brand": "Blue Dolphin", "category": "joint-tape", "packageSize": 20, "unit": "m", "store": "Realbud", "format": "shoper-api", "productId": 7826, "variant": ["48mm", "20 m"], "url": "https://realbud.com/Bandaz-z-wlokna-szklanego-8-cm-x-20-m", "imageUrl": "https://sklep.sewera.pl/photo/355803/tasma-spoinowa-z-wlokna-szklanego-48mm-x-20m-blue-dolphin.webp" },
+  // source: https://sklep.sewera.pl/benzyna-ekstrakcyjna-0-5l-anser-p13691
+  { "id": "sewera-anser-extraction-solvent-500ml", "ean": "5903231606117", "name": "Benzyna ekstrakcyjna 0,5l Anser", "brand": "Anser", "category": "extraction-solvent", "packageSize": 500, "unit": "ml", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["ekstrakcyjna", "0,5l"], "url": "https://sklep.sewera.pl/benzyna-ekstrakcyjna-0-5l-anser-p13691", "imageUrl": "https://sklep.sewera.pl/photo/233476/benzyna-ekstrakcyjna-0-5l-anser.webp" },
+  // source: https://www.rabdom.pl/pl/p/Sniezka-Eko-Supermal-Emalia-Akrylowa-0%2C8l-Bialy-Mat-A500/13990
+  { "id": "rabdom-supermal-acrylic-white-matt-800ml", "ean": "5903973147756", "name": "\u015Anie\u017Cka Eko Supermal Emalia Akrylowa 0,8l Bia\u0142y Mat A500", "brand": "\u015Anie\u017Cka", "category": "frame-paint", "packageSize": 800, "unit": "ml", "store": "Rab-Dom", "format": "shoper-api", "productId": 13990, "variant": ["bia\u0142y", "mat", "0,8l"], "url": "https://www.rabdom.pl/pl/p/Sniezka-Eko-Supermal-Emalia-Akrylowa-0%2C8l-Bialy-Mat-A500/13990", "imageUrl": "https://sklep.sewera.pl/photo/186957/sniezka-supermal-emalia-akrylowa-bialy-mat-0-8l.webp" },
+  // source: https://sklep.sewera.pl/sniezka-supermal-emalia-akrylowa-bialy-mat-0-8l-p6121
+  { "id": "sewera-supermal-acrylic-white-matt-800ml", "ean": "5903973147756", "name": "\u015Anie\u017Cka Supermal Emalia akrylowa bia\u0142y mat 0,8l", "brand": "\u015Anie\u017Cka", "category": "frame-paint", "packageSize": 800, "unit": "ml", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["bia\u0142y", "mat", "0,8l"], "url": "https://sklep.sewera.pl/sniezka-supermal-emalia-akrylowa-bialy-mat-0-8l-p6121", "imageUrl": "https://sklep.sewera.pl/photo/186957/sniezka-supermal-emalia-akrylowa-bialy-mat-0-8l.webp" },
+  // source: https://sklep.sewera.pl/supermal-emalia-akrylowa-bialy-a300-polpolysk-0-8l-p13608
+  { "id": "sewera-supermal-acrylic-white-semigloss-800ml", "ean": "5903973232131", "name": "Supermal Emalia akrylowa bia\u0142y a300 p\xF3\u0142po\u0142ysk 0,8l", "brand": "\u015Anie\u017Cka", "category": "frame-paint", "packageSize": 800, "unit": "ml", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["bia\u0142y", "p\xF3\u0142po\u0142ysk", "0,8l"], "url": "https://sklep.sewera.pl/supermal-emalia-akrylowa-bialy-a300-polpolysk-0-8l-p13608", "imageUrl": "https://sklep.sewera.pl/photo/186834/supermal-emalia-akrylowa-bialy-a300-polpolysk-0-8l.webp" },
+  // source: https://sklep.sewera.pl/grunt-do-drewna-urekor-d-bialy-0-8l-sniezka-p17330
+  { "id": "sewera-urekor-d-white-800ml", "ean": "5903973231684", "name": "Grunt do drewna Urekor D bia\u0142y 0,8l \u015Anie\u017Cka", "brand": "\u015Anie\u017Cka", "category": "frame-primer", "packageSize": 800, "unit": "ml", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["Urekor D", "bia\u0142y", "0,8l"], "url": "https://sklep.sewera.pl/grunt-do-drewna-urekor-d-bialy-0-8l-sniezka-p17330", "imageUrl": "https://sklep.sewera.pl/photo/46745/grunt-do-drewna-urekor-d-bialy-0-8l-sniezka.webp" },
+  // source: https://sklep.sewera.pl/urekor-s-podklad-antykorozyjny-bialy-0-8-l-sniezka-p11955
+  { "id": "sewera-urekor-s-white-800ml", "ean": "5903973228790", "name": "Urekor S Podk\u0142ad antykorozyjny bia\u0142y 0,8 l \u015Anie\u017Cka", "brand": "\u015Anie\u017Cka", "category": "frame-primer", "packageSize": 800, "unit": "ml", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["Urekor S", "bia\u0142y", "0,8l"], "url": "https://sklep.sewera.pl/urekor-s-podklad-antykorozyjny-bialy-0-8-l-sniezka-p11955", "imageUrl": "https://sklep.sewera.pl/photo/191092/urekor-s-podklad-antykorozyjny-bialy-0-8-l-sniezka.webp" },
+  // source: https://www.abud.pl/product-pol-63790-Dulux-do-drewna-i-metalu-RAPIDRY-Bialy-1L-matowa.html
+  { "id": "abud-dulux-rapidry-white-matt-1l", "ean": "5904078222379", "name": "Dulux do drewna i metalu RAPIDRY Bia\u0142y 1L matowa", "brand": "Dulux", "category": "frame-paint", "packageSize": 1e3, "unit": "ml", "store": "ABUD", "format": "idosell", "productId": 63790, "apiPurchaseUnit": "op.", "variant": ["bia\u0142y", "1l", "matowa"], "url": "https://www.abud.pl/product-pol-63790-Dulux-do-drewna-i-metalu-RAPIDRY-Bialy-1L-matowa.html", "imageUrl": "https://www.abud.pl/hpeciai/bd8e25d4eb247560173865d66d538564/pol_pl_Dulux-do-drewna-i-metalu-RAPIDRY-Bialy-1L-matowa-63790_1.webp" },
+  // source: https://marbet24.pl/gladzie/1288-norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg-5907651699056.html
+  { "id": "marbet-norgips-startfinish-20kg", "ean": "5907651699056", "name": "NORGIPS Gotowa dwufunkcyjna masa szpachlowa Start & Finish (20 kg)", "brand": "Norgips", "category": "drywall-joint-compound", "packageSize": 20, "unit": "kg", "store": "Marbet24", "format": "jsonld", "variant": ["Start", "Finish", "20"], "url": "https://marbet24.pl/gladzie/1288-norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg-5907651699056.html", "imageUrl": "https://marbet24.pl/6085-home_default/norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg.jpg", "pickupRequiresConfirmation": true },
+  // source: https://marbet24.pl/gladzie/1363-norgips-gips-szpachlowy-do-spoinowania-polaczen-plyt-gipsowo-kartonowych-start-25-kg-5907651693818.html
+  { "id": "marbet-norgips-start-25kg", "ean": "5907651693818", "name": "NORGIPS Gips szpachlowy do spoinowania po\u0142\u0105cze\u0144 p\u0142yt gipsowo-kartonowych Start (25 kg)", "brand": "Norgips", "category": "drywall-joint-compound-powder", "packageSize": 25, "unit": "kg", "store": "Marbet24", "format": "jsonld", "variant": ["Start", "25"], "url": "https://marbet24.pl/gladzie/1363-norgips-gips-szpachlowy-do-spoinowania-polaczen-plyt-gipsowo-kartonowych-start-25-kg-5907651693818.html", "imageUrl": "https://marbet24.pl/1363-home_default/norgips-gips-szpachlowy-do-spoinowania-polaczen-plyt-gipsowo-kartonowych-start-25-kg.jpg", "pickupRequiresConfirmation": true },
+  // source: https://marbet24.pl/plyty-karton-gips/1555-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2600-mm-5907651690442.html
+  { "id": "marbet-norgips-board-gkb-2600", "ean": "5907651690442", "name": "NORGIPS P\u0142yta gipsowo-kartonowa standardowa \u2013 do wn\u0119trz o normalnej wilgotno\u015Bci S GKB 12,5 mm typ A (1200 x 2600 mm)", "brand": "Norgips", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Marbet24", "format": "jsonld", "variant": ["GKB", "12,5", "1200", "2600"], "url": "https://marbet24.pl/plyty-karton-gips/1555-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2600-mm-5907651690442.html", "imageUrl": "https://marbet24.pl/1555-home_default/norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2600-mm.jpg", "pickupRequiresConfirmation": true },
+  // source: https://marbet24.pl/plyty-karton-gips/1126-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm-5907651690879.html
+  { "id": "marbet-norgips-board-gkb-2000", "ean": "5907651690879", "name": "NORGIPS P\u0142yta gipsowo-kartonowa standardowa \u2013 do wn\u0119trz o normalnej wilgotno\u015Bci S GKB 12,5 mm typ A (1200 x 2000 mm)", "brand": "Norgips", "category": "gypsum-board", "packageSize": 2.4, "unit": "m2", "store": "Marbet24", "format": "jsonld", "variant": ["GKB", "12,5", "1200", "2000"], "url": "https://marbet24.pl/plyty-karton-gips/1126-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm-5907651690879.html", "imageUrl": "https://marbet24.pl/1126-home_default/norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm.jpg", "pickupRequiresConfirmation": true },
+  // source: https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977
+  { "id": "sewera-isover-aku-plyta-50mm", "ean": "5901644653131", "name": "Isover we\u0142na mineralna Aku-P\u0142yta 037 5cm we\u0142na szklana", "brand": "Isover", "category": "partition-wool-50mm", "packageSize": 14.4, "unit": "m2", "store": "Sewera", "format": "sewera", "retailUnit": "OPA", "variant": ["5cm"], "packageDescription": "14,4m2", "url": "https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977", "imageUrl": "https://sklep.sewera.pl/photo/190047/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana.webp" }
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://marbet24.pl/gladzie/1288-norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg-5907651699056.html
+  "Gotowa masa do spoin Norgips Start & Finish 20 kg": "5907651699056",
+  // source: https://marbet24.pl/gladzie/1363-norgips-gips-szpachlowy-do-spoinowania-polaczen-plyt-gipsowo-kartonowych-start-25-kg-5907651693818.html
+  "Gips do spoin Norgips Start 25 kg \u2014 proszek": "5907651693818",
+  // source: https://marbet24.pl/plyty-karton-gips/1126-norgips-plyta-gipsowo-kartonowa-standardowa-do-wnetrz-o-normalnej-wilgotnosci-s-gkb-125-mm-typ-a-1200-x-2000-mm-5907651690879.html
+  "P\u0142yta gipsowa Norgips GKB typ A 12,5 mm 1200\xD72000 mm (2,4 m\xB2)": "5907651690879",
+  // source: https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977
+  "We\u0142na mineralna Isover Aku-P\u0142yta 037, 50 mm (14,4 m\xB2)": "5901644653131",
+  // source: https://www.rabdom.pl/pl/p/Sniezka-Eko-Supermal-Emalia-Akrylowa-0%2C8l-Bialy-Mat-A500/13990
+  "\u015Anie\u017Cka Supermal akrylowa bia\u0142y mat 0,8 l": "5903973147756",
+  // source: https://sklep.sewera.pl/supermal-emalia-akrylowa-bialy-a300-polpolysk-0-8l-p13608
+  "\u015Anie\u017Cka Supermal akrylowa bia\u0142y p\xF3\u0142po\u0142ysk 0,8 l": "5903973232131",
+  // source: https://sklep.sewera.pl/grunt-do-drewna-urekor-d-bialy-0-8l-sniezka-p17330
+  "\u015Anie\u017Cka Urekor D grunt do drewna bia\u0142y 0,8 l": "5903973231684",
+  // source: https://sklep.sewera.pl/urekor-s-podklad-antykorozyjny-bialy-0-8-l-sniezka-p11955
+  "\u015Anie\u017Cka Urekor S podk\u0142ad antykorozyjny bia\u0142y 0,8 l": "5903973228790",
+  // source: https://www.abud.pl/product-pol-63790-Dulux-do-drewna-i-metalu-RAPIDRY-Bialy-1L-matowa.html
+  "Dulux Rapidry bia\u0142y mat 1 l": "5904078222379",
+  // source: https://sklep.sewera.pl/benzyna-ekstrakcyjna-0-5l-anser-p13691
+  "Anser benzyna ekstrakcyjna 0,5 l": "5903231606117",
+  // source: https://sklep.sewera.pl/acryl-putz-st10-start-gladz-szpachlowa-sypka-5kg-p13308
+  "ACRYL-PUTZ ST10 START 5 kg": "5903973104414",
+  // source: https://sklep.sewera.pl/papier-scierny-gr-120-arkusz-230x280mm-p6899
+  "Klingspor PL 28 C P120, arkusz 230 \xD7 280 mm": "5907560017644",
+  // source: https://sklep.sewera.pl/papier-scierny-gr-150-arkusz-230x280mm-p6900
+  "Klingspor PL 28 C P150, arkusz 230 \xD7 280 mm": "5907560023553",
+  // source: https://sklep.sewera.pl/papier-scierny-gr-240-arkusz-230x280mm-p6903
+  "Klingspor PL 28 C P240, arkusz 230 \xD7 280 mm": "5907560039820",
+  // source: https://sklep.sewera.pl/tasma-spoinowa-z-wlokna-szklanego-48mm-x-20m-blue-dolphin-p22044
+  "Blue Dolphin FSH, ta\u015Bma spoinowa 48 mm \xD7 20 m": "5907758504369",
+  // source: https://www.rabdom.pl/pl/p/SOUDAL-SRODEK-DO-USUWANIA-SILIKONU-100ml/12481
+  "Soudal Silicone Remover 100 ml": "5411183041899",
+  // source: https://realbud.com/pl/p/SOUDAL-SILIKON-SANITARNY-KUCHNIA-LAZIENKA-PLESN-STOP-BIALY-280ml/75056922
+  "Soudal Silikon Sanitarny STOP bia\u0142y 280 ml": "5411183200326",
+  "\u015Anie\u017Cka Grunt bia\u0142a farba podk\u0142adowa 5 l": "5903973000235",
+  // source: https://www.rabdom.pl/pl/p/Mapei-Kerapoxy-Easy-Design-Uniwersalna-fuga-epoksydowa-3kg-Bialy-100/14527
+  "Mapei Kerapoxy Easy Design - Uniwersalna fuga epoksydowa 3kg Bia\u0142y 100": "8022452132940",
+  // source: https://sklep.sewera.pl/atlas-plus-klej-do-plytek-bialy-25kg-p8896
+  "Atlas Plus klej do p\u0142ytek bia\u0142y 25kg": "5905400313390",
+  "Mocowanie umywalki Fischer WST 140 K NV M10\xD7140 (2 mocowania)": "8590369454948",
+  "Krzy\u017Cyki dystansowe do p\u0142ytek Hardy 3 mm (150 szt.)": "5905061016869",
+  "Krzy\u017Cyki dystansowe do p\u0142ytek Hardy 4 mm (100 szt.)": "5905061016876",
   // source: https://www.castorama.pl/glazura-tamara-25-x-40-cm-white-1-5-m2/5907518303911_CAPL.prd
   "Glazura \u015Bcienna Ceramika Color Tamara white 25\xD740 cm (1,5 m\xB2)": "5907518303911",
   // source: https://www.castorama.pl/umywalka-cersanit-atlantic-new-50-cm/5901771226987_CAPL.prd
@@ -20902,6 +21009,176 @@ var RETAIL_NAME_ALIASES = {
   "Szybkoz\u0142\u0105czka uniwersalna WAGO 221-413 3\xD70,2-4 mm\xB2 (1 szt.)": "4050821808442",
   "Profil naro\u017Cny do glazury Cezar aluminiowy 8 mm, tytan szczotkowany mat, 2,5 m": "5904584853500"
 };
+
+// artifacts/api-server/src/lib/retail-microdata.ts
+var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+var decode = (text4) => text4.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+var text2 = (html) => decode(html.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+function attrs(tag) {
+  const result = {};
+  for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) result[match[1].toLowerCase()] = decode(match[2] ?? match[3]);
+  return result;
+}
+function elements(html, predicate) {
+  const result = [];
+  for (const match of html.matchAll(TAG)) {
+    if (match[0].startsWith("</") || !predicate(attrs(match[0]), match[1].toLowerCase())) continue;
+    if (["meta", "link", "img", "input", "br"].includes(match[1].toLowerCase()) || /\/>$/.test(match[0])) {
+      result.push(match[0]);
+      continue;
+    }
+    let depth = 1;
+    for (const next of html.slice(match.index + match[0].length).matchAll(TAG)) {
+      if (next[1].toLowerCase() !== match[1].toLowerCase()) continue;
+      depth += next[0].startsWith("</") ? -1 : 1;
+      if (depth === 0) {
+        result.push(html.slice(match.index, match.index + match[0].length + next.index + next[0].length));
+        break;
+      }
+    }
+  }
+  return result;
+}
+function one(values, error40) {
+  if (values.length !== 1) throw new Error(error40);
+  return values[0];
+}
+function property(html, key) {
+  const value = one(elements(html, (a2) => a2.itemprop === key), `microdata_${key}_ambiguous`);
+  const a = attrs(value.match(TAG)?.[0] ?? "");
+  return a.content ?? a.href ?? a.src ?? text2(value);
+}
+function labelled(html, label, tag) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`<${tag}\\b[^>]*>\\s*${escaped}\\s*<\\/${tag}>([\\s\\S]*?)<\\/div>`, "gi");
+  return text2(one([...html.matchAll(regex)].map((match) => match[1]), "microdata_identity_ambiguous"));
+}
+function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
+  const safe = clean(html);
+  const product = one(elements(safe, (a) => /\/Product$/.test(a.itemtype ?? "")), "microdata_product_ambiguous");
+  const offer = one(elements(product, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "microdata_offer_ambiguous");
+  const price2 = property(offer, "price");
+  const currency2 = property(offer, "priceCurrency");
+  const name = format === "unimet" ? text2(one(elements(product, (a, tag) => a.itemprop === "name" && tag === "h1"), "microdata_name_ambiguous")) : property(product, "name");
+  const images = elements(product, (a) => a.itemprop === "image").map((element) => {
+    const a = attrs(element.match(TAG)?.[0] ?? "");
+    return a.content ?? a.src ?? a.href;
+  }).filter((value) => Boolean(value));
+  const image = images[0] ? new URL(decodeURIComponent(images[0]), url2).href : null;
+  if (format === "unimet") {
+    const visible = text2(one(elements(offer, (a) => a.itemprop === "price"), "retailer_gross_price_not_confirmed"));
+    const grossLabel = text2(one(elements(product, (a) => a.class === "tax-shipping-delivery-label"), "retailer_gross_price_not_confirmed"));
+    if (grossLabel !== "SZT Brutto" || Number(visible.replace(/\s|zł/g, "").replace(",", ".")) !== Number(price2)) throw Error("retailer_gross_price_mismatch");
+    const brand = text2(one(elements(product, (a) => a.itemprop === "brand"), "microdata_brand_ambiguous")).replace(/^Marka\s*/, "");
+    return {
+      "@type": "Product",
+      name,
+      gtin13: property(product, "gtin13"),
+      brand,
+      image,
+      offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
+    };
+  }
+  if (format === "shoper" || format === "buduj24") {
+    const ean2 = property(product, "gtin");
+    const gross3 = format === "shoper" ? text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false), "retailer_gross_price_not_confirmed")) : text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("product-price-gross") ?? false), "retailer_gross_price_not_confirmed"));
+    const amount3 = gross3.replace(/\s|zł/g, "").replace(",", ".");
+    if (Number(amount3) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
+    const expiry = elements(offer, (a) => a.itemprop === "priceValidUntil");
+    const descriptions = elements(product, (a) => a.itemprop === "description");
+    const description = descriptions.length === 1 ? text2(descriptions[0]) : "";
+    return {
+      "@type": "Product",
+      name,
+      gtin13: ean2,
+      image,
+      description,
+      offers: {
+        "@type": "Offer",
+        price: price2,
+        priceCurrency: currency2,
+        url: url2,
+        availability: property(offer, "availability"),
+        ...expiry.length ? { priceValidUntil: property(offer, "priceValidUntil") } : {}
+      }
+    };
+  }
+  if (format === "sewera") {
+    const ean2 = labelled(product, "Kod kreskowy:", "strong");
+    const brand = labelled(product, "Producent:", "strong");
+    const stock = labelled(product, "Dost\u0119pne:", "strong");
+    const stockCount = stock.match(/^([0-9]+)\s+(SZT|OPA)$/i);
+    if (!stockCount || stockCount[2].toUpperCase() !== retailUnit) throw new Error("retailer_stock_not_confirmed");
+    const gross3 = text2(one(elements(offer, (a) => a.class === "priceShow"), "retailer_gross_price_not_confirmed"));
+    const grossMatch = gross3.match(/^([\d ,.]+)\s*zł\s*brutto\s*\/\s*(SZT|OPA)$/i);
+    const amount3 = grossMatch?.[2].toUpperCase() === retailUnit ? grossMatch[1].replace(/\s/g, "").replace(",", ".") : void 0;
+    if (amount3 === void 0 || Number(amount3) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
+    const description = elements(product, (a) => a.itemprop === "description").length ? property(product, "description") : "";
+    return {
+      "@type": "Product",
+      name,
+      description,
+      gtin13: ean2,
+      brand: { name: brand },
+      image,
+      offers: {
+        "@type": "Offer",
+        price: price2,
+        priceCurrency: currency2,
+        url: url2,
+        availability: Number(stockCount[1]) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+      }
+    };
+  }
+  const ean = labelled(product, "Kod EAN:", "em");
+  const gross2 = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value) => /z VAT/i.test(value)), "retailer_gross_price_not_confirmed");
+  const amount2 = gross2.match(/^([\d ,.]+)\s*zł\s*z VAT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
+  if (amount2 === void 0 || Number(amount2) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
+  return {
+    "@type": "Product",
+    name,
+    gtin13: ean,
+    image,
+    offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
+  };
+}
+
+// artifacts/api-server/src/lib/retail-sku.ts
+var URL2 = "https://sklep.sewera.pl/tasma-dylatacyjna-5mm-x-10cm-x-50m-p23282";
+function isReviewedSkuSource(source) {
+  const sku = source.skuIdentity;
+  return source.id === "sewera-packcenter-edge-tape-50m" && source.ean === "" && source.store === "Sewera" && source.format === "sewera" && source.url === URL2 && source.name === "Ta\u015Bma dylatacyjna 5mm x 10cm x 50m" && source.brand === "Pack-Center" && source.packageSize === 50 && source.unit === "mb" && source.retailUnit === "SZT" && sku?.catalogKey === "sewera-465325" && sku.manufacturerSku === "TB-FB00202" && sku.merchantProductId === "465325" && sku.pageBarcode === "465325" && source.dispatchDepartment?.id === "3" && source.dispatchDepartment.name === "Gliwice";
+}
+function retailProductId(source) {
+  if (source.skuIdentity) {
+    if (!isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
+    return `remont-sku-${source.skuIdentity.catalogKey}`;
+  }
+  if (!source.ean) throw Error("product_code_not_confirmed");
+  return `remont-${source.ean}`;
+}
+function retailProductName(source) {
+  if (!source.skuIdentity) return source.name;
+  if (!isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
+  return `${source.name} (${source.brand} ${source.skuIdentity.manufacturerSku})`;
+}
+function confirmRetailSkuProduct(html, product, source) {
+  if (!isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
+  const safe = clean(html), sku = source.skuIdentity;
+  const one8 = (rows) => {
+    if (rows.length !== 1) throw Error("retailer_sku_identity_not_confirmed");
+    return rows[0];
+  };
+  const primary = one8(elements(safe, (attributes) => /\/Product$/.test(attributes.itemtype ?? "")));
+  const canonical = one8(elements(safe, (attributes) => attributes.rel === "canonical"));
+  if (attrs(canonical).href !== source.url || product.name !== source.name || product.gtin13 !== sku.pageBarcode || labelled(primary, "Kod producenta:", "strong") !== sku.manufacturerSku || labelled(primary, "Producent:", "strong") !== "PACK-CENTER KO\u0141ODZIEJ I WSP\xD3LNICY SP.J.") throw Error("retailer_sku_identity_not_confirmed");
+  if (/\/OutOfStock$/.test(String(product.offers?.availability))) throw Error("retailer_out_of_stock");
+  const form = one8(elements(primary, (attributes) => attributes.name === "add_to_basket_pid"));
+  if (attrs(form).value !== sku.merchantProductId) throw Error("retailer_sku_identity_not_confirmed");
+  const { gtin13: _barcode, gtin: _gtin, gtin14: _gtin14, ...verified } = product;
+  return { ...verified, sku: sku.manufacturerSku };
+}
 
 // lib/pricing-service/src/delivery-limits.ts
 var DELIVERY_LIMITS = {
@@ -21037,6 +21314,49 @@ var MAX_PROPOSED = 256;
 var signature = (order) => order.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}:${pack.unitPriceGrosze}`)).sort().join("|");
 var removable = (pack) => pack.count - (pack.purchaseMultiple ?? 1) >= (pack.minimumPackages ?? 1) ? pack.purchaseMultiple ?? 1 : pack.count;
 async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
+  if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
+  const limits = /* @__PURE__ */ new Map(), cache = /* @__PURE__ */ new Map();
+  let allowNewQuotes = true;
+  const quoteWithStock = async (order, postalCode) => {
+    const key = JSON.stringify([order.store, signature(order)]);
+    if (cache.has(key)) return cache.get(key);
+    if (!allowNewQuotes || cache.size >= MAX_STORE_BASKETS) return { reason: "quote_limit" };
+    const pending = (async () => {
+      const outcome = await quoteBasket(order, postalCode);
+      if (!("reason" in outcome) || outcome.reason !== "insufficient_stock" || !outcome.stockLimits) return outcome;
+      const accepted = outcome.stockLimits.filter((limit) => {
+        const line2 = order.lines.find((line3) => line3.packages.some((pack2) => pack2.offerId === limit.offerId));
+        const pack = line2?.packages.find((pack2) => pack2.offerId === limit.offerId);
+        const checked = Date.parse(limit.checkedAt), expires = Date.parse(limit.expiresAt);
+        return pack && limit.productId === line2.product.id && limit.store === order.store && limit.postalCode === postalCode && Boolean(limit.dispatchFrom) && limit.unitPriceGrosze === pack.unitPriceGrosze && limit.requestedPackages === pack.count && Number.isSafeInteger(limit.maxPackages) && limit.maxPackages >= 0 && limit.maxPackages < pack.count && Number.isFinite(checked) && checked <= Date.now() && Date.now() - checked <= 6e5 && expires > Date.now() && expires <= checked + 6e5 && /^https:\/\//.test(limit.sourceUrl) && /^[a-f0-9]{64}$/.test(limit.evidenceSha256);
+      });
+      for (const limit of accepted) {
+        const previous = limits.get(limit.offerId);
+        if (!previous || limit.maxPackages < previous.maxPackages) limits.set(limit.offerId, limit);
+      }
+      return { reason: outcome.reason, ...accepted.length ? { stockLimits: accepted } : {} };
+    })();
+    cache.set(key, pending);
+    return pending;
+  };
+  let result;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    allowNewQuotes = attempt < 3;
+    const revision = [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|");
+    const constrained = stages.map((stage) => ({ ...stage, lines: stage.lines.map((line2) => !line2.resolved ? line2 : { ...line2, offers: line2.offers.flatMap((offer) => {
+      const limit = limits.get(offer.id);
+      if (!limit || limit.store !== offer.store) return [offer];
+      if (limit.maxPackages === 0) return [];
+      return [{ ...offer, maxPackages: Math.min(offer.maxPackages ?? Infinity, limit.maxPackages) }];
+    }) }) }));
+    result = await compareAutomaticDeliveryOnce(constrained, settings, quoteWithStock, policies, now, knownUnavailableStores);
+    const next = [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|");
+    if (revision === next) break;
+  }
+  if (limits.size) result.stockLimits = [...limits.values()];
+  return result;
+}
+async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   let groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
   const stores = [...new Set(groups.flatMap((g) => g.offers.filter((o) => isComparableOffer(o, now.getTime())).map((o) => o.store)))].sort();
@@ -21279,9 +21599,9 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   for (const [key, order] of [...ordered].reverse()) if (!smallest.has(order.store)) smallest.set(order.store, key);
   for (const key of smallest.values()) priority.add(key);
   const keys = [...priority, ...ordered.map(([key]) => key).filter((key) => !priority.has(key))];
-  let cursor = 0;
+  let cursor = 0, stockChanged = false;
   await Promise.all(Array.from({ length: Math.min(3, keys.length) }, async () => {
-    while (cursor < keys.length) {
+    while (cursor < keys.length && !stockChanged) {
       const key = keys[cursor++], order = unique.get(key);
       try {
         const outcome = await quoteBasket(order, settings.postalCode);
@@ -21291,7 +21611,10 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
           order.deliveryMinimumGrosze = outcome.quote.costGrosze;
           order.totalGrosze = order.materialsGrosze + outcome.quote.costGrosze;
           order.source = "retailer";
-        } else failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
+        } else {
+          failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
+          if ("reason" in outcome && outcome.reason === "insufficient_stock" && outcome.stockLimits?.length) stockChanged = true;
+        }
       } catch {
         failures.set(order.store, "quote_unavailable");
       }
@@ -21323,7 +21646,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto14 = require("node:crypto");
+var import_node_crypto15 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retailer-http.ts
 var MAX_RETAIL_PACKAGES = DELIVERY_LIMITS.packagesPerProduct;
@@ -21349,6 +21672,25 @@ var AnonymousShop = class {
   }
   async text(path, form) {
     return this.read(path, form ? new URLSearchParams(form).toString() : void 0, false);
+  }
+  /** Only ABUD's public postcode check, anonymous add and basket-rate query.
+   * The client-new endpoint is restricted to its postcode-only check; no
+   * registration/customer submission, payment or order action is exposed.
+   * source: https://www.abud.pl/gfx/pol/shop.js.gzip?r=1792053849
+   */
+  async abud(action, args = {}) {
+    if (this.origin !== "https://www.abud.pl" || Object.keys(args).some((key) => !["postalCode", "productId", "count"].includes(key))) throw Error("invalid_cart_action");
+    if (action === "destination") {
+      if (!/^\d{2}-\d{3}$/.test(args.postalCode ?? "") || args.productId !== void 0 || args.count !== void 0) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
+    }
+    if (action === "add") {
+      if (![6204, 64835, 17848, 63790].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read("/basketchange.php", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
+    }
+    if (action !== "shipping" || Object.keys(args).length) throw Error("invalid_cart_action");
+    const query = "query { shipping(ShippingInput: { mode: basket }) { shipping { courier { id name icon } prepaid cost { value formatted } deliveryTime { weekDay } } } }";
+    return JSON.parse(await this.read("/graphql/v1/", JSON.stringify({ query }), true, false, true));
   }
   /** Only this storefront's anonymous quantity update, never its order form.
    * source: https://modnalazienka.pl/static_files/js/update_cart.js?x=1792224600
@@ -21499,140 +21841,6 @@ var import_node_crypto6 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retail-pages.ts
 var import_node_crypto5 = require("node:crypto");
-
-// artifacts/api-server/src/lib/retail-microdata.ts
-var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
-var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
-var decode = (text4) => text4.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-var text2 = (html) => decode(html.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
-function attrs(tag) {
-  const result = {};
-  for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) result[match[1].toLowerCase()] = decode(match[2] ?? match[3]);
-  return result;
-}
-function elements(html, predicate) {
-  const result = [];
-  for (const match of html.matchAll(TAG)) {
-    if (match[0].startsWith("</") || !predicate(attrs(match[0]), match[1].toLowerCase())) continue;
-    if (["meta", "link", "img", "input", "br"].includes(match[1].toLowerCase()) || /\/>$/.test(match[0])) {
-      result.push(match[0]);
-      continue;
-    }
-    let depth = 1;
-    for (const next of html.slice(match.index + match[0].length).matchAll(TAG)) {
-      if (next[1].toLowerCase() !== match[1].toLowerCase()) continue;
-      depth += next[0].startsWith("</") ? -1 : 1;
-      if (depth === 0) {
-        result.push(html.slice(match.index, match.index + match[0].length + next.index + next[0].length));
-        break;
-      }
-    }
-  }
-  return result;
-}
-function one(values, error40) {
-  if (values.length !== 1) throw new Error(error40);
-  return values[0];
-}
-function property(html, key) {
-  const value = one(elements(html, (a2) => a2.itemprop === key), `microdata_${key}_ambiguous`);
-  const a = attrs(value.match(TAG)?.[0] ?? "");
-  return a.content ?? a.href ?? a.src ?? text2(value);
-}
-function labelled(html, label, tag) {
-  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(`<${tag}\\b[^>]*>\\s*${escaped}\\s*<\\/${tag}>([\\s\\S]*?)<\\/div>`, "gi");
-  return text2(one([...html.matchAll(regex)].map((match) => match[1]), "microdata_identity_ambiguous"));
-}
-function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
-  const safe = clean(html);
-  const product = one(elements(safe, (a) => /\/Product$/.test(a.itemtype ?? "")), "microdata_product_ambiguous");
-  const offer = one(elements(product, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "microdata_offer_ambiguous");
-  const price2 = property(offer, "price");
-  const currency2 = property(offer, "priceCurrency");
-  const name = format === "unimet" ? text2(one(elements(product, (a, tag) => a.itemprop === "name" && tag === "h1"), "microdata_name_ambiguous")) : property(product, "name");
-  const images = elements(product, (a) => a.itemprop === "image").map((element) => {
-    const a = attrs(element.match(TAG)?.[0] ?? "");
-    return a.content ?? a.src ?? a.href;
-  }).filter((value) => Boolean(value));
-  const image = images[0] ? new URL(decodeURIComponent(images[0]), url2).href : null;
-  if (format === "unimet") {
-    const visible = text2(one(elements(offer, (a) => a.itemprop === "price"), "retailer_gross_price_not_confirmed"));
-    const grossLabel = text2(one(elements(product, (a) => a.class === "tax-shipping-delivery-label"), "retailer_gross_price_not_confirmed"));
-    if (grossLabel !== "SZT Brutto" || Number(visible.replace(/\s|zł/g, "").replace(",", ".")) !== Number(price2)) throw Error("retailer_gross_price_mismatch");
-    const brand = text2(one(elements(product, (a) => a.itemprop === "brand"), "microdata_brand_ambiguous")).replace(/^Marka\s*/, "");
-    return {
-      "@type": "Product",
-      name,
-      gtin13: property(product, "gtin13"),
-      brand,
-      image,
-      offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
-    };
-  }
-  if (format === "shoper" || format === "buduj24") {
-    const ean2 = property(product, "gtin");
-    const gross3 = format === "shoper" ? text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false), "retailer_gross_price_not_confirmed")) : text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("product-price-gross") ?? false), "retailer_gross_price_not_confirmed"));
-    const amount3 = gross3.replace(/\s|zł/g, "").replace(",", ".");
-    if (Number(amount3) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
-    const expiry = elements(offer, (a) => a.itemprop === "priceValidUntil");
-    const descriptions = elements(product, (a) => a.itemprop === "description");
-    const description = descriptions.length === 1 ? text2(descriptions[0]) : "";
-    return {
-      "@type": "Product",
-      name,
-      gtin13: ean2,
-      image,
-      description,
-      offers: {
-        "@type": "Offer",
-        price: price2,
-        priceCurrency: currency2,
-        url: url2,
-        availability: property(offer, "availability"),
-        ...expiry.length ? { priceValidUntil: property(offer, "priceValidUntil") } : {}
-      }
-    };
-  }
-  if (format === "sewera") {
-    const ean2 = labelled(product, "Kod kreskowy:", "strong");
-    const brand = labelled(product, "Producent:", "strong");
-    const stock = labelled(product, "Dost\u0119pne:", "strong");
-    const stockCount = stock.match(/^([0-9]+)\s+(SZT|OPA)$/i);
-    if (!stockCount || stockCount[2].toUpperCase() !== retailUnit) throw new Error("retailer_stock_not_confirmed");
-    const gross3 = text2(one(elements(offer, (a) => a.class === "priceShow"), "retailer_gross_price_not_confirmed"));
-    const grossMatch = gross3.match(/^([\d ,.]+)\s*zł\s*brutto\s*\/\s*(SZT|OPA)$/i);
-    const amount3 = grossMatch?.[2].toUpperCase() === retailUnit ? grossMatch[1].replace(/\s/g, "").replace(",", ".") : void 0;
-    if (amount3 === void 0 || Number(amount3) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
-    const description = elements(product, (a) => a.itemprop === "description").length ? property(product, "description") : "";
-    return {
-      "@type": "Product",
-      name,
-      description,
-      gtin13: ean2,
-      brand: { name: brand },
-      image,
-      offers: {
-        "@type": "Offer",
-        price: price2,
-        priceCurrency: currency2,
-        url: url2,
-        availability: Number(stockCount[1]) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-      }
-    };
-  }
-  const ean = labelled(product, "Kod EAN:", "em");
-  const gross2 = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value) => /z VAT/i.test(value)), "retailer_gross_price_not_confirmed");
-  const amount2 = gross2.match(/^([\d ,.]+)\s*zł\s*z VAT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
-  if (amount2 === void 0 || Number(amount2) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
-  return {
-    "@type": "Product",
-    name,
-    gtin13: ean,
-    image,
-    offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
-  };
-}
 
 // artifacts/api-server/src/lib/shopify-product.ts
 function confirmShopifyProduct(product, source) {
@@ -22384,9 +22592,11 @@ function objects(value) {
 }
 function parseRetailPage(html, source, observedAt) {
   if (source.disabledReason) throw Error(source.disabledReason);
+  if ((!source.ean || source.skuIdentity) && !isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
   const products = [];
   let stockPackages;
-  if (source.format === "kronosfera") products.push(inspectKronosferaProduct(html, source).product);
+  if (source.skuIdentity) products.push(confirmRetailSkuProduct(html, readRetailMicrodata(html, "sewera", source.url, source.retailUnit), source));
+  else if (source.format === "kronosfera") products.push(inspectKronosferaProduct(html, source).product);
   else if (source.format === "folnet") {
     const reviewed = inspectFolnetProduct(html, source);
     products.push(reviewed.product);
@@ -22407,7 +22617,7 @@ function parseRetailPage(html, source, observedAt) {
     if (products.length !== 1) throw Error("product_identity_ambiguous");
     products[0] = confirmRetailIdentity(html, products[0], source);
   }
-  const product = products.find((item) => String(item.gtin13 ?? item.gtin ?? "") === source.ean);
+  const product = source.skuIdentity ? products.find((item) => item.sku === source.skuIdentity.manufacturerSku && !item.gtin13 && !item.gtin) : products.find((item) => String(item.gtin13 ?? item.gtin ?? "") === source.ean);
   if (!product) throw new Error("product_ean_not_confirmed");
   const name = String(product.name ?? "");
   const normalize = (value) => normalizeProductName(value.replace(/(\d|mm|cm|m)\s*[x×/]\s*(?=\d)/gi, "$1 x ").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
@@ -22625,8 +22835,8 @@ var one7 = (values) => {
 function createCheckoutPageReader() {
   const cache = /* @__PURE__ */ new Map();
   const reads = new QuoteQueue(3, 12, 15e3);
-  return (url2, price2, client) => {
-    const key = JSON.stringify([url2, price2]), previous = cache.get(key);
+  return (url2, price2, client, scope) => {
+    const key = JSON.stringify([url2, price2, scope ?? ""]), previous = cache.get(key);
     if (previous && previous.until > Date.now()) return previous.value;
     if (cache.size >= 32) cache.delete(cache.keys().next().value);
     const value = (async () => {
@@ -22653,7 +22863,7 @@ function checkoutMoney(value) {
   if (!Number.isSafeInteger(result) || result < 0) throw Error("invalid_money");
   return result;
 }
-function quote(order, costGrosze, carrier, payment, evidence, postalCode) {
+function quote(order, costGrosze, carrier, payment, evidence, postalCode, dispatchFrom = "Katowice") {
   const now = /* @__PURE__ */ new Date();
   return { quote: {
     costGrosze,
@@ -22664,7 +22874,7 @@ function quote(order, costGrosze, carrier, payment, evidence, postalCode) {
     sourceUrl: order.store === "Sewera" ? "https://sklep.sewera.pl/zamowienie" : "https://buduj24.pl/cart",
     basis: postalCode ? "retailer_basket_postcode" : "retailer_basket_national",
     destinationScope: postalCode ? "postal_code" : "PL",
-    ...postalCode ? { postalCode, dispatchFrom: "Katowice" } : {},
+    ...postalCode ? { postalCode, dispatchFrom } : {},
     evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
@@ -22680,22 +22890,35 @@ function tdValue(html, label) {
   const values = cells.flatMap((cell, i) => text2(cell) === label && cells[i + 1] ? [withoutOld(cells[i + 1])] : []);
   return one7(values);
 }
-function confirmSeweraBasket(html, expected, total) {
+function confirmSeweraBasket(html, expected, total, dispatchFrom = "Katowice") {
   const table = one7(elements(clean(html), (a) => cls2(a, "basket-product")));
   const body = one7(elements(table, (_, tag) => tag === "tbody"));
   const rows = elements(body, (_, tag) => tag === "tr").filter((row) => elements(row, (a) => a.name === "amount").length === 1);
-  if (rows.length !== expected.length || !/Twój sklep to Katowice/.test(text2(html))) throw Error("basket_not_confirmed");
+  const branch = dispatchFrom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (rows.length !== expected.length || !new RegExp(`Tw\xF3j sklep to ${branch}(?=\\s|$)`).test(text2(html))) throw Error("basket_not_confirmed");
+  const shortages = [];
   for (const wanted of expected) {
     const row = one7(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
     const stock = text2(row).match(/W magazynie znajdują się jedynie (\d+(?:[.,]\d+)?)\s+(SZT|OPA)/i);
-    if (stock && (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || Number(stock[1].replace(",", ".")) < wanted.count)) throw Error("insufficient_stock");
     const input2 = attr2(one7(elements(row, (a) => a.name === "amount")));
     const pid = attr2(one7(elements(row, (a) => a.wybierz !== void 0))).wybierz;
     if (Number(input2.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    if (stock) {
+      const maxPackages = Number(stock[1].replace(",", "."));
+      if (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || !Number.isSafeInteger(maxPackages) || maxPackages < 0) throw Error("basket_not_confirmed");
+      if (maxPackages < wanted.count) shortages.push({ url: wanted.url, count: wanted.count, price: wanted.price, maxPackages });
+    }
   }
   const sum = text2(one7(elements(table, (a) => cls2(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
   if (checkoutMoney(sum) !== total) throw Error("basket_not_confirmed");
+  if (shortages.length) throw new SeweraStockError(shortages);
 }
+var SeweraStockError = class extends Error {
+  constructor(shortages) {
+    super("insufficient_stock");
+    this.shortages = shortages;
+  }
+};
 function readSeweraPayment(html) {
   const safe = clean(html);
   if (elements(safe, (a) => a.id === "block_order" && a.value !== "0").length || /nie potrafił ustalić kosztu|wycena indywidualna/i.test(text2(safe))) return null;
@@ -22711,18 +22934,30 @@ function readSeweraPayment(html) {
   });
   return options.sort((a, b) => a.costGrosze - b.costGrosze)[0] ?? null;
 }
+function seweraHomeDeliveryMethods(checkout) {
+  return elements(clean(checkout), (a) => {
+    const name = a["data-name"] ?? "";
+    return a.name === "dostawa" && a["data-personal-collection"] === "0" && a.disabled === void 0 && (/kurier/i.test(name) || /^(DHL|Raben) - Paleta do \d+\s*kg$/i.test(name)) && !/indywidual|zapytani|odbiór|paczkomat/i.test(name);
+  }).filter((node) => !/\sdisabled(?:\s|=|>)/i.test(node.match(/^<[^>]+>/)?.[0] ?? "")).map(attr2);
+}
 async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price, client) => client.text(_url2)) {
+  const packs = expectedPacks(order);
+  const configured = packs.filter(({ source }) => source.dispatchDepartment);
+  if (configured.some(({ source }) => !isReviewedSkuSource(source))) throw Error("dispatch_department_not_confirmed");
+  const department = configured[0]?.source.dispatchDepartment ?? { id: "1", name: "Katowice" };
+  if (configured.some(({ source }) => source.dispatchDepartment.id !== department.id || source.dispatchDepartment.name !== department.name)) throw Error("dispatch_department_not_confirmed");
   const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
-  if ((await client.text("/ajax/ax_execute.php?operation=setDepartment", { model: "department", department: "1" })).trim() !== "1") throw Error("basket_not_confirmed");
+  if ((await client.text("/ajax/ax_execute.php?operation=setDepartment", { model: "department", department: department.id })).trim() !== department.id) throw Error("basket_not_confirmed");
   const expected = [];
-  const packs = expectedPacks(order), prepared = [];
+  const prepared = [];
   let next = 0, hasFailure = false;
   let failure;
   await Promise.all(Array.from({ length: Math.min(3, packs.length) }, async () => {
     while (next < packs.length && !hasFailure) {
       try {
         const index2 = next++, { source, pack } = packs[index2];
-        const page = await pages(source.url, pack.unitPriceGrosze, client), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
+        const page = await pages(source.url, pack.unitPriceGrosze, client, `sewera:${department.id}`), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
+        if (configured.length && text2(one7(elements(clean(page), (a) => cls2(a, "b2cCSS-select-dept")))) !== department.name) throw Error("dispatch_department_not_confirmed");
         if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
         const pid = attr2(one7(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
         if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
@@ -22741,11 +22976,35 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
     expected.push({ url: source.url, pid, count: pack.count, price: pack.unitPriceGrosze, retailUnit: source.retailUnit });
   }
   const basket = await client.text("/index.php?page=koszyk");
-  confirmSeweraBasket(basket, expected, order.materialsGrosze);
+  try {
+    confirmSeweraBasket(basket, expected, order.materialsGrosze, department.name);
+  } catch (error40) {
+    if (!(error40 instanceof SeweraStockError)) throw error40;
+    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto6.createHash)("sha256").update(basket).digest("hex");
+    return { reason: "insufficient_stock", stockLimits: error40.shortages.map((shortage) => {
+      const { pack } = prepared.find((item) => item.source.url === shortage.url);
+      const product = order.lines.find((line2) => line2.packages.some((item) => item.offerId === pack.offerId)).product;
+      return {
+        offerId: pack.offerId,
+        store: order.store,
+        productId: product.id,
+        productName: product.name,
+        maxPackages: shortage.maxPackages,
+        requestedPackages: shortage.count,
+        unitPriceGrosze: shortage.price,
+        postalCode,
+        dispatchFrom: department.name,
+        checkedAt: checkedAt.toISOString(),
+        expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(),
+        sourceUrl: "https://sklep.sewera.pl/index.php?page=koszyk",
+        evidenceSha256
+      };
+    }) };
+  }
   const checkout = clean(await client.text("/zamowienie"));
   const country = one7(elements(checkout, (a) => a.id === "selectCountryUser"));
   if (!elements(country, (a) => a.value === "1").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
-  const methods = elements(checkout, (a) => a.name === "dostawa" && a["data-personal-collection"] === "0" && /kurier/i.test(a["data-name"] ?? "") && !/indywidual|zapytani|odbiór|paczkomat/i.test(a["data-name"])).map(attr2);
+  const methods = seweraHomeDeliveryMethods(checkout);
   if (!methods.length || methods.length > 5) throw Error("no_home_delivery");
   const options = [];
   for (const method of methods) {
@@ -22765,7 +23024,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
   }
   const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
   if (!best) throw Error("no_home_delivery");
-  return quote(order, best.costGrosze, best.carrier, best.payment, { expected, postalCode, options }, postalCode);
+  return quote(order, best.costGrosze, best.carrier, best.payment, { expected, postalCode, options, department }, postalCode, department.name);
 }
 function budujItemPrice(row) {
   return elements(row, (a) => cls2(a, "item") && cls2(a, "price")).map((p) => checkoutMoney(withoutOld(p)));
@@ -23360,6 +23619,101 @@ async function quoteSkyshop(order, fetchImpl) {
   return { quote: { costGrosze: 0, carrier: method.name, payment: calculation.payment.name, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: wanted.length === 1 ? wanted[0].source.url : MATBUD_ORIGIN + "/order", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: skyshopEvidenceHash([...evidence, cart, shipping.html, shipping.methods, calculation]) } };
 }
 
+// artifacts/api-server/src/lib/abud-delivery.ts
+var import_node_crypto14 = require("node:crypto");
+var ORIGIN = "https://www.abud.pl";
+var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l"];
+function money5(value, formatted) {
+  if (!["string", "number"].includes(typeof value)) throw Error("invalid_money");
+  const amount2 = parsePriceToGrosze(value);
+  if (amount2 === null || !Number.isSafeInteger(amount2) || amount2 < 0) throw Error("invalid_money");
+  if (formatted !== void 0 && (typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted) || parsePriceToGrosze(formatted.replace(/\s*zł$/, "")) !== amount2)) throw Error("invalid_money");
+  return amount2;
+}
+function selectAbudHomeRate(response) {
+  const rates = response?.data?.shipping?.shipping;
+  if (response?.errors?.length || !Array.isArray(rates) || !rates.length || rates.length > 100) throw Error("invalid_response");
+  const names = { 100037: "Pocztex Kurier 24", 85: "Paczka GLS", 100336: "Pocztex Kurier XXL dor\u0119czenie pod wskazany adres", 30: "DPD Paczka - niestandard" };
+  const candidates = [], seen = /* @__PURE__ */ new Set();
+  for (const rate of rates) {
+    const id = rate?.courier?.id;
+    if (rate?.prepaid !== "prepaid" || !Number.isSafeInteger(id) || names[id] !== rate.courier.name) continue;
+    if (seen.has(id)) throw Error("invalid_response");
+    seen.add(id);
+    if (rate.cost?.value === void 0 || rate.cost?.formatted === void 0) throw Error("invalid_money");
+    candidates.push({ costGrosze: money5(rate.cost.value, rate.cost.formatted), carrier: rate.courier.name, payment: "P\u0142atno\u015B\u0107 z g\xF3ry" });
+  }
+  const best = candidates.sort((a, b) => a.costGrosze - b.costGrosze)[0];
+  if (!best) throw Error("no_home_delivery");
+  return best;
+}
+function confirmAbudDestination(response) {
+  const regions = response?.valid_region?.["1"];
+  if (response?.error || response?.errors?.length || response?.valid !== true || Object.keys(response.valid_region ?? {}).length !== 1 || !Array.isArray(regions) || regions.length !== 1 || regions[0]?.shop_id !== "1" || !/^\d+$/.test(regions[0].id_region ?? "") || regions[0].url !== ORIGIN) throw Error("address_required");
+  const region = regions[0];
+  if (!(region.id_region === "1143020003" && region.parent === "0" || region.id_region !== "1143020003" && region.parent === "1143020003")) throw Error("address_required");
+}
+function confirmVariant(html, source) {
+  const form = elements(clean(html), (a, tag) => tag === "form" && a["data-product_id"] === String(source.productId));
+  if (form.length !== 1) throw Error("product_unavailable");
+  for (const [id, value] of [["projector_size_hidden", "onesize"], ["projector_mode_hidden", "1"]]) {
+    const inputs = elements(form[0], (a) => a.id === id);
+    if (inputs.length !== 1 || attrs(inputs[0].match(/^<[^>]+>/)?.[0] ?? "").value !== value) throw Error("product_unavailable");
+  }
+}
+function confirmAbudBasket(response, expected, materialsGrosze) {
+  const basket = response?.basket;
+  if (response?.error || response?.errors?.length || !basket || basket.error || basket.errors?.length || basket.shipping_exists !== true || basket.currency !== "PLN" || basket.total_deposit !== 0 || basket.total_deposit_net !== 0 || !Array.isArray(basket.products) || basket.products.length !== expected.length || !expected.length) throw Error("basket_not_confirmed");
+  const remaining = new Map(expected.map((wanted) => [String(wanted.source.productId), wanted]));
+  if (remaining.size !== expected.length) throw Error("invalid_basket");
+  let total = 0, count = 0;
+  for (const row of basket.products) {
+    const wanted = remaining.get(row?.id);
+    if (!wanted || row.size !== "uniw" || row.price_unit !== wanted.source.apiPurchaseUnit || row.worth_unit !== wanted.source.apiPurchaseUnit || row.name !== wanted.source.name || new URL(row.link, ORIGIN).href !== wanted.source.url || row.bonus !== "n" || row.product_type !== "product_item" || row.bundle !== 0 || !Array.isArray(row.bundled) || row.bundled.length || row.subscription_period !== "0") throw Error("basket_not_confirmed");
+    if (!Number.isSafeInteger(row.reservation_stocksown) || row.reservation_stocksown < 0) throw Error("product_unavailable");
+    if (wanted.count > row.reservation_stocksown) throw Error("insufficient_stock");
+    if (row.count !== wanted.count) throw Error("basket_not_confirmed");
+    if (typeof row.prices?.gros_formatted !== "string" || typeof row.prices?.worth_gros_formatted !== "string") throw Error("basket_not_confirmed");
+    if (money5(row.prices?.gros, row.prices?.gros_formatted) !== wanted.price || money5(row.prices?.worth_gros, row.prices?.worth_gros_formatted) !== wanted.count * wanted.price) throw Error("price_changed");
+    total += wanted.count * wanted.price;
+    count += wanted.count;
+    remaining.delete(row.id);
+  }
+  if (remaining.size || !Number.isSafeInteger(total) || total !== materialsGrosze || money5(basket.worth) !== total || basket.productsNumber !== count) throw Error("basket_not_confirmed");
+  return basket;
+}
+async function quoteAbud(order, postalCode, fetchImpl) {
+  if (order.store !== "ABUD" || !order.lines.length || !/^\d{2}-\d{3}$/.test(postalCode) || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze <= 0) throw Error("invalid_basket");
+  const client = new AnonymousShop(ORIGIN, fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.length));
+  const expected = [], observations = [];
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === "ABUD" && source2.format === "idosell");
+    if (!source || !IDS.includes(source.id) || new URL(source.url).origin !== ORIGIN || pack.store !== "ABUD" || pack.url !== source.url || pack.packageSize !== source.packageSize || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze <= 0 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || expected.some((row) => row.source.productId === source.productId)) throw Error("invalid_basket");
+    const html = await client.text(source.url), observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
+    confirmVariant(html, source);
+    if (observation.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    expected.push({ source, count: pack.count, price: observation.priceGrosze });
+    observations.push(observation.evidenceSha256);
+  }
+  if (!expected.length || expected.reduce((sum, row) => sum + row.count * row.price, 0) !== order.materialsGrosze) throw Error("invalid_basket");
+  const destination = await client.abud("destination", { postalCode });
+  confirmAbudDestination(destination);
+  let added;
+  for (const row of expected) added = await client.abud("add", { productId: row.source.productId, count: row.count });
+  const basket = confirmAbudBasket(added, expected, order.materialsGrosze);
+  const shipping = await client.abud("shipping"), best = selectAbudHomeRate(shipping), now = /* @__PURE__ */ new Date();
+  return { quote: {
+    ...best,
+    checkedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 6e5).toISOString(),
+    sourceUrl: ORIGIN + "/basketedit.php",
+    basis: "retailer_basket_postcode",
+    destinationScope: "postal_code",
+    postalCode,
+    evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify({ observations, destination, postalCode, basket, shipping })).digest("hex")
+  } };
+}
+
 // artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
   "Rab-Dom": "https://www.rabdom.pl",
@@ -23381,15 +23735,15 @@ function unavailableReason(store) {
   if (sources.length && sources.every((source) => source.format === "betterial")) return "retailer_transport_quote_required";
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
-  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud"].includes(store)) return void 0;
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD"].includes(store)) return void 0;
   return ["Castorama", "OBI"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
-    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
-    postcodeStores: ["Sewera", "Cezar"],
+    postcodeStores: ["Sewera", "Cezar", "ABUD"],
     accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
   };
 }
@@ -23478,7 +23832,7 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin3}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto15.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
@@ -23498,6 +23852,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
       if (!release) return { reason: "quote_busy" };
       try {
         if (order.store === "Centrum Matbud") return await quoteSkyshop(order, fetchImpl);
+        if (order.store === "ABUD") return await quoteAbud(order, postalCode, fetchImpl);
         return await (order.store === "Kronosfera" ? quoteKronosfera(order, fetchImpl) : order.store === "Folnet" ? quoteFolnet(order, fetchImpl) : order.store === "Modna \u0141azienka" ? quoteModna(order, fetchImpl) : order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
       } catch (error40) {
         return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed"].includes(error40.message) ? error40.message : "quote_unavailable" };
@@ -23652,12 +24007,12 @@ function createRemontService(options = {}) {
       if (!observation) continue;
       if (withdrawnAt.has(source.id) && Date.parse(withdrawnAt.get(source.id)) >= Date.parse(observation.observedAt)) continue;
       if (observation.validUntil && !retailPriceIsValid(observation.validUntil, /* @__PURE__ */ new Date())) continue;
-      const productId = `remont-${source.ean}`;
+      const productId = retailProductId(source), productName = retailProductName(source);
       if (!products.some((product) => product.id === productId)) products.push({
         id: productId,
-        name: source.name,
-        normalizedName: normalizeProductName(source.name),
-        ean: source.ean,
+        name: productName,
+        normalizedName: normalizeProductName(productName),
+        ean: source.ean || null,
         gtin: null,
         manufacturer: source.brand || null,
         brand: source.brand || null,
@@ -23791,7 +24146,7 @@ function createRemontService(options = {}) {
     }
     for (const job of parsed.data.jobs) for (const line2 of job.materials) {
       const ean = line2.material.ean ?? RETAIL_NAME_ALIASES[line2.material.name];
-      const source = RETAIL_SOURCES.find((source2) => source2.ean === ean);
+      const source = RETAIL_SOURCES.find((source2) => source2.ean === ean) ?? RETAIL_SOURCES.find((source2) => source2.skuIdentity && source2.category === line2.material.category && normalizeProductName(retailProductName(source2)) === normalizeProductName(line2.material.name));
       if (source && normalUnit(line2.material.unit) !== source.unit) {
         res.status(400).json({ error: "incompatible_product_unit" });
         return;
