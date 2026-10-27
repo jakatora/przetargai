@@ -2597,5 +2597,57 @@
     "sourceUrl": "https://irbudsklep.pl/produkt/profil-glowny-sufitowy-cd60-3-mb-06/",
     "evidenceSha256": "f185d865d13e7d13d21ce69c6265b2f37db9123f67d3f086d2cea1371b110602",
     "validUntil": null
+  },
+  {
+    "sourceId": "kowalczyk-koelner-ws3595-1000",
+    "ean": "5906675303024",
+    "name": "KOELNER Wkręt samowiercący fosfatowy TEX 3,5x9,5mm 1000 szt (WS-3595)",
+    "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675303024.png",
+    "priceGrosze": 4333,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T12:15:44.409Z",
+    "sourceUrl": "https://sklep-kowalczyk.pl/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html",
+    "evidenceSha256": "35471505a2cf2e55ab55ca71f8c947aaf3c999c0b07681be7a2c32b204a46d0d",
+    "validUntil": null
+  },
+  {
+    "sourceId": "kowalczyk-koelner-fx06k040-200",
+    "ean": "5906675107622",
+    "name": "KOELNER Kołek szybkiego montażu 6x40 z kołnierzem 200szt/op. (FX-06K040)",
+    "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675107622.jpg",
+    "priceGrosze": 2187,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T12:15:45.782Z",
+    "sourceUrl": "https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html",
+    "evidenceSha256": "f48a03ea317aef7db4037c4a66d78af01d41c49a488a757eed272085bb9fb6ff",
+    "validUntil": null
+  },
+  {
+    "sourceId": "kim-koelner-fx06k040-200",
+    "ean": "5906675107622",
+    "name": "Kołek szybki montaż kołnierz 6x40 KOELNER 200 szt. FX-06K040",
+    "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675107622.jpg",
+    "priceGrosze": 1990,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T12:15:45.994Z",
+    "sourceUrl": "https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER",
+    "evidenceSha256": "fa49b10f64615833ca1aac6b70b4cebc2c3cf2bd6ad1764bd73f9c6a15edfc6f",
+    "validUntil": null
+  },
+  {
+    "sourceId": "zpradem-koelner-ws3595-1000",
+    "ean": "5906675303024",
+    "name": "Wkręt fosfatowany samowiercący 3,5x9,5 WS-3595 1000szt",
+    "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675303024.png",
+    "priceGrosze": 5630,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T12:15:46.267Z",
+    "sourceUrl": "https://zpradem.pl/wkret-fosfatowany-samowiercacy-35x95-ws-3595-1000szt/798230",
+    "evidenceSha256": "68ed84e20d0a97a5e6b38503d390eaa1341223209d2dc2d2d69000324e709268",
+    "validUntil": null
   }
 ]
