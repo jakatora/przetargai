@@ -2505,5 +2505,31 @@
     "sourceUrl": "https://liderzycen.pl/pl/p/Tasma-aluminiowa-do-laczenia-podkladow-Arbiton-Izo-Floor-Tape-25-m/31334",
     "evidenceSha256": "23c60bccf06004993cf37ee7a1c49acf312a095912c7dfb2bab51a1bca6ac4b6",
     "validUntil": null
+  },
+  {
+    "sourceId": "ebardo-conpar-100m2",
+    "ean": "5902096430103",
+    "name": "Folia paroizolacyjna Conpar 0,2mm 2mx50m",
+    "imageUrl": "https://ebardo.pl/environment/cache/images/productGfx_2143_500_500/Folia-paroizolacyjna-Conpar-0%2C2mm-2mx50m.jpg",
+    "priceGrosze": 16000,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T09:08:38.964Z",
+    "sourceUrl": "https://ebardo.pl/pl/p/Folia-paroizolacyjna-Conpar-0%2C2mm-2mx50m/86",
+    "evidenceSha256": "bab2df94da9f5124bc8061b75dd4fbafb6e2da917b6f440f9cf517d5b3ab1dee",
+    "validUntil": null
+  },
+  {
+    "sourceId": "ebardo-ecovil-p-100m2",
+    "ean": "5902096431131",
+    "name": "Folia paroizolacyjna Ecovil 0,2mm 2mx50m 100m2",
+    "imageUrl": "https://ebardo.pl/environment/cache/images/productGfx_2142_500_500/Folia-paroizolacyjna-Ecovil-0%2C2mm-2mx50m-100m2.jpg",
+    "priceGrosze": 10500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T09:08:39.599Z",
+    "sourceUrl": "https://ebardo.pl/pl/p/Folia-paroizolacyjna-Ecovil-0%2C2mm-2mx50m-100m2/534",
+    "evidenceSha256": "f4eaf44957858d9909e2076540b612c8f214467c0b9bf4504447316391a2744f",
+    "validUntil": null
   }
 ]
