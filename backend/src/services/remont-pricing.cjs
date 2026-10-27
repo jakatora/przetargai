@@ -19427,6 +19427,7 @@ var optionsSchema = external_exports2.object({
     mode: external_exports2.enum(["shipping", "pickup"]),
     method: external_exports2.enum(["automatic", "manual"]).optional(),
     postalCode: external_exports2.string().regex(/^\d{2}-\d{3}$/).optional(),
+    allowSeparateOrders: external_exports2.boolean().optional(),
     costsGrosze: external_exports2.record(external_exports2.string().min(1).max(80), external_exports2.number().int().min(0).max(1e7)).refine((value) => Object.keys(value).length <= 20).optional()
   }).optional()
 }).optional();
@@ -21490,9 +21491,9 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     cache.set(key, pending);
     return pending;
   };
-  const quoteOrders = withOrderPartitions(quoteWithStock, () => {
+  const quoteOrders = settings.allowSeparateOrders === true ? withOrderPartitions(quoteWithStock, () => {
     partitionSearchLimited = true;
-  });
+  }) : quoteWithStock;
   let result;
   for (let attempt = 0; attempt < 4; attempt++) {
     allowNewQuotes = attempt < 3;
@@ -21509,6 +21510,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   }
   if (limits.size) result.stockLimits = [...limits.values()];
   if (partitionSearchLimited) result.searchLimited = true;
+  result.allowSeparateOrders = settings.allowSeparateOrders === true;
   return result;
 }
 async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
