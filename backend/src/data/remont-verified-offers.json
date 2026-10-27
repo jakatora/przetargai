@@ -2857,5 +2857,18 @@
     "sourceUrl": "https://topboden.pl/listwy-przypodlogowe/indo-zakonczenie-prawe-lewe-bialy-polysk-01-opakowanie-foliowe",
     "evidenceSha256": "dda5d74d6bed10afa4467038259c3301189fc32c1ddb19181c141e667e9fde1f",
     "validUntil": "2026-10-29"
+  },
+  {
+    "sourceId": "topboden-strongman-300ml",
+    "ean": "5905167788264",
+    "name": "Klej montażowy Arbiton Strongman 300 ml - klej do listew przypodłogowych",
+    "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167788264_I_01.webp",
+    "priceGrosze": 3189,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T16:38:27.518Z",
+    "sourceUrl": "https://topboden.pl/listwy-przypodlogowe/klej-montazowy-strongman-300ml",
+    "evidenceSha256": "24625cfc582774889c3dfd18f32c1b744285c9febc3023da271eb8181745254d",
+    "validUntil": "2026-10-29"
   }
 ]
