@@ -14264,6 +14264,16 @@ async function listOffersForProduct(db, productId) {
   return sortOffersWithCheapest(rows);
 }
 
+// lib/pricing-service/src/indo-endcaps.ts
+var INDO_ENDCAP_EAN = "5905167726358";
+function validIndoEndcapDemand(value) {
+  const p = value;
+  return p?.version === 1 && [p.left, p.right].every((n) => Number.isSafeInteger(n) && n >= 0 && n <= 200);
+}
+function confirmedIndoEndcapDemand(ean, unit, pack, quantity, value) {
+  return ean === INDO_ENDCAP_EAN && unit === "kpl" && pack === 1 && validIndoEndcapDemand(value) && quantity === Math.max(value.left, value.right) ? { ...value } : null;
+}
+
 // lib/price-collector/src/normalize.ts
 function parsePriceToGrosze(raw) {
   if (raw === null || raw === void 0) return null;
@@ -14775,10 +14785,19 @@ async function estimateStageCost(db, items, options = {}, deps = defaultDeps) {
 function groupProjectByProduct(stages) {
   const groups = /* @__PURE__ */ new Map();
   const cuts = /* @__PURE__ */ new Map();
+  const pairs = /* @__PURE__ */ new Map();
   for (const [stageIndex, stage] of stages.entries()) {
     for (const line2 of stage.lines) {
       if (!line2.resolved) continue;
       const key = line2.product.id;
+      const pair = confirmedIndoEndcapDemand(line2.product.ean, line2.unit, line2.packageSize, line2.quantity, line2.indoEndcaps);
+      if (pair) {
+        const entry = pairs.get(key) ?? { left: 0, right: 0, quantity: 0 };
+        entry.left += pair.left;
+        entry.right += pair.right;
+        entry.quantity += line2.quantity;
+        pairs.set(key, entry);
+      }
       if (line2.plainWallpaper && line2.product.ean === ERISMANN_3333_5_EAN && line2.unit === "szt" && line2.packageSize === 1) {
         const entry = cuts.get(key) ?? { panels: [], quantity: 0 };
         entry.quantity += line2.quantity;
@@ -14804,6 +14823,11 @@ function groupProjectByProduct(stages) {
     }
   }
   return [...groups.values()].map((group) => {
+    const pair = pairs.get(group.product.id);
+    if (pair && [pair.left, pair.right].every(Number.isSafeInteger)) {
+      const count = Math.max(pair.left, pair.right), additionalPairs = group.totalQuantity - pair.quantity;
+      group = { ...group, totalQuantity: additionalPairs + count, indoEndcapPlan: { left: pair.left, right: pair.right, pairs: count, additionalPairs, savedPairs: pair.quantity - count } };
+    }
     const request = cuts.get(group.product.id), plan = request && planPlainWallpaperPanels(request.panels, ERISMANN_3333_5_ROLL);
     if (plan && plan.rollsNeeded <= request.quantity) group = { ...group, totalQuantity: group.totalQuantity - request.quantity + plan.rollsNeeded, wallpaperCutPlan: plan };
     const cheapest = selectCheapestOffer(group.offers, void 0, { quantity: group.totalQuantity, product: group.product });
@@ -14820,6 +14844,7 @@ function consolidateProject(stages) {
     const lineCostGrosze = packagePlan?.totalGrosze ?? packagesNeeded * g.cheapestOffer.unitPriceGrosze;
     lines.push({
       ...g.wallpaperCutPlan ? { wallpaperCutPlan: g.wallpaperCutPlan } : {},
+      ...g.indoEndcapPlan ? { indoEndcapPlan: g.indoEndcapPlan } : {},
       ...packagePlan ? { packagePlan } : {},
       product: g.product,
       cheapestOffer: g.cheapestOffer,
@@ -15435,6 +15460,10 @@ async function estimateStageCostFromCalculation(db, jobResult, options = {}, dep
   const stage = await estimateStageCost(db, items, options, deps);
   for (const [index2, line2] of stage.lines.entries()) {
     const input2 = jobResult.materials[index2], cut = input2?.plainWallpaper;
+    if (line2.resolved && input2?.material.ean === line2.product.ean) {
+      const pair = confirmedIndoEndcapDemand(line2.product.ean, line2.unit, line2.packageSize, input2.quantity, input2.indoEndcaps);
+      if (pair) line2.indoEndcaps = pair;
+    }
     if (!line2.resolved || line2.product.ean !== ERISMANN_3333_5_EAN || input2.material.ean !== ERISMANN_3333_5_EAN || line2.unit !== "szt" || line2.packageSize !== 1 || cut?.version !== 1 || !Array.isArray(cut.panels)) continue;
     const plan = planPlainWallpaperPanels(cut.panels, ERISMANN_3333_5_ROLL);
     if (plan && input2.quantity === plan.rollsNeeded) line2.plainWallpaper = { version: 1, panels: cut.panels.map((panel) => ({ ...panel })) };
@@ -19503,6 +19532,7 @@ var materialSchema = external_exports2.object({
   gtin: external_exports2.string().nullish()
 });
 var materialLineSchema = external_exports2.object({
+  indoEndcaps: external_exports2.object({ version: external_exports2.literal(1), left: external_exports2.number().int().min(0).max(200), right: external_exports2.number().int().min(0).max(200) }).optional(),
   plainWallpaper: external_exports2.object({ version: external_exports2.literal(1), panels: external_exports2.array(external_exports2.object({ id: external_exports2.string().min(1).max(200), widthMm: external_exports2.number().int().min(1).max(1e5), heightMm: external_exports2.number().int().min(100).max(3e4), allowanceMm: external_exports2.number().int().min(0).max(1e3) })).min(1).max(100) }).optional(),
   material: materialSchema,
   // Ilość natywna materiału policzona przez silnik — nieujemna i skończona.
@@ -19677,6 +19707,7 @@ function serializeStage(stage) {
 function serializeConsolidatedLine(line2) {
   return {
     ...line2.wallpaperCutPlan ? { wallpaperCutPlan: line2.wallpaperCutPlan } : {},
+    ...line2.indoEndcapPlan ? { indoEndcapPlan: line2.indoEndcapPlan } : {},
     ...line2.packagePlan ? { packages: line2.packagePlan.packages.map((entry) => ({
       ...entry.purchaseMultiple ? { purchaseMultiple: entry.purchaseMultiple } : {},
       ...entry.minimumPackages ? { minimumPackages: entry.minimumPackages } : {},
@@ -21056,7 +21087,10 @@ var RETAIL_SOURCES = [
   { "id": "topboden-indo-connector-gloss-2", "ean": "5905167725870", "name": "\u0141\u0105czniki do listew przypod\u0142ogowych Arbiton INDO - bia\u0142y po\u0142ysk 01 - 2 szt.", "brand": "Arbiton", "category": "skirting-accessory", "packageSize": 2, "unit": "szt", "store": "TopBoden", "format": "topboden-api", "productUuid": "46e7fec7-9ef8-4fb3-95c5-29c0b52b7f32", "apiPurchaseUnit": "opk.", "variant": ["INDO", "bia\u0142y po\u0142ysk", "2 szt"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/indo-lacznik-bialy-polysk-01-opakowanie-foliowe", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167725870_P_01.webp" },
   // source: https://topboden.pl/listwy-przypodlogowe/indo-zakonczenie-prawe-lewe-bialy-polysk-01-opakowanie-foliowe
   // source: https://arbiton.com/pl/listwy-przypodlogowe/akcesoria/zakonczenie-l-p-indo-bialy-polysk-1-arbiton
-  { "id": "topboden-indo-endcaps-gloss-pair", "ean": "5905167726358", "name": "Zako\u0144czenie listwy przypod\u0142ogowej Arbiton INDO - bia\u0142y po\u0142ysk 01 - lewe i prawe - 2 szt.", "brand": "Arbiton", "category": "skirting-accessory", "packageSize": 1, "unit": "kpl", "store": "TopBoden", "format": "topboden-api", "productUuid": "7e8bcf6a-8e26-4f27-9785-8bb7d087ba48", "apiPurchaseUnit": "opk.", "variant": ["INDO", "bia\u0142y po\u0142ysk", "2 szt"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/indo-zakonczenie-prawe-lewe-bialy-polysk-01-opakowanie-foliowe", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167726358_P_03.webp" }
+  { "id": "topboden-indo-endcaps-gloss-pair", "ean": "5905167726358", "name": "Zako\u0144czenie listwy przypod\u0142ogowej Arbiton INDO - bia\u0142y po\u0142ysk 01 - lewe i prawe - 2 szt.", "brand": "Arbiton", "category": "skirting-accessory", "packageSize": 1, "unit": "kpl", "store": "TopBoden", "format": "topboden-api", "productUuid": "7e8bcf6a-8e26-4f27-9785-8bb7d087ba48", "apiPurchaseUnit": "opk.", "variant": ["INDO", "bia\u0142y po\u0142ysk", "2 szt"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/indo-zakonczenie-prawe-lewe-bialy-polysk-01-opakowanie-foliowe", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167726358_P_03.webp" },
+  // source: https://topboden.pl/listwy-przypodlogowe/klej-montazowy-strongman-300ml
+  // source: https://arbiton.com/pl/klej-montazowy-strongman-300ml
+  { "id": "topboden-strongman-300ml", "ean": "5905167788264", "name": "Klej monta\u017Cowy Arbiton Strongman 300 ml - klej do listew przypod\u0142ogowych", "brand": "Arbiton", "category": "skirting-adhesive", "packageSize": 300, "unit": "ml", "store": "TopBoden", "format": "topboden-api", "productUuid": "9cc774ed-c24b-4f3b-a863-a935a86383f4", "apiPurchaseUnit": "szt.", "variant": ["Strongman", "300 ml"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/klej-montazowy-strongman-300ml", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167788264_I_01.webp" }
 ];
 var RETAIL_NAME_ALIASES = {
   "Erismann RollOver 3333-5 \u2014 flizelina do malowania, rolka 0,75 \xD7 25 m": "4002790333357",
@@ -21248,7 +21282,8 @@ var RETAIL_NAME_ALIASES = {
   "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 naro\u017Cniki wewn\u0119trzne (2 szt.)": "5905167726037",
   "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 naro\u017Cniki zewn\u0119trzne (2 szt.)": "5905167726198",
   "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 \u0142\u0105czniki (2 szt.)": "5905167725870",
-  "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 zako\u0144czenia lewe + prawe (1 para)": "5905167726358"
+  "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 zako\u0144czenia lewe + prawe (1 para)": "5905167726358",
+  "Arbiton Strongman \u2014 klej monta\u017Cowy 300 ml": "5905167788264"
 };
 
 // artifacts/api-server/src/lib/retail-microdata.ts
@@ -22282,12 +22317,14 @@ var AnonymousShop = class {
       if (!reader) throw Error("invalid_response");
       const chunks = [];
       let size = 0;
+      const largeStrongman = method === "GET" && !url2.search && (url2.origin === "https://api.topboden.pl" && url2.pathname === "/api/product/by-uuid/9cc774ed-c24b-4f3b-a863-a935a86383f4" || url2.origin === "https://topboden.pl" && url2.pathname === "/listwy-przypodlogowe/klej-montazowy-strongman-300ml");
+      const responseLimit = largeStrongman ? 2e6 : 1e6;
       try {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           size += value.byteLength;
-          if (size > 1e6) throw Error("response_too_large");
+          if (size > responseLimit) throw Error("response_too_large");
           chunks.push(value);
         }
       } finally {
@@ -22751,15 +22788,18 @@ function confirmTopbodenProduct(product, source, count = source.purchaseMultiple
   };
   const accessory = accessoryPacks[source.id];
   if (accessory && (source.ean !== accessory[0] || source.productUuid !== accessory[1] || source.packageSize !== accessory[2] || source.unit !== accessory[3] || source.apiPurchaseUnit !== "opk." || multiple !== 1)) throw Error("product_package_not_confirmed");
+  const glue = source.id === "topboden-strongman-300ml";
+  if (glue && (source.ean !== "5905167788264" || source.productUuid !== "9cc774ed-c24b-4f3b-a863-a935a86383f4" || source.packageSize !== 300 || source.unit !== "ml" || source.apiPurchaseUnit !== "szt." || multiple !== 1)) throw Error("product_package_not_confirmed");
   if (units && Number.isSafeInteger(units.multiple) && Number.isSafeInteger(units.minOrderQuantity) && (units.multiple !== multiple || units.minOrderQuantity !== multiple)) throw Error("purchase_rules_changed");
-  const nativeUnit = accessory ? "opk." : source.unit, nativeOrderUnit = accessory ? "opk." : "szt.", nativePackSize = accessory ? 1 : source.packageSize;
+  const nativeUnit = accessory ? "opk." : glue ? "szt." : source.unit, nativeOrderUnit = accessory ? "opk." : "szt.", nativePackSize = accessory || glue ? 1 : source.packageSize;
   if (!Number.isSafeInteger(multiple) || multiple < 1 || multiple > 1e4 || !units || units.orderUnit !== nativeOrderUnit || units.priceListUnit !== nativeUnit || units.basicUnit !== nativeUnit || !Number.isFinite(units.numerator) || !Number.isFinite(units.denominator) || units.denominator <= 0 || units.numerator / units.denominator !== nativePackSize || units.multiple !== multiple || units.minOrderQuantity !== multiple) throw Error("retailer_unit_not_confirmed");
   if (!Number.isSafeInteger(count) || count < multiple || count % multiple || count > 1e4) throw Error("purchase_multiple_required");
   if (product.available === false) throw Error("retailer_out_of_stock");
   if (product.available !== true || !Number.isFinite(product.baseUnitStock)) throw Error("retailer_stock_not_confirmed");
   if (product.baseUnitStock < count * nativePackSize) throw Error(count === multiple ? "retailer_out_of_stock" : "insufficient_stock");
   const price2 = product.price;
-  if (!price2 || typeof price2.isDiscount !== "boolean" || product.promotionCode) throw Error("conditional_price_not_supported");
+  const regularStrongman = glue && product.promotionCode?.code === "EXTRA20" && product.promotionCode?.discount === "20" && product.promotionCode?.freeProductsMessage === null && price2?.isDiscount === false && price2.discountValue === 0 && ["discountNetPrice", "discountGrossPrice", "discountPackageNetPrice", "discountPackageGrossPrice"].every((key) => price2[key] === null) && price2.grossPrice === price2.packageGrossPrice;
+  if (!price2 || typeof price2.isDiscount !== "boolean" || product.promotionCode && !regularStrongman) throw Error("conditional_price_not_supported");
   const priceGrosze = price2.isDiscount ? price2.discountPackageGrossPrice : price2.packageGrossPrice;
   if (!Number.isSafeInteger(priceGrosze) || priceGrosze <= 0) throw Error("retailer_gross_price_not_confirmed");
   const photo = product.images?.find((image) => image.category === "Packshot") ?? product.images?.[0];
@@ -22787,8 +22827,9 @@ async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMul
       return [];
     }
   }).filter((item) => item?.["@type"] === "Product");
-  const accessoryIdentity = source.apiPurchaseUnit === "opk." && records.length === 1 && typeof product.metaTitle === "string" && product.metaTitle.length > 0 && card.metaTitle === product.metaTitle && records[0].name === product.metaTitle && records[0].brand === source.brand && typeof records[0].image === "string" && records[0].image.includes(source.ean);
-  if (records.length !== 1 || !(source.apiPurchaseUnit === "opk." ? accessoryIdentity : records[0].name?.startsWith(product.name))) throw Error("product_identity_not_confirmed");
+  const reviewedNativePack = source.apiPurchaseUnit === "opk." || source.id === "topboden-strongman-300ml";
+  const accessoryIdentity = reviewedNativePack && records.length === 1 && typeof product.metaTitle === "string" && product.metaTitle.length > 0 && card.metaTitle === product.metaTitle && records[0].name === product.metaTitle && records[0].brand === source.brand && typeof records[0].image === "string" && records[0].image.includes(source.ean);
+  if (records.length !== 1 || !(reviewedNativePack ? accessoryIdentity : records[0].name?.startsWith(product.name))) throw Error("product_identity_not_confirmed");
   const offer = records[0].offers;
   if (offer?.priceCurrency !== "PLN" || parsePriceToGrosze(offer.price) !== confirmed.priceGrosze || !/\/InStock$/.test(String(offer.availability))) throw Error("retailer_gross_price_not_confirmed");
   return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
