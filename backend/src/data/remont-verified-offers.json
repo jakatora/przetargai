@@ -1903,5 +1903,18 @@
     "sourceUrl": "https://sklep.sewera.pl/sniezka-grunt-5l-p6153",
     "evidenceSha256": "e469fd3d84565bda605dc0cb347271206b3b1c7a3481b8946997b6a58242d73c",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-packcenter-edge-tape-50m",
+    "ean": "",
+    "name": "Taśma dylatacyjna 5mm x 10cm x 50m",
+    "imageUrl": "https://sklep.sewera.pl/photo/364366/tasma-dylatacyjna-5mm-x-10cm-x-50m.webp",
+    "priceGrosze": 1406,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T01:34:02.370Z",
+    "sourceUrl": "https://sklep.sewera.pl/tasma-dylatacyjna-5mm-x-10cm-x-50m-p23282",
+    "evidenceSha256": "a001f5f56a4ecbb1bf3b0c51b9a390ba83a1f7a1cc65ecb5f037f31e72a18ab5",
+    "validUntil": null
   }
 ]
