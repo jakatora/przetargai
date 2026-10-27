@@ -49,4 +49,7 @@ test('pobierzDokumenty: właściwy adres i UA, zły id → wyjątek bez sieci, b
   assert.match(zadanie.opcje.headers['User-Agent'], /PrzetargAI/);
   await assert.rejects(pobierzDokumenty('zly', { fetchFn: async () => { throw new Error('nie wolno'); } }), /identyfikator/);
   await assert.rejects(pobierzDokumenty(ID, { fetchFn: async () => ({ ok: false, status: 403 }) }), /403/);
+  // Portal nie zna postępowania (400 „Brak postępowania o identyfikatorze…”) → pusta lista, nie błąd.
+  assert.deepEqual(await pobierzDokumenty(ID, { fetchFn: async () => ({ ok: false, status: 400, json: async () => ({ error: 'Brak postępowania o identyfikatorze id: x' }) }) }), []);
+  assert.deepEqual(await pobierzDokumenty(ID, { fetchFn: async () => ({ ok: false, status: 404 }) }), []);
 });

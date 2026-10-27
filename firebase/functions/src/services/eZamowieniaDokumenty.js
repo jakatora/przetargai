@@ -72,6 +72,13 @@ export async function pobierzDokumenty(postepowanieId, { fetchFn = fetch, limitM
     const res = await fetchFn(`${BAZA_API}/Search/GetTenderDocuments?tenderId=${encodeURIComponent(postepowanieId)}`, {
       headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' }, signal: kontroler.signal,
     });
+    // 400 „Brak postępowania o identyfikatorze…” / 404: read-model portalu nie zna tego postępowania
+    // (np. ogłoszenie z BZP sprzed indeksacji albo spoza platformy) — dla klienta to „brak dokumentów
+    // na platformie”, nie awaria (produkcja 27.10: 2026~BZP_00505033).
+    if (res.status === 400 || res.status === 404) {
+      logger.info({ postepowanieId, status: res.status }, 'e-Zamówienia: postępowanie nieznane portalowi — brak dokumentów');
+      return [];
+    }
     if (!res.ok) throw new Error(`e-Zamówienia odpowiedziały ${res.status}`);
     const lista = await res.json();
     const dokumenty = normalizujDokumenty(postepowanieId, lista);
