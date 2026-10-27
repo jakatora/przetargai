@@ -27,3 +27,7 @@ niezacommitowany WIP na innej gałęzi.
 - [ ] Sklepy (user): Play Console AAB vc21 + „Informacje o wersji" z `store/whats-new-1.1.9.md`; ASC po TestFlight.
 - [x] Produkcja po deployu: `pracownikCo3h` wyzwolony ręcznie 26.10 19:26 UTC — pula 14 812, 1 użytkownik Standard, 0 nowych wyborów → gałąź dociągania dokumentów e-Zamówień nie miała kandydata (API e-Zamówień i trasa sprawdzone curlem/testami; 11 678 otwartych ogłoszeń ma `postepowanie_id`). Pierwszy dowód z danych: `ez_dokumenty_o` w `tenders` po kolejnym nowym dopasowaniu z BZP.
 - [x] STAN w pamięci projektu.
+
+## Po wydaniu — 27.10 rano
+- BUG z produkcji: 2 nowe dopasowania BZP z 01:10 UTC miały `postepowanie_id`, a `ez_dokumenty` nie powstały i nie było ostrzeżeń. Przyczyna: projekcja puli selekcji (`POLA_PULI`) nie zawierała `postepowanie_id` → warunek w `wybierz` cicho fałszywy. Poprawka `f8552f1` (+ test z prawdziwej puli `openPool`). Drugi wniosek: portal odpowiada 400 „Brak postępowania o identyfikatorze…” dla części ogłoszeń BZP → od `c0c60bf` pusta lista zamiast błędu. Deploy 14/14 27.10 ~06:3x UTC; backfill `ez_dokumenty` dla obu dopasowań (obie puste listy: jedno poza platformą, drugie nieznane portalowi). Dowód „dokumenty z SWZ w selekcji" nadal czeka na nowe dopasowanie BZP prowadzone na platformie.
+
