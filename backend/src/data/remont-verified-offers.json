@@ -2531,5 +2531,32 @@
     "sourceUrl": "https://ebardo.pl/pl/p/Folia-paroizolacyjna-Ecovil-0%2C2mm-2mx50m-100m2/534",
     "evidenceSha256": "f4eaf44957858d9909e2076540b612c8f214467c0b9bf4504447316391a2744f",
     "validUntil": null
+  },
+  {
+    "sourceId": "hipper-norgips-cross-100",
+    "ean": "5907651696468",
+    "name": "Łącznik krzyżowy 60 x 145 mm 100 szt. Norgips",
+    "stockPackages": 3,
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos%7CPhotoMed%7C9794D2D8-F401-4DEA-BF8D-D0FF361306EE%7C1/%C5%81%C4%85cznik%20krzy%C5%BCowy%2060%20x%20145%20mm%20100%20szt.%20Norgips.webp",
+    "priceGrosze": 8999,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T10:06:20.122Z",
+    "sourceUrl": "https://hipper.pl/lacznik-krzyzowy-60-x-145-mm-100-szt-norgips-3071669325",
+    "evidenceSha256": "2dac2cd94468c882446ef6a55b941f74bf4d5e3eb037ba92dc0b73ee334b9746",
+    "validUntil": null
+  },
+  {
+    "sourceId": "ebardo-budmat-cross-100",
+    "ean": "5901323043369",
+    "name": "Łącznik krzyżowy GK do profil CD60 100szt BUDMAT 0,8mm",
+    "imageUrl": "https://ebardo.pl/environment/cache/images/productGfx_2897_500_500/Lacznik-krzyzowy-GK-do-profil-CD60-100szt-BUDMAT-0%2C8mm.jpg",
+    "priceGrosze": 4900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T10:06:24.797Z",
+    "sourceUrl": "https://ebardo.pl/pl/p/Lacznik-krzyzowy-GK-do-profil-CD60-100szt-BUDMAT-0%2C8mm/138",
+    "evidenceSha256": "70fd05a6d5ad807d5ca70570436ba046c8b3895735cf310bd6053e87f61cd43a",
+    "validUntil": null
   }
 ]
