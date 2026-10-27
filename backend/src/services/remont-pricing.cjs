@@ -21030,7 +21030,21 @@ var RETAIL_SOURCES = [
   { "id": "swiat-metylan-normal-125g", "ean": "4015000095266", "name": "METYLAN Normal 125g klej do tapet 24122", "brand": "Metylan", "category": "wallpaper-adhesive", "packageSize": 125, "unit": "g", "store": "\u015Awiat Si\u0119 Klei", "url": "https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101", "format": "shoper-api", "productId": 101, "retailerSku": "N-26", "apiPurchaseUnit": "szt.", "variant": ["normal", "125g"], "imageUrl": "https://swiatsieklei.pl/environment/cache/images/productGfx_a44f7b5fc0ca152dba8e53e1ccae43fa_500_500.webp", "pickupRequiresConfirmation": true },
   // source: https://plejadatapet.pl/pl/p/Gladka-tapeta-flizelinowa-150gm2-25m-0%2C75m-3333-5-Erismann-RollOver/23972
   // source: https://www.erismann.de/en/collection/rollover-27
-  { "id": "plejada-erismann-rollover-3333-5", "ean": "4002790333357", "name": "G\u0142adka tapeta flizelinowa 150g/m2 25m * 0,75m 3333-5 Erismann RollOver", "brand": "Erismann", "category": "wallpaper", "packageSize": 1, "unit": "szt", "store": "Plejada Tapet", "url": "https://plejadatapet.pl/pl/p/Gladka-tapeta-flizelinowa-150gm2-25m-0%2C75m-3333-5-Erismann-RollOver/23972", "format": "shoper-api", "productId": 23972, "retailerSku": "ER 3333-5", "apiPurchaseUnit": "szt.", "variant": ["3333-5", "rollover"], "packageDescription": "25.00m * 0.75m", "imageUrl": "https://plejadatapet.pl/environment/cache/images/productGfx_92091_500_500/Gladka-tapeta-flizelinowa-150gm2-25m--0%2C75m-3333-5-Erismann-RollOver.jpg", "pickupRequiresConfirmation": true }
+  { "id": "plejada-erismann-rollover-3333-5", "ean": "4002790333357", "name": "G\u0142adka tapeta flizelinowa 150g/m2 25m * 0,75m 3333-5 Erismann RollOver", "brand": "Erismann", "category": "wallpaper", "packageSize": 1, "unit": "szt", "store": "Plejada Tapet", "url": "https://plejadatapet.pl/pl/p/Gladka-tapeta-flizelinowa-150gm2-25m-0%2C75m-3333-5-Erismann-RollOver/23972", "format": "shoper-api", "productId": 23972, "retailerSku": "ER 3333-5", "apiPurchaseUnit": "szt.", "variant": ["3333-5", "rollover"], "packageDescription": "25.00m * 0.75m", "imageUrl": "https://plejadatapet.pl/environment/cache/images/productGfx_92091_500_500/Gladka-tapeta-flizelinowa-150gm2-25m--0%2C75m-3333-5-Erismann-RollOver.jpg", "pickupRequiresConfirmation": true },
+  // source: https://winbud24.pl/pl/p/Mapei-Mapegum-WPS-folia-w-plynie-5kg/131
+  { "id": "winbud-mapegum-wps-5kg", "ean": "8022452002113", "name": "Mapei Mapegum WPS folia w p\u0142ynie  5kg", "category": "waterproofing", "brand": "Mapei", "packageSize": 5, "unit": "kg", "store": "WinBud", "format": "shoper-api", "url": "https://winbud24.pl/pl/p/Mapei-Mapegum-WPS-folia-w-plynie-5kg/131", "productId": 131, "retailerSku": "002113", "apiPurchaseUnit": "szt.", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_10363_500_500/Mapei-Mapegum-WPS-folia-w-plynie-5kg.png", "variant": ["5kg"], "pickupRequiresConfirmation": true },
+  // source: https://winbud24.pl/pl/p/Mapei-Mapegum-WPS-folia-w-plynie-10kg/419
+  { "id": "winbud-mapegum-wps-10kg", "ean": "8022452002120", "name": "Mapei Mapegum WPS folia w p\u0142ynie 10kg", "category": "waterproofing", "brand": "Mapei", "packageSize": 10, "unit": "kg", "store": "WinBud", "format": "shoper-api", "url": "https://winbud24.pl/pl/p/Mapei-Mapegum-WPS-folia-w-plynie-10kg/419", "productId": 419, "retailerSku": "002120", "apiPurchaseUnit": "szt.", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_10364_500_500/Mapei-Mapegum-WPS-folia-w-plynie-10kg.png", "variant": ["10kg"], "pickupRequiresConfirmation": true },
+  // source: https://winbud24.pl/pl/p/Mapei-Mapegum-WPS-20kg-folia-w-plynie/3543
+  { "id": "winbud-mapegum-wps-20kg", "ean": "8022452242502", "name": "Mapei Mapegum WPS 20kg folia w p\u0142ynie", "category": "waterproofing", "brand": "Mapei", "packageSize": 20, "unit": "kg", "store": "WinBud", "format": "shoper-api", "url": "https://winbud24.pl/pl/p/Mapei-Mapegum-WPS-20kg-folia-w-plynie/3543", "productId": 3543, "retailerSku": "8022452242502", "apiPurchaseUnit": "szt.", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_10095_500_500/Mapei-Mapegum-WPS-folia-w-plynie-20kg.jpg", "variant": ["20kg"], "pickupRequiresConfirmation": true },
+  // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-10mb-Tasma-uszczelniajaca%2C-rolka/3088
+  { "id": "winbud-mapeband-w-10m", "ean": "8022452113932", "name": "Mapei Mapeband W 10mb - Ta\u015Bma uszczelniaj\u0105ca, rolka", "category": "sealing-tape", "brand": "Mapei", "packageSize": 10, "unit": "m", "store": "WinBud", "format": "shoper-api", "url": "https://winbud24.pl/pl/p/Mapei-Mapeband-W-10mb-Tasma-uszczelniajaca%2C-rolka/3088", "productId": 3088, "retailerSku": "8022452113932", "apiPurchaseUnit": "szt.", "variant": ["10mb"], "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_445089b9b7c9b68ab49588317e73e9ce_500_500.jpg", "pickupRequiresConfirmation": true },
+  // source: https://winbud24.pl/pl/p/Mapei-Mapeband-W-mankiet-uszczelniajacy-300-x-300mm%2C-podlogowy/3091
+  { "id": "winbud-mapeband-w-floor-300", "ean": "8022452113895", "name": "Mapei Mapeband W -  mankiet uszczelniaj\u0105cy 300 x 300mm, pod\u0142ogowy", "category": "sealing-cuff", "brand": "Mapei", "packageSize": 1, "unit": "szt", "store": "WinBud", "format": "shoper-api", "url": "https://winbud24.pl/pl/p/Mapei-Mapeband-W-mankiet-uszczelniajacy-300-x-300mm%2C-podlogowy/3091", "productId": 3091, "retailerSku": "8022452113895", "apiPurchaseUnit": "szt.", "imageUrl": "https://winbud24.pl/environment/cache/images/productGfx_19e0623a7a479d85b5c509f0f7dd6f7e_500_500.jpg", "variant": ["300"], "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-1l-KONCENTRAT-GRUNTUJACY-GRUNT/10970
+  { "id": "rabdom-primer-g-pro-1l", "ean": "8022452241123", "name": "MAPEI PRIMER G PRO 1l KONCENTRAT GRUNTUJ\u0104CY GRUNT", "category": "primer", "brand": "Mapei", "packageSize": 1, "unit": "l", "store": "Rab-Dom", "format": "shoper-api", "url": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-1l-KONCENTRAT-GRUNTUJACY-GRUNT/10970", "productId": 10970, "retailerSku": "37969", "apiPurchaseUnit": "szt.", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_19574_500_500/4_primer-g-pro_1l_pl_2c7d4435f6894c59b7f19830a10992cc.webp", "variant": ["1l"], "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-5l-KONCENTRAT-GRUNTUJACY-GRUNT/10969
+  { "id": "rabdom-primer-g-pro-5l", "ean": "8022452241130", "name": "MAPEI PRIMER G PRO 5l KONCENTRAT GRUNTUJ\u0104CY GRUNT", "category": "primer", "brand": "Mapei", "packageSize": 5, "unit": "l", "store": "Rab-Dom", "format": "shoper-api", "url": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-5l-KONCENTRAT-GRUNTUJACY-GRUNT/10969", "productId": 10969, "retailerSku": "37970", "apiPurchaseUnit": "szt.", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_19572_500_500/4_primer-g-pro_5l_pl_ea1ad0866a074cc2a5352b1844b10324.webp", "variant": ["5l"], "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
   "Erismann RollOver 3333-5 \u2014 flizelina do malowania, rolka 0,75 \xD7 25 m": "4002790333357",
@@ -21211,7 +21225,14 @@ var RETAIL_NAME_ALIASES = {
   "Zestaw przy\u0142\u0105czeniowo-mocuj\u0105cy WC Tycner (rury, uszczelki i akcesoria)": "5901095514395",
   "Ta\u015Bma paroszczelna okienna Soudal SWS Basic Plus Inside 90 mm \xD7 30 m": "5411183151178",
   "Szybkoz\u0142\u0105czka uniwersalna WAGO 221-413 3\xD70,2-4 mm\xB2 (1 szt.)": "4050821808442",
-  "Profil naro\u017Cny do glazury Cezar aluminiowy 8 mm, tytan szczotkowany mat, 2,5 m": "5904584853500"
+  "Profil naro\u017Cny do glazury Cezar aluminiowy 8 mm, tytan szczotkowany mat, 2,5 m": "5904584853500",
+  "Mapei Mapegum WPS \u2014 folia w p\u0142ynie 5 kg": "8022452002113",
+  "Mapei Mapegum WPS \u2014 folia w p\u0142ynie 10 kg": "8022452002120",
+  "Mapei Mapegum WPS \u2014 folia w p\u0142ynie 20 kg": "8022452242502",
+  "Mapei Mapeband W \u2014 ta\u015Bma uszczelniaj\u0105ca 120 mm \xD7 10 m": "8022452113932",
+  "Mapei Mapeband W \u2014 mankiet pod\u0142ogowy 300 \xD7 300 mm (1 szt.)": "8022452113895",
+  "Mapei Primer G Pro \u2014 koncentrat gruntuj\u0105cy 1 l": "8022452241123",
+  "Mapei Primer G Pro \u2014 koncentrat gruntuj\u0105cy 5 l": "8022452241130"
 };
 
 // artifacts/api-server/src/lib/retail-microdata.ts
@@ -23450,6 +23471,17 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  const hydroPacks = {
+    "winbud-mapegum-wps-5kg": ["8022452002113", 5, "kg", 131, "002113"],
+    "winbud-mapegum-wps-10kg": ["8022452002120", 10, "kg", 419, "002120"],
+    "winbud-mapegum-wps-20kg": ["8022452242502", 20, "kg", 3543, "8022452242502"],
+    "winbud-mapeband-w-10m": ["8022452113932", 10, "m", 3088, "8022452113932"],
+    "winbud-mapeband-w-floor-300": ["8022452113895", 1, "szt", 3091, "8022452113895"],
+    "rabdom-primer-g-pro-1l": ["8022452241123", 1, "l", 10970, "37969"],
+    "rabdom-primer-g-pro-5l": ["8022452241130", 5, "l", 10969, "37970"]
+  };
+  const hydro = hydroPacks[source.id];
+  if (hydro && (source.ean !== hydro[0] || source.packageSize !== hydro[1] || source.unit !== hydro[2] || source.productId !== hydro[3] || source.retailerSku !== hydro[4] || source.apiPurchaseUnit !== "szt." || item.ean !== hydro[0] || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
   if (source.id === "plejada-erismann-rollover-3333-5" && (source.ean !== "4002790333357" || source.packageSize !== 1 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt." || source.productId !== 23972 || source.retailerSku !== "ER 3333-5")) throw Error("product_package_not_confirmed");
   const gluePacks = {
     "plejada-metylan-direct-200g": ["4015000402019", 200],
