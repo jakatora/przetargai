@@ -21892,10 +21892,13 @@ var AnonymousShop = class {
     return JSON.parse(await this.read("/csAPIServer_Hipper/invokeAction", JSON.stringify(body), true, false, true));
   }
   /** WooCommerce anonymous-cart token stays private to this one shop session.
-   * Only the reviewed cart/read and add-item routes are allowed, never checkout. */
+   * Reviewed cart reads/additions, IRBUD's country+postcode and courier selection
+   * only. Contact/address lines, checkout and order routes remain forbidden. */
   async cartJson(path, body) {
     const shipping = path === "/wp-json/wc/store/v1/cart/select-shipping-rate" && this.origin === "https://irbudsklep.pl" && body && Object.keys(body).sort().join(",") === "package_id,rate_id" && body.package_id === 0 && body.rate_id === "flexible_shipping_single:3";
-    if (!["/wp-json/wc/store/v1/cart", "/wp-json/wc/store/v1/cart/add-item"].includes(path) && !shipping) throw Error("invalid_cart_route");
+    const address = body?.shipping_address;
+    const destination = path === "/wp-json/wc/store/v1/cart/update-customer" && this.origin === "https://irbudsklep.pl" && body && Object.keys(body).join(",") === "shipping_address" && address && typeof address === "object" && Object.keys(address).sort().join(",") === "country,postcode" && address.country === "PL" && typeof address.postcode === "string" && /^\d{2}-\d{3}$/.test(address.postcode);
+    if (!["/wp-json/wc/store/v1/cart", "/wp-json/wc/store/v1/cart/add-item"].includes(path) && !shipping && !destination) throw Error("invalid_cart_route");
     if (body && !this.storeCartToken) throw Error("cart_session_not_confirmed");
     const raw = await this.read(path, body ? JSON.stringify(body) : void 0, true, true);
     if (!this.storeCartToken) throw Error("cart_session_not_confirmed");
@@ -22189,7 +22192,7 @@ function inspectIrbudCard(html, source) {
   if (!prices.length || prices.some((p) => !p || p !== prices[0])) throw Error("retailer_gross_price_mismatch");
   return { priceGrosze: prices[0] };
 }
-function confirmCart(cart, count, price2, selectedShipping) {
+function confirmCart(cart, count, price2, selectedShipping, postalCode = "") {
   if (!Array.isArray(cart.items) || cart.items.length !== 1 || cart.items_count !== count || cart.errors?.length || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
   const item = cart.items[0], t = item.totals, all = cart.totals;
   pln(item.prices);
@@ -22201,7 +22204,7 @@ function confirmCart(cart, count, price2, selectedShipping) {
   for (const k of ["total_discount", "total_discount_tax", "total_fees", "total_fees_tax"]) if (cents2(all[k]) !== 0) throw Error("basket_not_confirmed");
   const shipping = cents2(all.total_shipping) + cents2(all.total_shipping_tax);
   if (cents2(all.total_price) !== total + shipping || selectedShipping !== void 0 && shipping !== selectedShipping) throw Error("basket_not_confirmed");
-  if (cart.shipping_address?.country !== "PL" || Object.entries(cart.shipping_address).some(([k, v]) => k !== "country" && v !== "")) throw Error("country_not_confirmed");
+  if (cart.shipping_address?.country !== "PL" || cart.shipping_address?.postcode !== postalCode || Object.entries(cart.shipping_address).some(([k, v]) => !["country", "postcode"].includes(k) && v !== "")) throw Error("country_not_confirmed");
   return item;
 }
 async function prepareIrbudCart(source, count, fetchImpl) {
@@ -22218,27 +22221,30 @@ async function readIrbudProduct(source, fetchImpl) {
   const p = await prepareIrbudCart(source, 1, fetchImpl);
   return { ...p, evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
 }
-async function quoteIrbud(order, fetchImpl) {
-  if (order.store !== "IRBUD" || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
+async function quoteIrbud(order, postalCode, fetchImpl) {
+  if (order.store !== "IRBUD" || !/^\d{2}-\d{3}$/.test(postalCode) || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
   const pack = order.lines[0].packages[0], source = RETAIL_SOURCES.find((s) => s.id === pack.offerId);
   if (!source || !isReviewedIrbudSource(source)) throw Error("invalid_basket");
   const p = await prepareIrbudCart(source, pack.count, fetchImpl);
   if (p.priceGrosze !== pack.unitPriceGrosze || pack.count * p.priceGrosze !== order.materialsGrosze) throw Error("price_changed");
-  const groups = p.cart.shipping_rates;
-  if (!p.cart.has_calculated_shipping || !p.cart.needs_shipping || !Array.isArray(groups) || groups.length !== 1 || groups[0].package_id !== 0 || groups[0].destination?.country !== "PL" || Object.entries(groups[0].destination).some(([k, v]) => k !== "country" && v !== "")) throw Error("no_home_delivery");
-  if (!p.cart.payment_methods?.includes("bacs")) throw Error("no_prepaid_payment");
+  const located = await p.client.cartJson("/wp-json/wc/store/v1/cart/update-customer", { shipping_address: { country: "PL", postcode: postalCode } });
+  confirmCart(located, pack.count, p.priceGrosze, void 0, postalCode);
+  const groups = located.shipping_rates;
+  if (!located.has_calculated_shipping || !located.needs_shipping || !Array.isArray(groups) || groups.length !== 1 || groups[0].package_id !== 0 || groups[0].destination?.country !== "PL" || groups[0].destination?.postcode !== postalCode || Object.entries(groups[0].destination).some(([k, v]) => !["country", "postcode"].includes(k) && v !== "")) throw Error("no_home_delivery");
+  if (!located.payment_methods?.includes("bacs")) throw Error("no_prepaid_payment");
   const rates = groups[0].shipping_rates.filter((r) => r.rate_id === "flexible_shipping_single:3" && r.method_id === "flexible_shipping_single" && r.name === "Przesy\u0142ka kurierska");
   if (rates.length !== 1) throw Error("no_home_delivery");
   const rate = rates[0];
   pln(rate);
   const cost = cents2(rate.price) + cents2(rate.taxes);
-  if (cost <= 0) throw Error("no_home_delivery");
+  if (!Number.isSafeInteger(cost) || cost <= 0) throw Error("no_home_delivery");
   const final = await p.client.cartJson("/wp-json/wc/store/v1/cart/select-shipping-rate", { package_id: 0, rate_id: rate.rate_id });
-  confirmCart(final, pack.count, p.priceGrosze, cost);
+  confirmCart(final, pack.count, p.priceGrosze, cost, postalCode);
   const chosen = final.shipping_rates?.[0]?.shipping_rates?.filter((r) => r.selected);
   if (!final.payment_methods?.includes("bacs") || chosen?.length !== 1 || chosen[0].rate_id !== rate.rate_id || cents2(chosen[0].price) + cents2(chosen[0].taxes) !== cost) throw Error("basket_not_confirmed");
+  if (!final.has_calculated_shipping || final.shipping_rates?.length !== 1 || final.shipping_rates[0].destination?.country !== "PL" || final.shipping_rates[0].destination?.postcode !== postalCode) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: cost, carrier: rate.name, payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN + "/koszyk/", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify([...p.evidence, final])).digest("hex") } };
+  return { quote: { costGrosze: cost, carrier: rate.name, payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN + "/koszyk/", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto2.createHash)("sha256").update(JSON.stringify([...p.evidence, located, final])).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/qshop-product.ts
@@ -24036,7 +24042,7 @@ function retailerDeliveryCapabilities() {
     automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
-    postcodeStores: ["Sewera", "Cezar", "ABUD"],
+    postcodeStores: ["Sewera", "Cezar", "ABUD", "IRBUD"],
     accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", "Leroy Merlin", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
   };
 }
@@ -24144,7 +24150,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
-        if (order.store === "IRBUD") return await quoteIrbud(order, fetchImpl);
+        if (order.store === "IRBUD") return await quoteIrbud(order, postalCode, fetchImpl);
         if (order.store === "Centrum Matbud") return await quoteSkyshop(order, fetchImpl);
         if (order.store === "ABUD") return await quoteAbud(order, postalCode, fetchImpl);
         return await (order.store === "Kronosfera" ? quoteKronosfera(order, fetchImpl) : order.store === "Folnet" ? quoteFolnet(order, fetchImpl) : order.store === "Modna \u0141azienka" ? quoteModna(order, fetchImpl) : order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
