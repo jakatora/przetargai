@@ -20892,9 +20892,15 @@ var RETAIL_SOURCES = [
   // source: https://www.abud.pl/product-pol-1121-Preparat-gruntujacy-Atlas-Uni-Grunt-5kg.html
   { "id": "abud-atlas-unigrunt-5kg", "ean": "5905400520026", "name": "Preparat gruntuj\u0105cy Atlas Uni-Grunt (5kg)", "brand": "Atlas", "category": "primer", "packageSize": 5, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 1121, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-1121-Preparat-gruntujacy-Atlas-Uni-Grunt-5kg.html", "imageUrl": "https://www.abud.pl/hpeciai/8f79c1dfa0096ee78b71ee8dc46b4ccd/pol_pl_Preparat-gruntujacy-Atlas-Uni-Grunt-5kg-1121_1.webp", "pickupRequiresConfirmation": true },
   // source: https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124
-  { "id": "hipper-metylan-remover-500ml", "ean": "9000100222969", "name": "Metylan P\u0142yn do usuwania tapet 0,5 l", "brand": "Metylan", "category": "wallpaper-remover", "packageSize": 500, "unit": "ml", "store": "HIPPER", "format": "certusoft", "productId": 956213124, "retailerUnitId": 956370273, "apiPurchaseUnit": "szt", "variant": ["0,5 l"], "url": "https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|2948D411-51EF-432E-69FC-B6D536F816EC|2/Metylan%20P%C5%82yn%20do%20usuwania%20tapet%200,5%20l.webp", "pickupRequiresConfirmation": true }
+  { "id": "hipper-metylan-remover-500ml", "ean": "9000100222969", "name": "Metylan P\u0142yn do usuwania tapet 0,5 l", "brand": "Metylan", "category": "wallpaper-remover", "packageSize": 500, "unit": "ml", "store": "HIPPER", "format": "certusoft", "productId": 956213124, "retailerUnitId": 956370273, "apiPurchaseUnit": "szt", "variant": ["0,5 l"], "url": "https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|2948D411-51EF-432E-69FC-B6D536F816EC|2/Metylan%20P%C5%82yn%20do%20usuwania%20tapet%200,5%20l.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.mensura.pl/zestaw-do-ukladania-paneli-wolfcraft-6931000
+  { "id": "mensura-wolfcraft-6931000-kit", "ean": "4006885693104", "name": "WOLFCRAFT Zestaw do uk\u0142adania paneli pod\u0142ogowych 22 el. 6931000", "brand": "Wolfcraft", "category": "laminate-installation-kit", "packageSize": 1, "unit": "szt", "store": "Mensura", "format": "shoper-api", "productId": 17167, "retailerSku": "WF6931000", "apiPurchaseUnit": "szt", "variant": ["6931000"], "packageDescription": "20 x kliny dylatacyjne", "url": "https://www.mensura.pl/zestaw-do-ukladania-paneli-wolfcraft-6931000", "imageUrl": "https://www.mensura.pl/environment/cache/images/productGfx_102546_0_0/Zestaw-do-ukladania-paneli-22el.-Wolfcraft-6931000.jpg", "pickupRequiresConfirmation": true },
+  // source: https://liderzycen.pl/pl/p/Tasma-aluminiowa-do-laczenia-podkladow-Arbiton-Izo-Floor-Tape-25-m/31334
+  { "id": "liderzy-arbiton-izo-floor-tape-25m", "ean": "5905167698778", "name": "Ta\u015Bma aluminiowa do \u0142\u0105czenia podk\u0142ad\xF3w Arbiton Izo Floor Tape 25 m", "brand": "Arbiton", "category": "underlay-joint-tape", "packageSize": 25, "unit": "m", "store": "LiderzyCen", "format": "shoper-api", "productId": 31334, "retailerSku": "ctma_5905167698778", "apiPurchaseUnit": "szt.", "variant": ["25 m"], "packageDescription": "Wymiary produktu: d\u0142. 25 m", "url": "https://liderzycen.pl/pl/p/Tasma-aluminiowa-do-laczenia-podkladow-Arbiton-Izo-Floor-Tape-25-m/31334", "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_51949_500_500/7eb856643e33613605516b295006cacd.jpg", "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Zestaw do uk\u0142adania paneli Wolfcraft 6931000 \u2014 22 elementy": "4006885693104",
+  "Ta\u015Bma aluminiowa Arbiton Izo Floor Tape 50 mm \xD7 25 m": "5905167698778",
   "Metylan Remover \u2014 koncentrat do usuwania tapet 500 ml": "9000100222969",
   "Wkr\u0119ty do p\u0142yt GK Koelner FS 3,5\xD725 mm, 1000 szt.": "5906675305127",
   "Wkr\u0119ty do profili Koelner WS 3,5\xD79,5 mm, 1000 szt.": "5906675303024",
@@ -23788,6 +23794,8 @@ var ORIGINS = {
   WinBud: "https://winbud24.pl",
   "Dam-Bud": "https://salonbudowlanydambud.pl",
   "Plus-Market": "https://www.plus-market.pl",
+  // source: https://www.mensura.pl/zestaw-do-ukladania-paneli-wolfcraft-6931000
+  Mensura: "https://www.mensura.pl",
   KELOT: "https://listwy.sklep.pl",
   LiderzyCen: "https://liderzycen.pl",
   TGS: "https://tgs.pl"

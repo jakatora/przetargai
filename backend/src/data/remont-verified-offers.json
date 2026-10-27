@@ -2479,5 +2479,31 @@
     "sourceUrl": "https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124",
     "evidenceSha256": "3fbb31fbeb22ec41bad30033e36ed62b6f6c335311fd7224a6851d846130a787",
     "validUntil": null
+  },
+  {
+    "sourceId": "mensura-wolfcraft-6931000-kit",
+    "ean": "4006885693104",
+    "name": "WOLFCRAFT Zestaw do układania paneli podłogowych 22 el. 6931000",
+    "imageUrl": "https://www.mensura.pl/environment/cache/images/productGfx_102546_0_0/Zestaw-do-ukladania-paneli-22el.-Wolfcraft-6931000.jpg",
+    "priceGrosze": 6490,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T08:27:57.495Z",
+    "sourceUrl": "https://www.mensura.pl/zestaw-do-ukladania-paneli-wolfcraft-6931000",
+    "evidenceSha256": "f93e0b8810f5d7ac749a6b1f50fd181d018f6a723c2db22e691b7d614b691d8c",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-arbiton-izo-floor-tape-25m",
+    "ean": "5905167698778",
+    "name": "Taśma aluminiowa do łączenia podkładów Arbiton Izo Floor Tape 25 m",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_51949_500_500/7eb856643e33613605516b295006cacd.jpg",
+    "priceGrosze": 1233,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T08:27:57.779Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Tasma-aluminiowa-do-laczenia-podkladow-Arbiton-Izo-Floor-Tape-25-m/31334",
+    "evidenceSha256": "23c60bccf06004993cf37ee7a1c49acf312a095912c7dfb2bab51a1bca6ac4b6",
+    "validUntil": null
   }
 ]
