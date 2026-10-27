@@ -2426,5 +2426,58 @@
     "sourceUrl": "https://www.abud.pl/product-pol-1452-Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt.html",
     "evidenceSha256": "a9bdbd606dfafed380477eff1a25cdcb9908c9edab7194ce74a563bd706fa4b8",
     "validUntil": null
+  },
+  {
+    "sourceId": "abud-metylan-remover-500ml",
+    "ean": "9000100222969",
+    "name": "Płyn do usuwania tapet 500ml Metylan",
+    "imageUrl": "https://www.abud.pl/hpeciai/da34e4afb4b30103e7a6affb323594aa/pol_pl_Plyn-do-usuwania-tapet-500ml-Metylan-5708_1.webp",
+    "priceGrosze": 3520,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T07:13:37.392Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-5708-Plyn-do-usuwania-tapet-500ml-Metylan.html",
+    "evidenceSha256": "8893267670bc77161fa56b8bef7c20a2d8d4609ad90772bd49b4704352c7b496",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-acrylputz-st10-20kg",
+    "ean": "5903973104421",
+    "name": "Gładź szpachlowa Acryl-Putz ST10 20kg",
+    "imageUrl": "https://www.abud.pl/hpeciai/32d66f04ca7d073b4e7dae3199508b6e/pol_pl_Gladz-szpachlowa-Acryl-Putz-ST10-20kg-7965_1.webp",
+    "priceGrosze": 4740,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T07:13:37.420Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-7965-Gladz-szpachlowa-Acryl-Putz-ST10-20kg.html",
+    "evidenceSha256": "3b16666085c6161588fe15802a6afe9b16c959220b45128857ccc578a41ad34a",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-atlas-unigrunt-5kg",
+    "ean": "5905400520026",
+    "name": "Preparat gruntujący Atlas Uni-Grunt (5kg)",
+    "imageUrl": "https://www.abud.pl/hpeciai/8f79c1dfa0096ee78b71ee8dc46b4ccd/pol_pl_Preparat-gruntujacy-Atlas-Uni-Grunt-5kg-1121_1.webp",
+    "priceGrosze": 4550,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T07:13:37.464Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-1121-Preparat-gruntujacy-Atlas-Uni-Grunt-5kg.html",
+    "evidenceSha256": "dce58d5152abacb81ac6cdfb0d55b37118ca61a743e918ecb4485870cbfab8db",
+    "validUntil": null
+  },
+  {
+    "sourceId": "hipper-metylan-remover-500ml",
+    "ean": "9000100222969",
+    "name": "Metylan Płyn do usuwania tapet 0,5 l",
+    "stockPackages": 8,
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|2948D411-51EF-432E-69FC-B6D536F816EC|2/Metylan%20P%C5%82yn%20do%20usuwania%20tapet%200,5%20l.webp",
+    "priceGrosze": 3699,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T07:13:37.486Z",
+    "sourceUrl": "https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124",
+    "evidenceSha256": "3fbb31fbeb22ec41bad30033e36ed62b6f6c335311fd7224a6851d846130a787",
+    "validUntil": null
   }
 ]

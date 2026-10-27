@@ -20884,9 +20884,18 @@ var RETAIL_SOURCES = [
   // source: https://www.abud.pl/product-pol-1456-Wkrety-do-blachy-KOELNER-FS-3525-1000szt.html
   { "id": "abud-koelner-fs3525-1000", "ean": "5906675305127", "name": "Wkr\u0119ty do blachy KOELNER FS-3525 (1000szt.)", "category": "drywall-accessory", "brand": "Koelner", "packageSize": 1e3, "unit": "szt", "store": "ABUD", "format": "idosell", "productId": 1456, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-1456-Wkrety-do-blachy-KOELNER-FS-3525-1000szt.html", "variant": ["FS-3525", "1000szt"], "imageUrl": "https://www.abud.pl/hpeciai/f598fd825346cdd294a6ccccd65f764b/pol_pl_Wkrety-do-blachy-KOELNER-FS-3525-1000szt-1456_1.webp", "pickupRequiresConfirmation": true },
   // source: https://www.abud.pl/product-pol-1452-Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt.html
-  { "id": "abud-koelner-fx06k040-200", "ean": "5906675107622", "name": "Ko\u0142ek szybki monta\u017C ko\u0142nierz 6x40 KOELNER 200 szt", "category": "drywall-accessory", "brand": "Koelner", "packageSize": 200, "unit": "szt", "store": "ABUD", "format": "idosell", "productId": 1452, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-1452-Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt.html", "variant": ["6x40", "200szt"], "imageUrl": "https://www.abud.pl/hpeciai/a6c8238c098e65717875db7b7bcedfc1/pol_pl_Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt-1452_2.webp", "pickupRequiresConfirmation": true }
+  { "id": "abud-koelner-fx06k040-200", "ean": "5906675107622", "name": "Ko\u0142ek szybki monta\u017C ko\u0142nierz 6x40 KOELNER 200 szt", "category": "drywall-accessory", "brand": "Koelner", "packageSize": 200, "unit": "szt", "store": "ABUD", "format": "idosell", "productId": 1452, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-1452-Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt.html", "variant": ["6x40", "200szt"], "imageUrl": "https://www.abud.pl/hpeciai/a6c8238c098e65717875db7b7bcedfc1/pol_pl_Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt-1452_2.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.abud.pl/product-pol-5708-Plyn-do-usuwania-tapet-500ml-Metylan.html
+  { "id": "abud-metylan-remover-500ml", "ean": "9000100222969", "name": "P\u0142yn do usuwania tapet 500ml Metylan", "brand": "Metylan", "category": "wallpaper-remover", "packageSize": 500, "unit": "ml", "store": "ABUD", "format": "idosell", "productId": 5708, "apiPurchaseUnit": "szt.", "url": "https://www.abud.pl/product-pol-5708-Plyn-do-usuwania-tapet-500ml-Metylan.html", "imageUrl": "https://www.abud.pl/hpeciai/da34e4afb4b30103e7a6affb323594aa/pol_pl_Plyn-do-usuwania-tapet-500ml-Metylan-5708_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.abud.pl/product-pol-7965-Gladz-szpachlowa-Acryl-Putz-ST10-20kg.html
+  { "id": "abud-acrylputz-st10-20kg", "ean": "5903973104421", "name": "G\u0142ad\u017A szpachlowa Acryl-Putz ST10 20kg", "brand": "\u015Anie\u017Cka", "category": "skim-coat", "packageSize": 20, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 7965, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-7965-Gladz-szpachlowa-Acryl-Putz-ST10-20kg.html", "imageUrl": "https://www.abud.pl/hpeciai/32d66f04ca7d073b4e7dae3199508b6e/pol_pl_Gladz-szpachlowa-Acryl-Putz-ST10-20kg-7965_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.abud.pl/product-pol-1121-Preparat-gruntujacy-Atlas-Uni-Grunt-5kg.html
+  { "id": "abud-atlas-unigrunt-5kg", "ean": "5905400520026", "name": "Preparat gruntuj\u0105cy Atlas Uni-Grunt (5kg)", "brand": "Atlas", "category": "primer", "packageSize": 5, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 1121, "apiPurchaseUnit": "op.", "url": "https://www.abud.pl/product-pol-1121-Preparat-gruntujacy-Atlas-Uni-Grunt-5kg.html", "imageUrl": "https://www.abud.pl/hpeciai/8f79c1dfa0096ee78b71ee8dc46b4ccd/pol_pl_Preparat-gruntujacy-Atlas-Uni-Grunt-5kg-1121_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124
+  { "id": "hipper-metylan-remover-500ml", "ean": "9000100222969", "name": "Metylan P\u0142yn do usuwania tapet 0,5 l", "brand": "Metylan", "category": "wallpaper-remover", "packageSize": 500, "unit": "ml", "store": "HIPPER", "format": "certusoft", "productId": 956213124, "retailerUnitId": 956370273, "apiPurchaseUnit": "szt", "variant": ["0,5 l"], "url": "https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|2948D411-51EF-432E-69FC-B6D536F816EC|2/Metylan%20P%C5%82yn%20do%20usuwania%20tapet%200,5%20l.webp", "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Metylan Remover \u2014 koncentrat do usuwania tapet 500 ml": "9000100222969",
   "Wkr\u0119ty do p\u0142yt GK Koelner FS 3,5\xD725 mm, 1000 szt.": "5906675305127",
   "Wkr\u0119ty do profili Koelner WS 3,5\xD79,5 mm, 1000 szt.": "5906675303024",
   "Ko\u0142ki do profili Koelner FX-06K040, 6\xD740 mm, 200 szt.": "5906675107622",
@@ -21733,7 +21742,7 @@ var AnonymousShop = class {
       return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
     }
     if (action === "add") {
-      if (![6204, 64835, 17848, 63790, 1456, 63463, 1452].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
+      if (![6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
       return JSON.parse(await this.read("/basketchange.php", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
     }
     if (action !== "shipping" || Object.keys(args).length) throw Error("invalid_cart_action");
@@ -22272,8 +22281,9 @@ function readCertusoftProduct(html, source) {
   const url2 = new URL(source.url);
   if (url2.origin !== "https://hipper.pl" || !Number.isSafeInteger(source.productId) || !Number.isSafeInteger(source.retailerUnitId)) throw Error("product_id_not_confirmed");
   const reviewedRoll = source.id === "hipper-norgips-fleece-50x25" && source.ean === "5907651699926" && source.brand === "Norgips" && source.productId === 2682507570 && source.retailerUnitId === 2682507597 && source.url === "https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570" && source.unit === "m" && source.packageSize === 25;
+  const reviewedBottle = source.id === "hipper-metylan-remover-500ml" && source.ean === "9000100222969" && source.brand === "Metylan" && source.productId === 956213124 && source.retailerUnitId === 956370273 && source.url === "https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124" && source.unit === "ml" && source.packageSize === 500;
   const singlePiece = source.unit === "szt" && source.packageSize === 1;
-  if (!singlePiece && !reviewedRoll || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  if (!singlePiece && !reviewedRoll && !reviewedBottle || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
   const state = readCertusoftState(html), card = state.csAppWindowsUtils?.csAppWindows?.csB2BItemCard;
   const rows = card?.dataSets?.itemCard?.rows;
   if (!Array.isArray(rows) || rows.length !== 1) throw Error("product_identity_ambiguous");
@@ -23677,7 +23687,7 @@ async function quoteSkyshop(order, fetchImpl) {
 // artifacts/api-server/src/lib/abud-delivery.ts
 var import_node_crypto14 = require("node:crypto");
 var ORIGIN = "https://www.abud.pl";
-var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200"];
+var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg"];
 function money5(value, formatted) {
   if (!["string", "number"].includes(typeof value)) throw Error("invalid_money");
   const amount2 = parsePriceToGrosze(value);
