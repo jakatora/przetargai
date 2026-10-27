@@ -21477,6 +21477,39 @@ function withOrderPartitions(atomic, limited) {
   };
 }
 
+// lib/pricing-service/src/material-purchase-plan.ts
+function materialPurchasePlan(groups, now) {
+  if (!groups.length || groups.length > DELIVERY_LIMITS.products) return null;
+  const orders = /* @__PURE__ */ new Map();
+  for (const group of groups) {
+    const offers = group.offers.filter((offer) => isComparableOffer(offer, now.getTime()));
+    const plan = optimizePackages(group.totalQuantity, buildPackageVariants(offers, group.product));
+    if (!plan || !Number.isSafeInteger(plan.totalGrosze)) return null;
+    for (const pack of plan.packages) {
+      if (!Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > DELIVERY_LIMITS.packagesPerProduct) return null;
+      let order = orders.get(pack.store);
+      if (!order) {
+        order = { store: pack.store, materialsGrosze: 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown", lines: [] };
+        orders.set(pack.store, order);
+      }
+      order.materialsGrosze += pack.lineCostGrosze;
+      if (!Number.isSafeInteger(order.materialsGrosze)) return null;
+      order.lines.push({ product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [pack] });
+    }
+  }
+  if (orders.size > DELIVERY_LIMITS.stores) return null;
+  for (const order of orders.values()) {
+    const lines = /* @__PURE__ */ new Map();
+    for (const line2 of order.lines) {
+      const existing = lines.get(line2.product.id);
+      if (existing) existing.packages.push(...line2.packages);
+      else lines.set(line2.product.id, line2);
+    }
+    order.lines = [...lines.values()];
+  }
+  return [...orders.values()].sort((a, b) => a.store.localeCompare(b.store));
+}
+
 // lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
@@ -21563,10 +21596,14 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
     return result;
   }
   result.unavailableStores = stores.filter((store) => knownUnavailableStores[store]).map((store) => ({ store, reason: knownUnavailableStores[store] }));
+  const allGroups = groups;
   groups = groups.map((group) => ({ ...group, offers: group.offers.filter((offer) => !knownUnavailableStores[offer.store]) }));
   if (groups.some((group) => !group.offers.length || !optimizePackages(group.totalQuantity, buildPackageVariants(group.offers, group.product)))) {
     result.status = "needs_delivery_costs";
-    return result;
+    const orders = materialPurchasePlan(allGroups, now);
+    if (!orders) return result;
+    const knownOnly = (order, postcode) => knownUnavailableStores[order.store] ? Promise.resolve({ reason: knownUnavailableStores[order.store] }) : quoteBasket(order, postcode);
+    return quoteAndRank([orders], new Map(orders.map((order) => [signature(order), order])), result, settings, knownOnly, now);
   }
   const tooLarge = () => {
     result.status = "limit_exceeded";
@@ -21768,6 +21805,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
 }
 async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now) {
   const failures = new Map((result.unavailableStores ?? []).map((item) => [item.store, item.reason]));
+  const invalidMaterialOrders = /* @__PURE__ */ new Set();
   const ordered = [...unique.entries()].sort((a, b) => b[1].lines.length - a[1].lines.length || b[1].materialsGrosze - a[1].materialsGrosze);
   const first = /* @__PURE__ */ new Map();
   for (const [key, order] of ordered) if (!first.has(order.store)) first.set(order.store, key);
@@ -21791,6 +21829,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
           order.source = "retailer";
         } else {
           failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
+          if ("reason" in outcome && ["price_changed", "product_unavailable", "insufficient_stock", "purchase_rules_changed"].includes(outcome.reason)) invalidMaterialOrders.add(key);
           if ("reason" in outcome && outcome.reason === "insufficient_stock" && outcome.stockLimits?.length) stockChanged = true;
         }
       } catch {
@@ -21809,7 +21848,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
       totalGrosze: deliveryGrosze === null ? null : materialsGrosze + deliveryGrosze,
       lowerBoundGrosze: materialsGrosze + actual.reduce((sum, o) => sum + (o.deliveryGrosze ?? 0), 0)
     };
-  }).filter((b) => [b.materialsGrosze, b.lowerBoundGrosze, b.totalGrosze ?? 0].every(Number.isSafeInteger));
+  }).filter((b) => b.stores.every((order) => !invalidMaterialOrders.has(signature(order))) && [b.materialsGrosze, b.lowerBoundGrosze, b.totalGrosze ?? 0].every(Number.isSafeInteger));
   const known = baskets.filter((b) => b.totalGrosze !== null).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
   result.comparedBasketCount = known.length;
   result.best = known[0] ?? null;
@@ -24033,6 +24072,7 @@ function unavailableReason(store) {
   if (sources.some((source) => source.marketplaceSeller)) return "retailer_access_required";
   if (sources.length && sources.every((source) => source.format === "betterial")) return "retailer_transport_quote_required";
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
+  if (store === "Marbet24") return "customer_details_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
   if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD"].includes(store)) return void 0;
   return ["Castorama", "OBI", "Leroy Merlin"].includes(store) ? "retailer_access_required" : "integration_unavailable";
