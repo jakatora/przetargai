@@ -20919,9 +20919,19 @@ var RETAIL_SOURCES = [
   // source: https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER
   { "id": "kim-koelner-fx06k040-200", "ean": "5906675107622", "name": "Ko\u0142ek szybki monta\u017C ko\u0142nierz 6x40 KOELNER 200 szt. FX-06K040", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 200, "unit": "szt", "store": "KIM24", "format": "shoper-api", "productId": 13330, "retailerSku": "MTZKKW06K040", "apiPurchaseUnit": "op.", "variant": ["6x40", "200 szt", "FX-06K040"], "url": "https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER", "pickupRequiresConfirmation": true, "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675107622.jpg" },
   // source: https://zpradem.pl/wkret-fosfatowany-samowiercacy-35x95-ws-3595-1000szt/798230
-  { "id": "zpradem-koelner-ws3595-1000", "ean": "5906675303024", "name": "Wkr\u0119t fosfatowany samowierc\u0105cy 3,5x9,5 WS-3595 1000szt", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 1e3, "unit": "szt", "store": "Z pr\u0105dem", "format": "shoper-api", "productId": 798230, "retailerSku": "0004-00010-06761", "apiPurchaseUnit": "szt.", "variant": ["WS-3595", "1000szt", "3,5x9,5"], "url": "https://zpradem.pl/wkret-fosfatowany-samowiercacy-35x95-ws-3595-1000szt/798230", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675303024.png", "pickupRequiresConfirmation": true }
+  { "id": "zpradem-koelner-ws3595-1000", "ean": "5906675303024", "name": "Wkr\u0119t fosfatowany samowierc\u0105cy 3,5x9,5 WS-3595 1000szt", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 1e3, "unit": "szt", "store": "Z pr\u0105dem", "format": "shoper-api", "productId": 798230, "retailerSku": "0004-00010-06761", "apiPurchaseUnit": "szt.", "variant": ["WS-3595", "1000szt", "3,5x9,5"], "url": "https://zpradem.pl/wkret-fosfatowany-samowiercacy-35x95-ws-3595-1000szt/798230", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675303024.png", "pickupRequiresConfirmation": true },
+  // source: https://plejadatapet.pl/pl/p/Klej-do-tapet-Direct-200g-Metylan/825
+  { "id": "plejada-metylan-direct-200g", "ean": "4015000402019", "name": "Klej do tapet Direct 200g Metylan", "brand": "Metylan", "category": "wallpaper-adhesive", "packageSize": 200, "unit": "g", "store": "Plejada Tapet", "url": "https://plejadatapet.pl/pl/p/Klej-do-tapet-Direct-200g-Metylan/825", "format": "shoper-api", "productId": 825, "retailerSku": "MT DIR200", "apiPurchaseUnit": "szt.", "variant": ["direct", "200g"], "imageUrl": "https://plejadatapet.pl/environment/cache/images/productGfx_36488_500_500/Klej-do-tapet-na-flizelinie-Direct-200g-Metylan-Henkel.jpg", "pickupRequiresConfirmation": true },
+  // source: https://plejadatapet.pl/pl/p/Klej-do-tapet-Normal-125g-Metylan/824
+  { "id": "plejada-metylan-normal-125g", "ean": "4015000095266", "name": "Klej do tapet Normal 125g Metylan", "brand": "Metylan", "category": "wallpaper-adhesive", "packageSize": 125, "unit": "g", "store": "Plejada Tapet", "url": "https://plejadatapet.pl/pl/p/Klej-do-tapet-Normal-125g-Metylan/824", "format": "shoper-api", "productId": 824, "retailerSku": "MT NOR125", "apiPurchaseUnit": "szt.", "variant": ["normal", "125g"], "imageUrl": "https://plejadatapet.pl/environment/cache/images/productGfx_36489_500_500/Klej-do-tapet-papierowych-Normal-125g-Metylan-Henkel.jpg", "pickupRequiresConfirmation": true },
+  // source: https://swiatsieklei.pl/pl/p/METYLAN-Direct-200g-klej-do-tapet-24119/104
+  { "id": "swiat-metylan-direct-200g", "ean": "4015000402019", "name": "METYLAN Direct 200g klej do tapet 24119", "brand": "Metylan", "category": "wallpaper-adhesive", "packageSize": 200, "unit": "g", "store": "\u015Awiat Si\u0119 Klei", "url": "https://swiatsieklei.pl/pl/p/METYLAN-Direct-200g-klej-do-tapet-24119/104", "format": "shoper-api", "productId": 104, "retailerSku": "N-29", "apiPurchaseUnit": "szt.", "variant": ["direct", "200g"], "imageUrl": "https://swiatsieklei.pl/environment/cache/images/productGfx_8cf3f0b127670f2cfdd5620ec59b3e3e_500_500.webp", "pickupRequiresConfirmation": true },
+  // source: https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101
+  { "id": "swiat-metylan-normal-125g", "ean": "4015000095266", "name": "METYLAN Normal 125g klej do tapet 24122", "brand": "Metylan", "category": "wallpaper-adhesive", "packageSize": 125, "unit": "g", "store": "\u015Awiat Si\u0119 Klei", "url": "https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101", "format": "shoper-api", "productId": 101, "retailerSku": "N-26", "apiPurchaseUnit": "szt.", "variant": ["normal", "125g"], "imageUrl": "https://swiatsieklei.pl/environment/cache/images/productGfx_a44f7b5fc0ca152dba8e53e1ccae43fa_500_500.webp", "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Metylan Direct \u2014 klej do tapet flizelinowych 200 g": "4015000402019",
+  "Metylan Normal \u2014 klej do tapet papierowych 125 g": "4015000095266",
   "Kotwa stalowa sufitowa Rawlplug R-GS-06040 (100 szt.)": "5906675169347",
   "\u0141\u0105cznik krzy\u017Cowy Norgips CD 60 (100 szt.)": "5907651696468",
   "\u0141\u0105cznik krzy\u017Cowy Budmat CD 60, 0,8 mm (100 szt.)": "5901323043369",
@@ -23336,6 +23346,14 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  const gluePacks = {
+    "plejada-metylan-direct-200g": ["4015000402019", 200],
+    "swiat-metylan-direct-200g": ["4015000402019", 200],
+    "plejada-metylan-normal-125g": ["4015000095266", 125],
+    "swiat-metylan-normal-125g": ["4015000095266", 125]
+  };
+  const glue = gluePacks[source.id];
+  if (glue && (source.ean !== glue[0] || source.packageSize !== glue[1] || source.unit !== "g" || source.apiPurchaseUnit !== "szt." || String(item.ean) !== glue[0] || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
   if (["ehw-rawlplug-gs-100", "zpradem-rawlplug-gs-100"].includes(source.id) && (source.ean !== "5906675169347" || source.packageSize !== 100 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt.")) throw Error("product_package_not_confirmed");
   if (source.id === "kim-koelner-fx06k040-200" && (source.ean !== "5906675107622" || source.packageSize !== 200 || source.unit !== "szt" || source.apiPurchaseUnit !== "op." || source.productId !== 13330 || source.retailerSku !== "MTZKKW06K040")) throw Error("product_package_not_confirmed");
   if (source.id === "zpradem-koelner-ws3595-1000" && (source.ean !== "5906675303024" || source.packageSize !== 1e3 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt." || source.productId !== 798230 || source.retailerSku !== "0004-00010-06761")) throw Error("product_package_not_confirmed");
@@ -24291,6 +24309,10 @@ async function quoteAbud(order, postalCode, fetchImpl) {
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
+  // source: https://plejadatapet.pl/pl/p/Klej-do-tapet-Direct-200g-Metylan/825
+  // source: https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101
+  "Plejada Tapet": "https://plejadatapet.pl",
+  "\u015Awiat Si\u0119 Klei": "https://swiatsieklei.pl",
   // source: https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER
   KIM24: "https://kim24.pl",
   "Z pr\u0105dem": "https://zpradem.pl",

@@ -2649,5 +2649,57 @@
     "sourceUrl": "https://zpradem.pl/wkret-fosfatowany-samowiercacy-35x95-ws-3595-1000szt/798230",
     "evidenceSha256": "68ed84e20d0a97a5e6b38503d390eaa1341223209d2dc2d2d69000324e709268",
     "validUntil": null
+  },
+  {
+    "sourceId": "plejada-metylan-direct-200g",
+    "ean": "4015000402019",
+    "name": "Klej do tapet Direct 200g Metylan",
+    "imageUrl": "https://plejadatapet.pl/environment/cache/images/productGfx_36488_500_500/Klej-do-tapet-na-flizelinie-Direct-200g-Metylan-Henkel.jpg",
+    "priceGrosze": 3190,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T13:24:40.249Z",
+    "sourceUrl": "https://plejadatapet.pl/pl/p/Klej-do-tapet-Direct-200g-Metylan/825",
+    "evidenceSha256": "82a19dfede8c6198938d6ea6097e31848cc50b97f80c1cb4de4df402326a1d48",
+    "validUntil": null
+  },
+  {
+    "sourceId": "plejada-metylan-normal-125g",
+    "ean": "4015000095266",
+    "name": "Klej do tapet Normal 125g Metylan",
+    "imageUrl": "https://plejadatapet.pl/environment/cache/images/productGfx_36489_500_500/Klej-do-tapet-papierowych-Normal-125g-Metylan-Henkel.jpg",
+    "priceGrosze": 2000,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T13:24:40.432Z",
+    "sourceUrl": "https://plejadatapet.pl/pl/p/Klej-do-tapet-Normal-125g-Metylan/824",
+    "evidenceSha256": "4ef3cc577a81fd839b97674c90e24885b9ae35f65b3d42803ffa181f021cb96b",
+    "validUntil": null
+  },
+  {
+    "sourceId": "swiat-metylan-direct-200g",
+    "ean": "4015000402019",
+    "name": "METYLAN Direct 200g klej do tapet 24119",
+    "imageUrl": "https://swiatsieklei.pl/environment/cache/images/productGfx_8cf3f0b127670f2cfdd5620ec59b3e3e_500_500.webp",
+    "priceGrosze": 2494,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T13:24:40.578Z",
+    "sourceUrl": "https://swiatsieklei.pl/pl/p/METYLAN-Direct-200g-klej-do-tapet-24119/104",
+    "evidenceSha256": "68010c5e4ce63dfa474ff3271ffc879828fb3f8f944ac13a800ab1b71a279d22",
+    "validUntil": null
+  },
+  {
+    "sourceId": "swiat-metylan-normal-125g",
+    "ean": "4015000095266",
+    "name": "METYLAN Normal 125g klej do tapet 24122",
+    "imageUrl": "https://swiatsieklei.pl/environment/cache/images/productGfx_a44f7b5fc0ca152dba8e53e1ccae43fa_500_500.webp",
+    "priceGrosze": 1698,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T13:24:40.678Z",
+    "sourceUrl": "https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101",
+    "evidenceSha256": "4e7c26154447d5f9b776dbfbd6bdfe7d1ac19470f7be5ea17dc0de688621ab6c",
+    "validUntil": null
   }
 ]
