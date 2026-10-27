@@ -2374,5 +2374,57 @@
     "sourceUrl": "https://hipper.pl/lacznik-wzdluzny-60-x-110-mm-1-szt-norgips-2682631077",
     "evidenceSha256": "dd9773883f41c090bfd6bf55d0b71bb7606351bdab41250da78b32de4b129edb",
     "validUntil": null
+  },
+  {
+    "sourceId": "buduj24-koelner-fs3525-1000",
+    "ean": "5906675305127",
+    "name": "KOELNER Wkręt FS z drobnym gwintem do mocowania płyt GK, do blach 3,5x25MM 1000szt./opak",
+    "imageUrl": "https://buduj24.pl/files/_product/14398/5906675305127_1.webp",
+    "priceGrosze": 2489,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T06:26:40.315Z",
+    "sourceUrl": "https://buduj24.pl/produkt/14398,koelner-wkret-fs-z-drobnym-gwintem-do-mocowania-plyt-gk-do-blach-3-5x25mm-1000szt-opak",
+    "evidenceSha256": "3bae3a03c8c209c0cae861d125e40281283f2b3be914fe32b77d1826b16764c6",
+    "validUntil": "2026-11-10"
+  },
+  {
+    "sourceId": "abud-koelner-ws3595-1000",
+    "ean": "5906675303024",
+    "name": "Wkręt samowiercący 3,5x9,5mm 1000 szt",
+    "imageUrl": "https://www.abud.pl/hpeciai/c13753752e4f9725fd61b84075871cd7/pol_pl_Wkret-samowiercacy-3-5x9-5mm-1000-szt-63463_1.webp",
+    "priceGrosze": 4760,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T06:26:41.408Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-63463-Wkret-samowiercacy-3-5x9-5mm-1000-szt.html",
+    "evidenceSha256": "c28bd9ff1c0ebc8c101d00e2869a5cb06569be96ca7fba798ae09e423fdabf9e",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-koelner-fs3525-1000",
+    "ean": "5906675305127",
+    "name": "Wkręty do blachy KOELNER FS-3525 (1000szt.)",
+    "imageUrl": "https://www.abud.pl/hpeciai/f598fd825346cdd294a6ccccd65f764b/pol_pl_Wkrety-do-blachy-KOELNER-FS-3525-1000szt-1456_1.webp",
+    "priceGrosze": 3540,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T06:32:33.887Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-1456-Wkrety-do-blachy-KOELNER-FS-3525-1000szt.html",
+    "evidenceSha256": "651c1d9fa17f33206b0c030eb303e065127fdf0cb6446bf1320553a893075ba3",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-koelner-fx06k040-200",
+    "ean": "5906675107622",
+    "name": "Kołek szybki montaż kołnierz 6x40 KOELNER 200 szt",
+    "imageUrl": "https://www.abud.pl/hpeciai/a6c8238c098e65717875db7b7bcedfc1/pol_pl_Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt-1452_2.webp",
+    "priceGrosze": 2190,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T06:32:34.531Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-1452-Kolek-szybki-montaz-kolnierz-6x40-KOELNER-200-szt.html",
+    "evidenceSha256": "a9bdbd606dfafed380477eff1a25cdcb9908c9edab7194ce74a563bd706fa4b8",
+    "validUntil": null
   }
 ]
