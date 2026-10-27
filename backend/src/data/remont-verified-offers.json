@@ -1916,5 +1916,44 @@
     "sourceUrl": "https://sklep.sewera.pl/tasma-dylatacyjna-5mm-x-10cm-x-50m-p23282",
     "evidenceSha256": "a001f5f56a4ecbb1bf3b0c51b9a390ba83a1f7a1cc65ecb5f037f31e72a18ab5",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-soudal-silicone-remover-100ml",
+    "ean": "5411183041899",
+    "name": "Środek do usuwania silikonu Silicone Remover 100ml Soudal",
+    "imageUrl": "https://sklep.sewera.pl/photo/343512/srodek-do-usuwania-silikonu-silicone-remover-100ml-soudal.webp",
+    "priceGrosze": 5486,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T02:28:35.474Z",
+    "sourceUrl": "https://sklep.sewera.pl/srodek-do-usuwania-silikonu-silicone-remover-100ml-soudal-p21277",
+    "evidenceSha256": "726da4ac61b906c9db1348eb5d298f3e68972a783f21fb932f895e516ebee2d5",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-soudal-silicone-remover-100ml",
+    "ean": "5411183041899",
+    "name": "SOUDAL ŚRODEK DO USUWANIA SILIKONU 100ml",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_24083_500_500/full_srodek-do-usuwania-silikonu-1366719941.webp",
+    "priceGrosze": 4500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T02:28:35.602Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/SOUDAL-SRODEK-DO-USUWANIA-SILIKONU-100ml/12481",
+    "evidenceSha256": "c6043bc276dde0747e91566bb499b5a9e286a620afd6655d089e4919324a7561",
+    "validUntil": null
+  },
+  {
+    "sourceId": "realbud-soudal-sanitary-stop-white-280ml",
+    "ean": "5411183200326",
+    "name": "SOUDAL SILIKON SANITARNY KUCHNIA ŁAZIENKA PLEŚŃ STOP BIAŁY 280ml",
+    "imageUrl": "https://realbud.com/environment/cache/images/productGfx_23109_500_500/5daa6a798ad6adc9e8224e3b5a646bb7.jpg",
+    "priceGrosze": 2300,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T02:28:35.964Z",
+    "sourceUrl": "https://realbud.com/pl/p/SOUDAL-SILIKON-SANITARNY-KUCHNIA-LAZIENKA-PLESN-STOP-BIALY-280ml/75056922",
+    "evidenceSha256": "8a71c0d252d8b9eebd3cacbd26ae93b4bff6db78ff0731dfed6038b883dcfce4",
+    "validUntil": null
   }
 ]
