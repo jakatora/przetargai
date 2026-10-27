@@ -21868,6 +21868,14 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
       }
     }
   }));
+  for (const order of unique.values()) if (order.quote && Date.parse(order.quote.expiresAt) <= Date.now()) {
+    delete order.quote;
+    order.deliveryGrosze = null;
+    order.deliveryMinimumGrosze = 0;
+    order.totalGrosze = null;
+    order.source = "unknown";
+    failures.set(order.store, "quote_expired");
+  }
   const baskets = candidates.map((orders) => {
     const actual = orders.map((o) => unique.get(signature(o)));
     const materialsGrosze = actual.reduce((sum, o) => sum + o.materialsGrosze, 0);
@@ -24440,8 +24448,10 @@ function createRetailerQuoter(fetchImpl = fetch) {
     })();
     cache.set(key, { until: Date.now() + TTL, result: pending });
     const result = await pending;
-    if ("reason" in result && cache.get(key)?.result === pending) {
-      if (result.reason === "quote_busy") cache.delete(key);
+    if (cache.get(key)?.result === pending) {
+      if ("quote" in result) {
+        cache.set(key, { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result) });
+      } else if (result.reason === "quote_busy") cache.delete(key);
       else cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
     }
     return result;
