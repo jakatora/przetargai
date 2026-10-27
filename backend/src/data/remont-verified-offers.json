@@ -2701,5 +2701,18 @@
     "sourceUrl": "https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101",
     "evidenceSha256": "4e7c26154447d5f9b776dbfbd6bdfe7d1ac19470f7be5ea17dc0de688621ab6c",
     "validUntil": null
+  },
+  {
+    "sourceId": "plejada-erismann-rollover-3333-5",
+    "ean": "4002790333357",
+    "name": "Gładka tapeta flizelinowa 150g/m2 25m * 0,75m 3333-5 Erismann RollOver",
+    "imageUrl": "https://plejadatapet.pl/environment/cache/images/productGfx_92091_500_500/Gladka-tapeta-flizelinowa-150gm2-25m--0%2C75m-3333-5-Erismann-RollOver.jpg",
+    "priceGrosze": 22790,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-27T14:34:23.456Z",
+    "sourceUrl": "https://plejadatapet.pl/pl/p/Gladka-tapeta-flizelinowa-150gm2-25m-0%2C75m-3333-5-Erismann-RollOver/23972",
+    "evidenceSha256": "e2f14450f17ddcccbba66ac84eb984edd8723f930c3c13e1cadc492f36d33a34",
+    "validUntil": null
   }
 ]
