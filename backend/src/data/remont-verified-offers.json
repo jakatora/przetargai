@@ -2870,5 +2870,19 @@
     "sourceUrl": "https://topboden.pl/listwy-przypodlogowe/klej-montazowy-strongman-300ml",
     "evidenceSha256": "24625cfc582774889c3dfd18f32c1b744285c9febc3023da271eb8181745254d",
     "validUntil": "2026-10-29"
+  },
+  {
+    "sourceId": "izosystems-sws-inside90-30m",
+    "ean": "5411183151178",
+    "name": "Taśma paroszczelna wewnętrzna Soudal SWS Basic Plus Inside 90mm x 30m",
+    "stockPackages": 94,
+    "imageUrl": "https://izosystems.pl/10544-large_default/Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.jpg",
+    "priceGrosze": 14500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T16:10:51.422Z",
+    "sourceUrl": "https://izosystems.pl/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html",
+    "evidenceSha256": "03d340e455818d5c4f4c1477ad656fff3adba3fe8904669a58a567ec6c82171d",
+    "validUntil": null
   }
 ]

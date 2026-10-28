@@ -77,11 +77,11 @@ function priceToGrosze(raw) {
 
 // node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/entity.js
 var entityKind = /* @__PURE__ */ Symbol.for("drizzle:entityKind");
-function is(value, type) {
-  if (!value || typeof value !== "object") {
+function is(value2, type) {
+  if (!value2 || typeof value2 !== "object") {
     return false;
   }
-  if (value instanceof type) {
+  if (value2 instanceof type) {
     return true;
   }
   if (!Object.prototype.hasOwnProperty.call(type, entityKind)) {
@@ -89,7 +89,7 @@ function is(value, type) {
       `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`
     );
   }
-  let cls5 = Object.getPrototypeOf(value).constructor;
+  let cls5 = Object.getPrototypeOf(value2).constructor;
   if (cls5) {
     while (cls5) {
       if (entityKind in cls5 && cls5[entityKind] === type[entityKind]) {
@@ -140,11 +140,11 @@ var Column = class {
   generated = void 0;
   generatedIdentity = void 0;
   config;
-  mapFromDriverValue(value) {
-    return value;
+  mapFromDriverValue(value2) {
+    return value2;
   }
-  mapToDriverValue(value) {
-    return value;
+  mapToDriverValue(value2) {
+    return value2;
   }
   // ** @internal */
   shouldDisableInsert() {
@@ -202,8 +202,8 @@ var ColumnBuilder = class {
    *
    * If you need to set a dynamic default value, use {@link $defaultFn} instead.
    */
-  default(value) {
-    this.config.default = value;
+  default(value2) {
+    this.config.default = value2;
     this.config.hasDefault = true;
     return this;
   }
@@ -410,8 +410,8 @@ function parsePgNestedArray(arrayString, startFrom = 0) {
       continue;
     }
     if (char2 === '"') {
-      const [value2, startFrom2] = parsePgArrayValue(arrayString, i + 1, true);
-      result.push(value2);
+      const [value22, startFrom2] = parsePgArrayValue(arrayString, i + 1, true);
+      result.push(value22);
       i = startFrom2;
       continue;
     }
@@ -419,13 +419,13 @@ function parsePgNestedArray(arrayString, startFrom = 0) {
       return [result, i + 1];
     }
     if (char2 === "{") {
-      const [value2, startFrom2] = parsePgNestedArray(arrayString, i + 1);
-      result.push(value2);
+      const [value22, startFrom2] = parsePgNestedArray(arrayString, i + 1);
+      result.push(value22);
       i = startFrom2;
       continue;
     }
-    const [value, newStartFrom] = parsePgArrayValue(arrayString, i, false);
-    result.push(value);
+    const [value2, newStartFrom] = parsePgArrayValue(arrayString, i, false);
+    result.push(value2);
     i = newStartFrom;
   }
   return [result, i];
@@ -615,14 +615,14 @@ var PgArray = class _PgArray extends PgColumn {
   getSQLType() {
     return `${this.baseColumn.getSQLType()}[${typeof this.size === "number" ? this.size : ""}]`;
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") {
-      value = parsePgArray(value);
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") {
+      value2 = parsePgArray(value2);
     }
-    return value.map((v) => this.baseColumn.mapFromDriverValue(v));
+    return value2.map((v) => this.baseColumn.mapFromDriverValue(v));
   }
-  mapToDriverValue(value, isNestedArray = false) {
-    const a = value.map(
+  mapToDriverValue(value2, isNestedArray = false) {
+    const a = value2.map(
       (v) => v === null ? null : is(this.baseColumn, _PgArray) ? this.baseColumn.mapToDriverValue(v, true) : this.baseColumn.mapToDriverValue(v)
     );
     if (isNestedArray) return a;
@@ -813,8 +813,8 @@ function isTable(table) {
 var FakePrimitiveParam = class {
   static [entityKind] = "FakePrimitiveParam";
 };
-function isSQLWrapper(value) {
-  return value !== null && value !== void 0 && typeof value.getSQL === "function";
+function isSQLWrapper(value2) {
+  return value2 !== null && value2 !== void 0 && typeof value2.getSQL === "function";
 }
 function mergeQueries(queries) {
   const result = { sql: "", params: [] };
@@ -833,8 +833,8 @@ function mergeQueries(queries) {
 var StringChunk = class {
   static [entityKind] = "StringChunk";
   value;
-  constructor(value) {
-    this.value = Array.isArray(value) ? value : [value];
+  constructor(value2) {
+    this.value = Array.isArray(value2) ? value2 : [value2];
   }
   getSQL() {
     return new SQL([this]);
@@ -1042,8 +1042,8 @@ var SQL = class _SQL {
   }
 };
 var Name = class {
-  constructor(value) {
-    this.value = value;
+  constructor(value2) {
+    this.value = value2;
   }
   static [entityKind] = "Name";
   brand;
@@ -1051,14 +1051,14 @@ var Name = class {
     return new SQL([this]);
   }
 };
-function isDriverValueEncoder(value) {
-  return typeof value === "object" && value !== null && "mapToDriverValue" in value && typeof value.mapToDriverValue === "function";
+function isDriverValueEncoder(value2) {
+  return typeof value2 === "object" && value2 !== null && "mapToDriverValue" in value2 && typeof value2.mapToDriverValue === "function";
 }
 var noopDecoder = {
-  mapFromDriverValue: (value) => value
+  mapFromDriverValue: (value2) => value2
 };
 var noopEncoder = {
-  mapToDriverValue: (value) => value
+  mapToDriverValue: (value2) => value2
 };
 var noopMapper = {
   ...noopDecoder,
@@ -1069,8 +1069,8 @@ var Param = class {
    * @param value - Parameter value
    * @param encoder - Encoder to convert the value to a driver parameter
    */
-  constructor(value, encoder = noopEncoder) {
-    this.value = value;
+  constructor(value2, encoder = noopEncoder) {
+    this.value = value2;
     this.encoder = encoder;
   }
   static [entityKind] = "Param";
@@ -1113,16 +1113,16 @@ function sql(strings, ...params) {
     return new SQL(result);
   }
   sql2.join = join;
-  function identifier(value) {
-    return new Name(value);
+  function identifier(value2) {
+    return new Name(value2);
   }
   sql2.identifier = identifier;
   function placeholder2(name2) {
     return new Placeholder(name2);
   }
   sql2.placeholder = placeholder2;
-  function param2(value, encoder) {
-    return new Param(value, encoder);
+  function param2(value2, encoder) {
+    return new Param(value2, encoder);
   }
   sql2.param = param2;
 })(sql || (sql = {}));
@@ -1259,11 +1259,11 @@ var PgBigInt53 = class extends PgColumn {
   getSQLType() {
     return "bigint";
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "number") {
-      return value;
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "number") {
+      return value2;
     }
-    return Number(value);
+    return Number(value2);
   }
 };
 var PgBigInt64Builder = class extends PgIntColumnBaseBuilder {
@@ -1285,8 +1285,8 @@ var PgBigInt64 = class extends PgColumn {
     return "bigint";
   }
   // eslint-disable-next-line unicorn/prefer-native-coercion-functions
-  mapFromDriverValue(value) {
-    return BigInt(value);
+  mapFromDriverValue(value2) {
+    return BigInt(value2);
   }
 };
 function bigint(a, b) {
@@ -1318,11 +1318,11 @@ var PgBigSerial53 = class extends PgColumn {
   getSQLType() {
     return "bigserial";
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "number") {
-      return value;
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "number") {
+      return value2;
     }
-    return Number(value);
+    return Number(value2);
   }
 };
 var PgBigSerial64Builder = class extends PgColumnBuilder {
@@ -1345,8 +1345,8 @@ var PgBigSerial64 = class extends PgColumn {
     return "bigserial";
   }
   // eslint-disable-next-line unicorn/prefer-native-coercion-functions
-  mapFromDriverValue(value) {
-    return BigInt(value);
+  mapFromDriverValue(value2) {
+    return BigInt(value2);
   }
 };
 function bigserial(a, b) {
@@ -1458,11 +1458,11 @@ var PgCustomColumn = class extends PgColumn {
   getSQLType() {
     return this.sqlName;
   }
-  mapFromDriverValue(value) {
-    return typeof this.mapFrom === "function" ? this.mapFrom(value) : value;
+  mapFromDriverValue(value2) {
+    return typeof this.mapFrom === "function" ? this.mapFrom(value2) : value2;
   }
-  mapToDriverValue(value) {
-    return typeof this.mapTo === "function" ? this.mapTo(value) : value;
+  mapToDriverValue(value2) {
+    return typeof this.mapTo === "function" ? this.mapTo(value2) : value2;
   }
 };
 function customType(customTypeParams) {
@@ -1496,12 +1496,12 @@ var PgDate = class extends PgColumn {
   getSQLType() {
     return "date";
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") return new Date(value);
-    return value;
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") return new Date(value2);
+    return value2;
   }
-  mapToDriverValue(value) {
-    return value.toISOString();
+  mapToDriverValue(value2) {
+    return value2.toISOString();
   }
 };
 var PgDateStringBuilder = class extends PgDateColumnBaseBuilder {
@@ -1522,9 +1522,9 @@ var PgDateString = class extends PgColumn {
   getSQLType() {
     return "date";
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") return value;
-    return value.toISOString().slice(0, -14);
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") return value2;
+    return value2.toISOString().slice(0, -14);
   }
 };
 function date(a, b) {
@@ -1554,11 +1554,11 @@ var PgDoublePrecision = class extends PgColumn {
   getSQLType() {
     return "double precision";
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") {
-      return Number.parseFloat(value);
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") {
+      return Number.parseFloat(value2);
     }
-    return value;
+    return value2;
   }
 };
 function doublePrecision(name) {
@@ -1602,11 +1602,11 @@ var PgInteger = class extends PgColumn {
   getSQLType() {
     return "integer";
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") {
-      return Number.parseInt(value);
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") {
+      return Number.parseInt(value2);
     }
-    return value;
+    return value2;
   }
 };
 function integer(name) {
@@ -1659,18 +1659,18 @@ var PgJson = class extends PgColumn {
   getSQLType() {
     return "json";
   }
-  mapToDriverValue(value) {
-    return JSON.stringify(value);
+  mapToDriverValue(value2) {
+    return JSON.stringify(value2);
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") {
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") {
       try {
-        return JSON.parse(value);
+        return JSON.parse(value2);
       } catch {
-        return value;
+        return value2;
       }
     }
-    return value;
+    return value2;
   }
 };
 function json(name) {
@@ -1696,18 +1696,18 @@ var PgJsonb = class extends PgColumn {
   getSQLType() {
     return "jsonb";
   }
-  mapToDriverValue(value) {
-    return JSON.stringify(value);
+  mapToDriverValue(value2) {
+    return JSON.stringify(value2);
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") {
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") {
       try {
-        return JSON.parse(value);
+        return JSON.parse(value2);
       } catch {
-        return value;
+        return value2;
       }
     }
-    return value;
+    return value2;
   }
 };
 function jsonb(name) {
@@ -1733,12 +1733,12 @@ var PgLineTuple = class extends PgColumn {
   getSQLType() {
     return "line";
   }
-  mapFromDriverValue(value) {
-    const [a, b, c] = value.slice(1, -1).split(",");
+  mapFromDriverValue(value2) {
+    const [a, b, c] = value2.slice(1, -1).split(",");
     return [Number.parseFloat(a), Number.parseFloat(b), Number.parseFloat(c)];
   }
-  mapToDriverValue(value) {
-    return `{${value[0]},${value[1]},${value[2]}}`;
+  mapToDriverValue(value2) {
+    return `{${value2[0]},${value2[1]},${value2[2]}}`;
   }
 };
 var PgLineABCBuilder = class extends PgColumnBuilder {
@@ -1759,12 +1759,12 @@ var PgLineABC = class extends PgColumn {
   getSQLType() {
     return "line";
   }
-  mapFromDriverValue(value) {
-    const [a, b, c] = value.slice(1, -1).split(",");
+  mapFromDriverValue(value2) {
+    const [a, b, c] = value2.slice(1, -1).split(",");
     return { a: Number.parseFloat(a), b: Number.parseFloat(b), c: Number.parseFloat(c) };
   }
-  mapToDriverValue(value) {
-    return `{${value.a},${value.b},${value.c}}`;
+  mapToDriverValue(value2) {
+    return `{${value2.a},${value2.b},${value2.c}}`;
   }
 };
 function line(a, b) {
@@ -1839,9 +1839,9 @@ var PgNumeric = class extends PgColumn {
     this.precision = config2.precision;
     this.scale = config2.scale;
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") return value;
-    return String(value);
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") return value2;
+    return String(value2);
   }
   getSQLType() {
     if (this.precision !== void 0 && this.scale !== void 0) {
@@ -1877,9 +1877,9 @@ var PgNumericNumber = class extends PgColumn {
     this.precision = config2.precision;
     this.scale = config2.scale;
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "number") return value;
-    return Number(value);
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "number") return value2;
+    return Number(value2);
   }
   mapToDriverValue = String;
   getSQLType() {
@@ -1953,15 +1953,15 @@ var PgPointTuple = class extends PgColumn {
   getSQLType() {
     return "point";
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") {
-      const [x, y] = value.slice(1, -1).split(",");
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") {
+      const [x, y] = value2.slice(1, -1).split(",");
       return [Number.parseFloat(x), Number.parseFloat(y)];
     }
-    return [value.x, value.y];
+    return [value2.x, value2.y];
   }
-  mapToDriverValue(value) {
-    return `(${value[0]},${value[1]})`;
+  mapToDriverValue(value2) {
+    return `(${value2[0]},${value2[1]})`;
   }
 };
 var PgPointObjectBuilder = class extends PgColumnBuilder {
@@ -1982,15 +1982,15 @@ var PgPointObject = class extends PgColumn {
   getSQLType() {
     return "point";
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") {
-      const [x, y] = value.slice(1, -1).split(",");
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") {
+      const [x, y] = value2.slice(1, -1).split(",");
       return { x: Number.parseFloat(x), y: Number.parseFloat(y) };
     }
-    return value;
+    return value2;
   }
-  mapToDriverValue(value) {
-    return `(${value.x},${value.y})`;
+  mapToDriverValue(value2) {
+    return `(${value2.x},${value2.y})`;
   }
 };
 function point(a, b) {
@@ -2059,11 +2059,11 @@ var PgGeometry = class extends PgColumn {
   getSQLType() {
     return "geometry(point)";
   }
-  mapFromDriverValue(value) {
-    return parseEWKB(value);
+  mapFromDriverValue(value2) {
+    return parseEWKB(value2);
   }
-  mapToDriverValue(value) {
-    return `point(${value[0]} ${value[1]})`;
+  mapToDriverValue(value2) {
+    return `point(${value2[0]} ${value2[1]})`;
   }
 };
 var PgGeometryObjectBuilder = class extends PgColumnBuilder {
@@ -2084,12 +2084,12 @@ var PgGeometryObject = class extends PgColumn {
   getSQLType() {
     return "geometry(point)";
   }
-  mapFromDriverValue(value) {
-    const parsed = parseEWKB(value);
+  mapFromDriverValue(value2) {
+    const parsed = parseEWKB(value2);
     return { x: parsed[0], y: parsed[1] };
   }
-  mapToDriverValue(value) {
-    return `point(${value.x} ${value.y})`;
+  mapToDriverValue(value2) {
+    return `point(${value2.x} ${value2.y})`;
   }
 };
 function geometry(a, b) {
@@ -2120,11 +2120,11 @@ var PgReal = class extends PgColumn {
   getSQLType() {
     return "real";
   }
-  mapFromDriverValue = (value) => {
-    if (typeof value === "string") {
-      return Number.parseFloat(value);
+  mapFromDriverValue = (value2) => {
+    if (typeof value2 === "string") {
+      return Number.parseFloat(value2);
     }
-    return value;
+    return value2;
   };
 };
 function real(name) {
@@ -2170,11 +2170,11 @@ var PgSmallInt = class extends PgColumn {
   getSQLType() {
     return "smallint";
   }
-  mapFromDriverValue = (value) => {
-    if (typeof value === "string") {
-      return Number(value);
+  mapFromDriverValue = (value2) => {
+    if (typeof value2 === "string") {
+      return Number(value2);
     }
-    return value;
+    return value2;
   };
 };
 function smallint(name) {
@@ -2291,12 +2291,12 @@ var PgTimestamp = class extends PgColumn {
     const precision = this.precision === void 0 ? "" : ` (${this.precision})`;
     return `timestamp${precision}${this.withTimezone ? " with time zone" : ""}`;
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") return new Date(this.withTimezone ? value : value + "+0000");
-    return value;
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") return new Date(this.withTimezone ? value2 : value2 + "+0000");
+    return value2;
   }
-  mapToDriverValue = (value) => {
-    return value.toISOString();
+  mapToDriverValue = (value2) => {
+    return value2.toISOString();
   };
 };
 var PgTimestampStringBuilder = class extends PgDateColumnBaseBuilder {
@@ -2327,11 +2327,11 @@ var PgTimestampString = class extends PgColumn {
     const precision = this.precision === void 0 ? "" : `(${this.precision})`;
     return `timestamp${precision}${this.withTimezone ? " with time zone" : ""}`;
   }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") return value;
-    const shortened = value.toISOString().slice(0, -1).replace("T", " ");
+  mapFromDriverValue(value2) {
+    if (typeof value2 === "string") return value2;
+    const shortened = value2.toISOString().slice(0, -1).replace("T", " ");
     if (this.withTimezone) {
-      const offset = value.getTimezoneOffset();
+      const offset = value2.getTimezoneOffset();
       const sign = offset <= 0 ? "+" : "-";
       return `${shortened}${sign}${Math.floor(Math.abs(offset) / 60).toString().padStart(2, "0")}`;
     }
@@ -2450,11 +2450,11 @@ var PgHalfVector = class extends PgColumn {
   getSQLType() {
     return `halfvec(${this.dimensions})`;
   }
-  mapToDriverValue(value) {
-    return JSON.stringify(value);
+  mapToDriverValue(value2) {
+    return JSON.stringify(value2);
   }
-  mapFromDriverValue(value) {
-    return value.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
+  mapFromDriverValue(value2) {
+    return value2.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
   }
 };
 function halfvec(a, b) {
@@ -2510,11 +2510,11 @@ var PgVector = class extends PgColumn {
   getSQLType() {
     return `vector(${this.dimensions})`;
   }
-  mapToDriverValue(value) {
-    return JSON.stringify(value);
+  mapToDriverValue(value2) {
+    return JSON.stringify(value2);
   }
-  mapFromDriverValue(value) {
-    return value.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
+  mapFromDriverValue(value2) {
+    return value2.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
   }
 };
 function vector(a, b) {
@@ -2617,11 +2617,11 @@ var pgTable = (name, columns, extraConfig) => {
 };
 
 // node_modules/.pnpm/drizzle-orm@0.45.1_@types+p_0675e3e2dedea647770509e4aba60425/node_modules/drizzle-orm/sql/expressions/conditions.js
-function bindIfParam(value, column) {
-  if (isDriverValueEncoder(column) && !isSQLWrapper(value) && !is(value, Param) && !is(value, Placeholder) && !is(value, Column) && !is(value, Table) && !is(value, View)) {
-    return new Param(value, column);
+function bindIfParam(value2, column) {
+  if (isDriverValueEncoder(column) && !isSQLWrapper(value2) && !is(value2, Param) && !is(value2, Placeholder) && !is(value2, Column) && !is(value2, Table) && !is(value2, View)) {
+    return new Param(value2, column);
   }
-  return value;
+  return value2;
 }
 var eq = (left, right) => {
   return sql`${left} = ${bindIfParam(right, left)}`;
@@ -3345,19 +3345,19 @@ function getEnumValues(entries) {
 function joinValues(array2, separator = "|") {
   return array2.map((val) => stringifyPrimitive(val)).join(separator);
 }
-function jsonStringifyReplacer(_, value) {
-  if (typeof value === "bigint")
-    return value.toString();
-  return value;
+function jsonStringifyReplacer(_, value2) {
+  if (typeof value2 === "bigint")
+    return value2.toString();
+  return value2;
 }
 function cached(getter) {
   const set2 = false;
   return {
     get value() {
       if (!set2) {
-        const value = getter();
-        Object.defineProperty(this, "value", { value });
-        return value;
+        const value2 = getter();
+        Object.defineProperty(this, "value", { value: value2 });
+        return value2;
       }
       throw new Error("cached value already set");
     }
@@ -3384,9 +3384,9 @@ function defineLazy(object2, key, getter) {
   Object.defineProperty(object2, key, {
     get() {
       if (!set2) {
-        const value = getter();
-        object2[key] = value;
-        return value;
+        const value2 = getter();
+        object2[key] = value2;
+        return value2;
       }
       throw new Error("cached value already set");
     },
@@ -3399,9 +3399,9 @@ function defineLazy(object2, key, getter) {
     configurable: true
   });
 }
-function assignProp(target, prop, value) {
+function assignProp(target, prop, value2) {
   Object.defineProperty(target, prop, {
-    value,
+    value: value2,
     writable: true,
     enumerable: true,
     configurable: true
@@ -3552,9 +3552,9 @@ function createTransparentProxy(getter) {
       target ?? (target = getter());
       return Reflect.get(target, prop, receiver);
     },
-    set(_, prop, value, receiver) {
+    set(_, prop, value2, receiver) {
       target ?? (target = getter());
-      return Reflect.set(target, prop, value, receiver);
+      return Reflect.set(target, prop, value2, receiver);
     },
     has(_, prop) {
       target ?? (target = getter());
@@ -3578,12 +3578,12 @@ function createTransparentProxy(getter) {
     }
   });
 }
-function stringifyPrimitive(value) {
-  if (typeof value === "bigint")
-    return value.toString() + "n";
-  if (typeof value === "string")
-    return `"${value}"`;
-  return `${value}`;
+function stringifyPrimitive(value2) {
+  if (typeof value2 === "bigint")
+    return value2.toString() + "n";
+  if (typeof value2 === "string")
+    return `"${value2}"`;
+  return `${value2}`;
 }
 function optionalKeys(shape) {
   return Object.keys(shape).filter((k) => {
@@ -3940,9 +3940,9 @@ function prettifyError(error40) {
 }
 
 // node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/core/parse.js
-var _parse = (_Err) => (schema, value, _ctx, _params) => {
+var _parse = (_Err) => (schema, value2, _ctx, _params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: false }) : { async: false };
-  const result = schema._zod.run({ value, issues: [] }, ctx);
+  const result = schema._zod.run({ value: value2, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new $ZodAsyncError();
   }
@@ -3954,9 +3954,9 @@ var _parse = (_Err) => (schema, value, _ctx, _params) => {
   return result.value;
 };
 var parse = /* @__PURE__ */ _parse($ZodRealError);
-var _parseAsync = (_Err) => async (schema, value, _ctx, params) => {
+var _parseAsync = (_Err) => async (schema, value2, _ctx, params) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
+  let result = schema._zod.run({ value: value2, issues: [] }, ctx);
   if (result instanceof Promise)
     result = await result;
   if (result.issues.length) {
@@ -3967,9 +3967,9 @@ var _parseAsync = (_Err) => async (schema, value, _ctx, params) => {
   return result.value;
 };
 var parseAsync = /* @__PURE__ */ _parseAsync($ZodRealError);
-var _safeParse = (_Err) => (schema, value, _ctx) => {
+var _safeParse = (_Err) => (schema, value2, _ctx) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result = schema._zod.run({ value, issues: [] }, ctx);
+  const result = schema._zod.run({ value: value2, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new $ZodAsyncError();
   }
@@ -3979,9 +3979,9 @@ var _safeParse = (_Err) => (schema, value, _ctx) => {
   } : { success: true, data: result.value };
 };
 var safeParse = /* @__PURE__ */ _safeParse($ZodRealError);
-var _safeParseAsync = (_Err) => async (schema, value, _ctx) => {
+var _safeParseAsync = (_Err) => async (schema, value2, _ctx) => {
   const ctx = _ctx ? Object.assign(_ctx, { async: true }) : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
+  let result = schema._zod.run({ value: value2, issues: [] }, ctx);
   if (result instanceof Promise)
     result = await result;
   return result.issues.length ? {
@@ -4758,12 +4758,12 @@ var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
     };
   }
   inst["~standard"] = {
-    validate: (value) => {
+    validate: (value2) => {
       try {
-        const r = safeParse(inst, value);
+        const r = safeParse(inst, value2);
         return r.success ? { value: r.data } : { issues: r.error?.issues };
       } catch (_) {
-        return safeParseAsync(inst, value).then((r) => r.success ? { value: r.data } : { issues: r.error?.issues });
+        return safeParseAsync(inst, value2).then((r) => r.success ? { value: r.data } : { issues: r.error?.issues });
       }
     },
     vendor: "zod",
@@ -5421,9 +5421,9 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
   const allowsEval2 = allowsEval;
   const fastEnabled = jit && allowsEval2.value;
   const catchall = def.catchall;
-  let value;
+  let value2;
   inst._zod.parse = (payload, ctx) => {
-    value ?? (value = _normalized.value);
+    value2 ?? (value2 = _normalized.value);
     const input2 = payload.value;
     if (!isObject2(input2)) {
       payload.issues.push({
@@ -5441,8 +5441,8 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
       payload = fastpass(payload, ctx);
     } else {
       payload.value = {};
-      const shape = value.shape;
-      for (const key of value.keys) {
+      const shape = value2.shape;
+      for (const key of value2.keys) {
         const el = shape[key];
         const r = el._zod.run({ value: input2[key], issues: [] }, ctx);
         const isOptional = el._zod.optin === "optional" && el._zod.optout === "optional";
@@ -5459,7 +5459,7 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
       return proms.length ? Promise.all(proms).then(() => payload) : payload;
     }
     const unrecognized = [];
-    const keySet = value.keySet;
+    const keySet = value2.keySet;
     const _catchall = catchall._zod;
     const t = _catchall.def.type;
     for (const key of Object.keys(input2)) {
@@ -5867,9 +5867,9 @@ var $ZodMap = /* @__PURE__ */ $constructor("$ZodMap", (inst, def) => {
     }
     const proms = [];
     payload.value = /* @__PURE__ */ new Map();
-    for (const [key, value] of input2) {
+    for (const [key, value2] of input2) {
       const keyResult = def.keyType._zod.run({ value: key, issues: [] }, ctx);
-      const valueResult = def.valueType._zod.run({ value, issues: [] }, ctx);
+      const valueResult = def.valueType._zod.run({ value: value2, issues: [] }, ctx);
       if (keyResult instanceof Promise || valueResult instanceof Promise) {
         proms.push(Promise.all([keyResult, valueResult]).then(([keyResult2, valueResult2]) => {
           handleMapResult(keyResult2, valueResult2, payload, key, input2, inst, ctx);
@@ -11548,35 +11548,35 @@ function _nan(Class2, params) {
     ...normalizeParams(params)
   });
 }
-function _lt(value, params) {
+function _lt(value2, params) {
   return new $ZodCheckLessThan({
     check: "less_than",
     ...normalizeParams(params),
-    value,
+    value: value2,
     inclusive: false
   });
 }
-function _lte(value, params) {
+function _lte(value2, params) {
   return new $ZodCheckLessThan({
     check: "less_than",
     ...normalizeParams(params),
-    value,
+    value: value2,
     inclusive: true
   });
 }
-function _gt(value, params) {
+function _gt(value2, params) {
   return new $ZodCheckGreaterThan({
     check: "greater_than",
     ...normalizeParams(params),
-    value,
+    value: value2,
     inclusive: false
   });
 }
-function _gte(value, params) {
+function _gte(value2, params) {
   return new $ZodCheckGreaterThan({
     check: "greater_than",
     ...normalizeParams(params),
-    value,
+    value: value2,
     inclusive: true
   });
 }
@@ -11592,11 +11592,11 @@ function _nonpositive(params) {
 function _nonnegative(params) {
   return _gte(0, params);
 }
-function _multipleOf(value, params) {
+function _multipleOf(value2, params) {
   return new $ZodCheckMultipleOf({
     check: "multiple_of",
     ...normalizeParams(params),
-    value
+    value: value2
   });
 }
 function _maxSize(maximum, params) {
@@ -11802,10 +11802,10 @@ function _nativeEnum(Class2, entries, params) {
     ...normalizeParams(params)
   });
 }
-function _literal(Class2, value, params) {
+function _literal(Class2, value2, params) {
   return new Class2({
     type: "literal",
-    values: Array.isArray(value) ? value : [value],
+    values: Array.isArray(value2) ? value2 : [value2],
     ...normalizeParams(params)
   });
 }
@@ -13185,20 +13185,20 @@ function stringFormat(format, fnOrRegex, _params = {}) {
 var ZodNumber = /* @__PURE__ */ $constructor("ZodNumber", (inst, def) => {
   $ZodNumber.init(inst, def);
   ZodType.init(inst, def);
-  inst.gt = (value, params) => inst.check(_gt(value, params));
-  inst.gte = (value, params) => inst.check(_gte(value, params));
-  inst.min = (value, params) => inst.check(_gte(value, params));
-  inst.lt = (value, params) => inst.check(_lt(value, params));
-  inst.lte = (value, params) => inst.check(_lte(value, params));
-  inst.max = (value, params) => inst.check(_lte(value, params));
+  inst.gt = (value2, params) => inst.check(_gt(value2, params));
+  inst.gte = (value2, params) => inst.check(_gte(value2, params));
+  inst.min = (value2, params) => inst.check(_gte(value2, params));
+  inst.lt = (value2, params) => inst.check(_lt(value2, params));
+  inst.lte = (value2, params) => inst.check(_lte(value2, params));
+  inst.max = (value2, params) => inst.check(_lte(value2, params));
   inst.int = (params) => inst.check(int(params));
   inst.safe = (params) => inst.check(int(params));
   inst.positive = (params) => inst.check(_gt(0, params));
   inst.nonnegative = (params) => inst.check(_gte(0, params));
   inst.negative = (params) => inst.check(_lt(0, params));
   inst.nonpositive = (params) => inst.check(_lte(0, params));
-  inst.multipleOf = (value, params) => inst.check(_multipleOf(value, params));
-  inst.step = (value, params) => inst.check(_multipleOf(value, params));
+  inst.multipleOf = (value2, params) => inst.check(_multipleOf(value2, params));
+  inst.step = (value2, params) => inst.check(_multipleOf(value2, params));
   inst.finite = () => inst;
   const bag = inst._zod.bag;
   inst.minValue = Math.max(bag.minimum ?? Number.NEGATIVE_INFINITY, bag.exclusiveMinimum ?? Number.NEGATIVE_INFINITY) ?? null;
@@ -13239,19 +13239,19 @@ function boolean3(params) {
 var ZodBigInt = /* @__PURE__ */ $constructor("ZodBigInt", (inst, def) => {
   $ZodBigInt.init(inst, def);
   ZodType.init(inst, def);
-  inst.gte = (value, params) => inst.check(_gte(value, params));
-  inst.min = (value, params) => inst.check(_gte(value, params));
-  inst.gt = (value, params) => inst.check(_gt(value, params));
-  inst.gte = (value, params) => inst.check(_gte(value, params));
-  inst.min = (value, params) => inst.check(_gte(value, params));
-  inst.lt = (value, params) => inst.check(_lt(value, params));
-  inst.lte = (value, params) => inst.check(_lte(value, params));
-  inst.max = (value, params) => inst.check(_lte(value, params));
+  inst.gte = (value2, params) => inst.check(_gte(value2, params));
+  inst.min = (value2, params) => inst.check(_gte(value2, params));
+  inst.gt = (value2, params) => inst.check(_gt(value2, params));
+  inst.gte = (value2, params) => inst.check(_gte(value2, params));
+  inst.min = (value2, params) => inst.check(_gte(value2, params));
+  inst.lt = (value2, params) => inst.check(_lt(value2, params));
+  inst.lte = (value2, params) => inst.check(_lte(value2, params));
+  inst.max = (value2, params) => inst.check(_lte(value2, params));
   inst.positive = (params) => inst.check(_gt(BigInt(0), params));
   inst.negative = (params) => inst.check(_lt(BigInt(0), params));
   inst.nonpositive = (params) => inst.check(_lte(BigInt(0), params));
   inst.nonnegative = (params) => inst.check(_gte(BigInt(0), params));
-  inst.multipleOf = (value, params) => inst.check(_multipleOf(value, params));
+  inst.multipleOf = (value2, params) => inst.check(_multipleOf(value2, params));
   const bag = inst._zod.bag;
   inst.minValue = bag.minimum ?? null;
   inst.maxValue = bag.maximum ?? null;
@@ -13322,8 +13322,8 @@ function _void2(params) {
 var ZodDate = /* @__PURE__ */ $constructor("ZodDate", (inst, def) => {
   $ZodDate.init(inst, def);
   ZodType.init(inst, def);
-  inst.min = (value, params) => inst.check(_gte(value, params));
-  inst.max = (value, params) => inst.check(_lte(value, params));
+  inst.min = (value2, params) => inst.check(_gte(value2, params));
+  inst.max = (value2, params) => inst.check(_lte(value2, params));
   const c = inst._zod.bag;
   inst.minDate = c.minimum ? new Date(c.minimum) : null;
   inst.maxDate = c.maximum ? new Date(c.maximum) : null;
@@ -13513,11 +13513,11 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   const keys = new Set(Object.keys(def.entries));
   inst.extract = (values, params) => {
     const newEntries = {};
-    for (const value of values) {
-      if (keys.has(value)) {
-        newEntries[value] = def.entries[value];
+    for (const value2 of values) {
+      if (keys.has(value2)) {
+        newEntries[value2] = def.entries[value2];
       } else
-        throw new Error(`Key ${value} not found in enum`);
+        throw new Error(`Key ${value2} not found in enum`);
     }
     return new ZodEnum({
       ...def,
@@ -13528,11 +13528,11 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   };
   inst.exclude = (values, params) => {
     const newEntries = { ...def.entries };
-    for (const value of values) {
-      if (keys.has(value)) {
-        delete newEntries[value];
+    for (const value2 of values) {
+      if (keys.has(value2)) {
+        delete newEntries[value2];
       } else
-        throw new Error(`Key ${value} not found in enum`);
+        throw new Error(`Key ${value2} not found in enum`);
     }
     return new ZodEnum({
       ...def,
@@ -13570,10 +13570,10 @@ var ZodLiteral = /* @__PURE__ */ $constructor("ZodLiteral", (inst, def) => {
     }
   });
 });
-function literal(value, params) {
+function literal(value2, params) {
   return new ZodLiteral({
     type: "literal",
-    values: Array.isArray(value) ? value : [value],
+    values: Array.isArray(value2) ? value2 : [value2],
     ...util_exports.normalizeParams(params)
   });
 }
@@ -14178,9 +14178,9 @@ var insertProductSchema = createInsertSchema(productsTable).omit({
 
 // lib/db/src/repositories/products.repo.ts
 var upsertProductInput = insertProductSchema.partial({ normalizedName: true });
-async function findByColumn(db, field, value) {
+async function findByColumn(db, field, value2) {
   const col = field === "ean" ? productsTable.ean : productsTable.gtin;
-  const rows = await db.select().from(productsTable).where(eq(col, value)).limit(1);
+  const rows = await db.select().from(productsTable).where(eq(col, value2)).limit(1);
   return rows[0];
 }
 async function findByEanOrGtin(db, code) {
@@ -14266,12 +14266,12 @@ async function listOffersForProduct(db, productId) {
 
 // lib/pricing-service/src/indo-endcaps.ts
 var INDO_ENDCAP_EAN = "5905167726358";
-function validIndoEndcapDemand(value) {
-  const p = value;
+function validIndoEndcapDemand(value2) {
+  const p = value2;
   return p?.version === 1 && [p.left, p.right].every((n) => Number.isSafeInteger(n) && n >= 0 && n <= 200);
 }
-function confirmedIndoEndcapDemand(ean, unit, pack, quantity, value) {
-  return ean === INDO_ENDCAP_EAN && unit === "kpl" && pack === 1 && validIndoEndcapDemand(value) && quantity === Math.max(value.left, value.right) ? { ...value } : null;
+function confirmedIndoEndcapDemand(ean, unit, pack, quantity, value2) {
+  return ean === INDO_ENDCAP_EAN && unit === "kpl" && pack === 1 && validIndoEndcapDemand(value2) && quantity === Math.max(value2.left, value2.right) ? { ...value2 } : null;
 }
 
 // lib/price-collector/src/normalize.ts
@@ -14562,7 +14562,7 @@ var ERISMANN_3333_5_EAN = "4002790333357";
 var ERISMANN_3333_5_ROLL = { widthMm: 750, lengthMm: 25e3 };
 var MAX_STRIPS = 2e3;
 var MAX_SEARCH_NODES = 5e4;
-var integer3 = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
+var integer3 = (value2, min, max) => Number.isSafeInteger(value2) && value2 >= min && value2 <= max;
 function planPlainWallpaperPanels(panels, spec) {
   if (!integer3(spec.widthMm, 100, 3e3) || panels.length === 0 || panels.length > 100) return null;
   const groups = [];
@@ -14588,7 +14588,7 @@ function planPlainWallpaperCuts(groups, rollLengthMm) {
   });
   let assignments = [], used = [];
   for (const [index2, piece] of pieces.entries()) {
-    let bin = used.findIndex((value) => value + piece.lengthMm <= rollLengthMm);
+    let bin = used.findIndex((value2) => value2 + piece.lengthMm <= rollLengthMm);
     if (bin < 0) {
       bin = used.length;
       used.push(0);
@@ -15646,11 +15646,11 @@ var util;
     return array2.map((val) => typeof val === "string" ? `'${val}'` : val).join(separator);
   }
   util2.joinValues = joinValues2;
-  util2.jsonStringifyReplacer = (_, value) => {
-    if (typeof value === "bigint") {
-      return value.toString();
+  util2.jsonStringifyReplacer = (_, value2) => {
+    if (typeof value2 === "bigint") {
+      return value2.toString();
     }
-    return value;
+    return value2;
   };
 })(util || (util = {}));
 var objectUtil;
@@ -15808,9 +15808,9 @@ var ZodError2 = class _ZodError extends Error {
     processError(this);
     return fieldErrors;
   }
-  static assert(value) {
-    if (!(value instanceof _ZodError)) {
-      throw new Error(`Not a ZodError: ${value}`);
+  static assert(value2) {
+    if (!(value2 instanceof _ZodError)) {
+      throw new Error(`Not a ZodError: ${value2}`);
     }
   }
   toString() {
@@ -16030,10 +16030,10 @@ var ParseStatus = class _ParseStatus {
     const syncPairs = [];
     for (const pair of pairs) {
       const key = await pair.key;
-      const value = await pair.value;
+      const value2 = await pair.value;
       syncPairs.push({
         key,
-        value
+        value: value2
       });
     }
     return _ParseStatus.mergeObjectSync(status, syncPairs);
@@ -16041,17 +16041,17 @@ var ParseStatus = class _ParseStatus {
   static mergeObjectSync(status, pairs) {
     const finalObject = {};
     for (const pair of pairs) {
-      const { key, value } = pair;
+      const { key, value: value2 } = pair;
       if (key.status === "aborted")
         return INVALID;
-      if (value.status === "aborted")
+      if (value2.status === "aborted")
         return INVALID;
       if (key.status === "dirty")
         status.dirty();
-      if (value.status === "dirty")
+      if (value2.status === "dirty")
         status.dirty();
-      if (key.value !== "__proto__" && (typeof value.value !== "undefined" || pair.alwaysSet)) {
-        finalObject[key.value] = value.value;
+      if (key.value !== "__proto__" && (typeof value2.value !== "undefined" || pair.alwaysSet)) {
+        finalObject[key.value] = value2.value;
       }
     }
     return { status: status.value, value: finalObject };
@@ -16060,8 +16060,8 @@ var ParseStatus = class _ParseStatus {
 var INVALID = Object.freeze({
   status: "aborted"
 });
-var DIRTY = (value) => ({ status: "dirty", value });
-var OK = (value) => ({ status: "valid", value });
+var DIRTY = (value2) => ({ status: "dirty", value: value2 });
+var OK = (value2) => ({ status: "valid", value: value2 });
 var isAborted = (x) => x.status === "aborted";
 var isDirty = (x) => x.status === "dirty";
 var isValid = (x) => x.status === "valid";
@@ -16076,10 +16076,10 @@ var errorUtil;
 
 // node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path, key) {
+  constructor(parent, value2, path, key) {
     this._cachedPath = [];
     this.parent = parent;
-    this.data = value;
+    this.data = value2;
     this._path = path;
     this._key = key;
   }
@@ -16901,25 +16901,25 @@ var ZodString2 = class _ZodString2 extends ZodType2 {
       ...errorUtil.errToObj(message)
     });
   }
-  includes(value, options) {
+  includes(value2, options) {
     return this._addCheck({
       kind: "includes",
-      value,
+      value: value2,
       position: options?.position,
       ...errorUtil.errToObj(options?.message)
     });
   }
-  startsWith(value, message) {
+  startsWith(value2, message) {
     return this._addCheck({
       kind: "startsWith",
-      value,
+      value: value2,
       ...errorUtil.errToObj(message)
     });
   }
-  endsWith(value, message) {
+  endsWith(value2, message) {
     return this._addCheck({
       kind: "endsWith",
-      value,
+      value: value2,
       ...errorUtil.errToObj(message)
     });
   }
@@ -17141,26 +17141,26 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
     }
     return { status: status.value, value: input2.data };
   }
-  gte(value, message) {
-    return this.setLimit("min", value, true, errorUtil.toString(message));
+  gte(value2, message) {
+    return this.setLimit("min", value2, true, errorUtil.toString(message));
   }
-  gt(value, message) {
-    return this.setLimit("min", value, false, errorUtil.toString(message));
+  gt(value2, message) {
+    return this.setLimit("min", value2, false, errorUtil.toString(message));
   }
-  lte(value, message) {
-    return this.setLimit("max", value, true, errorUtil.toString(message));
+  lte(value2, message) {
+    return this.setLimit("max", value2, true, errorUtil.toString(message));
   }
-  lt(value, message) {
-    return this.setLimit("max", value, false, errorUtil.toString(message));
+  lt(value2, message) {
+    return this.setLimit("max", value2, false, errorUtil.toString(message));
   }
-  setLimit(kind, value, inclusive, message) {
+  setLimit(kind, value2, inclusive, message) {
     return new _ZodNumber({
       ...this._def,
       checks: [
         ...this._def.checks,
         {
           kind,
-          value,
+          value: value2,
           inclusive,
           message: errorUtil.toString(message)
         }
@@ -17211,10 +17211,10 @@ var ZodNumber2 = class _ZodNumber extends ZodType2 {
       message: errorUtil.toString(message)
     });
   }
-  multipleOf(value, message) {
+  multipleOf(value2, message) {
     return this._addCheck({
       kind: "multipleOf",
-      value,
+      value: value2,
       message: errorUtil.toString(message)
     });
   }
@@ -17357,26 +17357,26 @@ var ZodBigInt2 = class _ZodBigInt extends ZodType2 {
     });
     return INVALID;
   }
-  gte(value, message) {
-    return this.setLimit("min", value, true, errorUtil.toString(message));
+  gte(value2, message) {
+    return this.setLimit("min", value2, true, errorUtil.toString(message));
   }
-  gt(value, message) {
-    return this.setLimit("min", value, false, errorUtil.toString(message));
+  gt(value2, message) {
+    return this.setLimit("min", value2, false, errorUtil.toString(message));
   }
-  lte(value, message) {
-    return this.setLimit("max", value, true, errorUtil.toString(message));
+  lte(value2, message) {
+    return this.setLimit("max", value2, true, errorUtil.toString(message));
   }
-  lt(value, message) {
-    return this.setLimit("max", value, false, errorUtil.toString(message));
+  lt(value2, message) {
+    return this.setLimit("max", value2, false, errorUtil.toString(message));
   }
-  setLimit(kind, value, inclusive, message) {
+  setLimit(kind, value2, inclusive, message) {
     return new _ZodBigInt({
       ...this._def,
       checks: [
         ...this._def.checks,
         {
           kind,
-          value,
+          value: value2,
           inclusive,
           message: errorUtil.toString(message)
         }
@@ -17421,10 +17421,10 @@ var ZodBigInt2 = class _ZodBigInt extends ZodType2 {
       message: errorUtil.toString(message)
     });
   }
-  multipleOf(value, message) {
+  multipleOf(value2, message) {
     return this._addCheck({
       kind: "multipleOf",
-      value,
+      value: value2,
       message: errorUtil.toString(message)
     });
   }
@@ -17888,10 +17888,10 @@ var ZodObject2 = class _ZodObject extends ZodType2 {
     const pairs = [];
     for (const key of shapeKeys) {
       const keyValidator = shape[key];
-      const value = ctx.data[key];
+      const value2 = ctx.data[key];
       pairs.push({
         key: { status: "valid", value: key },
-        value: keyValidator._parse(new ParseInputLazyPath(ctx, value, ctx.path, key)),
+        value: keyValidator._parse(new ParseInputLazyPath(ctx, value2, ctx.path, key)),
         alwaysSet: key in ctx.data
       });
     }
@@ -17919,11 +17919,11 @@ var ZodObject2 = class _ZodObject extends ZodType2 {
     } else {
       const catchall = this._def.catchall;
       for (const key of extraKeys) {
-        const value = ctx.data[key];
+        const value2 = ctx.data[key];
         pairs.push({
           key: { status: "valid", value: key },
           value: catchall._parse(
-            new ParseInputLazyPath(ctx, value, ctx.path, key)
+            new ParseInputLazyPath(ctx, value2, ctx.path, key)
             //, ctx.child(key), value, getParsedType(value)
           ),
           alwaysSet: key in ctx.data
@@ -17935,10 +17935,10 @@ var ZodObject2 = class _ZodObject extends ZodType2 {
         const syncPairs = [];
         for (const pair of pairs) {
           const key = await pair.key;
-          const value = await pair.value;
+          const value2 = await pair.value;
           syncPairs.push({
             key,
-            value,
+            value: value2,
             alwaysSet: pair.alwaysSet
           });
         }
@@ -18369,11 +18369,11 @@ var ZodDiscriminatedUnion2 = class _ZodDiscriminatedUnion extends ZodType2 {
       if (!discriminatorValues.length) {
         throw new Error(`A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`);
       }
-      for (const value of discriminatorValues) {
-        if (optionsMap.has(value)) {
-          throw new Error(`Discriminator property ${String(discriminator)} has duplicate value ${String(value)}`);
+      for (const value2 of discriminatorValues) {
+        if (optionsMap.has(value2)) {
+          throw new Error(`Discriminator property ${String(discriminator)} has duplicate value ${String(value2)}`);
         }
-        optionsMap.set(value, type);
+        optionsMap.set(value2, type);
       }
     }
     return new _ZodDiscriminatedUnion({
@@ -18615,10 +18615,10 @@ var ZodMap2 = class extends ZodType2 {
     }
     const keyType = this._def.keyType;
     const valueType = this._def.valueType;
-    const pairs = [...ctx.data.entries()].map(([key, value], index2) => {
+    const pairs = [...ctx.data.entries()].map(([key, value2], index2) => {
       return {
         key: keyType._parse(new ParseInputLazyPath(ctx, key, ctx.path, [index2, "key"])),
-        value: valueType._parse(new ParseInputLazyPath(ctx, value, ctx.path, [index2, "value"]))
+        value: valueType._parse(new ParseInputLazyPath(ctx, value2, ctx.path, [index2, "value"]))
       };
     });
     if (ctx.common.async) {
@@ -18626,14 +18626,14 @@ var ZodMap2 = class extends ZodType2 {
       return Promise.resolve().then(async () => {
         for (const pair of pairs) {
           const key = await pair.key;
-          const value = await pair.value;
-          if (key.status === "aborted" || value.status === "aborted") {
+          const value2 = await pair.value;
+          if (key.status === "aborted" || value2.status === "aborted") {
             return INVALID;
           }
-          if (key.status === "dirty" || value.status === "dirty") {
+          if (key.status === "dirty" || value2.status === "dirty") {
             status.dirty();
           }
-          finalMap.set(key.value, value.value);
+          finalMap.set(key.value, value2.value);
         }
         return { status: status.value, value: finalMap };
       });
@@ -18641,14 +18641,14 @@ var ZodMap2 = class extends ZodType2 {
       const finalMap = /* @__PURE__ */ new Map();
       for (const pair of pairs) {
         const key = pair.key;
-        const value = pair.value;
-        if (key.status === "aborted" || value.status === "aborted") {
+        const value2 = pair.value;
+        if (key.status === "aborted" || value2.status === "aborted") {
           return INVALID;
         }
-        if (key.status === "dirty" || value.status === "dirty") {
+        if (key.status === "dirty" || value2.status === "dirty") {
           status.dirty();
         }
-        finalMap.set(key.value, value.value);
+        finalMap.set(key.value, value2.value);
       }
       return { status: status.value, value: finalMap };
     }
@@ -18886,9 +18886,9 @@ var ZodLiteral2 = class extends ZodType2 {
     return this._def.value;
   }
 };
-ZodLiteral2.create = (value, params) => {
+ZodLiteral2.create = (value2, params) => {
   return new ZodLiteral2({
-    value,
+    value: value2,
     typeName: ZodFirstPartyTypeKind.ZodLiteral,
     ...processCreateParams(params)
   });
@@ -19557,7 +19557,7 @@ var optionsSchema = external_exports2.object({
     method: external_exports2.enum(["automatic", "manual"]).optional(),
     postalCode: external_exports2.string().regex(/^\d{2}-\d{3}$/).optional(),
     allowSeparateOrders: external_exports2.boolean().optional(),
-    costsGrosze: external_exports2.record(external_exports2.string().min(1).max(80), external_exports2.number().int().min(0).max(1e7)).refine((value) => Object.keys(value).length <= 20).optional()
+    costsGrosze: external_exports2.record(external_exports2.string().min(1).max(80), external_exports2.number().int().min(0).max(1e7)).refine((value2) => Object.keys(value2).length <= 20).optional()
   }).optional()
 }).optional();
 var stageRequestSchema = external_exports2.object({
@@ -21090,7 +21090,9 @@ var RETAIL_SOURCES = [
   { "id": "topboden-indo-endcaps-gloss-pair", "ean": "5905167726358", "name": "Zako\u0144czenie listwy przypod\u0142ogowej Arbiton INDO - bia\u0142y po\u0142ysk 01 - lewe i prawe - 2 szt.", "brand": "Arbiton", "category": "skirting-accessory", "packageSize": 1, "unit": "kpl", "store": "TopBoden", "format": "topboden-api", "productUuid": "7e8bcf6a-8e26-4f27-9785-8bb7d087ba48", "apiPurchaseUnit": "opk.", "variant": ["INDO", "bia\u0142y po\u0142ysk", "2 szt"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/indo-zakonczenie-prawe-lewe-bialy-polysk-01-opakowanie-foliowe", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167726358_P_03.webp" },
   // source: https://topboden.pl/listwy-przypodlogowe/klej-montazowy-strongman-300ml
   // source: https://arbiton.com/pl/klej-montazowy-strongman-300ml
-  { "id": "topboden-strongman-300ml", "ean": "5905167788264", "name": "Klej monta\u017Cowy Arbiton Strongman 300 ml - klej do listew przypod\u0142ogowych", "brand": "Arbiton", "category": "skirting-adhesive", "packageSize": 300, "unit": "ml", "store": "TopBoden", "format": "topboden-api", "productUuid": "9cc774ed-c24b-4f3b-a863-a935a86383f4", "apiPurchaseUnit": "szt.", "variant": ["Strongman", "300 ml"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/klej-montazowy-strongman-300ml", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167788264_I_01.webp" }
+  { "id": "topboden-strongman-300ml", "ean": "5905167788264", "name": "Klej monta\u017Cowy Arbiton Strongman 300 ml - klej do listew przypod\u0142ogowych", "brand": "Arbiton", "category": "skirting-adhesive", "packageSize": 300, "unit": "ml", "store": "TopBoden", "format": "topboden-api", "productUuid": "9cc774ed-c24b-4f3b-a863-a935a86383f4", "apiPurchaseUnit": "szt.", "variant": ["Strongman", "300 ml"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/klej-montazowy-strongman-300ml", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167788264_I_01.webp" },
+  // source: https://izosystems.pl/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html
+  { "id": "izosystems-sws-inside90-30m", "ean": "5411183151178", "name": "Ta\u015Bma paroszczelna wewn\u0119trzna Soudal SWS Basic Plus Inside 90mm x 30m", "brand": "Soudal", "category": "window-tape", "packageSize": 30, "unit": "m", "store": "Izosystems", "format": "izosystems", "productId": 1783, "retailerSku": "135633", "apiPurchaseUnit": "szt.", "pickupRequiresConfirmation": true, "variant": ["Inside", "90mm", "30m"], "url": "https://izosystems.pl/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html" }
 ];
 var RETAIL_NAME_ALIASES = {
   "Erismann RollOver 3333-5 \u2014 flizelina do malowania, rolka 0,75 \xD7 25 m": "4002790333357",
@@ -21321,9 +21323,9 @@ function one(values, error40) {
   return values[0];
 }
 function property(html, key) {
-  const value = one(elements(html, (a2) => a2.itemprop === key), `microdata_${key}_ambiguous`);
-  const a = attrs(value.match(TAG)?.[0] ?? "");
-  return a.content ?? a.href ?? a.src ?? text2(value);
+  const value2 = one(elements(html, (a2) => a2.itemprop === key), `microdata_${key}_ambiguous`);
+  const a = attrs(value2.match(TAG)?.[0] ?? "");
+  return a.content ?? a.href ?? a.src ?? text2(value2);
 }
 function labelled(html, label, tag) {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -21340,7 +21342,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
   const images = elements(product, (a) => a.itemprop === "image").map((element) => {
     const a = attrs(element.match(TAG)?.[0] ?? "");
     return a.content ?? a.src ?? a.href;
-  }).filter((value) => Boolean(value));
+  }).filter((value2) => Boolean(value2));
   const image = images[0] ? new URL(decodeURIComponent(images[0]), url2).href : null;
   if (format === "unimet") {
     const visible = text2(one(elements(offer, (a) => a.itemprop === "price"), "retailer_gross_price_not_confirmed"));
@@ -21408,7 +21410,7 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
     };
   }
   const ean = labelled(product, "Kod EAN:", "em");
-  const gross2 = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value) => /z VAT/i.test(value)), "retailer_gross_price_not_confirmed");
+  const gross2 = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value2) => /z VAT/i.test(value2)), "retailer_gross_price_not_confirmed");
   const amount3 = gross2.match(/^([\d ,.]+)\s*zł\s*z VAT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
   if (amount3 === void 0 || Number(amount3) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
   return {
@@ -21490,8 +21492,8 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   });
   const knownFee = (store) => {
     if (settings.mode === "pickup") return 0;
-    const value = Object.hasOwn(settings.costsGrosze ?? {}, store) ? settings.costsGrosze[store] : void 0;
-    return Number.isSafeInteger(value) && value >= 0 && value <= 1e7 ? value : null;
+    const value2 = Object.hasOwn(settings.costsGrosze ?? {}, store) ? settings.costsGrosze[store] : void 0;
+    return Number.isSafeInteger(value2) && value2 >= 0 && value2 <= 1e7 ? value2 : null;
   };
   const result = {
     mode: settings.mode,
@@ -22093,7 +22095,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto17 = require("node:crypto");
+var import_node_crypto18 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retailer-http.ts
 var MAX_RETAIL_PACKAGES = DELIVERY_LIMITS.packagesPerProduct;
@@ -22120,6 +22122,29 @@ var AnonymousShop = class {
   }
   async text(path, form) {
     return this.read(path, form ? new URLSearchParams(form).toString() : void 0, false);
+  }
+  /** Only the reviewed anonymous product addition and postcode/carrier quote.
+   * This module also places orders: never accept its generic method or form.
+   * source: https://izosystems.pl/themes/warehouse/assets/cache/bottom-d7c313566.js
+   */
+  async izosystems(action, args) {
+    if (this.origin !== "https://izosystems.pl" || !args || !/^[a-f\d]{32}$/i.test(args.token) || Object.keys(args).some((k) => !["token", "productId", "count", "postalCode", "addressId"].includes(k))) throw Error("invalid_cart_action");
+    if (action === "add") {
+      if (args.productId !== 1783 || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || Object.keys(args).length !== 3) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read("/koszyk-zakupow", new URLSearchParams({ token: args.token, id_product: "1783", id_customization: "0", qty: String(args.count), add: "1", action: "update", ajax: "1" }).toString(), false));
+    }
+    let form = { ajax: "true", token: args.token };
+    if (action === "carriers") {
+      if (!/^\d{2}-\d{3}$/.test(args.postalCode ?? "") || Object.keys(args).length !== 2) throw Error("invalid_cart_action");
+      form = { ...form, id_country: "14", id_state: "0", postcode: args.postalCode, vat_number: "", id_address_delivery: "", method: "loadCarriers" };
+    } else if (action === "carrier") {
+      if (!/^\d{1,12}$/.test(args.addressId ?? "") || Object.keys(args).length !== 2) throw Error("invalid_cart_action");
+      form = { ...form, delivery_available: "true", ["delivery_option[" + args.addressId + "]"]: "992,", method: "updateCarrier" };
+    } else if (action === "cart" || action === "payments") {
+      if (Object.keys(args).length !== 1) throw Error("invalid_cart_action");
+      form = action === "cart" ? { ...form, method: "loadCart", shippingId: "992,", id_country: "14", id_address_delivery: "" } : { ...form, method: "loadPayment" };
+    } else throw Error("invalid_cart_action");
+    return JSON.parse(await this.read("/module/supercheckout/supercheckout", new URLSearchParams(form).toString(), false));
   }
   /** Only ABUD's public postcode check, anonymous add and basket-rate query.
    * The client-new endpoint is restricted to its postcode-only check; no
@@ -22269,8 +22294,9 @@ var AnonymousShop = class {
         redirect: "manual",
         headers: {
           "User-Agent": "AsystentRemontu/1.0",
-          Accept: json3 ? "application/json" : "text/html, application/json",
+          Accept: json3 ? "application/json" : this.origin === "https://izosystems.pl" ? "text/html" : "text/html, application/json",
           Cookie: cookie,
+          ...this.origin === "https://izosystems.pl" ? { "Accept-Language": "pl-PL" } : {},
           ...storeCart && this.storeCartToken ? { "Cart-Token": this.storeCartToken } : {},
           ...modnaCsrf ? { "X-CSRF-Token": modnaCsrf, "X-Requested-With": "XMLHttpRequest", Origin: this.origin, Referer: this.origin + "/" } : {},
           ...payload || forcePost ? { "Content-Type": storeCart || rawJson ? "application/json" : "application/x-www-form-urlencoded" } : {}
@@ -22321,11 +22347,11 @@ var AnonymousShop = class {
       const responseLimit = largeStrongman ? 2e6 : 1e6;
       try {
         while (true) {
-          const { done, value } = await reader.read();
+          const { done, value: value2 } = await reader.read();
           if (done) break;
-          size += value.byteLength;
+          size += value2.byteLength;
           if (size > responseLimit) throw Error("response_too_large");
-          chunks.push(value);
+          chunks.push(value2);
         }
       } finally {
         await reader.cancel().catch(() => {
@@ -22418,13 +22444,13 @@ var one2 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
   return values[0];
 };
-var attrs2 = (value) => attrs(value.match(/^<[^>]+>/)?.[0] ?? "");
-var cents = (value) => {
-  if (typeof value !== "string" || !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) throw Error("invalid_money");
-  return Number(value);
+var attrs2 = (value2) => attrs(value2.match(/^<[^>]+>/)?.[0] ?? "");
+var cents = (value2) => {
+  if (typeof value2 !== "string" || !/^\d+$/.test(value2) || !Number.isSafeInteger(Number(value2))) throw Error("invalid_money");
+  return Number(value2);
 };
-var currency = (value) => {
-  if (value?.currency_code !== "PLN" || value.currency_minor_unit !== 2) throw Error("retailer_currency_not_confirmed");
+var currency = (value2) => {
+  if (value2?.currency_code !== "PLN" || value2.currency_minor_unit !== 2) throw Error("retailer_currency_not_confirmed");
 };
 function inspectWooProductCard(html, source) {
   if (!Number.isSafeInteger(source.productId) || source.productId < 1) throw Error("product_id_not_confirmed");
@@ -22581,10 +22607,10 @@ var one4 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
   return values[0];
 };
-var amount = (value) => {
-  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw Error("invalid_money");
-  const n = parsePriceToGrosze(value);
-  if (n === null || !Number.isSafeInteger(n) || Math.abs(value * 100 - n) > 1e-5) throw Error("invalid_money");
+var amount = (value2) => {
+  if (typeof value2 !== "number" || !Number.isFinite(value2) || value2 < 0) throw Error("invalid_money");
+  const n = parsePriceToGrosze(value2);
+  if (n === null || !Number.isSafeInteger(n) || Math.abs(value2 * 100 - n) > 1e-5) throw Error("invalid_money");
   return n;
 };
 var sameName = (a, b) => a.replace(/\s+/g, " ").trim() === b.replace(/\s+/g, " ").trim();
@@ -22722,9 +22748,9 @@ var one5 = (rows, reason) => {
 var attrs5 = (el) => attrs(el.match(/^<[^>]+>/)?.[0] ?? "");
 var text3 = (el) => text2(el).replace(/&#47;/g, "/");
 var money = (el) => {
-  const amount3 = text3(el).match(/^([\d ,.]+)\s*zł$/)?.[1], value = amount3 ? parsePriceToGrosze(amount3) : null;
-  if (!value || !Number.isSafeInteger(value)) throw Error("retailer_gross_price_not_confirmed");
-  return value;
+  const amount3 = text3(el).match(/^([\d ,.]+)\s*zł$/)?.[1], value2 = amount3 ? parsePriceToGrosze(amount3) : null;
+  if (!value2 || !Number.isSafeInteger(value2)) throw Error("retailer_gross_price_not_confirmed");
+  return value2;
 };
 function review(source) {
   if (source.format !== "qshop" || source.id !== "tokmet-invena-ws20-030" || source.store !== "TOK-MET" || source.productId !== 2806 || source.retailerSku !== "WS-20-030-G" || source.ean !== "5907798716258" || source.brand !== "Invena" || source.name !== TOKMET_NAME || source.url !== TOKMET_URL || source.packageSize !== 1 || source.unit !== "szt" || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1) throw Error("product_identity_not_confirmed");
@@ -22759,7 +22785,7 @@ function confirmTokmetCart(html, priceGrosze) {
   const links = elements(safe, (a, t) => t === "a" && a.href === "cart.php?action=remove_item&id=2806");
   if (links.length !== 1) throw Error("basket_not_confirmed");
   const prices = elements(safe, (a) => a.class === "step3_data").map(text3).filter((s) => /^\d[\d ,.]*zł$/.test(s));
-  if (prices.length !== 2 || prices.some((value) => money(value) !== priceGrosze) || money(one5(elements(safe, (a) => a.class === "simple_cart_step_1_sum_netto"), "basket_not_confirmed")) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
+  if (prices.length !== 2 || prices.some((value2) => money(value2) !== priceGrosze) || money(one5(elements(safe, (a) => a.class === "simple_cart_step_1_sum_netto"), "basket_not_confirmed")) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
   if (!text3(safe).includes(TOKMET_NAME) || !elements(safe, (a) => a.id === "submit" && a.onclick === "__cart_form.Send('buyall.php')").length) throw Error("basket_not_confirmed");
 }
 async function readTokmetProduct(source, fetchImpl) {
@@ -22844,8 +22870,8 @@ function exactlyOne(elements2, reason) {
 function classElements(html, name) {
   return elements(html, (a) => a.class?.split(/\s+/).includes(name) ?? false);
 }
-function prestashopMoney(value) {
-  const match = value.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
+function prestashopMoney(value2) {
+  const match = value2.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
   const cents3 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
   if (!Number.isSafeInteger(cents3) || cents3 < 0) throw Error("invalid_money");
   return cents3;
@@ -22908,6 +22934,55 @@ function readPrestashopProduct(html, source) {
   };
 }
 
+// artifacts/api-server/src/lib/izosystems-product.ts
+var IZOSYSTEMS_ORIGIN = "https://izosystems.pl";
+var IZOSYSTEMS_PRODUCT_URL = IZOSYSTEMS_ORIGIN + "/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html";
+var izoAttrs = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
+var izoOne = exactlyOne;
+function izoMoney(text4, numeric2) {
+  if (typeof text4 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
+  const match = text4.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/), cents3 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
+  if (!Number.isSafeInteger(cents3) || cents3 < 0 || Math.abs(numeric2 * 100 - cents3) > 1e-5) throw Error("invalid_money");
+  return cents3;
+}
+function readIzosystemsState(html) {
+  const matches = [...html.matchAll(/var prestashop = ([^\r\n]+);/g)];
+  if (matches.length !== 1) throw Error("cart_session_not_confirmed");
+  const value2 = JSON.parse(matches[0][1]);
+  if (value2.currency?.iso_code !== "PLN" || value2.shop?.name !== "Izosystems.pl" || value2.customer?.is_logged !== false) throw Error("cart_session_not_confirmed");
+  return value2;
+}
+function readIzosystemsProduct(html, source) {
+  if (source.id !== "izosystems-sws-inside90-30m" || source.store !== "Izosystems" || source.url !== IZOSYSTEMS_PRODUCT_URL || source.productId !== 1783 || source.retailerSku !== "135633" || source.ean !== "5411183151178" || source.packageSize !== 30 || source.unit !== "m" || source.apiPurchaseUnit !== "szt." || source.brand !== "Soudal") throw Error("retailer_unit_not_confirmed");
+  const safe = clean(html), product = izoOne(elements(safe, (a) => a.id === "main-product-wrapper" && a.itemtype === "https://schema.org/Product"), "product_identity_ambiguous");
+  const byId2 = (id) => izoOne(elements(product, (a) => a.id === id), "product_identity_ambiguous");
+  const detail = byId2("product-details"), data = JSON.parse(izoAttrs(detail)["data-product"]);
+  const name = text2(izoOne(elements(product, (_a, t) => t === "h1"), "product_name_ambiguous"));
+  const prices = izoOne(classElements(product, "product-prices"), "product_price_ambiguous");
+  const labelled2 = (cls5) => text2(izoOne(classElements(prices, cls5), "product_identity_ambiguous"));
+  if (data.id !== 1783 || data.id_product !== 1783 || String(data.id_product_attribute) !== "0" || data.reference !== "135633" || data.name !== name || data.link !== source.url || labelled2("product-ean13") !== "EAN: " + source.ean || labelled2("product-reference") !== "Indeks: " + source.retailerSku) throw Error("product_identity_mismatch");
+  if (!/Soudal SWS Basic Plus Inside 90mm x 30m$/.test(name) || izoAttrs(izoOne(elements(product, (a) => a.itemprop === "brand"), "product_brand_ambiguous")).content !== "SOUDAL") throw Error("product_variant_mismatch");
+  if (data.available_for_order !== "1" || data.allow_oosp !== 0 || !Number.isSafeInteger(data.quantity) || data.quantity < 1 || data.quantity_all_versions !== data.quantity) throw Error("retailer_out_of_stock");
+  if (!["Przedmiot", "Przedmioty", "Przedmiot\xF3w"].includes(data.quantity_label) || text2(detail) !== "W magazynie " + data.quantity + " " + data.quantity_label || data.minimal_quantity !== 1 || data.is_virtual !== "0" || data.pack !== 0 || !Array.isArray(data.packItems) || data.packItems.length || data.customization_required || data.is_customizable) throw Error("purchase_rules_changed");
+  if (data.on_sale !== "0" || !Array.isArray(data.specific_prices) || data.specific_prices.length || data.customer_group_discount !== 0 || data.quantity_discounts?.length || data.price_without_reduction !== data.price) throw Error("conditional_price_not_supported");
+  const offer = izoOne(elements(prices, (a) => a.itemprop === "offers" && a.itemtype === "https://schema.org/Offer"), "product_offer_ambiguous");
+  const prop = (key) => izoOne(elements(offer, (a) => a.itemprop === key), "product_price_ambiguous");
+  const priceNode = prop("price"), priceGrosze = izoMoney(text2(priceNode).replace(/ \/ szt\.$/, ""), data.price);
+  if (priceGrosze <= 0 || parsePriceToGrosze(izoAttrs(priceNode).content) !== priceGrosze || izoAttrs(prop("priceCurrency")).content !== "PLN" || izoAttrs(prop("availability")).href !== "https://schema.org/InStock" || text2(izoOne(classElements(prices, "tax-shipping-delivery-label"), "product_tax_ambiguous")) !== "Brutto") throw Error("retailer_gross_price_mismatch");
+  const form = byId2("add-to-cart-or-refresh"), action = izoAttrs(form);
+  if (action.action !== IZOSYSTEMS_ORIGIN + "/koszyk-zakupow" || action.method !== "post") throw Error("invalid_cart_route");
+  const input2 = (name2) => izoAttrs(izoOne(elements(form, (a, t) => t === "input" && a.name === name2), "product_form_ambiguous"));
+  if (input2("id_product").value !== "1783" || input2("id_customization").value !== "0" || input2("qty").min !== "1" || input2("qty").step !== "1") throw Error("purchase_rules_changed");
+  const button = izoOne(elements(form, (a, t) => t === "button" && a["data-button-action"] === "add-to-cart"), "product_form_ambiguous");
+  if (/\bdisabled\b/.test(button.match(/^<[^>]+>/)?.[0] ?? "")) throw Error("retailer_out_of_stock");
+  const token = input2("token").value;
+  if (!/^[a-f\d]{32}$/i.test(token ?? "")) throw Error("cart_session_not_confirmed");
+  const photo = izoAttrs(izoOne(elements(product, (a, t) => t === "img" && a.itemprop === "image" && Boolean(a.src) && a.content === a.src), "product_image_not_confirmed"));
+  const imageUrl = photo.src;
+  if (!imageUrl?.startsWith(IZOSYSTEMS_ORIGIN + "/10544-large_default/") || !imageUrl.endsWith("/" + new URL(source.url).pathname.split("/").pop().replace(/^\d+-/, "").replace(".html", ".jpg")) || !/INSIDE 90mm x 30m\.$/.test(photo.alt ?? "")) throw Error("product_image_not_confirmed");
+  return { product: { "@type": "Product", name, brand: "Soudal", gtin13: source.ean, image: imageUrl, offers: { "@type": "Offer", price: priceGrosze / 100, priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, priceGrosze, maxPackages: data.quantity, imageUrl, name, token };
+}
+
 // artifacts/api-server/src/lib/abstore-product.ts
 var one6 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
@@ -22967,7 +23042,7 @@ var only2 = (values, reason) => {
 };
 var byClass2 = (html, name) => elements(html, (a) => a.class?.split(/\s+/).includes(name) ?? false);
 var attrs6 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
-var nameText = (value) => value.trim().replace(/\s+/g, " ");
+var nameText = (value2) => value2.trim().replace(/\s+/g, " ");
 function readCertusoftState(html) {
   const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
   const script = only2(scripts.filter((s) => /^\s*window\.__INITIAL_STATE__=/.test(s)), "retailer_state_ambiguous");
@@ -23031,8 +23106,8 @@ var modnaOne = (values, error40 = "product_identity_ambiguous") => {
 };
 var modnaAttrs = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var modnaById = (html, id, tag) => modnaOne(elements(html, (a, t) => a.id === id && (!tag || t === tag)));
-function modnaMoney(value) {
-  const match = value.replace(/\s/g, "").match(/^(\d+(?:[.,]\d{1,2})?)(?:zł)?$/);
+function modnaMoney(value2) {
+  const match = value2.replace(/\s/g, "").match(/^(\d+(?:[.,]\d{1,2})?)(?:zł)?$/);
   const result = match ? parsePriceToGrosze(match[1].replace(",", ".")) : null;
   if (!Number.isSafeInteger(result) || result === null || result <= 0) throw Error("invalid_money");
   return result;
@@ -23112,12 +23187,12 @@ function readBetterialProduct(html, source) {
   if (name !== source.name || item.name !== name || item.manufacturer_name !== source.brand) throw Error("product_name_mismatch");
   const products = [...html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].flatMap((match) => {
     try {
-      const value = JSON.parse(match[1]);
-      return Array.isArray(value) ? value : [value];
+      const value2 = JSON.parse(match[1]);
+      return Array.isArray(value2) ? value2 : [value2];
     } catch {
       return [];
     }
-  }).filter((value) => value?.["@type"] === "Product");
+  }).filter((value2) => value2?.["@type"] === "Product");
   if (products.length !== 1) throw Error("product_identity_ambiguous");
   const product = products[0], offer = product.offers;
   if (product.name !== name || product.url !== source.url || product.brand?.name !== source.brand || offer?.["@type"] !== "Offer" || offer.url !== source.url || offer.priceCurrency !== "PLN") throw Error("product_identity_mismatch");
@@ -23139,9 +23214,9 @@ var one7 = (values, reason) => {
 };
 var attrs7 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var byId = (html, id) => one7(elements(html, (a) => a.id === id), "product_identity_not_confirmed");
-var gross = (value) => {
-  if (typeof value !== "string" || !/^\d+\.\d{2}$/.test(value)) throw Error("retailer_gross_price_mismatch");
-  const price2 = parsePriceToGrosze(value);
+var gross = (value2) => {
+  if (typeof value2 !== "string" || !/^\d+\.\d{2}$/.test(value2)) throw Error("retailer_gross_price_mismatch");
+  const price2 = parsePriceToGrosze(value2);
   if (price2 === null || price2 < 0) throw Error("retailer_gross_price_mismatch");
   return price2;
 };
@@ -23203,13 +23278,13 @@ function inspectKronosferaProduct(html, source) {
   if (source.format !== "kronosfera" || source.store !== "Kronosfera" || source.productId !== 2068 || source.retailerSku !== "LK100F24-9002" || source.ean !== "5907555424969" || source.packageSize !== 2.4 || source.unit !== "mb" || source.url !== "https://kronosfera.pl/k/listwa-przypodlogowa-lk100f24-9002,2068") throw Error("product_identity_not_confirmed");
   const products = [];
   for (const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
-    let value;
+    let value2;
     try {
-      value = JSON.parse(match[1]);
+      value2 = JSON.parse(match[1]);
     } catch {
       continue;
     }
-    if (value?.["@type"] === "Product") products.push(value);
+    if (value2?.["@type"] === "Product") products.push(value2);
   }
   if (products.length !== 1) throw Error("product_identity_not_confirmed");
   const product = products[0], offer = product.offers;
@@ -23221,7 +23296,7 @@ function inspectKronosferaProduct(html, source) {
   const form = one8(elements(main, (a, tag) => tag === "form" && a.id === "customizable"), "product_form_not_confirmed");
   if (attr(form, "action") !== "https://kronosfera.pl/ajax/store/product/purchase/1/pl/2068" || attr(form, "method") !== "POST") throw Error("product_form_not_confirmed");
   const converter = one8(elements(form, (_a, tag) => tag === "price-converter"), "retailer_unit_not_confirmed");
-  for (const [key, value] of Object.entries({ "main-unit-type": "szt", "unit-value": "1.00000", "units-in-outer": "1", min: "1", step: "1" })) if (attr(converter, key) !== value) throw Error("retailer_unit_not_confirmed");
+  for (const [key, value2] of Object.entries({ "main-unit-type": "szt", "unit-value": "1.00000", "units-in-outer": "1", min: "1", step: "1" })) if (attr(converter, key) !== value2) throw Error("retailer_unit_not_confirmed");
   const visible = text2(one8(elements(form, (a) => hasClass(a, "product-buy-config__price-value")), "retailer_gross_price_not_confirmed"));
   const unit = text2(one8(elements(form, (a) => hasClass(a, "product-buy-config__price-currency")), "retailer_unit_not_confirmed"));
   const amount3 = parsePriceToGrosze(visible);
@@ -23230,7 +23305,7 @@ function inspectKronosferaProduct(html, source) {
     text2(one8(elements(row, (a) => hasClass(a, "product-params__name")), "product_variant_mismatch")),
     text2(one8(elements(row, (a) => hasClass(a, "product-params__value")), "product_variant_mismatch"))
   ]));
-  for (const [key, value] of Object.entries({ "Kolor listwy": "bia\u0142y", "D\u0142ugo\u015B\u0107 listwy (mm)": "2400", "Wysoko\u015B\u0107 listwy (mm)": "100", "Grubo\u015B\u0107 listwy (mm)": "14" })) if (params.get(key) !== value) throw Error("product_variant_mismatch");
+  for (const [key, value2] of Object.entries({ "Kolor listwy": "bia\u0142y", "D\u0142ugo\u015B\u0107 listwy (mm)": "2400", "Wysoko\u015B\u0107 listwy (mm)": "100", "Grubo\u015B\u0107 listwy (mm)": "14" })) if (params.get(key) !== value2) throw Error("product_variant_mismatch");
   if (!/Produkt z oferty Kronospan KO Sp\. z\.o\.o\./.test(text2(form))) throw Error("product_manufacturer_not_confirmed");
   const token = attr(one8(elements(form, (a) => a.name === "_token"), "anonymous_form_not_confirmed"), "value");
   if (!token || !/^[A-Za-z0-9]{40}$/.test(token)) throw Error("anonymous_form_not_confirmed");
@@ -23265,10 +23340,10 @@ var only3 = (values, reason) => {
   return values[0];
 };
 var attribute2 = (element, key) => attrs(element.match(/^<[^>]+>/)?.[0] ?? "")[key];
-var amount2 = (value) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
-var price = (value) => {
-  const number4 = parsePriceToGrosze(value?.gross), display = parsePriceToGrosze(String(value?.grossDisplay ?? "").replace(/\s*zł$/, ""));
-  if (value?.currency !== "PLN" || value.tax?.percent !== 23 || !number4 || !Number.isSafeInteger(number4) || number4 !== display) throw Error("retailer_gross_price_not_confirmed");
+var amount2 = (value2) => typeof value2 === "number" && Number.isSafeInteger(value2) && value2 >= 0;
+var price = (value2) => {
+  const number4 = parsePriceToGrosze(value2?.gross), display = parsePriceToGrosze(String(value2?.grossDisplay ?? "").replace(/\s*zł$/, ""));
+  if (value2?.currency !== "PLN" || value2.tax?.percent !== 23 || !number4 || !Number.isSafeInteger(number4) || number4 !== display) throw Error("retailer_gross_price_not_confirmed");
   return number4;
 };
 function inspectSkyshopProduct(html, api, parameters, source) {
@@ -23281,10 +23356,10 @@ function inspectSkyshopProduct(html, api, parameters, source) {
   if (!text2(producer).includes(MATBUD_PRODUCER)) throw Error("product_manufacturer_not_confirmed");
   const description = only3(elements(safe, (a) => a.id === "product_description"), "product_variant_mismatch");
   const facts = elements(description, (_a, tag) => tag === "li").map(text2);
-  for (const fact of ["sk\u0142ad: polistyren", "kolor: " + review2.color, "lambda: " + review2.lambda + " W/mK", "grubo\u015B\u0107 p\u0142yty: " + review2.thickness + " cm", "wymiar p\u0142yty: 100 x 50 cm", "ilo\u015B\u0107 p\u0142yt w opakowaniu: " + review2.boards + " szt", "obj\u0119to\u015B\u0107 opakowania: 0,3 m3", "powierzchnia p\u0142yt: " + review2.area + " m2", "Euroklasa: E"]) if (facts.filter((value) => value === fact).length !== 1) throw Error("product_variant_mismatch");
+  for (const fact of ["sk\u0142ad: polistyren", "kolor: " + review2.color, "lambda: " + review2.lambda + " W/mK", "grubo\u015B\u0107 p\u0142yty: " + review2.thickness + " cm", "wymiar p\u0142yty: 100 x 50 cm", "ilo\u015B\u0107 p\u0142yt w opakowaniu: " + review2.boards + " szt", "obj\u0119to\u015B\u0107 opakowania: 0,3 m3", "powierzchnia p\u0142yt: " + review2.area + " m2", "Euroklasa: E"]) if (facts.filter((value2) => value2 === fact).length !== 1) throw Error("product_variant_mismatch");
   if (!text2(description).includes("Wysy\u0142ka GRATIS od 50 paczek w ka\u017Cde dowolne miejsce Polski.")) throw Error("purchase_rules_changed");
   const counter = only3(elements(safe, (a) => a.id === "product_counter"), "purchase_rules_changed");
-  for (const [key, value] of Object.entries({ "data-real-min": String(minimum), "data-min": String(minimum), "data-tick": String(review2.nativePerPack), "data-boxamount": String(review2.nativePerPack), "data-boxrestrict": String(review2.nativePerPack), "data-boxrestrict-whole": "true" })) if (attribute2(counter, key) !== value) throw Error("purchase_rules_changed");
+  for (const [key, value2] of Object.entries({ "data-real-min": String(minimum), "data-min": String(minimum), "data-tick": String(review2.nativePerPack), "data-boxamount": String(review2.nativePerPack), "data-boxrestrict": String(review2.nativePerPack), "data-boxrestrict-whole": "true" })) if (attribute2(counter, key) !== value2) throw Error("purchase_rules_changed");
   if (api?.id !== review2.id || api.name !== review2.name || api.url !== review2.url || api.symbol !== review2.sku || api.type !== "product" || api.ean !== null || api.barCode !== null || !Array.isArray(api.setItems) || api.setItems.length) throw Error("product_identity_not_confirmed");
   const native = api.amount;
   if (native?.minAmount !== minimum || native.tick !== review2.nativePerPack || native.isBox !== true || native.unit !== review2.nativeUnit || api.amountPrecision !== review2.precision) throw Error("purchase_rules_changed");
@@ -23292,15 +23367,15 @@ function inspectSkyshopProduct(html, api, parameters, source) {
   if (!Array.isArray(parameters) || parameters.length !== 1 || parameters[0].productId !== review2.id || parameters[0].symbol !== api.symbol || parameters[0].ean !== null || parameters[0].barCode !== null) throw Error("product_variant_mismatch");
   for (const list of [api.parameters, parameters[0].parameters]) {
     if (!Array.isArray(list) || list.length !== 1 || list[0].id !== 20 || list[0].type !== "info" || list[0].required !== false || !Array.isArray(list[0].values) || list[0].values.length !== 2) throw Error("product_variant_mismatch");
-    const minimum2 = list[0].values.find((value) => value.id === 214), free = list[0].values.find((value) => value.id === 228);
-    if (!minimum2?.name.includes("poni\u017Cej 50op=15m3") || !free?.name.includes("Styropian DARMOWA WYSY\u0141KA !") || list[0].values.some((value) => value.changePrice !== 0)) throw Error("purchase_rules_changed");
+    const minimum2 = list[0].values.find((value2) => value2.id === 214), free = list[0].values.find((value2) => value2.id === 228);
+    if (!minimum2?.name.includes("poni\u017Cej 50op=15m3") || !free?.name.includes("Styropian DARMOWA WYSY\u0141KA !") || list[0].values.some((value2) => value2.changePrice !== 0)) throw Error("purchase_rules_changed");
   }
   const nativePriceGrosze = price(api.price), priceGrosze = nativePriceGrosze * review2.nativePerPack, products = [];
   if (!Number.isSafeInteger(priceGrosze)) throw Error("retailer_gross_price_not_confirmed");
   for (const match of html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
-      const value = JSON.parse(match[1]);
-      if (value?.["@type"] === "Product") products.push(value);
+      const value2 = JSON.parse(match[1]);
+      if (value2?.["@type"] === "Product") products.push(value2);
     } catch {
     }
   }
@@ -23333,21 +23408,21 @@ function confirmSkyshopBasket(cart, expected) {
     if (product.name !== review2.name || product.symbol !== review2.sku || product.producerId !== 982 || product.producerName !== MATBUD_PRODUCER || product.url !== review2.url || item.type !== "ORDINARY_PRODUCT" || !Array.isArray(item.parameters) || item.parameters.length) throw Error("basket_not_confirmed");
     if (item.quantity !== count) throw Error("insufficient_stock");
     if (price(item.unitPriceSummary?.final) !== unitPriceGrosze || price(item.unitPriceSummary?.base) !== unitPriceGrosze || item.unitPriceSummary.discounts?.length || item.priceSummary?.discounts?.length || cart.priceSummary?.discounts?.length) throw Error("price_changed");
-    for (const value of [item.priceSummary?.base, item.priceSummary?.final]) if (price(value) !== count * unitPriceGrosze) throw Error("price_changed");
+    for (const value2 of [item.priceSummary?.base, item.priceSummary?.final]) if (price(value2) !== count * unitPriceGrosze) throw Error("price_changed");
     total += count * unitPriceGrosze;
   }
-  for (const value of [cart.priceSummary?.base, cart.priceSummary?.final]) {
-    if (value?.currency !== "PLN" || parsePriceToGrosze(value.gross) !== total || parsePriceToGrosze(String(value.grossDisplay ?? "").replace(/\s*zł$/, "")) !== total) throw Error("basket_not_confirmed");
+  for (const value2 of [cart.priceSummary?.base, cart.priceSummary?.final]) {
+    if (value2?.currency !== "PLN" || parsePriceToGrosze(value2.gross) !== total || parsePriceToGrosze(String(value2.grossDisplay ?? "").replace(/\s*zł$/, "")) !== total) throw Error("basket_not_confirmed");
   }
   return cart;
 }
 var skyshopEvidenceHash = (evidence) => (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex");
 
 // artifacts/api-server/src/lib/retail-pages.ts
-function objects(value) {
-  if (Array.isArray(value)) return value.flatMap(objects);
-  if (!value || typeof value !== "object") return [];
-  const item = value;
+function objects(value2) {
+  if (Array.isArray(value2)) return value2.flatMap(objects);
+  if (!value2 || typeof value2 !== "object") return [];
+  const item = value2;
   return [item, ...objects(item["@graph"])];
 }
 function parseRetailPage(html, source, observedAt) {
@@ -23363,7 +23438,11 @@ function parseRetailPage(html, source, observedAt) {
     stockPackages = reviewed.stock;
   } else if (source.format === "betterial") products.push(readBetterialProduct(html, source));
   else if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
-  else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
+  else if (source.format === "izosystems") {
+    const reviewed = readIzosystemsProduct(html, source);
+    products.push(reviewed.product);
+    stockPackages = reviewed.maxPackages;
+  } else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
   else if (source.format === "certusoft") {
     const reviewed = readCertusoftProduct(html, source);
     products.push(reviewed.product);
@@ -23383,12 +23462,12 @@ function parseRetailPage(html, source, observedAt) {
   const product = source.skuIdentity ? products.find((item) => item.sku === retailSkuCode(source) && !item.gtin13 && !item.gtin) : products.find((item) => String(item.gtin13 ?? item.gtin ?? "") === source.ean);
   if (!product) throw new Error("product_ean_not_confirmed");
   const name = String(product.name ?? "");
-  const normalize = (value) => normalizeProductName(value.replace(/(\d|mm|cm|m)\s*[x×/]\s*(?=\d)/gi, "$1 x ").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
+  const normalize = (value2) => normalizeProductName(value2.replace(/(\d|mm|cm|m)\s*[x×/]\s*(?=\d)/gi, "$1 x ").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
   const normalized = normalize(name);
   const packagePattern = new RegExp(`(?:^| )${String(source.packageSize).replace(".", " ")} (?:${source.unit === "l" ? "l|litrow|litry" : source.unit})(?: |$)`);
   const explicitBrand = typeof product.brand === "string" ? product.brand : product.brand?.name;
   const brand = normalizeProductName(explicitBrand || (typeof product.manufacturer === "string" ? product.manufacturer : product.manufacturer?.name) || "");
-  const variantMatches = source.variant?.every((value) => new RegExp(`(?:^| )${normalize(value)}(?: |$)`).test(normalized));
+  const variantMatches = source.variant?.every((value2) => new RegExp(`(?:^| )${normalize(value2)}(?: |$)`).test(normalized));
   if (source.packageDescription && !normalize(text2(String(product.description ?? ""))).includes(normalize(source.packageDescription))) throw new Error("product_package_not_confirmed");
   const sourceBrand = normalizeProductName(source.brand);
   const unbranded = source.unbranded === true && source.id === "castorama-paint-economy-10l" && source.store === "Castorama" && source.ean === "3663602567240" && source.name === "Farba bia\u0142a mat 10 l" && sourceBrand === "";
@@ -23427,7 +23506,7 @@ function parseRetailPage(html, source, observedAt) {
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
     evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(html).digest("hex"),
-    validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value) => typeof value === "string").sort()[0] ?? null
+    validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value2) => typeof value2 === "string").sort()[0] ?? null
   };
 }
 function retailPriceIsValid(validUntil, now) {
@@ -23502,11 +23581,11 @@ async function readRetailSource(source, fetchImpl = fetch) {
   let bytes = 0;
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value: value2 } = await reader.read();
       if (done) break;
-      bytes += value.byteLength;
+      bytes += value2.byteLength;
       if (bytes > 3e6) throw new Error("retailer_page_too_large");
-      chunks.push(value);
+      chunks.push(value2);
     }
   } finally {
     await reader.cancel().catch(() => {
@@ -23636,7 +23715,7 @@ function createCheckoutPageReader() {
     const key = JSON.stringify([url2, price2, scope ?? ""]), previous = cache.get(key);
     if (previous && previous.until > Date.now()) return previous.value;
     if (cache.size >= 32) cache.delete(cache.keys().next().value);
-    const value = (async () => {
+    const value2 = (async () => {
       const release = await reads.acquire();
       if (!release) throw Error("quote_busy");
       try {
@@ -23645,16 +23724,16 @@ function createCheckoutPageReader() {
         release();
       }
     })();
-    cache.set(key, { until: Date.now() + 6e4, value });
-    void value.catch(() => {
-      if (cache.get(key)?.value === value) cache.delete(key);
+    cache.set(key, { until: Date.now() + 6e4, value: value2 });
+    void value2.catch(() => {
+      if (cache.get(key)?.value === value2) cache.delete(key);
     });
-    return value;
+    return value2;
   };
 }
 var withoutOld = (html) => html.replace(/<del\b[^>]*>[\s\S]*?<\/del>/gi, "").replace(/<div\b[^>]*class=["']price-old["'][^>]*>[\s\S]*?<\/div>/gi, "");
-function checkoutMoney(value) {
-  const match = text2(value).replace(/[\s\u00a0]/g, "").match(/^(\d+)(?:,(\d{2}))?zł$/);
+function checkoutMoney(value2) {
+  const match = text2(value2).replace(/[\s\u00a0]/g, "").match(/^(\d+)(?:,(\d{2}))?zł$/);
   if (!match) throw Error("invalid_money");
   const result = Number(match[1]) * 100 + Number(match[2] ?? 0);
   if (!Number.isSafeInteger(result) || result < 0) throw Error("invalid_money");
@@ -23723,10 +23802,10 @@ function readSeweraPayment(html) {
     const inputs = elements(row, (a2) => a2.name === "platnosc" && ["P\u0142atno\u015B\u0107 online", "Przelew tradycyjny"].includes(a2["data-name"]));
     if (inputs.length !== 1 || /\sdisabled(?:\s|=|>)/i.test(inputs[0])) return [];
     const a = attr2(inputs[0]);
-    const value = a.onclick?.match(/\('#koszt_dostawy'\)\.val\('([\d,]+)'\)/)?.[1];
+    const value2 = a.onclick?.match(/\('#koszt_dostawy'\)\.val\('([\d,]+)'\)/)?.[1];
     const visible = one9(elements(row, (b) => cls3(b, "dictionary-icon-additional")));
     const cost = checkoutMoney(visible);
-    if (!value || checkoutMoney(`${value} z\u0142`) !== cost) throw Error("invalid_money");
+    if (!value2 || checkoutMoney(`${value2} z\u0142`) !== cost) throw Error("invalid_money");
     return [{ costGrosze: cost, payment: a["data-name"] }];
   });
   return options.sort((a, b) => a.costGrosze - b.costGrosze)[0] ?? null;
@@ -23970,7 +24049,7 @@ async function quoteTopboden(order, fetchImpl) {
   if (!Number.isFinite(rate.minOrderValue) || rate.minOrderValue <= 0 || !Number.isSafeInteger(rate.minOrderValue * 100)) throw Error("delivery_threshold_not_confirmed");
   const prices = categories.map((keys) => {
     const applicable = keys.filter((key) => Object.hasOwn(matrix, key)).map((key) => parsePriceToGrosze(matrix[key]));
-    if (!applicable.length || applicable.some((value) => value === null || value <= 0)) throw Error("delivery_category_not_confirmed");
+    if (!applicable.length || applicable.some((value2) => value2 === null || value2 <= 0)) throw Error("delivery_category_not_confirmed");
     return Math.max(...applicable);
   });
   const costGrosze = materials >= Math.round(rate.minOrderValue * 100) ? 0 : Math.max(...prices), checkedAt = /* @__PURE__ */ new Date();
@@ -24057,10 +24136,10 @@ async function quotePrestashop(order, fetchImpl) {
 // artifacts/api-server/src/lib/certusoft-delivery.ts
 var import_node_crypto12 = require("node:crypto");
 var origin2 = "https://hipper.pl";
-var money2 = (value) => {
-  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) throw Error("invalid_money");
-  const cents3 = Math.round(value * 100);
-  if (!Number.isSafeInteger(cents3) || Math.abs(value * 100 - cents3) > 1e-5) throw Error("invalid_money");
+var money2 = (value2) => {
+  if (typeof value2 !== "number" || !Number.isFinite(value2) || value2 < 0) throw Error("invalid_money");
+  const cents3 = Math.round(value2 * 100);
+  if (!Number.isSafeInteger(cents3) || Math.abs(value2 * 100 - cents3) > 1e-5) throw Error("invalid_money");
   return cents3;
 };
 function confirmedCart(raw, expected, subtotal) {
@@ -24220,9 +24299,9 @@ async function quoteModna(order, fetchImpl) {
 
 // artifacts/api-server/src/lib/folnet-delivery.ts
 var import_node_crypto14 = require("node:crypto");
-var money3 = (value, formatted) => {
-  if (typeof value !== "string" || !/^\d+\.\d{2}$/.test(value) || typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted)) throw Error("invalid_money");
-  const amount3 = parsePriceToGrosze(value), visible = parsePriceToGrosze(formatted.replace(/\s*zł$/, ""));
+var money3 = (value2, formatted) => {
+  if (typeof value2 !== "string" || !/^\d+\.\d{2}$/.test(value2) || typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted)) throw Error("invalid_money");
+  const amount3 = parsePriceToGrosze(value2), visible = parsePriceToGrosze(formatted.replace(/\s*zł$/, ""));
   if (amount3 === null || amount3 < 0 || amount3 !== visible) throw Error("invalid_money");
   return amount3;
 };
@@ -24347,12 +24426,12 @@ async function quoteKronosfera(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/skyshop-delivery.ts
-function confirmSkyshopBasketCalculation(value, expected, selected = false) {
+function confirmSkyshopBasketCalculation(value2, expected, selected = false) {
   if (!expected.length || expected.length > 2 || new Set(expected.map((row) => row.productId)).size !== expected.length) throw Error("invalid_basket");
-  if (value?.baseCurrency !== "PLN" || value.orderCurrency !== "PLN" || value.isWdt !== false || value.coupon !== null || value.gratisId !== null || ![null, 0].includes(value.orderPaymentOverhead) || !Array.isArray(value.products) || value.products.length !== expected.length) throw Error("basket_not_confirmed");
+  if (value2?.baseCurrency !== "PLN" || value2.orderCurrency !== "PLN" || value2.isWdt !== false || value2.coupon !== null || value2.gratisId !== null || ![null, 0].includes(value2.orderPaymentOverhead) || !Array.isArray(value2.products) || value2.products.length !== expected.length) throw Error("basket_not_confirmed");
   let total = 0;
   const seen = /* @__PURE__ */ new Set();
-  for (const product of value.products) {
+  for (const product of value2.products) {
     const line2 = expected.find((row) => row.productId === product?.id);
     if (!line2 || seen.has(line2.productId)) throw Error("basket_not_confirmed");
     seen.add(line2.productId);
@@ -24363,10 +24442,10 @@ function confirmSkyshopBasketCalculation(value, expected, selected = false) {
     if (parsePriceToGrosze(product.price) !== line2.unitPriceGrosze || parsePriceToGrosze(product.priceInOrderCurrency) !== line2.unitPriceGrosze) throw Error("price_changed");
     total += line2.count * line2.unitPriceGrosze;
   }
-  if (!Number.isSafeInteger(total) || [value.orderProductsPricesSum, value.orderProductsPricesSumInOrderCurrency, value.orderPriceTotal].some((amount3) => parsePriceToGrosze(amount3) !== total)) throw Error("price_changed");
-  if (value.orderPriceShipment !== 0) throw Error("no_home_delivery");
-  if (selected && (value.payment?.name !== "Wp\u0142ata na konto bankowe" || value.shipment?.name !== "Styropian, DARMOWA DOSTAWA !")) throw Error("no_home_delivery");
-  return value;
+  if (!Number.isSafeInteger(total) || [value2.orderProductsPricesSum, value2.orderProductsPricesSumInOrderCurrency, value2.orderPriceTotal].some((amount3) => parsePriceToGrosze(amount3) !== total)) throw Error("price_changed");
+  if (value2.orderPriceShipment !== 0) throw Error("no_home_delivery");
+  if (selected && (value2.payment?.name !== "Wp\u0142ata na konto bankowe" || value2.shipment?.name !== "Styropian, DARMOWA DOSTAWA !")) throw Error("no_home_delivery");
+  return value2;
 }
 function confirmSkyshopBasketShipping(html, methods, expected) {
   const safe = clean(html), orders = elements(safe, (a) => a.class?.split(/\s+/).includes("order") ?? false);
@@ -24420,9 +24499,9 @@ async function quoteSkyshop(order, fetchImpl) {
 var import_node_crypto16 = require("node:crypto");
 var ORIGIN3 = "https://www.abud.pl";
 var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg"];
-function money5(value, formatted) {
-  if (!["string", "number"].includes(typeof value)) throw Error("invalid_money");
-  const amount3 = parsePriceToGrosze(value);
+function money5(value2, formatted) {
+  if (!["string", "number"].includes(typeof value2)) throw Error("invalid_money");
+  const amount3 = parsePriceToGrosze(value2);
   if (amount3 === null || !Number.isSafeInteger(amount3) || amount3 < 0) throw Error("invalid_money");
   if (formatted !== void 0 && (typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted) || parsePriceToGrosze(formatted.replace(/\s*zł$/, "")) !== amount3)) throw Error("invalid_money");
   return amount3;
@@ -24453,9 +24532,9 @@ function confirmAbudDestination(response) {
 function confirmVariant(html, source) {
   const form = elements(clean(html), (a, tag) => tag === "form" && a["data-product_id"] === String(source.productId));
   if (form.length !== 1) throw Error("product_unavailable");
-  for (const [id, value] of [["projector_size_hidden", "onesize"], ["projector_mode_hidden", "1"]]) {
+  for (const [id, value2] of [["projector_size_hidden", "onesize"], ["projector_mode_hidden", "1"]]) {
     const inputs = elements(form[0], (a) => a.id === id);
-    if (inputs.length !== 1 || attrs(inputs[0].match(/^<[^>]+>/)?.[0] ?? "").value !== value) throw Error("product_unavailable");
+    if (inputs.length !== 1 || attrs(inputs[0].match(/^<[^>]+>/)?.[0] ?? "").value !== value2) throw Error("product_unavailable");
   }
 }
 function confirmAbudBasket(response, expected, materialsGrosze) {
@@ -24511,6 +24590,63 @@ async function quoteAbud(order, postalCode, fetchImpl) {
   } };
 }
 
+// artifacts/api-server/src/lib/izosystems-delivery.ts
+var import_node_crypto17 = require("node:crypto");
+var money6 = (text4, n) => n === 0 && text4 === "Za darmo!" ? 0 : izoMoney(text4, n);
+var value = (html, id) => text2(izoOne(elements(html, (a) => a.id === id), "basket_not_confirmed"));
+async function quoteIzosystems(order, postalCode, fetchImpl) {
+  if (order.store !== "Izosystems" || !/^\d{2}-\d{3}$/.test(postalCode) || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
+  const pack = order.lines[0].packages[0], source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store && s.format === "izosystems");
+  if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || pack.unitPriceGrosze * pack.count !== order.materialsGrosze) throw Error("invalid_basket");
+  const client = new AnonymousShop(IZOSYSTEMS_ORIGIN, fetchImpl, AbortSignal.timeout(45e3), 24);
+  const page = await client.text(source.url), product = readIzosystemsProduct(page, source);
+  if (product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+  if (product.maxPackages < pack.count) throw Error("insufficient_stock");
+  const expected = order.materialsGrosze;
+  const confirmCart2 = (cart) => {
+    if (!cart || !Array.isArray(cart.products) || cart.products.length !== 1 || cart.products_count !== pack.count || !Array.isArray(cart.discounts) || cart.discounts.length || !Array.isArray(cart.vouchers?.added) || cart.vouchers.added.length || cart.subtotals?.discounts !== null) throw Error("basket_not_confirmed");
+    const p = cart.products[0];
+    if (String(p.id) !== "1783" || String(p.id_product) !== "1783" || String(p.id_product_attribute) !== "0" || p.reference !== "135633" || p.ean13 !== source.ean || p.name !== product.name || p.quantity !== pack.count || izoMoney(p.price, p.price_amount) !== pack.unitPriceGrosze || izoMoney(p.total, expected / 100) !== expected || izoMoney(cart.subtotals.products.value, cart.subtotals.products.amount) !== expected) throw Error("basket_not_confirmed");
+  };
+  const added = await client.izosystems("add", { token: product.token, productId: 1783, count: pack.count });
+  if (added.success !== true || String(added.id_product) !== "1783" || String(added.id_product_attribute) !== "0" || added.errors) throw Error("basket_not_confirmed");
+  confirmCart2(added.cart);
+  const checkout = await client.text("/zamowienie"), state = readIzosystemsState(checkout);
+  confirmCart2(state.cart);
+  const form = izoOne(elements(clean(checkout), (a, t) => t === "form" && a.id === "velsof_supercheckout_form"), "basket_not_confirmed");
+  if (izoAttrs(form).action !== IZOSYSTEMS_ORIGIN + "/module/supercheckout/supercheckout") throw Error("invalid_cart_route");
+  const countries = izoOne(elements(form, (a, t) => t === "select" && a.name === "shipping_address[id_country]"), "country_not_confirmed");
+  const poland = izoOne(elements(countries, (_a, t) => t === "option").filter((n) => text2(n) === "Polska"), "country_not_confirmed");
+  if (izoAttrs(poland).value !== "14") throw Error("country_not_confirmed");
+  const token = state.static_token;
+  const carriers = await client.izosystems("carriers", { token, postalCode });
+  if (carriers.hasError !== false || carriers.shipping_error?.length || typeof carriers.html !== "string") throw Error("no_home_delivery");
+  const row = izoOne(elements(clean(carriers.html), (_a, t) => t === "li").filter((n) => elements(n, (a, t) => t === "input" && a.value === "992,").length === 1), "no_home_delivery");
+  const option = izoAttrs(izoOne(elements(row, (a, t) => t === "input" && a.value === "992,"), "no_home_delivery")), addressId = option.name?.match(/^delivery_option\[(\d{1,12})\]$/)?.[1];
+  if (!addressId || option.type !== "radio" || !option.class?.split(/\s+/).includes("supercheckout_shipping_option")) throw Error("no_home_delivery");
+  const label = izoOne(elements(row, (a, t) => t === "label" && a.for === option.id), "no_home_delivery"), price2 = izoOne(classElements(label, "shippingPrice"), "no_home_delivery"), labelText = text2(label.replace(price2, ""));
+  if (labelText !== "DHL, GLS") throw Error("no_home_delivery");
+  const priceText = text2(price2).replace(/ brutto$/, ""), costGrosze = priceText === "Za darmo!" ? 0 : parsePriceToGrosze(priceText);
+  if (costGrosze === null || costGrosze < 0 || !Number.isSafeInteger(costGrosze)) throw Error("invalid_money");
+  const selected = await client.izosystems("carrier", { token, addressId });
+  if (selected.hasError !== false || selected.errors?.length) throw Error("basket_not_confirmed");
+  const confirmed = await client.izosystems("cart", { token }), payments = await client.izosystems("payments", { token });
+  if (confirmed.redirect !== false || typeof confirmed.html !== "string" || typeof payments.html !== "string") throw Error("basket_not_confirmed");
+  const final = readIzosystemsState(await client.text("/koszyk-zakupow?action=show")).cart;
+  confirmCart2(final);
+  const shipping = money6(final.subtotals.shipping.value, final.subtotals.shipping.amount), total = izoMoney(final.totals.total_including_tax.value, final.totals.total_including_tax.amount);
+  if (shipping !== costGrosze || total !== expected + costGrosze || izoMoney(final.totals.total.value, final.totals.total.amount) !== total) throw Error("basket_not_confirmed");
+  const summary = clean(confirmed.html), rows = elements(summary, (a) => Boolean(a.id?.startsWith("product_")));
+  if (rows.length !== 1 || izoAttrs(rows[0]).id !== `product_1783_0_${addressId}_0` || izoAttrs(izoOne(elements(rows[0], (a, t) => t === "input" && a.class?.split(/\s+/).includes("quantitybox")), "basket_not_confirmed")).value !== String(pack.count)) throw Error("basket_not_confirmed");
+  if (izoMoney(value(summary, "supercehckout_total_products_value"), expected / 100) !== expected || money6(value(summary, "supercehckout_total_shipping_value"), costGrosze / 100) !== costGrosze || izoMoney(value(summary, "total_price"), total / 100) !== total) throw Error("basket_not_confirmed");
+  const paymentHtml = clean(payments.html), wire = izoAttrs(izoOne(elements(paymentHtml, (a, t) => t === "input" && a["data-module-name"] === "ps_wirepayment"), "no_home_delivery"));
+  if (wire.name !== "payment-option" || wire.value !== "payment-option-1") throw Error("no_home_delivery");
+  const inputValue = (name) => izoAttrs(izoOne(elements(paymentHtml, (a, t) => t === "input" && a.name === name), "basket_not_confirmed")).value;
+  if (inputValue("kb_payment_fee_payment-option-1") !== "z\u01420" || inputValue("kb_payment_fee_status_payment-option-1") !== "0" || inputValue("kb_payment_fee_applicable_payment-option-1") !== "0" || inputValue("kb_payment_fee_currency") !== "z\u0142" || Number(inputValue("kb_payment_fee_total_payment-option-1")) * 100 !== total) throw Error("basket_not_confirmed");
+  const now = /* @__PURE__ */ new Date();
+  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
+}
+
 // artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
   // source: https://plejadatapet.pl/pl/p/Klej-do-tapet-Direct-200g-Metylan/825
@@ -24545,15 +24681,15 @@ function unavailableReason(store) {
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (store === "Marbet24") return "customer_details_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
-  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD", "E-Kowalczyk"].includes(store)) return void 0;
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD", "E-Kowalczyk", "Izosystems"].includes(store)) return void 0;
   return ["Castorama", "OBI", "Leroy Merlin"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
-    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD", "E-Kowalczyk"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD", "E-Kowalczyk", "Izosystems"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
-    postcodeStores: ["Sewera", "Cezar", "ABUD", "IRBUD", "E-Kowalczyk"],
+    postcodeStores: ["Sewera", "Cezar", "ABUD", "IRBUD", "E-Kowalczyk", "Izosystems"],
     accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", "Leroy Merlin", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
   };
 }
@@ -24642,7 +24778,7 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin3}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
@@ -24661,6 +24797,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
+        if (order.store === "Izosystems") return await quoteIzosystems(order, postalCode, fetchImpl);
         if (order.store === "E-Kowalczyk") return await quoteKowalczyk(order, postalCode, fetchImpl);
         if (order.store === "IRBUD") return await quoteIrbud(order, postalCode, fetchImpl);
         if (order.store === "Centrum Matbud") return await quoteSkyshop(order, fetchImpl);
@@ -24796,7 +24933,7 @@ function isLeroyBrowserSource(source) {
 
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
-var normalUnit = (value) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value] ?? value;
+var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
 function createRemontService(options = {}) {
   const quoteBasket = options.basketQuoter ?? createRetailerQuoter(options.fetchImpl);
   const observations = /* @__PURE__ */ new Map();
