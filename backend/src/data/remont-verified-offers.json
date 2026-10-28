@@ -2956,5 +2956,31 @@
     "evidenceSha256": "d862cd04359f11e3c28fb78bdfe276a8847e72bef2a3797681bc73f17e68fd9b",
     "validUntil": null,
     "stockPackages": 23
+  },
+  {
+    "sourceId": "sewera-atlas-szop-1kg",
+    "ean": "5905400990010",
+    "name": "Atlas Szop środek do usuwania zabrudzeń cementowych i wapiennych 1kg",
+    "imageUrl": "https://sklep.sewera.pl/photo/92647/atlas-szop-srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-1kg.webp",
+    "priceGrosze": 1606,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T23:20:39.677Z",
+    "sourceUrl": "https://sklep.sewera.pl/atlas-szop-srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-1kg-p9798",
+    "evidenceSha256": "9f86c78045659a282080a1bea60a3f7a3e2f967f6dead92b2baa472fd8b7d691",
+    "validUntil": null
+  },
+  {
+    "sourceId": "kim-atlas-szop-1kg",
+    "ean": "5905400990010",
+    "name": "Środek do usuwania zabrudzeń cementowych i wapiennych Atlas Szop  1 Kg",
+    "imageUrl": "https://kim24.pl/environment/cache/images/productGfx_32646_800_800/atlas-szop.webp",
+    "priceGrosze": 1500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T23:20:39.846Z",
+    "sourceUrl": "https://kim24.pl/Srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-Atlas-Szop-1-Kg",
+    "evidenceSha256": "a1540098ffb694b7beb0672b69f78371a90efc3c367e4fb1b3118ae031864a4f",
+    "validUntil": null
   }
 ]
