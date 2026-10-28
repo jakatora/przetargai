@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { features } from '../config.js';
-import { users } from '../db/repos.js';
+import { users, stanPushRepo } from '../db/repos.js';
+import { sladWysylki } from '../lib/stanPush.js';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
@@ -11,6 +12,19 @@ const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
  * stronie albo chwilowe, a token użytkownika jest wtedy nadal dobry.
  */
 const MARTWY_TOKEN = 'DeviceNotRegistered';
+
+/** Domyślny zapis śladu dostarczania do `_health/push` (widoczny w `/health`). */
+async function zapiszStanDomyslnie(wynik) {
+  await stanPushRepo.zapisz(sladWysylki(wynik, new Date().toISOString()));
+}
+
+/** Ślad nigdy nie wywraca wysyłki — push już poszedł (albo nie) niezależnie od zapisu. */
+async function zapiszBezpiecznie(zapiszStan, wynik) {
+  await Promise.resolve()
+    .then(() => zapiszStan(wynik))
+    .catch((err) => logger.warn({ err: err.message }, 'Push: nie udało się zapisać śladu dostarczania'));
+  return wynik;
+}
 
 /** Domyślne sprzątanie: martwe tokeny znikają z kont w Firestore. */
 async function zdejmijZBazy(tokeny) {
@@ -34,7 +48,7 @@ async function zdejmijZBazy(tokeny) {
  *   `sent` = bilety ze statusem 'ok' (realnie przyjęte przez Expo), NIE sam HTTP 200.
  *   `martweTokeny` = tokeny z biletem DeviceNotRegistered (już zdjęte z bazy).
  */
-export async function sendPush(tokens, { title, body, data = {} }, { zdejmijMartwe = zdejmijZBazy } = {}) {
+export async function sendPush(tokens, { title, body, data = {} }, { zdejmijMartwe = zdejmijZBazy, zapiszStan = zapiszStanDomyslnie } = {}) {
   const valid = (Array.isArray(tokens) ? tokens : [tokens])
     .filter((t) => typeof t === 'string' && t.startsWith('ExponentPushToken'));
   if (!valid.length) return { sent: 0, failed: 0, martweTokeny: [] };
@@ -55,7 +69,7 @@ export async function sendPush(tokens, { title, body, data = {} }, { zdejmijMart
     });
     if (!res.ok) {
       logger.warn({ status: res.status }, 'Expo Push API zwróciło błąd HTTP');
-      return { sent: 0, failed: valid.length, martweTokeny: [] };
+      return zapiszBezpiecznie(zapiszStan, { sent: 0, failed: valid.length, bledy: { [`HTTP${res.status}`]: valid.length }, martweTokeny: [] });
     }
 
     /*
@@ -89,9 +103,9 @@ export async function sendPush(tokens, { title, body, data = {} }, { zdejmijMart
         .then(() => zdejmijMartwe(martweTokeny))
         .catch((err) => logger.error({ err: err.message }, 'Push: nie udało się zdjąć martwych tokenów'));
     }
-    return { sent, failed, bledy, martweTokeny };
+    return zapiszBezpiecznie(zapiszStan, { sent, failed, bledy, martweTokeny });
   } catch (err) {
     logger.error({ err: err.message }, 'Wysyłka powiadomień push nie powiodła się');
-    return { sent: 0, failed: valid.length, martweTokeny: [] };
+    return zapiszBezpiecznie(zapiszStan, { sent: 0, failed: valid.length, bledy: { BladSieci: valid.length }, martweTokeny: [] });
   }
 }

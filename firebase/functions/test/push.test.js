@@ -99,3 +99,19 @@ test('sendPush: komplet biletów ok → wszystkie policzone', async () => {
   assert.equal(r.sent, 2);
   assert.equal(r.failed, 0);
 });
+
+test('sendPush: zapisuje ślad dostarczania (InvalidCredentials), a błąd zapisu nie wywraca wysyłki', async () => {
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ data: [{ status: 'error', details: { error: 'InvalidCredentials' } }] }) });
+  const zapisane = [];
+  const r = await sendPush(['ExponentPushToken[A]'], { title: 't', body: 'b' }, { zdejmijMartwe: async () => {}, zapiszStan: async (w) => { zapisane.push(w); } });
+  assert.equal(r.sent, 0);
+  assert.deepEqual(zapisane.map((w) => w.bledy), [{ InvalidCredentials: 1 }]);
+
+  const r2 = await sendPush(['ExponentPushToken[A]'], { title: 't', body: 'b' }, { zdejmijMartwe: async () => {}, zapiszStan: async () => { throw new Error('Firestore leży'); } });
+  assert.equal(r2.failed, 1, 'wynik wysyłki niezależny od zapisu śladu');
+
+  globalThis.fetch = async () => ({ ok: false, status: 502, json: async () => ({}) });
+  const zapisaneHttp = [];
+  await sendPush(['ExponentPushToken[A]'], { title: 't', body: 'b' }, { zapiszStan: async (w) => { zapisaneHttp.push(w); } });
+  assert.deepEqual(zapisaneHttp[0].bledy, { HTTP502: 1 }, 'błąd HTTP Expo też zostawia ślad');
+});

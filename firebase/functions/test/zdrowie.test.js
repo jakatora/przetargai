@@ -108,3 +108,19 @@ test('/health: zwraca wersję wdrożonego kodu', async () => {
   assert.ok(typeof cialo.wersja === 'string' && cialo.wersja.length,
     'przy incydencie pierwsze pytanie brzmi: co jest wdrożone');
 });
+
+test('/health: blok push — ok=false po InvalidCredentials, true po dostarczonym pushu; bez 503 z tego powodu', async () => {
+  const { stanPushRepo } = await import('../src/db/repos.js');
+  const { sladWysylki } = await import('../src/lib/stanPush.js');
+  await ustawZnacznikCyklu(1);
+  await stanPushRepo.zapisz(sladWysylki({ sent: 0, failed: 1, bledy: { InvalidCredentials: 1 } }, new Date().toISOString()));
+  const zle = await zapytajHealth();
+  assert.equal(zle.cialo.push.ok, false);
+  assert.equal(zle.cialo.push.ostatni_blad, 'InvalidCredentials');
+  await new Promise((r) => setTimeout(r, 5));
+  await stanPushRepo.zapisz(sladWysylki({ sent: 1, failed: 0, bledy: {} }, new Date().toISOString()));
+  const dobre = await zapytajHealth();
+  assert.equal(dobre.cialo.push.ok, true);
+  assert.deepEqual(dobre.cialo.push.ostatni_wynik.bledy, {}, 'mapa błędów zastąpiona, nie scalona ze starą');
+  assert.equal(zle.status, dobre.status, 'stan push nie zmienia kodu odpowiedzi /health (informacyjny)');
+});

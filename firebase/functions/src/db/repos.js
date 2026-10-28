@@ -2561,6 +2561,23 @@ export const oknoBk = {
  */
 const OKNO_PZ_REF = () => db().collection('_health').doc('pz_okno');
 
+/**
+ * Ślad dostarczania push (2026-10-28, lib/stanPush.js). `mergeFields` zamiast `merge: true`: mapa
+ * `ostatni_wynik.bledy` ma być ZASTĄPIONA, a nie scalona ze starymi kodami (pułapka merge map).
+ * Pola sukcesu/błędu zapisujemy tylko wtedy, gdy wystąpiły — trwała historia jak w `cron.zrodla`.
+ */
+const STAN_PUSH_REF = () => db().collection('_health').doc('push');
+export const stanPushRepo = {
+  async wczytaj() {
+    const doc = await STAN_PUSH_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+  async zapisz(slad) {
+    if (!slad) return;
+    await STAN_PUSH_REF().set(slad, { mergeFields: Object.keys(slad) });
+  },
+};
+
 /** Ślad okna e-ProPublico (2026-10-25): pełne przejście listy co 6 h, bez kursora. */
 const OKNO_EPP_REF = () => db().collection('_health').doc('epp_okno');
 export const oknoEpp = {
