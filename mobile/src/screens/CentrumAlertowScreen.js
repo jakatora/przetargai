@@ -201,7 +201,7 @@ const tworzStyleCentrum = tworzStyle((k) => ({
   plakietka: {
     fontSize: 12,
     fontWeight: '800',
-    color: k.white,
+    color: k.naAkcencie,
     backgroundColor: k.danger,
     borderRadius: 999,
     paddingVertical: 2,

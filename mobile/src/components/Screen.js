@@ -33,5 +33,6 @@ export default function Screen({ children, scroll = false, style, contentStyle }
 
 const tworzStyleEkranu = tworzStyle((k) => ({
   flex: { flex: 1, backgroundColor: k.bg },
-  content: { padding: spacing.lg },
+  // Szerokie okno (web, Windows, tablet): treść w czytelnej kolumnie zamiast od krawędzi do krawędzi.
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl, width: '100%', maxWidth: 760, alignSelf: 'center' },
 }));

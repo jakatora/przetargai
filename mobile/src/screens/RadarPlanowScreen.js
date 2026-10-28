@@ -121,7 +121,7 @@ export default function RadarPlanowScreen({ navigation }) {
             accessibilityRole="tab"
             accessibilityState={{ selected: aktywny }}
           >
-            <Text style={[styles.trybTekst, aktywny && { color: kolory.white }]}>
+            <Text style={[styles.trybTekst, aktywny && { color: kolory.naAkcencie }]}>
               {t(opcja.etykieta.pl, opcja.etykieta.en)}
             </Text>
           </Pressable>
@@ -195,7 +195,7 @@ export default function RadarPlanowScreen({ navigation }) {
             onPress={() => { setLadowanie(true); wczytaj(tryb); }}
             accessibilityRole="button"
           >
-            <Text style={[styles.akcjaTekst, { color: kolory.white }]}>{t('Spróbuj ponownie', 'Try again')}</Text>
+            <Text style={[styles.akcjaTekst, { color: kolory.naAkcencie }]}>{t('Spróbuj ponownie', 'Try again')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -207,7 +207,7 @@ export default function RadarPlanowScreen({ navigation }) {
               onPress={() => zmienTryb('wszystkie')}
               accessibilityRole="button"
             >
-              <Text style={[styles.akcjaTekst, { color: kolory.white }]}>{t('Pokaż wszystkie plany', 'Show all plans')}</Text>
+              <Text style={[styles.akcjaTekst, { color: kolory.naAkcencie }]}>{t('Pokaż wszystkie plany', 'Show all plans')}</Text>
             </Pressable>
           ) : null}
         </View>

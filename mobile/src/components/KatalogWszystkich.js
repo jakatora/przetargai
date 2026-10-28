@@ -8,7 +8,9 @@ import PodpisZrodla from './PodpisZrodla';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import * as storage from '../lib/storage';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia, DOTYK } from '../theme';
+import Ikona from './Ikona';
+import { StanLadowania, StanBledu, StanPusty } from './Stan';
 import { WOJEWODZTWA } from '../lib/wojewodztwa';
 import { formatDate, formatBudget } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
@@ -75,15 +77,15 @@ function KartaPrzetargu({ tender, onPress, styles, t }) {
         <Text style={styles.kartaOrg} numberOfLines={1}>{tender.organization}</Text>
       ) : null}
 
-      <View style={styles.kartaRzad}>
-        <Text style={[styles.kartaTermin, termin.pilny && styles.kartaPilny, termin.minal && styles.kartaPoTerminie]}>
-          {t('Termin', 'Deadline')}: {formatDate(tender.deadline)} · {termin.etykieta}
+      <View style={styles.kartaPasek}>
+        <Text style={styles.kartaTermin}>
+          {t('Termin', 'Deadline')}: <Text style={styles.kartaTerminData}>{formatDate(tender.deadline)}</Text>
         </Text>
-      </View>
-
-      <View style={styles.kartaRzad}>
+        <Text style={[styles.kartaChip, termin.pilny && styles.kartaPilny, termin.minal && styles.kartaPoTerminie]}>
+          {t(termin.etykieta)}
+        </Text>
         {tender.region_nazwa ? <Text style={styles.kartaMeta}>{tender.region_nazwa}</Text> : null}
-        {budzet ? <Text style={styles.kartaMeta}>{budzet}</Text> : null}
+        {budzet ? <Text style={[styles.kartaMeta, styles.kartaKwota]}>{budzet}</Text> : null}
       </View>
 
       {/* Źródło pierwotne + czas ostatniej synchronizacji — wymóg P1-3. */}
@@ -217,7 +219,7 @@ export default function KatalogWszystkich({ navigation }) {
   const naglowek = (
     <View>
       <View style={styles.szukajRzad}>
-        <Text style={styles.szukajIkona}>🔍</Text>
+        <Ikona nazwa="szukaj" rozmiar={18} kolor={kolory.textMuted} />
         <TextInput
           style={styles.szukajPole}
           value={filtry.q}
@@ -229,8 +231,8 @@ export default function KatalogWszystkich({ navigation }) {
           accessibilityLabel={t('Szukaj w całym rynku', 'Search the whole market')}
         />
         {filtry.q ? (
-          <Pressable accessibilityRole="button" onPress={() => zmienFiltr('q', '')} hitSlop={10} accessibilityLabel={t('Wyczyść szukanie', 'Clear search')}>
-            <Text style={styles.szukajX}>✕</Text>
+          <Pressable accessibilityRole="button" onPress={() => zmienFiltr('q', '')} hitSlop={10} style={styles.szukajX} accessibilityLabel={t('Wyczyść szukanie', 'Clear search')}>
+            <Ikona nazwa="zamknij" rozmiar={16} kolor={kolory.textMuted} />
           </Pressable>
         ) : null}
       </View>
@@ -240,11 +242,16 @@ export default function KatalogWszystkich({ navigation }) {
           onPress={() => setPanelOtwarty((v) => !v)}
           accessibilityRole="button"
           accessibilityState={{ expanded: panelOtwarty }}
-          style={styles.przyciskFiltrow}
+          accessibilityLabel={aktywnych
+            ? t(`Filtry, aktywne: ${aktywnych}`, `Filters, active: ${aktywnych}`)
+            : t('Filtry', 'Filters')}
+          style={[styles.przyciskFiltrow, (panelOtwarty || aktywnych > 0) && styles.przyciskFiltrowOn]}
         >
-          <Text style={styles.przyciskFiltrowTekst}>
-            {panelOtwarty ? '▾ ' : '▸ '}{t('Filtry', 'Filters')}{aktywnych ? ` (${aktywnych})` : ''}
+          <Ikona nazwa="filtr" rozmiar={18} kolor={panelOtwarty || aktywnych > 0 ? kolory.blue : kolory.text} />
+          <Text style={[styles.przyciskFiltrowTekst, (panelOtwarty || aktywnych > 0) && styles.przyciskFiltrowTekstOn]}>
+            {t('Filtry', 'Filters')}
           </Text>
+          {aktywnych ? <Text style={styles.filtryLicznik}>{aktywnych}</Text> : null}
         </Pressable>
         {licznik ? <Text style={styles.licznik}>{t(licznik)}</Text> : null}
       </View>
@@ -389,25 +396,16 @@ export default function KatalogWszystkich({ navigation }) {
   );
 
   if (ladowanie && !pozycje.length) {
-    return (
-      <View style={styles.srodek}>
-        <ActivityIndicator size="large" color={kolory.blue} />
-      </View>
-    );
+    return <StanLadowania karty={4} />;
   }
 
   if (blad && !pozycje.length) {
     return (
-      <View style={styles.srodek}>
-        <Text style={styles.pustkaTytul}>{t('Nie udało się wczytać rynku', 'Could not load the market')}</Text>
-        <Text style={styles.pustkaTekst}>{blad}</Text>
-        <Button
-          title={t('Spróbuj ponownie', 'Try again')}
-          variant="ghost"
-          onPress={() => { setLadowanie(true); wczytaj(); }}
-          style={styles.ponow}
-        />
-      </View>
+      <StanBledu
+        tytul={t('Nie udało się wczytać rynku', 'Could not load the market')}
+        opis={blad}
+        onPonow={() => { setLadowanie(true); wczytaj(); }}
+      />
     );
   }
 
@@ -439,21 +437,18 @@ export default function KatalogWszystkich({ navigation }) {
         <View style={styles.stopka}><ActivityIndicator color={kolory.blue} /></View>
       ) : null}
       ListEmptyComponent={(
-        <View style={styles.pustka}>
-          <Text style={styles.pustkaIkona}>🗂️</Text>
-          <Text style={styles.pustkaTytul}>{t('Brak wyników', 'No results')}</Text>
-          <Text style={styles.pustkaTekst}>{t(opisPustki(filtry))}</Text>
-          {aktywnych > 0 ? (
-            <Button title={t('Wyczyść filtry', 'Clear filters')} variant="ghost" onPress={wyczyscFiltry} style={styles.ponow} />
-          ) : null}
-        </View>
+        <StanPusty
+          tytul={t('Brak wyników', 'No results')}
+          opis={t(opisPustki(filtry))}
+          akcja={aktywnych > 0 ? { tytul: t('Wyczyść filtry', 'Clear filters'), onPress: wyczyscFiltry, wariant: 'ghost' } : null}
+        />
       )}
     />
   );
 }
 
 const tworzStyleKatalogu = tworzStyle((k) => ({
-  lista: { padding: spacing.md, paddingBottom: spacing.xl },
+  lista: { padding: spacing.md, paddingBottom: spacing.xxl, width: '100%', maxWidth: 760, alignSelf: 'center' },
   listaPusta: { padding: spacing.md, flexGrow: 1 },
   srodek: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg, backgroundColor: k.bg },
 
@@ -462,20 +457,31 @@ const tworzStyleKatalogu = tworzStyle((k) => ({
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: k.surface,
-    borderWidth: 1,
-    borderColor: k.border,
+    borderWidth: 1.5,
+    borderColor: k.obramowaniePola,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
+    paddingLeft: 12,
+    minHeight: DOTYK + 4,
     marginBottom: spacing.sm,
   },
-  szukajIkona: { fontSize: 14 },
-  szukajPole: { flex: 1, paddingVertical: 10, fontSize: 15, color: k.text },
-  szukajX: { fontSize: 16, color: k.textMuted, paddingHorizontal: 4 },
+  szukajPole: { flex: 1, paddingVertical: 11, fontSize: 15, color: k.text },
+  szukajX: { width: DOTYK, height: DOTYK, alignItems: 'center', justifyContent: 'center' },
 
-  paskaRzad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  przyciskFiltrow: { paddingVertical: 6, paddingRight: 8 },
-  przyciskFiltrowTekst: { fontSize: 14, fontWeight: '800', color: k.blue },
-  licznik: { fontSize: 12, color: k.textMuted, fontWeight: '600' },
+  paskaRzad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginBottom: spacing.sm },
+  przyciskFiltrow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, minHeight: 40,
+    borderRadius: radius.md, borderWidth: 1.5, borderColor: k.obramowaniePola, backgroundColor: k.surface,
+  },
+  przyciskFiltrowOn: { borderColor: k.blue, backgroundColor: k.wyroznienie },
+  przyciskFiltrowTekst: { fontSize: 14, fontWeight: '700', color: k.text },
+  przyciskFiltrowTekstOn: { color: k.blue },
+  filtryLicznik: {
+    minWidth: 20, textAlign: 'center',
+    fontSize: 12, fontWeight: '800', color: k.naAkcencie, backgroundColor: k.blue,
+    borderRadius: 10, overflow: 'hidden', paddingHorizontal: 5, paddingVertical: 1,
+  },
+  licznik: { flexShrink: 1, fontSize: 13, color: k.textMuted, fontWeight: '600', textAlign: 'right' },
 
   panel: {
     backgroundColor: k.surface,
@@ -483,26 +489,29 @@ const tworzStyleKatalogu = tworzStyle((k) => ({
     borderColor: k.border,
     borderRadius: radius.lg,
     padding: spacing.md,
+    paddingTop: spacing.sm,
     marginBottom: spacing.md,
   },
-  grupaTytul: { fontSize: 12, fontWeight: '800', color: k.textMuted, marginTop: spacing.sm, marginBottom: 6, textTransform: 'uppercase' },
+  grupaTytul: { ...typografia.etykieta, color: k.textMuted, marginTop: spacing.md, marginBottom: 6 },
   grupa: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, alignItems: 'center' },
   chip: {
-    borderWidth: 1,
+    minHeight: 36,
+    justifyContent: 'center',
+    borderWidth: 1.5,
     borderColor: k.border,
-    backgroundColor: k.bg,
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
+    backgroundColor: k.surface,
+    borderRadius: radius.pelny,
+    paddingHorizontal: 14,
     marginRight: spacing.xs,
   },
-  chipOn: { backgroundColor: k.blue, borderColor: k.blue },
-  chipTekst: { fontSize: 13, color: k.text, fontWeight: '600' },
-  chipTekstOn: { color: k.white, fontWeight: '800' },
+  chipOn: { backgroundColor: k.wyroznienie, borderColor: k.blue },
+  chipTekst: { fontSize: 13, color: k.textMuted, fontWeight: '600' },
+  chipTekstOn: { color: k.blue, fontWeight: '800' },
   pole: {
-    borderWidth: 1,
-    borderColor: k.border,
-    backgroundColor: k.bg,
+    minHeight: DOTYK,
+    borderWidth: 1.5,
+    borderColor: k.obramowaniePola,
+    backgroundColor: k.surface,
     borderRadius: radius.md,
     paddingVertical: 10,
     paddingHorizontal: spacing.md,
@@ -511,16 +520,16 @@ const tworzStyleKatalogu = tworzStyle((k) => ({
   },
   poleWaskie: { flex: 1 },
   widelki: { flexDirection: 'row', gap: spacing.sm },
-  uwaga: { fontSize: 11, color: k.textMuted, marginTop: 6, lineHeight: 16 },
+  uwaga: { fontSize: 12, color: k.textMuted, marginTop: 6, lineHeight: 17 },
   wyczysc: { marginTop: spacing.md },
 
   pasekBledu: {
     backgroundColor: k.ostrzezenieTlo,
     borderRadius: radius.md,
-    padding: spacing.sm,
+    padding: spacing.md,
     marginBottom: spacing.sm,
   },
-  pasekBleduTekst: { color: k.ostrzezenieTekst, fontSize: 12, fontWeight: '600', lineHeight: 17 },
+  pasekBleduTekst: { color: k.ostrzezenieTekst, fontSize: 13, fontWeight: '600', lineHeight: 18 },
 
   karta: {
     backgroundColor: k.surface,
@@ -528,22 +537,30 @@ const tworzStyleKatalogu = tworzStyle((k) => ({
     borderWidth: 1,
     borderColor: k.border,
     padding: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: 12,
   },
-  kartaWcisnieta: { opacity: 0.7 },
-  kartaMiniona: { opacity: 0.55 },
-  kartaTytul: { fontSize: 15, fontWeight: '700', color: k.text },
-  kartaOrg: { fontSize: 13, color: k.textMuted, marginTop: 3 },
+  kartaWcisnieta: { backgroundColor: k.powierzchniaWtorna, borderColor: k.obramowaniePola },
+  kartaMiniona: { opacity: 0.6 },
+  kartaTytul: { ...typografia.karta, color: k.text },
+  kartaOrg: { fontSize: 13, lineHeight: 18, color: k.textMuted, marginTop: 4 },
   kartaRzad: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
-  kartaTermin: { fontSize: 12, color: k.textMuted, fontWeight: '600' },
-  kartaPilny: { color: k.ostrzezenieAkcent },
-  kartaPoTerminie: { color: k.danger },
-  kartaMeta: { fontSize: 12, color: k.textMuted },
+  kartaPasek: {
+    flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm,
+    marginTop: spacing.md, paddingTop: spacing.sm + 2, borderTopWidth: 1, borderTopColor: k.border,
+  },
+  kartaTermin: { fontSize: 13, color: k.textMuted },
+  kartaTerminData: { color: k.text, fontWeight: '700' },
+  kartaChip: {
+    fontSize: 12, fontWeight: '700', color: k.textMuted, backgroundColor: k.neutralneTlo,
+    paddingVertical: 3, paddingHorizontal: 8, borderRadius: radius.sm, overflow: 'hidden',
+  },
+  kartaPilny: { color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo },
+  kartaPoTerminie: { color: k.danger, backgroundColor: k.dangerTlo },
+  kartaMeta: { fontSize: 13, color: k.textMuted },
+  kartaKwota: { color: k.text, fontWeight: '700', fontVariant: ['tabular-nums'] },
 
   stopka: { paddingVertical: spacing.md, alignItems: 'center' },
-  pustka: { alignItems: 'center', paddingTop: spacing.xl, gap: spacing.sm },
-  pustkaIkona: { fontSize: 40 },
-  pustkaTytul: { fontSize: 17, fontWeight: '800', color: k.text, textAlign: 'center' },
+  pustkaTytul: { ...typografia.sekcja, color: k.text, textAlign: 'center' },
   pustkaTekst: { fontSize: 14, color: k.textMuted, textAlign: 'center', lineHeight: 20 },
   ponow: { marginTop: spacing.md },
 }));

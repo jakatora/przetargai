@@ -191,7 +191,7 @@ const tworzStylePoWygranej = tworzStyle((k) => ({
   chip: { borderRadius: radius.md, borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, paddingVertical: 8, paddingHorizontal: 12 },
   chipAktywny: { backgroundColor: k.blue, borderColor: k.blue },
   chipTekst: { fontSize: 13, color: k.text, fontWeight: '600' },
-  chipTekstAktywny: { color: k.white },
+  chipTekstAktywny: { color: k.naAkcencie },
   wielolinia: { minHeight: 96, paddingTop: 12, textAlignVertical: 'top' },
   karta: { backgroundColor: k.surface, borderRadius: radius.md, borderWidth: 1, borderColor: k.border, padding: spacing.md, marginTop: spacing.md, marginBottom: spacing.sm },
   kartaTytul: { fontSize: 14, fontWeight: '700', color: k.text, marginBottom: spacing.sm },

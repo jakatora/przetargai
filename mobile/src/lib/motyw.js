@@ -37,43 +37,62 @@ export function wybierzSchemat(preferencja, schematSystemowy) {
 }
 
 export const PALETY = {
+  /*
+   * System wizualny 2026-10 (docs/design-system.md): granatowy „atrament" zamiast czerni,
+   * jeden niebieski akcent zgodny z ikoną aplikacji, żółty zakreślacz dla fragmentów,
+   * które aplikacja wyciągnęła z dokumentów. Pary kontrastu pilnuje test/motyw.test.js.
+   */
   jasny: {
-    bg: '#f4f7fc',
-    surface: '#ffffff',
-    text: '#14213d',
-    textMuted: '#5b6577',
-    border: '#e3e8f2',
-    blue: '#2563eb',
-    green: '#16a34a',
-    danger: '#dc2626',
-    white: '#ffffff',
+    bg: '#f3f6fa',              // tło ekranu („papier")
+    surface: '#ffffff',         // karty, nagłówek, arkusze
+    powierzchniaWtorna: '#f7f9fc', // wnętrze karty, pole szukania, wiersz listy
+    text: '#0f1b2d',            // atrament — tekst główny
+    textMuted: '#526075',       // tekst drugoplanowy (6,4:1 na surface)
+    border: '#dde3ec',          // linie i obramowania kart (dekoracyjne)
+    obramowaniePola: '#848fa2', // obramowanie kontrolek formularza (≥3:1, WCAG 1.4.11)
+    blue: '#1d4ed8',            // akcent: główne akcje, linki, zaznaczenie
+    green: '#15803d',
+    danger: '#b91c1c',
+    naAkcencie: '#ffffff',      // tekst/ikona NA wypełnionym akcencie (blue/green/danger)
     // Tła semantyczne (wcześniej twarde hexy rozsiane po ekranach):
-    wyroznienie: '#eaeffa',     // wiersz działu w ściądze CPV
+    wyroznienie: '#e8effd',     // delikatne tło akcentu (zaznaczony chip, baner informacyjny)
     ostrzezenieTlo: '#fef3c7',  // pasek błędu dociągania feedu
     ostrzezenieTekst: '#92400e',
     ostrzezenieAkcent: '#b45309', // akcent „pilne/ostrzeżenie" na BIAŁYM tle (obwódka+tytuł banera, chip) — żywy bursztyn, AA ≥4.5:1; nie mylić z ostrzezenieTekst (tekst na bursztynowym tle)
-    neutralneTlo: '#e7ebf3',    // plakietka „Plan Free"
+    neutralneTlo: '#e9eef5',    // plakietka „Plan Free"
     sukcesTlo: '#dcfce7',       // plakietka „Plan Standard"
-    sukcesAkcent: '#15803d',    // akcent „sukces/łatwiejszy start" jako MAŁY tekst (badge „Łatwiejszy start", potwierdzenie, tytuł banera „w porę") — ciemniejsza zieleń AA ≥4.5:1 na surface I sukcesTlo; nie mylić z `green` (za jasny na mały tekst: 3.0:1)
+    sukcesAkcent: '#15803d',    // akcent „sukces/łatwiejszy start" jako MAŁY tekst (badge „Łatwiejszy start", potwierdzenie, tytuł banera „w porę") — AA ≥4.5:1 na surface I sukcesTlo
     dangerTlo: '#fee2e2',       // tło czerwonej flagi (prześwietlenie umowy)
+    zakreslacz: '#fde68a',      // wyróżnik marki: fragment wyciągnięty z dokumentu (SWZ, uzasadnienie)
+    atrament: '#0f1b2d',        // ciemny blok (panel „Wybrane dziś", plan Standard)
+    naAtramencie: '#ffffff',
+    atramentDrugi: '#b8c4d8',   // tekst drugoplanowy na atramencie
+    cien: 'rgba(15, 27, 45, 0.08)', // kolor cienia kart uniesionych (theme.uniesienie)
   },
   ciemny: {
-    bg: '#0f1526',
-    surface: '#19213a',
-    text: '#e8edf8',
-    textMuted: '#9aa7c0',
-    border: '#2b3554',
-    blue: '#5b8cff',            // jaśniejszy — kontrast na ciemnym tle
-    green: '#2fae66',
-    danger: '#f47171',
-    white: '#ffffff',
-    wyroznienie: '#1e2947',
-    ostrzezenieTlo: '#3b2f12',
+    bg: '#0b1322',
+    surface: '#131d31',
+    powierzchniaWtorna: '#18233a',
+    text: '#e6ecf6',
+    textMuted: '#9aa8bf',
+    border: '#263250',
+    obramowaniePola: '#5a6a8e',
+    blue: '#7aa2ff',            // jaśniejszy — kontrast na ciemnym tle
+    green: '#34c27a',
+    danger: '#f87171',
+    naAkcencie: '#0b1630',      // ciemny tekst na jasnym akcencie (wzorem Material 3: onPrimary)
+    wyroznienie: '#1a2847',
+    ostrzezenieTlo: '#3a2e10',
     ostrzezenieTekst: '#fcd34d',
     ostrzezenieAkcent: '#fbbf24', // żywy bursztyn na ciemnym tle (obwódka+tytuł banera, chip)
-    neutralneTlo: '#273252',
-    sukcesTlo: '#143c2a',
-    sukcesAkcent: '#4ade80',    // jaśniejsza zieleń na ciemnym tle (mały tekst: badge/potwierdzenie/tytuł banera) — AA ≥4.5:1 na surface I sukcesTlo
-    dangerTlo: '#3b1518',       // czytelny na ciemnym tle wariant czerwonego tła
+    neutralneTlo: '#222d47',
+    sukcesTlo: '#11372a',
+    sukcesAkcent: '#4ade80',    // jaśniejsza zieleń na ciemnym tle (mały tekst) — AA ≥4.5:1 na surface I sukcesTlo
+    dangerTlo: '#3b1518',
+    zakreslacz: '#4a3c0e',
+    atrament: '#1c2a47',
+    naAtramencie: '#ffffff',
+    atramentDrugi: '#b8c4d8',
+    cien: 'rgba(0, 0, 0, 0.45)',
   },
 };

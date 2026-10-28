@@ -4,10 +4,11 @@ import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
 import TextField from '../components/TextField';
-import { useStyle, tworzStyle } from '../context/ThemeContext';
+import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { useAuth } from '../context/AuthContext';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia } from '../theme';
+import Ikona from '../components/Ikona';
 import { WOJEWODZTWA } from '../lib/wojewodztwa';
 import { KROKI_KREATORA, kartaDoFormularza, formularzDoKarty, walidujFormularz, parsujListe } from '../lib/kartaFirmy';
 import * as storage from '../lib/storage';
@@ -26,6 +27,7 @@ const KROKI_PELNE = [1, 2, 3, 4, 5];
 export default function KartaFirmyScreen({ route, navigation }) {
   const { t, jezyk } = useJezyk();
   const styles = useStyle(tworzStyleKarty);
+  const { kolory } = useTheme();
   const { user, setUser } = useAuth();
   const [krok, setKrok] = useState(Math.min(5, Math.max(1, Number(route?.params?.krok) || 1)));
   // Wejście zaraz po ekranie powitalnym (lib/onboarding.js): po zapisie albo pominięciu idziemy na listę, nie „wstecz".
@@ -175,6 +177,9 @@ export default function KartaFirmyScreen({ route, navigation }) {
           {t('Jeszcze minuta: NIP, teren i kwoty — selekcja przetargów będzie trafniejsza. Każdy krok możesz pominąć.', 'One more minute: tax ID, area and contract sizes — tender selection gets more accurate. You can skip any step.')}
         </Text>
       ) : null}
+      <View style={styles.postep} accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: kroki.length, now: pozycja + 1 }}>
+        {kroki.map((k, i) => <View key={k} style={[styles.postepOdcinek, i <= pozycja && styles.postepOdcinekGotowy]} />)}
+      </View>
       <Text style={styles.licznik}>{t(`Krok ${pozycja + 1} z ${kroki.length}`, `Step ${pozycja + 1} of ${kroki.length}`)}</Text>
       <Text style={styles.tytul}>{t(opisKroku.tytul)}</Text>
       <Text style={styles.opis}>{t(opisKroku.opis)}</Text>
@@ -190,10 +195,10 @@ export default function KartaFirmyScreen({ route, navigation }) {
             maxLength={13}
             hint={t('Wpisz NIP, a nazwę i województwo wstawimy z Białej listy VAT', 'Enter your NIP and we fill in the name and voivodeship from the VAT register')}
           />
-          <Button title={t('Wypełnij z Białej listy', 'Fill in from the VAT register')} variant="ghost" loading={nipStan.laduje} onPress={wypelnijZNip} />
+          <Button title={t('Wypełnij z Białej listy', 'Fill in from the VAT register')} variant="ghost" loading={nipStan.laduje} onPress={wypelnijZNip} style={styles.pomocniczy} />
           {nipStan.komunikat ? <Text style={nipStan.ok ? styles.ok : styles.blad}>{nipStan.komunikat}</Text> : null}
           {pole(form.opis, ustaw('opis'), t('Czym się zajmujesz', 'What you do'), t('Np. remonty i wymiana pokryć dachowych na Podkarpaciu', 'E.g. roof repairs and replacement in Subcarpathia'), { wieloliniowe: true, maks: 600 })}
-          <Button title={t('Podpowiedz słowa i kody CPV', 'Suggest keywords and CPV codes')} variant="ghost" loading={podpowiadanie} onPress={podpowiedz} />
+          <Button title={t('Podpowiedz słowa i kody CPV', 'Suggest keywords and CPV codes')} variant="ghost" loading={podpowiadanie} onPress={podpowiedz} style={styles.pomocniczy} />
           {pole(form.keywords, ustaw('keywords'), t('Słowa kluczowe, po przecinku', 'Keywords, comma separated'), t('Np. dach, pokrycie dachowe', 'E.g. roof, roofing'))}
           {pole(form.cpv_codes, ustaw('cpv_codes'), t('Kody CPV, po przecinku', 'CPV codes, comma separated'), t('Np. 45261000', 'E.g. 45261000'))}
         </View>
@@ -213,7 +218,8 @@ export default function KartaFirmyScreen({ route, navigation }) {
                 onPress={() => ustaw('regiony')(wybrane ? form.regiony.filter((r) => r !== kod) : [...form.regiony, kod])}
                 style={[styles.chip, wybrane && styles.chipWybrany]}
               >
-                <Text style={styles.chipTekst}>{nazwa}</Text>
+                {wybrane ? <Ikona nazwa="ok" rozmiar={14} kolor={kolory.blue} /> : null}
+                <Text style={[styles.chipTekst, wybrane && styles.chipTekstWybrany]}>{nazwa}</Text>
               </Pressable>
             );
           })}
@@ -256,18 +262,27 @@ export default function KartaFirmyScreen({ route, navigation }) {
 }
 
 const tworzStyleKarty = tworzStyle((k) => ({
-  uwaga: { fontSize: 13, color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo, padding: spacing.sm, borderRadius: radius.md, marginBottom: spacing.sm },
-  licznik: { fontSize: 13, color: k.textMuted },
-  ok: { fontSize: 13, color: k.green, fontWeight: '600', marginBottom: spacing.sm, lineHeight: 18 },
-  tytul: { fontSize: 20, fontWeight: '700', color: k.text, marginTop: spacing.xs },
-  opis: { fontSize: 14, color: k.textMuted, marginVertical: spacing.sm, lineHeight: 20 },
+  uwaga: { fontSize: 14, lineHeight: 20, color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo, padding: spacing.md, borderRadius: radius.md, marginBottom: spacing.md, overflow: 'hidden' },
+  postep: { flexDirection: 'row', gap: 6, marginBottom: spacing.sm },
+  postepOdcinek: { flex: 1, height: 4, borderRadius: 2, backgroundColor: k.neutralneTlo },
+  postepOdcinekGotowy: { backgroundColor: k.blue },
+  licznik: { fontSize: 13, fontWeight: '600', color: k.textMuted },
+  ok: { fontSize: 14, color: k.sukcesAkcent, fontWeight: '600', marginVertical: spacing.sm, lineHeight: 20 },
+  tytul: { ...typografia.tytul, color: k.text, marginTop: spacing.xs },
+  opis: { fontSize: 15, color: k.textMuted, marginTop: spacing.xs, marginBottom: spacing.lg, lineHeight: 22 },
   poleWysokie: { minHeight: 96, textAlignVertical: 'top' },
-  chipy: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  chip: { paddingVertical: spacing.xs, paddingHorizontal: spacing.sm, borderRadius: radius.md, borderWidth: 1, borderColor: k.border },
+  pomocniczy: { marginBottom: spacing.lg },
+  chipy: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    minHeight: 40, paddingHorizontal: 14, borderRadius: radius.pelny,
+    borderWidth: 1.5, borderColor: k.border, backgroundColor: k.surface,
+  },
   chipWybrany: { borderColor: k.blue, backgroundColor: k.wyroznienie },
-  chipTekst: { fontSize: 14, color: k.text },
-  blad: { color: k.danger, marginVertical: spacing.sm },
-  rzad: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  chipTekst: { fontSize: 14, fontWeight: '600', color: k.text },
+  chipTekstWybrany: { color: k.blue, fontWeight: '700' },
+  blad: { color: k.danger, marginVertical: spacing.sm, fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  rzad: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
   przycisk: { flex: 1 },
   zapisz: { marginTop: spacing.sm },
 }));

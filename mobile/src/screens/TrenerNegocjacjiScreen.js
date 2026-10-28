@@ -113,8 +113,8 @@ export default function TrenerNegocjacjiScreen({ route }) {
               accessibilityRole="radio"
               accessibilityState={{ checked: aktywny }}
             >
-              <Text style={[styles.wariantTytul, aktywny && { color: kolory.white }]}>{w.etykieta}</Text>
-              <Text style={[styles.wariantOpis, aktywny && { color: kolory.white }]}>{w.opis}</Text>
+              <Text style={[styles.wariantTytul, aktywny && { color: kolory.naAkcencie }]}>{w.etykieta}</Text>
+              <Text style={[styles.wariantOpis, aktywny && { color: kolory.naAkcencie }]}>{w.opis}</Text>
             </Pressable>
           );
         })}

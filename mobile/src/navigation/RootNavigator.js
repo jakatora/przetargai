@@ -73,11 +73,14 @@ export default function RootNavigator() {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleNawigatora);
 
-  // Nagłówek jest brandowo niebieski w OBU motywach; motyw zmienia tła treści.
+  // Nagłówek na powierzchni (biały / granatowy w ciemnym) z niebieskim akcentem powrotu:
+  // spokojniejszy niż pełny niebieski pasek, a treść ekranu dostaje cały kontrast
+  // (docs/design-system.md). Tytuł w kolorze tekstu, cienka linia pod spodem.
   const screenOptions = {
-    headerStyle: { backgroundColor: kolory.blue },
-    headerTintColor: kolory.white,
-    headerTitleStyle: { fontWeight: '700' },
+    headerStyle: { backgroundColor: kolory.surface },
+    headerTintColor: kolory.blue,
+    headerTitleStyle: { fontWeight: '700', fontSize: 17, color: kolory.text },
+    headerShadowVisible: true,
     headerBackTitleVisible: false,
     contentStyle: { backgroundColor: kolory.bg },
   };

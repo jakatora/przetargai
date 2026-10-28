@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, TextInput } from 'react-native';
 import { radius, spacing } from '../theme';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
@@ -7,16 +8,20 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
  * `inputStyle` (opcjonalny) dokłada style do samego pola — np. wyższy obszar
  * dla wieloliniowego wklejania; `style` wciąż stylizuje kontener.
  */
-export default function TextField({ label, hint, error, style, inputStyle, ...inputProps }) {
+export default function TextField({ label, hint, error, style, inputStyle, onFocus, onBlur, ...inputProps }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStylePola);
+  // Widoczny stan fokusu (niebieska ramka) — ważny przy klawiaturze na webie i Windows.
+  const [fokus, setFokus] = useState(false);
   return (
     <View style={[styles.wrap, style]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
-        style={[styles.input, error && styles.inputError, inputStyle]}
+        style={[styles.input, fokus && styles.inputFokus, error && styles.inputError, inputStyle]}
         placeholderTextColor={kolory.textMuted}
         accessibilityLabel={label}
+        onFocus={(e) => { setFokus(true); onFocus?.(e); }}
+        onBlur={(e) => { setFokus(false); onBlur?.(e); }}
         {...inputProps}
       />
       {error ? (
@@ -30,18 +35,20 @@ export default function TextField({ label, hint, error, style, inputStyle, ...in
 
 const tworzStylePola = tworzStyle((k) => ({
   wrap: { marginBottom: spacing.md },
-  label: { fontSize: 14, fontWeight: '600', color: k.text, marginBottom: 6 },
+  label: { fontSize: 14, fontWeight: '700', color: k.text, marginBottom: 6 },
   input: {
+    minHeight: 50,
     backgroundColor: k.surface,
     borderWidth: 1.5,
-    borderColor: k.border,
+    borderColor: k.obramowaniePola,
     borderRadius: radius.md,
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingVertical: 12,
     fontSize: 16,
     color: k.text,
   },
+  inputFokus: { borderColor: k.blue, borderWidth: 2, paddingHorizontal: 13.5 },
   inputError: { borderColor: k.danger },
-  hint: { fontSize: 12, color: k.textMuted, marginTop: 4 },
-  error: { fontSize: 12, color: k.danger, marginTop: 4 },
+  hint: { fontSize: 13, color: k.textMuted, marginTop: 6, lineHeight: 18 },
+  error: { fontSize: 13, color: k.danger, marginTop: 6, lineHeight: 18, fontWeight: '600' },
 }));

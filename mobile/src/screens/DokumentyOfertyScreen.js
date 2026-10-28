@@ -402,7 +402,7 @@ const tworzStyleDokumentow = tworzStyle((k) => ({
   chip: { borderRadius: radius.md, borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, paddingVertical: 8, paddingHorizontal: 12 },
   chipAktywny: { backgroundColor: k.blue, borderColor: k.blue },
   chipTekst: { fontSize: 13, color: k.text, fontWeight: '600' },
-  chipTekstAktywny: { color: k.white },
+  chipTekstAktywny: { color: k.naAkcencie },
   blad: { fontSize: 13, color: k.danger, marginTop: spacing.sm, lineHeight: 18 },
   nipBlok: { marginBottom: spacing.md },
   nipHint: { fontSize: 12, color: k.textMuted, marginTop: 6, lineHeight: 17 },

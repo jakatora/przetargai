@@ -9,7 +9,8 @@ import TextField from '../components/TextField';
 import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PREFERENCJE, ETYKIETY_PREFERENCJI } from '../lib/motyw';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia } from '../theme';
+import WierszAkcji from '../components/WierszAkcji';
 import { potwierdzAkcje } from '../lib/potwierdzenie';
 import { srodowiskoPotwierdzen, komunikat } from '../services/srodowiskoPotwierdzen';
 
@@ -191,25 +192,34 @@ export default function AccountScreen({ navigation }) {
   return (
     <Screen scroll>
       <View style={styles.card}>
-        <Text style={styles.company}>{user.company_name || t('Moje konto', 'My account')}</Text>
-        {user.company_nip ? <Text style={styles.muted}>NIP: {user.company_nip}</Text> : null}
-        <Text style={styles.muted}>{user.email}</Text>
+        <View style={styles.profilRzad}>
+          <View style={styles.monogram} accessible={false}>
+            <Text style={styles.monogramTekst}>{(user.company_name || user.email || '?').trim().charAt(0).toUpperCase()}</Text>
+          </View>
+          <View style={styles.profilTresc}>
+            <Text style={styles.company}>{user.company_name || t('Moje konto', 'My account')}</Text>
+            <Text style={styles.muted}>{user.email}</Text>
+            {user.company_nip ? <Text style={styles.muted}>NIP: {user.company_nip}</Text> : null}
+          </View>
+        </View>
         <View style={[styles.badge, isStandard ? styles.badgeStandard : styles.badgeFree]}>
-          <Text style={styles.badgeText}>{t('Plan', 'Plan')} {isStandard ? 'Standard' : 'Free'}</Text>
+          <Text style={[styles.badgeText, isStandard && styles.badgeTextStandard]}>{t('Plan', 'Plan')} {isStandard ? 'Standard' : 'Free'}</Text>
         </View>
       </View>
 
-      <Button
-        title={t('🧰  Wszystkie narzędzia', '🧰  All tools')}
-        onPress={() => navigation.navigate('Narzedzia')}
-        style={styles.gap}
-      />
-      <Button
-        title={t('🚀  Przewodnik startu — czy jesteś gotowy?', '🚀  Getting-started guide — are you ready?')}
-        variant="ghost"
-        onPress={() => navigation.navigate('PrzewodnikStartu')}
-        style={styles.gap}
-      />
+      <View style={styles.lista}>
+        <WierszAkcji
+          tytul={t('Wszystkie narzędzia', 'All tools')}
+          opis={t('Kalkulatory, kreatory pism i strażnicy terminów w jednym miejscu.', 'Calculators, letter wizards and deadline guards in one place.')}
+          onPress={() => navigation.navigate('Narzedzia')}
+        />
+        <WierszAkcji
+          tytul={t('Przewodnik startu', 'Getting-started guide')}
+          opis={t('Sprawdź, czy firma jest gotowa na pierwszy przetarg.', 'Check whether your company is ready for its first tender.')}
+          onPress={() => navigation.navigate('PrzewodnikStartu')}
+          ostatni
+        />
+      </View>
 
       {proba ? (
         <View style={styles.proba}>
@@ -220,7 +230,7 @@ export default function AccountScreen({ navigation }) {
 
       {isStandard ? (
         <View style={styles.upgradeCard}>
-          <Text style={styles.upgradeTitle}>{t('Plan Standard aktywny ✓', 'Standard plan active ✓')}</Text>
+          <Text style={styles.upgradeTitle}>{t('Plan Standard jest aktywny', 'Standard plan is active')}</Text>
           <Text style={styles.upgradeText}>
             {t('Bez dziennego limitu, przegląd co 3 godziny i powiadomienia od razu, sprawdzanie warunków udziału, plan działania do oferty.', 'No daily limit, reviews every 3 hours with instant alerts, participation condition checks, an action plan to your bid.')}
           </Text>
@@ -278,87 +288,49 @@ export default function AccountScreen({ navigation }) {
         </View>
       ) : null}
 
-      <Text style={styles.sectionTitle}>{t('Karta firmy', 'Company card')}</Text>
+      <Text style={styles.sectionTitle}>{t('Twoja firma', 'Your company')}</Text>
       <Text style={styles.sectionHint}>
         {t('Czym się zajmujesz, czego nie bierzesz, gdzie pracujesz, jakie kwoty — na tej podstawie wybieramy przetargi dla Ciebie.',
           'What you do, what you do not take on, where you work and what contract sizes — we pick tenders for you based on this.')}
       </Text>
-      <Button title={t('Otwórz kartę firmy', 'Open company card')} variant="ghost" onPress={() => navigation.navigate('KartaFirmy')} style={styles.gap} />
-
-      <View style={styles.przelacznik}>
-        <Text style={styles.przelacznikTekst}>{t('Maile o nowych przetargach', 'Emails about new tenders')}</Text>
-        <Switch
-          value={user.powiadomienia_pracownik_email !== false}
-          onValueChange={async (wl) => { await api.ustawMaileSelekcji(wl).catch(() => {}); await refreshUser?.().catch(() => {}); }}
-          accessibilityLabel={t('Maile o nowych przetargach', 'Emails about new tenders')}
+      <View style={styles.lista}>
+        <WierszAkcji tytul={t('Otwórz kartę firmy', 'Open company card')} onPress={() => navigation.navigate('KartaFirmy')} />
+        <WierszAkcji
+          tytul={t('Maile o nowych przetargach', 'Emails about new tenders')}
+          onPress={async () => {
+            await api.ustawMaileSelekcji(user.powiadomienia_pracownik_email === false).catch(() => {});
+            await refreshUser?.().catch(() => {});
+          }}
+          prawo={(
+            <Switch
+              value={user.powiadomienia_pracownik_email !== false}
+              onValueChange={async (wl) => { await api.ustawMaileSelekcji(wl).catch(() => {}); await refreshUser?.().catch(() => {}); }}
+              accessibilityLabel={t('Maile o nowych przetargach', 'Emails about new tenders')}
+            />
+          )}
+        />
+        <WierszAkcji
+          tytul={t('Otwórz bank referencji', 'Open reference bank')}
+          opis={t('Pilnuje „terminu przydatności” Twojego doświadczenia (roboty 5 lat, dostawy i usługi 3 lata).',
+            'Tracks the “shelf life” of your experience (works 5 years, supplies and services 3 years).')}
+          onPress={() => navigation.navigate('BankReferencji')}
+        />
+        <WierszAkcji
+          tytul={t('Certyfikat wykonawcy — czy się opłaca?', 'Contractor certificate — is it worth it?')}
+          onPress={() => navigation.navigate('CertyfikatWykonawcy')}
+          ostatni
         />
       </View>
 
-      <Text style={styles.sectionTitle}>{t('Narzędzia firmy', 'Company tools')}</Text>
-      <Text style={styles.sectionHint}>
-        {t('Bank referencji pilnuje „terminu przydatności” Twojego doświadczenia (roboty 5 lat, dostawy i usługi 3 lata) — żebyś nie odkrył w dniu składania, że kluczowa robota już się nie liczy.',
-          'The reference bank tracks the “shelf life” of your experience (works 5 years, supplies and services 3 years) — so you do not find out on submission day that a key project no longer counts.')}
-      </Text>
-      <Button
-        title={t('Otwórz bank referencji', 'Open reference bank')}
-        variant="ghost"
-        onPress={() => navigation.navigate('BankReferencji')}
-      />
-      <Button
-        title={t('Certyfikat wykonawcy — czy się opłaca?', 'Contractor certificate — is it worth it?')}
-        variant="ghost"
-        onPress={() => navigation.navigate('CertyfikatWykonawcy')}
-      />
-      <Button
-        title={t('Kalkulator terminów Pzp', 'Procurement deadline calculator')}
-        variant="ghost"
-        onPress={() => navigation.navigate('KalkulatorTerminow')}
-        style={styles.gap}
-      />
-      <Button
-        title={t('Kalkulator ceny ofertowej', 'Bid price calculator')}
-        variant="ghost"
-        onPress={() => navigation.navigate('KalkulatorCeny')}
-        style={styles.gap}
-      />
-      <Button
-        title={t('Sprawdzarka formularza cenowego', 'Price form checker')}
-        variant="ghost"
-        onPress={() => navigation.navigate('SprawdzarkaCeny')}
-        style={styles.gap}
-      />
-      <Button
-        title={t('Symulator punktacji oferty', 'Bid scoring simulator')}
-        variant="ghost"
-        onPress={() => navigation.navigate('SymulatorPunktacji')}
-        style={styles.gap}
-      />
-      <Button
-        title={t('Kalkulator kar umownych', 'Contractual penalty calculator')}
-        variant="ghost"
-        onPress={() => navigation.navigate('KaryUmowne')}
-        style={styles.gap}
-      />
-      <Button
-        title={t('Odsetki za opóźnienie + rekompensata', 'Late-payment interest + compensation')}
-        variant="ghost"
-        onPress={() => navigation.navigate('KalkulatorOdsetek')}
-        style={styles.gap}
-      />
-
-      <Text style={styles.sectionTitle}>{t('Zakres danych', 'Data coverage')}</Text>
-      <Text style={styles.sectionHint}>
-        {t(
-          'Które rejestry monitorujemy, kiedy każdy z nich ostatnio odpowiedział i czego aplikacja NIE obejmuje automatycznie.',
-          'Which registers we monitor, when each last responded, and what the app does NOT cover automatically.',
-        )}
-      </Text>
-      <Button
-        title={t('Zobacz zakres danych', 'View data coverage')}
-        variant="ghost"
-        onPress={() => navigation.navigate('ZakresDanych')}
-        style={styles.gap}
-      />
+      <Text style={styles.sectionTitle}>{t('Kalkulatory', 'Calculators')}</Text>
+      <View style={styles.lista}>
+        <WierszAkcji tytul={t('Kalkulator terminów Pzp', 'Procurement deadline calculator')} onPress={() => navigation.navigate('KalkulatorTerminow')} />
+        <WierszAkcji tytul={t('Kalkulator ceny ofertowej', 'Bid price calculator')} onPress={() => navigation.navigate('KalkulatorCeny')} />
+        <WierszAkcji tytul={t('Sprawdzarka formularza cenowego', 'Price form checker')} onPress={() => navigation.navigate('SprawdzarkaCeny')} />
+        <WierszAkcji tytul={t('Symulator punktacji oferty', 'Bid scoring simulator')} onPress={() => navigation.navigate('SymulatorPunktacji')} />
+        <WierszAkcji tytul={t('Kalkulator kar umownych', 'Contractual penalty calculator')} onPress={() => navigation.navigate('KaryUmowne')} />
+        <WierszAkcji tytul={t('Odsetki za opóźnienie + rekompensata', 'Late-payment interest + compensation')} onPress={() => navigation.navigate('KalkulatorOdsetek')} ostatni />
+      </View>
 
       <Text style={styles.sectionTitle}>{t('Język', 'Language')}</Text>
       <View style={styles.motywy} accessibilityRole="radiogroup">
@@ -407,7 +379,7 @@ export default function AccountScreen({ navigation }) {
           {t('Masz pytanie albo problem z kontem lub płatnością? Napisz do nas — pomożemy.', 'Have a question or a problem with your account or payment? Write to us — we will help.')}
         </Text>
         <Pressable onPress={otworzKontakt} accessibilityRole="button" hitSlop={8}>
-          <Text style={styles.zrodloLink}>{t('Napisz do nas', 'Write to us')}: {KONTAKT_EMAIL} →</Text>
+          <Text style={styles.zrodloLink}>{t('Napisz do nas', 'Write to us')}: {KONTAKT_EMAIL}</Text>
         </Pressable>
 
         {/*
@@ -437,15 +409,23 @@ export default function AccountScreen({ navigation }) {
         <Text style={styles.wersja}>PrzetargAI · {t('wersja', 'version')} {wersjaApp}</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>{t('Bezpieczeństwo konta', 'Account security')}</Text>
-      <Text style={styles.sectionHint}>
-        {t('Zmień hasło albo adres e-mail, na który się logujesz.', 'Change the password or the e-mail address you sign in with.')}
-      </Text>
-      <Button
-        title={t('Zmień hasło lub e-mail', 'Change password or e-mail')}
-        variant="ghost"
-        onPress={() => navigation.navigate('BezpieczenstwoKonta')}
-      />
+      <Text style={styles.sectionTitle}>{t('Konto i dane', 'Account and data')}</Text>
+      <View style={styles.lista}>
+        <WierszAkcji
+          tytul={t('Zmień hasło lub e-mail', 'Change password or e-mail')}
+          opis={t('Zmień hasło albo adres e-mail, na który się logujesz.', 'Change the password or the e-mail address you sign in with.')}
+          onPress={() => navigation.navigate('BezpieczenstwoKonta')}
+        />
+        <WierszAkcji
+          tytul={t('Zobacz zakres danych', 'View data coverage')}
+          opis={t(
+            'Które rejestry monitorujemy, kiedy każdy z nich ostatnio odpowiedział i czego aplikacja NIE obejmuje automatycznie.',
+            'Which registers we monitor, when each last responded, and what the app does NOT cover automatically.',
+          )}
+          onPress={() => navigation.navigate('ZakresDanych')}
+          ostatni
+        />
+      </View>
 
       <View style={styles.signOut}>
         <Button title={t('Wyloguj się', 'Sign out')} variant="ghost" onPress={confirmSignOut} />
@@ -479,46 +459,65 @@ export default function AccountScreen({ navigation }) {
 
 const tworzStyleKonta = tworzStyle((k) => ({
   strefaNiebezpieczna: {
-    marginTop: spacing.xl,
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: k.border,
+    marginTop: spacing.lg,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    backgroundColor: k.surface,
   },
   naglowekNiebezpieczny: { fontSize: 16, fontWeight: '700', color: k.danger, marginBottom: spacing.xs },
-  opisNiebezpieczny: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginBottom: spacing.md },
+  opisNiebezpieczny: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginBottom: spacing.md },
   card: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: k.border,
-    padding: spacing.lg,
+    padding: spacing.md + 4,
     marginBottom: spacing.md,
   },
-  company: { fontSize: 19, fontWeight: '800', color: k.text },
-  muted: { fontSize: 14, color: k.textMuted, marginTop: 4 },
+  profilRzad: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  monogram: {
+    width: 52, height: 52, borderRadius: radius.md, backgroundColor: k.atrament,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  monogramTekst: { color: k.naAtramencie, fontSize: 22, fontWeight: '800' },
+  profilTresc: { flex: 1 },
+  company: { ...typografia.tytul, fontSize: 19, color: k.text },
+  muted: { fontSize: 14, color: k.textMuted, marginTop: 2 },
   badge: {
     alignSelf: 'flex-start',
     marginTop: spacing.md,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
   },
   badgeFree: { backgroundColor: k.neutralneTlo },
   badgeStandard: { backgroundColor: k.sukcesTlo },
   badgeText: { fontSize: 13, fontWeight: '700', color: k.text },
+  badgeTextStandard: { color: k.sukcesAkcent },
+  lista: {
+    backgroundColor: k.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
   upgradeCard: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,
     borderWidth: 1.5,
     borderColor: k.blue,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
+    padding: spacing.md + 4,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   upgradeTitle: { fontSize: 16, fontWeight: '800', color: k.text },
   upgradeText: { fontSize: 14, color: k.textMuted, marginTop: 6, lineHeight: 21 },
   gap: { marginTop: spacing.md },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: k.text, marginTop: spacing.lg },
-  sectionHint: { fontSize: 13, color: k.textMuted, marginTop: 4, marginBottom: spacing.md },
+  sectionTitle: { ...typografia.sekcja, color: k.text, marginTop: spacing.xl },
+  sectionHint: { fontSize: 14, color: k.textMuted, marginTop: 4, lineHeight: 20 },
   przelacznik: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.sm },
   przelacznikTekst: { fontSize: 15, color: k.text, flex: 1, marginRight: spacing.sm },
   proba: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: k.sukcesTlo, marginBottom: spacing.md },
@@ -547,19 +546,18 @@ const tworzStyleKonta = tworzStyle((k) => ({
   demoPrzyciskTekst: { fontSize: 14, fontWeight: '700', color: k.ostrzezenieTekst },
   demoPrzyciskTekstAktywny: { color: k.surface },
   demoInfo: { fontSize: 12, color: k.ostrzezenieTekst, marginTop: spacing.sm, lineHeight: 17, fontWeight: '600' },
-  motywy: { flexDirection: 'row', gap: spacing.sm },
+  // Wybór języka i motywu: kontrolka segmentowa jak przełącznik „Dla mnie / Wszystkie".
+  motywy: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: radius.md, backgroundColor: k.neutralneTlo, marginTop: spacing.sm },
   motyw: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: k.border,
-    backgroundColor: k.surface,
+    minHeight: 40,
+    justifyContent: 'center',
+    borderRadius: radius.sm,
     alignItems: 'center',
   },
-  motywAktywny: { borderColor: k.blue, backgroundColor: k.wyroznienie },
+  motywAktywny: { backgroundColor: k.surface, boxShadow: `0px 1px 2px ${k.cien}, 0px 4px 12px ${k.cien}` },
   motywTekst: { fontSize: 14, fontWeight: '600', color: k.textMuted },
-  motywTekstAktywny: { color: k.blue },
+  motywTekstAktywny: { color: k.text, fontWeight: '800' },
   signOut: { marginTop: spacing.lg, marginBottom: spacing.xl },
   zrodlaCard: {
     backgroundColor: k.surface,

@@ -58,12 +58,12 @@ export default class GranicaBledu extends Component {
 
 // Kolory na sztywno — fallback musi działać nawet gdy zawiodła warstwa motywu.
 const style = {
-  tlo: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#0f172a' },
+  tlo: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: '#0f1b2d' },
   tytul: { fontSize: 20, fontWeight: '800', color: '#f8fafc', textAlign: 'center' },
   tresc: { fontSize: 14, color: '#cbd5e1', textAlign: 'center', marginTop: 10, lineHeight: 21 },
   przycisk: {
     marginTop: 24,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#1d4ed8',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,

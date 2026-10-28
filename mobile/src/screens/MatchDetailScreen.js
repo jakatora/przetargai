@@ -8,7 +8,9 @@ import StatusPicker from '../components/StatusPicker';
 import { ScoreBadge } from '../components/MatchCard';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useSaved } from '../context/SavedContext';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia } from '../theme';
+import Ikona from '../components/Ikona';
+import WierszAkcji from '../components/WierszAkcji';
 import { opisBrakuPrzypomnienia, opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
@@ -145,7 +147,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   // Jedno źródło prawdy o terminie — wcześniej `daysUntil` nie odróżniał
   // terminu minionego od nieznanego i po prostu nic nie pokazywał.
   const termin = opisTerminu(tender.deadline);
-  const deadlineText = `${formatDate(tender.deadline)}  ·  ${t(termin.etykieta)}`;
+  const deadlineText = formatDate(tender.deadline); // status terminu stoi w chipie pod tytułem
   const maTermin = !!tender.deadline && !termin.minal;
   const brakPrzypomnienia = opisBrakuPrzypomnienia(tender.deadline);
   // Wniosek już poszedł, gdy kontrola przeszła poza etap „nowa".
@@ -299,7 +301,19 @@ export default function MatchDetailScreen({ route, navigation }) {
     <Screen scroll>
       <View style={styles.headerRow}>
         <ScoreBadge score={match.confidence_score} size="lg" />
-        <Text style={styles.title}>{tender.title}</Text>
+        <View style={styles.headerTresc}>
+          <Text style={styles.title} accessibilityRole="header">{tender.title}</Text>
+          <View style={styles.headerChipy}>
+            <Text style={[styles.terminChip, termin.pilny && styles.terminChipPilny, termin.minal && styles.terminChipMiniony]}>
+              {t(termin.etykieta)}
+            </Text>
+            {wadium ? (
+              <Text style={[styles.terminChip, wadium.ostrzezenie ? styles.terminChipPilny : styles.terminChipOk]}>
+                {wadium.ostrzezenie ? t('Wymaga wadium', 'Bid security required') : t('Bez wadium', 'No bid security')}
+              </Text>
+            ) : null}
+          </View>
+        </View>
       </View>
 
       <View style={styles.card}>
@@ -363,33 +377,33 @@ export default function MatchDetailScreen({ route, navigation }) {
       ) : null}
 
       <Pressable
-        style={styles.decyzjaCta}
+        style={({ pressed }) => [styles.decyzjaCta, pressed && styles.ctaWcisniete]}
         onPress={() => navigation.navigate('KartaDecyzji', { match, wyniki: wynikiSurowe })}
         accessibilityRole="button"
       >
-        <Text style={styles.decyzjaCtaTytul}>{t('⚖️ Startować czy odpuścić?', '⚖️ Bid or pass?')}</Text>
+        <Text style={styles.decyzjaCtaTytul}>{t('Startować czy odpuścić?', 'Bid or pass?')}</Text>
         <Text style={styles.decyzjaCtaOpis}>
           {t(
             'Szybki werdykt GO / ROZWAŻ / ODPUŚĆ z czerwonymi flagami — zanim włożysz pracę w ofertę.',
             'A quick GO / CONSIDER / PASS verdict with red flags — before you put work into a bid.',
           )}
         </Text>
-        <Text style={styles.decyzjaCtaLink}>{t('Oceń ten przetarg →', 'Assess this tender →')}</Text>
+        <Text style={styles.decyzjaCtaLink}>{t('Oceń ten przetarg', 'Assess this tender')}</Text>
       </Pressable>
 
       <Pressable
-        style={styles.sciezkaCta}
+        style={({ pressed }) => [styles.sciezkaCta, pressed && styles.ctaWcisniete]}
         onPress={() => navigation.navigate('SciezkaDoOferty', { match })}
         accessibilityRole="button"
       >
-        <Text style={styles.sciezkaCtaTytul}>{t('🏆 Krok po kroku do wygranej', '🏆 Step by step to a win')}</Text>
+        <Text style={styles.sciezkaCtaTytul}>{t('Krok po kroku do oferty', 'Step by step to your bid')}</Text>
         <Text style={styles.sciezkaCtaOpis}>
           {t(
             'Przewodnik: co zrobić na każdym etapie — od SWZ po złożenie oferty. Odhaczaj postęp.',
             'A guide to every stage — from the tender documents (SWZ) to submitting your bid. Tick off your progress.',
           )}
         </Text>
-        <Text style={styles.sciezkaCtaLink}>{t('Otwórz przewodnik →', 'Open the guide →')}</Text>
+        <Text style={styles.sciezkaCtaLink}>{t('Otwórz przewodnik', 'Open the guide')}</Text>
       </Pressable>
 
       {/* Bezpośrednie wejście do checklisty — dotąd tylko z dołu ekranu „Czy warto". */}
@@ -511,109 +525,29 @@ export default function MatchDetailScreen({ route, navigation }) {
       </View>
 
       <Text style={styles.sectionTitle}>{t('Narzędzia do tej oferty', 'Tools for this bid')}</Text>
-      <View style={styles.card}>
-        <Text style={styles.strPodtytul}>
+      <View style={styles.kartaListy}>
+        <Text style={[styles.strPodtytul, styles.kartaListyWstep]}>
           {t(
             'Nie musisz być najtańszy — sprawdź, o ile drożej możesz dać, wygrywając kryteriami. Zanim złożysz wadium gwarancją, przekontroluj jej treść. A gdy przyjdzie wezwanie do uzupełnienia — odlicz czas i nie odpadnij formalnie.',
             'You do not have to be the cheapest — see how much higher you can price and still win on the criteria. Before you lodge bid security as a guarantee, check its wording. And when a request to supplement documents arrives — count down the time and avoid a formal rejection.',
           )}
         </Text>
-        <Button
-          title={t('Kalkulator ceny ofertowej', 'Bid price calculator')}
-          onPress={() => navigation.navigate('KalkulatorCeny', { nazwa: tender.title, match, rynek: wartoscOrient ?? null, budzet: Number.isFinite(Number(tender.budget)) && Number(tender.budget) > 0 ? Number(tender.budget) : null })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Sprawdzarka formularza cenowego', 'Price form checker')}
-          onPress={() => navigation.navigate('SprawdzarkaCeny', { nazwa: tender.title, tenderId: tender.id })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Kalkulator punktów (cena punktu)', 'Points calculator (price per point)')}
-          onPress={() => navigation.navigate('KalkulatorPunktow', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Symulator punktacji oferty', 'Bid scoring simulator')}
-          onPress={() => navigation.navigate('SymulatorPunktacji', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Kontroler gwarancji wadialnej', 'Bid security guarantee checker')}
-          onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title, tenderId: tender.id })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Strażnik wezwania do uzupełnienia', 'Supplement request guard')}
-          onPress={() => navigation.navigate('StraznikWezwania', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Asystent obrony ceny (art. 224)', 'Low-price defence assistant (Art. 224)')}
-          onPress={() => navigation.navigate('ObronaCeny', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Kalkulator kar umownych', 'Contractual penalties calculator')}
-          onPress={() => navigation.navigate('KaryUmowne', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Odsetki za opóźnienie + rekompensata', 'Late payment interest + compensation')}
-          onPress={() => navigation.navigate('KalkulatorOdsetek', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Strażnik terminu związania ofertą', 'Bid validity period guard')}
-          onPress={() => navigation.navigate('TerminZwiazania', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Wykrywacz obowiązkowej wizji lokalnej', 'Mandatory site visit detector')}
-          onPress={() => navigation.navigate('WizjaLokalna', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Strażnik oświadczenia konsorcjum (art. 117)', 'Consortium statement guard (Art. 117)')}
-          onPress={() => navigation.navigate('Konsorcjum', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Tarcza tajemnicy przedsiębiorstwa', 'Trade secret shield')}
-          onPress={() => navigation.navigate('Tajemnica', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Kreator samooczyszczenia (art. 110)', 'Self-cleaning wizard (Art. 110)')}
-          onPress={() => navigation.navigate('Samooczyszczenie', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Pożycz doświadczenie (art. 118)', 'Borrow experience (Art. 118)')}
-          onPress={() => navigation.navigate('Kreator118')}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Kalkulator terminów (dni robocze, święta)', 'Deadline calculator (working days, holidays)')}
-          onPress={() => navigation.navigate('KalkulatorTerminow', { nazwa: tender.title })}
-          variant="ghost"
-          style={styles.gap}
-        />
+        <WierszAkcji tytul={t('Kalkulator ceny ofertowej', 'Bid price calculator')} onPress={() => navigation.navigate('KalkulatorCeny', { nazwa: tender.title, match, rynek: wartoscOrient ?? null, budzet: Number.isFinite(Number(tender.budget)) && Number(tender.budget) > 0 ? Number(tender.budget) : null })} />
+        <WierszAkcji tytul={t('Sprawdzarka formularza cenowego', 'Price form checker')} onPress={() => navigation.navigate('SprawdzarkaCeny', { nazwa: tender.title, tenderId: tender.id })} />
+        <WierszAkcji tytul={t('Kalkulator punktów (cena punktu)', 'Points calculator (price per point)')} onPress={() => navigation.navigate('KalkulatorPunktow', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Symulator punktacji oferty', 'Bid scoring simulator')} onPress={() => navigation.navigate('SymulatorPunktacji', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Kontroler gwarancji wadialnej', 'Bid security guarantee checker')} onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title, tenderId: tender.id })} />
+        <WierszAkcji tytul={t('Strażnik wezwania do uzupełnienia', 'Supplement request guard')} onPress={() => navigation.navigate('StraznikWezwania', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Asystent obrony ceny (art. 224)', 'Low-price defence assistant (Art. 224)')} onPress={() => navigation.navigate('ObronaCeny', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Kalkulator kar umownych', 'Contractual penalties calculator')} onPress={() => navigation.navigate('KaryUmowne', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Odsetki za opóźnienie + rekompensata', 'Late payment interest + compensation')} onPress={() => navigation.navigate('KalkulatorOdsetek', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Strażnik terminu związania ofertą', 'Bid validity period guard')} onPress={() => navigation.navigate('TerminZwiazania', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Wykrywacz obowiązkowej wizji lokalnej', 'Mandatory site visit detector')} onPress={() => navigation.navigate('WizjaLokalna', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Strażnik oświadczenia konsorcjum (art. 117)', 'Consortium statement guard (Art. 117)')} onPress={() => navigation.navigate('Konsorcjum', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Tarcza tajemnicy przedsiębiorstwa', 'Trade secret shield')} onPress={() => navigation.navigate('Tajemnica', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Kreator samooczyszczenia (art. 110)', 'Self-cleaning wizard (Art. 110)')} onPress={() => navigation.navigate('Samooczyszczenie', { nazwa: tender.title })} />
+        <WierszAkcji tytul={t('Pożycz doświadczenie (art. 118)', 'Borrow experience (Art. 118)')} onPress={() => navigation.navigate('Kreator118')} />
+        <WierszAkcji tytul={t('Kalkulator terminów (dni robocze, święta)', 'Deadline calculator (working days, holidays)')} onPress={() => navigation.navigate('KalkulatorTerminow', { nazwa: tender.title })} ostatni />
       </View>
 
       <Text style={styles.sectionTitle}>{t('Etap i notatki', 'Stage and notes')}</Text>
@@ -799,8 +733,8 @@ export default function MatchDetailScreen({ route, navigation }) {
                 <Text style={styles.strNaglowek}>{t('Co zwykle trzeba przygotować', 'What you usually need to prepare')}</Text>
                 {streszczenie.dokumenty.map((d, i) => (
                   <View key={i} style={styles.strPunktRzad}>
-                    <Text style={styles.strKropka}>•</Text>
-                    <Text style={styles.strPunkt}>{d}</Text>
+                    <View style={styles.strKropka} />
+                    <Text style={styles.strPunkt}><Text style={styles.zakreslenie}>{d}</Text></Text>
                   </View>
                 ))}
               </View>
@@ -859,7 +793,12 @@ export default function MatchDetailScreen({ route, navigation }) {
       {(match.uzasadnienie ?? []).length ? (
         <View style={styles.zrodloBox}>
           <Text style={styles.sectionTitle}>{t('Dlaczego to wybraliśmy', 'Why we picked this')}</Text>
-          {match.uzasadnienie.map((p) => <Text key={p} style={styles.rowValue}>{`✓ ${p}`}</Text>)}
+          {match.uzasadnienie.map((p) => (
+            <View key={p} style={styles.uzasadnienieRzad}>
+              <Ikona nazwa="ok" rozmiar={16} kolor={kolory.sukcesAkcent} />
+              <Text style={styles.uzasadnienieTekst}>{p}</Text>
+            </View>
+          ))}
         </View>
       ) : null}
       <Wyjasnienie wyjasnienie={match.wyjasnienie} />
@@ -918,17 +857,17 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   },
   zapiszRzad: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    paddingVertical: spacing.md,
+    minHeight: 52, paddingVertical: spacing.sm,
   },
-  gwiazdka: { fontSize: 24, lineHeight: 26, fontWeight: '700' },
+  gwiazdka: { fontSize: 24, lineHeight: 28, fontWeight: '700' },
   zapiszTekst: { fontSize: 15, fontWeight: '700', color: k.text },
   przypRzad: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
     paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: k.border,
   },
   przypInfo: { flex: 1 },
-  przypTytul: { fontSize: 14, fontWeight: '700', color: k.text },
-  przypOpis: { fontSize: 12, color: k.textMuted, marginTop: 2, lineHeight: 17 },
+  przypTytul: { fontSize: 15, fontWeight: '700', color: k.text },
+  przypOpis: { fontSize: 13, color: k.textMuted, marginTop: 2, lineHeight: 18 },
   zrodloOceny: {
     marginTop: spacing.md,
     paddingTop: spacing.md,
@@ -937,8 +876,17 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   },
   zrodloEtykieta: { fontSize: 13, fontWeight: '700', color: k.blue },
   zrodloOpis: { fontSize: 13, color: k.textMuted, marginTop: 2, lineHeight: 18 },
-  headerRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'center', marginBottom: spacing.lg },
-  title: { flex: 1, fontSize: 18, fontWeight: '800', color: k.text, lineHeight: 24 },
+  headerRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start', marginBottom: spacing.md },
+  headerTresc: { flex: 1, gap: spacing.sm },
+  title: { ...typografia.tytul, color: k.text },
+  headerChipy: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  terminChip: {
+    fontSize: 12, fontWeight: '700', color: k.textMuted, backgroundColor: k.neutralneTlo,
+    paddingVertical: 3, paddingHorizontal: 8, borderRadius: radius.sm, overflow: 'hidden',
+  },
+  terminChipPilny: { color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo },
+  terminChipMiniony: { color: k.danger, backgroundColor: k.dangerTlo },
+  terminChipOk: { color: k.sukcesAkcent, backgroundColor: k.sukcesTlo },
   card: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,
@@ -946,34 +894,41 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
     borderColor: k.border,
     padding: spacing.md,
   },
+  kartaListy: {
+    backgroundColor: k.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    overflow: 'hidden',
+  },
+  kartaListyWstep: { padding: spacing.md, paddingBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: k.border },
   row: {
     paddingVertical: spacing.sm + 2,
     borderBottomWidth: 1,
     borderBottomColor: k.border,
   },
   rowLast: { borderBottomWidth: 0 },
-  rowLabel: { fontSize: 12, color: k.textMuted, marginBottom: 2 },
-  rowValue: { fontSize: 15, color: k.text, fontWeight: '600' },
-  wadiumPodpis: { fontSize: 12, color: k.textMuted, marginTop: 3, lineHeight: 16 },
+  rowLabel: { fontSize: 13, color: k.textMuted, marginBottom: 2 },
+  rowValue: { fontSize: 15, lineHeight: 21, color: k.text, fontWeight: '600' },
+  wadiumPodpis: { fontSize: 13, color: k.textMuted, marginTop: 3, lineHeight: 18 },
   wynikWiersz: { fontSize: 15, color: k.text, lineHeight: 22, marginBottom: 6 },
-  wynikPodpis: { fontSize: 12, color: k.textMuted, marginTop: 4, lineHeight: 16, fontStyle: 'italic' },
+  wynikPodpis: { fontSize: 13, color: k.textMuted, marginTop: 4, lineHeight: 18 },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...typografia.sekcja,
     color: k.text,
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     marginBottom: spacing.sm,
   },
   reasoning: { fontSize: 15, color: k.text, lineHeight: 22 },
-  strPodtytul: { fontSize: 12, color: k.textMuted, lineHeight: 17, fontStyle: 'italic' },
-  warsztatEtykieta: { fontSize: 13, fontWeight: '700', color: k.blue, marginTop: spacing.md, marginBottom: spacing.sm },
+  strPodtytul: { fontSize: 14, color: k.textMuted, lineHeight: 20 },
+  warsztatEtykieta: { fontSize: 13, fontWeight: '700', color: k.textMuted, marginTop: spacing.md, marginBottom: spacing.sm },
   warsztatOdstep: { marginTop: spacing.lg },
   notatka: {
-    minHeight: 88, borderWidth: 1, borderColor: k.border, borderRadius: radius.md ?? 10,
-    padding: spacing.sm, fontSize: 15, color: k.text, backgroundColor: k.bg ?? k.surface,
+    minHeight: 96, borderWidth: 1.5, borderColor: k.obramowaniePola, borderRadius: radius.md,
+    padding: spacing.sm + 4, fontSize: 15, lineHeight: 21, color: k.text, backgroundColor: k.surface,
   },
   notatkaStopka: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
-  notatkaStan: { fontSize: 12, color: k.textMuted, fontWeight: '600' },
+  notatkaStan: { fontSize: 13, color: k.sukcesAkcent, fontWeight: '700' },
   notatkaBtn: { minWidth: 140 },
   strStart: { marginTop: spacing.md, gap: spacing.sm },
   strBlad: { fontSize: 13, color: k.textMuted, lineHeight: 18 },
@@ -981,35 +936,43 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   strLadowanieTekst: { fontSize: 14, color: k.textMuted },
   strTresc: { marginTop: spacing.md, gap: spacing.md },
   strAkapit: { fontSize: 15, color: k.text, lineHeight: 22 },
-  strBlok: { gap: spacing.xs ?? 4 },
-  strNaglowek: { fontSize: 13, fontWeight: '700', color: k.blue, marginBottom: 2 },
+  strBlok: { gap: 6 },
+  strNaglowek: { fontSize: 14, fontWeight: '800', color: k.text, marginBottom: 2 },
   strPunktRzad: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
-  strKropka: { fontSize: 15, color: k.blue, lineHeight: 22 },
-  strPunkt: { flex: 1, fontSize: 15, color: k.text, lineHeight: 22 },
-  gap: { marginTop: spacing.lg },
+  strKropka: { width: 6, height: 6, borderRadius: 3, backgroundColor: k.textMuted, marginTop: 9 },
+  strPunkt: { flex: 1, fontSize: 15, color: k.text, lineHeight: 24 },
+  // Wyróżnik marki: to, co AI wypisało z dokumentów, jest „zakreślone" jak w papierowej SWZ.
+  zakreslenie: { backgroundColor: k.zakreslacz },
+  uzasadnienieRzad: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', marginTop: 6 },
+  uzasadnienieTekst: { flex: 1, fontSize: 15, lineHeight: 21, color: k.text },
+  gap: { marginTop: spacing.md },
   benchmarkKarta: {
     backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border,
     padding: spacing.md, marginTop: spacing.md,
   },
-  benchmarkTytul: { fontSize: 13, fontWeight: '800', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  benchmarkKwoty: { fontSize: 20, fontWeight: '700', color: k.text, marginTop: 6, fontVariant: ['tabular-nums'] },
+  benchmarkTytul: { fontSize: 13, fontWeight: '700', color: k.textMuted },
+  benchmarkKwoty: { fontSize: 22, fontWeight: '800', color: k.text, marginTop: 4, fontVariant: ['tabular-nums'], letterSpacing: -0.3 },
   benchmarkMediana: { color: k.blue, fontWeight: '800' },
-  benchmarkOpis: { fontSize: 12, color: k.textMuted, lineHeight: 17, marginTop: 6 },
-  benchmarkZrodlo: { fontSize: 11, color: k.textMuted, marginTop: 6, fontStyle: 'italic' },
-  decyzjaCta: { backgroundColor: k.wyroznienie, borderRadius: radius.lg, borderWidth: 1.5, borderColor: k.blue, padding: spacing.md, marginTop: spacing.md },
+  benchmarkOpis: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: 6 },
+  benchmarkZrodlo: { fontSize: 12, color: k.textMuted, marginTop: 6 },
+  decyzjaCta: { backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1.5, borderColor: k.blue, padding: spacing.md, marginTop: spacing.md },
   decyzjaCtaTytul: { fontSize: 16, fontWeight: '800', color: k.text },
-  decyzjaCtaOpis: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: 4 },
-  decyzjaCtaLink: { fontSize: 14, fontWeight: '800', color: k.blue, marginTop: 8 },
-  sciezkaCta: { backgroundColor: k.blue, borderRadius: radius.lg, padding: spacing.md, marginTop: spacing.md },
-  sciezkaCtaTytul: { fontSize: 16, fontWeight: '800', color: k.white },
-  sciezkaCtaOpis: { fontSize: 13, color: k.white, opacity: 0.92, lineHeight: 18, marginTop: 4 },
-  sciezkaCtaLink: { fontSize: 14, fontWeight: '800', color: k.white, marginTop: 8 },
-  checklistaCta: { marginTop: spacing.md },
+  decyzjaCtaOpis: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginTop: 4 },
+  decyzjaCtaLink: { fontSize: 14, fontWeight: '800', color: k.blue, marginTop: 10 },
+  sciezkaCta: { backgroundColor: k.atrament, borderRadius: radius.lg, padding: spacing.md, marginTop: spacing.sm },
+  sciezkaCtaTytul: { fontSize: 16, fontWeight: '800', color: k.naAtramencie },
+  sciezkaCtaOpis: { fontSize: 14, color: k.atramentDrugi, lineHeight: 20, marginTop: 4 },
+  sciezkaCtaLink: {
+    alignSelf: 'flex-start', fontSize: 14, fontWeight: '800', color: k.atrament, backgroundColor: k.naAtramencie,
+    paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.sm, overflow: 'hidden', marginTop: 12,
+  },
+  ctaWcisniete: { opacity: 0.88, transform: [{ scale: 0.99 }] },
+  checklistaCta: { marginTop: spacing.sm },
   kontrolaEtapRzad: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: k.border,
   },
-  kontrolaEtapEtykieta: { fontSize: 13, fontWeight: '700', color: k.blue },
+  kontrolaEtapEtykieta: { fontSize: 13, fontWeight: '700', color: k.textMuted },
   kontrolaEtapWartosc: { fontSize: 15, fontWeight: '700', color: k.text },
-  kontrolaInfo: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: spacing.sm },
+  kontrolaInfo: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginTop: spacing.sm },
 }));

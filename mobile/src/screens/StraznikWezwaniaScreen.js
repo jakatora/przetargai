@@ -209,7 +209,7 @@ const tworzStyleStraznika = tworzStyle((k) => ({
     width: 24, height: 24, borderRadius: radius.sm, borderWidth: 2, borderColor: k.border,
     alignItems: 'center', justifyContent: 'center', marginTop: 1,
   },
-  checkZnak: { color: k.white, fontSize: 15, fontWeight: '900', lineHeight: 18 },
+  checkZnak: { color: k.naAkcencie, fontSize: 15, fontWeight: '900', lineHeight: 18 },
   dokTresc: { flex: 1 },
   dokNazwa: { fontSize: 14, fontWeight: '700', color: k.text, lineHeight: 19 },
   dokNazwaGotowa: { textDecorationLine: 'line-through', color: k.textMuted },

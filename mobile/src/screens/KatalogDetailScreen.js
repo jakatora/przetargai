@@ -6,7 +6,7 @@ import SzczegolPlatformy from '../components/SzczegolPlatformy';
 import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia } from '../theme';
 import { formatDate, formatBudget } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
@@ -61,31 +61,22 @@ export default function KatalogDetailScreen({ route, navigation }) {
 
   return (
     <Screen scroll>
-      <Text style={styles.tytul}>{tender.title}</Text>
+      <Text style={styles.tytul} accessibilityRole="header">{tender.title}</Text>
       {tender.organization ? <Text style={styles.organizacja}>{tender.organization}</Text> : null}
-
-      {/* Metryczka źródła — skąd to jest i jak świeże. */}
-      <View style={styles.zrodloBox}>
-        {tender.zrodlo ? (
-          <>
-            <Text style={styles.zrodloNazwa}>{t(pelnaNazwaZrodla(tender.zrodlo.kod))}</Text>
-            <PodpisZrodla zrodlo={tender.zrodlo} />
-          </>
-        ) : (
-          <Text style={styles.zrodloNazwa}>
-            {t('Rejestr źródłowy nieznany — sprawdź w oryginale', 'Source register unknown — check the original')}
+      <View style={styles.chipy}>
+        <Text style={[styles.chip, termin.pilny && styles.chipPilny, termin.minal && styles.chipMiniony]}>{t(termin.etykieta)}</Text>
+        {wadium ? (
+          <Text style={[styles.chip, wadium.ostrzezenie ? styles.chipPilny : styles.chipOk]}>
+            {wadium.ostrzezenie ? t('Wymaga wadium', 'Bid security required') : t('Bez wadium', 'No bid security')}
           </Text>
-        )}
-        <PrzyciskOryginalu tender={tender} />
-        <SzczegolPlatformy tender={tender} navigation={navigation} />
-        <DokumentyEZamowienia tender={tender} navigation={navigation} />
+        ) : null}
       </View>
 
       <View style={styles.karta}>
         <Wiersz
           styles={styles}
           etykieta={t('Termin składania ofert', 'Submission deadline')}
-          wartosc={`${formatDate(tender.deadline)} · ${termin.etykieta}`}
+          wartosc={formatDate(tender.deadline)}
         />
         <Wiersz styles={styles} etykieta={t('Województwo', 'Voivodeship')} wartosc={tender.region_nazwa} />
         <Wiersz
@@ -110,6 +101,30 @@ export default function KatalogDetailScreen({ route, navigation }) {
         />
       </View>
 
+      <Button
+        title={t('Czy warto tu startować?', 'Is this one worth bidding on?')}
+        onPress={() => navigation.navigate('CzyWarto', { tenderId: tender.id, tytul: tender.title })}
+        style={styles.glownaAkcja}
+      />
+
+      <Text style={styles.sekcja}>{t('Źródło i dokumenty', 'Source and documents')}</Text>
+      {/* Metryczka źródła — skąd to jest i jak świeże. */}
+      <View style={styles.zrodloBox}>
+        {tender.zrodlo ? (
+          <>
+            <Text style={styles.zrodloNazwa}>{t(pelnaNazwaZrodla(tender.zrodlo.kod))}</Text>
+            <PodpisZrodla zrodlo={tender.zrodlo} />
+          </>
+        ) : (
+          <Text style={styles.zrodloNazwa}>
+            {t('Rejestr źródłowy nieznany — sprawdź w oryginale', 'Source register unknown — check the original')}
+          </Text>
+        )}
+        <PrzyciskOryginalu tender={tender} />
+        <SzczegolPlatformy tender={tender} navigation={navigation} />
+        <DokumentyEZamowienia tender={tender} navigation={navigation} />
+      </View>
+
       <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />
 
       {/*
@@ -122,12 +137,6 @@ export default function KatalogDetailScreen({ route, navigation }) {
         „czy warto". Bez niego to jest lista ogłoszeń bez żadnej podpowiedzi,
         w które z nich w ogóle wchodzić.
       */}
-      <Button
-        title={t('Czy warto tu startować?', 'Is this one worth bidding on?')}
-        onPress={() => navigation.navigate('CzyWarto', { tenderId: tender.id, tytul: tender.title })}
-        style={styles.notkaPrzycisk}
-      />
-
       <View style={styles.notka}>
         <Text style={styles.notkaTekst}>
           {t(
@@ -147,10 +156,19 @@ export default function KatalogDetailScreen({ route, navigation }) {
 }
 
 const tworzStyleSzczegolow = tworzStyle((k) => ({
-  tytul: { fontSize: 20, fontWeight: '800', color: k.text, lineHeight: 27 },
-  organizacja: { fontSize: 14, color: k.textMuted, marginTop: spacing.xs },
+  tytul: { ...typografia.tytul, color: k.text },
+  organizacja: { fontSize: 15, lineHeight: 21, color: k.textMuted, marginTop: spacing.xs },
+  chipy: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
+  chip: {
+    fontSize: 12, fontWeight: '700', color: k.textMuted, backgroundColor: k.neutralneTlo,
+    paddingVertical: 3, paddingHorizontal: 8, borderRadius: radius.sm, overflow: 'hidden',
+  },
+  chipPilny: { color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo },
+  chipMiniony: { color: k.danger, backgroundColor: k.dangerTlo },
+  chipOk: { color: k.sukcesAkcent, backgroundColor: k.sukcesTlo },
+  sekcja: { ...typografia.sekcja, color: k.text, marginTop: spacing.xl },
   zrodloBox: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -159,7 +177,7 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   },
   zrodloNazwa: { fontSize: 14, fontWeight: '800', color: k.text },
   karta: {
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: k.border,
@@ -167,19 +185,20 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
     paddingHorizontal: spacing.md,
   },
   wiersz: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     borderBottomWidth: 1,
     borderBottomColor: k.border,
   },
   wierszOstatni: { borderBottomWidth: 0 },
-  wierszEtykieta: { fontSize: 12, color: k.textMuted, fontWeight: '700' },
-  wierszWartosc: { fontSize: 15, color: k.text, marginTop: 2, lineHeight: 21 },
+  wierszEtykieta: { fontSize: 13, color: k.textMuted },
+  wierszWartosc: { fontSize: 15, color: k.text, marginTop: 2, lineHeight: 21, fontWeight: '600' },
+  glownaAkcja: { marginTop: spacing.md },
   notka: {
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
     padding: spacing.md,
     borderRadius: radius.lg,
     backgroundColor: k.wyroznienie,
   },
-  notkaTekst: { fontSize: 13, color: k.text, lineHeight: 19 },
-  notkaPrzycisk: { marginTop: spacing.sm },
+  notkaTekst: { fontSize: 14, color: k.text, lineHeight: 20 },
+  notkaPrzycisk: { marginTop: spacing.md },
 }));

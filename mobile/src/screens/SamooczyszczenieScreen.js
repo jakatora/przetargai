@@ -85,7 +85,7 @@ const tworzStyleSamo = tworzStyle((k) => ({
     padding: spacing.md, marginTop: spacing.sm,
   },
   check: { width: 26, height: 26, borderRadius: radius.sm, borderWidth: 2, borderColor: k.border, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  checkZnak: { color: k.white, fontSize: 16, fontWeight: '900', lineHeight: 20 },
+  checkZnak: { color: k.naAkcencie, fontSize: 16, fontWeight: '900', lineHeight: 20 },
   elementTresc: { flex: 1 },
   elementEt: { fontSize: 15, fontWeight: '700', color: k.text },
   elementOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginTop: 3 },

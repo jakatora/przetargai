@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider } from './src/context/AuthContext';
-import { ThemeProvider } from './src/context/ThemeContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { JezykProvider } from './src/context/JezykContext';
 import { SavedProvider } from './src/context/SavedContext';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -22,6 +22,12 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+/** Ikony paska statusu w kolorze zgodnym z motywem (ciemne w jasnym, jasne w ciemnym). */
+function PasekStatusu() {
+  const { schemat } = useTheme();
+  return <StatusBar style={schemat === 'ciemny' ? 'light' : 'dark'} />;
+}
 
 export default function App() {
   // Ślad startu aplikacji (analityka) — raz przy montowaniu.
@@ -53,11 +59,13 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      {/* Nagłówki ekranów są brandowo niebieskie w obu motywach → jasne ikony.
-          Wyjątkiem jest Login (bez nagłówka) — ustawia własny StatusBar. */}
+      {/* Domyślnie jasne ikony (ekran błędu GranicaBledu ma ciemne tło). Pod dostawcą motywu
+          PasekStatusu przestawia je zgodnie z motywem — nagłówki są na powierzchni (jasnej
+          albo granatowej), więc ikony paska muszą być ciemne w jasnym motywie. */}
       <StatusBar style="light" />
       <GranicaBledu>
         <ThemeProvider>
+          <PasekStatusu />
           <JezykProvider>
             <AuthProvider>
               <SavedProvider>

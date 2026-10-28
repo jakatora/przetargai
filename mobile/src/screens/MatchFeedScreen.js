@@ -7,7 +7,6 @@ import { pobierzNajnowszaWersje } from '../services/aktualizacja';
 import * as WebBrowser from 'expo-web-browser';
 import { api } from '../api/client';
 import MatchCard from '../components/MatchCard';
-import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { PROGI, KLUCZ_PROGU, filtrujPoProgu, normalizujProg } from '../lib/filtrOcen';
 import { SORTOWANIA, KLUCZ_SORT, sortujDopasowania, filtrujTekst, normalizujSort, filtrujMalaFirma } from '../lib/feedSort';
@@ -20,7 +19,9 @@ import {
 } from '../lib/filtrTerminu';
 import * as storage from '../lib/storage';
 import Constants from 'expo-constants';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia, uniesienie, DOTYK } from '../theme';
+import Ikona from '../components/Ikona';
+import { StanLadowania, StanBledu, StanPusty } from '../components/Stan';
 import { useJezyk } from '../context/JezykContext';
 import KatalogWszystkich from '../components/KatalogWszystkich';
 import PanelWyboru from '../components/PanelWyboru';
@@ -87,6 +88,7 @@ export default function MatchFeedScreen({ navigation }) {
   const [statusTerminu, setStatusTerminu] = useState(STATUS_TERMINU_DOMYSLNY); // Aktywne / Po terminie
   // Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free).
   const [zacheta, setZacheta] = useState(null);
+  const [filtryOtwarte, setFiltryOtwarte] = useState(false); // panel filtrów schowany — lista jest ważniejsza
   const [przerwaZrodel, setPrzerwaZrodel] = useState(null); // komunikat o przerwie BZP/TED z /health
   const [aktualizacja, setAktualizacja] = useState(null); // baner „jest nowa wersja” (APK ze strony / Windows)
   const [upgrading, setUpgrading] = useState(false);
@@ -164,6 +166,10 @@ export default function MatchFeedScreen({ navigation }) {
     const poWoj = filtrujWojewodztwo(poTekscie, woj);
     return sortujDopasowania(poWoj, sort);
   }, [matches, prog, szukajFiltr, sort, malaFirma, woj, statusTerminu, wybraneDzis]);
+
+  // Ile filtrów odbiega od domyślnych — licznik na przycisku „Filtry", gdy panel jest schowany.
+  const liczbaFiltrow = (statusTerminu !== STATUS_TERMINU_DOMYSLNY ? 1 : 0) + (sort !== 'trafnosc' ? 1 : 0)
+    + (prog ? 1 : 0) + (malaFirma ? 1 : 0) + (woj ? 1 : 0);
 
   // Jedna stabilna funkcja dla wszystkich kart — warunek, żeby memo(MatchCard) działało.
   const otworzPrzetarg = useCallback(
@@ -327,26 +333,18 @@ export default function MatchFeedScreen({ navigation }) {
    */
   function renderFeed() {
     if (loading) {
-      return (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={kolory.blue} />
-        </View>
-      );
+      // Szkielet kart w miejscu listy — bez skoku układu po wczytaniu.
+      return <StanLadowania karty={4} />;
     }
 
     // Pełnoekranowy błąd TYLKO wtedy, gdy nie mamy nic do pokazania.
     if (error && !matches.length) {
       return (
-        <View style={styles.center}>
-          <Text style={styles.title}>{t('Nie udało się wczytać przetargów', 'Could not load tenders')}</Text>
-          <Text style={styles.text}>{error}</Text>
-          <Button
-            title={t('Spróbuj ponownie', 'Try again')}
-            variant="ghost"
-            onPress={() => { setLoading(true); load(); }}
-            style={styles.retry}
-          />
-        </View>
+        <StanBledu
+          tytul={t('Nie udało się wczytać przetargów', 'Could not load tenders')}
+          opis={error}
+          onPonow={() => { setLoading(true); load(); }}
+        />
       );
     }
 
@@ -376,7 +374,7 @@ export default function MatchFeedScreen({ navigation }) {
             {/* Baner „nowe od ostatniej wizyty" — to jest „powiadomienie" wewnątrz apki. */}
             {noweLacznie > 0 ? (
               <View style={styles.noweBaner}>
-                <Text style={styles.noweBanerKropka}>●</Text>
+                <View style={styles.noweBanerKropka} />
                 <Text style={styles.noweBanerTekst}>
                   {noweLacznie === 1
                     ? t('1 nowy przetarg od ostatniej wizyty', '1 new tender since your last visit')
@@ -396,7 +394,7 @@ export default function MatchFeedScreen({ navigation }) {
                 <Text style={styles.fomoCta}>
                   {upgrading
                     ? t('Otwieram…', 'Opening…')
-                    : t('Przejdź na Standard — 99 zł/mc →', 'Upgrade to Standard — PLN 99/mo →')}
+                    : t('Przejdź na Standard — 99 zł/mc', 'Upgrade to Standard — PLN 99/mo')}
                 </Text>
               </Pressable>
             ) : null}
@@ -460,9 +458,10 @@ export default function MatchFeedScreen({ navigation }) {
               </View>
             ) : null}
 
-            {/* Wyszukiwarka — po tytule i zamawiającym, z tolerancją odmian (D-051). */}
+            {/* Wyszukiwarka — po tytule i zamawiającym, z tolerancją odmian (D-051) — i przycisk filtrów. */}
+            <View style={styles.szukajIFiltry}>
             <View style={styles.szukajRzad}>
-              <Text style={styles.szukajIkona}>🔍</Text>
+              <Ikona nazwa="szukaj" rozmiar={18} kolor={kolory.textMuted} />
               <TextInput
                 style={styles.szukajPole}
                 value={szukaj}
@@ -473,12 +472,31 @@ export default function MatchFeedScreen({ navigation }) {
                 accessibilityLabel={t('Szukaj w przetargach', 'Search tenders')}
               />
               {szukaj ? (
-                <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel={t('Wyczyść szukanie', 'Clear search')}>
-                  <Text style={styles.szukajX}>✕</Text>
+                <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} style={styles.szukajX} accessibilityLabel={t('Wyczyść szukanie', 'Clear search')}>
+                  <Ikona nazwa="zamknij" rozmiar={16} kolor={kolory.textMuted} />
                 </Pressable>
               ) : null}
             </View>
+            <Pressable
+              onPress={() => setFiltryOtwarte((v) => !v)}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: filtryOtwarte }}
+              accessibilityLabel={liczbaFiltrow
+                ? t(`Filtry, aktywne: ${liczbaFiltrow}`, `Filters, active: ${liczbaFiltrow}`)
+                : t('Filtry', 'Filters')}
+              style={({ pressed }) => [styles.filtryBtn, (filtryOtwarte || liczbaFiltrow > 0) && styles.filtryBtnOn, pressed && styles.filtryBtnWcisniety]}
+            >
+              <Ikona nazwa="filtr" rozmiar={18} kolor={filtryOtwarte || liczbaFiltrow > 0 ? kolory.blue : kolory.text} />
+              <Text style={[styles.filtryTekst, (filtryOtwarte || liczbaFiltrow > 0) && styles.filtryTekstOn]}>
+                {t('Filtry', 'Filters')}
+              </Text>
+              {liczbaFiltrow > 0 ? <Text style={styles.filtryLicznik}>{liczbaFiltrow}</Text> : null}
+            </Pressable>
+            </View>
 
+            {filtryOtwarte ? (
+            <View style={styles.panelFiltrow}>
+            <Text style={styles.filtrEtykieta}>{t('Termin', 'Deadline')}</Text>
             {/* Zakładka statusu terminu: Aktywne (domyślnie) / Po terminie. Odchudza feed z przeterminowanych. */}
             <View style={styles.progi} accessibilityRole="radiogroup">
               {STATUSY_TERMINU.map((opcja) => {
@@ -500,6 +518,7 @@ export default function MatchFeedScreen({ navigation }) {
               })}
             </View>
 
+            <Text style={styles.filtrEtykieta}>{t('Kolejność', 'Order')}</Text>
             {/* Sortowanie — trwały wybór (D-051). */}
             <View style={styles.progi} accessibilityRole="radiogroup">
               {SORTOWANIA.map((opcja) => {
@@ -518,6 +537,7 @@ export default function MatchFeedScreen({ navigation }) {
               })}
             </View>
 
+            <Text style={styles.filtrEtykieta}>{t('Minimalne dopasowanie', 'Minimum match')}</Text>
             {/* Filtr minimalnego dopasowania — trwały wybór usera (D-047). */}
             <View style={styles.progi} accessibilityRole="radiogroup">
               {PROGI.map((opcja) => {
@@ -544,8 +564,9 @@ export default function MatchFeedScreen({ navigation }) {
               accessibilityState={{ checked: malaFirma }}
               style={[styles.malaChip, malaFirma && styles.malaChipAktywny]}
             >
+              {malaFirma ? <Ikona nazwa="ok" rozmiar={14} kolor={kolory.naAkcencie} /> : null}
               <Text style={[styles.malaTekst, malaFirma && styles.malaTekstAktywny]}>
-                {malaFirma ? '✓ ' : ''}{t('Dla małej firmy (bez dużego wadium)', 'For small firms (no large bid security)')}
+                {t('Dla małej firmy (bez dużego wadium)', 'For small firms (no large bid security)')}
               </Text>
             </Pressable>
             {/* Filtr województwa — tylko gdy w feedzie SĄ dane regionu (co najmniej 2). */}
@@ -576,6 +597,8 @@ export default function MatchFeedScreen({ navigation }) {
                   );
                 })}
               </ScrollView>
+            ) : null}
+            </View>
             ) : null}
             {/* Licznik wyników (R14) — ile widać po filtrach; z podpowiedzią, gdy filtr zawęża. */}
             {widoczne.length > 0 ? (
@@ -685,9 +708,7 @@ export default function MatchFeedScreen({ navigation }) {
           // Pustka od FILTRA ma własny komunikat w nagłówku — ten ekran jest
           // wyłącznie dla faktycznie pustego konta.
           matches.length === 0 ? (
-            <View style={styles.center}>
-              <Text style={styles.emptyIcon}>📭</Text>
-              <Text style={styles.title}>{t('Brak dopasowanych przetargów', 'No matched tenders')}</Text>
+            <StanPusty tytul={t('Brak dopasowanych przetargów', 'No matched tenders')}>
               {/*
                 Pustka z KONKRETNYM następnym krokiem (P1-4). „Zajrzyj później" było
                 ślepą uliczką: nie mówiło ani dlaczego jest pusto, ani co zrobić.
@@ -705,7 +726,7 @@ export default function MatchFeedScreen({ navigation }) {
                   'You can also browse the whole market — the "All" tab above shows tenders regardless of your profile.',
                 )}
               </Text>
-            </View>
+            </StanPusty>
           ) : null
         }
       />
@@ -714,6 +735,7 @@ export default function MatchFeedScreen({ navigation }) {
 
   return (
     <View style={styles.ekran}>
+      <View style={styles.trybPasek}>
       <View style={styles.trybRzad} accessibilityRole="tablist">
         {TRYBY.map((opcja) => {
           const aktywny = tryb === opcja.wartosc;
@@ -730,6 +752,7 @@ export default function MatchFeedScreen({ navigation }) {
           );
         })}
       </View>
+      </View>
       {tryb === 'wszystkie'
         ? <KatalogWszystkich navigation={navigation} />
         : renderFeed()}
@@ -742,93 +765,110 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   /*
    * Przełącznik trybu listy. Stoi NAD listą, poza nią, żeby był widoczny także
    * przy ładowaniu i przy błędzie — moment, w którym przydaje się najbardziej,
-   * to właśnie pusty albo niedziałający feed.
+   * to właśnie pusty albo niedziałający feed. Kontrolka segmentowa: jeden tor,
+   * wybrany segment „uniesiony" na powierzchni.
    */
+  trybPasek: {
+    backgroundColor: k.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: k.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+  },
   trybRzad: {
     flexDirection: 'row',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
-    backgroundColor: k.bg,
+    gap: 4,
+    padding: 4,
+    borderRadius: radius.md,
+    backgroundColor: k.neutralneTlo,
+    width: '100%',
+    maxWidth: 712,
+    alignSelf: 'center',
   },
   trybChip: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: k.border,
-    backgroundColor: k.surface,
+    justifyContent: 'center',
+    minHeight: 40,
+    borderRadius: radius.sm,
   },
-  trybChipOn: { backgroundColor: k.blue, borderColor: k.blue },
-  trybTekst: { fontSize: 15, fontWeight: '700', color: k.text },
-  trybTekstOn: { color: k.white, fontWeight: '800' },
+  trybChipOn: { backgroundColor: k.surface, ...uniesienie(k) },
+  trybTekst: { fontSize: 15, fontWeight: '600', color: k.textMuted },
+  trybTekstOn: { color: k.text, fontWeight: '800' },
 
   noweBaner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: k.wyroznienie,
-    borderWidth: 1,
-    borderColor: k.blue,
     borderRadius: radius.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 10,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.md,
   },
-  noweBanerKropka: { color: k.blue, fontSize: 12 },
-  noweBanerTekst: { flex: 1, color: k.blue, fontSize: 14, fontWeight: '800' },
+  noweBanerKropka: { width: 8, height: 8, borderRadius: 4, backgroundColor: k.blue },
+  noweBanerTekst: { flex: 1, color: k.blue, fontSize: 14, fontWeight: '700' },
   sekcjaNaglowek: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.sm,
     backgroundColor: k.bg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xs,
-    marginBottom: spacing.xs,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
-  sekcjaTytul: { fontSize: 15, fontWeight: '800', color: k.text },
+  sekcjaTytul: { ...typografia.sekcja, color: k.text },
   sekcjaNowe: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '800',
-    color: k.white,
-    backgroundColor: k.blue,
+    color: k.blue,
+    backgroundColor: k.wyroznienie,
     paddingVertical: 2,
     paddingHorizontal: 8,
-    borderRadius: 999,
+    borderRadius: radius.sm,
     overflow: 'hidden',
   },
   fomo: {
-    backgroundColor: k.blue,
+    backgroundColor: k.atrament,
     borderRadius: radius.lg,
-    padding: spacing.md,
+    padding: spacing.md + 2,
     marginBottom: spacing.md,
     gap: 4,
   },
-  fomoTytul: { fontSize: 16, fontWeight: '800', color: k.surface },
-  fomoOpis: { fontSize: 13, color: k.surface, opacity: 0.92, lineHeight: 18 },
-  fomoCta: { fontSize: 14, fontWeight: '800', color: k.surface, marginTop: 6 },
+  fomoTytul: { fontSize: 16, fontWeight: '800', color: k.naAtramencie },
+  fomoOpis: { fontSize: 14, color: k.atramentDrugi, lineHeight: 20 },
+  fomoCta: {
+    alignSelf: 'flex-start',
+    fontSize: 14,
+    fontWeight: '800',
+    color: k.atrament,
+    backgroundColor: k.naAtramencie,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
 
   // ── Band radaru podprogowego („łatwiejszy start") ──
   ppBand: { marginBottom: spacing.md },
   ppNaglowek: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  ppTytulSekcji: { fontSize: 15, fontWeight: '800', color: k.text },
-  ppUstaw: { fontSize: 13, fontWeight: '700', color: k.blue },
+  ppTytulSekcji: { ...typografia.sekcja, color: k.text },
+  ppUstaw: { fontSize: 14, fontWeight: '700', color: k.blue, paddingVertical: 6 },
   ppZaproszenie: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: k.border,
+    borderStyle: 'dashed',
+    borderColor: k.obramowaniePola,
     padding: spacing.md,
     gap: 4,
   },
   ppZaproszenieTytul: { fontSize: 15, fontWeight: '700', color: k.text },
-  ppZaproszenieOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19 },
-  ppPusto: { fontSize: 13, color: k.textMuted, lineHeight: 19 },
+  ppZaproszenieOpis: { fontSize: 14, color: k.textMuted, lineHeight: 20 },
+  ppPusto: { fontSize: 14, color: k.textMuted, lineHeight: 20 },
   ppLista: { gap: spacing.sm, paddingRight: spacing.xs },
   ppKarta: {
-    width: 250,
+    width: 256,
     backgroundColor: k.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
@@ -838,7 +878,7 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   },
   ppBadge: {
     alignSelf: 'flex-start',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
     color: k.sukcesAkcent,
     backgroundColor: k.sukcesTlo,
@@ -850,10 +890,10 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   },
   ppTytul: { fontSize: 14, fontWeight: '700', color: k.text, lineHeight: 19 },
   ppZamawiajacy: { fontSize: 12, color: k.textMuted },
-  ppWartosc: { fontSize: 13, fontWeight: '700', color: k.text, marginTop: 2 },
+  ppWartosc: { fontSize: 13, fontWeight: '700', color: k.text, marginTop: 2, fontVariant: ['tabular-nums'] },
   ppFlagiRzad: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: 2 },
   ppFlaga: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     color: k.blue,
     backgroundColor: k.wyroznienie,
@@ -862,44 +902,74 @@ const tworzStyleFeedu = tworzStyle((k) => ({
     borderRadius: radius.sm,
     overflow: 'hidden',
   },
-  ppZrodlo: { fontSize: 11, color: k.textMuted, marginTop: 4 },
+  ppZrodlo: { fontSize: 12, color: k.textMuted, marginTop: 4 },
+
+  // ── Szukanie + filtry ──
+  szukajIFiltry: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
   szukajRzad: {
+    flex: 1,
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.border,
-    borderRadius: radius.md, paddingHorizontal: 12, marginBottom: spacing.sm,
+    backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.obramowaniePola,
+    borderRadius: radius.md, paddingLeft: 12, minHeight: DOTYK + 4,
   },
-  szukajIkona: { fontSize: 15 },
   szukajPole: { flex: 1, paddingVertical: 11, fontSize: 15, color: k.text },
-  szukajX: { color: k.textMuted, fontSize: 16, fontWeight: '700', paddingHorizontal: 2 },
+  szukajX: { width: DOTYK, height: DOTYK, alignItems: 'center', justifyContent: 'center' },
+  filtryBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, minHeight: DOTYK + 4,
+    borderRadius: radius.md, borderWidth: 1.5, borderColor: k.obramowaniePola, backgroundColor: k.surface,
+  },
+  filtryBtnOn: { borderColor: k.blue, backgroundColor: k.wyroznienie },
+  filtryBtnWcisniety: { opacity: 0.85 },
+  filtryTekst: { fontSize: 15, fontWeight: '700', color: k.text },
+  filtryTekstOn: { color: k.blue },
+  filtryLicznik: {
+    minWidth: 20, textAlign: 'center',
+    fontSize: 12, fontWeight: '800', color: k.naAkcencie, backgroundColor: k.blue,
+    borderRadius: 10, overflow: 'hidden', paddingHorizontal: 5, paddingVertical: 1,
+  },
+  panelFiltrow: {
+    backgroundColor: k.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: k.border,
+    padding: spacing.md,
+    paddingTop: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  filtrEtykieta: { ...typografia.etykieta, color: k.textMuted, marginTop: spacing.sm, marginBottom: 6 },
   malaChip: {
-    alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999,
-    borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, marginBottom: spacing.sm,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    alignSelf: 'flex-start', minHeight: 36, paddingHorizontal: 14, borderRadius: radius.pelny,
+    borderWidth: 1.5, borderColor: k.border, backgroundColor: k.surface, marginTop: spacing.xs, marginBottom: spacing.sm,
   },
   malaChipAktywny: { backgroundColor: k.blue, borderColor: k.blue },
   malaTekst: { fontSize: 13, fontWeight: '700', color: k.textMuted },
-  malaTekstAktywny: { color: k.surface },
-  wojRzad: { gap: spacing.sm, paddingRight: spacing.xs, marginBottom: spacing.sm },
+  malaTekstAktywny: { color: k.naAkcencie },
+  wojRzad: { gap: spacing.sm, paddingRight: spacing.xs, marginBottom: spacing.xs },
   wojChip: {
-    paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999,
+    minHeight: 36, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radius.pelny,
     borderWidth: 1.5, borderColor: k.border, backgroundColor: k.surface,
   },
   wojChipOn: { borderColor: k.blue, backgroundColor: k.wyroznienie },
   wojTekst: { fontSize: 13, fontWeight: '700', color: k.textMuted },
   wojTekstOn: { color: k.blue },
-  licznik: { fontSize: 13, color: k.textMuted, fontWeight: '700', marginBottom: spacing.sm },
-  progi: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  licznik: { fontSize: 13, color: k.textMuted, fontWeight: '700', marginBottom: spacing.xs, marginTop: spacing.xs },
+  progi: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xs },
   progChip: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 999,
+    minHeight: 36,
+    justifyContent: 'center',
+    borderRadius: radius.pelny,
     borderWidth: 1.5,
     borderColor: k.border,
     backgroundColor: k.surface,
     alignItems: 'center',
+    paddingHorizontal: 6,
   },
   progChipAktywny: { borderColor: k.blue, backgroundColor: k.wyroznienie },
-  progTekst: { fontSize: 13, fontWeight: '600', color: k.textMuted },
-  progTekstAktywny: { color: k.blue },
+  progTekst: { fontSize: 13, fontWeight: '600', color: k.textMuted, textAlign: 'center' },
+  progTekstAktywny: { color: k.blue, fontWeight: '700' },
   pustyFiltr: {
     color: k.textMuted,
     fontSize: 14,
@@ -914,15 +984,15 @@ const tworzStyleFeedu = tworzStyle((k) => ({
     marginBottom: spacing.md,
   },
   pasekBleduTekst: { color: k.ostrzezenieTekst, fontSize: 13, lineHeight: 18 },
-  pasekAktualizacji: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: k.wyroznienie, borderWidth: 1, borderColor: k.border, borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm },
+  pasekAktualizacji: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: k.wyroznienie, borderRadius: radius.md, padding: spacing.sm, paddingLeft: spacing.md, marginBottom: spacing.sm },
   pasekAktualizacjiTresc: { flex: 1 },
   pasekAktualizacjiTekst: { color: k.text, fontSize: 13, lineHeight: 18 },
-  pasekAktualizacjiPozniej: { color: k.blue, fontSize: 13, fontWeight: '700', paddingHorizontal: spacing.xs },
+  pasekAktualizacjiPozniej: { color: k.blue, fontSize: 13, fontWeight: '700', paddingHorizontal: spacing.xs, paddingVertical: spacing.sm },
   stopka: { paddingVertical: spacing.lg },
   headerAkcje: { flexDirection: 'row', alignItems: 'center', gap: 18, marginRight: 16 },
-  headerGwiazdka: { color: k.white, fontSize: 22, lineHeight: 24, fontWeight: '700' },
-  headerBtn: { color: k.white, fontWeight: '700', fontSize: 15 },
-  list: { padding: spacing.lg },
+  headerGwiazdka: { color: k.blue, fontSize: 22, lineHeight: 26, fontWeight: '700' },
+  headerBtn: { color: k.blue, fontWeight: '700', fontSize: 15 },
+  list: { padding: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xxl, width: '100%', maxWidth: 760, alignSelf: 'center' },
   listEmpty: { flexGrow: 1 },
   center: {
     flex: 1,
@@ -930,13 +1000,12 @@ const tworzStyleFeedu = tworzStyle((k) => ({
     alignItems: 'center',
     padding: spacing.xl,
   },
-  emptyIcon: { fontSize: 44, marginBottom: spacing.sm },
-  title: { fontSize: 18, fontWeight: '700', color: k.text, textAlign: 'center' },
+  title: { ...typografia.sekcja, color: k.text, textAlign: 'center' },
   text: {
     fontSize: 14,
     color: k.textMuted,
     textAlign: 'center',
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
     lineHeight: 21,
   },
   retry: { marginTop: spacing.lg, alignSelf: 'stretch' },

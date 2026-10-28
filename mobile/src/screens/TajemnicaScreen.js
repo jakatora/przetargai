@@ -113,7 +113,7 @@ const tworzStyleTajemnicy = tworzStyle((k) => ({
 
   przeslanka: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginTop: spacing.md },
   check: { width: 24, height: 24, borderRadius: radius.sm, borderWidth: 2, borderColor: k.border, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  checkZnak: { color: k.white, fontSize: 15, fontWeight: '900', lineHeight: 18 },
+  checkZnak: { color: k.naAkcencie, fontSize: 15, fontWeight: '900', lineHeight: 18 },
   przeslankaTresc: { flex: 1 },
   przeslankaEt: { fontSize: 14, fontWeight: '700', color: k.text },
   przeslankaOpis: { fontSize: 12, color: k.textMuted, lineHeight: 17, marginTop: 2 },

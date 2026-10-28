@@ -190,7 +190,7 @@ const tworzStyleObrony = tworzStyle((k) => ({
     width: 22, height: 22, borderRadius: radius.sm, borderWidth: 2, borderColor: k.border,
     alignItems: 'center', justifyContent: 'center', marginTop: 1,
   },
-  checkZnak: { color: k.white, fontSize: 14, fontWeight: '900', lineHeight: 16 },
+  checkZnak: { color: k.naAkcencie, fontSize: 14, fontWeight: '900', lineHeight: 16 },
   dowodOpis: { flex: 1, fontSize: 12, color: k.textMuted, lineHeight: 17 },
 
   problemy: {
