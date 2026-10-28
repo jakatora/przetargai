@@ -75,10 +75,10 @@ export function tokenRailway(idRailway) {
   return jwt.sign({ sub: idRailway }, env.JWT_SECRET, { expiresIn: '5m' });
 }
 
-async function zapytajRailway(sciezka, opcje) {
+async function zapytajRailway(sciezka, { limitMs, ...opcje } = {}) {
   return fetch(`${env.MOST_RAILWAY_URL}${sciezka}`, {
     ...opcje,
-    signal: AbortSignal.timeout(env.MOST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(limitMs ?? env.MOST_TIMEOUT_MS),
   });
 }
 
@@ -222,7 +222,7 @@ export function sciezkaMostu(surowyUrl) {
  * @returns {Promise<{status: number, naglowki: Headers, cialo: Buffer}>}
  * @throws {Error} err.code === 'MOST_ZLA_SCIEZKA' gdy ścieżka wychodzi poza prefiks
  */
-export async function przekaz({ metoda, sciezka, naglowki, cialo, idRailway }) {
+export async function przekaz({ metoda, sciezka, naglowki, cialo, idRailway, limitMs }) {
   // Druga linia obrony — trasa sprawdza to samo przed wywołaniem (400).
   const cel = sciezkaMostu(sciezka);
   if (!cel) {
@@ -244,6 +244,7 @@ export async function przekaz({ metoda, sciezka, naglowki, cialo, idRailway }) {
     method: metoda,
     headers: doWyslania,
     body: bezCiala || !cialo?.length ? undefined : cialo,
+    limitMs,
   });
 
   return {
@@ -284,14 +285,14 @@ export function tozsamoscPrzepadla({ status, cialo }) {
  * Nie rzuca na kodach HTTP — wołający MUSI sprawdzić `status`.
  * @returns {Promise<{status: number, dane: any}>}
  */
-export async function wywolajModulPrzetargowy(uzytkownik, { metoda = 'POST', sciezka, dane = null }) {
+export async function wywolajModulPrzetargowy(uzytkownik, { metoda = 'POST', sciezka, dane = null, limitMs }) {
   const cialo = dane === null ? undefined : Buffer.from(JSON.stringify(dane), 'utf8');
   const naglowki = cialo ? { 'content-type': 'application/json' } : {};
   let idRailway = await idRailwayDlaUzytkownika(uzytkownik);
-  let odpowiedz = await przekaz({ metoda, sciezka, naglowki, cialo, idRailway });
+  let odpowiedz = await przekaz({ metoda, sciezka, naglowki, cialo, idRailway, limitMs });
   if (tozsamoscPrzepadla({ status: odpowiedz.status, cialo: odpowiedz.cialo })) {
     idRailway = await idRailwayDlaUzytkownika(uzytkownik, { wymusOdnowienie: true });
-    odpowiedz = await przekaz({ metoda, sciezka, naglowki, cialo, idRailway });
+    odpowiedz = await przekaz({ metoda, sciezka, naglowki, cialo, idRailway, limitMs });
   }
   let wynik = null;
   try { wynik = JSON.parse(odpowiedz.cialo.toString('utf8')); } catch { /* treść nie-JSON */ }

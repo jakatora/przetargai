@@ -287,7 +287,8 @@ export const autoSwzFetch = onSchedule(
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '25,55 8-20 * * *',
     timeZone: 'Europe/Warsaw',
-    timeoutSeconds: 540,
+    // Analiza AI dłuższej SWZ trwa do kilku minut (limit 240 s na analizę, budżet przebiegu 480 s).
+    timeoutSeconds: 900,
     memory: '512MiB',
     secrets: [JWT_SECRET],
   },

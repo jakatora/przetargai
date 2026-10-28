@@ -24,6 +24,12 @@ export const MAKS_NA_KLIENTA_DOBE = 2;
 export const OKNO_WYBRANYCH_MS = 48 * 3_600_000;
 export const MAKS_BAJTOW_PDF = 5 * 1024 * 1024;
 export const LIMIT_POBRANIA_MS = 25_000;
+/*
+ * Analiza AI dłuższej SWZ trwa ponad domyślne 30 s mostu — pierwszy przebieg na produkcji (28.10) skończył
+ * 3 z 4 analiz na „aborted due to timeout”, choć backend dostał żądanie i liczył dalej (koszt poniesiony,
+ * postępowanie bez powiązania). Dla analizy limit 240 s; przebieg pilnuje budżetu czasu przed każdą pozycją.
+ */
+export const LIMIT_ANALIZY_MS = 240_000;
 
 /** Najlepszy kandydat na SWZ: PDF z SWZ/specyfikacją, najpierw NIE „Załącznik… do SWZ”. */
 export function wybierzSwz(dokumenty) {
@@ -58,7 +64,15 @@ export async function analizujDlaKlienta(user, tender, swz, { modul = wywolajMod
   const postepowanieId = nowe.dane?.postepowanie?.id;
   if (nowe.status !== 201 || !postepowanieId) return { status: 'blad', blad: `założenie postępowania: HTTP ${nowe.status}` };
 
-  const analiza = await modul(user, { metoda: 'POST', sciezka: `/swz/postepowania/${postepowanieId}/analiza`, dane: { swz_pdf_base64: pdf } });
+  let analiza;
+  try {
+    analiza = await modul(user, { metoda: 'POST', sciezka: `/swz/postepowania/${postepowanieId}/analiza`, dane: { swz_pdf_base64: pdf }, limitMs: LIMIT_ANALIZY_MS });
+  } catch (err) {
+    // Zerwanie/limit czasu PO wysłaniu: backend zapisał treść SWZ przed AI i najpewniej dokończy analizę —
+    // wiążemy postępowanie (checklista i plan już z niego korzystają), żeby koszt nie poszedł na marne.
+    await powiazaniaSwz.ustaw(user.id, tender.id, { postepowanieId, nazwa: tender.title ?? null });
+    return { status: 'tresc_bez_analizy', postepowanie_id: postepowanieId, blad: `analiza AI: ${err.message}` };
+  }
   // 400 = PDF bez warstwy tekstowej / za długi — backend NIE zapisał treści: bez powiązania (pusta analiza
   // tylko by myliła). Inne wyniki (201, 429 limit, 503 budżet/AI) — treść SWZ zapisana przed AI, więc
   // checklista i plan działania z niej korzystają: wiążemy i zapisujemy, czy pytania powstały.
@@ -69,12 +83,32 @@ export async function analizujDlaKlienta(user, tender, swz, { modul = wywolajMod
     : { status: 'tresc_bez_analizy', postepowanie_id: postepowanieId, blad: `analiza AI: HTTP ${analiza.status}` };
 }
 
+/**
+ * Naprawa po limicie czasu z pierwszego przebiegu (28.10): backend założył postępowanie i liczył analizę,
+ * a my zapisaliśmy „blad” bez powiązania. Szukamy postępowania o nazwie przetargu na liście klienta
+ * (GET — bez płatnego AI) i wiążemy je. Jedna próba na znacznik (`naprawa_o`).
+ */
+export async function naprawPoLimicie(user, tender, { modul = wywolajModulPrzetargowy, teraz = nowIso() } = {}) {
+  const lista = await modul(user, { metoda: 'GET', sciezka: '/swz/postepowania' });
+  const nazwa = String(tender.title ?? 'Przetarg').slice(0, 300);
+  const kandydaci = lista.status === 200 ? (lista.dane?.postepowania ?? []).filter((p) => p?.nazwa === nazwa && p?.id) : [];
+  const p = kandydaci[kandydaci.length - 1] ?? null;
+  if (!p) {
+    await autoSwz.zakoncz(user.id, tender.id, { status: 'blad', blad: 'limit czasu; postępowania nie odnaleziono', naprawa_o: teraz, teraz });
+    return false;
+  }
+  await powiazaniaSwz.ustaw(user.id, tender.id, { postepowanieId: p.id, nazwa: tender.title ?? null });
+  const pytan = Number(p.liczba_pytan ?? 0);
+  await autoSwz.zakoncz(user.id, tender.id, { status: pytan > 0 ? 'gotowe' : 'tresc_bez_analizy', postepowanie_id: String(p.id), liczba_pytan: pytan, naprawa_o: teraz, teraz });
+  return true;
+}
+
 export async function runAutoAnalizaSwz({
   teraz = nowIso(), maksNaPrzebieg = MAKS_NA_PRZEBIEG, maksNaKlientaDobe = MAKS_NA_KLIENTA_DOBE,
-  wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, budzetMs = 420_000,
+  wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, budzetMs = 480_000,
 } = {}) {
   const start = Date.now();
-  const wynik = { ok: true, klienci: 0, kandydaci: 0, analizy: 0, gotowe: 0, bez_analizy: 0, nieczytelne: 0, bledy: 0, pominiete_limit: 0, przerwane_budzetem: false };
+  const wynik = { ok: true, klienci: 0, kandydaci: 0, analizy: 0, gotowe: 0, bez_analizy: 0, nieczytelne: 0, bledy: 0, naprawione: 0, pominiete_limit: 0, przerwane_budzetem: false };
   const odDoby = poczatekDobyWarszawskiej(teraz);
   const odWybranych = new Date(Date.parse(teraz) - OKNO_WYBRANYCH_MS).toISOString();
   try {
@@ -82,9 +116,17 @@ export async function runAutoAnalizaSwz({
     wynik.klienci = klienci.length;
     for (const user of klienci) {
       if (wynik.analizy >= maksNaPrzebieg) break;
+      const wybrane = (await matches.wybraneOd(user.id, odWybranych)).filter((m) => m.tender_source === 'bzp');
+      // Naprawy po limicie czasu nie kosztują AI i nie liczą się do limitów — przed nimi.
+      for (const m of wybrane) {
+        const z = await autoSwz.pobierz(user.id, m.tender_id);
+        if (z?.status === 'blad' && /timeout|aborted/i.test(z.blad ?? '') && !z.naprawa_o && !await powiazaniaSwz.pobierz(user.id, m.tender_id)) {
+          const t = await tenders.findById(m.tender_id);
+          if (t && await naprawPoLimicie(user, t, { modul }).catch((err) => { logger.warn({ err: err.message, tender: m.tender_id }, 'Auto-SWZ: naprawa nie powiodła się'); return false; })) wynik.naprawione++;
+        }
+      }
       let zostalo = maksNaKlientaDobe - await autoSwz.ileOd(user.id, odDoby);
       if (zostalo <= 0) { wynik.pominiete_limit++; continue; }
-      const wybrane = (await matches.wybraneOd(user.id, odWybranych)).filter((m) => m.tender_source === 'bzp');
       for (const m of wybrane) {
         if (zostalo <= 0 || wynik.analizy >= maksNaPrzebieg) break;
         if (Date.now() - start > budzetMs) { wynik.przerwane_budzetem = true; break; }

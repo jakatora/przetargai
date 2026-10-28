@@ -290,6 +290,7 @@ router.get('/', async (_req, res) => {
         bez_analizy: stanAutoSwz.ostatni_przebieg.bez_analizy ?? null,
         nieczytelne: stanAutoSwz.ostatni_przebieg.nieczytelne ?? null,
         bledy: stanAutoSwz.ostatni_przebieg.bledy ?? null,
+        naprawione: stanAutoSwz.ostatni_przebieg.naprawione ?? null,
         error: stanAutoSwz.ostatni_przebieg.error ?? null,
       }
       : null,

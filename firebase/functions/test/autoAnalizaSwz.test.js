@@ -110,6 +110,43 @@ test('równoległe przebiegi: ten sam przetarg analizowany RAZ (zajęcie znaczni
   assert.equal(wyw.filter((c) => c.sciezka.endsWith('/analiza')).length, 1);
 });
 
+test('limit czasu analizy: postępowanie i tak powiązane (treść zapisana przed AI), analiza dostaje 240 s', async () => {
+  const s = await klient();
+  const t = await wybrany(s);
+  const limity = [];
+  const modul = async (_u, { sciezka, limitMs }) => {
+    limity.push(limitMs ?? null);
+    if (sciezka === '/swz/postepowania') return { status: 201, dane: { postepowanie: { id: 'pT' } } };
+    throw new Error('The operation was aborted due to timeout');
+  };
+  const w = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul, pobierzPdf: pdf });
+  assert.equal(w.bez_analizy, 1);
+  assert.deepEqual(limity, [null, 240_000], 'założenie z domyślnym limitem, analiza z 240 s');
+  assert.equal((await powiazaniaSwz.pobierz(s.id, t.id)).postepowanie_id, 'pT');
+  assert.equal((await autoSwz.pobierz(s.id, t.id)).status, 'tresc_bez_analizy');
+});
+
+test('naprawa po limicie z 28.10: znacznik „blad/timeout” → odnalezione po nazwie postępowanie powiązane BEZ płatnego AI, raz', async () => {
+  const s = await klient();
+  const t = await wybrany(s);
+  await autoSwz.zajmij(s.id, t.id, { dokument: 'd', teraz: TERAZ });
+  await autoSwz.zakoncz(s.id, t.id, { status: 'blad', blad: 'The operation was aborted due to timeout' });
+  const wyw = [];
+  const modul = async (_u, { metoda, sciezka }) => {
+    wyw.push(`${metoda} ${sciezka}`);
+    if (metoda === 'GET') return { status: 200, dane: { postepowania: [{ id: 'stare', nazwa: 'inne' }, { id: 'pX', nazwa: t.title, liczba_pytan: 4 }] } };
+    return { status: 201, dane: { postepowanie: { id: 'nowe' } } };
+  };
+  const w = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul, pobierzPdf: pdf });
+  assert.equal(w.naprawione, 1);
+  assert.deepEqual(wyw, ['GET /swz/postepowania'], 'bez POST — bez płatnego AI');
+  assert.equal((await powiazaniaSwz.pobierz(s.id, t.id)).postepowanie_id, 'pX');
+  const z = await autoSwz.pobierz(s.id, t.id);
+  assert.deepEqual([z.status, z.liczba_pytan, Boolean(z.naprawa_o)], ['gotowe', 4, true]);
+  const w2 = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul, pobierzPdf: pdf });
+  assert.equal(w2.naprawione, 0, 'naprawa jednorazowa');
+});
+
 test('wynik modułu sprawdzany: 400 (PDF-skan) → bez powiązania; 429/503 → powiązanie z treścią, status „tresc_bez_analizy”; błąd założenia → „blad”', async () => {
   const s = await klient();
   const skan = await wybrany(s);

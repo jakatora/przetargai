@@ -3306,8 +3306,8 @@ export const autoSwz = {
       throw err;
     }
   },
-  async zakoncz(userId, tenderId, { status, postepowanie_id = null, liczba_pytan = null, blad = null, teraz = nowIso() }) {
-    await autoSwzDoc(userId, tenderId).update({ status, postepowanie_id, liczba_pytan, blad: blad ? String(blad).slice(0, 300) : null, zakonczono_o: teraz });
+  async zakoncz(userId, tenderId, { status, postepowanie_id = null, liczba_pytan = null, blad = null, naprawa_o = null, teraz = nowIso() }) {
+    await autoSwzDoc(userId, tenderId).update({ status, postepowanie_id, liczba_pytan, blad: blad ? String(blad).slice(0, 300) : null, zakonczono_o: teraz, ...(naprawa_o ? { naprawa_o } : {}) });
   },
   /** Ile analiz klienta zajęto od `odIso` (dobowy limit). */
   async ileOd(userId, odIso) {
