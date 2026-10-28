@@ -2884,5 +2884,23 @@
     "sourceUrl": "https://izosystems.pl/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html",
     "evidenceSha256": "03d340e455818d5c4f4c1477ad656fff3adba3fe8904669a58a567ec6c82171d",
     "validUntil": null
+  },
+  {
+    "sourceId": "leroy-norgips-ud30-super-c3-3m",
+    "ean": "5907651691197",
+    "name": "Profil sufitowy UD30 3 m.b. Super Norgips",
+    "imageUrl": "https://media.adeo.com/media/3196086/media.png",
+    "priceGrosze": 1119,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T19:58:11.441Z",
+    "sourceUrl": "https://www.leroymerlin.pl/produkty/profil-sufitowy-ud30-3-m-b-super-norgips-44604343.html",
+    "evidenceSha256": "9bb3a4344fe4c69796251c76ea91c5483ca877a7f18fd53d5251879f2c0a9ce2",
+    "validUntil": null,
+    "verification": {
+      "method": "browser",
+      "checkedAt": "2026-10-28T19:58:11.441Z",
+      "expiresAt": "2026-10-29T19:58:11.441Z"
+    }
   }
 ]

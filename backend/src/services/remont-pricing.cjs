@@ -21003,6 +21003,10 @@ var RETAIL_SOURCES = [
   { "id": "leroy-norgips-uw50-06-3m", "ean": "5907651698547", "name": "Profil \u015Bcienny UW50 3 m.b. Super Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 3, "unit": "mb", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/profil-scienny-uw50-3-m-b-super-norgips-45191853.html", "retailerSku": "45191853", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/3191881/media.png", "variant": ["Norgips"] },
   // source: https://www.leroymerlin.pl/produkty/profil-sufitowy-ud30-3-m-b-super-norgips-44604343.html
   { "id": "leroy-norgips-ud30-06-3m", "ean": "5907651698905", "name": "Profil sufitowy UD30 3 m.b. Super Norgips", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 3, "unit": "mb", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/profil-sufitowy-ud30-3-m-b-super-norgips-44604343.html", "retailerSku": "44604343", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/3196086/media.png", "variant": ["Norgips"] },
+  // SUPER C3 is a different manufacturer GTIN; do not rewrite the old C2 observation.
+  // source: https://norgips.pl/produkty/profil-ud-30-super-o-gr-blachy-06-mm-c3-26.html
+  // source: https://www.leroymerlin.pl/produkty/profil-sufitowy-ud30-3-m-b-super-norgips-44604343.html
+  { id: "leroy-norgips-ud30-super-c3-3m", ean: "5907651691197", name: "Profil sufitowy UD30 3 m.b. Super Norgips", brand: "Norgips", category: "drywall-accessory", packageSize: 3, unit: "mb", store: "Leroy Merlin", url: "https://www.leroymerlin.pl/produkty/profil-sufitowy-ud30-3-m-b-super-norgips-44604343.html", retailerSku: "44604343", browserReviewAllowed: true, pickupRequiresConfirmation: true, imageUrl: "https://media.adeo.com/media/3196086/media.png", variant: ["Norgips", "SUPER"] },
   // source: https://www.leroymerlin.pl/produkty/wieszak-plaski-es-60-75-mm-norgips-43912435.html
   { "id": "leroy-norgips-es6075", "ean": "5907651699650", "name": "Wieszak p\u0142aski ES 60/75 mm NORGIPS", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 1, "unit": "szt", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/wieszak-plaski-es-60-75-mm-norgips-43912435.html", "retailerSku": "43912435", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/2629673/media.jpg", "variant": ["Norgips"] },
   // source: https://www.leroymerlin.pl/produkty/plyta-gipsowa-gkb-typ-a-2600-x-1200-x-12-5-mm-norgips-41661683.html
@@ -21116,6 +21120,8 @@ var RETAIL_NAME_ALIASES = {
   "Profil Norgips CW 50, 0,6 mm, 3 m (EAN 8912)": "5907651698912",
   "Profil Norgips UW 50 Super, 0,6 mm, 3 m": "5907651698547",
   "Profil Norgips UD 30, 0,6 mm, 3 m (EAN 8905)": "5907651698905",
+  // source: https://norgips.pl/produkty/profil-ud-30-super-o-gr-blachy-06-mm-c3-26.html
+  "Profil Norgips UD 30 SUPER C3, 0,6 mm, 3 m (EAN 1197)": "5907651691197",
   "Wieszak p\u0142aski Norgips ES 60/75, 1 szt.": "5907651699650",
   "Ta\u015Bma fizelinowa Norgips 50 mm \xD7 25 m": "5907651699926",
   "\u0141\u0105cznik wzd\u0142u\u017Cny Norgips CD 60, 60\xD7110 mm, 1 szt.": "5907651699674",
@@ -24919,6 +24925,9 @@ var PRODUCTS = {
   "leroy-norgips-cw50-06-3m": { sku: "44604350", ean: "5907651698912", unit: "mb", size: 3, facts: { "D\u0142ugo\u015B\u0107 (w m)": "3", "Szeroko\u015B\u0107 (w mm)": "50", "Grubo\u015B\u0107 (w mm)": "0.6 \xB1 0.05" } },
   "leroy-norgips-uw50-06-3m": { sku: "45191853", ean: "5907651698547", unit: "mb", size: 3, facts: { "D\u0142ugo\u015B\u0107 (w m)": "3", "Szeroko\u015B\u0107 (w mm)": "50", "Grubo\u015B\u0107 (w mm)": "0.6 \xB1 0.05" } },
   "leroy-norgips-ud30-06-3m": { sku: "44604343", ean: "5907651698905", unit: "mb", size: 3, facts: { "D\u0142ugo\u015B\u0107 (w m)": "3", "Szeroko\u015B\u0107 (w mm)": "30", "Grubo\u015B\u0107 (w mm)": "0.6 \xB1 0.05" } },
+  // Distinct SUPER C3 barcode confirmed by the manufacturer and current card.
+  // source: https://norgips.pl/produkty/profil-ud-30-super-o-gr-blachy-06-mm-c3-26.html
+  "leroy-norgips-ud30-super-c3-3m": { sku: "44604343", ean: "5907651691197", unit: "mb", size: 3, facts: { "D\u0142ugo\u015B\u0107 (w m)": "3", "Szeroko\u015B\u0107 (w mm)": "30", "Grubo\u015B\u0107 (w mm)": "0.6 \xB1 0.05" } },
   "leroy-norgips-es6075": { sku: "43912435", ean: "5907651699650", unit: "szt", size: 1, facts: { "Model produktu": "ES 60/75 MM", "D\u0142ugo\u015B\u0107 (w mm)": "75" } },
   "leroy-norgips-board-gkb-2600": { sku: "41661683", ean: "5907651690442", unit: "m2", size: 3.12, facts: { "Powierzchnia pokryta przez produkt (w m\xB2)": "3.12", "D\u0142ugo\u015B\u0107 (w cm)": "260", "Szeroko\u015B\u0107 (w cm)": "120", "Grubo\u015B\u0107 (w mm)": "12.5" } }
 };
