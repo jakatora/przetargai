@@ -54,6 +54,9 @@ test('alertAnalizy: tylko przy pytaniach; termin pytań w treści, gdy znany i n
   assert.match(a.tresc.pl, /5 szkiców pytań do „Remont”/);
   assert.match(a.tresc.pl, /Pytania można zadać do /);
   assert.match(a.tresc.en, /5 draft questions/);
+  const cyt = alertAnalizy({ id: 't2', title: '„Modernizacja dachu”', source: 'bzp', deadline: null }, 2, TERAZ);
+  assert.match(cyt.tresc.pl, /do „Modernizacja dachu”\./, 'bez podwójnego cudzysłowu');
+  assert.equal(cyt.pozycje[0].tytul, '„Modernizacja dachu”', 'pozycja z oryginalnym tytułem');
 });
 
 test('pobierzPdfBase64: odrzuca nie-PDF i plik > 5 MB; PDF → base64', async () => {

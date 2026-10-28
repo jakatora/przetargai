@@ -115,14 +115,16 @@ export function alertAnalizy(tender, liczbaPytan, teraz) {
   const termin = terminPytan({ id: tender.id, source: tender.source, deadline: tender.deadline }, teraz);
   const kiedy = termin?.lokalnie?.etykieta && !termin.minal ? termin.lokalnie.etykieta : null;
   const tytul = String(tender.title ?? 'Przetarg');
+  // Tytuły z BZP bywają już w cudzysłowie („…”) — bez tego treść miała podwójny „„.
+  const wTresci = tytul.replace(/^[\s„"“”']+|[\s„"“”']+$/g, '') || tytul;
   return {
     klucz: `auto-swz-${tender.id}`,
     typ: 'auto_swz',
     tender_id: tender.id,
     tytul: { pl: 'SWZ przeanalizowana — są pytania do zamawiającego', en: 'Tender documents analysed — questions for the buyer' },
     tresc: {
-      pl: `${liczbaPytan} szkiców pytań do „${tytul}”.${kiedy ? ` Pytania można zadać do ${kiedy}.` : ''} Sprawdź je w Radarze SWZ.`,
-      en: `${liczbaPytan} draft questions for “${tytul}”.${kiedy ? ` Questions can be asked until ${kiedy}.` : ''} Review them in the tender-document radar.`,
+      pl: `${liczbaPytan} szkiców pytań do „${wTresci}”.${kiedy ? ` Pytania można zadać do ${kiedy}.` : ''} Sprawdź je w Radarze SWZ.`,
+      en: `${liczbaPytan} draft questions for “${wTresci}”.${kiedy ? ` Questions can be asked until ${kiedy}.` : ''} Review them in the tender-document radar.`,
     },
     pozycje: [{ tender_id: tender.id, tytul, organizacja: tender.organization ?? null, deadline: tender.deadline ?? null, zrodlo: tender.source ?? 'bzp' }],
   };
