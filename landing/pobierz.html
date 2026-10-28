@@ -5,41 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pobierz aplikację — PrzetargAI</title>
   <meta name="description" content="Pobierz aplikację PrzetargAI z Google Play (Android) lub App Store (iPhone). Monitoring przetargów publicznych dopasowanych do Twojej firmy." />
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b1322" media="(prefers-color-scheme: dark)" />
   <meta name="robots" content="index,follow" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232563eb'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231d4ed8'/><text x='50' y='68' font-size='58' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>P</text></svg>" />
+  <link rel="preload" href="fonts/plus-jakarta-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="styles.css" />
-  <style>
-    .pobierz-page { max-width: 720px; margin: 0 auto; padding: 48px 20px 64px; }
-    .pobierz-page h1 { font-size: 34px; margin: 18px 0 10px; }
-    .pobierz-page .lead { color: var(--muted, #5b6577); font-size: 17px; line-height: 1.6; margin-bottom: 34px; }
-    .pobierz-karty { display: grid; gap: 18px; }
-    @media (min-width: 640px) { .pobierz-karty { grid-template-columns: 1fr 1fr; } }
-    .pobierz-karta { background: #fff; border: 1px solid #e3e8f2; border-radius: 16px; padding: 26px 22px; display: flex; flex-direction: column; gap: 12px; }
-    .pobierz-karta h2 { font-size: 20px; margin: 0; }
-    .pobierz-karta p { color: #5b6577; font-size: 14px; line-height: 1.55; margin: 0; flex: 1; }
-    .pobierz-karta .btn { text-align: center; }
-    .badge-wkrotce { display: inline-block; background: #fef3c7; color: #92400e; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 10px; margin-left: 8px; vertical-align: middle; }
-    .pobierz-meta { margin-top: 30px; background: #f4f7fc; border-radius: 12px; padding: 16px 18px; font-size: 13px; color: #5b6577; line-height: 1.6; }
-    .pobierz-meta code { word-break: break-all; background: #e9eef8; padding: 1px 5px; border-radius: 5px; font-size: 12px; }
-    .pobierz-kroki { margin: 8px 0 0 18px; padding: 0; }
-    .pobierz-kroki li { margin-bottom: 4px; }
-    .legal-back { display: inline-block; margin-bottom: 6px; }
-  </style>
 </head>
 <body>
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <symbol id="i-telefon" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  </svg>
+  <header class="pasek-strony">
+    <div class="container pasek-strony__inner">
+      <a class="brand" href="/">
+        <span class="brand__mark" aria-hidden="true">P</span>
+        <span class="brand__name">PrzetargAI</span>
+      </a>
+      <a class="wstecz" href="/">Strona główna</a>
+    </div>
+  </header>
   <main class="pobierz-page">
-    <a class="legal-back" href="/">← Powrót na stronę główną</a>
     <h1>Pobierz PrzetargAI</h1>
     <p class="lead">
-      Codzienny monitoring przetargów z BZP i TED, dopasowany do profilu Twojej firmy.
-      Konto jest darmowe — plan Standard (99&nbsp;zł/mies.) odblokowuje nielimitowane
-      dopasowania i powiadomienia push.
+      Aplikacja codziennie przegląda przetargi z BZP i TED, wybiera te pasujące do profilu Twojej
+      firmy i pomaga przygotować ofertę. Konto jest darmowe — plan Standard (99&nbsp;zł/mies.)
+      odblokowuje nielimitowane dopasowania i powiadomienia push na Androidzie.
     </p>
 
     <div class="pobierz-karty">
       <section class="pobierz-karta">
-        <h2>Android (Google Play)</h2>
+        <h2><svg class="ikona" aria-hidden="true"><use href="#i-telefon"/></svg>Android (Google Play)</h2>
         <p>
           Oficjalna wersja ze sklepu Google Play — z automatycznymi aktualizacjami.
           Zalecany sposób instalacji na Androidzie.
@@ -48,7 +44,7 @@
       </section>
 
       <section class="pobierz-karta">
-        <h2>iPhone (App Store)</h2>
+        <h2><svg class="ikona" aria-hidden="true"><use href="#i-telefon"/></svg>iPhone (App Store)</h2>
         <p>
           Oficjalna wersja z App Store dla iPhone'a — z automatycznymi aktualizacjami.
         </p>
@@ -65,7 +61,7 @@
         <li>Gdy Android zapyta o zgodę na instalację z tego źródła — zezwól (jednorazowo).</li>
         <li>Po instalacji załóż konto — pierwsze dopasowania zobaczysz od razu.</li>
       </ol>
-      <p style="margin:10px 0 0">
+      <p style="margin:12px 0 0">
         Suma kontrolna SHA-256 pliku:<br />
         <code>cd637872595e9f2dc0c4f62995c85b01e4cb8fb84bcd177a59f78621a5092e00</code>
       </p>
