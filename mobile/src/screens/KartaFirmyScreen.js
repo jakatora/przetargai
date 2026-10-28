@@ -195,10 +195,10 @@ export default function KartaFirmyScreen({ route, navigation }) {
             maxLength={13}
             hint={t('Wpisz NIP, a nazwę i województwo wstawimy z Białej listy VAT', 'Enter your NIP and we fill in the name and voivodeship from the VAT register')}
           />
-          <Button title={t('Wypełnij z Białej listy', 'Fill in from the VAT register')} variant="ghost" loading={nipStan.laduje} onPress={wypelnijZNip} />
+          <Button title={t('Wypełnij z Białej listy', 'Fill in from the VAT register')} variant="ghost" loading={nipStan.laduje} onPress={wypelnijZNip} style={styles.pomocniczy} />
           {nipStan.komunikat ? <Text style={nipStan.ok ? styles.ok : styles.blad}>{nipStan.komunikat}</Text> : null}
           {pole(form.opis, ustaw('opis'), t('Czym się zajmujesz', 'What you do'), t('Np. remonty i wymiana pokryć dachowych na Podkarpaciu', 'E.g. roof repairs and replacement in Subcarpathia'), { wieloliniowe: true, maks: 600 })}
-          <Button title={t('Podpowiedz słowa i kody CPV', 'Suggest keywords and CPV codes')} variant="ghost" loading={podpowiadanie} onPress={podpowiedz} />
+          <Button title={t('Podpowiedz słowa i kody CPV', 'Suggest keywords and CPV codes')} variant="ghost" loading={podpowiadanie} onPress={podpowiedz} style={styles.pomocniczy} />
           {pole(form.keywords, ustaw('keywords'), t('Słowa kluczowe, po przecinku', 'Keywords, comma separated'), t('Np. dach, pokrycie dachowe', 'E.g. roof, roofing'))}
           {pole(form.cpv_codes, ustaw('cpv_codes'), t('Kody CPV, po przecinku', 'CPV codes, comma separated'), t('Np. 45261000', 'E.g. 45261000'))}
         </View>
@@ -271,6 +271,7 @@ const tworzStyleKarty = tworzStyle((k) => ({
   tytul: { ...typografia.tytul, color: k.text, marginTop: spacing.xs },
   opis: { fontSize: 15, color: k.textMuted, marginTop: spacing.xs, marginBottom: spacing.lg, lineHeight: 22 },
   poleWysokie: { minHeight: 96, textAlignVertical: 'top' },
+  pomocniczy: { marginBottom: spacing.lg },
   chipy: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

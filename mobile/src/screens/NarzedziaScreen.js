@@ -3,7 +3,8 @@ import { View, Text, Pressable, TextInput } from 'react-native';
 import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia, DOTYK } from '../theme';
+import Ikona from '../components/Ikona';
 import { KATALOG_NARZEDZI } from '../lib/narzedziaKatalog';
 
 /**
@@ -49,7 +50,7 @@ export default function NarzedziaScreen({ navigation }) {
       </Text>
 
       <View style={styles.szukajRzad}>
-        <Text style={styles.szukajIkona}>🔍</Text>
+        <Ikona nazwa="szukaj" rozmiar={18} kolor={kolory.textMuted} />
         <TextInput
           style={styles.szukajPole}
           value={szukaj}
@@ -60,8 +61,8 @@ export default function NarzedziaScreen({ navigation }) {
           accessibilityLabel={t('Szukaj narzędzia', 'Search tools')}
         />
         {szukaj ? (
-          <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} accessibilityLabel={t('Wyczyść', 'Clear')}>
-            <Text style={styles.szukajX}>✕</Text>
+          <Pressable accessibilityRole="button" onPress={() => setSzukaj('')} hitSlop={10} style={styles.szukajX} accessibilityLabel={t('Wyczyść', 'Clear')}>
+            <Ikona nazwa="zamknij" rozmiar={16} kolor={kolory.textMuted} />
           </Pressable>
         ) : null}
       </View>
@@ -77,7 +78,7 @@ export default function NarzedziaScreen({ navigation }) {
                 <Pressable
                   key={n.ekran}
                   onPress={() => navigation.navigate(n.ekran)}
-                  style={[styles.wiersz, i > 0 && styles.wierszGorna]}
+                  style={({ pressed }) => [styles.wiersz, i > 0 && styles.wierszGorna, pressed && styles.wierszWcisniety]}
                   accessibilityRole="button"
                   accessibilityLabel={n.tytul}
                 >
@@ -85,7 +86,7 @@ export default function NarzedziaScreen({ navigation }) {
                     <Text style={styles.wierszTytul}>{n.tytul}</Text>
                     {n.opis ? <Text style={styles.wierszOpis}>{n.opis}</Text> : null}
                   </View>
-                  <Text style={styles.chevron}>›</Text>
+                  <Ikona nazwa="dalej" rozmiar={16} kolor={kolory.textMuted} />
                 </Pressable>
               ))}
             </View>
@@ -105,23 +106,22 @@ const tworzStyleNarzedzi = tworzStyle((k) => ({
   wstep: { fontSize: 14, color: k.textMuted, lineHeight: 21, marginBottom: spacing.md },
   szukajRzad: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.border,
-    borderRadius: radius.md, paddingHorizontal: 12, marginBottom: spacing.md,
+    backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.obramowaniePola,
+    borderRadius: radius.md, paddingLeft: 12, minHeight: DOTYK + 4, marginBottom: spacing.lg,
   },
-  szukajIkona: { fontSize: 15 },
   szukajPole: { flex: 1, paddingVertical: 11, fontSize: 15, color: k.text },
-  szukajX: { color: k.textMuted, fontSize: 16, fontWeight: '700', paddingHorizontal: 2 },
+  szukajX: { width: DOTYK, height: DOTYK, alignItems: 'center', justifyContent: 'center' },
   pusto: { fontSize: 14, color: k.textMuted, textAlign: 'center', paddingVertical: spacing.xl, fontStyle: 'italic' },
 
   kategoria: { marginBottom: spacing.lg },
-  kategoriaTytul: { fontSize: 13, fontWeight: '800', color: k.blue, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.sm },
+  kategoriaTytul: { ...typografia.sekcja, color: k.text, marginBottom: spacing.sm },
   karta: { backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, overflow: 'hidden' },
-  wiersz: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
+  wiersz: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: DOTYK + 8, paddingVertical: 12, paddingHorizontal: spacing.md },
+  wierszWcisniety: { backgroundColor: k.powierzchniaWtorna },
   wierszGorna: { borderTopWidth: 1, borderTopColor: k.border },
   wierszTresc: { flex: 1 },
   wierszTytul: { fontSize: 15, fontWeight: '700', color: k.text },
-  wierszOpis: { fontSize: 12, color: k.textMuted, marginTop: 2, lineHeight: 17 },
-  chevron: { fontSize: 22, color: k.textMuted, fontWeight: '300' },
+  wierszOpis: { fontSize: 13, color: k.textMuted, marginTop: 2, lineHeight: 18 },
 
   stopka: { fontSize: 12, color: k.textMuted, lineHeight: 17, marginTop: spacing.sm, fontStyle: 'italic', marginBottom: spacing.lg },
 }));

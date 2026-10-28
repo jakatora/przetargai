@@ -147,7 +147,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   // Jedno źródło prawdy o terminie — wcześniej `daysUntil` nie odróżniał
   // terminu minionego od nieznanego i po prostu nic nie pokazywał.
   const termin = opisTerminu(tender.deadline);
-  const deadlineText = `${formatDate(tender.deadline)}  ·  ${t(termin.etykieta)}`;
+  const deadlineText = formatDate(tender.deadline); // status terminu stoi w chipie pod tytułem
   const maTermin = !!tender.deadline && !termin.minal;
   const brakPrzypomnienia = opisBrakuPrzypomnienia(tender.deadline);
   // Wniosek już poszedł, gdy kontrola przeszła poza etap „nowa".

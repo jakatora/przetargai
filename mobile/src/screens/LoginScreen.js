@@ -52,7 +52,7 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <Screen scroll contentStyle={styles.content}>
-      {/* Jedyny ekran bez niebieskiego nagłówka — ikony paska muszą kontrastować z tłem. */}
+      {/* Ekran bez nagłówka — ikony paska muszą kontrastować z tłem ekranu. */}
       <StatusBar style={schemat === 'ciemny' ? 'light' : 'dark'} />
 
       <View style={styles.brand}>
