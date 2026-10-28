@@ -159,7 +159,9 @@ export async function pracujDlaUzytkownika(user, pool, {
     wynik.nowe.push(tender.id);
     // Wybrany z BZP: dociągamy listę dokumentów z e-Zamówień (SWZ z linkiem), żeby klient otworzył
     // Radar SWZ bez szukania pliku. Błąd = cicho, przycisk na ekranie dociągnie później.
-    if (tender.source === 'bzp' && czyIdPostepowania(tender.postepowanie_id) && !Array.isArray(tender.ez_dokumenty) && budzetDokumentowEz.pozostalo > 0) {
+    // `ez_dokumenty_blad`: znacznik W PAMIĘCI tego przebiegu — ogłoszenie z puli jest wspólne dla klientów,
+    // więc po nieudanym pobraniu kolejny klient nie pali budżetu na to samo (logi 27.10: 3× ten sam id).
+    if (tender.source === 'bzp' && czyIdPostepowania(tender.postepowanie_id) && !Array.isArray(tender.ez_dokumenty) && !tender.ez_dokumenty_blad && budzetDokumentowEz.pozostalo > 0) {
       budzetDokumentowEz.pozostalo--;
       try {
         const dokumenty = await dokumentyEz(tender.postepowanie_id);
@@ -169,6 +171,7 @@ export async function pracujDlaUzytkownika(user, pool, {
           wynik.dokumentyEz = (wynik.dokumentyEz ?? 0) + 1;
         }
       } catch (err) {
+        tender.ez_dokumenty_blad = true;
         logger.warn({ err: err.message, id: tender.id }, 'e-Zamówienia: dokumenty po wyborze nie powiodły się');
       }
     }

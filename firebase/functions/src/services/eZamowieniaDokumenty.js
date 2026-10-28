@@ -11,7 +11,16 @@ import { logger } from '../lib/logger.js';
  */
 export const BAZA_API = 'https://ezamowienia.gov.pl/mp-readmodels/api';
 export const USER_AGENT = 'Mozilla/5.0 (compatible; PrzetargAI/1.0; +https://przetarg-ai.pl)';
-export const LIMIT_ODCZYTU_MS = 20_000;
+/*
+ * Limit i ponowienie (2026-10-28): z tego komputera portal odpowiada w ~0,2 s, a z Cloud Functions
+ * ~29% żądań wisiało do 20 s i kończyło się „This operation was aborted” (21 z 72 w dobę po wdrożeniu).
+ * Objaw zawieszonego połączenia, nie wolnego serwera — krótszy limit i JEDNO ponowienie po zerwaniu
+ * (abort / błąd sieci) dają wynik szybciej niż czekanie 20 s. Błędów HTTP nie ponawiamy.
+ */
+export const LIMIT_ODCZYTU_MS = 8_000;
+export const PROB = 2;
+export const ODSTEP_PONOWIENIA_MS = 500;
+const czyZerwanie = (err) => err?.name === 'AbortError' || /aborted|fetch failed|socket|ECONNRESET|ETIMEDOUT|UND_ERR/i.test(`${err?.message ?? ''} ${err?.cause?.code ?? ''}`);
 const ID_POSTEPOWANIA = /^ocds-148610-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ID_DOKUMENTU = /^ocds-148610-[0-9a-f-]{36}_\d{1,4}$/i;
 
@@ -64,8 +73,22 @@ export function czySwz(dok) {
   return (dok?.rozszerzenie === 'pdf') && /(^|[^a-z])(swz|siwz)([^a-z]|$)|specyfikacj[a-ząę]* warunk/i.test(tekst);
 }
 
-export async function pobierzDokumenty(postepowanieId, { fetchFn = fetch, limitMs = LIMIT_ODCZYTU_MS } = {}) {
+export async function pobierzDokumenty(postepowanieId, {
+  fetchFn = fetch, limitMs = LIMIT_ODCZYTU_MS, prob = PROB, czekaj = (ms) => new Promise((r) => setTimeout(r, ms)),
+} = {}) {
   if (!czyIdPostepowania(postepowanieId)) throw new Error('Nieprawidłowy identyfikator postępowania e-Zamówień');
+  for (let proba = 1; ; proba++) {
+    try {
+      return await pobierzRaz(postepowanieId, { fetchFn, limitMs });
+    } catch (err) {
+      if (proba >= prob || !czyZerwanie(err)) throw err;
+      logger.info({ postepowanieId, proba, err: err.message }, 'e-Zamówienia: zerwane żądanie dokumentów — ponawiam');
+      await czekaj(ODSTEP_PONOWIENIA_MS);
+    }
+  }
+}
+
+async function pobierzRaz(postepowanieId, { fetchFn, limitMs }) {
   const kontroler = new AbortController();
   const zegar = setTimeout(() => kontroler.abort(), limitMs);
   try {

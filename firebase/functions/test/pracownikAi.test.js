@@ -206,6 +206,14 @@ test('wybrany z BZP: po wyborze dociągane dokumenty z e-Zamówień (SWZ z linki
   assert.equal(w2.wybrane, 1);
   assert.equal(w2.dokumentyEz ?? 0, 0);
 
+  // To samo ogłoszenie z puli u kolejnego klienta po nieudanym pobraniu — bez ponownego żądania w tym przebiegu.
+  const wspolne = await przetarg('Remont dachu ratusza (BZP)', { source: 'bzp', postepowanie_id: ID });
+  let proby = 0;
+  const pada = async () => { proby++; throw new Error('This operation was aborted'); };
+  await pracujDlaUzytkownika(await klient(), [wspolne], { teraz: teraz(), dokumentyEz: pada, ocen: biore(['Pasuje']) });
+  await pracujDlaUzytkownika(await klient(), [wspolne], { teraz: teraz(), dokumentyEz: pada, ocen: biore(['Pasuje']) });
+  assert.equal(proby, 1, 'drugi klient nie ponawia nieudanego pobrania');
+
   // Bez identyfikatora postępowania i przy budżecie 0 — zero żądań.
   let pobran3 = 0;
   const u3 = await klient();

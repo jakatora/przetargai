@@ -53,3 +53,25 @@ test('pobierzDokumenty: właściwy adres i UA, zły id → wyjątek bez sieci, b
   assert.deepEqual(await pobierzDokumenty(ID, { fetchFn: async () => ({ ok: false, status: 400, json: async () => ({ error: 'Brak postępowania o identyfikatorze id: x' }) }) }), []);
   assert.deepEqual(await pobierzDokumenty(ID, { fetchFn: async () => ({ ok: false, status: 404 }) }), []);
 });
+
+test('pobierzDokumenty: zerwane żądanie (abort / błąd sieci) ponawia JEDEN raz; błąd HTTP bez ponowienia', async () => {
+  const abort = () => Object.assign(new Error('This operation was aborted'), { name: 'AbortError' });
+  const bezCzekania = async () => {};
+  let n = 0;
+  const d = await pobierzDokumenty(ID, { czekaj: bezCzekania, fetchFn: async () => { n++; if (n === 1) throw abort(); return { ok: true, json: async () => SUROWE }; } });
+  assert.equal(d.length, 2);
+  assert.equal(n, 2, 'druga próba po zerwaniu');
+
+  n = 0;
+  await assert.rejects(pobierzDokumenty(ID, { czekaj: bezCzekania, fetchFn: async () => { n++; throw abort(); } }), /aborted/);
+  assert.equal(n, 2, 'najwyżej dwie próby');
+
+  n = 0;
+  await assert.rejects(pobierzDokumenty(ID, { czekaj: bezCzekania, fetchFn: async () => { n++; return { ok: false, status: 503 }; } }), /503/);
+  assert.equal(n, 1, 'błąd HTTP nie jest ponawiany');
+
+  n = 0;
+  const siec = Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNRESET' } });
+  await pobierzDokumenty(ID, { czekaj: bezCzekania, fetchFn: async () => { n++; if (n === 1) throw siec; return { ok: true, json: async () => [] }; } });
+  assert.equal(n, 2, 'błąd sieci też ponawiany');
+});
