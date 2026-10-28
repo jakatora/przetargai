@@ -22117,6 +22117,26 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   return result;
 }
 
+// lib/pricing-service/src/selected-store-delivery.ts
+async function compareDeliveryWithAvailablePart(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}, selectedStore) {
+  const comparison = await compareAutomaticDelivery(stages, settings, quoteBasket, policies, now, knownUnavailableStores);
+  if (!selectedStore || comparison.status !== "partial" || comparison.best || settings.mode !== "shipping" || settings.method === "manual" || !/^\d{2}-\d{3}$/.test(settings.postalCode ?? "")) return comparison;
+  const selected = stages.map((stage) => ({ ...stage, lines: stage.lines.map((line2) => line2.resolved ? { ...line2, offers: line2.offers.filter((o) => o.store === selectedStore && isComparableOffer(o, now.getTime())) } : line2) }));
+  const unresolved = selected.flatMap((s) => s.lines).filter((l) => !l.resolved && l.quantity > 0);
+  const groups = groupProjectByProduct(selected).filter((group) => group.totalQuantity > 0);
+  const matches = (a, b) => Boolean(a.ean && [b.ean, b.gtin].includes(a.ean) || a.gtin && [b.ean, b.gtin].includes(a.gtin) || a.normalizedName && a.category && a.normalizedName === b.normalizedName && a.category === b.category);
+  const accepted = new Set(groups.filter((group) => {
+    const identities = [{ ean: group.product.ean, gtin: group.product.gtin, normalizedName: group.product.normalizedName, category: group.product.category }, ...selected.flatMap((s) => s.lines).flatMap((l) => l.resolved && l.product.id === group.product.id ? [l.query] : [])];
+    if (unresolved.some((line2) => identities.some((id) => matches(line2.query, id)))) return false;
+    return Boolean(optimizePackages(group.totalQuantity, buildPackageVariants(group.offers, group.product)));
+  }).map((group) => group.product.id));
+  if (!accepted.size) return comparison;
+  const subset = selected.map((stage) => ({ ...stage, lines: stage.lines.filter((line2) => line2.resolved && accepted.has(line2.product.id)), unresolved: [] }));
+  const part = await compareAutomaticDelivery(subset, settings, quoteBasket, policies, now, knownUnavailableStores);
+  const basket = part.best && part.best.stores.length === 1 && part.best.stores[0].store === selectedStore ? part.best : null;
+  return { ...comparison, ...part.stockLimits?.length ? { stockLimits: part.stockLimits } : {}, availablePart: { store: selectedStore, productCount: accepted.size, basket, ...!basket ? { unavailableReason: part.stockLimits?.length ? "insufficient_stock" : part.unavailableStores?.find((s) => s.store === selectedStore)?.reason ?? "quote_unavailable" } : {} } };
+}
+
 // artifacts/api-server/src/lib/retailer-delivery.ts
 var import_node_crypto19 = require("node:crypto");
 
@@ -25294,13 +25314,14 @@ function createRemontService(options = {}) {
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
       const deadline = Date.now() + 2e4;
-      const deliveryComparison = stageOnly ? void 0 : await compareAutomaticDelivery(
+      const deliveryComparison = stageOnly ? void 0 : await compareDeliveryWithAvailablePart(
         estimate.stages,
         parsed.data.options?.delivery ?? { mode: "shipping" },
         (order, postalCode) => Date.now() < deadline || ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
         STORE_DELIVERY_POLICIES,
         /* @__PURE__ */ new Date(),
-        knownUnavailableRetailers()
+        knownUnavailableRetailers(),
+        parsed.data.options?.store ?? void 0
       );
       res.json(stageOnly ? serialized.stages[0] : {
         ...serialized,
