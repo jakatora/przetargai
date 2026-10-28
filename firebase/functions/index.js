@@ -109,7 +109,7 @@ export const dailyTenderFetch = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 12 * * *',
@@ -153,7 +153,7 @@ export const bzpOknoFetch = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '20 */3 * * *',
@@ -193,7 +193,7 @@ export const bkOknoFetch = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '50 */3 * * *',
@@ -224,7 +224,7 @@ export const pzOknoFetch = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '35 * * * *',
@@ -253,7 +253,7 @@ export const eppOknoFetch = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '5 */6 * * *',
@@ -283,7 +283,7 @@ export const pracownikCo3h = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '10 2-23/3 * * *',
@@ -319,7 +319,7 @@ export const remindDeadlines = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 */6 * * *',
@@ -367,7 +367,7 @@ export const monitorWyszukiwan = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '35 */2 * * *',
@@ -415,7 +415,7 @@ export const weeklyDigest = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     ...PONOWIENIA_IDEMPOTENTNE,
     schedule: '0 8 * * 1',
@@ -453,7 +453,7 @@ export const wynikiOknoFetch = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     schedule: '5 */6 * * *',
     timeZone: 'Europe/Warsaw',
@@ -484,7 +484,7 @@ export const planyOknoFetch = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     schedule: '15 6 * * *',
     timeZone: 'Europe/Warsaw',
@@ -515,7 +515,7 @@ export const benchmarkPrzelicz = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     schedule: '40 3 * * *',
     timeZone: 'Europe/Warsaw',
@@ -539,7 +539,7 @@ export const aggregateResults = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
     // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
-    // 13 × 3 + api 10 = 49 vCPU, daleko od progu, przy którym padał rollout (140). Po deployu sprawdzać rewizje.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
     maxInstances: 3,
     schedule: '0 4 * * 0',
     timeZone: 'Europe/Warsaw',
