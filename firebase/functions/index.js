@@ -274,6 +274,35 @@ export const eppOknoFetch = onSchedule(
 );
 
 /**
+ * Automatyczna analiza SWZ (2026-10-28) — co 30 min w ciągu dnia (8:25–20:55 PL): dla klientów Standard
+ * przetargi z BZP wybrane przez selekcję, z SWZ w PDF na e-Zamówieniach, dostają analizę w Radarze SWZ
+ * i powiązanie z przetargiem. Limity kosztu w jobs/autoAnalizaSwz.js; idempotencja: znacznik create().
+ */
+export const autoSwzFetch = onSchedule(
+  {
+    // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 (od 25.10) Cloud Run odrzucał wywołanie Schedulera przy
+    // zimnym starcie („no available instance”) — 27.10 cykl dzienny nie odbył się wcale, 28.10 ruszył dopiero z ponowienia.
+    // Limit CPU regionu dotyczy jednoczesnego startu rewizji przy deployu — wdrażać partiami po 2–3 funkcje i sprawdzać rewizje.
+    maxInstances: 3,
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '25,55 8-20 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runAutoAnalizaSwz } = await import('./src/jobs/autoAnalizaSwz.js');
+    const wynik = await runAutoAnalizaSwz();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'autoSwzFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`autoSwzFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'autoSwzFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Selekcja przetargów pod klienta co 3 h — TYLKO plan Standard (także 7-dniowa próba).
  * Godziny 2:10, 5:10 … 23:10 czasu polskiego, czyli po oknach BZP (:20) i BK (:50)
  * z poprzedniej godziny. Free dostaje przebieg raz dziennie w dailyTenderFetch.

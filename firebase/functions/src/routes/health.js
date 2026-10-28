@@ -2,7 +2,7 @@ import { zrodlaCichoPusteWCyklu } from '../lib/zrodlaCichoPuste.js';
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, stanPushRepo } from '../db/repos.js';
+import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, stanPushRepo, autoSwz } from '../db/repos.js';
 import { ocenStanPush } from '../lib/stanPush.js';
 import { logger } from '../lib/logger.js';
 import { ocenStanAi } from '../lib/stanAi.js';
@@ -50,16 +50,18 @@ router.get('/', async (_req, res) => {
   let stanOknaPz = null;
   let stanOknaEpp = null;
   let stanPush = null;
+  let stanAutoSwz = null;
   let stanOknaWynikow = null;
   let stanOknaPlanow = null;
 
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanPush] = await Promise.all([
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanPush, stanAutoSwz] = await Promise.all([
       cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
       oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null), oknoEpp.wczytaj().catch(() => null),
       stanPushRepo.wczytaj().catch(() => null),
+      autoSwz.wczytajPrzebieg().catch(() => null),
     ]);
   } catch { /* zgłoszone w polu db */ }
 
@@ -278,6 +280,19 @@ router.get('/', async (_req, res) => {
      * ale `ok: false` od pierwszej nieudanej próby: 20–28.10 każdy push padał na InvalidCredentials
      * (projekt Expo bez klucza FCM v1 / APNs) i widać to było tylko w logach.
      */
+    /* Automatyczna analiza SWZ (2026-10-28): ostatni przebieg — informacyjnie, bez 503. */
+    auto_swz: stanAutoSwz?.ostatni_przebieg
+      ? {
+        zakonczony_o: stanAutoSwz.ostatni_przebieg.zakonczony_o ?? null,
+        ok: stanAutoSwz.ostatni_przebieg.ok ?? null,
+        analizy: stanAutoSwz.ostatni_przebieg.analizy ?? null,
+        gotowe: stanAutoSwz.ostatni_przebieg.gotowe ?? null,
+        bez_analizy: stanAutoSwz.ostatni_przebieg.bez_analizy ?? null,
+        nieczytelne: stanAutoSwz.ostatni_przebieg.nieczytelne ?? null,
+        bledy: stanAutoSwz.ostatni_przebieg.bledy ?? null,
+        error: stanAutoSwz.ostatni_przebieg.error ?? null,
+      }
+      : null,
     push: {
       ok: ocenStanPush(stanPush),
       ostatnia_proba_o: stanPush?.ostatnia_proba_o ?? null,

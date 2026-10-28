@@ -3284,6 +3284,45 @@ export const limitEksportu = {
  * Własność analizy sprawdza trasa przez most PRZED zapisem. Znika razem z kontem
  * (`usunKonto` → recursiveDelete).
  */
+/*
+ * Znaczniki automatycznej analizy SWZ (2026-10-28, jobs/autoAnalizaSwz.js). Jeden dokument na
+ * (klient, przetarg): `zajmij` = create() — gdy istnieje, druga instancja/ponowienie odpada PRZED
+ * płatnym AI. Usuwane razem z kontem (podkolekcja użytkownika).
+ */
+const autoSwzDoc = (userId, tenderId) => db().collection('users').doc(userId).collection('auto_swz').doc(String(tenderId));
+const AUTO_SWZ_SLAD = () => db().collection('_health').doc('auto_swz');
+export const autoSwz = {
+  async pobierz(userId, tenderId) {
+    const snap = await autoSwzDoc(userId, tenderId).get();
+    return snap.exists ? snap.data() : null;
+  },
+  /** @returns {Promise<boolean>} true = zajęte przez to wywołanie */
+  async zajmij(userId, tenderId, { dokument = null, teraz = nowIso() } = {}) {
+    try {
+      await autoSwzDoc(userId, tenderId).create({ tender_id: String(tenderId), status: 'w_toku', dokument, utworzono_o: teraz });
+      return true;
+    } catch (err) {
+      if (err?.code === 6 || /already exists/i.test(err?.message ?? '')) return false;
+      throw err;
+    }
+  },
+  async zakoncz(userId, tenderId, { status, postepowanie_id = null, liczba_pytan = null, blad = null, teraz = nowIso() }) {
+    await autoSwzDoc(userId, tenderId).update({ status, postepowanie_id, liczba_pytan, blad: blad ? String(blad).slice(0, 300) : null, zakonczono_o: teraz });
+  },
+  /** Ile analiz klienta zajęto od `odIso` (dobowy limit). */
+  async ileOd(userId, odIso) {
+    const snap = await db().collection('users').doc(userId).collection('auto_swz').where('utworzono_o', '>=', odIso).count().get();
+    return snap.data().count;
+  },
+  async wczytajPrzebieg() {
+    const doc = await AUTO_SWZ_SLAD().get();
+    return doc.exists ? doc.data() : null;
+  },
+  async zapiszPrzebieg(wynik) {
+    await AUTO_SWZ_SLAD().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
 const powiazanieSwzDoc = (userId, tenderId) =>
   db().collection('users').doc(userId).collection('powiazania_swz').doc(String(tenderId));
 

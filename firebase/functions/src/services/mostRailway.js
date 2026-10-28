@@ -277,6 +277,27 @@ export function tozsamoscPrzepadla({ status, cialo }) {
  * @returns {Promise<{status: number, dane: any}>}
  * @throws {Error} przy braku łączności z Railway albo ścieżce poza prefiksem
  */
+/**
+ * Wywołanie modułu przetargowego Railway Z TREŚCIĄ JSON w imieniu użytkownika (2026-10-28, auto-analiza
+ * SWZ). Jak `zapytajModulPrzetargowy`: przy przepadłej tożsamości odnawia mapowanie i ponawia raz —
+ * bezpieczne także dla POST, bo backend odrzucił żądanie na uwierzytelnieniu, zanim cokolwiek zrobił.
+ * Nie rzuca na kodach HTTP — wołający MUSI sprawdzić `status`.
+ * @returns {Promise<{status: number, dane: any}>}
+ */
+export async function wywolajModulPrzetargowy(uzytkownik, { metoda = 'POST', sciezka, dane = null }) {
+  const cialo = dane === null ? undefined : Buffer.from(JSON.stringify(dane), 'utf8');
+  const naglowki = cialo ? { 'content-type': 'application/json' } : {};
+  let idRailway = await idRailwayDlaUzytkownika(uzytkownik);
+  let odpowiedz = await przekaz({ metoda, sciezka, naglowki, cialo, idRailway });
+  if (tozsamoscPrzepadla({ status: odpowiedz.status, cialo: odpowiedz.cialo })) {
+    idRailway = await idRailwayDlaUzytkownika(uzytkownik, { wymusOdnowienie: true });
+    odpowiedz = await przekaz({ metoda, sciezka, naglowki, cialo, idRailway });
+  }
+  let wynik = null;
+  try { wynik = JSON.parse(odpowiedz.cialo.toString('utf8')); } catch { /* treść nie-JSON */ }
+  return { status: odpowiedz.status, dane: wynik };
+}
+
 export async function zapytajModulPrzetargowy(uzytkownik, { metoda = 'GET', sciezka }) {
   let idRailway = await idRailwayDlaUzytkownika(uzytkownik);
   let odpowiedz = await przekaz({ metoda, sciezka, naglowki: {}, idRailway });
