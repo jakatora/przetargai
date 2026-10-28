@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
-const { users, tenders, matches, powiazaniaSwz, autoSwz } = await import('../src/db/repos.js');
-const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64 } = await import('../src/jobs/autoAnalizaSwz.js');
+const { users, tenders, matches, powiazaniaSwz, autoSwz, alerty } = await import('../src/db/repos.js');
+const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy } = await import('../src/jobs/autoAnalizaSwz.js');
 
 /*
  * Automatyczna analiza SWZ (2026-10-28): płatne AI na backendzie, więc testy pilnują przede wszystkim
@@ -46,6 +46,16 @@ test('wybierzSwz: właściwa specyfikacja przed „Załącznikiem do SWZ”; bez
   assert.equal(wybierzSwz(null), null);
 });
 
+test('alertAnalizy: tylko przy pytaniach; termin pytań w treści, gdy znany i nieminiony', () => {
+  assert.equal(alertAnalizy({ id: 't', title: 'X', source: 'bzp', deadline: '2099-01-01T00:00:00.000Z' }, 0, TERAZ), null);
+  const a = alertAnalizy({ id: 't', title: 'Remont', source: 'bzp', deadline: '2026-11-20T09:00:00.000Z' }, 5, TERAZ);
+  assert.equal(a.klucz, 'auto-swz-t');
+  assert.equal(a.typ, 'auto_swz');
+  assert.match(a.tresc.pl, /5 szkiców pytań do „Remont”/);
+  assert.match(a.tresc.pl, /Pytania można zadać do /);
+  assert.match(a.tresc.en, /5 draft questions/);
+});
+
 test('pobierzPdfBase64: odrzuca nie-PDF i plik > 5 MB; PDF → base64', async () => {
   const pdfBuf = Buffer.from('%PDF-1.7\n');
   assert.equal(await pobierzPdfBase64('u', { fetchFn: async () => ({ ok: true, arrayBuffer: async () => pdfBuf }) }), pdfBuf.toString('base64'));
@@ -73,6 +83,13 @@ test('przebieg: Standard z SWZ → postępowanie, analiza z PDF, powiązanie i z
   assert.deepEqual([z.status, z.postepowanie_id, z.liczba_pytan], ['gotowe', 'p1', 3]);
   assert.equal(await autoSwz.pobierz(s.id, bez.id), null, 'bez SWZ nic się nie dzieje');
   assert.equal((await autoSwz.wczytajPrzebieg()).ostatni_przebieg.gotowe, 1);
+  // Alert w Centrum: 3 szkice pytań → wpis z przetargiem (otwiera szczegół w apce).
+  const wpisy = await alerty.lista(s.id);
+  const a = wpisy.find((x) => x.typ === 'auto_swz');
+  assert.ok(a, 'alert o gotowej analizie');
+  assert.match(a.tresc.pl, /^3 szkiców pytań/);
+  assert.equal(a.pozycje[0].tender_id, t1.id);
+  assert.equal(a.pozycje[0].zrodlo, 'bzp');
 
   // Drugi przebieg: nic nowego (znacznik + powiązanie) — zero wywołań.
   const wyw2 = [];

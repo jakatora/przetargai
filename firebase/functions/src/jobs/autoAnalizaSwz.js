@@ -2,7 +2,8 @@ import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
 import { planEfektywny } from '../lib/plan.js';
 import { poczatekDobyWarszawskiej } from '../lib/czasPolski.js';
-import { users, matches, tenders, powiazaniaSwz, autoSwz } from '../db/repos.js';
+import { users, matches, tenders, powiazaniaSwz, autoSwz, alerty } from '../db/repos.js';
+import { terminPytan } from '../lib/przypomnieniePytan.js';
 import { czySwz } from '../services/eZamowieniaDokumenty.js';
 import { wywolajModulPrzetargowy } from '../services/mostRailway.js';
 
@@ -103,6 +104,30 @@ export async function naprawPoLimicie(user, tender, { modul = wywolajModulPrzeta
   return true;
 }
 
+/**
+ * Alert w Centrum (2026-10-29): analiza utworzyła szkice pytań do zamawiającego, a pytania do SWZ mają
+ * ustawowy termin — klient musi się o tym dowiedzieć bez otwierania przetargu. Tylko gdy są pytania.
+ * Bez pushu (cisza nocna i nadmiar powiadomień); przypomnienie w ostatniej dobie robi osobne zadanie.
+ * Idempotencja: klucz `auto-swz-<tender>` (create).
+ */
+export function alertAnalizy(tender, liczbaPytan, teraz) {
+  if (!(liczbaPytan > 0)) return null;
+  const termin = terminPytan({ id: tender.id, source: tender.source, deadline: tender.deadline }, teraz);
+  const kiedy = termin?.lokalnie?.etykieta && !termin.minal ? termin.lokalnie.etykieta : null;
+  const tytul = String(tender.title ?? 'Przetarg');
+  return {
+    klucz: `auto-swz-${tender.id}`,
+    typ: 'auto_swz',
+    tender_id: tender.id,
+    tytul: { pl: 'SWZ przeanalizowana — są pytania do zamawiającego', en: 'Tender documents analysed — questions for the buyer' },
+    tresc: {
+      pl: `${liczbaPytan} szkiców pytań do „${tytul}”.${kiedy ? ` Pytania można zadać do ${kiedy}.` : ''} Sprawdź je w Radarze SWZ.`,
+      en: `${liczbaPytan} draft questions for “${tytul}”.${kiedy ? ` Questions can be asked until ${kiedy}.` : ''} Review them in the tender-document radar.`,
+    },
+    pozycje: [{ tender_id: tender.id, tytul, organizacja: tender.organization ?? null, deadline: tender.deadline ?? null, zrodlo: tender.source ?? 'bzp' }],
+  };
+}
+
 export async function runAutoAnalizaSwz({
   teraz = nowIso(), maksNaPrzebieg = MAKS_NA_PRZEBIEG, maksNaKlientaDobe = MAKS_NA_KLIENTA_DOBE,
   wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, budzetMs = 480_000,
@@ -151,6 +176,12 @@ export async function runAutoAnalizaSwz({
         else if (rezultat.status === 'nieczytelny_pdf') wynik.nieczytelne++;
         else wynik.bledy++;
         await autoSwz.zakoncz(user.id, tender.id, { ...rezultat, teraz: nowIso() });
+        const alert = rezultat.status === 'gotowe' ? alertAnalizy(tender, rezultat.liczba_pytan, teraz) : null;
+        if (alert) {
+          await alerty.dodaj(user.id, alert, nowIso())
+            .then(({ nowy }) => { if (nowy) wynik.alerty = (wynik.alerty ?? 0) + 1; })
+            .catch((err) => logger.warn({ err: err.message, tender: tender.id }, 'Auto-SWZ: alert nie zapisany'));
+        }
         logger.info({ uid: user.id, tender: tender.id, ...rezultat }, 'Auto-SWZ: przetarg przeanalizowany');
       }
     }
