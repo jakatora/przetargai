@@ -1053,13 +1053,14 @@
     "sourceId": "krasny-goldband-25kg",
     "ean": "5902367206383",
     "name": "GIPS GOLDBAND 25 Gips tynkarski GOLDBAND 25kg",
+    "stockPackages": 2,
     "imageUrl": "https://static.krasny.pl/59/02/36/72/06/38/3/0/SMALL_100.webp?hash=d61d71b4ff1c4592683b9ceecda29fca",
     "priceGrosze": 4989,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T16:39:04.349Z",
+    "observedAt": "2026-10-28T21:43:54.802Z",
     "sourceUrl": "https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383",
-    "evidenceSha256": "91da0a55d8cc3f5a56adcea436cc536568a8fcc49b9038a3453453c254658c24",
+    "evidenceSha256": "a715715f928e18864f7c42f82be87404eea623468901c24d8d9fb7c446beb114",
     "validUntil": null
   },
   {
@@ -2927,6 +2928,19 @@
     "observedAt": "2026-10-28T20:40:34.454Z",
     "sourceUrl": "https://realbud.com/pl/p/Siatka-tynkarska-Knauf-PROFIX-szer.-1000-mm-oczko-10x10-mm-50-mb/75057500",
     "evidenceSha256": "a0c21dc5aa885c6d69a8124e79a5b546fd06bd0871889274b21487f5bd16d7c8",
+    "validUntil": null
+  },
+  {
+    "sourceId": "liderzycen-knauf-goldband-25kg",
+    "ean": "5902367206383",
+    "name": "Tynk gipsowy ręczny Knauf Goldband 25 kg",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_77582_0_0/32464cdd129db9bfb699808dae441565.webp",
+    "priceGrosze": 3038,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T21:41:14.561Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Tynk-gipsowy-reczny-Knauf-Goldband-25-kg/55390",
+    "evidenceSha256": "a110eae48e903357a26e27ae8eb6f88fbd2cd17ff188266691eedfcc63cfb12d",
     "validUntil": null
   }
 ]
