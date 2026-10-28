@@ -2942,5 +2942,19 @@
     "sourceUrl": "https://liderzycen.pl/pl/p/Tynk-gipsowy-reczny-Knauf-Goldband-25-kg/55390",
     "evidenceSha256": "a110eae48e903357a26e27ae8eb6f88fbd2cd17ff188266691eedfcc63cfb12d",
     "validUntil": null
+  },
+  {
+    "sourceId": "bmb-knauf-grundiermittel60-15kg",
+    "ean": "5901793357799",
+    "name": "Środek gruntujący Knauf Grundiermittel 60 15KG",
+    "imageUrl": "https://bmbtechnologie.pl/files/fotom/product-5454.png?ts=1649861303",
+    "priceGrosze": 19899,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T22:27:07.370Z",
+    "sourceUrl": "https://bmbtechnologie.pl/grunty-do-tynkowania/srodek-gruntujacy-knauf-grundiermittel-60-15kg.html",
+    "evidenceSha256": "d862cd04359f11e3c28fb78bdfe276a8847e72bef2a3797681bc73f17e68fd9b",
+    "validUntil": null,
+    "stockPackages": 23
   }
 ]

@@ -89,13 +89,13 @@ function is(value2, type) {
       `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`
     );
   }
-  let cls5 = Object.getPrototypeOf(value2).constructor;
-  if (cls5) {
-    while (cls5) {
-      if (entityKind in cls5 && cls5[entityKind] === type[entityKind]) {
+  let cls6 = Object.getPrototypeOf(value2).constructor;
+  if (cls6) {
+    while (cls6) {
+      if (entityKind in cls6 && cls6[entityKind] === type[entityKind]) {
         return true;
       }
-      cls5 = Object.getPrototypeOf(cls5);
+      cls6 = Object.getPrototypeOf(cls6);
     }
   }
   return false;
@@ -6590,7 +6590,7 @@ function az_default() {
 }
 
 // node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count, one10, few, many) {
+function getBelarusianPlural(count, one11, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -6598,7 +6598,7 @@ function getBelarusianPlural(count, one10, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one10;
+    return one11;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -9736,7 +9736,7 @@ function pt_default() {
 }
 
 // node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count, one10, few, many) {
+function getRussianPlural(count, one11, few, many) {
   const absCount = Math.abs(count);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
@@ -9744,7 +9744,7 @@ function getRussianPlural(count, one10, few, many) {
     return many;
   }
   if (lastDigit === 1) {
-    return one10;
+    return one11;
   }
   if (lastDigit >= 2 && lastDigit <= 4) {
     return few;
@@ -11709,8 +11709,8 @@ function _overwrite(tx) {
     tx
   });
 }
-function _normalize(form) {
-  return _overwrite((input2) => input2.normalize(form));
+function _normalize(form2) {
+  return _overwrite((input2) => input2.normalize(form2));
 }
 function _trim() {
   return _overwrite((input2) => input2.trim());
@@ -13814,17 +13814,17 @@ function superRefine(fn) {
   });
   return ch;
 }
-function _instanceof(cls5, params = {
-  error: `Input not instance of ${cls5.name}`
+function _instanceof(cls6, params = {
+  error: `Input not instance of ${cls6.name}`
 }) {
   const inst = new ZodCustom({
     type: "custom",
     check: "custom",
-    fn: (data) => data instanceof cls5,
+    fn: (data) => data instanceof cls6,
     abort: true,
     ...util_exports.normalizeParams(params)
   });
-  inst._zod.bag.Class = cls5;
+  inst._zod.bag.Class = cls6;
   return inst;
 }
 var stringbool = (...args) => _stringbool({
@@ -14730,11 +14730,11 @@ async function resolveProduct(db, deps, query) {
     if (byCode) return { product: byCode, hadCriteria };
   }
   if (name && category) {
-    const byName = await deps.findProductByNameAndCategory(db, {
+    const byName2 = await deps.findProductByNameAndCategory(db, {
       normalizedName: name,
       category
     });
-    if (byName) return { product: byName, hadCriteria };
+    if (byName2) return { product: byName2, hadCriteria };
   }
   return { product: null, hadCriteria };
 }
@@ -19470,9 +19470,9 @@ var ZodFirstPartyTypeKind;
   ZodFirstPartyTypeKind2["ZodPipeline"] = "ZodPipeline";
   ZodFirstPartyTypeKind2["ZodReadonly"] = "ZodReadonly";
 })(ZodFirstPartyTypeKind || (ZodFirstPartyTypeKind = {}));
-var instanceOfType = (cls5, params = {
-  message: `Input not instance of ${cls5.name}`
-}) => custom2((data) => data instanceof cls5, params);
+var instanceOfType = (cls6, params = {
+  message: `Input not instance of ${cls6.name}`
+}) => custom2((data) => data instanceof cls6, params);
 var stringType = ZodString2.create;
 var numberType = ZodNumber2.create;
 var nanType = ZodNaN2.create;
@@ -21107,9 +21107,13 @@ var RETAIL_SOURCES = [
   { "id": "realbud-knauf-profix-50m2", "ean": "5902367201067", "name": "Siatka tynkarska - Knauf PROFIX szer. 1000 mm ( oczko 10x10 mm ) - 50 mb", "brand": "Knauf", "category": "plaster-mesh", "packageSize": 50, "unit": "m2", "store": "Realbud", "format": "shoper-api", "productId": 75057500, "retailerSku": "11723", "apiPurchaseUnit": "szt.", "url": "https://realbud.com/pl/p/Siatka-tynkarska-Knauf-PROFIX-szer.-1000-mm-oczko-10x10-mm-50-mb/75057500", "imageUrl": "https://realbud.com/environment/cache/images/productGfx_23636_500_500/7ff3a7398c66270601e5d09d595d52a5.png", "pickupRequiresConfirmation": true, "variant": ["1000 mm", "10x10 mm", "50 mb"] },
   // source: https://liderzycen.pl/pl/p/Tynk-gipsowy-reczny-Knauf-Goldband-25-kg/55390
   // source: https://knauf.com/pl-PL/p/produkt/knauf-goldband-10265_0120
-  { "id": "liderzycen-knauf-goldband-25kg", "ean": "5902367206383", "name": "Tynk gipsowy r\u0119czny Knauf Goldband 25 kg", "brand": "Knauf", "category": "plaster", "packageSize": 25, "unit": "kg", "store": "LiderzyCen", "format": "shoper-api", "productId": 55390, "retailerSku": "ctma_5902367206383", "apiPurchaseUnit": "szt.", "pickupRequiresConfirmation": true, "url": "https://liderzycen.pl/pl/p/Tynk-gipsowy-reczny-Knauf-Goldband-25-kg/55390", "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_77582_0_0/32464cdd129db9bfb699808dae441565.webp" }
+  { "id": "liderzycen-knauf-goldband-25kg", "ean": "5902367206383", "name": "Tynk gipsowy r\u0119czny Knauf Goldband 25 kg", "brand": "Knauf", "category": "plaster", "packageSize": 25, "unit": "kg", "store": "LiderzyCen", "format": "shoper-api", "productId": 55390, "retailerSku": "ctma_5902367206383", "apiPurchaseUnit": "szt.", "pickupRequiresConfirmation": true, "url": "https://liderzycen.pl/pl/p/Tynk-gipsowy-reczny-Knauf-Goldband-25-kg/55390", "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_77582_0_0/32464cdd129db9bfb699808dae441565.webp" },
+  // source: https://bmbtechnologie.pl/grunty-do-tynkowania/srodek-gruntujacy-knauf-grundiermittel-60-15kg.html
+  // source: https://knauf.com/pl-PL/p/produkt/knauf-grundiermittel-60-28517_0120
+  { id: "bmb-knauf-grundiermittel60-15kg", ean: "5901793357799", name: "\u015Arodek gruntuj\u0105cy Knauf Grundiermittel 60 15KG", brand: "Knauf", category: "plaster-primer", packageSize: 15, unit: "kg", store: "BMB Technologie", format: "bmb", productId: 5454, retailerSku: "5901793357799", apiPurchaseUnit: "szt.", pickupRequiresConfirmation: true, url: "https://bmbtechnologie.pl/grunty-do-tynkowania/srodek-gruntujacy-knauf-grundiermittel-60-15kg.html", imageUrl: "https://bmbtechnologie.pl/files/fotom/product-5454.png?ts=1649861303" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Knauf Grundiermittel 60 \u2014 koncentrat gruntuj\u0105cy 15 kg": "5901793357799",
   "Knauf Betokontakt \u2014 grunt sczepny 5 kg": "4006379051014",
   "Siatka tynkarska Knauf Profix 100 cm \xD7 50 m (50 m\xB2)": "5902367201067",
   "Erismann RollOver 3333-5 \u2014 flizelina do malowania, rolka 0,75 \xD7 25 m": "4002790333357",
@@ -21471,16 +21475,16 @@ function retailProductName(source) {
 function confirmRetailSkuProduct(html, product, source) {
   if (!isReviewedSkuSource(source) || isReviewedIrbudSource(source)) throw Error("retailer_sku_source_not_reviewed");
   const safe = clean(html), sku = source.skuIdentity;
-  const one10 = (rows) => {
+  const one11 = (rows) => {
     if (rows.length !== 1) throw Error("retailer_sku_identity_not_confirmed");
     return rows[0];
   };
-  const primary = one10(elements(safe, (attributes) => /\/Product$/.test(attributes.itemtype ?? "")));
-  const canonical = one10(elements(safe, (attributes) => attributes.rel === "canonical"));
+  const primary = one11(elements(safe, (attributes) => /\/Product$/.test(attributes.itemtype ?? "")));
+  const canonical = one11(elements(safe, (attributes) => attributes.rel === "canonical"));
   if (attrs(canonical).href !== source.url || product.name !== source.name || product.gtin13 !== sku.pageBarcode || labelled(primary, "Kod producenta:", "strong") !== sku.manufacturerSku || labelled(primary, "Producent:", "strong") !== "PACK-CENTER KO\u0141ODZIEJ I WSP\xD3LNICY SP.J.") throw Error("retailer_sku_identity_not_confirmed");
   if (/\/OutOfStock$/.test(String(product.offers?.availability))) throw Error("retailer_out_of_stock");
-  const form = one10(elements(primary, (attributes) => attributes.name === "add_to_basket_pid"));
-  if (attrs(form).value !== sku.merchantProductId) throw Error("retailer_sku_identity_not_confirmed");
+  const form2 = one11(elements(primary, (attributes) => attributes.name === "add_to_basket_pid"));
+  if (attrs(form2).value !== sku.merchantProductId) throw Error("retailer_sku_identity_not_confirmed");
   const { gtin13: _barcode, gtin: _gtin, gtin14: _gtin14, ...verified } = product;
   return { ...verified, sku: sku.manufacturerSku };
 }
@@ -21666,8 +21670,8 @@ function withOrderPartitions(atomic, limited) {
     } else {
       limited();
       for (let i = 0; i < Math.min(count, 8); i++) {
-        const one10 = await read([i]), rest = await read(Array.from({ length: count }, (_, j) => j).filter((j) => j !== i));
-        if (one10 && rest && fee([one10, rest]) < fee(best)) best = [one10, rest];
+        const one11 = await read([i]), rest = await read(Array.from({ length: count }, (_, j) => j).filter((j) => j !== i));
+        if (one11 && rest && fee([one11, rest]) < fee(best)) best = [one11, rest];
       }
     }
     const costGrosze = fee(best);
@@ -22114,7 +22118,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto18 = require("node:crypto");
+var import_node_crypto19 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retailer-http.ts
 var MAX_RETAIL_PACKAGES = DELIVERY_LIMITS.packagesPerProduct;
@@ -22139,8 +22143,8 @@ var AnonymousShop = class {
   async json(path, body) {
     return JSON.parse(await this.read(path, body ? JSON.stringify(body) : void 0, true));
   }
-  async text(path, form) {
-    return this.read(path, form ? new URLSearchParams(form).toString() : void 0, false);
+  async text(path, form2) {
+    return this.read(path, form2 ? new URLSearchParams(form2).toString() : void 0, false);
   }
   /** Only the reviewed anonymous product addition and postcode/carrier quote.
    * This module also places orders: never accept its generic method or form.
@@ -22152,18 +22156,18 @@ var AnonymousShop = class {
       if (args.productId !== 1783 || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || Object.keys(args).length !== 3) throw Error("invalid_cart_action");
       return JSON.parse(await this.read("/koszyk-zakupow", new URLSearchParams({ token: args.token, id_product: "1783", id_customization: "0", qty: String(args.count), add: "1", action: "update", ajax: "1" }).toString(), false));
     }
-    let form = { ajax: "true", token: args.token };
+    let form2 = { ajax: "true", token: args.token };
     if (action === "carriers") {
       if (!/^\d{2}-\d{3}$/.test(args.postalCode ?? "") || Object.keys(args).length !== 2) throw Error("invalid_cart_action");
-      form = { ...form, id_country: "14", id_state: "0", postcode: args.postalCode, vat_number: "", id_address_delivery: "", method: "loadCarriers" };
+      form2 = { ...form2, id_country: "14", id_state: "0", postcode: args.postalCode, vat_number: "", id_address_delivery: "", method: "loadCarriers" };
     } else if (action === "carrier") {
       if (!/^\d{1,12}$/.test(args.addressId ?? "") || Object.keys(args).length !== 2) throw Error("invalid_cart_action");
-      form = { ...form, delivery_available: "true", ["delivery_option[" + args.addressId + "]"]: "992,", method: "updateCarrier" };
+      form2 = { ...form2, delivery_available: "true", ["delivery_option[" + args.addressId + "]"]: "992,", method: "updateCarrier" };
     } else if (action === "cart" || action === "payments") {
       if (Object.keys(args).length !== 1) throw Error("invalid_cart_action");
-      form = action === "cart" ? { ...form, method: "loadCart", shippingId: "992,", id_country: "14", id_address_delivery: "" } : { ...form, method: "loadPayment" };
+      form2 = action === "cart" ? { ...form2, method: "loadCart", shippingId: "992,", id_country: "14", id_address_delivery: "" } : { ...form2, method: "loadPayment" };
     } else throw Error("invalid_cart_action");
-    return JSON.parse(await this.read("/module/supercheckout/supercheckout", new URLSearchParams(form).toString(), false));
+    return JSON.parse(await this.read("/module/supercheckout/supercheckout", new URLSearchParams(form2).toString(), false));
   }
   /** Only ABUD's public postcode check, anonymous add and basket-rate query.
    * The client-new endpoint is restricted to its postcode-only check; no
@@ -22384,10 +22388,10 @@ var AnonymousShop = class {
 };
 
 // artifacts/api-server/src/lib/retailer-checkouts.ts
-var import_node_crypto8 = require("node:crypto");
+var import_node_crypto9 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retail-pages.ts
-var import_node_crypto7 = require("node:crypto");
+var import_node_crypto8 = require("node:crypto");
 
 // artifacts/api-server/src/lib/shopify-product.ts
 function confirmShopifyProduct(product, source) {
@@ -22426,21 +22430,21 @@ function confirmRetailIdentity(html, product, source) {
     if (attribute(photo, "alt") !== product.name || !attribute(photo, "src")) throw Error("product_photo_not_confirmed");
     image = new URL(attribute(photo, "src"), source.url).href;
   } else if (source.format === "idosell") {
-    const form = only(elements(safe, (a, tag) => tag === "form" && a["data-product_id"] === String(source.productId)), "product_id_not_confirmed");
-    const hidden = only(elements(form, (a) => a.id === "projector_product_hidden"), "product_id_not_confirmed");
+    const form2 = only(elements(safe, (a, tag) => tag === "form" && a["data-product_id"] === String(source.productId)), "product_id_not_confirmed");
+    const hidden = only(elements(form2, (a) => a.id === "projector_product_hidden"), "product_id_not_confirmed");
     if (attribute(hidden, "value") !== String(source.productId)) throw Error("product_id_not_confirmed");
     const dictionary = only(elements(safe, (a) => a["data-producer_code"] === "true"), "product_code_not_confirmed");
     code = text2(only(elements(dictionary, (a) => a.class?.split(/\s+/).includes("dictionary__producer_code") ?? false), "product_code_not_confirmed"));
-    price2 = text2(only(elements(form, (a) => a.id === "projector_price_value"), "retailer_gross_price_not_confirmed"));
-    const tax = text2(only(elements(form, (a) => a.class === "price_vat"), "retailer_gross_price_not_confirmed"));
-    const unit = text2(only(elements(form, (a) => a.id === "projector_price_unit"), "retailer_unit_not_confirmed"));
-    const quantity = only(elements(form, (a) => a.id === "projector_number"), "retailer_unit_not_confirmed");
+    price2 = text2(only(elements(form2, (a) => a.id === "projector_price_value"), "retailer_gross_price_not_confirmed"));
+    const tax = text2(only(elements(form2, (a) => a.class === "price_vat"), "retailer_gross_price_not_confirmed"));
+    const unit = text2(only(elements(form2, (a) => a.id === "projector_price_unit"), "retailer_unit_not_confirmed"));
+    const quantity = only(elements(form2, (a) => a.id === "projector_number"), "retailer_unit_not_confirmed");
     if (tax !== "brutto" || unit !== source.apiPurchaseUnit || attribute(quantity, "data-sellby") !== "1" || attribute(quantity, "step") !== "1") throw Error("retailer_unit_or_gross_not_confirmed");
     const offers2 = [product.offers].flat();
     if (offers2.length !== 1 || offers2[0]?.eligibleQuantity?.value !== "1" || offers2[0]?.eligibleQuantity?.unitCode !== unit) throw Error("retailer_unit_not_confirmed");
   } else if (source.format === "fixero") {
-    const form = only(elements(safe, (a) => a.id === "product_addtocart_form"), "product_id_not_confirmed");
-    const hidden = only(elements(form, (a) => a.name === "product"), "product_id_not_confirmed");
+    const form2 = only(elements(safe, (a) => a.id === "product_addtocart_form"), "product_id_not_confirmed");
+    const hidden = only(elements(form2, (a) => a.name === "product"), "product_id_not_confirmed");
     if (attribute(hidden, "value") !== String(source.productId)) throw Error("product_id_not_confirmed");
     const table = only(elements(safe, (a, tag) => tag === "table" && (a.class?.split(/\s+/).includes("additional-attributes") ?? false)), "product_code_not_confirmed");
     code = text2(only(elements(table, (a) => a["data-th"] === "EAN"), "product_code_not_confirmed"));
@@ -22479,10 +22483,10 @@ function inspectWooProductCard(html, source) {
   if (barcode !== source.ean) throw Error("product_ean_not_confirmed");
   const sku = text2(one2(elements(meta, (a) => cls(a, "sku")), "product_code_not_confirmed"));
   if (!sku || sku.length > 100) throw Error("product_code_not_confirmed");
-  const form = one2(elements(main, (a, tag) => tag === "form" && cls(a, "cart")), "product_id_not_confirmed");
-  const add = one2(elements(form, (a) => a.name === "add-to-cart"), "product_id_not_confirmed");
+  const form2 = one2(elements(main, (a, tag) => tag === "form" && cls(a, "cart")), "product_id_not_confirmed");
+  const add = one2(elements(form2, (a) => a.name === "add-to-cart"), "product_id_not_confirmed");
   if (attrs2(add).value !== String(source.productId) || /\sdisabled(?:\s|=|>)/i.test(add)) throw Error("product_id_not_confirmed");
-  const quantity = attrs2(one2(elements(form, (a) => a.name === "quantity"), "retailer_unit_not_confirmed"));
+  const quantity = attrs2(one2(elements(form2, (a) => a.name === "quantity"), "retailer_unit_not_confirmed"));
   if (quantity.step !== "1" || quantity.min !== "1") throw Error("retailer_unit_not_confirmed");
   const stock = one2(elements(main, (a) => cls(a, "stock")), "retailer_stock_not_confirmed");
   if (cls(attrs2(stock), "out-of-stock")) throw Error("retailer_out_of_stock");
@@ -22543,9 +22547,9 @@ function inspectIrbudCard(html, source) {
   for (const fact of ["Producent: NORGIPS", "D\u0142ugo\u015B\u0107: 300 cm", "Szeroko\u015B\u0107: 60 mm", "Grubo\u015B\u0107 blachy: 0,6 mm"]) if (!text4.includes(fact)) throw Error("product_variant_mismatch");
   const forms = elements(main, (a, t) => t === "form" && cls2(a, "cart"));
   if (!forms.length) throw Error("product_id_not_confirmed");
-  for (const form of forms) {
-    if (attrs3(form).action !== source.url) throw Error("product_id_not_confirmed");
-    const add = attrs3(one3(elements(form, (a) => a.name === "add-to-cart"), "product_id_not_confirmed")), q = attrs3(one3(elements(form, (a) => a.name === "quantity"), "retailer_unit_not_confirmed"));
+  for (const form2 of forms) {
+    if (attrs3(form2).action !== source.url) throw Error("product_id_not_confirmed");
+    const add = attrs3(one3(elements(form2, (a) => a.name === "add-to-cart"), "product_id_not_confirmed")), q = attrs3(one3(elements(form2, (a) => a.name === "quantity"), "retailer_unit_not_confirmed"));
     if (add.value !== "10911" || "disabled" in add || q.min !== "1" || q.step !== "1") throw Error("retailer_unit_not_confirmed");
   }
   const prices = elements(main, (a, t) => t === "p" && cls2(a, "price")).map((p) => {
@@ -22644,7 +22648,7 @@ function inspectKowalczykCard(raw, source) {
   if (!canonical.length || canonical.some((node) => attrs4(node).href !== source.url)) throw Error("product_identity_not_confirmed");
   const h1 = text2(one4(elements(html, (a2, tag) => tag === "h1" && a2["data-ui-id"] === "page-title-wrapper"), "product_name_mismatch"));
   if (!sameName(h1, review2.name)) throw Error("product_name_mismatch");
-  const form = one4(elements(html, (a2, tag) => tag === "form" && a2.id === "product_addtocart_form"), "product_id_not_confirmed"), a = attrs4(form);
+  const form2 = one4(elements(html, (a2, tag) => tag === "form" && a2.id === "product_addtocart_form"), "product_id_not_confirmed"), a = attrs4(form2);
   const action = new URL(a.action ?? "", ORIGIN2);
   if (a["data-sku"] !== review2.ean || action.origin !== ORIGIN2 || !action.pathname.endsWith("/product/" + review2.id + "/")) throw Error("product_identity_not_confirmed");
   const scriptPrice = one4([...raw.matchAll(/initialFinalPrice:\s*(\d+(?:\.\d{1,2})?)\s*,/g)].map((m) => Number(m[1])), "product_price_ambiguous");
@@ -22909,18 +22913,18 @@ function readPrestashopProduct(html, source) {
   if (source.packageSize !== 1 || source.unit !== "szt") throw Error("retailer_unit_not_confirmed");
   const name = text2(exactlyOne(elements(product, (a, tag) => tag === "h1" && a.itemprop === "name"), "product_name_ambiguous"));
   const brand = attrs(opening(exactlyOne(elements(product, (a, tag) => tag === "meta" && a.itemprop === "brand"), "product_brand_ambiguous"))).content;
-  const form = byId2("buy_block"), formAttrs = attrs(opening(form));
+  const form2 = byId2("buy_block"), formAttrs = attrs(opening(form2));
   const action = new URL(formAttrs.action, source.url);
   if (action.origin !== new URL(source.url).origin || action.pathname !== "/koszyk" || action.search || formAttrs.method?.toLowerCase() !== "post") throw Error("invalid_cart_route");
-  const input2 = (name2) => attrs(opening(exactlyOne(elements(form, (a, tag) => tag === "input" && a.name === name2), "product_form_ambiguous")));
+  const input2 = (name2) => attrs(opening(exactlyOne(elements(form2, (a, tag) => tag === "input" && a.name === name2), "product_form_ambiguous")));
   if (!Number.isSafeInteger(source.productId) || source.productId < 1 || input2("id_product").value !== String(source.productId) || !["", "0"].includes(input2("id_product_attribute").value)) throw Error("product_id_not_confirmed");
   if (input2("add").value !== "1") throw Error("invalid_cart_route");
   const quantity = input2("qty"), maxPackages = Number(quantity.max);
   if (quantity.min !== "1" || quantity.step !== "1") throw Error("purchase_rules_changed");
   if (!/^\d+$/.test(quantity.max ?? "") || !Number.isSafeInteger(maxPackages) || maxPackages < 1) throw Error("retailer_out_of_stock");
-  const button = exactlyOne(elements(form, (a, tag) => tag === "button" && a.type === "submit" && a.name === "Submit"), "product_form_ambiguous");
+  const button = exactlyOne(elements(form2, (a, tag) => tag === "button" && a.type === "submit" && a.name === "Submit"), "product_form_ambiguous");
   if (/\bdisabled\b/i.test(opening(button))) throw Error("retailer_out_of_stock");
-  const offer = exactlyOne(elements(form, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "product_offer_ambiguous");
+  const offer = exactlyOne(elements(form2, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "product_offer_ambiguous");
   const availability = attrs(opening(exactlyOne(elements(offer, (a) => a.itemprop === "availability"), "product_stock_ambiguous"))).href;
   if (!/^https?:\/\/schema.org\/InStock$/.test(availability)) throw Error("retailer_out_of_stock");
   const priceNode = exactlyOne(elements(offer, (a) => a.id === "our_price_display" && a.itemprop === "price"), "product_price_ambiguous");
@@ -22978,7 +22982,7 @@ function readIzosystemsProduct(html, source) {
   const detail = byId2("product-details"), data = JSON.parse(izoAttrs(detail)["data-product"]);
   const name = text2(izoOne(elements(product, (_a, t) => t === "h1"), "product_name_ambiguous"));
   const prices = izoOne(classElements(product, "product-prices"), "product_price_ambiguous");
-  const labelled2 = (cls5) => text2(izoOne(classElements(prices, cls5), "product_identity_ambiguous"));
+  const labelled2 = (cls6) => text2(izoOne(classElements(prices, cls6), "product_identity_ambiguous"));
   if (data.id !== 1783 || data.id_product !== 1783 || String(data.id_product_attribute) !== "0" || data.reference !== "135633" || data.name !== name || data.link !== source.url || labelled2("product-ean13") !== "EAN: " + source.ean || labelled2("product-reference") !== "Indeks: " + source.retailerSku) throw Error("product_identity_mismatch");
   if (!/Soudal SWS Basic Plus Inside 90mm x 30m$/.test(name) || izoAttrs(izoOne(elements(product, (a) => a.itemprop === "brand"), "product_brand_ambiguous")).content !== "SOUDAL") throw Error("product_variant_mismatch");
   if (data.available_for_order !== "1" || data.allow_oosp !== 0 || !Number.isSafeInteger(data.quantity) || data.quantity < 1 || data.quantity_all_versions !== data.quantity) throw Error("retailer_out_of_stock");
@@ -22988,11 +22992,11 @@ function readIzosystemsProduct(html, source) {
   const prop = (key) => izoOne(elements(offer, (a) => a.itemprop === key), "product_price_ambiguous");
   const priceNode = prop("price"), priceGrosze = izoMoney(text2(priceNode).replace(/ \/ szt\.$/, ""), data.price);
   if (priceGrosze <= 0 || parsePriceToGrosze(izoAttrs(priceNode).content) !== priceGrosze || izoAttrs(prop("priceCurrency")).content !== "PLN" || izoAttrs(prop("availability")).href !== "https://schema.org/InStock" || text2(izoOne(classElements(prices, "tax-shipping-delivery-label"), "product_tax_ambiguous")) !== "Brutto") throw Error("retailer_gross_price_mismatch");
-  const form = byId2("add-to-cart-or-refresh"), action = izoAttrs(form);
+  const form2 = byId2("add-to-cart-or-refresh"), action = izoAttrs(form2);
   if (action.action !== IZOSYSTEMS_ORIGIN + "/koszyk-zakupow" || action.method !== "post") throw Error("invalid_cart_route");
-  const input2 = (name2) => izoAttrs(izoOne(elements(form, (a, t) => t === "input" && a.name === name2), "product_form_ambiguous"));
+  const input2 = (name2) => izoAttrs(izoOne(elements(form2, (a, t) => t === "input" && a.name === name2), "product_form_ambiguous"));
   if (input2("id_product").value !== "1783" || input2("id_customization").value !== "0" || input2("qty").min !== "1" || input2("qty").step !== "1") throw Error("purchase_rules_changed");
-  const button = izoOne(elements(form, (a, t) => t === "button" && a["data-button-action"] === "add-to-cart"), "product_form_ambiguous");
+  const button = izoOne(elements(form2, (a, t) => t === "button" && a["data-button-action"] === "add-to-cart"), "product_form_ambiguous");
   if (/\bdisabled\b/.test(button.match(/^<[^>]+>/)?.[0] ?? "")) throw Error("retailer_out_of_stock");
   const token = input2("token").value;
   if (!/^[a-f\d]{32}$/i.test(token ?? "")) throw Error("cart_session_not_confirmed");
@@ -23017,8 +23021,104 @@ function readKrasnyStock(html, source) {
   return stock;
 }
 
+// artifacts/api-server/src/lib/bmb.ts
+var import_node_crypto6 = require("node:crypto");
+var BMB_ORIGIN = "https://bmbtechnologie.pl";
+var BMB_BASKET = "/order/basket.html";
+var NAME = "\u015Arodek gruntuj\u0105cy Knauf Grundiermittel 60 15KG";
+var URL3 = BMB_ORIGIN + "/grunty-do-tynkowania/srodek-gruntujacy-knauf-grundiermittel-60-15kg.html";
+var one6 = (nodes) => exactlyOne(nodes, "basket_not_confirmed");
+var cls3 = (html, name) => one6(classElements(html, name));
+var attr = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
+var byName = (html, name) => one6(elements(html, (a, t) => t === "input" && a.name === name));
+var form = (html, id) => {
+  const node = one6(elements(html, (a2, t) => t === "form" && a2.id === id)), a = attr(node);
+  if (a.method !== "post" || a.action !== BMB_ORIGIN + BMB_BASKET) throw Error("invalid_cart_route");
+  return node;
+};
+function reviewedBmbSource(s) {
+  if (s.id !== "bmb-knauf-grundiermittel60-15kg" || s.store !== "BMB Technologie" || s.format !== "bmb" || s.url !== URL3 || s.ean !== "5901793357799" || s.retailerSku !== s.ean || s.productId !== 5454 || s.packageSize !== 15 || s.unit !== "kg" || s.brand !== "Knauf" || s.apiPurchaseUnit !== "szt." || s.name !== NAME) throw Error("bmb_source_not_reviewed");
+}
+function readBmbProduct(html, source) {
+  reviewedBmbSource(source);
+  const primary = one6(classElements(clean(html), "productCardMain"));
+  const name = text2(cls3(primary, "productCardMain__name"));
+  const brand = cls3(primary, "productCardMain__producer"), brandImage = one6(elements(brand, (_a, t) => t === "img"));
+  if (name !== NAME || attr(brand).href !== BMB_ORIGIN + "/knauf/" || attr(brandImage).alt !== "Knauf") throw Error("product_identity_mismatch");
+  const info = cls3(primary, "productCardMain__infoBlock");
+  if (attr(info)["data-id"] !== "5454") throw Error("product_id_not_confirmed");
+  const param = (name2) => text2(cls3(cls3(info, "productParam--" + name2), "productParam__value"));
+  if (param("symbol") !== source.ean) throw Error("product_ean_not_confirmed");
+  const stockMatch = param("availability").match(/^(\d{1,9}) szt\.$/);
+  if (!stockMatch) throw Error("retailer_stock_not_confirmed");
+  const stock = Number(stockMatch[1]);
+  if (!stock) throw Error("retailer_out_of_stock");
+  const input2 = attr(byName(form(info, "js__productBasketForm"), "add_product[5454]"));
+  if (input2.type !== "text" || input2.value !== "1" || input2["data-min"] !== "1" || input2["data-qip"] !== "1" || input2["data-max"] !== String(stock)) throw Error("purchase_rules_changed");
+  const priceGrosze = prestashopMoney(param("price"));
+  if (priceGrosze <= 0) throw Error("invalid_money");
+  const image = attr(one6(elements(primary, (a, t) => t === "img" && a.alt === NAME))).src;
+  if (image !== source.imageUrl) throw Error("product_image_not_confirmed");
+  return { name, stock, priceGrosze, imageUrl: image };
+}
+function confirmBmbBasket(html, source, count, priceGrosze) {
+  reviewedBmbSource(source);
+  if (!Number.isSafeInteger(count) || count < 1 || count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(priceGrosze) || priceGrosze <= 0 || !Number.isSafeInteger(count * priceGrosze)) throw Error("invalid_basket");
+  const safe = clean(html), table = cls3(safe, "order_table"), row = one6(classElements(table, "order_product_row"));
+  const name = cls3(row, "col_name"), link = one6(elements(name, (_a, t) => t === "a"));
+  if (attr(link).href !== source.url || text2(link) !== NAME + " " + source.ean || text2(name) !== NAME + " " + source.ean) throw Error("basket_not_confirmed");
+  const input2 = attr(byName(row, "product[5454]"));
+  if (input2.value !== String(count) || input2["data-qip"] !== "1" || input2["data-min"] !== "1") throw Error("basket_not_confirmed");
+  const gross2 = cls3(row, "col_priceg"), value2 = cls3(row, "col_valueg");
+  if (attr(gross2)["data-th"] !== "Cena brutto" || attr(value2)["data-th"] !== "Warto\u015B\u0107 brutto") throw Error("retailer_gross_price_not_confirmed");
+  if (prestashopMoney(text2(gross2)) !== priceGrosze) throw Error("price_changed");
+  const total = count * priceGrosze;
+  if (prestashopMoney(text2(value2)) !== total || prestashopMoney(text2(one6(elements(table, (a) => a["data-th"] === "Warto\u015B\u0107 produkt\xF3w brutto:")))) !== total || prestashopMoney(text2(cls3(table, "order-sum-with-discount-value"))) !== total) throw Error("basket_not_confirmed");
+  return { safe, materialsGrosze: total };
+}
+function confirmBmbDelivery(html, source, count, priceGrosze) {
+  const { safe, materialsGrosze } = confirmBmbBasket(html, source, count, priceGrosze);
+  if (text2(cls3(safe, "order_delivery_country_wrap")) !== "Kraj dostawy Polska - zmie\u0144") throw Error("country_not_confirmed");
+  const selected = (id) => {
+    const f = form(safe, id), inputs = elements(f, (a, t) => t === "input" && a.name === "payment_delivery" && a.checked === "checked");
+    if (attr(one6(inputs)).value !== "51") throw Error("no_home_delivery");
+    return one6(elements(f, (_a, t) => t === "label").filter((n) => elements(n, (a, t) => t === "input" && a.name === "payment_delivery" && a.value === "51").length === 1));
+  };
+  const carrier = selected("delivery"), payment = selected("payment"), pallet = cls3(carrier, "delivery_tile_pallet_info");
+  if (text2(cls3(carrier, "order_tile_name").replace(pallet, "")) !== "Wysy\u0142ka paletowa" || text2(cls3(payment, "order_tile_name")) !== "Przelewy24.pl") throw Error("no_home_delivery");
+  const palletRow = one6(elements(pallet, (_a, t) => t === "li")), match = text2(palletRow).match(/^(\d{1,4}) x Paleta KN-WO - (\d{1,6})(?:,(\d{2}))?zł$/);
+  if (!match || Number(match[1]) < 1) throw Error("basket_not_confirmed");
+  const palletGrosze = Number(match[1]) * (Number(match[2]) * 100 + Number(match[3] ?? 0));
+  const carrierGrosze = prestashopMoney(text2(cls3(carrier, "order_tile_price"))), paymentText = text2(cls3(payment, "order_tile_price"));
+  if (!paymentText.startsWith("+")) throw Error("invalid_money");
+  const paymentGrosze = prestashopMoney(paymentText.slice(1)), costGrosze = carrierGrosze + palletGrosze + paymentGrosze;
+  const totalGrosze = prestashopMoney(text2(cls3(safe, "order_price_summ")));
+  if (!Number.isSafeInteger(costGrosze) || totalGrosze !== materialsGrosze + costGrosze) throw Error("basket_not_confirmed");
+  return { costGrosze, carrier: "Wysy\u0142ka paletowa + paleta KN-WO", payment: "Przelewy24.pl", carrierGrosze, palletGrosze, paymentGrosze, totalGrosze };
+}
+async function readBmbCart(source, count, fetchImpl, expectedPrice) {
+  reviewedBmbSource(source);
+  if (!Number.isSafeInteger(count) || count < 1 || count > MAX_RETAIL_PACKAGES) throw Error("invalid_basket");
+  const client = new AnonymousShop(BMB_ORIGIN, fetchImpl, AbortSignal.timeout(25e3), 12);
+  const page = await client.text(source.url), product = readBmbProduct(page, source);
+  if (expectedPrice !== void 0 && expectedPrice !== product.priceGrosze) throw Error("price_changed");
+  if (count > product.stock) throw Error("insufficient_stock");
+  await client.text(BMB_BASKET, { "add_product[5454]": String(count) });
+  const cart = await client.text(BMB_BASKET);
+  confirmBmbBasket(cart, source, count, product.priceGrosze);
+  return { product, cart, evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(page).update(cart).digest("hex") };
+}
+async function quoteBmb(order, fetchImpl) {
+  if (order.store !== "BMB Technologie" || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
+  const pack = order.lines[0].packages[0], source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
+  if (!source || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze * pack.count !== order.materialsGrosze) throw Error("invalid_basket");
+  const current = await readBmbCart(source, pack.count, fetchImpl, pack.unitPriceGrosze);
+  const quote2 = confirmBmbDelivery(current.cart, source, pack.count, pack.unitPriceGrosze), checkedAt = /* @__PURE__ */ new Date();
+  return { quote: { costGrosze: quote2.costGrosze, carrier: quote2.carrier, payment: quote2.payment, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: BMB_ORIGIN + BMB_BASKET, basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: current.evidenceSha256 } };
+}
+
 // artifacts/api-server/src/lib/abstore-product.ts
-var one6 = (values, reason) => {
+var one7 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
   return values[0];
 };
@@ -23027,7 +23127,7 @@ var byClass = (html, name) => elements(html, (a) => a.class?.split(/\s+/).includ
 function readAbstoreProduct(html, source) {
   if (new URL(source.url).origin !== "https://kronodom.pl") throw Error("invalid_retailer_origin");
   const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((match2) => match2[1]);
-  const raw = one6(scripts.filter((script) => /^\s*const productData = /.test(script)), "product_identity_ambiguous");
+  const raw = one7(scripts.filter((script) => /^\s*const productData = /.test(script)), "product_identity_ambiguous");
   const literal2 = raw.match(/^\s*const productData = ([\s\S]*);\s*$/)?.[1];
   if (!literal2) throw Error("product_identity_not_confirmed");
   const data = JSON.parse(literal2), schema = JSON.parse(data.schemaOrg?.jsonld ?? "null");
@@ -23043,14 +23143,14 @@ function readAbstoreProduct(html, source) {
   const price2 = unit.priceForUnit, gross2 = typeof price2?.finalGross === "string" ? price2.finalGross.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/) : null;
   const unitGrosze = gross2 ? Number(gross2[1]) * 100 + Number(gross2[2]) : NaN;
   if (price2?.currency !== "PLN" || price2.currencyValue !== "PLN" || schema.offers.priceCurrency !== "PLN" || !Number.isSafeInteger(unitGrosze) || unitGrosze <= 0 || parsePriceToGrosze(price2.finalGrossValue) !== unitGrosze || parsePriceToGrosze(data.price?.finalGrossValue) !== unitGrosze || parsePriceToGrosze(schema.offers.price) !== unitGrosze) throw Error("retailer_gross_price_mismatch");
-  const safe = clean(html), primary = one6(elements(safe, (a) => a.id === "product-details-div"), "product_identity_ambiguous");
-  const name = text2(one6(elements(primary, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
+  const safe = clean(html), primary = one7(elements(safe, (a) => a.id === "product-details-div"), "product_identity_ambiguous");
+  const name = text2(one7(elements(primary, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
   if (name !== data.name || !text2(primary).includes(`Indeks katalogowy: ${source.ean}`)) throw Error("product_identity_not_confirmed");
-  const input2 = opening2(one6(elements(primary, (a, tag) => tag === "input" && a.class?.split(/\s+/).includes("touch-spin")), "product_form_ambiguous"));
-  const button = opening2(one6(elements(primary, (a, tag) => tag === "button" && a["data-module"] === "cart/cartButton"), "product_form_ambiguous"));
+  const input2 = opening2(one7(elements(primary, (a, tag) => tag === "input" && a.class?.split(/\s+/).includes("touch-spin")), "product_form_ambiguous"));
+  const button = opening2(one7(elements(primary, (a, tag) => tag === "button" && a["data-module"] === "cart/cartButton"), "product_form_ambiguous"));
   if (input2["data-product-id"] !== String(source.productId) || input2["data-offer-pos-id"] !== String(source.productId) || input2["data-unitid"] !== String(unit.unitId) || input2["data-unitsc"] !== "m2" || button["data-product-id"] !== String(source.productId) || button["data-sale-unit-id"] !== String(unit.unitId) || button["data-unitsc"] !== "m2") throw Error("product_form_ambiguous");
   if (Number(input2["data-step"]) !== source.packageSize || Number(input2["data-min"]) !== source.packageSize || Number(button["data-qty"]) !== source.packageSize) throw Error("purchase_rules_changed");
-  const visible = text2(one6(byClass(one6(byClass(primary, "abs-product-header-price"), "product_price_ambiguous"), "abs-item-price-final"), "product_price_ambiguous"));
+  const visible = text2(one7(byClass(one7(byClass(primary, "abs-product-header-price"), "product_price_ambiguous"), "abs-item-price-final"), "product_price_ambiguous"));
   const match = visible.match(/^([\d\s,.]+)\s*zł\s*brutto\s*\/\s*m2$/);
   if (!match || parsePriceToGrosze(match[1].trim().replace(",", ".")) !== unitGrosze) throw Error("retailer_gross_price_mismatch");
   if (schema.offers.availability !== "InStock") throw Error("retailer_out_of_stock");
@@ -23203,19 +23303,19 @@ function readBetterialProduct(html, source) {
   const packName = `${source.packageSize} ${source.unit}`;
   if (!source.retailerSku || attribute4.ean13 !== source.ean || attribute4.reference !== source.retailerSku || attribute4.group !== "opakowanie" || attribute4.name !== packName) throw Error("product_identity_mismatch");
   if (item.unity !== "opakowanie" || item.unit_price_ratio !== 1 || item.nopackprice !== null || item.pack !== 0 || item.is_customizable !== false) throw Error("retailer_unit_not_confirmed");
-  const form = exactlyOne(elements(safe, (a) => a.id === "add-to-cart-or-refresh"), "product_form_ambiguous");
-  const formAttrs = attrs(opening3(form));
+  const form2 = exactlyOne(elements(safe, (a) => a.id === "add-to-cart-or-refresh"), "product_form_ambiguous");
+  const formAttrs = attrs(opening3(form2));
   const action = new URL(formAttrs.action, source.url);
   if (action.origin !== new URL(source.url).origin || action.pathname !== "/koszyk" || action.search || formAttrs.method !== "post") throw Error("invalid_cart_route");
-  const input2 = (name2) => attrs(opening3(exactlyOne(elements(form, (a, tag) => tag === "input" && a.name === name2), "product_form_ambiguous")));
+  const input2 = (name2) => attrs(opening3(exactlyOne(elements(form2, (a, tag) => tag === "input" && a.name === name2), "product_form_ambiguous")));
   if (input2("id_product").value !== String(source.productId) || input2("id_customization").value !== "0") throw Error("product_id_not_confirmed");
-  const select = exactlyOne(elements(form, (a, tag) => tag === "select" && a.name === `group[${groupId}]`), "product_variant_mismatch");
+  const select = exactlyOne(elements(form2, (a, tag) => tag === "select" && a.name === `group[${groupId}]`), "product_variant_mismatch");
   const selected = exactlyOne(elements(select, (a, tag) => tag === "option" && a.selected !== void 0), "product_variant_mismatch");
   if (attrs(opening3(selected)).value !== String(attribute4.id_attribute) || text2(selected) !== packName) throw Error("product_variant_mismatch");
   const multiple = source.purchaseMultiple ?? 1;
-  const marker = attrs(opening3(exactlyOne(elements(form, (a) => a["data-xplo-order-multiple"] !== void 0), "purchase_rules_changed")));
+  const marker = attrs(opening3(exactlyOne(elements(form2, (a) => a["data-xplo-order-multiple"] !== void 0), "purchase_rules_changed")));
   if (item.minimal_quantity !== multiple || input2("qty").min !== String(multiple) || marker["data-xplo-order-multiple"] !== String(multiple) || marker["data-xplo-product-id"] !== String(source.productId) || marker["data-xplo-product-attribute-id"] !== String(source.variantId)) throw Error("purchase_rules_changed");
-  const button = exactlyOne(elements(form, (a, tag) => tag === "button" && a["data-button-action"] === "add-to-cart"), "product_form_ambiguous");
+  const button = exactlyOne(elements(form2, (a, tag) => tag === "button" && a["data-button-action"] === "add-to-cart"), "product_form_ambiguous");
   if (item.active !== "1" || item.available_for_order !== "1" || item.availability !== "in_stock" || item.allow_oosp !== 0 || /\bdisabled\b/i.test(opening3(button))) throw Error("retailer_out_of_stock");
   const name = text2(exactlyOne(elements(safe, (_a, tag) => tag === "h1"), "product_name_ambiguous"));
   if (name !== source.name || item.name !== name || item.manufacturer_name !== source.brand) throw Error("product_name_mismatch");
@@ -23242,12 +23342,12 @@ function readBetterialProduct(html, source) {
 }
 
 // artifacts/api-server/src/lib/folnet-product.ts
-var one7 = (values, reason) => {
+var one8 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
   return values[0];
 };
 var attrs7 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
-var byId = (html, id) => one7(elements(html, (a) => a.id === id), "product_identity_not_confirmed");
+var byId = (html, id) => one8(elements(html, (a) => a.id === id), "product_identity_not_confirmed");
 var gross = (value2) => {
   if (typeof value2 !== "string" || !/^\d+\.\d{2}$/.test(value2)) throw Error("retailer_gross_price_mismatch");
   const price2 = parsePriceToGrosze(value2);
@@ -23270,11 +23370,11 @@ function inspectFolnetProduct(html, source) {
   const amount3 = gross(size.price.value);
   if (Object.keys(data.order_quantity_range ?? {}).length) throw Error("purchase_rules_changed");
   if (amount3 <= 0 || gross(data.base_price.value) !== amount3 || gross(data.base_price.price_unit_sellby) !== amount3) throw Error("retailer_gross_price_mismatch");
-  const safe = clean(html), form = byId(safe, "projector_form");
-  if (attrs7(form).action !== "/basketchange.php" || attrs7(form).method !== "post" || attrs7(form)["data-product_id"] !== String(source.productId) || attrs7(byId(form, "projector_product_hidden")).value !== String(source.productId) || attrs7(byId(form, "projector_size_hidden")).value !== "onesize" || attrs7(byId(form, "projector_mode_hidden")).value !== "1") throw Error("product_id_not_confirmed");
-  if (text2(byId(form, "projector_code")) !== `Symbol: ${source.retailerSku}` || text2(byId(form, "projector_price_unit")) !== nativeUnit || text2(byId(form, "projector_price_format")) !== "brutto") throw Error("retailer_unit_or_gross_not_confirmed");
-  if (parsePriceToGrosze(text2(byId(form, "projector_price_value")).replace(/\s*zł$/, "")) !== amount3) throw Error("retailer_gross_price_mismatch");
-  const name = text2(one7(elements(form, (_a, tag) => tag === "h1"), "product_name_not_confirmed"));
+  const safe = clean(html), form2 = byId(safe, "projector_form");
+  if (attrs7(form2).action !== "/basketchange.php" || attrs7(form2).method !== "post" || attrs7(form2)["data-product_id"] !== String(source.productId) || attrs7(byId(form2, "projector_product_hidden")).value !== String(source.productId) || attrs7(byId(form2, "projector_size_hidden")).value !== "onesize" || attrs7(byId(form2, "projector_mode_hidden")).value !== "1") throw Error("product_id_not_confirmed");
+  if (text2(byId(form2, "projector_code")) !== `Symbol: ${source.retailerSku}` || text2(byId(form2, "projector_price_unit")) !== nativeUnit || text2(byId(form2, "projector_price_format")) !== "brutto") throw Error("retailer_unit_or_gross_not_confirmed");
+  if (parsePriceToGrosze(text2(byId(form2, "projector_price_value")).replace(/\s*zł$/, "")) !== amount3) throw Error("retailer_gross_price_mismatch");
+  const name = text2(one8(elements(form2, (_a, tag) => tag === "h1"), "product_name_not_confirmed"));
   const records = [...html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].flatMap((m) => {
     try {
       return [JSON.parse(m[1])].flat();
@@ -23284,15 +23384,15 @@ function inspectFolnetProduct(html, source) {
   }).filter((p) => p?.["@type"] === "Product");
   if (records.length !== 1) throw Error("product_identity_ambiguous");
   const product = records[0], offers = [product.offers].flat();
-  const brand = text2(one7(elements(form, (a) => a.class === "brand"), "product_brand_not_confirmed"));
+  const brand = text2(one8(elements(form2, (a) => a.class === "brand"), "product_brand_not_confirmed"));
   if (product.name !== name || product.brand !== source.brand || brand !== product.brand || product.productID !== `mpn:${source.retailerSku}` || offers.length !== 1) throw Error("product_identity_not_confirmed");
   const url2 = new URL(offers[0]?.url, source.url);
   if (url2.origin !== "https://folnet.pl" || url2.pathname !== new URL(source.url).pathname || url2.searchParams.get("selected_size") !== "onesize" || offers[0]?.priceCurrency !== "PLN" || offers[0]?.availability !== "http://schema.org/InStock" || gross(offers[0]?.price) !== amount3) throw Error("retailer_gross_price_mismatch");
-  const dictionary = one7(elements(safe, (a) => a.class === "n54117_dictionary"), "product_package_not_confirmed");
-  const pack = text2(one7(elements(dictionary, (_a, tag) => tag === "tr").filter((row) => text2(row).startsWith("Wymiar :")), "product_package_not_confirmed"));
+  const dictionary = one8(elements(safe, (a) => a.class === "n54117_dictionary"), "product_package_not_confirmed");
+  const pack = text2(one8(elements(dictionary, (_a, tag) => tag === "tr").filter((row) => text2(row).startsWith("Wymiar :")), "product_package_not_confirmed"));
   if (pack !== (conpar ? "Wymiar : 2 m x 50 m" : "Wymiar : 750 ml")) throw Error("product_package_not_confirmed");
   if (conpar) {
-    const thickness = text2(one7(elements(dictionary, (_a, tag) => tag === "tr").filter((row) => text2(row).startsWith("Grubo\u015B\u0107 :")), "product_package_not_confirmed"));
+    const thickness = text2(one8(elements(dictionary, (_a, tag) => tag === "tr").filter((row) => text2(row).startsWith("Grubo\u015B\u0107 :")), "product_package_not_confirmed"));
     if (thickness !== "Grubo\u015B\u0107 : 0,2 mm \xB1 30%") throw Error("product_package_not_confirmed");
   }
   if (typeof product.image !== "string" || new URL(product.image).origin !== "https://folnet.pl") throw Error("product_photo_not_confirmed");
@@ -23303,11 +23403,11 @@ function inspectFolnetProduct(html, source) {
 
 // artifacts/api-server/src/lib/kronosfera-product.ts
 var hasClass = (attributes, name) => attributes.class?.split(/\s+/).includes(name) ?? false;
-var one8 = (values, reason) => {
+var one9 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
   return values[0];
 };
-var attr = (element, name) => attrs(element.match(/^<[^>]+>/)?.[0] ?? "")[name];
+var attr2 = (element, name) => attrs(element.match(/^<[^>]+>/)?.[0] ?? "")[name];
 function inspectKronosferaProduct(html, source) {
   if (source.format !== "kronosfera" || source.store !== "Kronosfera" || source.productId !== 2068 || source.retailerSku !== "LK100F24-9002" || source.ean !== "5907555424969" || source.packageSize !== 2.4 || source.unit !== "mb" || source.url !== "https://kronosfera.pl/k/listwa-przypodlogowa-lk100f24-9002,2068") throw Error("product_identity_not_confirmed");
   const products = [];
@@ -23325,29 +23425,29 @@ function inspectKronosferaProduct(html, source) {
   if (product.sku !== source.retailerSku || product.name !== source.name || product.brand !== "KronoOriginal" || ["gtin", "gtin8", "gtin12", "gtin13", "gtin14"].some((key) => product[key] !== void 0 && product[key] !== source.ean)) throw Error("product_identity_not_confirmed");
   if (!offer || Array.isArray(offer) || offer["@type"] !== "Offer" || offer.priceCurrency !== "PLN" || !/^https?:\/\/schema.org\/InStock$/.test(offer.availability) || new URL(offer.url, source.url).href !== source.url) throw Error("retailer_out_of_stock");
   const safe = clean(html);
-  if (text2(one8(elements(safe, (_a, tag) => tag === "h1"), "product_identity_not_confirmed")) !== source.name) throw Error("product_identity_not_confirmed");
-  const main = one8(elements(safe, (a) => a.id === "product"), "product_identity_not_confirmed");
-  const form = one8(elements(main, (a, tag) => tag === "form" && a.id === "customizable"), "product_form_not_confirmed");
-  if (attr(form, "action") !== "https://kronosfera.pl/ajax/store/product/purchase/1/pl/2068" || attr(form, "method") !== "POST") throw Error("product_form_not_confirmed");
-  const converter = one8(elements(form, (_a, tag) => tag === "price-converter"), "retailer_unit_not_confirmed");
-  for (const [key, value2] of Object.entries({ "main-unit-type": "szt", "unit-value": "1.00000", "units-in-outer": "1", min: "1", step: "1" })) if (attr(converter, key) !== value2) throw Error("retailer_unit_not_confirmed");
-  const visible = text2(one8(elements(form, (a) => hasClass(a, "product-buy-config__price-value")), "retailer_gross_price_not_confirmed"));
-  const unit = text2(one8(elements(form, (a) => hasClass(a, "product-buy-config__price-currency")), "retailer_unit_not_confirmed"));
+  if (text2(one9(elements(safe, (_a, tag) => tag === "h1"), "product_identity_not_confirmed")) !== source.name) throw Error("product_identity_not_confirmed");
+  const main = one9(elements(safe, (a) => a.id === "product"), "product_identity_not_confirmed");
+  const form2 = one9(elements(main, (a, tag) => tag === "form" && a.id === "customizable"), "product_form_not_confirmed");
+  if (attr2(form2, "action") !== "https://kronosfera.pl/ajax/store/product/purchase/1/pl/2068" || attr2(form2, "method") !== "POST") throw Error("product_form_not_confirmed");
+  const converter = one9(elements(form2, (_a, tag) => tag === "price-converter"), "retailer_unit_not_confirmed");
+  for (const [key, value2] of Object.entries({ "main-unit-type": "szt", "unit-value": "1.00000", "units-in-outer": "1", min: "1", step: "1" })) if (attr2(converter, key) !== value2) throw Error("retailer_unit_not_confirmed");
+  const visible = text2(one9(elements(form2, (a) => hasClass(a, "product-buy-config__price-value")), "retailer_gross_price_not_confirmed"));
+  const unit = text2(one9(elements(form2, (a) => hasClass(a, "product-buy-config__price-currency")), "retailer_unit_not_confirmed"));
   const amount3 = parsePriceToGrosze(visible);
-  if (unit !== "z\u0142 za sztuk\u0119" || !amount3 || amount3 !== parsePriceToGrosze(offer.price) || amount3 !== parsePriceToGrosze(attr(converter, "price-pack") ?? "")) throw Error("retailer_gross_price_mismatch");
+  if (unit !== "z\u0142 za sztuk\u0119" || !amount3 || amount3 !== parsePriceToGrosze(offer.price) || amount3 !== parsePriceToGrosze(attr2(converter, "price-pack") ?? "")) throw Error("retailer_gross_price_mismatch");
   const params = new Map(elements(main, (a) => hasClass(a, "product-params__item")).map((row) => [
-    text2(one8(elements(row, (a) => hasClass(a, "product-params__name")), "product_variant_mismatch")),
-    text2(one8(elements(row, (a) => hasClass(a, "product-params__value")), "product_variant_mismatch"))
+    text2(one9(elements(row, (a) => hasClass(a, "product-params__name")), "product_variant_mismatch")),
+    text2(one9(elements(row, (a) => hasClass(a, "product-params__value")), "product_variant_mismatch"))
   ]));
   for (const [key, value2] of Object.entries({ "Kolor listwy": "bia\u0142y", "D\u0142ugo\u015B\u0107 listwy (mm)": "2400", "Wysoko\u015B\u0107 listwy (mm)": "100", "Grubo\u015B\u0107 listwy (mm)": "14" })) if (params.get(key) !== value2) throw Error("product_variant_mismatch");
-  if (!/Produkt z oferty Kronospan KO Sp\. z\.o\.o\./.test(text2(form))) throw Error("product_manufacturer_not_confirmed");
-  const token = attr(one8(elements(form, (a) => a.name === "_token"), "anonymous_form_not_confirmed"), "value");
+  if (!/Produkt z oferty Kronospan KO Sp\. z\.o\.o\./.test(text2(form2))) throw Error("product_manufacturer_not_confirmed");
+  const token = attr2(one9(elements(form2, (a) => a.name === "_token"), "anonymous_form_not_confirmed"), "value");
   if (!token || !/^[A-Za-z0-9]{40}$/.test(token)) throw Error("anonymous_form_not_confirmed");
   return { amount: amount3, token, product: { ...product, gtin13: source.ean, offers: { ...offer, url: source.url } } };
 }
 
 // artifacts/api-server/src/lib/skyshop-product.ts
-var import_node_crypto6 = require("node:crypto");
+var import_node_crypto7 = require("node:crypto");
 var MATBUD_ORIGIN = "https://centrummatbud.pl";
 var MATBUD_URL = MATBUD_ORIGIN + "/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729";
 var MATBUD_NAME = "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op";
@@ -23450,7 +23550,7 @@ function confirmSkyshopBasket(cart, expected) {
   }
   return cart;
 }
-var skyshopEvidenceHash = (evidence) => (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex");
+var skyshopEvidenceHash = (evidence) => (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex");
 
 // artifacts/api-server/src/lib/retail-pages.ts
 function objects(value2) {
@@ -23461,6 +23561,7 @@ function objects(value2) {
 }
 function parseRetailPage(html, source, observedAt) {
   if (source.disabledReason) throw Error(source.disabledReason);
+  if (source.format === "bmb") throw Error("retailer_basket_required");
   if ((!source.ean || source.skuIdentity) && !isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
   const products = [];
   let stockPackages;
@@ -23540,7 +23641,7 @@ function parseRetailPage(html, source, observedAt) {
     availability: "in_stock",
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
-    evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(html).digest("hex"),
+    evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(html).digest("hex"),
     validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value2) => typeof value2 === "string").sort()[0] ?? null
   };
 }
@@ -23551,6 +23652,11 @@ function retailPriceIsValid(validUntil, now) {
 }
 async function readRetailSource(source, fetchImpl = fetch) {
   if (source.disabledReason) throw Error(source.disabledReason);
+  if (source.format === "bmb") {
+    const current = await readBmbCart(source, 1, fetchImpl), p = current.product;
+    const html = `<script type="application/ld+json">${JSON.stringify({ "@type": "Product", name: p.name, gtin13: source.ean, brand: source.brand, image: p.imageUrl, offers: { "@type": "Offer", price: (p.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } })}</script>`;
+    return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: p.stock, evidenceSha256: current.evidenceSha256 };
+  }
   if (source.store === "Leroy Merlin" && source.browserReviewAllowed) throw Error("browser_refresh_required");
   if (source.format === "qshop") {
     const current = await readTokmetProduct(source, fetchImpl);
@@ -23599,7 +23705,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       image: item.imageUrl,
       offers: { "@type": "Offer", price: (item.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", url: source.url, availability: "https://schema.org/InStock" }
     })}</script>`;
-    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
+    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
   }
   const api = source.format === "shoper-api";
   const requestUrl = api ? `${new URL(source.url).origin}/webapi/front/pl_PL/products/PLN/${shoperProductId(source)}` : source.url;
@@ -23645,7 +23751,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       offers: { "@type": "Offer", price: gross2.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
     })}</script>`;
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
-    return { ...observation, evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(raw).digest("hex") };
+    return { ...observation, evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(raw).digest("hex") };
   }
   if (source.pickupOnly && source.browserReviewAllowed) throw Error("browser_location_review_required");
   if (source.browserReviewAllowed && new URL(source.url).origin === "https://www.castorama.pl" && ["m2", "m"].includes(source.unit)) throw Error("browser_package_review_required");
@@ -23745,9 +23851,9 @@ var QuoteQueue = class {
 };
 
 // artifacts/api-server/src/lib/retailer-checkouts.ts
-var cls3 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
-var attr2 = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
-var one9 = (values) => {
+var cls4 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
+var attr3 = (html) => attrs(html.match(/^<[^>]+>/)?.[0] ?? "");
+var one10 = (values) => {
   if (values.length !== 1) throw Error("basket_not_confirmed");
   return values[0];
 };
@@ -23794,7 +23900,7 @@ function quote(order, costGrosze, carrier, payment, evidence, postalCode, dispat
     basis: postalCode ? "retailer_basket_postcode" : "retailer_basket_national",
     destinationScope: postalCode ? "postal_code" : "PL",
     ...postalCode ? { postalCode, dispatchFrom } : {},
-    evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto9.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function expectedPacks(order) {
@@ -23807,20 +23913,20 @@ function expectedPacks(order) {
 function tdValue(html, label) {
   const cells = elements(html, (_, tag) => tag === "td");
   const values = cells.flatMap((cell, i) => text2(cell) === label && cells[i + 1] ? [withoutOld(cells[i + 1])] : []);
-  return one9(values);
+  return one10(values);
 }
 function confirmSeweraBasket(html, expected, total, dispatchFrom = "Katowice") {
-  const table = one9(elements(clean(html), (a) => cls3(a, "basket-product")));
-  const body = one9(elements(table, (_, tag) => tag === "tbody"));
+  const table = one10(elements(clean(html), (a) => cls4(a, "basket-product")));
+  const body = one10(elements(table, (_, tag) => tag === "tbody"));
   const rows = elements(body, (_, tag) => tag === "tr").filter((row) => elements(row, (a) => a.name === "amount").length === 1);
   const branch = dispatchFrom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   if (rows.length !== expected.length || !new RegExp(`Tw\xF3j sklep to ${branch}(?=\\s|$)`).test(text2(html))) throw Error("basket_not_confirmed");
   const shortages = [];
   for (const wanted of expected) {
-    const row = one9(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
+    const row = one10(rows.filter((row2) => elements(row2, (a) => a.href === wanted.url).length > 0));
     const stock = text2(row).match(/W magazynie znajdują się jedynie (\d+(?:[.,]\d+)?)\s+(SZT|OPA)/i);
-    const input2 = attr2(one9(elements(row, (a) => a.name === "amount")));
-    const pid = attr2(one9(elements(row, (a) => a.wybierz !== void 0))).wybierz;
+    const input2 = attr3(one10(elements(row, (a) => a.name === "amount")));
+    const pid = attr3(one10(elements(row, (a) => a.wybierz !== void 0))).wybierz;
     if (Number(input2.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
     if (stock) {
       const maxPackages = Number(stock[1].replace(",", "."));
@@ -23828,7 +23934,7 @@ function confirmSeweraBasket(html, expected, total, dispatchFrom = "Katowice") {
       if (maxPackages < wanted.count) shortages.push({ url: wanted.url, count: wanted.count, price: wanted.price, maxPackages });
     }
   }
-  const sum = text2(one9(elements(table, (a) => cls3(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
+  const sum = text2(one10(elements(table, (a) => cls4(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
   if (checkoutMoney(sum) !== total) throw Error("basket_not_confirmed");
   if (shortages.length) throw new SeweraStockError(shortages);
 }
@@ -23841,12 +23947,12 @@ var SeweraStockError = class extends Error {
 function readSeweraPayment(html) {
   const safe = clean(html);
   if (elements(safe, (a) => a.id === "block_order" && a.value !== "0").length || /nie potrafił ustalić kosztu|wycena indywidualna/i.test(text2(safe))) return null;
-  const options = elements(safe, (a) => cls3(a, "radio")).flatMap((row) => {
+  const options = elements(safe, (a) => cls4(a, "radio")).flatMap((row) => {
     const inputs = elements(row, (a2) => a2.name === "platnosc" && ["P\u0142atno\u015B\u0107 online", "Przelew tradycyjny"].includes(a2["data-name"]));
     if (inputs.length !== 1 || /\sdisabled(?:\s|=|>)/i.test(inputs[0])) return [];
-    const a = attr2(inputs[0]);
+    const a = attr3(inputs[0]);
     const value2 = a.onclick?.match(/\('#koszt_dostawy'\)\.val\('([\d,]+)'\)/)?.[1];
-    const visible = one9(elements(row, (b) => cls3(b, "dictionary-icon-additional")));
+    const visible = one10(elements(row, (b) => cls4(b, "dictionary-icon-additional")));
     const cost = checkoutMoney(visible);
     if (!value2 || checkoutMoney(`${value2} z\u0142`) !== cost) throw Error("invalid_money");
     return [{ costGrosze: cost, payment: a["data-name"] }];
@@ -23857,7 +23963,7 @@ function seweraHomeDeliveryMethods(checkout) {
   return elements(clean(checkout), (a) => {
     const name = a["data-name"] ?? "";
     return a.name === "dostawa" && a["data-personal-collection"] === "0" && a.disabled === void 0 && (/kurier/i.test(name) || /^(DHL|Raben) - Paleta do \d+\s*kg$/i.test(name)) && !/indywidual|zapytani|odbiór|paczkomat/i.test(name);
-  }).filter((node) => !/\sdisabled(?:\s|=|>)/i.test(node.match(/^<[^>]+>/)?.[0] ?? "")).map(attr2);
+  }).filter((node) => !/\sdisabled(?:\s|=|>)/i.test(node.match(/^<[^>]+>/)?.[0] ?? "")).map(attr3);
 }
 async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price, client) => client.text(_url2)) {
   const packs = expectedPacks(order);
@@ -23876,9 +23982,9 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
       try {
         const index2 = next++, { source, pack } = packs[index2];
         const page = await pages(source.url, pack.unitPriceGrosze, client, `sewera:${department.id}`), observed = parseRetailPage(page, source, /* @__PURE__ */ new Date());
-        if (configured.length && text2(one9(elements(clean(page), (a) => cls3(a, "b2cCSS-select-dept")))) !== department.name) throw Error("dispatch_department_not_confirmed");
+        if (configured.length && text2(one10(elements(clean(page), (a) => cls4(a, "b2cCSS-select-dept")))) !== department.name) throw Error("dispatch_department_not_confirmed");
         if (observed.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-        const pid = attr2(one9(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
+        const pid = attr3(one10(elements(clean(page), (a) => a.name === "add_to_basket_pid"))).value;
         if (!/^\d+$/.test(pid)) throw Error("basket_not_confirmed");
         prepared[index2] = { source, pack, pid };
       } catch (error40) {
@@ -23899,7 +24005,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
     confirmSeweraBasket(basket, expected, order.materialsGrosze, department.name);
   } catch (error40) {
     if (!(error40 instanceof SeweraStockError)) throw error40;
-    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto8.createHash)("sha256").update(basket).digest("hex");
+    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto9.createHash)("sha256").update(basket).digest("hex");
     return { reason: "insufficient_stock", stockLimits: error40.shortages.map((shortage) => {
       const { pack } = prepared.find((item) => item.source.url === shortage.url);
       const product = order.lines.find((line2) => line2.packages.some((item) => item.offerId === pack.offerId)).product;
@@ -23921,7 +24027,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
     }) };
   }
   const checkout = clean(await client.text("/zamowienie"));
-  const country = one9(elements(checkout, (a) => a.id === "selectCountryUser"));
+  const country = one10(elements(checkout, (a) => a.id === "selectCountryUser"));
   if (!elements(country, (a) => a.value === "1").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
   const methods = seweraHomeDeliveryMethods(checkout);
   if (!methods.length || methods.length > 5) throw Error("no_home_delivery");
@@ -23939,43 +24045,43 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
       personal_collection: "0"
     });
     const price2 = readSeweraPayment(response);
-    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto8.createHash)("sha256").update(response).digest("hex") });
+    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto9.createHash)("sha256").update(response).digest("hex") });
   }
   const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
   if (!best) throw Error("no_home_delivery");
   return quote(order, best.costGrosze, best.carrier, best.payment, { expected, postalCode, options, department }, postalCode, department.name);
 }
 function budujItemPrice(row) {
-  return elements(row, (a) => cls3(a, "item") && cls3(a, "price")).map((p) => checkoutMoney(withoutOld(p)));
+  return elements(row, (a) => cls4(a, "item") && cls4(a, "price")).map((p) => checkoutMoney(withoutOld(p)));
 }
 function confirmBudujBasket(html, expected, total) {
-  const products = one9(elements(clean(html), (a) => a.id === "cart-products"));
-  const rows = elements(products, (a) => cls3(a, "cart-product") && !cls3(a, "headers") && !cls3(a, "summary"));
+  const products = one10(elements(clean(html), (a) => a.id === "cart-products"));
+  const rows = elements(products, (a) => cls4(a, "cart-product") && !cls4(a, "headers") && !cls4(a, "summary"));
   if (rows.length !== expected.length) throw Error("basket_not_confirmed");
   for (const wanted of expected) {
-    const row = one9(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
-    const qty = attr2(one9(elements(row, (a) => a.name === "count"))).value;
+    const row = one10(rows.filter((r) => elements(r, (a) => Boolean(a.href) && new URL(a.href, "https://buduj24.pl").href === wanted.url).length > 0));
+    const qty = attr3(one10(elements(row, (a) => a.name === "count"))).value;
     const prices = budujItemPrice(row);
     if (Number(qty) !== wanted.count || prices.length !== 2 || prices[0] !== wanted.price || prices[1] !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
   }
   if (budujSummary(html).materials !== total) throw Error("basket_not_confirmed");
 }
 function budujSummary(html) {
-  const scope = one9(elements(clean(html), (a) => a.id === "cart-summary"));
-  const fields = elements(scope, (a) => cls3(a, "label"));
-  const values = elements(scope, (a) => cls3(a, "value"));
+  const scope = one10(elements(clean(html), (a) => a.id === "cart-summary"));
+  const fields = elements(scope, (a) => cls4(a, "label"));
+  const values = elements(scope, (a) => cls4(a, "value"));
   if (fields.length !== 3 || values.length !== 3 || text2(fields[0]) !== "Suma koszyka:" || text2(fields[1]) !== "Koszt dostawy:" || !/Kwota zawiera podatek VAT/.test(text2(scope))) throw Error("basket_not_confirmed");
   const [materials, shipping, total] = values.map(checkoutMoney);
   if (materials + shipping !== total) throw Error("basket_not_confirmed");
   return { materials, shipping, total };
 }
 function budujOptions(html, kind) {
-  return elements(clean(html), (a) => cls3(a, "item") && cls3(a, kind)).map((row) => {
-    const name = text2(one9(elements(row, (a) => cls3(a, "name"))));
-    const click = attr2(one9(elements(row, (a) => cls3(a, "icnt")))).onclick;
+  return elements(clean(html), (a) => cls4(a, "item") && cls4(a, kind)).map((row) => {
+    const name = text2(one10(elements(row, (a) => cls4(a, "name"))));
+    const click = attr3(one10(elements(row, (a) => cls4(a, "icnt")))).onclick;
     const id = click?.match(new RegExp(`cart\\.${kind}_select\\((\\d+)`))?.[1];
     if (!id) throw Error("basket_not_confirmed");
-    return { id, name, active: cls3(attr2(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one9(elements(row, (a) => cls3(a, "price")))) } : {} };
+    return { id, name, active: cls4(attr3(row), "active"), ...kind === "delivery" ? { cost: checkoutMoney(one10(elements(row, (a) => cls4(a, "price")))) } : {} };
   });
 }
 function decodeBudujDetails(response) {
@@ -23996,7 +24102,7 @@ async function quoteBuduj24(order, fetchImpl) {
   }
   const basket = await client.text("/cart");
   confirmBudujBasket(basket, expected, order.materialsGrosze);
-  const countries = one9(elements(clean(basket), (a) => a.id === "sel_country"));
+  const countries = one10(elements(clean(basket), (a) => a.id === "sel_country"));
   if (!elements(countries, (a) => a.value === "PL").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
   const country = decodeBudujDetails(await client.text("/ajax/cart/details?lang=pl&country=PL"));
   const delivery = budujOptions(country, "delivery").filter((d) => /^Kurier\b/i.test(d.name) && !/pobran|zapytani|indywidual/i.test(d.name)).sort((a, b) => a.cost - b.cost)[0];
@@ -24013,7 +24119,7 @@ async function quoteBuduj24(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/cezar-delivery.ts
-var import_node_crypto9 = require("node:crypto");
+var import_node_crypto10 = require("node:crypto");
 async function quoteCezar(order, postalCode, fetchImpl) {
   const origin3 = "https://cezar.eu";
   const client = new AnonymousShop(origin3, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
@@ -24059,12 +24165,12 @@ async function quoteCezar(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto9.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
+    evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/topboden-delivery.ts
-var import_node_crypto10 = require("node:crypto");
+var import_node_crypto11 = require("node:crypto");
 async function quoteTopboden(order, fetchImpl) {
   const signal = AbortSignal.timeout(12e3), client = new AnonymousShop(TOPBODEN_API, fetchImpl, signal, retailerRequestBudget(order.lines.length));
   const proofs = [], categories = [], seen = /* @__PURE__ */ new Set();
@@ -24096,11 +24202,11 @@ async function quoteTopboden(order, fetchImpl) {
     return Math.max(...applicable);
   });
   const costGrosze = materials >= Math.round(rate.minOrderValue * 100) ? 0 : Math.max(...prices), checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/prestashop-delivery.ts
-var import_node_crypto11 = require("node:crypto");
+var import_node_crypto12 = require("node:crypto");
 var origin = "https://www.eelektryka.com";
 var attrs8 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var input = (html, name) => attrs8(exactlyOne(elements(html, (a, tag) => tag === "input" && a.name === name), "basket_not_confirmed"));
@@ -24140,11 +24246,11 @@ async function quotePrestashop(order, fetchImpl) {
   const materialCell = exactlyOne(classElements(summary, "total_without_delivery").filter((node) => classElements(node, "amount").length), "basket_not_confirmed");
   if (expected.size || subtotal !== order.materialsGrosze || prestashopMoney(text2(exactlyOne(classElements(materialCell, "amount"), "basket_not_confirmed"))) !== subtotal) throw Error("basket_not_confirmed");
   const checkoutRaw = await client.text("/index.php?controller=specialorderpayment"), checkout = clean(checkoutRaw);
-  const form = exactlyOne(elements(checkout, (a, tag) => tag === "form" && a.id === "cart_form"), "basket_not_confirmed");
-  const country = exactlyOne(elements(form, (a, tag) => tag === "select" && a.name === "individual[country]"), "country_not_confirmed");
+  const form2 = exactlyOne(elements(checkout, (a, tag) => tag === "form" && a.id === "cart_form"), "basket_not_confirmed");
+  const country = exactlyOne(elements(form2, (a, tag) => tag === "select" && a.name === "individual[country]"), "country_not_confirmed");
   const countries = elements(country, (_a, tag) => tag === "option");
   if (!countries.length || attrs8(countries[0]).value !== "Poland" || text2(countries[0]) !== "Polska" || countries.slice(1).some((node) => /\bselected\b/i.test(node.match(/^<[^>]+>/)?.[0] ?? ""))) throw Error("country_not_confirmed");
-  const prepaid = exactlyOne(classElements(form, "prepay"), "no_home_delivery");
+  const prepaid = exactlyOne(classElements(form2, "prepay"), "no_home_delivery");
   const methods = classElements(prepaid, "payment_option").flatMap((node) => {
     const carrier = text2(exactlyOne(classElements(node, "delivery-title"), "no_home_delivery"));
     if (!/kurier/i.test(carrier) || /pobran|punkt|automat|paczkomat|odbiór|odbior|indywidual|zapytani/i.test(carrier)) return [];
@@ -24156,7 +24262,7 @@ async function quotePrestashop(order, fetchImpl) {
     return [{ carrier, costGrosze: price2, id }];
   }).sort((a, b) => a.costGrosze - b.costGrosze);
   const best = methods[0];
-  if (!best || elements(form, (a) => a.name === "payMethod" && a.value === "bankwire").length !== 1) throw Error("no_home_delivery");
+  if (!best || elements(form2, (a) => a.name === "payMethod" && a.value === "bankwire").length !== 1) throw Error("no_home_delivery");
   const token = input(checkout, "token").value;
   if (!/^[a-f0-9]{32}$/i.test(token ?? "")) throw Error("cart_session_not_confirmed");
   const raw = await client.text("/", { controller: "specialorderpayment", ajax: "1", id_carrier_real: best.id, update_delivery: "1", token });
@@ -24172,12 +24278,12 @@ async function quotePrestashop(order, fetchImpl) {
     sourceUrl: origin + "/index.php?controller=specialorderpayment",
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
+    evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/certusoft-delivery.ts
-var import_node_crypto12 = require("node:crypto");
+var import_node_crypto13 = require("node:crypto");
 var origin2 = "https://hipper.pl";
 var money2 = (value2) => {
   if (typeof value2 !== "number" || !Number.isFinite(value2) || value2 < 0) throw Error("invalid_money");
@@ -24266,12 +24372,12 @@ async function quoteCertusoft(order, fetchImpl) {
     sourceUrl: origin2 + "/koszyk",
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
+    evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/modna-delivery.ts
-var import_node_crypto13 = require("node:crypto");
+var import_node_crypto14 = require("node:crypto");
 function confirmModnaCart(html, orderHtml, expected, materials) {
   const safe = clean(html), cart = modnaById(safe, "cart_summary_block");
   if (text2(modnaById(cart, "currency")) !== "PLN") throw Error("retailer_currency_not_confirmed");
@@ -24306,16 +24412,16 @@ function confirmModnaCart(html, orderHtml, expected, materials) {
   const match = summary.match(/^Do zapłaty ([\d ,]+ zł) \+ dostawa: Kurier ([\d ,]+ zł) (\d+) x paleta Dostawa i płatność$/);
   if (!match || modnaMoney(match[1]) !== materials || Number(match[3]) < 1) throw Error("basket_not_confirmed");
   const costGrosze = modnaMoney(match[2]);
-  const form = modnaById(clean(orderHtml), "order_summary", "form");
-  const country = modnaById(form, "country", "select"), countries = elements(country, (_a, t) => t === "option");
+  const form2 = modnaById(clean(orderHtml), "order_summary", "form");
+  const country = modnaById(form2, "country", "select"), countries = elements(country, (_a, t) => t === "option");
   if (countries.length !== 1 || modnaAttrs(countries[0]).value !== "PL" || text2(countries[0]) !== "Polska") throw Error("country_not_confirmed");
-  const transport = modnaById(form, "transport_1", "label"), transportAttrs = modnaAttrs(transport);
+  const transport = modnaById(form2, "transport_1", "label"), transportAttrs = modnaAttrs(transport);
   const allowed = JSON.parse((transportAttrs["data-allowed_country"] ?? "").replace(/&#34;/g, '"'));
   const forbidden = JSON.parse((transportAttrs["data-forbidden_country"] ?? "").replace(/&#34;/g, '"'));
   if (transportAttrs["data-module_name"] !== "courier" || !Array.isArray(allowed) || !allowed.includes("PL") || !(forbidden === "" || Array.isArray(forbidden) && !forbidden.includes("PL")) || text2(transport) !== `Kurier + ${match[2].replace(/ zł$/, "")} z\u0142 (${match[3]} x paleta)`) throw Error("no_home_delivery");
   const radio = modnaById(transport, "delivery_method_1", "input");
   if (modnaAttrs(radio).name !== "physical_delivery_method" || modnaAttrs(radio).value !== "1" || /\bdisabled\b/.test(radio)) throw Error("no_home_delivery");
-  const payment = modnaOne(elements(form, (_a, t) => t === "label").filter((node) => elements(node, (a) => a.id === "payment_method_2").length === 1), "no_prepayment");
+  const payment = modnaOne(elements(form2, (_a, t) => t === "label").filter((node) => elements(node, (a) => a.id === "payment_method_2").length === 1), "no_prepayment");
   const paymentInput = modnaById(payment, "payment_method_2", "input");
   if (text2(payment) !== "Przelew bankowy" || modnaAttrs(paymentInput).name !== "payment_method" || modnaAttrs(paymentInput).value !== "2" || /\bdisabled\b/.test(paymentInput)) throw Error("no_prepayment");
   return { costGrosze, carrier: `Kurier (${match[3]} \xD7 paleta)`, payment: "Przelew bankowy" };
@@ -24337,11 +24443,11 @@ async function quoteModna(order, fetchImpl) {
   if (!expected.length) throw Error("invalid_basket");
   const confirmed = confirmModnaCart(await client.text("/cart/"), await client.text("/order/"), expected, order.materialsGrosze);
   const checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
+  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/folnet-delivery.ts
-var import_node_crypto14 = require("node:crypto");
+var import_node_crypto15 = require("node:crypto");
 var money3 = (value2, formatted) => {
   if (typeof value2 !== "string" || !/^\d+\.\d{2}$/.test(value2) || typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted)) throw Error("invalid_money");
   const amount3 = parsePriceToGrosze(value2), visible = parsePriceToGrosze(formatted.replace(/\s*zł$/, ""));
@@ -24389,12 +24495,12 @@ async function quoteFolnet(order, fetchImpl) {
   for (const [id, item] of wanted) query.set(`products[${id}][uniw][quantity]`, String(item.count));
   const raw = await client.text("/ajax/get-deliveries.php?" + query, { getAjax: "true" });
   const response = JSON.parse(raw), best = selectFolnetHomeRate(response, materials), now = /* @__PURE__ */ new Date();
-  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
+  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto15.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/kronosfera-delivery.ts
-var import_node_crypto15 = require("node:crypto");
-var cls4 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
+var import_node_crypto16 = require("node:crypto");
+var cls5 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var only4 = (values) => {
   if (values.length !== 1) throw Error("basket_not_confirmed");
   return values[0];
@@ -24407,42 +24513,42 @@ var money4 = (text4) => {
   return amount3;
 };
 function confirmKronosferaCart(raw, wanted, materialsGrosze) {
-  const html = clean(raw), form = only4(elements(html, (a, tag) => tag === "form" && cls4(a, "cart-module__form")));
-  const rows = elements(form, (a) => cls4(a, "cart-module__row"));
+  const html = clean(raw), form2 = only4(elements(html, (a, tag) => tag === "form" && cls5(a, "cart-module__form")));
+  const rows = elements(form2, (a) => cls5(a, "cart-module__row"));
   if (rows.length !== wanted.size) throw Error("basket_not_confirmed");
   let total = 0;
   const seen = /* @__PURE__ */ new Set();
   for (const row of rows) {
-    const title = only4(elements(row, (a) => cls4(a, "cart-module__title"))), url2 = new URL(attribute3(title, "href") ?? "", "https://kronosfera.pl").href, item = wanted.get(url2);
+    const title = only4(elements(row, (a) => cls5(a, "cart-module__title"))), url2 = new URL(attribute3(title, "href") ?? "", "https://kronosfera.pl").href, item = wanted.get(url2);
     if (!item || seen.has(url2) || text2(title) !== "Listwa przypod\u0142ogowa LK100F24 9002") throw Error("basket_not_confirmed");
     seen.add(url2);
     const quantity = only4(elements(row, (a) => /^carts\[1_1\]\[quantity\]\[\d+\]$/.test(a.name ?? "")));
     if (attribute3(quantity, "value") !== String(item.count)) throw Error("product_unavailable");
-    const price2 = only4(elements(row, (a) => cls4(a, "cart-module__price-col") && !cls4(a, "d-none")));
-    if (money4(text2(only4(elements(price2, (a) => cls4(a, "cart-module__price"))))) !== item.price) throw Error("price_changed");
-    const line2 = money4(text2(only4(elements(only4(elements(row, (a) => cls4(a, "cart-module__total-price-col"))), (a) => cls4(a, "cart-module__price")))));
+    const price2 = only4(elements(row, (a) => cls5(a, "cart-module__price-col") && !cls5(a, "d-none")));
+    if (money4(text2(only4(elements(price2, (a) => cls5(a, "cart-module__price"))))) !== item.price) throw Error("price_changed");
+    const line2 = money4(text2(only4(elements(only4(elements(row, (a) => cls5(a, "cart-module__total-price-col"))), (a) => cls5(a, "cart-module__price")))));
     if (line2 !== item.count * item.price) throw Error("price_changed");
     total += line2;
   }
   if (total !== materialsGrosze || !Number.isSafeInteger(total)) throw Error("basket_not_confirmed");
   const summary = (label) => {
-    const values = elements(form, (a) => cls4(a, "cart-module__prices-list-item")).filter((item) => text2(only4(elements(item, (a) => cls4(a, "cart-module__label")))) === label).map((item) => money4(text2(only4(elements(item, (a) => cls4(a, "cart-module__price"))))));
+    const values = elements(form2, (a) => cls5(a, "cart-module__prices-list-item")).filter((item) => text2(only4(elements(item, (a) => cls5(a, "cart-module__label")))) === label).map((item) => money4(text2(only4(elements(item, (a) => cls5(a, "cart-module__price"))))));
     if (!values.length || new Set(values).size !== 1) throw Error("basket_not_confirmed");
     return values[0];
   };
   const materials = summary("Warto\u015B\u0107:"), delivery = summary("Koszt dostawy:"), paymentFee = summary("Koszt p\u0142atno\u015Bci:"), final = summary("Do zap\u0142aty:");
   if (materials !== total || paymentFee !== 0 || final !== total + delivery) throw Error("basket_not_confirmed");
-  const section = (label) => only4(elements(form, (a) => cls4(a, "cart-module__options-section")).filter((item) => text2(only4(elements(item, (a) => cls4(a, "cart-module__label")))) === label));
+  const section = (label) => only4(elements(form2, (a) => cls5(a, "cart-module__options-section")).filter((item) => text2(only4(elements(item, (a) => cls5(a, "cart-module__label")))) === label));
   const selected = (part, type) => only4(elements(part, (_a, tag) => tag === "label").filter((label) => elements(label, (a, tag) => tag === "input" && a.type === type).some((input2) => /\schecked(?:\s|=|>)/.test(input2))));
   const shipping = selected(section("Wyznaczone formy dostawy:"), "checkbox");
-  const carrier = text2(only4(elements(shipping, (a) => cls4(a, "name"))));
+  const carrier = text2(only4(elements(shipping, (a) => cls5(a, "name"))));
   if (carrier !== "Przesy\u0142ka kurierska (paczka 2620x300x300mm, 30kg)") throw Error("no_home_delivery");
-  let shippingValue = only4(elements(shipping, (a) => cls4(a, "value"))).replace(/<(del|s)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
-  for (const old of elements(shippingValue, (a) => cls4(a, "cart-module__price--old"))) shippingValue = shippingValue.replace(old, "");
+  let shippingValue = only4(elements(shipping, (a) => cls5(a, "value"))).replace(/<(del|s)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  for (const old of elements(shippingValue, (a) => cls5(a, "cart-module__price--old"))) shippingValue = shippingValue.replace(old, "");
   if (money4(text2(shippingValue)) !== delivery) throw Error("basket_not_confirmed");
   const payment = selected(section("Rodzaj p\u0142atno\u015Bci:"), "radio");
-  const paymentName = text2(only4(elements(payment, (a) => cls4(a, "name"))));
-  if (paymentName !== "P\u0142atno\u015Bci elektroniczne Przelewy24" || money4(text2(only4(elements(payment, (a) => cls4(a, "value"))))) !== 0) throw Error("no_home_delivery");
+  const paymentName = text2(only4(elements(payment, (a) => cls5(a, "name"))));
+  if (paymentName !== "P\u0142atno\u015Bci elektroniczne Przelewy24" || money4(text2(only4(elements(payment, (a) => cls5(a, "value"))))) !== 0) throw Error("no_home_delivery");
   if (delivery === 0 && total <= 25e4) throw Error("no_home_delivery");
   return { costGrosze: delivery, carrier, payment: paymentName };
 }
@@ -24450,7 +24556,7 @@ async function quoteKronosfera(order, fetchImpl) {
   if (order.store !== "Kronosfera" || !order.lines.length) throw Error("invalid_basket");
   const client = new AnonymousShop("https://kronosfera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.length));
   const empty = clean(await client.text("/koszyk"));
-  if (elements(empty, (a) => cls4(a, "cart-module__row")).length || !text2(empty).includes("W Twoim koszyku nie znale\u017Ali\u015Bmy \u017Cadnych produkt\xF3w.")) throw Error("basket_not_confirmed");
+  if (elements(empty, (a) => cls5(a, "cart-module__row")).length || !text2(empty).includes("W Twoim koszyku nie znale\u017Ali\u015Bmy \u017Cadnych produkt\xF3w.")) throw Error("basket_not_confirmed");
   const wanted = /* @__PURE__ */ new Map();
   let materials = 0;
   for (const line2 of order.lines) for (const pack of line2.packages) {
@@ -24465,7 +24571,7 @@ async function quoteKronosfera(order, fetchImpl) {
   }
   if (materials !== order.materialsGrosze) throw Error("basket_not_confirmed");
   const raw = await client.text("/koszyk"), selected = confirmKronosferaCart(raw, wanted, materials), now = /* @__PURE__ */ new Date();
-  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto15.createHash)("sha256").update(raw).digest("hex") } };
+  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto16.createHash)("sha256").update(raw).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/skyshop-delivery.ts
@@ -24539,7 +24645,7 @@ async function quoteSkyshop(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/abud-delivery.ts
-var import_node_crypto16 = require("node:crypto");
+var import_node_crypto17 = require("node:crypto");
 var ORIGIN3 = "https://www.abud.pl";
 var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg"];
 function money5(value2, formatted) {
@@ -24573,10 +24679,10 @@ function confirmAbudDestination(response) {
   if (!(region.id_region === "1143020003" && region.parent === "0" || region.id_region !== "1143020003" && region.parent === "1143020003")) throw Error("address_required");
 }
 function confirmVariant(html, source) {
-  const form = elements(clean(html), (a, tag) => tag === "form" && a["data-product_id"] === String(source.productId));
-  if (form.length !== 1) throw Error("product_unavailable");
+  const form2 = elements(clean(html), (a, tag) => tag === "form" && a["data-product_id"] === String(source.productId));
+  if (form2.length !== 1) throw Error("product_unavailable");
   for (const [id, value2] of [["projector_size_hidden", "onesize"], ["projector_mode_hidden", "1"]]) {
-    const inputs = elements(form[0], (a) => a.id === id);
+    const inputs = elements(form2[0], (a) => a.id === id);
     if (inputs.length !== 1 || attrs(inputs[0].match(/^<[^>]+>/)?.[0] ?? "").value !== value2) throw Error("product_unavailable");
   }
 }
@@ -24629,12 +24735,12 @@ async function quoteAbud(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto16.createHash)("sha256").update(JSON.stringify({ observations, destination, postalCode, basket, shipping })).digest("hex")
+    evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify({ observations, destination, postalCode, basket, shipping })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/izosystems-delivery.ts
-var import_node_crypto17 = require("node:crypto");
+var import_node_crypto18 = require("node:crypto");
 var money6 = (text4, n) => n === 0 && text4 === "Za darmo!" ? 0 : izoMoney(text4, n);
 var value = (html, id) => text2(izoOne(elements(html, (a) => a.id === id), "basket_not_confirmed"));
 async function quoteIzosystems(order, postalCode, fetchImpl) {
@@ -24656,9 +24762,9 @@ async function quoteIzosystems(order, postalCode, fetchImpl) {
   confirmCart2(added.cart);
   const checkout = await client.text("/zamowienie"), state = readIzosystemsState(checkout);
   confirmCart2(state.cart);
-  const form = izoOne(elements(clean(checkout), (a, t) => t === "form" && a.id === "velsof_supercheckout_form"), "basket_not_confirmed");
-  if (izoAttrs(form).action !== IZOSYSTEMS_ORIGIN + "/module/supercheckout/supercheckout") throw Error("invalid_cart_route");
-  const countries = izoOne(elements(form, (a, t) => t === "select" && a.name === "shipping_address[id_country]"), "country_not_confirmed");
+  const form2 = izoOne(elements(clean(checkout), (a, t) => t === "form" && a.id === "velsof_supercheckout_form"), "basket_not_confirmed");
+  if (izoAttrs(form2).action !== IZOSYSTEMS_ORIGIN + "/module/supercheckout/supercheckout") throw Error("invalid_cart_route");
+  const countries = izoOne(elements(form2, (a, t) => t === "select" && a.name === "shipping_address[id_country]"), "country_not_confirmed");
   const poland = izoOne(elements(countries, (_a, t) => t === "option").filter((n) => text2(n) === "Polska"), "country_not_confirmed");
   if (izoAttrs(poland).value !== "14") throw Error("country_not_confirmed");
   const token = state.static_token;
@@ -24687,7 +24793,7 @@ async function quoteIzosystems(order, postalCode, fetchImpl) {
   const inputValue = (name) => izoAttrs(izoOne(elements(paymentHtml, (a, t) => t === "input" && a.name === name), "basket_not_confirmed")).value;
   if (inputValue("kb_payment_fee_payment-option-1") !== "z\u01420" || inputValue("kb_payment_fee_status_payment-option-1") !== "0" || inputValue("kb_payment_fee_applicable_payment-option-1") !== "0" || inputValue("kb_payment_fee_currency") !== "z\u0142" || Number(inputValue("kb_payment_fee_total_payment-option-1")) * 100 !== total) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
@@ -24724,12 +24830,12 @@ function unavailableReason(store) {
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (store === "Marbet24") return "customer_details_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
-  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD", "E-Kowalczyk", "Izosystems"].includes(store)) return void 0;
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD", "E-Kowalczyk", "Izosystems", "BMB Technologie"].includes(store)) return void 0;
   return ["Castorama", "OBI", "Leroy Merlin"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
-    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD", "E-Kowalczyk", "Izosystems"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Centrum Matbud", "ABUD", "IRBUD", "E-Kowalczyk", "Izosystems", "BMB Technologie"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
     postcodeStores: ["Sewera", "Cezar", "ABUD", "IRBUD", "E-Kowalczyk", "Izosystems"],
@@ -24821,7 +24927,7 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin3}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
@@ -24840,6 +24946,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
+        if (order.store === "BMB Technologie") return await quoteBmb(order, fetchImpl);
         if (order.store === "Izosystems") return await quoteIzosystems(order, postalCode, fetchImpl);
         if (order.store === "E-Kowalczyk") return await quoteKowalczyk(order, postalCode, fetchImpl);
         if (order.store === "IRBUD") return await quoteIrbud(order, postalCode, fetchImpl);
