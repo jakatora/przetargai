@@ -20777,7 +20777,7 @@ var RETAIL_SOURCES = [
   // source: https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html
   { "id": "unimet-corner-mesh-25m", "ean": "5900308102411", "name": "NARO\u017BNIK ALUMINIOWY Z SIATK\u0104 70*70 - 250CM", "category": "plaster-corner", "packageSize": 2.5, "unit": "mb", "store": "Unimet", "url": "https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html", "imageUrl": "https://www.unimet.pl/2006367-large_default/naroznik-aluminiowy-z-siatka-7070-250cm.webp", "brand": "Budmat", "format": "unimet", "variant": ["250cm"] },
   // source: https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383
-  { "id": "krasny-goldband-25kg", "ean": "5902367206383", "name": "GIPS GOLDBAND 25 Gips tynkarski GOLDBAND 25kg", "category": "plaster", "packageSize": 25, "unit": "kg", "store": "Krasny", "url": "https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383", "imageUrl": "https://static.krasny.pl/59/02/36/72/06/38/3/0/SMALL_100.webp?hash=d61d71b4ff1c4592683b9ceecda29fca", "brand": "Knauf", "format": "jsonld" },
+  { "id": "krasny-goldband-25kg", "ean": "5902367206383", "name": "GIPS GOLDBAND 25 Gips tynkarski GOLDBAND 25kg", "category": "plaster", "packageSize": 25, "unit": "kg", "store": "Krasny", "url": "https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383", "imageUrl": "https://static.krasny.pl/59/02/36/72/06/38/3/0/SMALL_100.webp?hash=d61d71b4ff1c4592683b9ceecda29fca", "brand": "Knauf", "format": "krasny", "pickupRequiresConfirmation": true },
   // source: https://domat24.pl/produkt/plyta-gipsowa-gkbi-12-5-12002600-zielona/
   { "id": "domat-board-gkbi", "ean": "5907651691616", "name": "P\u0142yta gipsowa GKBI 12.5 1200*2600 ZIELONA", "brand": "Norgips", "category": "gypsum-board", "packageSize": 3.12, "unit": "m2", "store": "Domat", "url": "https://domat24.pl/produkt/plyta-gipsowa-gkbi-12-5-12002600-zielona/", "format": "woocommerce", "productId": 29071, "variant": ["GKBI", "12.5", "1200", "2600"] },
   // source: https://domat24.pl/produkt/plyta-gipsowa-gkb-12-5-12002600-biala/
@@ -21098,9 +21098,20 @@ var RETAIL_SOURCES = [
   // source: https://arbiton.com/pl/klej-montazowy-strongman-300ml
   { "id": "topboden-strongman-300ml", "ean": "5905167788264", "name": "Klej monta\u017Cowy Arbiton Strongman 300 ml - klej do listew przypod\u0142ogowych", "brand": "Arbiton", "category": "skirting-adhesive", "packageSize": 300, "unit": "ml", "store": "TopBoden", "format": "topboden-api", "productUuid": "9cc774ed-c24b-4f3b-a863-a935a86383f4", "apiPurchaseUnit": "szt.", "variant": ["Strongman", "300 ml"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/listwy-przypodlogowe/klej-montazowy-strongman-300ml", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167788264_I_01.webp" },
   // source: https://izosystems.pl/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html
-  { "id": "izosystems-sws-inside90-30m", "ean": "5411183151178", "name": "Ta\u015Bma paroszczelna wewn\u0119trzna Soudal SWS Basic Plus Inside 90mm x 30m", "brand": "Soudal", "category": "window-tape", "packageSize": 30, "unit": "m", "store": "Izosystems", "format": "izosystems", "productId": 1783, "retailerSku": "135633", "apiPurchaseUnit": "szt.", "pickupRequiresConfirmation": true, "variant": ["Inside", "90mm", "30m"], "url": "https://izosystems.pl/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html" }
+  { "id": "izosystems-sws-inside90-30m", "ean": "5411183151178", "name": "Ta\u015Bma paroszczelna wewn\u0119trzna Soudal SWS Basic Plus Inside 90mm x 30m", "brand": "Soudal", "category": "window-tape", "packageSize": 30, "unit": "m", "store": "Izosystems", "format": "izosystems", "productId": 1783, "retailerSku": "135633", "apiPurchaseUnit": "szt.", "pickupRequiresConfirmation": true, "variant": ["Inside", "90mm", "30m"], "url": "https://izosystems.pl/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html" },
+  // source: https://realbud.com/pl/p/Srodek-gruntujacy-KNAUF-Betokontakt-5-kg%2C-grunt-do-powierzchni-betonowych/74052350
+  // source: https://knauf.com/pl-PL/p/produkt/knauf-betokontakt-10251_0120
+  { "id": "realbud-knauf-betokontakt-5kg", "ean": "4006379051014", "name": "\u015Arodek gruntuj\u0105cy KNAUF Betokontakt 5 kg, grunt do powierzchni betonowych", "brand": "Knauf", "category": "plaster-primer", "packageSize": 5, "unit": "kg", "store": "Realbud", "format": "shoper-api", "productId": 74052350, "retailerSku": "9341", "apiPurchaseUnit": "szt.", "url": "https://realbud.com/pl/p/Srodek-gruntujacy-KNAUF-Betokontakt-5-kg%2C-grunt-do-powierzchni-betonowych/74052350", "imageUrl": "https://realbud.com/environment/cache/images/productGfx_25859_500_500/9341.png?overlay=1", "pickupRequiresConfirmation": true },
+  // source: https://realbud.com/pl/p/Siatka-tynkarska-Knauf-PROFIX-szer.-1000-mm-oczko-10x10-mm-50-mb/75057500
+  // source: https://knauf.com/pl-PL/p/produkt/knauf-profix-10681_0120
+  { "id": "realbud-knauf-profix-50m2", "ean": "5902367201067", "name": "Siatka tynkarska - Knauf PROFIX szer. 1000 mm ( oczko 10x10 mm ) - 50 mb", "brand": "Knauf", "category": "plaster-mesh", "packageSize": 50, "unit": "m2", "store": "Realbud", "format": "shoper-api", "productId": 75057500, "retailerSku": "11723", "apiPurchaseUnit": "szt.", "url": "https://realbud.com/pl/p/Siatka-tynkarska-Knauf-PROFIX-szer.-1000-mm-oczko-10x10-mm-50-mb/75057500", "imageUrl": "https://realbud.com/environment/cache/images/productGfx_23636_500_500/7ff3a7398c66270601e5d09d595d52a5.png", "pickupRequiresConfirmation": true, "variant": ["1000 mm", "10x10 mm", "50 mb"] },
+  // source: https://liderzycen.pl/pl/p/Tynk-gipsowy-reczny-Knauf-Goldband-25-kg/55390
+  // source: https://knauf.com/pl-PL/p/produkt/knauf-goldband-10265_0120
+  { "id": "liderzycen-knauf-goldband-25kg", "ean": "5902367206383", "name": "Tynk gipsowy r\u0119czny Knauf Goldband 25 kg", "brand": "Knauf", "category": "plaster", "packageSize": 25, "unit": "kg", "store": "LiderzyCen", "format": "shoper-api", "productId": 55390, "retailerSku": "ctma_5902367206383", "apiPurchaseUnit": "szt.", "pickupRequiresConfirmation": true, "url": "https://liderzycen.pl/pl/p/Tynk-gipsowy-reczny-Knauf-Goldband-25-kg/55390", "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_77582_0_0/32464cdd129db9bfb699808dae441565.webp" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Knauf Betokontakt \u2014 grunt sczepny 5 kg": "4006379051014",
+  "Siatka tynkarska Knauf Profix 100 cm \xD7 50 m (50 m\xB2)": "5902367201067",
   "Erismann RollOver 3333-5 \u2014 flizelina do malowania, rolka 0,75 \xD7 25 m": "4002790333357",
   "Metylan Direct \u2014 klej do tapet flizelinowych 200 g": "4015000402019",
   "Metylan Normal \u2014 klej do tapet papierowych 125 g": "4015000095266",
@@ -22991,6 +23002,21 @@ function readIzosystemsProduct(html, source) {
   return { product: { "@type": "Product", name, brand: "Soudal", gtin13: source.ean, image: imageUrl, offers: { "@type": "Offer", price: priceGrosze / 100, priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, priceGrosze, maxPackages: data.quantity, imageUrl, name, token };
 }
 
+// artifacts/api-server/src/lib/krasny-stock.ts
+function readKrasnyStock(html, source) {
+  if (source.id !== "krasny-goldband-25kg" || source.store !== "Krasny" || source.ean !== "5902367206383" || source.packageSize !== 25 || source.unit !== "kg" || source.brand !== "Knauf" || source.url !== "https://krasny.pl/gips-goldband-25-gips-tynkarski-goldband-25kg-id-5902367206383") throw Error("krasny_source_not_reviewed");
+  const blocks = elements(clean(html), (a, tag) => tag === "div" && a.type === "productStocks" && a.class?.split(/\s+/).includes("one-product-stocks-info") === true);
+  if (blocks.length !== 1) throw Error("retailer_stock_not_confirmed");
+  const warehouses = elements(blocks[0], (a) => a.class?.split(/\s+/).includes("one-product-stocks-info__warehouse") === true);
+  const quantities = elements(blocks[0], (a, tag) => tag === "div" && a.class === "mx-1");
+  if (warehouses.length !== 1 || text2(warehouses[0]) !== "Magazyn Centralny" || quantities.length !== 1) throw Error("retailer_stock_not_confirmed");
+  const match = text2(quantities[0]).match(/^(\d{1,9}) szt\.$/);
+  if (!match) throw Error("retailer_stock_not_confirmed");
+  const stock = Number(match[1]);
+  if (stock === 0) throw Error("retailer_out_of_stock");
+  return stock;
+}
+
 // artifacts/api-server/src/lib/abstore-product.ts
 var one6 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
@@ -23438,6 +23464,7 @@ function parseRetailPage(html, source, observedAt) {
   if ((!source.ean || source.skuIdentity) && !isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
   const products = [];
   let stockPackages;
+  if (source.format === "krasny") stockPackages = readKrasnyStock(html, source);
   if (source.skuIdentity && source.format !== "irbud-woo") products.push(confirmRetailSkuProduct(html, readRetailMicrodata(html, "sewera", source.url, source.retailUnit), source));
   else if (source.format === "kronosfera") products.push(inspectKronosferaProduct(html, source).product);
   else if (source.format === "folnet") {
@@ -23456,7 +23483,7 @@ function parseRetailPage(html, source, observedAt) {
     products.push(reviewed.product);
     stockPackages = reviewed.maxPackages;
   } else if (source.format === "modna") products.push(readModnaProduct(html, source).product);
-  else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax", "irbud-woo"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
+  else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax", "irbud-woo", "krasny"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
@@ -23634,6 +23661,14 @@ function confirmShoperPurchaseUnit(item, source) {
     "rabdom-primer-g-pro-1l": ["8022452241123", 1, "l", 10970, "37969"],
     "rabdom-primer-g-pro-5l": ["8022452241130", 5, "l", 10969, "37970"]
   };
+  const plasterPacks = {
+    // source: https://liderzycen.pl/pl/p/Tynk-gipsowy-reczny-Knauf-Goldband-25-kg/55390
+    "liderzycen-knauf-goldband-25kg": ["5902367206383", 25, "kg", 55390, "ctma_5902367206383"],
+    "realbud-knauf-betokontakt-5kg": ["4006379051014", 5, "kg", 74052350, "9341"],
+    "realbud-knauf-profix-50m2": ["5902367201067", 50, "m2", 75057500, "11723"]
+  };
+  const plaster = plasterPacks[source.id];
+  if (plaster && (source.ean !== plaster[0] || source.packageSize !== plaster[1] || source.unit !== plaster[2] || source.productId !== plaster[3] || source.retailerSku !== plaster[4] || source.apiPurchaseUnit !== "szt." || item.ean !== plaster[0] || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
   const hydro = hydroPacks[source.id];
   if (hydro && (source.ean !== hydro[0] || source.packageSize !== hydro[1] || source.unit !== hydro[2] || source.productId !== hydro[3] || source.retailerSku !== hydro[4] || source.apiPurchaseUnit !== "szt." || item.ean !== hydro[0] || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
   if (source.id === "plejada-erismann-rollover-3333-5" && (source.ean !== "4002790333357" || source.packageSize !== 1 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt." || source.productId !== 23972 || source.retailerSku !== "ER 3333-5")) throw Error("product_package_not_confirmed");
