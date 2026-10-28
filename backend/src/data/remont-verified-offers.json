@@ -2982,5 +2982,31 @@
     "sourceUrl": "https://kim24.pl/Srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-Atlas-Szop-1-Kg",
     "evidenceSha256": "a1540098ffb694b7beb0672b69f78371a90efc3c367e4fb1b3118ae031864a4f",
     "validUntil": null
+  },
+  {
+    "sourceId": "topboden-aquaprotec-vapour-10m2",
+    "ean": "5905167875223",
+    "name": "Folia paroizolacyjna Aquaprotec Vapour Barrier",
+    "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167875223_P_01.webp",
+    "priceGrosze": 4900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T23:51:56.294Z",
+    "sourceUrl": "https://topboden.pl/podklad-pod-panele/aquaprotec-vapour-barrier-energy-saving-flooring-system-folia-paroizolacyjna",
+    "evidenceSha256": "2b3480de6c44c0bfed18a9a1c575cf9d20a2011f6cfc0576596c86ea8d89ac48",
+    "validUntil": "2026-10-30"
+  },
+  {
+    "sourceId": "topboden-arbiton-izo-floor-tape-25m",
+    "ean": "5905167698778",
+    "name": "Taśma do podkładów pod panele Arbiton Izo Floor - 50 mm x 25 m",
+    "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167698778_P_01.webp",
+    "priceGrosze": 2891,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T23:51:56.720Z",
+    "sourceUrl": "https://topboden.pl/podklad-pod-panele/arbiton-izo-floor-tape-50mmx25m",
+    "evidenceSha256": "81ba11f2e1d08f1a8d1afbb8a67f47132f09fefb5d649e1e2c9d650945be0a7a",
+    "validUntil": "2026-10-30"
   }
 ]

@@ -21114,9 +21114,14 @@ var RETAIL_SOURCES = [
   // source: https://sklep.sewera.pl/atlas-szop-srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-1kg-p9798
   { "id": "sewera-atlas-szop-1kg", "ean": "5905400990010", "name": "Atlas Szop \u015Brodek do usuwania zabrudze\u0144 cementowych i wapiennych 1kg", "category": "grout-cleaner", "brand": "Atlas", "packageSize": 1, "unit": "kg", "store": "Sewera", "format": "sewera", "url": "https://sklep.sewera.pl/atlas-szop-srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-1kg-p9798" },
   // source: https://kim24.pl/Srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-Atlas-Szop-1-Kg
-  { "id": "kim-atlas-szop-1kg", "ean": "5905400990010", "name": "\u015Arodek do usuwania zabrudze\u0144 cementowych i wapiennych Atlas Szop  1 Kg", "category": "grout-cleaner", "brand": "Atlas", "packageSize": 1, "unit": "kg", "store": "KIM24", "format": "shoper-api", "productId": 13906, "retailerSku": "BSZA1IMSZOP01", "apiPurchaseUnit": "szt.", "variant": ["1 kg"], "url": "https://kim24.pl/Srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-Atlas-Szop-1-Kg", "imageUrl": "https://kim24.pl/environment/cache/images/productGfx_32646_800_800/atlas-szop.webp" }
+  { "id": "kim-atlas-szop-1kg", "ean": "5905400990010", "name": "\u015Arodek do usuwania zabrudze\u0144 cementowych i wapiennych Atlas Szop  1 Kg", "category": "grout-cleaner", "brand": "Atlas", "packageSize": 1, "unit": "kg", "store": "KIM24", "format": "shoper-api", "productId": 13906, "retailerSku": "BSZA1IMSZOP01", "apiPurchaseUnit": "szt.", "variant": ["1 kg"], "url": "https://kim24.pl/Srodek-do-usuwania-zabrudzen-cementowych-i-wapiennych-Atlas-Szop-1-Kg", "imageUrl": "https://kim24.pl/environment/cache/images/productGfx_32646_800_800/atlas-szop.webp" },
+  // source: https://topboden.pl/podklad-pod-panele/aquaprotec-vapour-barrier-energy-saving-flooring-system-folia-paroizolacyjna
+  { "id": "topboden-aquaprotec-vapour-10m2", "ean": "5905167875223", "name": "Folia paroizolacyjna Aquaprotec Vapour Barrier", "category": "vapor-barrier", "brand": "Arbiton", "packageSize": 10, "unit": "m2", "store": "TopBoden", "format": "topboden-api", "productUuid": "7a0956bd-3e86-4fd7-b9eb-43215294ebf2", "apiPurchaseUnit": "m<sup>2</sup>", "url": "https://topboden.pl/podklad-pod-panele/aquaprotec-vapour-barrier-energy-saving-flooring-system-folia-paroizolacyjna", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167875223_P_01.webp", "pickupRequiresConfirmation": true, "variant": ["Aquaprotec", "Vapour", "Barrier"] },
+  // source: https://topboden.pl/podklad-pod-panele/arbiton-izo-floor-tape-50mmx25m
+  { "id": "topboden-arbiton-izo-floor-tape-25m", "ean": "5905167698778", "name": "Ta\u015Bma do podk\u0142ad\xF3w pod panele Arbiton Izo Floor - 50 mm x 25 m", "category": "underlay-joint-tape", "brand": "Arbiton", "packageSize": 25, "unit": "m", "store": "TopBoden", "format": "topboden-api", "productUuid": "87657644-0281-4fd4-9857-4864c6aa2c63", "apiPurchaseUnit": "szt.", "url": "https://topboden.pl/podklad-pod-panele/arbiton-izo-floor-tape-50mmx25m", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167698778_P_01.webp", "pickupRequiresConfirmation": true, "variant": ["50 mm", "25 m"] }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Arbiton Aquaprotec Vapour Barrier 0,18 mm \u2014 folia 10 m\xB2": "5905167875223",
   "Atlas SZOP \u2014 \u015Brodek do pozosta\u0142o\u015Bci cementowych, 1 kg": "5905400990010",
   "Knauf Grundiermittel 60 \u2014 koncentrat gruntuj\u0105cy 15 kg": "5901793357799",
   "Knauf Betokontakt \u2014 grunt sczepny 5 kg": "4006379051014",
@@ -22864,16 +22869,23 @@ function confirmTopbodenProduct(product, source, count = source.purchaseMultiple
   if (accessory && (source.ean !== accessory[0] || source.productUuid !== accessory[1] || source.packageSize !== accessory[2] || source.unit !== accessory[3] || source.apiPurchaseUnit !== "opk." || multiple !== 1)) throw Error("product_package_not_confirmed");
   const glue = source.id === "topboden-strongman-300ml";
   if (glue && (source.ean !== "5905167788264" || source.productUuid !== "9cc774ed-c24b-4f3b-a863-a935a86383f4" || source.packageSize !== 300 || source.unit !== "ml" || source.apiPurchaseUnit !== "szt." || multiple !== 1)) throw Error("product_package_not_confirmed");
+  const supplies = {
+    "topboden-aquaprotec-vapour-10m2": ["5905167875223", "7a0956bd-3e86-4fd7-b9eb-43215294ebf2", 10, "m2", "m<sup>2</sup>", 10],
+    "topboden-arbiton-izo-floor-tape-25m": ["5905167698778", "87657644-0281-4fd4-9857-4864c6aa2c63", 25, "m", "szt.", 1]
+  };
+  const supply = supplies[source.id];
+  if (supply && (source.ean !== supply[0] || source.productUuid !== supply[1] || source.packageSize !== supply[2] || source.unit !== supply[3] || source.apiPurchaseUnit !== supply[4] || multiple !== 1)) throw Error("product_package_not_confirmed");
   if (units && Number.isSafeInteger(units.multiple) && Number.isSafeInteger(units.minOrderQuantity) && (units.multiple !== multiple || units.minOrderQuantity !== multiple)) throw Error("purchase_rules_changed");
-  const nativeUnit = accessory ? "opk." : glue ? "szt." : source.unit, nativeOrderUnit = accessory ? "opk." : "szt.", nativePackSize = accessory || glue ? 1 : source.packageSize;
+  const nativeUnit = supply ? supply[4] : accessory ? "opk." : glue ? "szt." : source.unit, nativeOrderUnit = accessory ? "opk." : "szt.", nativePackSize = supply ? supply[5] : accessory || glue ? 1 : source.packageSize;
   if (!Number.isSafeInteger(multiple) || multiple < 1 || multiple > 1e4 || !units || units.orderUnit !== nativeOrderUnit || units.priceListUnit !== nativeUnit || units.basicUnit !== nativeUnit || !Number.isFinite(units.numerator) || !Number.isFinite(units.denominator) || units.denominator <= 0 || units.numerator / units.denominator !== nativePackSize || units.multiple !== multiple || units.minOrderQuantity !== multiple) throw Error("retailer_unit_not_confirmed");
   if (!Number.isSafeInteger(count) || count < multiple || count % multiple || count > 1e4) throw Error("purchase_multiple_required");
   if (product.available === false) throw Error("retailer_out_of_stock");
   if (product.available !== true || !Number.isFinite(product.baseUnitStock)) throw Error("retailer_stock_not_confirmed");
   if (product.baseUnitStock < count * nativePackSize) throw Error(count === multiple ? "retailer_out_of_stock" : "insufficient_stock");
   const price2 = product.price;
-  const regularStrongman = glue && product.promotionCode?.code === "EXTRA20" && product.promotionCode?.discount === "20" && product.promotionCode?.freeProductsMessage === null && price2?.isDiscount === false && price2.discountValue === 0 && ["discountNetPrice", "discountGrossPrice", "discountPackageNetPrice", "discountPackageGrossPrice"].every((key) => price2[key] === null) && price2.grossPrice === price2.packageGrossPrice;
-  if (!price2 || typeof price2.isDiscount !== "boolean" || product.promotionCode && !regularStrongman) throw Error("conditional_price_not_supported");
+  const regularReviewedPrice = (glue || supply) && product.promotionCode?.code === "EXTRA20" && product.promotionCode?.discount === "20" && product.promotionCode?.freeProductsMessage === null && price2?.isDiscount === false && price2.discountValue === 0 && ["discountNetPrice", "discountGrossPrice", "discountPackageNetPrice", "discountPackageGrossPrice"].every((key) => price2[key] === null) && price2.grossPrice * nativePackSize === price2.packageGrossPrice;
+  if (!price2 || typeof price2.isDiscount !== "boolean" || product.promotionCode && !regularReviewedPrice) throw Error("conditional_price_not_supported");
+  if (supply && (!Number.isSafeInteger(price2.grossPrice) || price2.grossPrice <= 0 || price2.grossPrice * nativePackSize !== price2.packageGrossPrice)) throw Error("retailer_gross_price_not_confirmed");
   const priceGrosze = price2.isDiscount ? price2.discountPackageGrossPrice : price2.packageGrossPrice;
   if (!Number.isSafeInteger(priceGrosze) || priceGrosze <= 0) throw Error("retailer_gross_price_not_confirmed");
   const photo = product.images?.find((image) => image.category === "Packshot") ?? product.images?.[0];
@@ -22901,7 +22913,7 @@ async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMul
       return [];
     }
   }).filter((item) => item?.["@type"] === "Product");
-  const reviewedNativePack = source.apiPurchaseUnit === "opk." || source.id === "topboden-strongman-300ml";
+  const reviewedNativePack = source.apiPurchaseUnit === "opk." || ["topboden-strongman-300ml", "topboden-aquaprotec-vapour-10m2", "topboden-arbiton-izo-floor-tape-25m"].includes(source.id);
   const accessoryIdentity = reviewedNativePack && records.length === 1 && typeof product.metaTitle === "string" && product.metaTitle.length > 0 && card.metaTitle === product.metaTitle && records[0].name === product.metaTitle && records[0].brand === source.brand && typeof records[0].image === "string" && records[0].image.includes(source.ean);
   if (records.length !== 1 || !(reviewedNativePack ? accessoryIdentity : records[0].name?.startsWith(product.name))) throw Error("product_identity_not_confirmed");
   const offer = records[0].offers;
