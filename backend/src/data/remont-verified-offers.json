@@ -2902,5 +2902,31 @@
       "checkedAt": "2026-10-28T19:58:11.441Z",
       "expiresAt": "2026-10-29T19:58:11.441Z"
     }
+  },
+  {
+    "sourceId": "realbud-knauf-betokontakt-5kg",
+    "ean": "4006379051014",
+    "name": "Środek gruntujący KNAUF Betokontakt 5 kg, grunt do powierzchni betonowych",
+    "imageUrl": "https://realbud.com/environment/cache/images/productGfx_25859_500_500/9341.png?overlay=1",
+    "priceGrosze": 6679,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T20:40:34.364Z",
+    "sourceUrl": "https://realbud.com/pl/p/Srodek-gruntujacy-KNAUF-Betokontakt-5-kg%2C-grunt-do-powierzchni-betonowych/74052350",
+    "evidenceSha256": "7f60efd0172db5786e5e486dac8b7996de41cc33e90b8e5afb3b9e9bc38402e4",
+    "validUntil": null
+  },
+  {
+    "sourceId": "realbud-knauf-profix-50m2",
+    "ean": "5902367201067",
+    "name": "Siatka tynkarska - Knauf PROFIX szer. 1000 mm ( oczko 10x10 mm ) - 50 mb",
+    "imageUrl": "https://realbud.com/environment/cache/images/productGfx_23636_500_500/7ff3a7398c66270601e5d09d595d52a5.png",
+    "priceGrosze": 22700,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-28T20:40:34.454Z",
+    "sourceUrl": "https://realbud.com/pl/p/Siatka-tynkarska-Knauf-PROFIX-szer.-1000-mm-oczko-10x10-mm-50-mb/75057500",
+    "evidenceSha256": "a0c21dc5aa885c6d69a8124e79a5b546fd06bd0871889274b21487f5bd16d7c8",
+    "validUntil": null
   }
 ]
