@@ -208,7 +208,7 @@ const tworzStyleSciezki = tworzStyle((k) => ({
     alignItems: 'center', justifyContent: 'center', marginTop: 1,
   },
   checkOn: { backgroundColor: k.blue, borderColor: k.blue },
-  checkZnak: { color: k.white, fontSize: 15, fontWeight: '900', lineHeight: 18 },
+  checkZnak: { color: k.naAkcencie, fontSize: 15, fontWeight: '900', lineHeight: 18 },
   krokTresc: { flex: 1 },
   krokTytul: { fontSize: 15, fontWeight: '700', color: k.text, lineHeight: 20 },
   krokTytulZrobiony: { textDecorationLine: 'line-through', color: k.textMuted },

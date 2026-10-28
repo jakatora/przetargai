@@ -1,5 +1,5 @@
 import { Pressable, Text, ActivityIndicator } from 'react-native';
-import { radius } from '../theme';
+import { radius, DOTYK } from '../theme';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 
 /**
@@ -30,13 +30,13 @@ export default function Button({
         variant === 'primary' && styles.primary,
         variant === 'ghost' && styles.ghost,
         variant === 'danger' && styles.danger,
-        pressed && !isDisabled && styles.pressed,
+        pressed && !isDisabled && (solid ? styles.pressedSolid : styles.pressedGhost),
         isDisabled && styles.disabled,
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={solid ? kolory.white : kolory.blue} />
+        <ActivityIndicator color={solid ? kolory.naAkcencie : kolory.blue} />
       ) : (
         <Text style={[styles.text, solid ? styles.textLight : styles.textBlue]}>
           {title}
@@ -48,18 +48,22 @@ export default function Button({
 
 const tworzStylePrzycisku = tworzStyle((k) => ({
   base: {
-    height: 52,
+    minHeight: 50,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 12,
+    minWidth: DOTYK,
   },
   primary: { backgroundColor: k.blue },
   ghost: { backgroundColor: k.surface, borderWidth: 1.5, borderColor: k.border },
   danger: { backgroundColor: k.danger },
-  pressed: { opacity: 0.85 },
-  disabled: { opacity: 0.5 },
-  text: { fontSize: 16, fontWeight: '700' },
-  textLight: { color: k.white },
+  // Wciśnięcie: lekkie przygaszenie i zmniejszenie (bez zmiany wymiarów w układzie).
+  pressedSolid: { opacity: 0.88, transform: [{ scale: 0.98 }] },
+  pressedGhost: { backgroundColor: k.wyroznienie, borderColor: k.blue, transform: [{ scale: 0.98 }] },
+  disabled: { opacity: 0.45 },
+  text: { fontSize: 16, fontWeight: '700', textAlign: 'center', letterSpacing: -0.1 },
+  textLight: { color: k.naAkcencie },
   textBlue: { color: k.blue },
 }));

@@ -7,7 +7,7 @@ import TextField from '../components/TextField';
 import Button from '../components/Button';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia } from '../theme';
 import { celPoOnboardingu } from '../lib/onboarding';
 
 /**
@@ -106,17 +106,19 @@ export default function WitajScreen({ navigation }) {
   return (
     <Screen scroll>
       <View style={styles.hero}>
-        <Text style={styles.emoji}>🎯</Text>
-        <Text style={styles.tytul}>{t('Witaj w PrzetargAI', 'Welcome to PrzetargAI')}</Text>
+        <Text style={styles.tytul} accessibilityRole="header">{t('Witaj w PrzetargAI', 'Welcome to PrzetargAI')}</Text>
         <Text style={styles.wstep}>
           {t(
-            'Dopasujemy przetargi publiczne do Twojej firmy. Powiedz nam, czym się zajmujesz — na tej podstawie codziennie znajdziemy pasujące ogłoszenia.',
-            'We match public tenders to your company. Tell us what you do and we will find fitting notices for you every day.',
+            'Powiedz, czym się zajmujesz. Resztę robi aplikacja: codziennie przegląda ogłoszenia z rejestrów publicznych i wybiera te, które pasują do Twojej firmy.',
+            'Tell us what you do. The app does the rest: it reviews public procurement notices every day and picks the ones that fit your company.',
           )}
         </Text>
       </View>
 
-      <Text style={styles.krok}>{t('Krok 1 — opisz firmę jednym zdaniem', 'Step 1 — describe your company in one sentence')}</Text>
+      <View style={styles.krokRzad}>
+        <Text style={styles.krokNumer}>1</Text>
+        <Text style={styles.krok}>{t('Opisz firmę jednym zdaniem', 'Describe your company in one sentence')}</Text>
+      </View>
       <TextField
         value={opis}
         onChangeText={setOpis}
@@ -132,7 +134,10 @@ export default function WitajScreen({ navigation }) {
       />
       {info ? <Text style={styles.info}>{info}</Text> : null}
 
-      <Text style={styles.krok}>{t('Krok 2 — sprawdź i popraw', 'Step 2 — review and adjust')}</Text>
+      <View style={styles.krokRzad}>
+        <Text style={styles.krokNumer}>2</Text>
+        <Text style={styles.krok}>{t('Sprawdź i popraw', 'Review and adjust')}</Text>
+      </View>
       <TextField
         label={t('Słowa kluczowe', 'Keywords')}
         value={keywords}
@@ -163,22 +168,24 @@ export default function WitajScreen({ navigation }) {
 }
 
 const tworzStyleWitaj = tworzStyle((k) => ({
+  // Powitanie na „atramencie" — ten sam ciemny blok co raport pracownika na liście przetargów.
   hero: {
-    backgroundColor: k.wyroznienie,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: k.border,
+    backgroundColor: k.atrament,
+    borderRadius: radius.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
-    alignItems: 'center',
   },
-  emoji: { fontSize: 40, marginBottom: spacing.sm },
-  tytul: { fontSize: 24, fontWeight: '800', color: k.text, textAlign: 'center' },
-  wstep: { fontSize: 14, color: k.textMuted, textAlign: 'center', marginTop: spacing.sm, lineHeight: 21 },
-  krok: { fontSize: 15, fontWeight: '800', color: k.blue, marginTop: spacing.md, marginBottom: spacing.sm },
+  tytul: { ...typografia.ekran, color: k.naAtramencie },
+  wstep: { fontSize: 16, color: k.atramentDrugi, marginTop: spacing.sm, lineHeight: 23 },
+  krokRzad: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.sm },
+  krokNumer: {
+    width: 26, height: 26, borderRadius: 13, textAlign: 'center', lineHeight: 26, overflow: 'hidden',
+    fontSize: 14, fontWeight: '800', color: k.naAkcencie, backgroundColor: k.blue,
+  },
+  krok: { ...typografia.sekcja, color: k.text, flex: 1 },
   gap: { marginTop: spacing.md },
   gapMaly: { marginTop: spacing.sm },
   polCpv: { marginBottom: spacing.xs },
-  info: { fontSize: 13, color: k.blue, fontWeight: '600', marginTop: spacing.sm, lineHeight: 18 },
-  stopka: { fontSize: 12, color: k.textMuted, textAlign: 'center', marginTop: spacing.md, lineHeight: 17 },
+  info: { fontSize: 14, color: k.blue, fontWeight: '600', marginTop: spacing.sm, lineHeight: 20 },
+  stopka: { fontSize: 13, color: k.textMuted, textAlign: 'center', marginTop: spacing.md, lineHeight: 18 },
 }));

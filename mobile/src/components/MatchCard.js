@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Pressable, View, Text } from 'react-native';
-import { radius, spacing } from '../theme';
+import { radius, spacing, typografia } from '../theme';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useSaved } from '../context/SavedContext';
 import { useJezyk } from '../context/JezykContext';
@@ -31,22 +31,27 @@ export function SaveStar({ tenderId, styles, kolory }) {
   );
 }
 
-/** Kolorowy znacznik wyniku dopasowania (0–100). */
+/**
+ * Znacznik wyniku dopasowania (0–100): tonowane tło + liczba w kolorze progu.
+ * Spokojniejszy niż pełny kolor, a próg czytelny także bez koloru (liczba + podpis).
+ */
 export function ScoreBadge({ score, size = 'md' }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKarty);
   const { t } = useJezyk();
-  const color = score >= 80 ? kolory.green : score >= 60 ? kolory.blue : kolory.textMuted;
+  const [tlo, kolor] = score >= 80
+    ? [kolory.sukcesTlo, kolory.sukcesAkcent]
+    : score >= 60 ? [kolory.wyroznienie, kolory.blue] : [kolory.neutralneTlo, kolory.textMuted];
   const big = size === 'lg';
   return (
     <View
       style={[
         styles.score,
-        { backgroundColor: color, width: big ? 72 : 54, height: big ? 72 : 54 },
+        { backgroundColor: tlo, width: big ? 68 : 54, height: big ? 68 : 54 },
       ]}
     >
-      <Text style={[styles.scoreNum, big && styles.scoreNumBig]}>{score}</Text>
-      <Text style={styles.scorePct}>{t('% dopasowania', '% match')}</Text>
+      <Text style={[styles.scoreNum, big && styles.scoreNumBig, { color: kolor }]}>{score}</Text>
+      <Text style={[styles.scorePct, { color: kolor }]}>{t('% dopas.', '% match')}</Text>
     </View>
   );
 }
@@ -84,6 +89,7 @@ function MatchCard({ match, onOtworz, nowe = false }) {
       <View style={styles.row}>
         <ScoreBadge score={match.confidence_score} />
         <View style={styles.body}>
+          {nowe ? <Text style={styles.noweChip}>{t('Nowe', 'New')}</Text> : null}
           <Text style={styles.title} numberOfLines={2}>
             {tender.title}
           </Text>
@@ -92,41 +98,41 @@ function MatchCard({ match, onOtworz, nowe = false }) {
               {tender.organization}
             </Text>
           ) : null}
-          <Text style={styles.deadline}>
-            {t('Termin składania ofert', 'Bid deadline')}: {formatDate(tender.deadline)}
-          </Text>
-          <View style={styles.znacznikiRzad}>
-            {nowe ? <Text style={styles.noweChip}>{t('NOWE', 'NEW')}</Text> : null}
-            <Text
-              style={[
-                styles.znacznik,
-                termin.minal && styles.znacznikMiniony,
-                termin.pilny && styles.znacznikPilny,
-              ]}
-            >
-              {t(termin.etykieta)}
-            </Text>
-            {wadium ? (
-              <Text style={[styles.wadiumChip, wadium.ostrzezenie ? styles.wadiumChipWymaga : styles.wadiumChipBez]}>
-                {wadium.ostrzezenie
-                  ? t(`Wadium ${t(wadium.wartosc)}`, `Bid security ${t(wadium.wartosc)}`)
-                  : t('Bez wadium', 'No bid security')}
-              </Text>
-            ) : null}
-          </View>
-          {/*
-            Dlaczego widzisz ten przetarg (P1-4) — najwyżej dwa znaczniki i tylko
-            te sygnały, które zadziałały. Liczone bez AI, z profilu i ogłoszenia.
-          */}
-          <ZnacznikiWyjasnienia wyjasnienie={match.wyjasnienie} />
-          {/*
-            Źródło pierwotne + czas ostatniej synchronizacji (P1-3). Bez drugiej
-            informacji cichy feed wygląda tak samo przy spokojnym tygodniu
-            i przy padniętym pobieraniu.
-          */}
-          <PodpisZrodla zrodlo={tender.zrodlo} kompakt />
         </View>
       </View>
+      {/* Termin i wadium w jednym pasku pod tytułem — to, o co wykonawca pyta najpierw. */}
+      <View style={styles.meta}>
+        <Text style={styles.deadline}>
+          {t('Termin', 'Deadline')}: <Text style={styles.deadlineData}>{formatDate(tender.deadline)}</Text>
+        </Text>
+        <Text
+          style={[
+            styles.znacznik,
+            termin.minal && styles.znacznikMiniony,
+            termin.pilny && styles.znacznikPilny,
+          ]}
+        >
+          {t(termin.etykieta)}
+        </Text>
+        {wadium ? (
+          <Text style={[styles.wadiumChip, wadium.ostrzezenie ? styles.wadiumChipWymaga : styles.wadiumChipBez]}>
+            {wadium.ostrzezenie
+              ? t(`Wadium ${t(wadium.wartosc)}`, `Bid security ${t(wadium.wartosc)}`)
+              : t('Bez wadium', 'No bid security')}
+          </Text>
+        ) : null}
+      </View>
+      {/*
+        Dlaczego widzisz ten przetarg (P1-4) — najwyżej dwa znaczniki i tylko
+        te sygnały, które zadziałały. Liczone bez AI, z profilu i ogłoszenia.
+      */}
+      <ZnacznikiWyjasnienia wyjasnienie={match.wyjasnienie} />
+      {/*
+        Źródło pierwotne + czas ostatniej synchronizacji (P1-3). Bez drugiej
+        informacji cichy feed wygląda tak samo przy spokojnym tygodniu
+        i przy padniętym pobieraniu.
+      */}
+      <PodpisZrodla zrodlo={tender.zrodlo} kompakt />
     </Pressable>
   );
 }
@@ -134,51 +140,67 @@ function MatchCard({ match, onOtworz, nowe = false }) {
 export default memo(MatchCard);
 
 const tworzStyleKarty = tworzStyle((k) => ({
-  kartaMiniona: { opacity: 0.55 },
+  kartaMiniona: { opacity: 0.6 },
+  meta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingTop: spacing.sm + 2,
+    borderTopWidth: 1,
+    borderTopColor: k.border,
+  },
   znacznik: {
     fontSize: 12,
     fontWeight: '700',
     color: k.textMuted,
-  },
-  znacznikPilny: { color: k.ostrzezenieTekst },
-  znacznikMiniony: { color: k.danger },
-  noweChip: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: k.white,
-    backgroundColor: k.blue,
+    backgroundColor: k.neutralneTlo,
     paddingVertical: 3,
     paddingHorizontal: 8,
-    borderRadius: 999,
+    borderRadius: radius.sm,
     overflow: 'hidden',
-    letterSpacing: 0.5,
   },
-  znacznikiRzad: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
-  wadiumChip: { fontSize: 11, fontWeight: '800', paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, overflow: 'hidden' },
-  wadiumChipWymaga: { backgroundColor: k.ostrzezenieTlo ?? '#fef3c7', color: k.ostrzezenieTekst },
-  wadiumChipBez: { backgroundColor: (k.green ?? '#16a34a') + '22', color: k.green ?? '#16a34a' },
+  znacznikPilny: { color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo },
+  znacznikMiniony: { color: k.danger, backgroundColor: k.dangerTlo },
+  noweChip: {
+    alignSelf: 'flex-start',
+    fontSize: 11,
+    fontWeight: '800',
+    color: k.blue,
+    backgroundColor: k.wyroznienie,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  wadiumChip: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 8, borderRadius: radius.sm, overflow: 'hidden' },
+  wadiumChipWymaga: { backgroundColor: k.ostrzezenieTlo, color: k.ostrzezenieTekst },
+  wadiumChipBez: { backgroundColor: k.sukcesTlo, color: k.sukcesAkcent },
   card: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: k.border,
     padding: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: 12,
   },
-  pressed: { opacity: 0.7 },
-  gwiazdka: { position: 'absolute', top: 6, right: 8, zIndex: 2, padding: 4 },
-  gwiazdkaZnak: { fontSize: 22, lineHeight: 24, fontWeight: '700' },
-  row: { flexDirection: 'row', gap: spacing.md, paddingRight: 26 },
+  pressed: { backgroundColor: k.powierzchniaWtorna, borderColor: k.obramowaniePola },
+  gwiazdka: { position: 'absolute', top: 6, right: 6, zIndex: 2, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  gwiazdkaZnak: { fontSize: 22, lineHeight: 26, fontWeight: '700' },
+  row: { flexDirection: 'row', gap: 14, paddingRight: 30 },
   score: {
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scoreNum: { color: k.white, fontWeight: '800', fontSize: 18 },
-  scoreNumBig: { fontSize: 26 },
-  scorePct: { color: k.white, fontSize: 8, fontWeight: '600', textAlign: 'center' },
+  scoreNum: { fontWeight: '800', fontSize: 19, lineHeight: 22, fontVariant: ['tabular-nums'] },
+  scoreNumBig: { fontSize: 25, lineHeight: 29 },
+  scorePct: { fontSize: 9, fontWeight: '700', textAlign: 'center' },
   body: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '700', color: k.text },
-  org: { fontSize: 13, color: k.textMuted, marginTop: 3 },
-  deadline: { fontSize: 12, color: k.textMuted, marginTop: 6 },
+  title: { ...typografia.karta, color: k.text },
+  org: { fontSize: 13, lineHeight: 18, color: k.textMuted, marginTop: 4 },
+  deadline: { fontSize: 13, color: k.textMuted },
+  deadlineData: { color: k.text, fontWeight: '700' },
 }));

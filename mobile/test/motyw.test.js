@@ -108,3 +108,37 @@ test('ciemna paleta faktycznie jest ciemna (tło ciemne, tekst jasny)', () => {
   assert.ok(jasnosc(PALETY.jasny.bg) > 200, 'tło jasnego ma być jasne');
   assert.ok(jasnosc(PALETY.jasny.text) < 80, 'tekst jasnego ma być ciemny');
 });
+
+test('system wizualny 2026-10: tekst, akcenty i kontrolki mają wymagany kontrast w obu motywach', () => {
+  /*
+   * Nowa paleta (docs/design-system.md) wprowadziła tokeny `naAkcencie` (tekst NA wypełnionym
+   * akcencie — w ciemnym motywie ciemny, bo jasny niebieski z białym tekstem dawał 3,3:1),
+   * `zakreslacz`, `atrament` i `obramowaniePola`. Każda para, która niesie tekst, musi mieć
+   * AA 4,5:1; obramowanie kontrolki formularza — 3:1 (WCAG 1.4.11).
+   */
+  const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  const L = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  };
+  const kontrast = (fg, bg) => {
+    const a = L(fg) + 0.05; const b = L(bg) + 0.05;
+    return Math.max(a, b) / Math.min(a, b);
+  };
+  const tekst = [
+    ['text', 'bg'], ['text', 'surface'], ['text', 'zakreslacz'], ['text', 'wyroznienie'],
+    ['textMuted', 'surface'], ['textMuted', 'bg'], ['textMuted', 'neutralneTlo'], ['textMuted', 'powierzchniaWtorna'],
+    ['blue', 'surface'], ['blue', 'bg'], ['blue', 'wyroznienie'],
+    ['naAkcencie', 'blue'], ['naAkcencie', 'green'], ['naAkcencie', 'danger'],
+    ['naAtramencie', 'atrament'], ['atramentDrugi', 'atrament'],
+    ['danger', 'surface'], ['danger', 'dangerTlo'], ['ostrzezenieTekst', 'ostrzezenieTlo'],
+  ];
+  for (const [schemat, p] of Object.entries(PALETY)) {
+    for (const [fg, bg] of tekst) {
+      const r = kontrast(p[fg], p[bg]);
+      assert.ok(r >= 4.5, `${schemat}: ${fg} na ${bg} = ${r.toFixed(2)}:1 — poniżej AA 4.5:1`);
+    }
+    const ramka = kontrast(p.obramowaniePola, p.surface);
+    assert.ok(ramka >= 3, `${schemat}: obramowaniePola na surface = ${ramka.toFixed(2)}:1 — poniżej 3:1`);
+  }
+});

@@ -3,10 +3,11 @@ import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { api } from '../api/client';
 import Button from './Button';
 import ArkuszOdrzucenia from './ArkuszOdrzucenia';
-import { useStyle, tworzStyle } from '../context/ThemeContext';
+import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { useSaved } from '../context/SavedContext';
-import { spacing, radius } from '../theme';
+import { spacing, radius, typografia } from '../theme';
+import Ikona from './Ikona';
 import { formatDate } from '../lib/format';
 import { getItem, setItem } from '../lib/storage';
 import {
@@ -23,6 +24,7 @@ import { OPISY_BRAKOW } from '../lib/kartaFirmy';
  */
 export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds, onUpgrade, onZmiana }) {
   const { t } = useJezyk();
+  const { kolory } = useTheme();
   const styles = useStyle(tworzStylePanelu);
   const { isSaved, toggle } = useSaved();
   const [dzien, setDzien] = useState(null);
@@ -111,30 +113,31 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
 
   return (
     <View style={styles.panel}>
-      <View style={styles.raport}>
+      <View style={styles.raport} accessibilityRole="summary">
+        <Text style={styles.raportNaglowek}>{t('Raport z przeglądu ogłoszeń', 'Notice review report')}</Text>
         <Text style={styles.raportTekst}>{t(raport)}</Text>
-        {nastepny ? <Text style={styles.drobny}>{t(nastepny)}</Text> : null}
-        {czekaja ? <Text style={styles.drobny}>{t(czekaja)}</Text> : null}
+        {nastepny ? <Text style={styles.raportDrobny}>{t(nastepny)}</Text> : null}
+        {czekaja ? <Text style={styles.raportDrobny}>{t(czekaja)}</Text> : null}
       </View>
 
       {koniecProby ? (
         <Pressable style={styles.brak} onPress={onUpgrade} accessibilityRole="button">
           <Text style={styles.brakTekst}>{t(koniecProby)}</Text>
-          <Text style={styles.brakCta}>{t('Przejdź na Standard — 99 zł/mc →', 'Upgrade to Standard — PLN 99/mo →')}</Text>
+          <Text style={styles.brakCta}>{t('Przejdź na Standard — 99 zł/mc', 'Upgrade to Standard — PLN 99/mo')}</Text>
         </Pressable>
       ) : null}
 
       {proba ? (
         <Pressable style={styles.proba} onPress={onUpgrade} accessibilityRole="button">
           <Text style={styles.probaTekst}>{t(proba)}</Text>
-          <Text style={styles.probaCta}>{t('Przejdź na Standard — 99 zł/mc →', 'Upgrade to Standard — PLN 99/mo →')}</Text>
+          <Text style={styles.probaCta}>{t('Przejdź na Standard — 99 zł/mc', 'Upgrade to Standard — PLN 99/mo')}</Text>
         </Pressable>
       ) : null}
 
       {brak && OPISY_BRAKOW[brak] ? (
         <Pressable style={styles.brak} onPress={() => navigation.navigate('KartaFirmy', { krok: OPISY_BRAKOW[brak].krok })} accessibilityRole="button">
           <Text style={styles.brakTekst}>{t(OPISY_BRAKOW[brak].tytul)}</Text>
-          <Text style={styles.brakCta}>{t('Uzupełnij kartę firmy →', 'Complete your company card →')}</Text>
+          <Text style={styles.brakCta}>{t('Uzupełnij kartę firmy', 'Complete your company card')}</Text>
         </Pressable>
       ) : null}
 
@@ -153,13 +156,22 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
         <Text style={styles.drobny}>{t('Dziś nic nie pasuje do Twojej firmy. Wcześniejsze wybory są niżej.', 'Nothing fits your company today. Earlier picks are below.')}</Text>
       ) : null}
       {(dzien.wybrane ?? []).map((m) => (
-        <Pressable key={m.id} style={styles.karta} onPress={() => navigation.navigate('MatchDetail', { match: m })} accessibilityRole="button">
+        <Pressable key={m.id} style={({ pressed }) => [styles.karta, pressed && styles.kartaWcisnieta]} onPress={() => navigation.navigate('MatchDetail', { match: m })} accessibilityRole="button">
           <Text style={styles.kartaTytul}>{m.tender?.title}</Text>
           {m.tender?.organization ? <Text style={styles.drobny}>{m.tender.organization}</Text> : null}
           {m.tender?.deadline ? (
             <Text style={styles.drobny}>{t(`Termin ofert: ${formatDate(m.tender.deadline)}`, `Bid deadline: ${formatDate(m.tender.deadline)}`)}</Text>
           ) : null}
-          {(m.uzasadnienie ?? []).map((p) => <Text key={p} style={styles.punkt}>{`✓ ${p}`}</Text>)}
+          {(m.uzasadnienie ?? []).length ? (
+            <View style={styles.uzasadnienie}>
+              {m.uzasadnienie.map((p) => (
+                <View key={p} style={styles.punktRzad}>
+                  <Ikona nazwa="ok" rozmiar={16} kolor={kolory.sukcesAkcent} />
+                  <Text style={styles.punkt}>{p}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
           {m.ocena_bez_ai ? (
             <Text style={styles.drobny}>{t('Ocena wstępna — sprawdzimy ją jeszcze raz.', 'Preliminary assessment — we will re-check it.')}</Text>
           ) : null}
@@ -168,28 +180,36 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
               title={isSaved(m.id) ? t('Zapisany', 'Saved') : t('Zapisz', 'Save')}
               variant="ghost"
               onPress={() => toggle(m.id).catch((err) => zgloszBlad(t('Nie udało się zapisać przetargu', 'Could not save the tender'), err))}
-              style={styles.przyciskPol}
+              style={[styles.przyciskPol, styles.przyciskMaly]}
             />
-            <Button title={t('Odrzuć', 'Reject')} variant="ghost" onPress={() => setDoOdrzucenia(m)} style={styles.przyciskPol} />
+            <Button title={t('Odrzuć', 'Reject')} variant="ghost" onPress={() => setDoOdrzucenia(m)} style={[styles.przyciskPol, styles.przyciskMaly]} />
           </View>
         </Pressable>
       ))}
 
       {grupy.length ? (
         <View style={styles.odrzucone}>
-          <Pressable onPress={() => setRozwiniete((x) => !x)} accessibilityRole="button" accessibilityState={{ expanded: rozwiniete }}>
-            <Text style={styles.sekcja}>
-              {t(`Odrzucone (${razem}) ${rozwiniete ? '▲' : '▼'}`, `Rejected (${razem}) ${rozwiniete ? '▲' : '▼'}`)}
+          <Pressable onPress={() => setRozwiniete((x) => !x)} accessibilityRole="button" accessibilityState={{ expanded: rozwiniete }} style={styles.odrzuconeNaglowek}>
+            <Text style={styles.odrzuconeTytul}>
+              {t(`Odrzucone przez aplikację (${razem})`, `Rejected by the app (${razem})`)}
             </Text>
+            <View style={{ transform: [{ rotate: rozwiniete ? '-90deg' : '90deg' }] }}>
+              <Ikona nazwa="dalej" rozmiar={16} kolor={kolory.textMuted} />
+            </View>
           </Pressable>
           {rozwiniete ? (
             <View>
-              {grupy.map((g) => <Text key={g.kod} style={styles.punkt}>{`${t(g.etykieta)}: ${g.liczba}`}</Text>)}
+              {grupy.map((g) => (
+                <View key={g.kod} style={styles.grupaRzad}>
+                  <Text style={styles.grupaEtykieta}>{t(g.etykieta)}</Text>
+                  <Text style={styles.grupaLiczba}>{g.liczba}</Text>
+                </View>
+              ))}
               {dzien.odrzucone?.lista_dostepna ? (
                 <Button title={t('Pokaż listę odrzuconych', 'Show rejected list')} variant="ghost" onPress={() => navigation.navigate('Odrzucone')} />
               ) : (
                 <Pressable onPress={onUpgrade} accessibilityRole="button">
-                  <Text style={styles.brakCta}>{t('Pełna lista odrzuconych z przyczynami jest w planie Standard →', 'The full rejected list with reasons is on the Standard plan →')}</Text>
+                  <Text style={styles.brakCta}>{t('Pełna lista odrzuconych z przyczynami jest w planie Standard', 'The full rejected list with reasons is on the Standard plan')}</Text>
                 </Pressable>
               )}
             </View>
@@ -212,22 +232,34 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
 const tworzStylePanelu = tworzStyle((k) => ({
   panel: { paddingBottom: spacing.sm },
   ladowanie: { marginVertical: spacing.md },
-  raport: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: k.surface, borderWidth: 1, borderColor: k.border, marginBottom: spacing.sm },
-  raportTekst: { fontSize: 15, fontWeight: '700', color: k.text },
-  drobny: { fontSize: 13, color: k.textMuted, marginTop: spacing.xs },
+  // Raport dnia: ciemny blok — „tyle zrobiła aplikacja, zanim tu zajrzałeś".
+  raport: { padding: spacing.md + 2, borderRadius: radius.lg, backgroundColor: k.atrament, marginBottom: spacing.md, gap: 4 },
+  raportNaglowek: { fontSize: 13, fontWeight: '700', color: k.atramentDrugi },
+  raportTekst: { fontSize: 17, lineHeight: 23, fontWeight: '800', color: k.naAtramencie, letterSpacing: -0.2 },
+  raportDrobny: { fontSize: 13, lineHeight: 18, color: k.atramentDrugi },
+  drobny: { fontSize: 13, lineHeight: 18, color: k.textMuted, marginTop: spacing.xs },
   proba: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: k.sukcesTlo, marginBottom: spacing.sm },
   probaTekst: { fontSize: 15, fontWeight: '700', color: k.sukcesAkcent },
-  probaCta: { fontSize: 13, color: k.text, marginTop: spacing.xs },
+  probaCta: { fontSize: 14, fontWeight: '700', color: k.text, marginTop: spacing.xs },
   brak: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: k.ostrzezenieTlo, marginBottom: spacing.sm },
-  brakTekst: { fontSize: 14, color: k.ostrzezenieTekst },
-  brakCta: { fontSize: 13, fontWeight: '700', color: k.blue, marginTop: spacing.xs },
-  propozycja: { padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: k.ostrzezenieAkcent, marginBottom: spacing.sm },
+  brakTekst: { fontSize: 14, lineHeight: 20, color: k.ostrzezenieTekst },
+  brakCta: { fontSize: 14, fontWeight: '700', color: k.blue, marginTop: spacing.xs },
+  propozycja: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: k.surface, borderWidth: 1, borderColor: k.border, borderLeftWidth: 4, borderLeftColor: k.ostrzezenieAkcent, marginBottom: spacing.sm },
   propozycjaTekst: { fontSize: 14, color: k.text, lineHeight: 20 },
-  sekcja: { fontSize: 16, fontWeight: '700', color: k.text, marginTop: spacing.md, marginBottom: spacing.xs },
-  karta: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: k.surface, borderWidth: 1, borderColor: k.border, marginBottom: spacing.sm },
-  kartaTytul: { fontSize: 15, fontWeight: '700', color: k.text },
-  punkt: { fontSize: 14, color: k.text, marginTop: spacing.xs },
-  rzad: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  sekcja: { ...typografia.sekcja, color: k.text, marginTop: spacing.md, marginBottom: spacing.sm },
+  karta: { padding: spacing.md, borderRadius: radius.lg, backgroundColor: k.surface, borderWidth: 1, borderColor: k.border, marginBottom: 12 },
+  kartaWcisnieta: { backgroundColor: k.powierzchniaWtorna, borderColor: k.obramowaniePola },
+  kartaTytul: { ...typografia.karta, color: k.text },
+  uzasadnienie: { marginTop: spacing.sm, gap: 6, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: k.border },
+  punktRzad: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
+  punkt: { flex: 1, fontSize: 14, lineHeight: 20, color: k.text },
+  rzad: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   przyciskPol: { flex: 1 },
-  odrzucone: { marginTop: spacing.xs },
+  przyciskMaly: { minHeight: 42, paddingVertical: 8 },
+  odrzucone: { marginTop: spacing.sm, backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, paddingHorizontal: spacing.md },
+  odrzuconeNaglowek: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48 },
+  odrzuconeTytul: { fontSize: 15, fontWeight: '700', color: k.text },
+  grupaRzad: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: 1, borderTopColor: k.border },
+  grupaEtykieta: { flex: 1, fontSize: 14, color: k.text },
+  grupaLiczba: { fontSize: 14, fontWeight: '800', color: k.text, fontVariant: ['tabular-nums'] },
 }));

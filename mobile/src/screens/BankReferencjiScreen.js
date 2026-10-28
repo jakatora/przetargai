@@ -156,7 +156,7 @@ export default function BankReferencjiScreen() {
                 style={[styles.chip, aktywny && { backgroundColor: kolory.blue, borderColor: kolory.blue }]}
                 accessibilityLabel={RODZAJE[r].etykieta}
               >
-                <Text style={[styles.chipText, aktywny && { color: kolory.white }]}>
+                <Text style={[styles.chipText, aktywny && { color: kolory.naAkcencie }]}>
                   {RODZAJE[r].etykieta}
                 </Text>
               </Pressable>

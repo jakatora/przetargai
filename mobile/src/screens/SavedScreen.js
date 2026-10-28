@@ -250,5 +250,5 @@ const tworzStyleZapisanych = tworzStyle((k) => ({
     paddingHorizontal: spacing.xl,
     borderRadius: radius.md,
   },
-  ponowBtnTekst: { color: k.white, fontSize: 15, fontWeight: '700' },
+  ponowBtnTekst: { color: k.naAkcencie, fontSize: 15, fontWeight: '700' },
 }));

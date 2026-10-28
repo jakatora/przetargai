@@ -198,5 +198,5 @@ const tworzStylePulpitu = tworzStyle((k) => ({
     paddingHorizontal: spacing.xl,
     borderRadius: radius.md,
   },
-  akcjaBtnTekst: { color: k.white, fontSize: 15, fontWeight: '700' },
+  akcjaBtnTekst: { color: k.naAkcencie, fontSize: 15, fontWeight: '700' },
 }));

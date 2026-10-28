@@ -9,7 +9,7 @@ import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
 import { odmienPrzetargi } from '../lib/katalogPrzetargow';
-import { spacing } from '../theme';
+import { spacing, radius, typografia } from '../theme';
 
 /** Separator tysięcy bez Intl (Hermes bywa okrojony) — „12 345". */
 function formatLiczba(n) {
@@ -60,7 +60,7 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.logoText}>P</Text>
         </View>
         <Text style={styles.appName}>PrzetargAI</Text>
-        <Text style={styles.tagline}>{t('Monitoring przetargów publicznych', 'Public tender monitoring')}</Text>
+        <Text style={styles.tagline}>{t('Aplikacja szuka przetargów i robi za Ciebie większość pracy', 'The app finds tenders and does most of the work for you')}</Text>
       </View>
 
       {stats?.lacznie ? (
@@ -118,33 +118,31 @@ export default function LoginScreen({ navigation }) {
 }
 
 const tworzStyleLogowania = tworzStyle((k) => ({
-  content: { flexGrow: 1, justifyContent: 'center' },
+  content: { flexGrow: 1, justifyContent: 'center', maxWidth: 440 },
   brand: { alignItems: 'center', marginBottom: spacing.xl },
   logo: {
-    width: 64,
-    height: 64,
+    width: 60,
+    height: 60,
     borderRadius: 16,
     backgroundColor: k.blue,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoText: { color: k.white, fontSize: 36, fontWeight: '800' },
-  appName: { fontSize: 26, fontWeight: '800', color: k.text, marginTop: 12 },
-  tagline: { fontSize: 14, color: k.textMuted, marginTop: 4 },
+  logoText: { color: k.naAkcencie, fontSize: 32, fontWeight: '800' },
+  appName: { ...typografia.ekran, color: k.text, marginTop: 14 },
+  tagline: { fontSize: 15, lineHeight: 21, color: k.textMuted, marginTop: 6, textAlign: 'center', maxWidth: 300 },
   spoleczny: {
-    backgroundColor: k.wyroznienie ?? k.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: k.blue,
+    backgroundColor: k.wyroznienie,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.lg,
   },
-  spolecznyLiczba: { fontSize: 17, fontWeight: '800', color: k.blue },
-  spolecznyOpis: { fontSize: 13, color: k.text, marginTop: 4, lineHeight: 19 },
-  heading: { fontSize: 20, fontWeight: '700', color: k.text, marginBottom: spacing.md },
-  error: { color: k.danger, fontSize: 14, marginBottom: spacing.sm },
-  linkHaslo: { color: k.blue, fontWeight: '700', textAlign: 'center', marginTop: spacing.md },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
-  footerText: { color: k.textMuted },
-  link: { color: k.blue, fontWeight: '700' },
+  spolecznyLiczba: { fontSize: 17, fontWeight: '800', color: k.blue, fontVariant: ['tabular-nums'] },
+  spolecznyOpis: { fontSize: 14, color: k.text, marginTop: 4, lineHeight: 20 },
+  heading: { ...typografia.tytul, color: k.text, marginBottom: spacing.md },
+  error: { color: k.danger, fontSize: 14, fontWeight: '600', marginBottom: spacing.sm },
+  linkHaslo: { color: k.blue, fontWeight: '700', textAlign: 'center', marginTop: spacing.md, paddingVertical: spacing.sm },
+  footer: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', marginTop: spacing.md },
+  footerText: { color: k.textMuted, fontSize: 15, paddingVertical: spacing.sm },
+  link: { color: k.blue, fontWeight: '700', fontSize: 15, paddingVertical: spacing.sm },
 }));

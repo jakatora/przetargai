@@ -127,7 +127,7 @@ const tworzStyleKreatora = tworzStyle((k) => ({
     height: 26,
     borderRadius: 13,
     backgroundColor: k.blue,
-    color: k.white,
+    color: k.naAkcencie,
     textAlign: 'center',
     lineHeight: 26,
     fontSize: 14,

@@ -112,7 +112,7 @@ const tworzStylePrzewodnika = tworzStyle((k) => ({
   pozGora: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   check: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: k.border, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   checkOn: { backgroundColor: k.blue, borderColor: k.blue },
-  checkZnak: { color: k.white, fontSize: 15, fontWeight: '900', lineHeight: 18 },
+  checkZnak: { color: k.naAkcencie, fontSize: 15, fontWeight: '900', lineHeight: 18 },
   tresc: { flex: 1 },
   tytul: { fontSize: 15, fontWeight: '800', color: k.text, lineHeight: 20 },
   tytulZrobiony: { color: k.textMuted },

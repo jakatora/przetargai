@@ -159,7 +159,7 @@ const tworzStyleSciagi = tworzStyle((k) => ({
     marginRight: spacing.sm + 4,
   },
   kratkaWybrana: { backgroundColor: k.blue, borderColor: k.blue },
-  ptaszek: { color: k.white, fontSize: 14, fontWeight: '800', lineHeight: 16 },
+  ptaszek: { color: k.naAkcencie, fontSize: 14, fontWeight: '800', lineHeight: 16 },
   opis: { flex: 1 },
   nazwa: { fontSize: 15, color: k.text },
   nazwaDzialu: { fontWeight: '700' },

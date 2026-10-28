@@ -87,7 +87,7 @@ export default function KalkulatorPunktowScreen({ route }) {
                 const akt = k.kierunek === v;
                 return (
                   <Pressable accessibilityRole="radio" accessibilityState={{ checked: akt }} key={v} onPress={() => ustawKryt(k.id, 'kierunek', v)} style={[styles.chip, akt && { backgroundColor: kolory.blue, borderColor: kolory.blue }]}>
-                    <Text style={[styles.chipText, akt && { color: kolory.white }]}>{et}</Text>
+                    <Text style={[styles.chipText, akt && { color: kolory.naAkcencie }]}>{et}</Text>
                   </Pressable>
                 );
               })}

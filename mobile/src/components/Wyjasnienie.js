@@ -128,12 +128,12 @@ export function NastepnyKrok({ podpowiedz, onPress }) {
 }
 
 const tworzStyleWyjasnienia = tworzStyle((k) => ({
-  skrotRzad: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
+  skrotRzad: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.sm },
   znacznik: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     borderWidth: 1,
-    borderRadius: 999,
+    borderRadius: radius.sm,
     paddingVertical: 2,
     paddingHorizontal: 8,
     overflow: 'hidden',
@@ -165,7 +165,7 @@ const tworzStyleWyjasnienia = tworzStyle((k) => ({
   krok: {
     backgroundColor: k.wyroznienie,
     borderRadius: radius.lg,
-    borderWidth: 1,
+    borderLeftWidth: 4,
     borderColor: k.blue,
     padding: spacing.md,
     marginBottom: spacing.md,

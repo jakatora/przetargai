@@ -406,7 +406,7 @@ const tworzStyleWyszukiwan = tworzStyle((k) => ({
     paddingHorizontal: 10,
     overflow: 'hidden',
   },
-  chipWyborAktywny: { color: k.white, backgroundColor: k.blue, borderColor: k.blue },
+  chipWyborAktywny: { color: k.naAkcencie, backgroundColor: k.blue, borderColor: k.blue },
   stan: { fontSize: 13, fontWeight: '700', marginTop: 4 },
   meta: { fontSize: 12, color: k.textMuted },
   akcje: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },

@@ -140,7 +140,7 @@ const tworzStyleKontrolera = tworzStyle((k) => ({
     width: 26, height: 26, borderRadius: radius.sm, borderWidth: 2, borderColor: k.border,
     alignItems: 'center', justifyContent: 'center', marginTop: 1,
   },
-  checkZnak: { color: k.white, fontSize: 16, fontWeight: '900', lineHeight: 20 },
+  checkZnak: { color: k.naAkcencie, fontSize: 16, fontWeight: '900', lineHeight: 20 },
   wymogTresc: { flex: 1 },
   wymogGlowa: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   wymogEtykieta: { fontSize: 14, fontWeight: '700', color: k.text, flexShrink: 1 },
