@@ -3550,5 +3550,31 @@
     "sourceUrl": "https://sklep.sewera.pl/soudal-akryl-do-plyt-gk-bialy-280ml-p13819",
     "evidenceSha256": "51967a120a559e3a3941477b7866285f118bd613e3760d1a2cecc812f9598205",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-klingspor-pl28c-p180-sheet",
+    "ean": "5907560023560",
+    "name": "Papier ścierny gr.180 arkusz 230x280mm",
+    "imageUrl": "https://sklep.sewera.pl/photo/56975/papier-scierny-gr-180-arkusz-230x280mm.webp",
+    "priceGrosze": 154,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T18:53:03.968Z",
+    "sourceUrl": "https://sklep.sewera.pl/papier-scierny-gr-180-arkusz-230x280mm-p6901",
+    "evidenceSha256": "87bf9380ba1e45f1f0ed32446b69b1d010a97dedddcb5f0e54eed3d9c4547586",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-klingspor-pl28c-p220-sheet",
+    "ean": "5907560027483",
+    "name": "Papier ścierny gr.220 arkusz 230x280mm",
+    "imageUrl": "https://sklep.sewera.pl/photo/56977/papier-scierny-gr-220-arkusz-230x280mm.webp",
+    "priceGrosze": 167,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T18:53:05.517Z",
+    "sourceUrl": "https://sklep.sewera.pl/papier-scierny-gr-220-arkusz-230x280mm-p6902",
+    "evidenceSha256": "04b13843c90e6a5a34195e92f2a19efba243609409dbd324dbccbcf67bceb1df",
+    "validUntil": null
   }
 ]
