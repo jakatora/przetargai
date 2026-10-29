@@ -3008,5 +3008,31 @@
     "sourceUrl": "https://topboden.pl/podklad-pod-panele/arbiton-izo-floor-tape-50mmx25m",
     "evidenceSha256": "81ba11f2e1d08f1a8d1afbb8a67f47132f09fefb5d649e1e2c9d650945be0a7a",
     "validUntil": "2026-10-30"
+  },
+  {
+    "sourceId": "modna-paradyz-u117-light-grey-143m2",
+    "ean": "5904584158285",
+    "name": "U117 LIGHT GREY GRES SZKL. REKT. MAT. 59,8X59,8",
+    "imageUrl": "https://modnalazienka.pl/images/thumbnails/paradyz//u117-light-grey-gres-szkl-rekt-mat-598x598.jpg",
+    "priceGrosze": 10729,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T01:11:11.784Z",
+    "sourceUrl": "https://modnalazienka.pl/u117-light-grey-gres-szkl-rekt-mat-598x598-34155",
+    "evidenceSha256": "28b20ecd412278958f1f8cb824c7692a35ab045c21a318c44a7595165cd31f95",
+    "validUntil": null
+  },
+  {
+    "sourceId": "modna-paradyz-u117-light-beige-143m2",
+    "ean": "5904584158247",
+    "name": "U117 LIGHT BEIGE GRES SZKL. REKT. MAT. 59,8X59,8",
+    "imageUrl": "https://modnalazienka.pl/images/thumbnails/paradyz//u117-light-beige-gres-szkl-rekt-mat-598x598.jpg",
+    "priceGrosze": 10729,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T01:11:11.887Z",
+    "sourceUrl": "https://modnalazienka.pl/u117-light-beige-gres-szkl-rekt-mat-598x598-34162",
+    "evidenceSha256": "ac59c08773bce262d228863a10b2f0087b0e7e267ec6708f9081ce1fc0de7cf3",
+    "validUntil": null
   }
 ]

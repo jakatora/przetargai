@@ -21118,9 +21118,15 @@ var RETAIL_SOURCES = [
   // source: https://topboden.pl/podklad-pod-panele/aquaprotec-vapour-barrier-energy-saving-flooring-system-folia-paroizolacyjna
   { "id": "topboden-aquaprotec-vapour-10m2", "ean": "5905167875223", "name": "Folia paroizolacyjna Aquaprotec Vapour Barrier", "category": "vapor-barrier", "brand": "Arbiton", "packageSize": 10, "unit": "m2", "store": "TopBoden", "format": "topboden-api", "productUuid": "7a0956bd-3e86-4fd7-b9eb-43215294ebf2", "apiPurchaseUnit": "m<sup>2</sup>", "url": "https://topboden.pl/podklad-pod-panele/aquaprotec-vapour-barrier-energy-saving-flooring-system-folia-paroizolacyjna", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167875223_P_01.webp", "pickupRequiresConfirmation": true, "variant": ["Aquaprotec", "Vapour", "Barrier"] },
   // source: https://topboden.pl/podklad-pod-panele/arbiton-izo-floor-tape-50mmx25m
-  { "id": "topboden-arbiton-izo-floor-tape-25m", "ean": "5905167698778", "name": "Ta\u015Bma do podk\u0142ad\xF3w pod panele Arbiton Izo Floor - 50 mm x 25 m", "category": "underlay-joint-tape", "brand": "Arbiton", "packageSize": 25, "unit": "m", "store": "TopBoden", "format": "topboden-api", "productUuid": "87657644-0281-4fd4-9857-4864c6aa2c63", "apiPurchaseUnit": "szt.", "url": "https://topboden.pl/podklad-pod-panele/arbiton-izo-floor-tape-50mmx25m", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167698778_P_01.webp", "pickupRequiresConfirmation": true, "variant": ["50 mm", "25 m"] }
+  { "id": "topboden-arbiton-izo-floor-tape-25m", "ean": "5905167698778", "name": "Ta\u015Bma do podk\u0142ad\xF3w pod panele Arbiton Izo Floor - 50 mm x 25 m", "category": "underlay-joint-tape", "brand": "Arbiton", "packageSize": 25, "unit": "m", "store": "TopBoden", "format": "topboden-api", "productUuid": "87657644-0281-4fd4-9857-4864c6aa2c63", "apiPurchaseUnit": "szt.", "url": "https://topboden.pl/podklad-pod-panele/arbiton-izo-floor-tape-50mmx25m", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167698778_P_01.webp", "pickupRequiresConfirmation": true, "variant": ["50 mm", "25 m"] },
+  // source: https://modnalazienka.pl/u117-light-grey-gres-szkl-rekt-mat-598x598-34155
+  { "id": "modna-paradyz-u117-light-grey-143m2", "ean": "5904584158285", "name": "U117 LIGHT GREY GRES SZKL. REKT. MAT. 59,8X59,8", "category": "tile", "brand": "Parady\u017C", "packageSize": 1.43, "unit": "m2", "store": "Modna \u0141azienka", "format": "modna", "productId": 34155, "apiPurchaseUnit": "m2", "variant": ["U117", "LIGHT GREY", "MAT.", "59,8X59,8"], "url": "https://modnalazienka.pl/u117-light-grey-gres-szkl-rekt-mat-598x598-34155", "pickupRequiresConfirmation": true },
+  // source: https://modnalazienka.pl/u117-light-beige-gres-szkl-rekt-mat-598x598-34162
+  { "id": "modna-paradyz-u117-light-beige-143m2", "ean": "5904584158247", "name": "U117 LIGHT BEIGE GRES SZKL. REKT. MAT. 59,8X59,8", "category": "tile", "brand": "Parady\u017C", "packageSize": 1.43, "unit": "m2", "store": "Modna \u0141azienka", "format": "modna", "productId": 34162, "apiPurchaseUnit": "m2", "variant": ["U117", "LIGHT BEIGE", "MAT.", "59,8X59,8"], "url": "https://modnalazienka.pl/u117-light-beige-gres-szkl-rekt-mat-598x598-34162", "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Gres rektyfikowany Parady\u017C U117 Light Grey mat 59,8\xD759,8 cm, gatunek 1": "5904584158285",
+  "Gres rektyfikowany Parady\u017C U117 Light Beige mat 59,8\xD759,8 cm, gatunek 1": "5904584158247",
   "Arbiton Aquaprotec Vapour Barrier 0,18 mm \u2014 folia 10 m\xB2": "5905167875223",
   "Atlas SZOP \u2014 \u015Brodek do pozosta\u0142o\u015Bci cementowych, 1 kg": "5905400990010",
   "Knauf Grundiermittel 60 \u2014 koncentrat gruntuj\u0105cy 15 kg": "5901793357799",
@@ -21649,7 +21655,7 @@ function preservesOrderPackages(whole, parts) {
     }
     return Number.isSafeInteger(cost) && cost === order.materialsGrosze;
   };
-  return add(whole, expected) && parts.every((p) => !p.quote.orders && add(p.order, actual)) && expected.size === actual.size && [...expected].every(([key, count]) => actual.get(key) === count) && parts.reduce((n, p) => n + p.order.materialsGrosze, 0) === whole.materialsGrosze;
+  return add(whole, expected) && parts.every((p) => !p.quote.orders && p.quote.materialsRoundingGrosze === void 0 && add(p.order, actual)) && expected.size === actual.size && [...expected].every(([key, count]) => actual.get(key) === count) && parts.reduce((n, p) => n + p.order.materialsGrosze, 0) === whole.materialsGrosze;
 }
 async function quantityOrderPartitions(base, atomic, postcode, limited) {
   const whole = base.order;
@@ -21737,6 +21743,10 @@ function withOrderPartitions(atomic, limited) {
   return async (order, postcode) => {
     const base = await atomic(order, postcode), count = order.lines.length;
     if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !base.quote.costGrosze || !count) return base;
+    if (base.quote.materialsRoundingGrosze !== void 0) {
+      if (count > 1 || order.lines.some((l) => l.packages.some((p) => p.count > 1))) limited();
+      return base;
+    }
     const full = { order, quote: base.quote };
     if (count === 1) {
       if (order.lines[0].packages.length > 1 && order.lines[0].packages.some((p) => p.count > 1)) limited();
@@ -22169,10 +22179,13 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
       const key = keys[cursor++], order = unique.get(key);
       try {
         const outcome = await quoteBasket(order, settings.postalCode);
-        if ("quote" in outcome && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && (outcome.quote.destinationScope === "PL" || outcome.quote.postalCode === settings.postalCode) && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
+        const rounding = "quote" in outcome ? outcome.quote.materialsRoundingGrosze ?? 0 : 0;
+        const packCount = order.lines.reduce((n, l) => n + l.packages.reduce((s, p) => s + p.count, 0), 0);
+        if ("quote" in outcome && Number.isSafeInteger(rounding) && Math.abs(rounding) <= packCount && order.materialsGrosze + rounding > 0 && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && (outcome.quote.destinationScope === "PL" || outcome.quote.postalCode === settings.postalCode) && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
           order.deliveryGrosze = outcome.quote.costGrosze;
           order.quote = outcome.quote;
           order.deliveryMinimumGrosze = outcome.quote.costGrosze;
+          order.materialsGrosze += rounding;
           order.totalGrosze = order.materialsGrosze + outcome.quote.costGrosze;
           order.source = "retailer";
         } else {
@@ -22186,6 +22199,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
     }
   }));
   for (const order of unique.values()) if (order.quote && Date.parse(order.quote.expiresAt) <= Date.now()) {
+    order.materialsGrosze -= order.quote.materialsRoundingGrosze ?? 0;
     delete order.quote;
     order.deliveryGrosze = null;
     order.deliveryMinimumGrosze = 0;
@@ -23398,6 +23412,7 @@ function readModnaProduct(html, source) {
   const canonical = modnaOne(elements(safe, (a, t) => t === "link" && a.rel === "canonical"));
   if (modnaAttrs(canonical).href !== source.url) throw Error("product_identity_not_confirmed");
   const name = text2(modnaById(primary, "product_name_" + id, "h1")), ean = modnaById(primary, "product_ean_" + id);
+  if (name !== source.name) throw Error("product_identity_not_confirmed");
   if (modnaAttrs(ean).value !== source.ean || text2(ean) !== "EAN: " + source.ean) throw Error("product_ean_not_confirmed");
   const records = [...html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map((m) => JSON.parse(m[1])).filter((p) => p["@type"] === "Product");
   if (records.length !== 1 || records[0].mpn !== id || records[0].name.trim() !== name || records[0].brand?.name !== source.brand) throw Error("product_identity_not_confirmed");
@@ -23426,6 +23441,7 @@ function readModnaProduct(html, source) {
   if (!/^[A-Za-z0-9._-]{32,256}$/.test(token ?? "")) throw Error("cart_session_not_confirmed");
   return {
     priceGrosze,
+    squareMeterPriceGrosze: modnaMoney(unitPrice[1]),
     maxPackages,
     token,
     name,
@@ -24541,7 +24557,8 @@ function confirmModnaCart(html, orderHtml, expected, materials) {
     if (Number(packs.value) !== wanted.count || packs.step !== "1" || Number(packs.minimum) !== 1 || Math.round(Number(meters.value) * 100) !== quantity || Number(meters.unit) !== wanted.size || Number(meters.step) !== wanted.size || Math.round(Number(input2(id + "_quantity").value) * 100) !== quantity || Number(input2(id + "_unit").value) !== wanted.size || Number(input2(id + "_minimum").value) !== 1) throw Error("basket_not_confirmed");
     if (modnaMoney(text2(modnaById(row, "product_price_" + id, "span"))) !== wanted.price) throw Error("price_changed");
     const lineTotal = modnaMoney(text2(modnaOne(elements(row, (_a, t) => t === "h5"), "basket_not_confirmed")));
-    if (lineTotal !== wanted.price * wanted.count) throw Error("basket_not_confirmed");
+    const expectedTotal = wanted.squareMeterPriceGrosze === void 0 ? wanted.price * wanted.count : Math.floor(wanted.squareMeterPriceGrosze * Math.round(wanted.size * 100) * wanted.count / 100);
+    if (!Number.isSafeInteger(expectedTotal) || lineTotal !== expectedTotal) throw Error("basket_not_confirmed");
     const stocks = [...text2(row).matchAll(/Stan magazynowy: (\d+) paczek/g)];
     if (!stocks.length || stocks.some((match2) => Number(match2[1]) < wanted.count)) throw Error("insufficient_stock");
     if (wanted.count > 1) {
@@ -24551,10 +24568,10 @@ function confirmModnaCart(html, orderHtml, expected, materials) {
     remaining.delete(id);
     sum += lineTotal;
   }
-  if (remaining.size || sum !== materials) throw Error("basket_not_confirmed");
+  if (remaining.size || expected.reduce((n, p) => n + p.price * p.count, 0) !== materials) throw Error("basket_not_confirmed");
   const summary = text2(modnaById(safe, "order_summary", "span"));
   const match = summary.match(/^Do zapłaty ([\d ,]+ zł) \+ dostawa: Kurier ([\d ,]+ zł) (\d+) x paleta Dostawa i płatność$/);
-  if (!match || modnaMoney(match[1]) !== materials || Number(match[3]) < 1) throw Error("basket_not_confirmed");
+  if (!match || modnaMoney(match[1]) !== sum || Number(match[3]) < 1) throw Error("basket_not_confirmed");
   const costGrosze = modnaMoney(match[2]);
   const form2 = modnaById(clean(orderHtml), "order_summary", "form");
   const country = modnaById(form2, "country", "select"), countries = elements(country, (_a, t) => t === "option");
@@ -24568,7 +24585,12 @@ function confirmModnaCart(html, orderHtml, expected, materials) {
   const payment = modnaOne(elements(form2, (_a, t) => t === "label").filter((node) => elements(node, (a) => a.id === "payment_method_2").length === 1), "no_prepayment");
   const paymentInput = modnaById(payment, "payment_method_2", "input");
   if (text2(payment) !== "Przelew bankowy" || modnaAttrs(paymentInput).name !== "payment_method" || modnaAttrs(paymentInput).value !== "2" || /\bdisabled\b/.test(paymentInput)) throw Error("no_prepayment");
-  return { costGrosze, carrier: `Kurier (${match[3]} \xD7 paleta)`, payment: "Przelew bankowy" };
+  return {
+    costGrosze,
+    carrier: `Kurier (${match[3]} \xD7 paleta)`,
+    payment: "Przelew bankowy",
+    ...expected.every((p) => p.squareMeterPriceGrosze !== void 0) ? { materialsRoundingGrosze: sum - materials } : {}
+  };
 }
 async function quoteModna(order, fetchImpl) {
   if (order.store !== "Modna \u0141azienka") throw Error("invalid_basket");
@@ -24582,7 +24604,7 @@ async function quoteModna(order, fetchImpl) {
     if (pack.count > product.maxPackages) throw Error("insufficient_stock");
     const quantity = pack.count * Math.round(source.packageSize * 100);
     await client.modnaCart(source.productId, (quantity / 100).toFixed(2), product.token);
-    expected.push({ id: source.productId, name: product.name, url: source.url, size: source.packageSize, count: pack.count, price: product.priceGrosze });
+    expected.push({ id: source.productId, name: product.name, url: source.url, size: source.packageSize, count: pack.count, price: product.priceGrosze, squareMeterPriceGrosze: product.squareMeterPriceGrosze });
   }
   if (!expected.length) throw Error("invalid_basket");
   const confirmed = confirmModnaCart(await client.text("/cart/"), await client.text("/order/"), expected, order.materialsGrosze);
