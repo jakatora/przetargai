@@ -21145,6 +21145,9 @@ var RETAIL_SOURCES = [
   // source: https://budshop24.pl/produkt/cerplast-podkladowa-masa-tynkarska-15kg-baza-biala-atlas/
   // source: https://allegro.pl/produkt/atlas-podkladowa-masa-tynkarska-cerplast-15-kg-819f3488-d980-4f3c-9643-2b523e4e8ba1
   { "id": "budshop-atlas-cerplast-15kg", "ean": "5905400530032", "name": "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)", "brand": "Atlas", "category": "primer", "packageSize": 15, "unit": "kg", "store": "Budshop24", "format": "budshop-woo", "productId": 4808, "apiProductCode": "BS00215", "variant": ["Cerplast", "baza bia\u0142a", "15kg"], "url": "https://budshop24.pl/produkt/cerplast-podkladowa-masa-tynkarska-15kg-baza-biala-atlas/", "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/da2d66e8959c2ed6b638d0231c3e78cb.jpg", "pickupRequiresConfirmation": true },
+  // source: https://budshop24.pl/produkt/atlas-woder-duo-16kg-hydroizolacja-dwuskladnikowa/
+  // source: https://www.grupapsb.com.pl/produkt/hydroizolacja-dwuskladnikowa-elastyczna-woder-duo-16-kg-atlas-5905400195088.html
+  { "id": "budshop-atlas-woder-duo-16kg", "ean": "5905400195088", "name": "ATLAS WODER DUO 16kg - hydroizolacja dwusk\u0142adnikowa elastyczna", "brand": "Atlas", "category": "waterproofing", "packageSize": 16, "unit": "kg", "store": "Budshop24", "format": "budshop-woo", "productId": 7381, "apiProductCode": "BS00293", "variant": ["WODER DUO", "16kg"], "url": "https://budshop24.pl/produkt/atlas-woder-duo-16kg-hydroizolacja-dwuskladnikowa/", "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2044418.jpg", "pickupRequiresConfirmation": true },
   // source: https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html
   { "id": "kowalczyk-koelner-fx06k040-200", "ean": "5906675107622", "name": "KOELNER Ko\u0142ek szybkiego monta\u017Cu 6x40 z ko\u0142nierzem 200szt/op. (FX-06K040)", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 200, "unit": "szt", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 35762, "retailerSku": "5906675107622", "url": "https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675107622.jpg", "pickupRequiresConfirmation": true },
   // source: https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER
@@ -22529,11 +22532,12 @@ var AnonymousShop = class {
    * Reviewed cart reads/additions, IRBUD/Pati/Budshop country+postcode and courier selection
    * only. Contact/address lines, checkout and order routes remain forbidden. */
   async cartJson(path, body) {
-    const courierId = this.origin === "https://irbudsklep.pl" ? "flexible_shipping_single:3" : this.origin === "https://patiartstudio.pl" ? "flexible_shipping_single:7" : this.origin === "https://budshop24.pl" ? "wsds_simple_dimensional:3:medium_parcel_dhl" : null;
-    if (this.origin === "https://budshop24.pl" && path === "/wp-json/wc/store/v1/cart/add-item" && (!body || Object.keys(body).sort().join(",") !== "id,quantity" || body.id !== 4808 || !Number.isSafeInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_RETAIL_PACKAGES)) throw Error("invalid_cart_route");
-    const shipping = path === "/wp-json/wc/store/v1/cart/select-shipping-rate" && courierId && body && Object.keys(body).sort().join(",") === "package_id,rate_id" && body.package_id === 0 && body.rate_id === courierId;
+    const courierId = this.origin === "https://irbudsklep.pl" ? "flexible_shipping_single:3" : this.origin === "https://patiartstudio.pl" ? "flexible_shipping_single:7" : null;
+    const budshopCouriers = ["wsds_simple_dimensional:3:medium_parcel_dhl", "wsds_simple_dimensional:3:large_parcel_dhl", "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel"];
+    if (this.origin === "https://budshop24.pl" && path === "/wp-json/wc/store/v1/cart/add-item" && (!body || Object.keys(body).sort().join(",") !== "id,quantity" || ![4808, 7381].includes(body.id) || !Number.isSafeInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_RETAIL_PACKAGES)) throw Error("invalid_cart_route");
+    const shipping = path === "/wp-json/wc/store/v1/cart/select-shipping-rate" && body && Object.keys(body).sort().join(",") === "package_id,rate_id" && body.package_id === 0 && (courierId && body.rate_id === courierId || this.origin === "https://budshop24.pl" && budshopCouriers.includes(body.rate_id));
     const address = body?.shipping_address;
-    const destination = path === "/wp-json/wc/store/v1/cart/update-customer" && courierId && body && Object.keys(body).join(",") === "shipping_address" && address && typeof address === "object" && Object.keys(address).sort().join(",") === "country,postcode" && address.country === "PL" && typeof address.postcode === "string" && /^\d{2}-\d{3}$/.test(address.postcode);
+    const destination = path === "/wp-json/wc/store/v1/cart/update-customer" && (courierId || this.origin === "https://budshop24.pl") && body && Object.keys(body).join(",") === "shipping_address" && address && typeof address === "object" && Object.keys(address).sort().join(",") === "country,postcode" && address.country === "PL" && typeof address.postcode === "string" && /^\d{2}-\d{3}$/.test(address.postcode);
     if (!["/wp-json/wc/store/v1/cart", "/wp-json/wc/store/v1/cart/add-item"].includes(path) && !shipping && !destination) throw Error("invalid_cart_route");
     if (body && !this.storeCartToken) throw Error("cart_session_not_confirmed");
     const raw = await this.read(path, body ? JSON.stringify(body) : void 0, true, true);
@@ -23191,16 +23195,36 @@ async function quotePati(order, postalCode, fetchImpl) {
 // artifacts/api-server/src/lib/budshop-woo.ts
 var import_node_crypto5 = require("node:crypto");
 var ORIGIN3 = "https://budshop24.pl";
-var PRODUCT = {
+var PRODUCTS3 = [{
   sourceId: "budshop-atlas-cerplast-15kg",
   id: 4808,
   sku: "BS00215",
   ean: "5905400530032",
   name: "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)",
+  apiName: "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)",
+  cartName: "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)",
+  category: "primer",
+  packageSize: 15,
   url: ORIGIN3 + "/produkt/cerplast-podkladowa-masa-tynkarska-15kg-baza-biala-atlas/",
   image: ORIGIN3 + "/wp-content/uploads/2025/08/da2d66e8959c2ed6b638d0231c3e78cb.jpg"
+}, {
+  sourceId: "budshop-atlas-woder-duo-16kg",
+  id: 7381,
+  sku: "BS00293",
+  ean: "5905400195088",
+  name: "ATLAS WODER DUO 16kg - hydroizolacja dwusk\u0142adnikowa elastyczna",
+  apiName: "ATLAS WODER DUO 16kg &#8211; hydroizolacja dwusk\u0142adnikowa elastyczna",
+  cartName: "ATLAS WODER DUO 16kg &#8211; hydroizolacja dwusk\u0142adnikowa elastyczna",
+  category: "waterproofing",
+  packageSize: 16,
+  url: ORIGIN3 + "/produkt/atlas-woder-duo-16kg-hydroizolacja-dwuskladnikowa/",
+  image: ORIGIN3 + "/wp-content/uploads/2025/08/2044418.jpg"
+}];
+var COURIERS = {
+  "wsds_simple_dimensional:3:medium_parcel_dhl": { name: "DHL \u2013 \u015Arednia Paczka", label: "DHL \u2013 \u015Arednia Paczka" },
+  "wsds_simple_dimensional:3:large_parcel_dhl": { name: "DHL \u2013 Du\u017Ca Paczka", label: "DHL \u2013 Du\u017Ca Paczka" },
+  "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel": { name: "Paczki/Worki: \u015Arednia Paczka + Du\u017Ca Paczka", label: "Paczki/Worki: \u015Arednia Paczka + Du\u017Ca Paczka" }
 };
-var COURIER_ID = "wsds_simple_dimensional:3:medium_parcel_dhl";
 var cents4 = (value2) => {
   if (typeof value2 !== "string" || !/^\d+$/.test(value2) || !Number.isSafeInteger(Number(value2))) throw Error("invalid_money");
   return Number(value2);
@@ -23209,29 +23233,43 @@ var pln3 = (value2) => {
   if (value2?.currency_code !== "PLN" || value2.currency_minor_unit !== 2) throw Error("retailer_currency_not_confirmed");
 };
 function reviewed3(source) {
-  if (source.id !== PRODUCT.sourceId || source.store !== "Budshop24" || source.format !== "budshop-woo" || source.productId !== PRODUCT.id || source.apiProductCode !== PRODUCT.sku || source.ean !== PRODUCT.ean || source.name !== PRODUCT.name || source.url !== PRODUCT.url || source.imageUrl !== PRODUCT.image || source.brand !== "Atlas" || source.category !== "primer" || source.packageSize !== 15 || source.unit !== "kg")
+  const product = PRODUCTS3.find((p) => p.sourceId === source.id);
+  if (!product || source.store !== "Budshop24" || source.format !== "budshop-woo" || source.productId !== product.id || source.apiProductCode !== product.sku || source.ean !== product.ean || source.name !== product.name || source.url !== product.url || source.imageUrl !== product.image || source.brand !== "Atlas" || source.category !== product.category || source.packageSize !== product.packageSize || source.unit !== "kg")
     throw Error("product_identity_not_confirmed");
+  return product;
 }
 function inspectBudshopProduct(product, source) {
-  reviewed3(source);
-  if (product?.id !== PRODUCT.id || product.sku !== PRODUCT.sku || product.name !== PRODUCT.name || product.permalink !== PRODUCT.url || product.type !== "simple" || product.has_options !== false || product.is_purchasable !== true || product.is_in_stock !== true || product.is_on_backorder !== false || product.stock_availability?.class !== "in-stock" || product.images?.[0]?.src !== PRODUCT.image)
+  const expected = reviewed3(source);
+  if (product?.id !== expected.id || product.sku !== expected.sku || product.name !== expected.apiName || product.permalink !== expected.url || product.type !== "simple" || product.has_options !== false || product.is_purchasable !== true || product.is_in_stock !== true || product.is_on_backorder !== false || product.stock_availability?.class !== "in-stock" || product.images?.[0]?.src !== expected.image)
     throw Error("product_unavailable");
   pln3(product.prices);
   const priceGrosze = cents4(product.prices.price);
   if (priceGrosze <= 0) throw Error("invalid_money");
-  const stockPackages = product.low_stock_remaining;
-  if (stockPackages !== null && (!Number.isSafeInteger(stockPackages) || stockPackages < 1)) throw Error("product_unavailable");
-  return { name: PRODUCT.name, priceGrosze, imageUrl: PRODUCT.image, stockPackages: stockPackages ?? void 0 };
+  const lowStock = product.low_stock_remaining;
+  if (lowStock != null && (!Number.isSafeInteger(lowStock) || lowStock < 1)) throw Error("product_unavailable");
+  const visibleStock = String(product.stock_availability.text ?? "").match(/^(\d+) w magazynie$/);
+  const stockPackages = lowStock ?? (visibleStock ? Number(visibleStock[1]) : void 0);
+  if (stockPackages !== void 0 && (!Number.isSafeInteger(stockPackages) || stockPackages < 1)) throw Error("product_unavailable");
+  return { name: expected.name, priceGrosze, imageUrl: expected.image, stockPackages };
 }
-function confirmCart3(cart, count, price2, postalCode, shipping) {
-  if (!Array.isArray(cart?.items) || cart.items.length !== 1 || cart.items_count !== count || cart.errors?.length || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
-  const item = cart.items[0];
-  pln3(item.prices);
-  pln3(item.totals);
+function confirmCart3(cart, packs, postalCode, shipping) {
+  if (!Array.isArray(cart?.items) || cart.items.length !== packs.length || cart.items_count !== packs.reduce((n, pack) => n + pack.count, 0) || cart.errors?.length || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
+  const expected = new Map(packs.map((pack) => [pack.product.id, pack]));
+  let materials = 0;
+  for (const item of cart.items) {
+    const pack = expected.get(item.id);
+    if (!pack) throw Error("basket_not_confirmed");
+    expected.delete(item.id);
+    pln3(item.prices);
+    pln3(item.totals);
+    if (item.sku !== pack.product.sku || item.name !== pack.product.cartName || item.quantity !== pack.count || item.show_backorder_badge === true || item.quantity_limits?.minimum !== 1 || item.quantity_limits?.multiple_of !== 1 || item.quantity_limits?.maximum < pack.count) throw Error("basket_not_confirmed");
+    const line2 = pack.price * pack.count;
+    if (!Number.isSafeInteger(line2) || cents4(item.prices.price) !== pack.price || cents4(item.totals.line_total) + cents4(item.totals.line_total_tax) !== line2 || cents4(item.totals.line_subtotal) + cents4(item.totals.line_subtotal_tax) !== line2) throw Error("price_changed");
+    materials += line2;
+  }
+  if (expected.size || !Number.isSafeInteger(materials)) throw Error("basket_not_confirmed");
   pln3(cart.totals);
-  if (item.id !== PRODUCT.id || item.sku !== PRODUCT.sku || item.name !== PRODUCT.name || item.quantity !== count || item.show_backorder_badge === true || item.quantity_limits?.minimum !== 1 || item.quantity_limits?.multiple_of !== 1 || item.quantity_limits?.maximum < count) throw Error("basket_not_confirmed");
-  const materials = price2 * count;
-  if (!Number.isSafeInteger(materials) || cents4(item.prices.price) !== price2 || cents4(item.totals.line_total) + cents4(item.totals.line_total_tax) !== materials || cents4(item.totals.line_subtotal) + cents4(item.totals.line_subtotal_tax) !== materials || cents4(cart.totals.total_items) + cents4(cart.totals.total_items_tax) !== materials) throw Error("price_changed");
+  if (cents4(cart.totals.total_items) + cents4(cart.totals.total_items_tax) !== materials) throw Error("price_changed");
   for (const key of ["total_discount", "total_discount_tax", "total_fees", "total_fees_tax"])
     if (cents4(cart.totals[key]) !== 0) throw Error("basket_not_confirmed");
   const cost = cents4(cart.totals.total_shipping) + cents4(cart.totals.total_shipping_tax);
@@ -23241,39 +23279,53 @@ function confirmCart3(cart, count, price2, postalCode, shipping) {
     throw Error("country_not_confirmed");
   return cart;
 }
-async function prepare2(count, fetchImpl) {
-  if (!Number.isSafeInteger(count) || count < 1 || count > MAX_RETAIL_PACKAGES) throw Error("invalid_basket");
-  const client = new AnonymousShop(ORIGIN3, fetchImpl, AbortSignal.timeout(18e3), retailerRequestBudget(1));
+async function prepare2(entries, fetchImpl) {
+  if (!entries.length || entries.length > PRODUCTS3.length || new Set(entries.map((entry) => entry.source.id)).size !== entries.length || entries.some((entry) => !Number.isSafeInteger(entry.count) || entry.count < 1 || entry.count > MAX_RETAIL_PACKAGES)) throw Error("invalid_basket");
+  const client = new AnonymousShop(ORIGIN3, fetchImpl, AbortSignal.timeout(18e3), retailerRequestBudget(entries.length));
   const empty = await client.cartJson("/wp-json/wc/store/v1/cart");
   if (!Array.isArray(empty.items) || empty.items.length || empty.items_count !== 0) throw Error("basket_not_confirmed");
-  const source = RETAIL_SOURCES.find((s) => s.id === PRODUCT.sourceId);
-  if (!source) throw Error("product_identity_not_confirmed");
-  const product = await client.json("/wp-json/wc/store/v1/products/" + PRODUCT.id);
-  const card = inspectBudshopProduct(product, source);
-  if (card.stockPackages !== void 0 && count > card.stockPackages) throw Error("insufficient_stock");
-  const added = await client.cartJson("/wp-json/wc/store/v1/cart/add-item", { id: PRODUCT.id, quantity: count });
-  confirmCart3(added, count, card.priceGrosze, "");
-  return { client, card, evidence: [product, added] };
+  const packs = [], evidence = [];
+  let card;
+  for (const entry of entries) {
+    const expected = reviewed3(entry.source);
+    const product = await client.json("/wp-json/wc/store/v1/products/" + expected.id);
+    card = inspectBudshopProduct(product, entry.source);
+    if (card.stockPackages !== void 0 && entry.count > card.stockPackages) throw Error("insufficient_stock");
+    packs.push({ product: expected, count: entry.count, price: card.priceGrosze });
+    const added = await client.cartJson("/wp-json/wc/store/v1/cart/add-item", { id: expected.id, quantity: entry.count });
+    confirmCart3(added, packs, "");
+    evidence.push(product, added);
+  }
+  return { client, card, packs, evidence };
 }
 async function readBudshopProduct(source, fetchImpl) {
   reviewed3(source);
-  const result = await prepare2(1, fetchImpl);
+  const result = await prepare2([{ source, count: 1 }], fetchImpl);
   return { ...result.card, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify(result.evidence)).digest("hex") };
 }
 async function quoteBudshop(order, postalCode, fetchImpl) {
-  if (order.store !== "Budshop24" || !/^\d{2}-\d{3}$/.test(postalCode) || order.lines.length !== 1 || order.lines[0].packages.length !== 1 || order.lines[0].packages[0].offerId !== PRODUCT.sourceId) throw Error("invalid_basket");
-  const pack = order.lines[0].packages[0];
-  const result = await prepare2(pack.count, fetchImpl);
-  if (pack.unitPriceGrosze !== result.card.priceGrosze || order.materialsGrosze !== pack.count * result.card.priceGrosze) throw Error("price_changed");
+  if (order.store !== "Budshop24" || !/^\d{2}-\d{3}$/.test(postalCode) || !order.lines.length || order.lines.some((line2) => line2.packages.length !== 1 || line2.unit !== "kg")) throw Error("invalid_basket");
+  const entries = order.lines.map((line2) => {
+    const pack = line2.packages[0];
+    const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === "Budshop24");
+    if (!source) throw Error("invalid_basket");
+    return { source, count: pack.count };
+  });
+  const result = await prepare2(entries, fetchImpl);
+  const materials = result.packs.reduce((sum, pack) => sum + pack.price * pack.count, 0);
+  if (!Number.isSafeInteger(materials) || order.materialsGrosze !== materials || order.lines.some((line2, index2) => line2.packages[0].unitPriceGrosze !== result.packs[index2].price || line2.packages[0].lineCostGrosze !== result.packs[index2].price * result.packs[index2].count)) throw Error("price_changed");
   const located = confirmCart3(await result.client.cartJson(
     "/wp-json/wc/store/v1/cart/update-customer",
     { shipping_address: { country: "PL", postcode: postalCode } }
-  ), pack.count, result.card.priceGrosze, postalCode);
+  ), result.packs, postalCode);
   if (!located.has_calculated_shipping || !located.needs_shipping || !located.payment_methods?.includes("p24-online-payments")) throw Error("no_home_delivery");
   const groups = located.shipping_rates;
   if (!Array.isArray(groups) || groups.length !== 1 || groups[0].package_id !== 0 || groups[0].destination?.country !== "PL" || groups[0].destination?.postcode !== postalCode || Object.entries(groups[0].destination).some(([key, value2]) => !["country", "postcode"].includes(key) && value2 !== ""))
     throw Error("no_home_delivery");
-  const couriers = groups[0].shipping_rates?.filter((rate2) => rate2.rate_id === COURIER_ID && rate2.method_id === "wsds_simple_dimensional" && rate2.name === "DHL \u2013 \u015Arednia Paczka");
+  const ids = new Set(result.packs.map((pack) => pack.product.id));
+  const courierId = ids.size === 2 ? "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel" : ids.has(4808) ? "wsds_simple_dimensional:3:medium_parcel_dhl" : "wsds_simple_dimensional:3:large_parcel_dhl";
+  const courier = COURIERS[courierId];
+  const couriers = groups[0].shipping_rates?.filter((rate2) => rate2.rate_id === courierId && rate2.method_id === "wsds_simple_dimensional" && rate2.name === courier.name);
   if (couriers?.length !== 1) throw Error("no_home_delivery");
   const rate = couriers[0];
   pln3(rate);
@@ -23281,14 +23333,14 @@ async function quoteBudshop(order, postalCode, fetchImpl) {
   if (cost <= 0) throw Error("no_home_delivery");
   const final = confirmCart3(await result.client.cartJson(
     "/wp-json/wc/store/v1/cart/select-shipping-rate",
-    { package_id: 0, rate_id: COURIER_ID }
-  ), pack.count, result.card.priceGrosze, postalCode, cost);
+    { package_id: 0, rate_id: courierId }
+  ), result.packs, postalCode, cost);
   const selected = final.shipping_rates?.[0]?.shipping_rates?.filter((r) => r.selected);
-  if (!final.has_calculated_shipping || !final.payment_methods?.includes("p24-online-payments") || final.shipping_rates?.length !== 1 || final.shipping_rates[0].destination?.postcode !== postalCode || selected?.length !== 1 || selected[0].rate_id !== COURIER_ID || cents4(selected[0].price) + cents4(selected[0].taxes) !== cost) throw Error("basket_not_confirmed");
+  if (!final.has_calculated_shipping || !final.payment_methods?.includes("p24-online-payments") || final.shipping_rates?.length !== 1 || final.shipping_rates[0].destination?.postcode !== postalCode || selected?.length !== 1 || selected[0].rate_id !== courierId || cents4(selected[0].price) + cents4(selected[0].taxes) !== cost) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
   return { quote: {
     costGrosze: cost,
-    carrier: "DHL \u2013 \u015Arednia Paczka",
+    carrier: courier.label,
     payment: "Przelewy24",
     checkedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + 6e5).toISOString(),
@@ -25878,7 +25930,7 @@ function isBricomarcheBrowserSource(source) {
 }
 
 // artifacts/api-server/src/lib/leroy-browser-observation.ts
-var PRODUCTS3 = {
+var PRODUCTS4 = {
   "leroy-norgips-paper-50x75": { sku: "43912694", ean: "5907651699933", unit: "m", size: 75, facts: { "D\u0142ugo\u015B\u0107 (w m)": "75", "Szeroko\u015B\u0107 (w mm)": "50", "Materia\u0142 g\u0142\xF3wny w ca\u0142kowitej masie produktu": "Papier", "Rodzaj opakowania": "Szpula" } },
   "leroy-norgips-acoustic-50x30": { sku: "43912722", ean: "5907651698004", unit: "m", size: 30, facts: { "D\u0142ugo\u015B\u0107 (w m)": "30", "Szeroko\u015B\u0107 (w mm)": "50", "Rodzaj opakowania": "Szpula" } },
   "leroy-norgips-acoustic-30x30": { sku: "44420222", ean: "5907651698851", unit: "m", size: 30, facts: { "D\u0142ugo\u015B\u0107 (w m)": "30", "Szeroko\u015B\u0107 (w mm)": "30", "Rodzaj opakowania": "Szpula" } },
@@ -25892,7 +25944,7 @@ var PRODUCTS3 = {
   "leroy-norgips-board-gkb-2600": { sku: "41661683", ean: "5907651690442", unit: "m2", size: 3.12, facts: { "Powierzchnia pokryta przez produkt (w m\xB2)": "3.12", "D\u0142ugo\u015B\u0107 (w cm)": "260", "Szeroko\u015B\u0107 (w cm)": "120", "Grubo\u015B\u0107 (w mm)": "12.5" } }
 };
 function isLeroyBrowserSource(source) {
-  const p = PRODUCTS3[source.id];
+  const p = PRODUCTS4[source.id];
   if (!p || source.store !== "Leroy Merlin" || source.brand !== "Norgips" || source.browserReviewAllowed !== true || source.pickupRequiresConfirmation !== true || source.ean !== p.ean || source.unit !== p.unit || source.packageSize !== p.size || source.retailerSku !== p.sku || source.marketplaceSeller || source.pickupOnly || source.pickupUnavailable) return false;
   try {
     const u = new URL(source.url);
