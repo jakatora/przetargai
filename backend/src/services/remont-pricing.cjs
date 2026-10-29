@@ -20038,7 +20038,8 @@ var RETAIL_SOURCES = [
     store: "Sewera",
     format: "sewera",
     // source: https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321
-    url: "https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321"
+    url: "https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321",
+    dispatchDepartment: { id: "1", name: "Katowice" }
   },
   // source: https://lobo.pl/atlas-gta-super-biala-gladz-polimerowa-18kg
   { id: "lobo-atlas-gta-18kg", ean: "5905400542509", name: "ATLAS GTA Super Bia\u0142a G\u0142ad\u017A Polimerowa 18kg", category: "skim-coat", brand: "Atlas", packageSize: 18, unit: "kg", store: "Lobo", format: "shoper-api", productId: 42682, apiProductCode: "n.GG-R2U-18", apiPurchaseUnit: "szt.", variant: ["gta", "18kg"], url: "https://lobo.pl/atlas-gta-super-biala-gladz-polimerowa-18kg", imageUrl: "https://lobo.pl/environment/cache/images/productGfx_68392_500_500/ATLAS-GTA-Super-Biala-Gladz-Polimerowa-18kg.webp" },
@@ -21650,6 +21651,7 @@ function isReviewedSkuSource(source) {
 }
 function isReviewedSeweraDispatchSource(source) {
   if (isReviewedSkuSource(source)) return true;
+  if (source.id === "sewera-atlas-gta-18kg") return source.ean === "5905400542509" && source.skuIdentity === void 0 && source.store === "Sewera" && source.format === "sewera" && source.url === "https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321" && source.name === "Atlas GTA gotowa g\u0142ad\u017A polimerowa 18kg" && source.brand === "Atlas" && source.packageSize === 18 && source.unit === "kg" && source.dispatchDepartment?.id === "1" && source.dispatchDepartment.name === "Katowice";
   return source.id === "sewera-dulux-9l" && source.ean === "5904078198759" && source.skuIdentity === void 0 && source.store === "Sewera" && source.format === "sewera" && source.url === "https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385" && source.name === "Farba wewn\u0119trzna bia\u0142a Easycare nieskazitelna biel 9l mat Dulux" && source.brand === "Dulux" && source.packageSize === 9 && source.unit === "l" && source.dispatchDepartment?.id === "4" && source.dispatchDepartment.name === "Tarnowskie G\xF3ry";
 }
 function isReviewedIrbudSource(source) {
@@ -21841,6 +21843,32 @@ function preservesOrderPackages(whole, parts) {
   };
   return add2(whole, expected) && parts.every((p) => !p.quote.orders && p.quote.materialsRoundingGrosze === void 0 && add2(p.order, actual)) && expected.size === actual.size && [...expected].every(([key, count]) => actual.get(key) === count) && parts.reduce((n, p) => n + p.order.materialsGrosze, 0) === whole.materialsGrosze;
 }
+async function combineRequiredSeparateOrders(whole, parts, postcode) {
+  if (parts.length !== 2 || !parts.every((p) => currentDeliveryQuote(p.quote, postcode)) || !preservesOrderPackages(whole, parts)) return null;
+  const [first, second] = parts.map((p) => p.quote);
+  if (!first.dispatchFrom || !second.dispatchFrom || first.dispatchFrom === second.dispatchFrom || first.sourceUrl !== second.sourceUrl) return null;
+  const costGrosze = first.costGrosze + second.costGrosze;
+  if (!Number.isSafeInteger(costGrosze)) return null;
+  const orders = parts.map((p) => ({ materialsGrosze: p.order.materialsGrosze, lines: p.order.lines, quote: p.quote }));
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ orders, postcode })));
+  const postal = parts.some((p) => p.quote.destinationScope === "postal_code");
+  return {
+    ...first,
+    costGrosze,
+    orders,
+    ordersReason: "separate_dispatch",
+    singleOrderCostGrosze: void 0,
+    carrier: [...new Set(parts.map((p) => p.quote.carrier))].join(" + "),
+    payment: [...new Set(parts.map((p) => p.quote.payment))].join(" + "),
+    checkedAt: new Date(Math.min(...parts.map((p) => Date.parse(p.quote.checkedAt)))).toISOString(),
+    expiresAt: new Date(Math.min(...parts.map((p) => Date.parse(p.quote.expiresAt)))).toISOString(),
+    evidenceSha256: Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join(""),
+    destinationScope: postal ? "postal_code" : "PL",
+    basis: postal ? "retailer_basket_postcode" : parts.every((p) => p.quote.basis === "retailer_tariff_national") ? "retailer_tariff_national" : "retailer_basket_national",
+    dispatchFrom: void 0,
+    postalCode: postal ? postcode : void 0
+  };
+}
 async function quantityOrderPartitions(base, atomic, postcode, limited) {
   const whole = base.order;
   if (whole.lines.length !== 1 || whole.lines[0].packages.length !== 1) return [base];
@@ -21926,6 +21954,21 @@ async function combineOrderQuotes(base, parts, postcode) {
 function withOrderPartitions(atomic, limited) {
   return async (order, postcode) => {
     const base = await atomic(order, postcode), count = order.lines.length;
+    if ("reason" in base && base.reason === "requires_separate_dispatch" && order.store === "Sewera" && count === 2 && order.lines.every((line2) => line2.packages.length === 1)) {
+      const parts = [];
+      for (const line2 of order.lines) {
+        const part = { ...order, lines: [line2], materialsGrosze: line2.packages[0].lineCostGrosze, quote: void 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown" };
+        try {
+          const outcome = await atomic(part, postcode);
+          if (!("quote" in outcome) || !currentDeliveryQuote(outcome.quote, postcode)) return { reason: "requires_separate_dispatch" };
+          parts.push({ order: part, quote: outcome.quote });
+        } catch {
+          return { reason: "requires_separate_dispatch" };
+        }
+      }
+      const combined = await combineRequiredSeparateOrders(order, parts, postcode);
+      return combined ? { quote: combined } : { reason: "requires_separate_dispatch" };
+    }
     if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !base.quote.costGrosze || !count) return base;
     if (base.quote.materialsRoundingGrosze !== void 0) {
       if (count > 1 || order.lines.some((l) => l.packages.some((p) => p.count > 1))) limited();
@@ -24841,7 +24884,10 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
   const configured = packs.filter(({ source }) => source.dispatchDepartment);
   if (configured.some(({ source }) => !isReviewedSeweraDispatchSource(source))) throw Error("dispatch_department_not_confirmed");
   const department = configured[0]?.source.dispatchDepartment ?? { id: "1", name: "Katowice" };
-  if (configured.some(({ source }) => source.dispatchDepartment.id !== department.id || source.dispatchDepartment.name !== department.name)) throw Error("dispatch_department_not_confirmed");
+  if (configured.some(({ source }) => source.dispatchDepartment.id !== department.id || source.dispatchDepartment.name !== department.name)) {
+    if (configured.length === packs.length && order.lines.length === 2 && order.lines.every((line2) => line2.packages.length === 1)) return { reason: "requires_separate_dispatch" };
+    throw Error("dispatch_department_not_confirmed");
+  }
   const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   if ((await client.text("/ajax/ax_execute.php?operation=setDepartment", { model: "department", department: department.id })).trim() !== department.id) throw Error("basket_not_confirmed");
   const expected = [];
