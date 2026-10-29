@@ -21122,9 +21122,12 @@ var RETAIL_SOURCES = [
   // source: https://modnalazienka.pl/u117-light-grey-gres-szkl-rekt-mat-598x598-34155
   { "id": "modna-paradyz-u117-light-grey-143m2", "ean": "5904584158285", "name": "U117 LIGHT GREY GRES SZKL. REKT. MAT. 59,8X59,8", "category": "tile", "brand": "Parady\u017C", "packageSize": 1.43, "unit": "m2", "store": "Modna \u0141azienka", "format": "modna", "productId": 34155, "apiPurchaseUnit": "m2", "variant": ["U117", "LIGHT GREY", "MAT.", "59,8X59,8"], "url": "https://modnalazienka.pl/u117-light-grey-gres-szkl-rekt-mat-598x598-34155", "pickupRequiresConfirmation": true },
   // source: https://modnalazienka.pl/u117-light-beige-gres-szkl-rekt-mat-598x598-34162
-  { "id": "modna-paradyz-u117-light-beige-143m2", "ean": "5904584158247", "name": "U117 LIGHT BEIGE GRES SZKL. REKT. MAT. 59,8X59,8", "category": "tile", "brand": "Parady\u017C", "packageSize": 1.43, "unit": "m2", "store": "Modna \u0141azienka", "format": "modna", "productId": 34162, "apiPurchaseUnit": "m2", "variant": ["U117", "LIGHT BEIGE", "MAT.", "59,8X59,8"], "url": "https://modnalazienka.pl/u117-light-beige-gres-szkl-rekt-mat-598x598-34162", "pickupRequiresConfirmation": true }
+  { "id": "modna-paradyz-u117-light-beige-143m2", "ean": "5904584158247", "name": "U117 LIGHT BEIGE GRES SZKL. REKT. MAT. 59,8X59,8", "category": "tile", "brand": "Parady\u017C", "packageSize": 1.43, "unit": "m2", "store": "Modna \u0141azienka", "format": "modna", "productId": 34162, "apiPurchaseUnit": "m2", "variant": ["U117", "LIGHT BEIGE", "MAT.", "59,8X59,8"], "url": "https://modnalazienka.pl/u117-light-beige-gres-szkl-rekt-mat-598x598-34162", "pickupRequiresConfirmation": true },
+  // source: https://sklep.sewera.pl/atlas-plus-podwojna-moc-klej-do-plytek-25kg-p8893
+  { "id": "sewera-atlas-plus-standard-25kg", "ean": "5905400488579", "name": "Atlas Plus Podw\xF3jna Moc klej do p\u0142ytek 25kg", "category": "adhesive", "brand": "Atlas", "packageSize": 25, "unit": "kg", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "url": "https://sklep.sewera.pl/atlas-plus-podwojna-moc-klej-do-plytek-25kg-p8893", "pickupRequiresConfirmation": true }
 ];
 var RETAIL_NAME_ALIASES = {
+  "ATLAS PLUS Podw\xF3jna Moc \u2014 klej do p\u0142ytek 25 kg (opakowanie standardowe)": "5905400488579",
   "Gres rektyfikowany Parady\u017C U117 Light Grey mat 59,8\xD759,8 cm, gatunek 1": "5904584158285",
   "Gres rektyfikowany Parady\u017C U117 Light Beige mat 59,8\xD759,8 cm, gatunek 1": "5904584158247",
   "Arbiton Aquaprotec Vapour Barrier 0,18 mm \u2014 folia 10 m\xB2": "5905167875223",
