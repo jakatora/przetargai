@@ -311,12 +311,14 @@ router.patch('/me', authRequired, ah(async (req, res) => {
   res.json({ user: publicUser(await users.findById(req.user.id)) });
 }));
 
-const pushTokenSchema = z.object({ push_token: z.string().min(1).max(300) });
+// `platform` (2026-10-29, apka od 1.2.1): bez niej nie dało się stwierdzić, czy push dochodzi na iPhone
+// (klucz APNs) — `/health.push.urzadzenia` liczy tokeny per platforma. Starsze apki jej nie wysyłają.
+const pushTokenSchema = z.object({ push_token: z.string().min(1).max(300), platform: z.enum(['ios', 'android', 'web']).optional() });
 
 router.put('/me/push-token', authRequired, ah(async (req, res) => {
   const data = parseBody(pushTokenSchema, req.body);
   // Repo zdejmuje ten sam token z innych kont (ten sam telefon, inne konto).
-  await users.setPushToken(req.user.id, data.push_token);
+  await users.setPushToken(req.user.id, data.push_token, data.platform ?? null);
   res.json({ ok: true });
 }));
 

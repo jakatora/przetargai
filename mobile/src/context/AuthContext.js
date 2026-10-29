@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { Platform } from 'react-native';
 import * as storage from '../lib/storage';
 import { getItem, setItem, deleteItem } from '../lib/storage';
 import { api, setAuthToken, onSesjaWygasla } from '../api/client';
@@ -86,7 +87,7 @@ export function AuthProvider({ children }) {
   const zarejestrujPush = useCallback(() => {
     registerForPushNotifications()
       .then((pushToken) => {
-        if (pushToken) api.setPushToken(pushToken).catch(() => {});
+        if (pushToken) api.setPushToken(pushToken, Platform.OS).catch(() => {});
       })
       .catch(() => {}); // odmowa uprawnień nie jest błędem
   }, []);

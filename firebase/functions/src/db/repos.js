@@ -228,7 +228,7 @@ export const users = {
    * telefon B. Transakcja, żeby dwie równoległe rejestracje nie zostawiły tokenu
    * na dwóch kontach naraz. Zapytanie po jednym polu obsługuje indeks automatyczny.
    */
-  async setPushToken(id, token) {
+  async setPushToken(id, token, platform = null) {
     const firestore = db();
     const ts = nowIso();
     await firestore.runTransaction(async (tx) => {
@@ -236,10 +236,24 @@ export const users = {
         firestore.collection('users').where('push_token', '==', token),
       );
       for (const d of zTymTokenem.docs) {
-        if (d.id !== id) tx.update(d.ref, { push_token: null, updated_at: ts });
+        if (d.id !== id) tx.update(d.ref, { push_token: null, push_platform: null, updated_at: ts });
       }
-      tx.update(firestore.collection('users').doc(id), { push_token: token, updated_at: ts });
+      // Platforma tylko gdy apka ją podała — starsza wersja bez pola nie kasuje znanej wartości.
+      tx.update(firestore.collection('users').doc(id), { push_token: token, ...(platform ? { push_platform: platform } : {}), updated_at: ts });
     });
+  },
+
+  /** Urządzenia z tokenem push według platformy (2026-10-29, `/health.push.urzadzenia`). */
+  async urzadzeniaPush() {
+    const col = db().collection('users');
+    const ile = async (q) => (await q.count().get()).data().count;
+    const [wszystkie, ios, android, web] = await Promise.all([
+      ile(col.where('push_token', '>', '')),
+      ile(col.where('push_platform', '==', 'ios')),
+      ile(col.where('push_platform', '==', 'android')),
+      ile(col.where('push_platform', '==', 'web')),
+    ]);
+    return { wszystkie, ios, android, web, nieznana: Math.max(0, wszystkie - ios - android - web) };
   },
 
   /**
@@ -247,7 +261,7 @@ export const users = {
    * tokenu to nie błąd, bo mobile woła to przy KAŻDYM wylogowaniu.
    */
   async usunPushToken(id) {
-    await db().collection('users').doc(id).update({ push_token: null, updated_at: nowIso() });
+    await db().collection('users').doc(id).update({ push_token: null, push_platform: null, updated_at: nowIso() });
   },
 
   /**
@@ -266,7 +280,7 @@ export const users = {
       if (snap.empty) continue;
       const batch = db().batch();
       const ts = nowIso();
-      for (const d of snap.docs) batch.update(d.ref, { push_token: null, updated_at: ts });
+      for (const d of snap.docs) batch.update(d.ref, { push_token: null, push_platform: null, updated_at: ts });
       await batch.commit();
       wyczyszczone += snap.size;
     }

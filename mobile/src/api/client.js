@@ -98,8 +98,9 @@ export const api = {
   updateProfile: (payload) => request('/auth/me', { method: 'PATCH', body: payload }),
   /** Onboarding AI: opis firmy → { keywords, cpv } (albo { keywords: null, powod }). */
   suggestProfile: (opis) => request('/auth/suggest-profile', { method: 'POST', body: { opis } }),
-  setPushToken: (pushToken) =>
-    request('/auth/me/push-token', { method: 'PUT', body: { push_token: pushToken } }),
+  /** `platform` (2026-10-29): serwer liczy urządzenia per platforma — bez tego nie widać, czy push dochodzi na iPhone. */
+  setPushToken: (pushToken, platform) =>
+    request('/auth/me/push-token', { method: 'PUT', body: { push_token: pushToken, ...(platform ? { platform } : {}) } }),
   /**
    * Wyrejestrowanie tokenu push przy wylogowaniu → `{ ok: true }`. Bez tego telefon
    * dalej dostawał powiadomienia konta, z którego się wylogowano (2026-09-25).

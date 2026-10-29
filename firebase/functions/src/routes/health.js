@@ -2,7 +2,7 @@ import { zrodlaCichoPusteWCyklu } from '../lib/zrodlaCichoPuste.js';
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, stanPushRepo, autoSwz } from '../db/repos.js';
+import { cykl, tenders, users, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, stanPushRepo, autoSwz } from '../db/repos.js';
 import { ocenStanPush } from '../lib/stanPush.js';
 import { logger } from '../lib/logger.js';
 import { ocenStanAi } from '../lib/stanAi.js';
@@ -51,17 +51,19 @@ router.get('/', async (_req, res) => {
   let stanOknaEpp = null;
   let stanPush = null;
   let stanAutoSwz = null;
+  let urzadzenia = null;
   let stanOknaWynikow = null;
   let stanOknaPlanow = null;
 
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanPush, stanAutoSwz] = await Promise.all([
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanPush, stanAutoSwz, urzadzenia] = await Promise.all([
       cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
       oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null), oknoEpp.wczytaj().catch(() => null),
       stanPushRepo.wczytaj().catch(() => null),
       autoSwz.wczytajPrzebieg().catch(() => null),
+      users.urzadzeniaPush().catch(() => null),
     ]);
   } catch { /* zgłoszone w polu db */ }
 
@@ -301,6 +303,8 @@ router.get('/', async (_req, res) => {
       ostatni_blad_o: stanPush?.ostatni_blad_o ?? null,
       ostatni_blad: stanPush?.ostatni_blad ?? null,
       ostatni_wynik: stanPush?.ostatni_wynik ?? null,
+      // Tokeny push per platforma (apki od 1.2.1 podają platformę; „nieznana” = starsze wersje).
+      urzadzenia,
     },
     ai: {
       ok: aiOk,

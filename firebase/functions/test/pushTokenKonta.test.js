@@ -123,3 +123,17 @@ test('DELETE /auth/me/push-token bez tokenu sesji → 401', async () => {
   const odp = await fetch(`${BAZA}/auth/me/push-token`, { method: 'DELETE' });
   assert.equal(odp.status, 401);
 });
+
+test('PUT /auth/me/push-token z platformą (apka od 1.2.1): zapis platformy, stara apka bez pola jej nie kasuje, zła wartość → 400, wylogowanie czyści', async () => {
+  const konto = await kontoHttp();
+  const put = (body) => fetch(`${BAZA}/auth/me/push-token`, { method: 'PUT', headers: auth(konto.token), body: JSON.stringify(body) });
+  assert.equal((await put({ push_token: `ExponentPushToken[ios-${unikalny()}]`, platform: 'ios' })).status, 200);
+  assert.equal((await users.findById(konto.id)).push_platform, 'ios');
+  assert.equal((await put({ push_token: `ExponentPushToken[stara-${unikalny()}]` })).status, 200);
+  assert.equal((await users.findById(konto.id)).push_platform, 'ios', 'brak pola platform nie kasuje znanej wartości');
+  assert.equal((await put({ push_token: `ExponentPushToken[x-${unikalny()}]`, platform: 'windows-phone' })).status, 400);
+  const u = await users.urzadzeniaPush();
+  assert.ok(u.ios >= 1 && u.wszystkie >= u.ios, JSON.stringify(u));
+  await fetch(`${BAZA}/auth/me/push-token`, { method: 'DELETE', headers: auth(konto.token) });
+  assert.equal((await users.findById(konto.id)).push_platform, null);
+});
