@@ -3047,5 +3047,31 @@
     "sourceUrl": "https://sklep.sewera.pl/atlas-plus-podwojna-moc-klej-do-plytek-25kg-p8893",
     "evidenceSha256": "8492caa2f36c79b3fbc04dd2a0cda52b9e9bad4e45ebe254d1257bf8a09af418",
     "validUntil": null
+  },
+  {
+    "sourceId": "prescot-virone-dc11",
+    "ean": "5908254851223",
+    "name": "BATERYJNY CZUJNIK TLENKU WĘGLA ( CZADU    ) 10 LAT 3V ORNO",
+    "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_62267_500_500/1.jpg",
+    "priceGrosze": 7300,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T02:53:15.887Z",
+    "sourceUrl": "https://www.prescot.com.pl/pl/p/BATERYJNY-CZUJNIK-TLENKU-WEGLA-CZADU-10-LAT-3V-ORNO/18444",
+    "evidenceSha256": "8941435c00c32494e6eeb917458ff252355e090447626b3b31690d3272375784",
+    "validUntil": null
+  },
+  {
+    "sourceId": "zpradem-virone-dc11",
+    "ean": "5908254851223",
+    "name": "Bateryjny czujnik tlenku węgla (czadu), 2xAA, żywotność sensora 10 lat,DC-11",
+    "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_62267_500_500/1.jpg",
+    "priceGrosze": 9440,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T02:53:17.095Z",
+    "sourceUrl": "https://zpradem.pl/bateryjny-czujnik-tlenku-wegla-czadu-2xaa-zywotnosc-sensora-10-latdc-11/1089222",
+    "evidenceSha256": "fe5ddc7bfdf50ffd72ee4f19405dc5d0b42c9f7006ac64c4922c328ac60c3e42",
+    "validUntil": null
   }
 ]
