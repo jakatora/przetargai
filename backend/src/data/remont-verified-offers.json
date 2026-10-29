@@ -3641,5 +3641,57 @@
     "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P240-50szt/25773",
     "evidenceSha256": "e1ed10136ee17583ca8dc4da2dca99dde7eb32ca2232dd769da255ef0363afed",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-klingspor-pl28c-p80-sheet",
+    "ean": "5907560017637",
+    "name": "Papier ścierny gr.80 arkusz 230x280mm",
+    "imageUrl": "https://sklep.sewera.pl/photo/56987/papier-scierny-gr-80-arkusz-230x280mm.webp",
+    "priceGrosze": 194,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T20:02:42.280Z",
+    "sourceUrl": "https://sklep.sewera.pl/papier-scierny-gr-80-arkusz-230x280mm-p6906",
+    "evidenceSha256": "25b32c434b8df09c9b49d2f7f11c53dd64a4295eca22ca245f011c438e735063",
+    "validUntil": null
+  },
+  {
+    "sourceId": "matiw-klingspor-pl28c-p80-50",
+    "ean": "5907560017637",
+    "name": "Arkusz papier ścierny Klingspor 230x280mm PL28C  P80 50szt",
+    "imageUrl": "https://sklep.sewera.pl/photo/56987/papier-scierny-gr-80-arkusz-230x280mm.webp",
+    "priceGrosze": 4200,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T20:02:42.548Z",
+    "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P80-50szt/25767",
+    "evidenceSha256": "9957682dc1eaf6649d1eb66f3440dd73c4b21bb528d0b3a21ca891f392933c12",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-klingspor-pl28c-p100-sheet",
+    "ean": "5907560023546",
+    "name": "Papier ścierny gr.100 arkusz 230x280mm",
+    "imageUrl": "https://sklep.sewera.pl/photo/56969/papier-scierny-gr-100-arkusz-230x280mm.webp",
+    "priceGrosze": 167,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T20:02:44.169Z",
+    "sourceUrl": "https://sklep.sewera.pl/papier-scierny-gr-100-arkusz-230x280mm-p6898",
+    "evidenceSha256": "8c99a3b7529a06200cc446547e28f3b407152ee112388531f264b01d19d1ac7a",
+    "validUntil": null
+  },
+  {
+    "sourceId": "matiw-klingspor-pl28c-p100-50",
+    "ean": "5907560023546",
+    "name": "Arkusz papier ścierny Klingspor 230x280mm PL28C  P100 50szt",
+    "imageUrl": "https://sklep.sewera.pl/photo/56969/papier-scierny-gr-100-arkusz-230x280mm.webp",
+    "priceGrosze": 3600,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T20:02:44.350Z",
+    "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P100-50szt/25768",
+    "evidenceSha256": "030fd6ce9f823ebc9908fe6142c0ae314255b9fce0edd6af1e886cc15479f097",
+    "validUntil": null
   }
 ]
