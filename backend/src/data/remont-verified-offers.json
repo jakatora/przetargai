@@ -3337,5 +3337,19 @@
     "sourceUrl": "https://sklep-kowalczyk.pl/atlas-cerplast-podklad-grunt-pod-tynk-op-15kg-cp-00-15-52413.html",
     "evidenceSha256": "3d2e5a87f830b78a13098f82cda9bb8cb0f352b82f62e86b404dfac6d4b4f6d3",
     "validUntil": null
+  },
+  {
+    "sourceId": "budshop-atlas-cerplast-15kg",
+    "ean": "5905400530032",
+    "name": "ATLAS Cerplast podkładowa masa tynkarska 15kg (baza biała)",
+    "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/da2d66e8959c2ed6b638d0231c3e78cb.jpg",
+    "priceGrosze": 13900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T13:15:17.293Z",
+    "sourceUrl": "https://budshop24.pl/produkt/cerplast-podkladowa-masa-tynkarska-15kg-baza-biala-atlas/",
+    "evidenceSha256": "22b0331e9df31ba26eb07c9ba87c7ef6fda42a05253c553055a5bbe291617fce",
+    "validUntil": null,
+    "stockPackages": 1
   }
 ]

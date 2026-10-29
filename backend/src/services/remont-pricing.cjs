@@ -21142,6 +21142,9 @@ var RETAIL_SOURCES = [
   { "id": "kowalczyk-koelner-ws3595-1000", "ean": "5906675303024", "name": "KOELNER Wkr\u0119t samowierc\u0105cy fosfatowy TEX 3,5x9,5mm 1000 szt (WS-3595)", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 1e3, "unit": "szt", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 35759, "retailerSku": "5906675303024", "url": "https://sklep-kowalczyk.pl/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675303024.png", "pickupRequiresConfirmation": true },
   // source: https://sklep-kowalczyk.pl/atlas-cerplast-podklad-grunt-pod-tynk-op-15kg-cp-00-15-52413.html
   { "id": "kowalczyk-atlas-cerplast-15kg", "ean": "5905400530032", "name": "ATLAS CERPLAST Podk\u0142ad GRUNT pod tynk 15kg/op. (CP-00-15)", "brand": "Atlas", "category": "primer", "packageSize": 15, "unit": "kg", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 33738, "retailerSku": "5905400530032", "url": "https://sklep-kowalczyk.pl/atlas-cerplast-podklad-grunt-pod-tynk-op-15kg-cp-00-15-52413.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/9/5905400530032.png", "pickupRequiresConfirmation": true },
+  // source: https://budshop24.pl/produkt/cerplast-podkladowa-masa-tynkarska-15kg-baza-biala-atlas/
+  // source: https://allegro.pl/produkt/atlas-podkladowa-masa-tynkarska-cerplast-15-kg-819f3488-d980-4f3c-9643-2b523e4e8ba1
+  { "id": "budshop-atlas-cerplast-15kg", "ean": "5905400530032", "name": "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)", "brand": "Atlas", "category": "primer", "packageSize": 15, "unit": "kg", "store": "Budshop24", "format": "budshop-woo", "productId": 4808, "apiProductCode": "BS00215", "variant": ["Cerplast", "baza bia\u0142a", "15kg"], "url": "https://budshop24.pl/produkt/cerplast-podkladowa-masa-tynkarska-15kg-baza-biala-atlas/", "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/da2d66e8959c2ed6b638d0231c3e78cb.jpg", "pickupRequiresConfirmation": true },
   // source: https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html
   { "id": "kowalczyk-koelner-fx06k040-200", "ean": "5906675107622", "name": "KOELNER Ko\u0142ek szybkiego monta\u017Cu 6x40 z ko\u0142nierzem 200szt/op. (FX-06K040)", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 200, "unit": "szt", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 35762, "retailerSku": "5906675107622", "url": "https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675107622.jpg", "pickupRequiresConfirmation": true },
   // source: https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER
@@ -22523,10 +22526,11 @@ var AnonymousShop = class {
     return JSON.parse(await this.read("/csAPIServer_Hipper/invokeAction", JSON.stringify(body), true, false, true));
   }
   /** WooCommerce anonymous-cart token stays private to this one shop session.
-   * Reviewed cart reads/additions, IRBUD/Pati country+postcode and courier selection
+   * Reviewed cart reads/additions, IRBUD/Pati/Budshop country+postcode and courier selection
    * only. Contact/address lines, checkout and order routes remain forbidden. */
   async cartJson(path, body) {
-    const courierId = this.origin === "https://irbudsklep.pl" ? "flexible_shipping_single:3" : this.origin === "https://patiartstudio.pl" ? "flexible_shipping_single:7" : null;
+    const courierId = this.origin === "https://irbudsklep.pl" ? "flexible_shipping_single:3" : this.origin === "https://patiartstudio.pl" ? "flexible_shipping_single:7" : this.origin === "https://budshop24.pl" ? "wsds_simple_dimensional:3:medium_parcel_dhl" : null;
+    if (this.origin === "https://budshop24.pl" && path === "/wp-json/wc/store/v1/cart/add-item" && (!body || Object.keys(body).sort().join(",") !== "id,quantity" || body.id !== 4808 || !Number.isSafeInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_RETAIL_PACKAGES)) throw Error("invalid_cart_route");
     const shipping = path === "/wp-json/wc/store/v1/cart/select-shipping-rate" && courierId && body && Object.keys(body).sort().join(",") === "package_id,rate_id" && body.package_id === 0 && body.rate_id === courierId;
     const address = body?.shipping_address;
     const destination = path === "/wp-json/wc/store/v1/cart/update-customer" && courierId && body && Object.keys(body).join(",") === "shipping_address" && address && typeof address === "object" && Object.keys(address).sort().join(",") === "country,postcode" && address.country === "PL" && typeof address.postcode === "string" && /^\d{2}-\d{3}$/.test(address.postcode);
@@ -22741,9 +22745,9 @@ function money(value2) {
   return n;
 }
 function equalMoney(text4, numeric2) {
-  const cents4 = money(text4);
-  if (typeof numeric2 !== "number" || !Number.isFinite(numeric2) || Math.abs(numeric2 * 100 - cents4) > 1e-3) throw Error("invalid_money");
-  return cents4;
+  const cents5 = money(text4);
+  if (typeof numeric2 !== "number" || !Number.isFinite(numeric2) || Math.abs(numeric2 * 100 - cents5) > 1e-3) throw Error("invalid_money");
+  return cents5;
 }
 function country(context) {
   if (context.country?.id !== 14 || context.country?.iso_code !== "PL" || context.currency?.iso_code !== "PLN") throw Error("country_not_confirmed");
@@ -22833,13 +22837,13 @@ async function quoteIntegra(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto22 = require("node:crypto");
+var import_node_crypto23 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retailer-checkouts.ts
-var import_node_crypto11 = require("node:crypto");
+var import_node_crypto12 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retail-pages.ts
-var import_node_crypto10 = require("node:crypto");
+var import_node_crypto11 = require("node:crypto");
 
 // artifacts/api-server/src/lib/shopify-product.ts
 function confirmShopifyProduct(product, source) {
@@ -23184,9 +23188,121 @@ async function quotePati(order, postalCode, fetchImpl) {
   } };
 }
 
-// artifacts/api-server/src/lib/kowalczyk-magento.ts
+// artifacts/api-server/src/lib/budshop-woo.ts
 var import_node_crypto5 = require("node:crypto");
-var ORIGIN3 = "https://sklep-kowalczyk.pl";
+var ORIGIN3 = "https://budshop24.pl";
+var PRODUCT = {
+  sourceId: "budshop-atlas-cerplast-15kg",
+  id: 4808,
+  sku: "BS00215",
+  ean: "5905400530032",
+  name: "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)",
+  url: ORIGIN3 + "/produkt/cerplast-podkladowa-masa-tynkarska-15kg-baza-biala-atlas/",
+  image: ORIGIN3 + "/wp-content/uploads/2025/08/da2d66e8959c2ed6b638d0231c3e78cb.jpg"
+};
+var COURIER_ID = "wsds_simple_dimensional:3:medium_parcel_dhl";
+var cents4 = (value2) => {
+  if (typeof value2 !== "string" || !/^\d+$/.test(value2) || !Number.isSafeInteger(Number(value2))) throw Error("invalid_money");
+  return Number(value2);
+};
+var pln3 = (value2) => {
+  if (value2?.currency_code !== "PLN" || value2.currency_minor_unit !== 2) throw Error("retailer_currency_not_confirmed");
+};
+function reviewed3(source) {
+  if (source.id !== PRODUCT.sourceId || source.store !== "Budshop24" || source.format !== "budshop-woo" || source.productId !== PRODUCT.id || source.apiProductCode !== PRODUCT.sku || source.ean !== PRODUCT.ean || source.name !== PRODUCT.name || source.url !== PRODUCT.url || source.imageUrl !== PRODUCT.image || source.brand !== "Atlas" || source.category !== "primer" || source.packageSize !== 15 || source.unit !== "kg")
+    throw Error("product_identity_not_confirmed");
+}
+function inspectBudshopProduct(product, source) {
+  reviewed3(source);
+  if (product?.id !== PRODUCT.id || product.sku !== PRODUCT.sku || product.name !== PRODUCT.name || product.permalink !== PRODUCT.url || product.type !== "simple" || product.has_options !== false || product.is_purchasable !== true || product.is_in_stock !== true || product.is_on_backorder !== false || product.stock_availability?.class !== "in-stock" || product.images?.[0]?.src !== PRODUCT.image)
+    throw Error("product_unavailable");
+  pln3(product.prices);
+  const priceGrosze = cents4(product.prices.price);
+  if (priceGrosze <= 0) throw Error("invalid_money");
+  const stockPackages = product.low_stock_remaining;
+  if (stockPackages !== null && (!Number.isSafeInteger(stockPackages) || stockPackages < 1)) throw Error("product_unavailable");
+  return { name: PRODUCT.name, priceGrosze, imageUrl: PRODUCT.image, stockPackages: stockPackages ?? void 0 };
+}
+function confirmCart3(cart, count, price2, postalCode, shipping) {
+  if (!Array.isArray(cart?.items) || cart.items.length !== 1 || cart.items_count !== count || cart.errors?.length || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
+  const item = cart.items[0];
+  pln3(item.prices);
+  pln3(item.totals);
+  pln3(cart.totals);
+  if (item.id !== PRODUCT.id || item.sku !== PRODUCT.sku || item.name !== PRODUCT.name || item.quantity !== count || item.show_backorder_badge === true || item.quantity_limits?.minimum !== 1 || item.quantity_limits?.multiple_of !== 1 || item.quantity_limits?.maximum < count) throw Error("basket_not_confirmed");
+  const materials = price2 * count;
+  if (!Number.isSafeInteger(materials) || cents4(item.prices.price) !== price2 || cents4(item.totals.line_total) + cents4(item.totals.line_total_tax) !== materials || cents4(item.totals.line_subtotal) + cents4(item.totals.line_subtotal_tax) !== materials || cents4(cart.totals.total_items) + cents4(cart.totals.total_items_tax) !== materials) throw Error("price_changed");
+  for (const key of ["total_discount", "total_discount_tax", "total_fees", "total_fees_tax"])
+    if (cents4(cart.totals[key]) !== 0) throw Error("basket_not_confirmed");
+  const cost = cents4(cart.totals.total_shipping) + cents4(cart.totals.total_shipping_tax);
+  if (cents4(cart.totals.total_price) !== materials + cost || shipping !== void 0 && cost !== shipping)
+    throw Error("basket_not_confirmed");
+  if (cart.shipping_address?.country !== "PL" || cart.shipping_address.postcode !== postalCode || Object.entries(cart.shipping_address).some(([key, value2]) => !["country", "postcode"].includes(key) && value2 !== ""))
+    throw Error("country_not_confirmed");
+  return cart;
+}
+async function prepare2(count, fetchImpl) {
+  if (!Number.isSafeInteger(count) || count < 1 || count > MAX_RETAIL_PACKAGES) throw Error("invalid_basket");
+  const client = new AnonymousShop(ORIGIN3, fetchImpl, AbortSignal.timeout(18e3), retailerRequestBudget(1));
+  const empty = await client.cartJson("/wp-json/wc/store/v1/cart");
+  if (!Array.isArray(empty.items) || empty.items.length || empty.items_count !== 0) throw Error("basket_not_confirmed");
+  const source = RETAIL_SOURCES.find((s) => s.id === PRODUCT.sourceId);
+  if (!source) throw Error("product_identity_not_confirmed");
+  const product = await client.json("/wp-json/wc/store/v1/products/" + PRODUCT.id);
+  const card = inspectBudshopProduct(product, source);
+  if (card.stockPackages !== void 0 && count > card.stockPackages) throw Error("insufficient_stock");
+  const added = await client.cartJson("/wp-json/wc/store/v1/cart/add-item", { id: PRODUCT.id, quantity: count });
+  confirmCart3(added, count, card.priceGrosze, "");
+  return { client, card, evidence: [product, added] };
+}
+async function readBudshopProduct(source, fetchImpl) {
+  reviewed3(source);
+  const result = await prepare2(1, fetchImpl);
+  return { ...result.card, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify(result.evidence)).digest("hex") };
+}
+async function quoteBudshop(order, postalCode, fetchImpl) {
+  if (order.store !== "Budshop24" || !/^\d{2}-\d{3}$/.test(postalCode) || order.lines.length !== 1 || order.lines[0].packages.length !== 1 || order.lines[0].packages[0].offerId !== PRODUCT.sourceId) throw Error("invalid_basket");
+  const pack = order.lines[0].packages[0];
+  const result = await prepare2(pack.count, fetchImpl);
+  if (pack.unitPriceGrosze !== result.card.priceGrosze || order.materialsGrosze !== pack.count * result.card.priceGrosze) throw Error("price_changed");
+  const located = confirmCart3(await result.client.cartJson(
+    "/wp-json/wc/store/v1/cart/update-customer",
+    { shipping_address: { country: "PL", postcode: postalCode } }
+  ), pack.count, result.card.priceGrosze, postalCode);
+  if (!located.has_calculated_shipping || !located.needs_shipping || !located.payment_methods?.includes("p24-online-payments")) throw Error("no_home_delivery");
+  const groups = located.shipping_rates;
+  if (!Array.isArray(groups) || groups.length !== 1 || groups[0].package_id !== 0 || groups[0].destination?.country !== "PL" || groups[0].destination?.postcode !== postalCode || Object.entries(groups[0].destination).some(([key, value2]) => !["country", "postcode"].includes(key) && value2 !== ""))
+    throw Error("no_home_delivery");
+  const couriers = groups[0].shipping_rates?.filter((rate2) => rate2.rate_id === COURIER_ID && rate2.method_id === "wsds_simple_dimensional" && rate2.name === "DHL \u2013 \u015Arednia Paczka");
+  if (couriers?.length !== 1) throw Error("no_home_delivery");
+  const rate = couriers[0];
+  pln3(rate);
+  const cost = cents4(rate.price) + cents4(rate.taxes);
+  if (cost <= 0) throw Error("no_home_delivery");
+  const final = confirmCart3(await result.client.cartJson(
+    "/wp-json/wc/store/v1/cart/select-shipping-rate",
+    { package_id: 0, rate_id: COURIER_ID }
+  ), pack.count, result.card.priceGrosze, postalCode, cost);
+  const selected = final.shipping_rates?.[0]?.shipping_rates?.filter((r) => r.selected);
+  if (!final.has_calculated_shipping || !final.payment_methods?.includes("p24-online-payments") || final.shipping_rates?.length !== 1 || final.shipping_rates[0].destination?.postcode !== postalCode || selected?.length !== 1 || selected[0].rate_id !== COURIER_ID || cents4(selected[0].price) + cents4(selected[0].taxes) !== cost) throw Error("basket_not_confirmed");
+  const now = /* @__PURE__ */ new Date();
+  return { quote: {
+    costGrosze: cost,
+    carrier: "DHL \u2013 \u015Arednia Paczka",
+    payment: "Przelewy24",
+    checkedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 6e5).toISOString(),
+    sourceUrl: ORIGIN3 + "/koszyk/",
+    basis: "retailer_basket_postcode",
+    destinationScope: "postal_code",
+    postalCode,
+    evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify([...result.evidence, located, final])).digest("hex")
+  } };
+}
+
+// artifacts/api-server/src/lib/kowalczyk-magento.ts
+var import_node_crypto6 = require("node:crypto");
+var ORIGIN4 = "https://sklep-kowalczyk.pl";
 var reviews = [
   // source: https://sklep-kowalczyk.pl/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html
   { id: 35759, ean: "5906675303024", size: 1e3, unit: "szt", brand: "Koelner", category: "drywall-accessory", name: "KOELNER Wkr\u0119t samowierc\u0105cy fosfatowy TEX 3,5x9,5mm 1000 szt (WS-3595)", path: "/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html", photo: "/5/9/5906675303024.png" },
@@ -23209,7 +23325,7 @@ var amount = (value2) => {
 var sameName = (a, b) => a.replace(/\s+/g, " ").trim() === b.replace(/\s+/g, " ").trim();
 function reviewedKowalczykSource(source) {
   const review2 = reviews.find((row) => row.id === source.productId);
-  if (!review2 || source.store !== "E-Kowalczyk" || source.format !== "kowalczyk-magento" || source.ean !== review2.ean || source.retailerSku !== review2.ean || source.packageSize !== review2.size || source.unit !== review2.unit || source.brand !== review2.brand || source.category !== review2.category || source.name !== review2.name || source.url !== ORIGIN3 + review2.path) throw Error("product_identity_not_confirmed");
+  if (!review2 || source.store !== "E-Kowalczyk" || source.format !== "kowalczyk-magento" || source.ean !== review2.ean || source.retailerSku !== review2.ean || source.packageSize !== review2.size || source.unit !== review2.unit || source.brand !== review2.brand || source.category !== review2.category || source.name !== review2.name || source.url !== ORIGIN4 + review2.path) throw Error("product_identity_not_confirmed");
   return review2;
 }
 function inspectKowalczykCard(raw, source) {
@@ -23219,8 +23335,8 @@ function inspectKowalczykCard(raw, source) {
   const h1 = text2(one5(elements(html, (a2, tag) => tag === "h1" && a2["data-ui-id"] === "page-title-wrapper"), "product_name_mismatch"));
   if (!sameName(h1, review2.name)) throw Error("product_name_mismatch");
   const form2 = one5(elements(html, (a2, tag) => tag === "form" && a2.id === "product_addtocart_form"), "product_id_not_confirmed"), a = attrs4(form2);
-  const action = new URL(a.action ?? "", ORIGIN3);
-  if (a["data-sku"] !== review2.ean || action.origin !== ORIGIN3 || !action.pathname.endsWith("/product/" + review2.id + "/")) throw Error("product_identity_not_confirmed");
+  const action = new URL(a.action ?? "", ORIGIN4);
+  if (a["data-sku"] !== review2.ean || action.origin !== ORIGIN4 || !action.pathname.endsWith("/product/" + review2.id + "/")) throw Error("product_identity_not_confirmed");
   const scriptPrice = one5([...raw.matchAll(/initialFinalPrice:\s*(\d+(?:\.\d{1,2})?)\s*,/g)].map((m) => Number(m[1])), "product_price_ambiguous");
   const priceGrosze = amount(scriptPrice);
   if (!priceGrosze) throw Error("invalid_money");
@@ -23228,7 +23344,7 @@ function inspectKowalczykCard(raw, source) {
   const photos = [...raw.matchAll(/(?:"full"|"img")\s*:\s*"([^"\n]+)"/g)].map((m) => m[1].replaceAll("\\/", "/")).filter((url2) => {
     try {
       const p = new URL(url2);
-      return p.origin === ORIGIN3 && p.pathname.includes("/catalog/product/") && p.pathname.endsWith(review2.photo);
+      return p.origin === ORIGIN4 && p.pathname.includes("/catalog/product/") && p.pathname.endsWith(review2.photo);
     } catch {
       return false;
     }
@@ -23267,9 +23383,9 @@ function confirmKowalczykTotals(t, expected, shippingGrosze = 0) {
   if (!Array.isArray(t.total_segments) || t.total_segments.some((row) => !["subtotal", "shipping", "tax", "grand_total"].includes(row.code))) throw Error("basket_not_confirmed");
   return gross2;
 }
-async function prepare2(wanted, fetchImpl) {
+async function prepare3(wanted, fetchImpl) {
   if (!wanted.length || wanted.length > 3 || new Set(wanted.map((row) => row.source.ean)).size !== wanted.length) throw Error("invalid_basket");
-  const client = new AnonymousShop(ORIGIN3, fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(wanted.length));
+  const client = new AnonymousShop(ORIGIN4, fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(wanted.length));
   const evidence = [], images = /* @__PURE__ */ new Map();
   for (const row of wanted) {
     reviewedKowalczykSource(row.source);
@@ -23295,8 +23411,8 @@ async function prepare2(wanted, fetchImpl) {
   return { client, evidence, wanted, images };
 }
 async function readKowalczykProduct(source, fetchImpl) {
-  const p = await prepare2([{ source, count: 1, priceGrosze: 0 }], fetchImpl);
-  return { priceGrosze: p.wanted[0].priceGrosze, imageUrl: p.images.get(source.id), evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
+  const p = await prepare3([{ source, count: 1, priceGrosze: 0 }], fetchImpl);
+  return { priceGrosze: p.wanted[0].priceGrosze, imageUrl: p.images.get(source.id), evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
 }
 async function quoteKowalczyk(order, postalCode, fetchImpl) {
   if (order.store !== "E-Kowalczyk" || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
@@ -23306,7 +23422,7 @@ async function quoteKowalczyk(order, postalCode, fetchImpl) {
     return { source, count: pack.count, priceGrosze: pack.unitPriceGrosze };
   }));
   if (wanted.reduce((n, row) => n + row.count * row.priceGrosze, 0) !== order.materialsGrosze) throw Error("invalid_basket");
-  const p = await prepare2(wanted, fetchImpl);
+  const p = await prepare3(wanted, fetchImpl);
   const payments = await p.client.magento("payments");
   if (!Array.isArray(payments) || payments.filter((row) => row.code === "checkmo" && row.title === "Przedp\u0142ata (przelew tradycyjny)").length !== 1) throw Error("no_prepaid_payment");
   const paymentTitle = payments.find((row) => row.code === "checkmo").title;
@@ -23326,11 +23442,11 @@ async function quoteKowalczyk(order, postalCode, fetchImpl) {
   const ship = one5(final.total_segments.filter((row) => row.code === "shipping"), "basket_not_confirmed");
   if (ship.title !== "Wysy\u0142ka i obs\u0142uga (InPost Kurier - Kurier)") throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: cost, carrier: "InPost Kurier", payment: paymentTitle, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN3 + "/checkout/cart/", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify([...p.evidence, { postalCode, methods, payment, initial, final }])).digest("hex") } };
+  return { quote: { costGrosze: cost, carrier: "InPost Kurier", payment: paymentTitle, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN4 + "/checkout/cart/", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify([...p.evidence, { postalCode, methods, payment, initial, final }])).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/qshop-product.ts
-var import_node_crypto6 = require("node:crypto");
+var import_node_crypto7 = require("node:crypto");
 var TOKMET_ORIGIN = "https://sklep.tokmet.pl";
 var TOKMET_URL = TOKMET_ORIGIN + "/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i";
 var TOKMET_NAME = 'W\u0118\u017BYK DO BATERII STOJ\u0104CEJ 3/8" x M10*1 L - 30 CM D\u0141UGA KO\u0143C\xD3WKA';
@@ -23389,11 +23505,11 @@ async function readTokmetProduct(source, fetchImpl) {
   if (!text3(clean(empty)).includes("Tw\xF3j koszyk jest pusty") || elements(empty, (a) => /^qty\[|^cart_qty_type\[/.test(a.id ?? "")).length) throw Error("basket_not_confirmed");
   const added = await client.text("/_dynamic_cart.php?action=add&itemId=2806&qty=1&dbv=&view_only_price=false"), cart = await client.text("/cart.php");
   confirmTokmetCart(cart, current.priceGrosze);
-  return { stock: current.stock, product: { "@type": "Product", name: source.name, gtin13: source.ean, brand: source.brand, image: current.imageUrl, offers: { "@type": "Offer", price: (current.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify([list, card, empty, added, cart])).digest("hex") };
+  return { stock: current.stock, product: { "@type": "Product", name: source.name, gtin13: source.ean, brand: source.brand, image: current.imageUrl, offers: { "@type": "Offer", price: (current.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify([list, card, empty, added, cart])).digest("hex") };
 }
 
 // artifacts/api-server/src/lib/topboden-product.ts
-var import_node_crypto7 = require("node:crypto");
+var import_node_crypto8 = require("node:crypto");
 var TOPBODEN_API = "https://api.topboden.pl";
 function confirmTopbodenProduct(product, source, count = source.purchaseMultiple ?? 1) {
   if (!source.productUuid || !/^[a-f0-9-]{36}$/.test(source.productUuid) || product?.uuid !== source.productUuid || product.ean !== source.ean || product.data?.logisticData?.ean !== source.ean) throw Error("product_ean_not_confirmed");
@@ -23458,7 +23574,7 @@ async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMul
   if (records.length !== 1 || !(reviewedNativePack ? accessoryIdentity : records[0].name?.startsWith(product.name))) throw Error("product_identity_not_confirmed");
   const offer = records[0].offers;
   if (offer?.priceCurrency !== "PLN" || parsePriceToGrosze(offer.price) !== confirmed.priceGrosze || !/\/InStock$/.test(String(offer.availability))) throw Error("retailer_gross_price_not_confirmed");
-  return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
+  return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
 }
 
 // artifacts/api-server/src/lib/prestashop-product.ts
@@ -23472,9 +23588,9 @@ function classElements(html, name) {
 }
 function prestashopMoney(value2) {
   const match = value2.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
-  const cents4 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
-  if (!Number.isSafeInteger(cents4) || cents4 < 0) throw Error("invalid_money");
-  return cents4;
+  const cents5 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
+  if (!Number.isSafeInteger(cents5) || cents5 < 0) throw Error("invalid_money");
+  return cents5;
 }
 function readPrestashopProduct(html, source) {
   const safe = clean(html);
@@ -23541,9 +23657,9 @@ var izoAttrs = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var izoOne = exactlyOne;
 function izoMoney(text4, numeric2) {
   if (typeof text4 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
-  const match = text4.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/), cents4 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
-  if (!Number.isSafeInteger(cents4) || cents4 < 0 || Math.abs(numeric2 * 100 - cents4) > 1e-5) throw Error("invalid_money");
-  return cents4;
+  const match = text4.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/), cents5 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
+  if (!Number.isSafeInteger(cents5) || cents5 < 0 || Math.abs(numeric2 * 100 - cents5) > 1e-5) throw Error("invalid_money");
+  return cents5;
 }
 function readIzosystemsState(html) {
   const matches = [...html.matchAll(/var prestashop = ([^\r\n]+);/g)];
@@ -23599,7 +23715,7 @@ function readKrasnyStock(html, source) {
 }
 
 // artifacts/api-server/src/lib/bmb.ts
-var import_node_crypto8 = require("node:crypto");
+var import_node_crypto9 = require("node:crypto");
 var BMB_ORIGIN = "https://bmbtechnologie.pl";
 var BMB_BASKET = "/order/basket.html";
 var NAME = "\u015Arodek gruntuj\u0105cy Knauf Grundiermittel 60 15KG";
@@ -23683,7 +23799,7 @@ async function readBmbCart(source, count, fetchImpl, expectedPrice) {
   await client.text(BMB_BASKET, { "add_product[5454]": String(count) });
   const cart = await client.text(BMB_BASKET);
   confirmBmbBasket(cart, source, count, product.priceGrosze);
-  return { product, cart, evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(page).update(cart).digest("hex") };
+  return { product, cart, evidenceSha256: (0, import_node_crypto9.createHash)("sha256").update(page).update(cart).digest("hex") };
 }
 async function quoteBmb(order, fetchImpl) {
   if (order.store !== "BMB Technologie" || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
@@ -24026,7 +24142,7 @@ function inspectKronosferaProduct(html, source) {
 }
 
 // artifacts/api-server/src/lib/skyshop-product.ts
-var import_node_crypto9 = require("node:crypto");
+var import_node_crypto10 = require("node:crypto");
 var MATBUD_ORIGIN = "https://centrummatbud.pl";
 var MATBUD_URL = MATBUD_ORIGIN + "/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729";
 var MATBUD_NAME = "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op";
@@ -24129,7 +24245,7 @@ function confirmSkyshopBasket(cart, expected) {
   }
   return cart;
 }
-var skyshopEvidenceHash = (evidence) => (0, import_node_crypto9.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex");
+var skyshopEvidenceHash = (evidence) => (0, import_node_crypto10.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex");
 
 // artifacts/api-server/src/lib/retail-pages.ts
 function objects(value2) {
@@ -24148,20 +24264,20 @@ function parseRetailPage(html, source, observedAt) {
   if (source.skuIdentity && source.format !== "irbud-woo") products.push(confirmRetailSkuProduct(html, readRetailMicrodata(html, "sewera", source.url, source.retailUnit), source));
   else if (source.format === "kronosfera") products.push(inspectKronosferaProduct(html, source).product);
   else if (source.format === "folnet") {
-    const reviewed3 = inspectFolnetProduct(html, source);
-    products.push(reviewed3.product);
-    stockPackages = reviewed3.stock;
+    const reviewed4 = inspectFolnetProduct(html, source);
+    products.push(reviewed4.product);
+    stockPackages = reviewed4.stock;
   } else if (source.format === "betterial") products.push(readBetterialProduct(html, source));
   else if (source.format === "prestashop") products.push(readPrestashopProduct(html, source).product);
   else if (source.format === "izosystems") {
-    const reviewed3 = readIzosystemsProduct(html, source);
-    products.push(reviewed3.product);
-    stockPackages = reviewed3.maxPackages;
+    const reviewed4 = readIzosystemsProduct(html, source);
+    products.push(reviewed4.product);
+    stockPackages = reviewed4.maxPackages;
   } else if (source.format === "abstore") products.push(readAbstoreProduct(html, source));
   else if (source.format === "certusoft") {
-    const reviewed3 = readCertusoftProduct(html, source);
-    products.push(reviewed3.product);
-    stockPackages = reviewed3.maxPackages;
+    const reviewed4 = readCertusoftProduct(html, source);
+    products.push(reviewed4.product);
+    stockPackages = reviewed4.maxPackages;
   } else if (source.format === "modna") products.push(readModnaProduct(html, source).product);
   else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax", "irbud-woo", "krasny"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
@@ -24220,7 +24336,7 @@ function parseRetailPage(html, source, observedAt) {
     availability: "in_stock",
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
-    evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(html).digest("hex"),
+    evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(html).digest("hex"),
     validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value2) => typeof value2 === "string").sort()[0] ?? null
   };
 }
@@ -24276,6 +24392,11 @@ async function readRetailSource(source, fetchImpl = fetch) {
     const html = `<script type="application/ld+json">${JSON.stringify({ "@type": "Product", name: p.name, gtin13: source.ean, brand: source.brand, image: p.imageUrl, offers: { "@type": "Offer", price: (p.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } })}</script>`;
     return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: p.stockPackages, evidenceSha256: p.evidenceSha256 };
   }
+  if (source.format === "budshop-woo") {
+    const p = await readBudshopProduct(source, fetchImpl);
+    const html = `<script type="application/ld+json">${JSON.stringify({ "@type": "Product", name: p.name, gtin13: source.ean, brand: source.brand, image: p.imageUrl, offers: { "@type": "Offer", price: (p.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } })}</script>`;
+    return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: p.stockPackages, evidenceSha256: p.evidenceSha256 };
+  }
   if (source.format === "woocommerce") {
     const product = await readWooProduct(source, fetchImpl);
     const html = `<script type="application/ld+json">${JSON.stringify({ "@type": "Product", name: product.name, gtin13: source.ean, brand: source.brand, image: product.imageUrl, offers: { "@type": "Offer", price: (product.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } })}</script>`;
@@ -24294,7 +24415,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       image: item.imageUrl,
       offers: { "@type": "Offer", price: (item.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", url: source.url, availability: "https://schema.org/InStock" }
     })}</script>`;
-    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
+    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
   }
   const api = source.format === "shoper-api";
   const requestUrl = api ? `${new URL(source.url).origin}/webapi/front/pl_PL/products/PLN/${shoperProductId(source)}` : source.url;
@@ -24342,7 +24463,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       offers: { "@type": "Offer", price: gross2.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
     })}</script>`;
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
-    return { ...observation, evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(raw).digest("hex") };
+    return { ...observation, evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(raw).digest("hex") };
   }
   if (source.pickupOnly && source.browserReviewAllowed) throw Error("browser_location_review_required");
   if (source.browserReviewAllowed && new URL(source.url).origin === "https://www.castorama.pl" && ["m2", "m"].includes(source.unit)) throw Error("browser_package_review_required");
@@ -24498,7 +24619,7 @@ function quote(order, costGrosze, carrier, payment, evidence, postalCode, dispat
     basis: postalCode ? "retailer_basket_postcode" : "retailer_basket_national",
     destinationScope: postalCode ? "postal_code" : "PL",
     ...postalCode ? { postalCode, dispatchFrom } : {},
-    evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function expectedPacks(order) {
@@ -24603,7 +24724,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
     confirmSeweraBasket(basket, expected, order.materialsGrosze, department.name);
   } catch (error40) {
     if (!(error40 instanceof SeweraStockError)) throw error40;
-    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto11.createHash)("sha256").update(basket).digest("hex");
+    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto12.createHash)("sha256").update(basket).digest("hex");
     return { reason: "insufficient_stock", stockLimits: error40.shortages.map((shortage) => {
       const { pack } = prepared.find((item) => item.source.url === shortage.url);
       const product = order.lines.find((line2) => line2.packages.some((item) => item.offerId === pack.offerId)).product;
@@ -24643,7 +24764,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
       personal_collection: "0"
     });
     const price2 = readSeweraPayment(response);
-    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto11.createHash)("sha256").update(response).digest("hex") });
+    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto12.createHash)("sha256").update(response).digest("hex") });
   }
   const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
   if (!best) throw Error("no_home_delivery");
@@ -24717,7 +24838,7 @@ async function quoteBuduj24(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/cezar-delivery.ts
-var import_node_crypto12 = require("node:crypto");
+var import_node_crypto13 = require("node:crypto");
 async function quoteCezar(order, postalCode, fetchImpl) {
   const origin4 = "https://cezar.eu";
   const client = new AnonymousShop(origin4, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
@@ -24763,12 +24884,12 @@ async function quoteCezar(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
+    evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/topboden-delivery.ts
-var import_node_crypto13 = require("node:crypto");
+var import_node_crypto14 = require("node:crypto");
 async function quoteTopboden(order, fetchImpl) {
   const signal = AbortSignal.timeout(12e3), client = new AnonymousShop(TOPBODEN_API, fetchImpl, signal, retailerRequestBudget(order.lines.length));
   const proofs = [], categories = [], seen = /* @__PURE__ */ new Set();
@@ -24800,11 +24921,11 @@ async function quoteTopboden(order, fetchImpl) {
     return Math.max(...applicable);
   });
   const costGrosze = materials >= Math.round(rate.minOrderValue * 100) ? 0 : Math.max(...prices), checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/prestashop-delivery.ts
-var import_node_crypto14 = require("node:crypto");
+var import_node_crypto15 = require("node:crypto");
 var origin = "https://www.eelektryka.com";
 var attrs8 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var input = (html, name) => attrs8(exactlyOne(elements(html, (a, tag) => tag === "input" && a.name === name), "basket_not_confirmed"));
@@ -24876,18 +24997,18 @@ async function quotePrestashop(order, fetchImpl) {
     sourceUrl: origin + "/index.php?controller=specialorderpayment",
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
+    evidenceSha256: (0, import_node_crypto15.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/certusoft-delivery.ts
-var import_node_crypto15 = require("node:crypto");
+var import_node_crypto16 = require("node:crypto");
 var origin2 = "https://hipper.pl";
 var money3 = (value2) => {
   if (typeof value2 !== "number" || !Number.isFinite(value2) || value2 < 0) throw Error("invalid_money");
-  const cents4 = Math.round(value2 * 100);
-  if (!Number.isSafeInteger(cents4) || Math.abs(value2 * 100 - cents4) > 1e-5) throw Error("invalid_money");
-  return cents4;
+  const cents5 = Math.round(value2 * 100);
+  if (!Number.isSafeInteger(cents5) || Math.abs(value2 * 100 - cents5) > 1e-5) throw Error("invalid_money");
+  return cents5;
 };
 function confirmedCart(raw, expected, subtotal) {
   const state = readCertusoftState(raw), cart = state.csAppWindowsUtils?.csAppWindows?.csB2BCart, ds = cart?.dataSets;
@@ -24970,12 +25091,12 @@ async function quoteCertusoft(order, fetchImpl) {
     sourceUrl: origin2 + "/koszyk",
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto15.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
+    evidenceSha256: (0, import_node_crypto16.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/modna-delivery.ts
-var import_node_crypto16 = require("node:crypto");
+var import_node_crypto17 = require("node:crypto");
 function confirmModnaCart(html, orderHtml, expected, materials) {
   const safe = clean(html), cart = modnaById(safe, "cart_summary_block");
   if (text2(modnaById(cart, "currency")) !== "PLN") throw Error("retailer_currency_not_confirmed");
@@ -25049,11 +25170,11 @@ async function quoteModna(order, fetchImpl) {
   if (!expected.length) throw Error("invalid_basket");
   const confirmed = confirmModnaCart(await client.text("/cart/"), await client.text("/order/"), expected, order.materialsGrosze);
   const checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto16.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
+  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/folnet-delivery.ts
-var import_node_crypto17 = require("node:crypto");
+var import_node_crypto18 = require("node:crypto");
 var money4 = (value2, formatted) => {
   if (typeof value2 !== "string" || !/^\d+\.\d{2}$/.test(value2) || typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted)) throw Error("invalid_money");
   const amount4 = parsePriceToGrosze(value2), visible = parsePriceToGrosze(formatted.replace(/\s*zł$/, ""));
@@ -25101,11 +25222,11 @@ async function quoteFolnet(order, fetchImpl) {
   for (const [id, item] of wanted) query.set(`products[${id}][uniw][quantity]`, String(item.count));
   const raw = await client.text("/ajax/get-deliveries.php?" + query, { getAjax: "true" });
   const response = JSON.parse(raw), best = selectFolnetHomeRate(response, materials), now = /* @__PURE__ */ new Date();
-  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
+  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/kronosfera-delivery.ts
-var import_node_crypto18 = require("node:crypto");
+var import_node_crypto19 = require("node:crypto");
 var cls5 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var only4 = (values) => {
   if (values.length !== 1) throw Error("basket_not_confirmed");
@@ -25177,7 +25298,7 @@ async function quoteKronosfera(order, fetchImpl) {
   }
   if (materials !== order.materialsGrosze) throw Error("basket_not_confirmed");
   const raw = await client.text("/koszyk"), selected = confirmKronosferaCart(raw, wanted, materials), now = /* @__PURE__ */ new Date();
-  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(raw).digest("hex") } };
+  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(raw).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/skyshop-delivery.ts
@@ -25251,8 +25372,8 @@ async function quoteSkyshop(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/abud-delivery.ts
-var import_node_crypto19 = require("node:crypto");
-var ORIGIN4 = "https://www.abud.pl";
+var import_node_crypto20 = require("node:crypto");
+var ORIGIN5 = "https://www.abud.pl";
 var IDS = ["abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg"];
 function money6(value2, formatted) {
   if (!["string", "number"].includes(typeof value2)) throw Error("invalid_money");
@@ -25280,7 +25401,7 @@ function selectAbudHomeRate(response) {
 }
 function confirmAbudDestination(response) {
   const regions = response?.valid_region?.["1"];
-  if (response?.error || response?.errors?.length || response?.valid !== true || Object.keys(response.valid_region ?? {}).length !== 1 || !Array.isArray(regions) || regions.length !== 1 || regions[0]?.shop_id !== "1" || !/^\d+$/.test(regions[0].id_region ?? "") || regions[0].url !== ORIGIN4) throw Error("address_required");
+  if (response?.error || response?.errors?.length || response?.valid !== true || Object.keys(response.valid_region ?? {}).length !== 1 || !Array.isArray(regions) || regions.length !== 1 || regions[0]?.shop_id !== "1" || !/^\d+$/.test(regions[0].id_region ?? "") || regions[0].url !== ORIGIN5) throw Error("address_required");
   const region = regions[0];
   if (!(region.id_region === "1143020003" && region.parent === "0" || region.id_region !== "1143020003" && region.parent === "1143020003")) throw Error("address_required");
 }
@@ -25300,7 +25421,7 @@ function confirmAbudBasket(response, expected, materialsGrosze) {
   let total = 0, count = 0;
   for (const row of basket.products) {
     const wanted = remaining.get(row?.id);
-    if (!wanted || row.size !== "uniw" || row.price_unit !== wanted.source.apiPurchaseUnit || row.worth_unit !== wanted.source.apiPurchaseUnit || row.name !== wanted.source.name || new URL(row.link, ORIGIN4).href !== wanted.source.url || row.bonus !== "n" || row.product_type !== "product_item" || row.bundle !== 0 || !Array.isArray(row.bundled) || row.bundled.length || row.subscription_period !== "0") throw Error("basket_not_confirmed");
+    if (!wanted || row.size !== "uniw" || row.price_unit !== wanted.source.apiPurchaseUnit || row.worth_unit !== wanted.source.apiPurchaseUnit || row.name !== wanted.source.name || new URL(row.link, ORIGIN5).href !== wanted.source.url || row.bonus !== "n" || row.product_type !== "product_item" || row.bundle !== 0 || !Array.isArray(row.bundled) || row.bundled.length || row.subscription_period !== "0") throw Error("basket_not_confirmed");
     if (!Number.isSafeInteger(row.reservation_stocksown) || row.reservation_stocksown < 0) throw Error("product_unavailable");
     if (wanted.count > row.reservation_stocksown) throw Error("insufficient_stock");
     if (row.count !== wanted.count) throw Error("basket_not_confirmed");
@@ -25315,11 +25436,11 @@ function confirmAbudBasket(response, expected, materialsGrosze) {
 }
 async function quoteAbud(order, postalCode, fetchImpl) {
   if (order.store !== "ABUD" || !order.lines.length || !/^\d{2}-\d{3}$/.test(postalCode) || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze <= 0) throw Error("invalid_basket");
-  const client = new AnonymousShop(ORIGIN4, fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.length));
+  const client = new AnonymousShop(ORIGIN5, fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.length));
   const expected = [], observations = [];
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === "ABUD" && source2.format === "idosell");
-    if (!source || !IDS.includes(source.id) || new URL(source.url).origin !== ORIGIN4 || pack.store !== "ABUD" || pack.url !== source.url || pack.packageSize !== source.packageSize || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze <= 0 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || expected.some((row) => row.source.productId === source.productId)) throw Error("invalid_basket");
+    if (!source || !IDS.includes(source.id) || new URL(source.url).origin !== ORIGIN5 || pack.store !== "ABUD" || pack.url !== source.url || pack.packageSize !== source.packageSize || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze <= 0 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || expected.some((row) => row.source.productId === source.productId)) throw Error("invalid_basket");
     const html = await client.text(source.url), observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
     confirmVariant(html, source);
     if (observation.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
@@ -25337,16 +25458,16 @@ async function quoteAbud(order, postalCode, fetchImpl) {
     ...best,
     checkedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + 6e5).toISOString(),
-    sourceUrl: ORIGIN4 + "/basketedit.php",
+    sourceUrl: ORIGIN5 + "/basketedit.php",
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(JSON.stringify({ observations, destination, postalCode, basket, shipping })).digest("hex")
+    evidenceSha256: (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify({ observations, destination, postalCode, basket, shipping })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/izosystems-delivery.ts
-var import_node_crypto20 = require("node:crypto");
+var import_node_crypto21 = require("node:crypto");
 var money7 = (text4, n) => n === 0 && text4 === "Za darmo!" ? 0 : izoMoney(text4, n);
 var value = (html, id) => text2(izoOne(elements(html, (a) => a.id === id), "basket_not_confirmed"));
 async function quoteIzosystems(order, postalCode, fetchImpl) {
@@ -25358,16 +25479,16 @@ async function quoteIzosystems(order, postalCode, fetchImpl) {
   if (product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
   if (product.maxPackages < pack.count) throw Error("insufficient_stock");
   const expected = order.materialsGrosze;
-  const confirmCart3 = (cart) => {
+  const confirmCart4 = (cart) => {
     if (!cart || !Array.isArray(cart.products) || cart.products.length !== 1 || cart.products_count !== pack.count || !Array.isArray(cart.discounts) || cart.discounts.length || !Array.isArray(cart.vouchers?.added) || cart.vouchers.added.length || cart.subtotals?.discounts !== null) throw Error("basket_not_confirmed");
     const p = cart.products[0];
     if (String(p.id) !== "1783" || String(p.id_product) !== "1783" || String(p.id_product_attribute) !== "0" || p.reference !== "135633" || p.ean13 !== source.ean || p.name !== product.name || p.quantity !== pack.count || izoMoney(p.price, p.price_amount) !== pack.unitPriceGrosze || izoMoney(p.total, expected / 100) !== expected || izoMoney(cart.subtotals.products.value, cart.subtotals.products.amount) !== expected) throw Error("basket_not_confirmed");
   };
   const added = await client.izosystems("add", { token: product.token, productId: 1783, count: pack.count });
   if (added.success !== true || String(added.id_product) !== "1783" || String(added.id_product_attribute) !== "0" || added.errors) throw Error("basket_not_confirmed");
-  confirmCart3(added.cart);
+  confirmCart4(added.cart);
   const checkout = await client.text("/zamowienie"), state = readIzosystemsState(checkout);
-  confirmCart3(state.cart);
+  confirmCart4(state.cart);
   const form2 = izoOne(elements(clean(checkout), (a, t) => t === "form" && a.id === "velsof_supercheckout_form"), "basket_not_confirmed");
   if (izoAttrs(form2).action !== IZOSYSTEMS_ORIGIN + "/module/supercheckout/supercheckout") throw Error("invalid_cart_route");
   const countries = izoOne(elements(form2, (a, t) => t === "select" && a.name === "shipping_address[id_country]"), "country_not_confirmed");
@@ -25388,7 +25509,7 @@ async function quoteIzosystems(order, postalCode, fetchImpl) {
   const confirmed = await client.izosystems("cart", { token }), payments = await client.izosystems("payments", { token });
   if (confirmed.redirect !== false || typeof confirmed.html !== "string" || typeof payments.html !== "string") throw Error("basket_not_confirmed");
   const final = readIzosystemsState(await client.text("/koszyk-zakupow?action=show")).cart;
-  confirmCart3(final);
+  confirmCart4(final);
   const shipping = money7(final.subtotals.shipping.value, final.subtotals.shipping.amount), total = izoMoney(final.totals.total_including_tax.value, final.totals.total_including_tax.amount);
   if (shipping !== costGrosze || total !== expected + costGrosze || izoMoney(final.totals.total.value, final.totals.total.amount) !== total) throw Error("basket_not_confirmed");
   const summary = clean(confirmed.html), rows = elements(summary, (a) => Boolean(a.id?.startsWith("product_")));
@@ -25399,11 +25520,11 @@ async function quoteIzosystems(order, postalCode, fetchImpl) {
   const inputValue = (name) => izoAttrs(izoOne(elements(paymentHtml, (a, t) => t === "input" && a.name === name), "basket_not_confirmed")).value;
   if (inputValue("kb_payment_fee_payment-option-1") !== "z\u01420" || inputValue("kb_payment_fee_status_payment-option-1") !== "0" || inputValue("kb_payment_fee_applicable_payment-option-1") !== "0" || inputValue("kb_payment_fee_currency") !== "z\u0142" || Number(inputValue("kb_payment_fee_total_payment-option-1")) * 100 !== total) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto21.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/kronodom-delivery.ts
-var import_node_crypto21 = require("node:crypto");
+var import_node_crypto22 = require("node:crypto");
 var origin3 = "https://kronodom.pl";
 var sourceId = "kronodom-arbiton-secura-thermo-6m2";
 var one12 = (nodes, reason = "basket_not_confirmed") => {
@@ -25480,7 +25601,7 @@ async function quoteKronodom(order, fetchImpl) {
     if (!/powyżej 2999 zł - Darmowa wysyłka/.test(policy)) throw Error("no_home_delivery");
   }
   const now = /* @__PURE__ */ new Date();
-  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin3 + "/order/checkout/cart", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto21.createHash)("sha256").update(cart + policy).digest("hex") } };
+  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin3 + "/order/checkout/cart", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto22.createHash)("sha256").update(cart + policy).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
@@ -25521,15 +25642,15 @@ function unavailableReason(store) {
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (store === "Marbet24") return "customer_details_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
-  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Kronodom", "Centrum Matbud", "ABUD", "IRBUD", "Pati Art Studio", "E-Kowalczyk", "Izosystems", "BMB Technologie", "Integra Bieli\u0144scy"].includes(store)) return void 0;
+  if (ORIGINS[store] || ["Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Kronodom", "Centrum Matbud", "ABUD", "IRBUD", "Pati Art Studio", "Budshop24", "E-Kowalczyk", "Izosystems", "BMB Technologie", "Integra Bieli\u0144scy"].includes(store)) return void 0;
   return ["Castorama", "OBI", "Leroy Merlin"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
-    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Kronodom", "Centrum Matbud", "ABUD", "IRBUD", "Pati Art Studio", "E-Kowalczyk", "Izosystems", "BMB Technologie", "Integra Bieli\u0144scy"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Kronodom", "Centrum Matbud", "ABUD", "IRBUD", "Pati Art Studio", "Budshop24", "E-Kowalczyk", "Izosystems", "BMB Technologie", "Integra Bieli\u0144scy"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
-    postcodeStores: ["Sewera", "Cezar", "ABUD", "IRBUD", "Pati Art Studio", "E-Kowalczyk", "Izosystems"],
+    postcodeStores: ["Sewera", "Cezar", "ABUD", "IRBUD", "Pati Art Studio", "Budshop24", "E-Kowalczyk", "Izosystems"],
     accessRequiredStores: [.../* @__PURE__ */ new Set(["Castorama", "OBI", "Leroy Merlin", ...RETAIL_SOURCES.filter((source) => source.marketplaceSeller).map((source) => source.store)])]
   };
 }
@@ -25545,9 +25666,9 @@ function confirmedMoney(text4, numeric2) {
   if (typeof text4 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
   const match = text4.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
   if (!match) throw Error("invalid_money");
-  const cents4 = Number(match[1]) * 100 + Number(match[2]);
-  if (!Number.isSafeInteger(cents4) || cents4 < 0 || Math.abs(numeric2 * 100 - cents4) > 1e-5) throw Error("invalid_money");
-  return cents4;
+  const cents5 = Number(match[1]) * 100 + Number(match[2]);
+  if (!Number.isSafeInteger(cents5) || cents5 < 0 || Math.abs(numeric2 * 100 - cents5) > 1e-5) throw Error("invalid_money");
+  return cents5;
 }
 function selectHomeDelivery(basket) {
   if (!Array.isArray(basket.countries) || !basket.countries.some((c) => c.id === 179 && c.name === "Polska" && c.selected === true)) throw Error("country_not_confirmed");
@@ -25618,7 +25739,7 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin4}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto22.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function createRetailerQuoter(fetchImpl = fetch) {
@@ -25644,6 +25765,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
         if (order.store === "E-Kowalczyk") return await quoteKowalczyk(order, postalCode, fetchImpl);
         if (order.store === "IRBUD") return await quoteIrbud(order, postalCode, fetchImpl);
         if (order.store === "Pati Art Studio") return await quotePati(order, postalCode, fetchImpl);
+        if (order.store === "Budshop24") return await quoteBudshop(order, postalCode, fetchImpl);
         if (order.store === "Centrum Matbud") return await quoteSkyshop(order, fetchImpl);
         if (order.store === "ABUD") return await quoteAbud(order, postalCode, fetchImpl);
         return await (order.store === "Kronosfera" ? quoteKronosfera(order, fetchImpl) : order.store === "Folnet" ? quoteFolnet(order, fetchImpl) : order.store === "Modna \u0141azienka" ? quoteModna(order, fetchImpl) : order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
