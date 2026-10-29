@@ -3393,5 +3393,19 @@
     "evidenceSha256": "80c13fb8ac96a9dd9ea71253258680550a8f63b4b6d33a1003d25f978a04e063",
     "validUntil": null,
     "stockPackages": 3
+  },
+  {
+    "sourceId": "pati-paradyz-nati-bianco-struktura-25x40",
+    "ean": "5902610507960",
+    "name": "PARADYŻ NATI BIANCO ŚCIANA STRUKTURA 25×40",
+    "imageUrl": "https://patiartstudio.pl/wp-content/uploads/2022/09/NATI_-Bianco_sciana_struktura_250x400.jpg",
+    "priceGrosze": 6600,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T15:08:33.709Z",
+    "sourceUrl": "https://patiartstudio.pl/produkt/paradyz-nati-bianco-sciana-struktura-25x40-ss-250x400-1-nati-bi/",
+    "evidenceSha256": "66ab74eb595263d0757c9863411d39a96bf399a433fe98fbcef5a86e1621747b",
+    "validUntil": null,
+    "stockPackages": 32
   }
 ]

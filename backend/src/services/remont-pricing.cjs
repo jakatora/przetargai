@@ -21267,9 +21267,13 @@ var RETAIL_SOURCES = [
   // source: https://patiartstudio.pl/produkt/cersanit-deska-carina-zwykla-k98-0068/
   { "id": "pati-cersanit-carina-k98-0068", "ean": "5907720651077", "name": "CERSANIT CARINA DESKA DUROPLASTOWA BIA\u0141A K98-0068", "brand": "Cersanit", "category": "toilet-seat", "packageSize": 1, "unit": "szt", "store": "Pati Art Studio", "format": "pati-woo", "productId": 1550, "apiProductCode": "K98-0068", "variant": ["Carina", "K98-0068"], "pickupRequiresConfirmation": true, "url": "https://patiartstudio.pl/produkt/cersanit-deska-carina-zwykla-k98-0068/", "imageUrl": "https://patiartstudio.pl/wp-content/uploads/2021/06/132.jpg" },
   // source: https://patiartstudio.pl/produkt/cersanit-deska-carina-wolnoopadajaca-k98-0069/
-  { "id": "pati-cersanit-carina-k98-0069", "ean": "5907720651084", "name": "CERSANIT CARINA DESKA WOLNOOPADAJ\u0104CA BIA\u0141A K98-0069", "brand": "Cersanit", "category": "toilet-seat", "packageSize": 1, "unit": "szt", "store": "Pati Art Studio", "format": "pati-woo", "productId": 1549, "apiProductCode": "K98-0069", "variant": ["Carina", "K98-0069"], "pickupRequiresConfirmation": true, "url": "https://patiartstudio.pl/produkt/cersanit-deska-carina-wolnoopadajaca-k98-0069/", "imageUrl": "https://patiartstudio.pl/wp-content/uploads/2021/06/130.jpg" }
+  { "id": "pati-cersanit-carina-k98-0069", "ean": "5907720651084", "name": "CERSANIT CARINA DESKA WOLNOOPADAJ\u0104CA BIA\u0141A K98-0069", "brand": "Cersanit", "category": "toilet-seat", "packageSize": 1, "unit": "szt", "store": "Pati Art Studio", "format": "pati-woo", "productId": 1549, "apiProductCode": "K98-0069", "variant": ["Carina", "K98-0069"], "pickupRequiresConfirmation": true, "url": "https://patiartstudio.pl/produkt/cersanit-deska-carina-wolnoopadajaca-k98-0069/", "imageUrl": "https://patiartstudio.pl/wp-content/uploads/2021/06/130.jpg" },
+  // source: https://patiartstudio.pl/produkt/paradyz-nati-bianco-sciana-struktura-25x40-ss-250x400-1-nati-bi/ (12 szt. / 1,2 m²; exact manufacturer SKU SS--250X400-1-NATI.BI)
+  // EAN: https://elazienki.pl/p/plytka-scienna-paradyz-nati-bianco-struktura-25x40cm/
+  { "id": "pati-paradyz-nati-bianco-struktura-25x40", "ean": "5902610507960", "name": "PARADY\u017B NATI BIANCO \u015ACIANA STRUKTURA 25\xD740", "brand": "Parady\u017C", "category": "wall-tile", "packageSize": 1.2, "unit": "m2", "store": "Pati Art Studio", "format": "pati-woo", "productId": 103591, "apiProductCode": "SS&#8211;250X400-1-NATI.BI", "variant": ["Nati", "Bianco", "struktura", "25\xD740"], "pickupRequiresConfirmation": true, "url": "https://patiartstudio.pl/produkt/paradyz-nati-bianco-sciana-struktura-25x40-ss-250x400-1-nati-bi/", "imageUrl": "https://patiartstudio.pl/wp-content/uploads/2022/09/NATI_-Bianco_sciana_struktura_250x400.jpg" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "P\u0142ytka \u015Bcienna Parady\u017C Nati Bianco struktura 25\xD740 cm": "5902610507960",
   "Cersanit Carina K98-0068 \u2014 deska standardowa 36,1 \xD7 43,4 cm": "5907720651077",
   "Cersanit Carina K98-0069 \u2014 deska wolnoopadaj\u0105ca 36,1 \xD7 43,8 cm": "5907720651084",
   "Cersanit Carina SLIM K98-0135 \u2014 deska wolnoopadaj\u0105ca 35,7 \xD7 44,8 cm": "5902115712524",
@@ -22551,6 +22555,19 @@ var AnonymousShop = class {
     if (!this.storeCartToken) throw Error("cart_session_not_confirmed");
     return JSON.parse(raw);
   }
+  /** Pati's measurement calculator requires the reviewed area form. Its Store
+   * API silently creates a zero-quantity line for this tile, so use the same
+   * anonymous product form as the shop and then re-read the native cart. */
+  async patiTileAdd(packCount) {
+    if (this.origin !== "https://patiartstudio.pl" || !Number.isSafeInteger(packCount) || packCount < 1 || packCount > MAX_RETAIL_PACKAGES) throw Error("invalid_cart_action");
+    const area = (packCount * 1.2).toFixed(1);
+    await this.read(
+      "/produkt/paradyz-nati-bianco-sciana-struktura-25x40-ss-250x400-1-nati-bi/",
+      new URLSearchParams({ area_needed: area, _measurement_needed: area, _measurement_needed_unit: "sq m", quantity: "1", "add-to-cart": "103591" }).toString(),
+      false
+    );
+    this.storeCartToken = null;
+  }
   /** Reviewed Sky-Shop operations for two pinned Matbud products. Cart IDs are
    * obtained from this fresh session, never supplied by the app or browser.
    * The order json=1 routes calculate shipping; no final order/customer route.
@@ -23083,10 +23100,12 @@ async function quoteIrbud(order, postalCode, fetchImpl) {
 var import_node_crypto4 = require("node:crypto");
 var ORIGIN2 = "https://patiartstudio.pl";
 var PRODUCTS2 = {
-  "pati-cersanit-carina-k98-0068": { id: 1550, sku: "K98-0068", ean: "5907720651077", name: "CERSANIT CARINA DESKA DUROPLASTOWA BIA\u0141A K98-0068", url: ORIGIN2 + "/produkt/cersanit-deska-carina-zwykla-k98-0068/", image: ORIGIN2 + "/wp-content/uploads/2021/06/132.jpg" },
-  "pati-cersanit-carina-k98-0069": { id: 1549, sku: "K98-0069", ean: "5907720651084", name: "CERSANIT CARINA DESKA WOLNOOPADAJ\u0104CA BIA\u0141A K98-0069", url: ORIGIN2 + "/produkt/cersanit-deska-carina-wolnoopadajaca-k98-0069/", image: ORIGIN2 + "/wp-content/uploads/2021/06/130.jpg" },
-  "pati-cersanit-carina-k98-0135": { id: 3065, sku: "K98-0135", ean: "5902115712524", name: "CERSANIT CARINA DESKA SLIM WOLNOOPADAJ\u0104CA BIA\u0141A K98-0135", url: ORIGIN2 + "/produkt/cersanit-deska-carina-slim-wolnoopadajaca-k98-0135/", image: ORIGIN2 + "/wp-content/uploads/2021/06/1596.jpg" }
+  "pati-cersanit-carina-k98-0068": { id: 1550, sku: "K98-0068", ean: "5907720651077", name: "CERSANIT CARINA DESKA DUROPLASTOWA BIA\u0141A K98-0068", url: ORIGIN2 + "/produkt/cersanit-deska-carina-zwykla-k98-0068/", image: ORIGIN2 + "/wp-content/uploads/2021/06/132.jpg", brand: "Cersanit", packageSize: 1, unit: "szt" },
+  "pati-cersanit-carina-k98-0069": { id: 1549, sku: "K98-0069", ean: "5907720651084", name: "CERSANIT CARINA DESKA WOLNOOPADAJ\u0104CA BIA\u0141A K98-0069", url: ORIGIN2 + "/produkt/cersanit-deska-carina-wolnoopadajaca-k98-0069/", image: ORIGIN2 + "/wp-content/uploads/2021/06/130.jpg", brand: "Cersanit", packageSize: 1, unit: "szt" },
+  "pati-cersanit-carina-k98-0135": { id: 3065, sku: "K98-0135", ean: "5902115712524", name: "CERSANIT CARINA DESKA SLIM WOLNOOPADAJ\u0104CA BIA\u0141A K98-0135", url: ORIGIN2 + "/produkt/cersanit-deska-carina-slim-wolnoopadajaca-k98-0135/", image: ORIGIN2 + "/wp-content/uploads/2021/06/1596.jpg", brand: "Cersanit", packageSize: 1, unit: "szt" },
+  "pati-paradyz-nati-bianco-struktura-25x40": { id: 103591, sku: "SS&#8211;250X400-1-NATI.BI", ean: "5902610507960", name: "PARADY\u017B NATI BIANCO \u015ACIANA STRUKTURA 25&#215;40", url: ORIGIN2 + "/produkt/paradyz-nati-bianco-sciana-struktura-25x40-ss-250x400-1-nati-bi/", image: ORIGIN2 + "/wp-content/uploads/2022/09/NATI_-Bianco_sciana_struktura_250x400.jpg", brand: "Parady\u017C", packageSize: 1.2, unit: "m2", measurement: true }
 };
+var displayName = (value2) => value2.replaceAll("&#215;", "\xD7");
 var SHIPPING_ID = "flexible_shipping_single:7";
 var cents3 = (v) => {
   if (typeof v !== "string" || !/^\d+$/.test(v) || !Number.isSafeInteger(Number(v))) throw Error("invalid_money");
@@ -23097,7 +23116,7 @@ var pln2 = (v) => {
 };
 function reviewed2(source) {
   const p = PRODUCTS2[source.id];
-  if (!p || source.store !== "Pati Art Studio" || source.format !== "pati-woo" || source.productId !== p.id || source.apiProductCode !== p.sku || source.ean !== p.ean || source.name !== p.name || source.url !== p.url || source.imageUrl !== p.image || source.packageSize !== 1 || source.unit !== "szt" || source.brand !== "Cersanit") throw Error("product_identity_not_confirmed");
+  if (!p || source.store !== "Pati Art Studio" || source.format !== "pati-woo" || source.productId !== p.id || source.apiProductCode !== p.sku || source.ean !== p.ean || source.name !== displayName(p.name) || source.url !== p.url || source.imageUrl !== p.image || source.packageSize !== p.packageSize || source.unit !== p.unit || source.brand !== p.brand) throw Error("product_identity_not_confirmed");
   return p;
 }
 function inspectPatiProduct(product, source) {
@@ -23110,10 +23129,19 @@ function inspectPatiProduct(product, source) {
   if (imageUrl !== p.image) throw Error("product_photo_not_confirmed");
   const stockPackages = product.low_stock_remaining;
   if (stockPackages !== null && (!Number.isSafeInteger(stockPackages) || stockPackages < 1)) throw Error("product_unavailable");
+  if (p.measurement) {
+    const text4 = product.stock_availability?.text;
+    const stock = typeof text4 === "string" && /^(\d+(?:\.\d{1,2})?) m² na stanie \(dozwolone zamówienia oczekujące\)$/.exec(text4);
+    const nativeStock = product.extensions?.gtm4wp?.item?.stocklevel;
+    if (!stock || typeof nativeStock !== "number" || Number(stock[1]) !== nativeStock) throw Error("product_unavailable");
+    const packs = Math.floor((nativeStock + 1e-9) / p.packageSize);
+    if (packs < 1) throw Error("product_unavailable");
+    return { name: displayName(p.name), priceGrosze, imageUrl, stockPackages: packs };
+  }
   return { name: p.name, priceGrosze, imageUrl, stockPackages: stockPackages ?? void 0 };
 }
 function confirmCart2(cart, expected, postalCode, shipping) {
-  const count = [...expected.values()].reduce((n, p) => n + p.count, 0);
+  const count = [...expected.values()].reduce((n, p) => n + (p.measurement ? 1 : p.count), 0);
   if (!Array.isArray(cart.items) || cart.items.length !== expected.size || cart.items_count !== count || cart.errors?.length || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
   pln2(cart.totals);
   const seen = /* @__PURE__ */ new Set();
@@ -23143,14 +23171,14 @@ async function prepare(packs, fetchImpl) {
   if (!Array.isArray(empty.items) || empty.items.length || empty.items_count !== 0) throw Error("basket_not_confirmed");
   const expected = /* @__PURE__ */ new Map(), evidence = [];
   const cards = [];
-  for (const pack of packs) {
+  for (const pack of [...packs].sort((a, b) => Number(Boolean(reviewed2(b.source).measurement)) - Number(Boolean(reviewed2(a.source).measurement)))) {
     const p = reviewed2(pack.source);
     if (expected.has(p.id)) throw Error("invalid_basket");
     const product = await client.json("/wp-json/wc/store/v1/products/" + p.id);
     const card = inspectPatiProduct(product, pack.source);
     if (card.stockPackages !== void 0 && pack.count > card.stockPackages) throw Error("insufficient_stock");
-    expected.set(p.id, { sku: p.sku, name: p.name, count: pack.count, price: card.priceGrosze });
-    const added = await client.cartJson("/wp-json/wc/store/v1/cart/add-item", { id: p.id, quantity: pack.count });
+    expected.set(p.id, { sku: p.sku, name: p.name, count: pack.count, price: card.priceGrosze, ...p.measurement ? { measurement: true } : {} });
+    const added = p.measurement ? (await client.patiTileAdd(pack.count), await client.cartJson("/wp-json/wc/store/v1/cart")) : await client.cartJson("/wp-json/wc/store/v1/cart/add-item", { id: p.id, quantity: pack.count });
     confirmCart2(added, expected, "");
     cards.push({ sourceId: pack.source.id, ...card });
     evidence.push(product, added);
