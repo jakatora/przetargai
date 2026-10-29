@@ -3407,5 +3407,18 @@
     "evidenceSha256": "66ab74eb595263d0757c9863411d39a96bf399a433fe98fbcef5a86e1621747b",
     "validUntil": null,
     "stockPackages": 32
+  },
+  {
+    "sourceId": "lobo-dulux-rapidry-white-matt-1l",
+    "ean": "5904078222379",
+    "name": "DULUX RAPIDRY Farba do drewna metalu PCV Mat Biały 1 L",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_130210_500_500/DULUX-RAPIDRY-Farba-do-drewna-metalu-PCV-Mat-Bialy-1-L.webp",
+    "priceGrosze": 4999,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T15:39:43.965Z",
+    "sourceUrl": "https://lobo.pl/dulux-rapidry-farba-do-drewna-metalu-pcv-mat-bialy-1l",
+    "evidenceSha256": "6ab671d42451cc9d45a2e7225fe7c2040290d9b1ff653102a6008ec9ea3edd36",
+    "validUntil": null
   }
 ]

@@ -21070,6 +21070,8 @@ var RETAIL_SOURCES = [
   { "id": "sewera-urekor-s-white-800ml", "ean": "5903973228790", "name": "Urekor S Podk\u0142ad antykorozyjny bia\u0142y 0,8 l \u015Anie\u017Cka", "brand": "\u015Anie\u017Cka", "category": "frame-primer", "packageSize": 800, "unit": "ml", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["Urekor S", "bia\u0142y", "0,8l"], "url": "https://sklep.sewera.pl/urekor-s-podklad-antykorozyjny-bialy-0-8-l-sniezka-p11955", "imageUrl": "https://sklep.sewera.pl/photo/191092/urekor-s-podklad-antykorozyjny-bialy-0-8-l-sniezka.webp" },
   // source: https://www.abud.pl/product-pol-63790-Dulux-do-drewna-i-metalu-RAPIDRY-Bialy-1L-matowa.html
   { "id": "abud-dulux-rapidry-white-matt-1l", "ean": "5904078222379", "name": "Dulux do drewna i metalu RAPIDRY Bia\u0142y 1L matowa", "brand": "Dulux", "category": "frame-paint", "packageSize": 1e3, "unit": "ml", "store": "ABUD", "format": "idosell", "productId": 63790, "apiPurchaseUnit": "op.", "variant": ["bia\u0142y", "1l", "matowa"], "url": "https://www.abud.pl/product-pol-63790-Dulux-do-drewna-i-metalu-RAPIDRY-Bialy-1L-matowa.html", "imageUrl": "https://www.abud.pl/hpeciai/bd8e25d4eb247560173865d66d538564/pol_pl_Dulux-do-drewna-i-metalu-RAPIDRY-Bialy-1L-matowa-63790_1.webp" },
+  // source: https://lobo.pl/dulux-rapidry-farba-do-drewna-metalu-pcv-mat-bialy-1l
+  { "id": "lobo-dulux-rapidry-white-matt-1l", "ean": "5904078222379", "name": "DULUX RAPIDRY Farba do drewna metalu PCV Mat Bia\u0142y 1 L", "brand": "Dulux", "category": "frame-paint", "packageSize": 1e3, "unit": "ml", "store": "Lobo", "format": "shoper-api", "productId": 55967, "apiProductCode": "S7.005777249", "apiPurchaseUnit": "szt.", "variant": ["rapidry", "mat", "1 l"], "url": "https://lobo.pl/dulux-rapidry-farba-do-drewna-metalu-pcv-mat-bialy-1l", "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_130210_500_500/DULUX-RAPIDRY-Farba-do-drewna-metalu-PCV-Mat-Bialy-1-L.webp" },
   // source: https://marbet24.pl/gladzie/1288-norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg-5907651699056.html
   { "id": "marbet-norgips-startfinish-20kg", "ean": "5907651699056", "name": "NORGIPS Gotowa dwufunkcyjna masa szpachlowa Start & Finish (20 kg)", "brand": "Norgips", "category": "drywall-joint-compound", "packageSize": 20, "unit": "kg", "store": "Marbet24", "format": "jsonld", "variant": ["Start", "Finish", "20"], "url": "https://marbet24.pl/gladzie/1288-norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg-5907651699056.html", "imageUrl": "https://marbet24.pl/6085-home_default/norgips-gotowa-dwufunkcyjna-masa-szpachlowa-start-finish-20-kg.jpg", "pickupRequiresConfirmation": true },
   // source: https://marbet24.pl/gladzie/1363-norgips-gips-szpachlowy-do-spoinowania-polaczen-plyt-gipsowo-kartonowych-start-25-kg-5907651693818.html
@@ -25761,7 +25763,9 @@ var ORIGINS = {
   Mensura: "https://www.mensura.pl",
   KELOT: "https://listwy.sklep.pl",
   LiderzyCen: "https://liderzycen.pl",
-  TGS: "https://tgs.pl"
+  TGS: "https://tgs.pl",
+  // source: https://lobo.pl/dulux-rapidry-farba-do-drewna-metalu-pcv-mat-bialy-1l
+  Lobo: "https://lobo.pl"
 };
 var TTL = 10 * 6e4;
 function unavailableReason(store) {
@@ -25800,12 +25804,12 @@ function confirmedMoney(text4, numeric2) {
   if (!Number.isSafeInteger(cents5) || cents5 < 0 || Math.abs(numeric2 * 100 - cents5) > 1e-5) throw Error("invalid_money");
   return cents5;
 }
-function selectHomeDelivery(basket) {
+function selectHomeDelivery(basket, store) {
   if (!Array.isArray(basket.countries) || !basket.countries.some((c) => c.id === 179 && c.name === "Polska" && c.selected === true)) throw Error("country_not_confirmed");
   if (!Array.isArray(basket.shippings) || !Array.isArray(basket.payments)) throw Error("invalid_response");
   const options = [];
   for (const shipping of basket.shippings) {
-    if (!["", "ShoperShipment"].includes(shipping.engine) || typeof shipping.title !== "string" || !/kurier|kurierska|^Transport DPD$/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`)) continue;
+    if (!(["", "ShoperShipment"].includes(shipping.engine) || store === "Lobo" && shipping.engine === "inpost") || typeof shipping.title !== "string" || !/kurier|kurierska|^Transport DPD$/i.test(shipping.title) || (store === "Lobo" ? /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(shipping.title) || /pobran|odbiór|odbior|punkt|automat|pickup|zapytani|indywidualn|kontakt/i.test(String(shipping.description ?? "")) : /pobran|odbiór|odbior|punkt|automat|pickup|palet|zapytani|indywidualn|kontakt/i.test(`${shipping.title} ${shipping.description ?? ""}`))) continue;
     const country2 = shipping.countries?.find((c) => c.id === 179);
     if (!country2) continue;
     let cost;
@@ -25860,7 +25864,7 @@ async function quoteShoper(order, fetchImpl) {
     total += wanted.count * wanted.price;
   }
   if (expected.size || total !== order.materialsGrosze || confirmedMoney(basket.basket?.sum_products, basket.basket?.sum_products_float) !== total) throw Error("basket_not_confirmed");
-  const shipping = selectHomeDelivery(basket), checkedAt = /* @__PURE__ */ new Date();
+  const shipping = selectHomeDelivery(basket, order.store), checkedAt = /* @__PURE__ */ new Date();
   const evidence = { products: basket.products.map((p) => ({ stock: p.stock_id, count: p.quantity, price: p.price_float })), shippings: basket.shippings, payments: basket.payments, countries: basket.countries };
   return { quote: {
     ...shipping,
