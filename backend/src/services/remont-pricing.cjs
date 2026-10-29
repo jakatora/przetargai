@@ -21140,6 +21140,8 @@ var RETAIL_SOURCES = [
   { "id": "irbud-norgips-cd60-06-3m", "ean": "", "name": "Profil g\u0142\xF3wny sufitowy CD60 3 MB / 0,6", "brand": "Norgips", "category": "profile", "packageSize": 3, "unit": "mb", "store": "IRBUD", "format": "irbud-woo", "productId": 10911, "skuIdentity": { "kind": "merchant-only", "catalogKey": "irbud-10911", "merchantProductId": "10911" }, "variant": ["CD60", "3", "0,6"], "url": "https://irbudsklep.pl/produkt/profil-glowny-sufitowy-cd60-3-mb-06/", "imageUrl": "https://irbudsklep.pl/wp-content/uploads/2023/11/Zrzut-ekranu-2025-09-05-114945.png", "pickupRequiresConfirmation": true },
   // source: https://sklep-kowalczyk.pl/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html
   { "id": "kowalczyk-koelner-ws3595-1000", "ean": "5906675303024", "name": "KOELNER Wkr\u0119t samowierc\u0105cy fosfatowy TEX 3,5x9,5mm 1000 szt (WS-3595)", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 1e3, "unit": "szt", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 35759, "retailerSku": "5906675303024", "url": "https://sklep-kowalczyk.pl/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675303024.png", "pickupRequiresConfirmation": true },
+  // source: https://sklep-kowalczyk.pl/atlas-cerplast-podklad-grunt-pod-tynk-op-15kg-cp-00-15-52413.html
+  { "id": "kowalczyk-atlas-cerplast-15kg", "ean": "5905400530032", "name": "ATLAS CERPLAST Podk\u0142ad GRUNT pod tynk 15kg/op. (CP-00-15)", "brand": "Atlas", "category": "primer", "packageSize": 15, "unit": "kg", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 33738, "retailerSku": "5905400530032", "url": "https://sklep-kowalczyk.pl/atlas-cerplast-podklad-grunt-pod-tynk-op-15kg-cp-00-15-52413.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/9/5905400530032.png", "pickupRequiresConfirmation": true },
   // source: https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html
   { "id": "kowalczyk-koelner-fx06k040-200", "ean": "5906675107622", "name": "KOELNER Ko\u0142ek szybkiego monta\u017Cu 6x40 z ko\u0142nierzem 200szt/op. (FX-06K040)", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 200, "unit": "szt", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 35762, "retailerSku": "5906675107622", "url": "https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675107622.jpg", "pickupRequiresConfirmation": true },
   // source: https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER
@@ -22589,7 +22591,7 @@ var AnonymousShop = class {
     if (!this.magentoCartId) throw Error("invalid_cart_session");
     path += "/" + this.magentoCartId;
     if (action === "add") {
-      if (!["5906675303024", "5906675107622"].includes(args.sku ?? "") || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0 || Object.keys(args).length !== 2) throw Error("invalid_cart_action");
+      if (!["5906675303024", "5906675107622", "5905400530032"].includes(args.sku ?? "") || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0 || Object.keys(args).length !== 2) throw Error("invalid_cart_action");
       path += "/items";
       body = { cartItem: { sku: args.sku, qty: args.count, quote_id: this.magentoCartId } };
     } else if (action === "estimate" || action === "calculate") {
@@ -23187,9 +23189,11 @@ var import_node_crypto5 = require("node:crypto");
 var ORIGIN3 = "https://sklep-kowalczyk.pl";
 var reviews = [
   // source: https://sklep-kowalczyk.pl/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html
-  { id: 35759, ean: "5906675303024", size: 1e3, name: "KOELNER Wkr\u0119t samowierc\u0105cy fosfatowy TEX 3,5x9,5mm 1000 szt (WS-3595)", path: "/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html", photo: "/5/9/5906675303024.png" },
+  { id: 35759, ean: "5906675303024", size: 1e3, unit: "szt", brand: "Koelner", category: "drywall-accessory", name: "KOELNER Wkr\u0119t samowierc\u0105cy fosfatowy TEX 3,5x9,5mm 1000 szt (WS-3595)", path: "/koelner-wkret-samowiercacy-fosfatowy-tex-3-5x9-5mm-1000-szt-ws-3595.html", photo: "/5/9/5906675303024.png" },
   // source: https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html
-  { id: 35762, ean: "5906675107622", size: 200, name: "KOELNER Ko\u0142ek szybkiego monta\u017Cu 6x40 z ko\u0142nierzem 200szt/op. (FX-06K040)", path: "/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html", photo: "/5/9/5906675107622.jpg" }
+  { id: 35762, ean: "5906675107622", size: 200, unit: "szt", brand: "Koelner", category: "drywall-accessory", name: "KOELNER Ko\u0142ek szybkiego monta\u017Cu 6x40 z ko\u0142nierzem 200szt/op. (FX-06K040)", path: "/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html", photo: "/5/9/5906675107622.jpg" },
+  // source: https://sklep-kowalczyk.pl/atlas-cerplast-podklad-grunt-pod-tynk-op-15kg-cp-00-15-52413.html
+  { id: 33738, ean: "5905400530032", size: 15, unit: "kg", brand: "Atlas", category: "primer", name: "ATLAS CERPLAST Podk\u0142ad GRUNT pod tynk 15kg/op. (CP-00-15)", path: "/atlas-cerplast-podklad-grunt-pod-tynk-op-15kg-cp-00-15-52413.html", photo: "/5/9/5905400530032.png" }
 ];
 var attrs4 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var one5 = (values, reason) => {
@@ -23205,7 +23209,7 @@ var amount = (value2) => {
 var sameName = (a, b) => a.replace(/\s+/g, " ").trim() === b.replace(/\s+/g, " ").trim();
 function reviewedKowalczykSource(source) {
   const review2 = reviews.find((row) => row.id === source.productId);
-  if (!review2 || source.store !== "E-Kowalczyk" || source.format !== "kowalczyk-magento" || source.ean !== review2.ean || source.retailerSku !== review2.ean || source.packageSize !== review2.size || source.unit !== "szt" || source.brand !== "Koelner" || source.name !== review2.name || source.url !== ORIGIN3 + review2.path) throw Error("product_identity_not_confirmed");
+  if (!review2 || source.store !== "E-Kowalczyk" || source.format !== "kowalczyk-magento" || source.ean !== review2.ean || source.retailerSku !== review2.ean || source.packageSize !== review2.size || source.unit !== review2.unit || source.brand !== review2.brand || source.category !== review2.category || source.name !== review2.name || source.url !== ORIGIN3 + review2.path) throw Error("product_identity_not_confirmed");
   return review2;
 }
 function inspectKowalczykCard(raw, source) {
@@ -23264,7 +23268,7 @@ function confirmKowalczykTotals(t, expected, shippingGrosze = 0) {
   return gross2;
 }
 async function prepare2(wanted, fetchImpl) {
-  if (!wanted.length || wanted.length > 2 || new Set(wanted.map((row) => row.source.ean)).size !== wanted.length) throw Error("invalid_basket");
+  if (!wanted.length || wanted.length > 3 || new Set(wanted.map((row) => row.source.ean)).size !== wanted.length) throw Error("invalid_basket");
   const client = new AnonymousShop(ORIGIN3, fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(wanted.length));
   const evidence = [], images = /* @__PURE__ */ new Map();
   for (const row of wanted) {
