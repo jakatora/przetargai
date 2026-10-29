@@ -21231,7 +21231,11 @@ var RETAIL_SOURCES = [
   // source: https://zpradem.pl/asfora-ramka-podwojna-pozioma-biala-eph5800221/799939
   { "id": "zpradem-asfora-white-frame-2", "ean": "3606480527180", "name": "ASFORA Ramka podw\xF3jna pozioma bia\u0142a EPH5800221", "brand": "Schneider Electric", "category": "socket-frame", "packageSize": 1, "unit": "szt", "store": "Z pr\u0105dem", "format": "shoper-api", "productId": 799939, "apiPurchaseUnit": "szt.", "variant": ["EPH5800221"], "pickupRequiresConfirmation": true, "url": "https://zpradem.pl/asfora-ramka-podwojna-pozioma-biala-eph5800221/799939", "imageUrl": "https://zpradem.pl/environment/cache/images/productGfx_440276_500_500/ASFORA-Ramka-podwojna-pozioma-biala-EPH5800221.jpg" },
   // source: https://zpradem.pl/asfora-ramka-potrojna-pozioma-biala-eph5800321/815336
-  { "id": "zpradem-asfora-white-frame-3", "ean": "3606480527203", "name": "ASFORA Ramka potr\xF3jna pozioma bia\u0142a EPH5800321", "brand": "Schneider Electric", "category": "socket-frame", "packageSize": 1, "unit": "szt", "store": "Z pr\u0105dem", "format": "shoper-api", "productId": 815336, "apiPurchaseUnit": "szt.", "variant": ["EPH5800321"], "pickupRequiresConfirmation": true, "url": "https://zpradem.pl/asfora-ramka-potrojna-pozioma-biala-eph5800321/815336", "imageUrl": "https://zpradem.pl/environment/cache/images/productGfx_440028_500_500/ASFORA-Ramka-potrojna-pozioma-biala-EPH5800321.jpg" }
+  { "id": "zpradem-asfora-white-frame-3", "ean": "3606480527203", "name": "ASFORA Ramka potr\xF3jna pozioma bia\u0142a EPH5800321", "brand": "Schneider Electric", "category": "socket-frame", "packageSize": 1, "unit": "szt", "store": "Z pr\u0105dem", "format": "shoper-api", "productId": 815336, "apiPurchaseUnit": "szt.", "variant": ["EPH5800321"], "pickupRequiresConfirmation": true, "url": "https://zpradem.pl/asfora-ramka-potrojna-pozioma-biala-eph5800321/815336", "imageUrl": "https://zpradem.pl/environment/cache/images/productGfx_440028_500_500/ASFORA-Ramka-potrojna-pozioma-biala-EPH5800321.jpg" },
+  // source: https://sklep.instato.pl/pl/p/SYFON-UMYWALKOWY-BARDZO-NISKI-MALY-MEMBRANOWY-oszczedzajacy-miejsce-WHB1-32/23062689
+  { "id": "instato-mcalpine-whb132", "ean": "5036484088390", "name": "SYFON UMYWALKOWY  BARDZO NISKI MA\u0141Y MEMBRANOWY oszcz\u0119dzaj\u0105cy miejsce WHB1-32", "brand": "McAlpine", "category": "trap", "packageSize": 1, "unit": "szt", "store": "Instato", "format": "shoper-api", "productId": 23062689, "apiPurchaseUnit": "szt.", "variant": ["WHB1-32"], "pickupRequiresConfirmation": true, "url": "https://sklep.instato.pl/pl/p/SYFON-UMYWALKOWY-BARDZO-NISKI-MALY-MEMBRANOWY-oszczedzajacy-miejsce-WHB1-32/23062689", "imageUrl": "https://sklep.instato.pl/environment/cache/images/productGfx_5082_500_500/5036484088390_syfon_umywalkowy_niski_bialy_WHB1-322.jpg" },
+  // source: https://arenalazienek.pl/pl/p/Polsyfon-umywalkowy-MCALPINE-niski%2C-bialy-WHB1-32/57988
+  { "id": "arena-mcalpine-whb132", "ean": "5036484088390", "name": "P\xF3\u0142syfon umywalkowy MCALPINE niski, bia\u0142y WHB1-32", "brand": "McAlpine", "category": "trap", "packageSize": 1, "unit": "szt", "store": "Arena \u0141azienek", "format": "shoper-api", "productId": 57988, "apiPurchaseUnit": "szt.", "variant": ["WHB1-32"], "pickupRequiresConfirmation": true, "url": "https://arenalazienek.pl/pl/p/Polsyfon-umywalkowy-MCALPINE-niski%2C-bialy-WHB1-32/57988", "imageUrl": "https://sklep.instato.pl/environment/cache/images/productGfx_5082_500_500/5036484088390_syfon_umywalkowy_niski_bialy_WHB1-322.jpg" }
 ];
 var RETAIL_NAME_ALIASES = {
   "Schneider Electric Asfora \u2014 ramka 1-krotna bia\u0142a EPH5800121": "3606480527166",
@@ -25326,6 +25330,10 @@ async function quoteKronodom(order, fetchImpl) {
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
+  // source: https://sklep.instato.pl/pl/static/czas-i-koszty-dostawy.html
+  // source: https://arenalazienek.pl/pl/p/Polsyfon-umywalkowy-MCALPINE-niski%2C-bialy-WHB1-32/57988
+  Instato: "https://sklep.instato.pl",
+  "Arena \u0141azienek": "https://arenalazienek.pl",
   // source: https://plejadatapet.pl/pl/p/Klej-do-tapet-Direct-200g-Metylan/825
   // source: https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101
   "Plejada Tapet": "https://plejadatapet.pl",
