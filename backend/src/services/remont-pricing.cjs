@@ -20702,6 +20702,8 @@ var RETAIL_SOURCES = [
     "productId": 75056897,
     "imageUrl": "https://realbud.com/environment/cache/images/productGfx_23084_500_500/26118bf480c7744c75f0fe2b5b9732da.jpg"
   },
+  // source: https://realbud.com/pl/p/Akryl-SOUDAL-bialy-280-ml-do-plyt-GK/419576
+  { "id": "realbud-acrylic-soudal-gk-white-280ml", "ean": "5411183157248", "name": "Akryl SOUDAL bia\u0142y 280 ml do p\u0142yt GK", "category": "acrylic", "brand": "Soudal", "packageSize": 280, "unit": "ml", "store": "Realbud", "format": "shoper-api", "productId": 419576, "apiProductCode": "8022", "apiPurchaseUnit": "szt.", "variant": ["bia\u0142y", "280 ml", "GK"], "url": "https://realbud.com/pl/p/Akryl-SOUDAL-bialy-280-ml-do-plyt-GK/419576", "imageUrl": "https://realbud.com/environment/cache/images/productGfx_12733_500_500/ec4c20934e6690a4201ae5ae86b7b915.jpg" },
   // source: https://www.rabdom.pl/pl/p/SOUDAL-Akryl-uniwersalny-280ml-Bialy/460
   // source: https://www.castorama.pl/akryl-soudal-280-ml-bialy/5411183157538_CAPL.prd
   {
@@ -21487,6 +21489,7 @@ var RETAIL_NAME_ALIASES = {
   "Tynk cienkowarstwowy silikatowo-silikonowy Ceresit CT 174 baranek 1,5 mm baza bia\u0142a 25 kg": "9000101109733",
   "Tynk cementowo-wapienny maszynowy Baumit MPI 25 30 kg": "5907534261158",
   "Akryl uniwersalny Soudal bia\u0142y 280 ml (malowalny)": "5411183157538",
+  "Akryl Soudal bia\u0142y do p\u0142yt G-K 280 ml": "5411183157248",
   "Siatka zbroj\u0105ca z w\u0142\xF3kna szklanego Atlas 150 g/m\xB2 (rolka 50 m\xB2)": "5905400196993",
   "Klej-uszczelniacz hybrydowy Soudal Fix All High Tack 290 ml bia\u0142y": "5411183045620",
   "Zestaw przy\u0142\u0105czeniowo-mocuj\u0105cy WC Tycner (rury, uszczelki i akcesoria)": "5901095514395",
