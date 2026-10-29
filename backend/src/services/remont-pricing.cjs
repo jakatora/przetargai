@@ -22443,32 +22443,42 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   const smallest = /* @__PURE__ */ new Map();
   for (const [key, order] of [...ordered].reverse()) if (!smallest.has(order.store)) smallest.set(order.store, key);
   for (const key of smallest.values()) priority.add(key);
-  const keys = [...priority, ...ordered.map(([key]) => key).filter((key) => !priority.has(key))];
-  let cursor = 0, stockChanged = false;
-  await Promise.all(Array.from({ length: Math.min(3, keys.length) }, async () => {
-    while (cursor < keys.length && !stockChanged) {
-      const key = keys[cursor++], order = unique.get(key);
-      try {
-        const outcome = await quoteBasket(order, settings.postalCode);
-        const rounding = "quote" in outcome ? outcome.quote.materialsRoundingGrosze ?? 0 : 0;
-        const packCount = order.lines.reduce((n, l) => n + l.packages.reduce((s, p) => s + p.count, 0), 0);
-        if ("quote" in outcome && Number.isSafeInteger(rounding) && Math.abs(rounding) <= packCount && order.materialsGrosze + rounding > 0 && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && (outcome.quote.destinationScope === "PL" || outcome.quote.postalCode === settings.postalCode) && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
-          order.deliveryGrosze = outcome.quote.costGrosze;
-          order.quote = outcome.quote;
-          order.deliveryMinimumGrosze = outcome.quote.costGrosze;
-          order.materialsGrosze += rounding;
-          order.totalGrosze = order.materialsGrosze + outcome.quote.costGrosze;
-          order.source = "retailer";
-        } else {
-          failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
-          if ("reason" in outcome && ["price_changed", "product_unavailable", "insufficient_stock", "purchase_rules_changed"].includes(outcome.reason)) invalidMaterialOrders.add(key);
-          if ("reason" in outcome && outcome.reason === "insufficient_stock" && outcome.stockLimits?.length) stockChanged = true;
+  let stockChanged = false;
+  const quoteKeys = async (keys) => {
+    let cursor = 0;
+    await Promise.all(Array.from({ length: Math.min(3, keys.length) }, async () => {
+      while (cursor < keys.length && !stockChanged) {
+        const key = keys[cursor++], order = unique.get(key);
+        try {
+          const outcome = await quoteBasket(order, settings.postalCode);
+          const rounding = "quote" in outcome ? outcome.quote.materialsRoundingGrosze ?? 0 : 0;
+          const packCount = order.lines.reduce((n, l) => n + l.packages.reduce((s, p) => s + p.count, 0), 0);
+          if ("quote" in outcome && Number.isSafeInteger(rounding) && Math.abs(rounding) <= packCount && order.materialsGrosze + rounding > 0 && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && (outcome.quote.destinationScope === "PL" || outcome.quote.postalCode === settings.postalCode) && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
+            order.deliveryGrosze = outcome.quote.costGrosze;
+            order.quote = outcome.quote;
+            order.deliveryMinimumGrosze = outcome.quote.costGrosze;
+            order.materialsGrosze += rounding;
+            order.totalGrosze = order.materialsGrosze + outcome.quote.costGrosze;
+            order.source = "retailer";
+          } else {
+            failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
+            if ("reason" in outcome && ["price_changed", "product_unavailable", "insufficient_stock", "purchase_rules_changed"].includes(outcome.reason)) invalidMaterialOrders.add(key);
+            if ("reason" in outcome && outcome.reason === "insufficient_stock" && outcome.stockLimits?.length) stockChanged = true;
+          }
+        } catch {
+          failures.set(order.store, "quote_unavailable");
         }
-      } catch {
-        failures.set(order.store, "quote_unavailable");
       }
-    }
-  }));
+    }));
+  };
+  await quoteKeys([...priority]);
+  const confirmedUpperBound = Math.min(...candidates.flatMap((orders) => orders.every((order) => order.quote && order.totalGrosze !== null && Date.parse(order.quote.expiresAt) > Date.now()) ? [orders.reduce((sum, order) => sum + order.totalGrosze, 0)] : []));
+  const canStillWin = new Set(candidates.filter((orders) => {
+    if (!Number.isFinite(confirmedUpperBound)) return true;
+    const optimisticMaterials = orders.reduce((sum, order) => sum + order.materialsGrosze - order.lines.reduce((packs, line2) => packs + line2.packages.reduce((count, pack) => count + pack.count, 0), 0), 0);
+    return optimisticMaterials <= confirmedUpperBound;
+  }).flatMap((orders) => orders.map(signature)));
+  await quoteKeys(ordered.map(([key]) => key).filter((key) => !priority.has(key) && canStillWin.has(key)));
   for (const order of unique.values()) if (order.quote && Date.parse(order.quote.expiresAt) <= Date.now()) {
     order.materialsGrosze -= order.quote.materialsRoundingGrosze ?? 0;
     delete order.quote;
