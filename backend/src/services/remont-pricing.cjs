@@ -21150,6 +21150,8 @@ var RETAIL_SOURCES = [
   { "id": "budshop-atlas-woder-duo-16kg", "ean": "5905400195088", "name": "ATLAS WODER DUO 16kg - hydroizolacja dwusk\u0142adnikowa elastyczna", "brand": "Atlas", "category": "waterproofing", "packageSize": 16, "unit": "kg", "store": "Budshop24", "format": "budshop-woo", "productId": 7381, "apiProductCode": "BS00293", "variant": ["WODER DUO", "16kg"], "url": "https://budshop24.pl/produkt/atlas-woder-duo-16kg-hydroizolacja-dwuskladnikowa/", "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2044418.jpg", "pickupRequiresConfirmation": true },
   // source: https://budshop24.pl/produkt/szybkoschnaca-folia-w-plynie-woder-e-15kg-atlas/ ; EAN: https://mrowka.com.pl/produkt/folia-w-plynie-woder-e-szybkoschnaca-15-kg-atlas-5905400514506.html
   { "id": "budshop-atlas-woder-e-15kg", "ean": "5905400514506", "name": "ATLAS WODER E 15kg - Szybkoschn\u0105ca folia w p\u0142ynie", "brand": "Atlas", "category": "waterproofing", "packageSize": 15, "unit": "kg", "store": "Budshop24", "format": "budshop-woo", "productId": 6484, "apiProductCode": "BS00295", "variant": ["WODER E", "15kg"], "url": "https://budshop24.pl/produkt/szybkoschnaca-folia-w-plynie-woder-e-15kg-atlas/", "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2047356.png", "pickupRequiresConfirmation": true },
+  // source: https://budshop24.pl/produkt/hydroizolacja-plynna-folia-mapei-mapegum-wps-10kg/ ; EAN: https://cdnmedia.mapei.com/docs/librariesprovider15/preislisten/produktkatalog_2026.pdf?sfvrsn=d545668b_9
+  { "id": "budshop-mapei-mapegum-wps-10kg", "ean": "8022452002120", "name": "MAPEI Hydroizolacja P\u0142ynna folia MAPEGUM WPS 10kg", "brand": "Mapei", "category": "waterproofing", "packageSize": 10, "unit": "kg", "store": "Budshop24", "format": "budshop-woo", "productId": 6240, "apiProductCode": "BS02039", "variant": ["MAPEGUM WPS", "10kg"], "url": "https://budshop24.pl/produkt/hydroizolacja-plynna-folia-mapei-mapegum-wps-10kg/", "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2046500.jpg", "pickupRequiresConfirmation": true },
   // source: https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html
   { "id": "kowalczyk-koelner-fx06k040-200", "ean": "5906675107622", "name": "KOELNER Ko\u0142ek szybkiego monta\u017Cu 6x40 z ko\u0142nierzem 200szt/op. (FX-06K040)", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 200, "unit": "szt", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 35762, "retailerSku": "5906675107622", "url": "https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675107622.jpg", "pickupRequiresConfirmation": true },
   // source: https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER
@@ -22535,8 +22537,8 @@ var AnonymousShop = class {
    * only. Contact/address lines, checkout and order routes remain forbidden. */
   async cartJson(path, body) {
     const courierId = this.origin === "https://irbudsklep.pl" ? "flexible_shipping_single:3" : this.origin === "https://patiartstudio.pl" ? "flexible_shipping_single:7" : null;
-    const budshopCouriers = ["wsds_simple_dimensional:3:medium_parcel_dhl", "wsds_simple_dimensional:3:large_parcel_dhl", "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel", "wsds_simple_dimensional:3:multi_large_parcel_large_parcel", "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel"];
-    if (this.origin === "https://budshop24.pl" && path === "/wp-json/wc/store/v1/cart/add-item" && (!body || Object.keys(body).sort().join(",") !== "id,quantity" || ![4808, 7381, 6484].includes(body.id) || !Number.isSafeInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_RETAIL_PACKAGES)) throw Error("invalid_cart_route");
+    const budshopCouriers = ["wsds_simple_dimensional:3:medium_parcel_dhl", "wsds_simple_dimensional:3:large_parcel_dhl", "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel", "wsds_simple_dimensional:3:multi_large_parcel_large_parcel", "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel", "wsds_simple_dimensional:3:multi_medium_parcel_medium_parcel", "wsds_simple_dimensional:3:multi_medium_parcel_medium_parcel_large_parcel_large_parcel"];
+    if (this.origin === "https://budshop24.pl" && path === "/wp-json/wc/store/v1/cart/add-item" && (!body || Object.keys(body).sort().join(",") !== "id,quantity" || ![4808, 7381, 6484, 6240].includes(body.id) || !Number.isSafeInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_RETAIL_PACKAGES)) throw Error("invalid_cart_route");
     const shipping = path === "/wp-json/wc/store/v1/cart/select-shipping-rate" && body && Object.keys(body).sort().join(",") === "package_id,rate_id" && body.package_id === 0 && (courierId && body.rate_id === courierId || this.origin === "https://budshop24.pl" && budshopCouriers.includes(body.rate_id));
     const address = body?.shipping_address;
     const destination = path === "/wp-json/wc/store/v1/cart/update-customer" && (courierId || this.origin === "https://budshop24.pl") && body && Object.keys(body).join(",") === "shipping_address" && address && typeof address === "object" && Object.keys(address).sort().join(",") === "country,postcode" && address.country === "PL" && typeof address.postcode === "string" && /^\d{2}-\d{3}$/.test(address.postcode);
@@ -23202,6 +23204,7 @@ var PRODUCTS3 = [{
   id: 4808,
   sku: "BS00215",
   ean: "5905400530032",
+  brand: "Atlas",
   name: "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)",
   apiName: "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)",
   cartName: "ATLAS Cerplast podk\u0142adowa masa tynkarska 15kg (baza bia\u0142a)",
@@ -23214,6 +23217,7 @@ var PRODUCTS3 = [{
   id: 7381,
   sku: "BS00293",
   ean: "5905400195088",
+  brand: "Atlas",
   name: "ATLAS WODER DUO 16kg - hydroizolacja dwusk\u0142adnikowa elastyczna",
   apiName: "ATLAS WODER DUO 16kg &#8211; hydroizolacja dwusk\u0142adnikowa elastyczna",
   cartName: "ATLAS WODER DUO 16kg &#8211; hydroizolacja dwusk\u0142adnikowa elastyczna",
@@ -23226,6 +23230,7 @@ var PRODUCTS3 = [{
   id: 6484,
   sku: "BS00295",
   ean: "5905400514506",
+  brand: "Atlas",
   name: "ATLAS WODER E 15kg - Szybkoschn\u0105ca folia w p\u0142ynie",
   apiName: "ATLAS WODER E 15kg &#8211; Szybkoschn\u0105ca folia w p\u0142ynie",
   cartName: "ATLAS WODER E 15kg &#8211; Szybkoschn\u0105ca folia w p\u0142ynie",
@@ -23233,13 +23238,28 @@ var PRODUCTS3 = [{
   packageSize: 15,
   url: ORIGIN3 + "/produkt/szybkoschnaca-folia-w-plynie-woder-e-15kg-atlas/",
   image: ORIGIN3 + "/wp-content/uploads/2025/08/2047356.png"
+}, {
+  sourceId: "budshop-mapei-mapegum-wps-10kg",
+  id: 6240,
+  sku: "BS02039",
+  ean: "8022452002120",
+  brand: "Mapei",
+  name: "MAPEI Hydroizolacja P\u0142ynna folia MAPEGUM WPS 10kg",
+  apiName: "MAPEI Hydroizolacja P\u0142ynna folia MAPEGUM WPS 10kg",
+  cartName: "MAPEI Hydroizolacja P\u0142ynna folia MAPEGUM WPS 10kg",
+  category: "waterproofing",
+  packageSize: 10,
+  url: ORIGIN3 + "/produkt/hydroizolacja-plynna-folia-mapei-mapegum-wps-10kg/",
+  image: ORIGIN3 + "/wp-content/uploads/2025/08/2046500.jpg"
 }];
 var COURIERS = {
   "wsds_simple_dimensional:3:medium_parcel_dhl": { name: "DHL \u2013 \u015Arednia Paczka", label: "DHL \u2013 \u015Arednia Paczka" },
   "wsds_simple_dimensional:3:large_parcel_dhl": { name: "DHL \u2013 Du\u017Ca Paczka", label: "DHL \u2013 Du\u017Ca Paczka" },
   "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel": { name: "Paczki/Worki: \u015Arednia Paczka + Du\u017Ca Paczka", label: "Paczki/Worki: \u015Arednia Paczka + Du\u017Ca Paczka" },
   "wsds_simple_dimensional:3:multi_large_parcel_large_parcel": { name: "Paczki/Worki: 2\xD7 Du\u017Ca Paczka", label: "Paczki/Worki: 2\xD7 Du\u017Ca Paczka" },
-  "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel": { name: "Paczki/Worki: \u015Arednia Paczka + 2\xD7 Du\u017Ca Paczka", label: "Paczki/Worki: \u015Arednia Paczka + 2\xD7 Du\u017Ca Paczka" }
+  "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel": { name: "Paczki/Worki: \u015Arednia Paczka + 2\xD7 Du\u017Ca Paczka", label: "Paczki/Worki: \u015Arednia Paczka + 2\xD7 Du\u017Ca Paczka" },
+  "wsds_simple_dimensional:3:multi_medium_parcel_medium_parcel": { name: "Paczki/Worki: 2\xD7 \u015Arednia Paczka", label: "Paczki/Worki: 2\xD7 \u015Arednia Paczka" },
+  "wsds_simple_dimensional:3:multi_medium_parcel_medium_parcel_large_parcel_large_parcel": { name: "Paczki/Worki: 2\xD7 \u015Arednia Paczka + 2\xD7 Du\u017Ca Paczka", label: "Paczki/Worki: 2\xD7 \u015Arednia Paczka + 2\xD7 Du\u017Ca Paczka" }
 };
 var cents4 = (value2) => {
   if (typeof value2 !== "string" || !/^\d+$/.test(value2) || !Number.isSafeInteger(Number(value2))) throw Error("invalid_money");
@@ -23250,7 +23270,7 @@ var pln3 = (value2) => {
 };
 function reviewed3(source) {
   const product = PRODUCTS3.find((p) => p.sourceId === source.id);
-  if (!product || source.store !== "Budshop24" || source.format !== "budshop-woo" || source.productId !== product.id || source.apiProductCode !== product.sku || source.ean !== product.ean || source.name !== product.name || source.url !== product.url || source.imageUrl !== product.image || source.brand !== "Atlas" || source.category !== product.category || source.packageSize !== product.packageSize || source.unit !== "kg")
+  if (!product || source.store !== "Budshop24" || source.format !== "budshop-woo" || source.productId !== product.id || source.apiProductCode !== product.sku || source.ean !== product.ean || source.name !== product.name || source.url !== product.url || source.imageUrl !== product.image || source.brand !== product.brand || source.category !== product.category || source.packageSize !== product.packageSize || source.unit !== "kg")
     throw Error("product_identity_not_confirmed");
   return product;
 }
@@ -23338,15 +23358,17 @@ async function quoteBudshop(order, postalCode, fetchImpl) {
   const groups = located.shipping_rates;
   if (!Array.isArray(groups) || groups.length !== 1 || groups[0].package_id !== 0 || groups[0].destination?.country !== "PL" || groups[0].destination?.postcode !== postalCode || Object.entries(groups[0].destination).some(([key, value2]) => !["country", "postcode"].includes(key) && value2 !== ""))
     throw Error("no_home_delivery");
-  const mediumCount = result.packs.find((pack) => pack.product.id === 4808)?.count ?? 0;
-  const largeCount = result.packs.reduce((count, pack) => count + (pack.product.id === 4808 ? 0 : pack.count), 0);
+  const mediumCount = result.packs.reduce((count, pack) => count + ([4808, 6240].includes(pack.product.id) ? pack.count : 0), 0);
+  const largeCount = result.packs.reduce((count, pack) => count + ([4808, 6240].includes(pack.product.id) ? 0 : pack.count), 0);
   const shape = `${mediumCount}:${largeCount}`;
   const reviewedRates = {
     "1:0": "wsds_simple_dimensional:3:medium_parcel_dhl",
     "0:1": "wsds_simple_dimensional:3:large_parcel_dhl",
     "1:1": "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel",
     "0:2": "wsds_simple_dimensional:3:multi_large_parcel_large_parcel",
-    "1:2": "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel"
+    "1:2": "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel",
+    "2:0": "wsds_simple_dimensional:3:multi_medium_parcel_medium_parcel",
+    "2:2": "wsds_simple_dimensional:3:multi_medium_parcel_medium_parcel_large_parcel_large_parcel"
   };
   const courierId = reviewedRates[shape];
   if (!courierId) throw Error("no_home_delivery");

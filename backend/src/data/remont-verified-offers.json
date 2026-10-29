@@ -3379,5 +3379,19 @@
     "evidenceSha256": "979237bebd98cc2661b1c8ede3074266e83c8ade58c2d4bb2a0efbec86f8108d",
     "validUntil": null,
     "stockPackages": 5
+  },
+  {
+    "sourceId": "budshop-mapei-mapegum-wps-10kg",
+    "ean": "8022452002120",
+    "name": "MAPEI Hydroizolacja Płynna folia MAPEGUM WPS 10kg",
+    "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2046500.jpg",
+    "priceGrosze": 24899,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T14:21:17.932Z",
+    "sourceUrl": "https://budshop24.pl/produkt/hydroizolacja-plynna-folia-mapei-mapegum-wps-10kg/",
+    "evidenceSha256": "80c13fb8ac96a9dd9ea71253258680550a8f63b4b6d33a1003d25f978a04e063",
+    "validUntil": null,
+    "stockPackages": 3
   }
 ]
