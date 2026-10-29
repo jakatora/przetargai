@@ -25651,10 +25651,11 @@ function createRemontService(options = {}) {
   const observations = /* @__PURE__ */ new Map();
   const errors = /* @__PURE__ */ new Map();
   const withdrawnAt = /* @__PURE__ */ new Map();
-  let running = false;
-  let refreshPromise = null;
-  let refreshedAt = 0;
-  let refreshResult = { confirmedOfferIds: [], failedOfferIds: [] };
+  let activeRefreshes = 0;
+  let fullRefreshPromise = null;
+  const inFlightReads = /* @__PURE__ */ new Map();
+  const lastReadAt = /* @__PURE__ */ new Map();
+  const lastReadSucceeded = /* @__PURE__ */ new Map();
   let lastAttemptAt = null;
   const accept = (observation) => {
     if (!observation || typeof observation !== "object") return;
@@ -25746,47 +25747,85 @@ function createRemontService(options = {}) {
     };
     return { products, offers, deps };
   }
-  function refresh() {
-    if (refreshPromise) return refreshPromise;
-    running = true;
-    lastAttemptAt = (/* @__PURE__ */ new Date()).toISOString();
-    const confirmedOfferIds = [], failedOfferIds = [];
-    refreshPromise = (async () => {
+  function persistCache() {
+    if (options.cachePath) {
       try {
-        let cursor = 0;
-        await Promise.all(Array.from({ length: 3 }, async () => {
-          while (cursor < RETAIL_SOURCES.length) {
-            const source = RETAIL_SOURCES[cursor++];
-            try {
-              accept(await readRetailSource(source, options.fetchImpl));
-              errors.delete(source.id);
-              confirmedOfferIds.push(source.id);
-            } catch (error40) {
-              failedOfferIds.push(source.id);
-              const message = error40 instanceof Error ? error40.message : "retailer_read_failed";
-              errors.set(source.id, message);
-              if (message === "retailer_out_of_stock" || message === "purchase_rules_changed") withdrawnAt.set(source.id, (/* @__PURE__ */ new Date()).toISOString());
-            }
-          }
-        }));
-        if (options.cachePath) {
-          try {
-            (0, import_node_fs.mkdirSync)((0, import_node_path.dirname)(options.cachePath), { recursive: true });
-            (0, import_node_fs.writeFileSync)(`${options.cachePath}.tmp`, JSON.stringify({ version: 2, observations: [...observations.values()], withdrawnAt: Object.fromEntries(withdrawnAt) }));
-            (0, import_node_fs.renameSync)(`${options.cachePath}.tmp`, options.cachePath);
-            errors.delete("cache");
-          } catch {
-            errors.set("cache", "cache_write_failed");
-          }
-        }
-      } finally {
-        running = false;
-        refreshedAt = Date.now();
-        refreshResult = { confirmedOfferIds, failedOfferIds };
-        refreshPromise = null;
+        (0, import_node_fs.mkdirSync)((0, import_node_path.dirname)(options.cachePath), { recursive: true });
+        (0, import_node_fs.writeFileSync)(`${options.cachePath}.tmp`, JSON.stringify({ version: 2, observations: [...observations.values()], withdrawnAt: Object.fromEntries(withdrawnAt) }));
+        (0, import_node_fs.renameSync)(`${options.cachePath}.tmp`, options.cachePath);
+        errors.delete("cache");
+      } catch {
+        errors.set("cache", "cache_write_failed");
       }
+    }
+  }
+  function readSource(source) {
+    const pending = inFlightReads.get(source.id);
+    if (pending) return pending;
+    const read = (async () => {
+      let succeeded = false;
+      try {
+        accept(await readRetailSource(source, options.fetchImpl));
+        errors.delete(source.id);
+        succeeded = true;
+      } catch (error40) {
+        const message = error40 instanceof Error ? error40.message : "retailer_read_failed";
+        errors.set(source.id, message);
+        if (message === "retailer_out_of_stock" || message === "purchase_rules_changed") withdrawnAt.set(source.id, (/* @__PURE__ */ new Date()).toISOString());
+      } finally {
+        lastReadAt.set(source.id, Date.now());
+        lastReadSucceeded.set(source.id, succeeded);
+      }
+      return succeeded;
     })();
-    return refreshPromise;
+    inFlightReads.set(source.id, read);
+    void read.then(() => {
+      if (inFlightReads.get(source.id) === read) inFlightReads.delete(source.id);
+    });
+    return read;
+  }
+  async function refreshSources(sources) {
+    activeRefreshes++;
+    lastAttemptAt = (/* @__PURE__ */ new Date()).toISOString();
+    const outcome = /* @__PURE__ */ new Map();
+    try {
+      let cursor = 0;
+      await Promise.all(Array.from({ length: Math.min(3, sources.length) }, async () => {
+        while (cursor < sources.length) {
+          const source = sources[cursor++];
+          outcome.set(source.id, await readSource(source));
+        }
+      }));
+      return {
+        confirmedOfferIds: sources.filter((source) => outcome.get(source.id)).map((source) => source.id),
+        failedOfferIds: sources.filter((source) => !outcome.get(source.id)).map((source) => source.id)
+      };
+    } finally {
+      persistCache();
+      activeRefreshes--;
+    }
+  }
+  function refresh() {
+    if (fullRefreshPromise) return fullRefreshPromise;
+    fullRefreshPromise = refreshSources(RETAIL_SOURCES).then(() => {
+    }).finally(() => {
+      fullRefreshPromise = null;
+    });
+    return fullRefreshPromise;
+  }
+  async function refreshProjectSources(sources) {
+    const now = Date.now();
+    const stale = sources.filter((source) => now - (lastReadAt.get(source.id) ?? -Infinity) >= 6e4);
+    if (stale.length) await refreshSources(stale);
+    const checkedTimes = sources.map((source) => lastReadAt.get(source.id)).filter((value2) => value2 !== void 0);
+    const retryAfterSeconds = checkedTimes.length ? Math.max(0, Math.ceil((Math.min(...checkedTimes) + 6e4 - Date.now()) / 1e3)) : 0;
+    return {
+      status: stale.length ? "updated" : "recent",
+      checkedAt: checkedTimes.length ? new Date(Math.max(...checkedTimes)).toISOString() : null,
+      confirmedOfferIds: sources.filter((source) => lastReadSucceeded.get(source.id)).map((source) => source.id),
+      failedOfferIds: sources.filter((source) => !lastReadSucceeded.get(source.id)).map((source) => source.id),
+      retryAfterSeconds
+    };
   }
   function status() {
     const { offers } = catalog();
@@ -25797,7 +25836,7 @@ function createRemontService(options = {}) {
       products: new Set(eligible.map((offer) => offer.productId)).size,
       browserVerifiedOffers: eligible.filter((offer) => offer.verification?.method === "browser").length,
       stores: [...new Set(eligible.map((offer) => offer.store))],
-      running,
+      running: activeRefreshes > 0,
       lastAttemptAt,
       pickupConfirmationStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupRequiresConfirmation).map((source) => source.store))],
       pickupUnavailableStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupUnavailable).map((source) => source.store))],
@@ -25844,14 +25883,10 @@ function createRemontService(options = {}) {
     try {
       let priceRefresh;
       if (parsed.data.options?.refreshPrices) {
-        const recent = !running && Date.now() - refreshedAt < 6e4;
-        if (!recent) await refresh();
-        priceRefresh = {
-          status: recent ? "recent" : "updated",
-          checkedAt: lastAttemptAt,
-          ...refreshResult,
-          retryAfterSeconds: Math.max(0, Math.ceil((refreshedAt + 6e4 - Date.now()) / 1e3))
-        };
+        const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material));
+        const requestedEans = new Set(materials.map((material) => material.ean ?? RETAIL_NAME_ALIASES[material.name]).filter((ean) => Boolean(ean)));
+        const sources = RETAIL_SOURCES.filter((source) => requestedEans.has(source.ean) || materials.some((material) => !material.ean && !RETAIL_NAME_ALIASES[material.name] && source.skuIdentity && source.category === material.category && normalizeProductName(retailProductName(source)) === normalizeProductName(material.name)));
+        priceRefresh = await refreshProjectSources(sources);
       }
       const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog(parsed.data.options?.delivery?.mode === "pickup").deps);
       res.setHeader("Cache-Control", "no-store");
