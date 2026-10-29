@@ -21237,9 +21237,18 @@ var RETAIL_SOURCES = [
   // source: https://sklep.instato.pl/pl/p/SYFON-UMYWALKOWY-BARDZO-NISKI-MALY-MEMBRANOWY-oszczedzajacy-miejsce-WHB1-32/23062689
   { "id": "instato-mcalpine-whb132", "ean": "5036484088390", "name": "SYFON UMYWALKOWY  BARDZO NISKI MA\u0141Y MEMBRANOWY oszcz\u0119dzaj\u0105cy miejsce WHB1-32", "brand": "McAlpine", "category": "trap", "packageSize": 1, "unit": "szt", "store": "Instato", "format": "shoper-api", "productId": 23062689, "apiPurchaseUnit": "szt.", "variant": ["WHB1-32"], "pickupRequiresConfirmation": true, "url": "https://sklep.instato.pl/pl/p/SYFON-UMYWALKOWY-BARDZO-NISKI-MALY-MEMBRANOWY-oszczedzajacy-miejsce-WHB1-32/23062689", "imageUrl": "https://sklep.instato.pl/environment/cache/images/productGfx_5082_500_500/5036484088390_syfon_umywalkowy_niski_bialy_WHB1-322.jpg" },
   // source: https://arenalazienek.pl/pl/p/Polsyfon-umywalkowy-MCALPINE-niski%2C-bialy-WHB1-32/57988
-  { "id": "arena-mcalpine-whb132", "ean": "5036484088390", "name": "P\xF3\u0142syfon umywalkowy MCALPINE niski, bia\u0142y WHB1-32", "brand": "McAlpine", "category": "trap", "packageSize": 1, "unit": "szt", "store": "Arena \u0141azienek", "format": "shoper-api", "productId": 57988, "apiPurchaseUnit": "szt.", "variant": ["WHB1-32"], "pickupRequiresConfirmation": true, "url": "https://arenalazienek.pl/pl/p/Polsyfon-umywalkowy-MCALPINE-niski%2C-bialy-WHB1-32/57988", "imageUrl": "https://sklep.instato.pl/environment/cache/images/productGfx_5082_500_500/5036484088390_syfon_umywalkowy_niski_bialy_WHB1-322.jpg" }
+  { "id": "arena-mcalpine-whb132", "ean": "5036484088390", "name": "P\xF3\u0142syfon umywalkowy MCALPINE niski, bia\u0142y WHB1-32", "brand": "McAlpine", "category": "trap", "packageSize": 1, "unit": "szt", "store": "Arena \u0141azienek", "format": "shoper-api", "productId": 57988, "apiPurchaseUnit": "szt.", "variant": ["WHB1-32"], "pickupRequiresConfirmation": true, "url": "https://arenalazienek.pl/pl/p/Polsyfon-umywalkowy-MCALPINE-niski%2C-bialy-WHB1-32/57988", "imageUrl": "https://sklep.instato.pl/environment/cache/images/productGfx_5082_500_500/5036484088390_syfon_umywalkowy_niski_bialy_WHB1-322.jpg" },
+  // source: https://tgs.pl/pl/p/Cersanit-Carina-deska-wc-duroplastowa/12739
+  { "id": "tgs-cersanit-carina-k98-0068", "ean": "5907720651077", "name": "Cersanit Carina deska wc duroplastowa", "brand": "Cersanit", "category": "toilet-seat", "packageSize": 1, "unit": "szt", "store": "TGS", "format": "shoper-api", "productId": 12739, "apiProductCode": "K98-0068", "apiPurchaseUnit": "szt.", "variant": ["Carina"], "pickupRequiresConfirmation": true, "url": "https://tgs.pl/pl/p/Cersanit-Carina-deska-wc-duroplastowa/12739", "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_112917_500_500/Cersanit-Carina-deska-wc-duroplastowa.jpg" },
+  // source: https://tgs.pl/pl/p/Cersanit-Carina-deska-wolnoopadajaca-z-latwym-wypinaniem/4896
+  { "id": "tgs-cersanit-carina-k98-0069", "ean": "5907720651084", "name": "Cersanit Carina deska wolnoopadaj\u0105ca z \u0142atwym wypinaniem", "brand": "Cersanit", "category": "toilet-seat", "packageSize": 1, "unit": "szt", "store": "TGS", "format": "shoper-api", "productId": 4896, "apiProductCode": "K98-0069", "apiPurchaseUnit": "szt.", "variant": ["Carina"], "pickupRequiresConfirmation": true, "url": "https://tgs.pl/pl/p/Cersanit-Carina-deska-wolnoopadajaca-z-latwym-wypinaniem/4896", "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_112712_500_500/Cersanit-Carina-deska-wolnoopadajaca-z-latwym-wypinaniem..jpg" },
+  // source: https://tgs.pl/pl/p/Cersanit-Carina-deska-wc-slim-antybakteryjna%2Cwolnoopadajaca%2Clatwe-wypinanie%2Cduroplastowa/12740
+  { "id": "tgs-cersanit-carina-k98-0135", "ean": "5902115712524", "name": "Cersanit Carina deska wc slim antybakteryjna,wolnoopadaj\u0105ca,\u0142atwe wypinanie,duroplastowa", "brand": "Cersanit", "category": "toilet-seat", "packageSize": 1, "unit": "szt", "store": "TGS", "format": "shoper-api", "productId": 12740, "apiProductCode": "K98-0135", "apiPurchaseUnit": "szt.", "variant": ["Carina", "slim"], "pickupRequiresConfirmation": true, "url": "https://tgs.pl/pl/p/Cersanit-Carina-deska-wc-slim-antybakteryjna%2Cwolnoopadajaca%2Clatwe-wypinanie%2Cduroplastowa/12740", "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_112916_500_500/a%2Cwolnoopadajaca%2Clatwe-wypinanie%2Cduroplastowa.jpg" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "Cersanit Carina K98-0068 \u2014 deska standardowa 36,1 \xD7 43,4 cm": "5907720651077",
+  "Cersanit Carina K98-0069 \u2014 deska wolnoopadaj\u0105ca 36,1 \xD7 43,8 cm": "5907720651084",
+  "Cersanit Carina SLIM K98-0135 \u2014 deska wolnoopadaj\u0105ca 35,7 \xD7 44,8 cm": "5902115712524",
   "Schneider Electric Asfora \u2014 ramka 1-krotna bia\u0142a EPH5800121": "3606480527166",
   "Schneider Electric Asfora \u2014 ramka 2-krotna bia\u0142a EPH5800221": "3606480527180",
   "Schneider Electric Asfora \u2014 ramka 3-krotna bia\u0142a EPH5800321": "3606480527203",
@@ -24174,6 +24183,8 @@ async function readRetailSource(source, fetchImpl = fetch) {
   if (api) {
     const item = JSON.parse(raw);
     if (String(item.id) !== shoperProductId(source)) throw new Error("product_id_not_confirmed");
+    if (source.apiProductCode && item.code !== source.apiProductCode) throw new Error("product_code_not_confirmed");
+    if (source.apiProductCode && normalizeProductName(item.producer?.name ?? "") !== normalizeProductName(source.brand)) throw new Error("product_brand_not_confirmed");
     confirmShoperPurchaseUnit(item, source);
     if (!item.can_buy) throw new Error("retailer_out_of_stock");
     const gross2 = item.price?.gross;
