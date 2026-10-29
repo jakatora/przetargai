@@ -26029,17 +26029,27 @@ async function quoteShoper(order, fetchImpl) {
     evidenceSha256: (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
+function quoteBeforeDeadline(quoter, order, postalCode, deadline, now = Date.now()) {
+  if (now < deadline) return quoter(order, postalCode);
+  return Promise.resolve(quoter.cached?.(order, postalCode) ?? { reason: "quote_timeout" });
+}
 function createRetailerQuoter(fetchImpl = fetch) {
   const pages = createCheckoutPageReader();
   const cache = /* @__PURE__ */ new Map();
   const queue = new QuoteQueue();
-  return async (order, postalCode) => {
+  const keyFor = (order, postalCode) => JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
+  const cached2 = (order, postalCode) => {
+    if (!/^\d{2}-\d{3}$/.test(postalCode)) return null;
+    const row = cache.get(keyFor(order, postalCode)), now = Date.now();
+    return row && row.until > now && row.confirmed && "quote" in row.confirmed && Date.parse(row.confirmed.quote.expiresAt) > now ? row.confirmed : null;
+  };
+  const quote2 = async (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
     const unsupported = unavailableReason(order.store);
     if (unsupported) return { reason: unsupported };
-    const key = JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
-    const cached2 = cache.get(key);
-    if (cached2 && cached2.until > Date.now()) return cached2.result;
+    const key = keyFor(order, postalCode);
+    const cached3 = cache.get(key);
+    if (cached3 && cached3.until > Date.now()) return cached3.result;
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
     const pending = (async () => {
       const release = await queue.acquire();
@@ -26066,12 +26076,13 @@ function createRetailerQuoter(fetchImpl = fetch) {
     const result = await pending;
     if (cache.get(key)?.result === pending) {
       if ("quote" in result) {
-        cache.set(key, { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result) });
+        cache.set(key, { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result), confirmed: result });
       } else if (result.reason === "quote_busy") cache.delete(key);
       else cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
     }
     return result;
   };
+  return Object.assign(quote2, { cached: cached2 });
 }
 
 // artifacts/api-server/src/lib/store-delivery.ts
@@ -26455,7 +26466,7 @@ function createRemontService(options = {}) {
       const deliveryComparison = stageOnly ? void 0 : await compareDeliveryWithAvailablePart(
         estimate.stages,
         parsed.data.options?.delivery ?? { mode: "shipping" },
-        (order, postalCode) => Date.now() < deadline || ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
+        (order, postalCode) => ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : quoteBeforeDeadline(quoteBasket, order, postalCode, deadline),
         STORE_DELIVERY_POLICIES,
         /* @__PURE__ */ new Date(),
         knownUnavailableRetailers(),
