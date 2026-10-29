@@ -3205,5 +3205,44 @@
     "sourceUrl": "https://arenalazienek.pl/pl/p/Polsyfon-umywalkowy-MCALPINE-niski%2C-bialy-WHB1-32/57988",
     "evidenceSha256": "ac40e39e7a0cd4b65d6a5498604f19a25352f49eba5c45a961b194b2a2e109b4",
     "validUntil": null
+  },
+  {
+    "sourceId": "tgs-cersanit-carina-k98-0068",
+    "ean": "5907720651077",
+    "name": "Cersanit Carina deska wc duroplastowa",
+    "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_112917_500_500/Cersanit-Carina-deska-wc-duroplastowa.jpg",
+    "priceGrosze": 22680,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T09:30:44.501Z",
+    "sourceUrl": "https://tgs.pl/pl/p/Cersanit-Carina-deska-wc-duroplastowa/12739",
+    "evidenceSha256": "c09352761c917ed64fd302df18f8534c819d4e578e9b04e57c40daa4baa9e6aa",
+    "validUntil": null
+  },
+  {
+    "sourceId": "tgs-cersanit-carina-k98-0069",
+    "ean": "5907720651084",
+    "name": "Cersanit Carina deska wolnoopadająca z łatwym wypinaniem",
+    "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_112712_500_500/Cersanit-Carina-deska-wolnoopadajaca-z-latwym-wypinaniem..jpg",
+    "priceGrosze": 28372,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T09:30:44.702Z",
+    "sourceUrl": "https://tgs.pl/pl/p/Cersanit-Carina-deska-wolnoopadajaca-z-latwym-wypinaniem/4896",
+    "evidenceSha256": "bf2b1bcd14ceb88b5ed3731f09af0988ba407f66dd90d2a8e21d30c477294872",
+    "validUntil": null
+  },
+  {
+    "sourceId": "tgs-cersanit-carina-k98-0135",
+    "ean": "5902115712524",
+    "name": "Cersanit Carina deska wc slim antybakteryjna,wolnoopadająca,łatwe wypinanie,duroplastowa",
+    "imageUrl": "https://tgs.pl/environment/cache/images/productGfx_112916_500_500/a%2Cwolnoopadajaca%2Clatwe-wypinanie%2Cduroplastowa.jpg",
+    "priceGrosze": 29719,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T09:30:44.888Z",
+    "sourceUrl": "https://tgs.pl/pl/p/Cersanit-Carina-deska-wc-slim-antybakteryjna%2Cwolnoopadajaca%2Clatwe-wypinanie%2Cduroplastowa/12740",
+    "evidenceSha256": "af59d0396956c4187cd3909e87d1b3630ad892a8f96003b4c36865293a4c7c9c",
+    "validUntil": null
   }
 ]
