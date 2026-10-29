@@ -20023,6 +20023,8 @@ var RETAIL_SOURCES = [
     // source: https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385
     url: "https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385"
   },
+  // source: https://lobo.pl/dulux-easycare-nieskazitelna-biel-9l
+  { id: "lobo-dulux-easycare-white-9l", ean: "5904078198759", name: "DULUX EasyCare Nieskazitelna Biel 9L", category: "paint", brand: "Dulux", packageSize: 9, unit: "l", store: "Lobo", format: "shoper-api", productId: 6379, apiProductCode: "S7.0065237346", apiPurchaseUnit: "szt.", variant: ["easycare", "nieskazitelna biel", "9l"], url: "https://lobo.pl/dulux-easycare-nieskazitelna-biel-9l", imageUrl: "https://lobo.pl/environment/cache/images/productGfx_58351_500_500/DULUX-EASYCARE-NIESKAZITELNA-BIEL-9L.webp" },
   {
     id: "sewera-atlas-gta-18kg",
     ean: "5905400542509",
@@ -20036,6 +20038,8 @@ var RETAIL_SOURCES = [
     // source: https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321
     url: "https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321"
   },
+  // source: https://lobo.pl/atlas-gta-super-biala-gladz-polimerowa-18kg
+  { id: "lobo-atlas-gta-18kg", ean: "5905400542509", name: "ATLAS GTA Super Bia\u0142a G\u0142ad\u017A Polimerowa 18kg", category: "skim-coat", brand: "Atlas", packageSize: 18, unit: "kg", store: "Lobo", format: "shoper-api", productId: 42682, apiProductCode: "n.GG-R2U-18", apiPurchaseUnit: "szt.", variant: ["gta", "18kg"], url: "https://lobo.pl/atlas-gta-super-biala-gladz-polimerowa-18kg", imageUrl: "https://lobo.pl/environment/cache/images/productGfx_68392_500_500/ATLAS-GTA-Super-Biala-Gladz-Polimerowa-18kg.webp" },
   {
     id: "sewera-acrylputz-st10-20kg",
     ean: "5903973104421",
