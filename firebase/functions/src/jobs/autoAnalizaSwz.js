@@ -32,15 +32,38 @@ export const LIMIT_POBRANIA_MS = 25_000;
  */
 export const LIMIT_ANALIZY_MS = 240_000;
 
+/*
+ * Źródła plików (2026-10-29): e-Zamówienia (BZP) i platformazakupowa.pl — tam załączniki z publicznymi
+ * linkami ma szczegół pobrany przez selekcję (`pz_szczegol.zalaczniki`; sonda: 23 z 40 ma SWZ w PDF).
+ * Adres pliku pochodzi z cudzej strony, więc pobieramy WYŁĄCZNIE z tych domen.
+ */
+export const DOZWOLONE_HOSTY = /^https:\/\/([a-z0-9-]+\.)*(ezamowienia\.gov\.pl|platformazakupowa\.pl)\//i;
+export const ZRODLA_AUTO_SWZ = new Set(['bzp', 'platformazakupowa']);
+
+/** Dokumenty przetargu w jednym kształcie (`nazwa`, `plik`, `rozszerzenie`, `url`, `rozmiar_kb?`). */
+export function dokumentyPrzetargu(tender) {
+  if (tender?.source === 'bzp') return Array.isArray(tender.ez_dokumenty) ? tender.ez_dokumenty : [];
+  if (tender?.source === 'platformazakupowa') {
+    return (tender.pz_szczegol?.zalaczniki ?? []).filter((z) => z?.url).map((z) => {
+      const nazwa = String(z.nazwa ?? '');
+      const rozszerzenie = String(z.rozszerzenie ?? (nazwa.match(/\.([a-z0-9]{1,5})$/i)?.[1] ?? '')).toLowerCase() || null;
+      return { id: z.url, nazwa, plik: nazwa, rozszerzenie, url: z.url, rozmiar_kb: typeof z.rozmiar_kb === 'number' ? z.rozmiar_kb : null };
+    });
+  }
+  return [];
+}
+
 /** Najlepszy kandydat na SWZ: PDF z SWZ/specyfikacją, najpierw NIE „Załącznik… do SWZ”. */
 export function wybierzSwz(dokumenty) {
-  const kandydaci = (Array.isArray(dokumenty) ? dokumenty : []).filter((d) => d?.url && czySwz(d));
+  const kandydaci = (Array.isArray(dokumenty) ? dokumenty : []).filter((d) => d?.url && DOZWOLONE_HOSTY.test(d.url) && czySwz(d)
+    && !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_PDF));
   const zalacznik = (d) => /za[lł][aą]cznik/i.test(`${d.nazwa ?? ''} ${d.plik ?? ''}`);
   return kandydaci.find((d) => !zalacznik(d)) ?? null;
 }
 
 /** Pobranie PDF-a SWZ (≤ 5 MB, nagłówek %PDF) → base64. */
 export async function pobierzPdfBase64(url, { fetchFn = fetch, limitMs = LIMIT_POBRANIA_MS } = {}) {
+  if (!DOZWOLONE_HOSTY.test(String(url ?? ''))) throw Object.assign(new Error('Pobranie SWZ: niedozwolony adres'), { przejsciowy: false });
   const res = await fetchFn(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PrzetargAI/1.0; +https://przetarg-ai.pl)', Accept: 'application/pdf' },
     signal: AbortSignal.timeout(limitMs),
@@ -143,7 +166,7 @@ export async function runAutoAnalizaSwz({
     wynik.klienci = klienci.length;
     for (const user of klienci) {
       if (wynik.analizy >= maksNaPrzebieg) break;
-      const wybrane = (await matches.wybraneOd(user.id, odWybranych)).filter((m) => m.tender_source === 'bzp');
+      const wybrane = (await matches.wybraneOd(user.id, odWybranych)).filter((m) => ZRODLA_AUTO_SWZ.has(m.tender_source));
       // Naprawy po limicie czasu nie kosztują AI i nie liczą się do limitów — przed nimi.
       for (const m of wybrane) {
         const z = await autoSwz.pobierz(user.id, m.tender_id);
@@ -160,7 +183,7 @@ export async function runAutoAnalizaSwz({
         if (await autoSwz.pobierz(user.id, m.tender_id)) continue;
         if (await powiazaniaSwz.pobierz(user.id, m.tender_id)) continue;
         const tender = await tenders.findById(m.tender_id);
-        const swz = wybierzSwz(tender?.ez_dokumenty);
+        const swz = wybierzSwz(dokumentyPrzetargu(tender));
         if (!swz) continue;
         wynik.kandydaci++;
         // Zajęcie PRZED płatnym wywołaniem — create() w transakcji: druga instancja dostaje false.

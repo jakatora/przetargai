@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { users, tenders, matches, powiazaniaSwz, autoSwz, alerty } = await import('../src/db/repos.js');
-const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy } = await import('../src/jobs/autoAnalizaSwz.js');
+const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu } = await import('../src/jobs/autoAnalizaSwz.js');
 
 /*
  * Automatyczna analiza SWZ (2026-10-28): płatne AI na backendzie, więc testy pilnują przede wszystkim
@@ -59,12 +59,28 @@ test('alertAnalizy: tylko przy pytaniach; termin pytań w treści, gdy znany i n
   assert.equal(cyt.pozycje[0].tytul, '„Modernizacja dachu”', 'pozycja z oryginalnym tytułem');
 });
 
-test('pobierzPdfBase64: odrzuca nie-PDF i plik > 5 MB; PDF → base64', async () => {
+test('pobierzPdfBase64: odrzuca nie-PDF, plik > 5 MB i obcy host; PDF → base64', async () => {
   const pdfBuf = Buffer.from('%PDF-1.7\n');
-  assert.equal(await pobierzPdfBase64('u', { fetchFn: async () => ({ ok: true, arrayBuffer: async () => pdfBuf }) }), pdfBuf.toString('base64'));
-  await assert.rejects(pobierzPdfBase64('u', { fetchFn: async () => ({ ok: true, arrayBuffer: async () => Buffer.from('<html>') }) }), /nie jest PDF/);
-  await assert.rejects(pobierzPdfBase64('u', { fetchFn: async () => ({ ok: true, arrayBuffer: async () => Buffer.alloc(5 * 1024 * 1024 + 1) }) }), /limit 5 MB/);
-  await assert.rejects(pobierzPdfBase64('u', { fetchFn: async () => ({ ok: false, status: 503 }) }), /503/);
+  const U = 'https://platformazakupowa.pl/file/get_new/abc.pdf';
+  assert.equal(await pobierzPdfBase64(U, { fetchFn: async () => ({ ok: true, arrayBuffer: async () => pdfBuf }) }), pdfBuf.toString('base64'));
+  await assert.rejects(pobierzPdfBase64(U, { fetchFn: async () => ({ ok: true, arrayBuffer: async () => Buffer.from('<html>') }) }), /nie jest PDF/);
+  await assert.rejects(pobierzPdfBase64(U, { fetchFn: async () => ({ ok: true, arrayBuffer: async () => Buffer.alloc(5 * 1024 * 1024 + 1) }) }), /limit 5 MB/);
+  await assert.rejects(pobierzPdfBase64(U, { fetchFn: async () => ({ ok: false, status: 503 }) }), /503/);
+  await assert.rejects(pobierzPdfBase64('https://evil.example/swz.pdf', { fetchFn: async () => { throw new Error('nie wolno'); } }), /niedozwolony adres/);
+});
+
+test('dokumentyPrzetargu + wybierzSwz dla platformazakupowa: załączniki szczegółu, PDF ≤ 5 MB, tylko z platformy', () => {
+  const t = { source: 'platformazakupowa', pz_szczegol: { zalaczniki: [
+    { nazwa: '27_2026 SWZ (zatwierdzona).pdf', rozszerzenie: 'pdf', rozmiar_kb: 16448, url: 'https://platformazakupowa.pl/file/get_new/duzy.pdf' },
+    { nazwa: 'Załącznik nr 1 do SWZ.pdf', rozszerzenie: 'pdf', rozmiar_kb: 120, url: 'https://platformazakupowa.pl/file/get_new/zal.pdf' },
+    { nazwa: 'SWZ.pdf', rozmiar_kb: 395, url: 'https://platformazakupowa.pl/file/get_new/swz.pdf' },
+    { nazwa: 'SWZ-kopia.pdf', rozszerzenie: 'pdf', rozmiar_kb: 10, url: 'https://evil.example/swz.pdf' },
+  ] } };
+  const d = dokumentyPrzetargu(t);
+  assert.equal(d.length, 4);
+  assert.equal(d[2].rozszerzenie, 'pdf', 'rozszerzenie z nazwy pliku');
+  assert.equal(wybierzSwz(d).url, 'https://platformazakupowa.pl/file/get_new/swz.pdf', 'pomija > 5 MB, „Załącznik do SWZ” i obcy host');
+  assert.deepEqual(dokumentyPrzetargu({ source: 'ted' }), []);
 });
 
 test('przebieg: Standard z SWZ → postępowanie, analiza z PDF, powiązanie i znacznik „gotowe”; Free i bez SWZ pominięci', async () => {
@@ -98,6 +114,18 @@ test('przebieg: Standard z SWZ → postępowanie, analiza z PDF, powiązanie i z
   const wyw2 = [];
   await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul: modulOk(wyw2), pobierzPdf: pdf });
   assert.equal(wyw2.length, 0);
+});
+
+test('przebieg: przetarg z platformazakupowa z SWZ w załącznikach → analiza i powiązanie', async () => {
+  const s = await klient();
+  const { tender } = await tenders.upsert({ externalId: `pz:aswz${ZNAK}${++seq}`, title: `Remont szkoły ${seq}`, organization: 'Gmina', deadline: '2099-01-01T00:00:00.000Z', source: 'platformazakupowa' });
+  await tenders.zapiszSzczegolPz(tender.id, { tryb: 'Tryb podstawowy', zalaczniki: [{ nazwa: 'SWZ.pdf', rozszerzenie: 'pdf', rozmiar_kb: 395, url: 'https://platformazakupowa.pl/file/get_new/swz.pdf' }] });
+  await matches.createWithEvaluation({ userId: s.id, tenderId: tender.id, score: 80, reasoning: 'szkoła', tender });
+  const pobrane = [];
+  const w = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul: modulOk([]), pobierzPdf: async (u) => { pobrane.push(u); return 'JVBE'; } });
+  assert.equal(w.gotowe, 1);
+  assert.deepEqual(pobrane, ['https://platformazakupowa.pl/file/get_new/swz.pdf']);
+  assert.ok(await powiazaniaSwz.pobierz(s.id, tender.id));
 });
 
 test('limity kosztu: najwyżej 2 analizy na klienta na dobę i maksNaPrzebieg na przebieg', async () => {
