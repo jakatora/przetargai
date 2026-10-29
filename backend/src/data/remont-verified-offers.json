@@ -3365,5 +3365,19 @@
     "evidenceSha256": "1eb98687303545c3d85080b03f201315bfcccdc29a48d2a4c91189d63554d6d7",
     "validUntil": null,
     "stockPackages": 3
+  },
+  {
+    "sourceId": "budshop-atlas-woder-e-15kg",
+    "ean": "5905400514506",
+    "name": "ATLAS WODER E 15kg - Szybkoschnąca folia w płynie",
+    "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2047356.png",
+    "priceGrosze": 32500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T14:03:03.177Z",
+    "sourceUrl": "https://budshop24.pl/produkt/szybkoschnaca-folia-w-plynie-woder-e-15kg-atlas/",
+    "evidenceSha256": "979237bebd98cc2661b1c8ede3074266e83c8ade58c2d4bb2a0efbec86f8108d",
+    "validUntil": null,
+    "stockPackages": 5
   }
 ]

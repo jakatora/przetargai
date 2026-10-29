@@ -21148,6 +21148,8 @@ var RETAIL_SOURCES = [
   // source: https://budshop24.pl/produkt/atlas-woder-duo-16kg-hydroizolacja-dwuskladnikowa/
   // source: https://www.grupapsb.com.pl/produkt/hydroizolacja-dwuskladnikowa-elastyczna-woder-duo-16-kg-atlas-5905400195088.html
   { "id": "budshop-atlas-woder-duo-16kg", "ean": "5905400195088", "name": "ATLAS WODER DUO 16kg - hydroizolacja dwusk\u0142adnikowa elastyczna", "brand": "Atlas", "category": "waterproofing", "packageSize": 16, "unit": "kg", "store": "Budshop24", "format": "budshop-woo", "productId": 7381, "apiProductCode": "BS00293", "variant": ["WODER DUO", "16kg"], "url": "https://budshop24.pl/produkt/atlas-woder-duo-16kg-hydroizolacja-dwuskladnikowa/", "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2044418.jpg", "pickupRequiresConfirmation": true },
+  // source: https://budshop24.pl/produkt/szybkoschnaca-folia-w-plynie-woder-e-15kg-atlas/ ; EAN: https://mrowka.com.pl/produkt/folia-w-plynie-woder-e-szybkoschnaca-15-kg-atlas-5905400514506.html
+  { "id": "budshop-atlas-woder-e-15kg", "ean": "5905400514506", "name": "ATLAS WODER E 15kg - Szybkoschn\u0105ca folia w p\u0142ynie", "brand": "Atlas", "category": "waterproofing", "packageSize": 15, "unit": "kg", "store": "Budshop24", "format": "budshop-woo", "productId": 6484, "apiProductCode": "BS00295", "variant": ["WODER E", "15kg"], "url": "https://budshop24.pl/produkt/szybkoschnaca-folia-w-plynie-woder-e-15kg-atlas/", "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2047356.png", "pickupRequiresConfirmation": true },
   // source: https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html
   { "id": "kowalczyk-koelner-fx06k040-200", "ean": "5906675107622", "name": "KOELNER Ko\u0142ek szybkiego monta\u017Cu 6x40 z ko\u0142nierzem 200szt/op. (FX-06K040)", "brand": "Koelner", "category": "drywall-accessory", "packageSize": 200, "unit": "szt", "store": "E-Kowalczyk", "format": "kowalczyk-magento", "productId": 35762, "retailerSku": "5906675107622", "url": "https://sklep-kowalczyk.pl/rawlplug-koelner-kolek-szybkiego-montazu-6x40-z-kolnierzem-200szt-op-fx-06k040.html", "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5906675107622.jpg", "pickupRequiresConfirmation": true },
   // source: https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER
@@ -22533,8 +22535,8 @@ var AnonymousShop = class {
    * only. Contact/address lines, checkout and order routes remain forbidden. */
   async cartJson(path, body) {
     const courierId = this.origin === "https://irbudsklep.pl" ? "flexible_shipping_single:3" : this.origin === "https://patiartstudio.pl" ? "flexible_shipping_single:7" : null;
-    const budshopCouriers = ["wsds_simple_dimensional:3:medium_parcel_dhl", "wsds_simple_dimensional:3:large_parcel_dhl", "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel"];
-    if (this.origin === "https://budshop24.pl" && path === "/wp-json/wc/store/v1/cart/add-item" && (!body || Object.keys(body).sort().join(",") !== "id,quantity" || ![4808, 7381].includes(body.id) || !Number.isSafeInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_RETAIL_PACKAGES)) throw Error("invalid_cart_route");
+    const budshopCouriers = ["wsds_simple_dimensional:3:medium_parcel_dhl", "wsds_simple_dimensional:3:large_parcel_dhl", "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel", "wsds_simple_dimensional:3:multi_large_parcel_large_parcel", "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel"];
+    if (this.origin === "https://budshop24.pl" && path === "/wp-json/wc/store/v1/cart/add-item" && (!body || Object.keys(body).sort().join(",") !== "id,quantity" || ![4808, 7381, 6484].includes(body.id) || !Number.isSafeInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_RETAIL_PACKAGES)) throw Error("invalid_cart_route");
     const shipping = path === "/wp-json/wc/store/v1/cart/select-shipping-rate" && body && Object.keys(body).sort().join(",") === "package_id,rate_id" && body.package_id === 0 && (courierId && body.rate_id === courierId || this.origin === "https://budshop24.pl" && budshopCouriers.includes(body.rate_id));
     const address = body?.shipping_address;
     const destination = path === "/wp-json/wc/store/v1/cart/update-customer" && (courierId || this.origin === "https://budshop24.pl") && body && Object.keys(body).join(",") === "shipping_address" && address && typeof address === "object" && Object.keys(address).sort().join(",") === "country,postcode" && address.country === "PL" && typeof address.postcode === "string" && /^\d{2}-\d{3}$/.test(address.postcode);
@@ -23219,11 +23221,25 @@ var PRODUCTS3 = [{
   packageSize: 16,
   url: ORIGIN3 + "/produkt/atlas-woder-duo-16kg-hydroizolacja-dwuskladnikowa/",
   image: ORIGIN3 + "/wp-content/uploads/2025/08/2044418.jpg"
+}, {
+  sourceId: "budshop-atlas-woder-e-15kg",
+  id: 6484,
+  sku: "BS00295",
+  ean: "5905400514506",
+  name: "ATLAS WODER E 15kg - Szybkoschn\u0105ca folia w p\u0142ynie",
+  apiName: "ATLAS WODER E 15kg &#8211; Szybkoschn\u0105ca folia w p\u0142ynie",
+  cartName: "ATLAS WODER E 15kg &#8211; Szybkoschn\u0105ca folia w p\u0142ynie",
+  category: "waterproofing",
+  packageSize: 15,
+  url: ORIGIN3 + "/produkt/szybkoschnaca-folia-w-plynie-woder-e-15kg-atlas/",
+  image: ORIGIN3 + "/wp-content/uploads/2025/08/2047356.png"
 }];
 var COURIERS = {
   "wsds_simple_dimensional:3:medium_parcel_dhl": { name: "DHL \u2013 \u015Arednia Paczka", label: "DHL \u2013 \u015Arednia Paczka" },
   "wsds_simple_dimensional:3:large_parcel_dhl": { name: "DHL \u2013 Du\u017Ca Paczka", label: "DHL \u2013 Du\u017Ca Paczka" },
-  "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel": { name: "Paczki/Worki: \u015Arednia Paczka + Du\u017Ca Paczka", label: "Paczki/Worki: \u015Arednia Paczka + Du\u017Ca Paczka" }
+  "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel": { name: "Paczki/Worki: \u015Arednia Paczka + Du\u017Ca Paczka", label: "Paczki/Worki: \u015Arednia Paczka + Du\u017Ca Paczka" },
+  "wsds_simple_dimensional:3:multi_large_parcel_large_parcel": { name: "Paczki/Worki: 2\xD7 Du\u017Ca Paczka", label: "Paczki/Worki: 2\xD7 Du\u017Ca Paczka" },
+  "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel": { name: "Paczki/Worki: \u015Arednia Paczka + 2\xD7 Du\u017Ca Paczka", label: "Paczki/Worki: \u015Arednia Paczka + 2\xD7 Du\u017Ca Paczka" }
 };
 var cents4 = (value2) => {
   if (typeof value2 !== "string" || !/^\d+$/.test(value2) || !Number.isSafeInteger(Number(value2))) throw Error("invalid_money");
@@ -23322,8 +23338,18 @@ async function quoteBudshop(order, postalCode, fetchImpl) {
   const groups = located.shipping_rates;
   if (!Array.isArray(groups) || groups.length !== 1 || groups[0].package_id !== 0 || groups[0].destination?.country !== "PL" || groups[0].destination?.postcode !== postalCode || Object.entries(groups[0].destination).some(([key, value2]) => !["country", "postcode"].includes(key) && value2 !== ""))
     throw Error("no_home_delivery");
-  const ids = new Set(result.packs.map((pack) => pack.product.id));
-  const courierId = ids.size === 2 ? "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel" : ids.has(4808) ? "wsds_simple_dimensional:3:medium_parcel_dhl" : "wsds_simple_dimensional:3:large_parcel_dhl";
+  const mediumCount = result.packs.find((pack) => pack.product.id === 4808)?.count ?? 0;
+  const largeCount = result.packs.reduce((count, pack) => count + (pack.product.id === 4808 ? 0 : pack.count), 0);
+  const shape = `${mediumCount}:${largeCount}`;
+  const reviewedRates = {
+    "1:0": "wsds_simple_dimensional:3:medium_parcel_dhl",
+    "0:1": "wsds_simple_dimensional:3:large_parcel_dhl",
+    "1:1": "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel",
+    "0:2": "wsds_simple_dimensional:3:multi_large_parcel_large_parcel",
+    "1:2": "wsds_simple_dimensional:3:multi_medium_parcel_large_parcel_large_parcel"
+  };
+  const courierId = reviewedRates[shape];
+  if (!courierId) throw Error("no_home_delivery");
   const courier = COURIERS[courierId];
   const couriers = groups[0].shipping_rates?.filter((rate2) => rate2.rate_id === courierId && rate2.method_id === "wsds_simple_dimensional" && rate2.name === courier.name);
   if (couriers?.length !== 1) throw Error("no_home_delivery");
