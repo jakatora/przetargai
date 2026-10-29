@@ -3511,5 +3511,18 @@
     "sourceUrl": "https://lobo.pl/sniezka-grunt-ekspresowy-gleboko-penetrujacy-5l",
     "evidenceSha256": "ff66b66d4890f4711ad2812c5aca6d2cb47e5ab0daed21b903bfc35ca153ebe1",
     "validUntil": null
+  },
+  {
+    "sourceId": "realbud-acrylic-soudal-gk-white-280ml",
+    "ean": "5411183157248",
+    "name": "Akryl SOUDAL biały 280 ml do płyt GK",
+    "imageUrl": "https://realbud.com/environment/cache/images/productGfx_12733_500_500/ec4c20934e6690a4201ae5ae86b7b915.jpg",
+    "priceGrosze": 1501,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T17:59:36.650Z",
+    "sourceUrl": "https://realbud.com/pl/p/Akryl-SOUDAL-bialy-280-ml-do-plyt-GK/419576",
+    "evidenceSha256": "945a535446dc114a1a5b4cd9d1544ed6762f98b796ead6f56db73f34e01728a8",
+    "validUntil": null
   }
 ]
