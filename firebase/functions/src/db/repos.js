@@ -2703,6 +2703,18 @@ function znacznikAlarmu(ref) {
 export const alarmAi = znacznikAlarmu(ALARM_AI_REF);
 /** Alarm „źródło cicho puste" (BZP/TED bez surowych ogłoszeń w dzień roboczy, 2026-10-24). */
 export const alarmZrodla = znacznikAlarmu(() => db().collection('_health').doc('alarm_zrodla'));
+/** Strażnik zdrowia (2026-10-29): znacznik „ten zestaw powodów już dziś wysłany” (klucz `doba|kody`). */
+export const alarmZdrowia = znacznikAlarmu(() => db().collection('_health').doc('alarm_zdrowia'));
+/** Ostatni pomiar strażnika — do wykrycia powodów trwających ≥ 2 pomiary. */
+export const strazZdrowia = {
+  async wczytaj() {
+    const doc = await db().collection('_health').doc('straz').get();
+    return doc.exists ? doc.data() : null;
+  },
+  async zapisz(stan) {
+    await db().collection('_health').doc('straz').set(stan);
+  },
+};
 
 // ============================ zdarzenia Stripe (idempotencja) ============================
 

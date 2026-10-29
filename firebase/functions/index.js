@@ -274,6 +274,29 @@ export const eppOknoFetch = onSchedule(
 );
 
 /**
+ * Strażnik zdrowia (2026-10-29) — co godzinę o :45: odpytuje publiczny /health i pisze do właściciela,
+ * gdy problem trwa ≥ 2 pomiary (np. cykl dzienny się nie odbył — 27.10 nikt się nie dowiedział).
+ */
+export const strazZdrowiaCo1h = onSchedule(
+  {
+    // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 Cloud Run odrzucał zimny start. Wdrażać partiami.
+    maxInstances: 3,
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '45 * * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 120,
+    memory: '256MiB',
+    secrets: [JWT_SECRET, RESEND_API_KEY],
+  },
+  async () => {
+    const { runStrazZdrowia } = await import('./src/jobs/strazZdrowia.js');
+    const wynik = await runStrazZdrowia();
+    console.log(JSON.stringify({ severity: wynik.trwale.length ? 'WARNING' : 'INFO', message: 'strazZdrowia zakończony', ...wynik }));
+    if (!wynik.ok) throw new Error(`strazZdrowia: ${wynik.error ?? 'wysyłka alarmu nieudana'}`);
+  },
+);
+
+/**
  * Automatyczna analiza SWZ (2026-10-28) — co 30 min w ciągu dnia (8:25–20:55 PL): dla klientów Standard
  * przetargi z BZP wybrane przez selekcję, z SWZ w PDF na e-Zamówieniach, dostają analizę w Radarze SWZ
  * i powiązanie z przetargiem. Limity kosztu w jobs/autoAnalizaSwz.js; idempotencja: znacznik create().

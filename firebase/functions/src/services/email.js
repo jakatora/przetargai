@@ -139,6 +139,31 @@ export function przypomnienieTerminuEmail({ etap, tytul, termin, organizacja = n
   };
 }
 
+/** Strażnik zdrowia (2026-10-29): problem trwa co najmniej dwa pomiary (≥ 1 h). */
+export function alarmZdrowiaEmail({ powody = [], healthUrl }) {
+  const lista = powody.map((p) => p.opis);
+  const coZrobic = {
+    api: 'Sprawdź, czy funkcja api działa (Cloud Run: najnowsza rewizja gotowa i z ruchem) i czy nie trwa wdrożenie.',
+    baza: 'Sprawdź status Firestore w konsoli Firebase i logi funkcji api.',
+    cykl: 'Sprawdź Cloud Scheduler (firebase-schedule-dailyTenderFetch) i logi dailyTenderFetch — 27.10 przyczyną było „no available instance”. Można wyzwolić zadanie ręcznie.',
+    zrodla: 'Sprawdź, czy rejestr (e-Zamówienia / TED / BK) nie ma przerwy technicznej; okna dociągną dane po jej końcu.',
+    ai: 'Sprawdź kredyty i klucz Anthropic (PRZETARGAI_ANTHROPIC_API_KEY) oraz logi dailyTenderFetch.',
+    push: 'Sprawdź poświadczenia push w Expo (FCM v1 dla Androida, APNs dla iOS) — „InvalidCredentials” = brak klucza.',
+    auto_swz: 'Sprawdź logi autoSwzFetch i dostępność backendu Railway (most).',
+    status: 'Otwórz /health i sprawdź, która część zgłasza problem.',
+  };
+  const kroki = [...new Set(powody.map((p) => coZrobic[p.kod] ?? coZrobic.status))];
+  return {
+    subject: `PrzetargAI: problem na produkcji — ${powody.map((p) => p.kod).join(', ')}`,
+    text: `Strażnik zdrowia widzi problem od co najmniej godziny:\n${lista.map((l) => `• ${l}`).join('\n')}\n\n`
+      + `Co zrobić:\n${kroki.map((k) => `• ${k}`).join('\n')}\n\nStan: ${healthUrl}\n\n`
+      + 'Ten sam zestaw problemów zgłaszam najwyżej raz na dobę.',
+    html: `<p>Strażnik zdrowia widzi problem od co najmniej godziny:</p><ul>${lista.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`
+      + `<p><b>Co zrobić:</b></p><ul>${kroki.map((k) => `<li>${esc(k)}</li>`).join('')}</ul>`
+      + `<p>Stan: <a href="${esc(healthUrl)}">${esc(healthUrl)}</a></p><p>Ten sam zestaw problemów zgłaszam najwyżej raz na dobę.</p>`,
+  };
+}
+
 export function alarmZrodlaEmail({ zrodla = [], healthUrl }) {
   const lista = zrodla.map((z) => z.toUpperCase()).join(', ');
   return {

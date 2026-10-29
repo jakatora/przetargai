@@ -51,6 +51,8 @@ const schema = z.object({
   EMAIL_REPLY_TO: z.string().default('jakatora68@gmail.com'),
   // Dokąd idą alarmy operacyjne (np. brak kredytów Anthropic) — skrzynka właściciela.
   ALARM_EMAIL: z.string().email().default('jakatora68@gmail.com'),
+  // Publiczny /health, który odpytuje strażnik zdrowia (jobs/strazZdrowia.js) — sprawdza też, że API odpowiada.
+  HEALTH_URL: z.string().url().default('https://europe-central2-przetargai.cloudfunctions.net/api/health'),
 
   ADMIN_API_KEY: z.string().default(''),
 
