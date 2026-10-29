@@ -32,5 +32,9 @@ console.log('SMOKE zrzut:', png);
 console.log('SMOKE tekst ekranu:', JSON.stringify(tekst.slice(0, 200)));
 const krytyczne = bledy.filter((b) => b.startsWith('did-fail-load'));
 if (bledy.length) console.log('SMOKE błędy konsoli:', bledy);
-if (krytyczne.length || !tekst.trim()) process.exit(1);
+// 2026-10-29: smoke mówił „OK” przy ekranie „Nie udało się wczytać przetargów / Brak połączenia z serwerem”
+// (build celował w localhost). Ekran błędu ładowania to porażka, nie sukces.
+const ekranBledu = /Nie udało się wczytać|Brak połączenia z serwerem|Could not load|No connection to the server/i.test(tekst);
+if (ekranBledu) console.error('SMOKE: aplikacja pokazuje ekran błędu ładowania danych');
+if (krytyczne.length || !tekst.trim() || ekranBledu) process.exit(1);
 console.log('SMOKE: OK');
