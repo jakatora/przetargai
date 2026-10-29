@@ -3244,5 +3244,44 @@
     "sourceUrl": "https://tgs.pl/pl/p/Cersanit-Carina-deska-wc-slim-antybakteryjna%2Cwolnoopadajaca%2Clatwe-wypinanie%2Cduroplastowa/12740",
     "evidenceSha256": "af59d0396956c4187cd3909e87d1b3630ad892a8f96003b4c36865293a4c7c9c",
     "validUntil": null
+  },
+  {
+    "sourceId": "arena-cersanit-carina-k98-0068",
+    "ean": "5907720651077",
+    "name": "Deska WC CERSANIT CARINA, biała K98-0068",
+    "imageUrl": "https://arenalazienek.pl/environment/cache/images/productGfx_1123c38aa8590ccfc2ba00dca7976ff7_500_500.jpg",
+    "priceGrosze": 21599,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T10:46:58.785Z",
+    "sourceUrl": "https://arenalazienek.pl/pl/p/Deska-WC-CERSANIT-CARINA%2C-biala-K98-0068/7201",
+    "evidenceSha256": "acdadaae17de08b4adeb26638dec63a0d4d4f6e1bbb7896856a351bd7865a4c1",
+    "validUntil": null
+  },
+  {
+    "sourceId": "arena-cersanit-carina-k98-0069",
+    "ean": "5907720651084",
+    "name": "Deska WC CERSANIT CARINA wolnoopadająca, biała K98-0069",
+    "imageUrl": "https://arenalazienek.pl/environment/cache/images/productGfx_9236850dc586c5c3230a5442bef0515d_500_500.jpg",
+    "priceGrosze": 28372,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T10:46:58.856Z",
+    "sourceUrl": "https://arenalazienek.pl/pl/p/Deska-WC-CERSANIT-CARINA-wolnoopadajaca%2C-biala-K98-0069/7182",
+    "evidenceSha256": "30d3e323be03e5d35827da205dc989c4e784de9ec58c388b8c0ab1bf94133737",
+    "validUntil": null
+  },
+  {
+    "sourceId": "arena-cersanit-carina-k98-0135",
+    "ean": "5902115712524",
+    "name": "Deska WC CERSANIT CARINA SLIM wolnoopadająca, biała K98-0135",
+    "imageUrl": "https://arenalazienek.pl/environment/cache/images/productGfx_8518d622c825366a9fd9d14dc315cbe6_500_500.jpg",
+    "priceGrosze": 28899,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T10:46:58.956Z",
+    "sourceUrl": "https://arenalazienek.pl/pl/p/Deska-WC-CERSANIT-CARINA-SLIM-wolnoopadajaca%2C-biala-K98-0135/26758",
+    "evidenceSha256": "1b45d13659a53a43efbece75f8007ccbee5db7806344ae3097d547954572cd22",
+    "validUntil": null
   }
 ]
