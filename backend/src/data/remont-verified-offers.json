@@ -3140,5 +3140,44 @@
     "evidenceSha256": "72bac517d0cb95c97ed18f02d28d24273e03e23607618638cf939d27988bd177",
     "validUntil": null,
     "stockPackages": 5
+  },
+  {
+    "sourceId": "zpradem-asfora-white-frame-1",
+    "ean": "3606480527166",
+    "name": "ASFORA Ramka pojedyncza biała EPH5800121",
+    "imageUrl": "https://zpradem.pl/environment/cache/images/productGfx_440022_500_500/ASFORA-Ramka-pojedyncza-biala-EPH5800121.jpg",
+    "priceGrosze": 350,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T05:53:55.041Z",
+    "sourceUrl": "https://zpradem.pl/asfora-ramka-pojedyncza-biala-eph5800121/788683",
+    "evidenceSha256": "49f75e991691a9ab0ae894345d7e5c747ef85e083c7334e478a1ffde00024a28",
+    "validUntil": null
+  },
+  {
+    "sourceId": "zpradem-asfora-white-frame-2",
+    "ean": "3606480527180",
+    "name": "ASFORA Ramka podwójna pozioma biała EPH5800221",
+    "imageUrl": "https://zpradem.pl/environment/cache/images/productGfx_440276_500_500/ASFORA-Ramka-podwojna-pozioma-biala-EPH5800221.jpg",
+    "priceGrosze": 640,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T05:53:55.197Z",
+    "sourceUrl": "https://zpradem.pl/asfora-ramka-podwojna-pozioma-biala-eph5800221/799939",
+    "evidenceSha256": "d3581adcb15ecf596a769d6d3fa08bca82539191ea949607167d7475cfd9d6b9",
+    "validUntil": null
+  },
+  {
+    "sourceId": "zpradem-asfora-white-frame-3",
+    "ean": "3606480527203",
+    "name": "ASFORA Ramka potrójna pozioma biała EPH5800321",
+    "imageUrl": "https://zpradem.pl/environment/cache/images/productGfx_440028_500_500/ASFORA-Ramka-potrojna-pozioma-biala-EPH5800321.jpg",
+    "priceGrosze": 960,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T05:53:55.366Z",
+    "sourceUrl": "https://zpradem.pl/asfora-ramka-potrojna-pozioma-biala-eph5800321/815336",
+    "evidenceSha256": "2ef9405e23f151ae1222675eb25c4214864ef1009bb41991d280c48abfe34618",
+    "validUntil": null
   }
 ]
