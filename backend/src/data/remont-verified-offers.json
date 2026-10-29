@@ -3112,5 +3112,33 @@
     "sourceUrl": "https://www.rabdom.pl/pl/p/Chem-Rozlew-Benzyna-ekstrakcyjna-rozcienczalnik-0%2C5L/316",
     "evidenceSha256": "a0986d92db62e4816e0f83b864691074042d1f1c4a976b319152c93a7d1f5a6d",
     "validUntil": null
+  },
+  {
+    "sourceId": "integra-gtv-nyxa-128-black",
+    "ean": "5902801422652",
+    "name": "Uchwyt meblowy NYXA C-128 / L-138 czarny mat",
+    "imageUrl": "https://integra-bielinscy.pl/2693-home_default/uchwyt-meblowy-nyxa-c-128-l-138-czarny-mat.jpg",
+    "priceGrosze": 1299,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T05:26:30.747Z",
+    "sourceUrl": "https://integra-bielinscy.pl/uchwyty/1614-uchwyt-meblowy-nyxa-c-128-l-138-czarny-mat-5902801422652.html",
+    "evidenceSha256": "7d2124be2f27a5070aaa5690c13f47a8124b001068a24fd6bff1939923e11772",
+    "validUntil": null,
+    "stockPackages": 79
+  },
+  {
+    "sourceId": "integra-gtv-nyxa-128-gold",
+    "ean": "5902801422737",
+    "name": "Uchwyt meblowy NYXA C-128 / L-138 złoto szczotkowane",
+    "imageUrl": "https://integra-bielinscy.pl/2695-home_default/uchwyt-meblowy-nyxa-c-128-l-138-zloto-szczotkowane.jpg",
+    "priceGrosze": 1350,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T05:26:32.164Z",
+    "sourceUrl": "https://integra-bielinscy.pl/uchwyty/1613-uchwyt-meblowy-nyxa-c-128-l-138-zloto-szczotkowane-5902801422737.html",
+    "evidenceSha256": "72bac517d0cb95c97ed18f02d28d24273e03e23607618638cf939d27988bd177",
+    "validUntil": null,
+    "stockPackages": 5
   }
 ]
