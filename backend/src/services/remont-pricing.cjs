@@ -5362,7 +5362,7 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
   });
   const generateFastpass = (shape) => {
     const doc = new Doc(["shape", "payload", "ctx"]);
-    const normalized = _normalized.value;
+    const normalized2 = _normalized.value;
     const parseStr = (key) => {
       const k = esc(key);
       return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
@@ -5370,12 +5370,12 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     doc.write(`const input = payload.value;`);
     const ids = /* @__PURE__ */ Object.create(null);
     let counter = 0;
-    for (const key of normalized.keys) {
+    for (const key of normalized2.keys) {
       ids[key] = `key_${counter++}`;
     }
     doc.write(`const newResult = {}`);
-    for (const key of normalized.keys) {
-      if (normalized.optionalKeys.has(key)) {
+    for (const key of normalized2.keys) {
+      if (normalized2.optionalKeys.has(key)) {
         const id = ids[key];
         doc.write(`const ${id} = ${parseStr(key)};`);
         const k = esc(key);
@@ -14189,12 +14189,12 @@ async function findByEanOrGtin(db, code) {
   return findByColumn(db, key.field, key.value);
 }
 async function findByNormalizedNameAndCategory(db, name, category) {
-  const normalized = normalizeProductName(name);
+  const normalized2 = normalizeProductName(name);
   const cat = category.trim();
-  if (!normalized || !cat) return void 0;
+  if (!normalized2 || !cat) return void 0;
   const rows = await db.select().from(productsTable).where(
     and(
-      eq(productsTable.normalizedName, normalized),
+      eq(productsTable.normalizedName, normalized2),
       eq(productsTable.category, cat)
     )
   ).orderBy(productsTable.name).limit(1);
@@ -14264,6 +14264,82 @@ async function listOffersForProduct(db, productId) {
   return sortOffersWithCheapest(rows);
 }
 
+// lib/pricing-service/src/package-families.ts
+var V33_CABINET_FAMILY = "v33-easy-kitchen-white-satin-v1";
+var V33_CABINET_FAMILY_NAME = "V33 Easy Renowacja Kuchnia \u2014 bia\u0142y satyna, dob\xF3r opakowa\u0144";
+var V33_CABINET_PACKS = [{ ean: "3153895149044", size: 750 }, { ean: "3153895149228", size: 2e3 }];
+var familyId = "remont-family-" + V33_CABINET_FAMILY;
+var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
+async function resolvePackageFamily(db, deps, query, unit) {
+  if (query.packageFamily !== V33_CABINET_FAMILY || query.ean || query.gtin || query.category !== "cabinet-paint" || unit !== "ml" || normalized(query.normalizedName ?? "") !== normalized(V33_CABINET_FAMILY_NAME)) return null;
+  const found = [], offers = [];
+  for (const pack of V33_CABINET_PACKS) {
+    const product = await deps.findProductByCode(db, { ean: pack.ean });
+    if (!product || product.ean !== pack.ean || Number(product.packageSize) !== pack.size || product.packageUnit !== "ml" || product.category !== "cabinet-paint") continue;
+    found.push(product);
+    offers.push(...(await deps.listOffers(db, product.id)).filter((o) => o.productId === product.id && Number(o.packageSize) === pack.size && o.unit === "ml").map((o) => ({ ...o, product })));
+  }
+  return found.length ? { product: { ...found[0], id: familyId, name: V33_CABINET_FAMILY_NAME, ean: null, gtin: null, normalizedName: query.normalizedName, packageSize: null, imageUrl: null }, offers } : null;
+}
+function mergePackageFamilyGroups(groups) {
+  const automatic = groups.find((g) => g.product.id === familyId);
+  if (!automatic) return groups;
+  const locked = groups.filter((g) => V33_CABINET_PACKS.some((p) => p.ean === g.product.ean) && g.unit === "ml");
+  if (!locked.length) return groups;
+  const requiredBySize = {};
+  for (const g of locked) {
+    const size = String(g.product.packageSize);
+    requiredBySize[size] = (requiredBySize[size] ?? 0) + g.totalQuantity;
+  }
+  const offers = new Map(automatic.offers.map((o) => [o.id, o]));
+  for (const g of locked) for (const offer of g.offers) offers.set(offer.id, { ...offer, product: g.product });
+  const result = { ...automatic, totalQuantity: automatic.totalQuantity + locked.reduce((n, g) => n + g.totalQuantity, 0), perStageCostGrosze: automatic.perStageCostGrosze + locked.reduce((n, g) => n + g.perStageCostGrosze, 0), offers: [...offers.values()], requiredBySize };
+  return groups.filter((g) => !locked.includes(g)).map((g) => g === automatic ? result : g);
+}
+
+// lib/pricing-service/src/mixed-package-plans.ts
+function mixedPackagePlans(required2, variants, locked = {}, maxPlans = 4096, maxVisits = 1e5) {
+  const plans = [];
+  let visits = 0, limited = false;
+  const eligible = variants.filter((v) => Number.isFinite(v.packageSize) && v.packageSize > 0 && Number.isSafeInteger(v.unitPriceGrosze) && v.unitPriceGrosze > 0);
+  if (!Number.isFinite(required2) || required2 <= 0 || !eligible.length) return { plans, limited };
+  const ordered = [...eligible].sort((a, b) => b.packageSize - a.packageSize || a.offerId.localeCompare(b.offerId));
+  const covers = (packs) => packs.reduce((n, p) => n + p.count * p.packageSize, 0) + 1e-7 >= required2 && Object.entries(locked).every(([size, quantity]) => packs.filter((p) => String(p.packageSize) === size).reduce((n, p) => n + p.count * p.packageSize, 0) + 1e-7 >= quantity);
+  const visit = (index2, packs, coverage) => {
+    if (++visits > maxVisits || plans.length >= maxPlans) {
+      limited = true;
+      return;
+    }
+    if (index2 === ordered.length) {
+      if (!covers(packs)) return;
+      for (let i = 0; i < packs.length; i++) {
+        const pack = packs[i], step = pack.purchaseMultiple ?? 1;
+        const smaller = pack.count - step >= (pack.minimumPackages ?? 1) ? { ...pack, count: pack.count - step } : null;
+        const changed = packs.flatMap((row, n) => n === i ? smaller ? [smaller] : [] : [row]);
+        if (covers(changed)) return;
+      }
+      const totalGrosze = packs.reduce((n, p) => n + p.lineCostGrosze, 0);
+      if (!Number.isSafeInteger(totalGrosze)) return;
+      plans.push({ packages: packs, totalGrosze, requiredQuantity: required2, coveredQuantity: coverage, overage: Math.max(0, coverage - required2) });
+      return;
+    }
+    const v = ordered[index2], multiple = v.purchaseMultiple ?? 1, minimum = Math.ceil((v.minimumPackages ?? 1) / multiple) * multiple;
+    const already = packs.filter((p) => p.packageSize === v.packageSize).reduce((n, p) => n + p.count * p.packageSize, 0);
+    const remaining = Math.max(0, required2 - coverage, (locked[String(v.packageSize)] ?? 0) - already);
+    const useful = remaining > 1e-7 ? Math.max(minimum, Math.ceil((remaining - 1e-7) / v.packageSize / multiple) * multiple) : 0;
+    const maximum = Math.min(useful, v.maxPackages === void 0 ? useful : Math.floor(v.maxPackages / multiple) * multiple, 1e4);
+    for (let count = 0; count <= maximum; count += multiple) {
+      if (limited) return;
+      if (count > 0 && count < minimum) continue;
+      const entry = { ...v, count, lineCostGrosze: count * v.unitPriceGrosze };
+      visit(index2 + 1, count ? [...packs, entry] : packs, coverage + count * v.packageSize);
+    }
+  };
+  visit(0, [], 0);
+  plans.sort((a, b) => a.totalGrosze - b.totalGrosze || a.overage - b.overage);
+  return { plans, limited };
+}
+
 // lib/pricing-service/src/indo-endcaps.ts
 var INDO_ENDCAP_EAN = "5905167726358";
 function validIndoEndcapDemand(value2) {
@@ -14285,17 +14361,17 @@ function parsePriceToGrosze(raw) {
     if (cleaned === "") return null;
     const lastComma = cleaned.lastIndexOf(",");
     const lastDot = cleaned.lastIndexOf(".");
-    let normalized;
+    let normalized2;
     if (lastComma !== -1 && lastDot !== -1) {
       const decimalSep = lastComma > lastDot ? "," : ".";
       const thousandsSep = decimalSep === "," ? "." : ",";
-      normalized = cleaned.split(thousandsSep).join("").replace(decimalSep, ".");
+      normalized2 = cleaned.split(thousandsSep).join("").replace(decimalSep, ".");
     } else if (lastComma !== -1) {
-      normalized = cleaned.replace(",", ".");
+      normalized2 = cleaned.replace(",", ".");
     } else {
-      normalized = cleaned;
+      normalized2 = cleaned;
     }
-    amount4 = Number(normalized);
+    amount4 = Number(normalized2);
   }
   if (!Number.isFinite(amount4) || amount4 < 0) return null;
   return Math.round(amount4 * 100);
@@ -14340,6 +14416,7 @@ function buildEntries(chosen) {
       existing.lineCostGrosze += v.unitPriceGrosze * count;
     } else {
       byKey.set(key, {
+        ...v.product ? { product: v.product } : {},
         packageSize: v.packageSize,
         count,
         unitPriceGrosze: v.unitPriceGrosze,
@@ -14705,6 +14782,7 @@ function buildPackageVariants(offers, product, store) {
     if (existing === void 0 || unitPriceGrosze < existing.unitPriceGrosze) {
       bySize.set(key, {
         packageSize,
+        ...offer.product ? { product: offer.product } : {},
         ...purchaseMultiple > 1 ? { purchaseMultiple } : {},
         ...minimumPackages > 1 ? { minimumPackages } : {},
         ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {},
@@ -14741,23 +14819,24 @@ async function resolveProduct(db, deps, query) {
 async function estimateLine(db, deps, item, options) {
   const unit = item.unit ?? null;
   const base = { query: item.query, quantity: item.quantity, unit };
-  const { product, hadCriteria } = await resolveProduct(db, deps, item.query);
+  const family = item.query.packageFamily ? await resolvePackageFamily(db, deps, item.query, unit) : null;
+  const { product, hadCriteria } = item.query.packageFamily ? { product: family?.product ?? null, hadCriteria: true } : await resolveProduct(db, deps, item.query);
   if (!product) {
     const reason = hadCriteria ? "no-product" : "no-query";
     return { resolved: false, ...base, reason, lineCost: 0 };
   }
-  const offers = (await deps.listOffers(db, product.id)).filter((offer) => isComparableOffer(offer) && (!options.store || offer.store === options.store));
+  const offers = (family?.offers ?? await deps.listOffers(db, product.id)).filter((offer) => isComparableOffer(offer) && (!options.store || offer.store === options.store));
   if (!offers.length) {
     return { resolved: false, ...base, reason: "no-offer", lineCost: 0 };
   }
   const variants = buildPackageVariants(offers, product, options.store);
-  const packagePlan = optimizePackages(item.quantity, variants);
+  const packagePlan = family ? mixedPackagePlans(item.quantity, variants).plans[0] ?? null : optimizePackages(item.quantity, variants);
   if (!packagePlan) return { resolved: false, ...base, reason: offers.some((o) => o.maxPackages !== void 0) ? "insufficient-stock" : "no-offer", lineCost: 0 };
   const wholeOffer = selectCheapestOffer(offers, options.store, { quantity: item.quantity, product });
   const cheapestOffer = wholeOffer ?? selectCheapestOffer(offers, options.store);
   const packageSize = resolvePackageSize(cheapestOffer.offer, product);
-  const packagesNeeded = wholeOffer ? computePackagesNeeded(item.quantity, packageSize, cheapestOffer.offer.purchaseMultiple, cheapestOffer.offer.minimumPackages) : packagePlan.packages.reduce((sum, entry) => sum + entry.count, 0);
-  const lineCost = wholeOffer ? packagesNeeded * cheapestOffer.unitPriceGrosze : packagePlan.totalGrosze;
+  const packagesNeeded = family ? packagePlan.packages.reduce((n, p) => n + p.count, 0) : wholeOffer ? computePackagesNeeded(item.quantity, packageSize, cheapestOffer.offer.purchaseMultiple, cheapestOffer.offer.minimumPackages) : packagePlan.packages.reduce((sum, entry) => sum + entry.count, 0);
+  const lineCost = family ? packagePlan.totalGrosze : wholeOffer ? packagesNeeded * cheapestOffer.unitPriceGrosze : packagePlan.totalGrosze;
   return {
     resolved: true,
     ...base,
@@ -14822,7 +14901,7 @@ function groupProjectByProduct(stages) {
       }
     }
   }
-  return [...groups.values()].map((group) => {
+  const aggregated = [...groups.values()].map((group) => {
     const pair = pairs.get(group.product.id);
     if (pair && [pair.left, pair.right].every(Number.isSafeInteger)) {
       const count = Math.max(pair.left, pair.right), additionalPairs = group.totalQuantity - pair.quantity;
@@ -14833,12 +14912,17 @@ function groupProjectByProduct(stages) {
     const cheapest = selectCheapestOffer(group.offers, void 0, { quantity: group.totalQuantity, product: group.product });
     return cheapest ? { ...group, cheapestOffer: cheapest, packageSize: resolvePackageSize(cheapest.offer, group.product) } : group;
   });
+  return mergePackageFamilyGroups(aggregated);
+}
+function optimizeGroupPackages(group, offers = group.offers) {
+  const variants = buildPackageVariants(offers, group.product);
+  return group.requiredBySize || group.product.id.startsWith("remont-family-") ? mixedPackagePlans(group.totalQuantity, variants, group.requiredBySize).plans[0] ?? null : optimizePackages(group.totalQuantity, variants);
 }
 function consolidateProject(stages) {
   const groups = groupProjectByProduct(stages);
   const lines = [];
   for (const g of groups) {
-    const packagePlan = optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product));
+    const packagePlan = optimizeGroupPackages(g);
     if (!packagePlan) continue;
     const packagesNeeded = packagePlan?.packages.reduce((sum, entry) => sum + entry.count, 0) ?? computePackagesNeeded(g.totalQuantity, g.packageSize);
     const lineCostGrosze = packagePlan?.totalGrosze ?? packagesNeeded * g.cheapestOffer.unitPriceGrosze;
@@ -14871,7 +14955,7 @@ function compareStores(stages) {
   let optimalBasketGrosze = 0;
   const optimalByStoreMap = /* @__PURE__ */ new Map();
   for (const g of groups) {
-    const plan = optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product));
+    const plan = optimizeGroupPackages(g);
     if (!plan) continue;
     optimalBasketGrosze += plan.totalGrosze;
     const countedStores = /* @__PURE__ */ new Set();
@@ -14901,7 +14985,7 @@ function compareStores(stages) {
     let coveredCount = 0;
     const missingProductIds = [];
     for (const g of groups) {
-      const plan = optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product, store));
+      const plan = optimizeGroupPackages(g, g.offers.filter((offer) => offer.store === store));
       if (!plan) {
         missingProductIds.push(g.product.id);
         continue;
@@ -14952,7 +15036,7 @@ function estimateProjectCost(stages) {
   };
 }
 function reconcileStock(stages) {
-  const missing = new Set(groupProjectByProduct(stages).filter((g) => g.offers.some((o) => o.maxPackages !== void 0) && !optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product))).map((g) => g.product.id));
+  const missing = new Set(groupProjectByProduct(stages).filter((g) => g.offers.some((o) => o.maxPackages !== void 0) && !optimizeGroupPackages(g)).map((g) => g.product.id));
   if (!missing.size) return [...stages];
   return stages.map((stage) => {
     const lines = stage.lines.map((line2) => line2.resolved && missing.has(line2.product.id) ? { resolved: false, query: line2.query, quantity: line2.quantity, unit: line2.unit, reason: "insufficient-stock", lineCost: 0 } : line2);
@@ -15443,7 +15527,7 @@ function toItemQuery(material) {
   const rawName = material.name?.trim();
   const normalizedName = rawName ? normalizeProductName(rawName) || null : null;
   const category = material.category?.trim() || null;
-  return { ean, gtin, normalizedName, category };
+  return { ean, gtin, normalizedName, category, ...material.packageFamily ? { packageFamily: material.packageFamily } : {} };
 }
 function toEstimateItem(line2) {
   return {
@@ -19524,6 +19608,7 @@ var NEVER2 = INVALID;
 
 // artifacts/api-server/src/lib/pricing-schema.ts
 var materialSchema = external_exports2.object({
+  packageFamily: external_exports2.literal("v33-easy-kitchen-white-satin-v1").optional(),
   id: external_exports2.string(),
   name: external_exports2.string(),
   unit: external_exports2.string(),
@@ -19640,6 +19725,7 @@ function serializeLine(line2) {
     packageSize: line2.packageSize,
     packagesNeeded: line2.packagesNeeded,
     packages: line2.packagePlan.packages.map((p) => ({
+      ...p.product ? { product: serializeProduct(p.product) } : {},
       ...p.purchaseMultiple ? { purchaseMultiple: p.purchaseMultiple } : {},
       ...p.minimumPackages ? { minimumPackages: p.minimumPackages } : {},
       ...p.maxPackages !== void 0 ? { maxPackages: p.maxPackages } : {},
@@ -19709,6 +19795,7 @@ function serializeConsolidatedLine(line2) {
     ...line2.wallpaperCutPlan ? { wallpaperCutPlan: line2.wallpaperCutPlan } : {},
     ...line2.indoEndcapPlan ? { indoEndcapPlan: line2.indoEndcapPlan } : {},
     ...line2.packagePlan ? { packages: line2.packagePlan.packages.map((entry) => ({
+      ...entry.product ? { product: serializeProduct(entry.product) } : {},
       ...entry.purchaseMultiple ? { purchaseMultiple: entry.purchaseMultiple } : {},
       ...entry.minimumPackages ? { minimumPackages: entry.minimumPackages } : {},
       ...entry.maxPackages !== void 0 ? { maxPackages: entry.maxPackages } : {},
@@ -21529,7 +21616,7 @@ var DELIVERY_LIMITS = {
 // lib/pricing-service/src/delivery.ts
 function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, policies = [], now = /* @__PURE__ */ new Date()) {
   const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
-  const missingProductCount = stages.flatMap((stage) => stage.lines).filter((line2) => !line2.resolved && line2.quantity > 0).length + groups.filter((group) => !optimizePackages(group.totalQuantity, buildPackageVariants(group.offers, group.product))).length;
+  const missingProductCount = stages.flatMap((stage) => stage.lines).filter((line2) => !line2.resolved && line2.quantity > 0).length + groups.filter((group) => !optimizeGroupPackages(group)).length;
   const names = [...new Set(groups.flatMap((group) => group.offers.filter((offer) => isComparableOffer(offer, now.getTime())).map((offer) => offer.store)))].sort();
   const currentPolicies = names.map((store) => {
     const policy = policies.find((policy2) => policy2.store === store);
@@ -21582,7 +21669,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
       if (!cached2[index2].has(key)) {
         const variants = buildPackageVariants(offers, group.product);
         let plan2;
-        if (variants.length === 1 && variants[0].maxPackages === void 0) {
+        if (variants.length === 1 && !group.requiredBySize && variants[0].maxPackages === void 0) {
           const variant = variants[0], count = computePackagesNeeded(group.totalQuantity, variant.packageSize, variant.purchaseMultiple, variant.minimumPackages);
           const total = count * variant.unitPriceGrosze;
           plan2 = {
@@ -21592,7 +21679,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
             totalGrosze: total,
             packages: [{ ...variant, count, lineCostGrosze: total }]
           };
-        } else plan2 = optimizePackages(group.totalQuantity, variants);
+        } else plan2 = optimizeGroupPackages(group, offers);
         cached2[index2].set(key, plan2);
       }
       const plan = cached2[index2].get(key);
@@ -21615,9 +21702,9 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
           orders.set(entry.store, order);
         }
         order.materialsGrosze += entry.lineCostGrosze;
-        let line2 = order.lines.find((line3) => line3.product.id === group.product.id);
+        let line2 = order.lines.find((line3) => line3.product.id === (entry.product?.id ?? group.product.id));
         if (!line2) {
-          line2 = { product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
+          line2 = { product: entry.product ?? { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
           order.lines.push(line2);
         }
         line2.packages.push(entry);
@@ -21833,7 +21920,7 @@ function materialPurchasePlan(groups, now, preferredStore) {
   for (const group of groups) {
     const offers = group.offers.filter((offer) => isComparableOffer(offer, now.getTime()));
     const preferred = preferredStore ? offers.filter((offer) => offer.store === preferredStore) : [];
-    const plan = (preferred.length ? optimizePackages(group.totalQuantity, buildPackageVariants(preferred, group.product)) : null) ?? optimizePackages(group.totalQuantity, buildPackageVariants(offers, group.product));
+    const plan = (preferred.length ? optimizeGroupPackages(group, preferred) : null) ?? optimizeGroupPackages(group, offers);
     if (!plan || !Number.isSafeInteger(plan.totalGrosze)) return null;
     for (const pack of plan.packages) {
       if (!Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > DELIVERY_LIMITS.packagesPerProduct) return null;
@@ -21844,7 +21931,7 @@ function materialPurchasePlan(groups, now, preferredStore) {
       }
       order.materialsGrosze += pack.lineCostGrosze;
       if (!Number.isSafeInteger(order.materialsGrosze)) return null;
-      order.lines.push({ product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [pack] });
+      order.lines.push({ product: pack.product ?? { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [pack] });
     }
   }
   if (orders.size > DELIVERY_LIMITS.stores) return null;
@@ -21942,7 +22029,7 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
     postalCode: settings.postalCode ?? null,
     status: "empty",
     productCount: groups.length,
-    missingProductCount: stages.flatMap((s) => s.lines).filter((l) => !l.resolved && l.quantity > 0).length + groups.filter((g) => !optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product))).length,
+    missingProductCount: stages.flatMap((s) => s.lines).filter((l) => !l.resolved && l.quantity > 0).length + groups.filter((g) => !optimizeGroupPackages(g)).length,
     best: null,
     lowerBound: null,
     alternatives: [],
@@ -21962,7 +22049,7 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
   result.unavailableStores = stores.filter((store) => knownUnavailableStores[store]).map((store) => ({ store, reason: knownUnavailableStores[store] }));
   const allGroups = groups;
   groups = groups.map((group) => ({ ...group, offers: group.offers.filter((offer) => !knownUnavailableStores[offer.store]) }));
-  if (groups.some((group) => !group.offers.length || !optimizePackages(group.totalQuantity, buildPackageVariants(group.offers, group.product)))) {
+  if (groups.some((group) => !group.offers.length || !optimizeGroupPackages(group))) {
     result.status = "needs_delivery_costs";
     const plans = materialPurchasePlans(allGroups, now);
     if (!plans.length) return result;
@@ -21989,7 +22076,15 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
   for (const group of groups) {
     const offers = group.offers.filter((o) => isComparableOffer(o, now.getTime()));
     const sizes = offers.map((o) => Number(o.packageSize ?? group.product.packageSize));
-    if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return tooLarge();
+    if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0)) return tooLarge();
+    if (group.requiredBySize || sizes.some((size) => size !== sizes[0])) {
+      const mixed = mixedPackagePlans(group.totalQuantity, offers.flatMap((offer) => buildPackageVariants([offer], group.product)), group.requiredBySize);
+      candidateCount *= mixed.plans.length;
+      if (mixed.limited || candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
+      if (!mixed.plans.length) return tooLarge();
+      choices.push(mixed.plans.map((plan) => plan.packages));
+      continue;
+    }
     const count = computePackagesNeeded(group.totalQuantity, sizes[0]);
     if (!Number.isSafeInteger(count) || count > DELIVERY_LIMITS.packagesPerProduct) return tooLarge();
     if (count > 60) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
@@ -22011,7 +22106,7 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
       if (max > DELIVERY_LIMITS.packagesPerProduct) return;
       for (let n = index2 === offers.length - 1 ? max : 0; n <= max; n += multiple) {
         if (n > 0 && n < minimum) continue;
-        visit(index2 + 1, Math.max(0, remaining - n), n ? [...packs, { offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count: n, unitPriceGrosze: price2, lineCostGrosze: n * price2, ...multiple > 1 ? { purchaseMultiple: multiple } : {}, ...minimum > 1 ? { minimumPackages: minimum } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {}, ...offer.verification ? { verification: offer.verification } : {} }] : packs);
+        visit(index2 + 1, Math.max(0, remaining - n), n ? [...packs, { offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count: n, ...offer.product ? { product: offer.product } : {}, unitPriceGrosze: price2, lineCostGrosze: n * price2, ...multiple > 1 ? { purchaseMultiple: multiple } : {}, ...minimum > 1 ? { minimumPackages: minimum } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {}, ...offer.verification ? { verification: offer.verification } : {} }] : packs);
       }
     };
     visit(0, count, []);
@@ -22035,9 +22130,9 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
         orders.set(pack.store, order);
       }
       order.materialsGrosze += pack.lineCostGrosze;
-      let line2 = order.lines.find((l) => l.product.id === group.product.id);
+      let line2 = order.lines.find((l) => l.product.id === (pack.product?.id ?? group.product.id));
       if (!line2) {
-        line2 = { product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
+        line2 = { product: pack.product ?? { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
         order.lines.push(line2);
       }
       line2.packages.push(pack);
@@ -22054,12 +22149,14 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
   const options = groups.map((group) => {
     const offers = group.offers.filter((offer) => isComparableOffer(offer, now.getTime()));
     const sizes = offers.map((offer) => Number(offer.packageSize ?? group.product.packageSize));
-    if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0 || size !== sizes[0])) return null;
+    if (!sizes.length || sizes.some((size) => !Number.isFinite(size) || size <= 0)) return null;
     return offers.flatMap((offer) => {
-      const count = computePackagesNeeded(group.totalQuantity, sizes[0], offer.purchaseMultiple, offer.minimumPackages);
+      const size = Number(offer.packageSize ?? group.product.packageSize);
+      if (group.requiredBySize && Object.entries(group.requiredBySize).some(([locked, n]) => n > 0 && Number(locked) !== size)) return [];
+      const count = computePackagesNeeded(group.totalQuantity, size, offer.purchaseMultiple, offer.minimumPackages);
       if (!Number.isSafeInteger(count) || count < 1 || count > DELIVERY_LIMITS.packagesPerProduct || offer.maxPackages !== void 0 && count > offer.maxPackages) return [];
       const price2 = parsePriceToGrosze(offer.promoPrice ?? offer.price);
-      return price2 === null || price2 <= 0 || !Number.isSafeInteger(price2 * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: sizes[0], count, unitPriceGrosze: price2, lineCostGrosze: count * price2, ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {}, ...offer.minimumPackages ? { minimumPackages: offer.minimumPackages } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {}, ...offer.verification ? { verification: offer.verification } : {} }];
+      return price2 === null || price2 <= 0 || !Number.isSafeInteger(price2 * count) ? [] : [{ offerId: offer.id, store: offer.store, url: offer.productUrl, packageSize: size, count, ...offer.product ? { product: offer.product } : {}, unitPriceGrosze: price2, lineCostGrosze: count * price2, ...offer.purchaseMultiple ? { purchaseMultiple: offer.purchaseMultiple } : {}, ...offer.minimumPackages ? { minimumPackages: offer.minimumPackages } : {}, ...offer.maxPackages !== void 0 ? { maxPackages: offer.maxPackages } : {}, ...offer.verification ? { verification: offer.verification } : {} }];
     });
   });
   if (options.some((option) => !option)) {
@@ -22085,9 +22182,9 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
           orders.set(pack.store, order);
         }
         order.materialsGrosze += pack.lineCostGrosze;
-        let line2 = order.lines.find((line3) => line3.product.id === group.product.id);
+        let line2 = order.lines.find((line3) => line3.product.id === (pack.product?.id ?? group.product.id));
         if (!line2) {
-          line2 = { product: { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
+          line2 = { product: pack.product ?? { id: group.product.id, name: group.product.name, imageUrl: group.product.imageUrl }, unit: group.unit, packages: [] };
           order.lines.push(line2);
         }
         line2.packages.push(pack);
@@ -22098,7 +22195,11 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     proposed.set(key, actual);
     if (whole2) wholePlans.add(key);
   }
-  const materialPlans = groups.map((g) => optimizePackages(g.totalQuantity, buildPackageVariants(g.offers, g.product)));
+  const materialPlans = groups.map((g) => optimizeGroupPackages(g));
+  for (const store of stores) {
+    const perStore = groups.map((g) => optimizeGroupPackages(g, g.offers.filter((o) => o.store === store)));
+    if (perStore.every(Boolean)) addGroupedPlan(perStore.map((plan) => plan.packages), true);
+  }
   if (materialPlans.every(Boolean)) addGroupedPlan(materialPlans.map((plan) => plan.packages), materialPlans.every((plan) => plan.packages.length === 1));
   const orderedOptions = options.map((option) => option.sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId)));
   function addBase(selected) {
@@ -22128,7 +22229,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     const changed = [...seed];
     changed[index2] = alternative;
     addPlan(changed);
-    if (alternative.store !== seed[index2].store && seed[index2].count > 1) {
+    if (!groups[index2].requiredBySize && alternative.packageSize === seed[index2].packageSize && alternative.store !== seed[index2].store && seed[index2].count > 1) {
       const count = seed[index2].count;
       const multiple = seed[index2].purchaseMultiple ?? 1;
       const minimum = Math.ceil((seed[index2].minimumPackages ?? 1) / multiple) * multiple;
@@ -22262,7 +22363,7 @@ async function compareDeliveryWithAvailablePart(stages, settings, quoteBasket, p
   const accepted = new Set(groups.filter((group) => {
     const identities = [{ ean: group.product.ean, gtin: group.product.gtin, normalizedName: group.product.normalizedName, category: group.product.category }, ...selected.flatMap((s) => s.lines).flatMap((l) => l.resolved && l.product.id === group.product.id ? [l.query] : [])];
     if (unresolved.some((line2) => identities.some((id) => matches(line2.query, id)))) return false;
-    return Boolean(optimizePackages(group.totalQuantity, buildPackageVariants(group.offers, group.product)));
+    return Boolean(optimizeGroupPackages(group));
   }).map((group) => group.product.id));
   if (!accepted.size) return comparison;
   const subset = selected.map((stage) => ({ ...stage, lines: stage.lines.filter((line2) => line2.resolved && accepted.has(line2.product.id)), unresolved: [] }));
@@ -23773,17 +23874,17 @@ function parseRetailPage(html, source, observedAt) {
   if (!product) throw new Error("product_ean_not_confirmed");
   const name = String(product.name ?? "");
   const normalize = (value2) => normalizeProductName(value2.replace(/(\d|mm|cm|m)\s*[x×/]\s*(?=\d)/gi, "$1 x ").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
-  const normalized = normalize(name);
+  const normalized2 = normalize(name);
   const packagePattern = new RegExp(`(?:^| )${String(source.packageSize).replace(".", " ")} (?:${source.unit === "l" ? "l|litrow|litry" : source.unit})(?: |$)`);
   const explicitBrand = typeof product.brand === "string" ? product.brand : product.brand?.name;
   const brand = normalizeProductName(explicitBrand || (typeof product.manufacturer === "string" ? product.manufacturer : product.manufacturer?.name) || "");
-  const variantMatches = source.variant?.every((value2) => new RegExp(`(?:^| )${normalize(value2)}(?: |$)`).test(normalized));
+  const variantMatches = source.variant?.every((value2) => new RegExp(`(?:^| )${normalize(value2)}(?: |$)`).test(normalized2));
   if (source.packageDescription && !normalize(text2(String(product.description ?? ""))).includes(normalize(source.packageDescription))) throw new Error("product_package_not_confirmed");
   const sourceBrand = normalizeProductName(source.brand);
   const unbranded = source.unbranded === true && source.id === "castorama-paint-economy-10l" && source.store === "Castorama" && source.ean === "3663602567240" && source.name === "Farba bia\u0142a mat 10 l" && sourceBrand === "";
   if (!sourceBrand && !unbranded) throw Error("product_brand_not_confirmed");
-  if ((unbranded ? Boolean(brand) : !(normalized.includes(sourceBrand) || brand.includes(sourceBrand))) || !(source.variant ? variantMatches : packagePattern.test(normalized))) throw new Error("product_variant_mismatch");
-  if (!normalize(source.name).split(" ").filter((token) => token.length > 3).every((token) => normalized.includes(token))) throw new Error("product_name_mismatch");
+  if ((unbranded ? Boolean(brand) : !(normalized2.includes(sourceBrand) || brand.includes(sourceBrand))) || !(source.variant ? variantMatches : packagePattern.test(normalized2))) throw new Error("product_variant_mismatch");
+  if (!normalize(source.name).split(" ").filter((token) => token.length > 3).every((token) => normalized2.includes(token))) throw new Error("product_name_mismatch");
   const allOffers = objects(product.offers);
   if (allOffers.some((offer) => /\/OutOfStock$|\/Discontinued$/.test(String(offer.availability))) && !allOffers.some((offer) => /\/InStock$/.test(String(offer.availability)))) throw new Error("retailer_out_of_stock");
   const eligibleOffers = allOffers.filter((offer) => {
@@ -25536,7 +25637,11 @@ function createRemontService(options = {}) {
   async function handleEstimate(req, res) {
     const stageOnly = req.path.endsWith("/stage");
     const parsed = projectRequestSchema.safeParse(stageOnly ? { jobs: [req.body?.job], options: req.body?.options } : req.body);
-    if (!parsed.success || parsed.data.jobs.length > 20 || parsed.data.jobs.some((job) => job.materials.length > DELIVERY_LIMITS.products || job.materials.some((line2) => line2.quantity > 1e5))) {
+    const withinQuantityLimit = (job, line2) => {
+      const cabinet = job.jobId === "kitchen-cabinet-paint" && line2.material.id === "cabinet-paint" && line2.material.unit === "ml" && (line2.material.packageFamily === "v33-easy-kitchen-white-satin-v1" || ["3153895149044", "3153895149228"].includes(line2.material.ean ?? ""));
+      return line2.quantity <= (cabinet ? 2e6 : 1e5);
+    };
+    if (!parsed.success || parsed.data.jobs.length > 20 || parsed.data.jobs.some((job) => job.materials.length > DELIVERY_LIMITS.products || job.materials.some((line2) => !withinQuantityLimit(job, line2)))) {
       res.status(400).json({ error: "invalid_request" });
       return;
     }
