@@ -21073,8 +21073,14 @@ var RETAIL_SOURCES = [
   { "id": "sewera-klingspor-pl28c-p150-sheet", "ean": "5907560023553", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-150", "name": "Papier \u015Bcierny gr.150 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-150-arkusz-230x280mm-p6900", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56973/papier-scierny-gr-150-arkusz-230x280mm.webp", "variant": ["150", "230x280mm"], "packageDescription": "PL 28 C" },
   // source: https://sklep.sewera.pl/papier-scierny-gr-180-arkusz-230x280mm-p6901
   { "id": "sewera-klingspor-pl28c-p180-sheet", "ean": "5907560023560", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-180", "name": "Papier \u015Bcierny gr.180 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-180-arkusz-230x280mm-p6901", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56975/papier-scierny-gr-180-arkusz-230x280mm.webp", "variant": ["180", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P180-50szt/25771
+  { "id": "matiw-klingspor-pl28c-p180-50", "ean": "5907560023560", "brand": "Klingspor", "packageSize": 50, "unit": "szt", "category": "hand-abrasive-180", "name": "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P180 50szt", "url": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P180-50szt/25771", "format": "shoper-api", "store": "Matiw", "productId": 25771, "apiProductCode": "000622", "apiPurchaseUnit": "szt.", "retailerSku": "000622", "packageDescription": "P180 50szt", "imageUrl": "https://matiw.pl/environment/cache/images/productGfx_63656_500_500/ARKUSZ-PAPIER-SCIERNY-KLINGSPOR-230x280mm-PL28C--P180-50szt.png", "variant": ["PL28C", "P180", "50szt"] },
   // source: https://sklep.sewera.pl/papier-scierny-gr-220-arkusz-230x280mm-p6902
   { "id": "sewera-klingspor-pl28c-p220-sheet", "ean": "5907560027483", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-220", "name": "Papier \u015Bcierny gr.220 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-220-arkusz-230x280mm-p6902", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56977/papier-scierny-gr-220-arkusz-230x280mm.webp", "variant": ["220", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P220-50szt/25772
+  // The retailer's own productGfx image is blank; use the exact P220 EAN image from Sewera.
+  // source: https://sklep.sewera.pl/papier-scierny-gr-220-arkusz-230x280mm-p6902
+  { "id": "matiw-klingspor-pl28c-p220-50", "ean": "5907560027483", "brand": "Klingspor", "packageSize": 50, "unit": "szt", "category": "hand-abrasive-220", "name": "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P220 50szt", "url": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P220-50szt/25772", "format": "shoper-api", "store": "Matiw", "productId": 25772, "apiProductCode": "000632", "apiPurchaseUnit": "szt.", "retailerSku": "000632", "packageDescription": "P220 50szt", "imageUrl": "https://sklep.sewera.pl/photo/56977/papier-scierny-gr-220-arkusz-230x280mm.webp", "variant": ["PL28C", "P220", "50szt"] },
   // source: https://sklep.sewera.pl/papier-scierny-gr-240-arkusz-230x280mm-p6903
   { "id": "sewera-klingspor-pl28c-p240-sheet", "ean": "5907560039820", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-240", "name": "Papier \u015Bcierny gr.240 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-240-arkusz-230x280mm-p6903", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56979/papier-scierny-gr-240-arkusz-230x280mm.webp", "variant": ["240", "230x280mm"], "packageDescription": "PL 28 C" },
   // source: https://sklep.sewera.pl/tasma-spoinowa-z-wlokna-szklanego-48mm-x-20m-blue-dolphin-p22044
@@ -24690,6 +24696,12 @@ function confirmShoperPurchaseUnit(item, source) {
   };
   const cabinet = cabinetPacks[source.id];
   if (cabinet && (source.ean !== cabinet[0] || source.packageSize !== cabinet[1] || source.unit !== "ml" || source.productId !== cabinet[2] || source.retailerSku !== cabinet[3] || source.apiPurchaseUnit !== "szt." || item.ean !== cabinet[0] || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
+  const paperPacks = {
+    "matiw-klingspor-pl28c-p180-50": ["5907560023560", 25771, "000622", "P180"],
+    "matiw-klingspor-pl28c-p220-50": ["5907560027483", 25772, "000632", "P220"]
+  };
+  const paper = paperPacks[source.id];
+  if (paper && (source.ean !== paper[0] || source.productId !== paper[1] || source.apiProductCode !== paper[2] || source.retailerSku !== paper[2] || source.packageSize !== 50 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt." || item.ean !== paper[0] || item.code !== paper[2] || item.producer?.name !== "Klingspor" || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name) || !normalizeProductName(text2(String(item.description ?? ""))).includes(normalizeProductName(`${paper[3]} 50szt`)))) throw Error("product_package_not_confirmed");
   const hydroPacks = {
     "winbud-mapegum-wps-5kg": ["8022452002113", 5, "kg", 131, "002113"],
     "winbud-mapegum-wps-10kg": ["8022452002120", 10, "kg", 419, "002120"],
@@ -25830,6 +25842,8 @@ var ORIGINS = {
   // source: https://swiatsieklei.pl/pl/p/METYLAN-Normal-125g-klej-do-tapet-24122/101
   "Plejada Tapet": "https://plejadatapet.pl",
   "\u015Awiat Si\u0119 Klei": "https://swiatsieklei.pl",
+  // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P180-50szt/25771
+  Matiw: "https://matiw.pl",
   // source: https://kim24.pl/Kolek-szybki-montaz-kolnierz-6x40-KOELNER
   KIM24: "https://kim24.pl",
   "Z pr\u0105dem": "https://zpradem.pl",
