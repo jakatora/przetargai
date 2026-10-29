@@ -19994,6 +19994,8 @@ var RETAIL_SOURCES = [
     // source: https://www.rabdom.pl/pl/p/Folia-ochronna-malarska-Blue-Dolphin-GRUBA-4m-x-5m/3751
     url: "https://www.rabdom.pl/pl/p/Folia-ochronna-malarska-Blue-Dolphin-GRUBA-4m-x-5m/3751"
   },
+  // source: https://lobo.pl/blue-dolphin-folia-malarska-gruba-4x5m
+  { id: "lobo-film-20m2", ean: "5907758504932", name: "BLUE DOLPHIN Folia malarska Gruba 4x5m", category: "protective-film", brand: "Blue Dolphin", packageSize: 20, unit: "m2", store: "Lobo", format: "shoper-api", productId: 11389, apiProductCode: "s3.566CF380", apiPurchaseUnit: "szt.", variant: ["gruba", "4x5m"], url: "https://lobo.pl/blue-dolphin-folia-malarska-gruba-4x5m", imageUrl: "https://lobo.pl/environment/cache/images/productGfx_50aa169afafd96c1425962f6307f1a0f_500_500.webp" },
   {
     id: "buduj24-tape-30mm",
     ean: "5907758515952",
