@@ -3758,5 +3758,31 @@
     "sourceUrl": "https://sklep.sewera.pl/tasma-spoinowa-papierowa-50mm-x-75m-rigips-p7448",
     "evidenceSha256": "54a8af3ca153fda951bdfc21819d75eea135ba89b57ddd1976a3befa2164f1cb",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-rigips-acoustic-50x30",
+    "ean": "5905637113503",
+    "name": "Taśma akustyczna do profili piankowa uszczelniająca 50mm x 30m Rigips",
+    "imageUrl": "https://sklep.sewera.pl/photo/191957/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-50mm-x-30m-rigips.webp",
+    "priceGrosze": 2925,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T21:53:45.734Z",
+    "sourceUrl": "https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-50mm-x-30m-rigips-p7445",
+    "evidenceSha256": "e6a1995b854ab484799a070cca683aa2ac07a6c4cb2a64d465d5023c40deb953",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-rigips-acoustic-30x30",
+    "ean": "5905637148819",
+    "name": "Taśma akustyczna do profili piankowa uszczelniająca 30mm x 30m Rigips",
+    "imageUrl": "https://sklep.sewera.pl/photo/191959/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-30mm-x-30m-rigips.webp",
+    "priceGrosze": 1834,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T21:53:47.012Z",
+    "sourceUrl": "https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-30mm-x-30m-rigips-p7444",
+    "evidenceSha256": "0d83c5fb66e7fb0ce68ae3e5e8650be9b891eec109b218b46f7838921985c2f3",
+    "validUntil": null
   }
 ]
