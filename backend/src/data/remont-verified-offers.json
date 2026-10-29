@@ -3351,5 +3351,19 @@
     "evidenceSha256": "22b0331e9df31ba26eb07c9ba87c7ef6fda42a05253c553055a5bbe291617fce",
     "validUntil": null,
     "stockPackages": 1
+  },
+  {
+    "sourceId": "budshop-atlas-woder-duo-16kg",
+    "ean": "5905400195088",
+    "name": "ATLAS WODER DUO 16kg - hydroizolacja dwuskładnikowa elastyczna",
+    "imageUrl": "https://budshop24.pl/wp-content/uploads/2025/08/2044418.jpg",
+    "priceGrosze": 24900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T13:43:32.036Z",
+    "sourceUrl": "https://budshop24.pl/produkt/atlas-woder-duo-16kg-hydroizolacja-dwuskladnikowa/",
+    "evidenceSha256": "1eb98687303545c3d85080b03f201315bfcccdc29a48d2a4c91189d63554d6d7",
+    "validUntil": null,
+    "stockPackages": 3
   }
 ]
