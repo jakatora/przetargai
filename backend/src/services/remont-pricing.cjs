@@ -21071,6 +21071,13 @@ var RETAIL_SOURCES = [
   { "id": "sewera-klingspor-pl28c-p40-sheet", "ean": "5907560018009", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-40", "name": "Papier \u015Bcierny gr.40 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-40-arkusz-230x280mm-p6904", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56983/papier-scierny-gr-40-arkusz-230x280mm.webp", "variant": ["40", "230x280mm"], "packageDescription": "PL 28 C" },
   // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P40-50szt/25766
   { "id": "matiw-klingspor-pl28c-p40-50", "ean": "5907560018009", "brand": "Klingspor", "packageSize": 50, "unit": "szt", "category": "hand-abrasive-40", "name": "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P40 50szt", "url": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P40-50szt/25766", "format": "shoper-api", "store": "Matiw", "productId": 25766, "apiProductCode": "000564", "apiPurchaseUnit": "szt.", "retailerSku": "000564", "packageDescription": "P40 50szt", "imageUrl": "https://sklep.sewera.pl/photo/56983/papier-scierny-gr-40-arkusz-230x280mm.webp", "variant": ["PL28C", "P40", "50szt"] },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-60-arkusz-230x280mm-p6905
+  // The single sheet and carton have different GTINs for article 269221.
+  // source: https://www.klingspor.pl/produkty/arkusze-scierne/pl-28-c/pdf
+  // source: https://mkplastimex.pl/arkusze-scierne-papierowe-/1971-papier-scierny-arkusz-230x280-mm-klingspor-pl-28-c-5907560027483.html
+  { "id": "sewera-klingspor-pl28c-p60-sheet", "ean": "4014855194896", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-60", "name": "Papier \u015Bcierny gr.60 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-60-arkusz-230x280mm-p6905", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56985/papier-scierny-gr-60-arkusz-230x280mm.webp", "variant": ["60", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P60-50szt/25777
+  { "id": "matiw-klingspor-pl28c-p60-50", "ean": "5907560018016", "brand": "Klingspor", "packageSize": 50, "unit": "szt", "category": "hand-abrasive-60", "name": "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P60 50szt", "url": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P60-50szt/25777", "format": "shoper-api", "store": "Matiw", "productId": 25777, "apiProductCode": "000611", "apiPurchaseUnit": "szt.", "retailerSku": "000611", "packageDescription": "P60 50szt", "imageUrl": "https://matiw.pl/environment/cache/images/productGfx_63665_500_500/ARKUSZ-PAPIER-SCIERNY-KLINGSPOR-230x280mm-PL28C--P60-50szt.png", "variant": ["PL28C", "P60", "50szt"] },
   // source: https://sklep.sewera.pl/papier-scierny-gr-80-arkusz-230x280mm-p6906
   { "id": "sewera-klingspor-pl28c-p80-sheet", "ean": "5907560017637", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-80", "name": "Papier \u015Bcierny gr.80 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-80-arkusz-230x280mm-p6906", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56987/papier-scierny-gr-80-arkusz-230x280mm.webp", "variant": ["80", "230x280mm"], "packageDescription": "PL 28 C" },
   // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P80-50szt/25767
@@ -21701,13 +21708,24 @@ function isReviewedIrbudSource(source) {
 function retailSkuCode(source) {
   return isReviewedIrbudSource(source) ? source.skuIdentity.merchantProductId : source.skuIdentity?.manufacturerSku;
 }
+function retailComparableEan(source) {
+  if (source.id === "sewera-klingspor-pl28c-p60-sheet") {
+    if (source.ean !== "4014855194896" || source.brand !== "Klingspor" || source.category !== "hand-abrasive-60" || source.packageSize !== 1 || source.unit !== "szt" || source.store !== "Sewera" || source.url !== "https://sklep.sewera.pl/papier-scierny-gr-60-arkusz-230x280mm-p6905") throw Error("product_equivalence_not_reviewed");
+  }
+  if (source.id === "matiw-klingspor-pl28c-p60-50") {
+    if (source.ean !== "5907560018016" || source.brand !== "Klingspor" || source.category !== "hand-abrasive-60" || source.packageSize !== 50 || source.unit !== "szt" || source.store !== "Matiw" || source.productId !== 25777 || source.apiProductCode !== "000611" || source.retailerSku !== "000611" || source.packageDescription !== "P60 50szt" || source.name !== "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P60 50szt" || source.url !== "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P60-50szt/25777") throw Error("product_equivalence_not_reviewed");
+    return "4014855194896";
+  }
+  return source.ean;
+}
 function retailProductId(source) {
   if (source.skuIdentity) {
     if (!isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
     return `remont-sku-${source.skuIdentity.catalogKey}`;
   }
-  if (!source.ean) throw Error("product_code_not_confirmed");
-  return `remont-${source.ean}`;
+  const comparableEan = retailComparableEan(source);
+  if (!comparableEan) throw Error("product_code_not_confirmed");
+  return `remont-${comparableEan}`;
 }
 function retailProductName(source) {
   if (!source.skuIdentity) return source.name;
@@ -24727,6 +24745,7 @@ function confirmShoperPurchaseUnit(item, source) {
   if (cabinet && (source.ean !== cabinet[0] || source.packageSize !== cabinet[1] || source.unit !== "ml" || source.productId !== cabinet[2] || source.retailerSku !== cabinet[3] || source.apiPurchaseUnit !== "szt." || item.ean !== cabinet[0] || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
   const paperPacks = {
     "matiw-klingspor-pl28c-p40-50": ["5907560018009", 25766, "000564", "P40"],
+    "matiw-klingspor-pl28c-p60-50": ["5907560018016", 25777, "000611", "P60"],
     "matiw-klingspor-pl28c-p80-50": ["5907560017637", 25767, "000615", "P80"],
     "matiw-klingspor-pl28c-p100-50": ["5907560023546", 25768, "000618", "P100"],
     "matiw-klingspor-pl28c-p120-50": ["5907560017644", 25769, "000620", "P120"],
@@ -24953,7 +24972,8 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
     if (configured.length === packs.length && order.lines.length === 2 && order.lines.every((line2) => line2.packages.length === 1)) return { reason: "requires_separate_dispatch" };
     throw Error("dispatch_department_not_confirmed");
   }
-  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const timeoutMs = Math.min(45e3, 2e4 + Math.max(0, packs.length - 8) * 1e4);
+  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(timeoutMs), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   if ((await client.text("/ajax/ax_execute.php?operation=setDepartment", { model: "department", department: department.id })).trim() !== department.id) throw Error("basket_not_confirmed");
   const expected = [];
   const prepared = [];
@@ -26224,7 +26244,7 @@ function createRemontService(options = {}) {
         id: productId,
         name: productName,
         normalizedName: normalizeProductName(productName),
-        ean: source.ean || null,
+        ean: retailComparableEan(source) || null,
         gtin: null,
         manufacturer: source.brand || null,
         brand: source.brand || null,
@@ -26261,7 +26281,11 @@ function createRemontService(options = {}) {
     }
     const aliases = Object.entries(RETAIL_NAME_ALIASES).map(([name, ean]) => [normalizeProductName(name), ean]);
     const deps = {
-      findProductByCode: async (_db, code) => products.find((product) => product.ean === (code.ean ?? code.gtin)) ?? null,
+      findProductByCode: async (_db, code) => {
+        const requested = code.ean ?? code.gtin;
+        const source = RETAIL_SOURCES.find((item) => item.ean === requested);
+        return products.find((product) => product.ean === requested || source && product.id === retailProductId(source)) ?? null;
+      },
       findProductByNameAndCategory: async (_db, query) => {
         const alias = aliases.find(([name]) => name === query.normalizedName)?.[1];
         return products.find((product) => product.category === query.category && (product.normalizedName === query.normalizedName || product.ean === alias)) ?? null;
@@ -26419,13 +26443,15 @@ function createRemontService(options = {}) {
       if (parsed.data.options?.refreshPrices) {
         const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material));
         const requestedEans = new Set(materials.map((material) => material.ean ?? RETAIL_NAME_ALIASES[material.name]).filter((ean) => Boolean(ean)));
-        const sources = RETAIL_SOURCES.filter((source) => requestedEans.has(source.ean) || materials.some((material) => !material.ean && !RETAIL_NAME_ALIASES[material.name] && source.skuIdentity && source.category === material.category && normalizeProductName(retailProductName(source)) === normalizeProductName(material.name)));
+        const requestedProductIds = new Set(RETAIL_SOURCES.filter((source) => requestedEans.has(source.ean)).map(retailProductId));
+        const sources = RETAIL_SOURCES.filter((source) => requestedProductIds.has(retailProductId(source)) || materials.some((material) => !material.ean && !RETAIL_NAME_ALIASES[material.name] && source.skuIdentity && source.category === material.category && normalizeProductName(retailProductName(source)) === normalizeProductName(material.name)));
         priceRefresh = await refreshProjectSources(sources);
       }
       const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog(parsed.data.options?.delivery?.mode === "pickup").deps);
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
-      const deadline = Date.now() + 2e4;
+      const itemCount = parsed.data.jobs.reduce((count, job) => count + job.materials.length, 0);
+      const deadline = Date.now() + (itemCount >= 9 && itemCount <= 20 ? 35e3 : 2e4);
       const deliveryComparison = stageOnly ? void 0 : await compareDeliveryWithAvailablePart(
         estimate.stages,
         parsed.data.options?.delivery ?? { mode: "shipping" },
