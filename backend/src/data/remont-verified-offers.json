@@ -3099,5 +3099,18 @@
     "sourceUrl": "https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-2L/7613",
     "evidenceSha256": "affb6e9bb743a97b2eccb0777dace1c84f0d5de32a088f41622c6f4324cca065",
     "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-chem-rozlew-extraction-solvent-500ml",
+    "ean": "5906681230253",
+    "name": "Chem-Rozlew Benzyna ekstrakcyjna rozcieńczalnik 0,5L",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_38785_500_500/Benzyna-Ekstrakcyjna-Niskoaromatyczna-0%2C5L-2.webp",
+    "priceGrosze": 890,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T04:26:30.203Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/Chem-Rozlew-Benzyna-ekstrakcyjna-rozcienczalnik-0%2C5L/316",
+    "evidenceSha256": "a0986d92db62e4816e0f83b864691074042d1f1c4a976b319152c93a7d1f5a6d",
+    "validUntil": null
   }
 ]
