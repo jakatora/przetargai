@@ -3602,5 +3602,44 @@
     "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P220-50szt/25772",
     "evidenceSha256": "deac8db450203ca978296359a2922f009dc8453f91206b1ca0472f459eaa7455",
     "validUntil": null
+  },
+  {
+    "sourceId": "matiw-klingspor-pl28c-p120-50",
+    "ean": "5907560017644",
+    "name": "Arkusz papier ścierny Klingspor 230x280mm PL28C  P120 50szt",
+    "imageUrl": "https://matiw.pl/environment/cache/images/productGfx_63654_500_500/ARKUSZ-PAPIER-SCIERNY-KLINGSPOR-230x280mm-PL28C--P120-50szt.png",
+    "priceGrosze": 3600,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T19:30:29.066Z",
+    "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P120-50szt/25769",
+    "evidenceSha256": "e47cb06c90388455745153061d5244ce6d55a5b764067753eaaa4d816055e6b8",
+    "validUntil": null
+  },
+  {
+    "sourceId": "matiw-klingspor-pl28c-p150-50",
+    "ean": "5907560023553",
+    "name": "Arkusz papier ścierny Klingspor 230x280mm PL28C  P150 50szt",
+    "imageUrl": "https://matiw.pl/environment/cache/images/productGfx_63655_500_500/ARKUSZ-PAPIER-SCIERNY-KLINGSPOR-230x280mm-PL28C--P150-50szt.png",
+    "priceGrosze": 3600,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T19:30:29.505Z",
+    "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P150-50szt/25770",
+    "evidenceSha256": "4485265a2d5c87b49ae95f8181aae96eefd195e73aa5ee33935495704a5b5700",
+    "validUntil": null
+  },
+  {
+    "sourceId": "matiw-klingspor-pl28c-p240-50",
+    "ean": "5907560039820",
+    "name": "Arkusz papier ścierny Klingspor 230x280mm PL28C  P240 50szt",
+    "imageUrl": "https://matiw.pl/environment/cache/images/productGfx_63658_500_500/ARKUSZ-PAPIER-SCIERNY-KLINGSPOR-230x280mm-PL28C--P240-50szt.png",
+    "priceGrosze": 3824,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T19:30:29.914Z",
+    "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P240-50szt/25773",
+    "evidenceSha256": "e1ed10136ee17583ca8dc4da2dca99dde7eb32ca2232dd769da255ef0363afed",
+    "validUntil": null
   }
 ]
