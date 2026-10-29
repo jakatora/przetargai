@@ -3073,5 +3073,31 @@
     "sourceUrl": "https://zpradem.pl/bateryjny-czujnik-tlenku-wegla-czadu-2xaa-zywotnosc-sensora-10-latdc-11/1089222",
     "evidenceSha256": "fe5ddc7bfdf50ffd72ee4f19405dc5d0b42c9f7006ac64c4922c328ac60c3e42",
     "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-v33-easy-kitchen-white-750ml",
+    "ean": "3153895149044",
+    "name": "V33 Easy Renowacja Kuchnia Farba do mebli kuchennych i płytek ściennych biały satyna 0,75L",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_56652_500_500/Opakowanie-farby-do-renowacji-mebli-kuchennych%2C-blatow-i-plytek-marki-V33-Renowacja-Kuchnia..webp",
+    "priceGrosze": 8541,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T03:22:38.094Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-0%2C75L/7607",
+    "evidenceSha256": "434a5bfdc8fe437070cba0b4c4a35c47ecedf6f5f93f6c52eb92f310cba58fd3",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-v33-easy-kitchen-white-2000ml",
+    "ean": "3153895149228",
+    "name": "V33 Easy Renowacja Kuchnia Farba do mebli kuchennych i płytek ściennych biały satyna 2L",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_13354_500_500/Opakowanie-farby-do-renowacji-mebli-kuchennych%2C-blatow-i-plytek-marki-V33-Renowacja-Kuchnia..webp",
+    "priceGrosze": 17528,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T03:22:38.925Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-2L/7613",
+    "evidenceSha256": "affb6e9bb743a97b2eccb0777dace1c84f0d5de32a088f41622c6f4324cca065",
+    "validUntil": null
   }
 ]

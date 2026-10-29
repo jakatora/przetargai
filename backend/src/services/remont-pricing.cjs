@@ -21128,9 +21128,15 @@ var RETAIL_SOURCES = [
   // source: https://www.prescot.com.pl/pl/p/BATERYJNY-CZUJNIK-TLENKU-WEGLA-CZADU-10-LAT-3V-ORNO/18444
   { "id": "prescot-virone-dc11", "ean": "5908254851223", "name": "BATERYJNY CZUJNIK TLENKU W\u0118GLA ( CZADU    ) 10 LAT 3V ORNO", "brand": "ORNO", "category": "co-detector", "packageSize": 1, "unit": "szt", "store": "Prescot", "format": "shoper-api", "productId": 18444, "retailerSku": "OSP001720", "apiPurchaseUnit": "szt.", "variant": ["10 LAT", "3V"], "pickupRequiresConfirmation": true, "url": "https://www.prescot.com.pl/pl/p/BATERYJNY-CZUJNIK-TLENKU-WEGLA-CZADU-10-LAT-3V-ORNO/18444", "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_62267_500_500/1.jpg" },
   // source: https://zpradem.pl/bateryjny-czujnik-tlenku-wegla-czadu-2xaa-zywotnosc-sensora-10-latdc-11/1089222
-  { "id": "zpradem-virone-dc11", "ean": "5908254851223", "name": "Bateryjny czujnik tlenku w\u0119gla (czadu), 2xAA, \u017Cywotno\u015B\u0107 sensora 10 lat,DC-11", "brand": "ORNO", "category": "co-detector", "packageSize": 1, "unit": "szt", "store": "Z pr\u0105dem", "format": "shoper-api", "productId": 1089222, "retailerSku": "0001-00021-04285", "apiPurchaseUnit": "szt.", "variant": ["DC-11"], "pickupRequiresConfirmation": true, "url": "https://zpradem.pl/bateryjny-czujnik-tlenku-wegla-czadu-2xaa-zywotnosc-sensora-10-latdc-11/1089222", "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_62267_500_500/1.jpg" }
+  { "id": "zpradem-virone-dc11", "ean": "5908254851223", "name": "Bateryjny czujnik tlenku w\u0119gla (czadu), 2xAA, \u017Cywotno\u015B\u0107 sensora 10 lat,DC-11", "brand": "ORNO", "category": "co-detector", "packageSize": 1, "unit": "szt", "store": "Z pr\u0105dem", "format": "shoper-api", "productId": 1089222, "retailerSku": "0001-00021-04285", "apiPurchaseUnit": "szt.", "variant": ["DC-11"], "pickupRequiresConfirmation": true, "url": "https://zpradem.pl/bateryjny-czujnik-tlenku-wegla-czadu-2xaa-zywotnosc-sensora-10-latdc-11/1089222", "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_62267_500_500/1.jpg" },
+  // source: https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-0%2C75L/7607
+  { "id": "rabdom-v33-easy-kitchen-white-750ml", "ean": "3153895149044", "name": "V33 Easy Renowacja Kuchnia Farba do mebli kuchennych i p\u0142ytek \u015Bciennych bia\u0142y satyna 0,75L", "brand": "V33", "category": "cabinet-paint", "packageSize": 750, "unit": "ml", "store": "Rab-Dom", "format": "shoper-api", "productId": 7607, "retailerSku": "30668", "apiPurchaseUnit": "szt.", "variant": ["bia\u0142y", "satyna", "0,75L"], "pickupRequiresConfirmation": true, "url": "https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-0%2C75L/7607", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_56652_500_500/Opakowanie-farby-do-renowacji-mebli-kuchennych%2C-blatow-i-plytek-marki-V33-Renowacja-Kuchnia..webp" },
+  // source: https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-2L/7613
+  { "id": "rabdom-v33-easy-kitchen-white-2000ml", "ean": "3153895149228", "name": "V33 Easy Renowacja Kuchnia Farba do mebli kuchennych i p\u0142ytek \u015Bciennych bia\u0142y satyna 2L", "brand": "V33", "category": "cabinet-paint", "packageSize": 2e3, "unit": "ml", "store": "Rab-Dom", "format": "shoper-api", "productId": 7613, "retailerSku": "23708", "apiPurchaseUnit": "szt.", "variant": ["bia\u0142y", "satyna", "2L"], "pickupRequiresConfirmation": true, "url": "https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-2L/7613", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_13354_500_500/Opakowanie-farby-do-renowacji-mebli-kuchennych%2C-blatow-i-plytek-marki-V33-Renowacja-Kuchnia..webp" }
 ];
 var RETAIL_NAME_ALIASES = {
+  "V33 Easy Renowacja Kuchnia \u2014 bia\u0142y satyna 0,75 l": "3153895149044",
+  "V33 Easy Renowacja Kuchnia \u2014 bia\u0142y satyna 2 l": "3153895149228",
   "Czujnik tlenku w\u0119gla Virone DC-11, wy\u015Bwietlacz LCD, 2 \xD7 AA": "5908254851223",
   "ATLAS PLUS Podw\xF3jna Moc \u2014 klej do p\u0142ytek 25 kg (opakowanie standardowe)": "5905400488579",
   "Gres rektyfikowany Parady\u017C U117 Light Grey mat 59,8\xD759,8 cm, gatunek 1": "5904584158285",
@@ -23926,6 +23932,12 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  const cabinetPacks = {
+    "rabdom-v33-easy-kitchen-white-750ml": ["3153895149044", 750, 7607, "30668"],
+    "rabdom-v33-easy-kitchen-white-2000ml": ["3153895149228", 2e3, 7613, "23708"]
+  };
+  const cabinet = cabinetPacks[source.id];
+  if (cabinet && (source.ean !== cabinet[0] || source.packageSize !== cabinet[1] || source.unit !== "ml" || source.productId !== cabinet[2] || source.retailerSku !== cabinet[3] || source.apiPurchaseUnit !== "szt." || item.ean !== cabinet[0] || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
   const hydroPacks = {
     "winbud-mapegum-wps-5kg": ["8022452002113", 5, "kg", 131, "002113"],
     "winbud-mapegum-wps-10kg": ["8022452002120", 10, "kg", 419, "002120"],
