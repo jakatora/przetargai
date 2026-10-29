@@ -3420,5 +3420,18 @@
     "sourceUrl": "https://lobo.pl/dulux-rapidry-farba-do-drewna-metalu-pcv-mat-bialy-1l",
     "evidenceSha256": "6ab671d42451cc9d45a2e7225fe7c2040290d9b1ff653102a6008ec9ea3edd36",
     "validUntil": null
+  },
+  {
+    "sourceId": "lobo-tape-30mm",
+    "ean": "5907758515952",
+    "name": "BLUE DOLPHIN taśma papierowa niebieska 30mm x 50m",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_68169_500_500/BLUE-DOLPHIN-tasma-papierowa-niebieska-30mm-x-50m.webp",
+    "priceGrosze": 1599,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T15:53:44.842Z",
+    "sourceUrl": "https://lobo.pl/blue-dolphin-tasma-papierowa-niebieska-30mm-x-50m",
+    "evidenceSha256": "fc574b02aa1e0ac6e866034e809c7352275b538c2a7962953cec0b1c2f87c62c",
+    "validUntil": null
   }
 ]
