@@ -3459,5 +3459,18 @@
     "sourceUrl": "https://lobo.pl/blue-dolphin-folia-malarska-gruba-4x5m",
     "evidenceSha256": "c0db197e84715b7413c4302909a7f22003975500bdd0555729ba1b3c0bb7011c",
     "validUntil": null
+  },
+  {
+    "sourceId": "lobo-acrylputz-st10-20kg",
+    "ean": "5903973104421",
+    "name": "ŚNIEŻKA Acryl-Putz ST10 Start Gipsowa gładź szpachlowa 20 kg",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_134935_500_500/SNIEZKA-Acryl-Putz-ST10-Start-Gipsowa-gladz-szpachlowa-20-kg.webp",
+    "priceGrosze": 3699,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T16:26:25.190Z",
+    "sourceUrl": "https://lobo.pl/sniezka-acryl-putz-st10-start-gipsowa-gladz-szpachlowa-20-kg",
+    "evidenceSha256": "935230cc9d6872adb7110f14ab9ee837666153bb029f9229fd7824f49e5e6013",
+    "validUntil": null
   }
 ]
