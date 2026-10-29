@@ -3745,5 +3745,18 @@
     "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P60-50szt/25777",
     "evidenceSha256": "58ee013a0e70244bd8b8041e6ec79afa7210967b4594da012a80f85ae3c561f0",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-rigips-paper-50x75",
+    "ean": "5905637118010",
+    "name": "Taśma spoinowa papierowa 50mm x 75m Rigips",
+    "imageUrl": "https://sklep.sewera.pl/photo/25025/tasma-spoinowa-papierowa-50mm-x-75m-rigips.webp",
+    "priceGrosze": 2194,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T21:37:27.709Z",
+    "sourceUrl": "https://sklep.sewera.pl/tasma-spoinowa-papierowa-50mm-x-75m-rigips-p7448",
+    "evidenceSha256": "54a8af3ca153fda951bdfc21819d75eea135ba89b57ddd1976a3befa2164f1cb",
+    "validUntil": null
   }
 ]
