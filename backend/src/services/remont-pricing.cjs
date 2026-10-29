@@ -21071,6 +21071,10 @@ var RETAIL_SOURCES = [
   { "id": "sewera-klingspor-pl28c-p120-sheet", "ean": "5907560017644", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-120", "name": "Papier \u015Bcierny gr.120 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-120-arkusz-230x280mm-p6899", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56971/papier-scierny-gr-120-arkusz-230x280mm.webp", "variant": ["120", "230x280mm"], "packageDescription": "PL 28 C" },
   // source: https://sklep.sewera.pl/papier-scierny-gr-150-arkusz-230x280mm-p6900
   { "id": "sewera-klingspor-pl28c-p150-sheet", "ean": "5907560023553", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-150", "name": "Papier \u015Bcierny gr.150 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-150-arkusz-230x280mm-p6900", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56973/papier-scierny-gr-150-arkusz-230x280mm.webp", "variant": ["150", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-180-arkusz-230x280mm-p6901
+  { "id": "sewera-klingspor-pl28c-p180-sheet", "ean": "5907560023560", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-180", "name": "Papier \u015Bcierny gr.180 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-180-arkusz-230x280mm-p6901", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56975/papier-scierny-gr-180-arkusz-230x280mm.webp", "variant": ["180", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-220-arkusz-230x280mm-p6902
+  { "id": "sewera-klingspor-pl28c-p220-sheet", "ean": "5907560027483", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-220", "name": "Papier \u015Bcierny gr.220 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-220-arkusz-230x280mm-p6902", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56977/papier-scierny-gr-220-arkusz-230x280mm.webp", "variant": ["220", "230x280mm"], "packageDescription": "PL 28 C" },
   // source: https://sklep.sewera.pl/papier-scierny-gr-240-arkusz-230x280mm-p6903
   { "id": "sewera-klingspor-pl28c-p240-sheet", "ean": "5907560039820", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-240", "name": "Papier \u015Bcierny gr.240 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-240-arkusz-230x280mm-p6903", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56979/papier-scierny-gr-240-arkusz-230x280mm.webp", "variant": ["240", "230x280mm"], "packageDescription": "PL 28 C" },
   // source: https://sklep.sewera.pl/tasma-spoinowa-z-wlokna-szklanego-48mm-x-20m-blue-dolphin-p22044
@@ -21376,6 +21380,10 @@ var RETAIL_NAME_ALIASES = {
   "Klingspor PL 28 C P120, arkusz 230 \xD7 280 mm": "5907560017644",
   // source: https://sklep.sewera.pl/papier-scierny-gr-150-arkusz-230x280mm-p6900
   "Klingspor PL 28 C P150, arkusz 230 \xD7 280 mm": "5907560023553",
+  // source: https://sklep.sewera.pl/papier-scierny-gr-180-arkusz-230x280mm-p6901
+  "Klingspor PL 28 C P180, arkusz 230 \xD7 280 mm": "5907560023560",
+  // source: https://sklep.sewera.pl/papier-scierny-gr-220-arkusz-230x280mm-p6902
+  "Klingspor PL 28 C P220, arkusz 230 \xD7 280 mm": "5907560027483",
   // source: https://sklep.sewera.pl/papier-scierny-gr-240-arkusz-230x280mm-p6903
   "Klingspor PL 28 C P240, arkusz 230 \xD7 280 mm": "5907560039820",
   // source: https://sklep.sewera.pl/tasma-spoinowa-z-wlokna-szklanego-48mm-x-20m-blue-dolphin-p22044
