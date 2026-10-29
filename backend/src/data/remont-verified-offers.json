@@ -3179,5 +3179,31 @@
     "sourceUrl": "https://zpradem.pl/asfora-ramka-potrojna-pozioma-biala-eph5800321/815336",
     "evidenceSha256": "2ef9405e23f151ae1222675eb25c4214864ef1009bb41991d280c48abfe34618",
     "validUntil": null
+  },
+  {
+    "sourceId": "instato-mcalpine-whb132",
+    "ean": "5036484088390",
+    "name": "SYFON UMYWALKOWY  BARDZO NISKI MAŁY MEMBRANOWY oszczędzający miejsce WHB1-32",
+    "imageUrl": "https://sklep.instato.pl/environment/cache/images/productGfx_5082_50_50/5036484088390_syfon_umywalkowy_niski_bialy_WHB1-322.jpg",
+    "priceGrosze": 8790,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T06:25:23.570Z",
+    "sourceUrl": "https://sklep.instato.pl/pl/p/SYFON-UMYWALKOWY-BARDZO-NISKI-MALY-MEMBRANOWY-oszczedzajacy-miejsce-WHB1-32/23062689",
+    "evidenceSha256": "89b84201c36f859e843b747f7ad8084a4235de19ceae5c7e02d33c8ad99aff30",
+    "validUntil": null
+  },
+  {
+    "sourceId": "arena-mcalpine-whb132",
+    "ean": "5036484088390",
+    "name": "Półsyfon umywalkowy MCALPINE niski, biały WHB1-32",
+    "imageUrl": "https://sklep.instato.pl/environment/cache/images/productGfx_5082_50_50/5036484088390_syfon_umywalkowy_niski_bialy_WHB1-322.jpg",
+    "priceGrosze": 10619,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T06:25:23.744Z",
+    "sourceUrl": "https://arenalazienek.pl/pl/p/Polsyfon-umywalkowy-MCALPINE-niski%2C-bialy-WHB1-32/57988",
+    "evidenceSha256": "ac40e39e7a0cd4b65d6a5498604f19a25352f49eba5c45a961b194b2a2e109b4",
+    "validUntil": null
   }
 ]
