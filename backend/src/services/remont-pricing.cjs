@@ -20075,6 +20075,8 @@ var RETAIL_SOURCES = [
     // source: https://www.abud.pl/product-pol-1121-Preparat-gruntujacy-Atlas-Uni-Grunt-5kg.html
     url: "https://sklep.sewera.pl/atlas-uni-grunt-5kg-emulsja-gruntujaca-p9772"
   },
+  // source: https://lobo.pl/atlas-emulsja-gruntujaca-uni-grunt-5kg
+  { id: "lobo-atlas-unigrunt-5kg", ean: "5905400520026", name: "ATLAS Emulsja gruntuj\u0105ca UNI-GRUNT 5KG", category: "primer", brand: "Atlas", packageSize: 5, unit: "kg", store: "Lobo", format: "shoper-api", productId: 20533, apiProductCode: "CHEMIK-GRU-02", apiPurchaseUnit: "szt.", variant: ["uni-grunt", "5kg"], url: "https://lobo.pl/atlas-emulsja-gruntujaca-uni-grunt-5kg", imageUrl: "https://lobo.pl/environment/cache/images/productGfx_139397_500_500/ATLAS-Emulsja-gruntujaca-UNI-GRUNT-5KG.webp" },
   {
     id: "sewera-acrylputz-fs20-27kg",
     ean: "5903973104544",
