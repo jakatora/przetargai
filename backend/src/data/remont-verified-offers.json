@@ -3524,5 +3524,31 @@
     "sourceUrl": "https://realbud.com/pl/p/Akryl-SOUDAL-bialy-280-ml-do-plyt-GK/419576",
     "evidenceSha256": "945a535446dc114a1a5b4cd9d1544ed6762f98b796ead6f56db73f34e01728a8",
     "validUntil": null
+  },
+  {
+    "sourceId": "lobo-acrylic-soudal-gk-white-280ml",
+    "ean": "5411183157248",
+    "name": "SOUDAL Akryl do płyt G-K 280ml biały",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_71158_500_500/SOUDAL-Akryl-do-plyt-G-K-280ml-bialy.webp",
+    "priceGrosze": 1199,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T18:33:02.600Z",
+    "sourceUrl": "https://lobo.pl/soudal-akryl-do-plyt-g-k-280ml-bialy",
+    "evidenceSha256": "ca9afb206fec3874fb9dc4eb5d7ed6b4f3b95380a175fd9e25f8ec1e84b05eee",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-acrylic-soudal-gk-white-280ml",
+    "ean": "5411183157248",
+    "name": "Soudal akryl do płyt GK biały 280ml",
+    "imageUrl": "https://sklep.sewera.pl/photo/65122/soudal-akryl-do-plyt-gk-bialy-280ml.webp",
+    "priceGrosze": 1294,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T18:33:03.935Z",
+    "sourceUrl": "https://sklep.sewera.pl/soudal-akryl-do-plyt-gk-bialy-280ml-p13819",
+    "evidenceSha256": "51967a120a559e3a3941477b7866285f118bd613e3760d1a2cecc812f9598205",
+    "validUntil": null
   }
 ]
