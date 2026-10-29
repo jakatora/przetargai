@@ -3,7 +3,7 @@
     "name": "PrzetargAI",
     "slug": "przetargai",
     "scheme": "przetargai",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -29,7 +29,7 @@
       "edgeToEdgeEnabled": true,
       "package": "pl.przetargai.app",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 22,
+      "versionCode": 23,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",

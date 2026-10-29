@@ -206,12 +206,12 @@ test('strona pobierania: wersja APK = wersja aplikacji, a suma SHA-256 to suma w
   assert.ok(link, 'link do APK z wersją i rozmiarem');
   assert.equal(link[1], wersjaAplikacji, 'wersja APK na stronie = expo.version z mobile/app.json');
 
-  // Dokładnie jedna suma kontrolna i jest to suma APK 1.2.0 podpisanego kluczem przesyłania
-  // (CN=PrzetargAI, O=Jakatora; build lokalny 2026-10-29, 67 945 963 B).
+  // Dokładnie jedna suma kontrolna i jest to suma APK 1.2.1 podpisanego kluczem przesyłania
+  // (CN=PrzetargAI, O=Jakatora; build lokalny 2026-10-29, 67 946 019 B).
   const sumy = [...pobierz.matchAll(/<code>([0-9a-f]{64})<\/code>/g)].map((m) => m[1]);
-  assert.deepEqual(sumy, ['32ccc2ff3dc00a6e1efa2163430629395d208f06629885c64bd544340da04a73']);
-  assert.equal(Number(link[2]), Math.round(67_945_963 / 1024 / 1024), 'rozmiar w MB zgodny z plikiem');
-  assert.doesNotMatch(pobierz, /cd637872595e9f2dc0c4f62995c85b01e4cb8fb84bcd177a59f78621a5092e00/, 'suma poprzedniego APK (1.1.9) usunięta');
+  assert.deepEqual(sumy, ['8f9c92799fd27919df294ea7e567e7833cd100c00976cec9ff95a9a9de0e26b9']);
+  assert.equal(Number(link[2]), Math.round(67_946_019 / 1024 / 1024), 'rozmiar w MB zgodny z plikiem');
+  assert.doesNotMatch(pobierz, /32ccc2ff3dc00a6e1efa2163430629395d208f06629885c64bd544340da04a73/, 'suma poprzedniego APK (1.2.0) usunięta');
 
   // Jeśli plik leży obok strony (katalog hostingu / lokalna kopia; w repo go nie ma),
   // jego rzeczywista suma i rozmiar MUSZĄ zgadzać się z tym, co strona obiecuje.
