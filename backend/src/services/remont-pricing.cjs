@@ -14288,7 +14288,7 @@ function mergePackageFamilyGroups(groups) {
   if (!locked.length) return groups;
   const requiredBySize = {};
   for (const g of locked) {
-    const size = String(g.product.packageSize);
+    const size = String(Number(g.product.packageSize));
     requiredBySize[size] = (requiredBySize[size] ?? 0) + g.totalQuantity;
   }
   const offers = new Map(automatic.offers.map((o) => [o.id, o]));
@@ -21219,7 +21219,9 @@ var RETAIL_SOURCES = [
   // source: https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-0%2C75L/7607
   { "id": "rabdom-v33-easy-kitchen-white-750ml", "ean": "3153895149044", "name": "V33 Easy Renowacja Kuchnia Farba do mebli kuchennych i p\u0142ytek \u015Bciennych bia\u0142y satyna 0,75L", "brand": "V33", "category": "cabinet-paint", "packageSize": 750, "unit": "ml", "store": "Rab-Dom", "format": "shoper-api", "productId": 7607, "retailerSku": "30668", "apiPurchaseUnit": "szt.", "variant": ["bia\u0142y", "satyna", "0,75L"], "pickupRequiresConfirmation": true, "url": "https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-0%2C75L/7607", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_56652_500_500/Opakowanie-farby-do-renowacji-mebli-kuchennych%2C-blatow-i-plytek-marki-V33-Renowacja-Kuchnia..webp" },
   // source: https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-2L/7613
-  { "id": "rabdom-v33-easy-kitchen-white-2000ml", "ean": "3153895149228", "name": "V33 Easy Renowacja Kuchnia Farba do mebli kuchennych i p\u0142ytek \u015Bciennych bia\u0142y satyna 2L", "brand": "V33", "category": "cabinet-paint", "packageSize": 2e3, "unit": "ml", "store": "Rab-Dom", "format": "shoper-api", "productId": 7613, "retailerSku": "23708", "apiPurchaseUnit": "szt.", "variant": ["bia\u0142y", "satyna", "2L"], "pickupRequiresConfirmation": true, "url": "https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-2L/7613", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_13354_500_500/Opakowanie-farby-do-renowacji-mebli-kuchennych%2C-blatow-i-plytek-marki-V33-Renowacja-Kuchnia..webp" }
+  { "id": "rabdom-v33-easy-kitchen-white-2000ml", "ean": "3153895149228", "name": "V33 Easy Renowacja Kuchnia Farba do mebli kuchennych i p\u0142ytek \u015Bciennych bia\u0142y satyna 2L", "brand": "V33", "category": "cabinet-paint", "packageSize": 2e3, "unit": "ml", "store": "Rab-Dom", "format": "shoper-api", "productId": 7613, "retailerSku": "23708", "apiPurchaseUnit": "szt.", "variant": ["bia\u0142y", "satyna", "2L"], "pickupRequiresConfirmation": true, "url": "https://www.rabdom.pl/pl/p/V33-Easy-Renowacja-Kuchnia-Farba-do-mebli-kuchennych-i-plytek-sciennych-bialy-satyna-2L/7613", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_13354_500_500/Opakowanie-farby-do-renowacji-mebli-kuchennych%2C-blatow-i-plytek-marki-V33-Renowacja-Kuchnia..webp" },
+  // source: https://www.rabdom.pl/pl/p/Chem-Rozlew-Benzyna-ekstrakcyjna-rozcienczalnik-0%2C5L/316
+  { "id": "rabdom-chem-rozlew-extraction-solvent-500ml", "ean": "5906681230253", "name": "Chem-Rozlew Benzyna ekstrakcyjna rozcie\u0144czalnik 0,5L", "brand": "Chem-Rozlew", "category": "extraction-solvent", "packageSize": 500, "unit": "ml", "store": "Rab-Dom", "format": "shoper-api", "productId": 316, "retailerSku": "0175", "apiPurchaseUnit": "szt.", "variant": ["ekstrakcyjna", "0,5L"], "pickupRequiresConfirmation": true, "url": "https://www.rabdom.pl/pl/p/Chem-Rozlew-Benzyna-ekstrakcyjna-rozcienczalnik-0%2C5L/316", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_38785_500_500/Benzyna-Ekstrakcyjna-Niskoaromatyczna-0%2C5L-2.webp" }
 ];
 var RETAIL_NAME_ALIASES = {
   "V33 Easy Renowacja Kuchnia \u2014 bia\u0142y satyna 0,75 l": "3153895149044",
@@ -21425,7 +21427,8 @@ var RETAIL_NAME_ALIASES = {
   "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 naro\u017Cniki zewn\u0119trzne (2 szt.)": "5905167726198",
   "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 \u0142\u0105czniki (2 szt.)": "5905167725870",
   "Arbiton INDO bia\u0142y po\u0142ysk 01 \u2014 zako\u0144czenia lewe + prawe (1 para)": "5905167726358",
-  "Arbiton Strongman \u2014 klej monta\u017Cowy 300 ml": "5905167788264"
+  "Arbiton Strongman \u2014 klej monta\u017Cowy 300 ml": "5905167788264",
+  "Chem-Rozlew benzyna ekstrakcyjna 0,5 l": "5906681230253"
 };
 
 // artifacts/api-server/src/lib/retail-microdata.ts
@@ -24033,6 +24036,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  if (source.id === "rabdom-chem-rozlew-extraction-solvent-500ml" && (source.ean !== "5906681230253" || source.packageSize !== 500 || source.unit !== "ml" || source.productId !== 316 || source.retailerSku !== "0175" || source.apiPurchaseUnit !== "szt." || item.ean !== "5906681230253" || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
   const cabinetPacks = {
     "rabdom-v33-easy-kitchen-white-750ml": ["3153895149044", 750, 7607, "30668"],
     "rabdom-v33-easy-kitchen-white-2000ml": ["3153895149228", 2e3, 7613, "23708"]
