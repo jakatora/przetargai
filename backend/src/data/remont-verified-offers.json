@@ -3283,5 +3283,46 @@
     "sourceUrl": "https://arenalazienek.pl/pl/p/Deska-WC-CERSANIT-CARINA-SLIM-wolnoopadajaca%2C-biala-K98-0135/26758",
     "evidenceSha256": "1b45d13659a53a43efbece75f8007ccbee5db7806344ae3097d547954572cd22",
     "validUntil": null
+  },
+  {
+    "sourceId": "pati-cersanit-carina-k98-0068",
+    "ean": "5907720651077",
+    "name": "CERSANIT CARINA DESKA DUROPLASTOWA BIAŁA K98-0068",
+    "imageUrl": "https://patiartstudio.pl/wp-content/uploads/2021/06/132.jpg",
+    "priceGrosze": 17920,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T11:47:34.073Z",
+    "sourceUrl": "https://patiartstudio.pl/produkt/cersanit-deska-carina-zwykla-k98-0068/",
+    "evidenceSha256": "179ff890b1e417a2f9b74d98eeffc76a55fe7dd8eeaff1b9b5c5f1559e73dc9f",
+    "validUntil": null,
+    "stockPackages": 2
+  },
+  {
+    "sourceId": "pati-cersanit-carina-k98-0069",
+    "ean": "5907720651084",
+    "name": "CERSANIT CARINA DESKA WOLNOOPADAJĄCA BIAŁA K98-0069",
+    "imageUrl": "https://patiartstudio.pl/wp-content/uploads/2021/06/130.jpg",
+    "priceGrosze": 26597,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T11:47:35.739Z",
+    "sourceUrl": "https://patiartstudio.pl/produkt/cersanit-deska-carina-wolnoopadajaca-k98-0069/",
+    "evidenceSha256": "75f672a22ad0a4f7cfdad0c29ec8acd7311312f72f873c3b86c0930877cb4312",
+    "validUntil": null
+  },
+  {
+    "sourceId": "pati-cersanit-carina-k98-0135",
+    "ean": "5902115712524",
+    "name": "CERSANIT CARINA DESKA SLIM WOLNOOPADAJĄCA BIAŁA K98-0135",
+    "imageUrl": "https://patiartstudio.pl/wp-content/uploads/2021/06/1596.jpg",
+    "priceGrosze": 27093,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T11:47:37.325Z",
+    "sourceUrl": "https://patiartstudio.pl/produkt/cersanit-deska-carina-slim-wolnoopadajaca-k98-0135/",
+    "evidenceSha256": "536a2c61cf775e443d80cfcf54b8832c7edb78cdb6c10911290223bee21c3bdf",
+    "validUntil": null,
+    "stockPackages": 1
   }
 ]
