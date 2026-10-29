@@ -24557,8 +24557,10 @@ function confirmModnaCart(html, orderHtml, expected, materials) {
     if (Number(packs.value) !== wanted.count || packs.step !== "1" || Number(packs.minimum) !== 1 || Math.round(Number(meters.value) * 100) !== quantity || Number(meters.unit) !== wanted.size || Number(meters.step) !== wanted.size || Math.round(Number(input2(id + "_quantity").value) * 100) !== quantity || Number(input2(id + "_unit").value) !== wanted.size || Number(input2(id + "_minimum").value) !== 1) throw Error("basket_not_confirmed");
     if (modnaMoney(text2(modnaById(row, "product_price_" + id, "span"))) !== wanted.price) throw Error("price_changed");
     const lineTotal = modnaMoney(text2(modnaOne(elements(row, (_a, t) => t === "h5"), "basket_not_confirmed")));
-    const expectedTotal = wanted.squareMeterPriceGrosze === void 0 ? wanted.price * wanted.count : Math.floor(wanted.squareMeterPriceGrosze * Math.round(wanted.size * 100) * wanted.count / 100);
-    if (!Number.isSafeInteger(expectedTotal) || lineTotal !== expectedTotal) throw Error("basket_not_confirmed");
+    const packTotal = wanted.price * wanted.count;
+    if (wanted.squareMeterPriceGrosze === void 0 || wanted.count === 1) {
+      if (lineTotal !== packTotal) throw Error("basket_not_confirmed");
+    } else if (!Number.isSafeInteger(wanted.squareMeterPriceGrosze) || wanted.squareMeterPriceGrosze <= 0 || Math.abs(lineTotal - packTotal) * 2 > wanted.count + 1 || Math.abs(lineTotal * 100 - wanted.squareMeterPriceGrosze * quantity) * 2 > quantity + 100) throw Error("basket_not_confirmed");
     const stocks = [...text2(row).matchAll(/Stan magazynowy: (\d+) paczek/g)];
     if (!stocks.length || stocks.some((match2) => Number(match2[1]) < wanted.count)) throw Error("insufficient_stock");
     if (wanted.count > 1) {
