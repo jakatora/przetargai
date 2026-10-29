@@ -20021,7 +20021,9 @@ var RETAIL_SOURCES = [
     store: "Sewera",
     format: "sewera",
     // source: https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385
-    url: "https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385"
+    url: "https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385",
+    imageUrl: "https://sklep.sewera.pl/photo/346399/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux.webp",
+    dispatchDepartment: { id: "4", name: "Tarnowskie G\xF3ry" }
   },
   // source: https://lobo.pl/dulux-easycare-nieskazitelna-biel-9l
   { id: "lobo-dulux-easycare-white-9l", ean: "5904078198759", name: "DULUX EasyCare Nieskazitelna Biel 9L", category: "paint", brand: "Dulux", packageSize: 9, unit: "l", store: "Lobo", format: "shoper-api", productId: 6379, apiProductCode: "S7.0065237346", apiPurchaseUnit: "szt.", variant: ["easycare", "nieskazitelna biel", "9l"], url: "https://lobo.pl/dulux-easycare-nieskazitelna-biel-9l", imageUrl: "https://lobo.pl/environment/cache/images/productGfx_58351_500_500/DULUX-EASYCARE-NIESKAZITELNA-BIEL-9L.webp" },
@@ -21645,6 +21647,10 @@ function isReviewedSkuSource(source) {
   if (isReviewedIrbudSource(source)) return true;
   const sku = source.skuIdentity;
   return source.id === "sewera-packcenter-edge-tape-50m" && source.ean === "" && source.store === "Sewera" && source.format === "sewera" && source.url === URL2 && source.name === "Ta\u015Bma dylatacyjna 5mm x 10cm x 50m" && source.brand === "Pack-Center" && source.packageSize === 50 && source.unit === "mb" && source.retailUnit === "SZT" && sku?.catalogKey === "sewera-465325" && sku.manufacturerSku === "TB-FB00202" && sku.merchantProductId === "465325" && sku.pageBarcode === "465325" && source.dispatchDepartment?.id === "3" && source.dispatchDepartment.name === "Gliwice";
+}
+function isReviewedSeweraDispatchSource(source) {
+  if (isReviewedSkuSource(source)) return true;
+  return source.id === "sewera-dulux-9l" && source.ean === "5904078198759" && source.skuIdentity === void 0 && source.store === "Sewera" && source.format === "sewera" && source.url === "https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385" && source.name === "Farba wewn\u0119trzna bia\u0142a Easycare nieskazitelna biel 9l mat Dulux" && source.brand === "Dulux" && source.packageSize === 9 && source.unit === "l" && source.dispatchDepartment?.id === "4" && source.dispatchDepartment.name === "Tarnowskie G\xF3ry";
 }
 function isReviewedIrbudSource(source) {
   const sku = source.skuIdentity;
@@ -24833,7 +24839,7 @@ function seweraHomeDeliveryMethods(checkout) {
 async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price, client) => client.text(_url2)) {
   const packs = expectedPacks(order);
   const configured = packs.filter(({ source }) => source.dispatchDepartment);
-  if (configured.some(({ source }) => !isReviewedSkuSource(source))) throw Error("dispatch_department_not_confirmed");
+  if (configured.some(({ source }) => !isReviewedSeweraDispatchSource(source))) throw Error("dispatch_department_not_confirmed");
   const department = configured[0]?.source.dispatchDepartment ?? { id: "1", name: "Katowice" };
   if (configured.some(({ source }) => source.dispatchDepartment.id !== department.id || source.dispatchDepartment.name !== department.name)) throw Error("dispatch_department_not_confirmed");
   const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
