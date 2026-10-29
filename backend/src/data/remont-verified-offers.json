@@ -3498,5 +3498,18 @@
     "sourceUrl": "https://lobo.pl/atlas-gta-super-biala-gladz-polimerowa-18kg",
     "evidenceSha256": "11aa0bff450b868f4a4ec79aea871ba352d0d00014093455631de1e010368836",
     "validUntil": null
+  },
+  {
+    "sourceId": "lobo-sniezka-grunt-express-5l",
+    "ean": "5903973228905",
+    "name": "ŚNIEŻKA Grunt Ekspresowy głęboko penetrujący 5L",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_138567_500_500/SNIEZKA-Grunt-Ekspresowy-gleboko-penetrujacy-5L.webp",
+    "priceGrosze": 4290,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T17:03:54.644Z",
+    "sourceUrl": "https://lobo.pl/sniezka-grunt-ekspresowy-gleboko-penetrujacy-5l",
+    "evidenceSha256": "ff66b66d4890f4711ad2812c5aca6d2cb47e5ab0daed21b903bfc35ca153ebe1",
+    "validUntil": null
   }
 ]
