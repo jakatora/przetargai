@@ -3324,5 +3324,18 @@
     "evidenceSha256": "536a2c61cf775e443d80cfcf54b8832c7edb78cdb6c10911290223bee21c3bdf",
     "validUntil": null,
     "stockPackages": 1
+  },
+  {
+    "sourceId": "kowalczyk-atlas-cerplast-15kg",
+    "ean": "5905400530032",
+    "name": "ATLAS CERPLAST Podkład GRUNT pod tynk 15kg/op. (CP-00-15)",
+    "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/6517c62f5899ad6aa0ba23ceb3eeff97/5/9/5905400530032.png",
+    "priceGrosze": 14097,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T12:39:18.414Z",
+    "sourceUrl": "https://sklep-kowalczyk.pl/atlas-cerplast-podklad-grunt-pod-tynk-op-15kg-cp-00-15-52413.html",
+    "evidenceSha256": "3d2e5a87f830b78a13098f82cda9bb8cb0f352b82f62e86b404dfac6d4b4f6d3",
+    "validUntil": null
   }
 ]
