@@ -3446,5 +3446,18 @@
     "sourceUrl": "https://lobo.pl/atlas-emulsja-gruntujaca-uni-grunt-5kg",
     "evidenceSha256": "d8020f32d0dc0b46b63bc4e5725b6904abb35f51f6c201b515cbc88a29f07a62",
     "validUntil": null
+  },
+  {
+    "sourceId": "lobo-film-20m2",
+    "ean": "5907758504932",
+    "name": "BLUE DOLPHIN Folia malarska Gruba 4x5m",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_50aa169afafd96c1425962f6307f1a0f_500_500.webp",
+    "priceGrosze": 449,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T16:16:10.277Z",
+    "sourceUrl": "https://lobo.pl/blue-dolphin-folia-malarska-gruba-4x5m",
+    "evidenceSha256": "c0db197e84715b7413c4302909a7f22003975500bdd0555729ba1b3c0bb7011c",
+    "validUntil": null
   }
 ]
