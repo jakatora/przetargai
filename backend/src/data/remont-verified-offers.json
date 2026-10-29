@@ -3034,5 +3034,18 @@
     "sourceUrl": "https://modnalazienka.pl/u117-light-beige-gres-szkl-rekt-mat-598x598-34162",
     "evidenceSha256": "ac59c08773bce262d228863a10b2f0087b0e7e267ec6708f9081ce1fc0de7cf3",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-plus-standard-25kg",
+    "ean": "5905400488579",
+    "name": "Atlas Plus Podwójna Moc klej do płytek 25kg",
+    "imageUrl": "https://sklep.sewera.pl/photo/38894/atlas-plus-podwojna-moc-klej-do-plytek-25kg.webp",
+    "priceGrosze": 6397,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T01:32:05.905Z",
+    "sourceUrl": "https://sklep.sewera.pl/atlas-plus-podwojna-moc-klej-do-plytek-25kg-p8893",
+    "evidenceSha256": "8492caa2f36c79b3fbc04dd2a0cda52b9e9bad4e45ebe254d1257bf8a09af418",
+    "validUntil": null
   }
 ]
