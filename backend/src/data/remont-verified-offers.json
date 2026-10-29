@@ -3576,5 +3576,31 @@
     "sourceUrl": "https://sklep.sewera.pl/papier-scierny-gr-220-arkusz-230x280mm-p6902",
     "evidenceSha256": "04b13843c90e6a5a34195e92f2a19efba243609409dbd324dbccbcf67bceb1df",
     "validUntil": null
+  },
+  {
+    "sourceId": "matiw-klingspor-pl28c-p180-50",
+    "ean": "5907560023560",
+    "name": "Arkusz papier ścierny Klingspor 230x280mm PL28C  P180 50szt",
+    "imageUrl": "https://matiw.pl/environment/cache/images/productGfx_63656_500_500/ARKUSZ-PAPIER-SCIERNY-KLINGSPOR-230x280mm-PL28C--P180-50szt.png",
+    "priceGrosze": 3600,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T19:15:35.159Z",
+    "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P180-50szt/25771",
+    "evidenceSha256": "fb4190e988428ba6a8b101259aadf30955909ce50d5375eb95f462804b465ec4",
+    "validUntil": null
+  },
+  {
+    "sourceId": "matiw-klingspor-pl28c-p220-50",
+    "ean": "5907560027483",
+    "name": "Arkusz papier ścierny Klingspor 230x280mm PL28C  P220 50szt",
+    "imageUrl": "https://sklep.sewera.pl/photo/56977/papier-scierny-gr-220-arkusz-230x280mm.webp",
+    "priceGrosze": 3600,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T19:15:35.235Z",
+    "sourceUrl": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P220-50szt/25772",
+    "evidenceSha256": "deac8db450203ca978296359a2922f009dc8453f91206b1ca0472f459eaa7455",
+    "validUntil": null
   }
 ]
