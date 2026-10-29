@@ -20085,6 +20085,8 @@ var RETAIL_SOURCES = [
   },
   // source: https://lobo.pl/atlas-emulsja-gruntujaca-uni-grunt-5kg
   { id: "lobo-atlas-unigrunt-5kg", ean: "5905400520026", name: "ATLAS Emulsja gruntuj\u0105ca UNI-GRUNT 5KG", category: "primer", brand: "Atlas", packageSize: 5, unit: "kg", store: "Lobo", format: "shoper-api", productId: 20533, apiProductCode: "CHEMIK-GRU-02", apiPurchaseUnit: "szt.", variant: ["uni-grunt", "5kg"], url: "https://lobo.pl/atlas-emulsja-gruntujaca-uni-grunt-5kg", imageUrl: "https://lobo.pl/environment/cache/images/productGfx_139397_500_500/ATLAS-Emulsja-gruntujaca-UNI-GRUNT-5KG.webp" },
+  // source: https://lobo.pl/sniezka-grunt-ekspresowy-gleboko-penetrujacy-5l
+  { id: "lobo-sniezka-grunt-express-5l", ean: "5903973228905", name: "\u015ANIE\u017BKA Grunt Ekspresowy g\u0142\u0119boko penetruj\u0105cy 5L", category: "primer", brand: "\u015Anie\u017Cka", packageSize: 5, unit: "l", store: "Lobo", format: "shoper-api", productId: 58470, apiProductCode: "q62980003228905", apiPurchaseUnit: "szt.", variant: ["grunt ekspresowy", "5l"], url: "https://lobo.pl/sniezka-grunt-ekspresowy-gleboko-penetrujacy-5l", imageUrl: "https://lobo.pl/environment/cache/images/productGfx_138567_500_500/SNIEZKA-Grunt-Ekspresowy-gleboko-penetrujacy-5L.webp" },
   {
     id: "sewera-acrylputz-fs20-27kg",
     ean: "5903973104544",
