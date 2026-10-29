@@ -21696,6 +21696,9 @@ function confirmRetailSkuProduct(html, product, source) {
 
 // lib/pricing-service/src/delivery-limits.ts
 var DELIVERY_LIMITS = {
+  // The common basket has up to 100 measured works plus one extras stage.
+  jobs: 101,
+  materialLines: 1e3,
   products: 200,
   stores: 64,
   packagesPerProduct: 1e4
@@ -26330,7 +26333,15 @@ function createRemontService(options = {}) {
       const cabinet = job.jobId === "kitchen-cabinet-paint" && line2.material.id === "cabinet-paint" && line2.material.unit === "ml" && (line2.material.packageFamily === "v33-easy-kitchen-white-satin-v1" || ["3153895149044", "3153895149228"].includes(line2.material.ean ?? ""));
       return line2.quantity <= (cabinet ? 2e6 : 1e5);
     };
-    if (!parsed.success || parsed.data.jobs.length > 20 || parsed.data.jobs.some((job) => job.materials.length > DELIVERY_LIMITS.products || job.materials.some((line2) => !withinQuantityLimit(job, line2)))) {
+    if (!parsed.success) {
+      res.status(400).json({ error: "invalid_request" });
+      return;
+    }
+    if (parsed.data.jobs.length > DELIVERY_LIMITS.jobs || parsed.data.jobs.reduce((count, job) => count + job.materials.length, 0) > DELIVERY_LIMITS.materialLines) {
+      res.status(400).json({ error: "basket_limit_exceeded", maxJobs: DELIVERY_LIMITS.jobs, maxMaterialLines: DELIVERY_LIMITS.materialLines });
+      return;
+    }
+    if (parsed.data.jobs.some((job) => job.materials.length > DELIVERY_LIMITS.products || job.materials.some((line2) => !withinQuantityLimit(job, line2)))) {
       res.status(400).json({ error: "invalid_request" });
       return;
     }
