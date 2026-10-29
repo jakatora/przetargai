@@ -3433,5 +3433,18 @@
     "sourceUrl": "https://lobo.pl/blue-dolphin-tasma-papierowa-niebieska-30mm-x-50m",
     "evidenceSha256": "fc574b02aa1e0ac6e866034e809c7352275b538c2a7962953cec0b1c2f87c62c",
     "validUntil": null
+  },
+  {
+    "sourceId": "lobo-atlas-unigrunt-5kg",
+    "ean": "5905400520026",
+    "name": "ATLAS Emulsja gruntująca UNI-GRUNT 5KG",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_139397_500_500/ATLAS-Emulsja-gruntujaca-UNI-GRUNT-5KG.webp",
+    "priceGrosze": 3790,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T16:06:32.330Z",
+    "sourceUrl": "https://lobo.pl/atlas-emulsja-gruntujaca-uni-grunt-5kg",
+    "evidenceSha256": "d8020f32d0dc0b46b63bc4e5725b6904abb35f51f6c201b515cbc88a29f07a62",
+    "validUntil": null
   }
 ]
