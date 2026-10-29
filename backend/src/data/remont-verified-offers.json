@@ -3472,5 +3472,31 @@
     "sourceUrl": "https://lobo.pl/sniezka-acryl-putz-st10-start-gipsowa-gladz-szpachlowa-20-kg",
     "evidenceSha256": "935230cc9d6872adb7110f14ab9ee837666153bb029f9229fd7824f49e5e6013",
     "validUntil": null
+  },
+  {
+    "sourceId": "lobo-dulux-easycare-white-9l",
+    "ean": "5904078198759",
+    "name": "DULUX EasyCare Nieskazitelna Biel 9L",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_58351_500_500/DULUX-EASYCARE-NIESKAZITELNA-BIEL-9L.webp",
+    "priceGrosze": 17190,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T16:40:13.136Z",
+    "sourceUrl": "https://lobo.pl/dulux-easycare-nieskazitelna-biel-9l",
+    "evidenceSha256": "701ff184d4385449a3c4e951fa33d6f0e4bce4799729ba315960a9f87d8d0e8f",
+    "validUntil": null
+  },
+  {
+    "sourceId": "lobo-atlas-gta-18kg",
+    "ean": "5905400542509",
+    "name": "ATLAS GTA Super Biała Gładź Polimerowa 18kg",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_68392_500_500/ATLAS-GTA-Super-Biala-Gladz-Polimerowa-18kg.webp",
+    "priceGrosze": 5990,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-29T16:40:13.326Z",
+    "sourceUrl": "https://lobo.pl/atlas-gta-super-biala-gladz-polimerowa-18kg",
+    "evidenceSha256": "11aa0bff450b868f4a4ec79aea871ba352d0d00014093455631de1e010368836",
+    "validUntil": null
   }
 ]
