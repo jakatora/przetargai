@@ -5,6 +5,7 @@ import { authRequired } from '../middleware/auth.js';
 import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia, limitPytanSwz } from '../db/repos.js';
 import { planEfektywny } from '../lib/plan.js';
 import { ktoWygrywa } from '../lib/ktoWygrywa.js';
+import { kluczePartnerow, wybierzPartnerow } from '../lib/partnerzy.js';
 import { profilKonkurenta, normNip, twoiKonkurenci, kluczeKonkurentowUzytkownika } from '../lib/profilKonkurenta.js';
 import { AppError, badRequest, conflict, notFound, serviceUnavailable, tooMany } from '../lib/errors.js';
 import { features } from '../config.js';
@@ -90,6 +91,19 @@ router.get('/tender/:id/benchmark', ah(async (req, res) => {
       dzial_kraj: klucze.dzialKraj ? kubelki[klucze.dzialKraj] ?? null : null,
     },
   });
+}));
+
+/*
+ * Kto może użyczyć doświadczenia (2026-10-31): firmy, które w ostatnim roku wygrywały zamówienia tej
+ * samej klasy CPV (region → kraj → dział w regionie), bez własnej firmy. Partner do konsorcjum,
+ * podwykonawca albo podmiot udostępniający zasoby (art. 118 Pzp). Szczegóły: `lib/partnerzy.js`.
+ */
+router.get('/tender/:id/partnerzy', ah(async (req, res) => {
+  const tender = await tenders.findById(req.params.id);
+  if (!tender) throw notFound('Przetarg nie został znaleziony');
+  const klucze = kluczePartnerow(tender);
+  const kubelki = klucze.length ? await benchmarkRynku.pobierzWiele(klucze.map((k) => k.klucz)) : {};
+  res.json(wybierzPartnerow({ klucze, kubelki, wlasnyNip: req.user.company_nip ?? null }));
 }));
 
 /*

@@ -5,6 +5,7 @@ import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../componen
 import SzczegolPlatformy from '../components/SzczegolPlatformy';
 import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
 import KtoWygrywa from '../components/KtoWygrywa';
+import PartnerzyPrzetargu from '../components/PartnerzyPrzetargu';
 import { ZapytajSwzPrzetargu } from '../components/ZapytajSwz';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
@@ -127,6 +128,7 @@ export default function KatalogDetailScreen({ route, navigation }) {
         <DokumentyEZamowienia tender={tender} navigation={navigation} />
         <KtoWygrywa tender={tender} />
         <ZapytajSwzPrzetargu tender={tender} />
+        <PartnerzyPrzetargu tender={tender} />
       </View>
 
       <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />

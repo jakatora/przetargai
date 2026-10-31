@@ -33,6 +33,7 @@ import { opisWyniki } from '../lib/wyniki';
 import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
 import SzczegolPlatformy from '../components/SzczegolPlatformy';
 import KtoWygrywa from '../components/KtoWygrywa';
+import PartnerzyPrzetargu from '../components/PartnerzyPrzetargu';
 import { ZapytajSwzPrzetargu } from '../components/ZapytajSwz';
 import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
 import Wyjasnienie from '../components/Wyjasnienie';
@@ -380,6 +381,7 @@ export default function MatchDetailScreen({ route, navigation }) {
 
       <KtoWygrywa tender={tender} />
       <ZapytajSwzPrzetargu tender={tender} />
+      <PartnerzyPrzetargu tender={tender} />
 
       <Pressable
         style={({ pressed }) => [styles.decyzjaCta, pressed && styles.ctaWcisniete]}

@@ -425,6 +425,8 @@ export const api = {
   benchmarkPrzetargu: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}/benchmark`),
   /** „Kto wygrywa u tego zamawiającego” (2026-10-31): najczęstsi zwycięzcy i ostatnie rozstrzygnięcia po NIP-ie zamawiającego. */
   ktoWygrywa: (tenderId) => request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/kto-wygrywa`),
+  /** Kto może użyczyć doświadczenia: firmy wygrywające zamówienia tej samej klasy CPV (art. 118 Pzp, konsorcjum). */
+  partnerzyPrzetargu: (tenderId) => request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/partnerzy`),
   /** Profil konkurenta: co firma wygrywa u wszystkich zamawiających (BZP po NIP-ie, TED po nazwie). */
   profilKonkurenta: (kogo) => request(`/wygrywalnosc/wykonawca?${parametryProfilu(kogo)}`),
   /** Kto najczęściej wygrywa w branżach i regionach z Karty firmy (bez własnej firmy). */

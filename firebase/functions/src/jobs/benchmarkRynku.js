@@ -1,5 +1,5 @@
 import { logger } from '../lib/logger.js';
-import { benchmarkZamawiajacych, benchmarkDzialowCpv } from '../lib/benchmark.js';
+import { benchmarkZamawiajacych, benchmarkDzialowCpv, benchmarkKlasCpv } from '../lib/benchmark.js';
 import { rozstrzygniecia, benchmarkRynku as repoBenchmark } from '../db/repos.js';
 
 /*
@@ -105,6 +105,7 @@ export async function runBenchmarkRynku({
   const kubelki = {
     ...benchmarkZamawiajacych(partie),
     ...benchmarkDzialowCpv(partie),
+    ...benchmarkKlasCpv(partie),
   };
 
   /*

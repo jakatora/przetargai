@@ -25,7 +25,7 @@
  *    każdą próbkę.
  */
 
-import { dzialCpv, mediana, normWojewodztwo } from './wynikiAgregacja.js';
+import { dzialCpv, klasaCpv, mediana, normWojewodztwo } from './wynikiAgregacja.js';
 import { czystaNazwaWykonawcy, normNazwa } from './ktoWygrywa.js';
 import { normNip } from './profilKonkurenta.js';
 
@@ -75,6 +75,23 @@ export function kluczDzialuCpv(wynik) {
 export function kluczDzialuCpvKraj(wynik) {
   const dzial = dzialCpv(wynik?.cpv);
   return dzial ? `cpv:${dzial}` : null;
+}
+
+/**
+ * Klucz kubełka: KLASA CPV + województwo — „kto ma doświadczenie w takiej robocie” (partnerzy,
+ * podmiot udostępniający zasoby, 2026-10-31). Dział jest za szeroki: 45 to i drogi, i budynki.
+ */
+export function kluczKlasyCpv(wynik) {
+  const klasa = klasaCpv(wynik?.cpv);
+  const woj = normWojewodztwo(wynik?.wojewodztwo);
+  if (!klasa || !woj) return null;
+  return `cpvk:${klasa}|${woj}`;
+}
+
+/** Klucz kubełka: sama klasa CPV w kraju. */
+export function kluczKlasyCpvKraj(wynik) {
+  const klasa = klasaCpv(wynik?.cpv);
+  return klasa ? `cpvk:${klasa}` : null;
 }
 
 function pustyKubelek(klucz) {
@@ -247,6 +264,14 @@ export function zbudujBenchmark(wyniki, {
 /** Benchmark per zamawiający (po NIP-ie). */
 export function benchmarkZamawiajacych(wyniki, opcje = {}) {
   return zbudujBenchmark(wyniki, { klucz: kluczZamawiajacego, wymiar: 'zamawiajacy', ...opcje });
+}
+
+/** Benchmark per klasa CPV w województwie i w kraju (partnerzy z doświadczeniem, 2026-10-31). */
+export function benchmarkKlasCpv(wyniki, opcje = {}) {
+  return {
+    ...zbudujBenchmark(wyniki, { klucz: kluczKlasyCpvKraj, wymiar: 'klasa_cpv_kraj', ...opcje }),
+    ...zbudujBenchmark(wyniki, { klucz: kluczKlasyCpv, wymiar: 'klasa_cpv', ...opcje }),
+  };
 }
 
 /** Benchmark per dział CPV w województwie (i osobno w skali kraju). */

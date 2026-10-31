@@ -287,3 +287,27 @@ test('GET /wygrywalnosc/moi-konkurenci: zwycięzcy z kubełków branż i region�
   assert.deepEqual(d.zakresy.map((z) => [z.dzial, z.zakres]), [['03', 'region']]);
   assert.deepEqual(d.konkurenci.map((k) => [k.nazwa, k.wygrane]), [[`Rolnik ${ZNAK}`, 4]]);
 });
+
+test('GET /wygrywalnosc/tender/:id/partnerzy: firmy z doświadczeniem w klasie CPV, bez własnej; bez CPV → brak_cpv', async () => {
+  const t = await konto();
+  const zwyc = (nip, wygrane) => ({ nazwa: `Drogbud ${nip} ${ZNAK}`, nip, wygrane, ogloszen: wygrane, wartosc: 500_000, ostatnio: '2026-10-20' });
+  await benchmarkRynku.zapisz({
+    'cpvk:4523|18': {
+      klucz: 'cpvk:4523|18', wymiar: 'klasa_cpv', etykieta: null, zrodla: ['bzp'], probka: { ogloszenia: 11, czesci: 12, od: '2025-11-01', do: '2026-10-30' },
+      wystarczajacaProbka: true, powodBrakuWniosku: null,
+      najczestsiZwyciezcy: [zwyc('7010000001', 5), zwyc('7010000002', 4), zwyc('7010000003', 2)],
+    },
+  });
+  const { tender } = await tenders.upsert({ externalId: `pt-${ZNAK}`, title: 'Przebudowa drogi gminnej', organization: 'Gmina Drogowa', deadline: '2099-01-01T00:00:00.000Z', source: 'bzp', cpvMain: '45233120-6', wojewodztwo: 'PL18' });
+  const odp = await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/partnerzy`, { headers: auth(t) });
+  assert.equal(odp.status, 200);
+  const d = await odp.json();
+  assert.equal(d.dostepne, true);
+  assert.equal(d.zakres.poziom, 'klasa_region');
+  assert.deepEqual(d.partnerzy.map((p) => p.wygrane), [5, 4, 2]);
+
+  const { tender: bez } = await tenders.upsert({ externalId: `pt2-${ZNAK}`, title: 'Bez CPV', organization: 'X', deadline: '2099-01-01T00:00:00.000Z', source: 'platformazakupowa' });
+  const bezCpv = await (await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(bez.id)}/partnerzy`, { headers: auth(t) })).json();
+  assert.deepEqual([bezCpv.dostepne, bezCpv.powod], [false, 'brak_cpv']);
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/partnerzy`)).status, 401);
+});

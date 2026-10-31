@@ -20,6 +20,18 @@ export function dzialCpv(cpv) {
 }
 
 /**
+ * Czterocyfrowa KLASA CPV z pierwszego kodu (np. 4523 — drogi, rurociągi, linie). Kod opisany tylko
+ * do działu albo grupy (np. 45000000, 45200000) klasy nie ma → null: wrzucenie go do „klasy 4520”
+ * mieszałoby wszystkie roboty grupy w jeden kubełek udający konkretną specjalizację.
+ */
+export function klasaCpv(cpv) {
+  const pierwszy = Array.isArray(cpv) ? cpv[0] : cpv;
+  const cyfry = String(pierwszy ?? '').replace(/\D/g, '');
+  if (cyfry.length < 4 || cyfry[2] === '0' || cyfry[3] === '0') return null;
+  return cyfry.slice(0, 4);
+}
+
+/**
  * Klucz bucketa statystyk dla PRZETARGU (serwowanie, R17). Zwraca `dział|rodzaj|woj`
  * albo null, gdy brakuje któregokolwiek wymiaru. Symetryczne z agregacją.
  */
