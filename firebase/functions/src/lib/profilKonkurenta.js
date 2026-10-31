@@ -14,6 +14,7 @@ import { WOJEWODZTWA } from './wojewodztwa.js';
  */
 export const TOP = 5;
 export const OSTATNICH = 6;
+export const TOP_TWOICH = 10;
 
 /** NIP jako 10 cyfr albo null. */
 export function normNip(nip) {
@@ -139,7 +140,7 @@ export function profilKonkurenta(wyniki, { nip = null, nazwa = null } = {}) {
     policz(rodzaje, w.rodzaj, czesci.length);
     // Branża = nazwa z katalogu CPV aplikacji dla głównego kodu (katalog jest zgrubny, więc grupuje sam).
     const glowneCpv = Array.isArray(w.cpv) ? w.cpv[0] : null;
-    if (glowneCpv) policz(cpv, nazwaKodu(glowneCpv) ?? `CPV ${String(glowneCpv).replace(/\D/g, '').slice(0, 2)}`, czesci.length);
+    if (glowneCpv) policz(cpv, nazwaKodu(glowneCpv) ?? `dział CPV ${String(glowneCpv).replace(/\D/g, '').slice(0, 2)}`, czesci.length);
 
     ostatnie.push({
       tytul: w.tytul ?? null,
@@ -173,5 +174,53 @@ export function profilKonkurenta(wyniki, { nip = null, nazwa = null } = {}) {
     ostatnie: ostatnie.sort((a, b) => String(b.opublikowano ?? '').localeCompare(String(a.opublikowano ?? ''))).slice(0, OSTATNICH),
     zrodla: [...zrodla].sort(),
     firm_o_tej_nazwie: firmOTejNazwie > 1 ? firmOTejNazwie : null,
+  };
+}
+
+/*
+ * TWOI KONKURENCI (2026-10-31): bez szukania — firmy, które najczęściej wygrywają w branżach (działy CPV)
+ * i regionach z karty firmy. Wejście: kubełki benchmarku (`najczestsiZwyciezcy`), regionalne `cpv:45|18`
+ * albo krajowe `cpv:45`. Dział bierzemy z regionu, a gdy region nie ma listy (za mała próbka) — z kraju.
+ * Własną firmę (po NIP-ie) pomijamy.
+ */
+export function twoiKonkurenci({ dzialy = [], regiony = [], kubelki = {}, wlasnyNip = null } = {}) {
+  const wlasny = normNip(wlasnyNip);
+  const firmy = [];
+  const poNip = new Map();
+  const poNazwie = new Map();
+  const zakresy = [];
+  for (const dzial of dzialy) {
+    const regionalne = regiony.map((w) => kubelki[`cpv:${dzial}|${w}`]).filter((k) => k?.najczestsiZwyciezcy?.length);
+    const krajowy = kubelki[`cpv:${dzial}`];
+    const zrodla = regionalne.length ? regionalne : (krajowy?.najczestsiZwyciezcy?.length ? [krajowy] : []);
+    if (!zrodla.length) continue;
+    const branza = nazwaKodu(`${dzial}000000`) ?? `dział CPV ${dzial}`;
+    zakresy.push({ dzial, branza, zakres: regionalne.length ? 'region' : 'kraj' });
+    for (const k of zrodla) {
+      for (const z of k.najczestsiZwyciezcy) {
+        const nip = normNip(z.nip);
+        if (wlasny && nip === wlasny) continue;
+        const nazwa = normNazwa(z.nazwa);
+        let f = (nip && poNip.get(nip)) || (nazwa && poNazwie.get(nazwa)) || null;
+        if (!f) {
+          f = { nazwa: z.nazwa, nip, wygrane: 0, wartosc: 0, maKwote: false, branze: new Set(), ostatnio: null };
+          firmy.push(f);
+        }
+        if (nip && !poNip.has(nip)) poNip.set(nip, f);
+        if (nazwa && !poNazwie.has(nazwa)) poNazwie.set(nazwa, f);
+        if (!f.nip && nip) f.nip = nip;
+        f.wygrane += z.wygrane ?? 0;
+        if (Number.isFinite(z.wartosc)) { f.wartosc += z.wartosc; f.maKwote = true; }
+        f.branze.add(branza);
+        if (z.ostatnio && (!f.ostatnio || z.ostatnio > f.ostatnio)) f.ostatnio = z.ostatnio;
+      }
+    }
+  }
+  return {
+    zakresy,
+    konkurenci: firmy
+      .sort((a, b) => b.wygrane - a.wygrane || b.wartosc - a.wartosc)
+      .slice(0, TOP_TWOICH)
+      .map(({ maKwote, wartosc, branze, ...f }) => ({ ...f, wartosc: maKwote ? Math.round(wartosc) : null, branze: [...branze] })),
   };
 }

@@ -19,6 +19,7 @@ import RadarSwzScreen from '../screens/RadarSwzScreen';
 import SejfScreen from '../screens/SejfScreen';
 import KatalogDetailScreen from '../screens/KatalogDetailScreen';
 import ProfilKonkurentaScreen from '../screens/ProfilKonkurentaScreen';
+import TwoiKonkurenciScreen from '../screens/TwoiKonkurenciScreen';
 import ZakresDanychScreen from '../screens/ZakresDanychScreen';
 import RejestratorOfertyScreen from '../screens/RejestratorOfertyScreen';
 import CzyWartoScreen from '../screens/CzyWartoScreen';
@@ -172,6 +173,11 @@ export default function RootNavigator() {
               name="ProfilKonkurenta"
               component={ProfilKonkurentaScreen}
               options={{ title: 'Profil konkurenta' }}
+            />
+            <Stack.Screen
+              name="TwoiKonkurenci"
+              component={TwoiKonkurenciScreen}
+              options={{ title: 'Twoi konkurenci' }}
             />
             <Stack.Screen
               name="ZakresDanych"

@@ -265,3 +265,25 @@ test('GET /wygrywalnosc/wykonawca: profil konkurenta z kluczy zapisanych przy ro
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/wykonawca?nip=12`, { headers: auth(t) })).status, 400);
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/wykonawca?nip=${nip}`)).status, 401);
 });
+
+test('GET /wygrywalnosc/moi-konkurenci: zwycięzcy z kubełków branż i regionów karty firmy; bez CPV → dostepne:false', async () => {
+  const t = await konto();
+  const bez = await (await fetch(`${BAZA}/wygrywalnosc/moi-konkurenci`, { headers: auth(t) })).json();
+  assert.deepEqual([bez.dostepne, bez.powod], [false, 'brak_cpv_w_karcie']);
+
+  const patch = await fetch(`${BAZA}/auth/me`, { method: 'PATCH', headers: auth(t), body: JSON.stringify({ cpv_codes: ['03100000'], regiony: ['28'] }) });
+  assert.equal(patch.status, 200);
+  await benchmarkRynku.zapisz({
+    'cpv:03|28': {
+      klucz: 'cpv:03|28', wymiar: 'dzial_cpv', etykieta: null, zrodla: ['bzp'], probka: { ogloszenia: 9, czesci: 9, od: '2026-01-01', do: '2026-10-01' },
+      wystarczajacaProbka: true, powodBrakuWniosku: null,
+      najczestsiZwyciezcy: [{ nazwa: `Rolnik ${ZNAK}`, nip: '6660000000', wygrane: 4, wartosc: 80_000, ostatnio: '2026-10-01' }],
+    },
+  });
+  const odp = await fetch(`${BAZA}/wygrywalnosc/moi-konkurenci`, { headers: auth(t) });
+  assert.equal(odp.status, 200);
+  const d = await odp.json();
+  assert.equal(d.dostepne, true);
+  assert.deepEqual(d.zakresy.map((z) => [z.dzial, z.zakres]), [['03', 'region']]);
+  assert.deepEqual(d.konkurenci.map((k) => [k.nazwa, k.wygrane]), [[`Rolnik ${ZNAK}`, 4]]);
+});

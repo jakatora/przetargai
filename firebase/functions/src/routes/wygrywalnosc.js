@@ -4,7 +4,8 @@ import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
 import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia } from '../db/repos.js';
 import { ktoWygrywa } from '../lib/ktoWygrywa.js';
-import { profilKonkurenta, normNip } from '../lib/profilKonkurenta.js';
+import { profilKonkurenta, normNip, twoiKonkurenci } from '../lib/profilKonkurenta.js';
+import { dzialCpv, normWojewodztwo } from '../lib/wynikiAgregacja.js';
 import { AppError, badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
 import { features } from '../config.js';
 import { logger } from '../lib/logger.js';
@@ -122,6 +123,22 @@ router.get('/wykonawca', ah(async (req, res) => {
   if (!nip && !nazwa) throw badRequest('Podaj NIP wykonawcy (10 cyfr) albo jego nazwę');
   const wyniki = await rozstrzygniecia.dlaWykonawcy({ nip, nazwa });
   res.json(profilKonkurenta(wyniki, { nip, nazwa }));
+}));
+
+/*
+ * Twoi konkurenci (2026-10-31): kto najczęściej wygrywa w branżach i regionach z karty firmy —
+ * z kubełków benchmarku, bez dodatkowego skanu rozstrzygnięć. Bez kodów CPV w karcie nie ma z czego.
+ */
+router.get('/moi-konkurenci', ah(async (req, res) => {
+  const dzialy = [...new Set((req.user.cpv_codes ?? []).map((k) => dzialCpv(k)).filter(Boolean))].slice(0, 6);
+  const regiony = [...new Set((req.user.regiony ?? []).map(normWojewodztwo).filter(Boolean))].slice(0, 4);
+  if (!dzialy.length) {
+    res.json({ dostepne: false, powod: 'brak_cpv_w_karcie', zakresy: [], konkurenci: [] });
+    return;
+  }
+  const klucze = [...dzialy.map((d) => `cpv:${d}`), ...dzialy.flatMap((d) => regiony.map((w) => `cpv:${d}|${w}`))];
+  const kubelki = await benchmarkRynku.pobierzWiele(klucze);
+  res.json({ dostepne: true, ...twoiKonkurenci({ dzialy, regiony, kubelki, wlasnyNip: req.user.company_nip ?? null }) });
 }));
 
 /*

@@ -256,6 +256,9 @@ export default function KartaFirmyScreen({ route, navigation }) {
         onPress={zapisz}
         style={styles.zapisz}
       />
+      {!poStarcie && String(form.cpv_codes ?? '').trim() ? (
+        <Button title={t('Kto wygrywa w moich branżach?', 'Who wins in my industries?')} variant="ghost" onPress={() => navigation.navigate('TwoiKonkurenci')} />
+      ) : null}
       {poStarcie ? <Button title={t('Pomiń, pokaż przetargi', 'Skip, show tenders')} variant="ghost" onPress={() => navigation.replace('MatchFeed')} /> : null}
     </Screen>
   );

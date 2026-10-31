@@ -424,6 +424,8 @@ export const api = {
   ktoWygrywa: (tenderId) => request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/kto-wygrywa`),
   /** Profil konkurenta: co firma wygrywa u wszystkich zamawiających (BZP po NIP-ie, TED po nazwie). */
   profilKonkurenta: (kogo) => request(`/wygrywalnosc/wykonawca?${parametryProfilu(kogo)}`),
+  /** Kto najczęściej wygrywa w branżach i regionach z Karty firmy (bez własnej firmy). */
+  twoiKonkurenci: () => request('/wygrywalnosc/moi-konkurenci'),
   /**
    * Checklista „co musisz mieć na dzień składania". BEZSTANOWA: wymagania
    * z Radaru SWZ i stan Sejfu podaje KLIENT, backend dokłada dzień składania

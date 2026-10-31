@@ -26,6 +26,11 @@
  */
 
 import { dzialCpv, mediana, normWojewodztwo } from './wynikiAgregacja.js';
+import { czystaNazwaWykonawcy, normNazwa } from './ktoWygrywa.js';
+import { normNip } from './profilKonkurenta.js';
+
+/** Ilu najczęstszych zwycięzców trzyma kubełek („Twoi konkurenci”, 2026-10-31). */
+export const TOP_ZWYCIEZCOW_KUBELKA = 8;
 
 /** Ile części musi mieć kubełek, żeby wolno było powiedzieć cokolwiek. */
 export const MIN_PROBKA = 5;
@@ -89,7 +94,29 @@ function pustyKubelek(klucz) {
     maliZnane: 0,
     odDaty: null,
     doDaty: null,
+    // Zwycięzcy części: jedna pozycja na firmę — po NIP-ie albo po nazwie (TED nie podaje NIP-u).
+    zwyciezcy: [],
+    poNip: new Map(),
+    poNazwie: new Map(),
   };
+}
+
+function dolozZwyciezce(kubelek, czesc, dzien) {
+  const z = czesc?.zwyciezca;
+  if (czesc?.uniewaznione || !z?.nazwa) return;
+  const nip = normNip(z.nip);
+  const nazwa = normNazwa(z.nazwa);
+  let w = (nip && kubelek.poNip.get(nip)) || (nazwa && kubelek.poNazwie.get(nazwa)) || null;
+  if (!w) {
+    w = { nazwa: czystaNazwaWykonawcy(z.nazwa), nip, wygrane: 0, wartosc: 0, maKwote: false, ostatnio: null };
+    kubelek.zwyciezcy.push(w);
+  }
+  if (nip && !kubelek.poNip.has(nip)) kubelek.poNip.set(nip, w);
+  if (nazwa && !kubelek.poNazwie.has(nazwa)) kubelek.poNazwie.set(nazwa, w);
+  if (!w.nip && nip) w.nip = nip;
+  w.wygrane += 1;
+  if (czesc.spojne && Number.isFinite(czesc.cenaWybrana)) { w.wartosc += czesc.cenaWybrana; w.maKwote = true; }
+  if (dzien && (!w.ostatnio || dzien > w.ostatnio)) { w.ostatnio = dzien; w.nazwa = czystaNazwaWykonawcy(z.nazwa); }
 }
 
 /**
@@ -136,6 +163,7 @@ function dolozWynik(kubelek, wynik) {
       kubelek.maliZnane += 1;
       if (czesc.wygralMaly) kubelek.maliTak += 1;
     }
+    dolozZwyciezce(kubelek, czesc, dzien);
   }
 }
 
@@ -175,6 +203,13 @@ function domknijKubelek(kubelek, { minProbka, minProbkaCeny, wymiar }) {
     maliWygrywaja: kubelek.maliZnane
       ? { procent: Math.round((100 * kubelek.maliTak) / kubelek.maliZnane), n: kubelek.maliZnane }
       : null,
+    // Kto tu najczęściej wygrywa — wejście „Twoich konkurentów”. Z małej próbki nie wskazujemy firm.
+    najczestsiZwyciezcy: wystarczajaca
+      ? [...kubelek.zwyciezcy]
+        .sort((a, b) => b.wygrane - a.wygrane || b.wartosc - a.wartosc || String(b.ostatnio).localeCompare(String(a.ostatnio)))
+        .slice(0, TOP_ZWYCIEZCOW_KUBELKA)
+        .map(({ maKwote, wartosc, ...z }) => ({ ...z, wartosc: maKwote ? Math.round(wartosc) : null }))
+      : [],
   };
 }
 

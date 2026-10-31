@@ -250,3 +250,22 @@ describe('benchmark — odporność', () => {
     assert.equal(b['nip:1'].uniewaznienia.procent, null);
   });
 });
+
+describe('benchmark — najczęstsi zwycięzcy kubełka („Twoi konkurenci”, 2026-10-31)', () => {
+  test('firma po NIP-ie albo nazwie (TED), unieważnione pominięte, kwoty tylko spójne; mała próbka → pusta lista', () => {
+    const A = { nazwa: 'Budmax Sp. z o.o. ul. Polna 3 35-001 Rzeszów', nip: '8130000001' };
+    const b = benchmarkDzialowCpv([
+      wynikBzp({ woj: '18', dzien: '2026-09-01', czesci: [czesc({ zwyciezca: A, cenaWybrana: 100_000 }), czesc({ zwyciezca: { nazwa: 'Inny', nip: '1111111111' }, cenaWybrana: 50_000 })] }),
+      wynikBzp({ woj: '18', dzien: '2026-10-01', czesci: [czesc({ zwyciezca: { nazwa: 'BUDMAX SPÓŁKA Z O.O.', nip: null }, cenaWybrana: 300_000 }), czesc({ zwyciezca: A, spojne: false, cenaWybrana: 1 })] }),
+      wynikBzp({ woj: '18', dzien: '2026-10-05', czesci: [czesc({ uniewaznione: true, zwyciezca: null })] }),
+    ]);
+    const k = b['cpv:45|18'];
+    assert.equal(k.wystarczajacaProbka, true);
+    assert.deepEqual(k.najczestsiZwyciezcy.map((z) => [z.nazwa, z.nip, z.wygrane, z.wartosc]), [
+      ['BUDMAX SPÓŁKA Z O.O.', '8130000001', 3, 400_000],
+      ['Inny', '1111111111', 1, 50_000],
+    ]);
+    const maly = benchmarkDzialowCpv([wynikBzp({ woj: '18', czesci: [czesc({ zwyciezca: A })] })]);
+    assert.deepEqual(maly['cpv:45|18'].najczestsiZwyciezcy, []);
+  });
+});

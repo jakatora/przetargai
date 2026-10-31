@@ -62,3 +62,21 @@ test('klucze zwycięzców do zapisu: NIP-y 10-cyfrowe i nazwy bez formy prawnej,
   assert.equal(normNip('PL 813-000-00-01'), '8130000001');
   assert.equal(normNip('12345'), null);
 });
+
+test('Twoi konkurenci: region przed krajem, ta sama firma z kilku kubełków zsumowana, własna firma pominięta', async () => {
+  const { twoiKonkurenci } = await import('../src/lib/profilKonkurenta.js');
+  const kubelki = {
+    'cpv:45|18': { najczestsiZwyciezcy: [{ nazwa: 'Budmax', nip: '8130000001', wygrane: 5, wartosc: 1_000_000 }, { nazwa: 'Moja Firma', nip: '9990000000', wygrane: 9, wartosc: 10 }] },
+    'cpv:45|12': { najczestsiZwyciezcy: [{ nazwa: 'BUDMAX Sp. z o.o.', nip: null, wygrane: 2, wartosc: null }] },
+    'cpv:45': { najczestsiZwyciezcy: [{ nazwa: 'Krajowy Gigant', nip: '5250000000', wygrane: 99, wartosc: 1 }] },
+    'cpv:90': { najczestsiZwyciezcy: [{ nazwa: 'Eko Odpady', nip: '7770000000', wygrane: 4, wartosc: 200_000 }] },
+    'cpv:90|18': { najczestsiZwyciezcy: [] },
+  };
+  const w = twoiKonkurenci({ dzialy: ['45', '90', '71'], regiony: ['18', '12'], kubelki, wlasnyNip: '999-000-00-00' });
+  assert.deepEqual(w.zakresy.map((z) => [z.dzial, z.zakres]), [['45', 'region'], ['90', 'kraj']], 'dział 71 bez danych pominięty');
+  assert.deepEqual(w.konkurenci.map((k) => [k.nazwa, k.nip, k.wygrane, k.wartosc]), [
+    ['Budmax', '8130000001', 7, 1_000_000],
+    ['Eko Odpady', '7770000000', 4, 200_000],
+  ]);
+  assert.equal(w.konkurenci[0].branze.length, 1);
+});
