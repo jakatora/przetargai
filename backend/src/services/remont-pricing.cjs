@@ -20296,6 +20296,10 @@ var AnonymousShop = class {
         }
         continue;
       }
+      if (r.status === 429) {
+        await r.body?.cancel();
+        throw Error("retailer_rate_limited");
+      }
       if (!r.ok && !(magentoErrors && this.origin === "https://sklep-kowalczyk.pl" && r.status === 400)) {
         await r.body?.cancel();
         throw Error("retailer_unavailable");
@@ -25707,7 +25711,15 @@ function retailPriceIsValid(validUntil, now) {
 }
 async function readRetailSource(source, fetchImpl = fetch) {
   if (source.disabledReason) throw Error(source.disabledReason);
-  if (source.format === "idosell" && quoteRelayEnabled(source.store)) return readThroughRelay(source, fetchImpl);
+  if (source.format === "idosell" && quoteRelayEnabled(source.store)) {
+    const originalFetch = fetchImpl, deadline = AbortSignal.timeout(2e4);
+    fetchImpl = (input2, init) => originalFetch(input2, { ...init, signal: AbortSignal.any([deadline, ...init?.signal ? [init.signal] : []]) });
+    try {
+      return await readThroughRelay(source, fetchImpl);
+    } catch (error40) {
+      if (deadline.aborted || error40 instanceof Error && ["retailer_out_of_stock", "purchase_rules_changed", "price_changed", "retailer_rate_limited", "retailer_http_429"].includes(error40.message)) throw error40;
+    }
+  }
   if (source.format === "mlazienka") return readMlazienkaProduct(source, fetchImpl);
   if (source.format === "integra") {
     const p = await readIntegraProduct(source, fetchImpl);
@@ -27395,10 +27407,22 @@ function createRetailerQuoter(fetchImpl = fetch) {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
-        if (quoteRelayEnabled(order.store)) return await quoteThroughRelay(order, postalCode, fetchImpl);
-        if (order.store === "eTak") return await quoteEtak(order, postalCode, fetchImpl);
+        let nativeFetch = fetchImpl;
+        if (quoteRelayEnabled(order.store)) {
+          const deadline = AbortSignal.timeout(2e4);
+          nativeFetch = (input2, init) => fetchImpl(input2, { ...init, signal: AbortSignal.any([deadline, ...init?.signal ? [init.signal] : []]) });
+          let relayed;
+          try {
+            relayed = await quoteThroughRelay(order, postalCode, nativeFetch);
+          } catch {
+            relayed = { reason: "quote_unavailable" };
+          }
+          if ("quote" in relayed || relayed.reason !== "quote_unavailable") return relayed;
+          if (deadline.aborted) return relayed;
+        }
+        if (order.store === "eTak") return await quoteEtak(order, postalCode, nativeFetch);
         if (order.store === "Dekork") return await quoteDekork(order, postalCode, fetchImpl);
-        if (order.store === "ChemiaDoParkietu25") return await quoteChemia(order, postalCode, fetchImpl);
+        if (order.store === "ChemiaDoParkietu25") return await quoteChemia(order, postalCode, nativeFetch);
         if (order.store === "eWinyl") return await quoteEwinyl(order, postalCode, fetchImpl);
         if (order.store === "DekoratorMarket") return await quoteDekorator(order, fetchImpl);
         if (order.store === "m\u0141azienka") return await quoteMlazienka(order, fetchImpl);
@@ -27411,7 +27435,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
         if (order.store === "Pati Art Studio") return await quotePati(order, postalCode, fetchImpl);
         if (order.store === "Budshop24") return await quoteBudshop(order, postalCode, fetchImpl);
         if (order.store === "Centrum Matbud") return await quoteSkyshop(order, fetchImpl);
-        if (order.store === "ABUD") return await quoteAbud(order, postalCode, fetchImpl);
+        if (order.store === "ABUD") return await quoteAbud(order, postalCode, nativeFetch);
         return await (order.store === "Kronosfera" ? quoteKronosfera(order, fetchImpl) : order.store === "Folnet" ? quoteFolnet(order, fetchImpl) : order.store === "Modna \u0141azienka" ? quoteModna(order, fetchImpl) : order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
       } catch (error40) {
         return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed", "retailer_rate_limited"].includes(error40.message) ? error40.message : "quote_unavailable" };
