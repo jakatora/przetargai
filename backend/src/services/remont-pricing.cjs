@@ -20428,6 +20428,49 @@ function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
 
 // artifacts/api-server/src/lib/dekork.ts
 var ORIGIN = "https://dekork.pl";
+var transports = /* @__PURE__ */ new WeakMap();
+function limitedFetch(fetchImpl) {
+  const existing = transports.get(fetchImpl);
+  if (existing) return existing;
+  let tail = Promise.resolve(), nextAt = 0, cooldownUntil = 0;
+  const result = async (input2, init) => {
+    if (new URL(String(input2)).origin !== ORIGIN) throw Error("invalid_cart_route");
+    let unlock;
+    const previous = tail;
+    tail = new Promise((resolve) => {
+      unlock = resolve;
+    });
+    await previous;
+    try {
+      if (init?.signal?.aborted) throw init.signal.reason;
+      if (Date.now() < cooldownUntil) throw Error("retailer_rate_limited");
+      const wait = nextAt - Date.now();
+      if (wait > 0) await new Promise((resolve, reject) => {
+        const signal = init?.signal, abort = () => {
+          clearTimeout(timer);
+          reject(signal?.reason ?? Error("request_aborted"));
+        }, timer = setTimeout(() => {
+          signal?.removeEventListener("abort", abort);
+          resolve();
+        }, wait);
+        signal?.addEventListener("abort", abort, { once: true });
+      });
+      if (init?.signal?.aborted) throw init.signal.reason;
+      nextAt = Date.now() + 500;
+      const response = await fetchImpl(input2, init);
+      if (response.status === 429) {
+        const value2 = response.headers.get("retry-after"), seconds = value2 && /^\d+$/.test(value2) ? Number(value2) : null, date6 = value2 ? Date.parse(value2) : NaN;
+        cooldownUntil = seconds !== null && Number.isSafeInteger(seconds) ? Date.now() + Math.max(1e3, seconds * 1e3) : Number.isFinite(date6) ? Math.max(Date.now() + 1e3, date6) : Date.now() + 3e4;
+      }
+      return response;
+    } finally {
+      unlock();
+    }
+  };
+  transports.set(fetchImpl, result);
+  return result;
+}
+var publicProducts = /* @__PURE__ */ new WeakMap();
 var PRODUCTS = [
   {
     "key": "professional",
@@ -20588,24 +20631,45 @@ function confirmGross(html) {
   const taxes = elements(html, (a) => a.class?.split(/\s+/).includes("product__tax") ?? false).map(text2);
   if (!taxes.some((text5) => /Podatki są wliczone\./.test(text5))) throw Error("retailer_gross_price_not_confirmed");
 }
-async function nativeProduct(client, source) {
-  const u = new URL(source.url), raw = await client.text(u.pathname + ".js"), html = await client.text(u.pathname + u.search);
-  confirmGross(html);
-  return { raw, html, item: confirmDekorkProduct(JSON.parse(raw), source) };
+async function nativeProduct(fetchImpl, source) {
+  if (!isReviewedDekorkSource(source)) throw Error("product_source_not_reviewed");
+  let cache = publicProducts.get(fetchImpl);
+  if (!cache) {
+    cache = /* @__PURE__ */ new Map();
+    publicProducts.set(fetchImpl, cache);
+  }
+  const key = new URL(source.url).pathname, now = Date.now();
+  let row = cache.get(key);
+  if (!row || row.until <= now) {
+    const value2 = (async () => {
+      const client = new AnonymousShop(ORIGIN, limitedFetch(fetchImpl), AbortSignal.timeout(12e3)), raw = await client.text(key + ".js"), html = await client.text(key);
+      confirmGross(html);
+      const cart = JSON.parse(await client.text("/cart.js"));
+      if (cart.currency !== "PLN" || !Array.isArray(cart.items) || cart.items.length !== 0) throw Error("retailer_currency_not_confirmed");
+      return { raw, html, currency: cart.currency, observedAt: (/* @__PURE__ */ new Date()).toISOString() };
+    })();
+    row = { until: now + 3e4, value: value2 };
+    cache.set(key, row);
+    const entry = row;
+    void value2.catch(() => {
+      if (cache.get(key) === entry) cache.delete(key);
+    });
+  }
+  const data = await row.value;
+  return { ...data, item: confirmDekorkProduct(JSON.parse(data.raw), source) };
 }
 async function readDekorkProduct(source, fetchImpl) {
   if (!isReviewedDekorkSource(source)) throw Error("product_source_not_reviewed");
-  const client = new AnonymousShop(ORIGIN, fetchImpl, AbortSignal.timeout(12e3)), { raw, html, item } = await nativeProduct(client, source), cart = JSON.parse(await client.text("/cart.js"));
-  if (cart.currency !== "PLN") throw Error("retailer_currency_not_confirmed");
-  return { sourceId: source.id, ean: source.ean, name: item.name, imageUrl: item.imageUrl, priceGrosze: item.priceGrosze, currency: "PLN", availability: "in_stock", observedAt: (/* @__PURE__ */ new Date()).toISOString(), sourceUrl: source.url, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify([raw, html, cart.currency])).digest("hex") };
+  const { raw, html, item, currency: currency2, observedAt } = await nativeProduct(fetchImpl, source);
+  return { sourceId: source.id, ean: source.ean, name: item.name, imageUrl: item.imageUrl, priceGrosze: item.priceGrosze, currency: "PLN", availability: "in_stock", observedAt, sourceUrl: source.url, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify([raw, html, currency2])).digest("hex") };
 }
 async function quoteDekork(order, postalCode, fetchImpl) {
   if (order.store !== "Dekork" || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
-  const client = new AnonymousShop(ORIGIN, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0))), expected = /* @__PURE__ */ new Map();
+  const client = new AnonymousShop(ORIGIN, limitedFetch(fetchImpl), AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0))), expected = /* @__PURE__ */ new Map();
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = DEKORK_SOURCES.find((s) => s.id === pack.offerId);
     if (!source || line2.unit !== "m2" || line2.product.id !== "remont-" + source.ean || pack.store !== "Dekork" || pack.url !== source.url || pack.packageSize !== source.packageSize || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.count * pack.unitPriceGrosze)) throw Error("invalid_basket");
-    const { item } = await nativeProduct(client, source);
+    const { item } = await nativeProduct(fetchImpl, source);
     if (item.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
     if (expected.has(item.variantId)) throw Error("invalid_basket");
     expected.set(item.variantId, { count: pack.count, price: item.priceGrosze, productId: source.productId, sku: source.apiProductCode ?? null });
