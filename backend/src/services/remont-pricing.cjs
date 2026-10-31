@@ -20087,6 +20087,26 @@ var AnonymousShop = class {
     const query = `query { shippingCountries { id name selected } shipping(ShippingInput: { mode: basket, forcedRegion: 1143020003, zipCode: "${args.postalCode}" }) { shipping { courier { id name icon } prepaid cost { value formatted } deliveryTime { weekDay } } } }`;
     return JSON.parse(await this.read("/graphql/v1/", JSON.stringify({ query }), true, false, true));
   }
+  /** Only reviewed eTak anonymous cart operations. No client/contact fields,
+   * checkout, consent, payment or order submission can be supplied.
+   * source: https://etak.eu/pl/basketchange.html
+   * source: https://etak.eu/graphql/v1/ */
+  async etak(action, args = {}) {
+    if (this.origin !== "https://etak.eu" || Object.keys(args).some((k) => !["postalCode", "productId", "count"].includes(k))) throw Error("invalid_cart_action");
+    if (action === "add") {
+      if (![732, 733, 735].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || Object.keys(args).length !== 2) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read("/pl/basketchange.html", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
+    }
+    if (action === "basket") {
+      if (Object.keys(args).length) throw Error("invalid_cart_action");
+      return JSON.parse(await this.read("/pl/basketchange.html", new URLSearchParams({ getAjax: "true" }).toString(), false));
+    }
+    if (!/^\d{2}-\d{3}$/.test(args.postalCode ?? "") || Object.keys(args).length !== 1) throw Error("invalid_cart_action");
+    if (action === "destination") return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
+    if (action !== "shipping") throw Error("invalid_cart_action");
+    const query = `query { shippingCountries { id name selected } shipping(ShippingInput: { mode: basket, forcedRegion: 1143020003, zipCode: "${args.postalCode}" }) { shipping { courier { id name icon } prepaid cost { value formatted } } } }`;
+    return JSON.parse(await this.read("/graphql/v1/", JSON.stringify({ query }), true, false, true));
+  }
   async abud(action, args = {}) {
     if (this.origin !== "https://www.abud.pl" || Object.keys(args).some((key) => !["postalCode", "productId", "count"].includes(key))) throw Error("invalid_cart_action");
     if (action === "destination") {
@@ -20737,6 +20757,18 @@ var NORGIPS_JOINT_TAPE_SOURCES = [
 ];
 function isReviewedNorgipsJointTape(source) {
   return NORGIPS_JOINT_TAPE_SOURCES.some((reviewed6) => ["id", "ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "retailerUnitId", "apiPurchaseUnit", "url"].every((key) => source[key] === reviewed6[key]) && source.variant?.join("|") === reviewed6.variant?.join("|") && (source.purchaseMultiple ?? 1) === 1);
+}
+
+// artifacts/api-server/src/lib/etak-sources.ts
+var ETAK_ORIGIN = "https://etak.eu";
+var ETAK_SOURCES = [
+  { id: "etak-wago-221412", ean: "4050821808435", name: "WAGO Z\u0142\u0105czka instalacyjna otwierana 2-przewodowa do linek i drut\xF3w 0,14-4 mm\xB2 32A 221-412", productId: 735, retailerSku: "221-412", imageUrl: "https://etak.eu/hpeciai/f094d901015eabafd8204dbb3b32d408/pol_il_WAGO-Zlaczka-instalacyjna-otwierana-2-przewodowa-do-linek-i-drutow-0-14-4-mm2-32A-221-412-735.jpg" },
+  { id: "etak-wago-221413", ean: "4050821808442", name: "WAGO Z\u0142\u0105czka instalacyjna otwierana 3-przewodowa do linek i drut\xF3w 0,14-4 mm\xB2 32A 221-413", productId: 733, retailerSku: "221-413", imageUrl: "https://etak.eu/hpeciai/0abdd857ec50bc3258541869a2dc9e85/pol_il_WAGO-Zlaczka-instalacyjna-otwierana-3-przewodowa-do-linek-i-drutow-0-14-4-mm2-32A-221-413-733.jpg" },
+  { id: "etak-wago-221415", ean: "4055143234658", name: "WAGO Z\u0142\u0105czka instalacyjna otwierana 5-przewodowa do linek i drut\xF3w 0,14-4 mm\xB2 32A 221-415", productId: 732, retailerSku: "221-415", imageUrl: "https://etak.eu/hpeciai/0e3ed8b880b3bf3b0e17066819a2a38a/pol_il_WAGO-Zlaczka-instalacyjna-otwierana-5-przewodowa-do-linek-i-drutow-0-14-4-mm2-32A-221-415-732.jpg" }
+].map((row) => ({ ...row, brand: "WAGO ELWAG", category: "wire-connector", packageSize: 1, unit: "szt", store: "eTak", format: "idosell", apiPurchaseUnit: "szt.", variant: [row.retailerSku], pickupRequiresConfirmation: true, url: `${ETAK_ORIGIN}/pl/products/wago-zlaczka-instalacyjna-otwierana-${row.productId === 735 ? 2 : row.productId === 733 ? 3 : 5}-przewodowa-do-linek-i-drutow-0-14-4-mm2-32a-${row.retailerSku}-${row.productId}.html` }));
+function isReviewedEtakSource(source) {
+  const expected = ETAK_SOURCES.find((s) => s.id === source.id);
+  return Boolean(expected && ["ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "apiPurchaseUnit", "productId", "retailerSku", "url", "imageUrl"].every((key) => source[key] === expected[key]) && JSON.stringify(source.variant) === JSON.stringify(expected.variant) && source.purchaseMultiple === void 0 && source.minimumPackages === void 0 && !source.skuIdentity && !source.pickupOnly && !source.disabledReason);
 }
 
 // artifacts/api-server/src/lib/retail-catalog.ts
@@ -22251,7 +22283,8 @@ var RETAIL_SOURCES = [
   { "id": "prescot-wago-221415", "ean": "4055143234658", "name": "Z\u0141\u0104CZKA WAGO 221-415 5X4mm LINKA/DRUT NO WA", "brand": "WAGO ELWAG", "category": "wire-connector", "packageSize": 1, "unit": "szt", "store": "Prescot", "format": "shoper-api", "productId": 9816, "apiProductCode": "221-415", "retailerSku": "221-415", "apiPurchaseUnit": "szt.", "variant": ["221-415"], "pickupRequiresConfirmation": true, "url": "https://www.prescot.com.pl/pl/p/ZLACZKA-WAGO-221-415-5X4mm-LINKADRUT-NO-WA/9816", "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_28797_500_500/1.jpg" },
   // source: https://sklep.ehw.com.pl/osprzet-laczeniowy/szybkozlaczka-zlaczka-wago-221-415-5x4-mm
   // source: https://www.wago.com/ca-fr/interconnexions-%C3%A9lectriques/221
-  { "id": "ehw-wago-221415-25", "ean": "4055143234658", "name": "WAGO 221-415 Z\u0142\u0105czka instalacyjna COMPACT do wszystkich rodzaj\xF3w przewod\xF3w, transparentna opakowanie 25 szt.", "brand": "WAGO", "category": "wire-connector", "packageSize": 25, "unit": "szt", "store": "Elektro-Hurt", "format": "shoper-api", "productId": 462, "retailerSku": "WAGO-125138*25", "apiPurchaseUnit": "szt.", "variant": ["221-415", "25 szt."], "packageDescription": "Z\u0142\u0105czka 221-415 opakowanie 25 sztuk.", "pickupRequiresConfirmation": true, "url": "https://sklep.ehw.com.pl/osprzet-laczeniowy/szybkozlaczka-zlaczka-wago-221-415-5x4-mm", "imageUrl": "https://sklep.ehw.com.pl/environment/cache/images/productGfx_857_500_500/Szybkozlaczka-zlaczka-WAGO-221-415-5x4-mm-EAN-4055143234658.jpg" }
+  { "id": "ehw-wago-221415-25", "ean": "4055143234658", "name": "WAGO 221-415 Z\u0142\u0105czka instalacyjna COMPACT do wszystkich rodzaj\xF3w przewod\xF3w, transparentna opakowanie 25 szt.", "brand": "WAGO", "category": "wire-connector", "packageSize": 25, "unit": "szt", "store": "Elektro-Hurt", "format": "shoper-api", "productId": 462, "retailerSku": "WAGO-125138*25", "apiPurchaseUnit": "szt.", "variant": ["221-415", "25 szt."], "packageDescription": "Z\u0142\u0105czka 221-415 opakowanie 25 sztuk.", "pickupRequiresConfirmation": true, "url": "https://sklep.ehw.com.pl/osprzet-laczeniowy/szybkozlaczka-zlaczka-wago-221-415-5x4-mm", "imageUrl": "https://sklep.ehw.com.pl/environment/cache/images/productGfx_857_500_500/Szybkozlaczka-zlaczka-WAGO-221-415-5x4-mm-EAN-4055143234658.jpg" },
+  ...ETAK_SOURCES
 ];
 var RETAIL_NAME_ALIASES = {
   "P\u0142ytka \u015Bcienna Parady\u017C Nati Bianco struktura 25\xD740 cm": "5902610507960",
@@ -23019,11 +23052,12 @@ function withOrderPartitions(atomic, limited) {
     if ("reason" in base && base.reason === "requires_separate_dispatch" && order.store === "Sewera" && count >= 2 && order.lines.every((line2) => line2.packages.length === 1)) {
       return quoteRequiredDispatch(order, base, atomic, postcode, limited);
     }
-    if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !base.quote.costGrosze && !supportsCartPricing(order.store) || !count || quotedMaterialsGrosze(order, base.quote) === null) return base;
+    if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !count || quotedMaterialsGrosze(order, base.quote) === null) return base;
     if (base.quote.materialsRoundingGrosze !== void 0) {
       if (count > 1 || order.lines.some((l) => l.packages.some((p) => p.count > 1))) limited();
       return base;
     }
+    if (!base.quote.costGrosze && !supportsCartPricing(order.store)) return base;
     const full = { order, quote: base.quote };
     if (count === 1) {
       if (order.lines[0].packages.length > 1 && order.lines[0].packages.some((p) => p.count > 1)) limited();
@@ -23634,8 +23668,53 @@ async function readThroughRelay(source, fetchImpl = fetch, secret = process.env.
   return row;
 }
 
-// artifacts/api-server/src/lib/chemia-delivery.ts
+// artifacts/api-server/src/lib/etak-delivery.ts
 var import_node_crypto17 = require("node:crypto");
+
+// artifacts/api-server/src/lib/etak-product.ts
+function etakMoney(value2, formatted) {
+  if (typeof value2 !== "string" && typeof value2 !== "number") throw Error("invalid_money");
+  const amount6 = parsePriceToGrosze(value2);
+  if (amount6 === null || !Number.isSafeInteger(amount6) || amount6 < 0 || formatted !== void 0 && (typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted) || parsePriceToGrosze(formatted.replace(/\s*zł$/, "")) !== amount6)) throw Error("invalid_money");
+  return amount6;
+}
+function etakGrossFromNet(net) {
+  if (!Number.isSafeInteger(net) || net <= 0 || !Number.isSafeInteger(net * 123 + 50)) throw Error("invalid_money");
+  return Math.floor((net * 123 + 50) / 100);
+}
+function readEtakCard(html, source) {
+  if (!isReviewedEtakSource(source)) throw Error("product_identity_not_confirmed");
+  const states = [...html.matchAll(/\bvar\s+product_data\s*=\s*(\{[\s\S]*?\})\s*var\s+trust_level\s*=/g)];
+  if (states.length !== 1) throw Error("product_identity_not_confirmed");
+  const raw = states[0][1].replace(/^(\{\s*"product_id"\s*:\s*)'(\d+)'/, '$1"$2"');
+  let state;
+  try {
+    state = JSON.parse(raw);
+  } catch {
+    throw Error("product_identity_not_confirmed");
+  }
+  const size = state?.sizes?.uniw;
+  if (state.product_id !== String(source.productId) || state.product_type !== "product_item" || state.currency !== "z\u0142" || state.unit !== "szt." || state.unit_sellby !== "1" || state.unit_precision !== "0" || !state.order_quantity_range || Array.isArray(state.order_quantity_range) || Object.keys(state.order_quantity_range).length || !size || Object.keys(state.sizes).join(",") !== "uniw" || size.type !== "uniw" || size.name !== "uniw" || size.code_extern !== source.retailerSku || size.code_producer !== source.ean) throw Error("product_identity_not_confirmed");
+  if (!Number.isSafeInteger(size.amount) || size.amount <= 0 || size.amount_mw !== size.amount || size.amount_mo !== 0 || size.amount_mp !== 0) throw Error("retailer_out_of_stock");
+  const prices = [state.base_price, size.price];
+  let gross2 = 0, net = 0;
+  for (const price2 of prices) {
+    if (!price2 || price2.vat !== "23" || price2.basket_enable !== "y" || price2.special_offer !== "false" || price2.rebate_code_active !== "n" || price2.priceformula_error !== "false") throw Error("price_changed");
+    const current = etakMoney(price2.value, price2.price_formatted), currentNet = etakMoney(price2.price_net, price2.price_net_formatted);
+    if (!current || !currentNet || etakGrossFromNet(currentNet) !== current || gross2 && gross2 !== current || net && net !== currentNet) throw Error("price_changed");
+    gross2 = current;
+    net = currentNet;
+  }
+  const safe = clean(html), forms = elements(safe, (a, t) => t === "form" && a.id === "projector_form" && a["data-product_id"] === String(source.productId));
+  if (forms.length !== 1) throw Error("product_id_not_confirmed");
+  for (const [id, value2] of [["projector_size_hidden", "onesize"], ["projector_mode_hidden", "1"]]) {
+    const rows = elements(forms[0], (a) => a.id === id);
+    if (rows.length !== 1 || attrs(rows[0].match(/^<[^>]+>/)?.[0] ?? "").value !== value2) throw Error("purchase_rules_changed");
+  }
+  const selected = elements(forms[0], (a, t) => t === "option" && a["data-link"] === new URL(source.url).pathname);
+  if (selected.length !== 1 || !/^<option\b[^>]*\bselected(?:\s|=|>)/i.test(selected[0]) || new URL(attrs(selected[0].match(/^<[^>]+>/)?.[0] ?? "")["data-gfx"] ?? "", source.url).href !== source.imageUrl) throw Error("product_identity_not_confirmed");
+  return { priceGrosze: gross2, netPriceGrosze: net, maxPackages: size.amount };
+}
 
 // artifacts/api-server/src/lib/dekorator.ts
 var import_node_crypto4 = require("node:crypto");
@@ -25538,7 +25617,8 @@ function parseRetailPage(html, source, observedAt) {
   const products = [];
   let stockPackages;
   if (source.format === "krasny") stockPackages = readKrasnyStock(html, source);
-  if (source.format === "ewinyl") products.push(readEwinylProduct(html, source));
+  if (source.store === "eTak") stockPackages = readEtakCard(html, source).maxPackages;
+  else if (source.format === "ewinyl") products.push(readEwinylProduct(html, source));
   else if (source.skuIdentity && source.format !== "irbud-woo") products.push(confirmRetailSkuProduct(html, readRetailMicrodata(html, "sewera", source.url, source.retailUnit), source));
   else if (source.format === "dekorator") products.push(readDekoratorProduct(html, source));
   else if (source.format === "kronosfera") products.push(inspectKronosferaProduct(html, source).product);
@@ -25832,6 +25912,75 @@ function shoperProductId(source) {
   return id;
 }
 
+// artifacts/api-server/src/lib/etak-delivery.ts
+function confirmEtakDestination(value2) {
+  const regions = value2?.valid_region?.["1"], region = regions?.[0];
+  if (value2?.error || value2?.errors?.length || value2?.valid !== true || !Array.isArray(regions) || regions.length !== 1 || region.shop_id !== "1" || region.url !== ETAK_ORIGIN || !/^\d+$/.test(region.id_region ?? "") || !(region.id_region === "1143020003" && region.parent === "0" || region.id_region !== "1143020003" && region.parent === "1143020003")) throw Error("address_required");
+}
+function selectEtakShipping(value2) {
+  const countries = value2?.data?.shippingCountries, rates = value2?.data?.shipping?.shipping;
+  if (value2?.errors?.length || !Array.isArray(countries) || countries.length !== 1 || countries[0].id !== "1143020003" || countries[0].name !== "Polska" || countries[0].selected !== true || !Array.isArray(rates) || rates.length > 100) throw Error("address_required");
+  const selected = rates.filter((r) => r?.prepaid === "prepaid" && r.courier?.id === 100206 && r.courier.name === "DHL Paczka");
+  if (selected.length !== 1) throw Error("no_home_delivery");
+  const price2 = selected[0].cost;
+  if (price2?.value === void 0 || price2?.formatted === void 0) throw Error("invalid_money");
+  return { costGrosze: etakMoney(price2.value, price2.formatted), carrier: "DHL Paczka", payment: "P\u0142atno\u015B\u0107 z g\xF3ry" };
+}
+function confirmEtakBasket(response, expected, materialsGrosze) {
+  const basket = response?.basket;
+  if (response?.error || response?.errors?.length || !basket || basket.error || basket.errors?.length || basket.currency !== "PLN" || basket.shipping_exists !== true || basket.total_deposit !== 0 || basket.total_deposit_net !== 0 || !expected.length || expected.length > ETAK_SOURCES.length || !Array.isArray(basket.products) || basket.products.length !== expected.length) throw Error("basket_not_confirmed");
+  const remaining = new Map(expected.map((row) => [String(row.source.productId), row]));
+  let total = 0, netTotal = 0, base = 0, count = 0;
+  if (remaining.size !== expected.length || expected.some((row) => !isReviewedEtakSource(row.source) || !Number.isSafeInteger(row.count) || row.count < 1 || row.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(row.price) || row.price <= 0 || etakGrossFromNet(row.net) !== row.price)) throw Error("invalid_basket");
+  for (const row of basket.products) {
+    const wanted = remaining.get(row?.id);
+    if (!wanted || row.size !== "uniw" || row.price_unit !== "szt." || row.worth_unit !== "szt." || row.name !== wanted.source.name || new URL(row.link, wanted.source.url).href !== wanted.source.url || row.bonus !== "n" || row.product_type !== "product_item" || row.bundle !== 0 || !Array.isArray(row.bundled) || row.bundled.length || row.subscription_period !== "0" || row.available_now !== "y" || row.count !== wanted.count || row.vat !== "23.0") throw Error("basket_not_confirmed");
+    if (!Number.isSafeInteger(row.reservation_stocksown) || row.reservation_stocksown < 0) throw Error("product_unavailable");
+    if (row.reservation_stocksown < wanted.count) throw Error("insufficient_stock");
+    const p = row.prices, worthNet = wanted.net * wanted.count, worth = etakGrossFromNet(worthNet);
+    if (!p || ["gros_formatted", "net_formatted", "worth_gros_formatted", "worth_net_formatted"].some((k) => typeof p[k] !== "string") || etakMoney(p.gros, p.gros_formatted) !== wanted.price || etakMoney(p.net, p.net_formatted) !== wanted.net || etakMoney(p.worth_net, p.worth_net_formatted) !== worthNet || etakMoney(p.worth_gros, p.worth_gros_formatted) !== worth) throw Error("price_changed");
+    total += worth;
+    netTotal += worthNet;
+    base += wanted.count * wanted.price;
+    count += wanted.count;
+    remaining.delete(row.id);
+  }
+  if (remaining.size || ![total, netTotal, base].every(Number.isSafeInteger) || base !== materialsGrosze || etakMoney(basket.worth) !== total || etakMoney(basket.worth_net) !== netTotal || basket.productsNumber !== count || Math.abs(total - base) > count) throw Error("basket_not_confirmed");
+  return { basket, materialsRoundingGrosze: total - base };
+}
+async function quoteEtak(order, postalCode, fetchImpl) {
+  if (order.store !== "eTak" || !/^\d{2}-\d{3}$/.test(postalCode) || !order.lines.length || order.lines.length > ETAK_SOURCES.length || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze <= 0) throw Error("invalid_basket");
+  const client = new AnonymousShop(ETAK_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.length)), expected = [], observations = [];
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    const source = ETAK_SOURCES.find((s) => s.id === pack.offerId);
+    if (!source || line2.product.id !== "remont-" + source.ean || line2.unit !== "szt" || pack.store !== "eTak" || pack.url !== source.url || pack.packageSize !== 1 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || pack.purchaseMultiple !== void 0 || pack.minimumPackages !== void 0 || pack.cutRoll || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze <= 0 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || expected.some((row) => row.source.id === source.id)) throw Error("invalid_basket");
+    const html = await client.text(source.url), card = readEtakCard(html, source), observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
+    if (observation.priceGrosze !== pack.unitPriceGrosze || card.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (card.maxPackages < pack.count) throw Error("insufficient_stock");
+    expected.push({ source, count: pack.count, price: pack.unitPriceGrosze, net: card.netPriceGrosze });
+    observations.push(observation.evidenceSha256);
+  }
+  if (!expected.length || expected.reduce((sum, row) => sum + row.count * row.price, 0) !== order.materialsGrosze) throw Error("invalid_basket");
+  const destination = await client.etak("destination", { postalCode });
+  confirmEtakDestination(destination);
+  for (const row of expected) await client.etak("add", { productId: row.source.productId, count: row.count });
+  const confirmed = confirmEtakBasket(await client.etak("basket"), expected, order.materialsGrosze), shipping = await client.etak("shipping", { postalCode }), best = selectEtakShipping(shipping), now = /* @__PURE__ */ new Date();
+  return { quote: {
+    ...best,
+    materialsRoundingGrosze: confirmed.materialsRoundingGrosze,
+    checkedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + 6e5).toISOString(),
+    sourceUrl: ETAK_ORIGIN + "/pl/basketedit.html",
+    basis: "retailer_basket_postcode",
+    destinationScope: "postal_code",
+    postalCode,
+    evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify({ observations, destination, basket: confirmed.basket, shipping, postalCode })).digest("hex")
+  } };
+}
+
+// artifacts/api-server/src/lib/chemia-delivery.ts
+var import_node_crypto18 = require("node:crypto");
+
 // artifacts/api-server/src/lib/idosell-basket.ts
 function money4(value2, formatted) {
   if (!["string", "number"].includes(typeof value2)) throw Error("invalid_money");
@@ -25911,11 +26060,11 @@ async function quoteChemia(order, postalCode, fetchImpl) {
   const basket = await client.chemia("add", { count: pack.count });
   confirmIdosellBasket(basket, [{ source, count: pack.count, price: pack.unitPriceGrosze }], order.materialsGrosze);
   const shipping = await client.chemia("shipping", { postalCode }), best = selectChemiaShipping(shipping), now = /* @__PURE__ */ new Date();
-  return { quote: { ...best, payment: "P\u0142atno\u015B\u0107 z g\xF3ry", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN6 + "/basketedit.php", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify({ observation: observed.evidenceSha256, basket, shipping, postalCode })).digest("hex") } };
+  return { quote: { ...best, payment: "P\u0142atno\u015B\u0107 z g\xF3ry", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN6 + "/basketedit.php", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(JSON.stringify({ observation: observed.evidenceSha256, basket, shipping, postalCode })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/ewinyl.ts
-var import_node_crypto18 = require("node:crypto");
+var import_node_crypto19 = require("node:crypto");
 var text4 = (node) => text2(node).replace(/&#122;&#322;/g, "z\u0142");
 var marked = (node, name) => new RegExp("\\s" + name + "(?:\\s|=|>)").test(node.match(/^<[^>]+>/)?.[0] ?? "");
 function money5(scope) {
@@ -25999,14 +26148,14 @@ async function quoteEwinyl(order, postalCode, fetchImpl) {
   const safe = clean(checkout), payment = one2(elements(safe, (a, t) => t === "input" && a.name === "payment_method").filter((n) => marked(n, "checked")));
   if (attrs2(payment).value !== "bacs" || text4(one2(elements(safe, (a, t) => t === "label" && a.for === attrs2(payment).id))) !== "Przelew bankowy" || money5(one2(elements(byClass3(safe, "order-total"), (_a, t) => t === "strong"))) !== materials + shipping.costGrosze) throw Error("basket_not_confirmed");
   const checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { ...shipping, payment: "Przelew bankowy", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: EWINYL_ORIGIN + "/koszyk/", destinationScope: "postal_code", postalCode, basis: "retailer_basket_postcode", evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(evidence.join("\n")).digest("hex") } };
+  return { quote: { ...shipping, payment: "Przelew bankowy", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: EWINYL_ORIGIN + "/koszyk/", destinationScope: "postal_code", postalCode, basis: "retailer_basket_postcode", evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(evidence.join("\n")).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto30 = require("node:crypto");
+var import_node_crypto31 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retailer-checkouts.ts
-var import_node_crypto19 = require("node:crypto");
+var import_node_crypto20 = require("node:crypto");
 
 // artifacts/api-server/src/lib/quote-queue.ts
 var QuoteQueue = class {
@@ -26096,7 +26245,7 @@ function quote(order, costGrosze, carrier, payment, evidence, postalCode, dispat
     basis: postalCode ? "retailer_basket_postcode" : "retailer_basket_national",
     destinationScope: postalCode ? "postal_code" : "PL",
     ...postalCode ? { postalCode, dispatchFrom } : {},
-    evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function expectedPacks(order) {
@@ -26217,7 +26366,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
     confirmSeweraBasket(basket, expected, order.materialsGrosze, department.name);
   } catch (error40) {
     if (!(error40 instanceof SeweraStockError)) throw error40;
-    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto19.createHash)("sha256").update(basket).digest("hex");
+    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto20.createHash)("sha256").update(basket).digest("hex");
     return { reason: "insufficient_stock", stockLimits: error40.shortages.map((shortage) => {
       const { pack } = prepared.find((item) => item.source.url === shortage.url);
       const product = order.lines.find((line2) => line2.packages.some((item) => item.offerId === pack.offerId)).product;
@@ -26257,7 +26406,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
       personal_collection: "0"
     });
     const price2 = readSeweraPayment(response);
-    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto19.createHash)("sha256").update(response).digest("hex") });
+    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto20.createHash)("sha256").update(response).digest("hex") });
   }
   const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
   if (!best) throw Error("no_home_delivery");
@@ -26331,7 +26480,7 @@ async function quoteBuduj24(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/cezar-delivery.ts
-var import_node_crypto20 = require("node:crypto");
+var import_node_crypto21 = require("node:crypto");
 async function quoteCezar(order, postalCode, fetchImpl) {
   const origin6 = "https://cezar.eu";
   const client = new AnonymousShop(origin6, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
@@ -26377,12 +26526,12 @@ async function quoteCezar(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
+    evidenceSha256: (0, import_node_crypto21.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/topboden-delivery.ts
-var import_node_crypto21 = require("node:crypto");
+var import_node_crypto22 = require("node:crypto");
 async function quoteTopboden(order, fetchImpl) {
   const signal = AbortSignal.timeout(12e3), client = new AnonymousShop(TOPBODEN_API, fetchImpl, signal, retailerRequestBudget(order.lines.length));
   const proofs = [], categories = [], seen = /* @__PURE__ */ new Set();
@@ -26414,11 +26563,11 @@ async function quoteTopboden(order, fetchImpl) {
     return Math.max(...applicable);
   });
   const costGrosze = materials >= Math.round(rate.minOrderValue * 100) ? 0 : Math.max(...prices), checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto21.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto22.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/prestashop-delivery.ts
-var import_node_crypto22 = require("node:crypto");
+var import_node_crypto23 = require("node:crypto");
 var origin3 = "https://www.eelektryka.com";
 var attrs11 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var input = (html, name) => attrs11(exactlyOne(elements(html, (a, tag) => tag === "input" && a.name === name), "basket_not_confirmed"));
@@ -26490,12 +26639,12 @@ async function quotePrestashop(order, fetchImpl) {
     sourceUrl: origin3 + "/index.php?controller=specialorderpayment",
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto22.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
+    evidenceSha256: (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/certusoft-delivery.ts
-var import_node_crypto23 = require("node:crypto");
+var import_node_crypto24 = require("node:crypto");
 var origin4 = "https://hipper.pl";
 var money6 = (value2) => {
   if (typeof value2 !== "number" || !Number.isFinite(value2) || value2 < 0) throw Error("invalid_money");
@@ -26584,12 +26733,12 @@ async function quoteCertusoft(order, fetchImpl) {
     sourceUrl: origin4 + "/koszyk",
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
+    evidenceSha256: (0, import_node_crypto24.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/modna-delivery.ts
-var import_node_crypto24 = require("node:crypto");
+var import_node_crypto25 = require("node:crypto");
 function confirmModnaCart(html, orderHtml, expected, materials) {
   const safe = clean(html), cart = modnaById(safe, "cart_summary_block");
   if (text2(modnaById(cart, "currency")) !== "PLN") throw Error("retailer_currency_not_confirmed");
@@ -26663,11 +26812,11 @@ async function quoteModna(order, fetchImpl) {
   if (!expected.length) throw Error("invalid_basket");
   const confirmed = confirmModnaCart(await client.text("/cart/"), await client.text("/order/"), expected, order.materialsGrosze);
   const checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto24.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
+  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto25.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/folnet-delivery.ts
-var import_node_crypto25 = require("node:crypto");
+var import_node_crypto26 = require("node:crypto");
 var money7 = (value2, formatted) => {
   if (typeof value2 !== "string" || !/^\d+\.\d{2}$/.test(value2) || typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted)) throw Error("invalid_money");
   const amount6 = parsePriceToGrosze(value2), visible = parsePriceToGrosze(formatted.replace(/\s*zł$/, ""));
@@ -26715,11 +26864,11 @@ async function quoteFolnet(order, fetchImpl) {
   for (const [id, item] of wanted) query.set(`products[${id}][uniw][quantity]`, String(item.count));
   const raw = await client.text("/ajax/get-deliveries.php?" + query, { getAjax: "true" });
   const response = JSON.parse(raw), best = selectFolnetHomeRate(response, materials), now = /* @__PURE__ */ new Date();
-  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto25.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
+  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto26.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/kronosfera-delivery.ts
-var import_node_crypto26 = require("node:crypto");
+var import_node_crypto27 = require("node:crypto");
 var cls7 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var only4 = (values) => {
   if (values.length !== 1) throw Error("basket_not_confirmed");
@@ -26791,7 +26940,7 @@ async function quoteKronosfera(order, fetchImpl) {
   }
   if (materials !== order.materialsGrosze) throw Error("basket_not_confirmed");
   const raw = await client.text("/koszyk"), selected = confirmKronosferaCart(raw, wanted, materials), now = /* @__PURE__ */ new Date();
-  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto26.createHash)("sha256").update(raw).digest("hex") } };
+  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto27.createHash)("sha256").update(raw).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/skyshop-delivery.ts
@@ -26865,7 +27014,7 @@ async function quoteSkyshop(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/abud-delivery.ts
-var import_node_crypto27 = require("node:crypto");
+var import_node_crypto28 = require("node:crypto");
 var ORIGIN7 = "https://www.abud.pl";
 var IDS = ["abud-aks-ydyp-3x15-25m", "abud-aks-ydyp-3x15-50m", "abud-aks-ydyp-3x25-50m", "abud-aks-ydyp-3x25-5m", "abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg"];
 function money9(value2, formatted) {
@@ -26935,12 +27084,12 @@ async function quoteAbud(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto27.createHash)("sha256").update(JSON.stringify({ observations, destination, postalCode, basket, shipping })).digest("hex")
+    evidenceSha256: (0, import_node_crypto28.createHash)("sha256").update(JSON.stringify({ observations, destination, postalCode, basket, shipping })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/izosystems-delivery.ts
-var import_node_crypto28 = require("node:crypto");
+var import_node_crypto29 = require("node:crypto");
 var money10 = (text5, n) => n === 0 && text5 === "Za darmo!" ? 0 : izoMoney(text5, n);
 var value = (html, id) => text2(izoOne(elements(html, (a) => a.id === id), "basket_not_confirmed"));
 async function quoteIzosystems(order, postalCode, fetchImpl) {
@@ -26993,11 +27142,11 @@ async function quoteIzosystems(order, postalCode, fetchImpl) {
   const inputValue = (name) => izoAttrs(izoOne(elements(paymentHtml, (a, t) => t === "input" && a.name === name), "basket_not_confirmed")).value;
   if (inputValue("kb_payment_fee_payment-option-1") !== "z\u01420" || inputValue("kb_payment_fee_status_payment-option-1") !== "0" || inputValue("kb_payment_fee_applicable_payment-option-1") !== "0" || inputValue("kb_payment_fee_currency") !== "z\u0142" || Number(inputValue("kb_payment_fee_total_payment-option-1")) * 100 !== total) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto28.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto29.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/kronodom-delivery.ts
-var import_node_crypto29 = require("node:crypto");
+var import_node_crypto30 = require("node:crypto");
 var origin5 = "https://kronodom.pl";
 var sourceId3 = "kronodom-arbiton-secura-thermo-6m2";
 var one15 = (nodes, reason = "basket_not_confirmed") => {
@@ -27074,7 +27223,7 @@ async function quoteKronodom(order, fetchImpl) {
     if (!/powyżej 2999 zł - Darmowa wysyłka/.test(policy)) throw Error("no_home_delivery");
   }
   const now = /* @__PURE__ */ new Date();
-  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin5 + "/order/checkout/cart", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto29.createHash)("sha256").update(cart + policy).digest("hex") } };
+  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin5 + "/order/checkout/cart", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto30.createHash)("sha256").update(cart + policy).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
@@ -27119,12 +27268,12 @@ function unavailableReason(store) {
   if (sources.length && sources.every((source) => source.format === "qshop")) return "address_required";
   if (store === "Marbet24") return "customer_details_required";
   if (sources.length && sources.every((source) => source.disabledReason)) return sources[0].disabledReason;
-  if (ORIGINS[store] || ["Dekork", "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Kronodom", "Centrum Matbud", "ABUD", "IRBUD", "Pati Art Studio", "Budshop24", "E-Kowalczyk", "Izosystems", "BMB Technologie", "Integra Bieli\u0144scy", "m\u0141azienka", "DekoratorMarket", "eWinyl", "ChemiaDoParkietu25"].includes(store)) return void 0;
+  if (ORIGINS[store] || ["Dekork", "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Kronodom", "Centrum Matbud", "ABUD", "IRBUD", "Pati Art Studio", "Budshop24", "E-Kowalczyk", "Izosystems", "BMB Technologie", "Integra Bieli\u0144scy", "m\u0141azienka", "DekoratorMarket", "eWinyl", "ChemiaDoParkietu25", "eTak"].includes(store)) return void 0;
   return ["Castorama", "OBI", "Leroy Merlin"].includes(store) ? "retailer_access_required" : "integration_unavailable";
 }
 function retailerDeliveryCapabilities() {
   return {
-    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Dekork", "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Kronodom", "Centrum Matbud", "ABUD", "IRBUD", "Pati Art Studio", "Budshop24", "E-Kowalczyk", "Izosystems", "BMB Technologie", "Integra Bieli\u0144scy", "m\u0141azienka", "DekoratorMarket", "eWinyl", "ChemiaDoParkietu25"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
+    automaticStores: [.../* @__PURE__ */ new Set([...Object.keys(ORIGINS), "Dekork", "Sewera", "Buduj24", "Cezar", "TopBoden", "Eelektryka", "HIPPER", "Modna \u0141azienka", "Folnet", "Kronosfera", "Kronodom", "Centrum Matbud", "ABUD", "IRBUD", "Pati Art Studio", "Budshop24", "E-Kowalczyk", "Izosystems", "BMB Technologie", "Integra Bieli\u0144scy", "m\u0141azienka", "DekoratorMarket", "eWinyl", "ChemiaDoParkietu25", "eTak"])].filter((store) => RETAIL_SOURCES.some((source) => source.store === store && !source.disabledReason)),
     country: "PL",
     quoteTtlSeconds: 600,
     postcodeStores: ["Dekork", "ChemiaDoParkietu25", "eWinyl", "Sewera", "Cezar", "ABUD", "IRBUD", "Pati Art Studio", "Budshop24", "E-Kowalczyk", "Izosystems"],
@@ -27216,7 +27365,7 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin6}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto30.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto31.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function quoteBeforeDeadline(quoter, order, postalCode, deadline, now = Date.now()) {
@@ -27246,6 +27395,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
       if (!release) return { reason: "quote_busy" };
       try {
         if (quoteRelayEnabled(order.store)) return await quoteThroughRelay(order, postalCode, fetchImpl);
+        if (order.store === "eTak") return await quoteEtak(order, postalCode, fetchImpl);
         if (order.store === "Dekork") return await quoteDekork(order, postalCode, fetchImpl);
         if (order.store === "ChemiaDoParkietu25") return await quoteChemia(order, postalCode, fetchImpl);
         if (order.store === "eWinyl") return await quoteEwinyl(order, postalCode, fetchImpl);
@@ -27409,11 +27559,11 @@ function isLeroyBrowserSource(source) {
 }
 
 // artifacts/api-server/src/lib/retail-history.ts
-var import_node_crypto31 = require("node:crypto");
+var import_node_crypto32 = require("node:crypto");
 var RETENTION_MS = 90 * 864e5;
 var MAX_POINTS = 60;
 function historyIdentity(s) {
-  return (0, import_node_crypto31.createHash)("sha256").update(JSON.stringify([s.id, s.ean, s.skuIdentity, s.dispatchDepartment, s.store, s.url, s.brand, s.category, s.packageSize, s.unit, s.format, s.productId, s.variantId, s.apiProductCode, s.retailerSku, s.retailerUnitId, s.productUuid, s.retailUnit, s.packageDescription, s.purchaseMultiple, s.minimumPackages])).digest("hex");
+  return (0, import_node_crypto32.createHash)("sha256").update(JSON.stringify([s.id, s.ean, s.skuIdentity, s.dispatchDepartment, s.store, s.url, s.brand, s.category, s.packageSize, s.unit, s.format, s.productId, s.variantId, s.apiProductCode, s.retailerSku, s.retailerUnitId, s.productUuid, s.retailUnit, s.packageDescription, s.purchaseMultiple, s.minimumPackages])).digest("hex");
 }
 var RetailPriceHistory = class {
   constructor(sources, validate) {
