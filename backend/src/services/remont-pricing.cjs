@@ -22683,6 +22683,89 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   return result;
 }
 
+// lib/pricing-service/src/cart-pricing.ts
+var supportsCartPricing = (store) => store === "ABUD";
+var positive = (n) => Number.isSafeInteger(n) && n > 0;
+function validatedCartPricing(order, quote2) {
+  const pricing = quote2.cartPricing;
+  const checked = Date.parse(quote2.checkedAt), expires = Date.parse(quote2.expiresAt);
+  if (!pricing || !supportsCartPricing(order.store) || quote2.sourceUrl !== "https://www.abud.pl/basketedit.php" || quote2.basis !== "retailer_basket_postcode" || quote2.destinationScope !== "postal_code" || quote2.materialsRoundingGrosze !== void 0 || !/^\d{2}-\d{3}$/.test(quote2.postalCode ?? "") || !Number.isFinite(checked) || !Number.isFinite(expires) || expires <= checked || expires - checked > 6e5 || !/^[a-f0-9]{64}$/.test(quote2.evidenceSha256) || pricing.currency !== "PLN" || !positive(pricing.baseMaterialsGrosze) || !positive(pricing.materialsGrosze) || !positive(pricing.discountGrosze) || pricing.baseMaterialsGrosze !== order.materialsGrosze || pricing.materialsGrosze + pricing.discountGrosze !== pricing.baseMaterialsGrosze || !Array.isArray(pricing.lines) || !pricing.lines.length || pricing.lines.length > 800) return null;
+  const expected = /* @__PURE__ */ new Map();
+  let base = 0, total = 0;
+  const identity = (line2, pack) => JSON.stringify([line2.product, line2.unit, pack.store, pack.url, pack.packageSize, pack.purchaseMultiple ?? 1, pack.minimumPackages ?? 1]);
+  for (const line2 of order.lines) for (const pack of line2.packages) {
+    if (expected.has(pack.offerId) || pack.store !== order.store || !positive(pack.count) || !positive(pack.unitPriceGrosze) || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || pack.cutRoll) return null;
+    expected.set(pack.offerId, { count: pack.count, price: pack.unitPriceGrosze, identity: identity(line2, pack) });
+    base += pack.lineCostGrosze;
+  }
+  if (!Number.isSafeInteger(base) || base !== pricing.baseMaterialsGrosze) return null;
+  const counts = /* @__PURE__ */ new Map();
+  for (const line2 of pricing.lines) {
+    const pack = expected.get(line2?.offerId);
+    if (!pack || line2.baseUnitPriceGrosze !== pack.price || !positive(line2.count) || !positive(line2.unitPriceGrosze) || line2.unitPriceGrosze > pack.price || line2.lineCostGrosze !== line2.count * line2.unitPriceGrosze || !positive(line2.lineCostGrosze)) return null;
+    counts.set(line2.offerId, (counts.get(line2.offerId) ?? 0) + line2.count);
+    total += line2.lineCostGrosze;
+  }
+  if (!Number.isSafeInteger(total) || total !== pricing.materialsGrosze || counts.size !== expected.size || [...expected].some(([id, pack]) => counts.get(id) !== pack.count)) return null;
+  if (!quote2.orders && pricing.lines.length !== expected.size) return null;
+  if (quote2.orders) {
+    if (!Array.isArray(quote2.orders) || quote2.orders.length < 2 || quote2.orders.length > 8) return null;
+    let fees = 0, materials = 0;
+    const childPrices = [];
+    for (const part of quote2.orders) {
+      if (!part || !part.quote || "orders" in part.quote && part.quote.orders !== void 0 || part.quote.sourceUrl !== quote2.sourceUrl || part.quote.postalCode !== quote2.postalCode || part.quote?.basis !== quote2.basis || part.quote?.destinationScope !== quote2.destinationScope || !Array.isArray(part.lines)) return null;
+      for (const line2 of part.lines) for (const pack of line2.packages) {
+        const parent = expected.get(pack.offerId);
+        if (!parent || parent.identity !== identity(line2, pack) || parent.price !== pack.unitPriceGrosze) return null;
+      }
+      const base2 = part.lines.reduce((sum, l) => sum + l.packages.reduce((n, p) => n + p.lineCostGrosze, 0), 0), child = { ...order, lines: part.lines, materialsGrosze: base2, quote: void 0 };
+      const actual = quotedMaterialsGrosze(child, part.quote);
+      if (actual === null || actual !== part.materialsGrosze || !Number.isSafeInteger(part.quote.costGrosze) || part.quote.costGrosze < 0) return null;
+      const checked2 = Date.parse(part.quote.checkedAt), expires2 = Date.parse(part.quote.expiresAt);
+      if (!Number.isFinite(checked2) || !Number.isFinite(expires2) || expires2 <= checked2 || expires2 - checked2 > 6e5 || Date.parse(quote2.expiresAt) > expires2 || Date.parse(quote2.checkedAt) > checked2) return null;
+      materials += actual;
+      fees += part.quote.costGrosze;
+      childPrices.push(...part.quote.cartPricing?.lines ?? part.lines.flatMap((l) => l.packages.map((p) => ({ offerId: p.offerId, count: p.count, baseUnitPriceGrosze: p.unitPriceGrosze, unitPriceGrosze: p.unitPriceGrosze, lineCostGrosze: p.lineCostGrosze }))));
+    }
+    const key = (p) => JSON.stringify([p.offerId, p.count, p.baseUnitPriceGrosze, p.unitPriceGrosze, p.lineCostGrosze]);
+    if (!Number.isSafeInteger(fees) || fees !== quote2.costGrosze || materials !== pricing.materialsGrosze || JSON.stringify(childPrices.map(key).sort()) !== JSON.stringify(pricing.lines.map(key).sort())) return null;
+  }
+  return pricing;
+}
+function quotedMaterialsGrosze(order, quote2) {
+  if (quote2.cartPricing !== void 0) return validatedCartPricing(order, quote2)?.materialsGrosze ?? null;
+  const rounding = quote2.materialsRoundingGrosze ?? 0, packs = order.lines.reduce((sum, l) => sum + l.packages.reduce((n, p) => n + p.count, 0), 0);
+  const total = order.materialsGrosze + rounding;
+  return Number.isSafeInteger(rounding) && Math.abs(rounding) <= packs && positive(total) ? total : null;
+}
+function quotedOrderTotal(order, quote2) {
+  const materials = quotedMaterialsGrosze(order, quote2);
+  const total = materials === null ? null : materials + quote2.costGrosze;
+  return total !== null && Number.isSafeInteger(quote2.costGrosze) && quote2.costGrosze >= 0 && Number.isSafeInteger(total) ? total : null;
+}
+function combineCartPricing(order, parts) {
+  if (!parts.some((p) => p.quote.cartPricing)) return void 0;
+  const lines = [];
+  for (const part of parts) {
+    if (quotedMaterialsGrosze(part.order, part.quote) === null) throw Error("invalid_cart_pricing");
+    lines.push(...part.quote.cartPricing?.lines ?? part.order.lines.flatMap((l) => l.packages.map((p) => ({ offerId: p.offerId, count: p.count, baseUnitPriceGrosze: p.unitPriceGrosze, unitPriceGrosze: p.unitPriceGrosze, lineCostGrosze: p.lineCostGrosze }))));
+  }
+  const materialsGrosze = lines.reduce((n, p) => n + p.lineCostGrosze, 0);
+  return { currency: "PLN", baseMaterialsGrosze: order.materialsGrosze, materialsGrosze, discountGrosze: order.materialsGrosze - materialsGrosze, lines };
+}
+function applyCartPrices(order) {
+  const pricing = order.quote?.cartPricing;
+  if (!pricing) return order;
+  const lines = order.lines.map((line2) => ({ ...line2, packages: line2.packages.flatMap((pack) => pricing.lines.filter((p) => p.offerId === pack.offerId).map((p) => ({ ...pack, count: p.count, unitPriceGrosze: p.unitPriceGrosze, lineCostGrosze: p.lineCostGrosze }))) }));
+  const quote2 = { ...order.quote };
+  if (quote2.orders) quote2.orders = quote2.orders.map((part) => {
+    const base = part.lines.reduce((sum, l) => sum + l.packages.reduce((n, p) => n + p.lineCostGrosze, 0), 0);
+    const priced = applyCartPrices({ ...order, lines: part.lines, materialsGrosze: base, quote: part.quote, totalGrosze: part.materialsGrosze + part.quote.costGrosze });
+    return { ...part, lines: priced.lines };
+  });
+  return { ...order, lines, quote: quote2 };
+}
+
 // lib/pricing-service/src/quantity-order-partitions.ts
 var MAX_QUANTITY_QUOTES = 12;
 var MAX_SEPARATE_ORDERS = 8;
@@ -22706,7 +22789,7 @@ function preservesOrderPackages(whole, parts) {
     }
     return Number.isSafeInteger(cost) && cost === order.materialsGrosze;
   };
-  return add2(whole, expected) && parts.every((p) => !p.quote.orders && p.quote.materialsRoundingGrosze === void 0 && add2(p.order, actual)) && expected.size === actual.size && [...expected].every(([key, count]) => actual.get(key) === count) && parts.reduce((n, p) => n + p.order.materialsGrosze, 0) === whole.materialsGrosze;
+  return add2(whole, expected) && parts.every((p) => !p.quote.orders && p.quote.materialsRoundingGrosze === void 0 && quotedMaterialsGrosze(p.order, p.quote) !== null && add2(p.order, actual)) && expected.size === actual.size && [...expected].every(([key, count]) => actual.get(key) === count) && parts.reduce((n, p) => n + p.order.materialsGrosze, 0) === whole.materialsGrosze;
 }
 async function combineRequiredSeparateOrders(whole, parts, postcode) {
   if (parts.length < 2 || parts.length > 8 || !parts.every((p) => currentDeliveryQuote(p.quote, postcode)) || !preservesOrderPackages(whole, parts)) return null;
@@ -22738,7 +22821,7 @@ async function quantityOrderPartitions(base, atomic, postcode, limited) {
   const whole = base.order;
   if (whole.lines.length !== 1 || whole.lines[0].packages.length !== 1) return [base];
   const pack = whole.lines[0].packages[0], total = pack.count, multiple = pack.purchaseMultiple ?? 1, min = pack.minimumPackages ?? 1;
-  if (!currentDeliveryQuote(base.quote, postcode) || base.quote.orders || base.quote.costGrosze === 0 || total < 2 || !preservesOrderPackages(whole, [base])) return [base];
+  if (!currentDeliveryQuote(base.quote, postcode) || base.quote.orders || base.quote.costGrosze === 0 && !supportsCartPricing(whole.store) || total < 2 || !preservesOrderPackages(whole, [base])) return [base];
   if (total > DELIVERY_LIMITS.packagesPerProduct) {
     limited();
     return [base];
@@ -22767,21 +22850,23 @@ async function quantityOrderPartitions(base, atomic, postcode, limited) {
     const order = { ...whole, lines: [line2], materialsGrosze: n * pack.unitPriceGrosze, quote: void 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown" };
     try {
       const outcome = await atomic(order, postcode);
-      if ("quote" in outcome && !outcome.quote.orders && currentDeliveryQuote(outcome.quote, postcode)) verified.set(n, { order, quote: outcome.quote });
+      if ("quote" in outcome && !outcome.quote.orders && currentDeliveryQuote(outcome.quote, postcode) && quotedMaterialsGrosze(order, outcome.quote) !== null) verified.set(n, { order, quote: outcome.quote });
       else limited();
     } catch {
       limited();
     }
   }
   const layers = [/* @__PURE__ */ new Map([[0, { cost: 0, parts: [] }]])];
-  let best = { cost: base.quote.costGrosze, parts: [base] };
+  let best = { cost: quotedOrderTotal(whole, base.quote), parts: [base] };
   const largest = (p) => Math.max(...p.parts.map((part) => part.order.lines[0].packages[0].count));
   const better = (a, b) => a.cost < b.cost || a.cost === b.cost && (a.parts.length < b.parts.length || a.parts.length === b.parts.length && largest(a) < largest(b));
   for (let i = 1; i <= MAX_SEPARATE_ORDERS; i++) {
     const layer = /* @__PURE__ */ new Map();
     for (const [sum, previous] of layers[i - 1]) for (const [n, part] of verified) {
       if (sum + n > total) continue;
-      const cost = previous.cost + part.quote.costGrosze;
+      const partTotal = quotedOrderTotal(part.order, part.quote);
+      if (partTotal === null) continue;
+      const cost = previous.cost + partTotal;
       if (!Number.isSafeInteger(cost)) continue;
       const plan = { cost, parts: [...previous.parts, part] }, old = layer.get(sum + n);
       if (!old || better(plan, old)) layer.set(sum + n, plan);
@@ -22795,14 +22880,17 @@ async function quantityOrderPartitions(base, atomic, postcode, limited) {
 }
 async function combineOrderQuotes(base, parts, postcode) {
   const cost = fee(parts), quotes = [base.quote, ...parts.map((p) => p.quote)];
-  if (parts.length < 2 || !Number.isSafeInteger(cost) || cost >= base.quote.costGrosze || quotes.some((q) => !currentDeliveryQuote(q, postcode)) || !preservesOrderPackages(base.order, parts)) return base.quote;
-  const orders = parts.map((p) => ({ materialsGrosze: p.order.materialsGrosze, lines: p.order.lines, quote: p.quote })), digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ wholeOrderEvidence: base.quote.evidenceSha256, orders })));
+  const baseTotal = quotedOrderTotal(base.order, base.quote), totals = parts.map((p) => quotedOrderTotal(p.order, p.quote));
+  if (parts.length < 2 || baseTotal === null || totals.some((n) => n === null) || !Number.isSafeInteger(cost) || totals.reduce((n, p) => n + (p ?? Infinity), 0) >= baseTotal || quotes.some((q) => !currentDeliveryQuote(q, postcode)) || !preservesOrderPackages(base.order, parts)) return base.quote;
+  const orders = parts.map((p) => ({ materialsGrosze: quotedMaterialsGrosze(p.order, p.quote), lines: p.order.lines, quote: p.quote })), cartPricing = combineCartPricing(base.order, parts), digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ wholeOrderEvidence: base.quote.evidenceSha256, orders, cartPricing })));
   const postal = quotes.some((q) => q.destinationScope === "postal_code");
   return {
     ...base.quote,
     costGrosze: cost,
     orders,
-    singleOrderCostGrosze: base.quote.costGrosze,
+    cartPricing,
+    singleOrderCostGrosze: cost < base.quote.costGrosze ? base.quote.costGrosze : void 0,
+    singleOrderTotalGrosze: baseTotal,
     carrier: [...new Set(parts.map((p) => p.quote.carrier))].join(" + "),
     payment: [...new Set(parts.map((p) => p.quote.payment))].join(" + "),
     checkedAt: new Date(Math.min(...quotes.map((q) => Date.parse(q.checkedAt)))).toISOString(),
@@ -22899,7 +22987,7 @@ function withOrderPartitions(atomic, limited) {
     if ("reason" in base && base.reason === "requires_separate_dispatch" && order.store === "Sewera" && count >= 2 && order.lines.every((line2) => line2.packages.length === 1)) {
       return quoteRequiredDispatch(order, base, atomic, postcode, limited);
     }
-    if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !base.quote.costGrosze || !count) return base;
+    if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !base.quote.costGrosze && !supportsCartPricing(order.store) || !count || quotedMaterialsGrosze(order, base.quote) === null) return base;
     if (base.quote.materialsRoundingGrosze !== void 0) {
       if (count > 1 || order.lines.some((l) => l.packages.some((p) => p.count > 1))) limited();
       return base;
@@ -22923,7 +23011,7 @@ function withOrderPartitions(atomic, limited) {
       const basket = make(indices);
       try {
         const result = await atomic(basket, postcode);
-        if ("quote" in result && !result.quote.orders && currentDeliveryQuote(result.quote, postcode)) return quantityOrderPartitions({ order: basket, quote: result.quote }, atomic, postcode, limited);
+        if ("quote" in result && !result.quote.orders && currentDeliveryQuote(result.quote, postcode) && quotedMaterialsGrosze(basket, result.quote) !== null) return quantityOrderPartitions({ order: basket, quote: result.quote }, atomic, postcode, limited);
         if (!("reason" in result) || !["no_home_delivery", "product_unavailable", "purchase_rules_changed"].includes(result.reason)) limited();
       } catch {
         limited();
@@ -22931,7 +23019,7 @@ function withOrderPartitions(atomic, limited) {
       return null;
     };
     let best = [{ order, quote: base.quote }];
-    const fee2 = (parts) => parts.reduce((n, p) => n + p.quote.costGrosze, 0);
+    const total = (parts) => parts.reduce((n, p) => n + (quotedOrderTotal(p.order, p.quote) ?? Infinity), 0);
     if (count <= 5) {
       const all = (1 << count) - 1, parts = /* @__PURE__ */ new Map([[all, best]]);
       const masks = [.../* @__PURE__ */ new Set([...Array.from({ length: count }, (_, i) => 1 << i), ...Array.from({ length: count }, (_, i) => all ^ 1 << i), ...Array.from({ length: all - 1 }, (_, i) => i + 1)])];
@@ -22950,7 +23038,7 @@ function withOrderPartitions(atomic, limited) {
           const rest = solve(mask ^ sub);
           if (!rest) continue;
           const candidate = [...parts.get(sub), ...rest];
-          if (!chosen || fee2(candidate) < fee2(chosen) || fee2(candidate) === fee2(chosen) && candidate.length < chosen.length) chosen = candidate;
+          if (!chosen || total(candidate) < total(chosen) || total(candidate) === total(chosen) && candidate.length < chosen.length) chosen = candidate;
         }
         memo.set(mask, chosen);
         return chosen;
@@ -22960,11 +23048,11 @@ function withOrderPartitions(atomic, limited) {
       limited();
       for (let i = 0; i < Math.min(count, 8); i++) {
         const one16 = await read([i]), rest = await read(Array.from({ length: count }, (_, j) => j).filter((j) => j !== i));
-        if (one16 && rest && fee2([...one16, ...rest]) < fee2(best)) best = [...one16, ...rest];
+        if (one16 && rest && total([...one16, ...rest]) < total(best)) best = [...one16, ...rest];
       }
     }
-    const costGrosze = fee2(best);
-    if (best.length < 2 || costGrosze >= base.quote.costGrosze || !Number.isSafeInteger(costGrosze) || best.some((part) => !currentDeliveryQuote(part.quote, postcode)) || best.reduce((n, p) => n + p.order.materialsGrosze, 0) !== order.materialsGrosze) return base;
+    const costGrosze = total(best);
+    if (best.length < 2 || costGrosze >= quotedOrderTotal(order, base.quote) || !Number.isSafeInteger(costGrosze) || best.some((part) => !currentDeliveryQuote(part.quote, postcode)) || best.reduce((n, p) => n + p.order.materialsGrosze, 0) !== order.materialsGrosze) return base;
     return { quote: await combineOrderQuotes(full, best, postcode) };
   };
 }
@@ -23358,13 +23446,12 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
         const key = keys[cursor++], order = unique.get(key);
         try {
           const outcome = await quoteBasket(order, settings.postalCode);
-          const rounding = "quote" in outcome ? outcome.quote.materialsRoundingGrosze ?? 0 : 0;
-          const packCount = order.lines.reduce((n, l) => n + l.packages.reduce((s, p) => s + p.count, 0), 0);
-          if ("quote" in outcome && Number.isSafeInteger(rounding) && Math.abs(rounding) <= packCount && order.materialsGrosze + rounding > 0 && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && (outcome.quote.destinationScope === "PL" || outcome.quote.postalCode === settings.postalCode) && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
+          const materials = "quote" in outcome ? quotedMaterialsGrosze(order, outcome.quote) : null;
+          if ("quote" in outcome && materials !== null && Number.isSafeInteger(materials + outcome.quote.costGrosze) && Number.isSafeInteger(outcome.quote.costGrosze) && outcome.quote.costGrosze >= 0 && (outcome.quote.destinationScope === "PL" || outcome.quote.postalCode === settings.postalCode) && Date.parse(outcome.quote.expiresAt) > now.getTime() && Date.parse(outcome.quote.checkedAt) <= Date.now()) {
             order.deliveryGrosze = outcome.quote.costGrosze;
             order.quote = outcome.quote;
             order.deliveryMinimumGrosze = outcome.quote.costGrosze;
-            order.materialsGrosze += rounding;
+            order.materialsGrosze = materials;
             order.totalGrosze = order.materialsGrosze + outcome.quote.costGrosze;
             order.source = "retailer";
           } else {
@@ -23382,12 +23469,12 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   const confirmedUpperBound = Math.min(...candidates.flatMap((orders) => orders.every((order) => order.quote && order.totalGrosze !== null && Date.parse(order.quote.expiresAt) > Date.now()) ? [orders.reduce((sum, order) => sum + order.totalGrosze, 0)] : []));
   const canStillWin = new Set(candidates.filter((orders) => {
     if (!Number.isFinite(confirmedUpperBound)) return true;
-    const optimisticMaterials = orders.reduce((sum, order) => sum + order.materialsGrosze - order.lines.reduce((packs, line2) => packs + line2.packages.reduce((count, pack) => count + pack.count, 0), 0), 0);
+    const optimisticMaterials = orders.reduce((sum, order) => sum + (supportsCartPricing(order.store) && !order.quote ? 0 : order.materialsGrosze - order.lines.reduce((packs, line2) => packs + line2.packages.reduce((count, pack) => count + pack.count, 0), 0)), 0);
     return optimisticMaterials <= confirmedUpperBound;
   }).flatMap((orders) => orders.map(signature)));
   await quoteKeys(ordered.map(([key]) => key).filter((key) => !priority.has(key) && canStillWin.has(key)));
   for (const order of unique.values()) if (order.quote && Date.parse(order.quote.expiresAt) <= Date.now()) {
-    order.materialsGrosze -= order.quote.materialsRoundingGrosze ?? 0;
+    order.materialsGrosze = order.quote.cartPricing?.baseMaterialsGrosze ?? order.materialsGrosze - (order.quote.materialsRoundingGrosze ?? 0);
     delete order.quote;
     order.deliveryGrosze = null;
     order.deliveryMinimumGrosze = 0;
@@ -23396,7 +23483,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
     failures.set(order.store, "quote_expired");
   }
   const baskets = candidates.map((orders) => {
-    const actual = orders.map((o) => unique.get(signature(o)));
+    const actual = orders.map((o) => applyCartPrices(unique.get(signature(o))));
     const materialsGrosze = actual.reduce((sum, o) => sum + o.materialsGrosze, 0);
     const deliveryGrosze = actual.every((o) => o.deliveryGrosze !== null) ? actual.reduce((sum, o) => sum + o.deliveryGrosze, 0) : null;
     return {
@@ -23500,6 +23587,7 @@ async function quoteThroughRelay(order, postalCode, fetchImpl = fetch, secret = 
   if ("quote" in result) {
     const receipt = Date.now(), checked = Date.parse(result.quote?.checkedAt), expires = Date.parse(result.quote?.expiresAt), duration3 = expires - checked;
     if (result.quote?.postalCode !== postalCode || result.quote?.destinationScope !== "postal_code" || !Number.isSafeInteger(result.quote.costGrosze) || result.quote.costGrosze < 0 || !Number.isFinite(checked) || !Number.isFinite(expires) || expires <= receipt || checked > receipt + 5e3 || duration3 <= 0 || duration3 > 6e5) throw Error("quote_unavailable");
+    if (result.quote.cartPricing !== void 0 && quotedMaterialsGrosze(order, result.quote) === null) throw Error("quote_unavailable");
     if (checked > receipt) {
       result.quote = { ...result.quote, checkedAt: new Date(receipt).toISOString(), expiresAt: new Date(expires - (checked - receipt)).toISOString() };
     }
@@ -25708,12 +25796,13 @@ function money4(value2, formatted) {
   if (n === null || !Number.isSafeInteger(n) || n < 0 || formatted !== void 0 && (typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted) || parsePriceToGrosze(formatted.replace(/\s*zł$/, "")) !== n)) throw Error("invalid_money");
   return n;
 }
-function confirmIdosellBasket(response, expected, materialsGrosze) {
+function inspectBasket(response, expected, materialsGrosze, discounts) {
   const basket = response?.basket;
   if (response?.error || response?.errors?.length || !basket || basket.error || basket.errors?.length || basket.shipping_exists !== true || basket.currency !== "PLN" || basket.total_deposit !== 0 || basket.total_deposit_net !== 0 || !Array.isArray(basket.products) || basket.products.length !== expected.length || !expected.length) throw Error("basket_not_confirmed");
   const remaining = new Map(expected.map((wanted) => [String(wanted.source.productId), wanted]));
   if (remaining.size !== expected.length) throw Error("invalid_basket");
-  let total = 0, count = 0;
+  let total = 0, base = 0, count = 0;
+  const lines = [];
   for (const row of basket.products) {
     const wanted = remaining.get(row?.id);
     if (!wanted || row.size !== "uniw" || row.price_unit !== wanted.source.apiPurchaseUnit || row.worth_unit !== wanted.source.apiPurchaseUnit || row.name !== wanted.source.name || new URL(row.link, wanted.source.url).href !== wanted.source.url || row.bonus !== "n" || row.product_type !== "product_item" || row.bundle !== 0 || !Array.isArray(row.bundled) || row.bundled.length || row.subscription_period !== "0") throw Error("basket_not_confirmed");
@@ -25721,13 +25810,27 @@ function confirmIdosellBasket(response, expected, materialsGrosze) {
     if (wanted.count > row.reservation_stocksown) throw Error("insufficient_stock");
     if (row.count !== wanted.count) throw Error("basket_not_confirmed");
     if (typeof row.prices?.gros_formatted !== "string" || typeof row.prices?.worth_gros_formatted !== "string") throw Error("basket_not_confirmed");
-    if (money4(row.prices?.gros, row.prices?.gros_formatted) !== wanted.price || money4(row.prices?.worth_gros, row.prices?.worth_gros_formatted) !== wanted.count * wanted.price) throw Error("price_changed");
-    total += wanted.count * wanted.price;
+    const price2 = money4(row.prices?.gros, row.prices?.gros_formatted), worth = money4(row.prices?.worth_gros, row.prices?.worth_gros_formatted);
+    if (!Number.isSafeInteger(wanted.price) || wanted.price <= 0 || !Number.isSafeInteger(wanted.count) || wanted.count < 1 || price2 <= 0 || price2 > wanted.price || worth !== wanted.count * price2 || !Number.isSafeInteger(worth)) throw Error("price_changed");
+    if (price2 !== wanted.price) {
+      if (!discounts || wanted.source.store !== "ABUD" || money4(row.prices?.base_price) < price2) throw Error("price_changed");
+    }
+    lines.push({ offerId: wanted.source.id, count: wanted.count, baseUnitPriceGrosze: wanted.price, unitPriceGrosze: price2, lineCostGrosze: worth });
+    total += worth;
+    base += wanted.count * wanted.price;
     count += wanted.count;
     remaining.delete(row.id);
   }
-  if (remaining.size || !Number.isSafeInteger(total) || total !== materialsGrosze || money4(basket.worth) !== total || basket.productsNumber !== count) throw Error("basket_not_confirmed");
-  return basket;
+  if (remaining.size || !Number.isSafeInteger(total) || !Number.isSafeInteger(base) || base !== materialsGrosze || money4(basket.worth) !== total || basket.productsNumber !== count) throw Error("basket_not_confirmed");
+  const cartPricing = total < base ? { currency: "PLN", baseMaterialsGrosze: base, materialsGrosze: total, discountGrosze: base - total, lines } : void 0;
+  return { basket, cartPricing };
+}
+function confirmIdosellBasket(response, expected, materialsGrosze) {
+  return inspectBasket(response, expected, materialsGrosze, false).basket;
+}
+function confirmAbudCartPrices(response, expected, materialsGrosze) {
+  if (expected.some((p) => p.source.store !== "ABUD" || new URL(p.source.url).origin !== "https://www.abud.pl")) throw Error("invalid_basket");
+  return inspectBasket(response, expected, materialsGrosze, true);
 }
 
 // artifacts/api-server/src/lib/chemia-delivery.ts
@@ -26778,10 +26881,11 @@ async function quoteAbud(order, postalCode, fetchImpl) {
   confirmAbudDestination(destination);
   let added;
   for (const row of expected) added = await client.abud("add", { productId: row.source.productId, count: row.count });
-  const basket = confirmIdosellBasket(added, expected, order.materialsGrosze);
+  const { basket, cartPricing } = confirmAbudCartPrices(added, expected, order.materialsGrosze);
   const shipping = await client.abud("shipping"), best = selectAbudHomeRate(shipping), now = /* @__PURE__ */ new Date();
   return { quote: {
     ...best,
+    ...cartPricing ? { cartPricing } : {},
     checkedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + 6e5).toISOString(),
     sourceUrl: ORIGIN7 + "/basketedit.php",
