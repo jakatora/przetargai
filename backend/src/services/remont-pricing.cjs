@@ -27488,6 +27488,34 @@ var RetailPriceHistory = class {
   }
 };
 
+// artifacts/api-server/src/lib/catalog-availability.ts
+function catalogAvailability(sources, offers, observations, now = Date.now()) {
+  const products = /* @__PURE__ */ new Map();
+  let expiresAt = now + 3e4;
+  for (const offer of offers) {
+    const source = sources.find((s) => s.id === offer.id), observed = observations.get(offer.id);
+    if (!source || source.disabledReason || source.pickupOnly || !observed || !isComparableOffer(offer, now)) continue;
+    const code = retailComparableEan(source), ean = /^\d{13}$/.test(code) ? code : null;
+    if (ean === null && !source.skuIdentity) continue;
+    const merchantIdentity = ean === null ? { productId: retailProductId(source), name: retailProductName(source), url: source.url } : void 0;
+    const key = JSON.stringify([ean ?? merchantIdentity.productId, merchantIdentity?.url, source.category, source.packageSize, source.unit]);
+    let product = products.get(key);
+    if (!product) {
+      product = { ean, ...merchantIdentity ? { merchantIdentity } : {}, category: source.category, packageSize: source.packageSize, unit: source.unit, stores: [], lastCheckedAt: observed.observedAt };
+      products.set(key, product);
+    }
+    if (!product.stores.includes(source.store)) product.stores.push(source.store);
+    if (Date.parse(observed.observedAt) > Date.parse(product.lastCheckedAt)) product.lastCheckedAt = observed.observedAt;
+    expiresAt = Math.min(
+      expiresAt,
+      offer.fetchedAt.getTime() + MAX_COMPARABLE_OFFER_AGE_MS,
+      observed.validUntil ? Date.parse(observed.validUntil) : Infinity,
+      offer.verification ? Date.parse(offer.verification.expiresAt) : Infinity
+    );
+  }
+  return { version: 1, complete: true, channel: "online", currency: "PLN", deliveryIncluded: false, generatedAt: new Date(now).toISOString(), maxAgeMs: Math.max(0, Math.floor(expiresAt - now)), products: [...products.values()] };
+}
+
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
@@ -27719,6 +27747,10 @@ function createRemontService(options = {}) {
   });
   router.get("/pricing/health", (_req, res) => {
     res.json(status());
+  });
+  router.get("/pricing/catalog-availability", (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json(catalogAvailability(RETAIL_SOURCES, catalog().offers, observations));
   });
   async function handleEstimate(req, res) {
     const stageOnly = req.path.endsWith("/stage");
