@@ -11,6 +11,7 @@ import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
 import { opisBrakuPrzypomnienia, opisTerminu } from '../lib/termin';
 import { ScoreBadge } from '../components/MatchCard';
+import { znacznikKryteriow } from '../lib/kryteriaOceny';
 import StatusPicker from '../components/StatusPicker';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
 import { uruchomSciezkeOdwolania } from '../lib/orkiestratorOdwolania';
@@ -97,6 +98,7 @@ export default function SavedScreen({ navigation }) {
     const termin = opisTerminu(tender.deadline);
     const maTermin = !!tender.deadline && !termin.minal;
     const brakPrzypomnienia = opisBrakuPrzypomnienia(tender.deadline);
+    const kryteria = znacznikKryteriow(tender);
     return (
       // Karta to zwykły View: NAWIGUJE tylko górny wiersz. Gdyby cała karta była
       // Pressable, przełącznik przypomnienia (na web) otwierałby szczegóły.
@@ -115,6 +117,11 @@ export default function SavedScreen({ navigation }) {
             <Text style={[styles.znacznik, termin.minal && styles.miniony, termin.pilny && styles.pilny]}>
               {termin.etykieta}
             </Text>
+            {kryteria ? (
+              <Text style={[styles.kryteria, !kryteria.tylkoCena && styles.kryteriaPozacenowe]} numberOfLines={1}>
+                {t(kryteria.pl, kryteria.en)}
+              </Text>
+            ) : null}
           </View>
           <Pressable accessibilityRole="button" onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
             <Text style={[styles.gwiazdkaZnak, { color: kolory.blue }]}>★</Text>
@@ -227,6 +234,8 @@ const tworzStyleZapisanych = tworzStyle((k) => ({
   znacznik: { marginTop: spacing.xs, fontSize: 12, fontWeight: '700', color: k.textMuted },
   pilny: { color: k.ostrzezenieTekst },
   miniony: { color: k.danger },
+  kryteria: { marginTop: spacing.xs, fontSize: 12, fontWeight: '700', color: k.textMuted },
+  kryteriaPozacenowe: { color: k.blue },
   gwiazdka: { padding: 2 },
   gwiazdkaZnak: { fontSize: 22, lineHeight: 24, fontWeight: '700' },
   etapBlok: {
