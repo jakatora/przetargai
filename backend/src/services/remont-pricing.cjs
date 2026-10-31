@@ -23616,7 +23616,7 @@ var relaySecretValid = (secret) => typeof secret === "string" && /^[a-f0-9]{64}$
 
 // artifacts/api-server/src/lib/quote-relay-client.ts
 function quoteRelayEnabled(store) {
-  return process.env.REMONT_QUOTE_RELAY_MODE === "client" && ["ABUD", "ChemiaDoParkietu25"].includes(store) && relaySecretValid(process.env.REMONT_QUOTE_RELAY_SECRET);
+  return process.env.REMONT_QUOTE_RELAY_MODE === "client" && ["ABUD", "ChemiaDoParkietu25", "eTak"].includes(store) && relaySecretValid(process.env.REMONT_QUOTE_RELAY_SECRET);
 }
 async function requestRelay(payload, fetchImpl, secret) {
   if (!relaySecretValid(secret)) throw Error("invalid_basket");
@@ -23648,12 +23648,13 @@ async function requestRelay(payload, fetchImpl, secret) {
   return data.result;
 }
 async function quoteThroughRelay(order, postalCode, fetchImpl = fetch, secret = process.env.REMONT_QUOTE_RELAY_SECRET) {
-  if (!["ABUD", "ChemiaDoParkietu25"].includes(order.store) || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
+  if (!["ABUD", "ChemiaDoParkietu25", "eTak"].includes(order.store) || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
   const result = await requestRelay({ version: 1, action: "quote", basket: order, postalCode }, fetchImpl, secret);
   if ("quote" in result) {
     const receipt = Date.now(), checked = Date.parse(result.quote?.checkedAt), expires = Date.parse(result.quote?.expiresAt), duration3 = expires - checked;
     if (result.quote?.postalCode !== postalCode || result.quote?.destinationScope !== "postal_code" || !Number.isSafeInteger(result.quote.costGrosze) || result.quote.costGrosze < 0 || !Number.isFinite(checked) || !Number.isFinite(expires) || expires <= receipt || checked > receipt + 5e3 || duration3 <= 0 || duration3 > 6e5) throw Error("quote_unavailable");
-    if (result.quote.cartPricing !== void 0 && quotedMaterialsGrosze(order, result.quote) === null) throw Error("quote_unavailable");
+    if ((result.quote.cartPricing !== void 0 || result.quote.materialsRoundingGrosze !== void 0) && quotedMaterialsGrosze(order, result.quote) === null) throw Error("quote_unavailable");
+    if (order.store === "eTak" && (result.quote.sourceUrl !== "https://etak.eu/pl/basketedit.html" || result.quote.basis !== "retailer_basket_postcode" || !Number.isSafeInteger(result.quote.materialsRoundingGrosze) || result.quote.cartPricing !== void 0)) throw Error("quote_unavailable");
     if (checked > receipt) {
       result.quote = { ...result.quote, checkedAt: new Date(receipt).toISOString(), expiresAt: new Date(expires - (checked - receipt)).toISOString() };
     }
