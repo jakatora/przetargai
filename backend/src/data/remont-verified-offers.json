@@ -4233,5 +4233,33 @@
     "sourceUrl": "https://hipper.pl/puszka-podtynkowa-60-mm-lux-z-wkretami-elektro-plast-956340465",
     "evidenceSha256": "aa6ba5af4158d26b781100c25c5fe67cb9ed454f01f7bf27d99438c7e3c1769a",
     "validUntil": null
+  },
+  {
+    "sourceId": "hipper-norgips-metal-paper-50x30",
+    "ean": "5907651699940",
+    "name": "Taśma papierowa z wkładką metalową 50 mm Norgips",
+    "stockPackages": 57,
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|F2DBF33D-6B74-4EA1-96C8-6B552C5E2730|1/Taśma papierowa z wkładką metalową 50 mm Norgips.webp",
+    "priceGrosze": 9699,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T15:54:35.378Z",
+    "sourceUrl": "https://hipper.pl/tasma-papierowa-z-wkladka-metalowa-50-mm-norgips-2682508803",
+    "evidenceSha256": "e95e9364ef1edbd4c7ca6acd9d9e2824840e098fc080dfdb94668b7c63687527",
+    "validUntil": null
+  },
+  {
+    "sourceId": "hipper-norgips-mesh-45x153",
+    "ean": "5907651699995",
+    "name": "Taśma samoprzylepna z włókna szklanego 45 mm Norgips",
+    "stockPackages": 7,
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|9837026A-D482-48CC-9F75-C4F4177FF3E5|1/Taśma samoprzylepna z włókna szklanego 45 mm Norgips.webp",
+    "priceGrosze": 2299,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T15:54:38.353Z",
+    "sourceUrl": "https://hipper.pl/tasma-samoprzylepna-z-wlokna-szklanego-45-mm-norgips-2682509844",
+    "evidenceSha256": "13ee51d68d3fd86ff46bfcdf0d31e457c355c2be2cb3322ca1377c555914feaf",
+    "validUntil": null
   }
 ]
