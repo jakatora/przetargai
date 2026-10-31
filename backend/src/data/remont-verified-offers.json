@@ -3811,5 +3811,31 @@
     "sourceUrl": "https://dekoratormarket.pl/arbiton-secura-thermo-aquastop-smart-podklad-pod-panele-6m2-p-1367.html",
     "evidenceSha256": "99ba6b780841c498eeb48d46db97f3ffdc8b35f47c256f2b439eb26e035104e3",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-rigips-hanger-es6075",
+    "ean": "5905637101074",
+    "name": "Wieszak ES 60/75 prosty Rigips",
+    "imageUrl": "https://sklep.sewera.pl/photo/25090/wieszak-es-6075-prosty-rigips.webp",
+    "priceGrosze": 138,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T05:30:51.496Z",
+    "sourceUrl": "https://sklep.sewera.pl/wieszak-es-6075-prosty-rigips-p13734",
+    "evidenceSha256": "97a407b10ba60bfbd9b696b15a1d4fdc5d3595e7ae1d375ee1324be9a89f0fb8",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-rigips-hanger-es60125",
+    "ean": "5905637101081",
+    "name": "Wieszak ES 60/125 prosty Rigips",
+    "imageUrl": "https://sklep.sewera.pl/photo/25075/wieszak-es-60125-prosty-rigips.webp",
+    "priceGrosze": 175,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T05:31:02.758Z",
+    "sourceUrl": "https://sklep.sewera.pl/wieszak-es-60125-prosty-rigips-p7413",
+    "evidenceSha256": "56274e8498c4aafcef146ef1c222a9520ad6b684699140b239f4126a74fa42f6",
+    "validUntil": null
   }
 ]
