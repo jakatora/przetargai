@@ -3798,5 +3798,18 @@
     "evidenceSha256": "84acc83e7bf47796c6b8828309f8a62d72f35d6f21354fc321c37e93a1e8719f",
     "validUntil": null,
     "stockPackages": 4
+  },
+  {
+    "sourceId": "dekorator-arbiton-secura-thermo-6m2",
+    "ean": "5905167826942",
+    "name": "ARBITON SECURA THERMO AQUASTOP SMART podkład pod panele 6m2",
+    "imageUrl": "https://dekoratormarket.pl/images/securathermominia.png",
+    "priceGrosze": 4150,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T05:08:25.565Z",
+    "sourceUrl": "https://dekoratormarket.pl/arbiton-secura-thermo-aquastop-smart-podklad-pod-panele-6m2-p-1367.html",
+    "evidenceSha256": "99ba6b780841c498eeb48d46db97f3ffdc8b35f47c256f2b439eb26e035104e3",
+    "validUntil": null
   }
 ]
