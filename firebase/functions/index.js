@@ -573,7 +573,8 @@ export const benchmarkPrzelicz = onSchedule(
     schedule: '40 3 * * *',
     timeZone: 'Europe/Warsaw',
     timeoutSeconds: 1800,
-    memory: '512MiB',
+    // 1 GiB: benchmark z roku rynku (do 200 tys. rozstrzygnięć w pamięci, 2026-10-31).
+    memory: '1GiB',
     secrets: [JWT_SECRET],
   },
   async () => {

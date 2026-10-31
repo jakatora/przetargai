@@ -2299,9 +2299,11 @@ export const rozstrzygniecia = {
    * się z ułamka rynku — po cichu, bo strona wraca pełna i bez błędu.
    * Stąd drugi klucz sortowania po identyfikatorze dokumentu.
    */
-  async strona({ od = null, limit = 500, kursor = null } = {}) {
+  async strona({ od = null, limit = 500, kursor = null, pola = null } = {}) {
     let q = db().collection('rozstrzygniecia');
     if (od) q = q.where('opublikowano', '>=', od);
+    // Tylko potrzebne pola (benchmark z roku rynku, 2026-10-31): mniej pamięci i transferu, ten sam koszt odczytu.
+    if (Array.isArray(pola) && pola.length) q = q.select(...new Set([...pola, 'opublikowano']));
     q = q.orderBy('opublikowano', 'desc').orderBy(FieldPath.documentId(), 'desc');
     if (kursor?.opublikowano) q = q.startAfter(kursor.opublikowano, kursor.id);
     const snap = await q.limit(limit).get();

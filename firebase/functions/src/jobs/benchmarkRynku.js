@@ -34,7 +34,14 @@ const STRONA = 500;
  * (`ucietySufit`), żeby dało się je zobaczyć, zamiast domyślać się z rachunku.
  * Czytamy od najnowszych, więc ucięcie traci najstarsze obserwacje.
  */
-export const MAKS_ROZSTRZYGNIEC = 30_000;
+export const MAKS_ROZSTRZYGNIEC = 200_000;
+
+/*
+ * 31.10.2026: sufit 30 tys. przy ~1000 rozstrzygnięć dziennie (BZP + TED) to był ledwie miesiąc rynku —
+ * po wstecznym zasileniu roku benchmark i tak liczyłby się z ostatnich tygodni. 200 tys. = rok;
+ * odczyt tylko potrzebnych pól (`POLA_ODCZYTU`) i 1 GiB pamięci funkcji. Koszt: ~200 tys. odczytów/dobę.
+ */
+export const POLA_ODCZYTU = ['zrodlo', 'zamawiajacy', 'zamawiajacyNip', 'zamawiajacy_nip', 'cpv', 'wojewodztwo', 'czesci'];
 
 /**
  * Ile czasu wolno zużyć na czytanie kolekcji, zanim przejdziemy do zapisu.
@@ -43,7 +50,7 @@ export const MAKS_ROZSTRZYGNIEC = 30_000;
  * ginie CAŁA i po cichu. Lepiej policzyć benchmark z części okna i zapisać, niż
  * stracić wszystko — a `probka` w każdym kubełku i tak mówi, z czego powstał.
  */
-const BUDZET_ODCZYTU_MS = 900_000;
+const BUDZET_ODCZYTU_MS = 1_200_000;
 
 /**
  * @param {{dni?: number, budzetMs?: number, teraz?: number, strona?: number}} [opts]
@@ -72,7 +79,7 @@ export async function runBenchmarkRynku({
       logger.warn({ przeczytane }, 'benchmark: budżet odczytu wyczerpany — liczę z tego, co mam');
       break;
     }
-    const { pozycje, kursor: nastepny, koniec } = await rozstrzygniecia.strona({ od, limit: strona, kursor });
+    const { pozycje, kursor: nastepny, koniec } = await rozstrzygniecia.strona({ od, limit: strona, kursor, pola: POLA_ODCZYTU });
     stronPrzeczytanych += 1;
     przeczytane += pozycje.length;
     for (const pozycja of pozycje) {
