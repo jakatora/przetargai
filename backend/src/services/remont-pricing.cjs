@@ -20296,6 +20296,10 @@ var AnonymousShop = class {
         }
         continue;
       }
+      if (r.status === 429) {
+        await r.body?.cancel();
+        throw Error("retailer_rate_limited");
+      }
       if (!r.ok && !(magentoErrors && this.origin === "https://sklep-kowalczyk.pl" && r.status === 400)) {
         await r.body?.cancel();
         throw Error("retailer_unavailable");
