@@ -23094,7 +23094,7 @@ async function quoteDekorator(order, fetchImpl) {
   await client.dekorator("country", token(cartJs, "zmiana_kraju"));
   const shipment = JSON.parse(await client.dekorator("shipping", token(cartJs, "zmiana_wysylki")));
   const payment = JSON.parse(await client.dekorator("payment", token(cartJs, "zmiana_platnosci")));
-  if (typeof shipment?.podsumowanie !== "string" || typeof payment?.podsumowanie !== "string" || payment.kupon !== "nie") throw Error("basket_not_confirmed");
+  if (shipment?.przycisk_zamow !== true || shipment.kupon !== "nie" || typeof shipment.podsumowanie !== "string" || typeof payment?.podsumowanie !== "string" || payment.kupon !== "nie") throw Error("basket_not_confirmed");
   const cart = await client.text("/koszyk.html"), costGrosze = confirmDekoratorCart(cart, pack.count, pack.unitPriceGrosze);
   if (confirmDekoratorSummary(shipment.podsumowanie, order.materialsGrosze) !== costGrosze || confirmDekoratorSummary(payment.podsumowanie, order.materialsGrosze) !== costGrosze) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
