@@ -12,7 +12,23 @@ export const MIN_CZESCI_Z_UMOWA = 3;
 export const TOP_ZWYCIEZCOW = 5;
 export const OSTATNICH = 5;
 
-const normNazwa = (s) => String(s ?? '').toLowerCase().replace(/["„”'’]/g, '').replace(/\b(sp\.?\s*z\s*o\.?\s*o\.?|spółka z ograniczoną odpowiedzialnością|s\.?a\.?|sp\.?\s*k\.?|sp\.?\s*j\.?)\b/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+/*
+ * Nazwa wykonawcy do wyświetlenia (produkcja 31.10): BZP bywa, że wpisuje adres w pole nazwy —
+ * „MICRONE Sp. z o.o. pl. Strzelecki 20 50-224 Wrocław”. Ucinamy od ulicy/placu/alei albo kodu pocztowego.
+ */
+export function czystaNazwaWykonawcy(nazwa) {
+  const s = String(nazwa ?? '').replace(/\s+/g, ' ').trim();
+  const ciecie = s.search(/,?\s+(ul\.|ulica|pl\.|plac|al\.|aleja|os\.|osiedle)\s|,?\s+\d{2}-\d{3}\b/i);
+  const wynik = (ciecie > 3 ? s.slice(0, ciecie) : s).replace(/[,;\s]+$/, '');
+  return wynik || s;
+}
+
+/** Klucz porównania nazw: bez formy prawnej, cudzysłowów i interpunkcji (ta sama firma raz z NIP-em, raz bez). */
+export function normNazwa(s) {
+  return czystaNazwaWykonawcy(s).toLowerCase().replace(/["„”'’]/g, '')
+    .replace(/spółka z ograniczoną odpowiedzialnością|spółka komandytowa|spółka jawna|spółka cywilna|spółka akcyjna|sp\.?\s*z\s*o\.?\s*o\.?|sp\.?\s*k\.?|sp\.?\s*j\.?|s\.?\s*c\.?|s\.?\s*a\.?/g, ' ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
 
 /**
  * @param {object[]} wyniki rozstrzygnięcia jednego zamawiającego (dowolna kolejność)
@@ -24,6 +40,9 @@ const normNazwa = (s) => String(s ?? '').toLowerCase().replace(/["„”'’]/g,
 export function ktoWygrywa(wyniki) {
   const lista = (Array.isArray(wyniki) ? wyniki : []).filter(Boolean);
   const grupy = new Map();
+  // Jedna grupa na firmę: po NIP-ie ALBO po znormalizowanej nazwie (ta sama firma bywa raz z NIP-em, raz bez).
+  const poNip = new Map();
+  const poNazwie = new Map();
   const zrodla = new Set();
   let czesciZUmowa = 0;
   let uniewaznione = 0;
@@ -43,13 +62,20 @@ export function ktoWygrywa(wyniki) {
       const z = c?.zwyciezca;
       if (!z?.nazwa) continue;
       czesciZUmowa++;
-      const klucz = z.nip ? `nip:${String(z.nip).replace(/\D/g, '') || z.nip}` : `nazwa:${normNazwa(z.nazwa)}`;
-      if (!grupy.has(klucz)) grupy.set(klucz, { nazwa: z.nazwa, nip: z.nip ?? null, wygrane: 0, wartosc: 0, maKwote: false, maly: null, ostatnio: null });
-      const g = grupy.get(klucz);
+      const nip = z.nip ? String(z.nip).replace(/\D/g, '') || String(z.nip) : null;
+      const nazwaKlucz = normNazwa(z.nazwa);
+      let g = (nip && poNip.get(nip)) || poNazwie.get(nazwaKlucz) || null;
+      if (!g) {
+        g = { nazwa: czystaNazwaWykonawcy(z.nazwa), nip: z.nip ?? null, wygrane: 0, wartosc: 0, maKwote: false, maly: null, ostatnio: null };
+        grupy.set(grupy.size, g);
+      }
+      if (nip && !poNip.has(nip)) poNip.set(nip, g);
+      if (nazwaKlucz && !poNazwie.has(nazwaKlucz)) poNazwie.set(nazwaKlucz, g);
+      if (!g.nip && z.nip) g.nip = z.nip;
       g.wygrane++;
       if (c.spojne && Number.isFinite(c.cenaWybrana)) { g.wartosc += c.cenaWybrana; g.maKwote = true; }
       if (c.wygralMaly === true || c.wygralMaly === false) g.maly = c.wygralMaly;
-      if (dzien && (!g.ostatnio || dzien > g.ostatnio)) { g.ostatnio = dzien; g.nazwa = z.nazwa; }
+      if (dzien && (!g.ostatnio || dzien > g.ostatnio)) { g.ostatnio = dzien; g.nazwa = czystaNazwaWykonawcy(z.nazwa); }
     }
   }
 
@@ -61,7 +87,7 @@ export function ktoWygrywa(wyniki) {
     ostatnie.push({
       tytul: w.tytul ?? null,
       opublikowano: w.opublikowano ?? null,
-      zwyciezca: zUmowa?.zwyciezca?.nazwa ?? null,
+      zwyciezca: zUmowa?.zwyciezca?.nazwa ? czystaNazwaWykonawcy(zUmowa.zwyciezca.nazwa) : null,
       cena: zUmowa?.spojne && Number.isFinite(zUmowa.cenaWybrana) ? zUmowa.cenaWybrana : null,
       liczba_ofert: Number.isFinite(zUmowa?.liczbaOfert) ? zUmowa.liczbaOfert : null,
       uniewaznione: czesci.length > 0 && czesci.every((c) => c?.uniewaznione),

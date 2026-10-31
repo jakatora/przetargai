@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ktoWygrywa, MIN_CZESCI_Z_UMOWA } from '../src/lib/ktoWygrywa.js';
+import { ktoWygrywa, MIN_CZESCI_Z_UMOWA, czystaNazwaWykonawcy, normNazwa } from '../src/lib/ktoWygrywa.js';
 
 /*
  * „Kto tu wygrywa” (2026-10-31): zwycięzcy zamawiającego po NIP-ie, kwoty tylko ze spójnych części,
@@ -26,6 +26,21 @@ test('zwycięzcy po NIP-ie (różna pisownia i format NIP to jedna firma), kwoty
   assert.deepEqual(w.zrodla, ['bzp', 'ted']);
   assert.deepEqual(w.ostatnie.map((o) => o.tytul), ['Remont elewacji', 'Remont dachu', 'Drogi'], 'od najnowszego');
   assert.equal(w.ostatnie[0].cena, 300_000);
+});
+
+test('dane z produkcji 31.10: adres w nazwie ucięty; ta sama firma z NIP-em i bez NIP-u to jedna grupa', () => {
+  assert.equal(czystaNazwaWykonawcy('MICRONE Sp. z o.o. pl. Strzelecki 20 50-224 Wrocław'), 'MICRONE Sp. z o.o.');
+  assert.equal(czystaNazwaWykonawcy('Budmax, ul. Polna 3, 35-001 Rzeszów'), 'Budmax');
+  assert.equal(czystaNazwaWykonawcy('PIXEL Centrum Komputerowe Tomasz Dziedzic'), 'PIXEL Centrum Komputerowe Tomasz Dziedzic');
+  assert.equal(normNazwa('ZRD ORFIN SPÓŁKA KOMANDYTOWA'), normNazwa('ZRD Orfin Sp. k.'));
+  const orfinZNip = { nazwa: 'ZRD ORFIN SPÓŁKA KOMANDYTOWA', nip: '6340000000' };
+  const orfinBez = { nazwa: 'ZRD ORFIN SPÓŁKA KOMANDYTOWA', nip: null };
+  const w = ktoWygrywa([
+    { tytul: 'A', opublikowano: '2026-10-01', czesci: [czesc(orfinZNip, { cena: 100 }), czesc(orfinBez, { cena: 200 })] },
+    { tytul: 'B', opublikowano: '2026-10-02', czesci: [czesc(orfinBez, { cena: 300 }), czesc({ nazwa: 'MICRONE Sp. z o.o. pl. Strzelecki 20 50-224 Wrocław', nip: '8990000000' })] },
+  ]);
+  assert.deepEqual(w.zwyciezcy.map((z) => [z.nazwa, z.wygrane, z.nip]), [['ZRD ORFIN SPÓŁKA KOMANDYTOWA', 3, '6340000000'], ['MICRONE Sp. z o.o.', 1, '8990000000']]);
+  assert.equal(w.ostatnie[0].zwyciezca, 'ZRD ORFIN SPÓŁKA KOMANDYTOWA');
 });
 
 test('za mała próbka: brak listy zwycięzców, ale ostatnie rozstrzygnięcia są; całkiem unieważnione oznaczone', () => {
