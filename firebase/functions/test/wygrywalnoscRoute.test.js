@@ -242,3 +242,26 @@ test('GET /wygrywalnosc/tender/:id/kto-wygrywa: zwycięzcy zamawiającego po NIP
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/kto-wygrywa`)).status, 401);
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/nie-ma/kto-wygrywa`, { headers: auth(t) })).status, 404);
 });
+
+test('GET /wygrywalnosc/wykonawca: profil konkurenta z kluczy zapisanych przy rozstrzygnięciu (BZP po NIP-ie, TED po nazwie)', async () => {
+  const t = await konto();
+  const nip = `7${Date.now()}`.slice(-10);
+  const nazwa = `Firma ${ZNAK} Sp. z o.o.`;
+  await rozstrzygniecia.zapiszWiele([
+    { externalId: `pk-${ZNAK}-1`, zrodlo: 'bzp', tytul: 'Remont A', zamawiajacy: 'Gmina A', zamawiajacyNip: '1000000001', opublikowano: '2026-10-01', wojewodztwo: '18',
+      czesci: [{ numer: 1, uniewaznione: false, spojne: true, cenaWybrana: 100_000, liczbaOfert: 3, zwyciezca: { nazwa, nip } }] },
+    { externalId: `pk-${ZNAK}-2`, zrodlo: 'bzp', tytul: 'Remont B', zamawiajacy: 'Gmina B', zamawiajacyNip: '1000000002', opublikowano: '2026-10-05', wojewodztwo: '18',
+      czesci: [{ numer: 1, uniewaznione: false, spojne: true, cenaWybrana: 200_000, liczbaOfert: 5, zwyciezca: { nazwa: 'Ktoś Inny', nip: '2000000002' } }] },
+    { externalId: `pk-${ZNAK}-3`, zrodlo: 'ted', tytul: 'Hala C', zamawiajacy: 'Miasto C', opublikowano: '2026-09-01',
+      czesci: [{ numer: 1, uniewaznione: false, spojne: true, cenaWybrana: 900_000, liczbaOfert: 2, zwyciezca: { nazwa: nazwa.toUpperCase(), nip: null } }] },
+  ]);
+  const odp = await fetch(`${BAZA}/wygrywalnosc/wykonawca?nip=${nip}&nazwa=${encodeURIComponent(nazwa)}`, { headers: auth(t) });
+  assert.equal(odp.status, 200);
+  const p = await odp.json();
+  assert.deepEqual([p.znaleziono, p.wygrane, p.wartosc, p.nip], [true, 2, 1_000_000, nip]);
+  assert.deepEqual(p.ostatnie.map((o) => o.tytul), ['Remont A', 'Hala C']);
+  assert.deepEqual(p.zrodla, ['bzp', 'ted']);
+
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/wykonawca?nip=12`, { headers: auth(t) })).status, 400);
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/wykonawca?nip=${nip}`)).status, 401);
+});

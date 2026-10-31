@@ -4,6 +4,7 @@ import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
 import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia } from '../db/repos.js';
 import { ktoWygrywa } from '../lib/ktoWygrywa.js';
+import { profilKonkurenta, normNip } from '../lib/profilKonkurenta.js';
 import { AppError, badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
 import { features } from '../config.js';
 import { logger } from '../lib/logger.js';
@@ -103,6 +104,24 @@ router.get('/tender/:id/kto-wygrywa', ah(async (req, res) => {
   }
   const wyniki = await rozstrzygniecia.dlaZamawiajacego(nip, { limit: 200 });
   res.json({ dostepne: true, zamawiajacy: tender.organization ?? null, ...ktoWygrywa(wyniki) });
+}));
+
+/*
+ * Profil konkurenta (2026-10-31): co wygrywa jedna firma u wszystkich zamawiających (BZP po NIP-ie,
+ * TED po nazwie). Wejście z karty „Kto wygrywa” — klient dotyka zwycięzcy i widzi jego profil.
+ */
+const wejscieWykonawcy = z.object({
+  nip: z.string().max(20).optional(),
+  nazwa: z.string().trim().max(300).optional(),
+});
+
+router.get('/wykonawca', ah(async (req, res) => {
+  const parsed = wejscieWykonawcy.safeParse(req.query ?? {});
+  const nip = parsed.success ? normNip(parsed.data.nip) : null;
+  const nazwa = parsed.success && parsed.data.nazwa && parsed.data.nazwa.length >= 3 ? parsed.data.nazwa : null;
+  if (!nip && !nazwa) throw badRequest('Podaj NIP wykonawcy (10 cyfr) albo jego nazwę');
+  const wyniki = await rozstrzygniecia.dlaWykonawcy({ nip, nazwa });
+  res.json(profilKonkurenta(wyniki, { nip, nazwa }));
 }));
 
 /*

@@ -1,6 +1,7 @@
 import { API_URL } from '../config';
 import { bladOdpowiedzi, bladSieci } from './errors';
 import { wyslijZLimitem, parametryDlaMetody } from '../lib/zapytanieSieciowe';
+import { parametryProfilu } from '../lib/profilKonkurenta';
 
 let authToken = null;
 let naWygasnieciesesji = null;
@@ -421,6 +422,8 @@ export const api = {
   benchmarkPrzetargu: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}/benchmark`),
   /** „Kto wygrywa u tego zamawiającego” (2026-10-31): najczęstsi zwycięzcy i ostatnie rozstrzygnięcia po NIP-ie zamawiającego. */
   ktoWygrywa: (tenderId) => request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/kto-wygrywa`),
+  /** Profil konkurenta: co firma wygrywa u wszystkich zamawiających (BZP po NIP-ie, TED po nazwie). */
+  profilKonkurenta: (kogo) => request(`/wygrywalnosc/wykonawca?${parametryProfilu(kogo)}`),
   /**
    * Checklista „co musisz mieć na dzień składania". BEZSTANOWA: wymagania
    * z Radaru SWZ i stan Sejfu podaje KLIENT, backend dokłada dzień składania

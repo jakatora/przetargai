@@ -121,6 +121,34 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "rozstrzygniecia",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "zwyciezcy_nip",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "opublikowano",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "rozstrzygniecia",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "zwyciezcy_nazwy",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "opublikowano",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

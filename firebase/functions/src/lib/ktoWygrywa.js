@@ -23,10 +23,16 @@ export function czystaNazwaWykonawcy(nazwa) {
   return wynik || s;
 }
 
+/*
+ * Formy prawne tylko jako osobne słowa (granice liter Unicode): bez nich „Masa” traciło „sa”,
+ * a „spółka z o.o.” małymi literami zostawało w kluczu (31.10, test profilu konkurenta).
+ */
+const FORMY_PRAWNE = /(?<![\p{L}\p{N}])(spółka z ograniczoną odpowiedzialnością|spółka komandytowo-akcyjna|spółka komandytowa|spółka jawna|spółka cywilna|spółka akcyjna|spółka z o\.?\s*o\.?|sp\.?\s*z\s*o\.?\s*o\.?|sp\.?\s*k\.?|sp\.?\s*j\.?|s\.?\s*c\.?|s\.?\s*a\.?)(?![\p{L}\p{N}])/gu;
+
 /** Klucz porównania nazw: bez formy prawnej, cudzysłowów i interpunkcji (ta sama firma raz z NIP-em, raz bez). */
 export function normNazwa(s) {
   return czystaNazwaWykonawcy(s).toLowerCase().replace(/["„”'’]/g, '')
-    .replace(/spółka z ograniczoną odpowiedzialnością|spółka komandytowa|spółka jawna|spółka cywilna|spółka akcyjna|sp\.?\s*z\s*o\.?\s*o\.?|sp\.?\s*k\.?|sp\.?\s*j\.?|s\.?\s*c\.?|s\.?\s*a\.?/g, ' ')
+    .replace(FORMY_PRAWNE, ' ')
     .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 

@@ -33,6 +33,8 @@ test('dane z produkcji 31.10: adres w nazwie ucięty; ta sama firma z NIP-em i b
   assert.equal(czystaNazwaWykonawcy('Budmax, ul. Polna 3, 35-001 Rzeszów'), 'Budmax');
   assert.equal(czystaNazwaWykonawcy('PIXEL Centrum Komputerowe Tomasz Dziedzic'), 'PIXEL Centrum Komputerowe Tomasz Dziedzic');
   assert.equal(normNazwa('ZRD ORFIN SPÓŁKA KOMANDYTOWA'), normNazwa('ZRD Orfin Sp. k.'));
+  assert.equal(normNazwa('Budmax spółka z o.o.'), normNazwa('BUDMAX Sp. z o.o.'));
+  assert.equal(normNazwa('Masa Bud S.A.'), 'masa bud', 'forma prawna tylko jako osobne słowo');
   const orfinZNip = { nazwa: 'ZRD ORFIN SPÓŁKA KOMANDYTOWA', nip: '6340000000' };
   const orfinBez = { nazwa: 'ZRD ORFIN SPÓŁKA KOMANDYTOWA', nip: null };
   const w = ktoWygrywa([

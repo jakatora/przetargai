@@ -10,6 +10,8 @@ import {
 } from '../lib/katalogPrzetargow.js';
 import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
 import { kluczOgloszenia } from '../lib/dedupZrodel.js';
+import { kluczeZwyciezcow, normNip } from '../lib/profilKonkurenta.js';
+import { normNazwa } from '../lib/ktoWygrywa.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
 /*
@@ -2230,6 +2232,8 @@ export const rozstrzygniecia = {
           // Denormalizacja pod zapytania: te pola filtrują benchmark.
           postepowanie_id: wynik.tenderId ?? null,
           zamawiajacy_nip: wynik.zamawiajacyNip ?? null,
+          // Profil konkurenta (2026-10-31): zapytania `array-contains` po NIP-ie i nazwie zwycięzcy.
+          ...kluczeZwyciezcow(wynik.czesci),
           updated_at: nowIso(),
         });
       }
@@ -2261,6 +2265,29 @@ export const rozstrzygniecia = {
       .limit(limit)
       .get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /**
+   * Rozstrzygnięcia, w których dany wykonawca wygrał co najmniej jedną część — wejście profilu
+   * konkurenta. Dwa zapytania, bo BZP podaje NIP zwycięzcy, a TED tylko nazwę; wynik bez duplikatów.
+   * Nazwa krótsza niż 3 znaki po normalizacji nie idzie do zapytania (za ogólna).
+   */
+  async dlaWykonawcy({ nip = null, nazwa = null } = {}, { limit = 300 } = {}) {
+    const zapytania = [];
+    const n = normNip(nip);
+    if (n) zapytania.push(['zwyciezcy_nip', n]);
+    const k = nazwa ? normNazwa(nazwa) : '';
+    if (k.length >= 3) zapytania.push(['zwyciezcy_nazwy', k]);
+    const snapy = await Promise.all(zapytania.map(([pole, wartosc]) => db().collection('rozstrzygniecia')
+      .where(pole, 'array-contains', wartosc)
+      .orderBy('opublikowano', 'desc')
+      .limit(limit)
+      .get()));
+    const wyniki = new Map();
+    for (const snap of snapy) {
+      for (const d of snap.docs) if (!wyniki.has(d.id)) wyniki.set(d.id, { id: d.id, ...d.data() });
+    }
+    return [...wyniki.values()];
   },
 
   /**

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { api } from '../api/client';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
 import { kwotaKrotko, czyPokazacKtoWygrywa } from '../lib/ktoWygrywa';
+import { czyMoznaOtworzycProfil } from '../lib/profilKonkurenta';
 
 /**
  * „Kto wygrywa u tego zamawiającego” (2026-10-31, z analizy konkurencji: Pressinfo, eGospodarka).
@@ -17,6 +19,7 @@ import { kwotaKrotko, czyPokazacKtoWygrywa } from '../lib/ktoWygrywa';
 export default function KtoWygrywa({ tender }) {
   const styles = useStyle(tworzStyleKtoWygrywa);
   const { t } = useJezyk();
+  const navigation = useNavigation();
   const [dane, setDane] = useState(null);
   const pokaz = czyPokazacKtoWygrywa(tender);
 
@@ -40,14 +43,21 @@ export default function KtoWygrywa({ tender }) {
       {wystarczajaca ? (
         <View style={styles.lista}>
           {zwyciezcy.slice(0, 3).map((z) => (
-            <View key={z.nip ?? z.nazwa} style={styles.wiersz}>
+            <Pressable
+              key={z.nip ?? z.nazwa}
+              style={styles.wiersz}
+              accessibilityRole="button"
+              disabled={!czyMoznaOtworzycProfil(z)}
+              onPress={() => navigation.navigate('ProfilKonkurenta', { nip: z.nip ?? null, nazwa: z.nazwa })}
+            >
               <Text style={styles.nazwa} numberOfLines={1}>{z.nazwa}</Text>
               <Text style={styles.opis}>
                 {t(z.wygrane === 1 ? '1 wygrana' : `${z.wygrane} wygrane`, z.wygrane === 1 ? '1 win' : `${z.wygrane} wins`)}
                 {kwotaKrotko(z.wartosc, t) ? ` · ${kwotaKrotko(z.wartosc, t)}` : ''}
                 {z.maly === true ? t(' · mała firma', ' · small company') : ''}
               </Text>
-            </View>
+              {czyMoznaOtworzycProfil(z) ? <Text style={styles.link}>{t('Co jeszcze wygrywa →', 'What else it wins →')}</Text> : null}
+            </Pressable>
           ))}
         </View>
       ) : (
@@ -81,4 +91,5 @@ const tworzStyleKtoWygrywa = tworzStyle((k) => ({
   opis: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginTop: 2 },
   sekcja: { fontSize: 13, fontWeight: '700', color: k.textMuted, marginTop: spacing.md },
   zrodlo: { fontSize: 12, color: k.textMuted, marginTop: spacing.sm },
+  link: { fontSize: 13, fontWeight: '700', color: k.blue, marginTop: 2 },
 }));
