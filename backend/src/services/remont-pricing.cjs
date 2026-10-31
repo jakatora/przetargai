@@ -25717,7 +25717,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
     try {
       return await readThroughRelay(source, fetchImpl);
     } catch (error40) {
-      if (deadline.aborted || error40 instanceof Error && ["retailer_out_of_stock", "purchase_rules_changed", "price_changed", "retailer_rate_limited", "retailer_http_429"].includes(error40.message)) throw error40;
+      if (deadline.aborted || error40 instanceof Error && ["retailer_out_of_stock", "purchase_rules_changed", "price_changed", "retailer_rate_limited", "retailer_http_429", "quote_busy"].includes(error40.message)) throw error40;
     }
   }
   if (source.format === "mlazienka") return readMlazienkaProduct(source, fetchImpl);
