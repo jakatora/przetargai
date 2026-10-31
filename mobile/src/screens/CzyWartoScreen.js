@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, Pressable } from 'react-native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -30,7 +30,7 @@ function tokenyTonu(ton, k) {
   return { tlo: k.neutralneTlo, tekst: k.textMuted };
 }
 
-function Czynnik({ czynnik, styles, kolory, t }) {
+function Czynnik({ czynnik, styles, kolory, t, navigation }) {
   const tokeny = tokenyTonu(tonCzynnika(czynnik.ton), kolory);
   return (
     <View style={[styles.czynnik, { borderLeftColor: tokeny.tekst }]}>
@@ -40,6 +40,12 @@ function Czynnik({ czynnik, styles, kolory, t }) {
         <Text style={styles.czynnikProbka}>
           {t('z', 'from')} {czynnik.probka} {t('rozstrzygnięć', 'settled parts')}
         </Text>
+      ) : null}
+      {/* Stały wykonawca (2026-10-31): od faktu do profilu firmy — co jeszcze wygrywa i u kogo. */}
+      {czynnik.wykonawca?.nazwa && navigation ? (
+        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('ProfilKonkurenta', { nip: czynnik.wykonawca.nip ?? null, nazwa: czynnik.wykonawca.nazwa })}>
+          <Text style={styles.czynnikProbka}>{t('Co jeszcze wygrywa ta firma →', 'What else this company wins →')}</Text>
+        </Pressable>
       ) : null}
     </View>
   );
@@ -161,7 +167,7 @@ export default function CzyWartoScreen({ route, navigation }) {
       ) : null}
 
       {uporzadkujCzynniki(karta?.czynniki).map((czynnik) => (
-        <Czynnik key={czynnik.kod} czynnik={czynnik} styles={styles} kolory={kolory} t={t} />
+        <Czynnik key={czynnik.kod} czynnik={czynnik} styles={styles} kolory={kolory} t={t} navigation={navigation} />
       ))}
 
       {/*

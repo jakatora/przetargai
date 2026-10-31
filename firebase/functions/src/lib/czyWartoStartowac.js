@@ -46,6 +46,11 @@ export const PROGI = {
   dniNapiete: 7,
   // Mediana pozycji ceny w widełkach: poniżej = decyduje cena.
   pozycjaDecydujeCena: 0.2,
+  // Udział jednej firmy w częściach z umową u zamawiającego (2026-10-31).
+  stalyWykonawca: 50,
+  czestyWykonawca: 30,
+  stalyWykonawcaMinWygranych: 3,
+  stalyWykonawcaMinCzesci: 5,
 };
 
 const KRYTERIUM_TYLKO_CENA = /(^|[^a-ząćęłńóśźż])cena\s*[-–:]?\s*100|wy[łl]ącznie cena|tylko cena|cena\s*=?\s*100\s*%/i;
@@ -150,6 +155,35 @@ function czynnikMalychFirm(kubelek) {
       : 'Mała firma ma tu realnie wygrane postępowania.',
     wartosc: mali.procent,
     probka: mali.n,
+  };
+}
+
+/*
+ * Stały wykonawca u zamawiającego (2026-10-31, z analizy konkurencji: „kto wygrywa”). Fakt z rozstrzygnięć
+ * tego zamawiającego — ile części z umową wziął najczęstszy zwycięzca — a nie prognoza. Tylko kubełek
+ * ZAMAWIAJĄCEGO (w dziale CPV „stały wykonawca” nic nie znaczy). Bez danych o zwycięzcach czynnika nie ma.
+ */
+function czynnikStalegoWykonawcy(kubelek) {
+  const top = kubelek?.najczestsiZwyciezcy?.[0];
+  if (kubelek?.wymiar !== 'zamawiajacy' || !top?.nazwa) return null;
+  const zUmowa = (kubelek.probka?.czesci ?? 0) - (kubelek.uniewaznienia?.czesci ?? 0);
+  if (zUmowa < PROGI.stalyWykonawcaMinCzesci) return null;
+  const procent = Math.round((100 * top.wygrane) / zUmowa);
+  const ton = procent >= PROGI.stalyWykonawca && top.wygrane >= PROGI.stalyWykonawcaMinWygranych ? TON.CZERWONY
+    : procent >= PROGI.czestyWykonawca ? TON.ZOLTY : TON.ZIELONY;
+  const ile = `${top.wygrane} z ${zUmowa} części`;
+  return {
+    kod: 'staly_wykonawca', ton,
+    naglowek: ton === TON.CZERWONY ? `Stały wykonawca: ${top.nazwa} wygrał ${ile}`
+      : ton === TON.ZOLTY ? `${top.nazwa} wygrywa tu często (${ile})`
+        : `Wygrywają różne firmy (najczęściej ${top.nazwa}: ${ile})`,
+    szczegol: ton === TON.CZERWONY
+      ? 'Zamawiający zwykle wybiera tę samą firmę — sprawdź, czy warunki nie są pisane pod nią, i zadaj pytania do SWZ.'
+      : ton === TON.ZOLTY ? 'Jest firma, z którą przegrywa się tu najczęściej — zobacz, co jeszcze wygrywa.'
+        : 'Nie widać firmy, która bierze tu wszystko.',
+    wartosc: procent,
+    probka: zUmowa,
+    wykonawca: { nazwa: top.nazwa, nip: top.nip ?? null },
   };
 }
 
@@ -336,7 +370,8 @@ export function kartaStartu({ tender, benchmarki, profil = null, teraz = Date.no
     czynnikMalychFirm(kubelek),
     czynnikUniewaznien(kubelek),
     czynnikWadium(tender),
-  ];
+    czynnikStalegoWykonawcy(benchmarki?.zamawiajacy),
+  ].filter(Boolean);
 
   const werdykt = werdyktZCzynnikow(czynniki);
   return {

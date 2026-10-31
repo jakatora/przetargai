@@ -360,3 +360,26 @@ describe('werdykt z tonów', () => {
     ]), 'brak_danych');
   });
 });
+
+describe('stały wykonawca u zamawiającego (2026-10-31)', () => {
+  const karta = (nad, benchmarki = null) => kartaStartu({ tender: { deadline: za(20) }, benchmarki: benchmarki ?? { zamawiajacy: kubelek(nad) }, teraz: TERAZ });
+  const zwyciezca = (wygrane) => ({ najczestsiZwyciezcy: [{ nazwa: 'Budmax Sp. z o.o.', nip: '8130000001', wygrane, wartosc: null }] });
+
+  test('ponad połowa części z umową dla jednej firmy → czerwony z nazwą i liczbami; werdykt ostrzejszy', () => {
+    const k = karta(zwyciezca(20)); // 40 części − 4 unieważnione = 36
+    const c = czynnik(k, 'staly_wykonawca');
+    assert.equal(c.ton, TON.CZERWONY);
+    assert.equal(c.naglowek, 'Stały wykonawca: Budmax Sp. z o.o. wygrał 20 z 36 części');
+    assert.deepEqual([c.wartosc, c.probka, c.wykonawca.nip], [56, 36, '8130000001']);
+    assert.notEqual(k.werdykt, 'sprawdz');
+  });
+
+  test('progi: 30–49% żółty, poniżej zielony; bez danych o zwycięzcach albo w kubełku działu — brak czynnika', () => {
+    assert.equal(czynnik(karta(zwyciezca(12)), 'staly_wykonawca').ton, TON.ZOLTY);
+    assert.equal(czynnik(karta(zwyciezca(5)), 'staly_wykonawca').ton, TON.ZIELONY);
+    assert.equal(czynnik(karta({}), 'staly_wykonawca'), undefined);
+    const dzial = kubelek({ wymiar: 'dzial_cpv', ...zwyciezca(30) });
+    assert.equal(czynnik(karta(null, { dzialRegion: dzial }), 'staly_wykonawca'), undefined);
+    assert.ok(!/szans/i.test(JSON.stringify(karta(zwyciezca(20)))), 'bez obietnic szans');
+  });
+});
