@@ -173,7 +173,10 @@ export function createApp() {
   app.use('/api/smartspizarka/prices', apiLimiter, smartspizarkaPricesRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
-  app.use('/api/remont', apiLimiter, remontRouter);
+  // The browser must read the limiter's wait before making another quote request.
+  // Scoped to Remont; the shared limits and other modules stay unchanged.
+  // source: https://expressjs.com/en/resources/middleware/cors/#configuration-options
+  app.use('/api/remont', cors({ exposedHeaders: ['Retry-After'] }), apiLimiter, remontRouter);
   app.use(notFoundHandler);
   if (sentryEnabled) Sentry.setupExpressErrorHandler(app);
   app.use(errorHandler);
