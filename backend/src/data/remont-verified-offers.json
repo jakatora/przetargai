@@ -3902,5 +3902,18 @@
     "sourceUrl": "https://www.abud.pl/product-pol-27095-Soudal-klej-do-wykladzin-podlogowych-26A-5kg.html",
     "evidenceSha256": "dc03dbb896de6bcde60a67ecdb3643f90a81ac6c3616549f30fa592dc18f0eb8",
     "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-goodhome-arilla-light-grey-25m2",
+    "ean": "5059340969732",
+    "name": "Panele podłogowe winylowe GoodHome SPC Arilla Light Grey 2,5 m2",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_54664_500_500/fa1b6a4d34e9c8cf4c71603939ea436e.jpg",
+    "priceGrosze": 16445,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T10:13:49.118Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Panele-podlogowe-winylowe-GoodHome-SPC-Arilla-Light-Grey-2%2C5-m2/33716",
+    "evidenceSha256": "032d845b622d2384ae49c2aefb54cd5be8998d06c9fb88db129c846d338e81b3",
+    "validUntil": null
   }
 ]
