@@ -611,6 +611,26 @@ export const benchmarkPrzelicz = onSchedule(
 );
 
 /**
+ * Radar wygasających umów (2026-10-31) — codziennie o 4:20, po benchmarku. Tylko zapisane
+ * rozstrzygnięcia (koniec umowy z ogłoszenia o wyniku), bez rejestrów i bez AI.
+ */
+export const umowyWygasajacePrzelicz = onSchedule(
+  {
+    maxInstances: 3,
+    schedule: '20 4 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '1GiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runUmowyWygasajace } = await import('./src/jobs/umowyWygasajace.js');
+    const wynik = await runUmowyWygasajace();
+    console.log(JSON.stringify({ severity: wynik.ok ? 'INFO' : 'ERROR', message: 'umowyWygasajacePrzelicz zakończony', ...wynik }));
+  },
+);
+
+/**
  * Agregacja wyników postępowań (runda 16). Statystyki cen/konkurencji zmieniają się
  * wolno — liczymy je raz w tygodniu (niedziela 4:00) z szerokiego okna 30 dni.
  * Osobno od dziennego matchingu, bo pobiera inny typ ogłoszeń (TenderResultNotice).

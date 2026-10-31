@@ -2,7 +2,7 @@ import { zrodlaCichoPusteWCyklu } from '../lib/zrodlaCichoPuste.js';
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, users, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, oknoLt, stanPushRepo, autoSwz } from '../db/repos.js';
+import { cykl, tenders, users, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, oknoLt, stanPushRepo, autoSwz, umowyWygasajace } from '../db/repos.js';
 import { ocenStanPush } from '../lib/stanPush.js';
 import { logger } from '../lib/logger.js';
 import { ocenStanAi } from '../lib/stanAi.js';
@@ -50,6 +50,7 @@ router.get('/', async (_req, res) => {
   let stanOknaPz = null;
   let stanOknaEpp = null;
   let stanOknaLt = null;
+  let stanUmow = null;
   let stanPush = null;
   let stanAutoSwz = null;
   let urzadzenia = null;
@@ -59,12 +60,13 @@ router.get('/', async (_req, res) => {
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanOknaLt, stanPush, stanAutoSwz, urzadzenia] = await Promise.all([
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanOknaLt, stanPush, stanAutoSwz, urzadzenia, stanUmow] = await Promise.all([
       cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
       oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null), oknoEpp.wczytaj().catch(() => null), oknoLt.wczytaj().catch(() => null),
       stanPushRepo.wczytaj().catch(() => null),
       autoSwz.wczytajPrzebieg().catch(() => null),
       users.urzadzeniaPush().catch(() => null),
+      umowyWygasajace.wczytajPrzebieg().catch(() => null),
     ]);
   } catch { /* zgłoszone w polu db */ }
 
@@ -240,6 +242,17 @@ router.get('/', async (_req, res) => {
         bledy_zapisu: stanOknaLt.ostatni_przebieg.bledy_zapisu ?? null,
         ok: stanOknaLt.ostatni_przebieg.ok ?? null,
         error: stanOknaLt.ostatni_przebieg.error ?? null,
+      }
+      : null,
+    /* Radar wygasających umów (2026-10-31): przeliczenie raz na dobę z rozstrzygnięć. */
+    umowy_wygasajace: stanUmow
+      ? {
+        zakonczony_o: stanUmow.zakonczony_o ?? null,
+        rozstrzygniec: stanUmow.rozstrzygniec ?? null,
+        umow_cyklicznych: stanUmow.umow_cyklicznych ?? null,
+        kubelkow: stanUmow.kubelkow ?? null,
+        ok: stanUmow.ok ?? null,
+        error: stanUmow.error ?? null,
       }
       : null,
     pz_okno: stanOknaPz?.ostatni_przebieg

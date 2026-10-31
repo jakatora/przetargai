@@ -206,6 +206,61 @@ function wartosciCzesciNetto(sekcjaIv) {
   return mapa;
 }
 
+const DATA_ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+function dataPoprawna(iso) {
+  const m = DATA_ISO.exec(String(iso ?? ''));
+  if (!m) return false;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return d.getUTCMonth() === Number(m[2]) - 1 && d.getUTCDate() === Number(m[3]);
+}
+
+function dodajMiesiace(iso, n) {
+  const [r, m, d] = iso.split('-').map(Number);
+  const cel = new Date(Date.UTC(r, m - 1 + n, 1));
+  const ostatni = new Date(Date.UTC(cel.getUTCFullYear(), cel.getUTCMonth() + 1, 0)).getUTCDate();
+  cel.setUTCDate(Math.min(d, ostatni));
+  return cel.toISOString().slice(0, 10);
+}
+
+function dodajDni(iso, n) {
+  return new Date(Date.parse(`${iso}T00:00:00.000Z`) + n * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** Więcej niż 10 lat od zawarcia to literówka zamawiającego, nie umowa. */
+const MAKS_LAT_UMOWY = 10;
+
+/**
+ * Okres realizacji umowy z „8.3.)” (2026-10-31, radar wygasających umów). Zmierzone na 248
+ * częściach z 28–29.10.2026: „12 miesiące” (55+), „365 dni” (47+), „do 2026-12-15” (33+),
+ * „Od 2026-01-01 do 2026-12-31”. Przy łamaniu strony BZP dokleja stopkę „2026-10-29 Biuletyn
+ * Zamówień Publicznych …” — odcinamy ją. Długość liczymy od daty zawarcia umowy (8.1).
+ * @returns {{okres: string|null, koniec: string|null}} koniec = RRRR-MM-DD albo null
+ */
+export function okresUmowy(tekst, dataUmowy) {
+  const czysty = String(tekst ?? '').replace(/\s*\d{4}-\d{2}-\d{2}\s+Biuletyn Zam[óo]wie[ńn] Publicznych[^]*$/i, '').trim();
+  if (!czysty) return { okres: null, koniec: null };
+  const okres = czysty.slice(0, 120);
+  const start = dataPoprawna(String(dataUmowy ?? '').slice(0, 10)) ? String(dataUmowy).slice(0, 10) : null;
+  const daty = [...czysty.matchAll(/\d{4}-\d{2}-\d{2}/g)].map((m) => m[0]).filter(dataPoprawna);
+  let koniec = null;
+  if (/\bdo\b/i.test(czysty) && daty.length) {
+    koniec = daty[daty.length - 1];
+  } else if (start) {
+    const m = /(\d+(?:[.,]\d+)?)\s*(miesi|mies\b|m-c|dni|dzie|tygod|lat|lata|rok)/i.exec(czysty);
+    if (m) {
+      const n = Number(m[1].replace(',', '.'));
+      const j = m[2].toLowerCase();
+      if (j.startsWith('mies') || j === 'm-c') koniec = dodajMiesiace(start, Math.round(n));
+      else if (j.startsWith('dni') || j.startsWith('dzie')) koniec = dodajDni(start, Math.round(n));
+      else if (j.startsWith('tygod')) koniec = dodajDni(start, Math.round(n * 7));
+      else koniec = dodajMiesiace(start, Math.round(n * 12));
+    }
+  }
+  if (koniec && start && (koniec < start || koniec > dodajMiesiace(start, MAKS_LAT_UMOWY * 12))) koniec = null;
+  return { okres, koniec };
+}
+
 function parsujCzesc(blok, indeks, kontekst) {
   const numerZNaglowka = NUMER_CZESCI.exec(blok);
   const numer = numerZNaglowka ? Number(numerZNaglowka[1]) : indeks + 1;
@@ -219,6 +274,8 @@ function parsujCzesc(blok, indeks, kontekst) {
   const rozstrzygniecie = rozstrzygniecieCzesci(blok, kontekst.procedureResult[numer - 1]);
   const uniewaznione = rozstrzygniecie === 'uniewaznienie';
   const wielkosc = poEtykiecie(blok, '7.2');
+  const dataUmowy = poEtykiecie(blok, '8.1');
+  const okres = okresUmowy(poEtykiecie(blok, '8.3'), dataUmowy);
 
   return {
     numer,
@@ -235,7 +292,10 @@ function parsujCzesc(blok, indeks, kontekst) {
     // „Mały przedsiębiorca" / „Mikroprzedsiębiorstwo" — sygnał dla JDG, że tam się da wygrać
     wygralMaly: wielkosc ? /mał|mikro/i.test(wielkosc) : null,
     zwyciezca: uniewaznione ? null : zwyciezcaCzesci(blok, kontekst.contractors[numer - 1]),
-    dataUmowy: poEtykiecie(blok, '8.1'),
+    dataUmowy,
+    // Radar wygasających umów (2026-10-31): okres z ogłoszenia i wyliczony koniec umowy.
+    okresUmowy: okres.okres,
+    koniecUmowy: okres.koniec,
     // false = zamawiający wpisał sprzeczne kwoty; do statystyk NIE bierzemy
     spojne,
   };

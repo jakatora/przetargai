@@ -433,6 +433,8 @@ export const api = {
   profilKonkurenta: (kogo) => request(`/wygrywalnosc/wykonawca?${parametryProfilu(kogo)}`),
   /** Kto najczęściej wygrywa w branżach i regionach z Karty firmy (bez własnej firmy). */
   twoiKonkurenci: () => request('/wygrywalnosc/moi-konkurenci'),
+  // Radar wygasających umów (2026-10-31): umowy z branż i regionów karty kończące się w ~7 mies.
+  umowyWygasajace: () => request('/wygrywalnosc/umowy-wygasajace'),
   /**
    * Checklista „co musisz mieć na dzień składania". BEZSTANOWA: wymagania
    * z Radaru SWZ i stan Sejfu podaje KLIENT, backend dokłada dzień składania

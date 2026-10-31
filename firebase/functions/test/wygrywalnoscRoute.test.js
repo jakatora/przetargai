@@ -330,3 +330,31 @@ test('GET /wygrywalnosc/tender/:id/kryteria: lista z wagami; przetarg bez listy 
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/kryteria`)).status, 401);
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/nie-ma-${ZNAK}/kryteria`, { headers: auth(t) })).status, 404);
 });
+
+test('GET /wygrywalnosc/umowy-wygasajace: job składa kubełki z rozstrzygnięć, trasa daje umowy z branży i regionu karty', async () => {
+  const { runUmowyWygasajace } = await import('../src/jobs/umowyWygasajace.js');
+  const t = await konto();
+  const bez = await (await fetch(`${BAZA}/wygrywalnosc/umowy-wygasajace`, { headers: auth(t) })).json();
+  assert.deepEqual([bez.dostepne, bez.powod], [false, 'brak_cpv_w_karcie']);
+  assert.equal((await fetch(`${BAZA}/auth/me`, { method: 'PATCH', headers: auth(t), body: JSON.stringify({ cpv_codes: ['98341120'], regiony: ['30'] }) })).status, 200);
+
+  const dzien = (dni) => new Date(Date.now() + dni * 86_400_000).toISOString().slice(0, 10);
+  const wynik = (id, koniec, { woj = '30', dataUmowy = dzien(-300) } = {}) => ({
+    externalId: `uw-${id}-${ZNAK}`, tenderId: `ocds-uw-${id}-${ZNAK}`, zrodlo: 'bzp', tytul: `Ochrona obiektów ${id}`, zamawiajacy: 'Szpital Wojewódzki',
+    zamawiajacyNip: '7790000001', cpv: ['98341120-2'], wojewodztwo: woj, rodzaj: 'Services', opublikowano: dzien(-290),
+    czesci: [{ numer: 1, uniewaznione: false, dataUmowy, okresUmowy: '12 miesięcy', koniecUmowy: koniec, wartoscUmowy: 480_000, zwyciezca: { nazwa: `Ochrona ${id} Sp. z o.o.`, nip: '7790000002' } }],
+  });
+  await rozstrzygniecia.zapiszWiele([wynik('a', dzien(60)), wynik('b', dzien(20)), wynik('c', dzien(400)), wynik('d', dzien(30), { woj: '12' })]);
+  const stan = await runUmowyWygasajace();
+  assert.equal(stan.ok, true);
+  assert.ok(stan.umow_cyklicznych >= 3);
+
+  const odp = await fetch(`${BAZA}/wygrywalnosc/umowy-wygasajace`, { headers: auth(t) });
+  assert.equal(odp.status, 200);
+  const d = await odp.json();
+  assert.equal(d.dostepne, true);
+  const nasze = d.umowy.filter((u) => u.id.endsWith(ZNAK));
+  assert.deepEqual(nasze.map((u) => u.id), [`uw-b-${ZNAK}`, `uw-a-${ZNAK}`], 'tylko Wielkopolska (30), w horyzoncie, najbliżej końca pierwsze');
+  assert.deepEqual([nasze[0].dni_do_konca, nasze[0].wartosc, nasze[0].zwyciezcy[0].nip, nasze[0].region_nazwa], [20, 480000, '7790000002', 'Wielkopolskie']);
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/umowy-wygasajace`)).status, 401);
+});

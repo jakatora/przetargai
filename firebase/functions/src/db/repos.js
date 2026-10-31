@@ -11,6 +11,7 @@ import {
 import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
 import { kluczOgloszenia } from '../lib/dedupZrodel.js';
 import { kluczeZwyciezcow, normNip } from '../lib/profilKonkurenta.js';
+import { koniecUmowyWyniku } from '../lib/umowyWygasajace.js';
 import { normNazwa } from '../lib/ktoWygrywa.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
@@ -2295,12 +2296,39 @@ export const rozstrzygniecia = {
           zamawiajacy_nip: wynik.zamawiajacyNip ?? null,
           // Profil konkurenta (2026-10-31): zapytania `array-contains` po NIP-ie i nazwie zwycięzcy.
           ...kluczeZwyciezcow(wynik.czesci),
+          // Radar wygasających umów (2026-10-31): najpóźniejszy koniec umowy (zapytanie zakresowe).
+          koniec_umowy: koniecUmowyWyniku(wynik),
           updated_at: nowIso(),
         });
       }
       await batch.commit();
     }
     return { zapisane: wpisy.length, czesci };
+  },
+
+  /**
+   * Rozstrzygnięcia, których umowa kończy się w [od, do] (RRRR-MM-DD) — radar wygasających umów.
+   * Indeks jednopolowy `koniec_umowy` (automatyczny). Tylko pola potrzebne do pozycji radaru,
+   * stronami po 2000, z sufitem — dzień ruchu to kilkadziesiąt tysięcy umów, nie miliony.
+   */
+  async konczaceSie(od, doDnia, { sufit = 60_000 } = {}) {
+    const pola = ['externalId', 'tytul', 'zamawiajacy', 'zamawiajacyNip', 'miasto', 'wojewodztwo', 'cpv', 'rodzaj', 'czesci', 'tenderId', 'koniec_umowy'];
+    const wynik = [];
+    let ostatni = null;
+    for (;;) {
+      let q = db().collection('rozstrzygniecia')
+        .where('koniec_umowy', '>=', String(od))
+        .where('koniec_umowy', '<=', String(doDnia))
+        .orderBy('koniec_umowy')
+        .select(...pola)
+        .limit(2000);
+      if (ostatni) q = q.startAfter(ostatni);
+      const snap = await q.get();
+      for (const d of snap.docs) wynik.push(d.data());
+      if (snap.size < 2000 || wynik.length >= sufit) break;
+      ostatni = snap.docs[snap.docs.length - 1];
+    }
+    return wynik.slice(0, sufit);
   },
 
   /** Rozstrzygnięcie konkretnego POSTĘPOWANIA (klucz złączenia z przetargiem). */
@@ -2442,6 +2470,43 @@ export const benchmarkRynku = {
 
 /** Klucze kubełków niosą `|` i `:` — w docId dozwolone, ale `/` już nie. */
 const benchmarkDocId = (klucz) => String(klucz).replaceAll('/', '_');
+
+/*
+ * Radar wygasających umów (2026-10-31): gotowe kubełki dział CPV × województwo (i dział w kraju)
+ * z umowami kończącymi się w ciągu ~7 miesięcy. Liczy job `umowyWygasajacePrzelicz` raz na dobę,
+ * a trasa czyta tylko kubełki firmy — jak benchmark, bez liczenia przy wejściu na ekran.
+ */
+export const umowyWygasajace = {
+  async zapisz(kubelki) {
+    const wpisy = Object.entries(kubelki ?? {});
+    for (let i = 0; i < wpisy.length; i += 200) {
+      const batch = db().batch();
+      for (const [klucz, kubelek] of wpisy.slice(i, i + 200)) {
+        batch.set(db().collection('umowy_wygasajace').doc(benchmarkDocId(klucz)), { ...kubelek, klucz, updated_at: nowIso() });
+      }
+      await batch.commit();
+    }
+    return wpisy.length;
+  },
+
+  async pobierzWiele(klucze) {
+    const unikalne = [...new Set((klucze ?? []).filter(Boolean))];
+    if (!unikalne.length) return {};
+    const snapy = await db().getAll(...unikalne.map((k) => db().collection('umowy_wygasajace').doc(benchmarkDocId(k))));
+    const wynik = {};
+    snapy.forEach((snap, i) => { if (snap.exists) wynik[unikalne[i]] = snap.data(); });
+    return wynik;
+  },
+
+  async zapiszPrzebieg(stan) {
+    await db().collection('_health').doc('umowy_wygasajace').set({ ostatni_przebieg: stan }, { mergeFields: ['ostatni_przebieg'] });
+  },
+
+  async wczytajPrzebieg() {
+    const doc = await db().collection('_health').doc('umowy_wygasajace').get();
+    return doc.exists ? doc.data()?.ostatni_przebieg ?? null : null;
+  },
+};
 
 /*
  * Zmiany umów po rozstrzygnięciu (etap 6, TED `cont-modif`).

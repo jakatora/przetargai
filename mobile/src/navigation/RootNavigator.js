@@ -20,6 +20,7 @@ import SejfScreen from '../screens/SejfScreen';
 import KatalogDetailScreen from '../screens/KatalogDetailScreen';
 import ProfilKonkurentaScreen from '../screens/ProfilKonkurentaScreen';
 import TwoiKonkurenciScreen from '../screens/TwoiKonkurenciScreen';
+import UmowyWygasajaceScreen from '../screens/UmowyWygasajaceScreen';
 import ZakresDanychScreen from '../screens/ZakresDanychScreen';
 import RejestratorOfertyScreen from '../screens/RejestratorOfertyScreen';
 import CzyWartoScreen from '../screens/CzyWartoScreen';
@@ -179,6 +180,11 @@ export default function RootNavigator() {
               name="TwoiKonkurenci"
               component={TwoiKonkurenciScreen}
               options={{ title: 'Twoi konkurenci' }}
+            />
+            <Stack.Screen
+              name="UmowyWygasajace"
+              component={UmowyWygasajaceScreen}
+              options={{ title: 'Wygasające umowy' }}
             />
             <Stack.Screen
               name="ZakresDanych"

@@ -8,9 +8,11 @@ import { runOknoWynikow } from '../jobs/oknoWynikow.js';
 import { runBenchmarkRynku } from '../jobs/benchmarkRynku.js';
 import { runOknoPlanow } from '../jobs/oknoPlanow.js';
 import { runWynikiAggregation } from '../jobs/aggregateResults.js';
-import { pobierzOgloszeniaBzp } from '../services/bzp.js';
+import { pobierzOgloszeniaBzp, pobierzSuroweWynikiDnia } from '../services/bzp.js';
+import { parsujWynik } from '../lib/wynikiParser.js';
+import { runUmowyWygasajace } from '../jobs/umowyWygasajace.js';
 import { przeliczProfil } from '../services/pracownik.js';
-import { tenders, users } from '../db/repos.js';
+import { tenders, users, rozstrzygniecia } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
 import { badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
 
@@ -104,6 +106,27 @@ router.post('/kryteria-wstecz', ah(async (req, res) => {
   const ogloszenia = await pobierzOgloszeniaBzp({ from: dzien, to: dzien });
   const wynik = await tenders.uzupelnijKryteria(ogloszenia);
   res.json({ dzien, pobrane: ogloszenia.length, ...wynik });
+}));
+
+/**
+ * Ponowny odczyt wyników BZP z jednej doby (2026-10-31): rozstrzygnięcia zapisane przed odczytem
+ * okresu umowy (8.3) nie mają `koniecUmowy`, więc radar wygasających umów ich nie widzi. Nadpisuje
+ * dokumenty świeżym parsowaniem (te same dane + okres), bez checkpointu okna i bez AI.
+ */
+router.post('/wyniki-ponow-dzien', ah(async (req, res) => {
+  const dzien = String(req.body?.dzien ?? '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dzien) || Number.isNaN(Date.parse(dzien))) throw badRequest('Podaj dzien w formacie RRRR-MM-DD');
+  const surowe = await pobierzSuroweWynikiDnia(dzien);
+  const wyniki = surowe.map(parsujWynik).filter((w) => w?.externalId);
+  const { zapisane, czesci } = await rozstrzygniecia.zapiszWiele(wyniki);
+  const zKoncem = wyniki.filter((w) => w.czesci.some((c) => c.koniecUmowy)).length;
+  res.json({ dzien, pobrane: surowe.length, zapisane, czesci, z_koncem_umowy: zKoncem });
+}));
+
+/** Ręczne przeliczenie radaru wygasających umów (normalnie job o 4:20). */
+router.post('/umowy-wygasajace', ah(async (req, res) => {
+  const wynik = await runUmowyWygasajace();
+  res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
 router.post('/benchmark', ah(async (req, res) => {

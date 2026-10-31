@@ -15,6 +15,7 @@ export const KATALOG_NARZEDZI = [
     narzedzia: [
       { ekran: 'KartaDecyzji', tytul: 'Startować czy odpuścić?', opis: 'Werdykt GO / ROZWAŻ / ODPUŚĆ z czerwonymi flagami' },
       { ekran: 'TwoiKonkurenci', tytul: 'Twoi konkurenci', opis: 'Kto najczęściej wygrywa w Twoich branżach i regionach — z profilem każdej firmy' },
+      { ekran: 'UmowyWygasajace', tytul: 'Wygasające umowy', opis: 'Umowy w Twoich branżach, które kończą się w ciągu 7 miesięcy — ten przetarg zaraz wróci' },
       { ekran: 'SymulatorPlynnosci', tytul: 'Symulator płynności', opis: 'Czy udźwigniesz kontrakt do pierwszej faktury' },
       { ekran: 'KalkulatorPunktow', tytul: 'Kalkulator punktów', opis: 'Cena punktu — o ile drożej wygrasz jakością' },
       { ekran: 'SymulatorPunktacji', tytul: 'Symulator punktacji oferty', opis: 'Ile punktów realnie zdobędziesz' },

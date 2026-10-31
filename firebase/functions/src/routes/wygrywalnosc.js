@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia, limitPytanSwz } from '../db/repos.js';
+import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia, limitPytanSwz, umowyWygasajace } from '../db/repos.js';
+import { kluczeUmowUzytkownika, wybierzUmowy, HORYZONT_DNI } from '../lib/umowyWygasajace.js';
 import { planEfektywny } from '../lib/plan.js';
 import { ktoWygrywa } from '../lib/ktoWygrywa.js';
 import { kluczePartnerow, wybierzPartnerow } from '../lib/partnerzy.js';
@@ -214,6 +215,22 @@ router.get('/wykonawca', ah(async (req, res) => {
  * Twoi konkurenci (2026-10-31): kto najczęściej wygrywa w branżach i regionach z karty firmy —
  * z kubełków benchmarku, bez dodatkowego skanu rozstrzygnięć. Bez kodów CPV w karcie nie ma z czego.
  */
+/*
+ * Radar wygasających umów (2026-10-31): umowy z branż i regionów karty firmy, które kończą się
+ * w ciągu ~7 miesięcy — zamawiający niedługo ogłosi ten sam przetarg. Gotowe kubełki z joba
+ * `umowyWygasajacePrzelicz`, zero AI. Bez CPV w karcie — `dostepne: false`, nie błąd.
+ */
+router.get('/umowy-wygasajace', ah(async (req, res) => {
+  const { dzialy, regiony, klucze } = kluczeUmowUzytkownika(req.user);
+  if (!dzialy.length) {
+    res.json({ dostepne: false, powod: 'brak_cpv_w_karcie', umowy: [] });
+    return;
+  }
+  const kubelki = await umowyWygasajace.pobierzWiele(klucze);
+  const { umowy, w_kubelkach: wKubelkach } = wybierzUmowy({ kubelki, wlasnyNip: req.user.company_nip ?? null });
+  res.json({ dostepne: true, dzialy, regiony, horyzont_dni: HORYZONT_DNI, w_kubelkach: wKubelkach, umowy });
+}));
+
 router.get('/moi-konkurenci', ah(async (req, res) => {
   const { dzialy, regiony, klucze } = kluczeKonkurentowUzytkownika(req.user);
   if (!dzialy.length) {
