@@ -1,4 +1,6 @@
 import { kartaStartu } from '../lib/czyWartoStartowac.js';
+import { poprzedniaEdycja } from '../lib/poprzedniaEdycja.js';
+import { logger } from '../lib/logger.js';
 import { dzialCpv, normWojewodztwo } from '../lib/wynikiAgregacja.js';
 import { benchmarkRynku, rozstrzygniecia } from '../db/repos.js';
 
@@ -38,7 +40,21 @@ export function kluczeBenchmarku(tender) {
  */
 export async function zbudujKarteStartu({ tender, profil = null, teraz = Date.now() }) {
   const klucze = kluczeBenchmarku(tender);
-  const kubelki = await benchmarkRynku.pobierzWiele(Object.values(klucze));
+  /*
+   * Wyjątek od „bez zapytań po rozstrzygnięciach” (2026-10-31): poprzednia edycja przetargu
+   * wymaga rozstrzygnięć TEGO zamawiającego — jedno zapytanie po indeksie NIP + data, ≤100
+   * dokumentów, równolegle z kubełkami (karta „Kto wygrywa” na tym ekranie robi to samo).
+   * Błąd tego odczytu nie psuje karty — czynnik po prostu się nie pokazuje.
+   */
+  const [kubelki, wynikiZamawiajacego] = await Promise.all([
+    benchmarkRynku.pobierzWiele(Object.values(klucze)),
+    tender?.zamawiajacy_nip
+      ? rozstrzygniecia.dlaZamawiajacego(tender.zamawiajacy_nip, { limit: 100 }).catch((err) => {
+        logger.warn({ err: err.message }, 'Karta startu: poprzednia edycja pominięta');
+        return [];
+      })
+      : [],
+  ]);
 
   const karta = kartaStartu({
     tender,
@@ -49,6 +65,7 @@ export async function zbudujKarteStartu({ tender, profil = null, teraz = Date.no
     },
     profil,
     teraz,
+    poprzednia: poprzedniaEdycja(tender, wynikiZamawiajacego, { teraz }),
   });
 
   return { ...karta, klucze };

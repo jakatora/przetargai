@@ -427,7 +427,30 @@ export const ZASTRZEZENIE =
  * @returns {{werdykt: string, naglowek: string, zrodloBenchmarku: string|null,
  *   probka: object|null, czynniki: object[], zastrzezenie: string}}
  */
-export function kartaStartu({ tender, benchmarki, profil = null, teraz = Date.now() } = {}) {
+/**
+ * Poprzednia edycja (2026-10-31): kto wykonuje obecną umowę tego zamawiającego na to samo
+ * i za ile wygrał (`lib/poprzedniaEdycja.js`). Żółty = „sprawdź”, nie liczy się do werdyktu.
+ */
+function czynnikPoprzedniejEdycji(p) {
+  if (!p?.wykonawcy?.length) return null;
+  const kto = p.wykonawcy.map((w) => w.nazwa).join(', ');
+  const kwota = Number.isFinite(p.kwota) ? ` za ${Math.round(p.kwota).toLocaleString('pl-PL')} zł` : '';
+  const koniec = p.koniec_umowy ? `, umowa do ${p.koniec_umowy.split('-').reverse().join('.')}` : '';
+  const oferty = Number.isFinite(p.liczba_ofert) ? ` (ofert: ${p.liczba_ofert})` : '';
+  // Prawie ten sam tytuł = ta sama umowa sprzed roku; mniej = podobna robota u tego zamawiającego.
+  const taSama = Number(p.podobienstwo) >= 0.7;
+  return {
+    kod: 'poprzednia_edycja', ton: TON.ZOLTY,
+    naglowek: taSama ? `Poprzednio wygrał ${kto}${kwota}` : `Podobne zamówienie tu wygrał ${kto}${kwota}`,
+    szczegol: taSama
+      ? `${p.tytul ?? 'Poprzednia edycja'}${koniec}${oferty}. Cena poprzedniej edycji to dobry punkt odniesienia — sprawdź, czy zakres i ilości są te same.`
+      : `${p.tytul ?? 'Podobne zamówienie'}${koniec}${oferty}. To inne zamówienie tego zamawiającego, ale pokazuje, z kim i za ile tu się wygrywa.`,
+    probka: null,
+    wykonawca: p.wykonawcy[0].nazwa ? { nazwa: p.wykonawcy[0].nazwa, nip: p.wykonawcy[0].nip ?? null } : undefined,
+  };
+}
+
+export function kartaStartu({ tender, benchmarki, profil = null, teraz = Date.now(), poprzednia = null } = {}) {
   const { zrodlo, kubelek } = wybierzBenchmark(benchmarki);
 
   const czynniki = [
@@ -439,6 +462,7 @@ export function kartaStartu({ tender, benchmarki, profil = null, teraz = Date.no
     czynnikUniewaznien(kubelek),
     czynnikWadium(tender),
     czynnikStalegoWykonawcy(benchmarki?.zamawiajacy),
+    czynnikPoprzedniejEdycji(poprzednia),
   ].filter(Boolean);
 
   const werdykt = werdyktZCzynnikow(czynniki);
