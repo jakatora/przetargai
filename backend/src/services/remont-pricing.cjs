@@ -27495,12 +27495,13 @@ function catalogAvailability(sources, offers, observations, now = Date.now()) {
   for (const offer of offers) {
     const source = sources.find((s) => s.id === offer.id), observed = observations.get(offer.id);
     if (!source || source.disabledReason || source.pickupOnly || !observed || !isComparableOffer(offer, now)) continue;
-    const ean = retailComparableEan(source);
-    if (!/^\d{13}$/.test(ean)) continue;
-    const key = JSON.stringify([ean, source.category, source.packageSize, source.unit]);
+    const code = retailComparableEan(source), ean = /^\d{13}$/.test(code) ? code : null;
+    if (ean === null && !source.skuIdentity) continue;
+    const merchantIdentity = ean === null ? { productId: retailProductId(source), name: retailProductName(source), url: source.url } : void 0;
+    const key = JSON.stringify([ean ?? merchantIdentity.productId, merchantIdentity?.url, source.category, source.packageSize, source.unit]);
     let product = products.get(key);
     if (!product) {
-      product = { ean, category: source.category, packageSize: source.packageSize, unit: source.unit, stores: [], lastCheckedAt: observed.observedAt };
+      product = { ean, ...merchantIdentity ? { merchantIdentity } : {}, category: source.category, packageSize: source.packageSize, unit: source.unit, stores: [], lastCheckedAt: observed.observedAt };
       products.set(key, product);
     }
     if (!product.stores.includes(source.store)) product.stores.push(source.store);
