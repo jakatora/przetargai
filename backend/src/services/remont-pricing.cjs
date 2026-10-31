@@ -22549,6 +22549,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
 }
 async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now) {
   const failures = new Map((result.unavailableStores ?? []).map((item) => [item.store, item.reason]));
+  const unavailableIntegrations = new Set(failures.keys());
   const invalidMaterialOrders = /* @__PURE__ */ new Set();
   const ordered = [...unique.entries()].sort((a, b) => b[1].lines.length - a[1].lines.length || b[1].materialsGrosze - a[1].materialsGrosze);
   const first = /* @__PURE__ */ new Map();
@@ -22626,10 +22627,11 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
     if (result.purchasePlan) result.purchasePlanBasis = "fewest_unquoted_stores";
   }
   const quotedStores = new Set([...unique.values()].filter((o) => o.quote).map((o) => o.store));
-  result.missingDeliveryStores = [...failures.keys()].filter((store) => !quotedStores.has(store)).sort();
-  result.partiallyQuotedStores = [...failures.keys()].filter((store) => quotedStores.has(store)).sort();
+  const unresolvedFailures = [...failures.keys()].filter((store) => unavailableIntegrations.has(store) || baskets.some((basket) => basket.stores.some((order) => order.store === store && order.deliveryGrosze === null)));
+  result.missingDeliveryStores = unresolvedFailures.filter((store) => !quotedStores.has(store)).sort();
+  result.partiallyQuotedStores = unresolvedFailures.filter((store) => quotedStores.has(store)).sort();
   result.unavailableStores = [...failures].map(([store, reason]) => ({ store, reason, ...quotedStores.has(store) ? { partial: true } : {} }));
-  result.status = result.best && !failures.size ? "compared" : "needs_delivery_costs";
+  result.status = result.best && !unresolvedFailures.length ? "compared" : "needs_delivery_costs";
   return result;
 }
 
