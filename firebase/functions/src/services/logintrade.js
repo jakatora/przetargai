@@ -105,12 +105,22 @@ export function parsujSzczegol(html) {
   };
 }
 
+/**
+ * Zapytanie zagranicznej spółki z grupy (np. ukraiński Cersanit: treść cyrylicą, region „Inne”, bez NIP-u)
+ * — polskiemu wykonawcy nic po nim (2026-10-31, pierwszy przebieg na produkcji).
+ */
+export const CYRYLICA = /\p{Script=Cyrillic}/u;
+export function czyZagraniczne(poz, sz = null) {
+  if (CYRYLICA.test(String(poz?.tytul ?? ''))) return true;
+  return Boolean(sz) && !sz.nip && !kodWojewodztwa(poz?.wojewodztwo);
+}
+
 /** Identyfikator ogłoszenia: host instalacji kupca + numer zapytania (`lt:pge.logintrade.net:123`). */
 export const idLogintrade = (poz) => `lt:${poz.host}:${poz.id}`;
 
 /** Wiersz listy + karta → kształt `tenders.upsert`. Bez karty (kupca i godziny) — null. */
 export function normalizujOgloszenieLt(poz, sz) {
-  if (!poz?.id || !poz?.host || !poz?.tytul || !sz?.termin || !sz?.zamawiajacy) return null;
+  if (!poz?.id || !poz?.host || !poz?.tytul || !sz?.termin || !sz?.zamawiajacy || czyZagraniczne(poz, sz)) return null;
   const woj = kodWojewodztwa(poz.wojewodztwo);
   return {
     externalId: idLogintrade(poz),

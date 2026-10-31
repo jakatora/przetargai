@@ -2,7 +2,7 @@ import { logger } from '../lib/logger.js';
 import { oknoLt as repoOkna, tenders } from '../db/repos.js';
 import { pustyLicznik } from '../lib/licznikZrodla.js';
 import { kluczOgloszenia, PRIORYTET_ZRODEL } from '../lib/dedupZrodel.js';
-import { ZRODLO, pobierzStrone, pobierzSzczegol, normalizujOgloszenieLt, idLogintrade } from '../services/logintrade.js';
+import { ZRODLO, pobierzStrone, pobierzSzczegol, normalizujOgloszenieLt, idLogintrade, czyZagraniczne } from '../services/logintrade.js';
 
 /*
  * OKNO LOGINTRADE (2026-10-31). Co 6 h lista od najnowszych, strona po stronie, aż do dwóch stron
@@ -58,7 +58,10 @@ export async function runOknoLt({
       licznik.odrzucone += odrzucone;
       if (!pozycje.length) break;
       wynik.strony = strona;
-      const aktywne = pozycje.filter((p) => p.aktywne);
+      // Zapytania zagranicznych spółek (tytuł cyrylicą) odpadają od razu — bez pobierania karty w każdym przebiegu.
+      const zagraniczne = pozycje.filter((p) => p.aktywne && czyZagraniczne(p)).length;
+      licznik.odrzucone += zagraniczne;
+      const aktywne = pozycje.filter((p) => p.aktywne && !czyZagraniczne(p));
       if (!aktywne.length) {
         if (++pustychZRzedu >= PUSTYCH_STRON_DO_KONCA) break;
         continue;

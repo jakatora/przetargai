@@ -54,3 +54,14 @@ test('link karty: tylko https i ścieżka karty Logintrade; IP, localhost i inne
   assert.equal(bezpiecznyLinkKarty('https://localhost/zapytania_email,123,abcdef.html'), null);
   assert.equal(bezpiecznyLinkKarty('https://pge.logintrade.net/zalaczniki/plik.pdf'), null);
 });
+
+test('zagraniczne zapytania (cyrylica albo brak NIP-u i polskiego województwa) odrzucone', async () => {
+  const { czyZagraniczne } = await import('../src/services/logintrade.js');
+  const [poz] = parsujListe(LISTA).pozycje;
+  const sz = parsujSzczegol(SZCZEGOL);
+  assert.equal(czyZagraniczne({ ...poz, tytul: 'Просування рекламних кампаній' }), true);
+  assert.equal(normalizujOgloszenieLt({ ...poz, tytul: 'Переміщення стендів' }, sz), null);
+  assert.equal(normalizujOgloszenieLt({ ...poz, wojewodztwo: 'Inne' }, { ...sz, nip: null }), null);
+  assert.ok(normalizujOgloszenieLt(poz, { ...sz, nip: null }), 'polska spółka bez NIP-u na karcie, ale z województwem — zostaje');
+  assert.ok(normalizujOgloszenieLt({ ...poz, wojewodztwo: 'Inne' }, sz), 'z NIP-em — zostaje');
+});
