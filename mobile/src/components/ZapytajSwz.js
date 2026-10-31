@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import TextField from './TextField';
 import Button from './Button';
@@ -81,6 +81,33 @@ export default function ZapytajSwz({ postepowanieId, trescSwz }) {
       })}
     </View>
   );
+}
+
+/**
+ * To samo na ekranie przetargu: gdy przetarg jest powiązany z analizą SWZ (ręcznie albo przez
+ * automatyczną analizę SWZ), klient pyta od razu tutaj, bez wchodzenia do Radaru. Tylko Standard
+ * (Radar SWZ i płatne AI są w Standardzie); bez powiązania albo treści SWZ nic się nie pokazuje.
+ */
+export function ZapytajSwzPrzetargu({ tenderId, plan }) {
+  const [stan, setStan] = useState(null);
+
+  useEffect(() => {
+    if (plan !== 'standard' || !tenderId) return undefined;
+    let aktywny = true;
+    api.powiazanieSwz(tenderId)
+      .then((d) => {
+        const postepowanieId = d?.powiazanie?.postepowanie_id;
+        if (!postepowanieId) return null;
+        return api.radarPostepowanie(postepowanieId).then((p) => {
+          if (aktywny) setStan({ postepowanieId, trescSwz: p?.tresc_swz ?? null });
+        });
+      })
+      .catch(() => {});
+    return () => { aktywny = false; };
+  }, [plan, tenderId]);
+
+  if (!stan) return null;
+  return <ZapytajSwz postepowanieId={stan.postepowanieId} trescSwz={stan.trescSwz} />;
 }
 
 const tworzStyleZapytajSwz = tworzStyle((k) => ({
