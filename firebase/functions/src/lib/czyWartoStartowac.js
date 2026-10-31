@@ -50,6 +50,9 @@ export const PROGI = {
   stalyWykonawca: 50,
   czestyWykonawca: 30,
   stalyWykonawcaMinWygranych: 3,
+  // Różne ogłoszenia z wygraną: czerwony od 3, żółty od 2 (jeden przetarg wieloczęściowy to nie „stały wykonawca”).
+  stalyWykonawcaMinOgloszen: 3,
+  czestyWykonawcaMinOgloszen: 2,
   stalyWykonawcaMinCzesci: 5,
 };
 
@@ -169,8 +172,10 @@ function czynnikStalegoWykonawcy(kubelek) {
   const zUmowa = (kubelek.probka?.czesci ?? 0) - (kubelek.uniewaznienia?.czesci ?? 0);
   if (zUmowa < PROGI.stalyWykonawcaMinCzesci) return null;
   const procent = Math.round((100 * top.wygrane) / zUmowa);
-  const ton = procent >= PROGI.stalyWykonawca && top.wygrane >= PROGI.stalyWykonawcaMinWygranych ? TON.CZERWONY
-    : procent >= PROGI.czestyWykonawca ? TON.ZOLTY : TON.ZIELONY;
+  // Starsze kubełki (przed 31.10) nie mają `ogloszen` — wtedy decydują same części.
+  const ogloszen = Number.isFinite(top.ogloszen) ? top.ogloszen : top.wygrane;
+  const ton = procent >= PROGI.stalyWykonawca && top.wygrane >= PROGI.stalyWykonawcaMinWygranych && ogloszen >= PROGI.stalyWykonawcaMinOgloszen ? TON.CZERWONY
+    : procent >= PROGI.czestyWykonawca && ogloszen >= PROGI.czestyWykonawcaMinOgloszen ? TON.ZOLTY : TON.ZIELONY;
   const ile = `${top.wygrane} z ${zUmowa} części`;
   return {
     kod: 'staly_wykonawca', ton,

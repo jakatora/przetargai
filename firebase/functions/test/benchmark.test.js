@@ -265,6 +265,7 @@ describe('benchmark — najczęstsi zwycięzcy kubełka („Twoi konkurenci”, 
       ['BUDMAX SPÓŁKA Z O.O.', '8130000001', 3, 400_000],
       ['Inny', '1111111111', 1, 50_000],
     ]);
+    assert.equal(k.najczestsiZwyciezcy[0].ogloszen, 2, '3 części w 2 ogłoszeniach');
     const maly = benchmarkDzialowCpv([wynikBzp({ woj: '18', czesci: [czesc({ zwyciezca: A })] })]);
     assert.deepEqual(maly['cpv:45|18'].najczestsiZwyciezcy, []);
   });

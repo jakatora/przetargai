@@ -374,6 +374,13 @@ describe('stały wykonawca u zamawiającego (2026-10-31)', () => {
     assert.notEqual(k.werdykt, 'sprawdz');
   });
 
+  test('jeden przetarg wieloczęściowy wygrany przez jedną firmę to nie „stały wykonawca”', () => {
+    const jedenPrzetarg = { najczestsiZwyciezcy: [{ nazwa: 'Budmax Sp. z o.o.', nip: null, wygrane: 20, ogloszen: 1, wartosc: null }] };
+    assert.equal(czynnik(karta(jedenPrzetarg), 'staly_wykonawca').ton, TON.ZIELONY);
+    const dwa = { najczestsiZwyciezcy: [{ nazwa: 'Budmax Sp. z o.o.', nip: null, wygrane: 20, ogloszen: 2, wartosc: null }] };
+    assert.equal(czynnik(karta(dwa), 'staly_wykonawca').ton, TON.ZOLTY);
+  });
+
   test('progi: 30–49% żółty, poniżej zielony; bez danych o zwycięzcach albo w kubełku działu — brak czynnika', () => {
     assert.equal(czynnik(karta(zwyciezca(12)), 'staly_wykonawca').ton, TON.ZOLTY);
     assert.equal(czynnik(karta(zwyciezca(5)), 'staly_wykonawca').ton, TON.ZIELONY);

@@ -101,20 +101,22 @@ function pustyKubelek(klucz) {
   };
 }
 
-function dolozZwyciezce(kubelek, czesc, dzien) {
+function dolozZwyciezce(kubelek, czesc, dzien, policzeniWOgloszeniu) {
   const z = czesc?.zwyciezca;
   if (czesc?.uniewaznione || !z?.nazwa) return;
   const nip = normNip(z.nip);
   const nazwa = normNazwa(z.nazwa);
   let w = (nip && kubelek.poNip.get(nip)) || (nazwa && kubelek.poNazwie.get(nazwa)) || null;
   if (!w) {
-    w = { nazwa: czystaNazwaWykonawcy(z.nazwa), nip, wygrane: 0, wartosc: 0, maKwote: false, ostatnio: null };
+    w = { nazwa: czystaNazwaWykonawcy(z.nazwa), nip, wygrane: 0, ogloszen: 0, wartosc: 0, maKwote: false, ostatnio: null };
     kubelek.zwyciezcy.push(w);
   }
   if (nip && !kubelek.poNip.has(nip)) kubelek.poNip.set(nip, w);
   if (nazwa && !kubelek.poNazwie.has(nazwa)) kubelek.poNazwie.set(nazwa, w);
   if (!w.nip && nip) w.nip = nip;
   w.wygrane += 1;
+  // Różne ogłoszenia, nie tylko części: przetarg na 3 części wygrany przez jedną firmę to jedno zwycięstwo „u zamawiającego”.
+  if (!policzeniWOgloszeniu.has(w)) { w.ogloszen += 1; policzeniWOgloszeniu.add(w); }
   if (czesc.spojne && Number.isFinite(czesc.cenaWybrana)) { w.wartosc += czesc.cenaWybrana; w.maKwote = true; }
   if (dzien && (!w.ostatnio || dzien > w.ostatnio)) { w.ostatnio = dzien; w.nazwa = czystaNazwaWykonawcy(z.nazwa); }
 }
@@ -146,6 +148,7 @@ function dolozWynik(kubelek, wynik) {
     if (!kubelek.doDaty || dzien > kubelek.doDaty) kubelek.doDaty = dzien;
   }
 
+  const policzeniWOgloszeniu = new Set();
   for (const czesc of wynik.czesci ?? []) {
     kubelek.czesci += 1;
     if (czesc.uniewaznione) {
@@ -163,7 +166,7 @@ function dolozWynik(kubelek, wynik) {
       kubelek.maliZnane += 1;
       if (czesc.wygralMaly) kubelek.maliTak += 1;
     }
-    dolozZwyciezce(kubelek, czesc, dzien);
+    dolozZwyciezce(kubelek, czesc, dzien, policzeniWOgloszeniu);
   }
 }
 
