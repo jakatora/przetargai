@@ -22,6 +22,7 @@ import kalendarzRouter from './routes/kalendarz.js';
 import wygrywalnoscRouter from './routes/wygrywalnosc.js';
 import radarPlanowRouter from './routes/radarPlanow.js';
 import eksportRouter from './routes/eksport.js';
+import ofertaRouter from './routes/oferta.js';
 import pracownikRouter, { wypisRouter } from './routes/pracownik.js';
 
 /**
@@ -62,6 +63,10 @@ export function createApp() {
    */
   const mostLimiter = rateLimit({ windowMs: 60_000, max: 120, ...wspolne });
   app.use('/api/przetarg', express.raw({ type: () => true, limit: '12mb' }), mostLimiter, mostRouter);
+
+  // Kontrola plików oferty (2026-10-31): do 12 plików w base64 (≤ 14 MB danych) — własny parser
+  // PRZED globalnym 1 MB, jak most do Sejfu.
+  app.use('/oferta', express.json({ limit: '20mb' }));
 
   // W Functions surowe body jest dostępne jako `req.rawBody` niezależnie od
   // parsera, więc webhook Stripe nie wymaga montowania przed express.json().
@@ -120,6 +125,7 @@ export function createApp() {
   app.use('/radar-planow', apiLimiter, radarPlanowRouter);
   // Eksport CSV (P2-3): „Zapisane" i katalog do Excela / CRM-u.
   app.use('/eksport', apiLimiter, eksportRouter);
+  app.use('/oferta', apiLimiter, ofertaRouter);
   app.use('/upgrade', apiLimiter, upgradeRouter);
   app.use('/admin', adminLimiter, adminRouter);
 

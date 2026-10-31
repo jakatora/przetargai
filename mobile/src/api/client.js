@@ -492,4 +492,6 @@ export const api = {
   /** Formularz zamawiającego (.docx) wypełniony danymi firmy — e-mailem na adres konta albo plikiem (web). */
   wypelnijZalacznikEmail: (cialo) => request('/eksport/zalacznik', { method: 'POST', body: cialo }),
   wypelnijZalacznikPlik: (cialo) => requestBlob('/eksport/zalacznik.docx', { body: cialo }),
+  /** Kontrola plików oferty (podpisy, puste pola, NIP-y, kwoty) → raport z „czego nie sprawdziliśmy”. */
+  kontrolaPlikowOferty: (cialo) => request('/oferta/kontrola', { method: 'POST', body: cialo }),
 };

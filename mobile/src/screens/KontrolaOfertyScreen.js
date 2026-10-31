@@ -5,6 +5,7 @@ import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { spacing, radius } from '../theme';
 import * as storage from '../lib/storage';
 import { podsumujKontrole, wczytajKontroleOferty, zapiszKontroleOferty } from '../lib/kontrolaOferty';
+import KontrolaPlikowOferty from '../components/KontrolaPlikowOferty';
 
 /**
  * „KONTROLA OFERTY PRZED WYSŁANIEM" — lista kontrolna wyłapująca powtarzalne błędy formalne,
@@ -51,6 +52,8 @@ export default function KontrolaOfertyScreen({ route }) {
         Większość ofert odpada nie przez cenę, tylko przez POWTARZALNE błędy formalne. Przejdź tę
         listę przed wysyłką — najlepiej „świeżym okiem" osoby, która nie tworzyła oferty.
       </Text>
+
+      <KontrolaPlikowOferty tenderId={match?.tender?.id ?? null} />
 
       <View style={[styles.hero, w.gotowe && { backgroundColor: kolory.sukcesTlo, borderColor: kolory.sukcesAkcent }]}>
         <View style={styles.heroGora}>

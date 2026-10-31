@@ -23,6 +23,7 @@
     "firebase-functions": "^6.3.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "pdfjs-dist": "^6.1.200",
     "pino": "^10.3.1",
     "resend": "^6.12.3",
     "stripe": "^22.1.1",
