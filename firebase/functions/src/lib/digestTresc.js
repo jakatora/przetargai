@@ -28,7 +28,10 @@ const kwotaKrotko = (n) => (!Number.isFinite(n) ? null
   : n >= 1e6 ? `${(n / 1e6).toFixed(2).replace('.', ',')} mln zł` : n >= 1e3 ? `${Math.round(n / 1e3)} tys. zł` : `${Math.round(n)} zł`);
 const opisWygranej = (k) => [k.tytul, k.zamawiajacy, kwotaKrotko(k.cena)].filter(Boolean).join(' · ');
 
-export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [] }) {
+const dataPL = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso ?? '')); return m ? `${m[3]}.${m[2]}.${m[1]}` : null; };
+const opisUmowy = (u) => [u.zamawiajacy, dataPL(u.koniec) ? `koniec ${dataPL(u.koniec)}` : null, kwotaKrotko(u.wartosc)].filter(Boolean).join(' · ');
+
+export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [] }) {
   const n = Math.max(0, Math.floor(liczba));
   const rzeczownik = odmienPrzetargi(n);
   const subject = `Twój tygodniowy przegląd: ${n} ${rzeczownik}`;
@@ -47,7 +50,15 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
   const konkurenciHtml = wygrane.length
     ? `<p>Co w tym tygodniu wygrali <b>Twoi konkurenci</b>:</p><ul>${wygrane.map((k) => `<li><b>${esc(k.nazwa)}</b> — ${esc(opisWygranej(k))}</li>`).join('')}</ul>`
     : '';
-  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${konkurenciText}\n\n`
+  // Wygasające umowy (2026-10-31) — przetargi, które za chwilę wrócą w branżach i regionach karty.
+  const konczace = Array.isArray(umowy) ? umowy.filter((u) => u?.tytul).slice(0, 3) : [];
+  const umowyText = konczace.length
+    ? `\n\nUmowy w Twoich branżach, które wkrótce się kończą — ten przetarg zaraz wróci:\n${konczace.map((u) => `• ${u.tytul} — ${opisUmowy(u)}`).join('\n')}`
+    : '';
+  const umowyHtml = konczace.length
+    ? `<p>Umowy w Twoich branżach, które <b>wkrótce się kończą</b> — ten przetarg zaraz wróci:</p><ul>${konczace.map((u) => `<li><b>${esc(u.tytul)}</b> — ${esc(opisUmowy(u))}</li>`).join('')}</ul>`
+    : '';
+  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${konkurenciText}${umowyText}\n\n`
     + `Otwórz aplikację PrzetargAI, aby zobaczyć szczegóły i zdecydować, w które startujesz.\n\n`
     + `Zespół PrzetargAI\n\n`
     + `Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.`;
@@ -60,6 +71,7 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
 ${wstepHtml}
 ${tytulyHtml}
 ${konkurenciHtml}
+${umowyHtml}
 <p>Otwórz aplikację <b>PrzetargAI</b>, aby zobaczyć szczegóły i zdecydować, w które startujesz.</p>
 <p>Zespół PrzetargAI</p>
 <p style="font-size:12px;color:#667085">Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.</p>`;

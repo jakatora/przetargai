@@ -1,5 +1,6 @@
 import { logger } from '../lib/logger.js';
-import { users, matches, znacznikDigestu, benchmarkRynku, rozstrzygniecia } from '../db/repos.js';
+import { users, matches, znacznikDigestu, benchmarkRynku, rozstrzygniecia, umowyWygasajace } from '../db/repos.js';
+import { kluczeUmowUzytkownika, wybierzUmowy } from '../lib/umowyWygasajace.js';
 import { kluczeKonkurentowUzytkownika, twoiKonkurenci, wygraneKonkurentow, normNip } from '../lib/profilKonkurenta.js';
 import { sendEmail, weeklyDigestEmail } from '../services/email.js';
 
@@ -33,6 +34,17 @@ export async function wygraneKonkurentowTygodnia(user, odDnia) {
   const nipy = konkurenci.map((k) => normNip(k.nip)).filter(Boolean);
   if (!nipy.length) return [];
   return wygraneKonkurentow(await rozstrzygniecia.wygraneOd(nipy, odDnia), konkurenci);
+}
+
+/**
+ * Umowy z branż i regionów karty, które kończą się najwcześniej (radar wygasających umów,
+ * 2026-10-31) — trzy do przeglądu. Błąd tej sekcji NIE zatrzymuje przeglądu.
+ */
+export async function umowyDoPrzegladu(user, { limit = 3 } = {}) {
+  const { dzialy, klucze } = kluczeUmowUzytkownika(user);
+  if (!dzialy.length) return [];
+  const kubelki = await umowyWygasajace.pobierzWiele(klucze);
+  return wybierzUmowy({ kubelki, wlasnyNip: user.company_nip ?? null, limit }).umowy;
 }
 
 /**
@@ -90,7 +102,11 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja konkurentów pominięta');
           return [];
         });
-        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci });
+        const umowy = await umowyDoPrzegladu(user).catch((err) => {
+          logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja wygasających umów pominięta');
+          return [];
+        });
+        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy });
         wynik = await sendEmail({ to: user.email, ...tresc });
       } catch (err) {
         wynik = { sent: false, error: err.message };

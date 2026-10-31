@@ -404,9 +404,26 @@ describe('karta — kryterium z bazy (kody z ingestii, 2026-10-31)', () => {
       teraz: TERAZ,
     });
     const c = czynnik(karta, 'co_decyduje');
-    assert.match(c.naglowek, /nie tylko cena/i);
-    assert.equal(c.szczegol, 'Kryteria z ogłoszenia: Cena 60%, Okres gwarancji 40%.');
+    assert.match(c.naglowek, /same deklaracje — w praktyce decyduje cena/i);
+    assert.equal(c.szczegol, 'Kryteria z ogłoszenia: Cena 60%, Okres gwarancji 40%. Większość wykonawców wpisuje maksimum punktowane w SWZ, więc różnicę robi cena.');
     const bezListy = czynnik(kartaStartu({ tender: { deadline: za(20), kryterium_oceny: 'cena_i_jakosc' }, benchmarki: { zamawiajacy: kubelek() }, teraz: TERAZ }), 'co_decyduje');
     assert.doesNotMatch(bezListy.szczegol, /cena_i_jakosc/);
+  });
+});
+
+describe('karta — kryteria pozacenowe z listy (2026-10-31)', () => {
+  const karta = (kryteria, extra = {}) => kartaStartu({ tender: { deadline: za(20), kryterium_oceny: 'cena_i_jakosc', kryteria, ...extra }, benchmarki: { zamawiajacy: kubelek() }, teraz: TERAZ });
+  test('doświadczenie osób 40% przy cenie 60% → oferta z kompletem może być o 200% droższa', () => {
+    const c = czynnik(karta([{ nazwa: 'Cena', udzial: 60, rodzaj: 'cena' }, { nazwa: 'Doświadczenie kierownika budowy', udzial: 40, rodzaj: 'doswiadczenie' }]), 'co_decyduje');
+    assert.equal(c.ton, TON.ZIELONY);
+    assert.match(c.szczegol, /Doświadczenie kierownika budowy 40%\. Oferta z kompletem punktów .* nawet o 200% droższa/);
+  });
+  test('mieszane: deklaracje nie liczą się do przewagi (cena 80, gwarancja 10, jakość 10 → 14%)', () => {
+    const c = czynnik(karta([{ nazwa: 'Cena', udzial: 80, rodzaj: 'cena' }, { nazwa: 'Gwarancja', udzial: 10, rodzaj: 'gwarancja' }, { nazwa: 'Parametry', udzial: 10, rodzaj: 'jakosc' }]), 'co_decyduje');
+    assert.match(c.szczegol, /o 14% droższa/);
+  });
+  test('różne kryteria w częściach → bez tezy „same deklaracje”', () => {
+    const c = czynnik(karta([{ nazwa: 'Cena', udzial: 60, rodzaj: 'cena' }, { nazwa: 'Gwarancja', udzial: 40, rodzaj: 'gwarancja' }], { kryteria_rozne_czesci: true }), 'co_decyduje');
+    assert.match(c.naglowek, /nie tylko cena/i);
   });
 });

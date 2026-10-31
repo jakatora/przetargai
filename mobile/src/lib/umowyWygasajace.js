@@ -38,3 +38,22 @@ export function opisUmowy(u, t, kwota) {
 }
 
 export const dataKonca = (u) => dataPL(u?.koniec);
+
+/** Limity jak w Functions: nazwa wyszukiwania ≤ 60 znaków, fraza katalogu ≤ 120. */
+const MAKS_NAZWY = 60;
+const MAKS_FRAZY = 120;
+
+/**
+ * Zapisane wyszukiwanie z alertem na nowe ogłoszenia TEGO zamawiającego (fraza = jego nazwa,
+ * katalog dopasowuje wszystkie słowa w tytule i nazwie zamawiającego; region zawęża).
+ * Bez nazwy zamawiającego — null.
+ */
+export function wyszukiwanieZamawiajacego(u) {
+  const nazwa = String(u?.zamawiajacy ?? '').replace(/\s+/g, ' ').trim();
+  if (!nazwa) return null;
+  return {
+    nazwa: `Zamawiający: ${nazwa}`.slice(0, MAKS_NAZWY),
+    filtry: { q: nazwa.slice(0, MAKS_FRAZY), ...(u.wojewodztwo ? { region: u.wojewodztwo } : {}) },
+    alert_wlaczony: true,
+  };
+}

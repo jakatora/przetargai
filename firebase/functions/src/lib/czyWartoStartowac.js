@@ -251,6 +251,28 @@ function opisKryteriow(tender) {
   return k && k !== 'tylko_cena' && k !== 'cena_i_jakosc' ? String(k) : null;
 }
 
+/*
+ * Kryteria, które wykonawca bierze samą deklaracją w formularzu (gwarancja, termin, płatność,
+ * czas reakcji, warunki umowy, świadczenia dodatkowe). Gdy poza ceną są tylko one, większość
+ * ofert deklaruje maksimum z SWZ i różnicę robi cena — „cena i jakość” tylko z nazwy.
+ */
+const KRYTERIA_DEKLARATYWNE = new Set(['gwarancja', 'termin', 'platnosc', 'reakcja', 'umowa', 'dodatkowe']);
+
+/**
+ * O ile droższa może być oferta z kompletem punktów pozacenowych `k` (udział %) od najtańszej bez
+ * nich, przy JEDNYM kryterium ceny z udziałem `c` i typowym wzorze najniższa/badana: c·Cmin/C = c − k
+ * → C/Cmin − 1 = k / (c − k). null, gdy wzór się nie stosuje.
+ */
+function przewagaCenowaPunktow(lista) {
+  const ceny = lista.filter((k) => k.rodzaj === 'cena');
+  if (ceny.length !== 1 || typeof ceny[0].udzial !== 'number') return null;
+  const c = ceny[0].udzial;
+  const k = lista.filter((x) => x.rodzaj !== 'cena' && !KRYTERIA_DEKLARATYWNE.has(x.rodzaj) && typeof x.udzial === 'number')
+    .reduce((s, x) => s + x.udzial, 0);
+  if (k <= 0 || c <= k) return null;
+  return Math.round((k / (c - k)) * 100);
+}
+
 function czynnikCoDecyduje(kubelek, tender) {
   const kryterium = tender?.kryterium_oceny ?? null;
   const tylkoCena = czyTylkoCena(kryterium);
@@ -264,13 +286,27 @@ function czynnikCoDecyduje(kubelek, tender) {
       probka: null,
     };
   }
+  const lista = Array.isArray(tender?.kryteria) ? tender.kryteria.filter((k) => k && typeof k.nazwa === 'string' && k.nazwa) : [];
+  const poza = lista.filter((k) => k.rodzaj !== 'cena');
+  if (tylkoCena === false && poza.length && poza.every((k) => KRYTERIA_DEKLARATYWNE.has(k.rodzaj)) && !tender?.kryteria_rozne_czesci) {
+    return {
+      kod: 'co_decyduje', ton: TON.ZOLTY,
+      naglowek: 'Poza ceną same deklaracje — w praktyce decyduje cena',
+      szczegol: `Kryteria z ogłoszenia: ${opisKryteriow(tender)}. Większość wykonawców wpisuje maksimum punktowane w SWZ, więc różnicę robi cena.`,
+      probka: null,
+    };
+  }
   if (tylkoCena === false) {
+    const przewaga = przewagaCenowaPunktow(lista);
+    const opis = opisKryteriow(tender);
+    let szczegol = opis ? `Kryteria z ogłoszenia: ${opis}.` : 'Ogłoszenie przewiduje obok ceny kryteria jakościowe.';
+    if (przewaga !== null) {
+      szczegol += ` Oferta z kompletem punktów za doświadczenie, jakość czy certyfikaty może być nawet o ${przewaga}% droższa od najtańszej i wygrać.`;
+    }
     return {
       kod: 'co_decyduje', ton: TON.ZIELONY,
       naglowek: 'Liczy się nie tylko cena',
-      szczegol: opisKryteriow(tender)
-        ? `Kryteria z ogłoszenia: ${opisKryteriow(tender)}.`
-        : 'Ogłoszenie przewiduje obok ceny kryteria jakościowe.',
+      szczegol,
       probka: null,
     };
   }

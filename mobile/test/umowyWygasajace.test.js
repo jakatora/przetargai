@@ -17,3 +17,15 @@ test('druga linia karty i data końca po polsku', () => {
   assert.equal(dataKonca(u), '20.11.2026');
   assert.equal(dataKonca({}), null);
 });
+
+test('obserwacja zamawiającego: zapisane wyszukiwanie z alertem w limitach Functions', async () => {
+  const { wyszukiwanieZamawiajacego } = await import('../src/lib/umowyWygasajace.js');
+  assert.deepEqual(wyszukiwanieZamawiajacego({ zamawiajacy: ' Szpital  Wojewódzki ', wojewodztwo: '30' }), {
+    nazwa: 'Zamawiający: Szpital Wojewódzki', filtry: { q: 'Szpital Wojewódzki', region: '30' }, alert_wlaczony: true,
+  });
+  const dlugi = wyszukiwanieZamawiajacego({ zamawiajacy: 'X'.repeat(300) });
+  assert.equal(dlugi.nazwa.length, 60);
+  assert.equal(dlugi.filtry.q.length, 120);
+  assert.equal('region' in dlugi.filtry, false);
+  assert.equal(wyszukiwanieZamawiajacego({}), null);
+});

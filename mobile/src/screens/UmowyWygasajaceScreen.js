@@ -8,7 +8,7 @@ import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { kwotaKrotko } from '../lib/ktoWygrywa';
 import { czyMoznaOtworzycProfil } from '../lib/profilKonkurenta';
-import { tonTerminu, opisTerminu, opisUmowy, dataKonca } from '../lib/umowyWygasajace';
+import { tonTerminu, opisTerminu, opisUmowy, dataKonca, wyszukiwanieZamawiajacego } from '../lib/umowyWygasajace';
 
 /**
  * Wygasające umowy (2026-10-31, z analizy konkurencji: przetargi.info). Umowy z branż (CPV)
@@ -23,6 +23,19 @@ export default function UmowyWygasajaceScreen({ navigation }) {
   const [dane, setDane] = useState(null);
   const [blad, setBlad] = useState(null);
   const [proba, setProba] = useState(0);
+  const [obserwacje, setObserwacje] = useState({}); // id umowy → { trwa, ok, komunikat }
+
+  async function obserwuj(u) {
+    const payload = wyszukiwanieZamawiajacego(u);
+    if (!payload) return;
+    setObserwacje((s) => ({ ...s, [u.id]: { trwa: true } }));
+    try {
+      await api.zapiszWyszukiwanie(payload);
+      setObserwacje((s) => ({ ...s, [u.id]: { ok: true, komunikat: t('Obserwujesz. Damy znać, gdy ten zamawiający ogłosi nowy przetarg.', 'Watching. We will let you know when this buyer publishes a new tender.') } }));
+    } catch (err) {
+      setObserwacje((s) => ({ ...s, [u.id]: { ok: false, komunikat: err.message } }));
+    }
+  }
 
   useEffect(() => {
     let aktywny = true;
@@ -94,6 +107,13 @@ export default function UmowyWygasajaceScreen({ navigation }) {
                 </Text>
               </Pressable>
             ))}
+            {obserwacje[u.id]?.komunikat ? (
+              <Text style={obserwacje[u.id].ok ? styles.ok : styles.blad}>{obserwacje[u.id].komunikat}</Text>
+            ) : u.zamawiajacy ? (
+              <Pressable accessibilityRole="button" onPress={() => obserwuj(u)} disabled={obserwacje[u.id]?.trwa} hitSlop={6}>
+                <Text style={styles.link}>{obserwacje[u.id]?.trwa ? t('Zapisuję…', 'Saving…') : t('Obserwuj zamawiającego — alert o nowym przetargu', 'Watch this buyer — alert on a new tender')}</Text>
+              </Pressable>
+            ) : null}
           </View>
         );
       })}
@@ -122,6 +142,7 @@ const tworzStyleUmow = tworzStyle((k) => ({
   ton_neutralne: { backgroundColor: k.neutralneTlo, color: k.textMuted },
   zamawiajacy: { fontSize: 14, color: k.text, marginTop: spacing.xs },
   wykonawca: { fontSize: 13, color: k.text, marginTop: spacing.xs, lineHeight: 18 },
-  link: { fontSize: 13, fontWeight: '700', color: k.blue },
+  link: { fontSize: 13, fontWeight: '700', color: k.blue, marginTop: spacing.xs },
+  ok: { fontSize: 13, color: k.sukcesAkcent, lineHeight: 18, marginTop: spacing.xs },
   zrodlo: { fontSize: 12, color: k.textMuted, marginTop: spacing.lg, fontStyle: 'italic', lineHeight: 17 },
 }));

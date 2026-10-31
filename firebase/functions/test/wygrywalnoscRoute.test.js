@@ -358,3 +358,13 @@ test('GET /wygrywalnosc/umowy-wygasajace: job składa kubełki z rozstrzygnięć
   assert.deepEqual([nasze[0].dni_do_konca, nasze[0].wartosc, nasze[0].zwyciezcy[0].nip, nasze[0].region_nazwa], [20, 480000, '7790000002', 'Wielkopolskie']);
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/umowy-wygasajace`)).status, 401);
 });
+
+test('przegląd tygodniowy: trzy najbliżej kończące się umowy z kubełków karty (dane z testu wyżej)', async () => {
+  const { umowyDoPrzegladu } = await import('../src/jobs/weeklyDigest.js');
+  const umowy = await umowyDoPrzegladu({ cpv_codes: ['98341120'], regiony: ['30'], company_nip: '7790000002' });
+  assert.ok(!umowy.some((u) => u.id.endsWith(ZNAK)), 'firma, która wykonuje te umowy, nie dostaje ich jako leadów');
+  const obca = await umowyDoPrzegladu({ cpv_codes: ['98341120'], regiony: ['30'], company_nip: null });
+  assert.ok(obca.length <= 3);
+  assert.equal(obca.filter((u) => u.id.endsWith(ZNAK))[0]?.id, `uw-b-${ZNAK}`);
+  assert.deepEqual(await umowyDoPrzegladu({ cpv_codes: [], regiony: [] }), []);
+});

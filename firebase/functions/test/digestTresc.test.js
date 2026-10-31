@@ -47,3 +47,17 @@ test('budujDigest: sekcja „co wygrali Twoi konkurenci” (bez niej — bez sek
   const bez = budujDigest({ liczba: 2, tytuly: ['A'] });
   assert.ok(!/konkurenci/.test(bez.text));
 });
+
+test('budujDigest: sekcja wygasających umów (do 3) w tekście i HTML, z ucieczką znaków', () => {
+  const umowy = [
+    { tytul: 'Ochrona <obiektów>', zamawiajacy: 'Szpital Wojewódzki', koniec: '2026-12-31', wartosc: 480000 },
+    { tytul: 'Sprzątanie', zamawiajacy: 'Gmina', koniec: '2027-01-15', wartosc: null },
+    { tytul: 'Paliwo', zamawiajacy: 'Powiat', koniec: '2027-02-01' },
+    { tytul: 'Czwarta', zamawiajacy: 'X', koniec: '2027-03-01' },
+  ];
+  const d = budujDigest({ liczba: 2, tytuly: [], umowy });
+  assert.match(d.text, /wkrótce się kończą — ten przetarg zaraz wróci:\n• Ochrona <obiektów> — Szpital Wojewódzki · koniec 31\.12\.2026 · 480 tys\. zł/);
+  assert.ok(!d.text.includes('Czwarta'));
+  assert.match(d.html, /<b>Ochrona &lt;obiektów&gt;<\/b>/);
+  assert.ok(!budujDigest({ liczba: 1 }).text.includes('wkrótce się kończą'));
+});
