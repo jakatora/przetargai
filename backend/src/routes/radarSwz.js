@@ -267,6 +267,23 @@ router.post('/postepowania/:id/zapytaj', authRequired, ah(async (req, res) => {
   res.json({ postepowanie_id: postepowanie.id, pytanie: parsed.data.pytanie, zrodlo_tresci: zrodlo, ...wynik });
 }));
 
+/*
+ * Sama treść SWZ z PDF-a, BEZ płatnej analizy (2026-10-31): „Zapytaj SWZ” przy dowolnym przetargu —
+ * Functions pobiera PDF z e-Zamówień / platformy, zakłada postępowanie i zapisuje tu tekst, żeby
+ * od razu odpowiadać na pytania. Zapis jak przy analizie (pierwsza wklejona treść zostaje).
+ */
+const trescPdfSchema = z.object({ swz_pdf_base64: z.string().min(8).max(Math.ceil(MAKS_BAJTOW_PDF * 4 / 3) + 4) });
+
+router.post('/postepowania/:id/tresc-pdf', authRequired, ah(async (req, res) => {
+  const postepowanie = postepowaniaSwz.findByIdForUser(req.params.id, req.user.id);
+  if (!postepowanie) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');
+  const parsed = trescPdfSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Podaj plik PDF z SWZ (swz_pdf_base64).');
+  const tekst = await swzZPliku({ swz_pdf_base64: parsed.data.swz_pdf_base64 });
+  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: tekst });
+  res.json({ postepowanie_id: postepowanie.id, znakow: tekst.length, tresc_swz: stanTresciSwz(postepowanie.id) });
+}));
+
 // Ręczne odświeżenie: opcjonalnie niesie nowo opublikowaną wersję SWZ (treść inline
 // albo ścieżka/URL + hasz). Wszystkie pola opcjonalne — bez treści żądanie i tak
 // odpyta automatyczne źródło (domyślnie stub => nic nowego). `tresc` ma twardy limit

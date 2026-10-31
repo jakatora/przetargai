@@ -20,6 +20,13 @@ export function czyMoznaPytacSwz(trescSwz) {
   return trescSwz?.zrodlo === 'wklejona' || trescSwz?.zrodlo === 'wersja';
 }
 
+/** Przy przetargu: BZP (z identyfikatorem postępowania e-Zamówień) albo platformazakupowa.pl — tam są dokumenty z SWZ. */
+export function czyMoznaPytacPrzetargu(tender) {
+  const kod = tender?.zrodlo?.kod ?? tender?.source;
+  if (!tender?.id) return false;
+  return (kod === 'bzp' && Boolean(tender.postepowanie_id)) || kod === 'platformazakupowa';
+}
+
 export function poprawnePytanie(tekst) {
   const s = String(tekst ?? '').trim();
   return s.length >= MIN_DLUGOSC_PYTANIA && s.length <= MAKS_DLUGOSC_PYTANIA;

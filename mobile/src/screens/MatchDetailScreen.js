@@ -379,7 +379,7 @@ export default function MatchDetailScreen({ route, navigation }) {
       ) : null}
 
       <KtoWygrywa tender={tender} />
-      <ZapytajSwzPrzetargu tenderId={tender?.id ?? match?.tender_id} plan={plan} />
+      <ZapytajSwzPrzetargu tender={tender} />
 
       <Pressable
         style={({ pressed }) => [styles.decyzjaCta, pressed && styles.ctaWcisniete]}

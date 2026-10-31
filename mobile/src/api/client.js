@@ -262,6 +262,9 @@ export const api = {
   radarAnalizuj: (id, payload) =>
     request(`/api/przetarg/swz/postepowania/${id}/analiza`, { method: 'POST', body: payload }),
   /** Pytanie do SWZ (płatne AI) — odpowiedź z treści SWZ i cytaty sprawdzone w tekście. */
+  /** Pytanie do SWZ przy przetargu — serwer sam bierze SWZ w PDF i wiąże analizę (2026-10-31). */
+  zapytajSwzPrzetargu: (tenderId, pytanie) =>
+    request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/zapytaj-swz`, { method: 'POST', body: { pytanie } }),
   radarZapytajSwz: (id, pytanie) =>
     request(`/api/przetarg/swz/postepowania/${id}/zapytaj`, { method: 'POST', body: { pytanie } }),
   /** Wchłonięcie nowo opublikowanej wersji SWZ → wersjonowanie + wpis zmiany (diff). */

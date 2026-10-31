@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import TextField from './TextField';
 import Button from './Button';
@@ -6,7 +6,7 @@ import { api } from '../api/client';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
-import { PODPOWIEDZI_PYTAN, MAKS_DLUGOSC_PYTANIA, czyMoznaPytacSwz, poprawnePytanie, opisStatusuOdpowiedzi } from '../lib/zapytajSwz';
+import { PODPOWIEDZI_PYTAN, MAKS_DLUGOSC_PYTANIA, czyMoznaPytacSwz, czyMoznaPytacPrzetargu, poprawnePytanie, opisStatusuOdpowiedzi } from '../lib/zapytajSwz';
 
 /**
  * „Zapytaj SWZ” (2026-10-31, z analizy konkurencji: Mimira, SEZAM, Tendium). Wykonawca pyta wprost
@@ -14,7 +14,7 @@ import { PODPOWIEDZI_PYTAN, MAKS_DLUGOSC_PYTANIA, czyMoznaPytacSwz, poprawnePyta
  * a cytaty backend sprawdza w tekście: wymyślony cytat wraca jako „nieudowodnione”. Bez zapisanej
  * treści SWZ komponent się nie pokazuje (karta analizy niżej mówi, jak ją dodać).
  */
-export default function ZapytajSwz({ postepowanieId, trescSwz }) {
+export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null, podpowiedzPierwszego = null }) {
   const styles = useStyle(tworzStyleZapytajSwz);
   const { t } = useJezyk();
   const [pytanie, setPytanie] = useState('');
@@ -22,7 +22,8 @@ export default function ZapytajSwz({ postepowanieId, trescSwz }) {
   const [blad, setBlad] = useState(null);
   const [odpowiedzi, setOdpowiedzi] = useState([]);
 
-  if (!postepowanieId || !czyMoznaPytacSwz(trescSwz)) return null;
+  // Radar: pytamy postępowanie, które ma treść SWZ. Przetarg: własna funkcja (serwer sam bierze SWZ z PDF-a).
+  if (!zapytajFn && (!postepowanieId || !czyMoznaPytacSwz(trescSwz))) return null;
 
   async function zapytaj(tekst) {
     const p = String(tekst ?? '').trim();
@@ -30,7 +31,7 @@ export default function ZapytajSwz({ postepowanieId, trescSwz }) {
     setLaduje(true);
     setBlad(null);
     try {
-      const wynik = await api.radarZapytajSwz(postepowanieId, p);
+      const wynik = zapytajFn ? await zapytajFn(p) : await api.radarZapytajSwz(postepowanieId, p);
       setOdpowiedzi((stare) => [{ ...wynik, pytanie: p }, ...stare].slice(0, 5));
       setPytanie('');
     } catch (err) {
@@ -45,6 +46,7 @@ export default function ZapytajSwz({ postepowanieId, trescSwz }) {
       <Text style={styles.tytul}>{t('Zapytaj SWZ', 'Ask the tender documents')}</Text>
       <Text style={styles.opis}>
         {t('Zadaj pytanie, a odpowiemy z treści SWZ z cytatem, który sprawdzamy w dokumencie.', 'Ask a question and we answer from the documents with a quote we check in the text.')}
+        {podpowiedzPierwszego && !odpowiedzi.length ? ` ${podpowiedzPierwszego}` : ''}
       </Text>
       <View style={styles.podpowiedzi}>
         {PODPOWIEDZI_PYTAN.map((p) => (
@@ -84,30 +86,19 @@ export default function ZapytajSwz({ postepowanieId, trescSwz }) {
 }
 
 /**
- * To samo na ekranie przetargu: gdy przetarg jest powiązany z analizą SWZ (ręcznie albo przez
- * automatyczną analizę SWZ), klient pyta od razu tutaj, bez wchodzenia do Radaru. Tylko Standard
- * (Radar SWZ i płatne AI są w Standardzie); bez powiązania albo treści SWZ nic się nie pokazuje.
+ * To samo na ekranie przetargu — przy KAŻDYM przetargu z BZP i platformazakupowa.pl (2026-10-31).
+ * Serwer sam bierze SWZ w PDF z dokumentów, zapisuje jej tekst (bez płatnej analizy) i wiąże
+ * z przetargiem; brak SWZ w PDF → komunikat z drogą przez Radar. Plan darmowy ma dzienny limit pytań.
  */
-export function ZapytajSwzPrzetargu({ tenderId, plan }) {
-  const [stan, setStan] = useState(null);
-
-  useEffect(() => {
-    if (plan !== 'standard' || !tenderId) return undefined;
-    let aktywny = true;
-    api.powiazanieSwz(tenderId)
-      .then((d) => {
-        const postepowanieId = d?.powiazanie?.postepowanie_id;
-        if (!postepowanieId) return null;
-        return api.radarPostepowanie(postepowanieId).then((p) => {
-          if (aktywny) setStan({ postepowanieId, trescSwz: p?.tresc_swz ?? null });
-        });
-      })
-      .catch(() => {});
-    return () => { aktywny = false; };
-  }, [plan, tenderId]);
-
-  if (!stan) return null;
-  return <ZapytajSwz postepowanieId={stan.postepowanieId} trescSwz={stan.trescSwz} />;
+export function ZapytajSwzPrzetargu({ tender }) {
+  const { t } = useJezyk();
+  if (!czyMoznaPytacPrzetargu(tender)) return null;
+  return (
+    <ZapytajSwz
+      zapytajFn={(p) => api.zapytajSwzPrzetargu(tender.id, p)}
+      podpowiedzPierwszego={t('Pierwsze pytanie trwa dłużej — pobieramy SWZ z platformy.', 'The first question takes longer — we fetch the documents.')}
+    />
+  );
 }
 
 const tworzStyleZapytajSwz = tworzStyle((k) => ({

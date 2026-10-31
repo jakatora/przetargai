@@ -3314,6 +3314,27 @@ export const obserwacjePlanow = {
 const eksportLimitDoc = (userId, dzien) =>
   db().collection('users').doc(userId).collection('limity').doc(`eksport_${dzien}`);
 
+/*
+ * Dzienny limit pytań do SWZ w planie darmowym (2026-10-31). Wspólny budżet AI blokuje WSZYSTKICH,
+ * gdy się wyczerpie — darmowe konta nie mogą go wyjeść płacącym. Standard i próba bez tego limitu
+ * (dalej obowiązuje dobowy limit AI na Railway).
+ */
+const pytaniaSwzDoc = (userId, dzien) =>
+  db().collection('users').doc(userId).collection('limity').doc(`pytania_swz_${dzien}`);
+
+export const limitPytanSwz = {
+  async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
+    const ref = pytaniaSwzDoc(userId, dzien);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const zadane = doc.exists ? (doc.data().zadane ?? 0) : 0;
+      if (zadane >= limit) return false;
+      tx.set(ref, { zadane: zadane + 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+};
+
 export const limitEksportu = {
   async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
     const ref = eksportLimitDoc(userId, dzien);

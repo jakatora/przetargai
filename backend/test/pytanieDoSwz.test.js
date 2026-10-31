@@ -131,3 +131,25 @@ test('weryfikacja cytatów i odczyt odpowiedzi', () => {
   assert.equal(parsujOdpowiedz('{"odpowiedz": ""}'), null);
   assert.deepEqual(parsujOdpowiedz('Oto: {"odpowiedz": "Tak.", "cytaty": ["x"], "brak_w_swz": false}'), { odpowiedz: 'Tak.', cytaty: ['x'], brak_w_swz: false });
 });
+
+test('POST /tresc-pdf: tekst SWZ z PDF zapisany BEZ wywołania AI, potem można pytać', async () => {
+  const { budujPdf } = await import('./helpers/buildPdf.js');
+  const u = nowy('pdf', { swz: null });
+  const zapis = await fetch(`${base}/api/przetarg/swz/postepowania/${u.postId}/tresc-pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${u.token}` },
+    body: JSON.stringify({ swz_pdf_base64: budujPdf('Zamawiajacy wymaga wniesienia wadium w wysokosci 7 000,00 zl.') }),
+  });
+  assert.equal(zapis.status, 200);
+  const z = await zapis.json();
+  assert.equal(z.tresc_swz.zrodlo, 'wklejona');
+  assert.equal(wywolania.length, 0, 'zapis treści nie woła AI');
+  odpowiedzAi = { odpowiedz: 'Wadium 7 000,00 zł.', cytaty: ['wniesienia wadium w wysokosci 7 000,00 zl'], brak_w_swz: false };
+  const { json } = await zapytaj(u, { pytanie: 'Ile wadium?' });
+  assert.equal(json.status, 'potwierdzone');
+  const obcy = nowy('pdf-obcy');
+  const cudze = await fetch(`${base}/api/przetarg/swz/postepowania/${u.postId}/tresc-pdf`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${obcy.token}` }, body: JSON.stringify({ swz_pdf_base64: 'JVBERi0xLjQ=' }),
+  });
+  assert.equal(cudze.status, 404);
+});

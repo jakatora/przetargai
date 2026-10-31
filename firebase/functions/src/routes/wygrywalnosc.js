@@ -2,14 +2,17 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia } from '../db/repos.js';
+import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia, limitPytanSwz } from '../db/repos.js';
+import { planEfektywny } from '../lib/plan.js';
 import { ktoWygrywa } from '../lib/ktoWygrywa.js';
 import { profilKonkurenta, normNip, twoiKonkurenci } from '../lib/profilKonkurenta.js';
 import { dzialCpv, normWojewodztwo } from '../lib/wynikiAgregacja.js';
-import { AppError, badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
+import { AppError, badRequest, conflict, notFound, serviceUnavailable, tooMany } from '../lib/errors.js';
 import { features } from '../config.js';
 import { logger } from '../lib/logger.js';
-import { zapytajModulPrzetargowy } from '../services/mostRailway.js';
+import { zapytajModulPrzetargowy, wywolajModulPrzetargowy } from '../services/mostRailway.js';
+import { dokumentyPrzetargu, wybierzSwz, pobierzPdfBase64 } from '../jobs/autoAnalizaSwz.js';
+import { pobierzDokumenty as pobierzDokumentyEz, czyIdPostepowania } from '../services/eZamowieniaDokumenty.js';
 import { zbudujChecklisteOferty } from '../lib/checklistaOferty.js';
 import { zbudujKalendarz } from '../lib/kalendarzPrzetargu.js';
 import { zbudujKarteStartu, kluczeBenchmarku, rozstrzygniecieTegoPostepowania } from '../services/kartaStartu.js';
@@ -105,6 +108,64 @@ router.get('/tender/:id/kto-wygrywa', ah(async (req, res) => {
   }
   const wyniki = await rozstrzygniecia.dlaZamawiajacego(nip, { limit: 200 });
   res.json({ dostepne: true, zamawiajacy: tender.organization ?? null, ...ktoWygrywa(wyniki) });
+}));
+
+/*
+ * „Zapytaj SWZ” przy DOWOLNYM przetargu (2026-10-31): nie trzeba najpierw wchodzić do Radaru SWZ.
+ * Gdy przetarg nie ma jeszcze powiązanej analizy, sami bierzemy SWZ w PDF z dokumentów (e-Zamówienia
+ * albo platformazakupowa.pl), zakładamy postępowanie na Railway, zapisujemy tekst BEZ płatnej analizy
+ * (`/tresc-pdf`) i wiążemy z przetargiem — każde następne pytanie idzie od razu. Koszt pilnują bramki
+ * Railway (budżet AI i dobowy limit użytkownika); pytanie bez SWZ w PDF → 409 z instrukcją.
+ */
+const wejsciePytania = z.object({ pytanie: z.string().trim().min(3).max(500) });
+export const LIMIT_PYTAN_SWZ_DARMOWY = 3;
+
+async function postepowanieZTrescia(user, tender) {
+  let dokumenty = dokumentyPrzetargu(tender);
+  if (!dokumenty.length && tender.source === 'bzp' && czyIdPostepowania(tender.postepowanie_id)) {
+    dokumenty = await pobierzDokumentyEz(tender.postepowanie_id);
+    await tenders.zapiszDokumentyEz(tender.id, dokumenty);
+  }
+  const swz = wybierzSwz(dokumenty);
+  if (!swz) throw conflict('W dokumentach tego przetargu nie ma SWZ w PDF. Otwórz Radar SWZ i wklej treść specyfikacji — wtedy odpowiemy.');
+  let pdf;
+  try {
+    pdf = await pobierzPdfBase64(swz.url);
+  } catch (err) {
+    throw new AppError(502, 'SWZ_NIEDOSTEPNA', `Nie udało się pobrać SWZ: ${err.message}`);
+  }
+  const nowe = await wywolajModulPrzetargowy(user, {
+    metoda: 'POST', sciezka: '/swz/postepowania',
+    dane: { nazwa: String(tender.title ?? 'Przetarg').slice(0, 300), ...(tender.deadline ? { termin_skladania_ofert: tender.deadline } : {}) },
+  });
+  const postepowanieId = nowe.dane?.postepowanie?.id;
+  if (nowe.status !== 201 || !postepowanieId) throw new AppError(502, 'MOST_NIEDOSTEPNY', 'Moduł analizy SWZ jest chwilowo niedostępny. Spróbuj za chwilę.');
+  const tresc = await wywolajModulPrzetargowy(user, { metoda: 'POST', sciezka: `/swz/postepowania/${postepowanieId}/tresc-pdf`, dane: { swz_pdf_base64: pdf }, limitMs: 60_000 });
+  if (tresc.status !== 200) throw new AppError(tresc.status >= 500 ? 502 : tresc.status, 'SWZ_NIECZYTELNA', tresc.dane?.error?.message ?? 'Nie udało się odczytać tekstu SWZ.');
+  await powiazaniaSwz.ustaw(user.id, tender.id, { postepowanieId, nazwa: String(tender.title ?? '').slice(0, 300) || null });
+  return postepowanieId;
+}
+
+router.post('/tender/:id/zapytaj-swz', ah(async (req, res) => {
+  const parsed = wejsciePytania.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Wpisz pytanie do SWZ (od 3 do 500 znaków).');
+  if (!features.most) throw serviceUnavailable('Moduł analizy SWZ jest chwilowo wyłączony');
+  const tender = await tenders.findById(req.params.id);
+  if (!tender) throw notFound('Przetarg nie został znaleziony');
+  if (planEfektywny(req.user) !== 'standard' && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY))) {
+    throw tooMany(`W planie darmowym możesz zadać ${LIMIT_PYTAN_SWZ_DARMOWY} pytania do SWZ dziennie. W planie Standard pytasz bez tego limitu.`);
+  }
+
+  const powiazanie = await powiazaniaSwz.pobierz(req.user.id, tender.id);
+  let postepowanieId = powiazanie?.postepowanie_id ?? null;
+  const pytaj = (id) => wywolajModulPrzetargowy(req.user, { metoda: 'POST', sciezka: `/swz/postepowania/${id}/zapytaj`, dane: { pytanie: parsed.data.pytanie }, limitMs: 60_000 });
+  let odp = postepowanieId ? await pytaj(postepowanieId) : null;
+  // Brak powiązania, analiza usunięta (404) albo bez treści (409) → treść z PDF-a i jeszcze raz.
+  if (!odp || odp.status === 404 || odp.status === 409) {
+    postepowanieId = await postepowanieZTrescia(req.user, tender);
+    odp = await pytaj(postepowanieId);
+  }
+  res.status(odp.status).json({ ...(odp.dane ?? {}), postepowanie_id: postepowanieId });
 }));
 
 /*
