@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { View, Text, Pressable, Linking } from 'react-native';
 import Button from './Button';
+import WypelnijZalacznik from './WypelnijZalacznik';
+import { czyMoznaWypelnic } from '../lib/wypelnianieZalacznika';
 import { api } from '../api/client';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
@@ -56,6 +58,7 @@ export default function DokumentyEZamowienia({ tender, navigation }) {
                 <Text style={d.url ? styles.dokumentLink : styles.dokumentTekst} numberOfLines={2}>
                   {d.nazwa}{d.rozszerzenie ? ` · ${d.rozszerzenie.toUpperCase()}` : ''}
                 </Text>
+                {czyMoznaWypelnic(d) ? <WypelnijZalacznik dokument={d} navigation={navigation} /> : null}
               </Pressable>
             ))}
             <Text style={styles.podpis}>{t('Pliki pobierają się z ezamowienia.gov.pl — bez logowania.', 'Files download from ezamowienia.gov.pl — no sign-in needed.')}</Text>

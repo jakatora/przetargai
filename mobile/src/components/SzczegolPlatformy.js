@@ -7,6 +7,8 @@ import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
 import { swzZZalacznikow, parametryRadaruZPlatformy } from '../lib/zalacznikiPlatformy';
+import WypelnijZalacznik from './WypelnijZalacznik';
+import { czyMoznaWypelnic } from '../lib/wypelnianieZalacznika';
 
 /**
  * Szczegół postępowania z platformazakupowa.pl NA ŻĄDANIE (2026-10-25): lista platformy daje tylko
@@ -55,6 +57,7 @@ export default function SzczegolPlatformy({ tender, navigation }) {
                   <Text style={z.url ? styles.zalacznikLink : styles.zalacznikTekst} numberOfLines={2}>
                     {z.nazwa}{z.rozmiar_kb ? ` · ${z.rozmiar_kb >= 1024 ? `${(z.rozmiar_kb / 1024).toFixed(1)} MB` : `${z.rozmiar_kb} kB`}` : ''}
                   </Text>
+                  {czyMoznaWypelnic(z) ? <WypelnijZalacznik dokument={z} navigation={navigation} /> : null}
                 </Pressable>
               ))}
               <Text style={styles.podpis}>{t('Otwierają się na platformazakupowa.pl — bez logowania.', 'They open on platformazakupowa.pl — no sign-in needed.')}</Text>

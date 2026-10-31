@@ -230,3 +230,44 @@ describe('POST /eksport/pismo — pismo jako Word na e-mail konta', () => {
     assert.equal((await fetch(`${BAZA}/eksport/pismo`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nazwa: 'x', tresc: 'a' }) })).status, 401);
   });
 });
+
+describe('POST /eksport/zalacznik(.docx) — formularz zamawiającego wypełniony danymi firmy', async () => {
+  const { ustawPobieranieZalacznika } = await import('../src/routes/eksport.js');
+  const { zbudujZip } = await import('../src/lib/docx.js');
+  const { czytajZip } = await import('../src/lib/wypelnijZalacznik.js');
+  const xml = '<w:document xmlns:w="w"><w:body><w:p><w:r><w:t>Nazwa Wykonawcy: ……………………</w:t></w:r></w:p><w:p><w:r><w:t>Cena brutto: ……………… zł</w:t></w:r></w:p></w:body></w:document>';
+  const formularz = zbudujZip([{ nazwa: 'word/document.xml', dane: Buffer.from(xml) }]);
+  const cialo = { url: 'https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/x/x_1', nazwa: 'Załącznik nr 1', dane: { nazwa: 'Budmax Sp. z o.o.', nip: '8130000001' } };
+  test.after(() => ustawPobieranieZalacznika(null));
+
+  test('plik do pobrania: wpisana nazwa, cena zostaje, liczniki w nagłówkach', async () => {
+    ustawPobieranieZalacznika(async () => formularz);
+    const { token } = await konto();
+    const odp = await fetch(`${BAZA}/eksport/zalacznik.docx`, { method: 'POST', headers: naglowki(token), body: JSON.stringify(cialo) });
+    assert.equal(odp.status, 200);
+    assert.match(odp.headers.get('content-type'), /wordprocessingml/);
+    assert.equal(decodeURIComponent(odp.headers.get('x-plik')), 'Załącznik nr 1 - wypełniony.docx');
+    assert.equal(odp.headers.get('x-wypelnione'), '1');
+    const tekst = czytajZip(Buffer.from(await odp.arrayBuffer()))[0].dane.toString('utf8');
+    assert.match(tekst, /Nazwa Wykonawcy: Budmax Sp\. z o\.o\./);
+    assert.match(tekst, /Cena brutto: ……………… zł/);
+  });
+
+  test('e-mail na adres konta z raportem; błędy pobrania mają swój status; bez danych 400; bez tokenu 401', async () => {
+    ustawPobieranieZalacznika(async () => formularz);
+    const { token } = await konto();
+    const odp = await fetch(`${BAZA}/eksport/zalacznik`, { method: 'POST', headers: naglowki(token), body: JSON.stringify(cialo) });
+    assert.equal(odp.status, 200);
+    const d = await odp.json();
+    assert.equal(d.tryb_degradacji, true, 'w testach bez klucza Resend');
+    assert.deepEqual(d.wypelnione.map((w) => w.pole), ['nazwa']);
+    assert.ok(d.do_uzupelnienia.some((x) => /Cena brutto/.test(x.etykieta)));
+
+    ustawPobieranieZalacznika(async () => { throw Object.assign(new Error('To stary format Word (.doc).'), { status: 422 }); });
+    const stary = await fetch(`${BAZA}/eksport/zalacznik.docx`, { method: 'POST', headers: naglowki(token), body: JSON.stringify(cialo) });
+    assert.equal(stary.status, 422);
+    assert.match((await stary.json()).error.message, /\.doc/);
+    assert.equal((await fetch(`${BAZA}/eksport/zalacznik.docx`, { method: 'POST', headers: naglowki(token), body: JSON.stringify({ url: cialo.url, dane: {} }) })).status, 400);
+    assert.equal((await fetch(`${BAZA}/eksport/zalacznik.docx`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cialo) })).status, 401);
+  });
+});

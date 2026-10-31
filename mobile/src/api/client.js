@@ -484,4 +484,7 @@ export const api = {
   wyslijPismaWord: ({ pisma, tytul }) => request('/eksport/pismo', { method: 'POST', body: { pisma, ...(tytul ? { tytul } : {}) } }),
   /** Pismo jako plik .docx do pobrania (web / Windows) — { blob, nazwaPliku, typMime }. */
   pobierzPismoWord: ({ nazwa, tresc }) => requestBlob('/eksport/pismo.docx', { body: { nazwa, tresc } }),
+  /** Formularz zamawiającego (.docx) wypełniony danymi firmy — e-mailem na adres konta albo plikiem (web). */
+  wypelnijZalacznikEmail: (cialo) => request('/eksport/zalacznik', { method: 'POST', body: cialo }),
+  wypelnijZalacznikPlik: (cialo) => requestBlob('/eksport/zalacznik.docx', { body: cialo }),
 };

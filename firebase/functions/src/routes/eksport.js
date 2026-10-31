@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
 import { saved, tenders, limitEksportu } from '../db/repos.js';
-import { badRequest, tooMany, serviceUnavailable } from '../lib/errors.js';
+import { AppError, badRequest, tooMany, serviceUnavailable } from '../lib/errors.js';
 import { nowIso } from '../lib/ids.js';
 import { normalizujFiltry, LIMIT_MAKS } from '../lib/katalogPrzetargow.js';
 import {
@@ -13,6 +13,7 @@ import {
 import { sendEmail } from '../services/email.js';
 import { doIcs } from '../lib/kalendarzPrzetargu.js';
 import { zbudujDocx, nazwaPlikuDocx, TYP_MIME_DOCX } from '../lib/docx.js';
+import { wypelnijDocx, pobierzZalacznik, liczbaPol } from '../lib/wypelnijZalacznik.js';
 import { esc } from '../lib/html.js';
 import { kalendarzeUzytkownika } from './kalendarz.js';
 
@@ -239,4 +240,81 @@ router.post('/pismo.docx', ah(async (req, res) => {
   res.set('Content-Disposition', `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(plik)}`);
   res.set('X-Plik', encodeURIComponent(plik));
   res.send(zbudujDocx({ nazwa, tresc, teraz: new Date(nowIso()) }));
+}));
+
+/*
+ * Załącznik ZAMAWIAJĄCEGO wypełniony danymi firmy (2026-10-31, z analizy konkurencji: Mimira).
+ * Klient podaje adres .docx z dokumentów przetargu (e-Zamówienia / platformazakupowa.pl) i dane
+ * firmy wpisane raz w aplikacji; wpisujemy tylko pola rozpoznane z pewnością (lib/wypelnijZalacznik.js),
+ * a cenę, terminy i podpis zostawiamy wykonawcy. Dwie drogi jak przy pismach: e-mail na adres
+ * z konta (telefon) albo plik do pobrania (web / Windows).
+ */
+const poleDanych = z.string().trim().max(300).optional();
+const zalacznikSchema = z.object({
+  url: z.string().trim().min(10).max(800),
+  nazwa: z.string().trim().min(1).max(160).optional(),
+  dane: z.object({
+    nazwa: z.string().trim().min(2).max(300),
+    adres: poleDanych, nip: poleDanych, regon: poleDanych, rejestr: poleDanych, reprezentant: poleDanych,
+    stanowisko: poleDanych, email: poleDanych, telefon: poleDanych, miejscowosc: poleDanych,
+  }),
+});
+
+/** Test seam: podmiana pobierania załącznika (testy bez sieci). */
+let pobierzZal = pobierzZalacznik;
+export function ustawPobieranieZalacznika(fn) { pobierzZal = fn ?? pobierzZalacznik; }
+
+async function wypelnionyZalacznik(body) {
+  const parsed = zalacznikSchema.safeParse(body ?? {});
+  if (!parsed.success) throw badRequest('Podaj adres załącznika i dane firmy (co najmniej nazwę).', parsed.error.issues);
+  let bufor;
+  try {
+    bufor = await pobierzZal(parsed.data.url);
+  } catch (err) {
+    throw new AppError(err.status ?? 502, 'ZALACZNIK', err.message);
+  }
+  let wynik;
+  try {
+    wynik = wypelnijDocx(bufor, parsed.data.dane, { dzis: nowIso().slice(0, 10), teraz: new Date(nowIso()) });
+  } catch (err) {
+    throw new AppError(422, 'ZALACZNIK', `Nie udało się odczytać pliku Word: ${err.message}`);
+  }
+  const plik = nazwaPlikuDocx(`${(parsed.data.nazwa ?? 'Załącznik').replace(/\.docx?$/i, '')} - wypełniony`);
+  return { ...wynik, plik_nazwa: plik };
+}
+
+router.post('/zalacznik', ah(async (req, res) => {
+  if (!req.user.email) throw badRequest('Konto nie ma adresu e-mail.');
+  const w = await wypelnionyZalacznik(req.body);
+  if (!(await limitEksportu.zarezerwuj(req.user.id, LIMIT_WYSYLEK_DZIENNIE))) {
+    throw tooMany(`Dzienny limit wysyłek (${LIMIT_WYSYLEK_DZIENNIE}) wyczerpany — spróbuj jutro.`);
+  }
+  const doUzup = w.do_uzupelnienia.slice(0, 15);
+  const listaTekst = doUzup.map((d) => `• ${d.etykieta} — ${d.powod}`).join('\n');
+  const listaHtml = doUzup.length ? `<p>Do uzupełnienia przez Ciebie:</p><ul>${doUzup.map((d) => `<li>${esc(d.etykieta)} — ${esc(d.powod)}</li>`).join('')}</ul>` : '';
+  const wynik = await sendEmail({
+    to: req.user.email,
+    subject: `${w.plik_nazwa} — wpisaliśmy ${liczbaPol(w.wypelnione.length)}`,
+    text: `W załączniku formularz zamawiającego z wpisanymi danymi firmy (${liczbaPol(w.wypelnione.length)}).`
+      + (doUzup.length ? `\n\nDo uzupełnienia przez Ciebie:\n${listaTekst}` : '')
+      + '\n\nSprawdź dane, wpisz cenę i podpisz kwalifikowanym podpisem przed złożeniem.',
+    html: `<p>W załączniku formularz zamawiającego z wpisanymi danymi firmy (${liczbaPol(w.wypelnione.length)}).</p>${listaHtml}<p>Sprawdź dane, wpisz cenę i podpisz kwalifikowanym podpisem przed złożeniem.</p>`,
+    attachments: [{ filename: w.plik_nazwa, content: w.plik, contentType: TYP_MIME_DOCX }],
+  });
+  if (!wynik.sent && !wynik.degraded) throw serviceUnavailable('Nie udało się wysłać e-maila — spróbuj za chwilę.');
+  res.json({
+    wyslano: Boolean(wynik.sent), tryb_degradacji: Boolean(wynik.degraded), do: req.user.email, plik: w.plik_nazwa,
+    wypelnione: w.wypelnione, do_uzupelnienia: w.do_uzupelnienia,
+  });
+}));
+
+router.post('/zalacznik.docx', ah(async (req, res) => {
+  const w = await wypelnionyZalacznik(req.body);
+  const ascii = w.plik_nazwa.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').replace(/Ł/g, 'L').replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '');
+  res.set('Content-Type', TYP_MIME_DOCX);
+  res.set('Content-Disposition', `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(w.plik_nazwa)}`);
+  res.set('X-Plik', encodeURIComponent(w.plik_nazwa));
+  res.set('X-Wypelnione', String(w.wypelnione.length));
+  res.set('X-Do-Uzupelnienia', encodeURIComponent(JSON.stringify(w.do_uzupelnienia.slice(0, 8).map((d) => d.etykieta))));
+  res.send(w.plik);
 }));

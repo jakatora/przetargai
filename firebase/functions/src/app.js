@@ -38,7 +38,7 @@ export function createApp() {
   app.use(helmet());
   // Nagłówki plików (CSV, .docx) muszą być widoczne dla przeglądarki — bez `exposedHeaders`
   // web/Windows nie zna nazwy pobieranego pliku (CORS odsłania domyślnie tylko kilka nagłówków).
-  app.use(cors({ exposedHeaders: ['Content-Disposition', 'X-Plik', 'X-Wierszy', 'X-Obciety'] }));
+  app.use(cors({ exposedHeaders: ['Content-Disposition', 'X-Plik', 'X-Wierszy', 'X-Obciety', 'X-Wypelnione', 'X-Do-Uzupelnienia'] }));
 
   /*
    * UWAGA o skali: liczniki express-rate-limit żyją w pamięci INSTANCJI. Przy
