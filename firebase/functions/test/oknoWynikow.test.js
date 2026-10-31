@@ -51,12 +51,14 @@ describe('okno rozstrzygnięć — wybór dób i checkpoint', () => {
     assert.equal(stan.dni['2026-09-22'].blad, 'HTTP 503');
   });
 
-  test('doba poza oknem wypada z checkpointu (dokument nie rośnie bez końca)', () => {
+  test('poza oknem: domknięta doba z ostatniego roku zostaje (wsteczne zasilenie), niedomknięta i starsza wypadają', () => {
     const stan = zaktualizujCheckpointWynikow({
-      checkpoint: { dni: { '2026-08-01': { kompletny: true } } },
+      checkpoint: { dni: { '2026-08-01': { kompletny: true }, '2026-08-02': { kompletny: false }, '2025-07-01': { kompletny: true } } },
       raport: [], dni, dzisiaj: '2026-09-24', teraz: 'T',
     });
-    assert.equal(stan.dni['2026-08-01'], undefined);
+    assert.deepEqual(stan.dni['2026-08-01'], { kompletny: true });
+    assert.equal(stan.dni['2026-08-02'], undefined);
+    assert.equal(stan.dni['2025-07-01'], undefined, 'starsze niż ~rok — dokument nie rośnie bez końca');
   });
 
   test('doba pominięta z braku budżetu NIE dostaje nieprawdziwego „kompletny"', () => {
@@ -161,10 +163,11 @@ describe('okno rozstrzygnięć — przebieg', () => {
   });
 
   test('awaria doby BZP nie zatrzymuje pozostałych dób', async () => {
+    // Własne okno (maj): checkpoint pamięta domknięte doby z innych testów (DNI_PAMIECI_CHECKPOINTU).
     const wynik = await runOknoWynikow({
-      dniBzp: 3, dniTed: 1, teraz: DZIS,
+      dniBzp: 3, dniTed: 1, teraz: Date.UTC(2026, 4, 24),
       pobierzDzienBzp: async (dzien) => {
-        if (dzien === '2026-09-23') throw new Error('BZP 503');
+        if (dzien === '2026-05-23') throw new Error('BZP 503');
         return [];
       },
       pobierzTed: async () => [], pobierzModyfikacje: async () => [],

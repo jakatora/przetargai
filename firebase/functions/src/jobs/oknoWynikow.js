@@ -70,12 +70,21 @@ export function wybierzDniWynikow({ dni, checkpoint, dzisiaj }) {
     .filter((dzien) => dzien >= dzisiaj || !stan[dzien]?.kompletny);
 }
 
-/** Nowy stan checkpointu; doby poza oknem wypadają, żeby dokument nie rósł bez końca. */
+/**
+ * Jak długo checkpoint pamięta DOMKNIĘTE doby spoza okna (2026-10-31). Wsteczne zasilenie roku
+ * (trasa admina, `dniBzp: 365`) trwa kilka godzin, a zaplanowany przebieg co 6 h ma okno 14 dni —
+ * gdy wycinał starsze doby, kolejne wywołanie zasilenia pobierało je od nowa. ~400 wpisów po
+ * kilkadziesiąt bajtów to kilkadziesiąt KB, daleko od limitu dokumentu.
+ */
+export const DNI_PAMIECI_CHECKPOINTU = 400;
+
+/** Nowy stan checkpointu; niedomknięte doby spoza okna i domknięte starsze niż ~rok wypadają. */
 export function zaktualizujCheckpointWynikow({ checkpoint, raport = [], pominieteDni = [], dni, dzisiaj, teraz }) {
   const wOknie = new Set(dni);
+  const granica = new Date(Date.parse(`${dzisiaj}T00:00:00Z`) - DNI_PAMIECI_CHECKPOINTU * 86_400_000).toISOString().slice(0, 10);
   const stan = {};
   for (const [dzien, wpis] of Object.entries(checkpoint?.dni ?? {})) {
-    if (wOknie.has(dzien)) stan[dzien] = wpis;
+    if (wOknie.has(dzien) || (wpis?.kompletny && dzien >= granica)) stan[dzien] = wpis;
   }
   for (const wpis of raport) {
     stan[wpis.dzien] = {
