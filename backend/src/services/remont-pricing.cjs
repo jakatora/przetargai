@@ -20726,8 +20726,22 @@ async function quoteDekork(order, postalCode, fetchImpl) {
   return { quote: { costGrosze, carrier: "Dostawa standardowa", payment: "P\u0142atno\u015B\u0107 z g\xF3ry", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN + "/cart", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto.createHash)("sha256").update(JSON.stringify({ postalCode, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates.shipping_rates })).digest("hex") } };
 }
 
+// artifacts/api-server/src/lib/norgips-joint-tapes.ts
+var NORGIPS_JOINT_TAPE_SOURCES = [
+  // source: https://hipper.pl/tasma-papierowa-z-wkladka-metalowa-50-mm-norgips-2682508803
+  // source: https://norgips.pl/media/repository/0/306/47772594ab104a20ab31ac3f7ea22975/NORGIPS_PL_KT_akcesoria_tasma_papierow_784Tcv5.pdf
+  { id: "hipper-norgips-metal-paper-50x30", ean: "5907651699940", name: "Ta\u015Bma papierowa z wk\u0142adk\u0105 metalow\u0105 50 mm Norgips", brand: "Norgips", category: "drywall-accessory", packageSize: 30, unit: "m", store: "HIPPER", format: "certusoft", productId: 2682508803, retailerUnitId: 2682508830, apiPurchaseUnit: "szt", variant: ["50 mm", "wk\u0142adk\u0105 metalow\u0105"], pickupRequiresConfirmation: true, url: "https://hipper.pl/tasma-papierowa-z-wkladka-metalowa-50-mm-norgips-2682508803", imageUrl: "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|F2DBF33D-6B74-4EA1-96C8-6B552C5E2730|1/Ta\u015Bma papierowa z wk\u0142adk\u0105 metalow\u0105 50 mm Norgips.webp" },
+  // source: https://hipper.pl/tasma-samoprzylepna-z-wlokna-szklanego-45-mm-norgips-2682509844
+  // source: https://norgips.pl/media/repository/0/302/821d0d1d23d644d2b9e7ec418df53b90/NORGIPS_PL_KT_akcesoria_tasma_samoprzy_iKwHTWR.pdf
+  { id: "hipper-norgips-mesh-45x153", ean: "5907651699995", name: "Ta\u015Bma samoprzylepna z w\u0142\xF3kna szklanego 45 mm Norgips", brand: "Norgips", category: "drywall-accessory", packageSize: 153, unit: "m", store: "HIPPER", format: "certusoft", productId: 2682509844, retailerUnitId: 2682509871, apiPurchaseUnit: "szt", variant: ["45 mm", "w\u0142\xF3kna szklanego"], pickupRequiresConfirmation: true, url: "https://hipper.pl/tasma-samoprzylepna-z-wlokna-szklanego-45-mm-norgips-2682509844", imageUrl: "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|9837026A-D482-48CC-9F75-C4F4177FF3E5|1/Ta\u015Bma samoprzylepna z w\u0142\xF3kna szklanego 45 mm Norgips.webp" }
+];
+function isReviewedNorgipsJointTape(source) {
+  return NORGIPS_JOINT_TAPE_SOURCES.some((reviewed6) => ["id", "ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "retailerUnitId", "apiPurchaseUnit", "url"].every((key) => source[key] === reviewed6[key]) && source.variant?.join("|") === reviewed6.variant?.join("|") && (source.purchaseMultiple ?? 1) === 1);
+}
+
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...NORGIPS_JOINT_TAPE_SOURCES,
   // source: https://hipper.pl/puszka-podtynkowa-laczeniowa-60-mm-pro-z-wkretami-elektro-plast-956340504
   // source: https://www.elektro-plast.com.pl/download/EPN_CENNIK_2024_05.02.2024.pdf
   { "id": "hipper-epn-pk60-pro-0285-01", "ean": "5901752632141", "name": "Puszka podtynkowa \u0142\u0105czeniowa 60 mm Pro z wkr\u0119tami Elektro-Plast", "brand": "Elektro-Plast", "category": "flush-box", "packageSize": 1, "unit": "szt", "store": "HIPPER", "format": "certusoft", "productId": 956340504, "retailerUnitId": 956412483, "apiPurchaseUnit": "szt", "variant": ["60", "wkr\u0119tami"], "pickupRequiresConfirmation": true, "url": "https://hipper.pl/puszka-podtynkowa-laczeniowa-60-mm-pro-z-wkretami-elektro-plast-956340504", "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|2C8CF048-F501-47AA-A5F5-A63446185DB7|1/Puszka podtynkowa \u0142\u0105czeniowa 60 mm Pro z wkr\u0119tami Elektro-Plast.webp" },
@@ -25129,9 +25143,10 @@ function readCertusoftProduct(html, source) {
   const reviewedRoll = source.id === "hipper-norgips-fleece-50x25" && source.ean === "5907651699926" && source.brand === "Norgips" && source.productId === 2682507570 && source.retailerUnitId === 2682507597 && source.url === "https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570" && source.unit === "m" && source.packageSize === 25;
   const reviewedBottle = source.id === "hipper-metylan-remover-500ml" && source.ean === "9000100222969" && source.brand === "Metylan" && source.productId === 956213124 && source.retailerUnitId === 956370273 && source.url === "https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124" && source.unit === "ml" && source.packageSize === 500;
   const reviewedCarton = source.id === "hipper-norgips-cross-100" && source.ean === "5907651696468" && source.brand === "Norgips" && source.productId === 3071669325 && source.retailerUnitId === 3072059634 && source.url === "https://hipper.pl/lacznik-krzyzowy-60-x-145-mm-100-szt-norgips-3071669325" && source.unit === "szt" && source.packageSize === 100 && source.variant?.join("|") === "krzy\u017Cowy|60|145|100";
-  const singlePiece = source.unit === "szt" && source.packageSize === 1 && source.id !== "hipper-norgips-cross-100" && !source.id.startsWith("hipper-aks-");
+  const singlePiece = source.unit === "szt" && source.packageSize === 1 && source.id !== "hipper-norgips-cross-100" && !source.id.startsWith("hipper-aks-") && !NORGIPS_JOINT_TAPE_SOURCES.some((reviewed6) => reviewed6.id === source.id);
   const reviewedCable = source.id === "hipper-aks-ydyp-3x25-25m" && isReviewedAksCableSource(source);
-  if (!singlePiece && !reviewedRoll && !reviewedBottle && !reviewedCarton && !reviewedCable || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  const reviewedJointTape = isReviewedNorgipsJointTape(source);
+  if (!singlePiece && !reviewedRoll && !reviewedBottle && !reviewedCarton && !reviewedCable && !reviewedJointTape || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
   const state = readCertusoftState(html), card = state.csAppWindowsUtils?.csAppWindows?.csB2BItemCard;
   const rows = card?.dataSets?.itemCard?.rows;
   if (!Array.isArray(rows) || rows.length !== 1) throw Error("product_identity_ambiguous");
@@ -25139,6 +25154,15 @@ function readCertusoftProduct(html, source) {
   if (row.EAN !== source.ean || schema?.sku !== source.ean || schema.mpn !== String(source.productId) || row.csItemsId !== source.productId || row.csItemsUnitsId !== source.retailerUnitId) throw Error("product_ean_not_confirmed");
   if (typeof row.itemName !== "string" || typeof schema.name !== "string" || nameText(row.itemName) !== nameText(schema.name) || schema.brand?.name !== source.brand || "/" + row.appWindowIdentRoute !== url2.pathname) throw Error("product_identity_not_confirmed");
   if (row.stockUnit !== "szt" || row.quantityUnits !== 1 || row.isNegative !== 0) throw Error("purchase_rules_changed");
+  if (reviewedJointTape) {
+    const features = card.dataSets.features?.rows;
+    const feature = (name2) => Array.isArray(features) ? features.filter((r) => r.featureDesc?.trim() === name2).map((r) => r.featureValue) : [];
+    const matches = (name2, value2) => {
+      const values = feature(name2);
+      return values.length === 1 && values[0] === value2;
+    };
+    if (!matches("D\u0142ugo\u015B\u0107", `${source.packageSize} m`) || !matches("Szeroko\u015B\u0107", source.ean === "5907651699940" ? "50 mm" : "45 mm") || !matches("Marka", "Norgips")) throw Error("retailer_unit_not_confirmed");
+  }
   const maxPackages = row.qStockAv;
   if (!Number.isSafeInteger(maxPackages) || maxPackages < 1 || schema.offers?.availability !== "InStock") throw Error("retailer_out_of_stock");
   const priceGrosze = parsePriceToGrosze(row.cUnitPriceADis);
