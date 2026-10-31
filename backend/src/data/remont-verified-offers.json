@@ -3784,5 +3784,19 @@
     "sourceUrl": "https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-30mm-x-30m-rigips-p7444",
     "evidenceSha256": "0d83c5fb66e7fb0ce68ae3e5e8650be9b891eec109b218b46f7838921985c2f3",
     "validUntil": null
+  },
+  {
+    "sourceId": "mlazienka-cersanit-ovida-50",
+    "ean": "5901771226987",
+    "name": "Umywalka 50.5x40 cm półokrągła ścienna biały połysk K36031 Cersanit Ovida",
+    "imageUrl": "https://static.mlazienka.pl/files/produkty/cache/400x400/producers/crs/zle/k36031_6f13aa54.jpg",
+    "priceGrosze": 25700,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T04:53:03.786Z",
+    "sourceUrl": "https://www.mlazienka.pl/umywalka-505x40-cm-polokragla-scienna-bialy-polysk-k36031-cersanit-ovida-785642.html",
+    "evidenceSha256": "84acc83e7bf47796c6b8828309f8a62d72f35d6f21354fc321c37e93a1e8719f",
+    "validUntil": null,
+    "stockPackages": 4
   }
 ]
