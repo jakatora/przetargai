@@ -260,6 +260,9 @@ export const api = {
   /** Analiza SWZ (płatne AI, subskrypcja) — wykryte niejasności zapisze jako szkice pytań. */
   radarAnalizuj: (id, payload) =>
     request(`/api/przetarg/swz/postepowania/${id}/analiza`, { method: 'POST', body: payload }),
+  /** Pytanie do SWZ (płatne AI) — odpowiedź z treści SWZ i cytaty sprawdzone w tekście. */
+  radarZapytajSwz: (id, pytanie) =>
+    request(`/api/przetarg/swz/postepowania/${id}/zapytaj`, { method: 'POST', body: { pytanie } }),
   /** Wchłonięcie nowo opublikowanej wersji SWZ → wersjonowanie + wpis zmiany (diff). */
   /** Oznacza pytania (np. po udostępnieniu wniosku): { ids: [...], status: 'wyslane' } → { pytania }. */
   radarPytaniaStatus: (id, payload) =>

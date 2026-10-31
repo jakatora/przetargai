@@ -8,6 +8,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { czytajPlikBase64, sprawdzPlikSwz, czytajUrlBase64 } from '../lib/plikBase64';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
+import ZapytajSwz from '../components/ZapytajSwz';
 import Button from '../components/Button';
 import { api } from '../api/client';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
@@ -576,6 +577,8 @@ export default function RadarSwzScreen({ route, navigation }) {
           onPress={() => udostepnijWniosek(postepowanie, pytania)}
         />
       ) : null}
+
+      <ZapytajSwz postepowanieId={wybraneId} trescSwz={detal.tresc_swz} />
 
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>{t('Wygeneruj pytania z treści SWZ', 'Generate questions from the tender documents')}</Text>

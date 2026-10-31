@@ -45,6 +45,11 @@ export function ustawKlientaAnthropic(klient) {
   _client = klient;
 }
 
+/** Ten sam klient dla pytań do SWZ (`pytanieDoSwz.js`) — jedna atrapa w testach, jeden klucz w produkcji. */
+export function klientAnthropic() {
+  return _client;
+}
+
 const SYSTEM_PROMPT = [
   'Jesteś ekspertem od zamówień publicznych w Polsce (ustawa Pzp).',
   'Analizujesz dokumentację postępowania i wskazujesz miejsca, które wykonawca',

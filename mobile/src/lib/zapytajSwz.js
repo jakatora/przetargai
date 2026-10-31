@@ -1,0 +1,33 @@
+/*
+ * „Zapytaj SWZ” (2026-10-31): pytania, które wykonawca zadaje najczęściej, zanim zdecyduje o starcie.
+ * Jedno dotknięcie podpowiedzi = gotowe pytanie, bez pisania. Logika poza komponentem, żeby testy
+ * w Node nie ładowały react-native.
+ */
+export const PODPOWIEDZI_PYTAN = Object.freeze([
+  { pl: 'Czy jest wadium i ile wynosi?', en: 'Is there a bid bond and how much?' },
+  { pl: 'Jakie doświadczenie i referencje są wymagane?', en: 'What experience and references are required?' },
+  { pl: 'Jakie są kryteria oceny ofert?', en: 'What are the award criteria?' },
+  { pl: 'Jaki jest termin realizacji zamówienia?', en: 'What is the completion deadline?' },
+  { pl: 'Czy wymagana jest polisa OC i na jaką kwotę?', en: 'Is liability insurance required and for how much?' },
+  { pl: 'Jakie są kary umowne?', en: 'What are the contractual penalties?' },
+]);
+
+export const MIN_DLUGOSC_PYTANIA = 3;
+export const MAKS_DLUGOSC_PYTANIA = 500;
+
+/** Pytać można, gdy backend ma treść SWZ (wklejoną albo wersję zamawiającego). */
+export function czyMoznaPytacSwz(trescSwz) {
+  return trescSwz?.zrodlo === 'wklejona' || trescSwz?.zrodlo === 'wersja';
+}
+
+export function poprawnePytanie(tekst) {
+  const s = String(tekst ?? '').trim();
+  return s.length >= MIN_DLUGOSC_PYTANIA && s.length <= MAKS_DLUGOSC_PYTANIA;
+}
+
+/** Status odpowiedzi z backendu → ton karty i opis po polsku/angielsku. */
+export function opisStatusuOdpowiedzi(status) {
+  if (status === 'potwierdzone') return { ton: 'sukces', pl: 'Potwierdzone cytatem z SWZ', en: 'Confirmed by a quote from the documents' };
+  if (status === 'brak_w_swz') return { ton: 'neutralne', pl: 'SWZ tego nie rozstrzyga', en: 'The documents do not settle this' };
+  return { ton: 'ostrzezenie', pl: 'Nieudowodnione: cytatu nie znaleźliśmy w SWZ, sprawdź w dokumencie', en: 'Unproven: quote not found in the documents, check them yourself' };
+}

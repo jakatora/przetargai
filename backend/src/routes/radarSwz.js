@@ -5,7 +5,8 @@ import { AppError, badRequest, conflict, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { postepowaniaSwz, pytaniaSwz, zmianySwz } from '../db/repos.js';
 import { analizujSwz } from '../services/analizaSwz.js';
-import { zapamietajWklejonaSwz, stanTresciSwz } from '../services/trescSwz.js';
+import { zapamietajWklejonaSwz, stanTresciSwz, trescSwzPostepowania } from '../services/trescSwz.js';
+import { zapytajSwz } from '../services/pytanieDoSwz.js';
 import { odswiezPostepowanie } from '../jobs/monitorSwz.js';
 import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
 import { terminPytanSwz } from '../lib/terminPytanSwz.js';
@@ -244,6 +245,26 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
     pytania: zapisane,
     tresc_swz: stanTresciSwz(postepowanie.id),
   });
+}));
+
+/*
+ * Pytanie do SWZ z cytatem (2026-10-31, z analizy konkurencji): „czy wymagają ISO?”, „ile referencji?”
+ * → odpowiedź z treści SWZ tego postępowania i cytaty sprawdzone w tekście (`pytanieDoSwz.js`).
+ * Bez zapisanej treści SWZ nie ma o co pytać — 409 z instrukcją, BEZ wywołania płatnego AI.
+ */
+const pytanieSchema = z.object({ pytanie: z.string().trim().min(3).max(500) });
+
+router.post('/postepowania/:id/zapytaj', authRequired, ah(async (req, res) => {
+  const postepowanie = postepowaniaSwz.findByIdForUser(req.params.id, req.user.id);
+  if (!postepowanie) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');
+  const parsed = pytanieSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw badRequest('Wpisz pytanie do SWZ (od 3 do 500 znaków).');
+  const { tresc, zrodlo } = trescSwzPostepowania(postepowanie.id);
+  if (!tresc.trim()) {
+    throw conflict('Brak treści SWZ dla tego postępowania. Wklej SWZ albo dodaj plik PDF w analizie, potem zadaj pytanie.');
+  }
+  const wynik = await zapytajSwz({ tresc, pytanie: parsed.data.pytanie });
+  res.json({ postepowanie_id: postepowanie.id, pytanie: parsed.data.pytanie, zrodlo_tresci: zrodlo, ...wynik });
 }));
 
 // Ręczne odświeżenie: opcjonalnie niesie nowo opublikowaną wersję SWZ (treść inline

@@ -1,0 +1,133 @@
+import { test, before, after, beforeEach } from 'node:test';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import os from 'node:os';
+import fs from 'node:fs';
+
+/*
+ * Pytanie do SWZ z cytatem (2026-10-31): `POST /postepowania/:id/zapytaj`. Model odpowiada z treści
+ * SWZ postępowania, a każdy jego cytat sprawdzamy w tekście — wymyślony cytat nie przejdzie jako
+ * „potwierdzone”. Bez treści SWZ trasa nie woła płatnego AI.
+ */
+
+const DB_FILE = path.join(os.tmpdir(), `przetargai-pytanie-swz-${process.pid}.db`);
+process.env.DATABASE_PATH = DB_FILE;
+process.env.ANTHROPIC_API_KEY = '';
+process.env.RESEND_API_KEY = '';
+
+const { migrate } = await import('../src/db/migrate.js');
+const { db } = await import('../src/db/index.js');
+const { createApp } = await import('../src/app.js');
+const { users, postepowaniaSwz } = await import('../src/db/repos.js');
+const { signToken } = await import('../src/middleware/auth.js');
+const { ustawKlientaAnthropic } = await import('../src/services/analizaSwz.js');
+const { zapamietajWklejonaSwz } = await import('../src/services/trescSwz.js');
+const { fragmentyDlaPytania, zweryfikujCytaty, parsujOdpowiedz, MAKS_ZNAKOW_KONTEKSTU } = await import('../src/services/pytanieDoSwz.js');
+
+const SWZ = [
+  'Rozdział VII. Warunki udziału w postępowaniu.',
+  'Wykonawca wykaże, że w okresie ostatnich 5 lat wykonał co najmniej 2 roboty budowlane polegające na budowie drogi o wartości nie mniejszej niż 500 000,00 zł brutto każda.',
+  'Rozdział IX. Wadium.',
+  'Zamawiający wymaga wniesienia wadium w wysokości 15 000,00 zł.',
+].join('\n');
+
+let odpowiedzAi;
+const wywolania = [];
+const ai = {
+  messages: {
+    create: async (zadanie) => {
+      wywolania.push(zadanie);
+      return { content: [{ type: 'text', text: JSON.stringify(odpowiedzAi) }], usage: { input_tokens: 900, output_tokens: 120 } };
+    },
+  },
+};
+
+let server;
+let base;
+before(() => {
+  migrate();
+  ustawKlientaAnthropic(ai);
+  server = createApp().listen(0);
+  base = `http://127.0.0.1:${server.address().port}`;
+});
+after(() => {
+  server.close();
+  ustawKlientaAnthropic(null);
+  db.close();
+  for (const s of ['', '-wal', '-shm']) fs.rmSync(`${DB_FILE}${s}`, { force: true });
+});
+beforeEach(() => { wywolania.length = 0; });
+
+function nowy(nazwa, { swz = SWZ } = {}) {
+  const u = users.create({ companyNip: null, companyName: null, email: `pyt-${nazwa}-${process.pid}@t.pl`, passwordHash: 'h' });
+  const post = postepowaniaSwz.create({ userId: u.id, nazwa: `Postępowanie ${nazwa}`, terminSkladaniaOfert: new Date(Date.now() + 20 * 86_400_000).toISOString() });
+  if (swz) zapamietajWklejonaSwz({ postepowanieId: post.id, swz });
+  return { token: signToken(u.id), postId: post.id };
+}
+
+async function zapytaj(u, cialo, postId = u.postId) {
+  const res = await fetch(`${base}/api/przetarg/swz/postepowania/${postId}/zapytaj`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${u.token}` },
+    body: JSON.stringify(cialo),
+  });
+  return { status: res.status, json: await res.json().catch(() => null) };
+}
+
+test('cytat obecny w SWZ (inne cudzysłowy i odstępy) → „potwierdzone”, koszt zaksięgowany', async () => {
+  const u = nowy('ok');
+  odpowiedzAi = { odpowiedz: 'Tak, wadium wynosi 15 000,00 zł.', cytaty: ['Zamawiający  wymaga wniesienia wadium\nw wysokości 15 000,00 zł'], brak_w_swz: false };
+  const { status, json } = await zapytaj(u, { pytanie: 'Czy jest wadium i ile?' });
+  assert.equal(status, 200, JSON.stringify(json));
+  assert.equal(json.status, 'potwierdzone');
+  assert.equal(json.zrodlo_tresci, 'wklejona');
+  assert.deepEqual(json.cytaty.map((c) => c.potwierdzony), [true]);
+  assert.match(wywolania[0].messages[0].content, /Czy jest wadium i ile\?/);
+  const koszt = db.prepare("SELECT COUNT(*) AS n FROM ai_usage WHERE operation = 'swz_pytanie'").get();
+  assert.ok(koszt.n >= 1, 'wywołanie AI zaksięgowane w ai_usage');
+});
+
+test('cytat wymyślony przez model → „nieudowodnione”, nie „potwierdzone”', async () => {
+  const u = nowy('zmyslony');
+  odpowiedzAi = { odpowiedz: 'Wymagany jest certyfikat ISO 9001.', cytaty: ['Wykonawca przedstawi certyfikat ISO 9001'], brak_w_swz: false };
+  const { status, json } = await zapytaj(u, { pytanie: 'Czy wymagają ISO 9001?' });
+  assert.equal(status, 200);
+  assert.equal(json.status, 'nieudowodnione');
+  assert.deepEqual(json.cytaty.map((c) => c.potwierdzony), [false]);
+});
+
+test('model mówi, że SWZ tego nie rozstrzyga → „brak_w_swz”', async () => {
+  const u = nowy('brak');
+  odpowiedzAi = { odpowiedz: 'SWZ nie określa wymogu ubezpieczenia OC.', cytaty: [], brak_w_swz: true };
+  const { json } = await zapytaj(u, { pytanie: 'Jaka polisa OC?' });
+  assert.equal(json.status, 'brak_w_swz');
+});
+
+test('bez treści SWZ → 409 i ŻADNEGO wywołania AI; cudze postępowanie → 404; za krótkie pytanie → 400', async () => {
+  const bez = nowy('pusty', { swz: null });
+  const r409 = await zapytaj(bez, { pytanie: 'Czy jest wadium?' });
+  assert.equal(r409.status, 409);
+  const obcy = nowy('obcy');
+  const r404 = await zapytaj(obcy, { pytanie: 'Czy jest wadium?' }, bez.postId);
+  assert.equal(r404.status, 404);
+  const r400 = await zapytaj(obcy, { pytanie: 'a' });
+  assert.equal(r400.status, 400);
+  assert.equal(wywolania.length, 0, 'płatne AI nie zostało wywołane');
+});
+
+test('długa SWZ: do modelu idą fragmenty z odpowiedzią, w limicie znaków', () => {
+  const wypelniacz = 'Postanowienia ogólne dotyczące realizacji przedmiotu zamówienia i komunikacji. '.repeat(600);
+  const tresc = `${wypelniacz}\nZamawiający wymaga wniesienia wadium w wysokości 15 000,00 zł.\n${wypelniacz}`;
+  const f = fragmentyDlaPytania(tresc, 'Ile wynosi wadium?');
+  assert.ok(tresc.length > MAKS_ZNAKOW_KONTEKSTU);
+  assert.ok(f.length <= MAKS_ZNAKOW_KONTEKSTU + 200, `fragmenty mają ${f.length} znaków`);
+  assert.match(f, /wadium w wysokości 15 000,00 zł/);
+  assert.equal(fragmentyDlaPytania(SWZ, 'cokolwiek'), SWZ, 'krótka SWZ idzie w całości');
+});
+
+test('weryfikacja cytatów i odczyt odpowiedzi', () => {
+  assert.deepEqual(zweryfikujCytaty(['„wniesienia wadium” w wysokości', 'krótki', 42, 'wadium w wysokości 20 000,00 zł'], 'Zamawiający wymaga wniesienia wadium w wysokości 15 000,00 zł.').map((c) => c.potwierdzony), [true, false]);
+  assert.equal(parsujOdpowiedz('nie JSON'), null);
+  assert.equal(parsujOdpowiedz('{"odpowiedz": ""}'), null);
+  assert.deepEqual(parsujOdpowiedz('Oto: {"odpowiedz": "Tak.", "cytaty": ["x"], "brak_w_swz": false}'), { odpowiedz: 'Tak.', cytaty: ['x'], brak_w_swz: false });
+});
