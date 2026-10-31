@@ -21067,6 +21067,26 @@ var RETAIL_SOURCES = [
   { "id": "realbud-soudal-sanitary-stop-white-280ml", "ean": "5411183200326", "name": "SOUDAL SILIKON SANITARNY KUCHNIA \u0141AZIENKA PLE\u015A\u0143 STOP BIA\u0141Y 280ml", "category": "silicone", "brand": "Soudal", "packageSize": 280, "unit": "ml", "store": "Realbud", "format": "shoper-api", "productId": 75056922, "url": "https://realbud.com/pl/p/SOUDAL-SILIKON-SANITARNY-KUCHNIA-LAZIENKA-PLESN-STOP-BIALY-280ml/75056922", "imageUrl": "https://realbud.com/environment/cache/images/productGfx_23109_500_500/5daa6a798ad6adc9e8224e3b5a646bb7.jpg" },
   // source: https://sklep.sewera.pl/acryl-putz-st10-start-gladz-szpachlowa-sypka-5kg-p13308
   { "id": "sewera-acrylputz-st10-5kg", "ean": "5903973104414", "brand": "\u015ANIE\u017BKA", "packageSize": 5, "unit": "kg", "category": "skim-coat", "name": "Acryl Putz ST10 Start g\u0142ad\u017A szpachlowa sypka 5kg", "url": "https://sklep.sewera.pl/acryl-putz-st10-start-gladz-szpachlowa-sypka-5kg-p13308", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/34284/acryl-putz-st10-start-gladz-szpachlowa-sypka-5kg.webp" },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-40-arkusz-230x280mm-p6904
+  { "id": "sewera-klingspor-pl28c-p40-sheet", "ean": "5907560018009", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-40", "name": "Papier \u015Bcierny gr.40 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-40-arkusz-230x280mm-p6904", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56983/papier-scierny-gr-40-arkusz-230x280mm.webp", "variant": ["40", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P40-50szt/25766
+  { "id": "matiw-klingspor-pl28c-p40-50", "ean": "5907560018009", "brand": "Klingspor", "packageSize": 50, "unit": "szt", "category": "hand-abrasive-40", "name": "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P40 50szt", "url": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P40-50szt/25766", "format": "shoper-api", "store": "Matiw", "productId": 25766, "apiProductCode": "000564", "apiPurchaseUnit": "szt.", "retailerSku": "000564", "packageDescription": "P40 50szt", "imageUrl": "https://sklep.sewera.pl/photo/56983/papier-scierny-gr-40-arkusz-230x280mm.webp", "variant": ["PL28C", "P40", "50szt"] },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-60-arkusz-230x280mm-p6905
+  // The single sheet and carton have different GTINs for article 269221.
+  // source: https://www.klingspor.pl/produkty/arkusze-scierne/pl-28-c/pdf
+  // source: https://mkplastimex.pl/arkusze-scierne-papierowe-/1971-papier-scierny-arkusz-230x280-mm-klingspor-pl-28-c-5907560027483.html
+  { "id": "sewera-klingspor-pl28c-p60-sheet", "ean": "4014855194896", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-60", "name": "Papier \u015Bcierny gr.60 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-60-arkusz-230x280mm-p6905", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56985/papier-scierny-gr-60-arkusz-230x280mm.webp", "variant": ["60", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P60-50szt/25777
+  { "id": "matiw-klingspor-pl28c-p60-50", "ean": "5907560018016", "brand": "Klingspor", "packageSize": 50, "unit": "szt", "category": "hand-abrasive-60", "name": "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P60 50szt", "url": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P60-50szt/25777", "format": "shoper-api", "store": "Matiw", "productId": 25777, "apiProductCode": "000611", "apiPurchaseUnit": "szt.", "retailerSku": "000611", "packageDescription": "P60 50szt", "imageUrl": "https://matiw.pl/environment/cache/images/productGfx_63665_500_500/ARKUSZ-PAPIER-SCIERNY-KLINGSPOR-230x280mm-PL28C--P60-50szt.png", "variant": ["PL28C", "P60", "50szt"] },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-80-arkusz-230x280mm-p6906
+  { "id": "sewera-klingspor-pl28c-p80-sheet", "ean": "5907560017637", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-80", "name": "Papier \u015Bcierny gr.80 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-80-arkusz-230x280mm-p6906", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56987/papier-scierny-gr-80-arkusz-230x280mm.webp", "variant": ["80", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P80-50szt/25767
+  // Matiw's generic pack photo resolves to a P40 filename; use Sewera's exact-EAN P80 photograph.
+  { "id": "matiw-klingspor-pl28c-p80-50", "ean": "5907560017637", "brand": "Klingspor", "packageSize": 50, "unit": "szt", "category": "hand-abrasive-80", "name": "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P80 50szt", "url": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P80-50szt/25767", "format": "shoper-api", "store": "Matiw", "productId": 25767, "apiProductCode": "000615", "apiPurchaseUnit": "szt.", "retailerSku": "000615", "packageDescription": "P80 50szt", "imageUrl": "https://sklep.sewera.pl/photo/56987/papier-scierny-gr-80-arkusz-230x280mm.webp", "variant": ["PL28C", "P80", "50szt"] },
+  // source: https://sklep.sewera.pl/papier-scierny-gr-100-arkusz-230x280mm-p6898
+  { "id": "sewera-klingspor-pl28c-p100-sheet", "ean": "5907560023546", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-100", "name": "Papier \u015Bcierny gr.100 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-100-arkusz-230x280mm-p6898", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56969/papier-scierny-gr-100-arkusz-230x280mm.webp", "variant": ["100", "230x280mm"], "packageDescription": "PL 28 C" },
+  // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P100-50szt/25768
+  { "id": "matiw-klingspor-pl28c-p100-50", "ean": "5907560023546", "brand": "Klingspor", "packageSize": 50, "unit": "szt", "category": "hand-abrasive-100", "name": "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P100 50szt", "url": "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P100-50szt/25768", "format": "shoper-api", "store": "Matiw", "productId": 25768, "apiProductCode": "000618", "apiPurchaseUnit": "szt.", "retailerSku": "000618", "packageDescription": "P100 50szt", "imageUrl": "https://sklep.sewera.pl/photo/56969/papier-scierny-gr-100-arkusz-230x280mm.webp", "variant": ["PL28C", "P100", "50szt"] },
   // source: https://sklep.sewera.pl/papier-scierny-gr-120-arkusz-230x280mm-p6899
   { "id": "sewera-klingspor-pl28c-p120-sheet", "ean": "5907560017644", "brand": "Klingspor", "packageSize": 1, "unit": "szt", "category": "hand-abrasive-120", "name": "Papier \u015Bcierny gr.120 arkusz 230x280mm", "url": "https://sklep.sewera.pl/papier-scierny-gr-120-arkusz-230x280mm-p6899", "format": "sewera", "store": "Sewera", "retailUnit": "SZT", "imageUrl": "https://sklep.sewera.pl/photo/56971/papier-scierny-gr-120-arkusz-230x280mm.webp", "variant": ["120", "230x280mm"], "packageDescription": "PL 28 C" },
   // source: https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P120-50szt/25769
@@ -21123,6 +21143,12 @@ var RETAIL_SOURCES = [
   { "id": "sewera-isover-aku-plyta-50mm", "ean": "5901644653131", "name": "Isover we\u0142na mineralna Aku-P\u0142yta 037 5cm we\u0142na szklana", "brand": "Isover", "category": "partition-wool-50mm", "packageSize": 14.4, "unit": "m2", "store": "Sewera", "format": "sewera", "retailUnit": "OPA", "variant": ["5cm"], "packageDescription": "14,4m2", "url": "https://sklep.sewera.pl/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana-p11977", "imageUrl": "https://sklep.sewera.pl/photo/190047/isover-welna-mineralna-aku-plyta-037-5cm-welna-szklana.webp" },
   // source: https://www.leroymerlin.pl/produkty/tasma-papierowa-50mm-75-mb-norgips-43912694.html
   { "id": "leroy-norgips-paper-50x75", "ean": "5907651699933", "name": "Ta\u015Bma papierowa 50mm 75 mb NORGIPS", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 75, "unit": "m", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/tasma-papierowa-50mm-75-mb-norgips-43912694.html", "retailerSku": "43912694", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/2629682/media.jpg", "variant": ["Norgips"] },
+  // source: https://sklep.sewera.pl/tasma-spoinowa-papierowa-50mm-x-75m-rigips-p7448
+  { "id": "sewera-rigips-paper-50x75", "ean": "5905637118010", "name": "Ta\u015Bma spoinowa papierowa 50mm x 75m Rigips", "brand": "Rigips", "category": "drywall-accessory", "packageSize": 75, "unit": "m", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "url": "https://sklep.sewera.pl/tasma-spoinowa-papierowa-50mm-x-75m-rigips-p7448", "imageUrl": "https://sklep.sewera.pl/photo/25025/tasma-spoinowa-papierowa-50mm-x-75m-rigips.webp", "variant": ["Rigips", "50mm", "75m"], "dispatchDepartment": { "id": "2", "name": "Sosnowiec" } },
+  // source: https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-50mm-x-30m-rigips-p7445
+  { "id": "sewera-rigips-acoustic-50x30", "ean": "5905637113503", "name": "Ta\u015Bma akustyczna do profili piankowa uszczelniaj\u0105ca 50mm x 30m Rigips", "brand": "Rigips", "category": "drywall-accessory", "packageSize": 30, "unit": "m", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "url": "https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-50mm-x-30m-rigips-p7445", "imageUrl": "https://sklep.sewera.pl/photo/191957/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-50mm-x-30m-rigips.webp", "variant": ["Rigips", "50mm", "30m"], "dispatchDepartment": { "id": "2", "name": "Sosnowiec" } },
+  // source: https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-30mm-x-30m-rigips-p7444
+  { "id": "sewera-rigips-acoustic-30x30", "ean": "5905637148819", "name": "Ta\u015Bma akustyczna do profili piankowa uszczelniaj\u0105ca 30mm x 30m Rigips", "brand": "Rigips", "category": "drywall-accessory", "packageSize": 30, "unit": "m", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "url": "https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-30mm-x-30m-rigips-p7444", "imageUrl": "https://sklep.sewera.pl/photo/191959/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-30mm-x-30m-rigips.webp", "variant": ["Rigips", "30mm", "30m"], "dispatchDepartment": { "id": "2", "name": "Sosnowiec" } },
   // source: https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-50-mm-30-mb-norgips-43912722.html
   { "id": "leroy-norgips-acoustic-50x30", "ean": "5907651698004", "name": "Ta\u015Bma uszczelniaj\u0105ca akustyczna 50 mm/30 mb NORGIPS", "brand": "Norgips", "category": "drywall-accessory", "packageSize": 30, "unit": "m", "store": "Leroy Merlin", "url": "https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-50-mm-30-mb-norgips-43912722.html", "retailerSku": "43912722", "browserReviewAllowed": true, "pickupRequiresConfirmation": true, "imageUrl": "https://media.adeo.com/media/2631597/media.jpg", "variant": ["Norgips"] },
   // source: https://www.leroymerlin.pl/produkty/tasma-uszczelniajaca-akustyczna-30-mm-30-mb-norgips-44420222.html
@@ -21678,6 +21704,12 @@ function isReviewedSkuSource(source) {
 }
 function isReviewedSeweraDispatchSource(source) {
   if (isReviewedSkuSource(source)) return true;
+  if (source.id === "sewera-rigips-paper-50x75") return source.ean === "5905637118010" && source.skuIdentity === void 0 && source.store === "Sewera" && source.format === "sewera" && source.retailUnit === "SZT" && source.url === "https://sklep.sewera.pl/tasma-spoinowa-papierowa-50mm-x-75m-rigips-p7448" && source.name === "Ta\u015Bma spoinowa papierowa 50mm x 75m Rigips" && source.brand === "Rigips" && source.category === "drywall-accessory" && source.packageSize === 75 && source.unit === "m" && source.dispatchDepartment?.id === "2" && source.dispatchDepartment.name === "Sosnowiec";
+  const acoustic = {
+    "sewera-rigips-acoustic-50x30": { ean: "5905637113503", width: "50", url: "https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-50mm-x-30m-rigips-p7445" },
+    "sewera-rigips-acoustic-30x30": { ean: "5905637148819", width: "30", url: "https://sklep.sewera.pl/tasma-akustyczna-do-profili-piankowa-uszczelniajaca-30mm-x-30m-rigips-p7444" }
+  }[source.id];
+  if (acoustic) return source.ean === acoustic.ean && source.skuIdentity === void 0 && source.store === "Sewera" && source.format === "sewera" && source.retailUnit === "SZT" && source.url === acoustic.url && source.name === `Ta\u015Bma akustyczna do profili piankowa uszczelniaj\u0105ca ${acoustic.width}mm x 30m Rigips` && source.brand === "Rigips" && source.category === "drywall-accessory" && source.packageSize === 30 && source.unit === "m" && source.dispatchDepartment?.id === "2" && source.dispatchDepartment.name === "Sosnowiec";
   if (source.id === "sewera-atlas-gta-18kg") return source.ean === "5905400542509" && source.skuIdentity === void 0 && source.store === "Sewera" && source.format === "sewera" && source.url === "https://sklep.sewera.pl/atlas-gta-gotowa-gladz-polimerowa-18kg-p6321" && source.name === "Atlas GTA gotowa g\u0142ad\u017A polimerowa 18kg" && source.brand === "Atlas" && source.packageSize === 18 && source.unit === "kg" && source.dispatchDepartment?.id === "1" && source.dispatchDepartment.name === "Katowice";
   return source.id === "sewera-dulux-9l" && source.ean === "5904078198759" && source.skuIdentity === void 0 && source.store === "Sewera" && source.format === "sewera" && source.url === "https://sklep.sewera.pl/farba-wewnetrzna-biala-easycare-nieskazitelna-biel-9l-mat-dulux-p21385" && source.name === "Farba wewn\u0119trzna bia\u0142a Easycare nieskazitelna biel 9l mat Dulux" && source.brand === "Dulux" && source.packageSize === 9 && source.unit === "l" && source.dispatchDepartment?.id === "4" && source.dispatchDepartment.name === "Tarnowskie G\xF3ry";
 }
@@ -21688,13 +21720,24 @@ function isReviewedIrbudSource(source) {
 function retailSkuCode(source) {
   return isReviewedIrbudSource(source) ? source.skuIdentity.merchantProductId : source.skuIdentity?.manufacturerSku;
 }
+function retailComparableEan(source) {
+  if (source.id === "sewera-klingspor-pl28c-p60-sheet") {
+    if (source.ean !== "4014855194896" || source.brand !== "Klingspor" || source.category !== "hand-abrasive-60" || source.packageSize !== 1 || source.unit !== "szt" || source.store !== "Sewera" || source.url !== "https://sklep.sewera.pl/papier-scierny-gr-60-arkusz-230x280mm-p6905") throw Error("product_equivalence_not_reviewed");
+  }
+  if (source.id === "matiw-klingspor-pl28c-p60-50") {
+    if (source.ean !== "5907560018016" || source.brand !== "Klingspor" || source.category !== "hand-abrasive-60" || source.packageSize !== 50 || source.unit !== "szt" || source.store !== "Matiw" || source.productId !== 25777 || source.apiProductCode !== "000611" || source.retailerSku !== "000611" || source.packageDescription !== "P60 50szt" || source.name !== "Arkusz papier \u015Bcierny Klingspor 230x280mm PL28C  P60 50szt" || source.url !== "https://matiw.pl/pl/p/Arkusz-papier-scierny-Klingspor-230x280mm-PL28C-P60-50szt/25777") throw Error("product_equivalence_not_reviewed");
+    return "4014855194896";
+  }
+  return source.ean;
+}
 function retailProductId(source) {
   if (source.skuIdentity) {
     if (!isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
     return `remont-sku-${source.skuIdentity.catalogKey}`;
   }
-  if (!source.ean) throw Error("product_code_not_confirmed");
-  return `remont-${source.ean}`;
+  const comparableEan = retailComparableEan(source);
+  if (!comparableEan) throw Error("product_code_not_confirmed");
+  return `remont-${comparableEan}`;
 }
 function retailProductName(source) {
   if (!source.skuIdentity) return source.name;
@@ -21874,10 +21917,10 @@ function preservesOrderPackages(whole, parts) {
   return add2(whole, expected) && parts.every((p) => !p.quote.orders && p.quote.materialsRoundingGrosze === void 0 && add2(p.order, actual)) && expected.size === actual.size && [...expected].every(([key, count]) => actual.get(key) === count) && parts.reduce((n, p) => n + p.order.materialsGrosze, 0) === whole.materialsGrosze;
 }
 async function combineRequiredSeparateOrders(whole, parts, postcode) {
-  if (parts.length !== 2 || !parts.every((p) => currentDeliveryQuote(p.quote, postcode)) || !preservesOrderPackages(whole, parts)) return null;
-  const [first, second] = parts.map((p) => p.quote);
-  if (!first.dispatchFrom || !second.dispatchFrom || first.dispatchFrom === second.dispatchFrom || first.sourceUrl !== second.sourceUrl) return null;
-  const costGrosze = first.costGrosze + second.costGrosze;
+  if (parts.length < 2 || parts.length > 8 || !parts.every((p) => currentDeliveryQuote(p.quote, postcode)) || !preservesOrderPackages(whole, parts)) return null;
+  const first = parts[0].quote;
+  if (whole.store !== "Sewera" || parts.some((p) => p.quote.sourceUrl !== "https://sklep.sewera.pl/zamowienie" || p.quote.basis !== "retailer_basket_postcode" || p.quote.destinationScope !== "postal_code" || p.quote.postalCode !== postcode || !p.quote.dispatchFrom) || new Set(parts.map((p) => p.quote.dispatchFrom)).size !== parts.length) return null;
+  const costGrosze = parts.reduce((sum, part) => sum + part.quote.costGrosze, 0);
   if (!Number.isSafeInteger(costGrosze)) return null;
   const orders = parts.map((p) => ({ materialsGrosze: p.order.materialsGrosze, lines: p.order.lines, quote: p.quote }));
   const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ orders, postcode })));
@@ -21980,24 +22023,89 @@ async function combineOrderQuotes(base, parts, postcode) {
   };
 }
 
+// lib/pricing-service/src/dispatch-order-partitions.ts
+var MAX_PLANS = 32;
+async function quoteRequiredDispatch(order, base, atomic, postcode, limited) {
+  const unavailable = { reason: "requires_separate_dispatch" };
+  const lines = new Map(order.lines.map((line2) => [line2.packages[0].offerId, line2]));
+  const flexible = base.flexibleDispatchOfferIds ?? [], flexibleSet = new Set(flexible);
+  const legacy = !base.dispatchGroups && order.lines.length === 2 && !flexible.length;
+  const groups = base.dispatchGroups ?? (legacy ? order.lines.map((line2) => ({ dispatchFrom: "", offerIds: [line2.packages[0].offerId] })) : []);
+  if (lines.size !== order.lines.length || groups.length < 2 || groups.length > 8 || flexibleSet.size !== flexible.length || flexible.some((id) => !lines.has(id))) return unavailable;
+  if (!legacy && (groups.some((group) => !group.dispatchFrom) || new Set(groups.map((group) => group.dispatchFrom)).size !== groups.length)) return unavailable;
+  const used = /* @__PURE__ */ new Set();
+  for (const group of groups) {
+    if (!group.offerIds.length && !flexible.length) return unavailable;
+    for (const id of group.offerIds) {
+      if (!lines.has(id) || used.has(id) || flexibleSet.has(id)) return unavailable;
+      used.add(id);
+    }
+  }
+  if (used.size + flexible.length !== lines.size) return unavailable;
+  const plans = [];
+  if (!flexible.length) plans.push(groups);
+  else {
+    const defaultBranch = groups.findIndex((group) => group.dispatchFrom === "Katowice");
+    if (defaultBranch < 0) return unavailable;
+    limited();
+    const seen = /* @__PURE__ */ new Set();
+    const add2 = (assignment) => {
+      const key = assignment.join(",");
+      if (seen.has(key) || plans.length >= MAX_PLANS) return;
+      seen.add(key);
+      const plan = groups.map((group) => ({ ...group, offerIds: [...group.offerIds] }));
+      flexible.forEach((id, index2) => plan[assignment[index2]].offerIds.push(id));
+      plans.push(plan.filter((group) => group.offerIds.length));
+    };
+    add2(flexible.map(() => defaultBranch));
+    for (let branch = 0; branch < groups.length; branch++) add2(flexible.map(() => branch));
+    add2(flexible.map((_, index2) => index2 % groups.length));
+    let combinations = 1;
+    for (const _ of flexible) combinations = Math.min(MAX_PLANS + 1, combinations * groups.length);
+    for (let code = 0; code < Math.min(combinations, MAX_PLANS); code++) {
+      let remaining = code;
+      add2(flexible.map(() => {
+        const branch = remaining % groups.length;
+        remaining = Math.floor(remaining / groups.length);
+        return branch;
+      }));
+    }
+  }
+  if (groups.some((group) => group.offerIds.length > 1) || order.lines.some((line2) => line2.packages[0].count > 1)) limited();
+  const cache = /* @__PURE__ */ new Map();
+  let best;
+  for (const plan of plans) {
+    const parts = [];
+    for (const group of plan) {
+      const selected = group.offerIds.map((id) => lines.get(id));
+      const part = { ...order, lines: selected, materialsGrosze: selected.reduce((sum, line2) => sum + line2.packages[0].lineCostGrosze, 0), quote: void 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown" };
+      const key = JSON.stringify([group.dispatchFrom, [...group.offerIds].sort()]);
+      try {
+        let pending = cache.get(key);
+        if (!pending) {
+          pending = atomic(part, postcode, { ignoreStockOfferIds: flexible });
+          cache.set(key, pending);
+        }
+        const outcome = await pending;
+        if (!("quote" in outcome) || !currentDeliveryQuote(outcome.quote, postcode) || group.dispatchFrom && outcome.quote.dispatchFrom !== group.dispatchFrom) break;
+        parts.push({ order: part, quote: outcome.quote });
+      } catch {
+        break;
+      }
+    }
+    if (parts.length !== plan.length) continue;
+    const combined = await combineRequiredSeparateOrders(order, parts, postcode);
+    if (combined && (!best || combined.costGrosze < best.quote.costGrosze || combined.costGrosze === best.quote.costGrosze && combined.orders.length < best.quote.orders.length)) best = { quote: combined };
+  }
+  return best && currentDeliveryQuote(best.quote, postcode) ? best : unavailable;
+}
+
 // lib/pricing-service/src/order-partitions.ts
 function withOrderPartitions(atomic, limited) {
   return async (order, postcode) => {
     const base = await atomic(order, postcode), count = order.lines.length;
-    if ("reason" in base && base.reason === "requires_separate_dispatch" && order.store === "Sewera" && count === 2 && order.lines.every((line2) => line2.packages.length === 1)) {
-      const parts = [];
-      for (const line2 of order.lines) {
-        const part = { ...order, lines: [line2], materialsGrosze: line2.packages[0].lineCostGrosze, quote: void 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown" };
-        try {
-          const outcome = await atomic(part, postcode);
-          if (!("quote" in outcome) || !currentDeliveryQuote(outcome.quote, postcode)) return { reason: "requires_separate_dispatch" };
-          parts.push({ order: part, quote: outcome.quote });
-        } catch {
-          return { reason: "requires_separate_dispatch" };
-        }
-      }
-      const combined = await combineRequiredSeparateOrders(order, parts, postcode);
-      return combined ? { quote: combined } : { reason: "requires_separate_dispatch" };
+    if ("reason" in base && base.reason === "requires_separate_dispatch" && order.store === "Sewera" && count >= 2 && order.lines.every((line2) => line2.packages.length === 1)) {
+      return quoteRequiredDispatch(order, base, atomic, postcode, limited);
     }
     if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !base.quote.costGrosze || !count) return base;
     if (base.quote.materialsRoundingGrosze !== void 0) {
@@ -22127,8 +22235,9 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   const limits = /* @__PURE__ */ new Map(), cache = /* @__PURE__ */ new Map();
   let allowNewQuotes = true, partitionSearchLimited = false;
-  const quoteWithStock = async (order, postalCode) => {
-    const key = JSON.stringify([order.store, signature(order)]);
+  const quoteWithStock = async (order, postalCode, context) => {
+    const ignoredStock = new Set(context?.ignoreStockOfferIds ?? []);
+    const key = JSON.stringify([order.store, signature(order), [...ignoredStock].sort()]);
     if (cache.has(key)) return cache.get(key);
     if (!allowNewQuotes || cache.size >= MAX_STORE_BASKETS) {
       partitionSearchLimited = true;
@@ -22141,7 +22250,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
         const line2 = order.lines.find((line3) => line3.packages.some((pack2) => pack2.offerId === limit.offerId));
         const pack = line2?.packages.find((pack2) => pack2.offerId === limit.offerId);
         const checked = Date.parse(limit.checkedAt), expires = Date.parse(limit.expiresAt);
-        return pack && limit.productId === line2.product.id && limit.store === order.store && limit.postalCode === postalCode && Boolean(limit.dispatchFrom) && limit.unitPriceGrosze === pack.unitPriceGrosze && limit.requestedPackages === pack.count && Number.isSafeInteger(limit.maxPackages) && limit.maxPackages >= 0 && limit.maxPackages < pack.count && Number.isFinite(checked) && checked <= Date.now() && Date.now() - checked <= 6e5 && expires > Date.now() && expires <= checked + 6e5 && /^https:\/\//.test(limit.sourceUrl) && /^[a-f0-9]{64}$/.test(limit.evidenceSha256);
+        return pack && !ignoredStock.has(limit.offerId) && limit.productId === line2.product.id && limit.store === order.store && limit.postalCode === postalCode && Boolean(limit.dispatchFrom) && limit.unitPriceGrosze === pack.unitPriceGrosze && limit.requestedPackages === pack.count && Number.isSafeInteger(limit.maxPackages) && limit.maxPackages >= 0 && limit.maxPackages < pack.count && Number.isFinite(checked) && checked <= Date.now() && Date.now() - checked <= 6e5 && expires > Date.now() && expires <= checked + 6e5 && /^https:\/\//.test(limit.sourceUrl) && /^[a-f0-9]{64}$/.test(limit.evidenceSha256);
       });
       for (const limit of accepted) {
         const previous = limits.get(limit.offerId);
@@ -24713,6 +24822,10 @@ function confirmShoperPurchaseUnit(item, source) {
   const cabinet = cabinetPacks[source.id];
   if (cabinet && (source.ean !== cabinet[0] || source.packageSize !== cabinet[1] || source.unit !== "ml" || source.productId !== cabinet[2] || source.retailerSku !== cabinet[3] || source.apiPurchaseUnit !== "szt." || item.ean !== cabinet[0] || normalizeProductName(item.name ?? "") !== normalizeProductName(source.name))) throw Error("product_package_not_confirmed");
   const paperPacks = {
+    "matiw-klingspor-pl28c-p40-50": ["5907560018009", 25766, "000564", "P40"],
+    "matiw-klingspor-pl28c-p60-50": ["5907560018016", 25777, "000611", "P60"],
+    "matiw-klingspor-pl28c-p80-50": ["5907560017637", 25767, "000615", "P80"],
+    "matiw-klingspor-pl28c-p100-50": ["5907560023546", 25768, "000618", "P100"],
     "matiw-klingspor-pl28c-p120-50": ["5907560017644", 25769, "000620", "P120"],
     "matiw-klingspor-pl28c-p150-50": ["5907560023553", 25770, "000621", "P150"],
     "matiw-klingspor-pl28c-p180-50": ["5907560023560", 25771, "000622", "P180"],
@@ -24934,10 +25047,23 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
   if (configured.some(({ source }) => !isReviewedSeweraDispatchSource(source))) throw Error("dispatch_department_not_confirmed");
   const department = configured[0]?.source.dispatchDepartment ?? { id: "1", name: "Katowice" };
   if (configured.some(({ source }) => source.dispatchDepartment.id !== department.id || source.dispatchDepartment.name !== department.name)) {
-    if (configured.length === packs.length && order.lines.length === 2 && order.lines.every((line2) => line2.packages.length === 1)) return { reason: "requires_separate_dispatch" };
+    if (order.lines.length >= 2 && order.lines.every((line2) => line2.packages.length === 1)) {
+      const groups = /* @__PURE__ */ new Map();
+      for (const { source } of configured) {
+        const branch = source.dispatchDepartment;
+        const group = groups.get(branch.id) ?? { dispatchFrom: branch.name, offerIds: [] };
+        if (group.dispatchFrom !== branch.name) throw Error("dispatch_department_not_confirmed");
+        group.offerIds.push(source.id);
+        groups.set(branch.id, group);
+      }
+      const flexible = packs.filter(({ source }) => !source.dispatchDepartment).map(({ source }) => source.id);
+      if (flexible.length && !groups.has("1")) groups.set("1", { dispatchFrom: "Katowice", offerIds: [] });
+      return { reason: "requires_separate_dispatch", dispatchGroups: [...groups.values()], ...flexible.length ? { flexibleDispatchOfferIds: flexible } : {} };
+    }
     throw Error("dispatch_department_not_confirmed");
   }
-  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(2e4), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
+  const timeoutMs = Math.min(45e3, 2e4 + Math.max(0, packs.length - 8) * 1e4);
+  const client = new AnonymousShop("https://sklep.sewera.pl", fetchImpl, AbortSignal.timeout(timeoutMs), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
   if ((await client.text("/ajax/ax_execute.php?operation=setDepartment", { model: "department", department: department.id })).trim() !== department.id) throw Error("basket_not_confirmed");
   const expected = [];
   const prepared = [];
@@ -25993,17 +26119,27 @@ async function quoteShoper(order, fetchImpl) {
     evidenceSha256: (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
+function quoteBeforeDeadline(quoter, order, postalCode, deadline, now = Date.now()) {
+  if (now < deadline) return quoter(order, postalCode);
+  return Promise.resolve(quoter.cached?.(order, postalCode) ?? { reason: "quote_timeout" });
+}
 function createRetailerQuoter(fetchImpl = fetch) {
   const pages = createCheckoutPageReader();
   const cache = /* @__PURE__ */ new Map();
   const queue = new QuoteQueue();
-  return async (order, postalCode) => {
+  const keyFor = (order, postalCode) => JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
+  const cached2 = (order, postalCode) => {
+    if (!/^\d{2}-\d{3}$/.test(postalCode)) return null;
+    const row = cache.get(keyFor(order, postalCode)), now = Date.now();
+    return row && row.until > now && row.confirmed && "quote" in row.confirmed && Date.parse(row.confirmed.quote.expiresAt) > now ? row.confirmed : null;
+  };
+  const quote2 = async (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
     const unsupported = unavailableReason(order.store);
     if (unsupported) return { reason: unsupported };
-    const key = JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze])).sort()]);
-    const cached2 = cache.get(key);
-    if (cached2 && cached2.until > Date.now()) return cached2.result;
+    const key = keyFor(order, postalCode);
+    const cached3 = cache.get(key);
+    if (cached3 && cached3.until > Date.now()) return cached3.result;
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
     const pending = (async () => {
       const release = await queue.acquire();
@@ -26030,12 +26166,13 @@ function createRetailerQuoter(fetchImpl = fetch) {
     const result = await pending;
     if (cache.get(key)?.result === pending) {
       if ("quote" in result) {
-        cache.set(key, { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result) });
+        cache.set(key, { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result), confirmed: result });
       } else if (result.reason === "quote_busy") cache.delete(key);
       else cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
     }
     return result;
   };
+  return Object.assign(quote2, { cached: cached2 });
 }
 
 // artifacts/api-server/src/lib/store-delivery.ts
@@ -26208,7 +26345,7 @@ function createRemontService(options = {}) {
         id: productId,
         name: productName,
         normalizedName: normalizeProductName(productName),
-        ean: source.ean || null,
+        ean: retailComparableEan(source) || null,
         gtin: null,
         manufacturer: source.brand || null,
         brand: source.brand || null,
@@ -26245,7 +26382,11 @@ function createRemontService(options = {}) {
     }
     const aliases = Object.entries(RETAIL_NAME_ALIASES).map(([name, ean]) => [normalizeProductName(name), ean]);
     const deps = {
-      findProductByCode: async (_db, code) => products.find((product) => product.ean === (code.ean ?? code.gtin)) ?? null,
+      findProductByCode: async (_db, code) => {
+        const requested = code.ean ?? code.gtin;
+        const source = RETAIL_SOURCES.find((item) => item.ean === requested);
+        return products.find((product) => product.ean === requested || source && product.id === retailProductId(source)) ?? null;
+      },
       findProductByNameAndCategory: async (_db, query) => {
         const alias = aliases.find(([name]) => name === query.normalizedName)?.[1];
         return products.find((product) => product.category === query.category && (product.normalizedName === query.normalizedName || product.ean === alias)) ?? null;
@@ -26403,17 +26544,19 @@ function createRemontService(options = {}) {
       if (parsed.data.options?.refreshPrices) {
         const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material));
         const requestedEans = new Set(materials.map((material) => material.ean ?? RETAIL_NAME_ALIASES[material.name]).filter((ean) => Boolean(ean)));
-        const sources = RETAIL_SOURCES.filter((source) => requestedEans.has(source.ean) || materials.some((material) => !material.ean && !RETAIL_NAME_ALIASES[material.name] && source.skuIdentity && source.category === material.category && normalizeProductName(retailProductName(source)) === normalizeProductName(material.name)));
+        const requestedProductIds = new Set(RETAIL_SOURCES.filter((source) => requestedEans.has(source.ean)).map(retailProductId));
+        const sources = RETAIL_SOURCES.filter((source) => requestedProductIds.has(retailProductId(source)) || materials.some((material) => !material.ean && !RETAIL_NAME_ALIASES[material.name] && source.skuIdentity && source.category === material.category && normalizeProductName(retailProductName(source)) === normalizeProductName(material.name)));
         priceRefresh = await refreshProjectSources(sources);
       }
       const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog(parsed.data.options?.delivery?.mode === "pickup").deps);
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
-      const deadline = Date.now() + 2e4;
+      const itemCount = parsed.data.jobs.reduce((count, job) => count + job.materials.length, 0);
+      const deadline = Date.now() + (itemCount >= 9 && itemCount <= 20 ? 35e3 : 2e4);
       const deliveryComparison = stageOnly ? void 0 : await compareDeliveryWithAvailablePart(
         estimate.stages,
         parsed.data.options?.delivery ?? { mode: "shipping" },
-        (order, postalCode) => Date.now() < deadline || ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : Promise.resolve({ reason: "quote_timeout" }),
+        (order, postalCode) => ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : quoteBeforeDeadline(quoteBasket, order, postalCode, deadline),
         STORE_DELIVERY_POLICIES,
         /* @__PURE__ */ new Date(),
         knownUnavailableRetailers(),
