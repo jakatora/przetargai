@@ -22846,7 +22846,11 @@ async function quoteThroughRelay(order, postalCode, fetchImpl = fetch, secret = 
   if (!["ABUD", "ChemiaDoParkietu25"].includes(order.store) || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
   const result = await requestRelay({ version: 1, action: "quote", basket: order, postalCode }, fetchImpl, secret);
   if ("quote" in result) {
-    if (result.quote?.postalCode !== postalCode || result.quote?.destinationScope !== "postal_code" || !Number.isSafeInteger(result.quote.costGrosze) || result.quote.costGrosze < 0 || !Number.isFinite(Date.parse(result.quote.expiresAt)) || Date.parse(result.quote.expiresAt) <= Date.now()) throw Error("quote_unavailable");
+    const receipt = Date.now(), checked = Date.parse(result.quote?.checkedAt), expires = Date.parse(result.quote?.expiresAt), duration3 = expires - checked;
+    if (result.quote?.postalCode !== postalCode || result.quote?.destinationScope !== "postal_code" || !Number.isSafeInteger(result.quote.costGrosze) || result.quote.costGrosze < 0 || !Number.isFinite(checked) || !Number.isFinite(expires) || expires <= receipt || checked > receipt + 5e3 || duration3 <= 0 || duration3 > 6e5) throw Error("quote_unavailable");
+    if (checked > receipt) {
+      result.quote = { ...result.quote, checkedAt: new Date(receipt).toISOString(), expiresAt: new Date(expires - (checked - receipt)).toISOString() };
+    }
   } else if (typeof result.reason !== "string" || result.reason.length > 80) throw Error("quote_unavailable");
   return result;
 }
