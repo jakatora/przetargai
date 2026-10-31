@@ -20461,6 +20461,9 @@ function limitedFetch(fetchImpl) {
       if (response.status === 429) {
         const value2 = response.headers.get("retry-after"), seconds = value2 && /^\d+$/.test(value2) ? Number(value2) : null, date6 = value2 ? Date.parse(value2) : NaN;
         cooldownUntil = seconds !== null && Number.isSafeInteger(seconds) ? Date.now() + Math.max(1e3, seconds * 1e3) : Number.isFinite(date6) ? Math.max(Date.now() + 1e3, date6) : Date.now() + 3e4;
+        await response.body?.cancel().catch(() => {
+        });
+        throw Error("retailer_rate_limited");
       }
       return response;
     } finally {
@@ -27083,7 +27086,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
         if (order.store === "ABUD") return await quoteAbud(order, postalCode, fetchImpl);
         return await (order.store === "Kronosfera" ? quoteKronosfera(order, fetchImpl) : order.store === "Folnet" ? quoteFolnet(order, fetchImpl) : order.store === "Modna \u0141azienka" ? quoteModna(order, fetchImpl) : order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
       } catch (error40) {
-        return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed"].includes(error40.message) ? error40.message : "quote_unavailable" };
+        return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed", "retailer_rate_limited"].includes(error40.message) ? error40.message : "quote_unavailable" };
       } finally {
         release();
       }
