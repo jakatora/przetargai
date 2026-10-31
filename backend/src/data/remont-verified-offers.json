@@ -4287,5 +4287,47 @@
     "sourceUrl": "https://sklep.ehw.com.pl/osprzet-laczeniowy/szybkozlaczka-zlaczka-wago-221-415-5x4-mm",
     "evidenceSha256": "b4b4eeede94770a7d5844b6153f382ddf5ac02170d966138e9703a9360d19ed1",
     "validUntil": null
+  },
+  {
+    "sourceId": "etak-wago-221412",
+    "ean": "4050821808435",
+    "name": "WAGO Złączka instalacyjna otwierana 2-przewodowa do linek i drutów 0,14-4 mm² 32A 221-412",
+    "stockPackages": 22141,
+    "imageUrl": "https://etak.eu/hpeciai/f094d901015eabafd8204dbb3b32d408/pol_il_WAGO-Zlaczka-instalacyjna-otwierana-2-przewodowa-do-linek-i-drutow-0-14-4-mm2-32A-221-412-735.jpg",
+    "priceGrosze": 123,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T17:31:36.514Z",
+    "sourceUrl": "https://etak.eu/pl/products/wago-zlaczka-instalacyjna-otwierana-2-przewodowa-do-linek-i-drutow-0-14-4-mm2-32a-221-412-735.html",
+    "evidenceSha256": "d6b46f6643a4929e5fd2dbe0e64d197dc0c4dd93b0bc3189ab5cf5407d432b8b",
+    "validUntil": null
+  },
+  {
+    "sourceId": "etak-wago-221413",
+    "ean": "4050821808442",
+    "name": "WAGO Złączka instalacyjna otwierana 3-przewodowa do linek i drutów 0,14-4 mm² 32A 221-413",
+    "stockPackages": 27572,
+    "imageUrl": "https://etak.eu/hpeciai/0abdd857ec50bc3258541869a2dc9e85/pol_il_WAGO-Zlaczka-instalacyjna-otwierana-3-przewodowa-do-linek-i-drutow-0-14-4-mm2-32A-221-413-733.jpg",
+    "priceGrosze": 153,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T17:31:36.961Z",
+    "sourceUrl": "https://etak.eu/pl/products/wago-zlaczka-instalacyjna-otwierana-3-przewodowa-do-linek-i-drutow-0-14-4-mm2-32a-221-413-733.html",
+    "evidenceSha256": "85d0868185755ba46d522e623613164594d3179e97c8fe7185fb2f44153ad5eb",
+    "validUntil": null
+  },
+  {
+    "sourceId": "etak-wago-221415",
+    "ean": "4055143234658",
+    "name": "WAGO Złączka instalacyjna otwierana 5-przewodowa do linek i drutów 0,14-4 mm² 32A 221-415",
+    "stockPackages": 4937,
+    "imageUrl": "https://etak.eu/hpeciai/0e3ed8b880b3bf3b0e17066819a2a38a/pol_il_WAGO-Zlaczka-instalacyjna-otwierana-5-przewodowa-do-linek-i-drutow-0-14-4-mm2-32A-221-415-732.jpg",
+    "priceGrosze": 260,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T17:31:37.648Z",
+    "sourceUrl": "https://etak.eu/pl/products/wago-zlaczka-instalacyjna-otwierana-5-przewodowa-do-linek-i-drutow-0-14-4-mm2-32a-221-415-732.html",
+    "evidenceSha256": "c135bb1b27077227493c5b5b32e1cd76e7e43ce38ba2fadedd441a494824f8dc",
+    "validUntil": null
   }
 ]
