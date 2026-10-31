@@ -3850,5 +3850,44 @@
     "sourceUrl": "https://liderzycen.pl/pl/p/Podklad-podlogowy-pod-panele-winylowe-Volden-XPS-LVT-pod-panele-winylowe-1-mm-6%2C25-m2/32891",
     "evidenceSha256": "a3d41552876f6ddd6c3b5a2c8e98a4028acbdf1dc33d792f8463471437702a96",
     "validUntil": null
+  },
+  {
+    "sourceId": "ewinyl-orion514-2m",
+    "ean": "",
+    "name": "Wykładzina PCV Lentex Orion 514-05 — szerokość 2 m",
+    "imageUrl": "https://ewinyl.pl/wp-content/uploads/2019/01/514-05-copy-950x950-600x600.jpg",
+    "priceGrosze": 5500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T07:52:39.744Z",
+    "sourceUrl": "https://ewinyl.pl/produkt/orion-514-05-wykladzina-winylowy-3m-4m/",
+    "evidenceSha256": "55b7cb4e5f30fc5b5ba8b2396afe08d3f42f9d392f25a0fa8d1f566b9ffa4b56",
+    "validUntil": null
+  },
+  {
+    "sourceId": "ewinyl-orion514-4m",
+    "ean": "",
+    "name": "Wykładzina PCV Lentex Orion 514-05 — szerokość 4 m",
+    "imageUrl": "https://ewinyl.pl/wp-content/uploads/2019/01/514-05-copy-950x950-600x600.jpg",
+    "priceGrosze": 5500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T07:52:40.734Z",
+    "sourceUrl": "https://ewinyl.pl/produkt/orion-514-05-wykladzina-winylowy-3m-4m/",
+    "evidenceSha256": "a18cc75bdedce300927a23f00b43ff84b9e17fa9d8af748898d8e81680b03732",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-osakryl-4kg",
+    "ean": "5903518039515",
+    "name": "Klej do wykładzin Osakryl uniwersalny 4kg Tytan",
+    "imageUrl": "https://sklep.sewera.pl/photo/150507/klej-do-wykladzin-osakryl-uniwersalny-4kg-tytan.webp",
+    "priceGrosze": 5545,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T07:46:18.373Z",
+    "sourceUrl": "https://sklep.sewera.pl/klej-do-wykladzin-osakryl-uniwersalny-4kg-tytan-p21233",
+    "evidenceSha256": "d673b7775e7965a91ab2a08c08db26695f69caad468da18faabb9d6cf8678c80",
+    "validUntil": null
   }
 ]
