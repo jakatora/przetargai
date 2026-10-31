@@ -4261,5 +4261,31 @@
     "sourceUrl": "https://hipper.pl/tasma-samoprzylepna-z-wlokna-szklanego-45-mm-norgips-2682509844",
     "evidenceSha256": "13ee51d68d3fd86ff46bfcdf0d31e457c355c2be2cb3322ca1377c555914feaf",
     "validUntil": null
+  },
+  {
+    "sourceId": "prescot-wago-221415",
+    "ean": "4055143234658",
+    "name": "ZŁĄCZKA WAGO 221-415 5X4mm LINKA/DRUT NO WA",
+    "imageUrl": "https://www.prescot.com.pl/environment/cache/images/productGfx_28797_500_500/1.jpg",
+    "priceGrosze": 423,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T17:11:33.342Z",
+    "sourceUrl": "https://www.prescot.com.pl/pl/p/ZLACZKA-WAGO-221-415-5X4mm-LINKADRUT-NO-WA/9816",
+    "evidenceSha256": "6923e3bd891a5c81e8fa98b56cddb15f46e375df56a41b4c3c4876f9a4d43c21",
+    "validUntil": null
+  },
+  {
+    "sourceId": "ehw-wago-221415-25",
+    "ean": "4055143234658",
+    "name": "WAGO 221-415 Złączka instalacyjna COMPACT do wszystkich rodzajów przewodów, transparentna opakowanie 25 szt.",
+    "imageUrl": "https://sklep.ehw.com.pl/environment/cache/images/productGfx_857_500_500/Szybkozlaczka-zlaczka-WAGO-221-415-5x4-mm-EAN-4055143234658.jpg",
+    "priceGrosze": 6984,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T17:11:33.452Z",
+    "sourceUrl": "https://sklep.ehw.com.pl/osprzet-laczeniowy/szybkozlaczka-zlaczka-wago-221-415-5x4-mm",
+    "evidenceSha256": "b4b4eeede94770a7d5844b6153f382ddf5ac02170d966138e9703a9360d19ed1",
+    "validUntil": null
   }
 ]
