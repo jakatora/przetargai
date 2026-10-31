@@ -123,6 +123,48 @@ export function kartaKryteriow(dane) {
   };
 }
 
+/** Jednowyrazowe etykiety na kartę listy (pełne nazwy z RODZAJE_KRYTERIOW nie mieszczą się w znaczniku). */
+const KROTKO = Object.freeze({
+  cena: ['Cena', 'Price'], gwarancja: ['Gwarancja', 'Warranty'], termin: ['Termin', 'Deadline'],
+  platnosc: ['Płatność', 'Payment'], reakcja: ['Reakcja', 'Response'], doswiadczenie: ['Doświadczenie', 'Experience'],
+  koncepcja: ['Koncepcja', 'Approach'], spoleczne: ['Społeczne', 'Social'], srodowisko: ['Środowisko', 'Environment'],
+  certyfikat: ['Certyfikat', 'Certificate'], umowa: ['Umowa', 'Contract'], dodatkowe: ['Dodatkowe', 'Extras'],
+  dostepnosc: ['Dostępność', 'Availability'], jakosc: ['Jakość', 'Quality'], inne: ['Inne', 'Other'],
+});
+
+const procent = (u, jez) => {
+  const s = String(Math.round(u * 10) / 10);
+  return `${jez === 'pl' ? s.replace('.', ',') : s}%`;
+};
+
+/**
+ * Znacznik kryteriów na karcie listy (feed, Zapisane, katalog): „Cena 60% · Gwarancja 40%” albo
+ * „Tylko cena”, żeby nie otwierać każdego przetargu. Serwer daje `kryteria_skrot` (rodzaje
+ * zsumowane, najcięższe najpierw); starsze kopie mają tylko `kryterium_oceny`.
+ * @returns {null|{pl: string, en: string, tylkoCena: boolean}}
+ */
+export function znacznikKryteriow(tender) {
+  const skrot = tender?.kryteria_skrot;
+  const lista = Array.isArray(skrot?.kryteria) ? skrot.kryteria.filter((k) => k && typeof k.rodzaj === 'string') : [];
+  if (lista.length) {
+    const reszta = Number.isInteger(skrot.reszta) && skrot.reszta > 0 ? skrot.reszta : 0;
+    if (!reszta && lista.every((k) => k.rodzaj === 'cena')) {
+      return skrot.rozne_w_czesciach === true
+        ? { pl: 'Cena (części różnie)', en: 'Price (parts differ)', tylkoCena: false }
+        : { pl: 'Tylko cena', en: 'Price only', tylkoCena: true };
+    }
+    const tekst = (jez) => lista.map((k) => {
+      const [pl, en] = KROTKO[rodzajZnany(k.rodzaj)];
+      const nazwa = jez === 'pl' ? pl : en;
+      return typeof k.udzial === 'number' ? `${nazwa} ${procent(k.udzial, jez)}` : nazwa;
+    }).join(' · ') + (reszta ? ` +${reszta}` : '');
+    return { pl: tekst('pl'), en: tekst('en'), tylkoCena: false };
+  }
+  if (tender?.kryterium_oceny === 'tylko_cena') return { pl: 'Tylko cena', en: 'Price only', tylkoCena: true };
+  if (tender?.kryterium_oceny === 'cena_i_jakosc') return { pl: 'Cena + jakość', en: 'Price + quality', tylkoCena: false };
+  return null;
+}
+
 /** Długość pytania jak w „Zapytaj SWZ” (`lib/zapytajSwz.js`: do 500 znaków). */
 const MAKS_NAZWY_W_PYTANIU = 160;
 

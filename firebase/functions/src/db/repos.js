@@ -12,6 +12,7 @@ import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
 import { kluczOgloszenia } from '../lib/dedupZrodel.js';
 import { kluczeZwyciezcow, normNip } from '../lib/profilKonkurenta.js';
 import { koniecUmowyWyniku } from '../lib/umowyWygasajace.js';
+import { skrotKryteriow } from '../lib/ogloszenieMeta.js';
 import { normNazwa } from '../lib/ktoWygrywa.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
@@ -520,6 +521,8 @@ const POLA_PULI = [
   'anulowany',
   // Lejek selekcji: „nowe od ostatniego przebiegu” i rodzaj zamówienia dla AI (spec §4.2).
   'fetched_at', 'rodzaj',
+  // Skrót kryteriów na karcie feedu (2026-10-31) — lista ma najwyżej 12 krótkich pozycji.
+  'kryteria', 'kryteria_rozne_czesci',
 ];
 
 /**
@@ -1370,6 +1373,7 @@ function rekordDopasowania({ userId, tenderId, score, reasoning, scorer, tender,
     tender_wadium_kwota: tender?.wadium_kwota ?? null,
     tender_wadium_wiele_czesci: tender?.wadium_wiele_czesci ?? false,
     tender_kryterium_oceny: tender?.kryterium_oceny ?? null,
+    tender_kryteria_skrot: skrotKryteriow(tender),
     tender_liczba_czesci: tender?.liczba_czesci ?? null,
   };
 }
@@ -1389,6 +1393,43 @@ export const matches = {
       if (err.code === 6 /* ALREADY_EXISTS */) return { created: false, match: null };
       throw err;
     }
+  },
+
+  /**
+   * Skrót kryteriów w kopiach JUŻ istniejących (2026-10-31): dopasowania i zapisane z terminem
+   * w przyszłości, które go nie mają, a przetarg ma już listę (zapisaną przy pobraniu albo
+   * uzupełnioną wstecz). Konto po koncie — zapytanie po `tender_deadline` w kolekcji konta ma
+   * indeks automatyczny. Powtórka nic nie zapisuje.
+   */
+  async uzupelnijSkrotKryteriow({ teraz = nowIso() } = {}) {
+    const konta = await db().collection('users').select().get();
+    const wynik = { konta: konta.size, kopie_bez_skrotu: 0, uzupelnione: 0 };
+    for (const konto of konta.docs) {
+      const [m, s] = await Promise.all([
+        matchCol(konto.id).where('tender_deadline', '>=', teraz).select('tender_id', 'tender_kryteria_skrot').get(),
+        savedCol(konto.id).where('tender_deadline', '>=', teraz).select('tender_id', 'tender_kryteria_skrot').get(),
+      ]);
+      const bez = [...m.docs, ...s.docs].filter((d) => d.get('tender_kryteria_skrot') == null);
+      wynik.kopie_bez_skrotu += bez.length;
+      for (let i = 0; i < bez.length; i += 300) {
+        const czesc = bez.slice(i, i + 300);
+        const przetargi = await db().getAll(
+          ...czesc.map((d) => db().collection('tenders').doc(d.get('tender_id') ?? d.id)),
+          { fieldMask: ['kryteria', 'kryteria_rozne_czesci'] },
+        );
+        const batch = db().batch();
+        let wPartii = 0;
+        przetargi.forEach((p, j) => {
+          const skrot = p.exists ? skrotKryteriow(p.data()) : null;
+          if (!skrot) return;
+          batch.update(czesc[j].ref, { tender_kryteria_skrot: skrot });
+          wPartii += 1;
+        });
+        if (wPartii) await batch.commit();
+        wynik.uzupelnione += wPartii;
+      }
+    }
+    return wynik;
   },
 
   async exists(userId, tenderId) {
@@ -1675,6 +1716,7 @@ export const saved = {
       tender_wadium_kwota: match.tender_wadium_kwota ?? null,
       tender_wadium_wiele_czesci: match.tender_wadium_wiele_czesci ?? false,
       tender_kryterium_oceny: match.tender_kryterium_oceny ?? null,
+      tender_kryteria_skrot: match.tender_kryteria_skrot ?? null,
       tender_liczba_czesci: match.tender_liczba_czesci ?? null,
       saved_at: nowIso(),
     };

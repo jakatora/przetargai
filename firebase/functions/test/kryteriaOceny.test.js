@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { parsujKryteria, rodzajKryterium, kryteriaPrzetargu, MAKS_KRYTERIOW } from '../src/lib/ogloszenieMeta.js';
+import { parsujKryteria, rodzajKryterium, kryteriaPrzetargu, skrotKryteriow, MAKS_KRYTERIOW } from '../src/lib/ogloszenieMeta.js';
+import { publicMatch, publicTender } from '../src/lib/serialize.js';
 
 /*
  * Kryteria oceny z wagami (2026-10-31). Fixture = DOSŁOWNE sekcje 4.3 sześciu ogłoszeń BZP
@@ -109,4 +110,31 @@ test('normalizeNotice: kryteria w ogłoszeniu, a „tylko cena” liczone z list
   assert.equal(n.kryteria_rozne_czesci, false);
   const bez = normalizeNotice({ bzpNumber: '2026/BZP 1', orderObject: 'X', htmlBody: '<p>brak</p>' });
   assert.deepEqual([bez.kryteria, bez.kryteria_sposob, bez.kryteria_rozne_czesci], [null, null, false]);
+});
+
+test('skrotKryteriow: rodzaje zsumowane, najcięższe najpierw, reszta jako liczba; bez listy null', () => {
+  assert.equal(skrotKryteriow({ kryterium_oceny: 'tylko_cena' }), null);
+  const s = skrotKryteriow({
+    kryteria: [
+      { nazwa: 'Cena', udzial: 55, rodzaj: 'cena' },
+      { nazwa: 'Parametry techniczne', udzial: 15, rodzaj: 'jakosc' },
+      { nazwa: 'Jakość wykonania', udzial: 15.04, rodzaj: 'jakosc' },
+      { nazwa: 'Termin dostawy', udzial: 10, rodzaj: 'termin' },
+      { nazwa: 'Aspekty społeczne', udzial: 4.96, rodzaj: 'spoleczne' },
+    ],
+    kryteria_rozne_czesci: true,
+  });
+  assert.deepEqual(s, { kryteria: [{ rodzaj: 'cena', udzial: 55 }, { rodzaj: 'jakosc', udzial: 30 }, { rodzaj: 'termin', udzial: 10 }], reszta: 1, rozne_w_czesciach: true });
+  // Kolejność bez wag (punktowo bez udziału): jak w ogłoszeniu.
+  assert.deepEqual(skrotKryteriow({ kryteria: [{ nazwa: 'Cena', waga: null, rodzaj: 'cena' }, { nazwa: 'Gwarancja', rodzaj: 'gwarancja' }] }).kryteria,
+    [{ rodzaj: 'cena', udzial: null }, { rodzaj: 'gwarancja', udzial: null }]);
+});
+
+test('API: skrót w katalogu z przetargu, w feedzie z kopii w dopasowaniu (stara kopia — null)', () => {
+  const lista = [{ nazwa: 'Cena', udzial: 60, rodzaj: 'cena' }, { nazwa: 'Okres gwarancji', udzial: 40, rodzaj: 'gwarancja' }];
+  assert.deepEqual(publicTender({ id: 't1', title: 'X', kryteria: lista }).kryteria_skrot.kryteria.map((k) => k.rodzaj), ['cena', 'gwarancja']);
+  assert.equal(publicTender({ id: 't2', title: 'X' }).kryteria_skrot, null);
+  const skrot = skrotKryteriow({ kryteria: lista });
+  assert.deepEqual(publicMatch({ id: 't1', tender_id: 't1', tender_kryteria_skrot: skrot }).tender.kryteria_skrot, skrot);
+  assert.equal(publicMatch({ id: 't3', tender_id: 't3' }).tender.kryteria_skrot, null);
 });

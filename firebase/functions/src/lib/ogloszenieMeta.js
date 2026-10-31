@@ -191,3 +191,32 @@ export function kryteriaPrzetargu(tender) {
     })),
   };
 }
+
+/** Ile rodzajów pokazuje karta na liście — reszta jako „+N”. */
+export const MAKS_W_SKROCIE = 3;
+
+/**
+ * Skrót kryteriów do KARTY NA LIŚCIE (2026-10-31): „Cena 60% · Gwarancja 40%” bez otwierania
+ * przetargu. Rodzaje zsumowane (dwa kryteria jakości = jedna pozycja), najcięższe najpierw.
+ * Feed i Zapisane czytają kopię w dopasowaniu (`tender_kryteria_skrot`), bo lista renderuje się
+ * bez odczytu przetargu. Bez listy — null.
+ * @returns {{kryteria: {rodzaj: string, udzial: number|null}[], reszta: number, rozne_w_czesciach: boolean}|null}
+ */
+export function skrotKryteriow(tender) {
+  const k = kryteriaPrzetargu(tender);
+  if (!k.dostepne) return null;
+  const wgRodzaju = new Map();
+  for (const x of k.kryteria) {
+    const p = wgRodzaju.get(x.rodzaj);
+    if (!p) wgRodzaju.set(x.rodzaj, { rodzaj: x.rodzaj, udzial: x.udzial });
+    else p.udzial = p.udzial !== null && x.udzial !== null ? p.udzial + x.udzial : null;
+  }
+  const pozycje = [...wgRodzaju.values()]
+    .map((p) => ({ rodzaj: p.rodzaj, udzial: p.udzial === null ? null : Math.round(p.udzial * 10) / 10 }))
+    .sort((a, b) => (b.udzial ?? -1) - (a.udzial ?? -1));
+  return {
+    kryteria: pozycje.slice(0, MAKS_W_SKROCIE),
+    reszta: Math.max(0, pozycje.length - MAKS_W_SKROCIE),
+    rozne_w_czesciach: k.rozne_w_czesciach,
+  };
+}

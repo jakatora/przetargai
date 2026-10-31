@@ -14,6 +14,7 @@ import { StanLadowania, StanBledu, StanPusty } from './Stan';
 import { WOJEWODZTWA } from '../lib/wojewodztwa';
 import { formatDate, formatBudget } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
+import { znacznikKryteriow } from '../lib/kryteriaOceny';
 import {
   FILTRY_DOMYSLNE, KLUCZ_FILTROW, SORTOWANIA, STATUSY_TERMINU, ZRODLA,
   normalizujFiltry, parametryZapytania, liczbaAktywnychFiltrow, scalStrone,
@@ -65,6 +66,7 @@ function Chip({ etykieta, aktywny, onPress, styles }) {
 function KartaPrzetargu({ tender, onPress, styles, t }) {
   const termin = opisTerminu(tender.deadline);
   const budzet = formatBudget(tender.budget, tender.currency);
+  const kryteria = znacznikKryteriow(tender);
   return (
     <Pressable
       onPress={onPress}
@@ -86,6 +88,11 @@ function KartaPrzetargu({ tender, onPress, styles, t }) {
         </Text>
         {tender.region_nazwa ? <Text style={styles.kartaMeta}>{tender.region_nazwa}</Text> : null}
         {budzet ? <Text style={[styles.kartaMeta, styles.kartaKwota]}>{budzet}</Text> : null}
+        {kryteria ? (
+          <Text style={[styles.kartaChip, !kryteria.tylkoCena && styles.kartaKryteria]} numberOfLines={1}>
+            {t(kryteria.pl, kryteria.en)}
+          </Text>
+        ) : null}
       </View>
 
       {/* Źródło pierwotne + czas ostatniej synchronizacji — wymóg P1-3. */}
@@ -556,6 +563,7 @@ const tworzStyleKatalogu = tworzStyle((k) => ({
   },
   kartaPilny: { color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo },
   kartaPoTerminie: { color: k.danger, backgroundColor: k.dangerTlo },
+  kartaKryteria: { color: k.blue, backgroundColor: k.wyroznienie, flexShrink: 1 },
   kartaMeta: { fontSize: 13, color: k.textMuted },
   kartaKwota: { color: k.text, fontWeight: '700', fontVariant: ['tabular-nums'] },
 

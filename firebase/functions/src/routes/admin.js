@@ -12,7 +12,7 @@ import { pobierzOgloszeniaBzp, pobierzSuroweWynikiDnia } from '../services/bzp.j
 import { parsujWynik } from '../lib/wynikiParser.js';
 import { runUmowyWygasajace } from '../jobs/umowyWygasajace.js';
 import { przeliczProfil } from '../services/pracownik.js';
-import { tenders, users, rozstrzygniecia } from '../db/repos.js';
+import { tenders, users, rozstrzygniecia, matches as dopasowania } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
 import { badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
 
@@ -121,6 +121,14 @@ router.post('/wyniki-ponow-dzien', ah(async (req, res) => {
   const { zapisane, czesci } = await rozstrzygniecia.zapiszWiele(wyniki);
   const zKoncem = wyniki.filter((w) => w.czesci.some((c) => c.koniecUmowy)).length;
   res.json({ dzien, pobrane: surowe.length, zapisane, czesci, z_koncem_umowy: zKoncem });
+}));
+
+/**
+ * Skrót kryteriów („Cena 60% · Gwarancja 40%”) w kopiach przetargów, które już są w feedach
+ * i Zapisanych (2026-10-31). Nowe dopasowania dostają go przy tworzeniu. Bez BZP i bez AI.
+ */
+router.post('/kryteria-skrot-kopii', ah(async (req, res) => {
+  res.json(await dopasowania.uzupelnijSkrotKryteriow());
 }));
 
 /** Ręczne przeliczenie radaru wygasających umów (normalnie job o 4:20). */

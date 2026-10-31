@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { kartaKryteriow, pytaniaOKryteria, procentCenyZaPunkt, RODZAJE_KRYTERIOW } from '../src/lib/kryteriaOceny.js';
+import { kartaKryteriow, pytaniaOKryteria, procentCenyZaPunkt, RODZAJE_KRYTERIOW, znacznikKryteriow } from '../src/lib/kryteriaOceny.js';
 import { podpowiedziPytan, PODPOWIEDZI_PYTAN, MAKS_DLUGOSC_PYTANIA } from '../src/lib/zapytajSwz.js';
 
 // Kształt odpowiedzi `GET /wygrywalnosc/tender/:id/kryteria` — dane jak w 2026/BZP 00510580.
@@ -73,4 +73,17 @@ test('pytania do „Zapytaj SWZ”: pozacenowe od najcięższego, nie dłuższe 
   assert.deepEqual(podp.slice(0, 2), p);
   assert.ok(!podp.some((q) => /kryteria oceny/i.test(q.pl)), 'ogólne pytanie o kryteria znika');
   assert.deepEqual(podpowiedziPytan([]), [...PODPOWIEDZI_PYTAN]);
+});
+
+test('znacznik na karcie listy: wagi z przecinkiem, „+N”, „Tylko cena”, stare kopie z kryterium_oceny', () => {
+  const z = znacznikKryteriow({ kryteria_skrot: { kryteria: [{ rodzaj: 'cena', udzial: 60 }, { rodzaj: 'gwarancja', udzial: 32.5 }, { rodzaj: 'nieznany', udzial: 7.5 }], reszta: 2 } });
+  assert.deepEqual(z, { pl: 'Cena 60% · Gwarancja 32,5% · Inne 7,5% +2', en: 'Price 60% · Warranty 32.5% · Other 7.5% +2', tylkoCena: false });
+  assert.equal(znacznikKryteriow({ kryteria_skrot: { kryteria: [{ rodzaj: 'cena', udzial: null }, { rodzaj: 'termin', udzial: null }] } }).pl, 'Cena · Termin');
+  assert.deepEqual(znacznikKryteriow({ kryteria_skrot: { kryteria: [{ rodzaj: 'cena', udzial: 100 }], reszta: 0 } }), { pl: 'Tylko cena', en: 'Price only', tylkoCena: true });
+  assert.equal(znacznikKryteriow({ kryteria_skrot: { kryteria: [{ rodzaj: 'cena', udzial: 100 }], rozne_w_czesciach: true } }).tylkoCena, false, 'inna część może punktować jakość');
+  assert.equal(znacznikKryteriow({ kryterium_oceny: 'tylko_cena' }).pl, 'Tylko cena');
+  assert.equal(znacznikKryteriow({ kryterium_oceny: 'cena_i_jakosc', kryteria_skrot: null }).pl, 'Cena + jakość');
+  assert.equal(znacznikKryteriow({}), null);
+  assert.equal(znacznikKryteriow(null), null);
+  assert.equal(znacznikKryteriow({ kryteria_skrot: { kryteria: 'zepsute' } }), null);
 });

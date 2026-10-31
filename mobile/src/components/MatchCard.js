@@ -7,6 +7,7 @@ import { useJezyk } from '../context/JezykContext';
 import { formatDate } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { opisWadium } from '../lib/wadium';
+import { znacznikKryteriow } from '../lib/kryteriaOceny';
 import PodpisZrodla from './PodpisZrodla';
 import { ZnacznikiWyjasnienia } from './Wyjasnienie';
 
@@ -74,6 +75,8 @@ function MatchCard({ match, onOtworz, nowe = false }) {
    */
   const termin = opisTerminu(tender.deadline);
   const wadium = opisWadium(tender);
+  // Za co są punkty — „Tylko cena” albo „Cena 60% · Gwarancja 40%” bez otwierania przetargu.
+  const kryteria = znacznikKryteriow(tender);
 
   return (
     <Pressable
@@ -81,8 +84,8 @@ function MatchCard({ match, onOtworz, nowe = false }) {
       style={({ pressed }) => [styles.card, pressed && styles.pressed, termin.minal && styles.kartaMiniona]}
       accessibilityRole="button"
       accessibilityLabel={t(
-        `${tender.title}. Dopasowanie ${match.confidence_score} procent. ${t(termin.etykieta)}.`,
-        `${tender.title}. ${match.confidence_score} percent match. ${t(termin.etykieta)}.`,
+        `${tender.title}. Dopasowanie ${match.confidence_score} procent. ${t(termin.etykieta)}.${kryteria ? ` Kryteria: ${kryteria.pl}.` : ''}`,
+        `${tender.title}. ${match.confidence_score} percent match. ${t(termin.etykieta)}.${kryteria ? ` Criteria: ${kryteria.en}.` : ''}`,
       )}
     >
       <SaveStar tenderId={tender.id} styles={styles} kolory={kolory} />
@@ -119,6 +122,11 @@ function MatchCard({ match, onOtworz, nowe = false }) {
             {wadium.ostrzezenie
               ? t(`Wadium ${t(wadium.wartosc)}`, `Bid security ${t(wadium.wartosc)}`)
               : t('Bez wadium', 'No bid security')}
+          </Text>
+        ) : null}
+        {kryteria ? (
+          <Text style={[styles.kryteriaChip, !kryteria.tylkoCena && styles.kryteriaChipPozacenowe]} numberOfLines={1}>
+            {t(kryteria.pl, kryteria.en)}
           </Text>
         ) : null}
       </View>
@@ -178,6 +186,8 @@ const tworzStyleKarty = tworzStyle((k) => ({
   wadiumChip: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 8, borderRadius: radius.sm, overflow: 'hidden' },
   wadiumChipWymaga: { backgroundColor: k.ostrzezenieTlo, color: k.ostrzezenieTekst },
   wadiumChipBez: { backgroundColor: k.sukcesTlo, color: k.sukcesAkcent },
+  kryteriaChip: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 8, borderRadius: radius.sm, overflow: 'hidden', color: k.textMuted, backgroundColor: k.neutralneTlo, flexShrink: 1 },
+  kryteriaChipPozacenowe: { color: k.blue, backgroundColor: k.wyroznienie },
   card: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,

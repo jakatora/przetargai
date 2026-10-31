@@ -1,6 +1,10 @@
 import { ZRODLA } from './katalogPrzetargow.js';
 import { kodWojewodztwa, WOJEWODZTWA } from './wojewodztwa.js';
 import { planEfektywny, stanProby } from './plan.js';
+import { skrotKryteriow } from './ogloszenieMeta.js';
+
+/** Skrót kryteriów z kopii w dopasowaniu / zapisanym (`skrotKryteriow`); stare kopie go nie mają. */
+const skrotZKopii = (row) => (Array.isArray(row?.tender_kryteria_skrot?.kryteria) ? row.tender_kryteria_skrot : null);
 
 /** Reprezentacje zasobów bezpieczne do zwrotu w API (bez danych wrażliwych). */
 
@@ -57,6 +61,8 @@ export function publicTender(row, znaczniki = {}) {
     wadium_kwota: row.wadium_kwota ?? null,
     wadium_wiele_czesci: row.wadium_wiele_czesci ?? false,
     kryterium_oceny: row.kryterium_oceny ?? null,
+    // „Cena 60% · Gwarancja 40%” na karcie katalogu (2026-10-31).
+    kryteria_skrot: skrotKryteriow(row),
     liczba_czesci: row.liczba_czesci ?? null,
     published_at: row.published_at ?? null,
     fetched_at: row.fetched_at ?? null,
@@ -163,6 +169,7 @@ export function publicMatch(row, znaczniki = {}) {
       wadium_wiele_czesci: row.tender_wadium_wiele_czesci ?? false,
       // Meta (rundy 5-6): kryterium oceny + liczba części.
       kryterium_oceny: row.tender_kryterium_oceny ?? null,
+      kryteria_skrot: skrotZKopii(row),
       liczba_czesci: row.tender_liczba_czesci ?? null,
     },
   };
@@ -204,6 +211,7 @@ export function publicSaved(row, znaczniki = {}) {
       wadium_wiele_czesci: row.tender_wadium_wiele_czesci ?? false,
       // Meta (rundy 5-6): kryterium oceny + liczba części.
       kryterium_oceny: row.tender_kryterium_oceny ?? null,
+      kryteria_skrot: skrotZKopii(row),
       liczba_czesci: row.tender_liczba_czesci ?? null,
     },
   };
