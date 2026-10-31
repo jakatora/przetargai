@@ -19935,6 +19935,25 @@ function serializeProject(project) {
   };
 }
 
+// artifacts/api-server/src/lib/aks-cables.ts
+var AKS_CABLE_SOURCES = [
+  // source: https://www.abud.pl/product-pol-65373-Przewod-elektryczny-3x1-5mm2-YDYP-5m-Bialy-AKS-Zielonka.html
+  { id: "abud-aks-ydyp-3x15-5m", ean: "5901602190944", name: "Przew\xF3d elektryczny 3x1,5mm2 YDYP 5m Bia\u0142y AKS Zielonka", brand: "AKS Zielonka", category: "wire", packageSize: 5, unit: "mb", store: "ABUD", format: "idosell", productId: 65373, apiPurchaseUnit: "szt.", variant: ["3x1,5mm2", "5m"], pickupRequiresConfirmation: true, url: "https://www.abud.pl/product-pol-65373-Przewod-elektryczny-3x1-5mm2-YDYP-5m-Bialy-AKS-Zielonka.html", imageUrl: "https://www.abud.pl/hpeciai/63d002db68a8e4b49f22986e04d3d3c5/pol_pl_Przewod-elektryczny-3x1-5mm2-YDYP-5m-Bialy-AKS-Zielonka-65373_1.webp" },
+  // source: https://www.abud.pl/product-pol-50450-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x1-5-100m.html
+  { id: "abud-aks-ydyp-3x15-100m", ean: "5904617579735", name: "Przew\xF3d elektryczny AKS ZIELONKA YDYP 3x1,5 (100m)", brand: "AKS Zielonka", category: "wire", packageSize: 100, unit: "mb", store: "ABUD", format: "idosell", productId: 50450, apiPurchaseUnit: "op.", variant: ["3x1,5", "100m"], pickupRequiresConfirmation: true, url: "https://www.abud.pl/product-pol-50450-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x1-5-100m.html", imageUrl: "https://www.abud.pl/hpeciai/b5a27da15d1eb3073ec3741e9d64a4dc/pol_pl_Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x1-5-100m-50450_1.webp" },
+  // source: https://www.abud.pl/product-pol-6900-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-25m.html
+  { id: "abud-aks-ydyp-3x25-25m", ean: "5904617578721", name: "Przew\xF3d elektryczny AKS ZIELONKA YDYP 3x2,5 (25m)", brand: "AKS Zielonka", category: "wire", packageSize: 25, unit: "mb", store: "ABUD", format: "idosell", productId: 6900, apiPurchaseUnit: "op.", variant: ["3x2,5", "25m"], pickupRequiresConfirmation: true, url: "https://www.abud.pl/product-pol-6900-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-25m.html", imageUrl: "https://www.abud.pl/hpeciai/b3e45b96a86d1ae7a0ce0efd7442665c/pol_pl_Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-25m-6900_1.webp" },
+  // source: https://www.abud.pl/product-pol-50414-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-100m.html
+  { id: "abud-aks-ydyp-3x25-100m", ean: "5904617579759", name: "Przew\xF3d elektryczny AKS ZIELONKA YDYP 3x2,5 (100m)", brand: "AKS Zielonka", category: "wire", packageSize: 100, unit: "mb", store: "ABUD", format: "idosell", productId: 50414, apiPurchaseUnit: "op.", variant: ["3x2,5", "100m"], pickupRequiresConfirmation: true, url: "https://www.abud.pl/product-pol-50414-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-100m.html", imageUrl: "https://www.abud.pl/hpeciai/b5a27da15d1eb3073ec3741e9d64a4dc/pol_pl_Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-100m-50414_1.webp" },
+  // source: https://hipper.pl/przewod-elektroenergetyczny-ydyp-3-x-2-5-mm2-450-750-v-25-m-aks-zielonka-956340429
+  { id: "hipper-aks-ydyp-3x25-25m", ean: "5904617578721", name: "Przew\xF3d elektroenergetyczny YDYP 3 x 2,5 mm2 450/750 V 25 m AKS Zielonka", brand: "AKS Zielonka", category: "wire", packageSize: 25, unit: "mb", store: "HIPPER", format: "certusoft", productId: 956340429, retailerUnitId: 956397306, apiPurchaseUnit: "szt", variant: ["3 x 2,5", "25 m"], pickupRequiresConfirmation: true, url: "https://hipper.pl/przewod-elektroenergetyczny-ydyp-3-x-2-5-mm2-450-750-v-25-m-aks-zielonka-956340429" }
+];
+function isReviewedAksCableSource(source) {
+  const reviewed6 = AKS_CABLE_SOURCES.find((s) => s.id === source.id);
+  const identity = (s) => [s.id, s.ean, s.name, s.brand, s.category, s.packageSize, s.unit, s.store, s.format, s.productId, s.retailerUnitId, s.apiPurchaseUnit, s.url, s.variant];
+  return Boolean(reviewed6) && JSON.stringify(identity(source)) === JSON.stringify(identity(reviewed6)) && (source.purchaseMultiple ?? 1) === 1 && (source.minimumPackages ?? 1) === 1 && source.skuIdentity === void 0;
+}
+
 // artifacts/api-server/src/lib/dekork.ts
 var import_node_crypto = require("node:crypto");
 
@@ -20067,7 +20086,7 @@ var AnonymousShop = class {
       return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
     }
     if (action === "add") {
-      if (![27095, 6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
+      if (![65373, 50450, 6900, 50414, 27095, 6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
       return JSON.parse(await this.read("/basketchange.php", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
     }
     if (action !== "shipping" || Object.keys(args).length) throw Error("invalid_cart_action");
@@ -22191,7 +22210,8 @@ var RETAIL_SOURCES = [
   // actual purchases require validated cut lengths and a current native cart.
   // source: https://ewinyl.pl/produkt/orion-514-05-wykladzina-winylowy-3m-4m/
   { id: "ewinyl-orion514-2m", ean: "", name: "Wyk\u0142adzina PCV Lentex Orion 514-05 \u2014 szeroko\u015B\u0107 2 m", brand: "Lentex", category: "vinyl-roll", packageSize: 1, unit: "m2", store: "eWinyl", format: "ewinyl", productId: 5329, skuIdentity: { kind: "merchant-only", catalogKey: "ewinyl-5329-2m", merchantProductId: "5329" }, pickupRequiresConfirmation: true, variant: ["514-05"], url: "https://ewinyl.pl/produkt/orion-514-05-wykladzina-winylowy-3m-4m/", imageUrl: "https://ewinyl.pl/wp-content/uploads/2019/01/514-05-copy-950x950-600x600.jpg" },
-  { id: "ewinyl-orion514-4m", ean: "", name: "Wyk\u0142adzina PCV Lentex Orion 514-05 \u2014 szeroko\u015B\u0107 4 m", brand: "Lentex", category: "vinyl-roll", packageSize: 1, unit: "m2", store: "eWinyl", format: "ewinyl", productId: 5329, skuIdentity: { kind: "merchant-only", catalogKey: "ewinyl-5329-4m", merchantProductId: "5329" }, pickupRequiresConfirmation: true, variant: ["514-05"], url: "https://ewinyl.pl/produkt/orion-514-05-wykladzina-winylowy-3m-4m/", imageUrl: "https://ewinyl.pl/wp-content/uploads/2019/01/514-05-copy-950x950-600x600.jpg" }
+  { id: "ewinyl-orion514-4m", ean: "", name: "Wyk\u0142adzina PCV Lentex Orion 514-05 \u2014 szeroko\u015B\u0107 4 m", brand: "Lentex", category: "vinyl-roll", packageSize: 1, unit: "m2", store: "eWinyl", format: "ewinyl", productId: 5329, skuIdentity: { kind: "merchant-only", catalogKey: "ewinyl-5329-4m", merchantProductId: "5329" }, pickupRequiresConfirmation: true, variant: ["514-05"], url: "https://ewinyl.pl/produkt/orion-514-05-wykladzina-winylowy-3m-4m/", imageUrl: "https://ewinyl.pl/wp-content/uploads/2019/01/514-05-copy-950x950-600x600.jpg" },
+  ...AKS_CABLE_SOURCES
 ];
 var RETAIL_NAME_ALIASES = {
   "P\u0142ytka \u015Bcienna Parady\u017C Nati Bianco struktura 25\xD740 cm": "5902610507960",
@@ -23878,6 +23898,7 @@ function attribute(element4, name) {
   return attrs(element4.match(/^<[^>]+>/)?.[0] ?? "")[name];
 }
 function confirmRetailIdentity(html, product, source) {
+  if (source.id.startsWith("abud-aks-") && !isReviewedAksCableSource(source)) throw Error("product_package_not_confirmed");
   const safe = clean(html);
   if (source.format !== "rodimax" && (!Number.isSafeInteger(source.productId) || source.productId < 1)) throw Error("product_id_not_confirmed");
   let code, price2, brand = product.brand, image = product.image;
@@ -25000,8 +25021,9 @@ function readCertusoftProduct(html, source) {
   const reviewedRoll = source.id === "hipper-norgips-fleece-50x25" && source.ean === "5907651699926" && source.brand === "Norgips" && source.productId === 2682507570 && source.retailerUnitId === 2682507597 && source.url === "https://hipper.pl/tasma-flizelinowa-z-wlokna-szklanego-50-mm-norgips-2682507570" && source.unit === "m" && source.packageSize === 25;
   const reviewedBottle = source.id === "hipper-metylan-remover-500ml" && source.ean === "9000100222969" && source.brand === "Metylan" && source.productId === 956213124 && source.retailerUnitId === 956370273 && source.url === "https://hipper.pl/metylan-plyn-do-usuwania-tapet-0-5-l-956213124" && source.unit === "ml" && source.packageSize === 500;
   const reviewedCarton = source.id === "hipper-norgips-cross-100" && source.ean === "5907651696468" && source.brand === "Norgips" && source.productId === 3071669325 && source.retailerUnitId === 3072059634 && source.url === "https://hipper.pl/lacznik-krzyzowy-60-x-145-mm-100-szt-norgips-3071669325" && source.unit === "szt" && source.packageSize === 100 && source.variant?.join("|") === "krzy\u017Cowy|60|145|100";
-  const singlePiece = source.unit === "szt" && source.packageSize === 1 && source.id !== "hipper-norgips-cross-100";
-  if (!singlePiece && !reviewedRoll && !reviewedBottle && !reviewedCarton || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  const singlePiece = source.unit === "szt" && source.packageSize === 1 && source.id !== "hipper-norgips-cross-100" && !source.id.startsWith("hipper-aks-");
+  const reviewedCable = source.id === "hipper-aks-ydyp-3x25-25m" && isReviewedAksCableSource(source);
+  if (!singlePiece && !reviewedRoll && !reviewedBottle && !reviewedCarton && !reviewedCable || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
   const state = readCertusoftState(html), card = state.csAppWindowsUtils?.csAppWindows?.csB2BItemCard;
   const rows = card?.dataSets?.itemCard?.rows;
   if (!Array.isArray(rows) || rows.length !== 1) throw Error("product_identity_ambiguous");
@@ -26691,7 +26713,7 @@ async function quoteSkyshop(order, fetchImpl) {
 // artifacts/api-server/src/lib/abud-delivery.ts
 var import_node_crypto27 = require("node:crypto");
 var ORIGIN7 = "https://www.abud.pl";
-var IDS = ["abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg"];
+var IDS = ["abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg"];
 function money9(value2, formatted) {
   if (!["string", "number"].includes(typeof value2)) throw Error("invalid_money");
   const amount6 = parsePriceToGrosze(value2);

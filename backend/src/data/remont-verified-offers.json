@@ -4059,5 +4059,71 @@
     "observedAt": "2026-10-31T10:37:49.458Z",
     "sourceUrl": "https://dekork.pl/products/goldlux-podklad-lvt-1-5-mm-z-zlota-membrana-wysoka-gestosc-najwyzsza-jakosc?variant=57433623036235",
     "evidenceSha256": "a28473bb59a24b048b6ea43ace44eec8e4d5f92c13ef23bce59fac2878649f0c"
+  },
+  {
+    "sourceId": "abud-aks-ydyp-3x15-5m",
+    "ean": "5901602190944",
+    "name": "Przewód elektryczny 3x1,5mm2 YDYP 5m Biały AKS Zielonka",
+    "imageUrl": "https://www.abud.pl/hpeciai/63d002db68a8e4b49f22986e04d3d3c5/pol_pl_Przewod-elektryczny-3x1-5mm2-YDYP-5m-Bialy-AKS-Zielonka-65373_1.webp",
+    "priceGrosze": 2890,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T12:25:13.539Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-65373-Przewod-elektryczny-3x1-5mm2-YDYP-5m-Bialy-AKS-Zielonka.html",
+    "evidenceSha256": "85241e10c573e95f71c069824482e9e8f9959cde27fc4588e927ae00c82ae1a5",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-aks-ydyp-3x15-100m",
+    "ean": "5904617579735",
+    "name": "Przewód elektryczny AKS ZIELONKA YDYP 3x1,5 (100m)",
+    "imageUrl": "https://www.abud.pl/hpeciai/b5a27da15d1eb3073ec3741e9d64a4dc/pol_pl_Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x1-5-100m-50450_1.webp",
+    "priceGrosze": 41360,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T12:25:14.070Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-50450-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x1-5-100m.html",
+    "evidenceSha256": "fcb069a3c428e1e68d0c1d444be64cf57b54e54139a5618cb2bee403c40c55e9",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-aks-ydyp-3x25-25m",
+    "ean": "5904617578721",
+    "name": "Przewód elektryczny AKS ZIELONKA YDYP 3x2,5 (25m)",
+    "imageUrl": "https://www.abud.pl/hpeciai/b3e45b96a86d1ae7a0ce0efd7442665c/pol_pl_Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-25m-6900_1.webp",
+    "priceGrosze": 19270,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T12:25:14.722Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-6900-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-25m.html",
+    "evidenceSha256": "8bc373f8ad6c79cf225b20b1bb44725ac2844a22a3e1f9e7f2ae44dde0013e18",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-aks-ydyp-3x25-100m",
+    "ean": "5904617579759",
+    "name": "Przewód elektryczny AKS ZIELONKA YDYP 3x2,5 (100m)",
+    "imageUrl": "https://www.abud.pl/hpeciai/b5a27da15d1eb3073ec3741e9d64a4dc/pol_pl_Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-100m-50414_1.webp",
+    "priceGrosze": 63090,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T12:25:15.790Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-50414-Przewod-elektryczny-AKS-ZIELONKA-YDYP-3x2-5-100m.html",
+    "evidenceSha256": "e1dd9a3613b474cf362160d62fb7e1678198147d8a32f7ec8e759b7acb022669",
+    "validUntil": null
+  },
+  {
+    "sourceId": "hipper-aks-ydyp-3x25-25m",
+    "ean": "5904617578721",
+    "name": "Przewód elektroenergetyczny YDYP 3 x 2,5 mm2 450/750 V 25 m AKS Zielonka",
+    "stockPackages": 46,
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|A947C3A9-2E1B-467E-BCCC-414926A16F87|1/Przew%C3%B3d%20elektroenergetyczny%20YDYP%203%20x%202,5%20mm2%20450/750%20V%2025%20m%20AKS%20Zielonka.webp",
+    "priceGrosze": 18900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T12:25:17.664Z",
+    "sourceUrl": "https://hipper.pl/przewod-elektroenergetyczny-ydyp-3-x-2-5-mm2-450-750-v-25-m-aks-zielonka-956340429",
+    "evidenceSha256": "c9d5e4659b4e8df432b4a53d3875c40e621af31bf3bda99ec3fd76414dcaa660",
+    "validUntil": null
   }
 ]
