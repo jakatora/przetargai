@@ -4329,5 +4329,70 @@
     "sourceUrl": "https://etak.eu/pl/products/wago-zlaczka-instalacyjna-otwierana-5-przewodowa-do-linek-i-drutow-0-14-4-mm2-32a-221-415-732.html",
     "evidenceSha256": "c135bb1b27077227493c5b5b32e1cd76e7e43ce38ba2fadedd441a494824f8dc",
     "validUntil": null
+  },
+  {
+    "sourceId": "realbud-knauf-mp75l-30kg",
+    "ean": "5902367206451",
+    "name": "Tynk maszynowy gipsowy Knauf MP 75 L lekki, op. 30 kg",
+    "imageUrl": "https://realbud.com/environment/cache/images/productGfx_25647_500_500/49221.png",
+    "priceGrosze": 3748,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T19:15:54.590Z",
+    "sourceUrl": "https://realbud.com/Tynk-maszynowy-gipsowy-Knauf-MP75L-30-kg",
+    "evidenceSha256": "7122aed807a6b3a833135ed2c069a91bfc9b22ac0f88bb6afa83e459fa8d211b",
+    "validUntil": null
+  },
+  {
+    "sourceId": "realbud-knauf-goldband-30kg",
+    "ean": "5902367206475",
+    "name": "Tynk gipsowy ręczny Knauf GOLDBAND, op. 30 kg",
+    "imageUrl": "https://realbud.com/environment/cache/images/productGfx_25652_500_500/10956.png",
+    "priceGrosze": 5054,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T19:15:54.671Z",
+    "sourceUrl": "https://realbud.com/Tynk-gipsowy-reczny-Knauf-GOLDBAND-30-kg",
+    "evidenceSha256": "005c0deca94571b092ba9d0f698497e93ddfe24b5168f7de07c125073460f259",
+    "validUntil": null
+  },
+  {
+    "sourceId": "realbud-knauf-rotband-30kg",
+    "ean": "5903240904075",
+    "name": "Tynk gipsowy wys. przyczepności Knauf Rotband 30kg",
+    "imageUrl": "https://realbud.com/environment/cache/images/productGfx_25649_500_500/8493.png",
+    "priceGrosze": 7500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T19:15:54.768Z",
+    "sourceUrl": "https://realbud.com/Tynk-gipsowy-reczny-KNAUF-ROTBAND-30-kg",
+    "evidenceSha256": "27d903f3eed2a103f1e818d50707cc8780d50f588b442ca7b23fbaa5edf774e5",
+    "validUntil": null
+  },
+  {
+    "sourceId": "plus-knauf-mp75l-30kg",
+    "ean": "5902367206451",
+    "name": "Tynk maszynowy gipsowy Knauf MP 75 L 30 kg lekki",
+    "imageUrl": "https://www.plus-market.pl/environment/cache/images/productGfx_39104_500_500/Tynk-maszynowy-MP75-30-kg-KNAUF.webp",
+    "priceGrosze": 3899,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T19:15:54.876Z",
+    "sourceUrl": "https://www.plus-market.pl/pl/p/Tynk-maszynowy-gipsowy-Knauf-MP-75-L-30-kg-lekki/15716",
+    "evidenceSha256": "b90b1877029b05465c10541fe0f66c249b97b3ab1a70215de427f2c7a4b95093",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-knauf-goldband-30kg",
+    "ean": "5902367206475",
+    "name": "Knauf GOLDBAND Ręczny tynk gipsowy 30kg",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_5c8eda237bf003434d3020de193f3662_500_500.webp",
+    "priceGrosze": 4700,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T19:15:54.961Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/Knauf-GOLDBAND-Reczny-tynk-gipsowy-30kg/2022",
+    "evidenceSha256": "ecd2672028a5b26ca384b57d4b177c5b64a2aa8ebb866d6e142702fd8daac411",
+    "validUntil": null
   }
 ]
