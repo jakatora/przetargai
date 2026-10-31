@@ -12,6 +12,7 @@ const NAZWY = Object.freeze({
   baza_konkurencyjnosci: 'Baza Konkurencyjności',
   platformazakupowa: 'platformazakupowa.pl',
   epropublico: 'e-ProPublico',
+  logintrade: 'Logintrade',
 });
 
 /**

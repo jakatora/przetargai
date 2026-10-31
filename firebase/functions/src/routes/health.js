@@ -2,7 +2,7 @@ import { zrodlaCichoPusteWCyklu } from '../lib/zrodlaCichoPuste.js';
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, users, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, stanPushRepo, autoSwz } from '../db/repos.js';
+import { cykl, tenders, users, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, oknoLt, stanPushRepo, autoSwz } from '../db/repos.js';
 import { ocenStanPush } from '../lib/stanPush.js';
 import { logger } from '../lib/logger.js';
 import { ocenStanAi } from '../lib/stanAi.js';
@@ -49,6 +49,7 @@ router.get('/', async (_req, res) => {
   let stanOknaBk = null;
   let stanOknaPz = null;
   let stanOknaEpp = null;
+  let stanOknaLt = null;
   let stanPush = null;
   let stanAutoSwz = null;
   let urzadzenia = null;
@@ -58,9 +59,9 @@ router.get('/', async (_req, res) => {
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanPush, stanAutoSwz, urzadzenia] = await Promise.all([
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanOknaLt, stanPush, stanAutoSwz, urzadzenia] = await Promise.all([
       cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
-      oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null), oknoEpp.wczytaj().catch(() => null),
+      oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null), oknoEpp.wczytaj().catch(() => null), oknoLt.wczytaj().catch(() => null),
       stanPushRepo.wczytaj().catch(() => null),
       autoSwz.wczytajPrzebieg().catch(() => null),
       users.urzadzeniaPush().catch(() => null),
@@ -222,6 +223,23 @@ router.get('/', async (_req, res) => {
         bledy_zapisu: stanOknaEpp.ostatni_przebieg.bledy_zapisu ?? null,
         ok: stanOknaEpp.ostatni_przebieg.ok ?? null,
         error: stanOknaEpp.ostatni_przebieg.error ?? null,
+      }
+      : null,
+    /* Okno Logintrade (2026-10-31): lista od najnowszych + karty nowych zapytań co 6 h. */
+    lt_okno: stanOknaLt?.ostatni_przebieg
+      ? {
+        zakonczony_o: stanOknaLt.ostatni_przebieg.zakonczony_o ?? null,
+        strony: stanOknaLt.ostatni_przebieg.strony ?? null,
+        nowe: stanOknaLt.ostatni_przebieg.nowe ?? null,
+        zaktualizowane: stanOknaLt.ostatni_przebieg.zaktualizowane ?? null,
+        scalone_z_rejestrem: stanOknaLt.ostatni_przebieg.scalone_z_rejestrem ?? null,
+        szczegoly: stanOknaLt.ostatni_przebieg.szczegoly ?? null,
+        bledy_szczegolu: stanOknaLt.ostatni_przebieg.bledy_szczegolu ?? null,
+        odlozone: stanOknaLt.ostatni_przebieg.odlozone ?? null,
+        zapytania: stanOknaLt.ostatni_przebieg.zapytania ?? null,
+        bledy_zapisu: stanOknaLt.ostatni_przebieg.bledy_zapisu ?? null,
+        ok: stanOknaLt.ostatni_przebieg.ok ?? null,
+        error: stanOknaLt.ostatni_przebieg.error ?? null,
       }
       : null,
     pz_okno: stanOknaPz?.ostatni_przebieg

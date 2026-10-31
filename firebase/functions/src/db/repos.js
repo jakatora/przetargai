@@ -946,6 +946,16 @@ export const tenders = {
     return true;
   },
 
+  /**
+   * Dzień terminu z listy Logintrade (lista nie podaje godziny, 2026-10-31). Okno porównuje z nim dzień
+   * z kolejnej listy i pobiera kartę tylko po zmianie — bez tego rozjazd dnia listy i karty kosztowałby
+   * pobranie karty w każdym przebiegu.
+   */
+  async ustawDzienListyLt(id, dzien) {
+    if (!dzien) return;
+    await db().collection('tenders').doc(id).update({ lt_dzien_listy: String(dzien) });
+  },
+
   /** Szczegół z platformazakupowa.pl pobrany na żądanie (tryb, załączniki…) — cache przy ogłoszeniu. */
   async zapiszSzczegolPz(id, szczegol, teraz = nowIso()) {
     await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz });
@@ -2646,6 +2656,17 @@ export const oknoEpp = {
   },
   async zapiszPrzebieg(wynik) {
     await OKNO_EPP_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
+  },
+};
+
+const OKNO_LT_REF = () => db().collection('_health').doc('lt_okno');
+export const oknoLt = {
+  async wczytaj() {
+    const doc = await OKNO_LT_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+  async zapiszPrzebieg(wynik) {
+    await OKNO_LT_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
   },
 };
 

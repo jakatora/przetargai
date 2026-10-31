@@ -274,6 +274,32 @@ export const eppOknoFetch = onSchedule(
 );
 
 /**
+ * Okno Logintrade (2026-10-31) — co 6 h o :35 (00:35, 06:35, 12:35, 18:35 PL): lista zapytań ofertowych
+ * spółek od najnowszych do stron bez aktywnych, nowe z kartą (kupiec, NIP, termin z godziną).
+ * Idempotencja: docId = `lt:<host kupca>:<id>`.
+ */
+export const ltOknoFetch = onSchedule(
+  {
+    maxInstances: 3,
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '35 */6 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runOknoLt } = await import('./src/jobs/oknoLogintrade.js');
+    const wynik = await runOknoLt();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'ltOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error(`ltOknoFetch: ${wynik.error ?? 'nieznany błąd'}`);
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'ltOknoFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Strażnik zdrowia (2026-10-29) — co godzinę o :45: odpytuje publiczny /health i pisze do właściciela,
  * gdy problem trwa ≥ 2 pomiary (np. cykl dzienny się nie odbył — 27.10 nikt się nie dowiedział).
  */

@@ -95,6 +95,19 @@ export const ZRODLA = [
       en: 'Procedures of hospitals, municipalities and utilities on the e-ProPublico platform — title, buyer, deadline, mode and type (no CPV or region; attachments after signing in on the platform).',
     },
   },
+  {
+    kod: 'logintrade',
+    etykieta: { pl: 'Logintrade', en: 'Logintrade' },
+    nazwa: {
+      pl: 'Logintrade (zapytania ofertowe spółek)',
+      en: 'Logintrade (corporate requests for quotation)',
+    },
+    rejestr: 'https://platforma.logintrade.net',
+    zakres: {
+      pl: 'Zapytania ofertowe spółek (m.in. energetyka, chemia, paliwa, lotnictwo) poza Pzp — tytuł, kupiec z NIP-em, województwo i termin z godziną; oferty zwykle bez logowania (bez CPV i wartości).',
+      en: 'Requests for quotation from companies (energy, chemicals, fuels, aviation and more) outside public procurement law — title, buyer with tax ID, region and exact deadline; offers usually without signing in (no CPV or value).',
+    },
+  },
 ];
 
 const KODY_ZRODEL = new Set(ZRODLA.map((z) => z.kod));

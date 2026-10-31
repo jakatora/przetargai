@@ -42,6 +42,11 @@ const NAZWY = {
     pelna: { pl: 'e-ProPublico (Datacomp)', en: 'e-ProPublico (Datacomp)' },
     rejestr: 'https://e-propublico.pl',
   },
+  logintrade: {
+    etykieta: { pl: 'Logintrade', en: 'Logintrade' },
+    pelna: { pl: 'Logintrade (zapytania ofertowe spółek)', en: 'Logintrade (corporate requests for quotation)' },
+    rejestr: 'https://platforma.logintrade.net',
+  },
 };
 
 /**

@@ -192,7 +192,7 @@ test('każdy wariant zapytania ma zadeklarowany indeks złożony', async () => {
 });
 
 test('rejestr źródeł opisuje każdy kod po polsku i po angielsku', () => {
-  assert.deepEqual(K.ZRODLA.map((z) => z.kod).sort(), ['baza_konkurencyjnosci', 'bzp', 'epropublico', 'platformazakupowa', 'ted']);
+  assert.deepEqual(K.ZRODLA.map((z) => z.kod).sort(), ['baza_konkurencyjnosci', 'bzp', 'epropublico', 'logintrade', 'platformazakupowa', 'ted']);
   for (const z of K.ZRODLA) {
     assert.ok(z.nazwa.pl && z.nazwa.en, `${z.kod} bez nazwy PL/EN`);
     assert.ok(z.etykieta.pl && z.etykieta.en, `${z.kod} bez etykiety PL/EN`);
