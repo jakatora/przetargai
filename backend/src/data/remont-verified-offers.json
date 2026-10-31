@@ -1119,13 +1119,13 @@
     "sourceId": "chemiadoparkietu-soudal-26a-5kg",
     "ean": "5411183028395",
     "name": "Soudal 26A klej do wykładzin PCV winylu linoleum dywanowych 5 kg",
-    "imageUrl": "https://media.adeo.com/media/5600934/media.jpg",
+    "imageUrl": "https://static4.chemiadoparkietu25.pl/hpeciai/a7dc9f49d405f407703b43555fa6c8c2/pol_pl_Soudal-26A-klej-do-wykladzin-PCV-winylu-linoleum-dywanowych-5-kg-25914_2.png",
     "priceGrosze": 9350,
     "currency": "PLN",
     "availability": "in_stock",
-    "observedAt": "2026-10-25T17:30:57.007Z",
+    "observedAt": "2026-10-31T08:29:26.184Z",
     "sourceUrl": "https://chemiadoparkietu25.pl/product-pol-25914-Soudal-26A-klej-do-wykladzin-PCV-winylu-linoleum-dywanowych-5-kg.html",
-    "evidenceSha256": "1b301f9582f3dadb675b8317813e7930e73a25a4e0db594bd575ba31b8a5d4c0",
+    "evidenceSha256": "2cb044754fb3de15ac6695495a2095514384c92fe6d1e4651ce9c57248398ef4",
     "validUntil": null
   },
   {
@@ -3888,6 +3888,19 @@
     "observedAt": "2026-10-31T07:46:18.373Z",
     "sourceUrl": "https://sklep.sewera.pl/klej-do-wykladzin-osakryl-uniwersalny-4kg-tytan-p21233",
     "evidenceSha256": "d673b7775e7965a91ab2a08c08db26695f69caad468da18faabb9d6cf8678c80",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-soudal-26a-5kg",
+    "ean": "5411183028395",
+    "name": "Soudal klej do wykładzin podłogowych 26A  5kg ",
+    "imageUrl": "https://www.abud.pl/hpeciai/b184d895f8a51447bb2724358de3a73c/pol_pl_Soudal-klej-do-wykladzin-podlogowych-26A-5kg-27095_1.webp",
+    "priceGrosze": 10520,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T08:29:32.761Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-27095-Soudal-klej-do-wykladzin-podlogowych-26A-5kg.html",
+    "evidenceSha256": "dc03dbb896de6bcde60a67ecdb3643f90a81ac6c3616549f30fa592dc18f0eb8",
     "validUntil": null
   }
 ]
