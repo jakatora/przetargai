@@ -3837,5 +3837,18 @@
     "sourceUrl": "https://sklep.sewera.pl/wieszak-es-60125-prosty-rigips-p7413",
     "evidenceSha256": "56274e8498c4aafcef146ef1c222a9520ad6b684699140b239f4126a74fa42f6",
     "validUntil": null
+  },
+  {
+    "sourceId": "liderzy-volden-xps-lvt-625m2",
+    "ean": "5063022038326",
+    "name": "Podkład podłogowy pod panele winylowe Volden XPS LVT pod panele winylowe 1 mm 6,25 m2",
+    "imageUrl": "https://liderzycen.pl/environment/cache/images/productGfx_53817_500_500/9772c302db12f1d82525f11644d6fe42.jpg",
+    "priceGrosze": 11388,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-10-31T05:53:34.296Z",
+    "sourceUrl": "https://liderzycen.pl/pl/p/Podklad-podlogowy-pod-panele-winylowe-Volden-XPS-LVT-pod-panele-winylowe-1-mm-6%2C25-m2/32891",
+    "evidenceSha256": "a3d41552876f6ddd6c3b5a2c8e98a4028acbdf1dc33d792f8463471437702a96",
+    "validUntil": null
   }
 ]
