@@ -42,6 +42,7 @@ export const KLUCZE_KONTA = Object.freeze([
   KLUCZ_TOKENU,
   KLUCZ_PROFILU,
   'przetargai.bankReferencji', // rejestr kontraktów firmy (BankReferencjiScreen)
+  'przetargai.bankOsob', // kadra z uprawnieniami — dane osobowe pracowników (lib/bankOsob)
   'przetargai.wezwanie', // strażnik wezwania do uzupełnień (StraznikWezwaniaScreen)
   'przetargai.przewodnik-startu', // postęp przewodnika startu (lib/przewodnikStartu)
   'przetargai.onboarding_pominiety', // decyzja TEGO konta o pominięciu powitania

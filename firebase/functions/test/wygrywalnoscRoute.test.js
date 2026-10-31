@@ -311,3 +311,22 @@ test('GET /wygrywalnosc/tender/:id/partnerzy: firmy z doświadczeniem w klasie C
   assert.deepEqual([bezCpv.dostepne, bezCpv.powod], [false, 'brak_cpv']);
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/partnerzy`)).status, 401);
 });
+
+test('GET /wygrywalnosc/tender/:id/kryteria: lista z wagami; przetarg bez listy → brak_listy; bez tokenu 401', async () => {
+  const t = await konto();
+  const kryteria = [
+    { nazwa: 'Cena', waga: 60, udzial: 60, rodzaj: 'cena' },
+    { nazwa: 'Okres gwarancji', waga: 40, udzial: 40, rodzaj: 'gwarancja' },
+  ];
+  const { tender } = await tenders.upsert({ externalId: `kr-${ZNAK}`, title: 'Dostawa', organization: 'Gmina', deadline: '2099-01-01T00:00:00.000Z', source: 'bzp', kryterium_oceny: 'cena_i_jakosc', kryteria, kryteria_sposob: 'procentowo', kryteria_rozne_czesci: false });
+  const odp = await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/kryteria`, { headers: auth(t) });
+  assert.equal(odp.status, 200);
+  const d = await odp.json();
+  assert.deepEqual({ ...d }, { dostepne: true, sposob: 'procentowo', rozne_w_czesciach: false, liczba_czesci: null, kryteria });
+
+  const { tender: bez } = await tenders.upsert({ externalId: `kr2-${ZNAK}`, title: 'Zapytanie', organization: 'Spółka', deadline: '2099-01-01T00:00:00.000Z', source: 'logintrade' });
+  const brak = await (await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(bez.id)}/kryteria`, { headers: auth(t) })).json();
+  assert.deepEqual([brak.dostepne, brak.powod], [false, 'brak_listy']);
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/kryteria`)).status, 401);
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/nie-ma-${ZNAK}/kryteria`, { headers: auth(t) })).status, 404);
+});

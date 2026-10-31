@@ -9,7 +9,7 @@ import { KATALOG_NARZEDZI } from '../src/lib/narzedziaKatalog.js';
 const EKRANY = new Set([
   'MatchFeed', 'MatchDetail', 'WynikKontroli', 'PrzeswietlenieUmowy', 'RadarSwz', 'Sejf',
   'RejestratorOferty', 'SymulatorPlynnosci', 'ZabezpieczenieZwrot', 'PodprogoweDetail',
-  'PodprogoweUstawienia', 'Kreator118', 'KrokDanePodmiotu', 'BankReferencji', 'StraznikWezwania',
+  'PodprogoweUstawienia', 'Kreator118', 'KrokDanePodmiotu', 'BankReferencji', 'BankOsob', 'StraznikWezwania',
   'KalkulatorPunktow', 'KontrolerGwarancji', 'ObronaCeny', 'TerminZwiazania', 'WizjaLokalna',
   'Konsorcjum', 'CertyfikatWykonawcy', 'Tajemnica', 'Samooczyszczenie', 'KalkulatorTerminow',
   'KalendarzTerminow', 'SciezkaDoOferty', 'KalkulatorCeny', 'SymulatorPunktacji', 'KaryUmowne',

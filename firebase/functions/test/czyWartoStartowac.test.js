@@ -390,3 +390,23 @@ describe('stały wykonawca u zamawiającego (2026-10-31)', () => {
     assert.ok(!/szans/i.test(JSON.stringify(karta(zwyciezca(20)))), 'bez obietnic szans');
   });
 });
+
+describe('karta — kryterium z bazy (kody z ingestii, 2026-10-31)', () => {
+  test('kod „tylko_cena” = wyłącznie cena (wcześniej karta mówiła odwrotnie)', () => {
+    const karta = kartaStartu({ tender: { deadline: za(20), kryterium_oceny: 'tylko_cena' }, benchmarki: { zamawiajacy: kubelek() }, teraz: TERAZ });
+    assert.match(czynnik(karta, 'co_decyduje').naglowek, /wyłącznie cena/i);
+  });
+
+  test('kod „cena_i_jakosc” z listą kryteriów → nazwy z udziałem, bez kodu w treści', () => {
+    const karta = kartaStartu({
+      tender: { deadline: za(20), kryterium_oceny: 'cena_i_jakosc', kryteria: [{ nazwa: 'Cena', udzial: 60, rodzaj: 'cena' }, { nazwa: 'Okres gwarancji', udzial: 40, rodzaj: 'gwarancja' }] },
+      benchmarki: { zamawiajacy: kubelek() },
+      teraz: TERAZ,
+    });
+    const c = czynnik(karta, 'co_decyduje');
+    assert.match(c.naglowek, /nie tylko cena/i);
+    assert.equal(c.szczegol, 'Kryteria z ogłoszenia: Cena 60%, Okres gwarancji 40%.');
+    const bezListy = czynnik(kartaStartu({ tender: { deadline: za(20), kryterium_oceny: 'cena_i_jakosc' }, benchmarki: { zamawiajacy: kubelek() }, teraz: TERAZ }), 'co_decyduje');
+    assert.doesNotMatch(bezListy.szczegol, /cena_i_jakosc/);
+  });
+});

@@ -37,6 +37,7 @@ export const KATALOG_NARZEDZI = [
     narzedzia: [
       { ekran: 'Sejf', tytul: 'Sejf dokumentów', opis: 'Licznik ważności zaświadczeń (US, ZUS, KRK…)' },
       { ekran: 'BankReferencji', tytul: 'Bank referencji', opis: 'Pilnuje „terminu przydatności" doświadczenia' },
+      { ekran: 'BankOsob', tytul: 'Bank osób', opis: 'Kadra z uprawnieniami wpisana raz → wykaz osób w 1 klik' },
       { ekran: 'CertyfikatWykonawcy', tytul: 'Certyfikat wykonawcy', opis: 'Czy się opłaca (ustawa od 12.07.2026)' },
       { ekran: 'KontrolerGwarancji', tytul: 'Kontroler gwarancji wadialnej', opis: 'Wadium gwarancją, które nie odpadnie' },
       { ekran: 'Konsorcjum', tytul: 'Oświadczenie konsorcjum (art. 117)', opis: 'Kto co wykona' },

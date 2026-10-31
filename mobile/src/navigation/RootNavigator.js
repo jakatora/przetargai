@@ -33,6 +33,7 @@ import KrokDanePodmiotuScreen from '../screens/KrokDanePodmiotuScreen';
 import AccountScreen from '../screens/AccountScreen';
 import SavedScreen from '../screens/SavedScreen';
 import BankReferencjiScreen from '../screens/BankReferencjiScreen';
+import BankOsobScreen from '../screens/BankOsobScreen';
 import StraznikWezwaniaScreen from '../screens/StraznikWezwaniaScreen';
 import KalkulatorPunktowScreen from '../screens/KalkulatorPunktowScreen';
 import KontrolerGwarancjiScreen from '../screens/KontrolerGwarancjiScreen';
@@ -233,6 +234,11 @@ export default function RootNavigator() {
               name="BankReferencji"
               component={BankReferencjiScreen}
               options={{ title: 'Bank referencji' }}
+            />
+            <Stack.Screen
+              name="BankOsob"
+              component={BankOsobScreen}
+              options={{ title: 'Bank osób' }}
             />
             <Stack.Screen
               name="StraznikWezwania"

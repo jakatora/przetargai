@@ -8,10 +8,11 @@ import { runOknoWynikow } from '../jobs/oknoWynikow.js';
 import { runBenchmarkRynku } from '../jobs/benchmarkRynku.js';
 import { runOknoPlanow } from '../jobs/oknoPlanow.js';
 import { runWynikiAggregation } from '../jobs/aggregateResults.js';
+import { pobierzOgloszeniaBzp } from '../services/bzp.js';
 import { przeliczProfil } from '../services/pracownik.js';
 import { tenders, users } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
-import { notFound, serviceUnavailable } from '../lib/errors.js';
+import { badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
 
 const router = Router();
 router.use(adminRequired);
@@ -91,6 +92,20 @@ router.post('/okno-planow', ah(async (req, res) => {
  * Nie dotyka rejestrów zewnętrznych — liczy od nowa z tego, co już w bazie.
  * To jest właściwa reakcja na poprawkę parsera albo zmianę progów próbki.
  */
+/**
+ * Uzupełnienie listy kryteriów oceny (2026-10-31) w przetargach BZP zapisanych przed tą zmianą.
+ * Dzienne pobieranie samo dopisuje ją ostatnim `BZP_LOOKBACK_DAYS` dobom (upsert uzupełnia raz),
+ * a ta trasa sięga dalej: JEDNA doba publikacji na wywołanie, BEZ dopasowań i BEZ AI — kosztuje
+ * tylko odczyt publicznego API BZP i zapis brakujących pól.
+ */
+router.post('/kryteria-wstecz', ah(async (req, res) => {
+  const dzien = String(req.body?.dzien ?? '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dzien) || Number.isNaN(Date.parse(dzien))) throw badRequest('Podaj dzien w formacie RRRR-MM-DD');
+  const ogloszenia = await pobierzOgloszeniaBzp({ from: dzien, to: dzien });
+  const wynik = await tenders.uzupelnijKryteria(ogloszenia);
+  res.json({ dzien, pobrane: ogloszenia.length, ...wynik });
+}));
+
 router.post('/benchmark', ah(async (req, res) => {
   const wynik = await runBenchmarkRynku();
   res.json(wynik);

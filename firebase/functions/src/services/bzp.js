@@ -2,7 +2,7 @@ import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
 import { parsujWadium } from '../lib/wadium.js';
-import { parsujKryterium, parsujCzesci } from '../lib/ogloszenieMeta.js';
+import { parsujKryterium, parsujKryteria, parsujCzesci } from '../lib/ogloszenieMeta.js';
 import { warunkiZBzp } from '../lib/warunkiUdzialu.js';
 import { stanTempa, pobierzZPonowieniem, TEMPO_DOMYSLNE } from '../lib/tempoZapytan.js';
 
@@ -95,7 +95,15 @@ export function normalizeNotice(raw) {
   // Zanim je odrzucimy, wyciągamy z niego to, co decyduje o starcie — np. wadium.
   const { htmlBody, ...rawLite } = raw;
   const wadium = parsujWadium(htmlBody);
-  const kryterium = parsujKryterium(htmlBody);
+  const kryteria = parsujKryteria(htmlBody);
+  /*
+   * Gdy lista kryteriów jest znana, „tylko cena” wynika z niej, a nie z okna 600 znaków:
+   * stary odczyt brał „najniższej ceny” z opisu sposobu oceny i mylił się w 48 na 1258
+   * ogłoszeń (27–30.10.2026) — mówił „tylko cena” przy kryterium gwarancji albo czasu reakcji.
+   */
+  const kryterium = kryteria
+    ? (kryteria.pozacenowe ? 'cena_i_jakosc' : 'tylko_cena')
+    : parsujKryterium(htmlBody);
   const liczbaCzesci = parsujCzesci(htmlBody);
   const warunki = warunkiZBzp(htmlBody);
 
@@ -121,6 +129,10 @@ export function normalizeNotice(raw) {
     wadium_wiele_czesci: wadium.wieleCzesci ?? false,
     // Meta z htmlBody (rundy 5-6): kryterium oceny + liczba części.
     kryterium_oceny: kryterium,
+    // Za co są punkty (2026-10-31): [{nazwa, waga, udzial, rodzaj}] z pierwszej części zamówienia.
+    kryteria: kryteria?.lista ?? null,
+    kryteria_sposob: kryteria?.sposob ?? null,
+    kryteria_rozne_czesci: kryteria?.rozne_w_czesciach ?? false,
     liczba_czesci: liczbaCzesci,
     warunki_udzialu: warunki,
     // Wymiary do statystyk wyników (R17): rodzaj + województwo (PL+TERYT).

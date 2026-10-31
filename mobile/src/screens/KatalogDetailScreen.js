@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text } from 'react-native';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -6,6 +7,7 @@ import SzczegolPlatformy from '../components/SzczegolPlatformy';
 import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
 import KtoWygrywa from '../components/KtoWygrywa';
 import PartnerzyPrzetargu from '../components/PartnerzyPrzetargu';
+import KryteriaOceny from '../components/KryteriaOceny';
 import { ZapytajSwzPrzetargu } from '../components/ZapytajSwz';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
@@ -41,6 +43,7 @@ function Wiersz({ etykieta, wartosc, styles, ostatni }) {
 export default function KatalogDetailScreen({ route, navigation }) {
   const styles = useStyle(tworzStyleSzczegolow);
   const { t } = useJezyk();
+  const [pytaniaKryteriow, setPytaniaKryteriow] = useState([]);
   // Ekran bywa otwierany spoza katalogu (kalendarz, alerty, radar planów) z
   // niepełnym ogłoszeniem: rejestr jako napis albo pod starym kluczem `source`,
   // czasem bez rejestru w ogóle. Normalizacja zamienia go na metryczkę, a brak
@@ -127,7 +130,8 @@ export default function KatalogDetailScreen({ route, navigation }) {
         <SzczegolPlatformy tender={tender} navigation={navigation} />
         <DokumentyEZamowienia tender={tender} navigation={navigation} />
         <KtoWygrywa tender={tender} />
-        <ZapytajSwzPrzetargu tender={tender} />
+        <KryteriaOceny tender={tender} onPytania={setPytaniaKryteriow} />
+        <ZapytajSwzPrzetargu tender={tender} pytaniaDodatkowe={pytaniaKryteriow} />
         <PartnerzyPrzetargu tender={tender} />
       </View>
 

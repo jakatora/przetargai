@@ -12,6 +12,16 @@ export const PODPOWIEDZI_PYTAN = Object.freeze([
   { pl: 'Jakie są kary umowne?', en: 'What are the contractual penalties?' },
 ]);
 
+/**
+ * Podpowiedzi z pytaniami o kryteria TEGO przetargu (karta „Za co są punkty”, `lib/kryteriaOceny.js`)
+ * na początku. Gdy są, ogólne „Jakie są kryteria oceny ofert?” znika — lista kryteriów jest już na ekranie.
+ */
+export function podpowiedziPytan(dodatkowe = []) {
+  const extra = (Array.isArray(dodatkowe) ? dodatkowe : []).filter((p) => typeof p?.pl === 'string' && p.pl).slice(0, 2);
+  const ogolne = extra.length ? PODPOWIEDZI_PYTAN.filter((p) => !/kryteria oceny/i.test(p.pl)) : PODPOWIEDZI_PYTAN;
+  return [...extra, ...ogolne];
+}
+
 export const MIN_DLUGOSC_PYTANIA = 3;
 export const MAKS_DLUGOSC_PYTANIA = 500;
 

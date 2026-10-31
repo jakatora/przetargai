@@ -74,7 +74,15 @@ function opiszTermin(tender, nowIso) {
 /** Kryterium i podział na części — kontekst dla oceny „czy dla małej firmy". */
 function opiszKryterium(tender) {
   if (tender.kryterium_oceny === 'tylko_cena') return 'wygrywa najniższa cena';
-  if (tender.kryterium_oceny === 'cena_i_jakosc') return 'cena oraz kryteria jakościowe';
+  if (tender.kryterium_oceny === 'cena_i_jakosc') {
+    // Lista z wagami z ogłoszenia BZP (2026-10-31) — model może powiedzieć, ZA CO są punkty.
+    const lista = Array.isArray(tender.kryteria) ? tender.kryteria.filter((k) => k && typeof k.nazwa === 'string' && k.nazwa) : [];
+    if (lista.length) {
+      const opis = lista.slice(0, 6).map((k) => (typeof k.udzial === 'number' ? `${k.nazwa} ${k.udzial}%` : k.nazwa)).join(', ');
+      return `cena oraz kryteria jakościowe (${opis})`;
+    }
+    return 'cena oraz kryteria jakościowe';
+  }
   return 'nie podano';
 }
 

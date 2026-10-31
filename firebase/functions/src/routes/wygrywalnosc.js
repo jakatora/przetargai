@@ -6,6 +6,7 @@ import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia, limitPy
 import { planEfektywny } from '../lib/plan.js';
 import { ktoWygrywa } from '../lib/ktoWygrywa.js';
 import { kluczePartnerow, wybierzPartnerow } from '../lib/partnerzy.js';
+import { kryteriaPrzetargu } from '../lib/ogloszenieMeta.js';
 import { profilKonkurenta, normNip, twoiKonkurenci, kluczeKonkurentowUzytkownika } from '../lib/profilKonkurenta.js';
 import { AppError, badRequest, conflict, notFound, serviceUnavailable, tooMany } from '../lib/errors.js';
 import { features } from '../config.js';
@@ -104,6 +105,16 @@ router.get('/tender/:id/partnerzy', ah(async (req, res) => {
   const klucze = kluczePartnerow(tender);
   const kubelki = klucze.length ? await benchmarkRynku.pobierzWiele(klucze.map((k) => k.klucz)) : {};
   res.json(wybierzPartnerow({ klucze, kubelki, wlasnyNip: req.user.company_nip ?? null }));
+}));
+
+/*
+ * Za co są punkty (2026-10-31): kryteria oceny z wagami z ogłoszenia BZP (pole `kryteria`,
+ * `lib/ogloszenieMeta.js`). Darmowe w odczycie jak reszta tej karty — zero AI.
+ */
+router.get('/tender/:id/kryteria', ah(async (req, res) => {
+  const tender = await tenders.findById(req.params.id);
+  if (!tender) throw notFound('Przetarg nie został znaleziony');
+  res.json(kryteriaPrzetargu(tender));
 }));
 
 /*

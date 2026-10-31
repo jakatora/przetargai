@@ -226,9 +226,34 @@ function czynnikCeny(kubelek, profil) {
  * Kryterium jest mocniejsze — jest wiążące; pozycja tylko je potwierdza
  * albo podważa.
  */
+/*
+ * 🚨 Baza trzyma w `kryterium_oceny` KODY z ingestii (`tylko_cena` / `cena_i_jakosc`, Functions
+ * `lib/ogloszenieMeta.js`), a nie tekst ogłoszenia. Regex z podkreśleniem nie trafiał, więc do
+ * 31.10.2026 przetarg „tylko cena” dostawał tu „Liczy się nie tylko cena”, a szczegół pokazywał
+ * kod („Kryteria z ogłoszenia: tylko_cena.”). Testy karmiły kartę tekstem, nie kodem — stąd cisza.
+ */
+function czyTylkoCena(kryterium) {
+  if (!kryterium) return null;
+  if (kryterium === 'tylko_cena') return true;
+  if (kryterium === 'cena_i_jakosc') return false;
+  return KRYTERIUM_TYLKO_CENA.test(String(kryterium));
+}
+
+/** „Cena 60%, Okres gwarancji 40%” z listy kryteriów (2026-10-31); bez listy — tekst albo nic. */
+function opisKryteriow(tender) {
+  const lista = Array.isArray(tender?.kryteria) ? tender.kryteria.filter((k) => k && typeof k.nazwa === 'string' && k.nazwa) : [];
+  if (lista.length) {
+    return lista.slice(0, 6)
+      .map((k) => (typeof k.udzial === 'number' ? `${k.nazwa} ${String(k.udzial).replace('.', ',')}%` : k.nazwa))
+      .join(', ');
+  }
+  const k = tender?.kryterium_oceny ?? null;
+  return k && k !== 'tylko_cena' && k !== 'cena_i_jakosc' ? String(k) : null;
+}
+
 function czynnikCoDecyduje(kubelek, tender) {
   const kryterium = tender?.kryterium_oceny ?? null;
-  const tylkoCena = kryterium ? KRYTERIUM_TYLKO_CENA.test(String(kryterium)) : null;
+  const tylkoCena = czyTylkoCena(kryterium);
   const pozycja = kubelek?.pozycjaCeny?.mediana ?? null;
 
   if (tylkoCena === true) {
@@ -243,7 +268,9 @@ function czynnikCoDecyduje(kubelek, tender) {
     return {
       kod: 'co_decyduje', ton: TON.ZIELONY,
       naglowek: 'Liczy się nie tylko cena',
-      szczegol: `Kryteria z ogłoszenia: ${kryterium}.`,
+      szczegol: opisKryteriow(tender)
+        ? `Kryteria z ogłoszenia: ${opisKryteriow(tender)}.`
+        : 'Ogłoszenie przewiduje obok ceny kryteria jakościowe.',
       probka: null,
     };
   }

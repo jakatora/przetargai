@@ -685,6 +685,10 @@ export const tenders = {
       // Meta z htmlBody (rundy 5-6).
       kryterium_oceny: t.kryterium_oceny ?? null,
       liczba_czesci: t.liczba_czesci ?? null,
+      // Za co są punkty (2026-10-31): lista kryteriów z wagami z BZP (lib/ogloszenieMeta.js).
+      kryteria: t.kryteria ?? null,
+      kryteria_sposob: t.kryteria_sposob ?? null,
+      kryteria_rozne_czesci: t.kryteria_rozne_czesci ?? false,
       // Wymiary do statystyk wyników (R17).
       rodzaj: t.rodzaj ?? null,
       wojewodztwo: t.wojewodztwo ?? null,
@@ -728,6 +732,16 @@ export const tenders = {
         const doUzupelnienia = {};
         if (t.warunki_udzialu && dane.warunki_udzialu == null) doUzupelnienia.warunki_udzialu = t.warunki_udzialu;
         if (t.wojewodztwo && !dane.wojewodztwo) doUzupelnienia.wojewodztwo = t.wojewodztwo;
+        /*
+         * Lista kryteriów (2026-10-31) — raz, gdy dokument jej nie ma. Razem z nią poprawiamy
+         * `kryterium_oceny`: z listy wynika pewniej niż ze starego okna tekstu (48 pomyłek na 1258).
+         */
+        if (Array.isArray(t.kryteria) && dane.kryteria == null) {
+          doUzupelnienia.kryteria = t.kryteria;
+          doUzupelnienia.kryteria_sposob = t.kryteria_sposob ?? null;
+          doUzupelnienia.kryteria_rozne_czesci = t.kryteria_rozne_czesci ?? false;
+          if (t.kryterium_oceny) doUzupelnienia.kryterium_oceny = t.kryterium_oceny;
+        }
         if (Object.keys(doUzupelnienia).length) {
           await ref.update(doUzupelnienia);
           Object.assign(dane, doUzupelnienia);
@@ -891,6 +905,43 @@ export const tenders = {
     // z kalendarza — wyłączamy je na kopiach (2026-09-25).
     await uzgodnijKopiePrzetargu(id, { anulowany: true });
     return true;
+  },
+
+  /**
+   * Lista kryteriów oceny dla JUŻ zapisanych przetargów BZP (uzupełnienie wstecz, 2026-10-31):
+   * tylko tam, gdzie jej jeszcze nie ma, razem z poprawionym `kryterium_oceny`. Nie tworzy
+   * dokumentów — ogłoszenie, którego nie mamy (albo scalone pod innym rejestrem), pomija.
+   * @param {object[]} ogloszenia znormalizowane ogłoszenia BZP (`services/bzp.js`)
+   */
+  async uzupelnijKryteria(ogloszenia) {
+    const zLista = (ogloszenia ?? []).filter((o) => Array.isArray(o?.kryteria) && o.kryteria.length);
+    let istniejace = 0;
+    let uzupelnione = 0;
+    for (let i = 0; i < zLista.length; i += 300) {
+      const czesc = zLista.slice(i, i + 300);
+      const snapy = await db().getAll(
+        ...czesc.map((o) => db().collection('tenders').doc(tenderDocId(o.externalId))),
+        { fieldMask: ['kryteria'] },
+      );
+      const batch = db().batch();
+      let wPartii = 0;
+      snapy.forEach((snap, j) => {
+        if (!snap.exists) return;
+        istniejace += 1;
+        if (snap.get('kryteria') != null) return;
+        const o = czesc[j];
+        batch.update(snap.ref, {
+          kryteria: o.kryteria,
+          kryteria_sposob: o.kryteria_sposob ?? null,
+          kryteria_rozne_czesci: o.kryteria_rozne_czesci ?? false,
+          ...(o.kryterium_oceny ? { kryterium_oceny: o.kryterium_oceny } : {}),
+        });
+        wPartii += 1;
+      });
+      if (wPartii) await batch.commit();
+      uzupelnione += wPartii;
+    }
+    return { z_kryteriami: zLista.length, istniejace, uzupelnione };
   },
 
   async findById(id) {

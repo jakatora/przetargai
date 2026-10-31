@@ -427,6 +427,8 @@ export const api = {
   ktoWygrywa: (tenderId) => request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/kto-wygrywa`),
   /** Kto może użyczyć doświadczenia: firmy wygrywające zamówienia tej samej klasy CPV (art. 118 Pzp, konsorcjum). */
   partnerzyPrzetargu: (tenderId) => request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/partnerzy`),
+  // Za co są punkty (2026-10-31): kryteria oceny z wagami z ogłoszenia BZP.
+  kryteriaPrzetargu: (tenderId) => request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/kryteria`),
   /** Profil konkurenta: co firma wygrywa u wszystkich zamawiających (BZP po NIP-ie, TED po nazwie). */
   profilKonkurenta: (kogo) => request(`/wygrywalnosc/wykonawca?${parametryProfilu(kogo)}`),
   /** Kto najczęściej wygrywa w branżach i regionach z Karty firmy (bez własnej firmy). */

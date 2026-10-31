@@ -84,7 +84,7 @@ export function kluczOgloszenia(t) {
 const POLA_UZUPELNIANE = [
   'budget', 'currency', 'cpvMain', 'deadline', 'publishedAt', 'organization',
   'wojewodztwo', 'rodzaj', 'liczba_czesci', 'wadium_wymagane', 'wadium_kwota',
-  'kryterium_oceny', 'numer',
+  'kryterium_oceny', 'numer', 'kryteria', 'kryteria_sposob', 'kryteria_rozne_czesci',
 ];
 
 const pusty = (v) => v === undefined || v === null || v === '';

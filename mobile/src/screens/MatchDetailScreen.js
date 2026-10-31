@@ -34,6 +34,7 @@ import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../componen
 import SzczegolPlatformy from '../components/SzczegolPlatformy';
 import KtoWygrywa from '../components/KtoWygrywa';
 import PartnerzyPrzetargu from '../components/PartnerzyPrzetargu';
+import KryteriaOceny from '../components/KryteriaOceny';
 import { ZapytajSwzPrzetargu } from '../components/ZapytajSwz';
 import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
 import Wyjasnienie from '../components/Wyjasnienie';
@@ -87,6 +88,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   // Plan efektywny z API (spec §15); stary zapis użytkownika bez `plan` — z planu rozliczeniowego.
   const plan = user?.plan ?? (user?.premium_tier === 'standard' ? 'standard' : 'free');
   const [arkusz, setArkusz] = useState(false);
+  const [pytaniaKryteriow, setPytaniaKryteriow] = useState([]);
   const [odrzucanie, setOdrzucanie] = useState(false);
   // Stan przypomnienia: znany, gdy weszliśmy z ekranu „Zapisane"; inaczej domyślnie off.
   const [przypomnienie, setPrzypomnienie] = useState(match?.reminder_enabled === true);
@@ -380,7 +382,8 @@ export default function MatchDetailScreen({ route, navigation }) {
       ) : null}
 
       <KtoWygrywa tender={tender} />
-      <ZapytajSwzPrzetargu tender={tender} />
+      <KryteriaOceny tender={tender} onPytania={setPytaniaKryteriow} />
+      <ZapytajSwzPrzetargu tender={tender} pytaniaDodatkowe={pytaniaKryteriow} />
       <PartnerzyPrzetargu tender={tender} />
 
       <Pressable

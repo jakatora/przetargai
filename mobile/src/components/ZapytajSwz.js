@@ -6,7 +6,7 @@ import { api } from '../api/client';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
-import { PODPOWIEDZI_PYTAN, MAKS_DLUGOSC_PYTANIA, czyMoznaPytacSwz, czyMoznaPytacPrzetargu, poprawnePytanie, opisStatusuOdpowiedzi, dopisekStrony } from '../lib/zapytajSwz';
+import { podpowiedziPytan, MAKS_DLUGOSC_PYTANIA, czyMoznaPytacSwz, czyMoznaPytacPrzetargu, poprawnePytanie, opisStatusuOdpowiedzi, dopisekStrony } from '../lib/zapytajSwz';
 
 /**
  * „Zapytaj SWZ” (2026-10-31, z analizy konkurencji: Mimira, SEZAM, Tendium). Wykonawca pyta wprost
@@ -14,7 +14,7 @@ import { PODPOWIEDZI_PYTAN, MAKS_DLUGOSC_PYTANIA, czyMoznaPytacSwz, czyMoznaPyta
  * a cytaty backend sprawdza w tekście: wymyślony cytat wraca jako „nieudowodnione”. Bez zapisanej
  * treści SWZ komponent się nie pokazuje (karta analizy niżej mówi, jak ją dodać).
  */
-export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null, podpowiedzPierwszego = null }) {
+export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null, podpowiedzPierwszego = null, pytaniaDodatkowe = [] }) {
   const styles = useStyle(tworzStyleZapytajSwz);
   const { t } = useJezyk();
   const [pytanie, setPytanie] = useState('');
@@ -49,7 +49,7 @@ export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null,
         {podpowiedzPierwszego && !odpowiedzi.length ? ` ${podpowiedzPierwszego}` : ''}
       </Text>
       <View style={styles.podpowiedzi}>
-        {PODPOWIEDZI_PYTAN.map((p) => (
+        {podpowiedziPytan(pytaniaDodatkowe).map((p) => (
           <Pressable key={p.pl} accessibilityRole="button" disabled={laduje} onPress={() => zapytaj(t(p.pl, p.en))} style={styles.podpowiedz}>
             <Text style={styles.podpowiedzTekst}>{t(p.pl, p.en)}</Text>
           </Pressable>
@@ -90,12 +90,13 @@ export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null,
  * Serwer sam bierze SWZ w PDF z dokumentów, zapisuje jej tekst (bez płatnej analizy) i wiąże
  * z przetargiem; brak SWZ w PDF → komunikat z drogą przez Radar. Plan darmowy ma dzienny limit pytań.
  */
-export function ZapytajSwzPrzetargu({ tender }) {
+export function ZapytajSwzPrzetargu({ tender, pytaniaDodatkowe = [] }) {
   const { t } = useJezyk();
   if (!czyMoznaPytacPrzetargu(tender)) return null;
   return (
     <ZapytajSwz
       zapytajFn={(p) => api.zapytajSwzPrzetargu(tender.id, p)}
+      pytaniaDodatkowe={pytaniaDodatkowe}
       podpowiedzPierwszego={t('Pierwsze pytanie trwa dłużej — pobieramy SWZ z platformy.', 'The first question takes longer — we fetch the documents.')}
     />
   );

@@ -111,3 +111,12 @@ test('prompt znosi braki: nieznana wartość i brak terminu bez wywrotki', () =>
   assert.match(p, /nieznan|brak/i, 'brakujące pola opisane słownie, nie „null”');
   assert.doesNotMatch(p, /null/, 'żadnego surowego null w promptcie');
 });
+
+test('prompt: przy cenie i jakości podaje listę kryteriów z wagami z ogłoszenia (2026-10-31)', () => {
+  const p = buildSummaryPrompt({
+    title: 'Dostawa agregatu', deadline: '2099-01-01T00:00:00.000Z', kryterium_oceny: 'cena_i_jakosc',
+    kryteria: [{ nazwa: 'Cena', udzial: 80, rodzaj: 'cena' }, { nazwa: 'Autonomia pracy', udzial: 20, rodzaj: 'inne' }],
+  }, '2026-10-31T00:00:00.000Z');
+  assert.match(p, /cena oraz kryteria jakościowe \(Cena 80%, Autonomia pracy 20%\)/);
+  assert.match(buildSummaryPrompt({ title: 'X', kryterium_oceny: 'cena_i_jakosc' }, '2026-10-31T00:00:00.000Z'), /cena oraz kryteria jakościowe(?! \()/);
+});
