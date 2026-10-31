@@ -22023,38 +22023,89 @@ async function combineOrderQuotes(base, parts, postcode) {
   };
 }
 
+// lib/pricing-service/src/dispatch-order-partitions.ts
+var MAX_PLANS = 32;
+async function quoteRequiredDispatch(order, base, atomic, postcode, limited) {
+  const unavailable = { reason: "requires_separate_dispatch" };
+  const lines = new Map(order.lines.map((line2) => [line2.packages[0].offerId, line2]));
+  const flexible = base.flexibleDispatchOfferIds ?? [], flexibleSet = new Set(flexible);
+  const legacy = !base.dispatchGroups && order.lines.length === 2 && !flexible.length;
+  const groups = base.dispatchGroups ?? (legacy ? order.lines.map((line2) => ({ dispatchFrom: "", offerIds: [line2.packages[0].offerId] })) : []);
+  if (lines.size !== order.lines.length || groups.length < 2 || groups.length > 8 || flexibleSet.size !== flexible.length || flexible.some((id) => !lines.has(id))) return unavailable;
+  if (!legacy && (groups.some((group) => !group.dispatchFrom) || new Set(groups.map((group) => group.dispatchFrom)).size !== groups.length)) return unavailable;
+  const used = /* @__PURE__ */ new Set();
+  for (const group of groups) {
+    if (!group.offerIds.length && !flexible.length) return unavailable;
+    for (const id of group.offerIds) {
+      if (!lines.has(id) || used.has(id) || flexibleSet.has(id)) return unavailable;
+      used.add(id);
+    }
+  }
+  if (used.size + flexible.length !== lines.size) return unavailable;
+  const plans = [];
+  if (!flexible.length) plans.push(groups);
+  else {
+    const defaultBranch = groups.findIndex((group) => group.dispatchFrom === "Katowice");
+    if (defaultBranch < 0) return unavailable;
+    limited();
+    const seen = /* @__PURE__ */ new Set();
+    const add2 = (assignment) => {
+      const key = assignment.join(",");
+      if (seen.has(key) || plans.length >= MAX_PLANS) return;
+      seen.add(key);
+      const plan = groups.map((group) => ({ ...group, offerIds: [...group.offerIds] }));
+      flexible.forEach((id, index2) => plan[assignment[index2]].offerIds.push(id));
+      plans.push(plan.filter((group) => group.offerIds.length));
+    };
+    add2(flexible.map(() => defaultBranch));
+    for (let branch = 0; branch < groups.length; branch++) add2(flexible.map(() => branch));
+    add2(flexible.map((_, index2) => index2 % groups.length));
+    let combinations = 1;
+    for (const _ of flexible) combinations = Math.min(MAX_PLANS + 1, combinations * groups.length);
+    for (let code = 0; code < Math.min(combinations, MAX_PLANS); code++) {
+      let remaining = code;
+      add2(flexible.map(() => {
+        const branch = remaining % groups.length;
+        remaining = Math.floor(remaining / groups.length);
+        return branch;
+      }));
+    }
+  }
+  if (groups.some((group) => group.offerIds.length > 1) || order.lines.some((line2) => line2.packages[0].count > 1)) limited();
+  const cache = /* @__PURE__ */ new Map();
+  let best;
+  for (const plan of plans) {
+    const parts = [];
+    for (const group of plan) {
+      const selected = group.offerIds.map((id) => lines.get(id));
+      const part = { ...order, lines: selected, materialsGrosze: selected.reduce((sum, line2) => sum + line2.packages[0].lineCostGrosze, 0), quote: void 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown" };
+      const key = JSON.stringify([group.dispatchFrom, [...group.offerIds].sort()]);
+      try {
+        let pending = cache.get(key);
+        if (!pending) {
+          pending = atomic(part, postcode, { ignoreStockOfferIds: flexible });
+          cache.set(key, pending);
+        }
+        const outcome = await pending;
+        if (!("quote" in outcome) || !currentDeliveryQuote(outcome.quote, postcode) || group.dispatchFrom && outcome.quote.dispatchFrom !== group.dispatchFrom) break;
+        parts.push({ order: part, quote: outcome.quote });
+      } catch {
+        break;
+      }
+    }
+    if (parts.length !== plan.length) continue;
+    const combined = await combineRequiredSeparateOrders(order, parts, postcode);
+    if (combined && (!best || combined.costGrosze < best.quote.costGrosze || combined.costGrosze === best.quote.costGrosze && combined.orders.length < best.quote.orders.length)) best = { quote: combined };
+  }
+  return best && currentDeliveryQuote(best.quote, postcode) ? best : unavailable;
+}
+
 // lib/pricing-service/src/order-partitions.ts
 function withOrderPartitions(atomic, limited) {
   return async (order, postcode) => {
     const base = await atomic(order, postcode), count = order.lines.length;
     if ("reason" in base && base.reason === "requires_separate_dispatch" && order.store === "Sewera" && count >= 2 && order.lines.every((line2) => line2.packages.length === 1)) {
-      const groups = base.dispatchGroups ?? (count === 2 ? order.lines.map((line2) => ({ dispatchFrom: "", offerIds: [line2.packages[0].offerId] })) : []);
-      const lines = new Map(order.lines.map((line2) => [line2.packages[0].offerId, line2]));
-      const used = /* @__PURE__ */ new Set();
-      if (lines.size !== count || groups.length < 2 || groups.length > 8) return { reason: "requires_separate_dispatch" };
-      for (const group of groups) {
-        if (!group.offerIds.length) return { reason: "requires_separate_dispatch" };
-        for (const id of group.offerIds) {
-          if (!lines.has(id) || used.has(id)) return { reason: "requires_separate_dispatch" };
-          used.add(id);
-        }
-      }
-      if (used.size !== count) return { reason: "requires_separate_dispatch" };
-      if (groups.some((group) => group.offerIds.length > 1) || order.lines.some((line2) => line2.packages[0].count > 1)) limited();
-      const parts = [];
-      for (const group of groups) {
-        const selected = group.offerIds.map((id) => lines.get(id));
-        const part = { ...order, lines: selected, materialsGrosze: selected.reduce((sum, line2) => sum + line2.packages[0].lineCostGrosze, 0), quote: void 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown" };
-        try {
-          const outcome = await atomic(part, postcode);
-          if (!("quote" in outcome) || !currentDeliveryQuote(outcome.quote, postcode) || group.dispatchFrom && outcome.quote.dispatchFrom !== group.dispatchFrom) return { reason: "requires_separate_dispatch" };
-          parts.push({ order: part, quote: outcome.quote });
-        } catch {
-          return { reason: "requires_separate_dispatch" };
-        }
-      }
-      const combined = await combineRequiredSeparateOrders(order, parts, postcode);
-      return combined ? { quote: combined } : { reason: "requires_separate_dispatch" };
+      return quoteRequiredDispatch(order, base, atomic, postcode, limited);
     }
     if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !base.quote.costGrosze || !count) return base;
     if (base.quote.materialsRoundingGrosze !== void 0) {
@@ -22184,8 +22235,9 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   const limits = /* @__PURE__ */ new Map(), cache = /* @__PURE__ */ new Map();
   let allowNewQuotes = true, partitionSearchLimited = false;
-  const quoteWithStock = async (order, postalCode) => {
-    const key = JSON.stringify([order.store, signature(order)]);
+  const quoteWithStock = async (order, postalCode, context) => {
+    const ignoredStock = new Set(context?.ignoreStockOfferIds ?? []);
+    const key = JSON.stringify([order.store, signature(order), [...ignoredStock].sort()]);
     if (cache.has(key)) return cache.get(key);
     if (!allowNewQuotes || cache.size >= MAX_STORE_BASKETS) {
       partitionSearchLimited = true;
@@ -22198,7 +22250,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
         const line2 = order.lines.find((line3) => line3.packages.some((pack2) => pack2.offerId === limit.offerId));
         const pack = line2?.packages.find((pack2) => pack2.offerId === limit.offerId);
         const checked = Date.parse(limit.checkedAt), expires = Date.parse(limit.expiresAt);
-        return pack && limit.productId === line2.product.id && limit.store === order.store && limit.postalCode === postalCode && Boolean(limit.dispatchFrom) && limit.unitPriceGrosze === pack.unitPriceGrosze && limit.requestedPackages === pack.count && Number.isSafeInteger(limit.maxPackages) && limit.maxPackages >= 0 && limit.maxPackages < pack.count && Number.isFinite(checked) && checked <= Date.now() && Date.now() - checked <= 6e5 && expires > Date.now() && expires <= checked + 6e5 && /^https:\/\//.test(limit.sourceUrl) && /^[a-f0-9]{64}$/.test(limit.evidenceSha256);
+        return pack && !ignoredStock.has(limit.offerId) && limit.productId === line2.product.id && limit.store === order.store && limit.postalCode === postalCode && Boolean(limit.dispatchFrom) && limit.unitPriceGrosze === pack.unitPriceGrosze && limit.requestedPackages === pack.count && Number.isSafeInteger(limit.maxPackages) && limit.maxPackages >= 0 && limit.maxPackages < pack.count && Number.isFinite(checked) && checked <= Date.now() && Date.now() - checked <= 6e5 && expires > Date.now() && expires <= checked + 6e5 && /^https:\/\//.test(limit.sourceUrl) && /^[a-f0-9]{64}$/.test(limit.evidenceSha256);
       });
       for (const limit of accepted) {
         const previous = limits.get(limit.offerId);
@@ -24995,16 +25047,18 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
   if (configured.some(({ source }) => !isReviewedSeweraDispatchSource(source))) throw Error("dispatch_department_not_confirmed");
   const department = configured[0]?.source.dispatchDepartment ?? { id: "1", name: "Katowice" };
   if (configured.some(({ source }) => source.dispatchDepartment.id !== department.id || source.dispatchDepartment.name !== department.name)) {
-    if (configured.length === packs.length && order.lines.length >= 2 && order.lines.every((line2) => line2.packages.length === 1)) {
+    if (order.lines.length >= 2 && order.lines.every((line2) => line2.packages.length === 1)) {
       const groups = /* @__PURE__ */ new Map();
-      for (const { source } of packs) {
+      for (const { source } of configured) {
         const branch = source.dispatchDepartment;
         const group = groups.get(branch.id) ?? { dispatchFrom: branch.name, offerIds: [] };
         if (group.dispatchFrom !== branch.name) throw Error("dispatch_department_not_confirmed");
         group.offerIds.push(source.id);
         groups.set(branch.id, group);
       }
-      return { reason: "requires_separate_dispatch", dispatchGroups: [...groups.values()] };
+      const flexible = packs.filter(({ source }) => !source.dispatchDepartment).map(({ source }) => source.id);
+      if (flexible.length && !groups.has("1")) groups.set("1", { dispatchFrom: "Katowice", offerIds: [] });
+      return { reason: "requires_separate_dispatch", dispatchGroups: [...groups.values()], ...flexible.length ? { flexibleDispatchOfferIds: flexible } : {} };
     }
     throw Error("dispatch_department_not_confirmed");
   }
