@@ -1,5 +1,6 @@
 import { logger } from '../lib/logger.js';
-import { users, matches, znacznikDigestu } from '../db/repos.js';
+import { users, matches, znacznikDigestu, benchmarkRynku, rozstrzygniecia } from '../db/repos.js';
+import { kluczeKonkurentowUzytkownika, twoiKonkurenci, wygraneKonkurentow, normNip } from '../lib/profilKonkurenta.js';
 import { sendEmail, weeklyDigestEmail } from '../services/email.js';
 
 /**
@@ -17,6 +18,21 @@ export function kluczTygodniaIso(ms) {
   const rok = dzien.getUTCFullYear();
   const tydzien = Math.ceil(((dzien.getTime() - Date.UTC(rok, 0, 1)) / 86_400_000 + 1) / 7);
   return `${rok}-W${String(tydzien).padStart(2, '0')}`;
+}
+
+/**
+ * Co w tym tygodniu wygrali konkurenci użytkownika (2026-10-31): konkurenci z kubełków benchmarku
+ * (branże i regiony karty firmy, bez własnego NIP-u), ich wygrane z rozstrzygnięć od `odDnia`.
+ * Błąd tej sekcji NIE zatrzymuje przeglądu — mail idzie bez niej.
+ */
+export async function wygraneKonkurentowTygodnia(user, odDnia) {
+  const { dzialy, regiony, klucze } = kluczeKonkurentowUzytkownika(user);
+  if (!dzialy.length) return [];
+  const kubelki = await benchmarkRynku.pobierzWiele(klucze);
+  const { konkurenci } = twoiKonkurenci({ dzialy, regiony, kubelki, wlasnyNip: user.company_nip ?? null });
+  const nipy = konkurenci.map((k) => normNip(k.nip)).filter(Boolean);
+  if (!nipy.length) return [];
+  return wygraneKonkurentow(await rozstrzygniecia.wygraneOd(nipy, odDnia), konkurenci);
 }
 
 /**
@@ -70,7 +86,11 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
       let wynik;
       try {
         const tytuly = await matches.recentTitlesSince(user.id, sinceIso, 5);
-        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly });
+        const konkurenci = await wygraneKonkurentowTygodnia(user, sinceIso.slice(0, 10)).catch((err) => {
+          logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja konkurentów pominięta');
+          return [];
+        });
+        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci });
         wynik = await sendEmail({ to: user.email, ...tresc });
       } catch (err) {
         wynik = { sent: false, error: err.message };

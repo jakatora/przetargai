@@ -80,3 +80,15 @@ test('Twoi konkurenci: region przed krajem, ta sama firma z kilku kubełków zsu
   ]);
   assert.equal(w.konkurenci[0].branze.length, 1);
 });
+
+test('wygrane konkurentów do przeglądu i klucze kubełków z karty firmy', async () => {
+  const { wygraneKonkurentow, kluczeKonkurentowUzytkownika } = await import('../src/lib/profilKonkurenta.js');
+  const konkurenci = [{ nazwa: 'Budmax', nip: '8130000001' }, { nazwa: 'Eko', nip: '7770000000' }];
+  const w = wygraneKonkurentow([
+    { tytul: 'Stare', zamawiajacy: 'Gmina A', opublikowano: '2026-10-26', czesci: [czesc({ nazwa: 'Budmax SA', nip: '813-000-00-01' }, { cena: 100 })] },
+    { tytul: 'Nowe', zamawiajacy: 'Gmina B', opublikowano: '2026-10-30', czesci: [czesc({ nazwa: 'Budmax', nip: '8130000001' }, { cena: 300 }), czesc({ nazwa: 'Budmax', nip: '8130000001' }, { cena: 200 }), czesc({ nazwa: 'Obcy', nip: '1111111111' })] },
+  ], konkurenci);
+  assert.deepEqual(w.map((x) => [x.nazwa, x.tytul, x.cena]), [['Budmax', 'Nowe', 500], ['Budmax', 'Stare', 100]], 'jedna pozycja na ogłoszenie, nazwa z listy konkurentów');
+  assert.deepEqual(kluczeKonkurentowUzytkownika({ cpv_codes: ['45000000-7', '45233140', '90500000'], regiony: ['18'] }).klucze, ['cpv:45', 'cpv:90', 'cpv:45|18', 'cpv:90|18']);
+  assert.deepEqual(kluczeKonkurentowUzytkownika({}).dzialy, []);
+});

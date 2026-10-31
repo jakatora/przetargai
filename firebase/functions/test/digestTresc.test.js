@@ -38,3 +38,12 @@ test('budujDigest: max 5 tytułów', () => {
   const wystapienia = (d.html.match(/<li>/g) || []).length;
   assert.equal(wystapienia, 5);
 });
+
+test('budujDigest: sekcja „co wygrali Twoi konkurenci” (bez niej — bez sekcji), znaki HTML bezpieczne', async () => {
+  const { budujDigest } = await import('../src/lib/digestTresc.js');
+  const z = budujDigest({ liczba: 2, tytuly: ['A'], konkurenci: [{ nazwa: 'Budmax <Sp. z o.o.>', tytul: 'Remont drogi', zamawiajacy: 'Gmina X', cena: 1_234_000 }] });
+  assert.ok(z.text.includes('Co w tym tygodniu wygrali Twoi konkurenci:\n• Budmax <Sp. z o.o.> — Remont drogi · Gmina X · 1,23 mln zł'));
+  assert.match(z.html, /<b>Budmax &lt;Sp\. z o\.o\.&gt;<\/b>/);
+  const bez = budujDigest({ liczba: 2, tytuly: ['A'] });
+  assert.ok(!/konkurenci/.test(bez.text));
+});

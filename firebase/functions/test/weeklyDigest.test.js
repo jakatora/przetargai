@@ -55,3 +55,27 @@ test('digest pomija dopasowania starsze niż okno 7 dni', async () => {
   const liczba = await matches.countSince(user.id, new Date(Date.now() - 7 * 864e5).toISOString());
   assert.equal(liczba, 0, 'dopasowanie sprzed 10 dni nie wpada w okno 7 dni');
 });
+
+test('przegląd: wygrane konkurentów z tego tygodnia (kubełki karty firmy → rozstrzygnięcia po NIP-ach), bez własnej firmy', async () => {
+  const { benchmarkRynku, rozstrzygniecia } = await import('../src/db/repos.js');
+  const { wygraneKonkurentowTygodnia } = await import('../src/jobs/weeklyDigest.js');
+  const znak = `wdk${process.pid}${Date.now()}`;
+  const nipKonk = `6${String(Date.now()).slice(-9)}`;
+  const nipWlasny = `5${String(Date.now()).slice(-9)}`;
+  await benchmarkRynku.zapisz({
+    'cpv:02|26': { klucz: 'cpv:02|26', wymiar: 'dzial_cpv', zrodla: ['bzp'], probka: { ogloszenia: 9, czesci: 9 }, wystarczajacaProbka: true,
+      najczestsiZwyciezcy: [{ nazwa: `Leśnik ${znak}`, nip: nipKonk, wygrane: 5, wartosc: 1 }, { nazwa: 'Moja firma', nip: nipWlasny, wygrane: 9, wartosc: 1 }] },
+  });
+  const dzis = new Date().toISOString().slice(0, 10);
+  await rozstrzygniecia.zapiszWiele([
+    { externalId: `${znak}-1`, zrodlo: 'bzp', tytul: 'Wycinka drzew', zamawiajacy: 'Nadleśnictwo', opublikowano: dzis,
+      czesci: [{ numer: 1, uniewaznione: false, spojne: true, cenaWybrana: 80_000, zwyciezca: { nazwa: `Leśnik ${znak}`, nip: nipKonk } }] },
+    { externalId: `${znak}-2`, zrodlo: 'bzp', tytul: 'Moja wygrana', zamawiajacy: 'Gmina', opublikowano: dzis,
+      czesci: [{ numer: 1, uniewaznione: false, spojne: true, cenaWybrana: 10, zwyciezca: { nazwa: 'Moja firma', nip: nipWlasny } }] },
+  ]);
+  const user = { cpv_codes: ['02100000'], regiony: ['26'], company_nip: nipWlasny };
+  const od = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const w = await wygraneKonkurentowTygodnia(user, od);
+  assert.deepEqual(w.map((x) => [x.nazwa, x.tytul, x.cena]), [[`Leśnik ${znak}`, 'Wycinka drzew', 80_000]]);
+  assert.deepEqual(await wygraneKonkurentowTygodnia({ cpv_codes: [] }, od), []);
+});

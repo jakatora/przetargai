@@ -24,7 +24,11 @@ export function odmienPrzetargi(n) {
  * @param {{companyName?: string|null, liczba: number, tytuly?: string[]}} dane
  * @returns {{subject: string, text: string, html: string}}
  */
-export function budujDigest({ companyName = null, liczba = 0, tytuly = [] }) {
+const kwotaKrotko = (n) => (!Number.isFinite(n) ? null
+  : n >= 1e6 ? `${(n / 1e6).toFixed(2).replace('.', ',')} mln zł` : n >= 1e3 ? `${Math.round(n / 1e3)} tys. zł` : `${Math.round(n)} zł`);
+const opisWygranej = (k) => [k.tytul, k.zamawiajacy, kwotaKrotko(k.cena)].filter(Boolean).join(' · ');
+
+export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [] }) {
   const n = Math.max(0, Math.floor(liczba));
   const rzeczownik = odmienPrzetargi(n);
   const subject = `Twój tygodniowy przegląd: ${n} ${rzeczownik}`;
@@ -35,7 +39,15 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [] }) {
   const tytulyText = lista.length
     ? `\n\nNa przykład:\n${lista.map((t) => `• ${t}`).join('\n')}`
     : '';
-  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}\n\n`
+  // Co wygrali Twoi konkurenci (2026-10-31) — z rozstrzygnięć BZP z tego tygodnia.
+  const wygrane = Array.isArray(konkurenci) ? konkurenci.filter((k) => k?.nazwa).slice(0, 5) : [];
+  const konkurenciText = wygrane.length
+    ? `\n\nCo w tym tygodniu wygrali Twoi konkurenci:\n${wygrane.map((k) => `• ${k.nazwa} — ${opisWygranej(k)}`).join('\n')}`
+    : '';
+  const konkurenciHtml = wygrane.length
+    ? `<p>Co w tym tygodniu wygrali <b>Twoi konkurenci</b>:</p><ul>${wygrane.map((k) => `<li><b>${esc(k.nazwa)}</b> — ${esc(opisWygranej(k))}</li>`).join('')}</ul>`
+    : '';
+  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${konkurenciText}\n\n`
     + `Otwórz aplikację PrzetargAI, aby zobaczyć szczegóły i zdecydować, w które startujesz.\n\n`
     + `Zespół PrzetargAI\n\n`
     + `Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.`;
@@ -47,6 +59,7 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [] }) {
   const html = `<p>Dzień dobry,</p>
 ${wstepHtml}
 ${tytulyHtml}
+${konkurenciHtml}
 <p>Otwórz aplikację <b>PrzetargAI</b>, aby zobaczyć szczegóły i zdecydować, w które startujesz.</p>
 <p>Zespół PrzetargAI</p>
 <p style="font-size:12px;color:#667085">Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.</p>`;

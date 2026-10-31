@@ -2268,6 +2268,22 @@ export const rozstrzygniecia = {
   },
 
   /**
+   * Rozstrzygnięcia od dnia `od`, w których wygrał ktoś z listy NIP-ów (≤ 30 — limit `array-contains-any`).
+   * Cotygodniowy przegląd: „co wygrali Twoi konkurenci”. Indeks: zwyciezcy_nip CONTAINS + opublikowano DESC.
+   */
+  async wygraneOd(nipy, od, { limit = 40 } = {}) {
+    const lista = [...new Set((nipy ?? []).filter(Boolean))].slice(0, 30);
+    if (!lista.length || !od) return [];
+    const snap = await db().collection('rozstrzygniecia')
+      .where('zwyciezcy_nip', 'array-contains-any', lista)
+      .where('opublikowano', '>=', String(od))
+      .orderBy('opublikowano', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /**
    * Rozstrzygnięcia, w których dany wykonawca wygrał co najmniej jedną część — wejście profilu
    * konkurenta. Dwa zapytania, bo BZP podaje NIP zwycięzcy, a TED tylko nazwę; wynik bez duplikatów.
    * Nazwa krótsza niż 3 znaki po normalizacji nie idzie do zapytania (za ogólna).

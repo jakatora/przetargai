@@ -1,6 +1,7 @@
 import { czystaNazwaWykonawcy, normNazwa } from './ktoWygrywa.js';
 import { nazwaKodu } from './cpvSlowa.js';
 import { WOJEWODZTWA } from './wojewodztwa.js';
+import { dzialCpv, normWojewodztwo } from './wynikiAgregacja.js';
 
 /*
  * PROFIL KONKURENTA (2026-10-31, z analizy konkurencji: Tender Vision „profile konkurentów”,
@@ -223,4 +224,35 @@ export function twoiKonkurenci({ dzialy = [], regiony = [], kubelki = {}, wlasny
       .slice(0, TOP_TWOICH)
       .map(({ maKwote, wartosc, branze, ...f }) => ({ ...f, wartosc: maKwote ? Math.round(wartosc) : null, branze: [...branze] })),
   };
+}
+
+/** Działy CPV i regiony z karty firmy → klucze kubełków benchmarku (regionalne i krajowe). */
+export function kluczeKonkurentowUzytkownika(user) {
+  const dzialy = [...new Set((user?.cpv_codes ?? []).map((k) => dzialCpv(k)).filter(Boolean))].slice(0, 6);
+  const regiony = [...new Set((user?.regiony ?? []).map(normWojewodztwo).filter(Boolean))].slice(0, 4);
+  const klucze = [...dzialy.map((d) => `cpv:${d}`), ...dzialy.flatMap((d) => regiony.map((w) => `cpv:${d}|${w}`))];
+  return { dzialy, regiony, klucze };
+}
+
+/**
+ * Co wygrali konkurenci (cotygodniowy przegląd, 2026-10-31): z rozstrzygnięć, w których któryś
+ * z nich wygrał część — jedna pozycja na ogłoszenie i firmę, kwota ze spójnych części, od najnowszych.
+ */
+export function wygraneKonkurentow(wyniki, konkurenci, { limit = 5 } = {}) {
+  const poNip = new Map((konkurenci ?? []).filter((k) => normNip(k.nip)).map((k) => [normNip(k.nip), k]));
+  const lista = [];
+  for (const w of Array.isArray(wyniki) ? wyniki : []) {
+    const wTym = new Map();
+    for (const c of w?.czesci ?? []) {
+      const nip = normNip(c?.zwyciezca?.nip);
+      if (c?.uniewaznione || !nip || !poNip.has(nip)) continue;
+      const e = wTym.get(nip) ?? { nazwa: poNip.get(nip).nazwa, tytul: w.tytul ?? null, zamawiajacy: w.zamawiajacy ?? null, opublikowano: w.opublikowano ?? null, suma: 0, maKwote: false };
+      if (c.spojne && Number.isFinite(c.cenaWybrana)) { e.suma += c.cenaWybrana; e.maKwote = true; }
+      wTym.set(nip, e);
+    }
+    for (const e of wTym.values()) {
+      lista.push({ nazwa: e.nazwa, tytul: e.tytul, zamawiajacy: e.zamawiajacy, opublikowano: e.opublikowano, cena: e.maKwote ? Math.round(e.suma) : null });
+    }
+  }
+  return lista.sort((a, b) => String(b.opublikowano ?? '').localeCompare(String(a.opublikowano ?? ''))).slice(0, limit);
 }
