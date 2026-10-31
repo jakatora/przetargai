@@ -1,0 +1,13 @@
+-- Początki stron PDF-a przy treści SWZ z pliku (2026-10-31).
+--
+-- „Zapytaj SWZ” zwraca cytaty sprawdzone w treści SWZ. Konkurencja (SEZAM) podaje przy cytacie
+-- numer strony — wykonawca sprawdza go w dokumencie w kilka sekund. Treść z PDF-a jest zapisywana
+-- jako jeden znormalizowany tekst, więc podział na strony ginął. Kolumna `strony` trzyma JSON
+-- z offsetami pierwszego znaku każdej strony w `tresc`; NULL dla treści wklejonej jako tekst
+-- i dla wierszy sprzed tej migracji (wtedy cytat jest bez numeru strony, jak dotąd).
+--
+-- Samo `ALTER TABLE ADD COLUMN` (nullable, bez domyślnej) — bezpieczne na działającej bazie,
+-- nie dotyka tabel `fitter_*`. Ten sam kształt jest w schema.sql dla świeżych baz.
+--
+-- ROLLBACK (down): ALTER TABLE swz_tresc_wklejona DROP COLUMN strony;
+ALTER TABLE swz_tresc_wklejona ADD COLUMN strony TEXT;

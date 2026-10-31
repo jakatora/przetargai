@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PODPOWIEDZI_PYTAN, czyMoznaPytacSwz, czyMoznaPytacPrzetargu, poprawnePytanie, opisStatusuOdpowiedzi } from '../src/lib/zapytajSwz.js';
+import { PODPOWIEDZI_PYTAN, czyMoznaPytacSwz, czyMoznaPytacPrzetargu, poprawnePytanie, opisStatusuOdpowiedzi, dopisekStrony } from '../src/lib/zapytajSwz.js';
 
 test('pytać można tylko, gdy backend ma treść SWZ', () => {
   assert.equal(czyMoznaPytacSwz({ zrodlo: 'wklejona' }), true);
@@ -30,4 +30,12 @@ test('przy przetargu: BZP z postępowaniem e-Zamówień albo platformazakupowa.p
   assert.equal(czyMoznaPytacPrzetargu({ id: 't1', source: 'bzp' }), false, 'BZP bez postępowania na e-Zamówieniach nie ma dokumentów');
   assert.equal(czyMoznaPytacPrzetargu({ id: 't1', source: 'ted' }), false);
   assert.equal(czyMoznaPytacPrzetargu(null), false);
+});
+
+test('numer strony tylko przy potwierdzonym cytacie z numerem', () => {
+  assert.equal(dopisekStrony({ potwierdzony: true, strona: 12 }), ' (s. 12)');
+  assert.equal(dopisekStrony({ potwierdzony: true, strona: 12 }, true), ' (p. 12)');
+  assert.equal(dopisekStrony({ potwierdzony: false, strona: 12 }), '');
+  assert.equal(dopisekStrony({ potwierdzony: true }), '');
+  assert.equal(dopisekStrony({ potwierdzony: true, strona: 0 }), '');
 });

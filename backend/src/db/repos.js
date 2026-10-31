@@ -792,8 +792,8 @@ export const swzWersje = {
  * kluczu głównym sprawia, że drugie żądanie (ponowienie, równoległe) niczego nie zmienia.
  */
 const _stwInsert = lazy(`
-  INSERT INTO swz_tresc_wklejona (postepowanie_id, hash, tresc, created_at)
-  SELECT ?, ?, ?, ?
+  INSERT INTO swz_tresc_wklejona (postepowanie_id, hash, tresc, created_at, strony)
+  SELECT ?, ?, ?, ?, ?
   WHERE NOT EXISTS (SELECT 1 FROM swz_wersja WHERE postepowanie_id = ?)
   ON CONFLICT(postepowanie_id) DO NOTHING`);
 const _stwGet = lazy(`SELECT * FROM swz_tresc_wklejona WHERE postepowanie_id = ?`);
@@ -805,8 +805,8 @@ export const swzTrescWklejona = {
    * Zwraca `{ wiersz, created }`: `wiersz` to treść zapisana w bazie (może być wcześniejsza
    * niż podana) albo null, gdy zapis pominięto, bo istnieje wersja opublikowana.
    */
-  zapiszPierwsza({ postepowanieId, hash, tresc }) {
-    const res = _stwInsert().run(postepowanieId, hash, tresc, nowIso(), postepowanieId);
+  zapiszPierwsza({ postepowanieId, hash, tresc, strony = null }) {
+    const res = _stwInsert().run(postepowanieId, hash, tresc, nowIso(), strony, postepowanieId);
     return { wiersz: _stwGet().get(postepowanieId) || null, created: res.changes > 0 };
   },
   get(postepowanieId) {

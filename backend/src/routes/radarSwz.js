@@ -11,7 +11,7 @@ import { odswiezPostepowanie } from '../jobs/monitorSwz.js';
 import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
 import { terminPytanSwz } from '../lib/terminPytanSwz.js';
 import { trescDokumentu, bladLimituTresci, MAKS_ZNAKOW_TRESCI } from '../lib/limityTresci.js';
-import { ekstrahujZPdf, normalizujTekst, MAKS_BAJTOW_PDF } from '../lib/umowaEkstrakcja.js';
+import { ekstrahujStronyZPdf, tekstZeStronami, MAKS_BAJTOW_PDF } from '../lib/umowaEkstrakcja.js';
 
 /*
  * Radar SWZ — uruchomienie ANALIZY treści SWZ dla danego postępowania
@@ -151,19 +151,21 @@ function maTresc(d) {
 }
 
 /**
- * PDF → tekst SWZ. Skan bez warstwy tekstowej daje pustkę — to 400 z jasnym komunikatem,
- * nie „analiza niczego". Wklejony `swz` ma pierwszeństwo przed plikiem.
+ * PDF → tekst SWZ (i początki stron PDF-a — numer strony przy cytacie w „Zapytaj SWZ”). Skan bez
+ * warstwy tekstowej daje pustkę — to 400 z jasnym komunikatem, nie „analiza niczego". Wklejony
+ * `swz` ma pierwszeństwo przed plikiem; wklejony tekst nie ma stron (`strony: null`).
+ * @returns {Promise<{tekst: string|undefined, strony: number[]|null}>}
  */
 async function swzZPliku(d) {
-  if (d.swz?.trim() || !d.swz_pdf_base64?.trim()) return d.swz;
-  const tekst = normalizujTekst(await ekstrahujZPdf(d.swz_pdf_base64));
+  if (d.swz?.trim() || !d.swz_pdf_base64?.trim()) return { tekst: d.swz, strony: null };
+  const { tekst, poczatki } = tekstZeStronami(await ekstrahujStronyZPdf(d.swz_pdf_base64));
   if (!tekst.trim()) {
     throw badRequest('Z tego PDF-a nie da się odczytać tekstu (to skan bez warstwy tekstowej). Wklej treść SWZ albo użyj wersji PDF ze strony zamawiającego.');
   }
   if (tekst.length > MAKS_ZNAKOW_TRESCI) {
     throw new AppError(413, 'TRESC_ZA_DLUGA', `Tekst SWZ z pliku ma ${tekst.length} znaków — limit to ${MAKS_ZNAKOW_TRESCI}. Wklej tylko rozdziały o warunkach i dokumentach.`);
   }
-  return tekst;
+  return { tekst, strony: poczatki };
 }
 
 /*
@@ -196,7 +198,8 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
   const brakTresci = 'Podaj treść do analizy: "swz", "umowa" lub "przedmiar" (co najmniej jedno).';
   if (!parsed.success) throw bladLimituTresci(parsed.error) ?? badRequest(brakTresci);
   if (!maTresc(parsed.data)) throw badRequest(brakTresci);
-  parsed.data.swz = await swzZPliku(parsed.data);
+  const zPliku = await swzZPliku(parsed.data);
+  parsed.data.swz = zPliku.tekst;
 
   /*
    * Wklejoną SWZ zapamiętujemy PRZED płatnym AI (2026-10-03). Dopasowanie sejfu do SWZ
@@ -206,7 +209,7 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
    * wersja opublikowana: nie powstaje `swz_wersja` ani wpis `zmiany_swz`, a istniejąca
    * treść (wersja zamawiającego albo wcześniejsze wklejenie) zostaje nietknięta.
    */
-  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: parsed.data.swz });
+  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: parsed.data.swz, strony: zPliku.strony });
 
   let pytania;
   try {
@@ -259,11 +262,11 @@ router.post('/postepowania/:id/zapytaj', authRequired, ah(async (req, res) => {
   if (!postepowanie) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');
   const parsed = pytanieSchema.safeParse(req.body ?? {});
   if (!parsed.success) throw badRequest('Wpisz pytanie do SWZ (od 3 do 500 znaków).');
-  const { tresc, zrodlo } = trescSwzPostepowania(postepowanie.id);
+  const { tresc, zrodlo, strony } = trescSwzPostepowania(postepowanie.id);
   if (!tresc.trim()) {
     throw conflict('Brak treści SWZ dla tego postępowania. Wklej SWZ albo dodaj plik PDF w analizie, potem zadaj pytanie.');
   }
-  const wynik = await zapytajSwz({ tresc, pytanie: parsed.data.pytanie });
+  const wynik = await zapytajSwz({ tresc, pytanie: parsed.data.pytanie, strony });
   res.json({ postepowanie_id: postepowanie.id, pytanie: parsed.data.pytanie, zrodlo_tresci: zrodlo, ...wynik });
 }));
 
@@ -279,8 +282,8 @@ router.post('/postepowania/:id/tresc-pdf', authRequired, ah(async (req, res) => 
   if (!postepowanie) throw notFound('Nie znaleziono postępowania SWZ o podanym id.');
   const parsed = trescPdfSchema.safeParse(req.body ?? {});
   if (!parsed.success) throw badRequest('Podaj plik PDF z SWZ (swz_pdf_base64).');
-  const tekst = await swzZPliku({ swz_pdf_base64: parsed.data.swz_pdf_base64 });
-  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: tekst });
+  const { tekst, strony } = await swzZPliku({ swz_pdf_base64: parsed.data.swz_pdf_base64 });
+  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: tekst, strony });
   res.json({ postepowanie_id: postepowanie.id, znakow: tekst.length, tresc_swz: stanTresciSwz(postepowanie.id) });
 }));
 

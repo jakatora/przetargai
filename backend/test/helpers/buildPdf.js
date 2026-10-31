@@ -10,15 +10,27 @@
  * @returns {string} PDF zakodowany w base64
  */
 export function budujPdf(text) {
+  return budujPdfStrony([text]);
+}
+
+/**
+ * To samo dla kilku stron — po jednym napisie na stronę (numer strony przy cytacie z SWZ).
+ * @param {string[]} teksty treść kolejnych stron
+ * @returns {string} PDF zakodowany w base64
+ */
+export function budujPdfStrony(teksty) {
   const esc = (s) => s.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  // 1 katalog, 2 strony, 3 font, potem para (strona, treść) na każdą stronę.
   const objs = [
     '<< /Type /Catalog /Pages 2 0 R >>',
-    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Type /Pages /Kids [${teksty.map((_, i) => `${4 + 2 * i} 0 R`).join(' ')}] /Count ${teksty.length} >>`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
   ];
-  const content = `BT /F1 18 Tf 72 700 Td (${esc(text)}) Tj ET`;
-  objs.push(`<< /Length ${Buffer.byteLength(content, 'latin1')} >>\nstream\n${content}\nendstream`);
-  objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  teksty.forEach((text, i) => {
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${5 + 2 * i} 0 R /Resources << /Font << /F1 3 0 R >> >> >>`);
+    const content = `BT /F1 18 Tf 72 700 Td (${esc(text)}) Tj ET`;
+    objs.push(`<< /Length ${Buffer.byteLength(content, 'latin1')} >>\nstream\n${content}\nendstream`);
+  });
 
   let pdf = '%PDF-1.4\n';
   const offsets = [];

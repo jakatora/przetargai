@@ -6,7 +6,7 @@ import { api } from '../api/client';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
-import { PODPOWIEDZI_PYTAN, MAKS_DLUGOSC_PYTANIA, czyMoznaPytacSwz, czyMoznaPytacPrzetargu, poprawnePytanie, opisStatusuOdpowiedzi } from '../lib/zapytajSwz';
+import { PODPOWIEDZI_PYTAN, MAKS_DLUGOSC_PYTANIA, czyMoznaPytacSwz, czyMoznaPytacPrzetargu, poprawnePytanie, opisStatusuOdpowiedzi, dopisekStrony } from '../lib/zapytajSwz';
 
 /**
  * „Zapytaj SWZ” (2026-10-31, z analizy konkurencji: Mimira, SEZAM, Tendium). Wykonawca pyta wprost
@@ -75,7 +75,7 @@ export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null,
             <Text style={[styles.status, styles[`ton_${opis.ton}`]]}>{t(opis.pl, opis.en)}</Text>
             {(o.cytaty ?? []).map((c, j) => (
               <Text key={j} style={[styles.cytat, !c.potwierdzony && styles.cytatNiepotwierdzony]}>
-                {c.potwierdzony ? '✓ ' : '? '}„{c.tekst}”
+                {c.potwierdzony ? '✓ ' : '? '}„{c.tekst}”{t(dopisekStrony(c), dopisekStrony(c, true))}
               </Text>
             ))}
           </View>

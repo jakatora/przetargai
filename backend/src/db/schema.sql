@@ -279,7 +279,8 @@ CREATE TABLE IF NOT EXISTS swz_tresc_wklejona (
   postepowanie_id TEXT PRIMARY KEY REFERENCES postepowanie_swz(id) ON DELETE CASCADE,
   hash            TEXT NOT NULL,                 -- SHA-256 treści (rozpoznanie ponowienia tej samej treści)
   tresc           TEXT NOT NULL,                 -- treść SWZ wklejona przez użytkownika do analizy
-  created_at      TEXT NOT NULL                  -- ISO 8601 — kiedy UŻYTKOWNIK ją wkleił (to NIE data publikacji)
+  created_at      TEXT NOT NULL,                 -- ISO 8601 — kiedy UŻYTKOWNIK ją wkleił (to NIE data publikacji)
+  strony          TEXT                           -- JSON: początki stron PDF-a w `tresc` (treść z pliku; migracja 016)
 );
 
 -- Pytania do treści SWZ (wygenerowane lub ręczne). Status prowadzi cykl życia

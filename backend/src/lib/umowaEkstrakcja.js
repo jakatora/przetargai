@@ -62,7 +62,18 @@ export function normalizujTekst(raw) {
  *   MAKS_BAJTOW_PDF lub MAKS_STRON_PDF to błąd wejścia, nie „brak tekstu" (2026-09-25).
  */
 export async function ekstrahujZPdf(pdfBase64) {
-  if (typeof pdfBase64 !== 'string' || !pdfBase64.trim()) return '';
+  return (await ekstrahujStronyZPdf(pdfBase64)).map((s) => `${s}\n`).join('');
+}
+
+/**
+ * To samo co `ekstrahujZPdf`, ale strona po stronie (surowy tekst każdej strony, bez normalizacji).
+ * Numer strony przy cytacie z SWZ (2026-10-31): „Zapytaj SWZ” pokazuje, z której strony PDF-a
+ * pochodzi cytat — wykonawca sprawdza go w dokumencie w kilka sekund. Te same limity i wyjątki.
+ * @param {string} pdfBase64
+ * @returns {Promise<string[]>} pusta tablica, gdy PDF nie daje tekstu
+ */
+export async function ekstrahujStronyZPdf(pdfBase64) {
+  if (typeof pdfBase64 !== 'string' || !pdfBase64.trim()) return [];
   const b64 = pdfBase64.replace(/^data:[^;]*;base64,/, '').trim();
   // Rozmiar liczymy z długości base64 (bez dekodowania) — za duży plik odrzucamy od razu.
   if (Buffer.byteLength(b64, 'base64') > MAKS_BAJTOW_PDF) {
@@ -70,7 +81,7 @@ export async function ekstrahujZPdf(pdfBase64) {
       + 'Wgraj samą umowę (bez załączników) albo skompresuj plik.');
   }
   const buf = Buffer.from(b64, 'base64');
-  if (!buf.length) return '';
+  if (!buf.length) return [];
 
   let loadingTask;
   try {
@@ -86,25 +97,43 @@ export async function ekstrahujZPdf(pdfBase64) {
         + 'Wgraj samą umowę (bez załączników) albo wklej jej treść jako tekst.');
     }
 
-    let out = '';
+    const strony = [];
     for (let p = 1; p <= doc.numPages; p += 1) {
       const page = await doc.getPage(p);
       const tc = await page.getTextContent();
       // hasEOL na elemencie = koniec wiersza; poza tym rozdzielamy spacją.
       // Ewentualne zdublowania i tak zwinie normalizacja.
-      out += tc.items.map((it) => (it.str ?? '') + (it.hasEOL ? '\n' : ' ')).join('');
-      out += '\n';
+      strony.push(tc.items.map((it) => (it.str ?? '') + (it.hasEOL ? '\n' : ' ')).join(''));
     }
-    return out;
+    return strony;
   } catch (err) {
     // Przekroczony limit stron to błąd wejścia (413), a nie „brak tekstu" — przepuszczamy.
     if (err instanceof AppError) throw err;
-    return '';
+    return [];
   } finally {
     // Sprzątanie workera pdfjs — best-effort. NIE w bloku zwracającym `out`,
     // żeby ewentualny błąd teardownu nie skasował już wyekstrahowanego tekstu.
     try { await loadingTask?.destroy(); } catch { /* ignore */ }
   }
+}
+
+/**
+ * Strony PDF-a => jeden znormalizowany tekst i początki stron (offset pierwszego znaku strony
+ * w tym tekście; pusta strona dostaje offset następnej). Strony łączy spacja — wynik jest taki sam
+ * jak `normalizujTekst` całości, poza słowem przeniesionym z dywizem przez granicę stron.
+ * @param {string[]} strony
+ * @returns {{tekst: string, poczatki: number[]}}
+ */
+export function tekstZeStronami(strony) {
+  let tekst = '';
+  const poczatki = [];
+  for (const s of Array.isArray(strony) ? strony : []) {
+    const n = normalizujTekst(s);
+    if (n && tekst) tekst += ' ';
+    poczatki.push(tekst.length);
+    tekst += n;
+  }
+  return { tekst, poczatki };
 }
 
 /**

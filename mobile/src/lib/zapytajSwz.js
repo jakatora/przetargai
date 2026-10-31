@@ -32,6 +32,16 @@ export function poprawnePytanie(tekst) {
   return s.length >= MIN_DLUGOSC_PYTANIA && s.length <= MAKS_DLUGOSC_PYTANIA;
 }
 
+/**
+ * Dopisek strony przy cytacie (2026-10-31): backend podaje numer strony PDF-a dla potwierdzonego
+ * cytatu z SWZ pobranej jako plik. Brak numeru (tekst wklejony, starsza treść) → pusty dopisek.
+ */
+export function dopisekStrony(cytat, en = false) {
+  const n = Number(cytat?.strona);
+  if (!cytat?.potwierdzony || !Number.isInteger(n) || n < 1) return '';
+  return en ? ` (p. ${n})` : ` (s. ${n})`;
+}
+
 /** Status odpowiedzi z backendu → ton karty i opis po polsku/angielsku. */
 export function opisStatusuOdpowiedzi(status) {
   if (status === 'potwierdzone') return { ton: 'sukces', pl: 'Potwierdzone cytatem z SWZ', en: 'Confirmed by a quote from the documents' };

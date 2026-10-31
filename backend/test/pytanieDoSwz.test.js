@@ -153,3 +153,42 @@ test('POST /tresc-pdf: tekst SWZ z PDF zapisany BEZ wywołania AI, potem można 
   });
   assert.equal(cudze.status, 404);
 });
+
+test('numer strony PDF przy potwierdzonym cytacie (tresc-pdf → zapytaj); wklejony tekst bez numeru', async () => {
+  const { budujPdfStrony } = await import('./helpers/buildPdf.js');
+  const u = nowy('strony', { swz: null });
+  const zapis = await fetch(`${base}/api/przetarg/swz/postepowania/${u.postId}/tresc-pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${u.token}` },
+    body: JSON.stringify({ swz_pdf_base64: budujPdfStrony([
+      'Rozdzial I. Informacje ogolne o zamawiajacym.',
+      'Rozdzial IX. Wadium wynosi 9 000,00 zl.',
+      'Rozdzial XII. Realizacja trwa 6 miesiecy.',
+    ]) }),
+  });
+  assert.equal(zapis.status, 200);
+  odpowiedzAi = { odpowiedz: 'Wadium 9 000 zł, realizacja 6 miesięcy.', cytaty: ['Wadium wynosi 9 000,00 zl', 'Realizacja trwa 6 miesiecy', 'zmyślony cytat spoza dokumentu'], brak_w_swz: false };
+  const { json } = await zapytaj(u, { pytanie: 'Ile wadium i jaki termin?' });
+  assert.equal(json.status, 'potwierdzone');
+  assert.deepEqual(json.cytaty.map((c) => [c.potwierdzony, c.strona ?? null]), [[true, 2], [true, 3], [false, null]]);
+
+  const wklejona = nowy('strony-tekst');
+  odpowiedzAi = { odpowiedz: 'Wadium 15 000 zł.', cytaty: ['wniesienia wadium w wysokości 15 000,00 zł'], brak_w_swz: false };
+  const bez = await zapytaj(wklejona, { pytanie: 'Ile wadium?' });
+  assert.equal(bez.json.cytaty[0].potwierdzony, true);
+  assert.equal('strona' in bez.json.cytaty[0], false, 'wklejony tekst nie ma stron');
+});
+
+test('strona cytatu: przejście przez granicę stron → strona początku; zapis z niespójnymi stronami pominięty', async () => {
+  const { tekstZeStronami } = await import('../src/lib/umowaEkstrakcja.js');
+  const { poczatkiStron } = await import('../src/services/trescSwz.js');
+  const { tekst, poczatki } = tekstZeStronami(['Strona  pierwsza\nkonczy sie zdaniem o', '', 'wadium 5 000 zl. Dalej druga.']);
+  assert.equal(tekst, 'Strona pierwsza konczy sie zdaniem o wadium 5 000 zl. Dalej druga.');
+  assert.deepEqual(poczatki, [0, 36, 37]);
+  const c = zweryfikujCytaty(['zdaniem o wadium 5 000 zl', 'Dalej druga'], tekst, poczatki);
+  assert.deepEqual(c.map((x) => x.strona), [1, 3]);
+  assert.equal(poczatkiStron('[0, 50, 20]', tekst), null, 'malejące offsety odrzucone');
+  assert.equal(poczatkiStron('[0, 999]', tekst), null, 'offset poza treścią odrzucony');
+  assert.equal(poczatkiStron('nie JSON', tekst), null);
+  assert.deepEqual(poczatkiStron('[0, 36, 37]', tekst), [0, 36, 37]);
+});

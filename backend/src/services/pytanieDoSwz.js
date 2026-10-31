@@ -57,14 +57,46 @@ export function fragmentyDlaPytania(tresc, pytanie, { limit = MAKS_ZNAKOW_KONTEK
   return wybrane.sort((a, b) => a.i - b.i).map((k) => k.tekst.trim()).join('\n[…]\n');
 }
 
-/** Cytaty modelu → potwierdzone (dosłownie w SWZ po normalizacji) albo nie. */
-export function zweryfikujCytaty(cytaty, tresc) {
+/**
+ * Numer strony PDF-a (od 1), na której zaczyna się cytat; cytat przechodzący na następną stronę
+ * → strona początku. Bez początków stron albo bez trafienia → null.
+ * @param {string} szukany cytat po `normTekst`
+ * @param {string[]} segmenty treść kolejnych stron po `normTekst`
+ */
+function stronaCytatu(szukany, segmenty) {
+  if (!szukany || !segmenty?.length) return null;
+  for (let i = 0; i < segmenty.length; i += 1) {
+    if (segmenty[i].includes(szukany)) return i + 1;
+  }
+  // Granica stron: strona z następną NIEPUSTĄ (pusta strona między nimi nie przerywa cytatu).
+  for (let i = 0; i < segmenty.length; i += 1) {
+    if (!segmenty[i]) continue;
+    const j = segmenty.findIndex((s, k) => k > i && s);
+    if (j > 0 && `${segmenty[i]} ${segmenty[j]}`.includes(szukany)) return i + 1;
+  }
+  return null;
+}
+
+/**
+ * Cytaty modelu → potwierdzone (dosłownie w SWZ po normalizacji) albo nie. Przy treści z PDF-a
+ * (`strony` = początki stron w `tresc`) potwierdzony cytat dostaje numer strony (2026-10-31).
+ */
+export function zweryfikujCytaty(cytaty, tresc, strony = null) {
   const caly = normTekst(tresc);
+  const t = String(tresc ?? '');
+  const segmenty = Array.isArray(strony) && strony.length
+    ? strony.map((p, i) => normTekst(t.slice(p, strony[i + 1] ?? t.length)))
+    : null;
   return (Array.isArray(cytaty) ? cytaty : [])
     .map((c) => String(c ?? '').trim())
     .filter((c) => c.length >= 8)
     .slice(0, 4)
-    .map((tekst) => ({ tekst: tekst.slice(0, 600), potwierdzony: caly.includes(normTekst(tekst)) }));
+    .map((tekst) => {
+      const szukany = normTekst(tekst);
+      const potwierdzony = caly.includes(szukany);
+      const strona = potwierdzony ? stronaCytatu(szukany, segmenty) : null;
+      return { tekst: tekst.slice(0, 600), potwierdzony, ...(strona ? { strona } : {}) };
+    });
 }
 
 /** Odpowiedź modelu (JSON w tekście) → pola; nieczytelna → null. */
@@ -88,10 +120,10 @@ Zasady:
 Zwróć tylko JSON: {"odpowiedz": "...", "cytaty": ["..."], "brak_w_swz": false}`;
 
 /**
- * @param {{tresc: string, pytanie: string}} wejscie
- * @returns {Promise<{odpowiedz: string, status: 'potwierdzone'|'nieudowodnione'|'brak_w_swz', cytaty: {tekst: string, potwierdzony: boolean}[]}>}
+ * @param {{tresc: string, pytanie: string, strony?: number[]|null}} wejscie
+ * @returns {Promise<{odpowiedz: string, status: 'potwierdzone'|'nieudowodnione'|'brak_w_swz', cytaty: {tekst: string, potwierdzony: boolean, strona?: number}[]}>}
  */
-export async function zapytajSwz({ tresc, pytanie }) {
+export async function zapytajSwz({ tresc, pytanie, strony = null }) {
   const klient = klientAnthropic();
   if (!klient) throw serviceUnavailable('Pytania do SWZ niedostępne — brak konfiguracji AI (Anthropic).');
   if (!aiBudgetAllows(OPERACJA)) throw serviceUnavailable('Miesięczny budżet AI wyczerpany — pytania do SWZ chwilowo niedostępne.');
@@ -121,7 +153,7 @@ export async function zapytajSwz({ tresc, pytanie }) {
   const tekst = (resp.content ?? []).filter((b) => b.type === 'text').map((b) => b.text).join('\n');
   const d = parsujOdpowiedz(tekst);
   if (!d) throw serviceUnavailable('Model zwrócił nieczytelną odpowiedź — spróbuj zadać pytanie inaczej.');
-  const cytaty = zweryfikujCytaty(d.cytaty, tresc);
+  const cytaty = zweryfikujCytaty(d.cytaty, tresc, strony);
   const status = d.brak_w_swz ? 'brak_w_swz' : (cytaty.some((c) => c.potwierdzony) ? 'potwierdzone' : 'nieudowodnione');
   return { odpowiedz: d.odpowiedz, status, cytaty };
 }
