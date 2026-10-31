@@ -27231,6 +27231,93 @@ function isLeroyBrowserSource(source) {
   }
 }
 
+// artifacts/api-server/src/lib/retail-history.ts
+var import_node_crypto31 = require("node:crypto");
+var RETENTION_MS = 90 * 864e5;
+var MAX_POINTS = 60;
+function historyIdentity(s) {
+  return (0, import_node_crypto31.createHash)("sha256").update(JSON.stringify([s.id, s.ean, s.skuIdentity, s.dispatchDepartment, s.store, s.url, s.brand, s.category, s.packageSize, s.unit, s.format, s.productId, s.variantId, s.apiProductCode, s.retailerSku, s.retailerUnitId, s.productUuid, s.retailUnit, s.packageDescription, s.purchaseMultiple, s.minimumPackages])).digest("hex");
+}
+var RetailPriceHistory = class {
+  constructor(sources, validate) {
+    this.sources = sources;
+    this.validate = validate;
+  }
+  rows = /* @__PURE__ */ new Map();
+  conflicts = /* @__PURE__ */ new Set();
+  remember(observation, now = Date.now()) {
+    const source = this.validate(observation), time4 = Date.parse(observation?.observedAt);
+    if (!source || time4 < now - RETENTION_MS || time4 > now + 6e4) return;
+    const key = `${source.id}/${time4}`;
+    if (this.conflicts.has(key)) return;
+    const rows = this.rows.get(source.id) ?? [];
+    const same = rows.find((p) => Date.parse(p.observation.observedAt) === time4);
+    if (same) {
+      if (same.observation.priceGrosze !== observation.priceGrosze) {
+        this.rows.set(source.id, rows.filter((p) => p !== same));
+        this.conflicts.add(key);
+      }
+      return;
+    }
+    const saved = {
+      sourceId: source.id,
+      ean: source.ean,
+      name: source.name,
+      imageUrl: null,
+      sourceUrl: source.url,
+      currency: "PLN",
+      availability: "in_stock",
+      priceGrosze: observation.priceGrosze,
+      observedAt: observation.observedAt,
+      evidenceSha256: observation.evidenceSha256,
+      ...observation.verification ? { verification: observation.verification } : {}
+    };
+    rows.push({ identity: historyIdentity(source), observation: saved });
+    this.rows.set(source.id, rows.filter((p) => Date.parse(p.observation.observedAt) >= now - RETENTION_MS).sort((a, b) => Date.parse(a.observation.observedAt) - Date.parse(b.observation.observedAt)).slice(-MAX_POINTS));
+  }
+  restore(value2) {
+    if (!Array.isArray(value2) || value2.length > this.sources.length * MAX_POINTS) return;
+    for (const point2 of value2) {
+      if (!point2 || typeof point2 !== "object" || !point2.observation || typeof point2.observation !== "object") continue;
+      const source = this.sources.find((s) => s.id === point2.observation.sourceId);
+      if (source && point2.identity === historyIdentity(source)) this.remember(point2.observation);
+    }
+  }
+  snapshot(now = Date.now()) {
+    return [...this.rows.values()].flat().filter((p) => Date.parse(p.observation.observedAt) >= now - RETENTION_MS);
+  }
+  response(sources, current) {
+    const series = sources.flatMap((source2) => {
+      const points = (this.rows.get(source2.id) ?? []).filter((p) => p.identity === historyIdentity(source2) && Date.parse(p.observation.observedAt) >= Date.now() - RETENTION_MS).map((p) => p.observation);
+      if (!points.length) return [];
+      const last = points.at(-1), active = current.get(source2.id);
+      const price2 = active?.priceGrosze === last.priceGrosze && active.observedAt === last.observedAt ? active.priceGrosze : null;
+      const previous = price2 !== null && points.length > 1 ? points.at(-2).priceGrosze : null;
+      const delta = price2 !== null && previous !== null ? price2 - previous : null;
+      const lowest = Math.min(...points.map((p) => p.priceGrosze)), count = points.length;
+      const average = Number((points.reduce((sum, p) => sum + BigInt(p.priceGrosze), 0n) + BigInt(Math.floor(count / 2))) / BigInt(count));
+      return [{
+        offerId: source2.id,
+        store: source2.store,
+        url: source2.url,
+        packageSize: source2.packageSize,
+        unit: source2.unit,
+        stats: { count, lowest, average, current: price2, changeVsLowest: price2 === null ? null : price2 - lowest, changePct: delta === null || previous === null ? null : Math.round(delta / previous * 1e4) / 100, isRealPromo: false, previousGrosze: previous, deltaGrosze: delta },
+        history: points.map((p) => ({ offerId: source2.id, store: source2.store, source: "retailer-verified-observation", fetchedAt: p.observedAt, priceGrosze: p.priceGrosze, promoPriceGrosze: null, effectiveGrosze: p.priceGrosze }))
+      }];
+    }).sort((a, b) => Number(b.stats.current !== null) - Number(a.stats.current !== null) || a.store.localeCompare(b.store) || a.packageSize - b.packageSize || a.offerId.localeCompare(b.offerId));
+    if (!series.length) return null;
+    const source = sources.find((s) => s.id === series[0].offerId);
+    return {
+      product: { id: retailProductId(source), name: retailProductName(source), ean: retailComparableEan(source) || null, gtin: null, category: source.category, packageSize: String(source.packageSize), packageUnit: source.unit },
+      stats: series[0].stats,
+      history: series[0].history,
+      series,
+      scope: { kind: "recorded_observations", retentionDays: 90, maxPointsPerOffer: MAX_POINTS, completeStoreHistory: false, deliveryIncluded: false }
+    };
+  }
+};
+
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
@@ -27245,17 +27332,26 @@ function createRemontService(options = {}) {
   const lastReadAt = /* @__PURE__ */ new Map();
   const lastReadSucceeded = /* @__PURE__ */ new Map();
   let lastAttemptAt = null;
-  const accept = (observation) => {
+  const acceptedSource = (observation) => {
     if (!observation || typeof observation !== "object") return;
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
     if (!source || source.disabledReason || observation.ean !== source.ean || observation.sourceUrl !== source.url || observation.currency !== "PLN" || observation.availability !== "in_stock" || !Number.isSafeInteger(observation.priceGrosze) || observation.priceGrosze <= 0 || observation.stockPackages !== void 0 && (!Number.isSafeInteger(observation.stockPackages) || observation.stockPackages < 0 || observation.stockPackages > 1e9) || !/^[a-f0-9]{64}$/.test(observation.evidenceSha256) || !Number.isFinite(Date.parse(observation.observedAt))) return;
-    const previous = observations.get(source.id);
     if ((source.store === "Leroy Merlin" || isBricomarcheBrowserSource(source) || isCastoramaBrowserSource(source) && ["m2", "m"].includes(source.unit)) && !observation.verification) return;
     if (observation.verification !== void 0) {
       const v = observation.verification;
       if (!v || v.method !== "browser" || !(isCastoramaBrowserSource(source) || isBricomarcheBrowserSource(source) || isLeroyBrowserSource(source)) || observation.stockPackages !== void 0 || v.checkedAt !== observation.observedAt || Date.parse(v.expiresAt) !== Date.parse(v.checkedAt) + 864e5) return;
     }
-    if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) observations.set(source.id, observation);
+    return source;
+  };
+  const history = new RetailPriceHistory(RETAIL_SOURCES, acceptedSource);
+  const accept = (observation) => {
+    const source = acceptedSource(observation);
+    if (!source) return;
+    const previous = observations.get(source.id);
+    if (!previous || Date.parse(previous.observedAt) < Date.parse(observation.observedAt)) {
+      observations.set(source.id, observation);
+      history.remember(observation);
+    }
     if (Date.parse(observation.observedAt) >= Date.parse(withdrawnAt.get(source.id) ?? "")) withdrawnAt.delete(source.id);
   };
   options.initialObservations?.forEach(accept);
@@ -27263,7 +27359,8 @@ function createRemontService(options = {}) {
     try {
       const cache = JSON.parse((0, import_node_fs.readFileSync)(options.cachePath, "utf8"));
       if (Array.isArray(cache)) cache.forEach(accept);
-      else if (cache?.version === 2 && Array.isArray(cache.observations)) {
+      else if ([2, 3].includes(cache?.version) && Array.isArray(cache.observations)) {
+        if (cache.version === 3) history.restore(cache.history);
         cache.observations.forEach(accept);
         for (const [id, date6] of Object.entries(cache.withdrawnAt ?? {})) {
           if (typeof date6 === "string" && Number.isFinite(Date.parse(date6)) && RETAIL_SOURCES.some((source) => source.id === id)) withdrawnAt.set(id, date6);
@@ -27343,7 +27440,7 @@ function createRemontService(options = {}) {
     if (options.cachePath) {
       try {
         (0, import_node_fs.mkdirSync)((0, import_node_path.dirname)(options.cachePath), { recursive: true });
-        (0, import_node_fs.writeFileSync)(`${options.cachePath}.tmp`, JSON.stringify({ version: 2, observations: [...observations.values()], withdrawnAt: Object.fromEntries(withdrawnAt) }));
+        (0, import_node_fs.writeFileSync)(`${options.cachePath}.tmp`, JSON.stringify({ version: 3, observations: [...observations.values()], withdrawnAt: Object.fromEntries(withdrawnAt), history: history.snapshot() }));
         (0, import_node_fs.renameSync)(`${options.cachePath}.tmp`, options.cachePath);
         errors.delete("cache");
       } catch {
@@ -27515,8 +27612,21 @@ function createRemontService(options = {}) {
   }
   router.post("/pricing/project", handleEstimate);
   router.post("/pricing/stage", handleEstimate);
-  router.get("/pricing/history", (_req, res) => {
-    res.status(404).json({ error: "verified_history_unavailable" });
+  router.get("/pricing/history", (req, res) => {
+    const entries = Object.entries(req.query);
+    if (!entries.length || entries.some(([key, value2]) => !["productId", "ean", "gtin"].includes(key) || typeof value2 !== "string" || !value2 || value2.length > 200)) {
+      res.status(400).json({ error: "invalid_history_query" });
+      return;
+    }
+    const sources = RETAIL_SOURCES.filter((source) => !source.disabledReason && entries.every(([key, value2]) => key === "productId" ? retailProductId(source) === value2 : retailComparableEan(source) === value2));
+    const current = new Map(catalog().offers.filter((offer) => isComparableOffer(offer)).map((offer) => [offer.id, { priceGrosze: observations.get(offer.id).priceGrosze, observedAt: observations.get(offer.id).observedAt }]));
+    const result = history.response(sources, current);
+    res.setHeader("Cache-Control", "no-store");
+    if (!result) {
+      res.status(404).json({ error: "verified_history_unavailable" });
+      return;
+    }
+    res.json(result);
   });
   const timer = options.background === false ? void 0 : setInterval(() => {
     void refresh();
