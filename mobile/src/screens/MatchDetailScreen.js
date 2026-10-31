@@ -32,6 +32,7 @@ import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { opisWyniki } from '../lib/wyniki';
 import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
 import SzczegolPlatformy from '../components/SzczegolPlatformy';
+import KtoWygrywa from '../components/KtoWygrywa';
 import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
 import Wyjasnienie from '../components/Wyjasnienie';
 import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
@@ -375,6 +376,8 @@ export default function MatchDetailScreen({ route, navigation }) {
           <Text style={styles.benchmarkZrodlo}>{t('Źródło', 'Source')}: {t(ZRODLO_BENCHMARKU)}</Text>
         </View>
       ) : null}
+
+      <KtoWygrywa tender={tender} />
 
       <Pressable
         style={({ pressed }) => [styles.decyzjaCta, pressed && styles.ctaWcisniete]}

@@ -416,6 +416,8 @@ export const api = {
   czyWartoDlaDopasowania: (matchId) => request(`/matches/${matchId}/czy-warto`),
   /** Surowe kubełki benchmarku (zamawiający / dział w regionie / dział w kraju). */
   benchmarkPrzetargu: (tenderId) => request(`/wygrywalnosc/tender/${tenderId}/benchmark`),
+  /** „Kto wygrywa u tego zamawiającego” (2026-10-31): najczęstsi zwycięzcy i ostatnie rozstrzygnięcia po NIP-ie zamawiającego. */
+  ktoWygrywa: (tenderId) => request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/kto-wygrywa`),
   /**
    * Checklista „co musisz mieć na dzień składania". BEZSTANOWA: wymagania
    * z Radaru SWZ i stan Sejfu podaje KLIENT, backend dokłada dzień składania

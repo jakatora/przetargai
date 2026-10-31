@@ -219,3 +219,26 @@ describe('POST /wygrywalnosc/tender/:id/checklista — co musisz mieć na dzień
     assert.equal(odp.status, 400);
   });
 });
+
+test('GET /wygrywalnosc/tender/:id/kto-wygrywa: zwycięzcy zamawiającego po NIP-ie; bez NIP-u → dostepne:false; bez tokenu → 401', async () => {
+  const t = await konto();
+  const nip = `${Date.now()}`.slice(-10);
+  await rozstrzygniecia.zapiszWiele([1, 2, 3].map((n) => ({
+    externalId: `kw-${ZNAK}-${n}`, zrodlo: 'bzp', tytul: `Remont ${n}`, zamawiajacy: 'Gmina Testowa', zamawiajacyNip: nip,
+    opublikowano: `2026-10-0${n}`, czesci: [{ numer: 1, uniewaznione: false, spojne: true, cenaWybrana: 100_000 * n, liczbaOfert: 2, wygralMaly: true, zwyciezca: { nazwa: n === 3 ? 'Inna Firma' : 'Budmax', nip: n === 3 ? '9999999999' : '1111111111' } }],
+  })));
+  const { tender } = await tenders.upsert({ externalId: `kw-t-${ZNAK}`, title: 'Remont szkoły', organization: 'Gmina Testowa', deadline: '2099-01-01T00:00:00.000Z', source: 'bzp', zamawiajacy_nip: nip });
+  const odp = await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/kto-wygrywa`, { headers: auth(t) });
+  assert.equal(odp.status, 200);
+  const d = await odp.json();
+  assert.equal(d.dostepne, true);
+  assert.equal(d.wystarczajaca, true);
+  assert.deepEqual(d.zwyciezcy.map((z) => [z.nazwa, z.wygrane]), [['Budmax', 2], ['Inna Firma', 1]]);
+  assert.equal(d.ostatnie[0].tytul, 'Remont 3');
+
+  const { tender: bez } = await tenders.upsert({ externalId: `kw-t2-${ZNAK}`, title: 'Bez NIP', organization: 'X', deadline: '2099-01-01T00:00:00.000Z', source: 'platformazakupowa' });
+  const bezNip = await (await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(bez.id)}/kto-wygrywa`, { headers: auth(t) })).json();
+  assert.deepEqual([bezNip.dostepne, bezNip.powod], [false, 'brak_nip_zamawiajacego']);
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(tender.id)}/kto-wygrywa`)).status, 401);
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/nie-ma/kto-wygrywa`, { headers: auth(t) })).status, 404);
+});

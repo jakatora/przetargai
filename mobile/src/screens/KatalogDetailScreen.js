@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import PodpisZrodla, { PrzyciskOryginalu, ZrodlaAlternatywne } from '../components/PodpisZrodla';
 import SzczegolPlatformy from '../components/SzczegolPlatformy';
 import DokumentyEZamowienia from '../components/DokumentyEZamowienia';
+import KtoWygrywa from '../components/KtoWygrywa';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius, typografia } from '../theme';
@@ -123,6 +124,7 @@ export default function KatalogDetailScreen({ route, navigation }) {
         <PrzyciskOryginalu tender={tender} />
         <SzczegolPlatformy tender={tender} navigation={navigation} />
         <DokumentyEZamowienia tender={tender} navigation={navigation} />
+        <KtoWygrywa tender={tender} />
       </View>
 
       <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />

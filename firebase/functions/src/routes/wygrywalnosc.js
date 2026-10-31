@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { tenders, users, benchmarkRynku, powiazaniaSwz } from '../db/repos.js';
+import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia } from '../db/repos.js';
+import { ktoWygrywa } from '../lib/ktoWygrywa.js';
 import { AppError, badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
 import { features } from '../config.js';
 import { logger } from '../lib/logger.js';
@@ -85,6 +86,23 @@ router.get('/tender/:id/benchmark', ah(async (req, res) => {
       dzial_kraj: klucze.dzialKraj ? kubelki[klucze.dzialKraj] ?? null : null,
     },
   });
+}));
+
+/*
+ * „Kto tu wygrywa” (2026-10-31): zwycięzcy i ostatnie rozstrzygnięcia TEGO zamawiającego (po NIP-ie)
+ * z kolekcji `rozstrzygniecia`. Uzupełnia benchmark (ile ofert, jaka cena) o to, z KIM się startuje.
+ * Bez NIP-u zamawiającego (np. platformy zakupowe) — `dostepne: false` z powodem, nie błąd.
+ */
+router.get('/tender/:id/kto-wygrywa', ah(async (req, res) => {
+  const tender = await tenders.findById(req.params.id);
+  if (!tender) throw notFound('Przetarg nie został znaleziony');
+  const nip = tender.zamawiajacy_nip ?? null;
+  if (!nip) {
+    res.json({ dostepne: false, powod: 'brak_nip_zamawiajacego', zamawiajacy: tender.organization ?? null });
+    return;
+  }
+  const wyniki = await rozstrzygniecia.dlaZamawiajacego(nip, { limit: 200 });
+  res.json({ dostepne: true, zamawiajacy: tender.organization ?? null, ...ktoWygrywa(wyniki) });
 }));
 
 /*
