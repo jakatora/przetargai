@@ -20564,11 +20564,11 @@ var DEKORK_SOURCES = PRODUCTS.flatMap((product) => product.variants.map((variant
   // Keep the variant in the purchase link; a bundle must not open a single pack.
   url: `${ORIGIN}/products/${product.handle}?variant=${variant.id}`,
   imageUrl: product.image,
-  pickupUnavailable: true
+  pickupRequiresConfirmation: true
 })));
 function isReviewedDekorkSource(source) {
   const row = DEKORK_SOURCES.find((s) => s.id === source.id);
-  return Boolean(row && ["ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "variantId", "apiProductCode", "url", "pickupUnavailable"].every((key) => source[key] === row[key]) && !source.skuIdentity && !source.marketplaceSeller);
+  return Boolean(row && ["ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "variantId", "apiProductCode", "url", "pickupRequiresConfirmation"].every((key) => source[key] === row[key]) && !source.pickupUnavailable && !source.skuIdentity && !source.marketplaceSeller);
 }
 function confirmDekorkProduct(product, source) {
   if (!isReviewedDekorkSource(source)) throw Error("product_source_not_reviewed");
