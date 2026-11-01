@@ -169,13 +169,18 @@ router.post('/kryteria-pz', ah(async (req, res) => {
   const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).filter(Boolean).slice(0, 15);
   if (!ids.length) throw badRequest('Podaj ids (do 15)');
   const wynik = { sprawdzone: 0, z_kryteriami: 0, bledy: 0, przyklady_bledow: [] };
+  // `szczegol_zapisany`: szczegół świeżo pobrany (bez kryteriów w tabeli) — sam bliźniak z BZP/TED, bez platformy.
+  const bezPlatformy = req.body?.szczegol_zapisany === true;
   for (const id of ids) {
     const t = await tenders.findById(id);
     if (!t || t.source !== 'platformazakupowa') continue;
     wynik.sprawdzone += 1;
     try {
-      const pola = await tenders.zapiszSzczegolPz(t.id, await pobierzSzczegolPz(String(t.bzp_external_id ?? t.id).replace(/^pz:/, '')));
+      const pola = bezPlatformy && t.pz_szczegol
+        ? await tenders.zapiszSzczegolPz(t.id, t.pz_szczegol, t.pz_szczegol_o)
+        : await tenders.zapiszSzczegolPz(t.id, await pobierzSzczegolPz(String(t.bzp_external_id ?? t.id).replace(/^pz:/, '')));
       if (pola.kryteria) wynik.z_kryteriami += 1;
+      if (bezPlatformy) continue;
     } catch (err) {
       wynik.bledy += 1;
       if (wynik.przyklady_bledow.length < 3) wynik.przyklady_bledow.push(`${id}: ${String(err.message).slice(0, 160)}`);

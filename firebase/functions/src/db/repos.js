@@ -13,6 +13,7 @@ import { kluczOgloszenia } from '../lib/dedupZrodel.js';
 import { kluczeZwyciezcow, normNip } from '../lib/profilKonkurenta.js';
 import { koniecUmowyWyniku } from '../lib/umowyWygasajace.js';
 import { skrotKryteriow, polaKryteriow } from '../lib/ogloszenieMeta.js';
+import { kryteriaBlizniaka } from '../lib/blizniakKryteriow.js';
 import { normNazwa } from '../lib/ktoWygrywa.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
@@ -1053,9 +1054,24 @@ export const tenders = {
    * żeby wołający (selekcja) dopisał je do przetargu w pamięci, zanim zapisze dopasowanie.
    */
   async zapiszSzczegolPz(id, szczegol, teraz = nowIso()) {
-    const pola = polaKryteriow(szczegol?.kryteria);
+    let pola = polaKryteriow(szczegol?.kryteria);
+    // Postępowanie z ustawy: w tabeli platformy same dokumenty — kryteria bierzemy od bliźniaka z BZP/TED.
+    if (!pola.kryteria) pola = await this.kryteriaOdBlizniaka(id).catch(() => ({}));
     await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz, ...pola });
     return pola;
+  },
+
+  /**
+   * Kryteria od bliźniaka (2026-11-01, `lib/blizniakKryteriow.js`): ogłoszenia z TYM SAMYM terminem
+   * składania (równość — indeks automatyczny), z nich BZP/TED z listą i tytułem podobnym ≥ 0,6.
+   */
+  async kryteriaOdBlizniaka(id) {
+    const snap = await db().collection('tenders').doc(id).get();
+    const t = snap.exists ? snap.data() : null;
+    if (!t?.deadline || !t.title) return {};
+    const kand = await db().collection('tenders').where('deadline', '==', t.deadline)
+      .select('title', 'source', 'kryteria', 'kryteria_sposob', 'kryteria_rozne_czesci').limit(200).get();
+    return kryteriaBlizniaka(t, kand.docs.filter((d) => d.id !== id).map((d) => ({ id: d.id, ...d.data() })));
   },
 
   /** Dokumenty postępowania z e-Zamówień (SWZ, załączniki z linkami) — cache 24 h przy ogłoszeniu (2026-10-26). */

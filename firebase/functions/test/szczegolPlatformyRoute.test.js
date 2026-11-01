@@ -66,3 +66,19 @@ test('GET /matches/:id dla ogłoszenia z platformy niesie zapisany pz_szczegol (
   assert.equal(po.match.tender.pz_szczegol.tryb, 'Tryb podstawowy');
   assert.equal(po.match.tender.pz_szczegol.zalaczniki[0].nazwa, 'SWZ.pdf');
 });
+
+test('postępowanie z ustawy: tabela platformy bez kryteriów → kryteria od bliźniaka z BZP (ten sam termin, tytuł bez znaku sprawy)', async () => {
+  const t = await token();
+  const termin = '2099-03-04T09:00:00.000Z';
+  const { tender: bzp } = await tenders.upsert({ externalId: `2026/BZP 00${ZNAK}/01`, title: `Remont dachu szkoły podstawowej nr ${ZNAK}`, organization: 'Gmina', deadline: termin, source: 'bzp',
+    kryteria: [{ nazwa: 'Cena', waga: 60, udzial: 60, rodzaj: 'cena' }, { nazwa: 'Gwarancja', waga: 40, udzial: 40, rodzaj: 'gwarancja' }], kryteria_sposob: 'procentowo', kryterium_oceny: 'cena_i_jakosc' });
+  const { tender: pz } = await tenders.upsert({ externalId: `pz:${ZNAK}99`, title: `ZP.271.5.2026 Remont dachu szkoły podstawowej nr ${ZNAK}`, organization: 'Gmina', deadline: termin, source: 'platformazakupowa' });
+  _ustawPobieranieSzczegoluPz(async () => ({ ...SZCZEGOL, kryteria: null }));
+  try {
+    assert.equal((await fetch(`${BAZA}/tenders/${encodeURIComponent(pz.id)}/szczegol-platformy`, { method: 'POST', headers: { Authorization: `Bearer ${t}` } })).status, 200);
+    const po = await tenders.findById(pz.id);
+    assert.deepEqual([po.kryterium_oceny, po.kryteria?.map((k) => k.rodzaj), po.kryteria_z], ['cena_i_jakosc', ['cena', 'gwarancja'], bzp.id]);
+  } finally {
+    _ustawPobieranieSzczegoluPz(null);
+  }
+});
