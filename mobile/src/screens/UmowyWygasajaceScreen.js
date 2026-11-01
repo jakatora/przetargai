@@ -8,7 +8,7 @@ import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { kwotaKrotko } from '../lib/ktoWygrywa';
 import { czyMoznaOtworzycProfil } from '../lib/profilKonkurenta';
-import { tonTerminu, opisTerminu, opisUmowy, dataKonca, wyszukiwanieZamawiajacego } from '../lib/umowyWygasajace';
+import { tonTerminu, opisTerminu, opisUmowy, dataKonca, wyszukiwanieZamawiajacego, opisNastepcy, ogloszenieNastepcy } from '../lib/umowyWygasajace';
 
 /**
  * Wygasające umowy (2026-10-31, z analizy konkurencji: przetargi.info). Umowy z branż (CPV)
@@ -79,9 +79,18 @@ export default function UmowyWygasajaceScreen({ navigation }) {
           'These contracts end within 7 months. The buyer will soon tender the same again — prepare your pricing and references before competitors do.',
         )}
       </Text>
+      {dane.juz_ogloszone > 0 ? (
+        <Text style={styles.juzOgloszone}>
+          {t(
+            `Przy ${dane.juz_ogloszone} z nich nowy przetarg już trwa — są na górze listy, z terminem ofert.`,
+            `For ${dane.juz_ogloszone} of them the new tender is already open — they are at the top, with the bid deadline.`,
+          )}
+        </Text>
+      ) : null}
 
       {dane.umowy.map((u) => {
         const ton = tonTerminu(u.dni_do_konca);
+        const nastepca = opisNastepcy(u, t);
         return (
           <View key={u.id} style={styles.karta}>
             <View style={styles.glowa}>
@@ -93,6 +102,18 @@ export default function UmowyWygasajaceScreen({ navigation }) {
               {t(`Koniec umowy: ${dataKonca(u) ?? '—'}`, `Contract ends: ${dataKonca(u) ?? '—'}`)}
               {opisUmowy(u, t, kwotaKrotko) ? ` · ${opisUmowy(u, t, kwotaKrotko)}` : ''}
             </Text>
+            {nastepca ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${nastepca}. ${u.nastepca.tytul ?? ''}`}
+                onPress={() => navigation.navigate('KatalogDetail', { tender: ogloszenieNastepcy(u) })}
+                style={[styles.nastepca, u.nastepca.pewny === false && styles.nastepcaPodobny]}
+              >
+                <Text style={[styles.nastepcaNaglowek, u.nastepca.pewny === false && styles.nastepcaNaglowekPodobny]}>{nastepca}</Text>
+                {u.nastepca.tytul ? <Text style={styles.nastepcaTytul} numberOfLines={2}>{u.nastepca.tytul}</Text> : null}
+                <Text style={styles.link}>{t('Otwórz ogłoszenie →', 'Open the tender →')}</Text>
+              </Pressable>
+            ) : null}
             {(u.zwyciezcy ?? []).map((z) => (
               <Pressable
                 key={z.nip ?? z.nazwa}
@@ -144,5 +165,11 @@ const tworzStyleUmow = tworzStyle((k) => ({
   wykonawca: { fontSize: 13, color: k.text, marginTop: spacing.xs, lineHeight: 18 },
   link: { fontSize: 13, fontWeight: '700', color: k.blue, marginTop: spacing.xs },
   ok: { fontSize: 13, color: k.sukcesAkcent, lineHeight: 18, marginTop: spacing.xs },
+  juzOgloszone: { fontSize: 13, fontWeight: '700', color: k.sukcesAkcent, lineHeight: 19, marginTop: spacing.sm },
+  nastepca: { backgroundColor: k.sukcesTlo, borderRadius: radius.md, padding: spacing.sm, marginTop: spacing.sm },
+  nastepcaPodobny: { backgroundColor: k.neutralneTlo },
+  nastepcaNaglowek: { fontSize: 13, fontWeight: '800', color: k.sukcesAkcent, lineHeight: 18 },
+  nastepcaNaglowekPodobny: { color: k.text },
+  nastepcaTytul: { fontSize: 13, color: k.text, lineHeight: 18, marginTop: 2 },
   zrodlo: { fontSize: 12, color: k.textMuted, marginTop: spacing.lg, fontStyle: 'italic', lineHeight: 17 },
 }));

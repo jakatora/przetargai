@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { tonTerminu, opisTerminu, opisUmowy, dataKonca } from '../src/lib/umowyWygasajace.js';
+import { tonTerminu, opisTerminu, opisUmowy, dataKonca, opisNastepcy, ogloszenieNastepcy } from '../src/lib/umowyWygasajace.js';
 import { kwotaKrotko } from '../src/lib/ktoWygrywa.js';
 
 const t = (pl) => pl;
@@ -28,4 +28,13 @@ test('obserwacja zamawiającego: zapisane wyszukiwanie z alertem w limitach Func
   assert.equal(dlugi.filtry.q.length, 120);
   assert.equal('region' in dlugi.filtry, false);
   assert.equal(wyszukiwanieZamawiajacego({}), null);
+});
+
+test('następca umowy: opis z terminem ofert w dniu polskim, „podobny” przy słabym tytule, ogłoszenie do ekranu', () => {
+  const u = { zamawiajacy: 'Gmina Raszyn', nastepca: { tender_id: 't1', tytul: 'Opieka medyczna 2027', deadline: '2026-11-12T23:00:00.000Z', url: 'https://x.pl/t1', zrodlo: 'bzp', opublikowano: '2026-10-28', pewny: true } };
+  assert.equal(opisNastepcy(u, t), 'Nowy przetarg już ogłoszony · oferty do 13.11.2026');
+  assert.equal(opisNastepcy({ nastepca: { ...u.nastepca, pewny: false, deadline: null } }, t), 'Podobny przetarg tego zamawiającego już ogłoszony');
+  assert.equal(opisNastepcy({ nastepca: null }, t), null);
+  assert.deepEqual(ogloszenieNastepcy(u), { id: 't1', title: 'Opieka medyczna 2027', url: 'https://x.pl/t1', deadline: '2026-11-12T23:00:00.000Z', published_at: '2026-10-28', organization: 'Gmina Raszyn', source: 'bzp' });
+  assert.equal(ogloszenieNastepcy({}), null);
 });

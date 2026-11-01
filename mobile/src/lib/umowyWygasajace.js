@@ -3,6 +3,7 @@
  * `GET /wygrywalnosc/umowy-wygasajace` (Functions `lib/umowyWygasajace.js`). Bez zegara: dni do
  * końca liczy serwer w chwili odczytu.
  */
+import { dzienPL } from './dataUtc.js';
 
 /** Jak pilne: do 45 dni zamawiający zwykle już przygotowuje albo ogłasza przetarg. */
 export function tonTerminu(dni) {
@@ -55,5 +56,40 @@ export function wyszukiwanieZamawiajacego(u) {
     nazwa: `Zamawiający: ${nazwa}`.slice(0, MAKS_NAZWY),
     filtry: { q: nazwa.slice(0, MAKS_FRAZY), ...(u.wojewodztwo ? { region: u.wojewodztwo } : {}) },
     alert_wlaczony: true,
+  };
+}
+
+/** Termin ofert w dniu kalendarzowym w Polsce (północ PL zapisana w UTC to poprzedni dzień). */
+function terminPL(iso) {
+  const dzien = dzienPL(Date.parse(String(iso ?? '')));
+  return dzien === null ? null : dataPL(new Date(dzien).toISOString());
+}
+
+/**
+ * Następca umowy (2026-11-01): nowy przetarg tego zamawiającego już ogłoszony — „Nowy przetarg już
+ * ogłoszony · oferty do 12.11.2026”. Słabsze dopasowanie tytułu (`pewny: false`) to „podobny przetarg”.
+ * Bez następcy — null.
+ */
+export function opisNastepcy(u, t) {
+  const n = u?.nastepca;
+  if (!n?.tender_id) return null;
+  const termin = terminPL(n.deadline);
+  return n.pewny === false
+    ? t(`Podobny przetarg tego zamawiającego już ogłoszony${termin ? ` · oferty do ${termin}` : ''}`, `A similar tender from this buyer is already published${termin ? ` · bids due ${termin}` : ''}`)
+    : t(`Nowy przetarg już ogłoszony${termin ? ` · oferty do ${termin}` : ''}`, `The new tender is already published${termin ? ` · bids due ${termin}` : ''}`);
+}
+
+/** Ogłoszenie następcy dla ekranu ogłoszenia (zamawiający ten sam co w umowie — dopasowanie po NIP-ie). */
+export function ogloszenieNastepcy(u) {
+  const n = u?.nastepca;
+  if (!n?.tender_id) return null;
+  return {
+    id: n.tender_id,
+    title: n.tytul ?? null,
+    url: n.url ?? null,
+    deadline: n.deadline ?? null,
+    published_at: n.opublikowano ?? null,
+    organization: u.zamawiajacy ?? null,
+    source: n.zrodlo ?? null,
   };
 }
