@@ -561,6 +561,8 @@ const POLA_PULI = [
   'fetched_at', 'rodzaj',
   // Skrót kryteriów na karcie feedu (2026-10-31) — lista ma najwyżej 12 krótkich pozycji.
   'kryteria', 'kryteria_rozne_czesci',
+  // PZ/ePP (2026-11-01): dział CPV z tytułu — słaby sygnał w heurystyce dla profili opartych na kodach.
+  'cpv_dzial_z_tytulu',
 ];
 
 /**

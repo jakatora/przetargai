@@ -150,3 +150,12 @@ test('heuristicScore — zwraca stopień zgodności CPV, nie tylko flagę', () =
   assert.equal(szeroki.cpvAffinity, 0.35);
   assert.equal(waski.cpvAffinity, 1);
 });
+
+test('ogłoszenie bez CPV z działem z tytułu zgodnym z kodem firmy: 21 pkt (do oceny AI), słowo z nazwy kodu wygrywa', async () => {
+  const { heuristicScore } = await import('../src/lib/scoring.js');
+  const firma = { keywords: [], cpv_codes: ['45233140-2'] };
+  assert.equal(heuristicScore(firma, { title: 'Przebudowa budynku szkoły', cpv_main: null, cpv_dzial_z_tytulu: '45' }).score, 21);
+  assert.equal(heuristicScore(firma, { title: 'Przebudowa budynku szkoły', cpv_main: null, cpv_dzial_z_tytulu: '90' }).score, 0);
+  assert.equal(heuristicScore(firma, { title: 'Przebudowa budynku szkoły', cpv_main: null }).score, 0);
+  assert.equal(heuristicScore({ keywords: [], cpv_codes: [] }, { title: 'Przebudowa', cpv_main: null, cpv_dzial_z_tytulu: '45' }).score, 0);
+});

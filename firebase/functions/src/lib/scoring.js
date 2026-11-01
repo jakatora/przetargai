@@ -62,6 +62,13 @@ const CPV_WEIGHT = 70;
 const AFINICZNOSC_Z_NAZWY = 0.6;
 
 /**
+ * Ogłoszenie bez kodów, ale z działem CPV wywnioskowanym z tytułu (`cpv_dzial_z_tytulu`, 2026-11-01), zgodnym z działem
+ * kodu firmy: 0.3 → 21 pkt — ponad prefiltr AI (15), daleko pod progiem dopasowania. Dział to szeroka grupa
+ * („45” = każda budowa), więc decyzję zostawiamy AI; słowo z nazwy kodu (0.6) wygrywa.
+ */
+const AFINICZNOSC_Z_DZIALU = 0.3;
+
+/**
  * Zwraca wynik 0–100, listę trafionych słów kluczowych oraz stopień zgodności CPV.
  *
  * Sygnały łączą się probabilistycznie (`1 − (1−a)(1−b)`), nie przez dodawanie:
@@ -91,6 +98,10 @@ export function heuristicScore(company, tender) {
   if (!tenderCodes.length && company.cpv_codes?.length) {
     cpvZNazw = trafioneSlowaNazw(slowaZNazwCpv(company.cpv_codes), tender.title ?? '');
     if (cpvZNazw.length) cpvSignal = (CPV_WEIGHT / 100) * AFINICZNOSC_Z_NAZWY;
+    else if (/^\d{2}$/.test(String(tender.cpv_dzial_z_tytulu ?? ''))
+      && parseCpvCodes(company.cpv_codes).some((k) => k.slice(0, 2) === tender.cpv_dzial_z_tytulu)) {
+      cpvSignal = (CPV_WEIGHT / 100) * AFINICZNOSC_Z_DZIALU;
+    }
   }
 
   const combined = 1 - (1 - keywordSignal) * (1 - cpvSignal);
