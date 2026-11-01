@@ -4654,5 +4654,19 @@
     "sourceUrl": "https://buduj24.pl/produkt/15394,ceresit-grunt-gleboko-penetrujacy-ct17-transparent-10l",
     "evidenceSha256": "94fdef23452a1629692fe23c1d816c6e1f141d84713311c32679bb3a3f0891ab",
     "validUntil": "2026-11-15"
+  },
+  {
+    "sourceId": "elmas-norgips-acoustic-50x30",
+    "ean": "5907651698004",
+    "name": "TAŚMA AKUSTYCZNA SAMOPRZYLEPNA Z KLEJEM 50x3x30",
+    "stockPackages": 197,
+    "imageUrl": "https://sklep-elmas.pl/upload/6b89e6014d62a9e7cb888fdfa8ba.jpg",
+    "priceGrosze": 2289,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T19:09:22.846Z",
+    "sourceUrl": "https://sklep-elmas.pl/p/tasma-akustyczna-samoprzylepna-z-klejem-50x3x30",
+    "evidenceSha256": "d6ff6fae7aa126072aee3e09cadb89dd0831287e9fa338b2d9764b2b244b6e69",
+    "validUntil": null
   }
 ]
