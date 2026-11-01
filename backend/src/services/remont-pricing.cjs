@@ -43,9 +43,22 @@ var PRIMER_G_PRO_PACKS = [
   // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-KONCENTRAT-GRUNTUJACY-GRUNT-20L/10828
   { ean: "8022452241154", size: 20 }
 ];
+var MAPEGUM_WPS_FAMILY = "mapei-mapegum-wps-kg-v1";
+var MAPEGUM_WPS_FAMILY_NAME = "Mapei Mapegum WPS \u2014 dob\xF3r opakowa\u0144 3/5/10/20 kg";
+var MAPEGUM_WPS_PACKS = [
+  // source: https://www.rabdom.pl/pl/p/Folia-w-plynie-hydroizolacyjna-MAPEI-Mapegum-WPS-3kg/16590
+  { ean: "8022452249266", size: 3 },
+  // source: https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751
+  { ean: "8022452242489", size: 5 },
+  // source: https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-10kg-mapei-p7754
+  { ean: "8022452242496", size: 10 },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875
+  { ean: "8022452242502", size: 20 }
+];
 var REVIEWED_PACKAGE_FAMILIES = [
   { key: V33_CABINET_FAMILY, name: V33_CABINET_FAMILY_NAME, category: "cabinet-paint", unit: "ml", packs: V33_CABINET_PACKS },
-  { key: PRIMER_G_PRO_FAMILY, name: PRIMER_G_PRO_FAMILY_NAME, category: "primer", unit: "l", packs: PRIMER_G_PRO_PACKS }
+  { key: PRIMER_G_PRO_FAMILY, name: PRIMER_G_PRO_FAMILY_NAME, category: "primer", unit: "l", packs: PRIMER_G_PRO_PACKS },
+  { key: MAPEGUM_WPS_FAMILY, name: MAPEGUM_WPS_FAMILY_NAME, category: "waterproofing", unit: "kg", packs: MAPEGUM_WPS_PACKS }
 ];
 var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
 function reviewedPackageFamily(query, unit) {
@@ -19698,7 +19711,7 @@ var NEVER2 = INVALID;
 
 // artifacts/api-server/src/lib/pricing-schema.ts
 var materialSchema = external_exports2.object({
-  packageFamily: external_exports2.enum(["v33-easy-kitchen-white-satin-v1", "mapei-primer-g-pro-litres-v1"]).optional(),
+  packageFamily: external_exports2.enum(["v33-easy-kitchen-white-satin-v1", "mapei-primer-g-pro-litres-v1", "mapei-mapegum-wps-kg-v1"]).optional(),
   id: external_exports2.string(),
   name: external_exports2.string(),
   unit: external_exports2.string(),
@@ -28093,7 +28106,7 @@ function createRemontService(options = {}) {
     }
     try {
       let priceRefresh;
-      const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material)).filter((material) => parsed.data.options?.refreshPrices || material.packageFamily === PRIMER_G_PRO_FAMILY && reviewedPackageFamily({ ...material, normalizedName: material.name }, normalUnit(material.unit)));
+      const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material)).filter((material) => parsed.data.options?.refreshPrices || (material.packageFamily === PRIMER_G_PRO_FAMILY || material.packageFamily === MAPEGUM_WPS_FAMILY) && reviewedPackageFamily({ ...material, normalizedName: material.name }, normalUnit(material.unit)));
       if (materials.length) {
         const requestedEans = new Set(materials.flatMap((material) => {
           const family = reviewedPackageFamily({ ...material, normalizedName: material.name }, normalUnit(material.unit));
