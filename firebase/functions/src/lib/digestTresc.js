@@ -36,7 +36,19 @@ const opisNastepcy = (n) => (!n ? null
   : `${n.pewny === false ? 'podobny przetarg' : 'nowy przetarg'} już ogłoszony${terminPL(n.deadline) ? `, oferty do ${terminPL(n.deadline)}` : ''}`);
 const opisUmowy = (u) => [u.zamawiajacy, dataPL(u.koniec) ? `koniec ${dataPL(u.koniec)}` : null, kwotaKrotko(u.wartosc), opisNastepcy(u.nastepca)].filter(Boolean).join(' · ');
 
-export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [] }) {
+/**
+ * Skrót wpisu „nowe dokumenty” z centrum alertów (2026-11-01, monitoring e-Zamówień) do przeglądu:
+ * „zmianę dokumentów, wyjaśnienia treści SWZ (3)”, a przy otwarciu ofert — zdanie z liczbami.
+ */
+export function skrotDokumentow(alert) {
+  const tresc = String(alert?.tresc?.pl ?? '');
+  const co = tresc.match(/^Zamawiający opublikował ([^.]+\(\d+\))\./)?.[1] ?? null;
+  const liczby = tresc.match(/\d+ ofert\w* z ceną[^.]*\.|zamawiający przeznaczył[^.]*\./)?.[0] ?? null;
+  if (!co) return null;
+  return liczby ? `${co} — ${liczby}` : co;
+}
+
+export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [], dokumenty = [] }) {
   const n = Math.max(0, Math.floor(liczba));
   const rzeczownik = odmienPrzetargi(n);
   const subject = `Twój tygodniowy przegląd: ${n} ${rzeczownik}`;
@@ -64,7 +76,15 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
   const umowyHtml = konczace.length
     ? `<p>Umowy w Twoich branżach, które <b>wkrótce się kończą</b> — ${zapowiedz}:</p><ul>${konczace.map((u) => `<li><b>${esc(u.tytul)}</b> — ${esc(opisUmowy(u))}</li>`).join('')}</ul>`
     : '';
-  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${konkurenciText}${umowyText}\n\n`
+  // Nowe dokumenty w Twoich przetargach (2026-11-01): zmiany SWZ, wyjaśnienia, otwarcie ofert — z monitoringu e-Zamówień.
+  const zmianyDok = Array.isArray(dokumenty) ? dokumenty.filter((d) => d?.tytul && d?.opis).slice(0, 3) : [];
+  const dokumentyText = zmianyDok.length
+    ? `\n\nW Twoich przetargach pojawiły się nowe dokumenty na e-Zamówieniach:\n${zmianyDok.map((d) => `• ${d.tytul} — ${d.opis}`).join('\n')}`
+    : '';
+  const dokumentyHtml = zmianyDok.length
+    ? `<p>W Twoich przetargach pojawiły się <b>nowe dokumenty</b> na e-Zamówieniach:</p><ul>${zmianyDok.map((d) => `<li><b>${esc(d.tytul)}</b> — ${esc(d.opis)}</li>`).join('')}</ul>`
+    : '';
+  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${dokumentyText}${konkurenciText}${umowyText}\n\n`
     + `Otwórz aplikację PrzetargAI, aby zobaczyć szczegóły i zdecydować, w które startujesz.\n\n`
     + `Zespół PrzetargAI\n\n`
     + `Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.`;
@@ -76,6 +96,7 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
   const html = `<p>Dzień dobry,</p>
 ${wstepHtml}
 ${tytulyHtml}
+${dokumentyHtml}
 ${konkurenciHtml}
 ${umowyHtml}
 <p>Otwórz aplikację <b>PrzetargAI</b>, aby zobaczyć szczegóły i zdecydować, w które startujesz.</p>

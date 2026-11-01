@@ -74,3 +74,14 @@ test('budujDigest: umowa z już ogłoszonym następcą — „nowy przetarg już
   assert.match(d.text, /• Paliwo — Powiat · koniec 01\.02\.2027$/m);
   assert.match(d.html, /część przetargów już ogłoszono/);
 });
+
+test('budujDigest: nowe dokumenty w przetargach klienta — skrót z wpisu alertu, z liczbami z otwarcia', async () => {
+  const { skrotDokumentow } = await import('../src/lib/digestTresc.js');
+  assert.equal(skrotDokumentow({ tresc: { pl: 'Zamawiający opublikował zmianę dokumentów, wyjaśnienia treści SWZ (3). Sprawdź przed złożeniem oferty — oferta bez ich uwzględnienia może zostać odrzucona. Zmiana SWZ nr 1' } }), 'zmianę dokumentów, wyjaśnienia treści SWZ (3)');
+  assert.equal(skrotDokumentow({ tresc: { pl: 'Zamawiający opublikował informację z otwarcia ofert (1). 6 ofert z ceną: od 158 695 zł do 552 964 zł; zamawiający przeznaczył 195 457 zł. Informacja z otwarcia ofert' } }), 'informację z otwarcia ofert (1) — 6 ofert z ceną: od 158 695 zł do 552 964 zł; zamawiający przeznaczył 195 457 zł.');
+  assert.equal(skrotDokumentow({ tresc: { pl: 'coś innego' } }), null);
+  const d = budujDigest({ liczba: 3, tytuly: [], dokumenty: [{ tytul: 'Remont <dachu>', opis: 'zmianę dokumentów (1)' }] });
+  assert.match(d.text, /W Twoich przetargach pojawiły się nowe dokumenty na e-Zamówieniach:\n• Remont <dachu> — zmianę dokumentów \(1\)/);
+  assert.match(d.html, /<b>Remont &lt;dachu&gt;<\/b> — zmianę dokumentów \(1\)/);
+  assert.ok(!budujDigest({ liczba: 1 }).text.includes('nowe dokumenty'));
+});

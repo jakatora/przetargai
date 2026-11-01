@@ -113,3 +113,16 @@ test('informacja z otwarcia ofert: PDF czytany raz, liczby w alercie, na przetar
   const kopia = (await getFirestore().collection('users').doc(user.id).collection('matches').doc(tender.id).get()).data();
   assert.deepEqual(kopia.tender_otwarcie_ofert, { kwota: 195457.23, oferty: 6, cena_min: 158694.93, cena_max: 552963.59, czesci: false });
 });
+
+test('przegląd tygodniowy bierze nowe dokumenty z centrum alertów: pilne pierwsze, jeden wpis na przetarg', async () => {
+  const { dokumentyDoPrzegladu } = await import('../src/jobs/weeklyDigest.js');
+  const user = await users.create({ email: `md6-${ZNAK}@t.pl`, passwordHash: 'x' });
+  const teraz = new Date().toISOString();
+  const wpis = (klucz, tender_id, ton, tresc, tytul) => alerty.dodaj(user.id, { klucz, typ: 'nowe_dokumenty', tender_id, ton, tytul: { pl: 'x' }, tresc: { pl: tresc }, pozycje: [{ tender_id, tytul }] }, teraz);
+  await wpis('a1', 't1', 'neutral', 'Zamawiający opublikował informację z otwarcia ofert (1). 2 oferty z ceną: od 489 497 zł do 558 197 zł.', 'Budowa dostrzegalni');
+  await wpis('a2', 't2', 'ostrzezenie', 'Zamawiający opublikował zmianę dokumentów (1). Sprawdź przed złożeniem oferty.', 'Przebudowa drogi');
+  await wpis('a3', 't2', 'ostrzezenie', 'Zamawiający opublikował wyjaśnienia treści SWZ (1). Sprawdź.', 'Przebudowa drogi');
+  const lista = await dokumentyDoPrzegladu(user, new Date(Date.now() - 86_400_000).toISOString());
+  assert.deepEqual(lista.map((d) => d.tytul), ['Przebudowa drogi', 'Budowa dostrzegalni']);
+  assert.equal(lista[1].opis, 'informację z otwarcia ofert (1) — 2 oferty z ceną: od 489 497 zł do 558 197 zł.');
+});

@@ -1,5 +1,6 @@
 import { logger } from '../lib/logger.js';
-import { users, matches, znacznikDigestu, benchmarkRynku, rozstrzygniecia, umowyWygasajace } from '../db/repos.js';
+import { users, matches, znacznikDigestu, benchmarkRynku, rozstrzygniecia, umowyWygasajace, alerty } from '../db/repos.js';
+import { skrotDokumentow } from '../lib/digestTresc.js';
 import { kluczeUmowUzytkownika, wybierzUmowy } from '../lib/umowyWygasajace.js';
 import { kluczeKonkurentowUzytkownika, twoiKonkurenci, wygraneKonkurentow, normNip } from '../lib/profilKonkurenta.js';
 import { sendEmail, weeklyDigestEmail } from '../services/email.js';
@@ -46,6 +47,23 @@ export async function umowyDoPrzegladu(user, { limit = 3 } = {}) {
   const kubelki = await umowyWygasajace.pobierzWiele(klucze);
   // 72 h: mail czyta się w poniedziałek rano — przetarg zamykany tego samego dnia to już nie okazja.
   return wybierzUmowy({ kubelki, wlasnyNip: user.company_nip ?? null, limit, minGodzinDoOferty: 72 }).umowy;
+}
+
+/**
+ * Nowe dokumenty w przetargach klienta z tygodnia (2026-11-01, monitoring e-Zamówień) — z centrum alertów,
+ * także te z czołówki feedu, o których nie było pushu. Pilne (zmiany, wyjaśnienia, termin) pierwsze;
+ * jeden wpis na przetarg (najnowszy). Błąd tej sekcji NIE zatrzymuje przeglądu.
+ */
+export async function dokumentyDoPrzegladu(user, odIso, { limit = 3 } = {}) {
+  const wpisy = (await alerty.lista(user.id, 60))
+    .filter((a) => a.typ === 'nowe_dokumenty' && String(a.utworzone_o ?? '') >= odIso);
+  const poPrzetargu = new Map();
+  for (const a of wpisy) if (a.tender_id && !poPrzetargu.has(a.tender_id)) poPrzetargu.set(a.tender_id, a);
+  return [...poPrzetargu.values()]
+    .sort((x, y) => Number(y.ton === 'ostrzezenie') - Number(x.ton === 'ostrzezenie'))
+    .map((a) => ({ tytul: a.pozycje?.[0]?.tytul ?? null, opis: skrotDokumentow(a) }))
+    .filter((d) => d.tytul && d.opis)
+    .slice(0, limit);
 }
 
 /**
@@ -107,7 +125,11 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja wygasających umów pominięta');
           return [];
         });
-        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy });
+        const dokumenty = await dokumentyDoPrzegladu(user, sinceIso).catch((err) => {
+          logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja nowych dokumentów pominięta');
+          return [];
+        });
+        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy, dokumenty });
         wynik = await sendEmail({ to: user.email, ...tresc });
       } catch (err) {
         wynik = { sent: false, error: err.message };
