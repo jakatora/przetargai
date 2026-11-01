@@ -14409,7 +14409,8 @@ function mixedPackagePlans(required2, variants, locked = {}, maxPlans = 4096, ma
   const eligible = variants.filter((v) => Number.isFinite(v.packageSize) && v.packageSize > 0 && Number.isSafeInteger(v.unitPriceGrosze) && v.unitPriceGrosze > 0);
   if (!Number.isFinite(required2) || required2 <= 0 || !eligible.length) return { plans, limited };
   const ordered = [...eligible].sort((a, b) => b.packageSize - a.packageSize || a.offerId.localeCompare(b.offerId));
-  const covers = (packs) => packs.reduce((n, p) => n + p.count * p.packageSize, 0) + 1e-7 >= required2 && Object.entries(locked).every(([size, quantity]) => packs.filter((p) => String(p.packageSize) === size).reduce((n, p) => n + p.count * p.packageSize, 0) + 1e-7 >= quantity);
+  const meets = (available, quantity) => quantity <= 0 || available > 0 && available + 1e-7 >= quantity;
+  const covers = (packs) => meets(packs.reduce((n, p) => n + p.count * p.packageSize, 0), required2) && Object.entries(locked).every(([size, quantity]) => meets(packs.filter((p) => String(p.packageSize) === size).reduce((n, p) => n + p.count * p.packageSize, 0), quantity));
   const visit = (index2, packs, coverage) => {
     if (++visits > maxVisits || plans.length >= maxPlans) {
       limited = true;
@@ -14431,7 +14432,7 @@ function mixedPackagePlans(required2, variants, locked = {}, maxPlans = 4096, ma
     const v = ordered[index2], multiple = v.purchaseMultiple ?? 1, minimum = Math.ceil((v.minimumPackages ?? 1) / multiple) * multiple;
     const already = packs.filter((p) => p.packageSize === v.packageSize).reduce((n, p) => n + p.count * p.packageSize, 0);
     const remaining = Math.max(0, required2 - coverage, (locked[String(v.packageSize)] ?? 0) - already);
-    const useful = remaining > 1e-7 ? Math.max(minimum, Math.ceil((remaining - 1e-7) / v.packageSize / multiple) * multiple) : 0;
+    const useful = remaining > 0 ? Math.max(minimum, Math.ceil((remaining - 1e-7) / v.packageSize / multiple) * multiple) : 0;
     const maximum = Math.min(useful, v.maxPackages === void 0 ? useful : Math.floor(v.maxPackages / multiple) * multiple, 1e4);
     for (let count = 0; count <= maximum; count += multiple) {
       if (limited) return;
