@@ -99,6 +99,8 @@ export const api = {
   updateProfile: (payload) => request('/auth/me', { method: 'PATCH', body: payload }),
   /** NIP firmy w koncie (2026-11-01): własne umowy w radarze i alert o ich następcach. `null` = usuń. */
   ustawNipFirmy: (nip) => request('/auth/me/nip', { method: 'PUT', body: { company_nip: nip } }),
+  /** Kody CPV, regiony i tytuły z przetargów wygranych przez firmę z NIP-em w koncie (2026-11-01). */
+  kartaZWygranych: () => request('/wygrywalnosc/karta-z-wygranych'),
   /** Onboarding AI: opis firmy → { keywords, cpv } (albo { keywords: null, powod }). */
   suggestProfile: (opis) => request('/auth/suggest-profile', { method: 'POST', body: { opis } }),
   /** `platform` (2026-10-29): serwer liczy urządzenia per platforma — bez tego nie widać, czy push dochodzi na iPhone. */

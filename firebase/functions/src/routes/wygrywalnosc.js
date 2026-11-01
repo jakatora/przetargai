@@ -4,6 +4,7 @@ import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
 import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia, limitPytanSwz, umowyWygasajace } from '../db/repos.js';
 import { kluczeUmowUzytkownika, wybierzUmowy, twojeUmowy, HORYZONT_DNI } from '../lib/umowyWygasajace.js';
+import { kartaZWygranych } from '../lib/kartaZWygranych.js';
 import { planEfektywny } from '../lib/plan.js';
 import { ktoWygrywa } from '../lib/ktoWygrywa.js';
 import { kluczePartnerow, wybierzPartnerow } from '../lib/partnerzy.js';
@@ -201,6 +202,21 @@ const wejscieWykonawcy = z.object({
   nip: z.string().max(20).optional(),
   nazwa: z.string().trim().max(300).optional(),
 });
+
+/*
+ * Karta z wygranych (2026-11-01, `lib/kartaZWygranych.js`): kody CPV, regiony i tytuły z przetargów,
+ * które firma z NIP-em w koncie wygrała. Karta firmy wypełnia nimi puste pola zaraz po wpisaniu NIP-u.
+ * Bez NIP-u w koncie — `dostepne: false`.
+ */
+router.get('/karta-z-wygranych', ah(async (req, res) => {
+  const nip = normNip(req.user.company_nip);
+  if (!nip) {
+    res.json({ dostepne: false, powod: 'brak_nip' });
+    return;
+  }
+  const wyniki = await rozstrzygniecia.dlaWykonawcy({ nip });
+  res.json({ dostepne: true, ...kartaZWygranych(wyniki, nip) });
+}));
 
 router.get('/wykonawca', ah(async (req, res) => {
   const parsed = wejscieWykonawcy.safeParse(req.query ?? {});

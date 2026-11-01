@@ -88,3 +88,18 @@ test('NIP do konta: tylko poprawny i inny niż zapisany', () => {
   assert.equal(nipDoKonta('5261040827', null), null, 'zła suma kontrolna');
   assert.equal(nipDoKonta('', '5261040828'), null, 'puste pole nie usuwa NIP-u z konta');
 });
+
+test('karta z wygranych: CPV tylko w puste pole, regiony dokładane, tytuły do podpowiedzi słów', async () => {
+  const { prefillZWygranych } = await import('../src/lib/kartaZNip.js');
+  const karta = { dostepne: true, znaleziono: true, wygrane: 12, cpv_codes: ['45233120-6', '45111200-0'], regiony: ['12', '18'], tytuly: ['Remont drogi gminnej', 'Przebudowa chodnika'] };
+  const p = prefillZWygranych({ cpv_codes: '', keywords: '', regiony: ['18'] }, karta);
+  assert.deepEqual([p.form.cpv_codes, p.form.regiony, p.zmiany, p.tekst, p.wygrane], ['45233120-6, 45111200-0', ['18', '12'], ['cpv', 'teren'], 'Remont drogi gminnej; Przebudowa chodnika', 12]);
+  const zajete = prefillZWygranych({ cpv_codes: '90910000-9', keywords: 'sprzątanie', regiony: ['02', '04', '06', '08'] }, karta);
+  assert.deepEqual([zajete.form.cpv_codes, zajete.form.regiony.length, zajete.zmiany, zajete.tekst], ['90910000-9', 4, [], null], 'nic nie nadpisujemy');
+  assert.deepEqual(prefillZWygranych({ cpv_codes: '' }, { dostepne: false }).zmiany, []);
+});
+
+test('odmiana słów kluczowych', async () => {
+  const { odmianaSlow } = await import('../src/lib/kartaZNip.js');
+  assert.deepEqual([1, 3, 5, 12, 22, 25].map(odmianaSlow), ['1 słowo kluczowe', '3 słowa kluczowe', '5 słów kluczowych', '12 słów kluczowych', '22 słowa kluczowe', '25 słów kluczowych']);
+});

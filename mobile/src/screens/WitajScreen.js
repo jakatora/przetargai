@@ -9,6 +9,9 @@ import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius, typografia } from '../theme';
 import { celPoOnboardingu } from '../lib/onboarding';
+import { nipDoKonta, prefillZWygranych, odmianaSlow } from '../lib/kartaZNip';
+import { czyPoprawnyNip } from '../lib/dokumentyOferty';
+import { pobierzDanePoNip } from '../lib/danePoNip';
 
 /**
  * Ekran powitalny (first-run onboarding). Pokazywany, gdy zalogowany użytkownik ma
@@ -45,6 +48,10 @@ export default function WitajScreen({ navigation }) {
   const [dobieranie, setDobieranie] = useState(false);
   const [info, setInfo] = useState(null);
   const [zapis, setZapis] = useState(false);
+  // Szybka ścieżka (2026-11-01): sam NIP → kody CPV i regiony z wygranych przetargów, słowa z ich tytułów.
+  const [nip, setNip] = useState(user?.company_nip ?? '');
+  const [zNipu, setZNipu] = useState(false);
+  const [regiony, setRegiony] = useState(user?.regiony ?? []);
 
   function idzDoFeeda() {
     navigation.replace('MatchFeed');
@@ -76,6 +83,47 @@ export default function WitajScreen({ navigation }) {
     }
   }
 
+  /** Scala nowe pozycje z tym, co już wpisano (bez duplikatów), cap 30 = limit backendu. */
+  const scal = (biezace, nowe) => [...new Set([...parseList(biezace), ...nowe].map((x) => x.trim()).filter(Boolean))].slice(0, 30).join(', ');
+
+  async function dobierzZNipu() {
+    if (zNipu) return;
+    if (!czyPoprawnyNip(nip)) {
+      setInfo(t('To nie wygląda na poprawny NIP — sprawdź 10 cyfr.', 'This does not look like a valid NIP — check the 10 digits.'));
+      return;
+    }
+    setZNipu(true);
+    setInfo(null);
+    try {
+      const doKonta = nipDoKonta(nip, user?.company_nip);
+      if (doKonta) {
+        const d = await api.ustawNipFirmy(doKonta);
+        if (d?.user) setUser(d.user);
+      }
+      const karta = await api.kartaZWygranych().catch(() => null);
+      const zw = prefillZWygranych({ cpv_codes: cpv, keywords, regiony }, karta);
+      if (zw.zmiany.includes('cpv')) setCpv(zw.form.cpv_codes);
+      if (zw.zmiany.includes('teren')) setRegiony(zw.form.regiony);
+      // Słowa: z tytułów wygranych, a gdy firma nic jeszcze nie wygrała — z nazwy z Białej listy VAT.
+      let tekst = zw.tekst;
+      if (!tekst && !parseList(keywords).length) tekst = (await pobierzDanePoNip(nip))?.dane?.nazwa ?? null;
+      const s = tekst ? await api.suggestProfile(tekst).catch(() => null) : null;
+      if (s?.keywords?.length) setKeywords((b) => scal(b, s.keywords));
+      if (s?.cpv?.length && !zw.zmiany.includes('cpv')) setCpv((b) => scal(b, s.cpv));
+      const slow = s?.keywords?.length ?? 0;
+      setInfo(zw.wygrane
+        ? t(`Z ${zw.wygrane} wygranych przez Ciebie przetargów dobraliśmy kody CPV${zw.zmiany.includes('teren') ? ' i regiony' : ''}${slow ? `, a z ich tytułów ${odmianaSlow(slow)}` : ''}. Sprawdź i zapisz.`,
+          `From the ${zw.wygrane} tenders you won we picked CPV codes${zw.zmiany.includes('teren') ? ' and regions' : ''}${slow ? `, plus ${slow} keywords from their titles` : ''}. Review and save.`)
+        : slow
+          ? t(`Nie widzimy jeszcze Twoich wygranych przetargów — ${odmianaSlow(slow)} dobraliśmy z nazwy firmy. Sprawdź i zapisz.`, `We do not see tenders you won yet — we picked ${slow} keywords from the company name. Review and save.`)
+          : t('Nie widzimy jeszcze Twoich wygranych przetargów — opisz firmę jednym zdaniem poniżej.', 'We do not see tenders you won yet — describe your company in one sentence below.'));
+    } catch (err) {
+      setInfo(err.message);
+    } finally {
+      setZNipu(false);
+    }
+  }
+
   async function zapiszIStart() {
     const kw = parseList(keywords);
     const cp = parseList(cpv);
@@ -86,7 +134,7 @@ export default function WitajScreen({ navigation }) {
     }
     setZapis(true);
     try {
-      const data = await api.updateProfile({ keywords: kw, cpv_codes: cp });
+      const data = await api.updateProfile({ keywords: kw, cpv_codes: cp, ...(regiony.length ? { regiony } : {}) });
       setUser(data.user); // profil niepusty → onboarding już się nie pokaże
       // Dalej do Karty firmy (NIP, teren, kwoty) — reguła w lib/onboarding.js; „Pomiń" idzie prosto na listę.
       const cel = celPoOnboardingu(false);
@@ -115,9 +163,18 @@ export default function WitajScreen({ navigation }) {
         </Text>
       </View>
 
+      <View style={styles.szybko}>
+        <Text style={styles.krok}>{t('Najszybciej: wpisz NIP firmy', 'Fastest: enter your company NIP')}</Text>
+        <Text style={styles.szybkoOpis}>
+          {t('Branże i regiony dobierzemy z przetargów, które już wygrałeś — bez opisywania.', 'We pick industries and regions from tenders you have already won — no description needed.')}
+        </Text>
+        <TextField value={nip} onChangeText={setNip} placeholder="7941844550" keyboardType="numeric" maxLength={13} />
+        <Button title={t('Dobierz z NIP-u', 'Fill in from NIP')} onPress={dobierzZNipu} loading={zNipu} variant="ghost" style={styles.gapMaly} />
+      </View>
+
       <View style={styles.krokRzad}>
         <Text style={styles.krokNumer}>1</Text>
-        <Text style={styles.krok}>{t('Opisz firmę jednym zdaniem', 'Describe your company in one sentence')}</Text>
+        <Text style={styles.krok}>{t('…albo opisz firmę jednym zdaniem', '…or describe your company in one sentence')}</Text>
       </View>
       <TextField
         value={opis}
@@ -185,6 +242,8 @@ const tworzStyleWitaj = tworzStyle((k) => ({
   krok: { ...typografia.sekcja, color: k.text, flex: 1 },
   gap: { marginTop: spacing.md },
   gapMaly: { marginTop: spacing.sm },
+  szybko: { backgroundColor: k.wyroznienie, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.sm },
+  szybkoOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginTop: 2, marginBottom: spacing.sm },
   polCpv: { marginBottom: spacing.xs },
   info: { fontSize: 14, color: k.blue, fontWeight: '600', marginTop: spacing.sm, lineHeight: 20 },
   stopka: { fontSize: 13, color: k.textMuted, textAlign: 'center', marginTop: spacing.md, lineHeight: 18 },

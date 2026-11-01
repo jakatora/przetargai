@@ -133,3 +133,38 @@ export function nipDoKonta(wpisany, obecny) {
   if (!czyPoprawnyNip(nip)) return null;
   return nip === normalizujNip(obecny) ? null : nip;
 }
+
+/**
+ * Karta z wygranych (2026-11-01, `GET /wygrywalnosc/karta-z-wygranych`): kody CPV z przetargów, które
+ * firma wygrała, wpisujemy tylko w PUSTE pole; regiony dokładamy do już wybranych (do 4) — siedziba
+ * z Białej listy zostaje. Zwraca formularz, listę zmian i tekst do podpowiedzi słów (tytuły wygranych).
+ */
+export function prefillZWygranych(form, karta) {
+  const f = form && typeof form === 'object' ? form : {};
+  if (!karta?.dostepne || !karta.znaleziono) return { form: f, zmiany: [], tekst: null };
+  const wynik = { ...f };
+  const zmiany = [];
+  if (!String(f.cpv_codes ?? '').trim() && karta.cpv_codes?.length) {
+    wynik.cpv_codes = karta.cpv_codes.join(', ');
+    zmiany.push('cpv');
+  }
+  const obecne = Array.isArray(f.regiony) ? f.regiony : [];
+  const dodane = (karta.regiony ?? []).filter((r) => !obecne.includes(r));
+  if (dodane.length && obecne.length < 4) {
+    wynik.regiony = [...obecne, ...dodane].slice(0, 4);
+    zmiany.push('teren');
+  }
+  const tekst = !String(f.keywords ?? '').trim() && karta.tytuly?.length
+    ? karta.tytuly.join('; ').slice(0, 590)
+    : null;
+  return { form: wynik, zmiany, tekst, wygrane: karta.wygrane ?? 0 };
+}
+
+/** „1 słowo kluczowe”, „3 słowa kluczowe”, „5 słów kluczowych” (12–14 jak 5). */
+export function odmianaSlow(n) {
+  const d = Math.abs(n) % 100;
+  const j = Math.abs(n) % 10;
+  if (n === 1) return '1 słowo kluczowe';
+  if (j >= 2 && j <= 4 && !(d >= 12 && d <= 14)) return `${n} słowa kluczowe`;
+  return `${n} słów kluczowych`;
+}

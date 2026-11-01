@@ -14,7 +14,7 @@ import { KROKI_KREATORA, kartaDoFormularza, formularzDoKarty, walidujFormularz, 
 import * as storage from '../lib/storage';
 import { KLUCZ_DANYCH_WYKONAWCY } from '../lib/dokumentyOferty';
 import { pobierzDanePoNip } from '../lib/danePoNip';
-import { prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu, tekstDoPodpowiedzi, nipDoKonta } from '../lib/kartaZNip';
+import { prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu, tekstDoPodpowiedzi, nipDoKonta, prefillZWygranych } from '../lib/kartaZNip';
 
 /** Selekcja wyłączona po stronie serwera (`PRACOWNIK_ENABLED=false`) — zostają pola profilu z `PATCH /auth/me`. */
 const KROKI_UPROSZCZONE = [1, 3, 4];
@@ -89,16 +89,27 @@ export default function KartaFirmyScreen({ route, navigation }) {
     // NIP potwierdzony w Białej liście — zapisujemy go w koncie od razu, nie dopiero przy „Zapisz”.
     const bladNipu = await zapiszNipWKoncie();
     const wynik = prefillKartyZDanychFirmy(form, dane);
-    setForm(wynik.form);
+    // Karta z wygranych (2026-11-01): NIP jest już w koncie — kody CPV i regiony z przetargów, które firma
+    // wygrała, w puste pola; tytuły wygranych zamiast nazwy firmy do podpowiedzi słów. Błąd = bez tego.
+    const zWygranych = bladNipu ? null : prefillZWygranych(wynik.form, await api.kartaZWygranych().catch(() => null));
+    setForm(zWygranych?.form ?? wynik.form);
     try {
       const s = await storage.getItem(KLUCZ_DANYCH_WYKONAWCY);
       await storage.setItem(KLUCZ_DANYCH_WYKONAWCY, JSON.stringify(scalDaneWykonawcy(s ? JSON.parse(s) : null, dane)));
     } catch { /* magazyn niedostępny — karta i tak wypełniona */ }
     let komunikat = komunikatPrefillu(wynik, jezyk);
-    // Leniwy start: karta bez słów i CPV → dobieramy je od razu z nazwy firmy (albo z opisu), bez klikania.
-    const tekst = tekstDoPodpowiedzi({ opis: form.opis, nazwa: dane.nazwa, keywords: form.keywords, cpv_codes: form.cpv_codes });
+    if (zWygranych?.zmiany.length) {
+      komunikat += t(
+        ` Z ${zWygranych.wygrane} wygranych przez Ciebie przetargów dobraliśmy ${zWygranych.zmiany.includes('cpv') ? 'kody CPV' : ''}${zWygranych.zmiany.length === 2 ? ' i ' : ''}${zWygranych.zmiany.includes('teren') ? 'regiony' : ''}.`,
+        ` From the ${zWygranych.wygrane} tenders you won we picked ${zWygranych.zmiany.includes('cpv') ? 'CPV codes' : ''}${zWygranych.zmiany.length === 2 ? ' and ' : ''}${zWygranych.zmiany.includes('teren') ? 'regions' : ''}.`,
+      );
+    }
+    // Leniwy start: karta bez słów → dobieramy je od razu z tytułów wygranych, a bez nich z nazwy firmy (albo z opisu).
+    const tekst = zWygranych?.tekst ?? tekstDoPodpowiedzi({ opis: form.opis, nazwa: dane.nazwa, keywords: form.keywords, cpv_codes: form.cpv_codes });
     if (tekst && (await dobierzZ(tekst))) {
-      komunikat += t(' Dobraliśmy też słowa i kody CPV z nazwy firmy — sprawdź je niżej.', ' We also picked keywords and CPV codes from the company name — check them below.');
+      komunikat += zWygranych?.tekst
+        ? t(' Słowa kluczowe dobraliśmy z tytułów tych przetargów — sprawdź je niżej.', ' Keywords come from the titles of those tenders — check them below.')
+        : t(' Dobraliśmy też słowa i kody CPV z nazwy firmy — sprawdź je niżej.', ' We also picked keywords and CPV codes from the company name — check them below.');
     }
     // Karta wypełniona; NIP w koncie mógł się nie zapisać (np. ma go inne konto) — to też trzeba zobaczyć.
     setNipStan({ laduje: false, komunikat: bladNipu ? `${komunikat} ${bladNipu}` : komunikat, ok: !bladNipu });

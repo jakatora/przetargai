@@ -115,3 +115,19 @@ test('Twoje umowy: radar pokazuje własną kończącą się umowę z następcą;
   const wpisy = await alerty.lista(me.user.id);
   assert.deepEqual(wpisy.map((a) => [a.typ, a.tender_id]), [['umowa_nastepca', nowy.id]]);
 });
+
+test('GET /wygrywalnosc/karta-z-wygranych: bez NIP-u niedostępna; z NIP-em kody CPV i regiony z wygranych', async () => {
+  const t = await konto();
+  const bez = await (await fetch(`${BAZA}/wygrywalnosc/karta-z-wygranych`, { headers: auth(t) })).json();
+  assert.deepEqual(bez, { dostepne: false, powod: 'brak_nip' });
+  const nipFirmy = losowy();
+  assert.equal((await ustawNip(t, nipFirmy)).status, 200);
+  await rozstrzygniecia.zapiszWiele([1, 2, 3].map((i) => ({
+    externalId: `kw-${i}-${ZNAK}`, tenderId: `ocds-kw-${i}-${ZNAK}`, zrodlo: 'bzp', tytul: `Remont drogi gminnej nr ${i}`, zamawiajacy: `Gmina ${i}`,
+    zamawiajacyNip: losowy(), cpv: ['45233120-6', '45000000-7'], wojewodztwo: '12', rodzaj: 'Works', opublikowano: '2026-10-0' + i,
+    czesci: [{ numer: 1, uniewaznione: false, dataUmowy: '2026-10-10', zwyciezca: { nazwa: 'Drogbud', nip: nipFirmy } }],
+  })));
+  const k = await (await fetch(`${BAZA}/wygrywalnosc/karta-z-wygranych`, { headers: auth(t) })).json();
+  assert.deepEqual([k.dostepne, k.wygrane, k.cpv_codes, k.regiony, k.zamawiajacych], [true, 3, ['45233120-6'], ['12'], 3]);
+  assert.equal((await fetch(`${BAZA}/wygrywalnosc/karta-z-wygranych`)).status, 401);
+});
