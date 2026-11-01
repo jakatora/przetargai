@@ -57,6 +57,8 @@ export function celPush(data) {
     case 'nowe_dokumenty':
     // Wynik zapisanego przetargu (2026-11-01): kto wygrał i za ile — z ogłoszenia o wyniku w BZP.
     case 'wynik_przetargu':
+    // Unieważniony zapisany przetarg ogłoszony ponownie (2026-11-01).
+    case 'przetarg_ponownie':
       return {
         ekran: 'CentrumAlertow',
         params: data.klucz ? { podswietlKlucz: String(data.klucz) } : {},

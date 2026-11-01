@@ -4,6 +4,7 @@ import { pobierzSuroweWynikiDnia, dniWZakresie } from '../services/bzp.js';
 import { pobierzWynikiTed, pobierzModyfikacjeTed } from '../services/tedWyniki.js';
 import { rozstrzygniecia, modyfikacjeUmow, oknoWynikow as repoOkna } from '../db/repos.js';
 import { runWynikiZapisanych } from './wynikiZapisanych.js';
+import { runPonowneOgloszenia } from './ponowneOgloszenia.js';
 
 /*
  * OKNO ROZSTRZYGNIĘĆ (etap 6) — kompletne źródło „co się w tych przetargach stało".
@@ -124,6 +125,7 @@ export async function runOknoWynikow({
   pobierzTed = pobierzWynikiTed,
   pobierzModyfikacje = pobierzModyfikacjeTed,
   powiadomZapisane = runWynikiZapisanych,
+  ponowne = runPonowneOgloszenia,
 } = {}) {
   const start = Date.now();
   const dzisiaj = new Date(teraz).toISOString().slice(0, 10);
@@ -189,6 +191,11 @@ export async function runOknoWynikow({
     logger.error({ err: err.message }, 'okno wyników: powiadomienia o wynikach zapisanych pominięte');
     return { blad: err.message };
   });
+  // Unieważniony zapisany przetarg ogłoszony ponownie (2026-11-01) — po zapisie nowych wyników z tego przebiegu.
+  const ponowneOgl = await ponowne({ teraz }).catch((err) => {
+    logger.error({ err: err.message }, 'okno wyników: ponowne ogłoszenia pominięte');
+    return { blad: err.message };
+  });
 
   /*
    * Zmiany umów (`cont-modif`) — osobny typ formularza i osobna kolekcja.
@@ -244,6 +251,7 @@ export async function runOknoWynikow({
     ted_czesci: czesciTed,
     modyfikacji_umow: zapisaneModyfikacje,
     wyniki_zapisanych: zapisanych,
+    ponowne_ogloszenia: ponowneOgl,
     error_modyfikacji: bladModyfikacji,
     durationMs: Date.now() - start,
     zakonczony_o: new Date().toISOString(),

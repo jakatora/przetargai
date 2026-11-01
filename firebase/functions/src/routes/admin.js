@@ -247,6 +247,13 @@ router.post('/wojewodztwa-zamawiajacych', ah(async (req, res) => {
   res.json({ przebudowa, ...(await runWojewodztwaZamawiajacych()) });
 }));
 
+/** Ręczny przebieg: unieważnione zapisane przetargi ogłoszone ponownie (2026-11-01). */
+router.post('/ponowne-ogloszenia', ah(async (req, res) => {
+  const { runPonowneOgloszenia } = await import('../jobs/ponowneOgloszenia.js');
+  const wynik = await runPonowneOgloszenia();
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
 /** Ręczne przeliczenie benchmarku „ile dać” (kubełki `otw:`). */
 router.post('/benchmark-otwarcia', ah(async (req, res) => {
   const { runBenchmarkOtwarcia } = await import('../jobs/otwarcieRynku.js');

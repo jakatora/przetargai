@@ -1229,6 +1229,26 @@ export const tenders = {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
+  /** Ogłoszenia zamawiającego po DOKŁADNEJ nazwie — dla źródeł bez NIP-u (PZ, ePP), te same pola co po NIP-ie. */
+  async poNazwieZamawiajacego(nazwa, { limit = 50 } = {}) {
+    if (!nazwa) return [];
+    const snap = await db().collection('tenders').where('organization', '==', String(nazwa))
+      .select('title', 'cpv_main', 'budget', 'published_at', 'deadline', 'url', 'source', 'anulowany', 'zastapiony_przez', 'postepowanie_id')
+      .limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /** Wybrane pola wielu przetargów jednym `getAll` po 300 (2026-11-01, ponowne ogłoszenia). */
+  async polaWielu(ids, pola) {
+    const unikalne = [...new Set((ids ?? []).filter(Boolean).map(String))];
+    const wynik = [];
+    for (let i = 0; i < unikalne.length; i += 300) {
+      const snapy = await db().getAll(...unikalne.slice(i, i + 300).map((id) => db().collection('tenders').doc(id)), { fieldMask: pola });
+      for (const snap of snapy) if (snap.exists) wynik.push({ id: snap.id, ...snap.data() });
+    }
+    return wynik;
+  },
+
   /**
    * Otwarte przetargi z NIP-em zamawiającego (2026-11-01) — radar wygasających umów szuka wśród
    * nich nowych edycji kończących się umów. Jak `openPool`: nierówność i sortowanie po tym samym

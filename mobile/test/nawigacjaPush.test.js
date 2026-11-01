@@ -74,7 +74,7 @@ test('swz_questions_reminder bez tender_id → Kalendarz bez podświetlenia', ()
 });
 
 test('radar umów, nowe dokumenty i wynik zapisanego przetargu → centrum alertów z podświetleniem', () => {
-  for (const type of ['umowa_nastepca', 'nowe_dokumenty', 'wynik_przetargu']) {
+  for (const type of ['umowa_nastepca', 'nowe_dokumenty', 'wynik_przetargu', 'przetarg_ponownie']) {
     assert.deepEqual(celPush({ type, klucz: 'wynik_bzp_1' }), { ekran: 'CentrumAlertow', params: { podswietlKlucz: 'wynik_bzp_1' } });
   }
 });
