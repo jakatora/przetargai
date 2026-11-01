@@ -37,6 +37,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 export function idPostepowaniaEz(tender) {
   const id = String(tender?.postepowanie_id ?? '');
+  if (tender?.source !== 'bzp' && tender?.source !== 'ted') return null;
   if (czyIdPostepowania(id)) return id;
   if (tender?.source === 'ted' && UUID.test(id)) return `ocds-148610-${id}`;
   return null;

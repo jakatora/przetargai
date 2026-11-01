@@ -94,6 +94,24 @@ describe('okno rozstrzygnięć — przebieg', () => {
     assert.ok(wynik.ted_czesci >= 14);
   });
 
+  test('wyniki zapisanych dostają rozstrzygnięcia z BZP i z TED (ten sam klucz postępowania)', async () => {
+    const przekazane = [];
+    const wynik = await runOknoWynikow({
+      dniBzp: 1, dniTed: 1, teraz: DZIS,
+      pobierzDzienBzp: async () => [wynikBzp],
+      pobierzModyfikacje: async () => [],
+      pobierzTed: async () => {
+        const { mapujWynikTed } = await import('../src/services/tedWyniki.js');
+        return wynikiTed.map(mapujWynikTed);
+      },
+      powiadomZapisane: async (lista) => { przekazane.push(...lista); return { alerty: 0 }; },
+    });
+    assert.deepEqual(wynik.wyniki_zapisanych, { alerty: 0 });
+    assert.equal(przekazane.filter((w) => w.zrodlo === 'bzp').length, 1);
+    assert.equal(przekazane.filter((w) => w.zrodlo !== 'bzp').length, 3);
+    assert.ok(przekazane.every((w) => w.tenderId));
+  });
+
   test('zapisane rozstrzygnięcie da się znaleźć po identyfikatorze POSTĘPOWANIA', async () => {
     await runOknoWynikow({
       dniBzp: 1, dniTed: 1, teraz: DZIS,

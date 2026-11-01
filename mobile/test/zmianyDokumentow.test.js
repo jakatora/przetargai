@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { znacznikZmian } from '../src/lib/zmianyDokumentow.js';
+import { znacznikZmian, opisWyboru } from '../src/lib/zmianyDokumentow.js';
 
 test('znacznik zmian w dokumentacji na karcie listy', () => {
   assert.deepEqual(znacznikZmian({ ez_zmiany: { wyjasnienia: 2, zmiany: 1, termin: 1 } }), { pl: 'Nowy termin · Zmiany SWZ (1) · Wyjaśnienia (2)', en: 'New deadline · Document changes (1) · Clarifications (2)' });
@@ -21,4 +21,12 @@ test('otwarcie ofert: skrót na kartę i zdanie na ekran ogłoszenia', async () 
   const en = (_, e) => e;
   assert.equal(znacznikOtwarcia(tender, en), 'Opening: 6 bids · from PLN 159k');
   assert.equal(znacznikOtwarcia({}, t), null);
+});
+
+test('opisWyboru: kto wybrany i ile ofert; części; bez danych null', () => {
+  const t = (pl) => pl;
+  assert.equal(opisWyboru({ wybor_oferty: { wykonawcy: [{ czesc: null, nazwa: 'RR-BUD Sp. z o.o.' }], oferty: 3 } }, t), 'RR-BUD Sp. z o.o. (3 oferty)');
+  assert.equal(opisWyboru({ wybor_oferty: { wykonawcy: [{ czesc: 1, nazwa: 'A' }, { czesc: 2, nazwa: 'B' }], oferty: null } }, t), 'cz. 1: A; cz. 2: B');
+  assert.equal(opisWyboru({ wybor_oferty: null }, t), null);
+  assert.equal(opisWyboru({}, t), null);
 });

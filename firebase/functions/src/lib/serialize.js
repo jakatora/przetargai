@@ -11,6 +11,10 @@ const zmianyDokumentow = (z) => (z && typeof z === 'object' && Number.isFinite(z
 const otwarcieOfert = (o) => (o && typeof o === 'object' && (Number.isFinite(o.kwota) || Number.isFinite(o.oferty))
   ? { kwota: o.kwota ?? null, oferty: o.oferty ?? null, cena_min: o.cena_min ?? null, cena_max: o.cena_max ?? null, czesci: o.czesci === true, dokument_url: o.dokument?.url ?? null }
   : null);
+/** Kogo wybrano wg pisma o wyborze oferty (2026-11-01, `lib/wyborOferty.js`) — bez listy przeczytanych plików. */
+const wyborOferty = (w) => (w && Array.isArray(w.wykonawcy) && w.wykonawcy.length
+  ? { wykonawcy: w.wykonawcy.slice(0, 5).map((x) => ({ czesc: x.czesc ?? null, nazwa: x.nazwa, nip: x.nip ?? null })), oferty: w.oferty ?? null, dokument_url: w.dokument?.url ?? null }
+  : null);
 
 /** Reprezentacje zasobów bezpieczne do zwrotu w API (bez danych wrażliwych). */
 
@@ -71,6 +75,7 @@ export function publicTender(row, znaczniki = {}) {
     kryteria_skrot: skrotKryteriow(row),
     ez_zmiany: zmianyDokumentow(row.ez_zmiany),
     otwarcie_ofert: otwarcieOfert(row.otwarcie_ofert),
+    wybor_oferty: wyborOferty(row.wybor_oferty),
     liczba_czesci: row.liczba_czesci ?? null,
     published_at: row.published_at ?? null,
     fetched_at: row.fetched_at ?? null,

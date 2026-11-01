@@ -83,5 +83,6 @@ test('idPostepowaniaEz: BZP wprost, TED z UUID procedury + przedrostek ocds, res
   assert.equal(idPostepowaniaEz({ source: 'bzp', postepowanie_id: '7e43b893-e15b-4cdb-ac94-dcbf13c57990' }), null);
   assert.equal(idPostepowaniaEz({ source: 'ted', postepowanie_id: '2026/S 123-456789' }), null);
   assert.equal(idPostepowaniaEz({ source: 'platformazakupowa', postepowanie_id: null }), null);
+  assert.equal(idPostepowaniaEz({ source: 'platformazakupowa', postepowanie_id: ocds }), null);
   assert.equal(idPostepowaniaEz(null), null);
 });

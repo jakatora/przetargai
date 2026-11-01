@@ -165,27 +165,30 @@ export async function runOknoWynikow({
     }
   }
 
-  // Wynik zapisanego przetargu (2026-11-01): kto wygrał i za ile — do centrum alertów konta, które go zapisało.
-  const zapisanych = await powiadomZapisane(wynikiBzp, { teraz }).catch((err) => {
-    logger.error({ err: err.message }, 'okno wyników: powiadomienia o wynikach zapisanych pominięte');
-    return { blad: err.message };
-  });
-
   let zapisaneTed = 0;
   let czesciTed = 0;
   let bladTed = null;
+  const wynikiTed = [];
   try {
     const odTed = new Date(teraz - (dniTed - 1) * 86_400_000).toISOString().slice(0, 10);
     const wyniki = await pobierzTed({ odDnia: odTed });
     const { zapisane, czesci } = await rozstrzygniecia.zapiszWiele(wyniki);
     zapisaneTed = zapisane;
     czesciTed = czesci;
+    wynikiTed.push(...wyniki);
   } catch (err) {
     // TED nie może zabrać BZP tego, co już zapisane — awaria jednego rejestru
     // nie kasuje przebiegu (ta sama zasada, co w rejestrze źródeł pobierania).
     bladTed = err.message;
     logger.error({ err: err.message }, 'okno wyników: TED pominięty');
   }
+
+  // Wynik zapisanego przetargu (2026-11-01): kto wygrał i za ile — do centrum alertów konta, które go zapisało.
+  // TED łączy się tak samo: `procedure-identifier` wyniku = `postepowanie_id` przetargu TED.
+  const zapisanych = await powiadomZapisane([...wynikiBzp, ...wynikiTed], { teraz }).catch((err) => {
+    logger.error({ err: err.message }, 'okno wyników: powiadomienia o wynikach zapisanych pominięte');
+    return { blad: err.message };
+  });
 
   /*
    * Zmiany umów (`cont-modif`) — osobny typ formularza i osobna kolekcja.

@@ -45,6 +45,20 @@ export function znacznikOtwarcia(tender, t) {
 }
 
 /** Zdanie na ekran ogłoszenia: liczba ofert, rozpiętość cen i kwota zamawiającego. */
+/**
+ * Kogo wybrano (2026-11-01, z pisma o wyborze oferty na e-Zamówieniach): „RR-BUD Sp. z o.o. (3 oferty)”,
+ * przy częściach „cz. 1: X; cz. 2: Y”. Bez danych — null.
+ */
+export function opisWyboru(tender, t) {
+  const w = (tender?.wybor_oferty?.wykonawcy ?? []).filter((x) => x?.nazwa).slice(0, 3);
+  if (!w.length) return null;
+  const n = tender.wybor_oferty.oferty;
+  const czesci = w.some((x) => x.czesc);
+  const pl = czesci ? w.map((x) => `cz. ${x.czesc ?? '?'}: ${x.nazwa}`).join('; ') : w[0].nazwa;
+  const en = czesci ? w.map((x) => `lot ${x.czesc ?? '?'}: ${x.nazwa}`).join('; ') : w[0].nazwa;
+  return t(`${pl}${Number.isFinite(n) ? ` (${ofertyPl(n)})` : ''}`, `${en}${Number.isFinite(n) ? ` (${n} bid${n === 1 ? '' : 's'})` : ''}`);
+}
+
 export function opisOtwarcia(tender, t) {
   const o = tender?.otwarcie_ofert;
   if (!o) return null;
