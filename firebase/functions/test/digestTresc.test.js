@@ -81,7 +81,7 @@ test('budujDigest: nowe dokumenty w przetargach klienta — skrót z wpisu alert
   assert.equal(skrotDokumentow({ tresc: { pl: 'Zamawiający opublikował informację z otwarcia ofert (1). 6 ofert z ceną: od 158 695 zł do 552 964 zł; zamawiający przeznaczył 195 457 zł. Informacja z otwarcia ofert' } }), 'informację z otwarcia ofert (1) — 6 ofert z ceną: od 158 695 zł do 552 964 zł; zamawiający przeznaczył 195 457 zł.');
   assert.equal(skrotDokumentow({ tresc: { pl: 'coś innego' } }), null);
   const d = budujDigest({ liczba: 3, tytuly: [], dokumenty: [{ tytul: 'Remont <dachu>', opis: 'zmianę dokumentów (1)' }] });
-  assert.match(d.text, /W Twoich przetargach pojawiły się nowe dokumenty na e-Zamówieniach:\n• Remont <dachu> — zmianę dokumentów \(1\)/);
+  assert.match(d.text, /W Twoich przetargach pojawiły się nowe dokumenty na platformach zakupowych:\n• Remont <dachu> — zmianę dokumentów \(1\)/);
   assert.match(d.html, /<b>Remont &lt;dachu&gt;<\/b> — zmianę dokumentów \(1\)/);
   assert.ok(!budujDigest({ liczba: 1 }).text.includes('nowe dokumenty'));
 });

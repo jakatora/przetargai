@@ -153,3 +153,30 @@ test('pismo o wyborze oferty w zapisanym przetargu 30 dni po terminie: czytane r
   const t = await tenders.findById(tender.id);
   assert.deepEqual([t.wybor_oferty.wykonawcy[0].nazwa, t.wybor_oferty.oferty, t.wybor_oferty.przeczytane], ['RR-BUD Sp. z o.o.', 3, [`${post}_8`]]);
 });
+
+test('platformazakupowa: załączniki szczegółu jako dokumenty — nowe wyjaśnienie → alert raz, odstęp między szczegółami', async () => {
+  const { dokumentyZSzczegoluPz } = await import('../src/jobs/monitorDokumentow.js');
+  const user = await users.create({ email: `md8-${ZNAK}@t.pl`, passwordHash: 'x' });
+  const { tender } = await tenders.upsert({ externalId: `pz:${ZNAK}8`, title: 'Dostawa mebli biurowych', organization: 'Gmina Z',
+    deadline: new Date(Date.now() + 6 * 86_400_000).toISOString(), source: 'platformazakupowa' });
+  await saved.add(user.id, { tender_id: tender.id, tender_title: tender.title, tender_deadline: tender.deadline });
+  const szczegol = { zalaczniki: [
+    { nazwa: 'SWZ', rozszerzenie: 'pdf', url: 'https://platformazakupowa.pl/file/get_new/a1', opublikowano: '2026-10-01T10:00:00.000Z' },
+    { nazwa: 'Odpowiedzi na pytania nr 1', rozszerzenie: 'pdf', url: 'https://platformazakupowa.pl/file/get_new/a2', opublikowano: new Date(Date.now() + 60_000).toISOString() },
+  ] };
+  assert.deepEqual(dokumentyZSzczegoluPz(szczegol)[1], { id: 'https://platformazakupowa.pl/file/get_new/a2', nazwa: 'Odpowiedzi na pytania nr 1', plik: 'Odpowiedzi na pytania nr 1', rozszerzenie: 'pdf', url: 'https://platformazakupowa.pl/file/get_new/a2', opublikowano: szczegol.zalaczniki[1].opublikowano });
+  const pytane = [];
+  const opcje = {
+    pobierz: async () => [], wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async () => {}, czekaj: async () => {}, limitPz: 100,
+    pobierzPz: async (t) => { pytane.push(t.bzp_external_id ?? t.id); return dokumentyZSzczegoluPz(szczegol); },
+  };
+  const w1 = await runMonitorDokumentow(opcje);
+  const w2 = await runMonitorDokumentow(opcje);
+  // W emulatorze są też przetargi PZ z innych plików testów — liczymy tylko nasz.
+  assert.equal(pytane.filter((id) => String(id).includes(`${ZNAK}8`)).length, 2, JSON.stringify({ pytane, w1 }));
+  assert.ok(w1.alerty >= 1);
+  assert.equal(w2.alerty, 0);
+  const alert = (await alerty.lista(user.id)).find((a) => a.tender_id === tender.id);
+  assert.match(alert.tresc.pl, /wyjaśnienia treści SWZ \(1\)\. Sprawdź przed złożeniem oferty/);
+  assert.equal(alert.pozycje[0].zrodlo, 'platformazakupowa');
+});

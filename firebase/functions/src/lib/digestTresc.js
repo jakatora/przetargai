@@ -79,10 +79,10 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
   // Nowe dokumenty w Twoich przetargach (2026-11-01): zmiany SWZ, wyjaśnienia, otwarcie ofert — z monitoringu e-Zamówień.
   const zmianyDok = Array.isArray(dokumenty) ? dokumenty.filter((d) => d?.tytul && d?.opis).slice(0, 3) : [];
   const dokumentyText = zmianyDok.length
-    ? `\n\nW Twoich przetargach pojawiły się nowe dokumenty na e-Zamówieniach:\n${zmianyDok.map((d) => `• ${d.tytul} — ${d.opis}`).join('\n')}`
+    ? `\n\nW Twoich przetargach pojawiły się nowe dokumenty na platformach zakupowych:\n${zmianyDok.map((d) => `• ${d.tytul} — ${d.opis}`).join('\n')}`
     : '';
   const dokumentyHtml = zmianyDok.length
-    ? `<p>W Twoich przetargach pojawiły się <b>nowe dokumenty</b> na e-Zamówieniach:</p><ul>${zmianyDok.map((d) => `<li><b>${esc(d.tytul)}</b> — ${esc(d.opis)}</li>`).join('')}</ul>`
+    ? `<p>W Twoich przetargach pojawiły się <b>nowe dokumenty</b> na platformach zakupowych:</p><ul>${zmianyDok.map((d) => `<li><b>${esc(d.tytul)}</b> — ${esc(d.opis)}</li>`).join('')}</ul>`
     : '';
   // Wyniki zapisanych przetargów (2026-11-01): kto wygrał i za ile — z alertów `wynik_przetargu`.
   const rozstrzygniete = Array.isArray(wyniki) ? wyniki.filter((w) => w?.tytul && w?.opis).slice(0, 3) : [];

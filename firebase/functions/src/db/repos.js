@@ -1090,7 +1090,7 @@ export const tenders = {
     const wynik = [];
     for (let i = 0; i < unikalne.length; i += 300) {
       const snapy = await db().getAll(...unikalne.slice(i, i + 300).map((id) => db().collection('tenders').doc(id)),
-        { fieldMask: ['postepowanie_id', 'source', 'title', 'organization', 'deadline', 'ez_monitor', 'ez_zmiany', 'otwarcie_ofert', 'wybor_oferty'] });
+        { fieldMask: ['postepowanie_id', 'source', 'bzp_external_id', 'title', 'organization', 'deadline', 'ez_monitor', 'ez_zmiany', 'otwarcie_ofert', 'wybor_oferty'] });
       for (const snap of snapy) if (snap.exists) wynik.push({ id: snap.id, ...snap.data() });
     }
     return wynik;
