@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import { okresUmowy, parsujWynik } from '../src/lib/wynikiParser.js';
 import {
-  koniecUmowyWyniku, czyCykliczna, pozycjaUmowy, zbudujKubelkiUmow, kluczeUmowUzytkownika, wybierzUmowy, MIN_DLUGOSC_DNI,
+  koniecUmowyWyniku, czyCykliczna, pozycjaUmowy, zbudujKubelkiUmow, kluczeUmowUzytkownika, wybierzUmowy, nastepcyUmow, MIN_DLUGOSC_DNI,
 } from '../src/lib/umowyWygasajace.js';
 
 /*
@@ -87,4 +87,66 @@ test('lista dla firmy: klucze z karty, bez własnych umów i bez zakończonych, 
   assert.equal(wKubelkach, 2);
   const pozniej = wybierzUmowy({ kubelki: { '90|18': k['90|18'] }, teraz: Date.parse('2026-12-01T08:00:00.000Z') });
   assert.deepEqual(pozniej.umowy.map((u) => u.id), ['a'], 'zakończona po przeliczeniu kubełka znika przy odczycie');
+});
+
+/*
+ * Następca umowy (2026-11-01): otwarty przetarg tego samego zamawiającego, który jest nową edycją
+ * kończącej się umowy. Tytuły jak z produkcji — sprzątanie i ochrona u tego samego zamawiającego.
+ */
+const otwarty = (id, title, { nip = '7490005094', cpv = '90910000-9', deadline = '2026-11-20T10:00:00.000Z', published = '2026-10-28T00:00:00.000Z' } = {}) => ({
+  id, title, zamawiajacy_nip: nip, cpv_main: cpv, deadline, published_at: published, url: `https://example.pl/${id}`, source: 'bzp', organization: 'Gmina',
+});
+
+test('następca: nowa edycja u tego samego zamawiającego (po NIP-ie), nie inny zakup ani inny zamawiający', () => {
+  const wyniki = [
+    umowa('sp', { koniec: '2027-01-15', tytul: 'Sprzątanie budynków Urzędu Gminy' }),
+    umowa('oc', { koniec: '2026-12-31', tytul: 'Ochrona fizyczna obiektów', cpv: ['79710000-4'] }),
+  ];
+  const nastepcy = nastepcyUmow(wyniki, [
+    otwarty('t1', 'Sprzątanie budynków Urzędu Gminy w 2027 roku'),
+    otwarty('t2', 'Dostawa oleju opałowego', { cpv: '09135000-4' }),
+    otwarty('t3', 'Sprzątanie budynków Urzędu Gminy', { nip: '5830001675' }), // inny zamawiający
+    otwarty('t4', 'Ochrona fizyczna obiektów', { cpv: '79710000-4', deadline: '2026-10-30T10:00:00.000Z' }), // termin minął
+  ], { teraz: TERAZ });
+  assert.deepEqual([...nastepcy.keys()], ['sp']);
+  assert.deepEqual([nastepcy.get('sp').tender_id, nastepcy.get('sp').deadline, nastepcy.get('sp').url], ['t1', '2026-11-20T10:00:00.000Z', 'https://example.pl/t1']);
+});
+
+test('następca: dwa przetargi do jednej umowy — wygrywa podobniejszy tytuł, przy remisie bliższy termin', () => {
+  const wyniki = [umowa('sp', { koniec: '2027-01-15', tytul: 'Sprzątanie budynków Urzędu Gminy' })];
+  const remis = nastepcyUmow(wyniki, [
+    otwarty('pozno', 'Sprzątanie budynków Urzędu Gminy', { deadline: '2026-12-10T10:00:00.000Z' }),
+    otwarty('wczesnie', 'Sprzątanie budynków Urzędu Gminy', { deadline: '2026-11-12T10:00:00.000Z' }),
+  ], { teraz: TERAZ });
+  assert.equal(remis.get('sp').tender_id, 'wczesnie');
+  const podobniejszy = nastepcyUmow(wyniki, [
+    otwarty('dokladny', 'Sprzątanie budynków Urzędu Gminy', { deadline: '2026-12-10T10:00:00.000Z' }),
+    otwarty('luzny', 'Sprzątanie budynków i terenów zielonych Urzędu Gminy oraz szkół', { deadline: '2026-11-12T10:00:00.000Z' }),
+  ], { teraz: TERAZ });
+  assert.equal(podobniejszy.get('sp').tender_id, 'dokladny');
+});
+
+test('następca w kubełkach i na liście: ogłoszone pierwsze, po terminie ofert link znika przy odczycie', () => {
+  const wyniki = [umowa('a', { koniec: '2026-11-20' }), umowa('b', { koniec: '2027-03-01', tytul: 'Sprzątanie szkoły podstawowej' })];
+  const nastepcy = nastepcyUmow(wyniki, [otwarty('t-b', 'Sprzątanie szkoły podstawowej 2027', { deadline: '2026-11-15T10:00:00.000Z' })], { teraz: TERAZ });
+  const k = zbudujKubelkiUmow(wyniki, { teraz: TERAZ, nastepcy });
+  assert.deepEqual(k['90|18'].umowy.map((u) => [u.id, u.nastepca?.tender_id ?? null]), [['b', 't-b'], ['a', null]]);
+  const teraz = wybierzUmowy({ kubelki: { '90|18': k['90|18'] }, teraz: TERAZ });
+  assert.deepEqual([teraz.umowy.map((u) => u.id), teraz.juz_ogloszone], [['b', 'a'], 1]);
+  const poTerminie = wybierzUmowy({ kubelki: { '90|18': k['90|18'] }, teraz: Date.parse('2026-11-16T08:00:00.000Z') });
+  assert.deepEqual([poTerminie.umowy.map((u) => [u.id, u.nastepca]), poTerminie.juz_ogloszone], [[['a', null], ['b', null]], 0]);
+  assert.equal(zbudujKubelkiUmow(wyniki, { teraz: TERAZ })['90|18'].umowy[0].nastepca, null, 'bez następców pole jest, ale puste');
+});
+
+test('następca u brokera ubezpieczeniowego: jeden NIP, wiele gmin — tylko prawie ten sam tytuł; słaby = „podobny”', () => {
+  const broker = (id, tytul, koniec = '2026-12-31') => ({ ...umowa(id, { koniec, tytul, cpv: ['66510000-8'] }), zamawiajacy: 'Inter-Broker sp. z o.o.' });
+  const wyniki = [broker('jawor', 'Świadczenie usług ubezpieczeniowych dla Gminy Jawor wraz z jednostkami organizacyjnymi'), broker('niem', 'Ubezpieczenie majątku i innych interesów Gminy Niemodlin')];
+  const nastepcy = nastepcyUmow(wyniki, [
+    { ...otwarty('slaw', 'Ubezpieczenie majątku i innych interesów Gminy Sławatycze oraz jednostek organizacyjnych', { cpv: '66510000-8' }), organization: 'Inter-Broker sp. z o.o.' },
+    { ...otwarty('niem2', 'Ubezpieczenie majątku i innych interesów Gminy Niemodlin', { cpv: '66510000-8' }), organization: 'Inter-Broker sp. z o.o.' },
+  ], { teraz: TERAZ });
+  assert.deepEqual([...nastepcy].map(([id, n]) => [id, n.tender_id, n.pewny]), [['niem', 'niem2', true]]);
+  const slaby = nastepcyUmow([umowa('sp', { koniec: '2026-12-30', tytul: 'Sprzątanie pomieszczeń biurowych Urzędu Gminy' })],
+    [otwarty('sp2', 'Sprzątanie i ochrona pomieszczeń magazynowych w Urzędzie Gminy')], { teraz: TERAZ });
+  assert.deepEqual([slaby.get('sp')?.tender_id, slaby.get('sp')?.pewny], ['sp2', false]);
 });

@@ -339,23 +339,33 @@ test('GET /wygrywalnosc/umowy-wygasajace: job składa kubełki z rozstrzygnięć
   assert.equal((await fetch(`${BAZA}/auth/me`, { method: 'PATCH', headers: auth(t), body: JSON.stringify({ cpv_codes: ['98341120'], regiony: ['30'] }) })).status, 200);
 
   const dzien = (dni) => new Date(Date.now() + dni * 86_400_000).toISOString().slice(0, 10);
-  const wynik = (id, koniec, { woj = '30', dataUmowy = dzien(-300) } = {}) => ({
-    externalId: `uw-${id}-${ZNAK}`, tenderId: `ocds-uw-${id}-${ZNAK}`, zrodlo: 'bzp', tytul: `Ochrona obiektów ${id}`, zamawiajacy: 'Szpital Wojewódzki',
+  const wynik = (id, koniec, { woj = '30', dataUmowy = dzien(-300), tytul = `Ochrona obiektów ${id}` } = {}) => ({
+    externalId: `uw-${id}-${ZNAK}`, tenderId: `ocds-uw-${id}-${ZNAK}`, zrodlo: 'bzp', tytul, zamawiajacy: 'Szpital Wojewódzki',
     zamawiajacyNip: '7790000001', cpv: ['98341120-2'], wojewodztwo: woj, rodzaj: 'Services', opublikowano: dzien(-290),
     czesci: [{ numer: 1, uniewaznione: false, dataUmowy, okresUmowy: '12 miesięcy', koniecUmowy: koniec, wartoscUmowy: 480_000, zwyciezca: { nazwa: `Ochrona ${id} Sp. z o.o.`, nip: '7790000002' } }],
   });
-  await rozstrzygniecia.zapiszWiele([wynik('a', dzien(60)), wynik('b', dzien(20)), wynik('c', dzien(400)), wynik('d', dzien(30), { woj: '12' })]);
+  await rozstrzygniecia.zapiszWiele([wynik('a', dzien(60), { tytul: `Ochrona fizyczna szpitala psychiatrycznego ${ZNAK}` }), wynik('b', dzien(20)), wynik('c', dzien(400)), wynik('d', dzien(30), { woj: '12' })]);
+  // Następca umowy (2026-11-01): szpital już ogłosił nową ochronę — umowa „a” idzie na górę z linkiem.
+  const { tender: nowy } = await tenders.upsert({
+    externalId: `uw-nowy-${ZNAK}`, title: `Ochrona fizyczna szpitala psychiatrycznego ${ZNAK} w 2027 roku`, organization: 'Szpital Wojewódzki',
+    deadline: new Date(Date.now() + 10 * 86_400_000).toISOString(), publishedAt: new Date(Date.now() - 86_400_000).toISOString(),
+    source: 'bzp', cpvMain: '98341120-2', zamawiajacy_nip: '7790000001',
+  });
   const stan = await runUmowyWygasajace();
   assert.equal(stan.ok, true);
   assert.ok(stan.umow_cyklicznych >= 3);
+  assert.ok(stan.juz_ogloszonych >= 1);
+  assert.equal(stan.blad_nastepcow, null);
 
   const odp = await fetch(`${BAZA}/wygrywalnosc/umowy-wygasajace`, { headers: auth(t) });
   assert.equal(odp.status, 200);
   const d = await odp.json();
   assert.equal(d.dostepne, true);
   const nasze = d.umowy.filter((u) => u.id.endsWith(ZNAK));
-  assert.deepEqual(nasze.map((u) => u.id), [`uw-b-${ZNAK}`, `uw-a-${ZNAK}`], 'tylko Wielkopolska (30), w horyzoncie, najbliżej końca pierwsze');
-  assert.deepEqual([nasze[0].dni_do_konca, nasze[0].wartosc, nasze[0].zwyciezcy[0].nip, nasze[0].region_nazwa], [20, 480000, '7790000002', 'Wielkopolskie']);
+  assert.deepEqual(nasze.map((u) => u.id), [`uw-a-${ZNAK}`, `uw-b-${ZNAK}`], 'tylko Wielkopolska (30), w horyzoncie; z ogłoszonym następcą pierwsza, dalej najbliżej końca');
+  assert.deepEqual([nasze[0].nastepca?.tender_id, nasze[1].nastepca], [nowy.id, null]);
+  assert.ok(d.juz_ogloszone >= 1);
+  assert.deepEqual([nasze[1].dni_do_konca, nasze[1].wartosc, nasze[1].zwyciezcy[0].nip, nasze[1].region_nazwa], [20, 480000, '7790000002', 'Wielkopolskie']);
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/umowy-wygasajace`)).status, 401);
 });
 
@@ -365,6 +375,6 @@ test('przegląd tygodniowy: trzy najbliżej kończące się umowy z kubełków k
   assert.ok(!umowy.some((u) => u.id.endsWith(ZNAK)), 'firma, która wykonuje te umowy, nie dostaje ich jako leadów');
   const obca = await umowyDoPrzegladu({ cpv_codes: ['98341120'], regiony: ['30'], company_nip: null });
   assert.ok(obca.length <= 3);
-  assert.equal(obca.filter((u) => u.id.endsWith(ZNAK))[0]?.id, `uw-b-${ZNAK}`);
+  assert.equal(obca.filter((u) => u.id.endsWith(ZNAK))[0]?.id, `uw-a-${ZNAK}`, 'umowa z już ogłoszonym następcą idzie do przeglądu pierwsza');
   assert.deepEqual(await umowyDoPrzegladu({ cpv_codes: [], regiony: [] }), []);
 });

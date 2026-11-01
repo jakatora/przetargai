@@ -61,3 +61,16 @@ test('budujDigest: sekcja wygasających umów (do 3) w tekście i HTML, z uciecz
   assert.match(d.html, /<b>Ochrona &lt;obiektów&gt;<\/b>/);
   assert.ok(!budujDigest({ liczba: 1 }).text.includes('wkrótce się kończą'));
 });
+
+test('budujDigest: umowa z już ogłoszonym następcą — „nowy przetarg już ogłoszony, oferty do …” (czas warszawski)', () => {
+  const umowy = [
+    { tytul: 'Ochrona obiektów', zamawiajacy: 'Szpital', koniec: '2026-12-31', wartosc: 480000, nastepca: { deadline: '2026-11-12T23:00:00.000Z', pewny: true } },
+    { tytul: 'Sprzątanie', zamawiajacy: 'Gmina', koniec: '2027-01-15', nastepca: { deadline: '2026-11-20T09:00:00.000Z', pewny: false } },
+    { tytul: 'Paliwo', zamawiajacy: 'Powiat', koniec: '2027-02-01', nastepca: null },
+  ];
+  const d = budujDigest({ liczba: 2, tytuly: [], umowy });
+  assert.match(d.text, /wkrótce się kończą — część przetargów już ogłoszono:\n• Ochrona obiektów — Szpital · koniec 31\.12\.2026 · 480 tys\. zł · nowy przetarg już ogłoszony, oferty do 13\.11\.2026\n/);
+  assert.match(d.text, /• Sprzątanie — Gmina · koniec 15\.01\.2027 · podobny przetarg już ogłoszony, oferty do 20\.11\.2026/);
+  assert.match(d.text, /• Paliwo — Powiat · koniec 01\.02\.2027$/m);
+  assert.match(d.html, /część przetargów już ogłoszono/);
+});

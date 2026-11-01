@@ -29,7 +29,12 @@ const kwotaKrotko = (n) => (!Number.isFinite(n) ? null
 const opisWygranej = (k) => [k.tytul, k.zamawiajacy, kwotaKrotko(k.cena)].filter(Boolean).join(' · ');
 
 const dataPL = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso ?? '')); return m ? `${m[3]}.${m[2]}.${m[1]}` : null; };
-const opisUmowy = (u) => [u.zamawiajacy, dataPL(u.koniec) ? `koniec ${dataPL(u.koniec)}` : null, kwotaKrotko(u.wartosc)].filter(Boolean).join(' · ');
+/** Termin ofert następcy po polsku (czas warszawski — północ zapisana w UTC to poprzedni dzień). */
+const terminPL = (iso) => { const t = Date.parse(String(iso ?? '')); return Number.isFinite(t) ? new Date(t).toLocaleDateString('pl-PL', { timeZone: 'Europe/Warsaw', day: '2-digit', month: '2-digit', year: 'numeric' }) : null; };
+/** Następca umowy (2026-11-01): nowy przetarg już ogłoszony — wtedy nie „zaraz wróci”, tylko „składaj”. */
+const opisNastepcy = (n) => (!n ? null
+  : `${n.pewny === false ? 'podobny przetarg' : 'nowy przetarg'} już ogłoszony${terminPL(n.deadline) ? `, oferty do ${terminPL(n.deadline)}` : ''}`);
+const opisUmowy = (u) => [u.zamawiajacy, dataPL(u.koniec) ? `koniec ${dataPL(u.koniec)}` : null, kwotaKrotko(u.wartosc), opisNastepcy(u.nastepca)].filter(Boolean).join(' · ');
 
 export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [] }) {
   const n = Math.max(0, Math.floor(liczba));
@@ -52,11 +57,12 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
     : '';
   // Wygasające umowy (2026-10-31) — przetargi, które za chwilę wrócą w branżach i regionach karty.
   const konczace = Array.isArray(umowy) ? umowy.filter((u) => u?.tytul).slice(0, 3) : [];
+  const zapowiedz = konczace.some((u) => u.nastepca) ? 'część przetargów już ogłoszono' : 'ten przetarg zaraz wróci';
   const umowyText = konczace.length
-    ? `\n\nUmowy w Twoich branżach, które wkrótce się kończą — ten przetarg zaraz wróci:\n${konczace.map((u) => `• ${u.tytul} — ${opisUmowy(u)}`).join('\n')}`
+    ? `\n\nUmowy w Twoich branżach, które wkrótce się kończą — ${zapowiedz}:\n${konczace.map((u) => `• ${u.tytul} — ${opisUmowy(u)}`).join('\n')}`
     : '';
   const umowyHtml = konczace.length
-    ? `<p>Umowy w Twoich branżach, które <b>wkrótce się kończą</b> — ten przetarg zaraz wróci:</p><ul>${konczace.map((u) => `<li><b>${esc(u.tytul)}</b> — ${esc(opisUmowy(u))}</li>`).join('')}</ul>`
+    ? `<p>Umowy w Twoich branżach, które <b>wkrótce się kończą</b> — ${zapowiedz}:</p><ul>${konczace.map((u) => `<li><b>${esc(u.tytul)}</b> — ${esc(opisUmowy(u))}</li>`).join('')}</ul>`
     : '';
   const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${konkurenciText}${umowyText}\n\n`
     + `Otwórz aplikację PrzetargAI, aby zobaczyć szczegóły i zdecydować, w które startujesz.\n\n`

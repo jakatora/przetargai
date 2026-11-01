@@ -125,6 +125,7 @@ export function poprzedniaEdycja(tender, wyniki, { teraz = Date.now() } = {}) {
   const konce = czesci.map((c) => c.koniecUmowy).filter((k) => Number.isFinite(ms(k))).sort();
   const oferty = czesci.map((c) => c.liczbaOfert).filter((n) => Number.isFinite(n));
   return {
+    id: wynik.externalId ?? null,
     tytul: wynik.tytul ?? null,
     opublikowano: wynik.opublikowano ?? null,
     wykonawcy: wykonawcy.slice(0, 3),

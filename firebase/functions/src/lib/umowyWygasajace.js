@@ -1,6 +1,7 @@
 import { dzialCpv, normWojewodztwo } from './wynikiAgregacja.js';
 import { normNip } from './profilKonkurenta.js';
 import { WOJEWODZTWA } from './wojewodztwa.js';
+import { poprzedniaEdycja } from './poprzedniaEdycja.js';
 
 /*
  * RADAR WYGASAJĄCYCH UMÓW (2026-10-31, z analizy konkurencji: przetargi.info „umowy wygasające”).
@@ -98,12 +99,83 @@ export function pozycjaUmowy(wynik, { odDnia, doDnia }) {
   };
 }
 
+/*
+ * NASTĘPCA UMOWY (2026-11-01). Część kończących się umów ma już nowy przetarg w toku — zamawiający
+ * ogłosił go przed końcem starej umowy. Wtedy radar nie mówi „przygotuj się”, tylko „składaj ofertę,
+ * termin taki i taki” i prowadzi prosto do ogłoszenia, bez szukania go w katalogu.
+ *
+ * Kierunek dopasowania jest ten, w którym mierzono progi `lib/poprzedniaEdycja.js`: dla KAŻDEGO
+ * otwartego przetargu szukamy jego poprzedniej edycji wśród rozstrzygnięć tego samego zamawiającego
+ * (po NIP-ie). Ta sama umowa wybrana przez kilka przetargów — wygrywa najpodobniejszy tytuł, potem
+ * najbliższy termin składania.
+ *
+ * Próbka z produkcji (1.11.2026, 797 par z 8479 otwartych przetargów): 30 losowych par — wszystkie
+ * to ten sam zakup; błędy tylko przy podobieństwie < 0,45 i u brokerów ubezpieczeniowych, którzy
+ * pod JEDNYM NIP-em prowadzą przetargi wielu gmin („Gmina Jawor” → „Gmina Sławatycze”). Brokerowi
+ * wierzymy więc tylko przy prawie tym samym tytule, a słabsze dopasowanie to „podobny przetarg”.
+ */
+
+/** Pośrednik zamawiający w imieniu wielu jednostek (broker ubezpieczeniowy). */
+const POSREDNIK = /broker|\bEIB\b/i;
+const MIN_PODOB_POSREDNIKA = 0.8;
+/** Od tylu podobieństwa tytułów mówimy „nowa edycja”, poniżej — „podobny przetarg”. */
+export const PROG_PEWNEGO_NASTEPCY = 0.6;
+
+/**
+ * @param {object[]} wyniki rozstrzygnięcia z końcem umowy w oknie radaru
+ * @param {object[]} otwarte otwarte przetargi z NIP-em zamawiającego (id, title, cpv_main, deadline…)
+ * @returns {Map<string, object>} externalId rozstrzygnięcia → skrót nowego przetargu
+ */
+export function nastepcyUmow(wyniki, otwarte, { teraz = Date.now() } = {}) {
+  const poNipie = new Map();
+  for (const w of Array.isArray(wyniki) ? wyniki : []) {
+    const nip = normNip(w?.zamawiajacyNip ?? w?.zamawiajacy_nip);
+    if (!nip || !w.externalId) continue;
+    if (!poNipie.has(nip)) poNipie.set(nip, []);
+    poNipie.get(nip).push(w);
+  }
+  const terazIso = new Date(teraz).toISOString();
+  const nastepcy = new Map();
+  for (const t of Array.isArray(otwarte) ? otwarte : []) {
+    const grupa = poNipie.get(normNip(t?.zamawiajacy_nip));
+    if (!grupa || !t.id || t.anulowany === true || t.zastapiony_przez) continue;
+    if (!t.deadline || String(t.deadline) <= terazIso) continue;
+    const edycja = poprzedniaEdycja(t, grupa, { teraz });
+    if (!edycja?.id) continue;
+    const posrednik = POSREDNIK.test(String(t.organization ?? '')) || grupa.some((w) => w.externalId === edycja.id && POSREDNIK.test(String(w.zamawiajacy ?? '')));
+    if (posrednik && edycja.podobienstwo < MIN_PODOB_POSREDNIKA) continue;
+    const kandydat = {
+      tender_id: t.id,
+      tytul: t.title ?? null,
+      deadline: t.deadline,
+      opublikowano: t.published_at ?? null,
+      url: t.url ?? null,
+      zrodlo: t.source ?? null,
+      podobienstwo: edycja.podobienstwo,
+      pewny: edycja.podobienstwo >= PROG_PEWNEGO_NASTEPCY,
+    };
+    const byl = nastepcy.get(edycja.id);
+    if (byl && (byl.podobienstwo > kandydat.podobienstwo
+      || (byl.podobienstwo === kandydat.podobienstwo && byl.deadline <= kandydat.deadline))) continue;
+    nastepcy.set(edycja.id, kandydat);
+  }
+  return nastepcy;
+}
+
+/** Umowy z ogłoszonym następcą pierwsze (najbliższy termin oferty), potem najbliżej końca umowy. */
+function kolejnoscUmow(a, b) {
+  if (Boolean(a.nastepca) !== Boolean(b.nastepca)) return a.nastepca ? -1 : 1;
+  if (a.nastepca && b.nastepca) return String(a.nastepca.deadline).localeCompare(String(b.nastepca.deadline));
+  return a.koniec.localeCompare(b.koniec) || (b.wartosc ?? 0) - (a.wartosc ?? 0);
+}
+
 /**
  * Kubełki radaru z rozstrzygnięć, których umowa kończy się w [dzisiaj, dzisiaj + HORYZONT_DNI].
  * Każda umowa trafia do kubełków WSZYSTKICH swoich działów CPV (do 3) — w regionie i w kraju.
+ * `nastepcy` (z `nastepcyUmow`) dopisuje do pozycji już ogłoszony nowy przetarg.
  * @returns {Record<string, {klucz: string, dzial: string, wojewodztwo: string|null, umowy: object[]}>}
  */
-export function zbudujKubelkiUmow(wyniki, { teraz = Date.now(), horyzontDni = HORYZONT_DNI, maks = MAKS_W_KUBELKU } = {}) {
+export function zbudujKubelkiUmow(wyniki, { teraz = Date.now(), horyzontDni = HORYZONT_DNI, maks = MAKS_W_KUBELKU, nastepcy = null } = {}) {
   const odDnia = dzienIso(teraz);
   const doDnia = dzienIso(teraz + horyzontDni * DZIEN_MS);
   const kubelki = {};
@@ -114,6 +186,7 @@ export function zbudujKubelkiUmow(wyniki, { teraz = Date.now(), horyzontDni = HO
   for (const w of Array.isArray(wyniki) ? wyniki : []) {
     const poz = pozycjaUmowy(w, { odDnia, doDnia });
     if (!poz) continue;
+    poz.nastepca = (poz.id && nastepcy?.get(poz.id)) || null;
     const dzialy = [...new Set((Array.isArray(w.cpv) ? w.cpv : [w.cpv]).map((k) => dzialCpv(k)).filter(Boolean))].slice(0, 3);
     for (const d of dzialy) {
       dodaj(kluczUmow(d), d, null, poz);
@@ -122,7 +195,7 @@ export function zbudujKubelkiUmow(wyniki, { teraz = Date.now(), horyzontDni = HO
   }
   for (const k of Object.values(kubelki)) {
     k.liczba = k.umowy.length;
-    k.umowy = k.umowy.sort((a, b) => a.koniec.localeCompare(b.koniec) || (b.wartosc ?? 0) - (a.wartosc ?? 0)).slice(0, maks);
+    k.umowy = k.umowy.sort(kolejnoscUmow).slice(0, maks);
     k.od = odDnia;
     k.do = doDnia;
   }
@@ -139,10 +212,12 @@ export function kluczeUmowUzytkownika(user) {
 
 /**
  * Lista dla firmy: scalone kubełki, bez powtórzeń, bez umów już zakończonych i bez własnych
- * (firma, która tę umowę wykonuje, wie, kiedy się kończy), najbliżej końca pierwsze.
+ * (firma, która tę umowę wykonuje, wie, kiedy się kończy). Najpierw umowy, których nowy przetarg
+ * już trwa (termin ofert minął od przeliczenia — link znika), potem najbliżej końca.
  */
 export function wybierzUmowy({ kubelki, teraz = Date.now(), wlasnyNip = null, limit = 40 }) {
   const dzisiaj = dzienIso(teraz);
+  const terazIso = new Date(teraz).toISOString();
   const wlasny = normNip(wlasnyNip);
   const poId = new Map();
   let wKubelkach = 0;
@@ -152,16 +227,18 @@ export function wybierzUmowy({ kubelki, teraz = Date.now(), wlasnyNip = null, li
     for (const u of k.umowy ?? []) {
       if (!u?.id || !u.koniec || u.koniec < dzisiaj || poId.has(u.id)) continue;
       if (wlasny && (u.zwyciezcy ?? []).some((z) => normNip(z.nip) === wlasny)) continue;
-      poId.set(u.id, u);
+      const nastepca = u.nastepca?.deadline && String(u.nastepca.deadline) > terazIso ? u.nastepca : null;
+      poId.set(u.id, { ...u, nastepca });
     }
   }
-  const umowy = [...poId.values()]
-    .sort((a, b) => a.koniec.localeCompare(b.koniec))
+  const wszystkie = [...poId.values()].sort(kolejnoscUmow);
+  const juzOgloszone = wszystkie.filter((u) => u.nastepca).length;
+  const umowy = wszystkie
     .slice(0, limit)
     .map((u) => ({
       ...u,
       dni_do_konca: Math.round((msDnia(u.koniec) - msDnia(dzisiaj)) / DZIEN_MS),
       region_nazwa: u.wojewodztwo ? WOJEWODZTWA[u.wojewodztwo] ?? null : null,
     }));
-  return { umowy, w_kubelkach: wKubelkach };
+  return { umowy, w_kubelkach: wKubelkach, juz_ogloszone: juzOgloszone };
 }

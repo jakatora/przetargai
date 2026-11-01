@@ -227,8 +227,8 @@ router.get('/umowy-wygasajace', ah(async (req, res) => {
     return;
   }
   const kubelki = await umowyWygasajace.pobierzWiele(klucze);
-  const { umowy, w_kubelkach: wKubelkach } = wybierzUmowy({ kubelki, wlasnyNip: req.user.company_nip ?? null });
-  res.json({ dostepne: true, dzialy, regiony, horyzont_dni: HORYZONT_DNI, w_kubelkach: wKubelkach, umowy });
+  const { umowy, w_kubelkach: wKubelkach, juz_ogloszone: juzOgloszone } = wybierzUmowy({ kubelki, wlasnyNip: req.user.company_nip ?? null });
+  res.json({ dostepne: true, dzialy, regiony, horyzont_dni: HORYZONT_DNI, w_kubelkach: wKubelkach, juz_ogloszone: juzOgloszone, umowy });
 }));
 
 router.get('/moi-konkurenci', ah(async (req, res) => {

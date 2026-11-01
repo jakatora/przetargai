@@ -1038,6 +1038,24 @@ export const tenders = {
   },
 
   /**
+   * Otwarte przetargi z NIP-em zamawiającego (2026-11-01) — radar wygasających umów szuka wśród
+   * nich nowych edycji kończących się umów. Jak `openPool`: nierówność i sortowanie po tym samym
+   * polu (indeks automatyczny), ale bez cache puli — potrzebne są inne pola. Bez anulowanych
+   * i bez kopii z platform zastąpionych ogłoszeniem z rejestru wiodącego.
+   */
+  async otwarteZNipem({ sufit = 60_000, rozmiarStrony = 2000, teraz = nowIso() } = {}) {
+    const zapytanie = db().collection('tenders')
+      .where('deadline', '>', teraz)
+      .orderBy('deadline')
+      .select('title', 'organization', 'cpv_main', 'published_at', 'deadline', 'url', 'source',
+        'zamawiajacy_nip', 'postepowanie_id', 'anulowany', 'zastapiony_przez');
+    const { docs } = await stronicuj(zapytanie, sufit, rozmiarStrony);
+    return docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((t) => t.zamawiajacy_nip && t.anulowany !== true && !t.zastapiony_przez);
+  },
+
+  /**
    * Wyjaśnienie AI ogłoszenia jest CACHE'OWANE na dokumencie przetargu (D-052) —
    * przetarg jest niemutowalny co do danych źródłowych, ale wyjaśnienie to pole
    * pochodne, wspólne dla wszystkich oglądających. Pierwszy oglądający płaci za
@@ -2354,7 +2372,7 @@ export const rozstrzygniecia = {
    * stronami po 2000, z sufitem — dzień ruchu to kilkadziesiąt tysięcy umów, nie miliony.
    */
   async konczaceSie(od, doDnia, { sufit = 60_000 } = {}) {
-    const pola = ['externalId', 'tytul', 'zamawiajacy', 'zamawiajacyNip', 'miasto', 'wojewodztwo', 'cpv', 'rodzaj', 'czesci', 'tenderId', 'koniec_umowy'];
+    const pola = ['externalId', 'tytul', 'zamawiajacy', 'zamawiajacyNip', 'miasto', 'wojewodztwo', 'cpv', 'rodzaj', 'czesci', 'tenderId', 'koniec_umowy', 'opublikowano'];
     const wynik = [];
     let ostatni = null;
     for (;;) {
