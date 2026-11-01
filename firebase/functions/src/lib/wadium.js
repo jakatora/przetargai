@@ -56,9 +56,16 @@ const KWOTA_WADIUM = /(?<![\d/])(\d{1,3}(?:[\s.]?\d{3})*|\d+)(,\d{2})?(?![\d/])\
 
 export function parsujWadiumSwz(linie) {
   const tekst = (Array.isArray(linie) ? linie.join(' ') : String(linie ?? '')).replace(/\s+/g, ' ').replace(/(\d)\s+,(\d{2})\b/g, '$1,$2');
-  if (NIE_WYMAGA.test(tekst)) return { wymagane: false, kwota: null };
-  // Spis treści („WYMAGANIA DOTYCZĄCE WADIUM ..... 29”) nie jest zdaniem — pierwsze wystąpienie z czasownikiem.
-  const m = WYMAGA.exec(tekst);
+  const nie = [...tekst.matchAll(new RegExp(NIE_WYMAGA.source, 'gi'))];
+  // „nie wymaga wniesienia wadium” zawiera „wymaga wniesienia wadium” — takie trafienie nie jest wymogiem.
+  // Spis treści („WYMAGANIA DOTYCZĄCE WADIUM ..... 29”) nie jest zdaniem — liczy się zdanie z czasownikiem.
+  const tak = [...tekst.matchAll(new RegExp(WYMAGA.source, 'gi'))]
+    .filter((m) => !nie.some((n) => m.index >= n.index && m.index < n.index + n[0].length));
+  // Oba naraz (części z wadium i bez, albo wzór umowy obok wymogu): nie zgadujemy. Pominięte wadium odrzuca ofertę,
+  // więc „nie wymaga” podajemy tylko przy braku jakiegokolwiek wymogu w treści.
+  if (nie.length && tak.length) return { wymagane: null, kwota: null, sprzeczne: true };
+  if (nie.length) return { wymagane: false, kwota: null };
+  const m = tak[0];
   if (!m) return { wymagane: null, kwota: null };
   const okno = tekst.slice(m.index, m.index + OKNO_ZNAKOW);
   const kwoty = [...okno.matchAll(KWOTA_WADIUM)]

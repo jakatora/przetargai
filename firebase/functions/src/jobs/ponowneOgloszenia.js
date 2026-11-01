@@ -10,8 +10,9 @@ import { dostarcz } from './monitorWyszukiwan.js';
 /*
  * PONOWNE OGŁOSZENIA UNIEWAŻNIONYCH PRZETARGÓW (2026-11-01, `lib/ponowneOgloszenie.js`). Bierze Zapisane i przetargi
  * z analizą SWZ do 120 dni po terminie; unieważniony = znacznik anulowania albo wynik, w którym wszystkie części
- * są unieważnione. Dla takich szuka nowego ogłoszenia zamawiającego (po NIP-ie, bez NIP-u po dokładnej nazwie)
- * i — gdy jest — zapisuje je kontu z przypomnieniem i wysyła alert. Koszt: kilkadziesiąt odczytów na przebieg.
+ * są unieważnione. Dla takich szuka nowego ogłoszenia zamawiającego wśród otwartych (po NIP-ie i po dokładnej
+ * nazwie) i — gdy jest — zapisuje je kontu z przypomnieniem i wysyła alert, raz na parę stary × nowy. Koszt:
+ * kilkadziesiąt odczytów, a przy pierwszym unieważnionym jeszcze pula otwartych (~10 tys. odczytów pól).
  */
 export const DNI_PO_TERMINIE = 120;
 const POLA = ['title', 'organization', 'deadline', 'source', 'cpv_main', 'zamawiajacy_nip', 'postepowanie_id', 'anulowany'];
@@ -31,6 +32,21 @@ export async function runPonowneOgloszenia({
   for (const w of poKluczu.values()) poPrzetargu.set(w.tenderId, [...(poPrzetargu.get(w.tenderId) ?? []), w]);
   const stan = await przetargi.polaWielu([...poPrzetargu.keys()], POLA);
   const uzytkownicy = new Map();
+  // Pula otwartych raz na przebieg i dopiero przy pierwszym unieważnionym: po NIP-ie i po dokładnej nazwie (nowe
+  // ogłoszenie z PZ/ePP bywa bez NIP-u, choć stare z BZP go ma).
+  let pula = null;
+  const kandydaciDla = async (t) => {
+    if (!pula) {
+      pula = { poNip: new Map(), poNazwie: new Map() };
+      const dopisz = (mapa, klucz, k) => { if (klucz) mapa.set(klucz, [...(mapa.get(klucz) ?? []), k]); };
+      for (const k of await przetargi.otwarteZamawiajacych(new Date(teraz).toISOString())) {
+        dopisz(pula.poNip, k.zamawiajacy_nip ? String(k.zamawiajacy_nip) : null, k);
+        dopisz(pula.poNazwie, k.organization, k);
+      }
+    }
+    const lista = [...(t.zamawiajacy_nip ? pula.poNip.get(String(t.zamawiajacy_nip)) ?? [] : []), ...(pula.poNazwie.get(t.organization) ?? [])];
+    return [...new Map(lista.map((k) => [k.id, k])).values()];
+  };
   for (const t of stan) {
     if (!(Date.parse(t.deadline ?? '') < teraz) || Date.parse(t.deadline) < Date.parse(od)) continue;
     wynik.po_terminie += 1;
@@ -42,13 +58,14 @@ export async function runPonowneOgloszenia({
       }
       if (!uniewazniony) continue;
       wynik.uniewaznione += 1;
-      const kandydaci = t.zamawiajacy_nip ? await przetargi.poNipieZamawiajacego(t.zamawiajacy_nip, { limit: 80 }) : await przetargi.poNazwieZamawiajacego(t.organization);
-      const znaleziony = znajdzPonowne(t, kandydaci, { teraz });
+      const znaleziony = znajdzPonowne(t, await kandydaciDla(t), { teraz });
       if (!znaleziony) continue;
       wynik.ponowne += 1;
       const nowy = await przetargi.findById(znaleziony.tender.id);
       if (!nowy) continue;
       for (const wpis of poPrzetargu.get(t.id) ?? []) {
+        // Alert już był → konto wie i mogło świadomie usunąć nowe ogłoszenie z Zapisanych: nie zapisujemy drugi raz.
+        if (await alertyRepo.istnieje(wpis.userId, alertPonownego({ stary: t, nowy }).klucz)) continue;
         const { zapisany } = await zapisz(wpis.userId, nowy);
         if (zapisany) wynik.zapisane += 1;
         const alert = alertPonownego({ stary: t, nowy, zapisano: zapisany });

@@ -80,6 +80,10 @@ test('wadium z SWZ: kwota z walutą albo z groszami, „nie wymaga”, bez słow
   assert.deepEqual(parsujWadiumSwz(['XII. WYMAGANIA DOTYCZĄCE WADIUM Zamawiający nie wymaga wniesienia wadium. XIII. TERMIN']), { wymagane: false, kwota: null });
   assert.deepEqual(parsujWadiumSwz(['XX. WYMAGANIA DOTYCZĄCE WADIUM. ZAMAWIAJĄCY nie wymaga składania wadium.']), { wymagane: false, kwota: null });
   assert.deepEqual(parsujWadiumSwz(['Zapytanie ofertowe na dostawę mebli. Termin realizacji 30 dni.']), { wymagane: null, kwota: null });
+  // „nie wymaga” w jednym miejscu i wymóg z kwotą w innym (części, wzór umowy) — nie wiemy, a nie „nie wymaga”.
+  assert.deepEqual(parsujWadiumSwz(['Dla części 1 Zamawiający nie wymaga wniesienia wadium. Dla części 2 Wykonawca zobowiązany jest wnieść wadium w wysokości 4 000,00 zł.']), { wymagane: null, kwota: null, sprzeczne: true });
+  assert.deepEqual(parsujWadiumSwz(['XV. WADIUM Zamawiający wymaga wniesienia wadium w kwocie 2 500,00 zł. … § 9 Zamawiający nie przewiduje obowiązku wniesienia wadium przy zamówieniach dodatkowych.']), { wymagane: null, kwota: null, sprzeczne: true });
+  assert.deepEqual(parsujWadiumSwz(['Zamawiający nie wymaga od Wykonawców wniesienia wadium.']), { wymagane: false, kwota: null });
 });
 
 test('daneZSwzPz: jedno pobranie, kryteria i wadium z tego samego tekstu', async () => {

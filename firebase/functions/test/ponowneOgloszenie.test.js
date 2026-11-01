@@ -35,27 +35,45 @@ test('alert: tytuł, termin nowego, dopisek o zapisie; klucz stary × nowy', () 
   assert.match(a.tresc.pl, /Gmina Łańcut ogłosił go ponownie — oferty do 20\.11\.2026\..* Dodaliśmy go do Zapisanych z przypomnieniem\./);
 });
 
-test('job: tylko unieważnione (wszystkie części) po terminie; zapis i alert raz na konto', async () => {
+function depsJobu({ pula = [{ ...stary }, { ...nowy, zamawiajacy_nip: stary.zamawiajacy_nip, organization: 'Gmina Łańcut' }] } = {}) {
   const dodane = new Set();
   const zapisy = [];
+  let odczytyPuli = 0;
   const deps = {
     teraz: TERAZ,
     zapisane: { otwarteWszystkich: async () => [{ userId: 'u1', tenderId: 'bzp_1' }, { userId: 'u1', tenderId: 'bzp_9' }], zaangazowaneWszystkich: async () => [{ userId: 'u2', tenderId: 'bzp_1' }] },
     przetargi: {
       polaWielu: async () => [stary, { ...stary, id: 'bzp_9', postepowanie_id: 'ocds-148610-bbb' }],
-      poNipieZamawiajacego: async () => [stary, nowy],
-      poNazwieZamawiajacego: async () => [],
+      otwarteZamawiajacych: async () => { odczytyPuli += 1; return pula; },
       findById: async (id) => (id === 'bzp_2' ? nowy : null),
     },
     wyniki: { poPostepowaniu: async (id) => (id === 'ocds-148610-aaa' ? { czesci: [{ uniewaznione: true }, { uniewaznione: true }] } : { czesci: [{ uniewaznione: false }] }) },
     konta: { findById: async (id) => ({ id, email: `${id}@t.pl` }) },
-    alertyRepo: { dodaj: async (uid, alert) => { const k = `${uid}/${alert.klucz}`; const n = !dodane.has(k); dodane.add(k); return { nowy: n }; } },
+    alertyRepo: {
+      istnieje: async (uid, klucz) => dodane.has(`${uid}/${klucz}`),
+      dodaj: async (uid, alert) => { const k = `${uid}/${alert.klucz}`; const n = !dodane.has(k); dodane.add(k); return { nowy: n }; },
+    },
     wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async () => {},
     zapisz: async (uid, t) => { zapisy.push([uid, t.id]); return { zapisany: true }; },
   };
+  return { deps, zapisy, odczytyPuli: () => odczytyPuli };
+}
+
+test('job: tylko unieważnione (wszystkie części) po terminie; zapis i alert raz na konto', async () => {
+  const { deps, zapisy, odczytyPuli } = depsJobu();
   const w = await runPonowneOgloszenia(deps);
   assert.deepEqual([w.po_terminie, w.uniewaznione, w.ponowne, w.alerty, w.zapisane], [2, 1, 1, 2, 2]);
   assert.deepEqual(zapisy, [['u1', 'bzp_2'], ['u2', 'bzp_2']]);
+  assert.equal(odczytyPuli(), 1, 'pula otwartych raz na przebieg');
+  // Drugi przebieg: alert już jest — bez drugiego alertu i BEZ ponownego zapisu (konto mogło usunąć ogłoszenie).
   const w2 = await runPonowneOgloszenia(deps);
-  assert.equal(w2.alerty, 0);
+  assert.deepEqual([w2.alerty, w2.zapisane], [0, 0]);
+  assert.equal(zapisy.length, 2);
+});
+
+test('job: nowe ogłoszenie bez NIP-u (PZ) znalezione po dokładnej nazwie zamawiającego', async () => {
+  const { deps, zapisy } = depsJobu({ pula: [{ ...nowy, organization: 'Gmina Łańcut', source: 'platformazakupowa' }] });
+  const w = await runPonowneOgloszenia(deps);
+  assert.equal(w.ponowne, 1);
+  assert.equal(zapisy.length, 2);
 });

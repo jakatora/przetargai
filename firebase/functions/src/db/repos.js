@@ -1078,11 +1078,12 @@ export const tenders = {
     if (!pola.kryteria && zSwz) pola = polaKryteriow(await zSwz(szczegol).catch(() => null));
     // `daneSwz` (`services/kryteriaSwzPz.js` → `daneZSwzPz`, 2026-11-01): jedno pobranie SWZ — kryteria, gdy dalej
     // ich brak, i wadium, którego platforma nie podaje wcale (`wymagane: null` = nie wiemy, nic nie zapisujemy).
+    // Sprzeczny SWZ („nie wymaga” obok wymogu) czyści wcześniejszy odczyt — stare „nie wymaga” nie może zostać.
     if (daneSwz) {
       const zSwzWynik = await daneSwz(szczegol).catch(() => null);
       if (!pola.kryteria && zSwzWynik?.kryteria) pola = polaKryteriow(zSwzWynik.kryteria);
       const w = zSwzWynik?.wadium;
-      if (w && w.wymagane !== null) pola = { ...pola, wadium_wymagane: w.wymagane, wadium_kwota: w.kwota ?? null, wadium_wiele_czesci: w.wieleCzesci === true };
+      if (w && (w.wymagane !== null || w.sprzeczne)) pola = { ...pola, wadium_wymagane: w.wymagane, wadium_kwota: w.kwota ?? null, wadium_wiele_czesci: w.wieleCzesci === true };
     }
     await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz, ...pola });
     return pola;
@@ -1254,11 +1255,14 @@ export const tenders = {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
-  /** Ogłoszenia zamawiającego po DOKŁADNEJ nazwie — dla źródeł bez NIP-u (PZ, ePP), te same pola co po NIP-ie. */
-  async poNazwieZamawiajacego(nazwa, { limit = 50 } = {}) {
-    if (!nazwa) return [];
-    const snap = await db().collection('tenders').where('organization', '==', String(nazwa))
-      .select('title', 'cpv_main', 'budget', 'published_at', 'deadline', 'url', 'source', 'anulowany', 'zastapiony_przez', 'postepowanie_id')
+  /**
+   * Otwarte przetargi z polami do szukania ponownego ogłoszenia (2026-11-01). Zapytania po NIP-ie / nazwie z limitem
+   * i bez sortowania gubiły nowe ogłoszenie dużych zamawiających (setki starszych wpisów) — pula otwartych to jedno
+   * zapytanie po `deadline` (indeks automatyczny), a ponowne ogłoszenie i tak musi być otwarte.
+   */
+  async otwarteZamawiajacych(od, { limit = 30_000 } = {}) {
+    const snap = await db().collection('tenders').where('deadline', '>=', od)
+      .select('title', 'organization', 'zamawiajacy_nip', 'cpv_main', 'published_at', 'deadline', 'source', 'anulowany', 'zastapiony_przez')
       .limit(limit).get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
@@ -2851,12 +2855,30 @@ export const benchmarkRynku = {
 const benchmarkDocId = (klucz) => String(klucz).replaceAll('/', '_');
 
 /*
- * Mapy „zamawiający → województwo” z BZP (2026-11-01, `lib/wojewodztwoZamawiajacego.js`) — trzy dokumenty `meta`
- * (nazwy ~11 tys. wpisów, miasta, miejscowniki), każdy jako lista „klucz\twoj” (bezpieczniej niż mapa z kluczami
- * z dowolnymi znakami). Wczytanie: 3 odczyty, pamięć instancji na 6 h.
+ * Mapy „zamawiający → województwo” z BZP (2026-11-01, `lib/wojewodztwoZamawiajacego.js`) — dokumenty `meta`
+ * (nazwy ~11 tys. wpisów, miasta, miejscowniki, NIP-y), każdy jako linie „klucz\twartość” w JEDNYM polu tekstowym
+ * (bezpieczniej niż mapa z kluczami z dowolnymi znakami). Lista w tablicy dawała wpis indeksu na każdy element
+ * (limit 40 tys. na dokument) i rosła pod 1 MiB — tekst ma jeden wpis indeksu, a ponad ~800 KB idzie do
+ * `<dokument>_1`, `_2`… Wczytanie: 4 odczyty (+ części), pamięć instancji na 6 h.
  */
 const DOK_MAP_ZAMAWIAJACYCH = { poNazwie: 'mapa_zam_nazwy', poMiescie: 'mapa_zam_miasta', poMiejscowniku: 'mapa_zam_miejscowniki', poNazwieNip: 'mapa_zam_nip' };
+const MAKS_BAJTOW_CZESCI_MAPY = 800_000;
 let pamiecMapZamawiajacych = null;
+
+/** Linie → teksty po najwyżej `maksBajtow` (zawsze co najmniej jeden, choćby pusty). */
+function czesciTekstu(linie, maksBajtow) {
+  const czesci = [];
+  let biezaca = [];
+  let bajty = 0;
+  for (const l of linie) {
+    const b = Buffer.byteLength(l) + 1;
+    if (biezaca.length && bajty + b > maksBajtow) { czesci.push(biezaca.join('\n')); biezaca = []; bajty = 0; }
+    biezaca.push(l);
+    bajty += b;
+  }
+  czesci.push(biezaca.join('\n'));
+  return czesci;
+}
 
 /* Model „tytuł → dział CPV” (2026-11-01, `lib/dzialCpvZTytulu.js`): jeden dokument `meta`, słowa zwartym tekstem. */
 let pamiecModeluCpv = null;
@@ -2876,24 +2898,36 @@ export const modelCpvTytulu = {
 };
 
 export const mapaZamawiajacych = {
-  async zapisz(mapy, teraz = nowIso()) {
+  async zapisz(mapy, teraz = nowIso(), { maksBajtow = MAKS_BAJTOW_CZESCI_MAPY } = {}) {
     for (const [pole, doc] of Object.entries(DOK_MAP_ZAMAWIAJACYCH)) {
-      const wpisy = [...(mapy[pole] ?? new Map())].map(([k, v]) => `${k}\t${v}`);
-      await db().collection('meta').doc(doc).set({ wpisy, liczba: wpisy.length, zbudowano_o: teraz });
+      const linie = [...(mapy[pole] ?? new Map())].map(([k, v]) => `${k}\t${v}`);
+      const czesci = czesciTekstu(linie, maksBajtow);
+      await db().collection('meta').doc(doc).set({ tekst: czesci[0], czesci: czesci.length, liczba: linie.length, zbudowano_o: teraz });
+      for (let i = 1; i < czesci.length; i++) await db().collection('meta').doc(`${doc}_${i}`).set({ tekst: czesci[i] });
     }
-    pamiecMapZamawiajacych = { mapy, o: Date.now() };
+    // Z datą budowy — bez niej następne `wczytaj` z pamięci uznawało świeżą mapę za starą i budowało ją drugi raz.
+    pamiecMapZamawiajacych = { mapy: { ...mapy, zbudowano_o: teraz }, o: Date.now() };
   },
 
-  /** @returns {Promise<{poNazwie: Map, poMiescie: Map, poMiejscowniku: Map, zbudowano_o: string|null}|null>} */
+  /** @returns {Promise<{poNazwie: Map, poMiescie: Map, poMiejscowniku: Map, poNazwieNip: Map, zbudowano_o: string|null}|null>} */
   async wczytaj({ swiezoscMs = 6 * 3_600_000 } = {}) {
     if (pamiecMapZamawiajacych && Date.now() - pamiecMapZamawiajacych.o < swiezoscMs) return pamiecMapZamawiajacych.mapy;
-    const snapy = await db().getAll(...Object.values(DOK_MAP_ZAMAWIAJACYCH).map((d) => db().collection('meta').doc(d)));
+    const meta = db().collection('meta');
+    const snapy = await db().getAll(...Object.values(DOK_MAP_ZAMAWIAJACYCH).map((d) => meta.doc(d)));
     // Mapa NIP-ów doszła później (2026-11-01) — bez niej reszta map nadal działa.
     if (!snapy.slice(0, 3).every((s) => s.exists)) return null;
     const mapy = { zbudowano_o: snapy[0].get('zbudowano_o') ?? null };
-    Object.keys(DOK_MAP_ZAMAWIAJACYCH).forEach((pole, i) => {
-      mapy[pole] = new Map((snapy[i].get('wpisy') ?? []).map((w) => { const t = String(w).lastIndexOf('\t'); return [w.slice(0, t), w.slice(t + 1)]; }));
-    });
+    for (const [i, [pole, doc]] of Object.entries(DOK_MAP_ZAMAWIAJACYCH).entries()) {
+      const s = snapy[i];
+      let linie = s.get('wpisy') ?? []; // zapis sprzed 2026-11-01 (lista) — do pierwszej przebudowy
+      if (typeof s.get('tekst') === 'string') {
+        const teksty = [s.get('tekst')];
+        const ile = s.get('czesci') ?? 1;
+        if (ile > 1) teksty.push(...(await db().getAll(...Array.from({ length: ile - 1 }, (_, j) => meta.doc(`${doc}_${j + 1}`)))).map((c) => c.get('tekst') ?? ''));
+        linie = teksty.flatMap((t) => (t ? t.split('\n') : []));
+      }
+      mapy[pole] = new Map(linie.map((w) => { const t = String(w).lastIndexOf('\t'); return [w.slice(0, t), w.slice(t + 1)]; }));
+    }
     pamiecMapZamawiajacych = { mapy, o: Date.now() };
     return mapy;
   },
@@ -3694,6 +3728,11 @@ export const alerty = {
   async lista(userId, limit = 100) {
     const snap = await alertyCol(userId).orderBy('utworzone_o', 'desc').limit(limit).get();
     return snap.docs.map(userSnap);
+  },
+
+  /** Czy alert o tym kluczu już jest — żeby nie powtarzać skutków ubocznych (zapis do Zapisanych) przed `dodaj`. */
+  async istnieje(userId, klucz) {
+    return (await alertyCol(userId).doc(String(klucz)).get()).exists;
   },
 
   /** Licznik na plakietce. Zapytanie równościowe — mieści się w indeksie automatycznym. */

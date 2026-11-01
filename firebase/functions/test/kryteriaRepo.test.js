@@ -83,4 +83,8 @@ test('zapiszSzczegolPz z daneSwz: wadium z SWZ na przetargu, kryteria z SWZ tylk
   assert.deepEqual([t.wadium_wymagane, t.wadium_kwota, t.wadium_wiele_czesci, t.kryteria.length], [true, 9000, false, 1]);
   const bezWiedzy = await tenders.zapiszSzczegolPz(tender.id, { zalaczniki: [] }, undefined, { daneSwz: async () => ({ kryteria: null, wadium: { wymagane: null, kwota: null } }) });
   assert.equal(bezWiedzy.wadium_wymagane, undefined, '„nie wiemy” niczego nie nadpisuje');
+  // Sprzeczny SWZ czyści wcześniejsze „nie wymaga” — pominięte wadium odrzuca ofertę.
+  await tenders.zapiszSzczegolPz(tender.id, { zalaczniki: [] }, undefined, { daneSwz: async () => ({ kryteria: null, wadium: { wymagane: false, kwota: null } }) });
+  await tenders.zapiszSzczegolPz(tender.id, { zalaczniki: [] }, undefined, { daneSwz: async () => ({ kryteria: null, wadium: { wymagane: null, kwota: null, sprzeczne: true } }) });
+  assert.equal((await tenders.findById(tender.id)).wadium_wymagane, null);
 });

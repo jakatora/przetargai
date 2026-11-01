@@ -102,3 +102,9 @@ test('NIP zamawiającego z dokładnej nazwy: jednoznaczny wpis; dwa różne NIP-
   assert.equal(nipZNazwy('Urząd Miasta i Gminy Września', m), null, 'NIP tylko po dokładnej nazwie');
   assert.deepEqual(wojewodztwoNowejPozycji({ organization: 'Gmina Września', wojewodztwo: 'PL30' }, m), { organization: 'Gmina Września', wojewodztwo: 'PL30', zamawiajacy_nip: '7891703950', zamawiajacy_nip_z_nazwy: true });
 });
+
+test('„Miasto Stołeczne Warszawa”: miejscowość „warszawa”, nie „stołeczne warszawa”', () => {
+  const m = zbudujMapy([{ org: 'Szpital Bielański', woj: '14', miasto: 'Warszawa' }, { org: 'Urząd Dzielnicy Wola', woj: 'PL14', miasto: 'Warszawa' }]);
+  assert.equal(wojewodztwoZNazwy('Miasto Stołeczne Warszawa – Dzielnica Mokotów', m), null, 'z myślnikiem i dopiskiem to już inna nazwa');
+  assert.equal(wojewodztwoZNazwy('Miasto Stołeczne Warszawa', m), '14');
+});

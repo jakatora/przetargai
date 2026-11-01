@@ -19,7 +19,8 @@ export function normNazwy(nazwa) {
     .trim();
 }
 
-const PRZED_MIEJSCOWOSCIA = /^(?:gmina miejska|gmina wiejska|gmina|miasto i gmina|miasto|urząd gminy|urząd miasta i gminy|urząd miasta|urząd miejski w|powiat|starostwo powiatowe w|miasto stołeczne)\s+/;
+// Dłuższe przedrostki przed krótszymi: „miasto” przed „miasto stołeczne” dawało miejscowość „stołeczne warszawa”.
+const PRZED_MIEJSCOWOSCIA = /^(?:gmina miejska|gmina wiejska|gmina|miasto stołeczne|miasto i gmina|miasto|urząd gminy|urząd miasta i gminy|urząd miasta|urząd miejski w|powiat|starostwo powiatowe w)\s+/;
 
 /** Miejscowość z nazwy JST: „Gmina Września” → „września”, „Urząd Miejski w Gnieźnie” → „gnieźnie” (miejscownik). */
 function miejscowoscJst(norm) {
