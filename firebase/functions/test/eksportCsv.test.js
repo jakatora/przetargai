@@ -70,6 +70,28 @@ describe('wiersze', () => {
     assert.equal(wierszZapisanego({ tender_title: 'x' }).etap, 'Rozważam');
   });
 
+  test('dane z kopii (2026-11-01): wadium, za co punkty, nowe dokumenty, otwarcie ofert, unieważnienie', () => {
+    const w = wierszZapisanego({
+      tender_title: 'Remont dachu',
+      tender_wadium_wymagane: true, tender_wadium_kwota: 15000, tender_wadium_wiele_czesci: true,
+      tender_kryteria_skrot: { kryteria: [{ rodzaj: 'cena', udzial: 60 }, { rodzaj: 'gwarancja', udzial: 40 }], reszta: 0, rozne_w_czesciach: false },
+      tender_ez_zmiany: { wyjasnienia: 2, zmiany: 1, termin: 1, ostatnia_o: '2026-10-30' },
+      tender_otwarcie_ofert: { kwota: 250000, oferty: 3, cena_min: 190750.5, cena_max: 260000, czesci: false },
+      tender_anulowany: true,
+    });
+    assert.equal(w.wadium, '15 000 zł (różne w częściach)');
+    assert.equal(w.kryteria, 'Cena 60% · Gwarancja 40%');
+    assert.equal(w.zmiany, 'nowy termin · zmiany SWZ: 1 · wyjaśnienia: 2');
+    assert.equal(w.otwarcie, '3 oferty · najniższa 190 751 zł · zamawiający ma 250 000 zł');
+    assert.equal(w.uniewazniony, 'tak');
+    assert.equal(wierszZapisanego({ tender_wadium_wymagane: false }).wadium, 'nie wymaga');
+    assert.equal(wierszZapisanego({ tender_wadium_wymagane: true }).wadium, 'wymagane (kwota w SWZ)');
+    assert.equal(wierszZapisanego({ tender_otwarcie_ofert: { oferty: 12, kwota: null } }).otwarcie, '12 ofert');
+    assert.equal(wierszZapisanego({ tender_otwarcie_ofert: { oferty: 22 } }).otwarcie, '22 oferty');
+    const pusty = wierszZapisanego({ tender_title: 'x' });
+    assert.deepEqual([pusty.wadium, pusty.kryteria, pusty.zmiany, pusty.otwarcie, pusty.uniewazniony], [null, null, null, null, null]);
+  });
+
   test('przetarg z katalogu', () => {
     const w = wierszKatalogu({
       id: 'T1', title: 'Dostawa', organization: 'Szpital', deadline: '2026-12-01T11:00:00.000Z',

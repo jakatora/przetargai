@@ -19,6 +19,7 @@ import { STATUSY, STATUS_DOMYSLNY } from './statusPrzetargu.js';
 import { ZRODLA } from './katalogPrzetargow.js';
 import { wCzasieWarszawskim } from './kalendarzPrzetargu.js';
 import { nazwaWojewodztwa } from './wojewodztwa.js';
+import { NAZWA_RODZAJU } from './kryteriaTed.js';
 
 export const BOM = '﻿';
 const SEPARATOR = ';';
@@ -72,6 +73,49 @@ function etykietaZrodla(kod) {
 
 const ETAPY = new Map(STATUSY.map((s) => [s.wartosc, s.etykieta]));
 
+/** „190 750 zł” — grupy zwykłą spacją (toLocaleString daje twardą spację, w Excelu widoczną jako znak). */
+function kwotaPl(n) {
+  return Number.isFinite(n) ? `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} zł` : null;
+}
+
+/*
+ * Kolumny z danych, które serwer dopisuje do kopii w Zapisanych (2026-11-01): wadium, kryteria, otwarcie ofert,
+ * nowe dokumenty, unieważnienie. Firma, która trzyma przetargi w Excelu, nie musi otwierać każdego w aplikacji.
+ */
+function wadiumZapisanego(s) {
+  if (s?.tender_wadium_wymagane === false) return 'nie wymaga';
+  if (s?.tender_wadium_wymagane !== true) return null;
+  const kwota = kwotaPl(s.tender_wadium_kwota);
+  return `${kwota ?? 'wymagane (kwota w SWZ)'}${s.tender_wadium_wiele_czesci ? ' (różne w częściach)' : ''}`;
+}
+
+function kryteriaZapisanego(s) {
+  const k = s?.tender_kryteria_skrot;
+  if (!Array.isArray(k?.kryteria) || !k.kryteria.length) return null;
+  const pozycje = k.kryteria.map((x) => `${x.rodzaj === 'cena' ? 'Cena' : NAZWA_RODZAJU[x.rodzaj] ?? 'Inne'}${typeof x.udzial === 'number' ? ` ${String(x.udzial).replace('.', ',')}%` : ''}`);
+  return `${pozycje.join(' · ')}${k.reszta ? ` +${k.reszta}` : ''}${k.rozne_w_czesciach ? ' (różne w częściach)' : ''}`;
+}
+
+function otwarcieZapisanego(s) {
+  const o = s?.tender_otwarcie_ofert;
+  if (!o) return null;
+  const czesci = [];
+  if (Number.isFinite(o.oferty)) czesci.push(o.oferty === 1 ? '1 oferta' : `${o.oferty} ofert${o.oferty % 10 >= 2 && o.oferty % 10 <= 4 && (o.oferty % 100 < 12 || o.oferty % 100 > 14) ? 'y' : ''}`);
+  if (Number.isFinite(o.cena_min)) czesci.push(`najniższa ${kwotaPl(o.cena_min)}`);
+  if (Number.isFinite(o.kwota)) czesci.push(`zamawiający ma ${kwotaPl(o.kwota)}`);
+  return czesci.length ? `${czesci.join(' · ')}${o.czesci ? ' (kilka części)' : ''}` : null;
+}
+
+function zmianyZapisanego(s) {
+  const z = s?.tender_ez_zmiany;
+  if (!z) return null;
+  const czesci = [];
+  if (z.termin) czesci.push('nowy termin');
+  if (z.zmiany) czesci.push(`zmiany SWZ: ${z.zmiany}`);
+  if (z.wyjasnienia) czesci.push(`wyjaśnienia: ${z.wyjasnienia}`);
+  return czesci.length ? czesci.join(' · ') : null;
+}
+
 export const KOLUMNY_ZAPISANYCH = [
   { klucz: 'tytul', naglowek: 'Przedmiot zamówienia' },
   { klucz: 'zamawiajacy', naglowek: 'Zamawiający' },
@@ -81,6 +125,11 @@ export const KOLUMNY_ZAPISANYCH = [
   { klucz: 'waluta', naglowek: 'Waluta' },
   { klucz: 'cpv', naglowek: 'CPV' },
   { klucz: 'zrodlo', naglowek: 'Rejestr' },
+  { klucz: 'wadium', naglowek: 'Wadium' },
+  { klucz: 'kryteria', naglowek: 'Za co punkty' },
+  { klucz: 'zmiany', naglowek: 'Nowe dokumenty' },
+  { klucz: 'otwarcie', naglowek: 'Otwarcie ofert' },
+  { klucz: 'uniewazniony', naglowek: 'Unieważniony' },
   { klucz: 'notatka', naglowek: 'Notatka' },
   { klucz: 'zapisano', naglowek: 'Zapisano' },
   { klucz: 'link', naglowek: 'Link do ogłoszenia' },
@@ -110,6 +159,11 @@ export function wierszZapisanego(s) {
     waluta: typeof s?.tender_budget === 'number' ? (s?.tender_currency ?? 'PLN') : null,
     cpv: s?.tender_cpv ?? null,
     zrodlo: etykietaZrodla(s?.tender_source ?? null),
+    wadium: wadiumZapisanego(s),
+    kryteria: kryteriaZapisanego(s),
+    zmiany: zmianyZapisanego(s),
+    otwarcie: otwarcieZapisanego(s),
+    uniewazniony: s?.tender_anulowany === true ? 'tak' : null,
     notatka: s?.notatka ?? null,
     zapisano: dataPl(s?.saved_at),
     link: s?.tender_url ?? null,

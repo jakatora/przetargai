@@ -20,7 +20,7 @@ import { rodzajKryterium, MAKS_KRYTERIOW } from './ogloszenieMeta.js';
  */
 
 const MAKS_NAZWY = 120;
-const NAZWA_RODZAJU = {
+export const NAZWA_RODZAJU = {
   gwarancja: 'Gwarancja', platnosc: 'Termin płatności', umowa: 'Warunki umowy', reakcja: 'Czas reakcji', termin: 'Termin realizacji',
   spoleczne: 'Aspekty społeczne', srodowisko: 'Aspekty środowiskowe', certyfikat: 'Certyfikaty', koncepcja: 'Koncepcja',
   doswiadczenie: 'Doświadczenie', dodatkowe: 'Dodatkowe usługi', dostepnosc: 'Dostępność', jakosc: 'Jakość',
