@@ -51,13 +51,17 @@ function dolicz(mapa, klucz, woj) {
 
 /**
  * @param {{org?: string, woj?: string, miasto?: string}[]} rekordy zamawiający z BZP (ogłoszenia, rozstrzygnięcia)
- * @returns {{poNazwie: Map<string,string>, poMiescie: Map<string,string>, poMiejscowniku: Map<string,string>}}
+ * @returns {{poNazwie: Map<string,string>, poMiescie: Map<string,string>, poMiejscowniku: Map<string,string>, poNazwieNip: Map<string,string>}}
  */
 export function zbudujMapy(rekordy) {
   const nazwy = new Map();
+  // NIP zamawiającego (2026-11-01) — tylko po DOKŁADNEJ nazwie: z miasta czy miejscownika NIP-u się nie zgadnie.
+  const nipy = new Map();
   const miasta = new Map();
   const miejscowniki = new Map();
   for (const r of rekordy ?? []) {
+    const nip = String(r?.nip ?? '').replace(/\D/g, '');
+    if (nip.length === 10 && normNazwy(r?.org)) dolicz(nipy, normNazwy(r.org), nip);
     // BZP w ogłoszeniu: „PL10”, w rozstrzygnięciu: „10” — liczymy po kodzie.
     const woj = /^(?:PL)?(\d{2})$/i.exec(String(r?.woj ?? '').trim())?.[1] ?? null;
     if (!woj) continue;
@@ -74,7 +78,7 @@ export function zbudujMapy(rekordy) {
   for (const m of [miejscowniki, miasta]) {
     for (const [k, poWoj] of m) if ([...poWoj.values()].reduce((s, x) => s + x, 0) < 2) m.delete(k);
   }
-  return { poNazwie: rozstrzygnij(nazwy), poMiescie: rozstrzygnij(miasta), poMiejscowniku: rozstrzygnij(miejscowniki) };
+  return { poNazwie: rozstrzygnij(nazwy), poMiescie: rozstrzygnij(miasta), poMiejscowniku: rozstrzygnij(miejscowniki), poNazwieNip: rozstrzygnij(nipy) };
 }
 
 /** Województwo zamawiającego z nazwy jako kod „02”…„32” albo null (zapis przy przetargu: „PL” + kod, jak BZP). */
@@ -90,4 +94,10 @@ export function wojewodztwoZNazwy(nazwa, mapy) {
   }
   const mc = miejscownik(n);
   return mc ? mapy.poMiejscowniku.get(mc) ?? null : null;
+}
+
+/** NIP zamawiającego z dokładnej nazwy (po normalizacji) albo null. */
+export function nipZNazwy(nazwa, mapy) {
+  const n = normNazwy(nazwa);
+  return n && mapy?.poNazwieNip ? mapy.poNazwieNip.get(n) ?? null : null;
 }

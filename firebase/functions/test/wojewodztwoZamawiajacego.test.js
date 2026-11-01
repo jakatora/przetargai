@@ -88,3 +88,17 @@ test('dział CPV z tytułu: model z przykładów BZP, pewny wynik przy jednoznac
   assert.equal(wojewodztwoNowejPozycji({ title: 'Odbiór odpadów komunalnych z nieruchomości', organization: 'X', cpvMain: null }, null, model).cpv_dzial_z_tytulu, '90');
   assert.deepEqual(kluczeBenchmarku({ cpv_main: null, cpv_dzial_z_tytulu: '45', wojewodztwo: 'PL18' }), { zamawiajacy: null, dzialRegion: 'cpv:45|18', dzialKraj: 'cpv:45' });
 });
+
+test('NIP zamawiającego z dokładnej nazwy: jednoznaczny wpis; dwa różne NIP-y pod jedną nazwą — brak', async () => {
+  const { nipZNazwy } = await import('../src/lib/wojewodztwoZamawiajacego.js');
+  const m = zbudujMapy([
+    { org: 'Gmina Września', woj: '30', nip: '789-17-03-950' },
+    { org: 'GMINA WRZEŚNIA', woj: 'PL30', nip: '7891703950' },
+    { org: 'Szkoła Podstawowa nr 1', woj: '30', nip: '7891111111' },
+    { org: 'Szkoła Podstawowa nr 1', woj: '12', nip: '6792222222' },
+  ]);
+  assert.equal(nipZNazwy('Gmina Września', m), '7891703950');
+  assert.equal(nipZNazwy('Szkoła Podstawowa nr 1', m), null);
+  assert.equal(nipZNazwy('Urząd Miasta i Gminy Września', m), null, 'NIP tylko po dokładnej nazwie');
+  assert.deepEqual(wojewodztwoNowejPozycji({ organization: 'Gmina Września', wojewodztwo: 'PL30' }, m), { organization: 'Gmina Września', wojewodztwo: 'PL30', zamawiajacy_nip: '7891703950', zamawiajacy_nip_z_nazwy: true });
+});

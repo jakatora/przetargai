@@ -1,7 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
 import { tenders, rozstrzygniecia, mapaZamawiajacych, modelCpvTytulu } from '../db/repos.js';
-import { zbudujMapy, wojewodztwoZNazwy } from '../lib/wojewodztwoZamawiajacego.js';
+import { zbudujMapy, wojewodztwoZNazwy, nipZNazwy } from '../lib/wojewodztwoZamawiajacego.js';
 import { nauczModel, przewidzDzial, modelDoTekstu, modelZTekstu } from '../lib/dzialCpvZTytulu.js';
 
 /*
@@ -25,9 +25,9 @@ export async function runMapaZamawiajacych({
   const tytuly = [];
   let kursor = null;
   for (let i = 0; i < maksStron; i++) {
-    const strona = await repoWynikow.strona({ od: new Date(teraz - dni * 86_400_000).toISOString().slice(0, 10), kursor, limit: 1000, pola: ['zamawiajacy', 'wojewodztwo', 'miasto', 'tytul', 'cpv'] });
+    const strona = await repoWynikow.strona({ od: new Date(teraz - dni * 86_400_000).toISOString().slice(0, 10), kursor, limit: 1000, pola: ['zamawiajacy', 'zamawiajacyNip', 'wojewodztwo', 'miasto', 'tytul', 'cpv'] });
     for (const r of strona.pozycje) {
-      rekordy.push({ org: r.zamawiajacy, woj: r.wojewodztwo, miasto: r.miasto });
+      rekordy.push({ org: r.zamawiajacy, woj: r.wojewodztwo, miasto: r.miasto, nip: r.zamawiajacyNip });
       tytuly.push({ tytul: r.tytul, cpv: Array.isArray(r.cpv) ? r.cpv[0] : r.cpv });
     }
     if (strona.koniec || !strona.kursor) break;
@@ -36,14 +36,14 @@ export async function runMapaZamawiajacych({
   const otwarte = await przetargi.otwarteDoWojewodztwa(new Date(teraz).toISOString());
   for (const t of otwarte) {
     if (t.source !== 'bzp') continue;
-    rekordy.push({ org: t.organization, woj: t.wojewodztwo });
+    rekordy.push({ org: t.organization, woj: t.wojewodztwo, nip: t.zamawiajacy_nip });
     tytuly.push({ tytul: t.title, cpv: t.cpv_main });
   }
   const mapy = zbudujMapy(rekordy);
   await repoMap.zapisz(mapy, new Date(teraz).toISOString());
   const model = nauczModel(tytuly);
   await repoModelu.zapisz({ tekst: modelDoTekstu(model), dzialy: model.dzialy, n: model.n }, new Date(teraz).toISOString());
-  const wynik = { rekordow: rekordy.length, nazw: mapy.poNazwie.size, miast: mapy.poMiescie.size, miejscownikow: mapy.poMiejscowniku.size, tytulow: model.n, slow: Object.keys(model.slowa).length };
+  const wynik = { rekordow: rekordy.length, nazw: mapy.poNazwie.size, nipow: mapy.poNazwieNip.size, miast: mapy.poMiescie.size, miejscownikow: mapy.poMiejscowniku.size, tytulow: model.n, slow: Object.keys(model.slowa).length };
   logger.info(wynik, 'runMapaZamawiajacych: zakończono');
   return wynik;
 }
@@ -66,7 +66,7 @@ export async function runWojewodztwaZamawiajacych({
     mapy = await repoMap.wczytaj({ swiezoscMs: 0 });
   }
   const model = await wczytajModelCpv(repoModelu);
-  const wynik = { ok: true, przebudowa, kandydaci: 0, przypisane: 0, dzialy: 0, bledy: 0 };
+  const wynik = { ok: true, przebudowa, kandydaci: 0, przypisane: 0, dzialy: 0, nipy: 0, bledy: 0 };
   if (!mapy) return { ...wynik, ok: false };
   const otwarte = await przetargi.otwarteDoWojewodztwa(new Date(teraz).toISOString());
   const doZapisu = [];
@@ -74,10 +74,12 @@ export async function runWojewodztwaZamawiajacych({
     if (!ZRODLA_BEZ_REGIONU.has(t.source)) continue;
     const kod = t.wojewodztwo ? null : wojewodztwoZNazwy(t.organization, mapy);
     const dzial = !t.cpv_main && !t.cpv_dzial_z_tytulu && model ? przewidzDzial(t.title, model)?.dzial ?? null : null;
+    const nip = t.zamawiajacy_nip ? null : nipZNazwy(t.organization, mapy);
     if (!t.wojewodztwo) wynik.kandydaci += 1;
     if (kod) wynik.przypisane += 1;
     if (dzial) wynik.dzialy += 1;
-    if (kod || dzial) doZapisu.push({ id: t.id, ...(kod ? { wojewodztwo: `PL${kod}` } : {}), ...(dzial ? { cpvDzial: dzial } : {}) });
+    if (nip) wynik.nipy += 1;
+    if (kod || dzial || nip) doZapisu.push({ id: t.id, ...(kod ? { wojewodztwo: `PL${kod}` } : {}), ...(dzial ? { cpvDzial: dzial } : {}), ...(nip ? { zamawiajacyNip: nip } : {}) });
   }
   try {
     await przetargi.ustawWojewodztwaZNazwy(doZapisu);
@@ -98,6 +100,10 @@ export function wojewodztwoNowejPozycji(t, mapy, model = null) {
   if (!t.wojewodztwo && mapy) {
     const kod = wojewodztwoZNazwy(t.organization, mapy);
     if (kod) wynik = { ...wynik, wojewodztwo: `PL${kod}`, wojewodztwo_z_nazwy: true };
+  }
+  if (!t.zamawiajacy_nip && mapy) {
+    const nip = nipZNazwy(t.organization, mapy);
+    if (nip) wynik = { ...wynik, zamawiajacy_nip: nip, zamawiajacy_nip_z_nazwy: true };
   }
   if (!t.cpvMain && model) {
     const dzial = przewidzDzial(t.title, model)?.dzial;

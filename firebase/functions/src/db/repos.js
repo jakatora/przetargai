@@ -748,6 +748,7 @@ export const tenders = {
       ...(t.wojewodztwo_z_nazwy ? { wojewodztwo_z_nazwy: true } : {}),
       // PZ/ePP: dział CPV z tytułu (`lib/dzialCpvZTytulu.js`) — tylko do kluczy kubełków karty startu.
       ...(t.cpv_dzial_z_tytulu ? { cpv_dzial_z_tytulu: t.cpv_dzial_z_tytulu } : {}),
+      ...(t.zamawiajacy_nip_z_nazwy ? { zamawiajacy_nip_z_nazwy: true } : {}),
       // Warunki udziału (spec §6.1) — wycinek ≤3000 znaków albo {tekst:null, zrodlo:'swz'}.
       warunki_udzialu: t.warunki_udzialu ?? null,
       /*
@@ -1159,7 +1160,7 @@ export const tenders = {
   /** Otwarte przetargi (termin ≥ `od`) z polami do przypisania województwa po nazwie zamawiającego (2026-11-01). */
   async otwarteDoWojewodztwa(od, { limit = 30_000 } = {}) {
     const snap = await db().collection('tenders').where('deadline', '>=', od)
-      .select('source', 'organization', 'wojewodztwo', 'title', 'cpv_main', 'cpv_dzial_z_tytulu').limit(limit).get();
+      .select('source', 'organization', 'wojewodztwo', 'title', 'cpv_main', 'cpv_dzial_z_tytulu', 'zamawiajacy_nip').limit(limit).get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
@@ -1170,10 +1171,11 @@ export const tenders = {
   async ustawWojewodztwaZNazwy(lista) {
     for (let i = 0; i < lista.length; i += 400) {
       const batch = db().batch();
-      for (const { id, wojewodztwo, cpvDzial } of lista.slice(i, i + 400)) {
+      for (const { id, wojewodztwo, cpvDzial, zamawiajacyNip } of lista.slice(i, i + 400)) {
         batch.update(db().collection('tenders').doc(id), {
           ...(wojewodztwo ? { wojewodztwo, wojewodztwo_z_nazwy: true } : {}),
           ...(cpvDzial ? { cpv_dzial_z_tytulu: cpvDzial } : {}),
+          ...(zamawiajacyNip ? { zamawiajacy_nip: zamawiajacyNip, zamawiajacy_nip_z_nazwy: true } : {}),
         });
       }
       await batch.commit();
@@ -2853,7 +2855,7 @@ const benchmarkDocId = (klucz) => String(klucz).replaceAll('/', '_');
  * (nazwy ~11 tys. wpisów, miasta, miejscowniki), każdy jako lista „klucz\twoj” (bezpieczniej niż mapa z kluczami
  * z dowolnymi znakami). Wczytanie: 3 odczyty, pamięć instancji na 6 h.
  */
-const DOK_MAP_ZAMAWIAJACYCH = { poNazwie: 'mapa_zam_nazwy', poMiescie: 'mapa_zam_miasta', poMiejscowniku: 'mapa_zam_miejscowniki' };
+const DOK_MAP_ZAMAWIAJACYCH = { poNazwie: 'mapa_zam_nazwy', poMiescie: 'mapa_zam_miasta', poMiejscowniku: 'mapa_zam_miejscowniki', poNazwieNip: 'mapa_zam_nip' };
 let pamiecMapZamawiajacych = null;
 
 /* Model „tytuł → dział CPV” (2026-11-01, `lib/dzialCpvZTytulu.js`): jeden dokument `meta`, słowa zwartym tekstem. */
@@ -2886,7 +2888,8 @@ export const mapaZamawiajacych = {
   async wczytaj({ swiezoscMs = 6 * 3_600_000 } = {}) {
     if (pamiecMapZamawiajacych && Date.now() - pamiecMapZamawiajacych.o < swiezoscMs) return pamiecMapZamawiajacych.mapy;
     const snapy = await db().getAll(...Object.values(DOK_MAP_ZAMAWIAJACYCH).map((d) => db().collection('meta').doc(d)));
-    if (!snapy.every((s) => s.exists)) return null;
+    // Mapa NIP-ów doszła później (2026-11-01) — bez niej reszta map nadal działa.
+    if (!snapy.slice(0, 3).every((s) => s.exists)) return null;
     const mapy = { zbudowano_o: snapy[0].get('zbudowano_o') ?? null };
     Object.keys(DOK_MAP_ZAMAWIAJACYCH).forEach((pole, i) => {
       mapy[pole] = new Map((snapy[i].get('wpisy') ?? []).map((w) => { const t = String(w).lastIndexOf('\t'); return [w.slice(0, t), w.slice(t + 1)]; }));
