@@ -20893,8 +20893,50 @@ function confirmMapeiSupplyPurchase(item, source) {
   return true;
 }
 
+// artifacts/api-server/src/lib/painting-tapes.ts
+var PAINTING_TAPE_SOURCES = [
+  // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zwenatrz-25mm-x-50m-niebieska/648
+  // source: https://sklep.sewera.pl/tasma-malarska-niebieska-25mmx50m-p6965
+  { "id": "rabdom-tape-blue25", "ean": "5907758507308", "name": "BLUE DOLPHIN Ta\u015Bma malarska papierowa do wn\u0119trz i na zwen\u0105trz 25mm x 50m niebieska", "brand": "Blue Dolphin", "category": "masking-tape", "packageSize": 50, "unit": "mb", "store": "Rab-Dom", "format": "shoper-api", "productId": 648, "retailerSku": "18948", "apiProductCode": "18948", "apiPurchaseUnit": "szt.", "variant": ["25mm", "50m"], "url": "https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zwenatrz-25mm-x-50m-niebieska/648", "imageUrl": "https://sklep.sewera.pl/photo/23322/tasma-malarska-niebieska-25mmx50m.webp", "pickupRequiresConfirmation": true },
+  // source: https://sklep.sewera.pl/tasma-malarska-niebieska-25mmx50m-p6965
+  // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zwenatrz-25mm-x-50m-niebieska/648
+  { "id": "sewera-tape-blue25", "ean": "5907758507308", "name": "Ta\u015Bma malarska niebieska 25mmx50m", "brand": "Blue Dolphin", "category": "masking-tape", "packageSize": 50, "unit": "mb", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["25", "50"], "url": "https://sklep.sewera.pl/tasma-malarska-niebieska-25mmx50m-p6965", "imageUrl": "https://sklep.sewera.pl/photo/23322/tasma-malarska-niebieska-25mmx50m.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zewnatrz-48mm-x-50m-niebieska/548
+  // source: https://sklep.sewera.pl/tasma-malarska-niebieska-48mmx50m-p6969
+  { "id": "rabdom-tape-blue48", "ean": "5907758507292", "name": "BLUE DOLPHIN Ta\u015Bma malarska papierowa do wn\u0119trz i na zewn\u0105trz 48mm x 50m niebieska", "brand": "Blue Dolphin", "category": "masking-tape", "packageSize": 50, "unit": "mb", "store": "Rab-Dom", "format": "shoper-api", "productId": 548, "retailerSku": "18913", "apiProductCode": "18913", "apiPurchaseUnit": "szt.", "variant": ["48mm", "50m"], "url": "https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zewnatrz-48mm-x-50m-niebieska/548", "imageUrl": "https://sklep.sewera.pl/photo/23329/tasma-malarska-niebieska-48mm-x-50m-blue-dolphin.webp", "pickupRequiresConfirmation": true },
+  // source: https://sklep.sewera.pl/tasma-malarska-niebieska-48mmx50m-p6969
+  // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-do-wnetrz-i-na-zewnatrz-48mm-x-50m-niebieska/548
+  { "id": "sewera-tape-blue48", "ean": "5907758507292", "name": "Ta\u015Bma malarska niebieska 48mm x 50m Blue Dolphin", "brand": "Blue Dolphin", "category": "masking-tape", "packageSize": 50, "unit": "mb", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["48", "50"], "url": "https://sklep.sewera.pl/tasma-malarska-niebieska-48mmx50m-p6969", "imageUrl": "https://sklep.sewera.pl/photo/23329/tasma-malarska-niebieska-48mm-x-50m-blue-dolphin.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-38mm-x-50m/3745
+  // source: https://sklep.sewera.pl/tasma-malarska-papierowa-38mm-x-50m-zolta-blue-dolphin-p22108
+  { "id": "rabdom-tape-yellow38", "ean": "5907758504789", "name": "BLUE DOLPHIN Ta\u015Bma malarska papierowa 38mm x 50m", "brand": "Blue Dolphin", "category": "masking-tape", "packageSize": 50, "unit": "mb", "store": "Rab-Dom", "format": "shoper-api", "productId": 3745, "retailerSku": "18965", "apiProductCode": "18965", "apiPurchaseUnit": "szt.", "variant": ["38mm", "50m"], "url": "https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-38mm-x-50m/3745", "imageUrl": "https://sklep.sewera.pl/photo/356176/tasma-malarska-papierowa-38mm-x-50m-zolta-blue-dolphin.webp", "pickupRequiresConfirmation": true },
+  // source: https://sklep.sewera.pl/tasma-malarska-papierowa-38mm-x-50m-zolta-blue-dolphin-p22108
+  // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-38mm-x-50m/3745
+  { "id": "sewera-tape-yellow38", "ean": "5907758504789", "name": "Ta\u015Bma malarska papierowa 38mm x 50m \u017C\xF3\u0142ta Blue Dolphin", "brand": "Blue Dolphin", "category": "masking-tape", "packageSize": 50, "unit": "mb", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["38", "50"], "url": "https://sklep.sewera.pl/tasma-malarska-papierowa-38mm-x-50m-zolta-blue-dolphin-p22108", "imageUrl": "https://sklep.sewera.pl/photo/356176/tasma-malarska-papierowa-38mm-x-50m-zolta-blue-dolphin.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-48mm-x-50m/3744
+  // source: https://sklep.sewera.pl/tasma-malarska-papierowa-48mmx50m-p6963
+  { "id": "rabdom-tape-yellow48", "ean": "5907758504581", "name": "BLUE DOLPHIN Ta\u015Bma malarska papierowa 48mm x 50m", "brand": "Blue Dolphin", "category": "masking-tape", "packageSize": 50, "unit": "mb", "store": "Rab-Dom", "format": "shoper-api", "productId": 3744, "retailerSku": "18964", "apiProductCode": "18964", "apiPurchaseUnit": "szt.", "variant": ["48mm", "50m"], "url": "https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-48mm-x-50m/3744", "imageUrl": "https://sklep.sewera.pl/photo/356183/tasma-malarska-papierowa-48mm-x-50m-blue-dolphin.webp", "pickupRequiresConfirmation": true },
+  // source: https://sklep.sewera.pl/tasma-malarska-papierowa-48mmx50m-p6963
+  // source: https://www.rabdom.pl/pl/p/BLUE-DOLPHIN-Tasma-malarska-papierowa-48mm-x-50m/3744
+  { "id": "sewera-tape-yellow48", "ean": "5907758504581", "name": "Ta\u015Bma malarska papierowa 48mm x 50m Blue Dolphin", "brand": "Blue Dolphin", "category": "masking-tape", "packageSize": 50, "unit": "mb", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["48", "50"], "url": "https://sklep.sewera.pl/tasma-malarska-papierowa-48mmx50m-p6963", "imageUrl": "https://sklep.sewera.pl/photo/356183/tasma-malarska-papierowa-48mm-x-50m-blue-dolphin.webp", "pickupRequiresConfirmation": true }
+];
+function reviewedPaintingTape(source) {
+  const reviewed6 = PAINTING_TAPE_SOURCES.find((row) => row.id === source.id);
+  if (!reviewed6) return void 0;
+  const keys = ["id", "ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "retailerSku", "apiProductCode", "apiPurchaseUnit", "retailUnit", "url"];
+  if (keys.some((key) => source[key] !== reviewed6[key]) || source.variant?.join("|") !== reviewed6.variant?.join("|") || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1) throw Error("product_package_not_confirmed");
+  return reviewed6;
+}
+function confirmPaintingTapePurchase(item, source) {
+  const reviewed6 = reviewedPaintingTape(source);
+  if (!reviewed6 || reviewed6.format !== "shoper-api") return false;
+  if (item.id !== reviewed6.productId || item.ean !== reviewed6.ean || item.name !== reviewed6.name || item.code !== reviewed6.retailerSku || item.url !== reviewed6.url || item.producer?.id !== 42 || item.producer?.name !== "Blue Dolphin" || item.unit?.name !== "szt." || item.unit?.floating_point !== false || item.package !== "0") throw Error("product_package_not_confirmed");
+  return true;
+}
+
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...PAINTING_TAPE_SOURCES,
   // source: https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751
   { "id": "sewera-mapegum-wps-5kg", "ean": "8022452242489", "name": "Folia w p\u0142ynie Mapegum WPS 5kg Mapei", "brand": "Mapei", "category": "waterproofing", "packageSize": 5, "unit": "kg", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "url": "https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17476_500_500/Zrzut-ekranu-2022-02-12-091101.webp", "pickupRequiresConfirmation": true },
   // source: https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-10kg-mapei-p7754
@@ -25766,6 +25808,7 @@ function objects(value2) {
   return [item, ...objects(item["@graph"])];
 }
 function parseRetailPage(html, source, observedAt) {
+  reviewedPaintingTape(source);
   if (source.disabledReason) throw Error(source.disabledReason);
   if (source.format === "bmb" || source.format === "integra" || source.format === "mlazienka") throw Error("retailer_basket_required");
   if ((!source.ean || source.skuIdentity) && !isReviewedSkuSource(source)) throw Error("retailer_sku_source_not_reviewed");
@@ -25998,6 +26041,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  confirmPaintingTapePurchase(item, source);
   confirmMapeiSupplyPurchase(item, source);
   confirmKnaufPlasterPurchase(item, source);
   if (source.id === "ehw-wago-221415-25" && (source.store !== "Elektro-Hurt" || source.ean !== "4055143234658" || source.productId !== 462 || source.packageSize !== 25 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt." || source.retailerSku !== "WAGO-125138*25" || source.packageDescription !== "Z\u0142\u0105czka 221-415 opakowanie 25 sztuk." || item.ean !== source.ean || item.name !== source.name || item.producer?.name !== "WAGO")) throw Error("product_package_not_confirmed");
