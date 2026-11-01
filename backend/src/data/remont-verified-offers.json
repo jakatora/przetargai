@@ -4394,5 +4394,57 @@
     "sourceUrl": "https://www.rabdom.pl/pl/p/Knauf-GOLDBAND-Reczny-tynk-gipsowy-30kg/2022",
     "evidenceSha256": "ecd2672028a5b26ca384b57d4b177c5b64a2aa8ebb866d6e142702fd8daac411",
     "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-primer-g-pro-10l",
+    "ean": "8022452241147",
+    "name": "MAPEI PRIMER G PRO 10l KONCENTRAT GRUNTUJĄCY GRUNT",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_38733_500_500/primer-g-10l.webp",
+    "priceGrosze": 13990,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T11:08:47.858Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-10l-KONCENTRAT-GRUNTUJACY-GRUNT/15704",
+    "evidenceSha256": "d6db7c484917583fbe6b5fa78e00317ca12c90422cc70a3b0b52f78db1c8da04",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-primer-g-pro-20l",
+    "ean": "8022452241154",
+    "name": "MAPEI PRIMER G PRO KONCENTRAT GRUNTUJĄCY GRUNT 20L",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_19103_500_500/4_primer-g-pro_20l_pl_4aaf7bd94b4c46708f4e182628687303.webp",
+    "priceGrosze": 24900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T11:08:47.925Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-KONCENTRAT-GRUNTUJACY-GRUNT-20L/10828",
+    "evidenceSha256": "1306d90b5eb93792d35a6651e3c99537d666f1925c97c4cb743d5fba2aa8d4cf",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-mapegum-wps-3kg",
+    "ean": "8022452249266",
+    "name": "Folia w płynie hydroizolacyjna MAPEI Mapegum WPS 3kg",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_48728_500_500/Opakowanie-folii-w-plynie-hydroizalacyjnej-o-pojemnosci-3kg.webp",
+    "priceGrosze": 7990,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T11:08:48.119Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/Folia-w-plynie-hydroizolacyjna-MAPEI-Mapegum-WPS-3kg/16590",
+    "evidenceSha256": "d6f0806f64e5ebd534b5a8f2337e322367032ce3f2f0303c49315641ac26ccaa",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-mapegum-wps-20kg",
+    "ean": "8022452242502",
+    "name": "MAPEI Mapegum WPS 20kg HYDROIZOLACJA PŁYNNA FOLIA",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17482_500_500/Zrzut-ekranu-2022-02-12-090849.webp",
+    "priceGrosze": 38500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T11:08:48.176Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875",
+    "evidenceSha256": "403387f9d2625025a800ebf92a1db79d24d5fa6d0cc83cfdfc0b9d7dfa95ac45",
+    "validUntil": null
   }
 ]
