@@ -22,15 +22,26 @@ export async function kontraktyTygodnia(odDnia, { repo = rozstrzygniecia, maksSt
   return duzeKontrakty(wyniki);
 }
 
-/** Kontrakty dla konta: działy i regiony z karty, a gdy ich brak — z dopasowań z 30 dni (`profilZDopasowan`). */
+/**
+ * Konto z działami i województwami do sekcji przeglądu (2026-11-01): z karty, a gdy ich brak — z dopasowań z 30 dni
+ * (`profilZDopasowan`). 1.11 województwa w karcie miały 3 konta na 31, kody CPV 18 — bez tego „Co wygrali
+ * konkurenci”, wygasające umowy i podwykonawstwo omijały prawie wszystkich. Kody działu jako „45000000”.
+ */
+export async function profilPrzegladu(user, now = Date.now(), { dopasowania = matches } = {}) {
+  const { dzialy, regiony } = kluczeKonkurentowUzytkownika(user);
+  if (dzialy.length && regiony.length) return user;
+  const zDopasowan = profilZDopasowan(await dopasowania.profilDopasowan(user.id, new Date(now - 30 * 86_400_000).toISOString()));
+  return {
+    ...user,
+    cpv_codes: dzialy.length ? user.cpv_codes : zDopasowan.dzialy.map((d) => `${d}000000`),
+    regiony: regiony.length ? user.regiony : zDopasowan.regiony,
+  };
+}
+
+/** Kontrakty dla konta: działy i regiony z karty, a gdy ich brak — z dopasowań z 30 dni. */
 export async function podwykonawstwoDlaKonta(user, kontrakty, now = Date.now(), { dopasowania = matches } = {}) {
   if (!kontrakty?.length) return [];
-  let { dzialy, regiony } = kluczeKonkurentowUzytkownika(user);
-  if (!dzialy.length || !regiony.length) {
-    const zDopasowan = profilZDopasowan(await dopasowania.profilDopasowan(user.id, new Date(now - 30 * 86_400_000).toISOString()));
-    if (!dzialy.length) dzialy = zDopasowan.dzialy;
-    if (!regiony.length) regiony = zDopasowan.regiony;
-  }
+  const { dzialy, regiony } = kluczeKonkurentowUzytkownika(await profilPrzegladu(user, now, { dopasowania }));
   return kontraktyDlaKonta(kontrakty, { dzialy, regiony, wlasnyNip: user.company_nip ?? null });
 }
 
@@ -160,11 +171,13 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
       let wynik;
       try {
         const tytuly = await matches.recentTitlesSince(user.id, sinceIso, 5);
-        const konkurenci = await wygraneKonkurentowTygodnia(user, sinceIso.slice(0, 10)).catch((err) => {
+        // Branże i województwa z karty albo z dopasowań — jeden odczyt na konto dla trzech sekcji.
+        const profil = await profilPrzegladu(user, now).catch(() => user);
+        const konkurenci = await wygraneKonkurentowTygodnia(profil, sinceIso.slice(0, 10)).catch((err) => {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja konkurentów pominięta');
           return [];
         });
-        const umowy = await umowyDoPrzegladu(user).catch((err) => {
+        const umowy = await umowyDoPrzegladu(profil).catch((err) => {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja wygasających umów pominięta');
           return [];
         });
@@ -176,7 +189,7 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja wyników pominięta');
           return [];
         });
-        const podwykonawstwo = await podwykonawstwoDlaKonta(user, kontrakty, now).catch((err) => {
+        const podwykonawstwo = await podwykonawstwoDlaKonta(profil, kontrakty, now).catch((err) => {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: podwykonawstwo konta pominięte');
           return [];
         });

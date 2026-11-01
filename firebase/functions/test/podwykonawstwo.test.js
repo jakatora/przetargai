@@ -68,3 +68,15 @@ test('profil z dopasowań: działy i regiony od 20% udziału; konto bez karty do
   const lista = await podwykonawstwoDlaKonta({ id: 'u1', cpv_codes: [], regiony: [] }, kontrakty, Date.now(), { dopasowania: { profilDopasowan: async () => dop } });
   assert.deepEqual(lista.map((k) => k.tytul), ['Przebudowa DW 886']);
 });
+
+test('profil przeglądu: karta wygrywa; bez karty — działy i regiony z dopasowań jako kody i województwa', async () => {
+  const { profilPrzegladu } = await import('../src/jobs/weeklyDigest.js');
+  const dop = Array.from({ length: 10 }, () => ({ cpv: '45233140-2', wojewodztwo: 'PL18' }));
+  const dopasowania = { profilDopasowan: async () => dop };
+  const zKarta = { id: 'u1', cpv_codes: ['90910000-9'], regiony: ['12'] };
+  assert.equal(await profilPrzegladu(zKarta, Date.now(), { dopasowania }), zKarta);
+  const p = await profilPrzegladu({ id: 'u2', cpv_codes: [], regiony: [] }, Date.now(), { dopasowania });
+  assert.deepEqual([p.cpv_codes, p.regiony], [['45000000'], ['18']]);
+  const czesciowo = await profilPrzegladu({ id: 'u3', cpv_codes: ['90910000-9'], regiony: [] }, Date.now(), { dopasowania });
+  assert.deepEqual([czesciowo.cpv_codes, czesciowo.regiony], [['90910000-9'], ['18']]);
+});
