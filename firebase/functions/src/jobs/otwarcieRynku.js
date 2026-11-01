@@ -7,6 +7,9 @@ import { rodzajDokumentu } from '../lib/noweDokumenty.js';
 import { parsujOtwarcie, scalOtwarcie } from '../lib/otwarcieOfert.js';
 import { liniePdf } from '../services/tekstPdf.js';
 import { pobierzPdfBase64 } from './autoAnalizaSwz.js';
+import { bladPrzejsciowy } from '../lib/bladPrzejsciowy.js';
+
+const POMIN = Symbol('pomin');
 
 /*
  * INFORMACJA Z OTWARCIA OFERT DLA CAŁEGO RYNKU (2026-11-01). Monitoring dokumentów czyta ją tylko dla
@@ -51,7 +54,8 @@ export async function runOtwarcieRynku({
   // `odH` > 72 tylko przy uzupełnieniu wstecz (trasa admina) — harmonogram trzyma okno 6–72 h.
   const od = new Date(teraz - odH * 3_600_000).toISOString();
   const doIso = new Date(teraz - OKNO_DO_H * 3_600_000).toISOString();
-  const kandydaci = (await przetargi.doOtwarciaRynku(od, doIso, { limit: odH > OKNO_OD_H ? 20_000 : 3000 }))
+  // Okno 66 h to ~3100 przetargów ze wszystkich źródeł (1.11) — limit z zapasem, inaczej najświeższe wypadały.
+  const kandydaci = (await przetargi.doOtwarciaRynku(od, doIso, { limit: odH > OKNO_OD_H ? 20_000 : 8000 }))
     .filter((t) => doProby(t, teraz))
     // Najpierw te, które jeszcze nie miały próby, potem najstarszy termin.
     .sort((a, b) => (a.otwarcie_rynek?.proby ?? 0) - (b.otwarcie_rynek?.proby ?? 0) || String(a.deadline).localeCompare(String(b.deadline)));
@@ -84,8 +88,10 @@ export async function runOtwarcieRynku({
       for (const d of dokumenty.filter((x) => rodzajDokumentu(x) === 'otwarcie' && x.rozszerzenie === 'pdf' && !przeczytane.has(x.id)).slice(0, 2)) {
         const odczyt = await czytajOtwarcie(d).catch((err) => {
           logger.warn({ err: err.message, tenderId: t.id, dokument: d.id }, 'Otwarcie rynku: nie odczytano PDF-a');
-          return null;
+          return bladPrzejsciowy(err) ? POMIN : null;
         });
+        // Błąd przejściowy: plik nie trafia do „przeczytanych” — wróci przy kolejnej próbie.
+        if (odczyt === POMIN) continue;
         otwarcie = scalOtwarcie(otwarcie, odczyt, d);
         czytano = true;
         if (odczyt) wynik.odczytane += 1;

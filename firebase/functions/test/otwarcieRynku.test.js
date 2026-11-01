@@ -79,3 +79,22 @@ test('403 z rzędu: po kilku błędach przebieg się kończy, bez prób zapisany
   assert.equal(pytan, MAKS_BLEDOW_POD_RZAD);
   assert.equal(w.ok, true, 'dławienie platformy to nie błąd zapisu');
 });
+
+test('PDF z otwarcia: 403 przy pobraniu nie oznacza pliku jako przeczytany — kolejna próba go czyta', async () => {
+  const post = `ocds-148610-${String(Date.now() + 77).slice(-8)}-1111-2222-3333-555544443333`;
+  const { tender } = await tenders.upsert({ externalId: `2026/BZP 55${ZNAK}/01`, title: 'Most', organization: 'Gmina U',
+    deadline: new Date(Date.now() - 30 * 3_600_000).toISOString(), source: 'bzp', postepowanie_id: post });
+  const plik = { id: `${post}_3`, nazwa: 'Informacja z otwarcia ofert', rozszerzenie: 'pdf', url: 'https://ezamowienia.gov.pl/y' };
+  let rzuc = true;
+  const opcje = {
+    czekaj: async () => {}, pobierz: async (id) => (id === post ? [plik] : []),
+    czytajOtwarcie: async () => { if (rzuc) throw new Error('Pobranie SWZ: HTTP 403'); return ODCZYT; },
+  };
+  await runOtwarcieRynku(opcje);
+  let t = await tenders.findById(tender.id);
+  assert.deepEqual([t.otwarcie_ofert ?? null, t.otwarcie_rynek.proby], [null, 1]);
+  rzuc = false;
+  await runOtwarcieRynku({ ...opcje, teraz: Date.now() + 17 * 3_600_000 });
+  t = await tenders.findById(tender.id);
+  assert.deepEqual([t.otwarcie_ofert.oferty, t.otwarcie_ofert.przeczytane], [6, [plik.id]]);
+});

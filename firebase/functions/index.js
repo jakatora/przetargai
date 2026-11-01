@@ -290,9 +290,10 @@ export const otwarcieRynkuFetch = onSchedule(
   },
   async () => {
     const { runOtwarcieRynku, runBenchmarkOtwarcia } = await import('./src/jobs/otwarcieRynku.js');
-    const wynik = await runOtwarcieRynku();
-    // Benchmark „ile dać” raz na dobę (przebieg 04:50 PL) — odczyt wszystkich przetargów z liczbą ofert.
-    if (new Date().toLocaleString('en-GB', { timeZone: 'Europe/Warsaw', hour: '2-digit', hour12: false }) === '04') {
+    // Benchmark „ile dać” raz na dobę (przebieg 04:50 PL) — wtedy job ma mniejszy budżet, żeby oba zmieściły się w 540 s.
+    const godzinaBenchmarku = new Date().toLocaleString('en-GB', { timeZone: 'Europe/Warsaw', hour: '2-digit', hour12: false }) === '04';
+    const wynik = await runOtwarcieRynku(godzinaBenchmarku ? { budzetMs: 240_000 } : {});
+    if (godzinaBenchmarku) {
       await runBenchmarkOtwarcia().catch((err) => console.error(JSON.stringify({ severity: 'ERROR', message: 'benchmark otwarcia', err: err.message })));
     }
     if (!wynik.ok) {

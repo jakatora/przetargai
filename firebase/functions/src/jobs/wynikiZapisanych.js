@@ -38,7 +38,7 @@ export async function runWynikiZapisanych(wyniki, {
   // Zapisane i przetargi z analizą SWZ (`powiazania_swz`) — konto nad nimi pracowało, wynik jest dla niego.
   const odZapisanych = new Date(teraz - DNI_WSTECZ_ZAPISANYCH * 86_400_000).toISOString();
   const poKluczu = new Map();
-  const zaangazowane = zapisane.zaangazowaneWszystkich ? await zapisane.zaangazowaneWszystkich().catch(() => []) : [];
+  const zaangazowane = zapisane.zaangazowaneWszystkich ? await zapisane.zaangazowaneWszystkich(odZapisanych).catch(() => []) : [];
   for (const w of [...await zapisane.otwarteWszystkich(odZapisanych), ...zaangazowane]) {
     if (!poKluczu.has(`${w.userId}|${w.tenderId}`)) poKluczu.set(`${w.userId}|${w.tenderId}`, w);
   }

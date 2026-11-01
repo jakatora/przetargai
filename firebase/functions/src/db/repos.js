@@ -1092,6 +1092,11 @@ export const tenders = {
     return kryteriaBlizniaka(t, kand.docs.filter((d) => d.id !== id).map((d) => ({ id: d.id, ...d.data() })));
   },
 
+  /** Nieudane pobranie listy plików w monitoringu — przetarg schodzi z czoła kolejki (inaczej blokowałby ją). */
+  async oznaczBladMonitora(id, teraz = nowIso()) {
+    await db().collection('tenders').doc(id).update({ 'ez_monitor.blad_o': teraz });
+  },
+
   /** Stan monitoringu dokumentów e-Zamówień (2026-11-01) dla wielu przetargów — jeden `getAll` po 300. */
   async stanMonitoraDokumentow(ids) {
     const unikalne = [...new Set((ids ?? []).filter(Boolean).map(String))];
@@ -1141,7 +1146,7 @@ export const tenders = {
    * Przetargi BZP/TED z terminem ofert w [od, do] — kandydaci do odczytu informacji z otwarcia ofert dla całego
    * rynku (2026-11-01, `jobs/otwarcieRynku.js`). Tylko pola potrzebne jobowi; indeks jednopolowy `deadline`.
    */
-  async doOtwarciaRynku(od, doIso, { limit = 3000 } = {}) {
+  async doOtwarciaRynku(od, doIso, { limit = 8000 } = {}) {
     const snap = await db().collection('tenders').where('deadline', '>=', od).where('deadline', '<=', doIso)
       .select('postepowanie_id', 'source', 'deadline', 'otwarcie_ofert', 'otwarcie_rynek').limit(limit).get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -1885,18 +1890,20 @@ export const saved = {
    * Przetargi, nad którymi konto PRACUJE, choć ich nie zapisało (2026-11-01): przeanalizowało SWZ w Radarze
    * albo pytało „Zapytaj SWZ” (`powiazania_swz`). 1.11 na 30 kont było 8 zapisów — leniwy użytkownik nie
    * klika „zapisz”, ale po analizie SWZ zmiana dokumentów czy wybór oferty dotyczy go tak samo.
-   * Bez filtra terminu (dokument powiązania go nie zna) — przycina wołający po terminie przetargu.
+   * Bez filtra terminu (dokument powiązania go nie zna) — przycina wołający po terminie przetargu; `od` przycina po
+   * dacie analizy, żeby zbiór nie rósł z całą historią (auto-analiza dokłada do 2 wpisów dziennie na konto).
    * @returns {Promise<{userId: string, tenderId: string, saved_at: string|null}[]>}
    */
-  async zaangazowaneWszystkich() {
+  async zaangazowaneWszystkich(od = new Date(Date.now() - 150 * 86_400_000).toISOString()) {
     const konta = await db().collection('users').select().get();
     const wynik = [];
     for (const konto of konta.docs) {
-      const snap = await db().collection('users').doc(konto.id).collection('powiazania_swz').select('tender_id', 'powiazano_o').get();
+      const snap = await db().collection('users').doc(konto.id).collection('powiazania_swz').where('powiazano_o', '>=', od).select('tender_id', 'powiazano_o').get();
       for (const d of snap.docs) wynik.push({ userId: konto.id, tenderId: d.get('tender_id') ?? d.id, saved_at: d.get('powiazano_o') ?? null });
       // Gotowa automatyczna analiza SWZ w Radarze: zmiana SWZ ją dezaktualizuje — konto musi o tym wiedzieć.
-      const auto = await autoSwzCol(konto.id).where('status', '==', 'gotowe').select('tender_id', 'utworzono_o').get();
-      for (const d of auto.docs) wynik.push({ userId: konto.id, tenderId: d.get('tender_id') ?? d.id, saved_at: d.get('utworzono_o') ?? null });
+      // Zakres po dacie, status w pamięci — równość + zakres na dwóch polach wymagałyby indeksu złożonego.
+      const auto = await autoSwzCol(konto.id).where('utworzono_o', '>=', od).select('tender_id', 'utworzono_o', 'status').get();
+      for (const d of auto.docs.filter((x) => x.get('status') === 'gotowe')) wynik.push({ userId: konto.id, tenderId: d.get('tender_id') ?? d.id, saved_at: d.get('utworzono_o') ?? null });
     }
     return wynik;
   },

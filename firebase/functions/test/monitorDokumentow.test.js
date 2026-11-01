@@ -201,3 +201,26 @@ test('przetarg z analizą SWZ (powiązanie Radaru albo gotowa auto-analiza), bez
   assert.equal(doreczone.length, 2);
   assert.ok((await alerty.lista(drugi.id)).some((x) => x.tender_id === tender.id));
 });
+
+test('403 przy PDF-ie z otwarcia: plik wraca w kolejnym przebiegu; błąd platformy zapisuje znacznik w kolejce', async () => {
+  const post = `ocds-148610-${String(Date.now() + 41).slice(-8)}-1111-2222-3333-343434343434`;
+  const user = await users.create({ email: `md10-${ZNAK}@t.pl`, passwordHash: 'x' });
+  const { tender } = await tenders.upsert({ externalId: `2026/BZP 10${ZNAK}/01`, title: 'Kanalizacja deszczowa', organization: 'Gmina V',
+    deadline: new Date(Date.now() - 2 * 86_400_000).toISOString(), source: 'bzp', postepowanie_id: post });
+  await saved.add(user.id, { tender_id: tender.id, tender_title: tender.title, tender_deadline: tender.deadline });
+  const plik = { id: `${post}_6`, nazwa: 'Informacja z otwarcia ofert', rozszerzenie: 'pdf', url: 'https://ezamowienia.gov.pl/z', opublikowano: new Date(Date.now() + 60_000).toISOString() };
+  let rzuc = true;
+  const opcje = {
+    wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async () => {},
+    pobierz: async (id) => (id === post ? [plik] : []),
+    czytajOtwarcie: async () => { if (rzuc) throw new Error('Pobranie SWZ: HTTP 403'); return { kwota: 300000, oferty: 3, cena_min: 250000, cena_max: 320000, czesci: false }; },
+  };
+  await runMonitorDokumentow(opcje);
+  assert.equal((await tenders.findById(tender.id)).otwarcie_ofert ?? null, null, 'po 403 bez śladu przeczytania');
+  rzuc = false;
+  await runMonitorDokumentow(opcje);
+  assert.equal((await tenders.findById(tender.id)).otwarcie_ofert.oferty, 3);
+
+  await runMonitorDokumentow({ ...opcje, pobierz: async (id) => { if (id === post) throw new Error('e-Zamówienia odpowiedziały 403'); return []; } });
+  assert.ok((await tenders.findById(tender.id)).ez_monitor.blad_o, 'znacznik błędu platformy');
+});

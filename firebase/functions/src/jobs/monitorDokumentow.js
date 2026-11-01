@@ -7,6 +7,7 @@ import { pobierzDokumenty, idPostepowaniaEz } from '../services/eZamowieniaDokum
 import { noweDokumenty, alertNowychDokumentow, podsumowanieZmian, rodzajDokumentu } from '../lib/noweDokumenty.js';
 import { parsujOtwarcie, scalOtwarcie } from '../lib/otwarcieOfert.js';
 import { parsujWyborOferty, scalWybor } from '../lib/wyborOferty.js';
+import { bladPrzejsciowy } from '../lib/bladPrzejsciowy.js';
 import { liniePdf } from '../services/tekstPdf.js';
 import { pobierzPdfBase64 } from './autoAnalizaSwz.js';
 import { pobierzSzczegol as pobierzSzczegolPz, ZRODLO as ZRODLO_PZ } from '../services/platformaZakupowa.js';
@@ -37,6 +38,12 @@ async function czytajWyborDomyslnie(dok) {
   return parsujWyborOferty(Array.isArray(linie) ? linie : []);
 }
 import { dostarcz } from './monitorWyszukiwan.js';
+
+/** Znacznik „pobranie nie wyszło przejściowo” — odróżnia go od nieczytelnego pliku (null). */
+const POMIN = Symbol('pomin');
+
+/** Ostatnie podejście do przetargu: udane sprawdzenie albo błąd platformy — przetarg stale z błędem nie blokuje czoła kolejki. */
+const ostatniaProba = (t) => [t.ez_monitor?.sprawdzone_o ?? '', t.ez_monitor?.blad_o ?? ''].sort().at(-1);
 
 /** Platforma zaczęła odmawiać po ~20 szczegółach pod rząd (1.11) — limit i odstęp na przebieg. */
 const LIMIT_PZ = 12;
@@ -93,7 +100,7 @@ export async function runMonitorDokumentow({
     // Powiązania SWZ nie znają terminu — tu przycinamy do okna Zapisanych (60 dni po terminie).
     .filter((t) => !t.deadline || String(t.deadline) >= odZapisanych)
     .sort((a, b) => Number(maZapis(b.id)) - Number(maZapis(a.id))
-      || String(a.ez_monitor?.sprawdzone_o ?? '').localeCompare(String(b.ez_monitor?.sprawdzone_o ?? '')));
+      || ostatniaProba(a).localeCompare(ostatniaProba(b)));
   wynik.przetargow = kandydaci.length;
 
   const uzytkownicy = new Map();
@@ -120,6 +127,7 @@ export async function runMonitorDokumentow({
     } catch (err) {
       wynik.bledy_platformy += 1;
       logger.warn({ err: err.message, tenderId: t.id }, 'Monitoring dokumentów: platforma nie odpowiedziała — wróci w następnym przebiegu');
+      await tenders.oznaczBladMonitora(t.id, teraz).catch(() => {});
       continue;
     }
     try {
@@ -131,8 +139,10 @@ export async function runMonitorDokumentow({
       for (const d of dokumenty.filter((x) => rodzajDokumentu(x) === 'otwarcie' && x.rozszerzenie === 'pdf' && !przeczytane.has(x.id)).slice(0, 2)) {
         const odczyt = await czytajOtwarcie(d).catch((err) => {
           logger.warn({ err: err.message, tenderId: t.id, dokument: d.id }, 'Monitoring dokumentów: nie odczytano PDF-a z otwarcia ofert');
-          return null;
+          return bladPrzejsciowy(err) ? POMIN : null;
         });
+        // Błąd przejściowy (403, limit czasu): plik NIE jest „przeczytany” — wróci w następnym przebiegu.
+        if (odczyt === POMIN) continue;
         otwarcie = scalOtwarcie(otwarcie, odczyt, d);
         if (odczyt) wynik.otwarcia = (wynik.otwarcia ?? 0) + 1;
       }
@@ -144,8 +154,9 @@ export async function runMonitorDokumentow({
       for (const d of pisma.slice(0, 2)) {
         const odczyt = await czytajWybor(d).catch((err) => {
           logger.warn({ err: err.message, tenderId: t.id, dokument: d.id }, 'Monitoring dokumentów: nie odczytano pisma o wyborze oferty');
-          return null;
+          return bladPrzejsciowy(err) ? POMIN : null;
         });
+        if (odczyt === POMIN) continue;
         wybor = scalWybor(wybor, odczyt, d);
         if (odczyt) wynik.wybory = (wynik.wybory ?? 0) + 1;
       }
