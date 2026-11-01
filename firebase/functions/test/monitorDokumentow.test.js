@@ -72,3 +72,21 @@ test('czołówka feedu (wynik ≥ 80, bez zapisu): wpis w centrum alertów, bez 
   assert.equal(email.filter((m) => m.to === `md2-${z}@t.pl`).length, 0, 'bez maila');
   assert.deepEqual(await alerty.lista(slaby.id), [], 'dopasowanie 55 nie jest monitorowane');
 });
+
+test('podsumowanie zmian ląduje na przetargu i w kopiach (feed, Zapisane) — karta pokaże „Wyjaśnienia (1)”', async () => {
+  const z = `${ZNAK}c`;
+  const post = `ocds-148610-${String(Date.now() + 7).slice(-8)}-1111-2222-3333-000011112222`;
+  const user = await users.create({ email: `md4-${z}@t.pl`, passwordHash: 'x' });
+  const { tender } = await tenders.upsert({ externalId: `2026/BZP 04${ZNAK}/01`, title: 'Dostawa mebli', organization: 'Gmina Z',
+    deadline: new Date(Date.now() + 8 * 86_400_000).toISOString(), source: 'bzp', postepowanie_id: post });
+  await matches.createWithEvaluation({ userId: user.id, tenderId: tender.id, score: 85, reasoning: 'meble', tender });
+  await runMonitorDokumentow({
+    pobierz: async (id) => (id === post ? [{ id: `${post}_1`, nazwa: 'SWZ' }, { id: `${post}_2`, nazwa: 'Wyjaśnienia treści SWZ', opublikowano: new Date(Date.now() + 60_000).toISOString() }] : []),
+    wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async () => {},
+  });
+  const t = await tenders.findById(tender.id);
+  assert.deepEqual([t.ez_zmiany.wyjasnienia, t.ez_zmiany.zmiany, t.ez_zmiany.termin], [1, 0, 0]);
+  const { getFirestore } = await import('firebase-admin/firestore');
+  const kopia = (await getFirestore().collection('users').doc(user.id).collection('matches').doc(tender.id).get()).data();
+  assert.equal(kopia.tender_ez_zmiany.wyjasnienia, 1);
+});

@@ -1080,20 +1080,37 @@ export const tenders = {
     const wynik = [];
     for (let i = 0; i < unikalne.length; i += 300) {
       const snapy = await db().getAll(...unikalne.slice(i, i + 300).map((id) => db().collection('tenders').doc(id)),
-        { fieldMask: ['postepowanie_id', 'source', 'title', 'organization', 'deadline', 'ez_monitor'] });
+        { fieldMask: ['postepowanie_id', 'source', 'title', 'organization', 'deadline', 'ez_monitor', 'ez_zmiany'] });
       for (const snap of snapy) if (snap.exists) wynik.push({ id: snap.id, ...snap.data() });
     }
     return wynik;
   },
 
-  /** Po sprawdzeniu: znane id plików + świeża lista dokumentów jako cache ekranu (jak `zapiszDokumentyEz`). */
-  async zapiszMonitorDokumentow(id, dokumenty, teraz = nowIso()) {
+  /**
+   * Po sprawdzeniu: znane id plików + świeża lista dokumentów jako cache ekranu (jak `zapiszDokumentyEz`).
+   * `zmiany` (podsumowanie wyjaśnień/zmian/terminu, `lib/noweDokumenty.js`) — gdy inne niż było, idzie też
+   * do kopii w feedach i Zapisanych (`tender_ez_zmiany`), bo lista renderuje się bez odczytu przetargu.
+   */
+  async zapiszMonitorDokumentow(id, dokumenty, teraz = nowIso(), { zmiany = null, poprzednie = null } = {}) {
     const lista = Array.isArray(dokumenty) ? dokumenty : [];
     await db().collection('tenders').doc(id).update({
       ez_monitor: { ids: lista.map((d) => d.id).slice(0, 300), sprawdzone_o: teraz },
       ez_dokumenty: lista,
       ez_dokumenty_o: teraz,
+      ez_zmiany: zmiany,
     });
+    if (JSON.stringify(zmiany) === JSON.stringify(poprzednie ?? null)) return 0;
+    const [zapisane, dopasowania] = await Promise.all([
+      db().collectionGroup('saved').where('tender_id', '==', id).get(),
+      db().collectionGroup('matches').where('tender_id', '==', id).get(),
+    ]);
+    const refy = [...zapisane.docs, ...dopasowania.docs].map((d) => d.ref);
+    for (let i = 0; i < refy.length; i += 400) {
+      const batch = db().batch();
+      for (const ref of refy.slice(i, i + 400)) batch.update(ref, { tender_ez_zmiany: zmiany });
+      await batch.commit();
+    }
+    return refy.length;
   },
 
   /** Dokumenty postępowania z e-Zamówień (SWZ, załączniki z linkami) — cache 24 h przy ogłoszeniu (2026-10-26). */

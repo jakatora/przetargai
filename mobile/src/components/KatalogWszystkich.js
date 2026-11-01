@@ -15,6 +15,7 @@ import { WOJEWODZTWA } from '../lib/wojewodztwa';
 import { formatDate, formatBudget } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { znacznikKryteriow } from '../lib/kryteriaOceny';
+import { znacznikZmian } from '../lib/zmianyDokumentow';
 import {
   FILTRY_DOMYSLNE, KLUCZ_FILTROW, SORTOWANIA, STATUSY_TERMINU, ZRODLA,
   normalizujFiltry, parametryZapytania, liczbaAktywnychFiltrow, scalStrone,
@@ -67,6 +68,7 @@ function KartaPrzetargu({ tender, onPress, styles, t }) {
   const termin = opisTerminu(tender.deadline);
   const budzet = formatBudget(tender.budget, tender.currency);
   const kryteria = znacznikKryteriow(tender);
+  const zmiany = znacznikZmian(tender);
   return (
     <Pressable
       onPress={onPress}
@@ -93,6 +95,7 @@ function KartaPrzetargu({ tender, onPress, styles, t }) {
             {t(kryteria.pl, kryteria.en)}
           </Text>
         ) : null}
+        {zmiany ? <Text style={[styles.kartaChip, styles.kartaZmiany]} numberOfLines={1}>{t(zmiany.pl, zmiany.en)}</Text> : null}
       </View>
 
       {/* Źródło pierwotne + czas ostatniej synchronizacji — wymóg P1-3. */}
@@ -564,6 +567,7 @@ const tworzStyleKatalogu = tworzStyle((k) => ({
   kartaPilny: { color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo },
   kartaPoTerminie: { color: k.danger, backgroundColor: k.dangerTlo },
   kartaKryteria: { color: k.blue, backgroundColor: k.wyroznienie, flexShrink: 1 },
+  kartaZmiany: { color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo, flexShrink: 1 },
   kartaMeta: { fontSize: 13, color: k.textMuted },
   kartaKwota: { color: k.text, fontWeight: '700', fontVariant: ['tabular-nums'] },
 

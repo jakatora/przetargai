@@ -8,6 +8,7 @@ import { formatDate } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { opisWadium } from '../lib/wadium';
 import { znacznikKryteriow } from '../lib/kryteriaOceny';
+import { znacznikZmian } from '../lib/zmianyDokumentow';
 import PodpisZrodla from './PodpisZrodla';
 import { ZnacznikiWyjasnienia } from './Wyjasnienie';
 
@@ -77,6 +78,8 @@ function MatchCard({ match, onOtworz, nowe = false }) {
   const wadium = opisWadium(tender);
   // Za co są punkty — „Tylko cena” albo „Cena 60% · Gwarancja 40%” bez otwierania przetargu.
   const kryteria = znacznikKryteriow(tender);
+  // Wyjaśnienia / zmiany SWZ / nowy termin z monitoringu e-Zamówień (2026-11-01) — „jest co czytać”.
+  const zmiany = znacznikZmian(tender);
 
   return (
     <Pressable
@@ -128,6 +131,9 @@ function MatchCard({ match, onOtworz, nowe = false }) {
           <Text style={[styles.kryteriaChip, !kryteria.tylkoCena && styles.kryteriaChipPozacenowe]} numberOfLines={1}>
             {t(kryteria.pl, kryteria.en)}
           </Text>
+        ) : null}
+        {zmiany ? (
+          <Text style={[styles.kryteriaChip, styles.zmianyChip]} numberOfLines={1}>{t(zmiany.pl, zmiany.en)}</Text>
         ) : null}
       </View>
       {/*
@@ -188,6 +194,7 @@ const tworzStyleKarty = tworzStyle((k) => ({
   wadiumChipBez: { backgroundColor: k.sukcesTlo, color: k.sukcesAkcent },
   kryteriaChip: { fontSize: 12, fontWeight: '700', paddingVertical: 3, paddingHorizontal: 8, borderRadius: radius.sm, overflow: 'hidden', color: k.textMuted, backgroundColor: k.neutralneTlo, flexShrink: 1 },
   kryteriaChipPozacenowe: { color: k.blue, backgroundColor: k.wyroznienie },
+  zmianyChip: { color: k.ostrzezenieTekst, backgroundColor: k.ostrzezenieTlo },
   card: {
     backgroundColor: k.surface,
     borderRadius: radius.lg,

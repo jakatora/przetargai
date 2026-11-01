@@ -95,3 +95,21 @@ export function alertNowychDokumentow({ tender, nowe, zapisany = true }) {
     }],
   };
 }
+
+/**
+ * Podsumowanie zmian w dokumentacji do KARTY NA LIŚCIE (2026-11-01): „Nowy termin · Wyjaśnienia (2)”
+ * bez otwierania przetargu. Liczymy z CAŁEJ aktualnej listy plików, nie tylko z nowych — karta mówi,
+ * co w postępowaniu jest, a alert — co doszło. Bez wyjaśnień, zmian i nowego terminu — null.
+ * @returns {{wyjasnienia: number, zmiany: number, termin: number, ostatnia_o: string|null}|null}
+ */
+export function podsumowanieZmian(dokumenty) {
+  const wynik = { wyjasnienia: 0, zmiany: 0, termin: 0, ostatnia_o: null };
+  for (const d of Array.isArray(dokumenty) ? dokumenty : []) {
+    const r = rodzajDokumentu(d);
+    const pole = r === 'wyjasnienia' || r === 'informacja' ? 'wyjasnienia' : r === 'zmiana' ? 'zmiany' : r === 'termin' ? 'termin' : null;
+    if (!pole) continue;
+    wynik[pole] += 1;
+    if (d.opublikowano && (!wynik.ostatnia_o || String(d.opublikowano) > wynik.ostatnia_o)) wynik.ostatnia_o = String(d.opublikowano);
+  }
+  return wynik.wyjasnienia + wynik.zmiany + wynik.termin ? wynik : null;
+}

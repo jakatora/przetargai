@@ -46,3 +46,14 @@ test('produkcja 1.11: zmiana terminu i komunikaty osobno; pierwszy odczyt bez zw
   const a = alertNowychDokumentow({ tender: { id: 't' }, nowe: [dok[2]] });
   assert.deepEqual([a.ton, a.tresc.pl.startsWith('Zamawiający opublikował zmianę terminu składania ofert (1).')], ['ostrzezenie', true]);
 });
+
+test('podsumowanie zmian na kartę: z całej listy, bez zwykłej dokumentacji → null', async () => {
+  const { podsumowanieZmian } = await import('../src/lib/noweDokumenty.js');
+  const p = podsumowanieZmian([
+    { id: '1', nazwa: 'SWZ' }, { id: '2', nazwa: 'Wyjaśnienia treści SWZ nr 1', opublikowano: '2026-10-28T10:00:00Z' },
+    { id: '3', nazwa: 'Informacja nr 1 dla Wykonawców', opublikowano: '2026-10-29T10:00:00Z' }, { id: '4', nazwa: 'Modyfikacja nr 1', opublikowano: '2026-10-30T09:00:00Z' },
+    { id: '5', nazwa: 'Zmiana terminu składania ofert', opublikowano: '2026-10-30T12:00:00Z' },
+  ]);
+  assert.deepEqual(p, { wyjasnienia: 2, zmiany: 1, termin: 1, ostatnia_o: '2026-10-30T12:00:00Z' });
+  assert.equal(podsumowanieZmian([{ id: '1', nazwa: 'SWZ' }, { id: '2', nazwa: 'Informacja z otwarcia ofert' }]), null);
+});

@@ -4,7 +4,7 @@ import { saved, tenders, alerty, users } from '../db/repos.js';
 import { sendPush } from '../services/push.js';
 import { sendEmail } from '../services/email.js';
 import { pobierzDokumenty, czyIdPostepowania } from '../services/eZamowieniaDokumenty.js';
-import { noweDokumenty, alertNowychDokumentow } from '../lib/noweDokumenty.js';
+import { noweDokumenty, alertNowychDokumentow, podsumowanieZmian } from '../lib/noweDokumenty.js';
 import { dostarcz } from './monitorWyszukiwan.js';
 
 /*
@@ -85,8 +85,9 @@ export async function runMonitorDokumentow({
         if (kanal === 'email') wynik.email += 1;
       }
       if (byloNowe) wynik.z_nowymi += 1;
-      // Znana lista PO wysyłce — powtórkę po awarii odsiewa klucz alertu.
-      await tenders.zapiszMonitorDokumentow(t.id, dokumenty, teraz);
+      // Znana lista PO wysyłce — powtórkę po awarii odsiewa klucz alertu. Podsumowanie idzie na karty list.
+      wynik.kopie = (wynik.kopie ?? 0) + await tenders.zapiszMonitorDokumentow(t.id, dokumenty, teraz,
+        { zmiany: podsumowanieZmian(dokumenty), poprzednie: t.ez_zmiany ?? null });
     } catch (err) {
       wynik.bledy += 1;
       logger.error({ err: err.message, tenderId: t.id }, 'Monitoring dokumentów: przetarg pominięty');
