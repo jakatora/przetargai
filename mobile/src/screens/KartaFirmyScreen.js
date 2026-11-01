@@ -14,7 +14,7 @@ import { KROKI_KREATORA, kartaDoFormularza, formularzDoKarty, walidujFormularz, 
 import * as storage from '../lib/storage';
 import { KLUCZ_DANYCH_WYKONAWCY } from '../lib/dokumentyOferty';
 import { pobierzDanePoNip } from '../lib/danePoNip';
-import { prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu, tekstDoPodpowiedzi } from '../lib/kartaZNip';
+import { prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu, tekstDoPodpowiedzi, nipDoKonta } from '../lib/kartaZNip';
 
 /** Selekcja wyłączona po stronie serwera (`PRACOWNIK_ENABLED=false`) — zostają pola profilu z `PATCH /auth/me`. */
 const KROKI_UPROSZCZONE = [1, 3, 4];
@@ -60,15 +60,34 @@ export default function KartaFirmyScreen({ route, navigation }) {
   useEffect(() => {
     let aktywny = true;
     storage.getItem(KLUCZ_DANYCH_WYKONAWCY)
-      .then((s) => { const d = s ? JSON.parse(s) : null; if (aktywny && d?.nip) setNip(String(d.nip)); })
+      // Pole NIP: z danych do oferty w telefonie, a gdy ich brak — z konta (NIP zapisany na serwerze).
+      .then((s) => { const d = s ? JSON.parse(s) : null; const z = d?.nip || user?.company_nip; if (aktywny && z) setNip(String(z)); })
       .catch(() => {});
     return () => { aktywny = false; };
   }, []);
+
+  /**
+   * NIP do konta (2026-11-01) — bez niego serwer nie widzi umów firmy (radar, alert o następcy).
+   * Błąd (np. NIP ma inne konto) nie blokuje karty: zwracamy komunikat do pokazania pod polem.
+   */
+  async function zapiszNipWKoncie() {
+    const doZapisu = nipDoKonta(nip, user?.company_nip);
+    if (!doZapisu) return null;
+    try {
+      const d = await api.ustawNipFirmy(doZapisu);
+      if (d?.user) setUser?.(d.user);
+      return null;
+    } catch (err) {
+      return err.message;
+    }
+  }
 
   async function wypelnijZNip() {
     setNipStan({ laduje: true, komunikat: null, ok: false });
     const { dane, blad } = await pobierzDanePoNip(nip);
     if (!dane) { setNipStan({ laduje: false, komunikat: blad, ok: false }); return; }
+    // NIP potwierdzony w Białej liście — zapisujemy go w koncie od razu, nie dopiero przy „Zapisz”.
+    const bladNipu = await zapiszNipWKoncie();
     const wynik = prefillKartyZDanychFirmy(form, dane);
     setForm(wynik.form);
     try {
@@ -81,7 +100,8 @@ export default function KartaFirmyScreen({ route, navigation }) {
     if (tekst && (await dobierzZ(tekst))) {
       komunikat += t(' Dobraliśmy też słowa i kody CPV z nazwy firmy — sprawdź je niżej.', ' We also picked keywords and CPV codes from the company name — check them below.');
     }
-    setNipStan({ laduje: false, komunikat, ok: true });
+    // Karta wypełniona; NIP w koncie mógł się nie zapisać (np. ma go inne konto) — to też trzeba zobaczyć.
+    setNipStan({ laduje: false, komunikat: bladNipu ? `${komunikat} ${bladNipu}` : komunikat, ok: !bladNipu });
   }
 
   if (!form) {
@@ -144,6 +164,8 @@ export default function KartaFirmyScreen({ route, navigation }) {
         : await api.zapiszKarteFirmy(karta);
       // Odpowiedź niesie świeżego użytkownika — bez drugiego żądania, które mogłoby się nie udać po udanym zapisie.
       if (d?.user) setUser?.(d.user);
+      const bladNipu = await zapiszNipWKoncie();
+      if (bladNipu) { setNipStan({ laduje: false, komunikat: bladNipu, ok: false }); setKrok(1); return; }
       if (poStarcie) navigation.replace('MatchFeed'); else navigation.goBack();
     } catch (err) {
       setBlad(err.message);

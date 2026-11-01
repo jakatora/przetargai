@@ -1,4 +1,5 @@
 import { WOJEWODZTWA } from './wojewodztwa.js';
+import { normalizujNip, czyPoprawnyNip } from './dokumentyOferty.js';
 
 /*
  * „KARTA FIRMY Z NIP" (2026-10-25) — leniwy start: użytkownik wpisuje sam NIP, a nazwa firmy
@@ -120,4 +121,15 @@ export function tekstDoPodpowiedzi({ opis, nazwa, keywords, cpv_codes } = {}) {
     .replace(/\s+/g, ' ')
     .trim();
   return zNazwy.replace(/[^\p{L}\p{N}]/gu, '').length >= 3 ? zNazwy : null;
+}
+
+/**
+ * NIP do zapisania w koncie (2026-11-01): poprawny i inny niż ten, który konto już ma — inaczej null
+ * (nie ma czego wysyłać). Serwer z NIP-em pokazuje w radarze własne umowy firmy i ostrzega, gdy
+ * zamawiający ogłosi ich następcę; bez niego te funkcje milczą.
+ */
+export function nipDoKonta(wpisany, obecny) {
+  const nip = normalizujNip(wpisany);
+  if (!czyPoprawnyNip(nip)) return null;
+  return nip === normalizujNip(obecny) ? null : nip;
 }

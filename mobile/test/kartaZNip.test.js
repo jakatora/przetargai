@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { kodPocztowyZAdresu, wojewodztwoZAdresu, prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu, tekstDoPodpowiedzi } from '../src/lib/kartaZNip.js';
+import { kodPocztowyZAdresu, wojewodztwoZAdresu, prefillKartyZDanychFirmy, scalDaneWykonawcy, komunikatPrefillu, tekstDoPodpowiedzi, nipDoKonta } from '../src/lib/kartaZNip.js';
 import { kartaDoFormularza } from '../src/lib/kartaFirmy.js';
 import { WOJEWODZTWA } from '../src/lib/wojewodztwa.js';
 
@@ -80,4 +80,11 @@ test('tekst do automatycznej podpowiedzi: własny opis > nazwa bez form prawnych
   assert.equal(tekstDoPodpowiedzi({ nazwa: 'DACHY KOWALSKI', keywords: 'dach' }), null, 'słowa już są — nie ruszamy');
   assert.equal(tekstDoPodpowiedzi({ nazwa: 'DACHY KOWALSKI', cpv_codes: '45261000' }), null);
   assert.equal(tekstDoPodpowiedzi({}), null);
+});
+
+test('NIP do konta: tylko poprawny i inny niż zapisany', () => {
+  assert.equal(nipDoKonta('526-104-08-28', null), '5261040828');
+  assert.equal(nipDoKonta('5261040828', '5261040828'), null, 'bez zmian — nic nie wysyłamy');
+  assert.equal(nipDoKonta('5261040827', null), null, 'zła suma kontrolna');
+  assert.equal(nipDoKonta('', '5261040828'), null, 'puste pole nie usuwa NIP-u z konta');
 });

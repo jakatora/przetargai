@@ -26,6 +26,8 @@ import {
   zapiszStanOferty,
 } from '../lib/dokumentyOferty';
 import { pobierzDanePoNip } from '../lib/danePoNip';
+import { nipDoKonta } from '../lib/kartaZNip';
+import { api } from '../api/client';
 import { generujSciageJedz } from '../lib/sciagaJedz';
 import { wczytajKontroleOferty, zapiszKontroleOferty } from '../lib/kontrolaOferty';
 
@@ -42,7 +44,7 @@ import { wczytajKontroleOferty, zapiszKontroleOferty } from '../lib/kontrolaOfer
 export default function DokumentyOfertyScreen({ route, navigation }) {
   const styles = useStyle(tworzStyleDokumentow);
   const { t } = useJezyk();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const match = route?.params?.match ?? null;
   const przetarg = useMemo(() => daneZOgloszenia(match?.tender), [match]);
 
@@ -138,6 +140,10 @@ export default function DokumentyOfertyScreen({ route, navigation }) {
       await storage.setItem(KLUCZ_DANYCH_WYKONAWCY, JSON.stringify(wykonawca));
       setZapisano(true);
       setPokazDane(false);
+      // NIP do konta (2026-11-01): serwer pokaże własne umowy firmy w radarze i ostrzeże o ich następcach.
+      // Po cichu — błąd (np. NIP ma inne konto) nie dotyczy dokumentów oferty.
+      const doKonta = nipDoKonta(wykonawca.nip, user?.company_nip);
+      if (doKonta) api.ustawNipFirmy(doKonta).then((d) => { if (d?.user) setUser?.(d.user); }).catch(() => {});
     } catch {
       /* magazyn niedostępny — dokumenty i tak się generują z bieżącego stanu */
       setZapisano(true);

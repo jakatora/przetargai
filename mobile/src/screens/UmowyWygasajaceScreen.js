@@ -56,11 +56,90 @@ export default function UmowyWygasajaceScreen({ navigation }) {
   }
   if (!dane) return <Screen><ActivityIndicator color={kolory.blue} style={styles.spinner} /></Screen>;
 
+  // Karta jednej umowy. `wlasna` = umowa, którą firma sama wykonuje: bez „Wykonuje:” (to Ty)
+  // i bez „Obserwuj” (alert o następcy przychodzi sam).
+  const karta = (u, wlasna = false) => {
+    const ton = tonTerminu(u.dni_do_konca);
+    const nastepca = opisNastepcy(u, t);
+    return (
+      <View key={`${wlasna ? 'w' : 'r'}-${u.id}`} style={[styles.karta, wlasna && styles.kartaWlasna]}>
+        <View style={styles.glowa}>
+          <Text style={styles.nazwa} numberOfLines={3}>{u.tytul ?? t('Umowa bez tytułu', 'Untitled contract')}</Text>
+          <Text style={[styles.odznaka, styles[`ton_${ton}`]]}>{opisTerminu(u.dni_do_konca, t)}</Text>
+        </View>
+        <Text style={styles.zamawiajacy}>{u.zamawiajacy}{u.miasto ? `, ${u.miasto}` : ''}</Text>
+        <Text style={styles.opis}>
+          {t(`Koniec umowy: ${dataKonca(u) ?? '—'}`, `Contract ends: ${dataKonca(u) ?? '—'}`)}
+          {opisUmowy(u, t, kwotaKrotko) ? ` · ${opisUmowy(u, t, kwotaKrotko)}` : ''}
+        </Text>
+        {nastepca ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${nastepca}. ${u.nastepca.tytul ?? ''}`}
+            onPress={() => navigation.navigate('KatalogDetail', { tender: ogloszenieNastepcy(u) })}
+            style={[styles.nastepca, u.nastepca.pewny === false && styles.nastepcaPodobny]}
+          >
+            <Text style={[styles.nastepcaNaglowek, u.nastepca.pewny === false && styles.nastepcaNaglowekPodobny]}>{nastepca}</Text>
+            {u.nastepca.tytul ? <Text style={styles.nastepcaTytul} numberOfLines={2}>{u.nastepca.tytul}</Text> : null}
+            <Text style={styles.link}>{t('Otwórz ogłoszenie →', 'Open the tender →')}</Text>
+          </Pressable>
+        ) : null}
+        {wlasna ? null : (u.zwyciezcy ?? []).map((z) => (
+          <Pressable
+            key={z.nip ?? z.nazwa}
+            accessibilityRole="button"
+            disabled={!czyMoznaOtworzycProfil(z)}
+            onPress={() => navigation.navigate('ProfilKonkurenta', { nip: z.nip ?? null, nazwa: z.nazwa })}
+            hitSlop={6}
+          >
+            <Text style={styles.wykonawca}>
+              {t('Wykonuje: ', 'Current contractor: ')}{z.nazwa}
+              {czyMoznaOtworzycProfil(z) ? <Text style={styles.link}>{t('  profil →', '  profile →')}</Text> : null}
+            </Text>
+          </Pressable>
+        ))}
+        {wlasna ? null : obserwacje[u.id]?.komunikat ? (
+          <Text style={obserwacje[u.id].ok ? styles.ok : styles.blad}>{obserwacje[u.id].komunikat}</Text>
+        ) : u.zamawiajacy ? (
+          <Pressable accessibilityRole="button" onPress={() => obserwuj(u)} disabled={obserwacje[u.id]?.trwa} hitSlop={6}>
+            <Text style={styles.link}>{obserwacje[u.id]?.trwa ? t('Zapisuję…', 'Saving…') : t('Obserwuj zamawiającego — alert o nowym przetargu', 'Watch this buyer — alert on a new tender')}</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  };
+
+  // Twoje umowy (2026-11-01): serwer zwraca null, gdy konto nie ma NIP-u — wtedy podpowiedź.
+  const twoje = Array.isArray(dane.twoje) ? dane.twoje : null;
+  const sekcjaTwoich = twoje === null ? (
+    <Pressable accessibilityRole="button" onPress={() => navigation.navigate('KartaFirmy')} style={styles.podpowiedzNip}>
+      <Text style={styles.opis}>
+        {t(
+          'Podaj NIP w Karcie firmy — pokażemy też umowy, które sam wykonujesz, i ostrzeżemy, gdy zamawiający ogłosi ich następny przetarg.',
+          'Add your NIP in the company card — we will also show contracts you perform and warn you when the buyer tenders them again.',
+        )}
+      </Text>
+      <Text style={styles.link}>{t('Podaj NIP →', 'Add NIP →')}</Text>
+    </Pressable>
+  ) : twoje.length ? (
+    <View>
+      <Text style={styles.sekcja}>{t('Twoje umowy, które się kończą', 'Your contracts that are ending')}</Text>
+      <Text style={styles.opis}>
+        {t(
+          'Gdy zamawiający ogłosi następny przetarg na Twoją umowę, dostaniesz alert z terminem ofert — żeby jej nie oddać.',
+          'When the buyer tenders your contract again, you get an alert with the bid deadline — so you do not lose it.',
+        )}
+      </Text>
+      {twoje.map((u) => karta(u, true))}
+    </View>
+  ) : null;
+
   if (!dane.dostepne || !dane.umowy?.length) {
     return (
       <Screen scroll>
         <Text style={styles.tytul}>{t('Wygasające umowy', 'Expiring contracts')}</Text>
-        <Text style={styles.opis}>
+        {sekcjaTwoich}
+        <Text style={[styles.opis, twoje?.length ? styles.odstep : null]}>
           {dane.dostepne
             ? t('W Twoich branżach i regionach nie widzimy teraz umów, które kończą się w ciągu 7 miesięcy. Sprawdzimy znowu jutro.', 'No contracts in your industries and regions end within 7 months right now. We check again tomorrow.')
             : t('Dodaj kody CPV i regiony w Karcie firmy — pokażemy umowy, które wkrótce się kończą, czyli przetargi, które zaraz wrócą.', 'Add CPV codes and regions in your company card and we will show contracts that end soon — tenders that will be back.')}
@@ -73,6 +152,8 @@ export default function UmowyWygasajaceScreen({ navigation }) {
   return (
     <Screen scroll>
       <Text style={styles.tytul}>{t('Wygasające umowy', 'Expiring contracts')}</Text>
+      {sekcjaTwoich}
+      {twoje?.length ? <Text style={styles.sekcja}>{t('Umowy w Twoich branżach', 'Contracts in your industries')}</Text> : null}
       <Text style={styles.opis}>
         {t(
           'Te umowy kończą się w ciągu 7 miesięcy. Zamawiający niedługo ogłosi ten sam przetarg — przygotuj kalkulację i referencje, zanim zrobi to konkurencja.',
@@ -88,61 +169,12 @@ export default function UmowyWygasajaceScreen({ navigation }) {
         </Text>
       ) : null}
 
-      {dane.umowy.map((u) => {
-        const ton = tonTerminu(u.dni_do_konca);
-        const nastepca = opisNastepcy(u, t);
-        return (
-          <View key={u.id} style={styles.karta}>
-            <View style={styles.glowa}>
-              <Text style={styles.nazwa} numberOfLines={3}>{u.tytul ?? t('Umowa bez tytułu', 'Untitled contract')}</Text>
-              <Text style={[styles.odznaka, styles[`ton_${ton}`]]}>{opisTerminu(u.dni_do_konca, t)}</Text>
-            </View>
-            <Text style={styles.zamawiajacy}>{u.zamawiajacy}{u.miasto ? `, ${u.miasto}` : ''}</Text>
-            <Text style={styles.opis}>
-              {t(`Koniec umowy: ${dataKonca(u) ?? '—'}`, `Contract ends: ${dataKonca(u) ?? '—'}`)}
-              {opisUmowy(u, t, kwotaKrotko) ? ` · ${opisUmowy(u, t, kwotaKrotko)}` : ''}
-            </Text>
-            {nastepca ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${nastepca}. ${u.nastepca.tytul ?? ''}`}
-                onPress={() => navigation.navigate('KatalogDetail', { tender: ogloszenieNastepcy(u) })}
-                style={[styles.nastepca, u.nastepca.pewny === false && styles.nastepcaPodobny]}
-              >
-                <Text style={[styles.nastepcaNaglowek, u.nastepca.pewny === false && styles.nastepcaNaglowekPodobny]}>{nastepca}</Text>
-                {u.nastepca.tytul ? <Text style={styles.nastepcaTytul} numberOfLines={2}>{u.nastepca.tytul}</Text> : null}
-                <Text style={styles.link}>{t('Otwórz ogłoszenie →', 'Open the tender →')}</Text>
-              </Pressable>
-            ) : null}
-            {(u.zwyciezcy ?? []).map((z) => (
-              <Pressable
-                key={z.nip ?? z.nazwa}
-                accessibilityRole="button"
-                disabled={!czyMoznaOtworzycProfil(z)}
-                onPress={() => navigation.navigate('ProfilKonkurenta', { nip: z.nip ?? null, nazwa: z.nazwa })}
-                hitSlop={6}
-              >
-                <Text style={styles.wykonawca}>
-                  {t('Wykonuje: ', 'Current contractor: ')}{z.nazwa}
-                  {czyMoznaOtworzycProfil(z) ? <Text style={styles.link}>{t('  profil →', '  profile →')}</Text> : null}
-                </Text>
-              </Pressable>
-            ))}
-            {obserwacje[u.id]?.komunikat ? (
-              <Text style={obserwacje[u.id].ok ? styles.ok : styles.blad}>{obserwacje[u.id].komunikat}</Text>
-            ) : u.zamawiajacy ? (
-              <Pressable accessibilityRole="button" onPress={() => obserwuj(u)} disabled={obserwacje[u.id]?.trwa} hitSlop={6}>
-                <Text style={styles.link}>{obserwacje[u.id]?.trwa ? t('Zapisuję…', 'Saving…') : t('Obserwuj zamawiającego — alert o nowym przetargu', 'Watch this buyer — alert on a new tender')}</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        );
-      })}
+      {dane.umowy.map((u) => karta(u))}
 
       <Text style={styles.zrodlo}>
         {t(
-          'Koniec liczymy z daty zawarcia i okresu realizacji podanych w ogłoszeniu o wyniku w BZP. Pomijamy umowy krótsze niż pół roku i jednorazowe roboty budowlane, a także umowy, które wykonuje Twoja firma. Zamawiający może umowę przedłużyć albo zakończyć wcześniej.',
-          'The end date comes from the signing date and term in the BZP award notice. We skip contracts shorter than six months, one-off construction works, and contracts your company performs. The buyer may extend or end a contract early.',
+          'Koniec liczymy z daty zawarcia i okresu realizacji podanych w ogłoszeniu o wyniku w BZP. Pomijamy umowy krótsze niż pół roku i jednorazowe roboty budowlane. Umowy, które wykonuje Twoja firma, są osobno na górze (gdy w koncie jest NIP). Zamawiający może umowę przedłużyć albo zakończyć wcześniej.',
+          'The end date comes from the signing date and term in the BZP award notice. We skip contracts shorter than six months and one-off construction works. Contracts your company performs are listed separately at the top (when your account has a NIP). The buyer may extend or end a contract early.',
         )}
       </Text>
     </Screen>
@@ -171,5 +203,9 @@ const tworzStyleUmow = tworzStyle((k) => ({
   nastepcaNaglowek: { fontSize: 13, fontWeight: '800', color: k.sukcesAkcent, lineHeight: 18 },
   nastepcaNaglowekPodobny: { color: k.text },
   nastepcaTytul: { fontSize: 13, color: k.text, lineHeight: 18, marginTop: 2 },
+  kartaWlasna: { borderColor: k.blue },
+  sekcja: { fontSize: 17, fontWeight: '800', color: k.text, marginTop: spacing.lg },
+  podpowiedzNip: { backgroundColor: k.wyroznienie, borderRadius: radius.md, padding: spacing.sm, marginTop: spacing.sm },
+  odstep: { marginTop: spacing.lg },
   zrodlo: { fontSize: 12, color: k.textMuted, marginTop: spacing.lg, fontStyle: 'italic', lineHeight: 17 },
 }));
