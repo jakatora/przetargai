@@ -1042,6 +1042,14 @@ export const tenders = {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((t) => t.source === 'ted');
   },
 
+  /** Przetargi jednego postępowania ze wszystkich rejestrów — do oznaczenia unieważnienia z wyniku (2026-11-01). */
+  async przetargiPostepowania(postepowanieId) {
+    if (!postepowanieId) return [];
+    const snap = await db().collection('tenders').where('postepowanie_id', '==', String(postepowanieId))
+      .select('source', 'anulowany', 'liczba_czesci', 'deadline').limit(20).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
   /** TED z terminem od `od` (uzupełnianie wstecz wersji): zakres po `deadline`, źródło w pamięci. */
   async tedDoWersji(od, { limit = 40_000 } = {}) {
     const snap = await db().collection('tenders').where('deadline', '>=', od)

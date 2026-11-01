@@ -5,6 +5,7 @@ import { pobierzWynikiTed, pobierzModyfikacjeTed } from '../services/tedWyniki.j
 import { rozstrzygniecia, modyfikacjeUmow, oknoWynikow as repoOkna } from '../db/repos.js';
 import { runWynikiZapisanych } from './wynikiZapisanych.js';
 import { runPonowneOgloszenia } from './ponowneOgloszenia.js';
+import { runUniewaznioneZWyniku } from './uniewaznioneZWyniku.js';
 
 /*
  * OKNO ROZSTRZYGNIĘĆ (etap 6) — kompletne źródło „co się w tych przetargach stało".
@@ -126,6 +127,7 @@ export async function runOknoWynikow({
   pobierzModyfikacje = pobierzModyfikacjeTed,
   powiadomZapisane = runWynikiZapisanych,
   ponowne = runPonowneOgloszenia,
+  uniewaznione = runUniewaznioneZWyniku,
 } = {}) {
   const start = Date.now();
   const dzisiaj = new Date(teraz).toISOString().slice(0, 10);
@@ -191,6 +193,11 @@ export async function runOknoWynikow({
     logger.error({ err: err.message }, 'okno wyników: powiadomienia o wynikach zapisanych pominięte');
     return { blad: err.message };
   });
+  // Wynik „wszystkie części unieważnione” (2026-11-01): przetarg schodzi z feedu, katalogu i przypomnień.
+  const uniewazn = await uniewaznione({ wyniki: [...wynikiBzp, ...wynikiTed], teraz }).catch((err) => {
+    logger.error({ err: err.message }, 'okno wyników: oznaczanie unieważnionych pominięte');
+    return { blad: err.message };
+  });
   // Unieważniony zapisany przetarg ogłoszony ponownie (2026-11-01) — po zapisie nowych wyników z tego przebiegu.
   const ponowneOgl = await ponowne({ teraz }).catch((err) => {
     logger.error({ err: err.message }, 'okno wyników: ponowne ogłoszenia pominięte');
@@ -252,6 +259,7 @@ export async function runOknoWynikow({
     modyfikacji_umow: zapisaneModyfikacje,
     wyniki_zapisanych: zapisanych,
     ponowne_ogloszenia: ponowneOgl,
+    uniewaznione_z_wyniku: uniewazn,
     error_modyfikacji: bladModyfikacji,
     durationMs: Date.now() - start,
     zakonczony_o: new Date().toISOString(),

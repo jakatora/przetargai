@@ -272,6 +272,14 @@ router.post('/wersje-ted', ah(async (req, res) => {
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
+/** Przetargi z wynikiem „wszystkie części unieważnione” → anulowane (2026-11-01); `dni` ≤ 120 wstecz. */
+router.post('/uniewaznione', ah(async (req, res) => {
+  const { runUniewaznioneZWyniku } = await import('../jobs/uniewaznioneZWyniku.js');
+  const dni = Math.min(120, Math.max(1, Number(req.body?.dni) || 60));
+  const wynik = await runUniewaznioneZWyniku({ dni });
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
 /** Ręczny przebieg: unieważnione zapisane przetargi ogłoszone ponownie (2026-11-01). */
 router.post('/ponowne-ogloszenia', ah(async (req, res) => {
   const { runPonowneOgloszenia } = await import('../jobs/ponowneOgloszenia.js');
