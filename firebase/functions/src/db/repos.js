@@ -1844,6 +1844,23 @@ export const saved = {
   },
 
   /**
+   * Przetargi, nad którymi konto PRACUJE, choć ich nie zapisało (2026-11-01): przeanalizowało SWZ w Radarze
+   * albo pytało „Zapytaj SWZ” (`powiazania_swz`). 1.11 na 30 kont było 8 zapisów — leniwy użytkownik nie
+   * klika „zapisz”, ale po analizie SWZ zmiana dokumentów czy wybór oferty dotyczy go tak samo.
+   * Bez filtra terminu (dokument powiązania go nie zna) — przycina wołający po terminie przetargu.
+   * @returns {Promise<{userId: string, tenderId: string, saved_at: string|null}[]>}
+   */
+  async zaangazowaneWszystkich() {
+    const konta = await db().collection('users').select().get();
+    const wynik = [];
+    for (const konto of konta.docs) {
+      const snap = await db().collection('users').doc(konto.id).collection('powiazania_swz').select('tender_id', 'powiazano_o').get();
+      for (const d of snap.docs) wynik.push({ userId: konto.id, tenderId: d.get('tender_id') ?? d.id, saved_at: d.get('powiazano_o') ?? null });
+    }
+    return wynik;
+  },
+
+  /**
    * Najlepiej dopasowane OTWARTE przetargi z feedu każdego konta (wynik ≥ `minWynik`, do `naKonto`) —
    * leniwy użytkownik nie zapisuje, tylko przegląda listę, a wyjaśnienia SWZ dotyczą i jego (2026-11-01).
    * `od` = najwcześniejszy termin — po terminie przychodzi informacja z otwarcia ofert.

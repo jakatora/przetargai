@@ -71,7 +71,9 @@ export async function runMonitorDokumentow({
   // przetargów BZP, 80 na przebieg co 2 h = pełny cykl w kilkanaście godzin): leniwy użytkownik nie
   // zapisuje, a wyjaśnienia SWZ dotyczą i jego. Zapis wygrywa z dopasowaniem tego samego przetargu.
   const odZapisanych = new Date(Date.parse(teraz) - DNI_PO_TERMINIE_ZAPISANYCH * 86_400_000).toISOString();
-  const zapisane = (await saved.otwarteWszystkich(odZapisanych)).map((w) => ({ ...w, zapisany: true }));
+  // Przetarg z analizą SWZ (Radar / „Zapytaj SWZ”) liczy się jak zapisany — push przy zmianach i wyborze oferty.
+  const zapisane = [...await saved.otwarteWszystkich(odZapisanych), ...await saved.zaangazowaneWszystkich().catch(() => [])]
+    .map((w) => ({ ...w, zapisany: true }));
   const dopasowane = (await saved.najlepszeDopasowaniaWszystkich(od).catch(() => [])).map((w) => ({ ...w, zapisany: false }));
   const poKluczu = new Map();
   for (const w of [...zapisane, ...dopasowane]) {
@@ -88,6 +90,8 @@ export async function runMonitorDokumentow({
   const maZapis = (id) => (poPrzetargu.get(id) ?? []).some((w) => w.zapisany);
   const kandydaci = (await tenders.stanMonitoraDokumentow([...poPrzetargu.keys()]))
     .filter((t) => idPostepowaniaEz(t) || t.source === ZRODLO_PZ)
+    // Powiązania SWZ nie znają terminu — tu przycinamy do okna Zapisanych (60 dni po terminie).
+    .filter((t) => !t.deadline || String(t.deadline) >= odZapisanych)
     .sort((a, b) => Number(maZapis(b.id)) - Number(maZapis(a.id))
       || String(a.ez_monitor?.sprawdzone_o ?? '').localeCompare(String(b.ez_monitor?.sprawdzone_o ?? '')));
   wynik.przetargow = kandydaci.length;

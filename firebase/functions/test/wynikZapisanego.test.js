@@ -74,3 +74,21 @@ test('job: złącza po postepowanie_id, wysyła raz, pomija stare wyniki i obce 
   assert.equal(r2.alerty, 0);
   assert.equal(push.length, 1);
 });
+
+test('job: przetarg z analizą SWZ (powiązanie) dostaje wynik jak zapisany; ten sam wpis z obu źródeł raz', async () => {
+  const dodane = [];
+  const deps = {
+    teraz: Date.parse('2026-11-01T10:00:00Z'),
+    zapisane: {
+      otwarteWszystkich: async () => [{ userId: 'u1', tenderId: 'bzp_1' }],
+      zaangazowaneWszystkich: async () => [{ userId: 'u1', tenderId: 'bzp_1' }, { userId: 'u3', tenderId: 'bzp_1' }],
+    },
+    przetargi: { stanMonitoraDokumentow: async () => [tender] },
+    konta: { findById: async (id) => ({ id, email: `${id}@t.pl` }) },
+    alertyRepo: { dodaj: async (uid, alert) => { dodane.push(`${uid}/${alert.klucz}`); return { nowy: true }; } },
+    wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async () => {},
+  };
+  const r = await runWynikiZapisanych([wynik([czesc()])], deps);
+  assert.deepEqual([r.zapisanych, r.alerty, r.email], [2, 2, 2]);
+  assert.deepEqual(dodane, ['u1/wynik_bzp_1', 'u3/wynik_bzp_1']);
+});

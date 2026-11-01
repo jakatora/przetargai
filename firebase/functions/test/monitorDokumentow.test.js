@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
-const { tenders, saved, users, alerty, matches } = await import('../src/db/repos.js');
+const { tenders, saved, users, alerty, matches, powiazaniaSwz } = await import('../src/db/repos.js');
 const { runMonitorDokumentow } = await import('../src/jobs/monitorDokumentow.js');
 
 const ZNAK = `${process.pid}${Date.now()}`.slice(-8);
@@ -179,4 +179,20 @@ test('platformazakupowa: załączniki szczegółu jako dokumenty — nowe wyjaś
   const alert = (await alerty.lista(user.id)).find((a) => a.tender_id === tender.id);
   assert.match(alert.tresc.pl, /wyjaśnienia treści SWZ \(1\)\. Sprawdź przed złożeniem oferty/);
   assert.equal(alert.pozycje[0].zrodlo, 'platformazakupowa');
+});
+
+test('przetarg z analizą SWZ (powiązanie Radaru), bez zapisu: alert z doręczeniem jak dla zapisanego', async () => {
+  const post = `ocds-148610-${String(Date.now() + 37).slice(-8)}-1111-2222-3333-121212121212`;
+  const user = await users.create({ email: `md9-${ZNAK}@t.pl`, passwordHash: 'x' });
+  const { tender } = await tenders.upsert({ externalId: `2026/BZP 09${ZNAK}/01`, title: 'Termomodernizacja szkoły', organization: 'Gmina W',
+    deadline: new Date(Date.now() + 4 * 86_400_000).toISOString(), source: 'bzp', postepowanie_id: post });
+  await powiazaniaSwz.ustaw(user.id, tender.id, { postepowanieId: 'railway-1', nazwa: 'SWZ' });
+  const doreczone = [];
+  await runMonitorDokumentow({
+    wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async (m) => { doreczone.push(m.subject); },
+    pobierz: async (id) => (id === post ? [{ id: `${post}_4`, nazwa: 'Zmiana treści SWZ', rozszerzenie: 'pdf', opublikowano: new Date(Date.now() + 60_000).toISOString() }] : []),
+  });
+  const alert = (await alerty.lista(user.id)).find((a) => a.tender_id === tender.id);
+  assert.match(alert.tytul.pl, /^Nowe dokumenty w zapisanym przetargu/);
+  assert.equal(doreczone.length, 1);
 });

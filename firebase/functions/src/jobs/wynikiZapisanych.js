@@ -35,7 +35,14 @@ export async function runWynikiZapisanych(wyniki, {
   wynik.wynikow = poPostepowaniu.size;
   if (!poPostepowaniu.size) return wynik;
 
-  const wpisy = await zapisane.otwarteWszystkich(new Date(teraz - DNI_WSTECZ_ZAPISANYCH * 86_400_000).toISOString());
+  // Zapisane i przetargi z analizą SWZ (`powiazania_swz`) — konto nad nimi pracowało, wynik jest dla niego.
+  const odZapisanych = new Date(teraz - DNI_WSTECZ_ZAPISANYCH * 86_400_000).toISOString();
+  const poKluczu = new Map();
+  const zaangazowane = zapisane.zaangazowaneWszystkich ? await zapisane.zaangazowaneWszystkich().catch(() => []) : [];
+  for (const w of [...await zapisane.otwarteWszystkich(odZapisanych), ...zaangazowane]) {
+    if (!poKluczu.has(`${w.userId}|${w.tenderId}`)) poKluczu.set(`${w.userId}|${w.tenderId}`, w);
+  }
+  const wpisy = [...poKluczu.values()];
   wynik.zapisanych = wpisy.length;
   if (!wpisy.length) return wynik;
   const stan = new Map((await przetargi.stanMonitoraDokumentow(wpisy.map((w) => w.tenderId))).map((t) => [t.id, t]));
