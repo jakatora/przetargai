@@ -181,12 +181,16 @@ test('platformazakupowa: załączniki szczegółu jako dokumenty — nowe wyjaś
   assert.equal(alert.pozycje[0].zrodlo, 'platformazakupowa');
 });
 
-test('przetarg z analizą SWZ (powiązanie Radaru), bez zapisu: alert z doręczeniem jak dla zapisanego', async () => {
+test('przetarg z analizą SWZ (powiązanie Radaru albo gotowa auto-analiza), bez zapisu: alert z doręczeniem jak dla zapisanego', async () => {
   const post = `ocds-148610-${String(Date.now() + 37).slice(-8)}-1111-2222-3333-121212121212`;
   const user = await users.create({ email: `md9-${ZNAK}@t.pl`, passwordHash: 'x' });
   const { tender } = await tenders.upsert({ externalId: `2026/BZP 09${ZNAK}/01`, title: 'Termomodernizacja szkoły', organization: 'Gmina W',
     deadline: new Date(Date.now() + 4 * 86_400_000).toISOString(), source: 'bzp', postepowanie_id: post });
   await powiazaniaSwz.ustaw(user.id, tender.id, { postepowanieId: 'railway-1', nazwa: 'SWZ' });
+  // Drugie konto: gotowa automatyczna analiza SWZ w Radarze (bez zapisu i bez powiązania).
+  const drugi = await users.create({ email: `md9b-${ZNAK}@t.pl`, passwordHash: 'x' });
+  const { getFirestore } = await import('firebase-admin/firestore');
+  await getFirestore().collection('users').doc(drugi.id).collection('auto_swz').doc(tender.id).set({ tender_id: tender.id, status: 'gotowe', utworzono_o: new Date().toISOString() });
   const doreczone = [];
   await runMonitorDokumentow({
     wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async (m) => { doreczone.push(m.subject); },
@@ -194,5 +198,6 @@ test('przetarg z analizą SWZ (powiązanie Radaru), bez zapisu: alert z doręcze
   });
   const alert = (await alerty.lista(user.id)).find((a) => a.tender_id === tender.id);
   assert.match(alert.tytul.pl, /^Nowe dokumenty w zapisanym przetargu/);
-  assert.equal(doreczone.length, 1);
+  assert.equal(doreczone.length, 2);
+  assert.ok((await alerty.lista(drugi.id)).some((x) => x.tender_id === tender.id));
 });

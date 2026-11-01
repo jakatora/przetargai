@@ -1856,6 +1856,9 @@ export const saved = {
     for (const konto of konta.docs) {
       const snap = await db().collection('users').doc(konto.id).collection('powiazania_swz').select('tender_id', 'powiazano_o').get();
       for (const d of snap.docs) wynik.push({ userId: konto.id, tenderId: d.get('tender_id') ?? d.id, saved_at: d.get('powiazano_o') ?? null });
+      // Gotowa automatyczna analiza SWZ w Radarze: zmiana SWZ ją dezaktualizuje — konto musi o tym wiedzieć.
+      const auto = await autoSwzCol(konto.id).where('status', '==', 'gotowe').select('tender_id', 'utworzono_o').get();
+      for (const d of auto.docs) wynik.push({ userId: konto.id, tenderId: d.get('tender_id') ?? d.id, saved_at: d.get('utworzono_o') ?? null });
     }
     return wynik;
   },
@@ -3781,7 +3784,8 @@ export const limitEksportu = {
  * (klient, przetarg): `zajmij` = create() — gdy istnieje, druga instancja/ponowienie odpada PRZED
  * płatnym AI. Usuwane razem z kontem (podkolekcja użytkownika).
  */
-const autoSwzDoc = (userId, tenderId) => db().collection('users').doc(userId).collection('auto_swz').doc(String(tenderId));
+const autoSwzCol = (userId) => db().collection('users').doc(userId).collection('auto_swz');
+const autoSwzDoc = (userId, tenderId) => autoSwzCol(userId).doc(String(tenderId));
 const AUTO_SWZ_SLAD = () => db().collection('_health').doc('auto_swz');
 export const autoSwz = {
   async pobierz(userId, tenderId) {

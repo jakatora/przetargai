@@ -71,7 +71,7 @@ export async function runMonitorDokumentow({
   // przetargów BZP, 80 na przebieg co 2 h = pełny cykl w kilkanaście godzin): leniwy użytkownik nie
   // zapisuje, a wyjaśnienia SWZ dotyczą i jego. Zapis wygrywa z dopasowaniem tego samego przetargu.
   const odZapisanych = new Date(Date.parse(teraz) - DNI_PO_TERMINIE_ZAPISANYCH * 86_400_000).toISOString();
-  // Przetarg z analizą SWZ (Radar / „Zapytaj SWZ”) liczy się jak zapisany — push przy zmianach i wyborze oferty.
+  // Przetarg z analizą SWZ (Radar / „Zapytaj SWZ” / gotowa auto-analiza) liczy się jak zapisany — push przy zmianach.
   const zapisane = [...await saved.otwarteWszystkich(odZapisanych), ...await saved.zaangazowaneWszystkich().catch(() => [])]
     .map((w) => ({ ...w, zapisany: true }));
   const dopasowane = (await saved.najlepszeDopasowaniaWszystkich(od).catch(() => [])).map((w) => ({ ...w, zapisany: false }));
