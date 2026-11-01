@@ -20219,7 +20219,7 @@ var AnonymousShop = class {
       return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
     }
     if (action === "add") {
-      if (![6883, 6892, 6901, 65390, 65373, 50450, 6900, 50414, 27095, 6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
+      if (![6883, 6892, 6901, 65390, 65373, 50450, 6900, 50414, 27095, 6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121, 27268, 42372].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
       return JSON.parse(await this.read("/basketchange.php", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
     }
     if (action !== "shipping" || Object.keys(args).length) throw Error("invalid_cart_action");
@@ -21003,8 +21003,25 @@ function confirmPaintingTapePurchase(item, source) {
   return true;
 }
 
+// artifacts/api-server/src/lib/knauf-finishes.ts
+var KNAUF_FINISH_SOURCES = [
+  // source: https://www.abud.pl/product-pol-27268-Gotowa-masa-szpachlowa-Super-Finish-5-4-kg-Knauf.html
+  { id: "abud-knauf-superfinish-54kg", ean: "5901793357959", name: "Gotowa masa szpachlowa Super Finish 5,4 kg Knauf", brand: "Knauf", category: "skim-coat", packageSize: 5.4, unit: "kg", store: "ABUD", format: "idosell", productId: 27268, apiPurchaseUnit: "szt.", variant: ["Super Finish", "5,4 kg"], pickupRequiresConfirmation: true, url: "https://www.abud.pl/product-pol-27268-Gotowa-masa-szpachlowa-Super-Finish-5-4-kg-Knauf.html", imageUrl: "https://www.abud.pl/hpeciai/ee6f4a05d00ce5080a2896b3ba2e256c/pol_pl_Gotowa-masa-szpachlowa-Super-Finish-5-4-kg-Knauf-27268_1.webp" },
+  // source: https://www.abud.pl/product-pol-42372--Gotowa-Masa-szpachlowa-Knauf-Super-finish-28kg.html
+  { id: "abud-knauf-superfinish-28kg", ean: "5901793357935", name: " Gotowa Masa szpachlowa Knauf Super finish 28kg ", brand: "Knauf", category: "skim-coat", packageSize: 28, unit: "kg", store: "ABUD", format: "idosell", productId: 42372, apiPurchaseUnit: "szt.", variant: ["Super finish", "28kg"], pickupRequiresConfirmation: true, url: "https://www.abud.pl/product-pol-42372--Gotowa-Masa-szpachlowa-Knauf-Super-finish-28kg.html", imageUrl: "https://www.abud.pl/hpeciai/8da3f584f3e0b08cab351f35a22ee7b6/pol_pl_-Gotowa-Masa-szpachlowa-Knauf-Super-finish-28kg-42372_1.webp" },
+  // source: https://realbud.com/pl/p/Gladz-KNAUF-SUPER-FINISH-28-kg%2C-gotowa-masa-szpachlowa/75056672
+  { id: "realbud-knauf-superfinish-28kg", ean: "5901793357935", name: "G\u0142ad\u017A KNAUF SUPER FINISH 28 kg, gotowa masa szpachlowa", brand: "Knauf", category: "skim-coat", packageSize: 28, unit: "kg", store: "Realbud", format: "shoper-api", productId: 75056672, apiProductCode: "18587", retailerSku: "18587", apiPurchaseUnit: "szt.", variant: ["Super Finish", "28 kg"], pickupRequiresConfirmation: true, url: "https://realbud.com/pl/p/Gladz-KNAUF-SUPER-FINISH-28-kg%2C-gotowa-masa-szpachlowa/75056672", imageUrl: "https://www.abud.pl/hpeciai/8da3f584f3e0b08cab351f35a22ee7b6/pol_pl_-Gotowa-Masa-szpachlowa-Knauf-Super-finish-28kg-42372_1.webp" }
+];
+function confirmKnaufFinishPurchase(item, source) {
+  if (source.id !== "realbud-knauf-superfinish-28kg") return;
+  const reviewed6 = KNAUF_FINISH_SOURCES[2];
+  const keys = ["ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "retailerSku", "apiProductCode", "apiPurchaseUnit", "url"];
+  if (keys.some((key) => source[key] !== reviewed6[key]) || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1 || item.id !== reviewed6.productId || item.ean !== reviewed6.ean || item.code !== reviewed6.retailerSku || item.name !== reviewed6.name || item.url !== reviewed6.url || item.unit?.name !== "szt." || item.unit.floating_point !== false || item.package !== "0" || item.producer?.id !== 13 || item.producer.name !== "Knauf") throw Error("product_package_not_confirmed");
+}
+
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...KNAUF_FINISH_SOURCES,
   ...PAINTING_TAPE_SOURCES,
   // source: https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751
   { "id": "sewera-mapegum-wps-5kg", "ean": "8022452242489", "name": "Folia w p\u0142ynie Mapegum WPS 5kg Mapei", "brand": "Mapei", "category": "waterproofing", "packageSize": 5, "unit": "kg", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "url": "https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17476_500_500/Zrzut-ekranu-2022-02-12-091101.webp", "pickupRequiresConfirmation": true },
@@ -22528,6 +22545,8 @@ var RETAIL_SOURCES = [
   ...ELMAS_SOURCES
 ];
 var RETAIL_NAME_ALIASES = {
+  "Knauf Super Finish \u2014 gotowa masa szpachlowa 5,4 kg": "5901793357959",
+  "Knauf Super Finish \u2014 gotowa masa szpachlowa 28 kg": "5901793357935",
   // source: https://sklep-elmas.pl/p/tasma-akustyczna-norgips-3-mm-x-0075-m
   "Ta\u015Bma uszczelniaj\u0105ca Norgips 75 mm \xD7 30 m": "5907651698011",
   // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-5kg-HYDROIZOLACJA-PLYNNA-FOLIA/1906
@@ -26098,6 +26117,18 @@ function objects(value2) {
   const item = value2;
   return [item, ...objects(item["@graph"])];
 }
+function idosellPromotion(product, now) {
+  const offers = [product.offers].flat();
+  if (offers.length !== 1 || !offers[0] || offers[0].price !== void 0) return product;
+  const offer = offers[0], specs = offer.priceSpecification;
+  if (!Array.isArray(specs) || specs.length !== 2 || specs.some((s) => !s || s["@type"] !== "UnitPriceSpecification" || s.priceCurrency !== "PLN")) throw Error("retailer_promotion_not_confirmed");
+  const list = specs.filter((s) => s.priceType === "https://schema.org/ListPrice");
+  const sale = specs.filter((s) => s.priceType === "https://schema.org/SalePrice");
+  if (list.length !== 1 || sale.length !== 1 || typeof sale[0].validThrough !== "string" || offer.priceValidUntil !== sale[0].validThrough || !retailPriceIsValid(sale[0].validThrough, now) || offer.priceCurrency !== void 0 && offer.priceCurrency !== "PLN") throw Error("retailer_promotion_not_confirmed");
+  const base = parsePriceToGrosze(list[0].price), current2 = parsePriceToGrosze(sale[0].price);
+  if (base === null || current2 === null || current2 <= 0 || current2 > base || !Number.isSafeInteger(current2) || !Number.isSafeInteger(base)) throw Error("retailer_promotion_not_confirmed");
+  return { ...product, offers: [{ ...offer, price: sale[0].price, priceCurrency: "PLN" }] };
+}
 function parseRetailPage(html, source, observedAt) {
   if (source.id.startsWith("buduj24-ceresit-ct17-")) confirmCeresitPrimerSource(source);
   reviewedPaintingTape(source);
@@ -26141,6 +26172,7 @@ function parseRetailPage(html, source, observedAt) {
   }
   if (source.format === "idosell" || source.format === "fixero" || source.format === "rodimax") {
     if (products.length !== 1) throw Error("product_identity_ambiguous");
+    if (source.format === "idosell") products[0] = idosellPromotion(products[0], observedAt);
     products[0] = confirmRetailIdentity(html, products[0], source);
   }
   const product = source.skuIdentity ? products.find((item) => item.sku === retailSkuCode(source) && !item.gtin13 && !item.gtin) : products.find((item) => String(item.gtin13 ?? item.gtin ?? "") === source.ean);
@@ -26337,6 +26369,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  confirmKnaufFinishPurchase(item, source);
   confirmPaintingTapePurchase(item, source);
   confirmMapeiSupplyPurchase(item, source);
   confirmKnaufPlasterPurchase(item, source);
@@ -27573,18 +27606,22 @@ async function quoteSkyshop(order, fetchImpl) {
 // artifacts/api-server/src/lib/abud-delivery.ts
 var import_node_crypto29 = require("node:crypto");
 var ORIGIN7 = "https://www.abud.pl";
-var IDS = ["abud-aks-ydyp-3x15-25m", "abud-aks-ydyp-3x15-50m", "abud-aks-ydyp-3x25-50m", "abud-aks-ydyp-3x25-5m", "abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg"];
+var IDS = ["abud-aks-ydyp-3x15-25m", "abud-aks-ydyp-3x15-50m", "abud-aks-ydyp-3x25-50m", "abud-aks-ydyp-3x25-5m", "abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg", "abud-knauf-superfinish-54kg", "abud-knauf-superfinish-28kg"];
 function money11(value2, formatted) {
   if (!["string", "number"].includes(typeof value2)) throw Error("invalid_money");
   const amount7 = parsePriceToGrosze(value2);
   if (amount7 === null || !Number.isSafeInteger(amount7) || amount7 < 0) throw Error("invalid_money");
+  if (formatted !== void 0) {
+    const precise = typeof value2 === "number" ? value2 : Number(String(value2).replace(/\s/g, "").replace(",", "."));
+    if (!Number.isFinite(precise) || Math.abs(precise * 100 - amount7) > 1e-5) throw Error("invalid_money");
+  }
   if (formatted !== void 0 && (typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted) || parsePriceToGrosze(formatted.replace(/\s*zł$/, "")) !== amount7)) throw Error("invalid_money");
   return amount7;
 }
 function selectAbudHomeRate(response) {
   const rates = response?.data?.shipping?.shipping;
   if (response?.errors?.length || !Array.isArray(rates) || !rates.length || rates.length > 100) throw Error("invalid_response");
-  const names = { 100037: "Pocztex Kurier 24", 85: "Paczka GLS", 100336: "Pocztex Kurier XXL dor\u0119czenie pod wskazany adres", 30: "DPD Paczka - niestandard" };
+  const names = { 100037: "Pocztex Kurier 24", 85: "Paczka GLS", 100336: "Pocztex Kurier XXL dor\u0119czenie pod wskazany adres", 30: "DPD Paczka - niestandard", 100072: "Pekaes - Paleta 60x40", 100073: "Geis / Pekaes  - Paleta 120x80" };
   const candidates = [], seen = /* @__PURE__ */ new Set();
   for (const rate of rates) {
     const id = rate?.courier?.id;
@@ -27914,6 +27951,7 @@ async function quoteShoper(order, fetchImpl) {
     total += wanted.count * wanted.price;
   }
   if (expected.size || total !== order.materialsGrosze || confirmedMoney(basket.basket?.sum_products, basket.basket?.sum_products_float) !== total) throw Error("basket_not_confirmed");
+  if (order.store === "Realbud" && basket.shippings?.some((rate) => rate.selected === true && rate.shipping_id === 23 && rate.title === "Transport na zapytanie" && rate.engine === "personal")) return { reason: "retailer_transport_quote_required" };
   const shipping = selectRealbudMp75lDelivery(basket, order) ?? selectHomeDelivery(basket, order.store), checkedAt = /* @__PURE__ */ new Date();
   const evidence = { products: basket.products.map((p) => ({ stock: p.stock_id, count: p.quantity, price: p.price_float })), shippings: basket.shippings, payments: basket.payments, countries: basket.countries };
   return { quote: {
