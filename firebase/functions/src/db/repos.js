@@ -1151,9 +1151,14 @@ export const tenders = {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
-  /** Województwo wywnioskowane z nazwy zamawiającego (PZ, ePP) — z oznaczeniem, że to szacunek, nie dane źródła. */
-  async ustawWojewodztwoZNazwy(id, wojewodztwo) {
-    await db().collection('tenders').doc(id).update({ wojewodztwo, wojewodztwo_z_nazwy: true });
+  /** Województwa wywnioskowane z nazwy zamawiającego (PZ, ePP) — z oznaczeniem, że to szacunek; partie po 400. */
+  async ustawWojewodztwaZNazwy(lista) {
+    for (let i = 0; i < lista.length; i += 400) {
+      const batch = db().batch();
+      for (const { id, wojewodztwo } of lista.slice(i, i + 400)) batch.update(db().collection('tenders').doc(id), { wojewodztwo, wojewodztwo_z_nazwy: true });
+      await batch.commit();
+    }
+    return lista.length;
   },
 
   /**

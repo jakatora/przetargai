@@ -46,18 +46,18 @@ export async function runWojewodztwaZamawiajacych({ teraz = Date.now(), przetarg
   const wynik = { ok: true, przebudowa, kandydaci: 0, przypisane: 0, bledy: 0 };
   if (!mapy) return { ...wynik, ok: false };
   const otwarte = await przetargi.otwarteDoWojewodztwa(new Date(teraz).toISOString());
+  const doZapisu = [];
   for (const t of otwarte) {
     if (!ZRODLA_BEZ_REGIONU.has(t.source) || t.wojewodztwo) continue;
     wynik.kandydaci += 1;
     const kod = wojewodztwoZNazwy(t.organization, mapy);
-    if (!kod) continue;
-    try {
-      await przetargi.ustawWojewodztwoZNazwy(t.id, `PL${kod}`);
-      wynik.przypisane += 1;
-    } catch (err) {
-      wynik.bledy += 1;
-      logger.warn({ err: err.message, tenderId: t.id }, 'Województwo z nazwy: zapis nie powiódł się');
-    }
+    if (kod) doZapisu.push({ id: t.id, wojewodztwo: `PL${kod}` });
+  }
+  try {
+    wynik.przypisane = await przetargi.ustawWojewodztwaZNazwy(doZapisu);
+  } catch (err) {
+    wynik.bledy += 1;
+    logger.warn({ err: err.message, ile: doZapisu.length }, 'Województwo z nazwy: zapis nie powiódł się');
   }
   wynik.ok = wynik.bledy === 0;
   wynik.zakonczony_o = nowIso();

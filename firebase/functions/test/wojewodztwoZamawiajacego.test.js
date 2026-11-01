@@ -56,7 +56,7 @@ test('job: mapa starsza niż tydzień → przebudowa; województwo tylko PZ/ePP 
         { id: 'pz:4', source: 'platformazakupowa', organization: 'Gmina Września', wojewodztwo: 'PL30' },
         { id: 'ted:5', source: 'ted', organization: 'Komenda Wojewódzka Policji w Łodzi', wojewodztwo: null },
       ],
-      ustawWojewodztwoZNazwy: async (id, woj) => { zapisy.push([id, woj]); },
+      ustawWojewodztwaZNazwy: async (lista) => { zapisy.push(...lista.map((x) => [x.id, x.wojewodztwo])); return lista.length; },
     },
   });
   assert.equal(przebudowano, 1);
