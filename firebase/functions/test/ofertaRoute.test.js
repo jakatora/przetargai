@@ -43,6 +43,7 @@ test('POST /oferta/kontrola: raport z plików (podpis, NIP-y z zamawiającym prz
   const kody = r.wyniki.map((w) => w.kod);
   assert.ok(kody.includes('podpisy_ok') && kody.includes('nip_ok') && kody.includes('kwota'));
   assert.ok(!kody.includes('obcy_nip'), 'NIP zamawiającego przetargu nie jest „obcy”');
+  assert.equal(r.zapisano, true, 'kontrola plików = oferta prawie gotowa → przetarg do Zapisanych');
 
   assert.equal((await fetch(`${BAZA}/oferta/kontrola`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 401);
   const zle = await fetch(`${BAZA}/oferta/kontrola`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ pliki: [] }) });

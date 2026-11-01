@@ -59,7 +59,7 @@ export default function DokumentyEZamowienia({ tender, navigation }) {
                 <Text style={d.url ? styles.dokumentLink : styles.dokumentTekst} numberOfLines={2}>
                   {d.nazwa}{d.rozszerzenie ? ` · ${d.rozszerzenie.toUpperCase()}` : ''}
                 </Text>
-                {czyMoznaWypelnic(d) ? <WypelnijZalacznik dokument={d} navigation={navigation} /> : null}
+                {czyMoznaWypelnic(d) ? <WypelnijZalacznik dokument={d} navigation={navigation} tenderId={tender.id} /> : null}
               </Pressable>
             ))}
             <Text style={styles.podpis}>{t('Pliki pobierają się z ezamowienia.gov.pl — bez logowania.', 'Files download from ezamowienia.gov.pl — no sign-in needed.')}</Text>

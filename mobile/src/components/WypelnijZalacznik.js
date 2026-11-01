@@ -15,7 +15,7 @@ import { spacing } from '../theme';
  * Telefon: plik idzie e-mailem na adres konta (podpis i tak na komputerze). Web/Windows: pobranie.
  * Bez danych firmy prowadzi do „Dokumentów do oferty”, gdzie wpisuje się je raz.
  */
-export default function WypelnijZalacznik({ dokument, navigation }) {
+export default function WypelnijZalacznik({ dokument, navigation, tenderId = null }) {
   const styles = useStyle(tworzStyleWypelniania);
   const { t } = useJezyk();
   const [stan, setStan] = useState({ laduje: false, komunikat: null, blad: false });
@@ -30,7 +30,8 @@ export default function WypelnijZalacznik({ dokument, navigation }) {
       return;
     }
     setStan({ laduje: true, komunikat: null, blad: false });
-    const cialo = { url: dokument.url, nazwa: dokument.nazwa, dane };
+    // `tender_id`: serwer zapisuje przetarg z przypomnieniem o terminie (wypełnianie = szykowanie oferty).
+    const cialo = { url: dokument.url, nazwa: dokument.nazwa, dane, ...(tenderId ? { tender_id: String(tenderId) } : {}) };
     try {
       if (Platform.OS === 'web') {
         const { blob, nazwaPliku, typMime } = await api.wypelnijZalacznikPlik(cialo);

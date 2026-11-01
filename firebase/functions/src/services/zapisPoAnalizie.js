@@ -3,8 +3,8 @@ import { skrotKryteriow } from '../lib/ogloszenieMeta.js';
 import { matches, saved } from '../db/repos.js';
 
 /*
- * ZAPIS PO ANALIZIE SWZ (2026-11-01). Kto sam pyta o SWZ („Zapytaj SWZ”) albo podpina analizę z Radaru,
- * ten szykuje ofertę — a 1.11 na 30 kont było 8 zapisów: użytkownik nie klika „zapisz”, więc nie dostaje
+ * ZAPIS PO ANALIZIE SWZ (2026-11-01). Kto sam pyta o SWZ („Zapytaj SWZ”), podpina analizę z Radaru, wypełnia
+ * formularz zamawiającego swoimi danymi albo sprawdza pliki oferty przed wysłaniem, ten szykuje ofertę — a 1.11 na 30 kont było 8 zapisów: użytkownik nie klika „zapisz”, więc nie dostaje
  * przypomnień o terminie (7/3/1 dni). Robimy to za niego: zapis + włączone przypomnienie. Gdy już był
  * zapisany, zostawiamy jego ustawienia (świadomie wyłączone przypomnienie zostaje wyłączone).
  * Automatyczna analiza (job auto-SWZ) tego nie robi — tam konto niczego nie kliknęło.

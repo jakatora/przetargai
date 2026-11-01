@@ -5,6 +5,7 @@ import { tenders, limitKontroliOferty } from '../db/repos.js';
 import { AppError, tooMany } from '../lib/errors.js';
 import { kontrolujPlikiOferty } from '../lib/kontrolaPlikowOferty.js';
 import { liniePdf } from '../services/tekstPdf.js';
+import { zapiszPoAnalizieSwz } from '../services/zapisPoAnalizie.js';
 
 /*
  * Kontrola plików oferty przed wysłaniem (2026-10-31): wykonawca wysyła gotowe pliki (base64),
@@ -28,7 +29,9 @@ router.post('/kontrola', ah(async (req, res) => {
       { pliki, firma: { nip: req.user.company_nip ?? null }, zamawiajacyNip: tender?.zamawiajacy_nip ?? null },
       { tekstPdf: liniePdf },
     );
-    res.json({ tender_id: tender?.id ?? null, ...raport });
+    // Kontrola plików przed wysłaniem = oferta prawie gotowa: przetarg do Zapisanych z przypomnieniem.
+    const zapis = tender ? await zapiszPoAnalizieSwz(req.user.id, tender) : { zapisany: false };
+    res.json({ tender_id: tender?.id ?? null, ...raport, zapisano: zapis.zapisany });
   } catch (err) {
     if (err.status) throw new AppError(err.status, err.status === 413 ? 'ZA_DUZO' : 'BAD_REQUEST', err.message);
     throw err;

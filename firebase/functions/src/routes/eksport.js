@@ -15,6 +15,7 @@ import { doIcs } from '../lib/kalendarzPrzetargu.js';
 import { zbudujDocx, nazwaPlikuDocx, TYP_MIME_DOCX } from '../lib/docx.js';
 import { wypelnijDocx, pobierzZalacznik, liczbaPol } from '../lib/wypelnijZalacznik.js';
 import { esc } from '../lib/html.js';
+import { zapiszPoAnalizieSwz } from '../services/zapisPoAnalizie.js';
 import { kalendarzeUzytkownika } from './kalendarz.js';
 
 /*
@@ -253,6 +254,8 @@ const poleDanych = z.string().trim().max(300).optional();
 const zalacznikSchema = z.object({
   url: z.string().trim().min(10).max(800),
   nazwa: z.string().trim().min(1).max(160).optional(),
+  // Przetarg, z którego jest formularz (apka od 1.2.2) — wypełnianie = szykowanie oferty, więc zapis z przypomnieniem.
+  tender_id: z.string().trim().min(1).max(200).optional(),
   dane: z.object({
     nazwa: z.string().trim().min(2).max(300),
     adres: poleDanych, nip: poleDanych, regon: poleDanych, rejestr: poleDanych, reprezentant: poleDanych,
@@ -280,7 +283,14 @@ async function wypelnionyZalacznik(body) {
     throw new AppError(422, 'ZALACZNIK', `Nie udało się odczytać pliku Word: ${err.message}`);
   }
   const plik = nazwaPlikuDocx(`${(parsed.data.nazwa ?? 'Załącznik').replace(/\.docx?$/i, '')} - wypełniony`);
-  return { ...wynik, plik_nazwa: plik };
+  return { ...wynik, plik_nazwa: plik, tender_id: parsed.data.tender_id ?? null };
+}
+
+/** Formularz z przetargu znanego w bazie → zapis z przypomnieniem (`services/zapisPoAnalizie.js`). */
+async function zapiszPrzetargFormularza(userId, tenderId) {
+  if (!tenderId) return { zapisany: false };
+  const tender = await tenders.findById(String(tenderId)).catch(() => null);
+  return tender ? zapiszPoAnalizieSwz(userId, tender) : { zapisany: false };
 }
 
 router.post('/zalacznik', ah(async (req, res) => {
@@ -302,8 +312,9 @@ router.post('/zalacznik', ah(async (req, res) => {
     attachments: [{ filename: w.plik_nazwa, content: w.plik, contentType: TYP_MIME_DOCX }],
   });
   if (!wynik.sent && !wynik.degraded) throw serviceUnavailable('Nie udało się wysłać e-maila — spróbuj za chwilę.');
+  const zapis = await zapiszPrzetargFormularza(req.user.id, w.tender_id);
   res.json({
-    wyslano: Boolean(wynik.sent), tryb_degradacji: Boolean(wynik.degraded), do: req.user.email, plik: w.plik_nazwa,
+    wyslano: Boolean(wynik.sent), tryb_degradacji: Boolean(wynik.degraded), do: req.user.email, plik: w.plik_nazwa, zapisano: zapis.zapisany,
     wypelnione: w.wypelnione, do_uzupelnienia: w.do_uzupelnienia,
   });
 }));
@@ -316,5 +327,6 @@ router.post('/zalacznik.docx', ah(async (req, res) => {
   res.set('X-Plik', encodeURIComponent(w.plik_nazwa));
   res.set('X-Wypelnione', String(w.wypelnione.length));
   res.set('X-Do-Uzupelnienia', encodeURIComponent(JSON.stringify(w.do_uzupelnienia.slice(0, 8).map((d) => d.etykieta))));
+  res.set('X-Zapisano', String((await zapiszPrzetargFormularza(req.user.id, w.tender_id)).zapisany));
   res.send(w.plik);
 }));
