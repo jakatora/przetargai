@@ -44,7 +44,8 @@ export async function umowyDoPrzegladu(user, { limit = 3 } = {}) {
   const { dzialy, klucze } = kluczeUmowUzytkownika(user);
   if (!dzialy.length) return [];
   const kubelki = await umowyWygasajace.pobierzWiele(klucze);
-  return wybierzUmowy({ kubelki, wlasnyNip: user.company_nip ?? null, limit }).umowy;
+  // 72 h: mail czyta się w poniedziałek rano — przetarg zamykany tego samego dnia to już nie okazja.
+  return wybierzUmowy({ kubelki, wlasnyNip: user.company_nip ?? null, limit, minGodzinDoOferty: 72 }).umowy;
 }
 
 /**

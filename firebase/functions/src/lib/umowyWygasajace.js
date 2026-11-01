@@ -215,9 +215,12 @@ export function kluczeUmowUzytkownika(user) {
  * (firma, która tę umowę wykonuje, wie, kiedy się kończy). Najpierw umowy, których nowy przetarg
  * już trwa (termin ofert minął od przeliczenia — link znika), potem najbliżej końca.
  */
-export function wybierzUmowy({ kubelki, teraz = Date.now(), wlasnyNip = null, limit = 40 }) {
+export function wybierzUmowy({ kubelki, teraz = Date.now(), wlasnyNip = null, limit = 40, minGodzinDoOferty = 0 }) {
   const dzisiaj = dzienIso(teraz);
   const terazIso = new Date(teraz).toISOString();
+  // Przegląd tygodniowy (2026-11-01): umowa, której nowy przetarg zamyka się za kilka godzin, w mailu
+  // tylko frustruje — oferty nikt już nie przygotuje. Taką pomijamy (na ekranie zostaje).
+  const granicaOferty = new Date(teraz + minGodzinDoOferty * 3_600_000).toISOString();
   const wlasny = normNip(wlasnyNip);
   const poId = new Map();
   let wKubelkach = 0;
@@ -228,6 +231,7 @@ export function wybierzUmowy({ kubelki, teraz = Date.now(), wlasnyNip = null, li
       if (!u?.id || !u.koniec || u.koniec < dzisiaj || poId.has(u.id)) continue;
       if (wlasny && (u.zwyciezcy ?? []).some((z) => normNip(z.nip) === wlasny)) continue;
       const nastepca = u.nastepca?.deadline && String(u.nastepca.deadline) > terazIso ? u.nastepca : null;
+      if (nastepca && minGodzinDoOferty > 0 && String(nastepca.deadline) < granicaOferty) continue;
       poId.set(u.id, { ...u, nastepca });
     }
   }

@@ -136,6 +136,8 @@ test('następca w kubełkach i na liście: ogłoszone pierwsze, po terminie ofer
   const poTerminie = wybierzUmowy({ kubelki: { '90|18': k['90|18'] }, teraz: Date.parse('2026-11-16T08:00:00.000Z') });
   assert.deepEqual([poTerminie.umowy.map((u) => [u.id, u.nastepca]), poTerminie.juz_ogloszone], [[['a', null], ['b', null]], 0]);
   assert.equal(zbudujKubelkiUmow(wyniki, { teraz: TERAZ })['90|18'].umowy[0].nastepca, null, 'bez następców pole jest, ale puste');
+  const doMaila = wybierzUmowy({ kubelki: { '90|18': k['90|18'] }, teraz: Date.parse('2026-11-14T08:00:00.000Z'), minGodzinDoOferty: 72 });
+  assert.deepEqual(doMaila.umowy.map((u) => u.id), ['a'], 'przetarg zamykany za 26 h nie idzie do przeglądu tygodniowego');
 });
 
 test('następca u brokera ubezpieczeniowego: jeden NIP, wiele gmin — tylko prawie ten sam tytuł; słaby = „podobny”', () => {
