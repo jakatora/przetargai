@@ -1108,7 +1108,10 @@ export const tenders = {
       otwarcie_ofert: otwarcie,
     });
     // Informacja z otwarcia ofert (2026-11-01) — do kopii bez listy przeczytanych plików.
-    const naKarte = (o) => (o ? { kwota: o.kwota ?? null, oferty: o.oferty ?? null, cena_min: o.cena_min ?? null, cena_max: o.cena_max ?? null, czesci: o.czesci === true } : null);
+    // Nieczytelny PDF (skan) zostawia sam ślad przeczytania — na kartę idzie wtedy null, nie puste pola.
+    const naKarte = (o) => (o && (Number.isFinite(o.kwota) || Number.isFinite(o.oferty))
+      ? { kwota: o.kwota ?? null, oferty: o.oferty ?? null, cena_min: o.cena_min ?? null, cena_max: o.cena_max ?? null, czesci: o.czesci === true }
+      : null);
     const zmianaZmian = JSON.stringify(zmiany) !== JSON.stringify(poprzednie ?? null);
     const zmianaOtwarcia = JSON.stringify(naKarte(otwarcie)) !== JSON.stringify(naKarte(poprzednieOtwarcie));
     if (!zmianaZmian && !zmianaOtwarcia) return 0;
