@@ -1198,6 +1198,21 @@ export const tenders = {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
+  /** Wadium (z SWZ) do kopii przetargu w dopasowaniach i Zapisanych — pola `tender_wadium_*` (2026-11-01). */
+  async wadiumDoKopii(id, { wadium_wymagane: wymagane, wadium_kwota: kwota = null, wadium_wiele_czesci: wiele = false }) {
+    const [zapisane, dopasowania] = await Promise.all([
+      db().collectionGroup('saved').where('tender_id', '==', id).get(),
+      db().collectionGroup('matches').where('tender_id', '==', id).get(),
+    ]);
+    const refy = [...zapisane.docs, ...dopasowania.docs].map((d) => d.ref);
+    for (let i = 0; i < refy.length; i += 400) {
+      const batch = db().batch();
+      for (const ref of refy.slice(i, i + 400)) batch.update(ref, { tender_wadium_wymagane: wymagane ?? null, tender_wadium_kwota: kwota, tender_wadium_wiele_czesci: wiele === true });
+      await batch.commit();
+    }
+    return refy.length;
+  },
+
   /** Wynik próby odczytu otwarcia (job rynku): przetarg + kopie w feedach i Zapisanych, gdy liczby się zmieniły. */
   async zapiszOtwarcieRynku(id, { otwarcie = null, poprzednie = null, proba }) {
     await db().collection('tenders').doc(id).update({ ...(otwarcie ? { otwarcie_ofert: otwarcie } : {}), otwarcie_rynek: proba });

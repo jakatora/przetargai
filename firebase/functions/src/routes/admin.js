@@ -169,7 +169,7 @@ const ODSTEP_PZ_MS = 3000;
 router.post('/kryteria-pz', ah(async (req, res) => {
   const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).filter(Boolean).slice(0, 15);
   if (!ids.length) throw badRequest('Podaj ids (do 15)');
-  const wynik = { sprawdzone: 0, z_kryteriami: 0, bledy: 0, przyklady_bledow: [] };
+  const wynik = { sprawdzone: 0, z_kryteriami: 0, z_wadium: 0, kopie: 0, bledy: 0, przyklady_bledow: [] };
   // `szczegol_zapisany`: szczegół świeżo pobrany (bez kryteriów w tabeli) — sam bliźniak z BZP/TED, bez platformy.
   const bezPlatformy = req.body?.szczegol_zapisany === true;
   for (const id of ids) {
@@ -183,6 +183,11 @@ router.post('/kryteria-pz', ah(async (req, res) => {
         ? await tenders.zapiszSzczegolPz(t.id, t.pz_szczegol, t.pz_szczegol_o, opcje)
         : await tenders.zapiszSzczegolPz(t.id, await pobierzSzczegolPz(String(t.bzp_external_id ?? t.id).replace(/^pz:/, '')), undefined, opcje);
       if (pola.kryteria) wynik.z_kryteriami += 1;
+      // Wadium z SWZ (2026-11-01) — także do kopii w feedach i Zapisanych (znacznik na karcie listy).
+      if (pola.wadium_wymagane !== undefined) {
+        wynik.z_wadium += 1;
+        wynik.kopie += await tenders.wadiumDoKopii(t.id, pola);
+      }
       if (bezPlatformy && !opcje.daneSwz) continue;
     } catch (err) {
       wynik.bledy += 1;
