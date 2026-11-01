@@ -38,7 +38,7 @@ export function doProby(t, teraz) {
 }
 
 export async function runOtwarcieRynku({
-  teraz = Date.now(), limit = 220, budzetMs = 420_000, przetargi = tenders,
+  teraz = Date.now(), limit = 500, budzetMs = 420_000, przetargi = tenders,
   pobierz = pobierzDokumenty, czytajOtwarcie = czytajOtwarcieDomyslnie,
 } = {}) {
   const start = Date.now();
