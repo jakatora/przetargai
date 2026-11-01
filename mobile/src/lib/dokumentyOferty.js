@@ -119,11 +119,14 @@ export function normalizujNip(nip) {
   return String(nip ?? '').replace(/\D/g, '');
 }
 
-/** Suma kontrolna NIP (wagi 6 7 8 9 5 7 6 5 7, mod 11). */
+/**
+ * Suma kontrolna NIP (wagi 6 5 7 2 3 4 5 6 7, mod 11 — jak `lib/nip.js` w Functions). Do 1.11.2026 były tu
+ * złe wagi (6 7 8 9 5 7 6 5 7): każdy prawdziwy NIP dostawał „niepoprawną sumę kontrolną”.
+ */
 export function czyPoprawnyNip(nip) {
   const cyfry = normalizujNip(nip);
   if (!/^\d{10}$/.test(cyfry)) return false;
-  const wagi = [6, 7, 8, 9, 5, 7, 6, 5, 7];
+  const wagi = [6, 5, 7, 2, 3, 4, 5, 6, 7];
   const suma = wagi.reduce((s, waga, i) => s + waga * Number(cyfry[i]), 0);
   const kontrolna = suma % 11;
   return kontrolna !== 10 && kontrolna === Number(cyfry[9]);

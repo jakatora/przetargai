@@ -9,6 +9,7 @@ import {
   ETYKIETY_KIEDY,
   szablonDanychWykonawcy,
   walidujDaneWykonawcy,
+  czyPoprawnyNip,
   daneZOgloszenia,
   policzBrutto,
   generujOswiadczenie125,
@@ -34,7 +35,7 @@ function wykonawcaPelny() {
   return {
     nazwa: 'Budrem Sp. z o.o.',
     adres: 'ul. Długa 12, 30-001 Kraków',
-    nip: '5261040827', // poprawna suma kontrolna
+    nip: '5261040828', // poprawna suma kontrolna (NIP GUS)
     regon: '012345678',
     rejestr: 'KRS 0000123456',
     reprezentant: 'Jan Kowalski',
@@ -74,9 +75,9 @@ test('szablon danych wykonawcy: pusty, a z profilu bierze nazwę i NIP', () => {
   const pusty = szablonDanychWykonawcy();
   for (const p of POLA_WYKONAWCY) assert.equal(pusty[p.id], '', `pole ${p.id} nie jest puste`);
 
-  const zProfilu = szablonDanychWykonawcy({ company_name: 'Alfa S.A.', company_nip: '526-10-40-827' });
+  const zProfilu = szablonDanychWykonawcy({ company_name: 'Alfa S.A.', company_nip: '526-10-40-828' });
   assert.equal(zProfilu.nazwa, 'Alfa S.A.');
-  assert.equal(zProfilu.nip, '5261040827', 'NIP z profilu znormalizowany do samych cyfr');
+  assert.equal(zProfilu.nip, '5261040828', 'NIP z profilu znormalizowany do samych cyfr');
 });
 
 test('walidacja: braki wymaganych pól i zły NIP (suma kontrolna) blokują komplet', () => {
@@ -89,12 +90,12 @@ test('walidacja: braki wymaganych pól i zły NIP (suma kontrolna) blokują komp
   assert.equal(bezAdresu.kompletne, false);
   assert.deepEqual(bezAdresu.braki.map((b) => b.id), [ID_POL_WYKONAWCY.ADRES]);
 
-  const zlyNip = walidujDaneWykonawcy({ ...wykonawcaPelny(), nip: '5261040828' });
+  const zlyNip = walidujDaneWykonawcy({ ...wykonawcaPelny(), nip: '5261040827' });
   assert.equal(zlyNip.kompletne, false);
   assert.equal(zlyNip.bledy[0].id, ID_POL_WYKONAWCY.NIP);
   assert.match(zlyNip.bledy[0].komunikat, /sum/i);
 
-  const nipZKreskami = walidujDaneWykonawcy({ ...wykonawcaPelny(), nip: '526-104-08-27' });
+  const nipZKreskami = walidujDaneWykonawcy({ ...wykonawcaPelny(), nip: '526-104-08-28' });
   assert.equal(nipZKreskami.kompletne, true, 'kreski w NIP są dozwolone');
 
   const zlyEmail = walidujDaneWykonawcy({ ...wykonawcaPelny(), email: 'biuro' });
@@ -127,7 +128,7 @@ test('oświadczenie art. 125 ust. 1: ma podstawę, obie części (wykluczenie + 
   assert.match(dok.tresc, /art\. 108 ust\. 1/);
   assert.match(dok.tresc, /spełniam warunki udziału/i);
   assert.match(dok.tresc, /Budrem Sp\. z o\.o\./);
-  assert.match(dok.tresc, /NIP 5261040827/);
+  assert.match(dok.tresc, /NIP 5261040828/);
   assert.match(dok.tresc, /Jan Kowalski/);
   assert.match(dok.tresc, /Gmina Miejska Kraków/);
   assert.match(dok.tresc, /ZP\.271\.14\.2026/);
@@ -267,4 +268,9 @@ test('pakiet jest deterministyczny i nie rzuca na pustych danych', () => {
   assert.equal(pusty.length, 4);
   assert.match(pusty[1].tresc, /…/, 'brakujące dane to kropki, nie „undefined"');
   assert.doesNotMatch(pusty.map((d) => d.tresc).join('\n'), /undefined|null|NaN/);
+});
+
+test('NIP: prawdziwe numery przechodzą (wagi 6 5 7 2 3 4 5 6 7), zmieniona cyfra nie', () => {
+  for (const n of ['5261040828', '7941844550', '5213017228', '526-104-08-28', 'PL 5261040828']) assert.equal(czyPoprawnyNip(n), true, n);
+  for (const n of ['5261040827', '7941844551', '123', '']) assert.equal(czyPoprawnyNip(n), false, n);
 });
