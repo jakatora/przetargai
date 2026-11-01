@@ -38,6 +38,16 @@ test('parser: „godz. 9:00”, encje HTML i brak numeru zmienianego', () => {
   assert.equal(zmianaTerminu({ htmlBody: '<p>8.1. Termin składania ofert Przed zmianą: 2026-11-02 10:00 Po zmianie: 2026-11-05 10:00</p>' }), null);
 });
 
+test('parser: godzina z wolnego tekstu („r. godz.”, „do godz.”, „10.00”, „T”); sama data przy starej godzinie → pomiń', () => {
+  const zm = (przed, po) => zmianaTerminu({ htmlBody: `3.2.) Numer zmienianego ogłoszenia w BZP: 2026/BZP 00412345 tj. Termin składania ofert: Przed zmianą: ${przed} Po zmianie: ${po} 3.4.1.) Opis` });
+  assert.equal(zm('2026-11-02 10:00', '2026-11-04 r. godz. 10:00').nowyTermin, '2026-11-04T09:00:00.000Z');
+  assert.equal(zm('2026-11-02 r. do godz. 9:00', '2026-11-04 r. do godz. 9:30').nowyTermin, '2026-11-04T08:30:00.000Z');
+  assert.equal(zm('2026-11-02, godz. 10.00', '2026-11-04, godz. 12.00').nowyTermin, '2026-11-04T11:00:00.000Z');
+  assert.equal(zm('2026-11-02T10:00', '2026-11-04T10:00').staryTermin, '2026-11-02T09:00:00.000Z');
+  assert.equal(zm('2026-11-02 10:00', '2026-11-04'), null, 'godziny nie odczytaliśmy — koniec dnia byłby za późno');
+  assert.equal(zm('2026-11-02', '2026-11-04').nowyTermin, '2026-11-04T22:59:59.999Z', 'obie same daty — do końca dnia');
+});
+
 test('najnowsza zmiana na ogłoszenie wygrywa; alert: wcześniej = ostrzeżenie, klucz przetarg × nowy termin', () => {
   const najnowsze = najnowszeZmiany(FIXTURE.map(zmianaTerminu));
   assert.equal(najnowsze.length, 3);

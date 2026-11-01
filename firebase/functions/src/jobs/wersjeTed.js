@@ -1,6 +1,6 @@
 import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
-import { wersjeDoZastapienia } from '../lib/wersjeTed.js';
+import { wersjeDoZastapienia, porzadekPublikacji } from '../lib/wersjeTed.js';
 import { tenders, evaluations } from '../db/repos.js';
 
 /*
@@ -53,6 +53,8 @@ export async function runWersjeTed({ postepowania = null, teraz = Date.now(), ma
   // Ocena i dopasowanie przechodzą na aktualną wersję — selekcja nie płaci drugi raz za AI ani nie ogłasza
   // „nowego przetargu”, który konto już zna (~139 wersji TED dziennie).
   try {
+    // Od najnowszej starej wersji — gdy kilka wskazuje tę samą aktualną, przechodzi stan najświeższej.
+    wszystkieStare.sort((a, b) => porzadekPublikacji(b.staraId) - porzadekPublikacji(a.staraId));
     const p = await oceny.przeniesNaWersje(wszystkieStare);
     wynik.przeniesione_oceny = p.oceny;
     wynik.przeniesione_dopasowania = p.dopasowania;

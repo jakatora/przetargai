@@ -5,23 +5,58 @@ import { tenders, rozstrzygniecia } from '../db/repos.js';
 /*
  * UNIEWAŻNIENIE Z OGŁOSZENIA O WYNIKU (2026-11-01). Anulowanie oznaczała tylko Baza Konkurencyjności — przetarg
  * BZP/TED, którego wynik mówi „wszystkie części unieważnione”, zostawał „otwarty”: wisiał w feedzie, katalogu
- * i selekcji, a Zapisane przypominały o terminie. 1.11 na prod 10 otwartych przetargów miało już taki wynik
- * (np. dostawa gazu, kredyt dla gminy). `tenders.oznaczAnulowany` = poza pulą i katalogiem, przypomnienia wyłączone
- * w kopiach, wpis „anulowanie” w historii (alerty zapisanych wyszukiwań). Przetarg z większą liczbą części niż
- * w wyniku zostaje — wynik mógł objąć tylko część postępowania.
- *   • w `wynikiOknoFetch`: wyniki z tego przebiegu,
- *   • `/admin/uniewaznione`: zapisane rozstrzygnięcia z `dni` (uzupełnienie wstecz).
+ * i selekcji, a Zapisane przypominały o terminie. `tenders.oznaczAnulowany` = poza pulą i katalogiem, przypomnienia
+ * wyłączone w kopiach, wpis „anulowanie” w historii (alerty zapisanych wyszukiwań).
+ *
+ * 🚨 FAŁSZYWE UNIEWAŻNIENIE JEST GORSZE NIŻ BRAK: przetarg znika, choć przyjmuje oferty. Pierwsza wersja (1.11)
+ * brała jeden wynik i nieznaną liczbę części za „całość” — wynik TED dla jednej z czterech części anulował cały
+ * przetarg (929 z 942 oznaczonych miało nieznaną liczbę części; cofnięte). Teraz oznaczamy tylko, gdy:
+ *   • WSZYSTKIE wyniki postępowania (nie tylko z tego przebiegu) mają wyłącznie unieważnione części,
+ *   • liczba części przetargu jest ZNANA (BZP: `liczba_czesci`; TED: terminy części w `raw_data`) i wyniki
+ *     obejmują co najmniej tyle różnych części,
+ *   • przetarg opublikowano nie później niż pierwszy wynik (ponowne ogłoszenie z tym samym identyfikatorem zostaje).
+ *   • w `wynikiOknoFetch`: postępowania z wyników tego przebiegu, `/admin/uniewaznione`: z rozstrzygnięć z `dni`.
  */
 const wszystkieUniewaznione = (w) => Array.isArray(w?.czesci) && w.czesci.length > 0 && w.czesci.every((c) => c?.uniewaznione);
+
+/** Liczba części przetargu albo null (nie wiemy). TED: jeden termin na część w zapisanych polach ogłoszenia. */
+export function liczbaCzesciPrzetargu(t) {
+  const n = Number(t?.liczba_czesci);
+  if (Number.isInteger(n) && n > 0) return n;
+  if (t?.source !== 'ted' || typeof t.raw_data !== 'string') return null;
+  try {
+    const terminy = JSON.parse(t.raw_data)?.['deadline-receipt-tender-date-lot'];
+    return Array.isArray(terminy) && terminy.length ? terminy.length : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Czy przetarg jest na pewno unieważniony w całości.
+ * @param {object} t przetarg (`liczba_czesci`, `source`, `raw_data`, `published_at`)
+ * @param {{czesci: {numer?: number, uniewaznione?: boolean}[], opublikowano?: string}[]} wynikiPostepowania
+ */
+export function pewnieUniewazniony(t, wynikiPostepowania) {
+  const wyniki = (wynikiPostepowania ?? []).filter((w) => Array.isArray(w?.czesci) && w.czesci.length);
+  if (!wyniki.length || !wyniki.every(wszystkieUniewaznione)) return false;
+  const czesci = liczbaCzesciPrzetargu(t);
+  if (!czesci) return false;
+  const numery = new Set(wyniki.flatMap((w) => w.czesci.map((c, i) => c?.numer ?? i + 1)));
+  if (numery.size < czesci) return false;
+  const pierwszyWynik = wyniki.map((w) => String(w.opublikowano ?? '').slice(0, 10)).filter(Boolean).sort()[0];
+  const opublikowano = String(t?.published_at ?? '').slice(0, 10);
+  return !(pierwszyWynik && opublikowano && opublikowano > pierwszyWynik);
+}
 
 export async function runUniewaznioneZWyniku({
   wyniki = null, dni = 60, teraz = Date.now(), przetargi = tenders, repoWynikow = rozstrzygniecia,
 } = {}) {
-  const wynik = { ok: true, wynikow_uniewaznionych: 0, przetargow: 0, oznaczone: 0, pominiete_czesci: 0, bledy: 0 };
-  const poPostepowaniu = new Map();
+  const wynik = { ok: true, postepowan: 0, przetargow: 0, oznaczone: 0, niepewne: 0, bledy: 0 };
+  const kandydaci = new Set();
   const dodaj = (w) => {
     const pid = w?.postepowanie_id ?? w?.tenderId;
-    if (pid && wszystkieUniewaznione(w)) poPostepowaniu.set(String(pid), w.czesci.length);
+    if (pid && wszystkieUniewaznione(w)) kandydaci.add(String(pid));
   };
   if (wyniki) {
     wyniki.forEach(dodaj);
@@ -35,13 +70,15 @@ export async function runUniewaznioneZWyniku({
       kursor = strona.kursor;
     }
   }
-  wynik.wynikow_uniewaznionych = poPostepowaniu.size;
-  for (const [pid, czesciWyniku] of poPostepowaniu) {
+  wynik.postepowan = kandydaci.size;
+  for (const pid of kandydaci) {
     try {
-      for (const t of await przetargi.przetargiPostepowania(pid)) {
-        if (t.anulowany === true) continue;
+      const lista = (await przetargi.przetargiPostepowania(pid)).filter((t) => t.anulowany !== true);
+      if (!lista.length) continue;
+      const wszystkieWyniki = await repoWynikow.wszystkieDlaPostepowania(pid);
+      for (const t of lista) {
         wynik.przetargow += 1;
-        if (Number(t.liczba_czesci) > czesciWyniku) { wynik.pominiete_czesci += 1; continue; }
+        if (!pewnieUniewazniony(t, wszystkieWyniki)) { wynik.niepewne += 1; continue; }
         if (await przetargi.oznaczAnulowany(t.id, { powod: 'uniewaznienie_w_wyniku' })) wynik.oznaczone += 1;
       }
     } catch (err) {

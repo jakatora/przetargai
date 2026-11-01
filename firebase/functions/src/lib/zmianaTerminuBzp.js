@@ -25,13 +25,17 @@ export function tekstOgloszenia(html) {
 }
 
 const NUMER_ZMIENIANEGO = /Numer zmienianego ogłoszenia w BZP:\s*(\d{4}\/BZP \d{8})/i;
-const DATA = String.raw`(\d{4}-\d{2}-\d{2}(?:\s*(?:godz\.?|godzina)?\s*\d{1,2}:\d{2})?)`;
+// Godzina bywa wolnym tekstem zamawiającego: „2026-11-04 r. godz. 10:00”, „do godz. 10:00”, „, godz. 10.00”, „T10:00”.
+const DATA = String.raw`(\d{4}-\d{2}-\d{2}(?:(?:T|\s*r\.?)?[,\s]*(?:do\s+)?(?:godz\.?|godzina)?\s*\d{1,2}[:.]\d{2})?)`;
 // „8.1. Termin składania ofert Przed zmianą: …” i „tj. Termin składania ofert: Przed zmianą: …”.
 const ZMIANA_TERMINU = new RegExp(String.raw`Termin składania ofert:?[^:]{0,40}?Przed zmianą:\s*${DATA}[^]{0,80}?Po zmianie:\s*${DATA}`, 'i');
 
-/** „2026-11-04 godz. 10:00” → „2026-11-04 10:00” (jak w ogłoszeniu o zamówieniu). */
-const normDaty = (s) => s.replace(/\s*(?:godz\.?|godzina)\s*/i, ' ').replace(/\s+/g, ' ').trim()
-  .replace(/ (\d):/, ' 0$1:');
+/** „2026-11-04 r. godz. 9.00” → „2026-11-04 09:00” (jak w ogłoszeniu o zamówieniu); sama data zostaje datą. */
+const normDaty = (s) => {
+  const m = /(\d{4}-\d{2}-\d{2})\D*?(\d{1,2})[:.](\d{2})/.exec(s);
+  return m ? `${m[1]} ${m[2].padStart(2, '0')}:${m[3]}` : s.slice(0, 10);
+};
+const maGodzine = (s) => /\d[:.]\d{2}$/.test(s);
 
 /**
  * @param {object} n surowe ogłoszenie BZP typu `NoticeUpdateNotice`
@@ -43,6 +47,9 @@ export function zmianaTerminu(n) {
   const numer = NUMER_ZMIENIANEGO.exec(tekst)?.[1] ?? null;
   const m = ZMIANA_TERMINU.exec(tekst);
   if (!numer || !m) return null;
+  // Sama data po zmianie przy starym terminie z godziną = godziny nie odczytaliśmy. Koniec dnia byłby terminem
+  // późniejszym niż prawdziwy (oferta po czasie) — lepiej nie ruszać.
+  if (!maGodzine(m[2]) && maGodzine(m[1])) return null;
   const nowyTermin = doUtcIso(normDaty(m[2]));
   if (!nowyTermin) return null;
   return {

@@ -878,6 +878,10 @@ export const tenders = {
     if (!snap.exists) return { zmienione: false, zmiany: [] };
 
     const przed = snap.data();
+    // Zmiana terminu BZP starsza niż już zastosowana (nakładające się przebiegi) nie cofa terminu (2026-11-01).
+    if (t.termin_zmiana_o && przed.termin_zmiana_o && String(przed.termin_zmiana_o) >= String(t.termin_zmiana_o)) {
+      return { zmienione: false, zmiany: [] };
+    }
 
     const pola = { zaktualizowany_o: nowIso() };
     const ustaw = (pole, wartosc) => {
@@ -1046,7 +1050,7 @@ export const tenders = {
   async przetargiPostepowania(postepowanieId) {
     if (!postepowanieId) return [];
     const snap = await db().collection('tenders').where('postepowanie_id', '==', String(postepowanieId))
-      .select('source', 'anulowany', 'liczba_czesci', 'deadline').limit(20).get();
+      .select('source', 'anulowany', 'liczba_czesci', 'deadline', 'published_at', 'raw_data').limit(20).get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
@@ -2817,6 +2821,14 @@ export const rozstrzygniecia = {
     const snap = await db().collection('rozstrzygniecia')
       .where('postepowanie_id', '==', String(postepowanieId)).limit(1).get();
     return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+  },
+
+  /** WSZYSTKIE wyniki postępowania (bywa kilka — po częściach albo korekta); do pewności unieważnienia (2026-11-01). */
+  async wszystkieDlaPostepowania(postepowanieId) {
+    if (!postepowanieId) return [];
+    const snap = await db().collection('rozstrzygniecia').where('postepowanie_id', '==', String(postepowanieId))
+      .select('czesci', 'opublikowano').limit(20).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
   /**
