@@ -38,10 +38,11 @@ export function duzeKontrakty(wyniki, { minKwota = MIN_KWOTA_KONTRAKTU } = {}) {
 
 /**
  * Działy i województwa z DOPASOWAŃ konta — gdy karta ich nie ma (1.11: województwa w karcie miały 3 konta na 31).
- * Bierzemy tylko te, które stanowią co najmniej `minUdzial` dopasowań: profil ma odzwierciedlać, gdzie konto
+ * Bierzemy tylko te, które stanowią co najmniej `minUdzial` dopasowań (10%: dopasowania zwykle są z całej Polski,
+ * przy 20% regionu nie miało 25 z 31 kont) — profil ma odzwierciedlać, gdzie konto
  * pracuje, a nie pojedyncze przypadki.
  */
-export function profilZDopasowan(dopasowania, { minUdzial = 0.2, maksDzialow = 3, maksRegionow = 2 } = {}) {
+export function profilZDopasowan(dopasowania, { minUdzial = 0.1, maksDzialow = 3, maksRegionow = 2 } = {}) {
   const lista = Array.isArray(dopasowania) ? dopasowania : [];
   const top = (klucze, maks) => {
     const n = new Map();
