@@ -57,3 +57,16 @@ test('podsumowanie zmian na kartę: z całej listy, bez zwykłej dokumentacji �
   assert.deepEqual(p, { wyjasnienia: 2, zmiany: 1, termin: 1, ostatnia_o: '2026-10-30T12:00:00Z' });
   assert.equal(podsumowanieZmian([{ id: '1', nazwa: 'SWZ' }, { id: '2', nazwa: 'Informacja z otwarcia ofert' }]), null);
 });
+
+test('wybór oferty: termin odwołania do KIO liczony od publikacji (5 dni), po terminie bez daty', () => {
+  const tender = { id: 'bzp_9', title: 'Dostawa kruszywa', organization: 'Gmina X', deadline: '2026-10-20T08:00:00.000Z' };
+  const wybor = [{ id: 'd1', nazwa: 'Zawiadomienie o wyborze najkorzystniejszej oferty', opublikowano: '2026-11-02T09:00:00.000Z' }];
+  const a = alertNowychDokumentow({ tender, nowe: wybor, teraz: Date.parse('2026-11-02T10:00:00Z') });
+  assert.equal(a.ton, 'ostrzezenie');
+  assert.equal(a.tresc.pl, 'Zamawiający opublikował informację o wyborze oferty (1). Sprawdź, czy wybrano Twoją ofertę. Jeśli złożyłeś ofertę i chcesz się odwołać do KIO, masz 5 dni od przekazania informacji — licząc od publikacji, do 07.11.2026. Zawiadomienie o wyborze najkorzystniejszej oferty');
+  assert.match(a.tresc.en, /until 07\/11\/2026\./);
+  const pozno = alertNowychDokumentow({ tender, nowe: wybor, teraz: Date.parse('2026-11-09T10:00:00Z') });
+  assert.match(pozno.tresc.pl, /Sprawdź, czy wybrano Twoją ofertę\. Zawiadomienie/);
+  const uniewaznienie = alertNowychDokumentow({ tender, nowe: [{ id: 'd2', nazwa: 'Unieważnienie postępowania', opublikowano: '2026-11-02T09:00:00.000Z' }], teraz: Date.parse('2026-11-02T10:00:00Z') });
+  assert.match(uniewaznienie.tresc.pl, /Postępowanie unieważnione — zamawiający może ogłosić je ponownie\. Jeśli złożyłeś ofertę/);
+});

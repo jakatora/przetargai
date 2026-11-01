@@ -94,7 +94,7 @@ export async function runMonitorDokumentow({
       let byloNowe = false;
       for (const wpis of poPrzetargu.get(t.id) ?? []) {
         const nowe = noweDokumenty(dokumenty, { znane, zapisanoO: wpis.saved_at });
-        const alert = alertNowychDokumentow({ tender: t, nowe, zapisany: wpis.zapisany, otwarcie });
+        const alert = alertNowychDokumentow({ tender: t, nowe, zapisany: wpis.zapisany, otwarcie, teraz: Date.parse(teraz) });
         if (!alert) continue;
         byloNowe = true;
         const { nowy } = await alerty.dodaj(wpis.userId, alert, teraz);
