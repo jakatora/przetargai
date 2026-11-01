@@ -57,10 +57,11 @@ function kwotyW(tekst, { bezWaluty = false } = {}) {
  * @returns {{kwota: number|null, kwoty_czesci: number[]|null, oferty: number|null, cena_min: number|null, cena_max: number|null, czesci: boolean}|null}
  */
 export function parsujOtwarcie(linie) {
-  // PDF-y rozrywają liczby i słowa: „215 275, 00 zł”, „z ł”, „ofert a” — skleja to, co zwykle trzeba.
+  // PDF-y rozrywają liczby i słowa: „215 275, 00 zł”, „190 750 ,00 zł”, „z ł”, „ofert a” — skleja to, co zwykle trzeba.
   const tekst = (Array.isArray(linie) ? linie.join('\n') : String(linie ?? ''))
     .replace(/\s+/g, ' ')
     .replace(/(\d)\s*,\s+(\d{2})\b/g, '$1,$2')
+    .replace(/(\d)\s+,(\d{2})\b/g, '$1,$2')
     .replace(/\bz\s+ł\b/g, 'zł');
   if (!tekst.trim()) return null;
   const iKwoty = tekst.search(ZNACZNIK_KWOTY);
@@ -89,6 +90,8 @@ export function parsujOtwarcie(linie) {
   let oferty = null;
   let cenaMin = null;
   let cenaMax = null;
+  let cenyNip = null;
+  let cenyWszystkie = null;
   let czesci = Boolean(kwotyCzesci);
   if (iOfert >= 0) {
     const sekcja = tekst.slice(iOfert);
@@ -109,6 +112,8 @@ export function parsujOtwarcie(linie) {
         oferty = ceny.length;
         cenaMin = Math.min(...wiarygodne);
         cenaMax = Math.max(...wiarygodne);
+        cenyWszystkie = [...ceny].sort((a, b) => a - b).slice(0, 40);
+        cenyNip = paryNipCena(sekcja, ceny, { bezWaluty: /brutto|PLN|zł/i.test(sekcja) });
       }
       // „wpłynęło 10 ofert”, „wpłynęła (1) oferta” — liczba podana wprost wygrywa z policzoną.
       const wprost = tekst.match(/wp[łl]yn[ęe][łl]\w*\s+\(?\s*(\d{1,2})\s*\)?\s+ofert/i);
@@ -117,7 +122,49 @@ export function parsujOtwarcie(linie) {
   }
 
   if (kwota === null && oferty === null) return null;
-  return { kwota, kwoty_czesci: kwotyCzesci, oferty, cena_min: cenaMin, cena_max: cenaMax, czesci };
+  return {
+    kwota, kwoty_czesci: kwotyCzesci, oferty, cena_min: cenaMin, cena_max: cenaMax, czesci,
+    ...(cenyWszystkie ? { ceny: cenyWszystkie } : {}), ...(cenyNip ? { ceny_nip: cenyNip } : {}),
+  };
+}
+
+/**
+ * Którą ofertą jest oferta konta (po NIP-ie z pary NIP → cena): „2. najtańsza z 7”. Bez pary — null.
+ * @returns {{cena: number, miejsce: number, z: number}|null}
+ */
+export function pozycjaKonta(otwarcie, nipKonta) {
+  const nip = String(nipKonta ?? '').replace(/\D/g, '');
+  if (nip.length !== 10) return null;
+  const para = (otwarcie?.ceny_nip ?? []).find((p) => p.nip === nip);
+  if (!para) return null;
+  const ceny = Array.isArray(otwarcie.ceny) && otwarcie.ceny.length ? otwarcie.ceny : null;
+  const z = ceny ? ceny.length : otwarcie.oferty ?? null;
+  if (!ceny || !z) return null;
+  return { cena: para.cena, miejsce: 1 + ceny.filter((c) => c < para.cena - 0.005).length, z };
+}
+
+const NIP_W_TEKSCIE = /\bNIP\s*:?\s*(\d{3}[ -]?\d{3}[ -]?\d{2}[ -]?\d{2}|\d{3}[ -]?\d{2}[ -]?\d{2}[ -]?\d{3})\b/gi;
+
+/**
+ * Pary NIP → cena (2026-11-01): w tabeli ofert NIP wykonawcy stoi przy nazwie, a cena za nim — bierzemy pierwszą
+ * cenę z listy ofert między NIP-em a kolejnym NIP-em. Po tym alert powie kontu z tym NIP-em, którą ma pozycję.
+ * Bez par albo gdy jeden NIP ma dwie ceny — null (lepiej nic niż cudza pozycja).
+ */
+function paryNipCena(sekcja, ceny, { bezWaluty }) {
+  const nipy = [...sekcja.matchAll(NIP_W_TEKSCIE)];
+  const pary = [];
+  for (const [i, m] of nipy.entries()) {
+    const od = m.index + m[0].length;
+    const odcinek = sekcja.slice(od, nipy[i + 1]?.index ?? od + 400);
+    const cena = kwotyW(odcinek, { bezWaluty }).map((k) => k.kwota).find((v) => ceny.some((c) => Math.abs(c - v) < 0.01));
+    if (cena !== undefined) pary.push({ nip: m[1].replace(/\D/g, ''), cena });
+  }
+  const unikalne = new Map();
+  for (const p of pary) {
+    if (unikalne.has(p.nip) && Math.abs(unikalne.get(p.nip) - p.cena) >= 0.01) return null;
+    unikalne.set(p.nip, p.cena);
+  }
+  return unikalne.size ? [...unikalne].map(([nip, cena]) => ({ nip, cena })).slice(0, 40) : null;
 }
 
 const zl = (n) => `${Math.round(n).toLocaleString('pl-PL')} zł`;
@@ -168,6 +215,9 @@ export function scalOtwarcie(poprzednie, odczyt, dokument) {
     oferty: maOferty ? w.oferty : p.oferty ?? null,
     cena_min: maOferty ? w.cena_min : p.cena_min ?? null,
     cena_max: maOferty ? w.cena_max : p.cena_max ?? null,
+    // Pozycja oferty konta (2026-11-01): wszystkie ceny i pary NIP → cena z tego samego pisma.
+    ceny: maOferty ? w.ceny ?? null : p.ceny ?? null,
+    ceny_nip: maOferty ? w.ceny_nip ?? null : p.ceny_nip ?? null,
     czesci: Boolean(w.czesci || p.czesci),
     dokument: dokument ? { id: dokument.id, nazwa: dokument.nazwa ?? null, url: dokument.url ?? null, opublikowano: dokument.opublikowano ?? null } : p.dokument ?? null,
     przeczytane: [...new Set([...(p.przeczytane ?? []), ...(dokument?.id ? [dokument.id] : [])])].slice(-20),

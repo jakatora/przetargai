@@ -19,7 +19,10 @@ test('zdania „cena oferty …”, waluta raz jest, raz nie; oferta bez ceny (�
 
 test('tabele: cena bez waluty obok NIP-u, „215 275, 00 zł”, oferta 150× kwoty liczona, ale nie w rozpiętości', () => {
   assert.deepEqual(krotko(p('9c55193_16.pdf')), [null, 2, 347721, 451656, false]);
-  assert.deepEqual(krotko(p('ce56e6f_14.pdf')), [200000, 7, 141603.75, 430500, false]);
+  // 8 ofert z ceną (sprawdzone ręcznie 1.11): „190 750 ,00 zł” ze spacją przed przecinkiem też się liczy.
+  assert.deepEqual(krotko(p('ce56e6f_14.pdf')), [200000, 8, 141603.75, 430500, false]);
+  assert.deepEqual(p('ce56e6f_14.pdf').ceny_nip.slice(0, 3), [
+    { nip: '7842306252', cena: 190750 }, { nip: '6270027029', cena: 215275 }, { nip: '5252811568', cena: 268140 }]);
   assert.deepEqual(krotko(p('0d2407ba_4.pdf')), [362000, 2, 594336, 594336, false]);
 });
 
@@ -38,4 +41,13 @@ test('opis do alertu: odmiana, zakres, kwota zamawiającego (twarda spacja w tys
   assert.equal(opis({ kwota: 60000, oferty: 1, cena_min: 55536.37, cena_max: 55536.37 }), '1 oferta z ceną: 55 536 zł; zamawiający przeznaczył 60 000 zł.');
   assert.equal(opis({ kwota: 527143.56, oferty: null, cena_min: null, cena_max: null }), 'zamawiający przeznaczył 527 144 zł.');
   assert.equal(opisOtwarcia(null), null);
+});
+
+test('pozycjaKonta: miejsce po cenie wśród wszystkich ofert; bez pary albo zły NIP — null', async () => {
+  const { pozycjaKonta } = await import('../src/lib/otwarcieOfert.js');
+  const o = { oferty: 4, ceny: [141603.75, 185400, 215275, 290587.5], ceny_nip: [{ nip: '6270027029', cena: 215275 }] };
+  assert.deepEqual(pozycjaKonta(o, 'PL 627 002 70 29'), { cena: 215275, miejsce: 3, z: 4 });
+  assert.equal(pozycjaKonta(o, '5261040828'), null);
+  assert.equal(pozycjaKonta(o, '123'), null);
+  assert.equal(pozycjaKonta({ ...o, ceny: null }, '6270027029'), null);
 });

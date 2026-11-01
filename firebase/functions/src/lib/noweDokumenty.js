@@ -1,4 +1,4 @@
-import { opisOtwarcia } from './otwarcieOfert.js';
+import { opisOtwarcia, pozycjaKonta } from './otwarcieOfert.js';
 import { wybranoNip } from './wyborOferty.js';
 
 /*
@@ -116,7 +116,13 @@ export function alertNowychDokumentow({ tender, nowe, zapisany = true, otwarcie 
   const tytul = String(tender.title ?? 'przetarg').slice(0, 90);
   const czysc = (s) => String(s).replace(/[/\s]/g, '_');
   const ostatni = [...nowe].map((d) => d.id).sort().at(-1);
-  const liczby = rodzaje.includes('otwarcie') ? opisOtwarcia(otwarcie) : null;
+  const liczbyOgolne = rodzaje.includes('otwarcie') ? opisOtwarcia(otwarcie) : null;
+  // Oferta konta w informacji z otwarcia (po NIP-ie, 2026-11-01): „Twoja oferta: 215 275 zł — 3. najtańsza z 7.”
+  const moja = liczbyOgolne ? pozycjaKonta(otwarcie, nipKonta) : null;
+  const grosze = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const liczby = liczbyOgolne && moja
+    ? { pl: `${liczbyOgolne.pl} Twoja oferta: ${grosze(moja.cena)} zł — ${moja.miejsce}. najtańsza z ${moja.z}.`, en: `${liczbyOgolne.en} Your bid: PLN ${grosze(moja.cena)} — ${moja.miejsce} of ${moja.z} by price.` }
+    : liczbyOgolne;
   const decyzja = dopisekRozstrzygniecia(nowe, teraz, { wybor, nipKonta });
   const dopisek = {
     pl: decyzja ? decyzja.pl : liczby ? ` ${liczby.pl}` : pilne ? ' Sprawdź przed złożeniem oferty — oferta bez ich uwzględnienia może zostać odrzucona.' : rodzaje.includes('otwarcie') ? ' Zobacz, jakie ceny dali konkurenci.' : '',

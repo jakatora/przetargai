@@ -70,3 +70,16 @@ test('wybór oferty: termin odwołania do KIO liczony od publikacji (5 dni), po 
   const uniewaznienie = alertNowychDokumentow({ tender, nowe: [{ id: 'd2', nazwa: 'Unieważnienie postępowania', opublikowano: '2026-11-02T09:00:00.000Z' }], teraz: Date.parse('2026-11-02T10:00:00Z') });
   assert.match(uniewaznienie.tresc.pl, /Postępowanie unieważnione — zamawiający może ogłosić je ponownie\. Jeśli złożyłeś ofertę/);
 });
+
+test('otwarcie ofert z NIP-em konta w tabeli: „Twoja oferta … N. najtańsza z M”; bez NIP-u — same liczby', () => {
+  const tender = { id: 'bzp_11', title: 'Plan miejscowy', organization: 'Gmina Y', deadline: '2026-10-30T08:00:00.000Z' };
+  const nowe = [{ id: 'd5', nazwa: 'Informacja z otwarcia ofert', opublikowano: '2026-10-30T10:00:00.000Z' }];
+  const otwarcie = { kwota: 300000, oferty: 3, cena_min: 185400, cena_max: 290587.5, czesci: false,
+    ceny: [185400, 215275, 290587.5], ceny_nip: [{ nip: '6270027029', cena: 215275 }, { nip: '8130333566', cena: 290587.5 }] };
+  const moj = alertNowychDokumentow({ tender, nowe, otwarcie, nipKonta: '627-002-70-29', teraz: Date.parse('2026-10-30T12:00:00Z') });
+  assert.match(moj.tresc.pl, /Twoja oferta: 215 275 zł — 2\. najtańsza z 3\./);
+  assert.match(moj.tresc.en, /Your bid: PLN 215 275 — 2 of 3 by price\./);
+  const obcy = alertNowychDokumentow({ tender, nowe, otwarcie, nipKonta: '5261040828', teraz: Date.parse('2026-10-30T12:00:00Z') });
+  assert.doesNotMatch(obcy.tresc.pl, /Twoja oferta/);
+  assert.match(obcy.tresc.pl, /3 oferty z ceną/);
+});

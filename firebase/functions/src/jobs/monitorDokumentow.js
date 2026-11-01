@@ -152,7 +152,7 @@ export async function runMonitorDokumentow({
       let byloNowe = false;
       for (const wpis of poPrzetargu.get(t.id) ?? []) {
         const nowe = noweDokumenty(dokumenty, { znane, zapisanoO: wpis.saved_at });
-        const nipKonta = wybor?.wykonawcy?.length ? (await uzytkownik(wpis.userId))?.company_nip ?? null : null;
+        const nipKonta = wybor?.wykonawcy?.length || otwarcie?.ceny_nip?.length ? (await uzytkownik(wpis.userId))?.company_nip ?? null : null;
         const alert = alertNowychDokumentow({ tender: t, nowe, zapisany: wpis.zapisany, otwarcie, teraz: Date.parse(teraz), wybor, nipKonta });
         if (!alert) continue;
         byloNowe = true;
