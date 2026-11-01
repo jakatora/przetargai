@@ -82,11 +82,18 @@ test('pierwsze pytanie: SWZ z PDF → postępowanie z treścią (bez analizy) �
   assert.ok(!zadania.some((z) => z.endsWith('/analiza')), 'bez płatnej analizy');
 
   assert.equal((await powiazaniaSwz.pobierz(uid, tender.id))?.postepowanie_id, 'pst-1', 'przetarg powiązany z postępowaniem');
+  // Pyta o SWZ = szykuje ofertę: przetarg sam trafia do Zapisanych z przypomnieniem o terminie.
+  assert.equal(d1.zapisano, true);
+  const { getFirestore } = await import('firebase-admin/firestore');
+  const zakladka = (await getFirestore().collection('users').doc(uid).collection('saved').doc(tender.id).get()).data();
+  assert.equal(zakladka?.tender_id, tender.id);
+  assert.equal(zakladka.reminder_enabled, true, 'przypomnienie włączone');
 
   zadania.length = 0;
   const r2 = await zapytaj(token, tender.id, 'Jakie kryteria?');
   assert.equal(r2.status, 200);
   assert.deepEqual(zadania.filter((z) => !z.includes('/auth/')), ['POST /api/przetarg/swz/postepowania/pst-1/zapytaj'], 'drugie pytanie bez zakładania i pobierania');
+  assert.equal((await r2.json()).zapisano, false, 'drugi raz już zapisany');
 });
 
 test('bez SWZ w PDF → 409 z instrukcją; za krótkie pytanie → 400; bez tokenu → 401', async () => {

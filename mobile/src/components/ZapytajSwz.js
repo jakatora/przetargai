@@ -73,6 +73,10 @@ export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null,
             <Text style={styles.pytanie}>{o.pytanie}</Text>
             <Text style={styles.trescOdp}>{o.odpowiedz}</Text>
             <Text style={[styles.status, styles[`ton_${opis.ton}`]]}>{t(opis.pl, opis.en)}</Text>
+            {/* Serwer sam zapisał przetarg po pierwszym pytaniu (2026-11-01) — mówimy, gdzie go szukać. */}
+            {o.zapisano ? (
+              <Text style={styles.opis}>{t('Dodaliśmy ten przetarg do Zapisanych i przypomnimy o terminie ofert.', 'We added this tender to Saved and will remind you about the deadline.')}</Text>
+            ) : null}
             {(o.cytaty ?? []).map((c, j) => (
               <Text key={j} style={[styles.cytat, !c.potwierdzony && styles.cytatNiepotwierdzony]}>
                 {c.potwierdzony ? '✓ ' : '? '}„{c.tekst}”{t(dopisekStrony(c), dopisekStrony(c, true))}

@@ -17,6 +17,7 @@ import { zapytajModulPrzetargowy, wywolajModulPrzetargowy } from '../services/mo
 import { dokumentyPrzetargu, wybierzSwz, pobierzPdfBase64 } from '../jobs/autoAnalizaSwz.js';
 import { pobierzDokumenty as pobierzDokumentyEz, idPostepowaniaEz } from '../services/eZamowieniaDokumenty.js';
 import { zbudujChecklisteOferty } from '../lib/checklistaOferty.js';
+import { zapiszPoAnalizieSwz } from '../services/zapisPoAnalizie.js';
 import { zbudujKalendarz } from '../lib/kalendarzPrzetargu.js';
 import { zbudujKarteStartu, kluczeBenchmarku, rozstrzygniecieTegoPostepowania } from '../services/kartaStartu.js';
 
@@ -191,7 +192,9 @@ router.post('/tender/:id/zapytaj-swz', ah(async (req, res) => {
     postepowanieId = await postepowanieZTrescia(req.user, tender);
     odp = await pytaj(postepowanieId);
   }
-  res.status(odp.status).json({ ...(odp.dane ?? {}), postepowanie_id: postepowanieId });
+  // Pyta o SWZ = szykuje ofertę: zapis z przypomnieniem o terminie (`services/zapisPoAnalizie.js`).
+  const zapis = odp.status === 200 ? await zapiszPoAnalizieSwz(req.user.id, tender) : { zapisany: false };
+  res.status(odp.status).json({ ...(odp.dane ?? {}), postepowanie_id: postepowanieId, zapisano: zapis.zapisany });
 }));
 
 /*
@@ -364,7 +367,8 @@ router.put('/tender/:id/swz', ah(async (req, res) => {
     postepowanieId,
     nazwa: typeof wynik.dane.postepowanie.nazwa === 'string' ? wynik.dane.postepowanie.nazwa : null,
   });
-  res.json({ powiazanie });
+  const zapis = await zapiszPoAnalizieSwz(req.user.id, tender);
+  res.json({ powiazanie, zapisano: zapis.zapisany });
 }));
 
 router.delete('/tender/:id/swz', ah(async (req, res) => {
