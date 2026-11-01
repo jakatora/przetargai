@@ -90,3 +90,26 @@ test('podsumowanie zmian ląduje na przetargu i w kopiach (feed, Zapisane) — k
   const kopia = (await getFirestore().collection('users').doc(user.id).collection('matches').doc(tender.id).get()).data();
   assert.equal(kopia.tender_ez_zmiany.wyjasnienia, 1);
 });
+
+test('informacja z otwarcia ofert: PDF czytany raz, liczby w alercie, na przetargu i w kopii', async () => {
+  const z = `${ZNAK}d`;
+  const post = `ocds-148610-${String(Date.now() + 11).slice(-8)}-1111-2222-3333-555566667777`;
+  const user = await users.create({ email: `md5-${z}@t.pl`, passwordHash: 'x' });
+  const { tender } = await tenders.upsert({ externalId: `2026/BZP 05${ZNAK}/01`, title: 'Remont internatu', organization: 'Zespół Szkół',
+    deadline: new Date(Date.now() + 2 * 86_400_000).toISOString(), source: 'bzp', postepowanie_id: post });
+  await matches.createWithEvaluation({ userId: user.id, tenderId: tender.id, score: 92, reasoning: 'remont', tender });
+  const czytane = [];
+  const czytajOtwarcie = async (d) => { czytane.push(d.id); return { kwota: 195457.23, kwoty_czesci: null, oferty: 6, cena_min: 158694.93, cena_max: 552963.59, czesci: false }; };
+  const opcje = { czytajOtwarcie, wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async () => {},
+    pobierz: async (id) => (id === post ? [{ id: `${post}_1`, nazwa: 'SWZ', rozszerzenie: 'pdf' }, { id: `${post}_9`, nazwa: 'Informacja z otwarcia ofert', rozszerzenie: 'pdf', url: 'https://ezamowienia.gov.pl/x', opublikowano: new Date(Date.now() + 60_000).toISOString() }] : []) };
+  await runMonitorDokumentow(opcje);
+  await runMonitorDokumentow(opcje);
+  assert.deepEqual(czytane, [`${post}_9`], 'ten sam PDF drugi raz nie jest pobierany');
+  const [alert] = await alerty.lista(user.id);
+  assert.match(alert.tresc.pl.replace(/\u00a0/g, ' '), /informację z otwarcia ofert \(1\)\. 6 ofert z ceną: od 158 695 zł do 552 964 zł; zamawiający przeznaczył 195 457 zł\./);
+  const t = await tenders.findById(tender.id);
+  assert.deepEqual([t.otwarcie_ofert.oferty, t.otwarcie_ofert.kwota, t.otwarcie_ofert.dokument.id], [6, 195457.23, `${post}_9`]);
+  const { getFirestore } = await import('firebase-admin/firestore');
+  const kopia = (await getFirestore().collection('users').doc(user.id).collection('matches').doc(tender.id).get()).data();
+  assert.deepEqual(kopia.tender_otwarcie_ofert, { kwota: 195457.23, oferty: 6, cena_min: 158694.93, cena_max: 552963.59, czesci: false });
+});

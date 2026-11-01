@@ -9,3 +9,16 @@ test('znacznik zmian w dokumentacji na karcie listy', () => {
   assert.equal(znacznikZmian({}), null);
   assert.equal(znacznikZmian(null), null);
 });
+
+test('otwarcie ofert: skrót na kartę i zdanie na ekran ogłoszenia', async () => {
+  const { znacznikOtwarcia, opisOtwarcia } = await import('../src/lib/zmianyDokumentow.js');
+  const t = (pl) => pl;
+  const tender = { otwarcie_ofert: { kwota: 195457.23, oferty: 6, cena_min: 158694.93, cena_max: 552963.59, czesci: false } };
+  assert.equal(znacznikOtwarcia(tender, t), 'Otwarcie: 6 ofert · od 159 tys. zł');
+  assert.equal(opisOtwarcia(tender, t), '6 ofert z ceną: od 159 tys. zł do 553 tys. zł; zamawiający przeznaczył 195 tys. zł.');
+  assert.equal(znacznikOtwarcia({ otwarcie_ofert: { kwota: 527143.56, oferty: null } }, t), 'Budżet zamawiającego: 527 tys. zł');
+  assert.equal(znacznikOtwarcia({ otwarcie_ofert: { kwota: null, oferty: 2, cena_min: 347721, cena_max: 451656 } }, t), 'Otwarcie: 2 oferty · od 348 tys. zł');
+  const en = (_, e) => e;
+  assert.equal(znacznikOtwarcia(tender, en), 'Opening: 6 bids · from PLN 159k');
+  assert.equal(znacznikOtwarcia({}, t), null);
+});

@@ -8,7 +8,7 @@ import { formatDate } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { opisWadium } from '../lib/wadium';
 import { znacznikKryteriow } from '../lib/kryteriaOceny';
-import { znacznikZmian } from '../lib/zmianyDokumentow';
+import { znacznikZmian, znacznikOtwarcia } from '../lib/zmianyDokumentow';
 import PodpisZrodla from './PodpisZrodla';
 import { ZnacznikiWyjasnienia } from './Wyjasnienie';
 
@@ -80,6 +80,7 @@ function MatchCard({ match, onOtworz, nowe = false }) {
   const kryteria = znacznikKryteriow(tender);
   // Wyjaśnienia / zmiany SWZ / nowy termin z monitoringu e-Zamówień (2026-11-01) — „jest co czytać”.
   const zmiany = znacznikZmian(tender);
+  const otwarcie = znacznikOtwarcia(tender, t);
 
   return (
     <Pressable
@@ -135,6 +136,7 @@ function MatchCard({ match, onOtworz, nowe = false }) {
         {zmiany ? (
           <Text style={[styles.kryteriaChip, styles.zmianyChip]} numberOfLines={1}>{t(zmiany.pl, zmiany.en)}</Text>
         ) : null}
+        {otwarcie ? <Text style={[styles.kryteriaChip, styles.kryteriaChipPozacenowe]} numberOfLines={1}>{otwarcie}</Text> : null}
       </View>
       {/*
         Dlaczego widzisz ten przetarg (P1-4) — najwyżej dwa znaczniki i tylko

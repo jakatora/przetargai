@@ -1,3 +1,5 @@
+import { opisOtwarcia } from './otwarcieOfert.js';
+
 /*
  * NOWE DOKUMENTY W ZAPISANYM PRZETARGU (2026-11-01). Zamawiający w trakcie postępowania publikuje
  * na e-Zamówieniach wyjaśnienia treści SWZ, zmiany SWZ, a po terminie — informację z otwarcia ofert.
@@ -59,9 +61,10 @@ const KOLEJNOSC = ['termin', 'zmiana', 'wyjasnienia', 'informacja', 'otwarcie', 
  * Alert do centrum alertów + push. Klucz = przetarg × najnowszy nowy dokument — ten sam stan
  * zapisany drugi raz zostaje jednym wpisem (ponowienie przebiegu nie wyśle drugiego pushu).
  * `zapisany: false` = przetarg z czołówki feedu (nie z Zapisanych) — inny nagłówek, a job nie wysyła pushu.
- * @param {{tender: {id: string, title?: string, organization?: string, deadline?: string}, nowe: object[], zapisany?: boolean}} wejscie
+ * `otwarcie` (`lib/otwarcieOfert.js`) — liczby z informacji z otwarcia ofert, dopisywane do treści.
+ * @param {{tender: {id: string, title?: string, organization?: string, deadline?: string}, nowe: object[], zapisany?: boolean, otwarcie?: object|null}} wejscie
  */
-export function alertNowychDokumentow({ tender, nowe, zapisany = true }) {
+export function alertNowychDokumentow({ tender, nowe, zapisany = true, otwarcie = null }) {
   if (!tender?.id || !nowe?.length) return null;
   const rodzaje = [...new Set(nowe.map(rodzajDokumentu))].sort((a, b) => KOLEJNOSC.indexOf(a) - KOLEJNOSC.indexOf(b));
   const pilne = rodzaje.includes('termin') || rodzaje.includes('zmiana') || rodzaje.includes('wyjasnienia');
@@ -70,9 +73,10 @@ export function alertNowychDokumentow({ tender, nowe, zapisany = true }) {
   const tytul = String(tender.title ?? 'przetarg').slice(0, 90);
   const czysc = (s) => String(s).replace(/[/\s]/g, '_');
   const ostatni = [...nowe].map((d) => d.id).sort().at(-1);
+  const liczby = rodzaje.includes('otwarcie') ? opisOtwarcia(otwarcie) : null;
   const dopisek = {
-    pl: pilne ? ' Sprawdź przed złożeniem oferty — oferta bez ich uwzględnienia może zostać odrzucona.' : rodzaje.includes('otwarcie') ? ' Zobacz, jakie ceny dali konkurenci.' : '',
-    en: pilne ? ' Check them before you bid — an offer that ignores them may be rejected.' : rodzaje.includes('otwarcie') ? ' See what prices competitors offered.' : '',
+    pl: liczby ? ` ${liczby.pl}` : pilne ? ' Sprawdź przed złożeniem oferty — oferta bez ich uwzględnienia może zostać odrzucona.' : rodzaje.includes('otwarcie') ? ' Zobacz, jakie ceny dali konkurenci.' : '',
+    en: liczby ? ` ${liczby.en}` : pilne ? ' Check them before you bid — an offer that ignores them may be rejected.' : rodzaje.includes('otwarcie') ? ' See what prices competitors offered.' : '',
   };
   return {
     klucz: `dok_${czysc(tender.id)}_${czysc(ostatni)}`,

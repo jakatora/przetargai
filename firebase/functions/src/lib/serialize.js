@@ -7,6 +7,10 @@ import { skrotKryteriow } from './ogloszenieMeta.js';
 const skrotZKopii = (row) => (Array.isArray(row?.tender_kryteria_skrot?.kryteria) ? row.tender_kryteria_skrot : null);
 /** Zmiany w dokumentacji (2026-11-01, monitoring e-Zamówień) — z kopii albo z przetargu. */
 const zmianyDokumentow = (z) => (z && typeof z === 'object' && Number.isFinite(z.wyjasnienia) ? z : null);
+/** Informacja z otwarcia ofert (2026-11-01): kwota zamawiającego, liczba ofert, rozpiętość cen. */
+const otwarcieOfert = (o) => (o && typeof o === 'object' && (Number.isFinite(o.kwota) || Number.isFinite(o.oferty))
+  ? { kwota: o.kwota ?? null, oferty: o.oferty ?? null, cena_min: o.cena_min ?? null, cena_max: o.cena_max ?? null, czesci: o.czesci === true, dokument_url: o.dokument?.url ?? null }
+  : null);
 
 /** Reprezentacje zasobów bezpieczne do zwrotu w API (bez danych wrażliwych). */
 
@@ -66,6 +70,7 @@ export function publicTender(row, znaczniki = {}) {
     // „Cena 60% · Gwarancja 40%” na karcie katalogu (2026-10-31).
     kryteria_skrot: skrotKryteriow(row),
     ez_zmiany: zmianyDokumentow(row.ez_zmiany),
+    otwarcie_ofert: otwarcieOfert(row.otwarcie_ofert),
     liczba_czesci: row.liczba_czesci ?? null,
     published_at: row.published_at ?? null,
     fetched_at: row.fetched_at ?? null,
@@ -174,6 +179,7 @@ export function publicMatch(row, znaczniki = {}) {
       kryterium_oceny: row.tender_kryterium_oceny ?? null,
       kryteria_skrot: skrotZKopii(row),
       ez_zmiany: zmianyDokumentow(row.tender_ez_zmiany),
+      otwarcie_ofert: otwarcieOfert(row.tender_otwarcie_ofert),
       liczba_czesci: row.tender_liczba_czesci ?? null,
     },
   };
@@ -217,6 +223,7 @@ export function publicSaved(row, znaczniki = {}) {
       kryterium_oceny: row.tender_kryterium_oceny ?? null,
       kryteria_skrot: skrotZKopii(row),
       ez_zmiany: zmianyDokumentow(row.tender_ez_zmiany),
+      otwarcie_ofert: otwarcieOfert(row.tender_otwarcie_ofert),
       liczba_czesci: row.tender_liczba_czesci ?? null,
     },
   };

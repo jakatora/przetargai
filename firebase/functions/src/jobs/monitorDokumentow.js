@@ -4,7 +4,16 @@ import { saved, tenders, alerty, users } from '../db/repos.js';
 import { sendPush } from '../services/push.js';
 import { sendEmail } from '../services/email.js';
 import { pobierzDokumenty, czyIdPostepowania } from '../services/eZamowieniaDokumenty.js';
-import { noweDokumenty, alertNowychDokumentow, podsumowanieZmian } from '../lib/noweDokumenty.js';
+import { noweDokumenty, alertNowychDokumentow, podsumowanieZmian, rodzajDokumentu } from '../lib/noweDokumenty.js';
+import { parsujOtwarcie, scalOtwarcie } from '../lib/otwarcieOfert.js';
+import { liniePdf } from '../services/tekstPdf.js';
+import { pobierzPdfBase64 } from './autoAnalizaSwz.js';
+
+/** Tekst PDF-a z e-Zamówień → liczby z informacji z otwarcia ofert (≤ 5 MB, tylko dozwolone hosty). */
+async function czytajOtwarcieDomyslnie(dok) {
+  const linie = await liniePdf(Buffer.from(await pobierzPdfBase64(dok.url), 'base64'));
+  return parsujOtwarcie((Array.isArray(linie) ? linie : linie?.linie ?? []).map((l) => (typeof l === 'string' ? l : l?.tekst ?? '')));
+}
 import { dostarcz } from './monitorWyszukiwan.js';
 
 /*
@@ -23,7 +32,7 @@ const DNI_PO_TERMINIE = 14;
 
 export async function runMonitorDokumentow({
   teraz = nowIso(), pobierz = pobierzDokumenty, wyslijPush = sendPush, wyslijEmail = sendEmail,
-  limit = 30, budzetMs = 150_000,
+  limit = 30, budzetMs = 150_000, czytajOtwarcie = czytajOtwarcieDomyslnie,
 } = {}) {
   const start = Date.now();
   const wynik = { ok: true, wpisow: 0, przetargow: 0, sprawdzone: 0, z_nowymi: 0, alerty: 0, push: 0, email: 0, bledy_platformy: 0, bledy: 0 };
@@ -31,7 +40,7 @@ export async function runMonitorDokumentow({
   // Zapisane (alert z pushem) + czołówka feedu (wynik ≥ 80, tylko centrum alertów): leniwy użytkownik nie
   // zapisuje, a wyjaśnienia SWZ dotyczą i jego. Zapis wygrywa z dopasowaniem tego samego przetargu.
   const zapisane = (await saved.otwarteWszystkich(od)).map((w) => ({ ...w, zapisany: true }));
-  const dopasowane = (await saved.najlepszeDopasowaniaWszystkich(teraz).catch(() => [])).map((w) => ({ ...w, zapisany: false }));
+  const dopasowane = (await saved.najlepszeDopasowaniaWszystkich(od).catch(() => [])).map((w) => ({ ...w, zapisany: false }));
   const poKluczu = new Map();
   for (const w of [...zapisane, ...dopasowane]) {
     const k = `${w.userId}|${w.tenderId}`;
@@ -70,10 +79,21 @@ export async function runMonitorDokumentow({
     try {
       wynik.sprawdzone += 1;
       const znane = Array.isArray(t.ez_monitor?.ids) ? t.ez_monitor.ids : null;
+      // Informacja z otwarcia ofert / o kwocie (PDF): każdy taki plik czytamy raz — liczby idą do alertu i na kartę.
+      let otwarcie = t.otwarcie_ofert ?? null;
+      const przeczytane = new Set(otwarcie?.przeczytane ?? []);
+      for (const d of dokumenty.filter((x) => rodzajDokumentu(x) === 'otwarcie' && x.rozszerzenie === 'pdf' && !przeczytane.has(x.id)).slice(0, 2)) {
+        const odczyt = await czytajOtwarcie(d).catch((err) => {
+          logger.warn({ err: err.message, tenderId: t.id, dokument: d.id }, 'Monitoring dokumentów: nie odczytano PDF-a z otwarcia ofert');
+          return null;
+        });
+        otwarcie = scalOtwarcie(otwarcie, odczyt, d);
+        if (odczyt) wynik.otwarcia = (wynik.otwarcia ?? 0) + 1;
+      }
       let byloNowe = false;
       for (const wpis of poPrzetargu.get(t.id) ?? []) {
         const nowe = noweDokumenty(dokumenty, { znane, zapisanoO: wpis.saved_at });
-        const alert = alertNowychDokumentow({ tender: t, nowe, zapisany: wpis.zapisany });
+        const alert = alertNowychDokumentow({ tender: t, nowe, zapisany: wpis.zapisany, otwarcie });
         if (!alert) continue;
         byloNowe = true;
         const { nowy } = await alerty.dodaj(wpis.userId, alert, teraz);
@@ -87,7 +107,7 @@ export async function runMonitorDokumentow({
       if (byloNowe) wynik.z_nowymi += 1;
       // Znana lista PO wysyłce — powtórkę po awarii odsiewa klucz alertu. Podsumowanie idzie na karty list.
       wynik.kopie = (wynik.kopie ?? 0) + await tenders.zapiszMonitorDokumentow(t.id, dokumenty, teraz,
-        { zmiany: podsumowanieZmian(dokumenty), poprzednie: t.ez_zmiany ?? null });
+        { zmiany: podsumowanieZmian(dokumenty), poprzednie: t.ez_zmiany ?? null, otwarcie, poprzednieOtwarcie: t.otwarcie_ofert ?? null });
     } catch (err) {
       wynik.bledy += 1;
       logger.error({ err: err.message, tenderId: t.id }, 'Monitoring dokumentów: przetarg pominięty');

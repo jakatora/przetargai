@@ -19,6 +19,7 @@ import { opisWadium } from '../lib/wadium';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
 import { normalizujOgloszenie, czyNiepelneOgloszenie, scalOgloszenie } from '../lib/skrotOgloszenia';
+import { opisOtwarcia, znacznikZmian } from '../lib/zmianyDokumentow';
 import { api } from '../api/client';
 
 /*
@@ -100,6 +101,9 @@ export default function KatalogDetailScreen({ route, navigation }) {
           etykieta={t('Wartość zamówienia', 'Contract value')}
           wartosc={formatBudget(tender.budget, tender.currency) || t('nie podano w ogłoszeniu', 'not stated in the notice')}
         />
+        {/* Z PDF-a z e-Zamówień (2026-11-01): kwota zamawiającego, a po terminie — oferty i ceny. */}
+        <Wiersz styles={styles} etykieta={t('Otwarcie ofert', 'Bid opening')} wartosc={opisOtwarcia(tender, t)} />
+        <Wiersz styles={styles} etykieta={t('Zmiany w dokumentacji', 'Document changes')} wartosc={(() => { const z = znacznikZmian(tender); return z ? t(z.pl, z.en) : null; })()} />
         <Wiersz styles={styles} etykieta={cpv.etykieta} wartosc={cpv.wartosc} />
         <Wiersz
           styles={styles}

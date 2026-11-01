@@ -1087,7 +1087,7 @@ export const tenders = {
     const wynik = [];
     for (let i = 0; i < unikalne.length; i += 300) {
       const snapy = await db().getAll(...unikalne.slice(i, i + 300).map((id) => db().collection('tenders').doc(id)),
-        { fieldMask: ['postepowanie_id', 'source', 'title', 'organization', 'deadline', 'ez_monitor', 'ez_zmiany'] });
+        { fieldMask: ['postepowanie_id', 'source', 'title', 'organization', 'deadline', 'ez_monitor', 'ez_zmiany', 'otwarcie_ofert'] });
       for (const snap of snapy) if (snap.exists) wynik.push({ id: snap.id, ...snap.data() });
     }
     return wynik;
@@ -1098,15 +1098,20 @@ export const tenders = {
    * `zmiany` (podsumowanie wyjaśnień/zmian/terminu, `lib/noweDokumenty.js`) — gdy inne niż było, idzie też
    * do kopii w feedach i Zapisanych (`tender_ez_zmiany`), bo lista renderuje się bez odczytu przetargu.
    */
-  async zapiszMonitorDokumentow(id, dokumenty, teraz = nowIso(), { zmiany = null, poprzednie = null } = {}) {
+  async zapiszMonitorDokumentow(id, dokumenty, teraz = nowIso(), { zmiany = null, poprzednie = null, otwarcie = null, poprzednieOtwarcie = null } = {}) {
     const lista = Array.isArray(dokumenty) ? dokumenty : [];
     await db().collection('tenders').doc(id).update({
       ez_monitor: { ids: lista.map((d) => d.id).slice(0, 300), sprawdzone_o: teraz },
       ez_dokumenty: lista,
       ez_dokumenty_o: teraz,
       ez_zmiany: zmiany,
+      otwarcie_ofert: otwarcie,
     });
-    if (JSON.stringify(zmiany) === JSON.stringify(poprzednie ?? null)) return 0;
+    // Informacja z otwarcia ofert (2026-11-01) — do kopii bez listy przeczytanych plików.
+    const naKarte = (o) => (o ? { kwota: o.kwota ?? null, oferty: o.oferty ?? null, cena_min: o.cena_min ?? null, cena_max: o.cena_max ?? null, czesci: o.czesci === true } : null);
+    const zmianaZmian = JSON.stringify(zmiany) !== JSON.stringify(poprzednie ?? null);
+    const zmianaOtwarcia = JSON.stringify(naKarte(otwarcie)) !== JSON.stringify(naKarte(poprzednieOtwarcie));
+    if (!zmianaZmian && !zmianaOtwarcia) return 0;
     const [zapisane, dopasowania] = await Promise.all([
       db().collectionGroup('saved').where('tender_id', '==', id).get(),
       db().collectionGroup('matches').where('tender_id', '==', id).get(),
@@ -1114,7 +1119,7 @@ export const tenders = {
     const refy = [...zapisane.docs, ...dopasowania.docs].map((d) => d.ref);
     for (let i = 0; i < refy.length; i += 400) {
       const batch = db().batch();
-      for (const ref of refy.slice(i, i + 400)) batch.update(ref, { tender_ez_zmiany: zmiany });
+      for (const ref of refy.slice(i, i + 400)) batch.update(ref, { tender_ez_zmiany: zmiany, tender_otwarcie_ofert: naKarte(otwarcie) });
       await batch.commit();
     }
     return refy.length;
@@ -1833,13 +1838,14 @@ export const saved = {
   /**
    * Najlepiej dopasowane OTWARTE przetargi z feedu każdego konta (wynik ≥ `minWynik`, do `naKonto`) —
    * leniwy użytkownik nie zapisuje, tylko przegląda listę, a wyjaśnienia SWZ dotyczą i jego (2026-11-01).
+   * `od` = najwcześniejszy termin — po terminie przychodzi informacja z otwarcia ofert.
    * @returns {Promise<{userId: string, tenderId: string, saved_at: string|null}[]>}
    */
-  async najlepszeDopasowaniaWszystkich(teraz, { minWynik = 80, naKonto = 10 } = {}) {
+  async najlepszeDopasowaniaWszystkich(od, { minWynik = 80, naKonto = 15 } = {}) {
     const konta = await db().collection('users').select().get();
     const wynik = [];
     for (const konto of konta.docs) {
-      const snap = await matchCol(konto.id).where('tender_deadline', '>=', teraz).select('tender_id', 'confidence_score', 'created_at').get();
+      const snap = await matchCol(konto.id).where('tender_deadline', '>=', od).select('tender_id', 'confidence_score', 'created_at').get();
       snap.docs
         .map((d) => ({ tenderId: d.get('tender_id') ?? d.id, wynik: Number(d.get('confidence_score')) || 0, od: d.get('created_at') ?? null }))
         .filter((m) => m.wynik >= minWynik)

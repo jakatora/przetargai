@@ -12,7 +12,7 @@ import { formatDate } from '../lib/format';
 import { opisBrakuPrzypomnienia, opisTerminu } from '../lib/termin';
 import { ScoreBadge } from '../components/MatchCard';
 import { znacznikKryteriow } from '../lib/kryteriaOceny';
-import { znacznikZmian } from '../lib/zmianyDokumentow';
+import { znacznikZmian, znacznikOtwarcia } from '../lib/zmianyDokumentow';
 import StatusPicker from '../components/StatusPicker';
 import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
 import { uruchomSciezkeOdwolania } from '../lib/orkiestratorOdwolania';
@@ -101,6 +101,7 @@ export default function SavedScreen({ navigation }) {
     const brakPrzypomnienia = opisBrakuPrzypomnienia(tender.deadline);
     const kryteria = znacznikKryteriow(tender);
     const zmiany = znacznikZmian(tender);
+    const otwarcie = znacznikOtwarcia(tender, t);
     return (
       // Karta to zwykły View: NAWIGUJE tylko górny wiersz. Gdyby cała karta była
       // Pressable, przełącznik przypomnienia (na web) otwierałby szczegóły.
@@ -125,6 +126,7 @@ export default function SavedScreen({ navigation }) {
               </Text>
             ) : null}
             {zmiany ? <Text style={[styles.kryteria, styles.zmiany]} numberOfLines={1}>{t(zmiany.pl, zmiany.en)}</Text> : null}
+            {otwarcie ? <Text style={[styles.kryteria, styles.kryteriaPozacenowe]} numberOfLines={1}>{otwarcie}</Text> : null}
           </View>
           <Pressable accessibilityRole="button" onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
             <Text style={[styles.gwiazdkaZnak, { color: kolory.blue }]}>★</Text>
