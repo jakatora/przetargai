@@ -11,6 +11,7 @@ import { runWynikiAggregation } from '../jobs/aggregateResults.js';
 import { pobierzOgloszeniaBzp, pobierzSuroweWynikiDnia } from '../services/bzp.js';
 import { pobierzOgloszeniaTedDnia } from '../services/ted.js';
 import { pobierzSzczegol as pobierzSzczegolPz } from '../services/platformaZakupowa.js';
+import { kryteriaZSwzPz } from '../services/kryteriaSwzPz.js';
 import { pobierzSzczegolBk, normalizujOgloszenieBk, TEMPO_BK } from '../services/bazaKonkurencyjnosci.js';
 import { stanTempa } from '../lib/tempoZapytan.js';
 import { parsujWynik } from '../lib/wynikiParser.js';
@@ -176,11 +177,13 @@ router.post('/kryteria-pz', ah(async (req, res) => {
     if (!t || t.source !== 'platformazakupowa') continue;
     wynik.sprawdzone += 1;
     try {
+      // `z_swz`: brak w tabeli i u bliźniaka → kryteria z treści SWZ (PDF z platformy, bez AI).
+      const opcje = req.body?.z_swz === true ? { zSwz: kryteriaZSwzPz } : {};
       const pola = bezPlatformy && t.pz_szczegol
-        ? await tenders.zapiszSzczegolPz(t.id, t.pz_szczegol, t.pz_szczegol_o)
-        : await tenders.zapiszSzczegolPz(t.id, await pobierzSzczegolPz(String(t.bzp_external_id ?? t.id).replace(/^pz:/, '')));
+        ? await tenders.zapiszSzczegolPz(t.id, t.pz_szczegol, t.pz_szczegol_o, opcje)
+        : await tenders.zapiszSzczegolPz(t.id, await pobierzSzczegolPz(String(t.bzp_external_id ?? t.id).replace(/^pz:/, '')), undefined, opcje);
       if (pola.kryteria) wynik.z_kryteriami += 1;
-      if (bezPlatformy) continue;
+      if (bezPlatformy && !opcje.zSwz) continue;
     } catch (err) {
       wynik.bledy += 1;
       if (wynik.przyklady_bledow.length < 3) wynik.przyklady_bledow.push(`${id}: ${String(err.message).slice(0, 160)}`);

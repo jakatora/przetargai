@@ -1053,11 +1053,14 @@ export const tenders = {
    * Szczegół z platformazakupowa.pl pobrany na żądanie (tryb, załączniki…) — cache przy ogłoszeniu.
    * Od 2026-11-01 także kryteria oceny z tabeli platformy → te same pola co z BZP; zwraca je,
    * żeby wołający (selekcja) dopisał je do przetargu w pamięci, zanim zapisze dopasowanie.
+   * `zSwz` (`services/kryteriaSwzPz.js`): ostatnia deska — kryteria z treści SWZ, gdy nie ma ich ani w tabeli,
+   * ani u bliźniaka. Wstrzykiwane przez wołającego, bo to pobranie PDF-a, a repozytorium nie chodzi do sieci.
    */
-  async zapiszSzczegolPz(id, szczegol, teraz = nowIso()) {
+  async zapiszSzczegolPz(id, szczegol, teraz = nowIso(), { zSwz = null } = {}) {
     let pola = polaKryteriow(szczegol?.kryteria);
     // Postępowanie z ustawy: w tabeli platformy same dokumenty — kryteria bierzemy od bliźniaka z BZP/TED.
     if (!pola.kryteria) pola = await this.kryteriaOdBlizniaka(id).catch(() => ({}));
+    if (!pola.kryteria && zSwz) pola = polaKryteriow(await zSwz(szczegol).catch(() => null));
     await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz, ...pola });
     return pola;
   },
