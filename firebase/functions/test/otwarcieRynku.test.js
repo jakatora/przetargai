@@ -35,6 +35,7 @@ test('przetarg TED 20 h po terminie: PDF z otwarcia czytany, liczby na przetargu
   const pytane = [];
   const czytane = [];
   const opcje = {
+    czekaj: async () => {},
     pobierz: async (id) => { pytane.push(id); return id === `ocds-148610-${UUID}` ? [{ id: `ocds-148610-${UUID}_7`, nazwa: 'Informacja z otwarcia ofert', rozszerzenie: 'pdf', url: 'https://ezamowienia.gov.pl/x' }] : []; },
     czytajOtwarcie: async (d) => { czytane.push(d.id); return ODCZYT; },
   };
@@ -57,11 +58,24 @@ test('bez pliku z otwarcia: próba zapisana (proby 1), kolejny przebieg w odstę
   const { tender } = await tenders.upsert({ externalId: `2026/BZP 33${ZNAK}/01`, title: 'Remont', organization: 'Gmina S',
     deadline: new Date(Date.now() - 10 * 3_600_000).toISOString(), source: 'bzp', postepowanie_id: post });
   const pytane = [];
-  const opcje = { pobierz: async (id) => { pytane.push(id); return []; }, czytajOtwarcie: async () => ODCZYT };
+  const opcje = { czekaj: async () => {}, pobierz: async (id) => { pytane.push(id); return []; }, czytajOtwarcie: async () => ODCZYT };
   await runOtwarcieRynku(opcje);
   await runOtwarcieRynku(opcje);
   assert.equal(pytane.filter((id) => id === post).length, 1);
   const t = await tenders.findById(tender.id);
   assert.equal(t.otwarcie_rynek.proby, 1);
   assert.equal(t.otwarcie_ofert ?? null, null);
+});
+
+test('403 z rzędu: po kilku błędach przebieg się kończy, bez prób zapisanych dla pominiętych', async () => {
+  const { MAKS_BLEDOW_POD_RZAD } = await import('../src/jobs/otwarcieRynku.js');
+  for (let i = 0; i < MAKS_BLEDOW_POD_RZAD + 3; i++) {
+    await tenders.upsert({ externalId: `2026/BZP 44${ZNAK}${i}/01`, title: `Droga ${i}`, organization: 'Gmina T',
+      deadline: new Date(Date.now() - (30 + i) * 3_600_000).toISOString(), source: 'bzp', postepowanie_id: `ocds-148610-${String(Date.now() + 100 + i).slice(-8)}-1111-2222-3333-${String(i).padStart(12, '0')}` });
+  }
+  let pytan = 0;
+  const w = await runOtwarcieRynku({ czekaj: async () => {}, pobierz: async () => { pytan += 1; throw new Error('e-Zamówienia odpowiedziały 403'); }, czytajOtwarcie: async () => ODCZYT });
+  assert.equal(w.przerwano, true);
+  assert.equal(pytan, MAKS_BLEDOW_POD_RZAD);
+  assert.equal(w.ok, true, 'dławienie platformy to nie błąd zapisu');
 });

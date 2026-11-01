@@ -22,6 +22,9 @@ export const OKNO_OD_H = 72;
 export const OKNO_DO_H = 6;
 export const MAKS_PROB = 3;
 export const ODSTEP_PROB_H = 16;
+// 1.11 na produkcji: 500 żądań bez przerwy → po ~80 e-Zamówienia odpowiadały 403 (212 z 288). Odstęp i bezpiecznik.
+export const ODSTEP_MS = 400;
+export const MAKS_BLEDOW_POD_RZAD = 5;
 
 async function czytajOtwarcieDomyslnie(dok) {
   const linie = await liniePdf(Buffer.from(await pobierzPdfBase64(dok.url), 'base64'));
@@ -39,7 +42,7 @@ export function doProby(t, teraz) {
 
 export async function runOtwarcieRynku({
   teraz = Date.now(), limit = 500, budzetMs = 420_000, przetargi = tenders,
-  pobierz = pobierzDokumenty, czytajOtwarcie = czytajOtwarcieDomyslnie,
+  pobierz = pobierzDokumenty, czytajOtwarcie = czytajOtwarcieDomyslnie, czekaj = (ms) => new Promise((ok) => { setTimeout(ok, ms); }),
 } = {}) {
   const start = Date.now();
   const wynik = { ok: true, kandydaci: 0, sprawdzone: 0, z_plikami: 0, odczytane: 0, z_ofertami: 0, kopie: 0, bledy_platformy: 0, bledy: 0 };
@@ -51,17 +54,23 @@ export async function runOtwarcieRynku({
     .sort((a, b) => (a.otwarcie_rynek?.proby ?? 0) - (b.otwarcie_rynek?.proby ?? 0) || String(a.deadline).localeCompare(String(b.deadline)));
   wynik.kandydaci = kandydaci.length;
 
-  for (const t of kandydaci.slice(0, limit)) {
+  let bledyPodRzad = 0;
+  for (const [i, t] of kandydaci.slice(0, limit).entries()) {
     if (Date.now() - start > budzetMs) break;
+    // Platforma dławi serię (403) — kilka błędów z rzędu kończy przebieg, reszta wróci w następnym.
+    if (bledyPodRzad >= MAKS_BLEDOW_POD_RZAD) { wynik.przerwano = true; break; }
+    if (i > 0) await czekaj(ODSTEP_MS);
     const proba = { proby: (t.otwarcie_rynek?.proby ?? 0) + 1, o: nowIso(), pliki: 0 };
     let dokumenty;
     try {
       dokumenty = await pobierz(idPostepowaniaEz(t));
     } catch (err) {
       wynik.bledy_platformy += 1;
+      bledyPodRzad += 1;
       logger.warn({ err: err.message, tenderId: t.id }, 'Otwarcie rynku: e-Zamówienia nie odpowiedziały');
       continue;
     }
+    bledyPodRzad = 0;
     try {
       wynik.sprawdzone += 1;
       proba.pliki = dokumenty.length;
