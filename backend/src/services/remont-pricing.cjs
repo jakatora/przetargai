@@ -20008,8 +20008,16 @@ var ELMAS_ORIGIN = "https://sklep-elmas.pl";
 var ELMAS_VARIANT = "5e70dce30acac12465cf0ee1;1";
 var ELMAS_HOME_CARRIER = 1785759636513;
 var ELMAS_TAPE = { id: "elmas-norgips-acoustic-50x30", ean: "5907651698004", name: "TA\u015AMA AKUSTYCZNA SAMOPRZYLEPNA Z KLEJEM 50x3x30", brand: "Norgips", category: "drywall-accessory", packageSize: 30, unit: "m", store: "Elmas", format: "elmas", retailerSku: "6a69c6cc869b9bc4c7953c25", variant: ["50", "3", "30"], pickupRequiresConfirmation: true, url: ELMAS_ORIGIN + "/p/tasma-akustyczna-samoprzylepna-z-klejem-50x3x30", imageUrl: ELMAS_ORIGIN + "/upload/6b89e6014d62a9e7cb888fdfa8ba.jpg" };
+var ELMAS_TAPE_75 = { id: "elmas-norgips-acoustic-75x30", ean: "5907651698011", name: "Ta\u015Bma akustyczna Norgips 3 mm x 0,075 m", brand: "Norgips", category: "drywall-accessory", packageSize: 30, unit: "m", store: "Elmas", format: "elmas", retailerSku: "6a69c65d869b9bc4c79538c6", variant: ["75", "3", "30"], pickupRequiresConfirmation: true, url: ELMAS_ORIGIN + "/p/tasma-akustyczna-norgips-3-mm-x-0075-m", imageUrl: ELMAS_ORIGIN + "/upload/2890a51b478292855b3e5e15866f.jpg" };
+var ELMAS_SOURCES = [ELMAS_TAPE, ELMAS_TAPE_75];
+var ELMAS_ITEMS = [
+  { source: ELMAS_TAPE, catalogueName: ELMAS_TAPE.name, weight: 0.3, description: "Samoprzylepna TA\u015AMA USZCZELNIAJ\u0104CA NORGIPS 50mm x 3mm x 30m", packageChecks: [/Samoprzylepna TAŚMA USZCZELNIAJĄCA NORGIPS 50mm x 3mm x 30m/], vars: { "6a69ca5e869b9bc4c7953c50": "0.05", "6a69ca5e869b9bc4c7953c2f": "inny", "6a69ca5e869b9bc4c7953c91": "1", "5e70dce30acac12465cf0ee1": "none" } },
+  { source: ELMAS_TAPE_75, catalogueName: "Ta\u015Bma akustyczna Norgips 75 mm x 3 mm x 30 m", weight: 0.4, description: "Ta\u015Bma akustyczna Norgips 75 mm x 3 mm x 30 m", packageChecks: [/Długość\s*-\s*30 metrów/, /Szerokość\s*-\s*75 mm/, /Grubość\s*-\s*3 mm/], vars: { "6a69ca5e869b9bc4c7953c50": "0.075", "6a69ca5e869b9bc4c7953c2f": "ta\u015Bma akustyczna", "6a69ca5e869b9bc4c7953c91": "75", "6a69ca5e869b9bc4c7953c4f": "3", "5e70dce30acac12465cf0ee1": "none" } }
+];
 function confirmElmasSource(source) {
-  if (!["id", "ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "retailerSku", "url"].every((k) => source[k] === ELMAS_TAPE[k]) || source.variant?.join("|") !== ELMAS_TAPE.variant.join("|") || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1 || source.skuIdentity !== void 0) throw Error("product_package_not_confirmed");
+  const item = ELMAS_ITEMS.find((item2) => item2.source.id === source.id), expected = item?.source;
+  if (!expected || !["id", "ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "retailerSku", "url", "imageUrl"].every((k) => source[k] === expected[k]) || source.variant?.join("|") !== expected.variant.join("|") || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1 || source.skuIdentity !== void 0) throw Error("product_package_not_confirmed");
+  return item;
 }
 
 // artifacts/api-server/src/lib/aks-cables.ts
@@ -20079,13 +20087,23 @@ var AnonymousShop = class {
   async text(path, form2) {
     return this.read(path, form2 ? new URLSearchParams(form2).toString() : void 0, false);
   }
-  /** Fixed public PL carrier calculation for one reviewed roll; no customer,
+  /** Fixed public PL carrier calculation for reviewed complete rolls; no customer,
    * login, consent, discount, payment execution or order/new operation.
    * source: https://sklep-elmas.pl/scripts/order-form.js */
   async elmasShipping(args) {
-    if (this.origin !== ELMAS_ORIGIN || !args || Object.keys(args).some((k) => !["count", "priceGrosze", "nettoGrosze", "stock", "selected", "previousTotalGrosze"].includes(k)) || ![args.count, args.priceGrosze, args.nettoGrosze, args.stock].every((n) => Number.isSafeInteger(n) && n > 0) || args.count > MAX_RETAIL_PACKAGES || args.count > args.stock || args.stock > 1e6 || args.priceGrosze > 1e8 || args.nettoGrosze > 1e8 || Math.round(args.nettoGrosze * 1.23) !== args.priceGrosze || args.selected !== void 0 && typeof args.selected !== "boolean" || args.previousTotalGrosze !== void 0 && (!Number.isSafeInteger(args.previousTotalGrosze) || args.previousTotalGrosze < 0 || args.previousTotalGrosze > 2e9)) throw Error("invalid_cart_action");
-    const gross2 = args.priceGrosze / 100, net = args.nettoGrosze / 100;
-    const basket = [{ variant: { "5e70dce30acac12465cf0ee1": "1" }, product: { _id: ELMAS_TAPE.retailerSku, mainImage: new URL(ELMAS_TAPE.imageUrl).pathname, name: ELMAS_TAPE.name, url: new URL(ELMAS_TAPE.url).pathname, mainCategory: "Ta\u015Bmy monta\u017Cowe", price: { brutto: gross2, discountBrutto: gross2, netto: net, discountNetto: net, old: gross2, discount: 0, vat: 23, currency: "PLN" }, weight: 0.3, variantHash: ELMAS_VARIANT, componentsHash: "", variantName: "", preorder: false, vars: { "6a69ca5e869b9bc4c7953c50": "0.05", "6a69ca5e869b9bc4c7953c2f": "inny", "6a69ca5e869b9bc4c7953c91": "1", "5e70dce30acac12465cf0ee1": "none" } }, quantity: args.count, max: args.stock }];
+    if (this.origin !== ELMAS_ORIGIN || !args || Object.keys(args).some((k) => !["lines", "selected", "previousTotalGrosze"].includes(k)) || !Array.isArray(args.lines) || args.lines.length < 1 || args.lines.length > ELMAS_ITEMS.length || args.selected !== void 0 && typeof args.selected !== "boolean" || args.previousTotalGrosze !== void 0 && (!Number.isSafeInteger(args.previousTotalGrosze) || args.previousTotalGrosze < 0 || args.previousTotalGrosze > 2e9)) throw Error("invalid_cart_action");
+    const seen = /* @__PURE__ */ new Set();
+    let materials = 0;
+    const basket = args.lines.map((line2) => {
+      if (!line2 || Object.keys(line2).some((k) => !["sourceId", "count", "priceGrosze", "nettoGrosze", "stock"].includes(k)) || ![line2.count, line2.priceGrosze, line2.nettoGrosze, line2.stock].every((n) => Number.isSafeInteger(n) && n > 0) || line2.count > MAX_RETAIL_PACKAGES || line2.count > line2.stock || line2.stock > 1e6 || line2.priceGrosze > 1e8 || line2.nettoGrosze > 1e8 || Math.round(line2.nettoGrosze * 1.23) !== line2.priceGrosze || seen.has(line2.sourceId)) throw Error("invalid_cart_action");
+      const item = ELMAS_ITEMS.find((item2) => item2.source.id === line2.sourceId);
+      if (!item) throw Error("invalid_cart_action");
+      seen.add(line2.sourceId);
+      materials += line2.count * line2.priceGrosze;
+      if (!Number.isSafeInteger(materials) || materials > 2e9) throw Error("invalid_cart_action");
+      const source = item.source, gross2 = line2.priceGrosze / 100, net = line2.nettoGrosze / 100;
+      return { variant: { "5e70dce30acac12465cf0ee1": "1" }, product: { _id: source.retailerSku, mainImage: new URL(source.imageUrl).pathname, name: source.name, url: new URL(source.url).pathname, mainCategory: "Ta\u015Bmy monta\u017Cowe", price: { brutto: gross2, discountBrutto: gross2, netto: net, discountNetto: net, old: gross2, discount: 0, vat: 23, currency: "PLN" }, weight: item.weight, variantHash: ELMAS_VARIANT, componentsHash: "", variantName: "", preorder: false, vars: { ...item.vars } }, quantity: line2.count, max: line2.stock };
+    });
     const body = { step: args.selected ? 2 : 1, code: "", giftCardCode: "", currency: "PLN", basket, lang: "pl", deliveryCountry: "pl", total: (args.previousTotalGrosze ?? 0) / 100, init: !args.selected, ...args.selected ? { selectedDeliveryId: ELMAS_HOME_CARRIER } : {} };
     return JSON.parse(await this.read("/api/public/order/form", JSON.stringify(body), true, false, true));
   }
@@ -20346,7 +20364,7 @@ var AnonymousShop = class {
     for (let i = 0; i < 4; i++) {
       if (url2.origin !== this.origin) throw Error("invalid_redirect");
       if (this.origin === ELMAS_ORIGIN) {
-        const card = method === "GET" && [ELMAS_TAPE.url, ELMAS_ORIGIN + "/api/public/p/" + ELMAS_TAPE.retailerSku + "?lang=pl&id=1"].includes(url2.href);
+        const card = method === "GET" && ELMAS_ITEMS.some(({ source }) => [source.url, ELMAS_ORIGIN + "/api/public/p/" + source.retailerSku + "?lang=pl&id=1"].includes(url2.href));
         const carrier = method === "POST" && url2.href === ELMAS_ORIGIN + "/api/public/order/form" && json3 && rawJson;
         if (!card && !carrier) throw Error("invalid_cart_route");
       }
@@ -22507,9 +22525,11 @@ var RETAIL_SOURCES = [
   ...ETAK_SOURCES,
   ...KNAUF_PLASTER_SOURCES,
   ...CERESIT_PRIMER_SOURCES,
-  ELMAS_TAPE
+  ...ELMAS_SOURCES
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://sklep-elmas.pl/p/tasma-akustyczna-norgips-3-mm-x-0075-m
+  "Ta\u015Bma uszczelniaj\u0105ca Norgips 75 mm \xD7 30 m": "5907651698011",
   // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-5kg-HYDROIZOLACJA-PLYNNA-FOLIA/1906
   "Mapei Mapegum WPS \u2014 folia w p\u0142ynie 5 kg (124805PL)": "8022452242489",
   // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-10kg-HYDROIZOLACJA-PLYNNA-FOLIA/9873
@@ -24089,28 +24109,29 @@ var money2 = (value2) => {
   return amount7;
 };
 function readElmasNativeCard(p, source) {
-  confirmElmasSource(source);
+  const item = confirmElmasSource(source);
   if (p?._id !== source.retailerSku || p.name !== source.name || p.url !== new URL(source.url).pathname || p.manufacturer?.name !== source.brand || p.preorder !== false || p.personalization?.length !== 0 || (p.components?.length ?? 0) !== 0 || p.type !== void 0 && p.type !== "normal") throw Error("product_identity_not_confirmed");
   if ([p.gtin13, p.gtin, p.ean].some((code) => code !== void 0 && code !== source.ean)) throw Error("product_ean_not_confirmed");
   if (!Array.isArray(p.variants)) throw Error("purchase_rules_changed");
   const v = one3(p.variants);
-  if (v.hash !== ELMAS_VARIANT || v.weight !== 0.3 || (p.price?.pricedUnit ?? 1) !== 1 || (p.price?.quantityFactor ?? 1) !== 1 || p.price?.unit !== void 0 && !["szt", "szt."].includes(p.price.unit)) throw Error("retailer_unit_not_confirmed");
+  if (v.hash !== ELMAS_VARIANT || v.weight !== item.weight || (p.price?.pricedUnit ?? 1) !== 1 || (p.price?.quantityFactor ?? 1) !== 1 || p.price?.unit !== void 0 && !["szt", "szt."].includes(p.price.unit)) throw Error("retailer_unit_not_confirmed");
   if (!Number.isSafeInteger(v.count) || !Number.isSafeInteger(v.locked) || v.locked < 0 || v.count - v.locked < 1) throw Error("retailer_out_of_stock");
   if (p.price?.currency !== "PLN" || p.price?.vat !== 23) throw Error("retailer_gross_price_mismatch");
   if (p.price.discount !== 0 || v.price?.discount !== 0 || p.price.brutto !== p.price.discountBrutto || p.price.netto !== p.price.discountNetto) throw Error("purchase_rules_changed");
   const priceGrosze = money2(p.price.discountBrutto), nettoGrosze = money2(p.price.discountNetto);
   if (money2(v.price?.discountBrutto) !== priceGrosze || money2(v.price?.discountNetto) !== nettoGrosze || money2(p.price.brutto) !== money2(v.price?.brutto) || money2(p.price.netto) !== money2(v.price?.netto) || Math.round(nettoGrosze * 1.23) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
   const imageUrl = new URL(p.mainImage?.url, ELMAS_ORIGIN).href;
-  if (new URL(imageUrl).origin !== ELMAS_ORIGIN || !new URL(imageUrl).pathname.startsWith("/upload/")) throw Error("product_image_not_confirmed");
+  if (imageUrl !== source.imageUrl) throw Error("product_image_not_confirmed");
   return { priceGrosze, nettoGrosze, maxPackages: v.count - v.locked, imageUrl };
 }
 function readElmasProduct(raw, source) {
-  confirmElmasSource(source);
+  const item = confirmElmasSource(source);
   const state = JSON.parse(one3([...raw.matchAll(/<script>__state__=\s*([\s\S]*?)<\/script>/g)]).at(1).trim().replace(/;$/, "")), p = state.product;
   const { priceGrosze, nettoGrosze, maxPackages, imageUrl } = readElmasNativeCard(p, source);
   const html = clean(raw), primary = one3(elements(html, (a) => cls(a, "product-conf") && a["data-p-id"] === source.retailerSku)), name = text2(one3(elements(primary, (_a, t) => t === "h1"))), code = text2(one3(elements(primary, (a) => cls(a, "code"))));
   if (name !== source.name || code !== "Kod produktu: " + source.ean || text2(one3(elements(primary, (a) => cls(a, "producer")))) !== "Producent: " + source.brand) throw Error("product_ean_not_confirmed");
-  if (!text2(html).includes("Samoprzylepna TA\u015AMA USZCZELNIAJ\u0104CA NORGIPS 50mm x 3mm x 30m")) throw Error("product_package_not_confirmed");
+  const description = one3(elements(html, (a) => cls(a, "product-description"))), descriptionText = text2(description.replace(/<\/?(?:b|strong|em|i|span)\b[^>]*>/gi, ""));
+  if (!item.packageChecks.every((check2) => check2.test(descriptionText))) throw Error("product_package_not_confirmed");
   const regular = text2(one3(elements(primary, (a) => cls(a, "regular"))));
   if (!/^\d+\.\d{2} PLN$/.test(regular) || parsePriceToGrosze(regular.replace(" PLN", "")) !== priceGrosze) throw Error("retailer_gross_price_mismatch");
   const products = [...raw.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/g)].flatMap((m) => {
@@ -24119,7 +24140,7 @@ function readElmasProduct(raw, source) {
   }).filter((x) => x["@type"] === "Product"), schema = one3(products);
   if (schema.name !== p.name || schema.mpn !== source.retailerSku || schema.brand?.name !== source.brand || schema.offers?.url !== source.url || schema.offers?.priceCurrency !== "PLN" || schema.offers?.availability !== "InStock" || money2(schema.offers.price) !== priceGrosze || [schema.gtin13, schema.gtin, schema.ean].some((code2) => code2 !== void 0 && code2 !== source.ean)) throw Error("product_identity_not_confirmed");
   if (schema.image !== imageUrl) throw Error("product_image_not_confirmed");
-  return { priceGrosze, nettoGrosze, maxPackages, imageUrl, product: { "@type": "Product", name, brand: source.brand, gtin13: source.ean, image: imageUrl, description: "Samoprzylepna TA\u015AMA USZCZELNIAJ\u0104CA NORGIPS 50mm x 3mm x 30m", offers: { "@type": "Offer", url: source.url, price: (priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock" } } };
+  return { priceGrosze, nettoGrosze, maxPackages, imageUrl, product: { "@type": "Product", name: item.catalogueName, brand: source.brand, gtin13: source.ean, image: imageUrl, description: item.description, offers: { "@type": "Offer", url: source.url, price: (priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock" } } };
 }
 
 // artifacts/api-server/src/lib/etak-product.ts
@@ -26460,19 +26481,41 @@ var home = (data) => {
   if (rows.length !== 1 || !data.paymentOptions.some((p) => p.key === "p24" && p.type === "p24" && p.disabled === false && p.error === "")) throw Error("no_home_delivery");
   return { row: rows[0], cost: amount5(rows[0].price?.brutto) };
 };
+function reviewedLines(order) {
+  if (order.store !== "Elmas" || order.lines.length < 1 || order.lines.length > ELMAS_ITEMS.length || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze < 1) throw Error("invalid_basket");
+  const seen = /* @__PURE__ */ new Set(), lines = order.lines.map((line2) => {
+    if (line2.unit !== "m" || line2.packages.length !== 1) throw Error("invalid_basket");
+    const pack = line2.packages[0], item = ELMAS_ITEMS.find((item2) => item2.source.id === pack.offerId), source = item?.source;
+    if (!source || seen.has(source.id) || line2.product.id !== "remont-" + source.ean || pack.store !== "Elmas" || pack.url !== source.url || pack.packageSize !== source.packageSize || (pack.minimumPackages ?? 1) !== 1 || (pack.purchaseMultiple ?? 1) !== 1 || pack.cutRoll !== void 0 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze < 1 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze) throw Error("invalid_basket");
+    seen.add(source.id);
+    return { source, pack };
+  });
+  if (lines.reduce((sum, line2) => sum + line2.pack.lineCostGrosze, 0) !== order.materialsGrosze) throw Error("invalid_basket");
+  return lines;
+}
+function elmasNationalBasketKey(order) {
+  try {
+    return JSON.stringify(["PL", order.materialsGrosze, reviewedLines(order).map(({ source, pack }) => [source.id, pack.count, pack.unitPriceGrosze]).sort((a, b) => String(a[0]).localeCompare(String(b[0])))]);
+  } catch {
+    return null;
+  }
+}
 async function quoteElmas(order, fetchImpl) {
-  if (order.store !== "Elmas" || order.lines.length !== 1 || order.lines[0].unit !== "m" || order.lines[0].product.id !== "remont-" + ELMAS_TAPE.ean || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
-  const pack = order.lines[0].packages[0];
-  if (pack.offerId !== ELMAS_TAPE.id || pack.store !== "Elmas" || pack.url !== ELMAS_TAPE.url || pack.packageSize !== 30 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze < 1 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze !== pack.count * pack.unitPriceGrosze) throw Error("invalid_basket");
-  const client = new AnonymousShop(ELMAS_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), 8), raw = await client.text(ELMAS_TAPE.url), card = readElmasProduct(raw, ELMAS_TAPE), api = await client.json("/api/public/p/" + ELMAS_TAPE.retailerSku + "?lang=pl&id=1"), current2 = readElmasNativeCard(api, ELMAS_TAPE);
-  if (card.priceGrosze !== pack.unitPriceGrosze || current2.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-  if (current2.maxPackages < pack.count) throw Error("insufficient_stock");
-  const args = { count: pack.count, priceGrosze: current2.priceGrosze, nettoGrosze: current2.nettoGrosze, stock: current2.maxPackages }, initial = await client.elmasShipping(args);
+  const lines = reviewedLines(order);
+  const client = new AnonymousShop(ELMAS_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), 2 * lines.length + 4), evidence = [], cart = [];
+  for (const { source, pack } of lines) {
+    const raw = await client.text(source.url), card = readElmasProduct(raw, source), api = await client.json("/api/public/p/" + source.retailerSku + "?lang=pl&id=1"), current2 = readElmasNativeCard(api, source);
+    if (card.priceGrosze !== pack.unitPriceGrosze || current2.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (current2.maxPackages < pack.count) throw Error("insufficient_stock");
+    cart.push({ sourceId: source.id, count: pack.count, priceGrosze: current2.priceGrosze, nettoGrosze: current2.nettoGrosze, stock: current2.maxPackages });
+    evidence.push({ raw, api });
+  }
+  const args = { lines: cart }, initial = await client.elmasShipping(args);
   if (!Array.isArray(initial.options?.countries) || !initial.options.countries.some((c) => c.value === "pl" && c.text === "Polska") || initial.discountCode !== void 0 || initial.giftCard !== void 0) throw Error("no_home_delivery");
   const first = home(initial), defaultCost = amount5(initial.selectedDelivery?.price), selected = await client.elmasShipping({ ...args, selected: true, previousTotalGrosze: order.materialsGrosze + defaultCost }), last = home(selected);
   if (last.cost !== first.cost || selected.selectedDelivery?.id !== ELMAS_HOME_CARRIER || selected.selectedDelivery?.name !== "InPost Kurier" || amount5(selected.selectedDelivery?.price) !== last.cost || selected.selectedDelivery?.mapType || selected.discountCode !== void 0 || selected.giftCard !== void 0) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: last.cost, carrier: "InPost Kurier", payment: "Przelewy24", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ELMAS_ORIGIN + "/order/form", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(raw + JSON.stringify({ country: "PL", store: order.store, materialsGrosze: order.materialsGrosze, packages: order.lines[0].packages, api, initial, selected })).digest("hex") } };
+  return { quote: { costGrosze: last.cost, carrier: "InPost Kurier", payment: "Przelewy24", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ELMAS_ORIGIN + "/order/form", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(JSON.stringify({ country: "PL", store: order.store, materialsGrosze: order.materialsGrosze, lines: order.lines, evidence, initial, selected })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/chemia-delivery.ts
@@ -27873,17 +27916,37 @@ function quoteBeforeDeadline(quoter, order, postalCode, deadline, now = Date.now
 function createRetailerQuoter(fetchImpl = fetch) {
   const pages = createCheckoutPageReader();
   const cache = /* @__PURE__ */ new Map();
+  const elmasNational = /* @__PURE__ */ new Map();
+  const nationalKey = (order) => order.store === "Elmas" ? elmasNationalBasketKey(order) : null;
+  const validNational = (result, now) => {
+    if (!result || !("quote" in result)) return false;
+    const q = result.quote, checked = Date.parse(q.checkedAt), expires = Date.parse(q.expiresAt);
+    return q.basis === "retailer_basket_national" && q.destinationScope === "PL" && q.postalCode === void 0 && q.sourceUrl === "https://sklep-elmas.pl/order/form" && Number.isSafeInteger(q.costGrosze) && q.costGrosze >= 0 && /^[a-f0-9]{64}$/.test(q.evidenceSha256 ?? "") && Number.isFinite(checked) && checked <= now && expires > now && expires <= checked + 6e5;
+  };
+  const cachedNational = (order, now = Date.now()) => {
+    const key = nationalKey(order);
+    if (!key) return null;
+    const row = elmasNational.get(key);
+    if (!row) return null;
+    if (row.until > now && validNational(row.confirmed, now)) return row.confirmed;
+    elmasNational.delete(key);
+    return null;
+  };
   const queue = new QuoteQueue();
   const keyFor = (order, postalCode) => JSON.stringify([postalCode, order.store, order.materialsGrosze, order.lines.flatMap((l) => l.packages.map((p) => [p.offerId, p.count, p.unitPriceGrosze, p.packageSize, p.cutRoll ?? null])).sort()]);
   const cached2 = (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return null;
+    if (order.store === "Elmas" && !nationalKey(order)) return null;
     const row = cache.get(keyFor(order, postalCode)), now = Date.now();
-    return row && row.until > now && row.confirmed && "quote" in row.confirmed && Date.parse(row.confirmed.quote.expiresAt) > now ? row.confirmed : null;
+    return row && row.until > now && row.confirmed && "quote" in row.confirmed && Date.parse(row.confirmed.quote.expiresAt) > now ? row.confirmed : cachedNational(order, now);
   };
   const quote2 = async (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
     const unsupported = unavailableReason(order.store);
     if (unsupported) return { reason: unsupported };
+    if (order.store === "Elmas" && !nationalKey(order)) return { reason: "quote_unavailable" };
+    const national = cachedNational(order);
+    if (national) return national;
     const key = keyFor(order, postalCode);
     const cached3 = cache.get(key);
     if (cached3 && cached3.until > Date.now()) return cached3.result;
@@ -27933,7 +27996,13 @@ function createRetailerQuoter(fetchImpl = fetch) {
     const result = await pending;
     if (cache.get(key)?.result === pending) {
       if ("quote" in result) {
-        cache.set(key, { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result), confirmed: result });
+        const row = { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result), confirmed: result };
+        cache.set(key, row);
+        const countryKey = nationalKey(order);
+        if (countryKey && validNational(result, Date.now())) {
+          if (elmasNational.size >= 64 && !elmasNational.has(countryKey)) elmasNational.delete(elmasNational.keys().next().value);
+          elmasNational.set(countryKey, row);
+        }
       } else if (result.reason === "quote_busy") cache.delete(key);
       else cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
     }

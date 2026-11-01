@@ -4668,5 +4668,19 @@
     "sourceUrl": "https://sklep-elmas.pl/p/tasma-akustyczna-samoprzylepna-z-klejem-50x3x30",
     "evidenceSha256": "d6ff6fae7aa126072aee3e09cadb89dd0831287e9fa338b2d9764b2b244b6e69",
     "validUntil": null
+  },
+  {
+    "sourceId": "elmas-norgips-acoustic-75x30",
+    "ean": "5907651698011",
+    "name": "Taśma akustyczna Norgips 75 mm x 3 mm x 30 m",
+    "stockPackages": 46,
+    "imageUrl": "https://sklep-elmas.pl/upload/2890a51b478292855b3e5e15866f.jpg",
+    "priceGrosze": 3200,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T20:39:51.697Z",
+    "sourceUrl": "https://sklep-elmas.pl/p/tasma-akustyczna-norgips-3-mm-x-0075-m",
+    "evidenceSha256": "f5d4a5214732fe9b54b3ced53b3a2a334a3f2b9d2d14572593e3abb8f71438bf",
+    "validUntil": null
   }
 ]
