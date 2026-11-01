@@ -14,6 +14,7 @@ import { kluczeZwyciezcow, normNip } from '../lib/profilKonkurenta.js';
 import { koniecUmowyWyniku } from '../lib/umowyWygasajace.js';
 import { skrotKryteriow, polaKryteriow } from '../lib/ogloszenieMeta.js';
 import { kryteriaBlizniaka } from '../lib/blizniakKryteriow.js';
+import { doUtcIso } from '../lib/daty.js';
 import { normNazwa } from '../lib/ktoWygrywa.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
@@ -1062,20 +1063,21 @@ export const tenders = {
   },
 
   /**
-   * Kryteria od bliźniaka (2026-11-01, `lib/blizniakKryteriow.js`): ogłoszenia z terminem składania
-   * ±30 h (TED podaje sam dzień, więc u nas to koniec dnia, a platforma — godzinę: różnica 11–15 h;
-   * zakres po jednym polu = indeks automatyczny), z nich BZP/TED z listą i tytułem podobnym ≥ 0,6.
+   * Kryteria od bliźniaka (2026-11-01, `lib/blizniakKryteriow.js`): ogłoszenia z TYM SAMYM terminem (BZP
+   * podaje godzinę jak platforma) albo z końcem tego samego dnia w Polsce (TED podaje sam dzień — u nas
+   * `doUtcIso` robi z niego 23:59:59 czasu polskiego). Dwie wartości w `in` = jedno zapytanie po jednym
+   * polu (indeks automatyczny); okno ±30 h miało 2300–3600 kandydatów, a limit je ucinał (1.11).
+   * Z kandydatów BZP/TED z listą i tytułem podobnym ≥ 0,6.
    */
   async kryteriaOdBlizniaka(id) {
     const snap = await db().collection('tenders').doc(id).get();
     const t = snap.exists ? snap.data() : null;
     const termin = Date.parse(t?.deadline ?? '');
     if (!Number.isFinite(termin) || !t.title) return {};
-    const okno = 30 * 3_600_000;
-    const kand = await db().collection('tenders')
-      .where('deadline', '>=', new Date(termin - okno).toISOString())
-      .where('deadline', '<=', new Date(termin + okno).toISOString())
-      .select('title', 'source', 'kryteria', 'kryteria_sposob', 'kryteria_rozne_czesci').limit(1500).get();
+    const dzienPL = new Date(termin).toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
+    const terminy = [...new Set([t.deadline, doUtcIso(dzienPL)].filter(Boolean))];
+    const kand = await db().collection('tenders').where('deadline', 'in', terminy)
+      .select('title', 'source', 'kryteria', 'kryteria_sposob', 'kryteria_rozne_czesci').limit(500).get();
     return kryteriaBlizniaka(t, kand.docs.filter((d) => d.id !== id).map((d) => ({ id: d.id, ...d.data() })));
   },
 

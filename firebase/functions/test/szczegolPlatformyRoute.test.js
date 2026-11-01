@@ -99,7 +99,7 @@ test('GET /tenders/:id: pełne ogłoszenie jak w katalogu (wartość, CPV, skró
 
 test('bliźniak z TED: termin bez godziny (koniec dnia) vs godzina na platformie — różnica 14 h wciąż łączy', async () => {
   const t = await token();
-  const { tender: ted } = await tenders.upsert({ externalId: `ted:${ZNAK}-2099`, title: `Usługi ochrony fizycznej osób i mienia ${ZNAK}`, organization: 'Urząd', deadline: '2099-05-10T21:59:59.000Z', source: 'ted',
+  const { tender: ted } = await tenders.upsert({ externalId: `ted:${ZNAK}-2099`, title: `Usługi ochrony fizycznej osób i mienia ${ZNAK}`, organization: 'Urząd', deadline: '2099-05-10T21:59:59.999Z', source: 'ted',
     kryteria: [{ nazwa: 'Cena', waga: 60, udzial: 60, rodzaj: 'cena' }, { nazwa: 'Czas reakcji', waga: 40, udzial: 40, rodzaj: 'reakcja' }], kryteria_sposob: 'procentowo', kryterium_oceny: 'cena_i_jakosc' });
   const { tender: pz } = await tenders.upsert({ externalId: `pz:${ZNAK}55`, title: `104.2026 Usługi ochrony fizycznej osób i mienia ${ZNAK}`, organization: 'Urząd', deadline: '2099-05-10T08:00:00.000Z', source: 'platformazakupowa' });
   _ustawPobieranieSzczegoluPz(async () => ({ ...SZCZEGOL, kryteria: null }));
