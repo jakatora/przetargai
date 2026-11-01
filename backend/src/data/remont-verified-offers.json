@@ -4446,5 +4446,57 @@
     "sourceUrl": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875",
     "evidenceSha256": "403387f9d2625025a800ebf92a1db79d24d5fa6d0cc83cfdfc0b9d7dfa95ac45",
     "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-mapegum-wps-5kg",
+    "ean": "8022452242489",
+    "name": "MAPEI Mapegum WPS 5kg HYDROIZOLACJA PŁYNNA FOLIA",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17476_500_500/Zrzut-ekranu-2022-02-12-091101.webp",
+    "priceGrosze": 11290,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T12:26:10.003Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-5kg-HYDROIZOLACJA-PLYNNA-FOLIA/1906",
+    "evidenceSha256": "a948b962628cfe4c4ee74389319a7a9079b8a3a65982b73f37d578d0b73af36f",
+    "validUntil": null
+  },
+  {
+    "sourceId": "rabdom-mapegum-wps-10kg",
+    "ean": "8022452242496",
+    "name": "MAPEI Mapegum WPS 10kg HYDROIZOLACJA PŁYNNA FOLIA",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17480_500_500/mapei-mapegum-wps-10kg-folia-w-plynie.webp",
+    "priceGrosze": 19990,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T12:26:10.074Z",
+    "sourceUrl": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-10kg-HYDROIZOLACJA-PLYNNA-FOLIA/9873",
+    "evidenceSha256": "2a6087d8d7e1962a9d5a1388530bca75e297bb327525f13dba9f281b4d008817",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-mapegum-wps-5kg",
+    "ean": "8022452242489",
+    "name": "Folia w płynie Mapegum WPS 5kg Mapei",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17476_500_500/Zrzut-ekranu-2022-02-12-091101.webp",
+    "priceGrosze": 11235,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T12:26:11.679Z",
+    "sourceUrl": "https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751",
+    "evidenceSha256": "dd02dcefc2fc4b737db65b6e0fcb439ef87dcd634e07252fc1f71c1c0c389e1b",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-mapegum-wps-10kg",
+    "ean": "8022452242496",
+    "name": "Folia w płynie Mapegum WPS 10kg Mapei",
+    "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17480_500_500/mapei-mapegum-wps-10kg-folia-w-plynie.webp",
+    "priceGrosze": 22585,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T12:26:13.200Z",
+    "sourceUrl": "https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-10kg-mapei-p7754",
+    "evidenceSha256": "cede2bffba4ede73b7be9743e55c610e5e1fa9d85cdf08f2fb7bdc33b557d629",
+    "validUntil": null
   }
 ]
