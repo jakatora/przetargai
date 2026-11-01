@@ -6,6 +6,7 @@ import { sendEmail } from '../services/email.js';
 import { pobierzDokumenty, czyIdPostepowania } from '../services/eZamowieniaDokumenty.js';
 import { noweDokumenty, alertNowychDokumentow, podsumowanieZmian, rodzajDokumentu } from '../lib/noweDokumenty.js';
 import { parsujOtwarcie, scalOtwarcie } from '../lib/otwarcieOfert.js';
+import { parsujWyborOferty, scalWybor } from '../lib/wyborOferty.js';
 import { liniePdf } from '../services/tekstPdf.js';
 import { pobierzPdfBase64 } from './autoAnalizaSwz.js';
 
@@ -13,6 +14,12 @@ import { pobierzPdfBase64 } from './autoAnalizaSwz.js';
 async function czytajOtwarcieDomyslnie(dok) {
   const linie = await liniePdf(Buffer.from(await pobierzPdfBase64(dok.url), 'base64'));
   return parsujOtwarcie((Array.isArray(linie) ? linie : linie?.linie ?? []).map((l) => (typeof l === 'string' ? l : l?.tekst ?? '')));
+}
+
+/** Tekst pisma o wyborze najkorzystniejszej oferty → kogo wybrano (`lib/wyborOferty.js`). */
+async function czytajWyborDomyslnie(dok) {
+  const linie = await liniePdf(Buffer.from(await pobierzPdfBase64(dok.url), 'base64'));
+  return parsujWyborOferty(Array.isArray(linie) ? linie : []);
 }
 import { dostarcz } from './monitorWyszukiwan.js';
 
@@ -29,10 +36,12 @@ import { dostarcz } from './monitorWyszukiwan.js';
  * przebiegu (wróci za 2 h); idempotencję daje klucz alertu.
  */
 const DNI_PO_TERMINIE = 14;
+// Zapisane dłużej: wybór oferty przychodzi zwykle 2–6 tygodni po terminie, a od niego biegnie termin odwołania.
+const DNI_PO_TERMINIE_ZAPISANYCH = 60;
 
 export async function runMonitorDokumentow({
   teraz = nowIso(), pobierz = pobierzDokumenty, wyslijPush = sendPush, wyslijEmail = sendEmail,
-  limit = 80, budzetMs = 150_000, czytajOtwarcie = czytajOtwarcieDomyslnie,
+  limit = 80, budzetMs = 150_000, czytajOtwarcie = czytajOtwarcieDomyslnie, czytajWybor = czytajWyborDomyslnie,
 } = {}) {
   const start = Date.now();
   const wynik = { ok: true, wpisow: 0, przetargow: 0, sprawdzone: 0, z_nowymi: 0, alerty: 0, push: 0, email: 0, bledy_platformy: 0, bledy: 0 };
@@ -40,7 +49,8 @@ export async function runMonitorDokumentow({
   // Zapisane (alert z pushem) + czołówka feedu (wynik ≥ 70, do 40 na konto, tylko centrum alertów; 1.11: ~950
   // przetargów BZP, 80 na przebieg co 2 h = pełny cykl w kilkanaście godzin): leniwy użytkownik nie
   // zapisuje, a wyjaśnienia SWZ dotyczą i jego. Zapis wygrywa z dopasowaniem tego samego przetargu.
-  const zapisane = (await saved.otwarteWszystkich(od)).map((w) => ({ ...w, zapisany: true }));
+  const odZapisanych = new Date(Date.parse(teraz) - DNI_PO_TERMINIE_ZAPISANYCH * 86_400_000).toISOString();
+  const zapisane = (await saved.otwarteWszystkich(odZapisanych)).map((w) => ({ ...w, zapisany: true }));
   const dopasowane = (await saved.najlepszeDopasowaniaWszystkich(od).catch(() => [])).map((w) => ({ ...w, zapisany: false }));
   const poKluczu = new Map();
   for (const w of [...zapisane, ...dopasowane]) {
@@ -91,10 +101,24 @@ export async function runMonitorDokumentow({
         otwarcie = scalOtwarcie(otwarcie, odczyt, d);
         if (odczyt) wynik.otwarcia = (wynik.otwarcia ?? 0) + 1;
       }
+      // Pismo o wyborze oferty (PDF, bez unieważnień): też raz — kto wygrał idzie do alertu.
+      let wybor = t.wybor_oferty ?? null;
+      const przeczytaneWybory = new Set(wybor?.przeczytane ?? []);
+      const pisma = dokumenty.filter((x) => rodzajDokumentu(x) === 'rozstrzygniecie' && x.rozszerzenie === 'pdf'
+        && !/uniewa[żz]ni|uniewazni/i.test(`${x.nazwa ?? ''} ${x.plik ?? ''}`) && !przeczytaneWybory.has(x.id));
+      for (const d of pisma.slice(0, 2)) {
+        const odczyt = await czytajWybor(d).catch((err) => {
+          logger.warn({ err: err.message, tenderId: t.id, dokument: d.id }, 'Monitoring dokumentów: nie odczytano pisma o wyborze oferty');
+          return null;
+        });
+        wybor = scalWybor(wybor, odczyt, d);
+        if (odczyt) wynik.wybory = (wynik.wybory ?? 0) + 1;
+      }
       let byloNowe = false;
       for (const wpis of poPrzetargu.get(t.id) ?? []) {
         const nowe = noweDokumenty(dokumenty, { znane, zapisanoO: wpis.saved_at });
-        const alert = alertNowychDokumentow({ tender: t, nowe, zapisany: wpis.zapisany, otwarcie, teraz: Date.parse(teraz) });
+        const nipKonta = wybor?.wykonawcy?.length ? (await uzytkownik(wpis.userId))?.company_nip ?? null : null;
+        const alert = alertNowychDokumentow({ tender: t, nowe, zapisany: wpis.zapisany, otwarcie, teraz: Date.parse(teraz), wybor, nipKonta });
         if (!alert) continue;
         byloNowe = true;
         const { nowy } = await alerty.dodaj(wpis.userId, alert, teraz);
@@ -108,7 +132,7 @@ export async function runMonitorDokumentow({
       if (byloNowe) wynik.z_nowymi += 1;
       // Znana lista PO wysyłce — powtórkę po awarii odsiewa klucz alertu. Podsumowanie idzie na karty list.
       wynik.kopie = (wynik.kopie ?? 0) + await tenders.zapiszMonitorDokumentow(t.id, dokumenty, teraz,
-        { zmiany: podsumowanieZmian(dokumenty), poprzednie: t.ez_zmiany ?? null, otwarcie, poprzednieOtwarcie: t.otwarcie_ofert ?? null });
+        { zmiany: podsumowanieZmian(dokumenty), poprzednie: t.ez_zmiany ?? null, otwarcie, poprzednieOtwarcie: t.otwarcie_ofert ?? null, wybor });
     } catch (err) {
       wynik.bledy += 1;
       logger.error({ err: err.message, tenderId: t.id }, 'Monitoring dokumentów: przetarg pominięty');

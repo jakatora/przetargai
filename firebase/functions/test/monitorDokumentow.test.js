@@ -126,3 +126,30 @@ test('przegląd tygodniowy bierze nowe dokumenty z centrum alertów: pilne pierw
   assert.deepEqual(lista.map((d) => d.tytul), ['Przebudowa drogi', 'Budowa dostrzegalni']);
   assert.equal(lista[1].opis, 'informację z otwarcia ofert (1) — 2 oferty z ceną: od 489 497 zł do 558 197 zł.');
 });
+
+test('pismo o wyborze oferty w zapisanym przetargu 30 dni po terminie: czytane raz, NIP konta → „wybrano Twoją ofertę”', async () => {
+  const z = `${ZNAK}w`;
+  const post = `ocds-148610-${String(Date.now() + 23).slice(-8)}-1111-2222-3333-888899990000`;
+  const user = await users.create({ email: `md7-${z}@t.pl`, passwordHash: 'x' });
+  await users.ustawNip(user.id, '6871977540');
+  const { tender } = await tenders.upsert({ externalId: `2026/BZP 07${ZNAK}/01`, title: 'Przebudowa drogi wojewódzkiej', organization: 'PZDW',
+    deadline: new Date(Date.now() - 30 * 86_400_000).toISOString(), source: 'bzp', postepowanie_id: post });
+  await saved.add(user.id, { tender_id: tender.id, tender_title: tender.title, tender_deadline: tender.deadline });
+  const czytane = [];
+  const czytajWybor = async (d) => { czytane.push(d.id); return { wykonawcy: [{ czesc: null, nazwa: 'RR-BUD Sp. z o.o.', nip: '6871977540' }], oferty: 3 }; };
+  const push = [];
+  const opcje = { czytajWybor, wyslijPush: async (_t, tresc) => { push.push(tresc.body); return { sent: 1 }; }, wyslijEmail: async (m) => { push.push(m.subject); },
+    pobierz: async (id) => (id === post ? [
+      { id: `${post}_1`, nazwa: 'SWZ', rozszerzenie: 'pdf', opublikowano: '2026-09-01T10:00:00Z' },
+      { id: `${post}_8`, nazwa: 'Informacja o wyborze oferty', rozszerzenie: 'pdf', url: 'https://ezamowienia.gov.pl/x', opublikowano: new Date(Date.now() + 60_000).toISOString() },
+    ] : []) };
+  await runMonitorDokumentow(opcje);
+  await runMonitorDokumentow(opcje);
+  assert.deepEqual(czytane, [`${post}_8`], 'to samo pismo drugi raz nie jest pobierane');
+  const [alert] = await alerty.lista(user.id);
+  assert.equal(alert.ton, 'sukces');
+  assert.match(alert.tresc.pl, /informację o wyborze oferty \(1\)\. Wybrano Twoją ofertę — gratulacje!/);
+  assert.equal(push.length, 1);
+  const t = await tenders.findById(tender.id);
+  assert.deepEqual([t.wybor_oferty.wykonawcy[0].nazwa, t.wybor_oferty.oferty, t.wybor_oferty.przeczytane], ['RR-BUD Sp. z o.o.', 3, [`${post}_8`]]);
+});

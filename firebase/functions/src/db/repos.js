@@ -1090,7 +1090,7 @@ export const tenders = {
     const wynik = [];
     for (let i = 0; i < unikalne.length; i += 300) {
       const snapy = await db().getAll(...unikalne.slice(i, i + 300).map((id) => db().collection('tenders').doc(id)),
-        { fieldMask: ['postepowanie_id', 'source', 'title', 'organization', 'deadline', 'ez_monitor', 'ez_zmiany', 'otwarcie_ofert'] });
+        { fieldMask: ['postepowanie_id', 'source', 'title', 'organization', 'deadline', 'ez_monitor', 'ez_zmiany', 'otwarcie_ofert', 'wybor_oferty'] });
       for (const snap of snapy) if (snap.exists) wynik.push({ id: snap.id, ...snap.data() });
     }
     return wynik;
@@ -1101,7 +1101,7 @@ export const tenders = {
    * `zmiany` (podsumowanie wyjaśnień/zmian/terminu, `lib/noweDokumenty.js`) — gdy inne niż było, idzie też
    * do kopii w feedach i Zapisanych (`tender_ez_zmiany`), bo lista renderuje się bez odczytu przetargu.
    */
-  async zapiszMonitorDokumentow(id, dokumenty, teraz = nowIso(), { zmiany = null, poprzednie = null, otwarcie = null, poprzednieOtwarcie = null } = {}) {
+  async zapiszMonitorDokumentow(id, dokumenty, teraz = nowIso(), { zmiany = null, poprzednie = null, otwarcie = null, poprzednieOtwarcie = null, wybor = null } = {}) {
     const lista = Array.isArray(dokumenty) ? dokumenty : [];
     await db().collection('tenders').doc(id).update({
       ez_monitor: { ids: lista.map((d) => d.id).slice(0, 300), sprawdzone_o: teraz },
@@ -1109,6 +1109,8 @@ export const tenders = {
       ez_dokumenty_o: teraz,
       ez_zmiany: zmiany,
       otwarcie_ofert: otwarcie,
+      // Kto wygrał wg pisma o wyborze oferty (2026-11-01, `lib/wyborOferty.js`).
+      ...(wybor ? { wybor_oferty: wybor } : {}),
     });
     // Informacja z otwarcia ofert (2026-11-01) — do kopii bez listy przeczytanych plików.
     // Nieczytelny PDF (skan) zostawia sam ślad przeczytania — na kartę idzie wtedy null, nie puste pola.

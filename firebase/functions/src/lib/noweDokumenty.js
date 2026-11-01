@@ -1,4 +1,5 @@
 import { opisOtwarcia } from './otwarcieOfert.js';
+import { wybranoNip } from './wyborOferty.js';
 
 /*
  * NOWE DOKUMENTY W ZAPISANYM PRZETARGU (2026-11-01). Zamawiający w trakcie postępowania publikuje
@@ -63,9 +64,10 @@ export const DNI_NA_ODWOLANIE = 5;
 /**
  * Dopisek do informacji o wyborze oferty / unieważnieniu (2026-11-01): termin odwołania liczony od PUBLIKACJI
  * pliku, bez przesuwania na dzień roboczy — nasza data nigdy nie wypada później niż prawdziwy termin.
- * Po terminie (alert spóźniony) — bez daty.
+ * Po terminie (alert spóźniony) — bez daty. `wybor` (`lib/wyborOferty.js`) — kogo wybrano, z PDF-a pisma;
+ * gdy wśród wybranych jest NIP konta, zamiast „sprawdź” — „wybrano Twoją ofertę” i bez terminu odwołania.
  */
-export function dopisekRozstrzygniecia(nowe, teraz = Date.now()) {
+export function dopisekRozstrzygniecia(nowe, teraz = Date.now(), { wybor = null, nipKonta = null } = {}) {
   const dokumenty = nowe.filter((d) => rodzajDokumentu(d) === 'rozstrzygniecie');
   if (!dokumenty.length) return null;
   const uniewaznienie = dokumenty.every((d) => /uniewa[żz]ni|uniewazni/i.test(`${d.nazwa ?? ''} ${d.plik ?? ''}`));
@@ -76,9 +78,26 @@ export function dopisekRozstrzygniecia(nowe, teraz = Date.now()) {
   const termin = data
     ? { pl: ` Jeśli złożyłeś ofertę i chcesz się odwołać do KIO, masz ${DNI_NA_ODWOLANIE} dni od przekazania informacji — licząc od publikacji, do ${data}.`, en: ` If you bid and want to appeal to the KIO, you have ${DNI_NA_ODWOLANIE} days from notification — counting from publication, until ${dataEn}.` }
     : { pl: '', en: '' };
-  return uniewaznienie
-    ? { pl: ` Postępowanie unieważnione — zamawiający może ogłosić je ponownie.${termin.pl}`, en: ` The procedure was cancelled — the buyer may re-tender it.${termin.en}` }
+  if (uniewaznienie) {
+    return { pl: ` Postępowanie unieważnione — zamawiający może ogłosić je ponownie.${termin.pl}`, en: ` The procedure was cancelled — the buyer may re-tender it.${termin.en}` };
+  }
+  if (wybranoNip(wybor, nipKonta)) return { pl: ' Wybrano Twoją ofertę — gratulacje!', en: ' Your bid was selected — congratulations!' };
+  const kogo = opisWybranych(wybor);
+  return kogo
+    ? { pl: ` ${kogo.pl}${termin.pl}`, en: ` ${kogo.en}${termin.en}` }
     : { pl: ` Sprawdź, czy wybrano Twoją ofertę.${termin.pl}`, en: ` Check whether your bid was selected.${termin.en}` };
+}
+
+/** „Wybrano ofertę: RR-BUD Sp. z o.o. (3 oferty).”, przy częściach „Część 1: X; część 2: Y”. */
+function opisWybranych(wybor) {
+  const w = (wybor?.wykonawcy ?? []).filter((x) => x?.nazwa).slice(0, 2);
+  if (!w.length) return null;
+  const n = wybor.oferty;
+  const ile = Number.isFinite(n) ? { pl: ` (${n === 1 ? '1 oferta' : `${n} ${n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? 'oferty' : 'ofert'}`})`, en: ` (${n} bid${n === 1 ? '' : 's'})` } : { pl: '', en: '' };
+  const czesci = w.some((x) => x.czesc);
+  const pl = czesci ? w.map((x) => `część ${x.czesc ?? '?'}: ${x.nazwa}`).join('; ') : w[0].nazwa;
+  const en = czesci ? w.map((x) => `lot ${x.czesc ?? '?'}: ${x.nazwa}`).join('; ') : w[0].nazwa;
+  return { pl: `Wybrano ofertę: ${pl}${ile.pl}.`, en: `Selected bid: ${en}${ile.en}.` };
 }
 
 /**
@@ -88,7 +107,7 @@ export function dopisekRozstrzygniecia(nowe, teraz = Date.now()) {
  * `otwarcie` (`lib/otwarcieOfert.js`) — liczby z informacji z otwarcia ofert, dopisywane do treści.
  * @param {{tender: {id: string, title?: string, organization?: string, deadline?: string}, nowe: object[], zapisany?: boolean, otwarcie?: object|null}} wejscie
  */
-export function alertNowychDokumentow({ tender, nowe, zapisany = true, otwarcie = null, teraz = Date.now() }) {
+export function alertNowychDokumentow({ tender, nowe, zapisany = true, otwarcie = null, teraz = Date.now(), wybor = null, nipKonta = null }) {
   if (!tender?.id || !nowe?.length) return null;
   const rodzaje = [...new Set(nowe.map(rodzajDokumentu))].sort((a, b) => KOLEJNOSC.indexOf(a) - KOLEJNOSC.indexOf(b));
   const pilne = rodzaje.includes('termin') || rodzaje.includes('zmiana') || rodzaje.includes('wyjasnienia');
@@ -98,16 +117,16 @@ export function alertNowychDokumentow({ tender, nowe, zapisany = true, otwarcie 
   const czysc = (s) => String(s).replace(/[/\s]/g, '_');
   const ostatni = [...nowe].map((d) => d.id).sort().at(-1);
   const liczby = rodzaje.includes('otwarcie') ? opisOtwarcia(otwarcie) : null;
-  const wybor = dopisekRozstrzygniecia(nowe, teraz);
+  const decyzja = dopisekRozstrzygniecia(nowe, teraz, { wybor, nipKonta });
   const dopisek = {
-    pl: wybor ? wybor.pl : liczby ? ` ${liczby.pl}` : pilne ? ' Sprawdź przed złożeniem oferty — oferta bez ich uwzględnienia może zostać odrzucona.' : rodzaje.includes('otwarcie') ? ' Zobacz, jakie ceny dali konkurenci.' : '',
-    en: wybor ? wybor.en : liczby ? ` ${liczby.en}` : pilne ? ' Check them before you bid — an offer that ignores them may be rejected.' : rodzaje.includes('otwarcie') ? ' See what prices competitors offered.' : '',
+    pl: decyzja ? decyzja.pl : liczby ? ` ${liczby.pl}` : pilne ? ' Sprawdź przed złożeniem oferty — oferta bez ich uwzględnienia może zostać odrzucona.' : rodzaje.includes('otwarcie') ? ' Zobacz, jakie ceny dali konkurenci.' : '',
+    en: decyzja ? decyzja.en : liczby ? ` ${liczby.en}` : pilne ? ' Check them before you bid — an offer that ignores them may be rejected.' : rodzaje.includes('otwarcie') ? ' See what prices competitors offered.' : '',
   };
   return {
     klucz: `dok_${czysc(tender.id)}_${czysc(ostatni)}`,
     typ: 'nowe_dokumenty',
     tender_id: tender.id,
-    ton: pilne || wybor ? 'ostrzezenie' : 'neutral',
+    ton: wybranoNip(wybor, nipKonta) && decyzja ? 'sukces' : pilne || decyzja ? 'ostrzezenie' : 'neutral',
     tytul: zapisany
       ? { pl: `Nowe dokumenty w zapisanym przetargu: ${tytul}`, en: `New documents in a saved tender: ${tytul}` }
       : { pl: `Nowe dokumenty w przetargu z Twojej listy: ${tytul}`, en: `New documents in a tender from your list: ${tytul}` },

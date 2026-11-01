@@ -76,7 +76,7 @@ const REGULY_RODZAJU = [
   ['gwarancja', /gwarancj|rękojm/i],
   ['platnosc', /płatnoś/i],
   ['cena', /^\W*(?:\d+[.)]\s*|[a-z][.)]\s*)?(?:cen[aąy]\b|koszt|prowizj|oprocentowan|wynagrodzen|stawk)|\bcen[aąy]\s+(?:jednostkow|brutto|netto|oferty|ofertow|za\b)|rabat|upust|opust|marż|najni[żz]sz\w*\s+cen/i],
-  ['spoleczne', /społeczn|bezrobotn|niepełnospraw|umow\w*\s+o\s+pracę|zatrudni|integracj|wykluczeni/i],
+  ['spoleczne', /społeczn|bezrobotn|niepełnospraw|pe?fron|umow\w*\s+o\s+pracę|zatrudni|integracj|wykluczeni/i],
   ['umowa', /kar\w*\s+umown|\bkar[ayę](?:\s|\(|$)|ubezpieczeni|klauzul|postanowieni|zabezpieczeni|zaliczk|polis/i],
   ['reakcja', /czas\w*\s+(?:reakcji|reagowania|naprawy|skutecznej naprawy|usunięci|podjęci|dojazdu|przyjazdu|podstawieni|zapewnieni|przywróceni|wymiany|rozpatrzeni|rozpoczęci)|serwis|awari|usterk|reklamac|wsparci\w*\s+techniczn|pogotowi|interwencj|zastępcz|pilnych/i],
   ['termin', /termin|czas\w*\s+(?:dostaw|realizacj|wykonani)|skróceni|okres\w*\s+realizacj|harmonogram/i],
