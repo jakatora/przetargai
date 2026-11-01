@@ -4,6 +4,23 @@ import { skrotDokumentow } from '../lib/digestTresc.js';
 import { kluczeUmowUzytkownika, wybierzUmowy } from '../lib/umowyWygasajace.js';
 import { kluczeKonkurentowUzytkownika, twoiKonkurenci, wygraneKonkurentow, normNip } from '../lib/profilKonkurenta.js';
 import { sendEmail, weeklyDigestEmail } from '../services/email.js';
+import { duzeKontrakty, kontraktyDlaKonta } from '../lib/podwykonawstwo.js';
+
+/**
+ * Duże kontrakty z tygodnia (podwykonawstwo, 2026-11-01) — rozstrzygnięcia czytane RAZ na przebieg, nie per konto.
+ * Tydzień rynku to kilka tysięcy ogłoszeń o wyniku; tylko pola potrzebne do kontraktu.
+ */
+export async function kontraktyTygodnia(odDnia, { repo = rozstrzygniecia, maksStron = 20 } = {}) {
+  const wyniki = [];
+  let kursor = null;
+  for (let i = 0; i < maksStron; i++) {
+    const strona = await repo.strona({ od: odDnia, kursor, pola: ['tytul', 'zamawiajacy', 'cpv', 'wojewodztwo', 'czesci'] });
+    wyniki.push(...strona.pozycje);
+    if (strona.koniec || !strona.kursor) break;
+    kursor = strona.kursor;
+  }
+  return duzeKontrakty(wyniki);
+}
 
 /**
  * Tydzień ISO 8601 jako klucz znacznika, np. `2026-W39`.
@@ -107,6 +124,10 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
   const tydzien = kluczTygodniaIso(now);
 
   const wszyscy = await users.all();
+  const kontrakty = await kontraktyTygodnia(sinceIso.slice(0, 10)).catch((err) => {
+    logger.warn({ err: err.message }, 'Przegląd: sekcja podwykonawstwa pominięta');
+    return [];
+  });
   let kandydaci = 0;
   let wyslane = 0;
   let juzWyslane = 0;
@@ -143,7 +164,9 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja wyników pominięta');
           return [];
         });
-        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy, dokumenty, wyniki });
+        const { dzialy, regiony } = kluczeKonkurentowUzytkownika(user);
+        const podwykonawstwo = kontraktyDlaKonta(kontrakty, { dzialy, regiony, wlasnyNip: user.company_nip ?? null });
+        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy, dokumenty, wyniki, podwykonawstwo });
         wynik = await sendEmail({ to: user.email, ...tresc });
       } catch (err) {
         wynik = { sent: false, error: err.message };

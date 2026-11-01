@@ -48,7 +48,11 @@ export function skrotDokumentow(alert) {
   return liczby ? `${co} — ${liczby}` : co;
 }
 
-export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [], dokumenty = [], wyniki = [] }) {
+/** „RR-BUD Sp. z o.o. (Zarszyn) — Przebudowa DW 886 · PZDW · 4,20 mln zł” — kontrakt pod podwykonawstwo. */
+const opisKontraktu = (k) => [k.tytul, k.zamawiajacy, kwotaKrotko(k.kwota)].filter(Boolean).join(' · ');
+const ktoKontrakt = (k) => `${k.wykonawca.nazwa}${k.wykonawca.miasto ? ` (${k.wykonawca.miasto})` : ''}`;
+
+export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [], dokumenty = [], wyniki = [], podwykonawstwo = [] }) {
   const n = Math.max(0, Math.floor(liczba));
   const rzeczownik = odmienPrzetargi(n);
   const subject = `Twój tygodniowy przegląd: ${n} ${rzeczownik}`;
@@ -92,7 +96,15 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
   const wynikiHtml = rozstrzygniete.length
     ? `<p><b>Rozstrzygnięcia</b> w Twoich zapisanych przetargach:</p><ul>${rozstrzygniete.map((w) => `<li><b>${esc(w.tytul)}</b> — ${esc(w.opis)}</li>`).join('')}</ul>`
     : '';
-  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${wynikiText}${dokumentyText}${konkurenciText}${umowyText}\n\n`
+  // Podwykonawstwo (2026-11-01): największe kontrakty z tygodnia w branżach i regionach karty — kto wygrał.
+  const kontrakty = Array.isArray(podwykonawstwo) ? podwykonawstwo.filter((k) => k?.wykonawca?.nazwa).slice(0, 3) : [];
+  const podwykText = kontrakty.length
+    ? `\n\nDuże kontrakty w Twojej branży i regionie — wykonawca może szukać podwykonawców:\n${kontrakty.map((k) => `• ${ktoKontrakt(k)} — ${opisKontraktu(k)}`).join('\n')}`
+    : '';
+  const podwykHtml = kontrakty.length
+    ? `<p><b>Duże kontrakty</b> w Twojej branży i regionie — wykonawca może szukać podwykonawców:</p><ul>${kontrakty.map((k) => `<li><b>${esc(ktoKontrakt(k))}</b> — ${esc(opisKontraktu(k))}</li>`).join('')}</ul>`
+    : '';
+  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${wynikiText}${dokumentyText}${konkurenciText}${umowyText}${podwykText}\n\n`
     + `Otwórz aplikację PrzetargAI, aby zobaczyć szczegóły i zdecydować, w które startujesz.\n\n`
     + `Zespół PrzetargAI\n\n`
     + `Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.`;
@@ -108,6 +120,7 @@ ${wynikiHtml}
 ${dokumentyHtml}
 ${konkurenciHtml}
 ${umowyHtml}
+${podwykHtml}
 <p>Otwórz aplikację <b>PrzetargAI</b>, aby zobaczyć szczegóły i zdecydować, w które startujesz.</p>
 <p>Zespół PrzetargAI</p>
 <p style="font-size:12px;color:#667085">Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.</p>`;
