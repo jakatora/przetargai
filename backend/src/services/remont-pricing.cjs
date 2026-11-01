@@ -19755,6 +19755,7 @@ var optionsSchema = external_exports2.object({
     method: external_exports2.enum(["automatic", "manual"]).optional(),
     postalCode: external_exports2.string().regex(/^\d{2}-\d{3}$/).optional(),
     allowSeparateOrders: external_exports2.boolean().optional(),
+    allowExtraPackages: external_exports2.boolean().optional(),
     costsGrosze: external_exports2.record(external_exports2.string().min(1).max(80), external_exports2.number().int().min(0).max(1e7)).refine((value2) => Object.keys(value2).length <= 20).optional()
   }).optional()
 }).optional();
@@ -22874,13 +22875,13 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   const currentPolicies = names.map((store) => {
     const policy = policies.find((policy2) => policy2.store === store);
     const time4 = policy?.checkedAt ? Date.parse(policy.checkedAt) : NaN;
-    const current = Number.isFinite(time4) && now.getTime() - time4 <= 7 * 864e5 && time4 <= now.getTime();
+    const current2 = Number.isFinite(time4) && now.getTime() - time4 <= 7 * 864e5 && time4 <= now.getTime();
     return {
       store,
       sourceUrl: policy?.sourceUrl ?? null,
       checkedAt: policy?.checkedAt ?? null,
-      minimumGrosze: current ? policy?.minimumGrosze ?? null : null,
-      ...current && policy?.freeFromGrosze ? { freeFromGrosze: policy.freeFromGrosze } : {}
+      minimumGrosze: current2 ? policy?.minimumGrosze ?? null : null,
+      ...current2 && policy?.freeFromGrosze ? { freeFromGrosze: policy.freeFromGrosze } : {}
     };
   });
   const knownFee = (store) => {
@@ -23410,6 +23411,119 @@ function materialPurchasePlans(groups, now) {
   return [...plans.values()];
 }
 
+// lib/pricing-service/src/extra-package-difference.ts
+function extraPackageAdditions(base, proposed) {
+  if (!base?.stores?.length || base.stores.length !== proposed?.stores?.length) return null;
+  const additions = [];
+  for (const previous of base.stores) {
+    const orders = proposed.stores.filter((order) => order.store === previous.store);
+    if (orders.length !== 1) return null;
+    const next = orders[0];
+    const index2 = (order) => {
+      const entries = /* @__PURE__ */ new Map();
+      for (const line2 of order.lines) for (const pack of line2.packages) {
+        if (!Number.isSafeInteger(pack.count) || pack.count < 1 || !Number.isFinite(pack.packageSize) || pack.packageSize <= 0 || pack.store !== order.store) return null;
+        const key = JSON.stringify([line2.product.id, line2.unit, pack.offerId, pack.packageSize, pack.url, pack.cutRoll ?? null]);
+        const entry = entries.get(key);
+        if (entry) {
+          entry.count += pack.count;
+          entry.cost += pack.lineCostGrosze;
+        } else entries.set(key, { pack, product: line2.product, unit: line2.unit, count: pack.count, cost: pack.lineCostGrosze });
+      }
+      return entries;
+    };
+    const before = index2(previous), after = index2(next);
+    if (!before?.size || !after || before.size !== after.size) return null;
+    let changed = false;
+    for (const [key, entry] of before) {
+      const candidate = after.get(key);
+      if (!candidate || candidate.count < entry.count) return null;
+      if (candidate.count === entry.count) continue;
+      const multiple = entry.pack.purchaseMultiple ?? 1, minimum = entry.pack.minimumPackages ?? 1;
+      if (entry.pack.cutRoll || !Number.isSafeInteger(candidate.count) || !Number.isSafeInteger(multiple) || multiple < 1 || candidate.count % multiple || candidate.count < minimum || candidate.count > Math.min(entry.pack.maxPackages ?? Infinity, candidate.pack.maxPackages ?? Infinity)) return null;
+      additions.push({
+        store: previous.store,
+        product: entry.product,
+        unit: entry.unit,
+        packageSize: entry.pack.packageSize,
+        baselinePackages: entry.count,
+        proposedPackages: candidate.count,
+        extraPackages: candidate.count - entry.count
+      });
+      changed = true;
+    }
+    if (!changed && (previous.materialsGrosze !== next.materialsGrosze || previous.deliveryGrosze !== next.deliveryGrosze || previous.totalGrosze !== next.totalGrosze || [...before].some(([key, entry]) => after.get(key).cost !== entry.cost))) return null;
+  }
+  return additions.length === 1 ? additions : null;
+}
+
+// lib/pricing-service/src/extra-package-options.ts
+var MAX_EXTRA_QUOTES = 8;
+var MAX_EXTRA_LOTS = 4;
+var current = (quote2, postcode) => {
+  const checked = Date.parse(quote2.checkedAt), expires = Date.parse(quote2.expiresAt);
+  return Number.isFinite(checked) && checked <= Date.now() + 5e3 && expires > Date.now() && expires > checked && expires - checked <= 6e5 && Number.isSafeInteger(quote2.costGrosze) && quote2.costGrosze >= 0 && /^https:\/\//.test(quote2.sourceUrl) && /^[a-f0-9]{64}$/.test(quote2.evidenceSha256) && (quote2.destinationScope === "PL" && ["retailer_basket_national", "retailer_tariff_national"].includes(quote2.basis) || quote2.destinationScope === "postal_code" && quote2.postalCode === postcode && quote2.basis === "retailer_basket_postcode");
+};
+async function findExtraPackageOption(base, stages, postcode, quoteBasket) {
+  let option = null, confirmed = 0;
+  const live = (basket) => basket.stores.every((order) => order.quote && current(order.quote, postcode));
+  if (base.totalGrosze === null || base.deliveryGrosze === null || !live(base)) return { option, confirmed, searched: false, baselineExpired: !live(base) };
+  const groups = groupProjectByProduct(stages), offers = new Map(groups.flatMap((group) => group.offers.filter((offer) => isComparableOffer(offer)).map((offer) => [offer.id, offer])));
+  const trials = [];
+  for (const previous of base.stores) {
+    if (!previous.deliveryGrosze) continue;
+    const lines = previous.lines.map((line2) => ({ ...line2, packages: line2.packages.map((pack) => {
+      const offer = offers.get(pack.offerId), price2 = offer && parsePriceToGrosze(offer.promoPrice ?? offer.price);
+      return { ...pack, unitPriceGrosze: price2 ?? pack.unitPriceGrosze, lineCostGrosze: (price2 ?? pack.unitPriceGrosze) * pack.count };
+    }) }));
+    for (const [lineIndex, line2] of lines.entries()) for (const [packIndex, pack] of line2.packages.entries()) {
+      const offer = offers.get(pack.offerId);
+      if (!offer || pack.cutRoll) continue;
+      if (lines.flatMap((line3) => line3.packages).filter((row) => row.offerId === pack.offerId).length !== 1) continue;
+      const multiple = pack.purchaseMultiple ?? 1, max = Math.min(pack.maxPackages ?? Infinity, offer.maxPackages ?? Infinity, DELIVERY_LIMITS.packagesPerProduct);
+      for (let lots = 1; lots <= MAX_EXTRA_LOTS; lots++) {
+        const extra = lots * multiple, count = pack.count + extra, increment = extra * pack.unitPriceGrosze;
+        if (!Number.isSafeInteger(count) || count > max || !Number.isSafeInteger(increment) || increment >= previous.deliveryGrosze) break;
+        const changed = lines.map((row, i) => ({ ...row, packages: row.packages.map((item, j) => i === lineIndex && j === packIndex ? { ...item, count, lineCostGrosze: count * item.unitPriceGrosze } : item) }));
+        const materials = changed.reduce((n, row) => n + row.packages.reduce((sum, item) => sum + item.lineCostGrosze, 0), 0);
+        if (!Number.isSafeInteger(materials)) continue;
+        trials.push({ increment, order: { ...previous, lines: changed, materialsGrosze: materials, quote: void 0, source: "unknown", deliveryGrosze: null, totalGrosze: null, deliveryMinimumGrosze: 0 } });
+      }
+    }
+  }
+  const potential = (trial) => base.stores.find((order) => order.store === trial.order.store).deliveryGrosze - trial.increment;
+  trials.sort((a, b) => potential(b) - potential(a) || a.increment - b.increment || a.order.store.localeCompare(b.order.store));
+  const first = /* @__PURE__ */ new Map();
+  for (const trial of trials) if (!first.has(trial.order.store)) first.set(trial.order.store, trial);
+  const selected = [...first.values(), ...trials.filter((trial) => first.get(trial.order.store) !== trial)].slice(0, MAX_EXTRA_QUOTES);
+  for (const trial of selected) {
+    if (!live(base)) break;
+    if (option && !live(option.basket)) option = null;
+    if (option && !supportsCartPricing(trial.order.store)) {
+      const previous = base.stores.find((order) => order.store === trial.order.store);
+      const rounding = trial.order.lines.reduce((sum, line2) => sum + line2.packages.reduce((n, pack) => n + pack.count, 0), 0);
+      if (base.totalGrosze - previous.totalGrosze + trial.order.materialsGrosze - rounding >= option.basket.totalGrosze) continue;
+    }
+    try {
+      const result = await quoteBasket(trial.order, postcode);
+      if (!("quote" in result) || !current(result.quote, postcode)) continue;
+      const materials = quotedMaterialsGrosze(trial.order, result.quote);
+      if (materials === null || !Number.isSafeInteger(materials + result.quote.costGrosze)) continue;
+      const updated = applyCartPrices({ ...trial.order, source: "retailer", quote: result.quote, materialsGrosze: materials, deliveryGrosze: result.quote.costGrosze, deliveryMinimumGrosze: result.quote.costGrosze, totalGrosze: materials + result.quote.costGrosze });
+      const stores = base.stores.map((order) => order.store === updated.store ? updated : order), materialTotal = stores.reduce((n, order) => n + order.materialsGrosze, 0), delivery = stores.reduce((n, order) => n + order.deliveryGrosze, 0), total = materialTotal + delivery;
+      if (![materialTotal, delivery, total].every(Number.isSafeInteger) || !stores.every((order) => order.quote && current(order.quote, postcode))) continue;
+      const basket = { stores, materialsGrosze: materialTotal, deliveryGrosze: delivery, totalGrosze: total, lowerBoundGrosze: total };
+      if (!extraPackageAdditions(base, basket)) continue;
+      confirmed++;
+      if (total < base.totalGrosze && (option === null || total < option.basket.totalGrosze)) option = { basket, savingGrosze: base.totalGrosze - total };
+    } catch {
+    }
+  }
+  const baselineExpired = !live(base);
+  if (baselineExpired || option && !live(option.basket)) option = null;
+  return { option, confirmed, searched: selected.length > 0, baselineExpired };
+}
+
 // lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
@@ -23419,12 +23533,13 @@ var removable = (pack) => pack.count - (pack.purchaseMultiple ?? 1) >= (pack.min
 async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   const limits = /* @__PURE__ */ new Map(), cache = /* @__PURE__ */ new Map();
-  let allowNewQuotes = true, partitionSearchLimited = false;
+  let allowNewQuotes = true, partitionSearchLimited = false, quoteBudget = MAX_STORE_BASKETS, reserveHit = false;
   const quoteWithStock = async (order, postalCode, context) => {
     const ignoredStock = new Set(context?.ignoreStockOfferIds ?? []);
     const key = JSON.stringify([order.store, signature(order), [...ignoredStock].sort()]);
     if (cache.has(key)) return cache.get(key);
-    if (!allowNewQuotes || cache.size >= MAX_STORE_BASKETS) {
+    if (!allowNewQuotes || cache.size >= quoteBudget) {
+      if (quoteBudget < MAX_STORE_BASKETS && cache.size >= quoteBudget) reserveHit = true;
       partitionSearchLimited = true;
       return { reason: "quote_limit" };
     }
@@ -23452,6 +23567,8 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   let result;
   for (let attempt = 0; attempt < 4; attempt++) {
     allowNewQuotes = attempt < 3;
+    quoteBudget = settings.allowExtraPackages === true && attempt === 0 ? MAX_STORE_BASKETS - 8 : MAX_STORE_BASKETS;
+    reserveHit = false;
     const revision = [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|");
     const constrained = stages.map((stage) => ({ ...stage, lines: stage.lines.map((line2) => !line2.resolved ? line2 : { ...line2, offers: line2.offers.flatMap((offer) => {
       const limit = limits.get(offer.id);
@@ -23460,12 +23577,39 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
       return [{ ...offer, maxPackages: Math.min(offer.maxPackages ?? Infinity, limit.maxPackages) }];
     }) }) }));
     result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+    quoteBudget = MAX_STORE_BASKETS;
+    const addExtra = async () => {
+      if (settings.allowExtraPackages === true && result.best) {
+        const extra = await findExtraPackageOption(result.best, constrained, settings.postalCode, quoteWithStock);
+        if (extra.baselineExpired) {
+          const previous = allowNewQuotes;
+          allowNewQuotes = false;
+          result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+          allowNewQuotes = previous;
+          result.extraPackageOption = null;
+          result.searchLimited = true;
+        } else {
+          result.extraPackageOption = extra.option;
+          result.comparedBasketCount = (result.comparedBasketCount ?? 0) + extra.confirmed;
+          if (extra.searched) result.searchLimited = true;
+        }
+      }
+    };
+    await addExtra();
+    if (reserveHit && cache.size < MAX_STORE_BASKETS) {
+      result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+      await addExtra();
+    }
     const next = [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|");
     if (revision === next) break;
   }
   if (limits.size) result.stockLimits = [...limits.values()];
   if (partitionSearchLimited) result.searchLimited = true;
   result.allowSeparateOrders = settings.allowSeparateOrders === true;
+  if (settings.allowExtraPackages === true) {
+    result.allowExtraPackages = true;
+    result.extraPackageOption ??= null;
+  }
   return result;
 }
 async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
@@ -24007,9 +24151,9 @@ function readEtakCard(html, source) {
   let gross2 = 0, net = 0;
   for (const price2 of prices) {
     if (!price2 || price2.vat !== "23" || price2.basket_enable !== "y" || price2.special_offer !== "false" || price2.rebate_code_active !== "n" || price2.priceformula_error !== "false") throw Error("price_changed");
-    const current = etakMoney(price2.value, price2.price_formatted), currentNet = etakMoney(price2.price_net, price2.price_net_formatted);
-    if (!current || !currentNet || etakGrossFromNet(currentNet) !== current || gross2 && gross2 !== current || net && net !== currentNet) throw Error("price_changed");
-    gross2 = current;
+    const current2 = etakMoney(price2.value, price2.price_formatted), currentNet = etakMoney(price2.price_net, price2.price_net_formatted);
+    if (!current2 || !currentNet || etakGrossFromNet(currentNet) !== current2 || gross2 && gross2 !== current2 || net && net !== currentNet) throw Error("price_changed");
+    gross2 = current2;
     net = currentNet;
   }
   const safe = clean(html), forms = elements(safe, (a, t) => t === "form" && a.id === "projector_form" && a["data-product_id"] === String(source.productId));
@@ -24368,15 +24512,15 @@ async function nativeCart(source, count, client) {
   return { raw, product, cart, stock: confirmed.stock };
 }
 async function readMlazienkaProduct(source, fetchImpl) {
-  const current = await nativeCart(source, 1, new AnonymousShop(origin2, fetchImpl, AbortSignal.timeout(15e3), 8));
-  return { ...current.product, ...current.stock === void 0 ? {} : { stockPackages: current.stock }, evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(current.raw + current.cart).digest("hex") };
+  const current2 = await nativeCart(source, 1, new AnonymousShop(origin2, fetchImpl, AbortSignal.timeout(15e3), 8));
+  return { ...current2.product, ...current2.stock === void 0 ? {} : { stockPackages: current2.stock }, evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(current2.raw + current2.cart).digest("hex") };
 }
 async function quoteMlazienka(order, fetchImpl) {
   if (order.store !== "m\u0141azienka" || order.lines.length !== 1 || order.lines[0].unit !== "szt" || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
   const pack = order.lines[0].packages[0], source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.id === sourceId2);
   if (!source || pack.packageSize !== 1 || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze <= 0 || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze !== pack.count * pack.unitPriceGrosze) throw Error("invalid_basket");
-  const client = new AnonymousShop(origin2, fetchImpl, AbortSignal.timeout(2e4), 12), current = await nativeCart(source, pack.count, client);
-  if (current.product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+  const client = new AnonymousShop(origin2, fetchImpl, AbortSignal.timeout(2e4), 12), current2 = await nativeCart(source, pack.count, client);
+  if (current2.product.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
   const updated = JSON.parse(await client.mlazienka("select", pack.count));
   if (updated.cart_quantity !== pack.count || typeof updated.summary !== "string") throw Error("basket_not_confirmed");
   const cart = await client.text("/koszyk.html"), selected = confirmMlazienkaCart(cart, pack.count, pack.unitPriceGrosze, true), costGrosze = selected.costGrosze;
@@ -24384,7 +24528,7 @@ async function quoteMlazienka(order, fetchImpl) {
   const policy = clean(await client.text("/koszty-dostawy")), policyText = text2(policy);
   if (!/Produkty średnie Umywalki Miski WC Stelaże podtynkowe Zlewozmywaki Przesyłka kurierska 0 , 00 zł/.test(policyText) || !policyText.includes("Koszt dostawy zagranicznej jest uzale\u017Cniony od r\xF3\u017Cnych czynnik\xF3w i jest obliczany indywidualnie.")) throw Error("no_home_delivery");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier (bez wniesienia)", payment: "Przelew zwyk\u0142y", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin2 + "/koszyk.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(current.raw + cart + JSON.stringify(updated) + policy).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier (bez wniesienia)", payment: "Przelew zwyk\u0142y", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin2 + "/koszyk.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(current2.raw + cart + JSON.stringify(updated) + policy).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/retail-pages.ts
@@ -25152,12 +25296,12 @@ function confirmTokmetCart(html, priceGrosze) {
 async function readTokmetProduct(source, fetchImpl) {
   review(source);
   const client = new AnonymousShop(TOKMET_ORIGIN, fetchImpl, AbortSignal.timeout(15e3), 8, "iso-8859-2");
-  const list = await client.text("/94,wezyki_w_oplocie_stalowym.html"), card = await client.text(source.url), current = inspectTokmetProduct(list, card, source);
+  const list = await client.text("/94,wezyki_w_oplocie_stalowym.html"), card = await client.text(source.url), current2 = inspectTokmetProduct(list, card, source);
   const empty = await client.text("/cart.php");
   if (!text3(clean(empty)).includes("Tw\xF3j koszyk jest pusty") || elements(empty, (a) => /^qty\[|^cart_qty_type\[/.test(a.id ?? "")).length) throw Error("basket_not_confirmed");
   const added = await client.text("/_dynamic_cart.php?action=add&itemId=2806&qty=1&dbv=&view_only_price=false"), cart = await client.text("/cart.php");
-  confirmTokmetCart(cart, current.priceGrosze);
-  return { stock: current.stock, product: { "@type": "Product", name: source.name, gtin13: source.ean, brand: source.brand, image: current.imageUrl, offers: { "@type": "Offer", price: (current.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify([list, card, empty, added, cart])).digest("hex") };
+  confirmTokmetCart(cart, current2.priceGrosze);
+  return { stock: current2.stock, product: { "@type": "Product", name: source.name, gtin13: source.ean, brand: source.brand, image: current2.imageUrl, offers: { "@type": "Offer", price: (current2.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify([list, card, empty, added, cart])).digest("hex") };
 }
 
 // artifacts/api-server/src/lib/topboden-product.ts
@@ -25457,9 +25601,9 @@ async function quoteBmb(order, fetchImpl) {
   if (order.store !== "BMB Technologie" || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
   const pack = order.lines[0].packages[0], source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === order.store);
   if (!source || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze * pack.count !== order.materialsGrosze) throw Error("invalid_basket");
-  const current = await readBmbCart(source, pack.count, fetchImpl, pack.unitPriceGrosze);
-  const quote2 = confirmBmbDelivery(current.cart, source, pack.count, pack.unitPriceGrosze), checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: quote2.costGrosze, carrier: quote2.carrier, payment: quote2.payment, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: BMB_ORIGIN + BMB_BASKET, basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: current.evidenceSha256 } };
+  const current2 = await readBmbCart(source, pack.count, fetchImpl, pack.unitPriceGrosze);
+  const quote2 = confirmBmbDelivery(current2.cart, source, pack.count, pack.unitPriceGrosze), checkedAt = /* @__PURE__ */ new Date();
+  return { quote: { costGrosze: quote2.costGrosze, carrier: quote2.carrier, payment: quote2.payment, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: BMB_ORIGIN + BMB_BASKET, basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: current2.evidenceSha256 } };
 }
 
 // artifacts/api-server/src/lib/abstore-product.ts
@@ -26035,24 +26179,24 @@ async function readRetailSource(source, fetchImpl = fetch) {
     return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: p.stock, evidenceSha256: p.evidenceSha256 };
   }
   if (source.format === "bmb") {
-    const current = await readBmbCart(source, 1, fetchImpl), p = current.product;
+    const current2 = await readBmbCart(source, 1, fetchImpl), p = current2.product;
     const html = `<script type="application/ld+json">${JSON.stringify({ "@type": "Product", name: p.name, gtin13: source.ean, brand: source.brand, image: p.imageUrl, offers: { "@type": "Offer", price: (p.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } })}</script>`;
-    return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: p.stock, evidenceSha256: current.evidenceSha256 };
+    return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: p.stock, evidenceSha256: current2.evidenceSha256 };
   }
   if (source.store === "Leroy Merlin" && source.browserReviewAllowed) throw Error("browser_refresh_required");
   if (source.format === "qshop") {
-    const current = await readTokmetProduct(source, fetchImpl);
-    return { ...parseRetailPage(`<script type="application/ld+json">${JSON.stringify(current.product)}</script>`, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: current.stock, evidenceSha256: current.evidenceSha256 };
+    const current2 = await readTokmetProduct(source, fetchImpl);
+    return { ...parseRetailPage(`<script type="application/ld+json">${JSON.stringify(current2.product)}</script>`, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: current2.stock, evidenceSha256: current2.evidenceSha256 };
   }
   if (source.format === "skyshop") {
     const review2 = reviewedSkyshopSource(source), nativeCount = source.minimumPackages * review2.nativePerPack;
-    const client = new AnonymousShop(MATBUD_ORIGIN, fetchImpl, AbortSignal.timeout(15e3), 12), current = await readSkyshopProduct(source, client);
+    const client = new AnonymousShop(MATBUD_ORIGIN, fetchImpl, AbortSignal.timeout(15e3), 12), current2 = await readSkyshopProduct(source, client);
     const empty = await client.skyshop("create-cart"), added = await client.skyshop("add", nativeCount, review2.id);
     if (added?.id !== empty.id || added.addedCartItem?.quantity !== nativeCount) throw Error("insufficient_stock");
-    const cart = confirmSkyshopBasket(await client.skyshop("cart"), [{ productId: review2.id, count: nativeCount, unitPriceGrosze: current.nativePriceGrosze }]);
+    const cart = confirmSkyshopBasket(await client.skyshop("cart"), [{ productId: review2.id, count: nativeCount, unitPriceGrosze: current2.nativePriceGrosze }]);
     if (cart.id !== empty.id) throw Error("basket_not_confirmed");
-    const html = `<script type="application/ld+json">${JSON.stringify(current.product)}</script>`;
-    return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: current.stock, evidenceSha256: skyshopEvidenceHash([...current.evidence, cart]) };
+    const html = `<script type="application/ld+json">${JSON.stringify(current2.product)}</script>`;
+    return { ...parseRetailPage(html, { ...source, format: "jsonld" }, /* @__PURE__ */ new Date()), stockPackages: current2.stock, evidenceSha256: skyshopEvidenceHash([...current2.evidence, cart]) };
   }
   if (source.format === "topboden-api") {
     const product = await readTopbodenProduct(source, fetchImpl);
@@ -26320,10 +26464,10 @@ async function quoteElmas(order, fetchImpl) {
   if (order.store !== "Elmas" || order.lines.length !== 1 || order.lines[0].unit !== "m" || order.lines[0].product.id !== "remont-" + ELMAS_TAPE.ean || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
   const pack = order.lines[0].packages[0];
   if (pack.offerId !== ELMAS_TAPE.id || pack.store !== "Elmas" || pack.url !== ELMAS_TAPE.url || pack.packageSize !== 30 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze < 1 || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze !== pack.count * pack.unitPriceGrosze) throw Error("invalid_basket");
-  const client = new AnonymousShop(ELMAS_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), 8), raw = await client.text(ELMAS_TAPE.url), card = readElmasProduct(raw, ELMAS_TAPE), api = await client.json("/api/public/p/" + ELMAS_TAPE.retailerSku + "?lang=pl&id=1"), current = readElmasNativeCard(api, ELMAS_TAPE);
-  if (card.priceGrosze !== pack.unitPriceGrosze || current.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-  if (current.maxPackages < pack.count) throw Error("insufficient_stock");
-  const args = { count: pack.count, priceGrosze: current.priceGrosze, nettoGrosze: current.nettoGrosze, stock: current.maxPackages }, initial = await client.elmasShipping(args);
+  const client = new AnonymousShop(ELMAS_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), 8), raw = await client.text(ELMAS_TAPE.url), card = readElmasProduct(raw, ELMAS_TAPE), api = await client.json("/api/public/p/" + ELMAS_TAPE.retailerSku + "?lang=pl&id=1"), current2 = readElmasNativeCard(api, ELMAS_TAPE);
+  if (card.priceGrosze !== pack.unitPriceGrosze || current2.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+  if (current2.maxPackages < pack.count) throw Error("insufficient_stock");
+  const args = { count: pack.count, priceGrosze: current2.priceGrosze, nettoGrosze: current2.nettoGrosze, stock: current2.maxPackages }, initial = await client.elmasShipping(args);
   if (!Array.isArray(initial.options?.countries) || !initial.options.countries.some((c) => c.value === "pl" && c.text === "Polska") || initial.discountCode !== void 0 || initial.giftCard !== void 0) throw Error("no_home_delivery");
   const first = home(initial), defaultCost = amount5(initial.selectedDelivery?.price), selected = await client.elmasShipping({ ...args, selected: true, previousTotalGrosze: order.materialsGrosze + defaultCost }), last = home(selected);
   if (last.cost !== first.cost || selected.selectedDelivery?.id !== ELMAS_HOME_CARRIER || selected.selectedDelivery?.name !== "InPost Kurier" || amount5(selected.selectedDelivery?.price) !== last.cost || selected.selectedDelivery?.mapType || selected.discountCode !== void 0 || selected.giftCard !== void 0) throw Error("basket_not_confirmed");
@@ -26475,11 +26619,11 @@ async function quoteEwinyl(order, postalCode, fetchImpl) {
   for (const line2 of order.lines) {
     const spec = ORION_ROLLS.find((s) => s.id === line2.product.id), source = spec && RETAIL_SOURCES.find((s) => s.id === `ewinyl-orion514-${spec.widthMm / 1e3}m`);
     if (!spec || !source || line2.unit !== "m2" || line2.product.name !== spec.name || !line2.packages.length) throw Error("invalid_basket");
-    const product = readEwinylProduct(page, source), current = Math.round(Number(product.offers.price) * 100);
+    const product = readEwinylProduct(page, source), current2 = Math.round(Number(product.offers.price) * 100);
     for (const pack of line2.packages) {
       const cut = pack.cutRoll, cost = cut ? cutRollCost(cut.widthMm, cut.lengthMm, cut.pricePerM2Grosze) : null;
       if (!cut || cut.widthMm !== spec.widthMm || pack.offerId !== source.id || pack.url !== source.url || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > 100 || pack.packageSize !== cut.widthMm * cut.lengthMm / 1e6 || cost === null || pack.unitPriceGrosze !== cost || pack.lineCostGrosze !== cost * pack.count) throw Error("invalid_basket");
-      if (cut.pricePerM2Grosze !== current) throw Error("price_changed");
+      if (cut.pricePerM2Grosze !== current2) throw Error("price_changed");
       const previous = expected.find((c) => c.widthMm === cut.widthMm && c.lengthMm === cut.lengthMm);
       if (previous) previous.count += pack.count;
       else expected.push({ widthMm: cut.widthMm, lengthMm: cut.lengthMm, count: pack.count, cost });
@@ -26893,16 +27037,16 @@ async function quoteTopboden(order, fetchImpl) {
     const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === "TopBoden" && source2.format === "topboden-api");
     if (!source || seen.has(pack.offerId) || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || pack.packageSize !== source.packageSize || line2.unit !== source.unit || pack.url !== source.url || !Number.isSafeInteger(pack.lineCostGrosze) || pack.lineCostGrosze !== pack.unitPriceGrosze * pack.count) throw Error("invalid_basket");
     seen.add(pack.offerId);
-    const current = await readTopbodenProduct(source, fetchImpl, pack.count, signal);
-    if (current.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-    const product = current.product;
+    const current2 = await readTopbodenProduct(source, fetchImpl, pack.count, signal);
+    if (current2.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    const product = current2.product;
     if (typeof product.category?.uuid !== "string" || typeof product.category.parentUuid !== "string" || typeof product.isSlab !== "boolean" || typeof product.isTile !== "boolean") throw Error("delivery_category_not_confirmed");
     const keys = [product.category.uuid, product.category.parentUuid];
     if (product.isSlab) keys.push("4ee25b28-2305-4f9d-a1a0-c452489d6564");
     if (product.isTile) keys.push("36708ff4-b0e6-4f02-a2ff-27ff3edf0cbf");
     categories.push(keys);
     materials += pack.lineCostGrosze;
-    proofs.push({ id: source.id, ean: source.ean, count: pack.count, price: current.priceGrosze, evidence: current.evidenceSha256 });
+    proofs.push({ id: source.id, ean: source.ean, count: pack.count, price: current2.priceGrosze, evidence: current2.evidenceSha256 });
   }
   if (!seen.size || !Number.isSafeInteger(materials) || materials !== order.materialsGrosze) throw Error("basket_not_confirmed");
   const data = await client.json("/api/delivery");
@@ -27205,12 +27349,12 @@ async function quoteFolnet(order, fetchImpl) {
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === "Folnet" && source2.format === "folnet");
     if (!source || !source.productId || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || wanted.has(source.productId)) throw Error("invalid_basket");
-    const raw2 = await client.text(source.url), current = inspectFolnetProduct(raw2, source);
+    const raw2 = await client.text(source.url), current2 = inspectFolnetProduct(raw2, source);
     if (elements(clean(raw2), (a) => a.id === "menu_basket" && (a.class?.split(/\s+/).includes("empty_bsket") ?? false)).length !== 1) throw Error("basket_not_confirmed");
-    if (current.amount !== pack.unitPriceGrosze) throw Error("price_changed");
-    if (pack.count > current.stock) throw Error("product_unavailable");
-    wanted.set(source.productId, { count: pack.count, price: current.amount });
-    materials += current.amount * pack.count;
+    if (current2.amount !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (pack.count > current2.stock) throw Error("product_unavailable");
+    wanted.set(source.productId, { count: pack.count, price: current2.amount });
+    materials += current2.amount * pack.count;
   }
   if (!Number.isSafeInteger(materials) || materials !== order.materialsGrosze || !wanted.size) throw Error("basket_not_confirmed");
   const query = new URLSearchParams({ mode: "productAndBasket" });
@@ -27284,12 +27428,12 @@ async function quoteKronosfera(order, fetchImpl) {
   for (const line2 of order.lines) for (const pack of line2.packages) {
     const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === "Kronosfera" && source2.format === "kronosfera");
     if (!source || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || wanted.has(source.url)) throw Error("invalid_basket");
-    const current = inspectKronosferaProduct(await client.text(source.url), source);
-    if (current.amount !== pack.unitPriceGrosze) throw Error("price_changed");
-    const response = JSON.parse(await client.text("/ajax/store/product/purchase/1/pl/" + source.productId, { _token: current.token, quantity: String(pack.count) }));
+    const current2 = inspectKronosferaProduct(await client.text(source.url), source);
+    if (current2.amount !== pack.unitPriceGrosze) throw Error("price_changed");
+    const response = JSON.parse(await client.text("/ajax/store/product/purchase/1/pl/" + source.productId, { _token: current2.token, quantity: String(pack.count) }));
     if (response.quantity !== String(pack.count) && response.quantity !== pack.count) throw Error("product_unavailable");
-    wanted.set(source.url, { count: pack.count, price: current.amount });
-    materials += current.amount * pack.count;
+    wanted.set(source.url, { count: pack.count, price: current2.amount });
+    materials += current2.amount * pack.count;
   }
   if (materials !== order.materialsGrosze) throw Error("basket_not_confirmed");
   const raw = await client.text("/koszyk"), selected = confirmKronosferaCart(raw, wanted, materials), now = /* @__PURE__ */ new Date();
@@ -27347,11 +27491,11 @@ async function quoteSkyshop(order, fetchImpl) {
   if (wanted.reduce((sum, row) => sum + row.pack.lineCostGrosze, 0) !== order.materialsGrosze) throw Error("invalid_basket");
   const client = new AnonymousShop(MATBUD_ORIGIN, fetchImpl, AbortSignal.timeout(2e4), 32), expected = [], evidence = [];
   for (const { source, review: review2, pack } of wanted) {
-    const current = await readSkyshopProduct(source, client);
-    if (current.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
-    if (current.stock < pack.count) throw Error("insufficient_stock");
-    expected.push({ productId: review2.id, count: pack.count * review2.nativePerPack, unitPriceGrosze: current.nativePriceGrosze });
-    evidence.push(...current.evidence);
+    const current2 = await readSkyshopProduct(source, client);
+    if (current2.priceGrosze !== pack.unitPriceGrosze) throw Error("price_changed");
+    if (current2.stock < pack.count) throw Error("insufficient_stock");
+    expected.push({ productId: review2.id, count: pack.count * review2.nativePerPack, unitPriceGrosze: current2.nativePriceGrosze });
+    evidence.push(...current2.evidence);
   }
   const empty = await client.skyshop("create-cart");
   for (const line2 of expected) {
@@ -27980,11 +28124,11 @@ var RetailPriceHistory = class {
   snapshot(now = Date.now()) {
     return [...this.rows.values()].flat().filter((p) => Date.parse(p.observation.observedAt) >= now - RETENTION_MS);
   }
-  response(sources, current) {
+  response(sources, current2) {
     const series = sources.flatMap((source2) => {
       const points = (this.rows.get(source2.id) ?? []).filter((p) => p.identity === historyIdentity(source2) && Date.parse(p.observation.observedAt) >= Date.now() - RETENTION_MS).map((p) => p.observation);
       if (!points.length) return [];
-      const last = points.at(-1), active = current.get(source2.id);
+      const last = points.at(-1), active = current2.get(source2.id);
       const price2 = active?.priceGrosze === last.priceGrosze && active.observedAt === last.observedAt ? active.priceGrosze : null;
       const previous = price2 !== null && points.length > 1 ? points.at(-2).priceGrosze : null;
       const delta = price2 !== null && previous !== null ? price2 - previous : null;
@@ -28348,8 +28492,8 @@ function createRemontService(options = {}) {
       return;
     }
     const sources = RETAIL_SOURCES.filter((source) => !source.disabledReason && entries.every(([key, value2]) => key === "productId" ? retailProductId(source) === value2 : retailComparableEan(source) === value2));
-    const current = new Map(catalog().offers.filter((offer) => isComparableOffer(offer)).map((offer) => [offer.id, { priceGrosze: observations.get(offer.id).priceGrosze, observedAt: observations.get(offer.id).observedAt }]));
-    const result = history.response(sources, current);
+    const current2 = new Map(catalog().offers.filter((offer) => isComparableOffer(offer)).map((offer) => [offer.id, { priceGrosze: observations.get(offer.id).priceGrosze, observedAt: observations.get(offer.id).observedAt }]));
+    const result = history.response(sources, current2);
     res.setHeader("Cache-Control", "no-store");
     if (!result) {
       res.status(404).json({ error: "verified_history_unavailable" });
