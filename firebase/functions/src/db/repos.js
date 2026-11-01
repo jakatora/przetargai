@@ -1038,14 +1038,14 @@ export const tenders = {
   async tedPoPostepowaniu(postepowanieId) {
     if (!postepowanieId) return [];
     const snap = await db().collection('tenders').where('postepowanie_id', '==', String(postepowanieId))
-      .select('source', 'published_at', 'deadline', 'zastapiony_przez', 'postepowanie_id').limit(50).get();
+      .select('source', 'published_at', 'deadline', 'url', 'zastapiony_przez', 'postepowanie_id').limit(50).get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((t) => t.source === 'ted');
   },
 
   /** TED z terminem od `od` (uzupełnianie wstecz wersji): zakres po `deadline`, źródło w pamięci. */
   async tedDoWersji(od, { limit = 40_000 } = {}) {
     const snap = await db().collection('tenders').where('deadline', '>=', od)
-      .select('source', 'published_at', 'deadline', 'zastapiony_przez', 'postepowanie_id').limit(limit).get();
+      .select('source', 'published_at', 'deadline', 'url', 'zastapiony_przez', 'postepowanie_id').limit(limit).get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((t) => t.source === 'ted');
   },
 
@@ -2453,6 +2453,51 @@ export const evaluations = {
       });
     }
     await evalCol(userId).doc(tenderId).set(rekord);
+  },
+
+  /**
+   * Nowa wersja ogłoszenia TED (2026-11-01, `jobs/wersjeTed.js`) przejmuje ślad oceny i dopasowanie starej: bez
+   * ponownej (płatnej) oceny AI, bez „nowego przetargu” w powiadomieniu, a feed pokazuje aktualną wersję (stara
+   * ma `tender_zastapiony_przez` i znika, gdy konto ma aktualną). Istniejących śladów i dopasowań nie nadpisuje.
+   * @param {{staraId: string, aktualna: {id: string, deadline?: string, url?: string}}[]} pary
+   * @returns {Promise<{oceny: number, dopasowania: number}>}
+   */
+  async przeniesNaWersje(pary) {
+    const wynik = { oceny: 0, dopasowania: 0 };
+    if (!pary?.length) return wynik;
+    const konta = await db().collection('users').select().get();
+    const utworz = async (ref, dane, licznik) => {
+      try {
+        await ref.create(dane);
+        wynik[licznik] += 1;
+      } catch (err) {
+        if (err.code !== 6 /* ALREADY_EXISTS */) throw err;
+      }
+    };
+    const kontoPoKoncie = async (konto) => {
+      for (let i = 0; i < pary.length; i += 300) {
+        const czesc = pary.slice(i, i + 300);
+        const [oceny, dopasowania] = await Promise.all([
+          db().getAll(...czesc.map((p) => evalCol(konto.id).doc(p.staraId))),
+          db().getAll(...czesc.map((p) => matchCol(konto.id).doc(p.staraId))),
+        ]);
+        for (const [j, p] of czesc.entries()) {
+          if (oceny[j].exists) await utworz(evalCol(konto.id).doc(p.aktualna.id), oceny[j].data(), 'oceny');
+          if (!dopasowania[j].exists) continue;
+          const { tender_zastapiony_przez: _pomin, ...stary } = dopasowania[j].data();
+          await utworz(matchCol(konto.id).doc(p.aktualna.id), {
+            ...stary,
+            tender_id: p.aktualna.id,
+            tender_deadline: p.aktualna.deadline ?? stary.tender_deadline ?? null,
+            tender_url: p.aktualna.url ?? stary.tender_url ?? null,
+            przeniesiono_z: p.staraId,
+          }, 'dopasowania');
+        }
+      }
+    };
+    // Po 8 kont naraz — uzupełnianie wstecz (2626 wersji × 32 konta) mieści się w limicie trasy.
+    for (let i = 0; i < konta.docs.length; i += 8) await Promise.all(konta.docs.slice(i, i + 8).map(kontoPoKoncie));
+    return wynik;
   },
 
   async pobierz(userId, tenderId) {
