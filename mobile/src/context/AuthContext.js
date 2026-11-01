@@ -6,6 +6,7 @@ import { api, setAuthToken, onSesjaWygasla } from '../api/client';
 import { registerForPushNotifications, anulujPowiadomieniaKonta } from '../services/push';
 import { czyPokazacOnboarding, KLUCZ_ONBOARDING_POMINIETY } from '../lib/onboarding';
 import { przeprowadzWylogowanie, zwiazDaneZKontem } from '../lib/daneLokalne';
+import { synchronizujNipKonta } from '../lib/nipKonta';
 
 const TOKEN_KEY = 'przetargai_token';
 const USER_KEY = 'przetargai_user';
@@ -49,6 +50,12 @@ export function AuthProvider({ children }) {
           }
           setUser(data.user);
           await setItem(USER_KEY, JSON.stringify(data.user)).catch(() => {});
+          // NIP wpisany kiedyś tylko w telefonie trafia do konta sam (2026-11-01) — w tle, bez czekania.
+          synchronizujNipKonta(data.user, { storage, api }).then((u) => {
+            if (!u) return;
+            setUser(u);
+            setItem(USER_KEY, JSON.stringify(u)).catch(() => {});
+          });
         }
       } catch (err) {
         // Tylko wygaśnięcie sesji kasuje token. Brak internetu, 429 czy awaria
