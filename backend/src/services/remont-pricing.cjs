@@ -20456,7 +20456,7 @@ var AnonymousShop = class {
 // artifacts/api-server/src/lib/retail-microdata.ts
 var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
 var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
-var decode = (text5) => text5.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+var decode = (text6) => text6.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 var text2 = (html) => decode(html.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
 function attrs(tag) {
   const result = {};
@@ -20787,13 +20787,13 @@ function confirmDekorkProduct(product, source) {
   if (product.available !== true || v.available !== true) throw Error("retailer_out_of_stock");
   if (v.sku !== wanted.sku || v.barcode !== wanted.barcode || v.title !== wanted.title || v.requires_shipping !== true || v.taxable !== true || v.quantity_rule?.min !== 1 || v.quantity_rule?.increment !== 1 || v.quantity_rule.max !== null) throw Error("retailer_unit_not_confirmed");
   if (!Number.isSafeInteger(v.price) || v.price <= 0) throw Error("invalid_money");
-  const text5 = text2(String(product.description ?? "")).replace(/\s+/g, " ");
-  if (!/1,5 mm/.test(text5) || (reviewed6.coverage === 6 ? !/800 mm/.test(text5) || !/500 mm/.test(text5) || !/15 szt\./.test(text5) || !/6[–-]60 m²/.test(text5) : !/Paczka:\s*10 m²/i.test(text5) || !text5.toLocaleLowerCase("pl").includes(reviewed6.key === "silverlux" ? "srebrna folia wilgocioochronna" : "z\u0142ota folia wilgocioochronna"))) throw Error("product_package_not_confirmed");
+  const text6 = text2(String(product.description ?? "")).replace(/\s+/g, " ");
+  if (!/1,5 mm/.test(text6) || (reviewed6.coverage === 6 ? !/800 mm/.test(text6) || !/500 mm/.test(text6) || !/15 szt\./.test(text6) || !/6[–-]60 m²/.test(text6) : !/Paczka:\s*10 m²/i.test(text6) || !text6.toLocaleLowerCase("pl").includes(reviewed6.key === "silverlux" ? "srebrna folia wilgocioochronna" : "z\u0142ota folia wilgocioochronna"))) throw Error("product_package_not_confirmed");
   return { variantId: v.id, priceGrosze: v.price, name: product.title + (wanted.packs > 1 ? ` \u2014 zestaw ${wanted.packs} paczek (${source.packageSize} m\xB2)` : ""), imageUrl: reviewed6.image };
 }
 function confirmGross(html) {
   const taxes = elements(html, (a) => a.class?.split(/\s+/).includes("product__tax") ?? false).map(text2);
-  if (!taxes.some((text5) => /Podatki są wliczone\./.test(text5))) throw Error("retailer_gross_price_not_confirmed");
+  if (!taxes.some((text6) => /Podatki są wliczone\./.test(text6))) throw Error("retailer_gross_price_not_confirmed");
 }
 async function nativeProduct(fetchImpl, source) {
   if (!isReviewedDekorkSource(source)) throw Error("product_source_not_reviewed");
@@ -20912,9 +20912,9 @@ function confirmKnaufPlasterPurchase(item, source) {
   if (producerId !== void 0 ? item.producer?.id !== producerId || item.producer?.name !== "Knauf" : item.producer !== void 0 && item.producer?.name !== "Knauf") throw Error("product_brand_not_confirmed");
   return true;
 }
-function money(text5, numeric2) {
-  if (typeof text5 !== "string" || !/^\s*[\d\s,.]+\s*zł$/.test(text5)) throw Error("basket_not_confirmed");
-  const parsed = typeof text5 === "string" ? parsePriceToGrosze(text5.replace(/\s*zł$/, "")) : null;
+function money(text6, numeric2) {
+  if (typeof text6 !== "string" || !/^\s*[\d\s,.]+\s*zł$/.test(text6)) throw Error("basket_not_confirmed");
+  const parsed = typeof text6 === "string" ? parsePriceToGrosze(text6.replace(/\s*zł$/, "")) : null;
   if (parsed === null || !Number.isSafeInteger(parsed) || parsed < 0 || typeof numeric2 !== "number" || !Number.isFinite(numeric2) || Math.abs(numeric2 * 100 - parsed) > 1e-5) throw Error("basket_not_confirmed");
   return parsed;
 }
@@ -22779,7 +22779,7 @@ var one2 = (nodes) => {
 var attrs2 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var hasClass = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 function ewinylMoney(node) {
-  const text5 = text2(node).replace(/&#122;&#322;/g, "z\u0142"), m = text5.match(/^([\d ]+),(\d{2}) zł$/);
+  const text6 = text2(node).replace(/&#122;&#322;/g, "z\u0142"), m = text6.match(/^([\d ]+),(\d{2}) zł$/);
   if (!m) throw Error("basket_not_confirmed");
   const n = Number(m[1].replace(/ /g, "")) * 100 + Number(m[2]);
   if (!Number.isSafeInteger(n) || n < 0) throw Error("basket_not_confirmed");
@@ -24143,6 +24143,17 @@ function readElmasProduct(raw, source) {
   return { priceGrosze, nettoGrosze, maxPackages, imageUrl, product: { "@type": "Product", name: item.catalogueName, brand: source.brand, gtin13: source.ean, image: imageUrl, description: item.description, offers: { "@type": "Offer", url: source.url, price: (priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock" } } };
 }
 
+// artifacts/api-server/src/lib/shoper-metres.ts
+function shoperFloatingPointUnit(source) {
+  if (source.id !== "plusmarket-pex-pipe-16x2") return false;
+  if (source.ean !== "5901095517976" || source.name !== "Rura pex/al/pex/ 16 mmx2 - 1mb" || source.store !== "Plus-Market" || source.brand !== "PLUS-MARKET" || source.category !== "pipe" || source.format !== "shoper-api" || source.productId !== 12990 || source.packageSize !== 1 || source.unit !== "mb" || source.apiPurchaseUnit !== "mb" || source.url !== "https://www.plus-market.pl/pl/p/Rura-pexalpex-16-mmx2-1mb/12990" || (source.minimumPackages ?? 1) !== 1 || (source.purchaseMultiple ?? 1) !== 1) throw Error("product_package_not_confirmed");
+  return true;
+}
+function confirmShoperMetreCard(item, source) {
+  if (!shoperFloatingPointUnit(source)) return;
+  if (item?.id !== 12990 || item.stockId !== 13709 || item.name !== source.name || item.ean !== source.ean || item.code !== source.ean || item.producer?.id !== 174 || item.producer?.name !== "PLUS-MARKET" || item.url !== source.url || !/^Oferta dotyczy 1mb!?/.test(text2(String(item.description ?? "")))) throw Error("product_package_not_confirmed");
+}
+
 // artifacts/api-server/src/lib/etak-product.ts
 function etakMoney(value2, formatted) {
   if (typeof value2 !== "string" && typeof value2 !== "number") throw Error("invalid_money");
@@ -24201,7 +24212,7 @@ var cls2 = (a, n) => a.class?.split(/\s+/).includes(n) ?? false;
 var element = (html, id) => one4(elements(html, (a) => a.id === id));
 var has = (html, name) => new RegExp("\\s" + name + "(?:\\s|=|>)").test(html.match(/^<[^>]+>/)?.[0] ?? "");
 var amount = (html) => {
-  const text5 = text2(html).replace(/\u00a0/g, " "), m = text5.match(/^([\d ]+),(\d{2}) zł$/);
+  const text6 = text2(html).replace(/\u00a0/g, " "), m = text6.match(/^([\d ]+),(\d{2}) zł$/);
   if (!m) throw Error("basket_not_confirmed");
   const n = Number(m[1].replace(/ /g, "")) * 100 + Number(m[2]);
   if (!Number.isSafeInteger(n)) throw Error("basket_not_confirmed");
@@ -24351,8 +24362,8 @@ function money3(value2) {
   if (n === null || !Number.isSafeInteger(n) || n < 0) throw Error("invalid_money");
   return n;
 }
-function equalMoney(text5, numeric2) {
-  const cents5 = money3(text5);
+function equalMoney(text6, numeric2) {
+  const cents5 = money3(text6);
   if (typeof numeric2 !== "number" || !Number.isFinite(numeric2) || Math.abs(numeric2 * 100 - cents5) > 1e-3) throw Error("invalid_money");
   return cents5;
 }
@@ -24373,8 +24384,8 @@ function integraProductPage(html, source) {
   const token2 = attrs(one5(elements(form2, (a2, t) => t === "input" && a2.name === "token"))).value;
   const id = attrs(one5(elements(form2, (a2, t) => t === "input" && a2.name === "id_product"))).value;
   if (!token2 || id !== String(source.productId)) throw Error("invalid_cart_route");
-  const weights = elements(safe, (a2, t) => t === "meta" && a2.property === "product:weight:value"), units = elements(safe, (a2, t) => t === "meta" && a2.property === "product:weight:units");
-  const kg = weights.length === 1 && units.length === 1 && attrs(units[0]).content === "kg" ? Number(attrs(weights[0]).content) : NaN;
+  const weights = elements(safe, (a2, t) => t === "meta" && a2.property === "product:weight:value"), units2 = elements(safe, (a2, t) => t === "meta" && a2.property === "product:weight:units");
+  const kg = weights.length === 1 && units2.length === 1 && attrs(units2[0]).content === "kg" ? Number(attrs(weights[0]).content) : NaN;
   return { token: token2, priceGrosze, stock: p.quantity, imageUrl, weightGrams: Number.isFinite(kg) && kg > 0 && Number.isSafeInteger(kg * 1e3) ? kg * 1e3 : null };
 }
 function confirmIntegraCart(cart, expected) {
@@ -24408,8 +24419,8 @@ async function readIntegraProduct(source, fetchImpl) {
   return { ...page, evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(JSON.stringify([proof, page.imageUrl])).digest("hex") };
 }
 function integraTariff(html, materials, grams) {
-  const safe = clean(html), main = one5(elements(safe, (a) => a.id === "content")), text5 = text2(main);
-  const section = text5.match(/Kurier InPost (.*?)Kurier DPD/);
+  const safe = clean(html), main = one5(elements(safe, (a) => a.id === "content")), text6 = text2(main);
+  const section = text6.match(/Kurier InPost (.*?)Kurier DPD/);
   if (!section || !/maksymalnej długości 1,2 m i wadze do 30 kg/.test(section[1]) || !/do 49\.99 zł - 14\.95 zł od 50\.00 do 99\.99 zł - 8\.95 zł od 100\.00 do 149\.00 zł - 4\.95 zł od 150 zł - GRATIS/.test(section[1])) throw Error("delivery_tariff_changed");
   if (!Number.isSafeInteger(grams) || grams <= 0 || grams > 3e4) throw Error("delivery_weight_not_confirmed");
   if (!Number.isSafeInteger(materials) || materials <= 0) throw Error("invalid_money");
@@ -24710,8 +24721,8 @@ function inspectIrbudCard(html, source) {
   if (attrs6(canonical).href !== source.url) throw Error("product_identity_not_confirmed");
   const names = elements(main, (a) => cls5(a, "product_title")).map(text2);
   if (!names.length || names.some((n) => n !== source.name)) throw Error("product_name_mismatch");
-  const text5 = text2(main);
-  for (const fact of ["Producent: NORGIPS", "D\u0142ugo\u015B\u0107: 300 cm", "Szeroko\u015B\u0107: 60 mm", "Grubo\u015B\u0107 blachy: 0,6 mm"]) if (!text5.includes(fact)) throw Error("product_variant_mismatch");
+  const text6 = text2(main);
+  for (const fact of ["Producent: NORGIPS", "D\u0142ugo\u015B\u0107: 300 cm", "Szeroko\u015B\u0107: 60 mm", "Grubo\u015B\u0107 blachy: 0,6 mm"]) if (!text6.includes(fact)) throw Error("product_variant_mismatch");
   const forms = elements(main, (a, t) => t === "form" && cls5(a, "cart"));
   if (!forms.length) throw Error("product_id_not_confirmed");
   for (const form2 of forms) {
@@ -24817,8 +24828,8 @@ function inspectPatiProduct(product, source) {
   const stockPackages = product.low_stock_remaining;
   if (stockPackages !== null && (!Number.isSafeInteger(stockPackages) || stockPackages < 1)) throw Error("product_unavailable");
   if (p.measurement) {
-    const text5 = product.stock_availability?.text;
-    const stock = typeof text5 === "string" && /^(\d+(?:\.\d{1,2})?) m² na stanie \(dozwolone zamówienia oczekujące\)$/.exec(text5);
+    const text6 = product.stock_availability?.text;
+    const stock = typeof text6 === "string" && /^(\d+(?:\.\d{1,2})?) m² na stanie \(dozwolone zamówienia oczekujące\)$/.exec(text6);
     const nativeStock = product.extensions?.gtm4wp?.item?.stocklevel;
     if (!stock || typeof nativeStock !== "number" || Number(stock[1]) !== nativeStock) throw Error("product_unavailable");
     const packs = Math.floor((nativeStock + 1e-9) / p.packageSize);
@@ -25331,7 +25342,7 @@ var TOPBODEN_API = "https://api.topboden.pl";
 function confirmTopbodenProduct(product, source, count = source.purchaseMultiple ?? 1) {
   if (!source.productUuid || !/^[a-f0-9-]{36}$/.test(source.productUuid) || product?.uuid !== source.productUuid || product.ean !== source.ean || product.data?.logisticData?.ean !== source.ean) throw Error("product_ean_not_confirmed");
   if (product.brand?.name !== source.brand || typeof product.name !== "string") throw Error("product_brand_not_confirmed");
-  const units = product.units, multiple = source.purchaseMultiple ?? 1;
+  const units2 = product.units, multiple = source.purchaseMultiple ?? 1;
   const accessoryPacks = {
     "topboden-indo-inside-gloss-2": ["5905167726037", "9d18849b-1174-4fb0-a0ef-f78e5ee3e03f", 2, "szt"],
     "topboden-indo-outside-gloss-2": ["5905167726198", "6d0e4dc7-6cc8-4f8a-bd57-4d5f7f634c62", 2, "szt"],
@@ -25348,9 +25359,9 @@ function confirmTopbodenProduct(product, source, count = source.purchaseMultiple
   };
   const supply = supplies[source.id];
   if (supply && (source.ean !== supply[0] || source.productUuid !== supply[1] || source.packageSize !== supply[2] || source.unit !== supply[3] || source.apiPurchaseUnit !== supply[4] || multiple !== 1)) throw Error("product_package_not_confirmed");
-  if (units && Number.isSafeInteger(units.multiple) && Number.isSafeInteger(units.minOrderQuantity) && (units.multiple !== multiple || units.minOrderQuantity !== multiple)) throw Error("purchase_rules_changed");
+  if (units2 && Number.isSafeInteger(units2.multiple) && Number.isSafeInteger(units2.minOrderQuantity) && (units2.multiple !== multiple || units2.minOrderQuantity !== multiple)) throw Error("purchase_rules_changed");
   const nativeUnit = supply ? supply[4] : accessory ? "opk." : glue ? "szt." : source.unit, nativeOrderUnit = accessory ? "opk." : "szt.", nativePackSize = supply ? supply[5] : accessory || glue ? 1 : source.packageSize;
-  if (!Number.isSafeInteger(multiple) || multiple < 1 || multiple > 1e4 || !units || units.orderUnit !== nativeOrderUnit || units.priceListUnit !== nativeUnit || units.basicUnit !== nativeUnit || !Number.isFinite(units.numerator) || !Number.isFinite(units.denominator) || units.denominator <= 0 || units.numerator / units.denominator !== nativePackSize || units.multiple !== multiple || units.minOrderQuantity !== multiple) throw Error("retailer_unit_not_confirmed");
+  if (!Number.isSafeInteger(multiple) || multiple < 1 || multiple > 1e4 || !units2 || units2.orderUnit !== nativeOrderUnit || units2.priceListUnit !== nativeUnit || units2.basicUnit !== nativeUnit || !Number.isFinite(units2.numerator) || !Number.isFinite(units2.denominator) || units2.denominator <= 0 || units2.numerator / units2.denominator !== nativePackSize || units2.multiple !== multiple || units2.minOrderQuantity !== multiple) throw Error("retailer_unit_not_confirmed");
   if (!Number.isSafeInteger(count) || count < multiple || count % multiple || count > 1e4) throw Error("purchase_multiple_required");
   if (product.available === false) throw Error("retailer_out_of_stock");
   if (product.available !== true || !Number.isFinite(product.baseUnitStock)) throw Error("retailer_stock_not_confirmed");
@@ -25472,9 +25483,9 @@ var IZOSYSTEMS_ORIGIN = "https://izosystems.pl";
 var IZOSYSTEMS_PRODUCT_URL = IZOSYSTEMS_ORIGIN + "/tasmy-wewnetrzne-do-cieplego-montazu-okien/1783-Tasma-paroszczelna-do-cieplego-montazu-okien-soudal-sws-basic-plus-inside-90mm-x-30m.html";
 var izoAttrs = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var izoOne = exactlyOne;
-function izoMoney(text5, numeric2) {
-  if (typeof text5 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
-  const match = text5.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/), cents5 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
+function izoMoney(text6, numeric2) {
+  if (typeof text6 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
+  const match = text6.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/), cents5 = match ? Number(match[1]) * 100 + Number(match[2]) : NaN;
   if (!Number.isSafeInteger(cents5) || cents5 < 0 || Math.abs(numeric2 * 100 - cents5) > 1e-5) throw Error("invalid_money");
   return cents5;
 }
@@ -26379,7 +26390,8 @@ function confirmShoperPurchaseUnit(item, source) {
   if (source.id === "kim-koelner-fx06k040-200" && (source.ean !== "5906675107622" || source.packageSize !== 200 || source.unit !== "szt" || source.apiPurchaseUnit !== "op." || source.productId !== 13330 || source.retailerSku !== "MTZKKW06K040")) throw Error("product_package_not_confirmed");
   if (source.id === "zpradem-koelner-ws3595-1000" && (source.ean !== "5906675303024" || source.packageSize !== 1e3 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt." || source.productId !== 798230 || source.retailerSku !== "0004-00010-06761")) throw Error("product_package_not_confirmed");
   if (String(item.id) !== shoperProductId(source)) throw Error("product_id_not_confirmed");
-  if (source.apiPurchaseUnit && (item.unit?.name !== source.apiPurchaseUnit || item.unit?.floating_point !== false)) throw Error("retailer_unit_not_confirmed");
+  confirmShoperMetreCard(item, source);
+  if (source.apiPurchaseUnit && (item.unit?.name !== source.apiPurchaseUnit || item.unit?.floating_point !== shoperFloatingPointUnit(source))) throw Error("retailer_unit_not_confirmed");
   if (source.retailerSku && item.code !== source.retailerSku) throw Error("product_identity_not_confirmed");
   if (source.packageDescription && !normalizeProductName(text2(String(item.description ?? ""))).includes(normalizeProductName(source.packageDescription))) throw Error("product_package_not_confirmed");
   if (source.brandReference) {
@@ -27415,8 +27427,8 @@ var only4 = (values) => {
   return values[0];
 };
 var attribute3 = (element4, key) => attrs(element4.match(/^<[^>]+>/)?.[0] ?? "")[key];
-var money10 = (text5) => {
-  const match = /^([\d\s,.]+)\s*zł(?:\/szt\.)?$/.exec(text5);
+var money10 = (text6) => {
+  const match = /^([\d\s,.]+)\s*zł(?:\/szt\.)?$/.exec(text6);
   const amount7 = match ? parsePriceToGrosze(match[1].trim()) : null;
   if (amount7 === null || amount7 < 0) throw Error("invalid_money");
   return amount7;
@@ -27630,7 +27642,7 @@ async function quoteAbud(order, postalCode, fetchImpl) {
 
 // artifacts/api-server/src/lib/izosystems-delivery.ts
 var import_node_crypto30 = require("node:crypto");
-var money12 = (text5, n) => n === 0 && text5 === "Za darmo!" ? 0 : izoMoney(text5, n);
+var money12 = (text6, n) => n === 0 && text6 === "Za darmo!" ? 0 : izoMoney(text6, n);
 var value = (html, id) => text2(izoOne(elements(html, (a) => a.id === id), "basket_not_confirmed"));
 async function quoteIzosystems(order, postalCode, fetchImpl) {
   if (order.store !== "Izosystems" || !/^\d{2}-\d{3}$/.test(postalCode) || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
@@ -27698,7 +27710,7 @@ var cls9 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var element3 = (html, id) => one16(elements(html, (a) => a.id === id));
 var has3 = (node, key) => new RegExp("\\s" + key + "(?:\\s|=|>)").test(node.match(/^<[^>]+>/)?.[0] ?? "");
 var amount6 = (html) => {
-  const node = one16(elements(html, (a) => cls9(a, "abs-item-price-amount"))), text5 = text2(node), match = text5.match(/^([\d\s]+),(\d{2}) zł(?: brutto)?$/);
+  const node = one16(elements(html, (a) => cls9(a, "abs-item-price-amount"))), text6 = text2(node), match = text6.match(/^([\d\s]+),(\d{2}) zł(?: brutto)?$/);
   if (!match) throw Error("basket_not_confirmed");
   const value2 = Number(match[1].replace(/\s/g, "")) * 100 + Number(match[2]);
   if (!Number.isSafeInteger(value2) || value2 < 0) throw Error("basket_not_confirmed");
@@ -27828,9 +27840,9 @@ function knownUnavailableRetailers() {
   }
   return result;
 }
-function confirmedMoney(text5, numeric2) {
-  if (typeof text5 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
-  const match = text5.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
+function confirmedMoney(text6, numeric2) {
+  if (typeof text6 !== "string" || typeof numeric2 !== "number" || !Number.isFinite(numeric2)) throw Error("invalid_money");
+  const match = text6.replace(/[\s\u00a0]/g, "").match(/^(\d+),(\d{2})zł$/);
   if (!match) throw Error("invalid_money");
   const cents5 = Number(match[1]) * 100 + Number(match[2]);
   if (!Number.isSafeInteger(cents5) || cents5 < 0 || Math.abs(numeric2 * 100 - cents5) > 1e-5) throw Error("invalid_money");
@@ -27884,7 +27896,7 @@ async function quoteShoper(order, fetchImpl) {
     const price2 = confirmedMoney(product.price?.gross?.final, product.price?.gross?.final_float);
     if (price2 !== pack.unitPriceGrosze) throw Error("price_changed");
     if (expected.has(product.stockId)) throw Error("invalid_basket");
-    expected.set(product.stockId, { count: pack.count, price: price2, unitName: source.apiPurchaseUnit });
+    expected.set(product.stockId, { count: pack.count, price: price2, unitName: source.apiPurchaseUnit, floatingPoint: shoperFloatingPointUnit(source) });
     await client.json("/webapi/front/pl_PL/basket/PLN/", { stock_id: product.stockId, quantity: pack.count });
   }
   const basket = await client.json("/webapi/front/pl_PL/basket/PLN/");
@@ -27892,7 +27904,7 @@ async function quoteShoper(order, fetchImpl) {
   let total = 0;
   for (const p of basket.products) {
     const wanted = expected.get(p.stock_id);
-    if (!wanted || p.quantity !== wanted.count || wanted.unitName && (p.unit?.name !== wanted.unitName || p.unit?.floating_point !== false) || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
+    if (!wanted || p.quantity !== wanted.count || wanted.unitName && (p.unit?.name !== wanted.unitName || p.unit?.floating_point !== wanted.floatingPoint) || confirmedMoney(p.price, p.price_float) !== wanted.price || confirmedMoney(p.sum, p.sum_float) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
     expected.delete(p.stock_id);
     total += wanted.count * wanted.price;
   }
@@ -28253,6 +28265,16 @@ function catalogAvailability(sources, offers, observations, now = Date.now()) {
   return { version: 1, complete: true, channel: "online", currency: "PLN", deliveryIncluded: false, generatedAt: new Date(now).toISOString(), maxAgeMs: Math.max(0, Math.floor(expiresAt - now)), products: [...products.values()] };
 }
 
+// lib/pricing-service/src/catalog-refresh.ts
+var text5 = (x, max = 100) => typeof x === "string" && x.trim() === x && x.length > 0 && x.length <= max && !/[\u0000-\u001f]/.test(x);
+var units = { m: "m", mb: "m", "m\xB2": "m2", litr: "l", litry: "l", "szt.": "szt" };
+var catalogRefreshUnit = (u) => units[u] ?? u;
+function parseCatalogRefreshIdentity(value2) {
+  const x = value2;
+  if (!x || typeof x !== "object" || Array.isArray(x) || Object.keys(x).some((k) => !["ean", "productId", "category", "packageSize", "unit"].includes(k)) || Object.hasOwn(x, "ean") === Object.hasOwn(x, "productId") || !text5(x.category) || !text5(x.unit, 30) || !Number.isFinite(x.packageSize) || x.packageSize <= 0 || x.packageSize > 1e6 || ("ean" in x ? !/^\d{13}$/.test(x.ean) || typeof x.ean !== "string" : !text5(x.productId, 170) || !/^remont-sku-[a-z0-9-]{1,150}$/.test(x.productId))) throw Error("invalid_catalog_refresh_identity");
+  return x;
+}
+
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
@@ -28488,6 +28510,27 @@ function createRemontService(options = {}) {
   router.get("/pricing/catalog-availability", (_req, res) => {
     res.set("Cache-Control", "no-store");
     res.json(catalogAvailability(RETAIL_SOURCES, catalog().offers, observations));
+  });
+  router.post("/pricing/catalog-availability/refresh", async (req, res) => {
+    let identity;
+    try {
+      identity = parseCatalogRefreshIdentity(req.body);
+    } catch {
+      res.status(400).json({ error: "invalid_catalog_refresh_identity" });
+      return;
+    }
+    const sources = RETAIL_SOURCES.filter((source) => !source.disabledReason && !source.pickupOnly && source.category === identity.category && source.packageSize === identity.packageSize && catalogRefreshUnit(source.unit) === catalogRefreshUnit(identity.unit) && ("ean" in identity ? retailComparableEan(source) === identity.ean : retailProductId(source) === identity.productId));
+    if (!sources.length) {
+      res.status(404).json({ error: "catalog_product_not_reviewed" });
+      return;
+    }
+    try {
+      const refresh2 = await refreshProjectSources(sources);
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ version: 1, identity, refresh: refresh2, availability: catalogAvailability(RETAIL_SOURCES, catalog().offers, observations) });
+    } catch {
+      res.status(503).json({ error: "catalog_product_refresh_unavailable" });
+    }
   });
   async function handleEstimate(req, res) {
     const stageOnly = req.path.endsWith("/stage");
