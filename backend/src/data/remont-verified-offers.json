@@ -4682,5 +4682,44 @@
     "sourceUrl": "https://sklep-elmas.pl/p/tasma-akustyczna-norgips-3-mm-x-0075-m",
     "evidenceSha256": "f5d4a5214732fe9b54b3ced53b3a2a334a3f2b9d2d14572593e3abb8f71438bf",
     "validUntil": null
+  },
+  {
+    "sourceId": "abud-knauf-superfinish-54kg",
+    "ean": "5901793357959",
+    "name": "Gotowa masa szpachlowa Super Finish 5,4 kg Knauf",
+    "imageUrl": "https://www.abud.pl/hpeciai/ee6f4a05d00ce5080a2896b3ba2e256c/pol_pl_Gotowa-masa-szpachlowa-Super-Finish-5-4-kg-Knauf-27268_1.webp",
+    "priceGrosze": 4470,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T23:28:25.502Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-27268-Gotowa-masa-szpachlowa-Super-Finish-5-4-kg-Knauf.html",
+    "evidenceSha256": "76d70f439b8bbff42e0272857b635e7e727d14a96019e74dab59bdb5270f432b",
+    "validUntil": null
+  },
+  {
+    "sourceId": "abud-knauf-superfinish-28kg",
+    "ean": "5901793357935",
+    "name": " Gotowa Masa szpachlowa Knauf Super finish 28kg ",
+    "imageUrl": "https://www.abud.pl/hpeciai/8da3f584f3e0b08cab351f35a22ee7b6/pol_pl_-Gotowa-Masa-szpachlowa-Knauf-Super-finish-28kg-42372_1.webp",
+    "priceGrosze": 9900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T23:28:25.717Z",
+    "sourceUrl": "https://www.abud.pl/product-pol-42372--Gotowa-Masa-szpachlowa-Knauf-Super-finish-28kg.html",
+    "evidenceSha256": "22681831fdacd3d95a93db4749f40d15ae15f527dfd3ab774d1bbd871ab42706",
+    "validUntil": "2026-11-30"
+  },
+  {
+    "sourceId": "realbud-knauf-superfinish-28kg",
+    "ean": "5901793357935",
+    "name": "Gładź KNAUF SUPER FINISH 28 kg, gotowa masa szpachlowa",
+    "imageUrl": "https://www.abud.pl/hpeciai/8da3f584f3e0b08cab351f35a22ee7b6/pol_pl_-Gotowa-Masa-szpachlowa-Knauf-Super-finish-28kg-42372_1.webp",
+    "priceGrosze": 10305,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T23:28:25.283Z",
+    "sourceUrl": "https://realbud.com/pl/p/Gladz-KNAUF-SUPER-FINISH-28-kg%2C-gotowa-masa-szpachlowa/75056672",
+    "evidenceSha256": "fb02e9e99faec0a4450f7cbd28d6375a6daffbc07f9fd68d2be8715ba6793d9d",
+    "validUntil": null
   }
 ]
