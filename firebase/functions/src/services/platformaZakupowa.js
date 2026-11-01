@@ -1,5 +1,6 @@
 import { doUtcIso } from '../lib/daty.js';
 import { logger } from '../lib/logger.js';
+import { rodzajKryterium, MAKS_KRYTERIOW } from '../lib/ogloszenieMeta.js';
 
 /*
  * PLATFORMAZAKUPOWA.PL (Open Nexus) — czwarte źródło ogłoszeń (2026-10-25), zapas na przerwy
@@ -137,6 +138,44 @@ function dataZPozycji(tekst) {
  * @returns {{tryb: string|null, rodzaj: string|null, opublikowano: string|null, termin: string|null,
  *   wymagania: string|null, zalaczniki: {nazwa: string, rozszerzenie: string|null, rozmiar_kb: number|null, opublikowano: string|null, url: string|null}[]}}
  */
+/**
+ * Kryteria oceny z tabeli „Kryteria i warunki formalne” (2026-11-01) — ten sam kształt co
+ * `parsujKryteria` (BZP) i `parsujKryteriaTed`, żeby karta „Za co są punkty” i znacznik na liście
+ * działały też dla platformazakupowa.pl. Wiersz z wagą („100%”) to kryterium oceny; wiersz z „-”
+ * to warunek formalny („Warunki płatności”, „Termin realizacji”) i do punktów się nie liczy.
+ * Sama „Cena” bez wagi przy samych warunkach formalnych = jedyne kryterium (zapytania spółek).
+ * Kilka części = kilka tabel; różne → `rozne_w_czesciach`.
+ */
+export function parsujKryteriaPz(html) {
+  const tabele = [...String(html ?? '').matchAll(/<table[^>]*table-criterium[^>]*>[\s\S]*?<tbody>([\s\S]*?)<\/tbody>/g)].map((m) => m[1]);
+  const listy = tabele.map((tbody) => {
+    const wiersze = [];
+    for (const wiersz of tbody.split(/<tr[\s>]/).slice(1)) {
+      const komorki = [...wiersz.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((m) => odkoduj(m[1].replace(/<[^>]+>/g, ' ')));
+      if (komorki.length < 3 || !komorki[1]) continue;
+      const m = komorki[2].match(/^(\d+(?:[.,]\d+)?)\s*(%|pkt)?$/i);
+      wiersze.push({ nazwa: komorki[1].slice(0, 200), waga: m ? Number(m[1].replace(',', '.')) : null, procent: m?.[2] === '%', rodzaj: rodzajKryterium(komorki[1]) });
+    }
+    let punktowane = wiersze.filter((w) => w.waga !== null);
+    if (!punktowane.length) punktowane = wiersze.filter((w) => w.rodzaj === 'cena').slice(0, 1);
+    const lista = punktowane.slice(0, MAKS_KRYTERIOW);
+    const suma = lista.reduce((a, k) => a + (k.waga ?? 0), 0);
+    const pelne = lista.every((k) => k.waga !== null) && suma > 0;
+    return lista.map((k) => ({
+      nazwa: k.nazwa, waga: k.waga, rodzaj: k.rodzaj, procent: k.procent,
+      udzial: lista.length === 1 ? 100 : pelne ? Math.round((k.waga / suma) * 1000) / 10 : null,
+    }));
+  }).filter((l) => l.length);
+  if (!listy.length) return null;
+  const podpis = (l) => l.map((k) => `${k.nazwa.toLowerCase()}|${k.waga}`).join(';');
+  return {
+    lista: listy[0].map(({ procent: _p, ...k }) => k),
+    sposob: listy[0].some((k) => k.waga !== null) ? (listy[0].some((k) => k.procent) ? 'procentowo' : 'punktowo') : null,
+    rozne_w_czesciach: listy.some((l) => podpis(l) !== podpis(listy[0])),
+    pozacenowe: listy.some((l) => l.some((k) => k.rodzaj !== 'cena')),
+  };
+}
+
 export function parsujSzczegol(html) {
   const s = String(html ?? '');
   const tryb = polePostepowania(s, 'Tryb');
@@ -166,7 +205,7 @@ export function parsujSzczegol(html) {
       if (zalaczniki.length >= MAKS_ZALACZNIKOW) break;
     }
   }
-  return { tryb, rodzaj, opublikowano, termin, wymagania, zalaczniki };
+  return { tryb, rodzaj, opublikowano, termin, wymagania, zalaczniki, kryteria: parsujKryteriaPz(s) };
 }
 
 /** Słoik ciasteczek do łańcucha SSO: zbiera `Set-Cookie` z odpowiedzi, oddaje nagłówek `Cookie`. */

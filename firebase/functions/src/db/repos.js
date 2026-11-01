@@ -12,7 +12,7 @@ import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
 import { kluczOgloszenia } from '../lib/dedupZrodel.js';
 import { kluczeZwyciezcow, normNip } from '../lib/profilKonkurenta.js';
 import { koniecUmowyWyniku } from '../lib/umowyWygasajace.js';
-import { skrotKryteriow } from '../lib/ogloszenieMeta.js';
+import { skrotKryteriow, polaKryteriow } from '../lib/ogloszenieMeta.js';
 import { normNazwa } from '../lib/ktoWygrywa.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
@@ -1047,9 +1047,15 @@ export const tenders = {
     await db().collection('tenders').doc(id).update({ lt_dzien_listy: String(dzien) });
   },
 
-  /** Szczegół z platformazakupowa.pl pobrany na żądanie (tryb, załączniki…) — cache przy ogłoszeniu. */
+  /**
+   * Szczegół z platformazakupowa.pl pobrany na żądanie (tryb, załączniki…) — cache przy ogłoszeniu.
+   * Od 2026-11-01 także kryteria oceny z tabeli platformy → te same pola co z BZP; zwraca je,
+   * żeby wołający (selekcja) dopisał je do przetargu w pamięci, zanim zapisze dopasowanie.
+   */
   async zapiszSzczegolPz(id, szczegol, teraz = nowIso()) {
-    await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz });
+    const pola = polaKryteriow(szczegol?.kryteria);
+    await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz, ...pola });
+    return pola;
   },
 
   /** Dokumenty postępowania z e-Zamówień (SWZ, załączniki z linkami) — cache 24 h przy ogłoszeniu (2026-10-26). */

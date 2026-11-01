@@ -4,6 +4,7 @@ import { doUtcIso } from '../lib/daty.js';
 import { wyciagnijNip } from '../lib/nip.js';
 import { wojewodztwoRealizacji } from '../lib/nuts.js';
 import { warunkiZTed } from '../lib/warunkiUdzialu.js';
+import { parsujKryteriaTed } from '../lib/kryteriaTed.js';
 
 /*
  * TED (Tenders Electronic Daily) — dziennik zamówień publicznych UE.
@@ -37,6 +38,12 @@ const POLA = [
   'selection-criteria-source',
   'buyer-country-sub',
   'place-of-performance-subdiv-lot',
+  // Za co są punkty (2026-11-01, `lib/kryteriaTed.js`): typ, nazwa, waga i opis kryteriów oceny.
+  'award-criterion-type-lot',
+  'award-criterion-name-lot',
+  'award-criterion-number-lot',
+  'award-criterion-number-weight-lot',
+  'award-criterion-description-lot',
 ];
 
 /** Pierwsza wartość z obiektu wielojęzycznego TED — polski przed innymi. */
@@ -77,6 +84,7 @@ export function mapujOgloszenieTed(notice) {
 
   const cpv = [...new Set(notice['classification-cpv'] ?? [])].join(', ');
   const linki = notice.links?.html ?? {};
+  const kryteria = parsujKryteriaTed(notice);
 
   return {
     externalId: `ted:${numer}`,
@@ -95,8 +103,19 @@ export function mapujOgloszenieTed(notice) {
     // zostaje przy siedzibie — tam chodzi o to, KTO planuje. Logika: lib/nuts.js.
     wojewodztwo: wojewodztwoRealizacji({ miejsca: notice['place-of-performance-subdiv-lot'], siedziba: notice['buyer-country-sub'] }),
     warunki_udzialu: warunkiZTed(notice),
-    raw: notice,
+    // Te same pola co z BZP — karta „Za co są punkty” i znacznik na liście działają bez rozróżniania rejestru.
+    kryterium_oceny: kryteria ? (kryteria.pozacenowe ? 'cena_i_jakosc' : 'tylko_cena') : null,
+    kryteria: kryteria?.lista ?? null,
+    kryteria_sposob: kryteria?.sposob ?? null,
+    kryteria_rozne_czesci: kryteria?.rozne_w_czesciach ?? false,
+    // Opisy kryteriów (wzory, całe akapity × liczba części) zostają poza podglądem — lista wyżej ma to, co potrzebne.
+    raw: bezOpisowKryteriow(notice),
   };
+}
+
+function bezOpisowKryteriow(notice) {
+  const { 'award-criterion-description-lot': _opisy, ...reszta } = notice;
+  return reszta;
 }
 
 /** Pierwsza wartosc pola TED, ktore bywa tablica albo skalarem. */
@@ -170,6 +189,31 @@ export async function pobierzOgloszeniaTed({
   if (zebrane.length < total) {
     logger.warn({ zebrane: zebrane.length, total },
       'TED: sufit stron uciął pobieranie — rozważ większy rozmiarStrony/maksStron');
+  }
+  return zebrane;
+}
+
+/**
+ * Ogłoszenia konkursowe TED z JEDNEJ doby publikacji (2026-11-01) — uzupełnianie wstecz pól,
+ * które doszły później (kryteria oceny), przez `POST /admin/kryteria-ted-wstecz`. Okno dzienne
+ * pobierania patrzy tylko 7 dni wstecz, a przetarg unijny bywa otwarty ponad miesiąc.
+ */
+export async function pobierzOgloszeniaTedDnia(dzien, { rozmiarStrony = 250, maksStron = 8 } = {}) {
+  const data = String(dzien).replaceAll('-', '');
+  if (!/^\d{8}$/.test(data)) throw new Error('dzien w formacie RRRR-MM-DD');
+  const query = `(place-of-performance IN (POL)) AND (publication-date = ${data}) AND (form-type = competition)`;
+  const zebrane = [];
+  for (let page = 1; page <= maksStron; page++) {
+    const odpowiedz = await fetch(`${env.TED_API_BASE_URL}/v3/notices/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, fields: POLA, page, limit: rozmiarStrony }),
+    });
+    if (!odpowiedz.ok) throw new Error(`TED API odpowiedziało ${odpowiedz.status}: ${(await odpowiedz.text()).slice(0, 300)}`);
+    const dane = await odpowiedz.json();
+    const surowe = dane.notices ?? [];
+    zebrane.push(...surowe.map(mapujOgloszenieTed).filter(Boolean));
+    if (surowe.length < rozmiarStrony || zebrane.length >= (dane.totalNoticeCount ?? 0)) break;
   }
   return zebrane;
 }

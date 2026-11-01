@@ -9,6 +9,8 @@ import { runBenchmarkRynku } from '../jobs/benchmarkRynku.js';
 import { runOknoPlanow } from '../jobs/oknoPlanow.js';
 import { runWynikiAggregation } from '../jobs/aggregateResults.js';
 import { pobierzOgloszeniaBzp, pobierzSuroweWynikiDnia } from '../services/bzp.js';
+import { pobierzOgloszeniaTedDnia } from '../services/ted.js';
+import { pobierzSzczegol as pobierzSzczegolPz } from '../services/platformaZakupowa.js';
 import { parsujWynik } from '../lib/wynikiParser.js';
 import { runUmowyWygasajace } from '../jobs/umowyWygasajace.js';
 import { przeliczProfil } from '../services/pracownik.js';
@@ -106,6 +108,41 @@ router.post('/kryteria-wstecz', ah(async (req, res) => {
   const ogloszenia = await pobierzOgloszeniaBzp({ from: dzien, to: dzien });
   const wynik = await tenders.uzupelnijKryteria(ogloszenia);
   res.json({ dzien, pobrane: ogloszenia.length, ...wynik });
+}));
+
+/**
+ * Kryteria oceny dla zapisanych przetargów TED z jednej doby publikacji (2026-11-01) — jak
+ * `/kryteria-wstecz` dla BZP: tylko tam, gdzie listy jeszcze nie ma, bez tworzenia dokumentów.
+ */
+router.post('/kryteria-ted-wstecz', ah(async (req, res) => {
+  const dzien = String(req.body?.dzien ?? '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dzien) || Number.isNaN(Date.parse(dzien))) throw badRequest('Podaj dzien w formacie RRRR-MM-DD');
+  const ogloszenia = await pobierzOgloszeniaTedDnia(dzien);
+  const wynik = await tenders.uzupelnijKryteria(ogloszenia);
+  res.json({ dzien, pobrane: ogloszenia.length, ...wynik });
+}));
+
+/**
+ * Kryteria oceny dla wskazanych przetargów z platformazakupowa.pl (2026-11-01): szczegół z tabelą
+ * „Kryteria i warunki formalne” pobrany od nowa i zapisany razem z polami kryteriów. Do 20 na
+ * wywołanie — platforma wymaga cichego SSO na każde ogłoszenie (~2 s).
+ */
+router.post('/kryteria-pz', ah(async (req, res) => {
+  const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).filter(Boolean).slice(0, 20);
+  if (!ids.length) throw badRequest('Podaj ids (do 20)');
+  const wynik = { sprawdzone: 0, z_kryteriami: 0, bledy: 0 };
+  for (const id of ids) {
+    const t = await tenders.findById(id);
+    if (!t || t.source !== 'platformazakupowa') continue;
+    wynik.sprawdzone += 1;
+    try {
+      const pola = await tenders.zapiszSzczegolPz(t.id, await pobierzSzczegolPz(String(t.bzp_external_id ?? t.id).replace(/^pz:/, '')));
+      if (pola.kryteria) wynik.z_kryteriami += 1;
+    } catch {
+      wynik.bledy += 1;
+    }
+  }
+  res.json(wynik);
 }));
 
 /**

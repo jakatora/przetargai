@@ -1,0 +1,334 @@
+{
+ "wieleCzesci": {
+  "award-criterion-number-lot": [
+   "90",
+   "10",
+   "90",
+   "10",
+   "90",
+   "10"
+  ],
+  "award-criterion-description-lot": {
+   "pol": [
+    "Oferty będą oceniane na podstawie ceny podanej w formularzu i obliczane wg poniższego wzoru: Pc = Cn / Co x 90 Pc – liczba punktów przyznanych rozpatrywanej ofercie Cn- najniższa zaoferowana cena Co- cena rozpatrywanej oferty",
+    "Oferty będą oceniane z uwzględnieniem poniższych kryteriów punktowych zależnych od akceptacji przez wykonawcę poszczególnych klauzul fakultatywnych opisanych w Specyfikacji Warunków Zamówienia. Przyznane punkty za akceptację poszczególnych klauzul fakultatywnych zostaną zsumowane, a ogólna wartość punktowa obliczana będzie wg wzoru: Pw = Wo x 10% Pw – liczba punktów w kryterium warunki ubezpieczenia Wo – punkty przyznane za kryterium warunki ubezpieczenia",
+    "Oferty będą oceniane na podstawie ceny podanej w formularzu i obliczane wg poniższego wzoru: Pc = Cn / Co x 90 Pc – liczba punktów przyznanych rozpatrywanej ofercie Cn- najniższa zaoferowana cena Co- cena rozpatrywanej oferty",
+    "Oferty będą oceniane z uwzględnieniem poniższych kryteriów punktowych zależnych od akceptacji przez wykonawcę poszczególnych klauzul fakultatywnych opisanych w Specyfikacji Warunków Zamówienia. Przyznane punkty za akceptację poszczególnych klauzul fakultatywnych zostaną zsumowane, a ogólna wartość punktowa obliczana będzie wg wzoru: Pw = Wo x 10% Pw – liczba punktów w kryterium warunki ubezpieczenia Wo – punkty przyznane za kryterium warunki ubezpieczenia",
+    "Oferty będą oceniane na podstawie ceny podanej w formularzu i obliczane wg poniższego wzoru: Pc = Cn / Co x 90 Pc – liczba punktów przyznanych rozpatrywanej ofercie Cn- najniższa zaoferowana cena Co- cena rozpatrywanej oferty",
+    "Oferty będą oceniane z uwzględnieniem poniższych kryteriów punktowych zależnych od akceptacji przez wykonawcę poszczególnych klauzul fakultatywnych opisanych w Specyfikacji Warunków Zamówienia. Przyznane punkty za akceptację poszczególnych klauzul fakultatywnych zostaną zsumowane, a ogólna wartość punktowa obliczana będzie wg wzoru: Pw = Wo x 10% Pw – liczba punktów w kryterium warunki ubezpieczenia Wo – punkty przyznane za kryterium warunki ubezpieczenia"
+   ]
+  },
+  "publication-number": "752755-2026",
+  "award-criterion-type-lot": [
+   "price",
+   "quality",
+   "price",
+   "quality",
+   "price",
+   "quality"
+  ],
+  "award-criterion-name-lot": {
+   "pol": [
+    "Cena",
+    "Warunki ubezpieczenia",
+    "Cena",
+    "Warunki ubezpieczenia",
+    "Cena",
+    "Warunki ubezpieczenia"
+   ]
+  },
+  "award-criterion-number-weight-lot": [
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa"
+  ]
+ },
+ "brak": {
+  "publication-number": "756319-2026"
+ },
+ "wagiZOpisu": {
+  "award-criterion-description-lot": {
+   "pol": [
+    "Cena - suma Ceny ryczałtowej brutto za realizację całości Robót budowlanych wraz z dokumentacją projektową oraz Ceny szacunkowej brutto za realizację usług Serwisu - max 94 pkt. Szczegółowy opis kryterium opisany w pkt. 28 IDW (Część I SWZ)",
+    "Efektywność - uwzględnia sprawność całkowitą jednostki wytwórczej GUK, kotła gazowego, współczynnik skojarzenia, oraz wydajność świec zapłonowych nieregulowanych jednostki wytwórczej GUK - max 6 pkt. Szczegółowy opis kryterium opisany w pkt. 28 IDW (Część I SWZ)"
+   ]
+  },
+  "publication-number": "756241-2026",
+  "award-criterion-type-lot": [
+   "price",
+   "quality"
+  ]
+ },
+ "nazwyJakosci": {
+  "award-criterion-number-lot": [
+   "80",
+   "20"
+  ],
+  "award-criterion-description-lot": {
+   "pol": [
+    "1.1. Kryterium cena - 80% (maksymalnie 80 pkt). W ramach kryterium ceny Zamawiający będzie przyznawał punkty (P1) zgodnie z poniższym wzorem: P1 = ( Cmin/Ci) *80 pkt gdzie: P1 – liczba punktów jakie otrzyma oferta oceniana Cmin – najniższa cena spośród ocenianych ofert Ci – cena oferty ocenianej Liczba punktów będzie obliczana do dwóch miejsc po przecinku.",
+    "1.2. Kryterium „Doświadczenie Projektanta” – 20% (maksymalnie 20 pkt). W ramach kryterium Zamawiający oceni doświadczenie osoby wskazanej w Formularzu oferty jako projektanta odpowiedzialnego za realizację zamówienia, zdobyte po uzyskaniu wymaganych uprawnień, polegające na wykonaniu dokumentacji projektowej na budowę sieci kanalizacji sanitarnej w granicach administracyjnych miasta o długości nie mniejszej niż 100 m, wg reguły: 20 pkt - osoba, którą dysponuje Wykonawca wykonała co najmniej dwie dokumentacje projektowe, o których mowa w pkt 1.2; 10 pkt - osoba, którą dysponuje Wykonawca wykonała jedną dokumentację projektową, o której mowa w pkt 1.2; 0 pkt - osoba, którą dysponuje Wykonawca nie wykonała dokumentacji projektowej, o której mowa w pkt 1.2;"
+   ]
+  },
+  "publication-number": "756038-2026",
+  "award-criterion-type-lot": [
+   "price",
+   "quality"
+  ],
+  "award-criterion-name-lot": {
+   "pol": [
+    "Doświadczenie Projektanta"
+   ]
+  },
+  "award-criterion-number-weight-lot": [
+   "per-exa",
+   "per-exa"
+  ]
+ },
+ "tylkoCenaWiele": {
+  "award-criterion-number-lot": [
+   "100",
+   "100",
+   "100",
+   "100",
+   "100",
+   "100",
+   "100",
+   "100",
+   "100"
+  ],
+  "award-criterion-description-lot": {
+   "pol": [
+    "Cena 100%",
+    "Cena 100%",
+    "Cena 100%",
+    "Cena 100%",
+    "Cena 100%",
+    "Cena 100%",
+    "Cena 100%",
+    "Cena 100%",
+    "Cena 100%"
+   ]
+  },
+  "publication-number": "752750-2026",
+  "award-criterion-type-lot": [
+   "price",
+   "price",
+   "price",
+   "price",
+   "price",
+   "price",
+   "price",
+   "price",
+   "price"
+  ],
+  "award-criterion-number-weight-lot": [
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa"
+  ]
+ },
+ "rozne": {
+  "award-criterion-number-lot": [
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20",
+   "60",
+   "20",
+   "20"
+  ],
+  "award-criterion-description-lot": {
+   "pol": [
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w podrozdziale 4.3 pkt 6. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 1 Dostawy świeżych warzyw i owoców oraz owoców sezonowych, punkty zostaną przyznane w następujący sposób: 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach: 6:30 – 8:00 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego 8:00 – 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy.",
+    "całkowita cena brutto za realizację przedmiotu zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 2 Dostawy mleka i przetworów mlecznych, punkty zostaną przyznane w następujący sposób: 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach: 6:30 – 8:00 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach: 8:00 – 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy.",
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 3 Dostawy jaj kurzych, punkty zostaną przyznane w następujący sposób: 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 6:30 do 8:00 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 8:00 do 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy. Kategoria kryterium udzielenia zamówienia próg: Waga (wartość procentowa",
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 4 Dostawy naturalnej wody źródlanej wraz z dzierżawą i serwisem dystrybutorów dozujących podgrzaną i schłodzoną naturalną wodę źródlaną z pojemników, punkty zostaną przyznane w następujący sposób: 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach: 8:00 – 12:00 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach: 12:00 – 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy.",
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 5 Dostawy mrożonych warzyw i owoców, punkty zostaną przyznane w następujący sposób: 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 9:00 do 12:00 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 12:00 do 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy",
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 6 Dostawy mrożonych filetów rybnych, punkty zostaną przyznane w następujący sposób: 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 9:00 do 12:00 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 12:00 do 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy",
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 7 - Dostawy artykułów spożywczych specjalnego przeznaczenia żywieniowego (baby food), punkty zostaną przyznane w następujący sposób: - 20 pkt za zaoferowanie dostawy każdej z placówek Zamawiającego w godzinach od 7:00 do 10:00 - 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 10:00 do 12:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: - 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” - 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” - 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy. Kategoria kryterium udzielenia zamówienia waga: Waga (wartość procentowa, dokładna) Kryterium udzielenia - Liczba: 20,00",
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 8 - Dostawy artykułów spożywczych ogólnego przeznaczenia żywieniowego, punkty zostaną przyznane w następujący sposób: - 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 6:30 do 8:00 - 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 8:00 do 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: - 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” - 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” - 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy. Kategoria kryterium udzielenia zamówienia waga: Waga (wartość procentowa, dokładna) Kryterium udzielenia - Liczba: 20,00",
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 9 - Dostawy mięsa i wędlin, punkty zostaną przyznane w następujący sposób: - 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 7:30 do 10:30 - 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 10:30 do 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: - 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” - 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” - 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy",
+    "całkowita cena brutto za realizację zamówienia w danej części",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego Wykonawca obowiązany jest wskazać w ofercie przedział czasowy, w którym będą realizowane dostawy przedmiotu zamówienia w ramach poszczególnych części zamówienia. Zamawiający informuje, że dostawy przedmiotu zamówienia mogą odbywać się w godzinach: 6:30 – 15:00 od poniedziałku do piątku z wyjątkiem dni ustawowo wolnych od pracy. Zadeklarowany przez Wykonawcę w ofercie czas realizacji dostaw żywności do wszystkich placówek Zamawiającego jest rozumiany jako przedział czasowy, w którym Wykonawca jest zobowiązany dany asortyment dostarczyć do poszczególnych placówek, zgodnie z częstotliwością dostaw określoną w SWZ. Wykonawca jest zobowiązany tak zorganizować proces dostaw, aby w każdej placówce odbywały się w zaoferowanym czasie. dla części nr 10 - Dostawy świeżo wypiekanego pieczywa na naturalnym zakwasie, punkty zostaną przyznane w następujący sposób: - 20 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 6:30 do 8:00 - 10 pkt za zaoferowanie dostawy do każdej z placówek Zamawiającego w godzinach od 8:00do 14:00",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia Wykonawca obowiązany jest wskazać w ofercie zasady wymiany wadliwego przedmiotu zamówienia z określonych przez Zamawiającego. Punkty zostaną przypisane w następujący sposób: - 20 pkt za zaoferowanie „wymiana w ciągu tego samego dnia co dzień dostawy (nie później niż do godz. 15:00)” - 10 pkt za zaoferowanie „wymiany w dniu następnym po dniu dostawy” - 1 pkt za ofertę, w której Wykonawca daje dyspozycję do dokonania zakupu u innego dostawcy na rachunek Wykonawcy. Kategoria kryterium udzielenia zamówienia waga: Waga (wartość procentowa, dokładna) Kryterium udzielenia - Liczba: 20,00"
+   ]
+  },
+  "publication-number": "755598-2026",
+  "award-criterion-type-lot": [
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality",
+   "price",
+   "quality",
+   "quality"
+  ],
+  "award-criterion-name-lot": {
+   "pol": [
+    "Cena 60%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia 20%",
+    "Cena -60%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy czas dostawy zamówionego asortymentu do placówek Zamawiającego 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy termin wymiany dostarczonego wadliwego przedmiotu zamówienia 20%",
+    "Cena 60%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia 20%",
+    "Cena 60 %",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia 20%",
+    "Cena 60%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego 20",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia 20%",
+    "Cena 60 %",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego – 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia 20%",
+    "Cena - 60%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego - 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia - 20%",
+    "Cena - 60 %",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego - 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia - 20%",
+    "Cena 60%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego - 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia - 20%",
+    "Cena -60%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: czas dostawy zamówionego asortymentu do placówek Zamawiającego - 20%",
+    "Zasady realizacji dostaw w trakcie realizacji umowy: termin wymiany dostarczonego wadliwego przedmiotu zamówienia - 20%"
+   ]
+  },
+  "award-criterion-number-weight-lot": [
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa",
+   "per-exa"
+  ]
+ },
+ "punkty": {
+  "award-criterion-number-lot": [
+   "60",
+   "40"
+  ],
+  "award-criterion-description-lot": {
+   "pol": [
+    "Zasada oceny ofert wg kryterium – Cena oferty brutto w PLN (C) W przypadku kryterium – Cena oferty brutto w PLN (C) - oferta otrzyma zaokrągloną do dwóch miejsc po przecinku ilość punktów wynikającą z działania: Pi(C) = x 60 gdzie: Pi(C1) I Ilość punktów jakie otrzyma oferta badana za kryterium – cena oferty brutto w PLN Cmin Najniższa cena spośród wszystkich ofert niepodlegających odrzuceniu Ci Cena oferty badanej * Zgodnie z art. 225 ust. 1 ustawy Pzp, w przypadku, gdy wybór oferty prowadziłby do powstania u Zamawiającego obowiązku podatkowego zgodnie z przepisami o podatku od towarów i usług, dla celów zastosowania kryterium ceny lub kosztu z Zamawiający dolicza do przedstawionej w tej ofercie ceny kwotę̨ podatku od towarów i usług, którą̨ miałby obowiązek rozliczyć́",
+    "18.4.2 Zasady oceny ofert wg kryterium –„Termin dostawy”: 18.4.2.1 w przypadku kryterium „Termin dostawy” oferta otrzyma ilość punktów wynikającą z tabeli: „Termin dostawy” (T) Zamawiający będzie oceniał termin dostawy przez Wykonawcę po złożeniu zamówienia przez Zamawiającego: Wykonawca otrzyma 40 pkt – w przypadku dostawy w terminie do 3 dni roboczych licząc od dnia następnego po dniu otrzymania zamówienia przez Zamawiającego (w godzinach pracy Zamawiającego); Wykonawca otrzyma 30 pkt – w przypadku dostawy w terminie do 4 dni roboczych licząc od dnia następnego po dniu otrzymania zamówienia przez Zamawiającego (w godzinach pracy Zamawiającego); Wykonawca otrzyma 20 pkt w przypadku dostawy w terminie do 5 dni roboczych licząc od dnia następnego po dniu otrzymania zamówienia przez Zamawiającego (w godzinach pracy Zamawiającego); Wykonawca otrzyma 0 pkt – w przypadku dostawy w terminie do 6 dni roboczych licząc od dnia następnego po dniu otrzymania zamówienia przez Zamawiającego (w godzinach pracy Zamawiającego); Uwaga: W przypadku kiedy Wykonawca nie zaznaczy żadnego z kwadratów lub zaznaczy więcej niż jeden kwadrat w kryterium „Termin dostawy” w karcie ocen w pkt. 6 Formularza ofertowego Zamawiający przyjmie, że Wykonawca zrealizuje dostawy w terminie do 6 dni roboczych licząc od dnia następnego po dniu otrzymania zamówienia przez Zamawiającego (w godzinach pracy Zamawiającego), a oferta Wykonawcy w kryterium tym otrzyma 0 pkt."
+   ]
+  },
+  "publication-number": "756030-2026",
+  "award-criterion-type-lot": [
+   "price",
+   "quality"
+  ],
+  "award-criterion-name-lot": {
+   "pol": [
+    "Cena",
+    "Termin dostawy"
+   ]
+  },
+  "award-criterion-number-weight-lot": [
+   "poi-exa",
+   "poi-exa"
+  ]
+ }
+}

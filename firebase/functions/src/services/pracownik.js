@@ -212,7 +212,8 @@ export async function pracujDlaUzytkownika(user, pool, {
         const sz = await szczegolPz(String(tender.bzp_external_id ?? tender.id).replace(/^pz:/, ''));
         if (sz) {
           tender.pz_szczegol = sz;
-          await tenders.zapiszSzczegolPz(tender.id, sz, teraz);
+          // Kryteria z tabeli platformy (2026-11-01) trafiają też do kopii w dopasowaniu („Tylko cena” na karcie).
+          Object.assign(tender, await tenders.zapiszSzczegolPz(tender.id, sz, teraz));
         }
       } catch (err) {
         logger.warn({ err: err.message, id: tender.id }, 'platformazakupowa: szczegół przed oceną nie powiódł się');

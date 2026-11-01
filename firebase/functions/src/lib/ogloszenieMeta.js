@@ -192,6 +192,20 @@ export function kryteriaPrzetargu(tender) {
   };
 }
 
+/**
+ * Wynik parsera kryteriów (BZP / TED / platformazakupowa) → pola przetargu. Jedno miejsce, żeby
+ * każdy rejestr zapisywał to samo: lista, sposób, różne części i `kryterium_oceny` wyliczone z listy.
+ */
+export function polaKryteriow(k) {
+  if (!k?.lista?.length) return {};
+  return {
+    kryteria: k.lista,
+    kryteria_sposob: k.sposob ?? null,
+    kryteria_rozne_czesci: k.rozne_w_czesciach ?? false,
+    kryterium_oceny: k.pozacenowe ? 'cena_i_jakosc' : 'tylko_cena',
+  };
+}
+
 /** Ile rodzajów pokazuje karta na liście — reszta jako „+N”. */
 export const MAKS_W_SKROCIE = 3;
 

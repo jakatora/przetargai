@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parsujSzczegol, pobierzSzczegolHtml, pobierzSzczegol, sloikCiasteczek } from '../src/services/platformaZakupowa.js';
+import { parsujSzczegol, pobierzSzczegolHtml, pobierzSzczegol, sloikCiasteczek, parsujKryteriaPz } from '../src/services/platformaZakupowa.js';
 
 const FIXTURE = readFileSync(new URL('./fixtures/platformazakupowa-szczegol.html', import.meta.url), 'utf8');
 
@@ -22,7 +22,7 @@ test('parsujSzczegol: tryb, rodzaj, daty (czas polski → UTC), wymagania bez ta
 });
 
 test('parsujSzczegol: śmieci → same null i pusta lista', () => {
-  assert.deepEqual(parsujSzczegol(''), { tryb: null, rodzaj: null, opublikowano: null, termin: null, wymagania: null, zalaczniki: [] });
+  assert.deepEqual(parsujSzczegol(''), { tryb: null, rodzaj: null, opublikowano: null, termin: null, wymagania: null, zalaczniki: [], kryteria: null });
   assert.deepEqual(parsujSzczegol(null).zalaczniki, []);
 });
 
@@ -78,4 +78,27 @@ test('pobierzSzczegolHtml: 403 i wieczny refresh = wyjątek, nie pusta odpowied�
     ? { ok: true, status: 200, headers: { get: () => null, getSetCookie: () => [] }, text: async () => '' }
     : { ok: true, status: 200, headers: { get: () => null, getSetCookie: () => [] }, text: async () => META });
   await assert.rejects(pobierzSzczegolHtml('1', { fetchFn: wieczny }), /SSO/);
+});
+
+/*
+ * Kryteria oceny z tabeli „Kryteria i warunki formalne” (2026-11-01). Fixture = dwie prawdziwe tabele
+ * (1.11.2026): zapytanie spółki „Cena 100%” + warunki formalne i postępowanie Pzp z samymi
+ * „Dokumentami jawnymi” (kryteria są w SWZ).
+ */
+const TABELE = readFileSync(new URL('./fixtures/pz-kryteria.html', import.meta.url), 'utf8').split('<!-- 1363952');
+const tabela = (wiersze) => `<table class="table on-table table-criterium"><thead><tr><th>Lp</th></tr></thead><tbody>${wiersze.map(([lp, n, w]) => `<tr class="auction_criterium_${lp}"><td class="text-left">${lp}</td><td class="text-left">${n}</td><td class="text-center">${w}</td><td>opis</td></tr>`).join('')}</tbody></table>`;
+
+test('kryteria z platformy: „Cena 100%” bez warunków formalnych; Pzp z samymi dokumentami → brak listy', () => {
+  assert.deepEqual(parsujKryteriaPz(TABELE[0]), { lista: [{ nazwa: 'Cena', waga: 100, rodzaj: 'cena', udzial: 100 }], sposob: 'procentowo', rozne_w_czesciach: false, pozacenowe: false });
+  assert.equal(parsujKryteriaPz(TABELE[1]), null);
+  assert.equal(parsujKryteriaPz('<p>bez tabeli</p>'), null);
+});
+
+test('kryteria z platformy: pozacenowe z udziałem, sama „Cena” bez wagi, różne części', () => {
+  const dwa = parsujKryteriaPz(tabela([[1, 'Cena', '60%'], [2, 'Termin dostawy', '40%'], [3, 'Warunki płatności', '-']]));
+  assert.deepEqual([dwa.lista.map((k) => [k.nazwa, k.udzial, k.rodzaj]), dwa.pozacenowe], [[['Cena', 60, 'cena'], ['Termin dostawy', 40, 'termin']], true]);
+  const bezWagi = parsujKryteriaPz(tabela([[1, 'Warunki płatności', '-'], [2, 'Cena', '-']]));
+  assert.deepEqual([bezWagi.lista.map((k) => [k.nazwa, k.udzial]), bezWagi.sposob], [[['Cena', 100]], null]);
+  const czesci = parsujKryteriaPz(tabela([[1, 'Cena', '100%']]) + tabela([[1, 'Cena', '80%'], [2, 'Gwarancja', '20%']]));
+  assert.deepEqual([czesci.rozne_w_czesciach, czesci.pozacenowe, czesci.lista.length], [true, true, 1]);
 });

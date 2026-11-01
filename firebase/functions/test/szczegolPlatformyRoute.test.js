@@ -22,7 +22,7 @@ async function konto() {
   return odp.json();
 }
 async function token() { return (await konto()).token; }
-const SZCZEGOL = { tryb: 'Tryb podstawowy', rodzaj: 'Robota budowlana', opublikowano: '2026-10-20T19:33:00.000Z', termin: '2026-11-05T09:00:00.000Z', wymagania: 'Remont dachu szkoły', zalaczniki: [{ nazwa: 'SWZ.pdf', rozszerzenie: 'pdf', rozmiar_kb: 320, opublikowano: null, url: 'https://platformazakupowa.pl/file/get_new/abc.pdf' }] };
+const SZCZEGOL = { tryb: 'Tryb podstawowy', rodzaj: 'Robota budowlana', opublikowano: '2026-10-20T19:33:00.000Z', termin: '2026-11-05T09:00:00.000Z', wymagania: 'Remont dachu szkoły', zalaczniki: [{ nazwa: 'SWZ.pdf', rozszerzenie: 'pdf', rozmiar_kb: 320, opublikowano: null, url: 'https://platformazakupowa.pl/file/get_new/abc.pdf' }], kryteria: { lista: [{ nazwa: 'Cena', waga: 100, rodzaj: 'cena', udzial: 100 }], sposob: 'procentowo', rozne_w_czesciach: false, pozacenowe: false } };
 
 test('POST /tenders/:id/szczegol-platformy: pobiera raz, zapisuje przy ogłoszeniu, drugi raz oddaje cache; obce źródło → 400; brak → 404', async () => {
   const t = await token();
@@ -38,6 +38,8 @@ test('POST /tenders/:id/szczegol-platformy: pobiera raz, zapisuje przy ogłoszen
     assert.deepEqual(wywolania, [`${ZNAK}77`], 'id platformy bez prefiksu pz:');
     const zapisany = await tenders.findById(tender.id);
     assert.equal(zapisany.pz_szczegol.zalaczniki[0].nazwa, 'SWZ.pdf');
+    // Kryteria z tabeli platformy (2026-11-01) lądują w tych samych polach co z BZP.
+    assert.deepEqual([zapisany.kryterium_oceny, zapisany.kryteria?.[0]?.nazwa, zapisany.kryteria_sposob], ['tylko_cena', 'Cena', 'procentowo']);
 
     const drugi = await (await fetch(`${BAZA}/tenders/${encodeURIComponent(tender.id)}/szczegol-platformy`, { method: 'POST', headers: { Authorization: `Bearer ${t}` } })).json();
     assert.equal(drugi.cached, true);
