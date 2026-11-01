@@ -48,7 +48,7 @@ export function skrotDokumentow(alert) {
   return liczby ? `${co} — ${liczby}` : co;
 }
 
-export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [], dokumenty = [] }) {
+export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [], dokumenty = [], wyniki = [] }) {
   const n = Math.max(0, Math.floor(liczba));
   const rzeczownik = odmienPrzetargi(n);
   const subject = `Twój tygodniowy przegląd: ${n} ${rzeczownik}`;
@@ -84,7 +84,15 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
   const dokumentyHtml = zmianyDok.length
     ? `<p>W Twoich przetargach pojawiły się <b>nowe dokumenty</b> na e-Zamówieniach:</p><ul>${zmianyDok.map((d) => `<li><b>${esc(d.tytul)}</b> — ${esc(d.opis)}</li>`).join('')}</ul>`
     : '';
-  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${dokumentyText}${konkurenciText}${umowyText}\n\n`
+  // Wyniki zapisanych przetargów (2026-11-01): kto wygrał i za ile — z alertów `wynik_przetargu`.
+  const rozstrzygniete = Array.isArray(wyniki) ? wyniki.filter((w) => w?.tytul && w?.opis).slice(0, 3) : [];
+  const wynikiText = rozstrzygniete.length
+    ? `\n\nRozstrzygnięcia w Twoich zapisanych przetargach:\n${rozstrzygniete.map((w) => `• ${w.tytul} — ${w.opis}`).join('\n')}`
+    : '';
+  const wynikiHtml = rozstrzygniete.length
+    ? `<p><b>Rozstrzygnięcia</b> w Twoich zapisanych przetargach:</p><ul>${rozstrzygniete.map((w) => `<li><b>${esc(w.tytul)}</b> — ${esc(w.opis)}</li>`).join('')}</ul>`
+    : '';
+  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${wynikiText}${dokumentyText}${konkurenciText}${umowyText}\n\n`
     + `Otwórz aplikację PrzetargAI, aby zobaczyć szczegóły i zdecydować, w które startujesz.\n\n`
     + `Zespół PrzetargAI\n\n`
     + `Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.`;
@@ -96,6 +104,7 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
   const html = `<p>Dzień dobry,</p>
 ${wstepHtml}
 ${tytulyHtml}
+${wynikiHtml}
 ${dokumentyHtml}
 ${konkurenciHtml}
 ${umowyHtml}

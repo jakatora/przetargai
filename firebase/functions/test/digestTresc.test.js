@@ -85,3 +85,10 @@ test('budujDigest: nowe dokumenty w przetargach klienta — skrót z wpisu alert
   assert.match(d.html, /<b>Remont &lt;dachu&gt;<\/b> — zmianę dokumentów \(1\)/);
   assert.ok(!budujDigest({ liczba: 1 }).text.includes('nowe dokumenty'));
 });
+
+test('budujDigest: rozstrzygnięcia zapisanych przetargów przed dokumentami; bez wyników — bez sekcji', () => {
+  const d = budujDigest({ liczba: 2, wyniki: [{ tytul: 'Remont <dachu>', opis: 'Wygrał BUDREM Sp. z o.o. za 120 000 zł (5 ofert).' }], dokumenty: [{ tytul: 'Droga', opis: 'zmianę dokumentów (1)' }] });
+  assert.match(d.text, /Rozstrzygnięcia w Twoich zapisanych przetargach:\n• Remont <dachu> — Wygrał BUDREM Sp\. z o\.o\. za 120 000 zł \(5 ofert\)\.\n\nW Twoich przetargach pojawiły się nowe dokumenty/);
+  assert.match(d.html, /<li><b>Remont &lt;dachu&gt;<\/b> — Wygrał BUDREM/);
+  assert.ok(!budujDigest({ liczba: 1 }).text.includes('Rozstrzygnięcia'));
+});

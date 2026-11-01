@@ -66,6 +66,16 @@ export async function dokumentyDoPrzegladu(user, odIso, { limit = 3 } = {}) {
     .slice(0, limit);
 }
 
+/** Wyniki zapisanych przetargów z tygodnia (alerty `wynik_przetargu`, 2026-11-01): wygrane konta pierwsze. */
+export async function wynikiDoPrzegladu(user, odIso, { limit = 3 } = {}) {
+  return (await alerty.lista(user.id, 60))
+    .filter((a) => a.typ === 'wynik_przetargu' && String(a.utworzone_o ?? '') >= odIso)
+    .sort((x, y) => Number(y.ton === 'sukces') - Number(x.ton === 'sukces'))
+    .map((a) => ({ tytul: a.pozycje?.[0]?.tytul ?? null, opis: String(a.tresc?.pl ?? '').slice(0, 240) || null }))
+    .filter((w) => w.tytul && w.opis)
+    .slice(0, limit);
+}
+
 /**
  * Cotygodniowy przegląd e-mail (D-057, roadmap developerski #10).
  *
@@ -129,7 +139,11 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja nowych dokumentów pominięta');
           return [];
         });
-        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy, dokumenty });
+        const wyniki = await wynikiDoPrzegladu(user, sinceIso).catch((err) => {
+          logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja wyników pominięta');
+          return [];
+        });
+        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy, dokumenty, wyniki });
         wynik = await sendEmail({ to: user.email, ...tresc });
       } catch (err) {
         wynik = { sent: false, error: err.message };
