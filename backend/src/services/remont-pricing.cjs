@@ -14409,7 +14409,8 @@ function mixedPackagePlans(required2, variants, locked = {}, maxPlans = 4096, ma
   const eligible = variants.filter((v) => Number.isFinite(v.packageSize) && v.packageSize > 0 && Number.isSafeInteger(v.unitPriceGrosze) && v.unitPriceGrosze > 0);
   if (!Number.isFinite(required2) || required2 <= 0 || !eligible.length) return { plans, limited };
   const ordered = [...eligible].sort((a, b) => b.packageSize - a.packageSize || a.offerId.localeCompare(b.offerId));
-  const covers = (packs) => packs.reduce((n, p) => n + p.count * p.packageSize, 0) + 1e-7 >= required2 && Object.entries(locked).every(([size, quantity]) => packs.filter((p) => String(p.packageSize) === size).reduce((n, p) => n + p.count * p.packageSize, 0) + 1e-7 >= quantity);
+  const meets = (available, quantity) => quantity <= 0 || available > 0 && available + 1e-7 >= quantity;
+  const covers = (packs) => meets(packs.reduce((n, p) => n + p.count * p.packageSize, 0), required2) && Object.entries(locked).every(([size, quantity]) => meets(packs.filter((p) => String(p.packageSize) === size).reduce((n, p) => n + p.count * p.packageSize, 0), quantity));
   const visit = (index2, packs, coverage) => {
     if (++visits > maxVisits || plans.length >= maxPlans) {
       limited = true;
@@ -14431,7 +14432,7 @@ function mixedPackagePlans(required2, variants, locked = {}, maxPlans = 4096, ma
     const v = ordered[index2], multiple = v.purchaseMultiple ?? 1, minimum = Math.ceil((v.minimumPackages ?? 1) / multiple) * multiple;
     const already = packs.filter((p) => p.packageSize === v.packageSize).reduce((n, p) => n + p.count * p.packageSize, 0);
     const remaining = Math.max(0, required2 - coverage, (locked[String(v.packageSize)] ?? 0) - already);
-    const useful = remaining > 1e-7 ? Math.max(minimum, Math.ceil((remaining - 1e-7) / v.packageSize / multiple) * multiple) : 0;
+    const useful = remaining > 0 ? Math.max(minimum, Math.ceil((remaining - 1e-7) / v.packageSize / multiple) * multiple) : 0;
     const maximum = Math.min(useful, v.maxPackages === void 0 ? useful : Math.floor(v.maxPackages / multiple) * multiple, 1e4);
     for (let count = 0; count <= maximum; count += multiple) {
       if (limited) return;
@@ -20864,7 +20865,11 @@ var MAPEI_SUPPLY_SOURCES = [
   // source: https://www.rabdom.pl/pl/p/Folia-w-plynie-hydroizolacyjna-MAPEI-Mapegum-WPS-3kg/16590
   { "id": "rabdom-mapegum-wps-3kg", "ean": "8022452249266", "name": "Folia w p\u0142ynie hydroizolacyjna MAPEI Mapegum WPS 3kg", "brand": "Mapei", "category": "waterproofing", "packageSize": 3, "unit": "kg", "store": "Rab-Dom", "format": "shoper-api", "productId": 16590, "retailerSku": "59458", "apiProductCode": "59458", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/Folia-w-plynie-hydroizolacyjna-MAPEI-Mapegum-WPS-3kg/16590", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_48728_500_500/Opakowanie-folii-w-plynie-hydroizalacyjnej-o-pojemnosci-3kg.webp", "pickupRequiresConfirmation": true },
   // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875
-  { "id": "rabdom-mapegum-wps-20kg", "ean": "8022452242502", "name": "MAPEI Mapegum WPS 20kg HYDROIZOLACJA P\u0141YNNA FOLIA", "brand": "Mapei", "category": "waterproofing", "packageSize": 20, "unit": "kg", "store": "Rab-Dom", "format": "shoper-api", "productId": 9875, "retailerSku": "36196", "apiProductCode": "36196", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17482_500_500/Zrzut-ekranu-2022-02-12-090849.webp", "pickupRequiresConfirmation": true }
+  { "id": "rabdom-mapegum-wps-20kg", "ean": "8022452242502", "name": "MAPEI Mapegum WPS 20kg HYDROIZOLACJA P\u0141YNNA FOLIA", "brand": "Mapei", "category": "waterproofing", "packageSize": 20, "unit": "kg", "store": "Rab-Dom", "format": "shoper-api", "productId": 9875, "retailerSku": "36196", "apiProductCode": "36196", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17482_500_500/Zrzut-ekranu-2022-02-12-090849.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-5kg-HYDROIZOLACJA-PLYNNA-FOLIA/1906
+  { "id": "rabdom-mapegum-wps-5kg", "ean": "8022452242489", "name": "MAPEI Mapegum WPS 5kg HYDROIZOLACJA P\u0141YNNA FOLIA", "brand": "Mapei", "category": "waterproofing", "packageSize": 5, "unit": "kg", "store": "Rab-Dom", "format": "shoper-api", "productId": 1906, "retailerSku": "12552", "apiProductCode": "12552", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-5kg-HYDROIZOLACJA-PLYNNA-FOLIA/1906", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17476_500_500/Zrzut-ekranu-2022-02-12-091101.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-10kg-HYDROIZOLACJA-PLYNNA-FOLIA/9873
+  { "id": "rabdom-mapegum-wps-10kg", "ean": "8022452242496", "name": "MAPEI Mapegum WPS 10kg HYDROIZOLACJA P\u0141YNNA FOLIA", "brand": "Mapei", "category": "waterproofing", "packageSize": 10, "unit": "kg", "store": "Rab-Dom", "format": "shoper-api", "productId": 9873, "retailerSku": "2879", "apiProductCode": "2879", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-10kg-HYDROIZOLACJA-PLYNNA-FOLIA/9873", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17480_500_500/mapei-mapegum-wps-10kg-folia-w-plynie.webp", "pickupRequiresConfirmation": true }
 ];
 function confirmMapeiSupplyPurchase(item, source) {
   const reviewed6 = MAPEI_SUPPLY_SOURCES.find((row) => row.id === source.id);
@@ -20877,6 +20882,10 @@ function confirmMapeiSupplyPurchase(item, source) {
 
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  // source: https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751
+  { "id": "sewera-mapegum-wps-5kg", "ean": "8022452242489", "name": "Folia w p\u0142ynie Mapegum WPS 5kg Mapei", "brand": "Mapei", "category": "waterproofing", "packageSize": 5, "unit": "kg", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "url": "https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17476_500_500/Zrzut-ekranu-2022-02-12-091101.webp", "pickupRequiresConfirmation": true },
+  // source: https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-10kg-mapei-p7754
+  { "id": "sewera-mapegum-wps-10kg", "ean": "8022452242496", "name": "Folia w p\u0142ynie Mapegum WPS 10kg Mapei", "brand": "Mapei", "category": "waterproofing", "packageSize": 10, "unit": "kg", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "url": "https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-10kg-mapei-p7754", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17480_500_500/mapei-mapegum-wps-10kg-folia-w-plynie.webp", "pickupRequiresConfirmation": true },
   ...MAPEI_SUPPLY_SOURCES,
   ...NORGIPS_JOINT_TAPE_SOURCES,
   // source: https://hipper.pl/puszka-podtynkowa-laczeniowa-60-mm-pro-z-wkretami-elektro-plast-956340504
@@ -22393,6 +22402,10 @@ var RETAIL_SOURCES = [
   ...KNAUF_PLASTER_SOURCES
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-5kg-HYDROIZOLACJA-PLYNNA-FOLIA/1906
+  "Mapei Mapegum WPS \u2014 folia w p\u0142ynie 5 kg (124805PL)": "8022452242489",
+  // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-10kg-HYDROIZOLACJA-PLYNNA-FOLIA/9873
+  "Mapei Mapegum WPS \u2014 folia w p\u0142ynie 10 kg (124810PL)": "8022452242496",
   // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-10l-KONCENTRAT-GRUNTUJACY-GRUNT/15704
   "Mapei Primer G Pro \u2014 koncentrat gruntuj\u0105cy 10 l": "8022452241147",
   // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-KONCENTRAT-GRUNTUJACY-GRUNT-20L/10828
