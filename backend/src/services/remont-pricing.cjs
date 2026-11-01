@@ -19976,6 +19976,23 @@ function serializeProject(project) {
   };
 }
 
+// artifacts/api-server/src/lib/ceresit-primers.ts
+var CERESIT_PRIMER_SOURCES = [
+  // source: https://buduj24.pl/produkt/16299,ceresit-grunt-ct17-transparent-gleboko-penetrujacy-5l
+  { "id": "buduj24-ceresit-ct17-transparent-5l", "ean": "5900089218653", "name": "CERESIT Grunt CT17 TRANSPARENT g\u0142\u0119boko penetruj\u0105cy 5L", "brand": "Ceresit", "category": "primer", "packageSize": 5, "unit": "l", "store": "Buduj24", "format": "buduj24", "productId": 16299, "variant": ["5L"], "packageDescription": "5L", "url": "https://buduj24.pl/produkt/16299,ceresit-grunt-ct17-transparent-gleboko-penetrujacy-5l", "imageUrl": "https://buduj24.pl/files/_product/16299/5900089218653_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://buduj24.pl/produkt/10218,ceresit-grunt-gleboko-penetrujacy-ct17-profi-primer-10l
+  { "id": "buduj24-ceresit-ct17-profi-10l", "ean": "5900089617081", "name": "CERESIT Grunt g\u0142\u0119boko penetruj\u0105cy CT17 PROFI PRIMER 10L", "brand": "Ceresit", "category": "primer", "packageSize": 10, "unit": "l", "store": "Buduj24", "format": "buduj24", "productId": 10218, "variant": ["10L"], "packageDescription": "10L", "url": "https://buduj24.pl/produkt/10218,ceresit-grunt-gleboko-penetrujacy-ct17-profi-primer-10l", "imageUrl": "https://buduj24.pl/files/_product/10218/5900089617081_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://buduj24.pl/produkt/10217,ceresit-grunt-gleboko-penetrujacy-ct17-profi-primer-5l
+  { "id": "buduj24-ceresit-ct17-profi-5l", "ean": "5900089617050", "name": "CERESIT Grunt g\u0142\u0119boko penetruj\u0105cy CT17 PROFI PRIMER 5L", "brand": "Ceresit", "category": "primer", "packageSize": 5, "unit": "l", "store": "Buduj24", "format": "buduj24", "productId": 10217, "variant": ["5L"], "packageDescription": "5L", "url": "https://buduj24.pl/produkt/10217,ceresit-grunt-gleboko-penetrujacy-ct17-profi-primer-5l", "imageUrl": "https://buduj24.pl/files/_product/10217/5900089617050_1.webp", "pickupRequiresConfirmation": true },
+  // source: https://buduj24.pl/produkt/15394,ceresit-grunt-gleboko-penetrujacy-ct17-transparent-10l
+  { "id": "buduj24-ceresit-ct17-transparent-10l", "ean": "5900089218677", "name": "CERESIT Grunt g\u0142\u0119boko penetruj\u0105cy CT17 TRANSPARENT 10L", "brand": "Ceresit", "category": "primer", "packageSize": 10, "unit": "l", "store": "Buduj24", "format": "buduj24", "productId": 15394, "variant": ["10L"], "packageDescription": "10L", "url": "https://buduj24.pl/produkt/15394,ceresit-grunt-gleboko-penetrujacy-ct17-transparent-10l", "imageUrl": "https://buduj24.pl/files/_product/15394/5900089218677_1.webp", "pickupRequiresConfirmation": true }
+];
+function confirmCeresitPrimerSource(source) {
+  const reviewed6 = CERESIT_PRIMER_SOURCES.find((row) => row.id === source.id);
+  const keys = ["id", "ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "packageDescription", "url", "imageUrl"];
+  if (!reviewed6 || !keys.every((key) => source[key] === reviewed6[key]) || source.variant?.join("|") !== reviewed6.variant?.join("|") || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1 || source.skuIdentity !== void 0) throw Error("product_package_not_confirmed");
+}
+
 // artifacts/api-server/src/lib/aks-cables.ts
 var AKS_CABLE_SOURCES = [
   // source: https://www.abud.pl/product-pol-65373-Przewod-elektryczny-3x1-5mm2-YDYP-5m-Bialy-AKS-Zielonka.html
@@ -22454,7 +22471,8 @@ var RETAIL_SOURCES = [
   // source: https://www.wago.com/ca-fr/interconnexions-%C3%A9lectriques/221
   { "id": "ehw-wago-221415-25", "ean": "4055143234658", "name": "WAGO 221-415 Z\u0142\u0105czka instalacyjna COMPACT do wszystkich rodzaj\xF3w przewod\xF3w, transparentna opakowanie 25 szt.", "brand": "WAGO", "category": "wire-connector", "packageSize": 25, "unit": "szt", "store": "Elektro-Hurt", "format": "shoper-api", "productId": 462, "retailerSku": "WAGO-125138*25", "apiPurchaseUnit": "szt.", "variant": ["221-415", "25 szt."], "packageDescription": "Z\u0142\u0105czka 221-415 opakowanie 25 sztuk.", "pickupRequiresConfirmation": true, "url": "https://sklep.ehw.com.pl/osprzet-laczeniowy/szybkozlaczka-zlaczka-wago-221-415-5x4-mm", "imageUrl": "https://sklep.ehw.com.pl/environment/cache/images/productGfx_857_500_500/Szybkozlaczka-zlaczka-WAGO-221-415-5x4-mm-EAN-4055143234658.jpg" },
   ...ETAK_SOURCES,
-  ...KNAUF_PLASTER_SOURCES
+  ...KNAUF_PLASTER_SOURCES,
+  ...CERESIT_PRIMER_SOURCES
 ];
 var RETAIL_NAME_ALIASES = {
   // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-5kg-HYDROIZOLACJA-PLYNNA-FOLIA/1906
@@ -25808,6 +25826,7 @@ function objects(value2) {
   return [item, ...objects(item["@graph"])];
 }
 function parseRetailPage(html, source, observedAt) {
+  if (source.id.startsWith("buduj24-ceresit-ct17-")) confirmCeresitPrimerSource(source);
   reviewedPaintingTape(source);
   if (source.disabledReason) throw Error(source.disabledReason);
   if (source.format === "bmb" || source.format === "integra" || source.format === "mlazienka") throw Error("retailer_basket_required");

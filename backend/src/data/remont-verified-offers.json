@@ -4602,5 +4602,57 @@
     "sourceUrl": "https://sklep.sewera.pl/tasma-malarska-papierowa-48mmx50m-p6963",
     "evidenceSha256": "a642074aa85e9bc9d93fadc8f21b255df4c4dba573927fd602add9b4a4b160c8",
     "validUntil": null
+  },
+  {
+    "sourceId": "buduj24-ceresit-ct17-transparent-5l",
+    "ean": "5900089218653",
+    "name": "CERESIT Grunt CT17 TRANSPARENT głęboko penetrujący 5L",
+    "imageUrl": "https://buduj24.pl/files/_product/16299/5900089218653_1.webp",
+    "priceGrosze": 4315,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T17:41:42.845Z",
+    "sourceUrl": "https://buduj24.pl/produkt/16299,ceresit-grunt-ct17-transparent-gleboko-penetrujacy-5l",
+    "evidenceSha256": "cce2b6b3b41dc35d2db078fb9270c5c0cbaebd671d327ffe9094aa3eedafb811",
+    "validUntil": "2026-11-15"
+  },
+  {
+    "sourceId": "buduj24-ceresit-ct17-profi-10l",
+    "ean": "5900089617081",
+    "name": "CERESIT Grunt głęboko penetrujący CT17 PROFI PRIMER 10L",
+    "imageUrl": "https://buduj24.pl/files/_product/10218/5900089617081_1.webp",
+    "priceGrosze": 9199,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T17:41:42.884Z",
+    "sourceUrl": "https://buduj24.pl/produkt/10218,ceresit-grunt-gleboko-penetrujacy-ct17-profi-primer-10l",
+    "evidenceSha256": "6307244ec0298b4ecb86ce923a14e1dd02051a925232018f83c4ffa462b78e38",
+    "validUntil": "2026-11-15"
+  },
+  {
+    "sourceId": "buduj24-ceresit-ct17-profi-5l",
+    "ean": "5900089617050",
+    "name": "CERESIT Grunt głęboko penetrujący CT17 PROFI PRIMER 5L",
+    "imageUrl": "https://buduj24.pl/files/_product/10217/5900089617050_1.webp",
+    "priceGrosze": 5064,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T17:41:42.894Z",
+    "sourceUrl": "https://buduj24.pl/produkt/10217,ceresit-grunt-gleboko-penetrujacy-ct17-profi-primer-5l",
+    "evidenceSha256": "97c307fcdc07b3e3f9bda8ab2fd8959adee11d45cfc4941c4f18bbaf1e42efcb",
+    "validUntil": "2026-11-15"
+  },
+  {
+    "sourceId": "buduj24-ceresit-ct17-transparent-10l",
+    "ean": "5900089218677",
+    "name": "CERESIT Grunt głęboko penetrujący CT17 TRANSPARENT 10L",
+    "imageUrl": "https://buduj24.pl/files/_product/15394/5900089218677_1.webp",
+    "priceGrosze": 8448,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-01T17:41:42.902Z",
+    "sourceUrl": "https://buduj24.pl/produkt/15394,ceresit-grunt-gleboko-penetrujacy-ct17-transparent-10l",
+    "evidenceSha256": "94fdef23452a1629692fe23c1d816c6e1f141d84713311c32679bb3a3f0891ab",
+    "validUntil": "2026-11-15"
   }
 ]
