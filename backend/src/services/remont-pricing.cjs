@@ -55,11 +55,20 @@ var MAPEGUM_WPS_PACKS = [
   // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875
   { ean: "8022452242502", size: 20 }
 ];
+var CT17_PROFI_FAMILY = "ceresit-ct17-profi-litres-v1";
+var CT17_PROFI_FAMILY_NAME = "Ceresit CT 17 PROFI \u2014 dob\xF3r opakowa\u0144 5/10 l";
+var CT17_PROFI_PACKS = [{ ean: "5900089617050", size: 5 }, { ean: "5900089617081", size: 10 }];
+var CT17_TRANSPARENT_FAMILY = "ceresit-ct17-transparent-litres-v1";
+var CT17_TRANSPARENT_FAMILY_NAME = "Ceresit CT 17 Transparent \u2014 dob\xF3r opakowa\u0144 5/10 l";
+var CT17_TRANSPARENT_PACKS = [{ ean: "5900089218653", size: 5 }, { ean: "5900089218677", size: 10 }];
 var REVIEWED_PACKAGE_FAMILIES = [
   { key: V33_CABINET_FAMILY, name: V33_CABINET_FAMILY_NAME, category: "cabinet-paint", unit: "ml", packs: V33_CABINET_PACKS },
   { key: PRIMER_G_PRO_FAMILY, name: PRIMER_G_PRO_FAMILY_NAME, category: "primer", unit: "l", packs: PRIMER_G_PRO_PACKS },
-  { key: MAPEGUM_WPS_FAMILY, name: MAPEGUM_WPS_FAMILY_NAME, category: "waterproofing", unit: "kg", packs: MAPEGUM_WPS_PACKS }
+  { key: MAPEGUM_WPS_FAMILY, name: MAPEGUM_WPS_FAMILY_NAME, category: "waterproofing", unit: "kg", packs: MAPEGUM_WPS_PACKS },
+  { key: CT17_PROFI_FAMILY, name: CT17_PROFI_FAMILY_NAME, category: "primer", unit: "l", packs: CT17_PROFI_PACKS },
+  { key: CT17_TRANSPARENT_FAMILY, name: CT17_TRANSPARENT_FAMILY_NAME, category: "primer", unit: "l", packs: CT17_TRANSPARENT_PACKS }
 ];
+var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY];
 var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
 function reviewedPackageFamily(query, unit) {
   return REVIEWED_PACKAGE_FAMILIES.find((f) => query.packageFamily === f.key && !query.ean && !query.gtin && query.category === f.category && unit === f.unit && normalized(query.normalizedName ?? "") === normalized(f.name));
@@ -19711,7 +19720,7 @@ var NEVER2 = INVALID;
 
 // artifacts/api-server/src/lib/pricing-schema.ts
 var materialSchema = external_exports2.object({
-  packageFamily: external_exports2.enum(["v33-easy-kitchen-white-satin-v1", "mapei-primer-g-pro-litres-v1", "mapei-mapegum-wps-kg-v1"]).optional(),
+  packageFamily: external_exports2.enum(REVIEWED_PACKAGE_FAMILY_KEYS).optional(),
   id: external_exports2.string(),
   name: external_exports2.string(),
   unit: external_exports2.string(),
@@ -28179,7 +28188,7 @@ function createRemontService(options = {}) {
     }
     try {
       let priceRefresh;
-      const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material)).filter((material) => parsed.data.options?.refreshPrices || (material.packageFamily === PRIMER_G_PRO_FAMILY || material.packageFamily === MAPEGUM_WPS_FAMILY) && reviewedPackageFamily({ ...material, normalizedName: material.name }, normalUnit(material.unit)));
+      const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material)).filter((material) => parsed.data.options?.refreshPrices || material.packageFamily !== V33_CABINET_FAMILY && reviewedPackageFamily({ ...material, normalizedName: material.name }, normalUnit(material.unit)));
       if (materials.length) {
         const requestedEans = new Set(materials.flatMap((material) => {
           const family = reviewedPackageFamily({ ...material, normalizedName: material.name }, normalUnit(material.unit));
