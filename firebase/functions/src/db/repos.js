@@ -690,6 +690,14 @@ async function zapiszHistorieBezpiecznie(tenderId, zmiany) {
   }
 }
 
+/**
+ * Informacja z otwarcia ofert (2026-11-01) — do kopii bez listy przeczytanych plików. Nieczytelny PDF (skan)
+ * zostawia sam ślad przeczytania — na kartę idzie wtedy null, nie puste pola.
+ */
+const otwarcieNaKarte = (o) => (o && (Number.isFinite(o.kwota) || Number.isFinite(o.oferty))
+  ? { kwota: o.kwota ?? null, oferty: o.oferty ?? null, cena_min: o.cena_min ?? null, cena_max: o.cena_max ?? null, czesci: o.czesci === true }
+  : null);
+
 export const tenders = {
   /** Wstawia przetarg, jeśli jeszcze go nie ma. Zwraca { tender, created }. */
   async upsert(t) {
@@ -1112,11 +1120,7 @@ export const tenders = {
       // Kto wygrał wg pisma o wyborze oferty (2026-11-01, `lib/wyborOferty.js`).
       ...(wybor ? { wybor_oferty: wybor } : {}),
     });
-    // Informacja z otwarcia ofert (2026-11-01) — do kopii bez listy przeczytanych plików.
-    // Nieczytelny PDF (skan) zostawia sam ślad przeczytania — na kartę idzie wtedy null, nie puste pola.
-    const naKarte = (o) => (o && (Number.isFinite(o.kwota) || Number.isFinite(o.oferty))
-      ? { kwota: o.kwota ?? null, oferty: o.oferty ?? null, cena_min: o.cena_min ?? null, cena_max: o.cena_max ?? null, czesci: o.czesci === true }
-      : null);
+    const naKarte = otwarcieNaKarte;
     const zmianaZmian = JSON.stringify(zmiany) !== JSON.stringify(poprzednie ?? null);
     const zmianaOtwarcia = JSON.stringify(naKarte(otwarcie)) !== JSON.stringify(naKarte(poprzednieOtwarcie));
     if (!zmianaZmian && !zmianaOtwarcia) return 0;
@@ -1128,6 +1132,33 @@ export const tenders = {
     for (let i = 0; i < refy.length; i += 400) {
       const batch = db().batch();
       for (const ref of refy.slice(i, i + 400)) batch.update(ref, { tender_ez_zmiany: zmiany, tender_otwarcie_ofert: naKarte(otwarcie) });
+      await batch.commit();
+    }
+    return refy.length;
+  },
+
+  /**
+   * Przetargi BZP/TED z terminem ofert w [od, do] — kandydaci do odczytu informacji z otwarcia ofert dla całego
+   * rynku (2026-11-01, `jobs/otwarcieRynku.js`). Tylko pola potrzebne jobowi; indeks jednopolowy `deadline`.
+   */
+  async doOtwarciaRynku(od, doIso, { limit = 3000 } = {}) {
+    const snap = await db().collection('tenders').where('deadline', '>=', od).where('deadline', '<=', doIso)
+      .select('postepowanie_id', 'source', 'deadline', 'otwarcie_ofert', 'otwarcie_rynek').limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /** Wynik próby odczytu otwarcia (job rynku): przetarg + kopie w feedach i Zapisanych, gdy liczby się zmieniły. */
+  async zapiszOtwarcieRynku(id, { otwarcie = null, poprzednie = null, proba }) {
+    await db().collection('tenders').doc(id).update({ ...(otwarcie ? { otwarcie_ofert: otwarcie } : {}), otwarcie_rynek: proba });
+    if (!otwarcie || JSON.stringify(otwarcieNaKarte(otwarcie)) === JSON.stringify(otwarcieNaKarte(poprzednie))) return 0;
+    const [zapisane, dopasowania] = await Promise.all([
+      db().collectionGroup('saved').where('tender_id', '==', id).get(),
+      db().collectionGroup('matches').where('tender_id', '==', id).get(),
+    ]);
+    const refy = [...zapisane.docs, ...dopasowania.docs].map((d) => d.ref);
+    for (let i = 0; i < refy.length; i += 400) {
+      const batch = db().batch();
+      for (const ref of refy.slice(i, i + 400)) batch.update(ref, { tender_otwarcie_ofert: otwarcieNaKarte(otwarcie) });
       await batch.commit();
     }
     return refy.length;

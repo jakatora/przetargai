@@ -230,6 +230,14 @@ router.post('/monitor-dokumentow', ah(async (req, res) => {
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
+/** Ręczny przebieg odczytu informacji z otwarcia ofert dla rynku (2026-11-01); `limit` ≤ 300. */
+router.post('/otwarcie-rynku', ah(async (req, res) => {
+  const { runOtwarcieRynku } = await import('../jobs/otwarcieRynku.js');
+  const limit = Math.min(300, Math.max(1, Number(req.body?.limit) || 220));
+  const wynik = await runOtwarcieRynku({ limit, budzetMs: 240_000 });
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
 router.post('/benchmark', ah(async (req, res) => {
   const wynik = await runBenchmarkRynku();
   res.json(wynik);

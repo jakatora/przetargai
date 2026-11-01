@@ -274,6 +274,32 @@ export const eppOknoFetch = onSchedule(
 );
 
 /**
+ * Informacja z otwarcia ofert dla całego rynku (2026-11-01, `src/jobs/otwarcieRynku.js`) — co 4 h o :50:
+ * przetargi BZP/TED na e-Zamówieniach 6–72 h po terminie ofert, PDF z otwarcia → kwota, oferty, ceny.
+ * Bez AI; każdy przetarg najwyżej 3 próby. Idempotencja: zapis to nadpisanie tych samych pól.
+ */
+export const otwarcieRynkuFetch = onSchedule(
+  {
+    maxInstances: 3,
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '50 */4 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '512MiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runOtwarcieRynku } = await import('./src/jobs/otwarcieRynku.js');
+    const wynik = await runOtwarcieRynku();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'otwarcieRynkuFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error('otwarcieRynkuFetch: błędy zapisu');
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'otwarcieRynkuFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Okno Logintrade (2026-10-31) — co 6 h o :35 (00:35, 06:35, 12:35, 18:35 PL): lista zapytań ofertowych
  * spółek od najnowszych do stron bez aktywnych, nowe z kartą (kupiec, NIP, termin z godziną).
  * Idempotencja: docId = `lt:<host kupca>:<id>`.
