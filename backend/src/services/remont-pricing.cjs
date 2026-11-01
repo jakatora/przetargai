@@ -26,6 +26,33 @@ __export(shared_backend_exports, {
   parseRetailPage: () => parseRetailPage
 });
 module.exports = __toCommonJS(shared_backend_exports);
+
+// lib/pricing-service/src/reviewed-package-families.ts
+var V33_CABINET_FAMILY = "v33-easy-kitchen-white-satin-v1";
+var V33_CABINET_FAMILY_NAME = "V33 Easy Renowacja Kuchnia \u2014 bia\u0142y satyna, dob\xF3r opakowa\u0144";
+var V33_CABINET_PACKS = [{ ean: "3153895149044", size: 750 }, { ean: "3153895149228", size: 2e3 }];
+var PRIMER_G_PRO_FAMILY = "mapei-primer-g-pro-litres-v1";
+var PRIMER_G_PRO_FAMILY_NAME = "Mapei Primer G Pro \u2014 koncentrat, dob\xF3r opakowa\u0144 1/5/10/20 l";
+var PRIMER_G_PRO_PACKS = [
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-1l-KONCENTRAT-GRUNTUJACY-GRUNT/10970
+  { ean: "8022452241123", size: 1 },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-5l-KONCENTRAT-GRUNTUJACY-GRUNT/10969
+  { ean: "8022452241130", size: 5 },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-10l-KONCENTRAT-GRUNTUJACY-GRUNT/15704
+  { ean: "8022452241147", size: 10 },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-KONCENTRAT-GRUNTUJACY-GRUNT-20L/10828
+  { ean: "8022452241154", size: 20 }
+];
+var REVIEWED_PACKAGE_FAMILIES = [
+  { key: V33_CABINET_FAMILY, name: V33_CABINET_FAMILY_NAME, category: "cabinet-paint", unit: "ml", packs: V33_CABINET_PACKS },
+  { key: PRIMER_G_PRO_FAMILY, name: PRIMER_G_PRO_FAMILY_NAME, category: "primer", unit: "l", packs: PRIMER_G_PRO_PACKS }
+];
+var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
+function reviewedPackageFamily(query, unit) {
+  return REVIEWED_PACKAGE_FAMILIES.find((f) => query.packageFamily === f.key && !query.ean && !query.gtin && query.category === f.category && unit === f.unit && normalized(query.normalizedName ?? "") === normalized(f.name));
+}
+
+// artifacts/api-server/src/shared-backend.ts
 var import_express = require("express");
 var import_node_fs = require("node:fs");
 var import_node_path = require("node:path");
@@ -14343,36 +14370,36 @@ function cutRollPackagePlan(product, demand, quantity, offers) {
 }
 
 // lib/pricing-service/src/package-families.ts
-var V33_CABINET_FAMILY = "v33-easy-kitchen-white-satin-v1";
-var V33_CABINET_FAMILY_NAME = "V33 Easy Renowacja Kuchnia \u2014 bia\u0142y satyna, dob\xF3r opakowa\u0144";
-var V33_CABINET_PACKS = [{ ean: "3153895149044", size: 750 }, { ean: "3153895149228", size: 2e3 }];
-var familyId = "remont-family-" + V33_CABINET_FAMILY;
-var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
 async function resolvePackageFamily(db, deps, query, unit) {
-  if (query.packageFamily !== V33_CABINET_FAMILY || query.ean || query.gtin || query.category !== "cabinet-paint" || unit !== "ml" || normalized(query.normalizedName ?? "") !== normalized(V33_CABINET_FAMILY_NAME)) return null;
+  const family = reviewedPackageFamily(query, unit);
+  if (!family) return null;
   const found = [], offers = [];
-  for (const pack of V33_CABINET_PACKS) {
+  for (const pack of family.packs) {
     const product = await deps.findProductByCode(db, { ean: pack.ean });
-    if (!product || product.ean !== pack.ean || Number(product.packageSize) !== pack.size || product.packageUnit !== "ml" || product.category !== "cabinet-paint") continue;
+    if (!product || product.ean !== pack.ean || product.gtin && product.gtin !== pack.ean || Number(product.packageSize) !== pack.size || product.packageUnit !== family.unit || product.category !== family.category) continue;
     found.push(product);
-    offers.push(...(await deps.listOffers(db, product.id)).filter((o) => o.productId === product.id && Number(o.packageSize) === pack.size && o.unit === "ml").map((o) => ({ ...o, product })));
+    offers.push(...(await deps.listOffers(db, product.id)).filter((o) => o.productId === product.id && Number(o.packageSize) === pack.size && o.unit === family.unit).map((o) => ({ ...o, product })));
   }
-  return found.length ? { product: { ...found[0], id: familyId, name: V33_CABINET_FAMILY_NAME, ean: null, gtin: null, normalizedName: query.normalizedName, packageSize: null, imageUrl: null }, offers } : null;
+  return found.length ? { product: { ...found[0], id: "remont-family-" + family.key, name: family.name, ean: null, gtin: null, normalizedName: query.normalizedName, packageSize: null, imageUrl: null }, offers } : null;
 }
 function mergePackageFamilyGroups(groups) {
-  const automatic = groups.find((g) => g.product.id === familyId);
-  if (!automatic) return groups;
-  const locked = groups.filter((g) => V33_CABINET_PACKS.some((p) => p.ean === g.product.ean) && g.unit === "ml");
-  if (!locked.length) return groups;
-  const requiredBySize = {};
-  for (const g of locked) {
-    const size = String(Number(g.product.packageSize));
-    requiredBySize[size] = (requiredBySize[size] ?? 0) + g.totalQuantity;
+  let result = groups;
+  for (const family of REVIEWED_PACKAGE_FAMILIES) {
+    const automatic = result.find((g) => g.product.id === "remont-family-" + family.key);
+    if (!automatic) continue;
+    const locked = result.filter((g) => g.unit === family.unit && g.product.category === family.category && family.packs.some((p) => p.ean === g.product.ean && p.size === Number(g.product.packageSize)));
+    if (!locked.length) continue;
+    const requiredBySize = { ...automatic.requiredBySize };
+    for (const g of locked) {
+      const size = String(Number(g.product.packageSize));
+      requiredBySize[size] = (requiredBySize[size] ?? 0) + g.totalQuantity;
+    }
+    const offers = new Map(automatic.offers.map((o) => [o.id, o]));
+    for (const g of locked) for (const offer of g.offers) offers.set(offer.id, { ...offer, product: g.product });
+    const merged = { ...automatic, totalQuantity: automatic.totalQuantity + locked.reduce((n, g) => n + g.totalQuantity, 0), perStageCostGrosze: automatic.perStageCostGrosze + locked.reduce((n, g) => n + g.perStageCostGrosze, 0), offers: [...offers.values()], requiredBySize };
+    result = result.filter((g) => !locked.includes(g)).map((g) => g === automatic ? merged : g);
   }
-  const offers = new Map(automatic.offers.map((o) => [o.id, o]));
-  for (const g of locked) for (const offer of g.offers) offers.set(offer.id, { ...offer, product: g.product });
-  const result = { ...automatic, totalQuantity: automatic.totalQuantity + locked.reduce((n, g) => n + g.totalQuantity, 0), perStageCostGrosze: automatic.perStageCostGrosze + locked.reduce((n, g) => n + g.perStageCostGrosze, 0), offers: [...offers.values()], requiredBySize };
-  return groups.filter((g) => !locked.includes(g)).map((g) => g === automatic ? result : g);
+  return result;
 }
 
 // lib/pricing-service/src/mixed-package-plans.ts
@@ -19670,7 +19697,7 @@ var NEVER2 = INVALID;
 
 // artifacts/api-server/src/lib/pricing-schema.ts
 var materialSchema = external_exports2.object({
-  packageFamily: external_exports2.literal("v33-easy-kitchen-white-satin-v1").optional(),
+  packageFamily: external_exports2.enum(["v33-easy-kitchen-white-satin-v1", "mapei-primer-g-pro-litres-v1"]).optional(),
   id: external_exports2.string(),
   name: external_exports2.string(),
   unit: external_exports2.string(),
@@ -28053,9 +28080,12 @@ function createRemontService(options = {}) {
     }
     try {
       let priceRefresh;
-      if (parsed.data.options?.refreshPrices) {
-        const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material));
-        const requestedEans = new Set(materials.map((material) => material.ean ?? RETAIL_NAME_ALIASES[material.name]).filter((ean) => Boolean(ean)));
+      const materials = parsed.data.jobs.flatMap((job) => job.materials.map((line2) => line2.material)).filter((material) => parsed.data.options?.refreshPrices || material.packageFamily === PRIMER_G_PRO_FAMILY && reviewedPackageFamily({ ...material, normalizedName: material.name }, normalUnit(material.unit)));
+      if (materials.length) {
+        const requestedEans = new Set(materials.flatMap((material) => {
+          const family = reviewedPackageFamily({ ...material, normalizedName: material.name }, normalUnit(material.unit));
+          return family ? family.packs.map((pack) => pack.ean) : [material.ean ?? RETAIL_NAME_ALIASES[material.name]].filter((ean) => Boolean(ean));
+        }));
         const requestedProductIds = new Set(RETAIL_SOURCES.filter((source) => requestedEans.has(source.ean)).map(retailProductId));
         const sources = RETAIL_SOURCES.filter((source) => requestedProductIds.has(retailProductId(source)) || materials.some((material) => !material.ean && !RETAIL_NAME_ALIASES[material.name] && source.skuIdentity && source.category === material.category && normalizeProductName(retailProductName(source)) === normalizeProductName(material.name)));
         priceRefresh = await refreshProjectSources(sources);
