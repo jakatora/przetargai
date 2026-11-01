@@ -28,6 +28,20 @@ export function czyIdPostepowania(id) {
   return ID_POSTEPOWANIA.test(String(id ?? ''));
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Identyfikator postępowania na e-Zamówieniach (2026-11-01): BZP ma go wprost (`ocds-148610-…`), TED — jako
+ * `procedure-identifier` bez przedrostka (polskie ogłoszenia unijne idą przez e-Zamówienia; 678606-2026: UUID
+ * z TED = ocds z linku do dokumentów). Postępowanie prowadzone poza platformą → pusta lista plików, nie błąd.
+ */
+export function idPostepowaniaEz(tender) {
+  const id = String(tender?.postepowanie_id ?? '');
+  if (czyIdPostepowania(id)) return id;
+  if (tender?.source === 'ted' && UUID.test(id)) return `ocds-148610-${id}`;
+  return null;
+}
+
 export function linkPobrania(postepowanieId, dokumentId) {
   if (!czyIdPostepowania(postepowanieId) || !ID_DOKUMENTU.test(String(dokumentId ?? ''))) return null;
   return `${BAZA_API}/Tender/DownloadDocument/${postepowanieId}/${dokumentId}`;

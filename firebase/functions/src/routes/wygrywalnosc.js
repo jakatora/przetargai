@@ -15,7 +15,7 @@ import { features } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { zapytajModulPrzetargowy, wywolajModulPrzetargowy } from '../services/mostRailway.js';
 import { dokumentyPrzetargu, wybierzSwz, pobierzPdfBase64 } from '../jobs/autoAnalizaSwz.js';
-import { pobierzDokumenty as pobierzDokumentyEz, czyIdPostepowania } from '../services/eZamowieniaDokumenty.js';
+import { pobierzDokumenty as pobierzDokumentyEz, idPostepowaniaEz } from '../services/eZamowieniaDokumenty.js';
 import { zbudujChecklisteOferty } from '../lib/checklistaOferty.js';
 import { zbudujKalendarz } from '../lib/kalendarzPrzetargu.js';
 import { zbudujKarteStartu, kluczeBenchmarku, rozstrzygniecieTegoPostepowania } from '../services/kartaStartu.js';
@@ -148,8 +148,8 @@ export const LIMIT_PYTAN_SWZ_DARMOWY = 3;
 
 async function postepowanieZTrescia(user, tender) {
   let dokumenty = dokumentyPrzetargu(tender);
-  if (!dokumenty.length && tender.source === 'bzp' && czyIdPostepowania(tender.postepowanie_id)) {
-    dokumenty = await pobierzDokumentyEz(tender.postepowanie_id);
+  if (!dokumenty.length && idPostepowaniaEz(tender)) {
+    dokumenty = await pobierzDokumentyEz(idPostepowaniaEz(tender));
     await tenders.zapiszDokumentyEz(tender.id, dokumenty);
   }
   const swz = wybierzSwz(dokumenty);

@@ -15,7 +15,7 @@ const proste = (k) => k?.lista.map((c) => [c.nazwa, c.waga, c.rodzaj]) ?? null;
 
 test('procenty: „waga N%”, „– N %” z przelicznikiem pkt, nazwy bez numeracji i oznaczeń (C)', () => {
   assert.deepEqual(proste(parsujKryteriaSwz([F.pz_1393678])), [
-    ['cena ofertowa brutto', 80, 'cena'], ['Doświadczenie pracowników', 10, 'doswiadczenie'], ['Obniżenie składki PEFRON', 10, 'inne']]);
+    ['cena ofertowa brutto', 80, 'cena'], ['Doświadczenie pracowników', 10, 'doswiadczenie'], ['Obniżenie składki PEFRON', 10, 'spoleczne']]);
   assert.deepEqual(proste(parsujKryteriaSwz([F.pz_1393429])), [['CENA OFERTY BRUTTO', 60, 'cena'], ['OKRES GWARANCJI', 40, 'gwarancja']]);
   assert.deepEqual(proste(parsujKryteriaSwz([F.pz_1384519])), [['Cena', 60, 'cena'], ['Okres gwarancji', 40, 'gwarancja']]);
 });

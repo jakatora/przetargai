@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { czyIdPostepowania, linkPobrania, normalizujDokumenty, czySwz, pobierzDokumenty, BAZA_API } from '../src/services/eZamowieniaDokumenty.js';
+import { czyIdPostepowania, idPostepowaniaEz, linkPobrania, normalizujDokumenty, czySwz, pobierzDokumenty, BAZA_API } from '../src/services/eZamowieniaDokumenty.js';
 
 const ID = 'ocds-148610-16f1c19e-be85-4853-82f5-171345acf01b';
 // Odpowiedź GetTenderDocuments z sondy 26.10.2026 (skrót).
@@ -74,4 +74,14 @@ test('pobierzDokumenty: zerwane żądanie (abort / błąd sieci) ponawia JEDEN r
   const siec = Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNRESET' } });
   await pobierzDokumenty(ID, { czekaj: bezCzekania, fetchFn: async () => { n++; if (n === 1) throw siec; return { ok: true, json: async () => [] }; } });
   assert.equal(n, 2, 'błąd sieci też ponawiany');
+});
+
+test('idPostepowaniaEz: BZP wprost, TED z UUID procedury + przedrostek ocds, reszta null', () => {
+  const ocds = 'ocds-148610-7e43b893-e15b-4cdb-ac94-dcbf13c57990';
+  assert.equal(idPostepowaniaEz({ source: 'bzp', postepowanie_id: ocds }), ocds);
+  assert.equal(idPostepowaniaEz({ source: 'ted', postepowanie_id: '7e43b893-e15b-4cdb-ac94-dcbf13c57990' }), ocds);
+  assert.equal(idPostepowaniaEz({ source: 'bzp', postepowanie_id: '7e43b893-e15b-4cdb-ac94-dcbf13c57990' }), null);
+  assert.equal(idPostepowaniaEz({ source: 'ted', postepowanie_id: '2026/S 123-456789' }), null);
+  assert.equal(idPostepowaniaEz({ source: 'platformazakupowa', postepowanie_id: null }), null);
+  assert.equal(idPostepowaniaEz(null), null);
 });

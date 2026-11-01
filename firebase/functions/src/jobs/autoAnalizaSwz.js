@@ -38,11 +38,12 @@ export const LIMIT_ANALIZY_MS = 240_000;
  * Adres pliku pochodzi z cudzej strony, więc pobieramy WYŁĄCZNIE z tych domen.
  */
 export const DOZWOLONE_HOSTY = /^https:\/\/([a-z0-9-]+\.)*(ezamowienia\.gov\.pl|platformazakupowa\.pl)\//i;
-export const ZRODLA_AUTO_SWZ = new Set(['bzp', 'platformazakupowa']);
+export const ZRODLA_AUTO_SWZ = new Set(['bzp', 'ted', 'platformazakupowa']);
 
 /** Dokumenty przetargu w jednym kształcie (`nazwa`, `plik`, `rozszerzenie`, `url`, `rozmiar_kb?`). */
 export function dokumentyPrzetargu(tender) {
-  if (tender?.source === 'bzp') return Array.isArray(tender.ez_dokumenty) ? tender.ez_dokumenty : [];
+  // TED (2026-11-01): ogłoszenia unijne z Polski — te same pliki z e-Zamówień (`idPostepowaniaEz`).
+  if (tender?.source === 'bzp' || tender?.source === 'ted') return Array.isArray(tender.ez_dokumenty) ? tender.ez_dokumenty : [];
   if (tender?.source === 'platformazakupowa') {
     return (tender.pz_szczegol?.zalaczniki ?? []).filter((z) => z?.url).map((z) => {
       const nazwa = String(z.nazwa ?? '');

@@ -139,7 +139,7 @@ export function alertNowychDokumentow({ tender, nowe, zapisany = true, otwarcie 
       tytul: tender.title ?? null,
       organizacja: tender.organization ?? null,
       deadline: tender.deadline ?? null,
-      zrodlo: 'bzp',
+      zrodlo: tender.source ?? 'bzp',
     }],
   };
 }

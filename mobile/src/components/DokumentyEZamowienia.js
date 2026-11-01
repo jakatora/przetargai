@@ -15,14 +15,15 @@ import { swzZZalacznikow, parametryRadaruZPlatformy } from '../lib/zalacznikiPla
  * dopasowań; w pozostałych przypadkach jedno dotknięcie. SWZ w PDF otwiera Radar SWZ, który pobiera
  * plik sam — użytkownik nie szuka specyfikacji i nic nie wgrywa. Postępowanie prowadzone poza
  * platformą = pusta lista (SWZ jest wtedy na stronie zamawiającego — link „Oryginał” wyżej).
- * Pokazuje się tylko dla `source === 'bzp'` z `postepowanie_id`.
+ * Pokazuje się dla BZP i TED z `postepowanie_id` (2026-11-01: ogłoszenie unijne z Polski ma ten sam
+ * identyfikator na e-Zamówieniach; prowadzone poza platformą = pusta lista).
  */
 export default function DokumentyEZamowienia({ tender, navigation }) {
   const styles = useStyle(tworzStyleDokumentow);
   const { t } = useJezyk();
   const [stan, setStan] = useState({ laduje: false, dokumenty: Array.isArray(tender?.ez_dokumenty) ? tender.ez_dokumenty : null, blad: null });
   const kod = tender?.zrodlo?.kod ?? tender?.source;
-  if (kod !== 'bzp' || !tender?.id || !tender?.postepowanie_id) return null;
+  if ((kod !== 'bzp' && kod !== 'ted') || !tender?.id || !tender?.postepowanie_id) return null;
 
   async function pobierz() {
     setStan({ laduje: true, dokumenty: null, blad: null });

@@ -17,7 +17,7 @@ import { backfillUser, generateMatchesForAllUsers } from './matching.js';
 import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from './platformaZakupowa.js';
 import { kryteriaZSwzPz } from './kryteriaSwzPz.js';
-import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, czyIdPostepowania } from './eZamowieniaDokumenty.js';
+import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, idPostepowaniaEz } from './eZamowieniaDokumenty.js';
 
 /** Ile szczegółów platformazakupowa.pl dociągamy w JEDNYM przebiegu (żądania do obcego serwisu). */
 export const MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG = 10;
@@ -162,10 +162,10 @@ export async function pracujDlaUzytkownika(user, pool, {
     // Radar SWZ bez szukania pliku. Błąd = cicho, przycisk na ekranie dociągnie później.
     // `ez_dokumenty_blad`: znacznik W PAMIĘCI tego przebiegu — ogłoszenie z puli jest wspólne dla klientów,
     // więc po nieudanym pobraniu kolejny klient nie pali budżetu na to samo (logi 27.10: 3× ten sam id).
-    if (tender.source === 'bzp' && czyIdPostepowania(tender.postepowanie_id) && !Array.isArray(tender.ez_dokumenty) && !tender.ez_dokumenty_blad && budzetDokumentowEz.pozostalo > 0) {
+    if (idPostepowaniaEz(tender) && !Array.isArray(tender.ez_dokumenty) && !tender.ez_dokumenty_blad && budzetDokumentowEz.pozostalo > 0) {
       budzetDokumentowEz.pozostalo--;
       try {
-        const dokumenty = await dokumentyEz(tender.postepowanie_id);
+        const dokumenty = await dokumentyEz(idPostepowaniaEz(tender));
         if (Array.isArray(dokumenty)) {
           tender.ez_dokumenty = dokumenty;
           await tenders.zapiszDokumentyEz(tender.id, dokumenty, teraz);

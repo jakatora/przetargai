@@ -3,7 +3,7 @@ import { nowIso } from '../lib/ids.js';
 import { saved, tenders, alerty, users } from '../db/repos.js';
 import { sendPush } from '../services/push.js';
 import { sendEmail } from '../services/email.js';
-import { pobierzDokumenty, czyIdPostepowania } from '../services/eZamowieniaDokumenty.js';
+import { pobierzDokumenty, idPostepowaniaEz } from '../services/eZamowieniaDokumenty.js';
 import { noweDokumenty, alertNowychDokumentow, podsumowanieZmian, rodzajDokumentu } from '../lib/noweDokumenty.js';
 import { parsujOtwarcie, scalOtwarcie } from '../lib/otwarcieOfert.js';
 import { parsujWyborOferty, scalWybor } from '../lib/wyborOferty.js';
@@ -66,7 +66,7 @@ export async function runMonitorDokumentow({
   // Najpierw przetargi z Zapisanych, potem najdawniej sprawdzane.
   const maZapis = (id) => (poPrzetargu.get(id) ?? []).some((w) => w.zapisany);
   const kandydaci = (await tenders.stanMonitoraDokumentow([...poPrzetargu.keys()]))
-    .filter((t) => czyIdPostepowania(t.postepowanie_id))
+    .filter((t) => idPostepowaniaEz(t))
     .sort((a, b) => Number(maZapis(b.id)) - Number(maZapis(a.id))
       || String(a.ez_monitor?.sprawdzone_o ?? '').localeCompare(String(b.ez_monitor?.sprawdzone_o ?? '')));
   wynik.przetargow = kandydaci.length;
@@ -81,7 +81,7 @@ export async function runMonitorDokumentow({
     if (Date.now() - start > budzetMs) break;
     let dokumenty;
     try {
-      dokumenty = await pobierz(t.postepowanie_id);
+      dokumenty = await pobierz(idPostepowaniaEz(t));
     } catch (err) {
       wynik.bledy_platformy += 1;
       logger.warn({ err: err.message, tenderId: t.id }, 'Monitoring dokumentów: e-Zamówienia nie odpowiedziały — wróci w następnym przebiegu');

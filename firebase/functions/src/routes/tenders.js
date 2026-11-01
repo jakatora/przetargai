@@ -9,7 +9,7 @@ import { pobierzZakresDanych, pobierzZnacznikiZrodel } from '../services/zakresZ
 import { WOJEWODZTWA } from '../lib/wojewodztwa.js';
 import { notFound } from '../lib/errors.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from '../services/platformaZakupowa.js';
-import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, czyIdPostepowania } from '../services/eZamowieniaDokumenty.js';
+import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, idPostepowaniaEz } from '../services/eZamowieniaDokumenty.js';
 import {
   ZRODLA, SORTOWANIA, STATUSY_TERMINU, LIMIT_MAKS,
   normalizujFiltry, odciskFiltrow, kodujKursor, dekodujKursor, opisFiltrow,
@@ -160,15 +160,16 @@ router.post('/:id/szczegol-platformy', ah(async (req, res) => {
 router.post('/:id/dokumenty-ezamowienia', ah(async (req, res) => {
   const tender = await tenders.findById(req.params.id);
   if (!tender) throw notFound('Ogłoszenie nie zostało znalezione');
-  if (tender.source !== 'bzp') throw badRequest('To ogłoszenie nie pochodzi z BZP / e-Zamówień');
-  if (!czyIdPostepowania(tender.postepowanie_id)) throw badRequest('Ogłoszenie nie ma identyfikatora postępowania na e-Zamówieniach');
+  // BZP i TED (2026-11-01): ogłoszenie unijne z Polski ma ten sam identyfikator postępowania bez przedrostka.
+  const idEz = idPostepowaniaEz(tender);
+  if (!idEz) throw badRequest('Ogłoszenie nie ma identyfikatora postępowania na e-Zamówieniach');
   const teraz = nowIso();
   const swiezy = Array.isArray(tender.ez_dokumenty) && tender.ez_dokumenty_o && (Date.parse(teraz) - Date.parse(tender.ez_dokumenty_o)) < CACHE_SZCZEGOLU_PZ_MS;
   if (swiezy) {
     res.json({ dokumenty: tender.ez_dokumenty, pobrano_o: tender.ez_dokumenty_o, cached: true });
     return;
   }
-  const dokumenty = await pobierzDokumentyEz(tender.postepowanie_id);
+  const dokumenty = await pobierzDokumentyEz(idEz);
   await tenders.zapiszDokumentyEz(tender.id, dokumenty, teraz);
   res.json({ dokumenty, pobrano_o: teraz, cached: false });
 }));
