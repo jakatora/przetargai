@@ -84,6 +84,8 @@ test('wadium z SWZ: kwota z walutą albo z groszami, „nie wymaga”, bez słow
   assert.deepEqual(parsujWadiumSwz(['Dla części 1 Zamawiający nie wymaga wniesienia wadium. Dla części 2 Wykonawca zobowiązany jest wnieść wadium w wysokości 4 000,00 zł.']), { wymagane: null, kwota: null, sprzeczne: true });
   assert.deepEqual(parsujWadiumSwz(['XV. WADIUM Zamawiający wymaga wniesienia wadium w kwocie 2 500,00 zł. … § 9 Zamawiający nie przewiduje obowiązku wniesienia wadium przy zamówieniach dodatkowych.']), { wymagane: null, kwota: null, sprzeczne: true });
   assert.deepEqual(parsujWadiumSwz(['Zamawiający nie wymaga od Wykonawców wniesienia wadium.']), { wymagane: false, kwota: null });
+  // SWZ z prod (pz:1390119): dwa zaprzeczenia to nie konflikt — „nie jest zabezpieczona wadium” nie jest wymogiem.
+  assert.deepEqual(parsujWadiumSwz(['XII Wymagania dotyczące wadium. Zamawiający nie wymaga wniesienia wadium. XIII Termin związania ofertą. … 4. Oferta nie jest zabezpieczona wadium. 5. Treść oferty']), { wymagane: false, kwota: null });
 });
 
 test('daneZSwzPz: jedno pobranie, kryteria i wadium z tego samego tekstu', async () => {

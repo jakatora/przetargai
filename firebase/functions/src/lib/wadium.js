@@ -50,7 +50,7 @@ export function parsujWadium(htmlBody) {
  * `wymagane: null` (nie wiemy). Zmierzone na 14 SWZ z platformy (1.11): 13 rozpoznanych, kwoty zgodne z treścią.
  * @param {string[]|string} linie tekst SWZ
  */
-const NIE_WYMAGA = /nie\s+wymaga\s+(?:od\s+wykonawc\S*\s+)?(?:wniesienia|złożenia|składania|wnoszenia)?\s*wadium|wadium\s+nie\s+jest\s+wymagane|nie\s+przewiduje\s+(?:obowiązku\s+)?(?:wniesienia\s+)?wadium|odstępuje\s+od\s+(?:żądania\s+)?wadium/i;
+const NIE_WYMAGA = /nie\s+wymaga\s+(?:od\s+wykonawc\S*\s+)?(?:wniesienia|złożenia|składania|wnoszenia)?\s*wadium|wadium\s+nie\s+jest\s+wymagane|nie\s+jest\s+zabezpieczon\S*\s+wadium|nie\s+przewiduje\s+(?:obowiązku\s+)?(?:wniesienia\s+)?wadium|odstępuje\s+od\s+(?:żądania\s+)?wadium/i;
 const WYMAGA = /wymaga\s+(?:od\s+wykonawc\S*\s+)?(?:wniesienia|złożenia|składania|wnoszenia)\s+wadium|wadium\s+w\s+(?:wysoko\S+|kwocie)|wadium\s+wynosi|zabezpieczon\S*\s+wadium|zabezpieczenia\s+(?:swojej\s+)?oferty\s+wadium|wnieść\s+wadium/i;
 const KWOTA_WADIUM = /(?<![\d/])(\d{1,3}(?:[\s.]?\d{3})*|\d+)(,\d{2})?(?![\d/])\s*(zł|PLN|złotych)?/gi;
 
