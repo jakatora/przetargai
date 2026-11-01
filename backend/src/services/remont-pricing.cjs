@@ -28275,6 +28275,22 @@ function parseCatalogRefreshIdentity(value2) {
   return x;
 }
 
+// artifacts/api-server/src/lib/catalog-refresh-offers.ts
+function catalogRefreshOffers(sources, observations, activeIds, confirmedIds, history) {
+  const selected = sources.filter((s) => activeIds.has(s.id) && confirmedIds.includes(s.id) && observations.has(s.id));
+  const current2 = new Map(selected.map((s) => {
+    const o = observations.get(s.id);
+    return [s.id, { priceGrosze: o.priceGrosze, observedAt: o.observedAt }];
+  }));
+  const series = history.response(selected, current2)?.series ?? [];
+  return selected.map((s) => {
+    const o = observations.get(s.id), record2 = series.find((row) => row.offerId === s.id && row.stats.current === o.priceGrosze && row.history.at(-1)?.fetchedAt === o.observedAt);
+    const point2 = record2 && record2.stats.previousGrosze !== null ? record2.history.at(-2) : void 0;
+    const previous = point2 ? { priceGrosze: point2.priceGrosze, checkedAt: point2.fetchedAt } : null;
+    return { offerId: s.id, store: s.store, sourceUrl: s.url, currency: "PLN", packageSize: s.packageSize, unit: s.unit, priceGrosze: o.priceGrosze, checkedAt: o.observedAt, previous, deltaGrosze: previous ? record2.stats.deltaGrosze : null };
+  }).sort((a, b) => a.priceGrosze - b.priceGrosze || a.store.localeCompare(b.store) || a.offerId.localeCompare(b.offerId));
+}
+
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
@@ -28526,8 +28542,9 @@ function createRemontService(options = {}) {
     }
     try {
       const refresh2 = await refreshProjectSources(sources);
+      const current2 = catalog();
       res.setHeader("Cache-Control", "no-store");
-      res.json({ version: 1, identity, refresh: refresh2, availability: catalogAvailability(RETAIL_SOURCES, catalog().offers, observations) });
+      res.json({ version: 1, identity, refresh: refresh2, availability: catalogAvailability(RETAIL_SOURCES, current2.offers, observations), offers: catalogRefreshOffers(sources, observations, new Set(current2.offers.filter((o) => isComparableOffer(o)).map((o) => o.id)), refresh2.confirmedOfferIds, history) });
     } catch {
       res.status(503).json({ error: "catalog_product_refresh_unavailable" });
     }
