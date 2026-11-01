@@ -9,10 +9,12 @@
  */
 
 const REGULY = [
+  ['termin', /zmian\w*\s+termin|przed[łl]u[żz]eni\w*\s+termin|nowy\s+termin\s+sk[łl]adani/i],
   ['otwarcie', /otwarci|kwot\w*\s+(?:jak[aą]|przeznacz)|zestawieni\w*\s+ofert/i],
   ['rozstrzygniecie', /wyb[oó]r\w*\s+(?:najkorzystniejsz|oferty)|rozstrzygni|uniewa[żz]ni|uniewazni/i],
   ['wyjasnienia', /wyja[śs]nie|odpowied|pyta[nń]/i],
   ['zmiana', /zmian|modyfikac|sprostow|korekt|aktualizac|nowa\s+wersj|po\s+zmianie/i],
+  ['informacja', /informacj\w*\s+(?:nr|dla\s+wykonawc|zamawiaj)|komunikat|do\s+wszystkich\s+(?:wykonawc|oferent)/i],
 ];
 
 /** Rodzaj dokumentu po nazwie: wyjaśnienia, zmiana SWZ, otwarcie ofert, rozstrzygnięcie albo inne. */
@@ -35,17 +37,23 @@ export function noweDokumenty(dokumenty, { znane = null, zapisanoO = null } = {}
     return lista.filter((d) => !zbior.has(d.id));
   }
   if (!zapisanoO) return [];
-  return lista.filter((d) => d.opublikowano && String(d.opublikowano) > String(zapisanoO));
+  // Pierwszy odczyt (1.11 na produkcji): SWZ i załączniki dodane na platformę po ogłoszeniu to nie
+  // nowość dla wykonawcy, tylko zwykła dokumentacja — z tego okna bierzemy wyłącznie ważne rodzaje.
+  return lista.filter((d) => d.opublikowano && String(d.opublikowano) > String(zapisanoO) && WAZNE.has(rodzajDokumentu(d)));
 }
 
+const WAZNE = new Set(['termin', 'zmiana', 'wyjasnienia', 'otwarcie', 'rozstrzygniecie', 'informacja']);
+
 const OPIS_RODZAJU = {
+  termin: { pl: 'zmianę terminu składania ofert', en: 'a new bid deadline' },
+  informacja: { pl: 'komunikat dla wykonawców', en: 'a notice to bidders' },
   wyjasnienia: { pl: 'wyjaśnienia treści SWZ', en: 'clarifications of the tender documents' },
   zmiana: { pl: 'zmianę dokumentów', en: 'a change to the tender documents' },
   otwarcie: { pl: 'informację z otwarcia ofert', en: 'the bid opening report' },
   rozstrzygniecie: { pl: 'informację o wyborze oferty', en: 'the award decision' },
   inne: { pl: 'nowe pliki', en: 'new files' },
 };
-const KOLEJNOSC = ['zmiana', 'wyjasnienia', 'otwarcie', 'rozstrzygniecie', 'inne'];
+const KOLEJNOSC = ['termin', 'zmiana', 'wyjasnienia', 'informacja', 'otwarcie', 'rozstrzygniecie', 'inne'];
 
 /**
  * Alert do centrum alertów + push. Klucz = przetarg × najnowszy nowy dokument — ten sam stan
@@ -56,7 +64,7 @@ const KOLEJNOSC = ['zmiana', 'wyjasnienia', 'otwarcie', 'rozstrzygniecie', 'inne
 export function alertNowychDokumentow({ tender, nowe, zapisany = true }) {
   if (!tender?.id || !nowe?.length) return null;
   const rodzaje = [...new Set(nowe.map(rodzajDokumentu))].sort((a, b) => KOLEJNOSC.indexOf(a) - KOLEJNOSC.indexOf(b));
-  const pilne = rodzaje.includes('zmiana') || rodzaje.includes('wyjasnienia');
+  const pilne = rodzaje.includes('termin') || rodzaje.includes('zmiana') || rodzaje.includes('wyjasnienia');
   const lista = (jez) => rodzaje.map((r) => OPIS_RODZAJU[r][jez]).join(', ');
   const nazwy = nowe.slice(0, 3).map((d) => d.nazwa).filter(Boolean).join(' · ');
   const tytul = String(tender.title ?? 'przetarg').slice(0, 90);

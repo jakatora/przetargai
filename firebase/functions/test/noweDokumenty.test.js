@@ -35,3 +35,14 @@ test('alert: zmiana i wyjaśnienia są pilne, otwarcie ofert — „zobacz ceny 
   assert.match(o.tresc.pl, /informację z otwarcia ofert \(1\)\. Zobacz, jakie ceny dali konkurenci\./);
   assert.equal(alertNowychDokumentow({ tender, nowe: [] }), null);
 });
+
+test('produkcja 1.11: zmiana terminu i komunikaty osobno; pierwszy odczyt bez zwykłej dokumentacji (SWZ, załączniki)', () => {
+  const r = (nazwa) => rodzajDokumentu({ nazwa });
+  assert.deepEqual(['Zmiana treści SWZ oraz Zmiana terminu sładania ofert', 'Przedłużenie terminu składania ofert', 'Informacja nr 1 dla Wykonawców', 'Informacja Zamawiającego (1) o nieobowiązkowej wizji lokalnej'].map(r), ['termin', 'termin', 'informacja', 'informacja']);
+  const pozniej = new Date(Date.now() + 60_000).toISOString();
+  const dok = [{ id: 'd_1', nazwa: 'SWZ', opublikowano: pozniej }, { id: 'd_2', nazwa: 'załącznik nr 1', opublikowano: pozniej }, { id: 'd_3', nazwa: 'Zmiana terminu składania ofert', opublikowano: pozniej }];
+  assert.deepEqual(noweDokumenty(dok, { zapisanoO: new Date().toISOString() }).map((d) => d.id), ['d_3']);
+  assert.deepEqual(noweDokumenty(dok, { znane: [] }).map((d) => d.id), ['d_1', 'd_2', 'd_3'], 'przy znanej liście nowość to każdy nowy plik');
+  const a = alertNowychDokumentow({ tender: { id: 't' }, nowe: [dok[2]] });
+  assert.deepEqual([a.ton, a.tresc.pl.startsWith('Zamawiający opublikował zmianę terminu składania ofert (1).')], ['ostrzezenie', true]);
+});
