@@ -1074,6 +1074,28 @@ export const tenders = {
     return kryteriaBlizniaka(t, kand.docs.filter((d) => d.id !== id).map((d) => ({ id: d.id, ...d.data() })));
   },
 
+  /** Stan monitoringu dokumentów e-Zamówień (2026-11-01) dla wielu przetargów — jeden `getAll` po 300. */
+  async stanMonitoraDokumentow(ids) {
+    const unikalne = [...new Set((ids ?? []).filter(Boolean).map(String))];
+    const wynik = [];
+    for (let i = 0; i < unikalne.length; i += 300) {
+      const snapy = await db().getAll(...unikalne.slice(i, i + 300).map((id) => db().collection('tenders').doc(id)),
+        { fieldMask: ['postepowanie_id', 'source', 'title', 'organization', 'deadline', 'ez_monitor'] });
+      for (const snap of snapy) if (snap.exists) wynik.push({ id: snap.id, ...snap.data() });
+    }
+    return wynik;
+  },
+
+  /** Po sprawdzeniu: znane id plików + świeża lista dokumentów jako cache ekranu (jak `zapiszDokumentyEz`). */
+  async zapiszMonitorDokumentow(id, dokumenty, teraz = nowIso()) {
+    const lista = Array.isArray(dokumenty) ? dokumenty : [];
+    await db().collection('tenders').doc(id).update({
+      ez_monitor: { ids: lista.map((d) => d.id).slice(0, 300), sprawdzone_o: teraz },
+      ez_dokumenty: lista,
+      ez_dokumenty_o: teraz,
+    });
+  },
+
   /** Dokumenty postępowania z e-Zamówień (SWZ, załączniki z linkami) — cache 24 h przy ogłoszeniu (2026-10-26). */
   async zapiszDokumentyEz(id, dokumenty, teraz = nowIso()) {
     await db().collection('tenders').doc(id).update({ ez_dokumenty: Array.isArray(dokumenty) ? dokumenty : [], ez_dokumenty_o: teraz });
@@ -1768,6 +1790,42 @@ export const matches = {
 const savedCol = (userId) => db().collection('users').doc(userId).collection('saved');
 
 export const saved = {
+  /**
+   * Zapisane przetargi WSZYSTKICH kont z terminem od `od` (monitoring nowych dokumentów, 2026-11-01).
+   * Po kontach, nie collectionGroup: sam zakres po `tender_deadline` w grupie kolekcji wymagałby
+   * osobnego indeksu, a w kolekcji jednego konta mieści się w indeksie automatycznym.
+   * @returns {Promise<{userId: string, tenderId: string, saved_at: string|null}[]>}
+   */
+  async otwarteWszystkich(od) {
+    const konta = await db().collection('users').select().get();
+    const wynik = [];
+    for (const konto of konta.docs) {
+      const snap = await savedCol(konto.id).where('tender_deadline', '>=', od).select('tender_id', 'saved_at').get();
+      for (const d of snap.docs) wynik.push({ userId: konto.id, tenderId: d.get('tender_id') ?? d.id, saved_at: d.get('saved_at') ?? null });
+    }
+    return wynik;
+  },
+
+  /**
+   * Najlepiej dopasowane OTWARTE przetargi z feedu każdego konta (wynik ≥ `minWynik`, do `naKonto`) —
+   * leniwy użytkownik nie zapisuje, tylko przegląda listę, a wyjaśnienia SWZ dotyczą i jego (2026-11-01).
+   * @returns {Promise<{userId: string, tenderId: string, saved_at: string|null}[]>}
+   */
+  async najlepszeDopasowaniaWszystkich(teraz, { minWynik = 80, naKonto = 10 } = {}) {
+    const konta = await db().collection('users').select().get();
+    const wynik = [];
+    for (const konto of konta.docs) {
+      const snap = await matchCol(konto.id).where('tender_deadline', '>=', teraz).select('tender_id', 'confidence_score', 'created_at').get();
+      snap.docs
+        .map((d) => ({ tenderId: d.get('tender_id') ?? d.id, wynik: Number(d.get('confidence_score')) || 0, od: d.get('created_at') ?? null }))
+        .filter((m) => m.wynik >= minWynik)
+        .sort((x, y) => y.wynik - x.wynik)
+        .slice(0, naKonto)
+        .forEach((m) => wynik.push({ userId: konto.id, tenderId: m.tenderId, saved_at: m.od }));
+    }
+    return wynik;
+  },
+
   /**
    * Zapisuje przetarg do „Zapisanych" — kopiuje zdenormalizowane pola z dopasowania,
    * żeby lista renderowała się bez JOIN-a (tak jak feed). docId = tenderId, więc

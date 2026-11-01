@@ -53,6 +53,8 @@ export function celPush(data) {
     case 'plan_ogloszony':
     // Radar umów (2026-11-01): „Twoja umowa wraca do przetargu" — zamawiający ogłosił jej następcę.
     case 'umowa_nastepca':
+    // Nowe dokumenty w zapisanym przetargu (2026-11-01): wyjaśnienia i zmiany SWZ z e-Zamówień.
+    case 'nowe_dokumenty':
       return {
         ekran: 'CentrumAlertow',
         params: data.klucz ? { podswietlKlucz: String(data.klucz) } : {},

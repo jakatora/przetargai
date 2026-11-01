@@ -220,6 +220,13 @@ router.post('/umowy-wygasajace', ah(async (req, res) => {
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
+/** Monitoring nowych dokumentów w Zapisanych i czołówce feedu (2026-11-01) — ręczny przebieg, jak co 2 h. */
+router.post('/monitor-dokumentow', ah(async (req, res) => {
+  const { runMonitorDokumentow } = await import('../jobs/monitorDokumentow.js');
+  const wynik = await runMonitorDokumentow();
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
 router.post('/benchmark', ah(async (req, res) => {
   const wynik = await runBenchmarkRynku();
   res.json(wynik);

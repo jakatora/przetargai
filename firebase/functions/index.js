@@ -468,6 +468,12 @@ export const monitorWyszukiwan = onSchedule(
       throw new Error(`monitorPlanow: ${plany.bledy} obserwacji planów zakończyło się błędem`);
     }
 
+    // Nowe dokumenty w Zapisanych (2026-11-01): wyjaśnienia i zmiany SWZ z e-Zamówień. Awaria platformy nie jest
+    // błędem przebiegu (wróci za 2 h) — rzucamy tylko przy błędzie zapisu, jak przy planach.
+    const { runMonitorDokumentow } = await import('./src/jobs/monitorDokumentow.js');
+    const dokumenty = await runMonitorDokumentow().catch((err) => ({ ok: false, bledy: 1, error: err.message }));
+    console.log(JSON.stringify({ severity: dokumenty.ok ? 'INFO' : 'ERROR', message: 'monitorDokumentow zakończony', ...dokumenty }));
+
     if (!wynik.ok) {
       /*
        * Rzucamy, żeby Cloud Scheduler odnotował NIEPOWODZENIE i ponowił przebieg.
