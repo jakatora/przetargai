@@ -240,6 +240,13 @@ router.post('/otwarcie-rynku', ah(async (req, res) => {
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
+/** Województwo z nazwy zamawiającego dla PZ/ePP (2026-11-01); `przebuduj: true` = najpierw nowa mapa z BZP. */
+router.post('/wojewodztwa-zamawiajacych', ah(async (req, res) => {
+  const { runWojewodztwaZamawiajacych, runMapaZamawiajacych } = await import('../jobs/wojewodztwaZamawiajacych.js');
+  const przebudowa = req.body?.przebuduj === true ? await runMapaZamawiajacych() : null;
+  res.json({ przebudowa, ...(await runWojewodztwaZamawiajacych()) });
+}));
+
 /** Ręczne przeliczenie benchmarku „ile dać” (kubełki `otw:`). */
 router.post('/benchmark-otwarcia', ah(async (req, res) => {
   const { runBenchmarkOtwarcia } = await import('../jobs/otwarcieRynku.js');

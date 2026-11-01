@@ -274,6 +274,31 @@ export const eppOknoFetch = onSchedule(
 );
 
 /**
+ * Województwo z nazwy zamawiającego dla platformazakupowa i e-ProPublico (2026-11-01,
+ * `src/jobs/wojewodztwaZamawiajacych.js`) — codziennie 03:40; mapa z BZP przebudowywana co 7 dni.
+ */
+export const wojewodztwaZamFetch = onSchedule(
+  {
+    maxInstances: 3,
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '40 3 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 540,
+    memory: '1GiB',
+    secrets: [JWT_SECRET],
+  },
+  async () => {
+    const { runWojewodztwaZamawiajacych } = await import('./src/jobs/wojewodztwaZamawiajacych.js');
+    const wynik = await runWojewodztwaZamawiajacych();
+    if (!wynik.ok) {
+      console.error(JSON.stringify({ severity: 'ERROR', message: 'wojewodztwaZamFetch NIE POWIÓDŁ SIĘ', ...wynik }));
+      throw new Error('wojewodztwaZamFetch: błędy');
+    }
+    console.log(JSON.stringify({ severity: 'INFO', message: 'wojewodztwaZamFetch zakończony', ...wynik }));
+  },
+);
+
+/**
  * Informacja z otwarcia ofert dla całego rynku (2026-11-01, `src/jobs/otwarcieRynku.js`) — co 4 h o :50:
  * przetargi BZP/TED na e-Zamówieniach 6–72 h po terminie ofert, PDF z otwarcia → kwota, oferty, ceny.
  * Bez AI; każdy przetarg najwyżej 3 próby. Idempotencja: zapis to nadpisanie tych samych pól.

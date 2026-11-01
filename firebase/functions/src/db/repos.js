@@ -742,6 +742,8 @@ export const tenders = {
       // Wymiary do statystyk wyników (R17).
       rodzaj: t.rodzaj ?? null,
       wojewodztwo: t.wojewodztwo ?? null,
+      // PZ/ePP (2026-11-01): województwo wywnioskowane z nazwy zamawiającego, nie z danych źródła.
+      ...(t.wojewodztwo_z_nazwy ? { wojewodztwo_z_nazwy: true } : {}),
       // Warunki udziału (spec §6.1) — wycinek ≤3000 znaków albo {tekst:null, zrodlo:'swz'}.
       warunki_udzialu: t.warunki_udzialu ?? null,
       /*
@@ -1140,6 +1142,18 @@ export const tenders = {
       await batch.commit();
     }
     return refy.length;
+  },
+
+  /** Otwarte przetargi (termin ≥ `od`) z polami do przypisania województwa po nazwie zamawiającego (2026-11-01). */
+  async otwarteDoWojewodztwa(od, { limit = 30_000 } = {}) {
+    const snap = await db().collection('tenders').where('deadline', '>=', od)
+      .select('source', 'organization', 'wojewodztwo').limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /** Województwo wywnioskowane z nazwy zamawiającego (PZ, ePP) — z oznaczeniem, że to szacunek, nie dane źródła. */
+  async ustawWojewodztwoZNazwy(id, wojewodztwo) {
+    await db().collection('tenders').doc(id).update({ wojewodztwo, wojewodztwo_z_nazwy: true });
   },
 
   /**
@@ -2773,6 +2787,37 @@ export const benchmarkRynku = {
 
 /** Klucze kubełków niosą `|` i `:` — w docId dozwolone, ale `/` już nie. */
 const benchmarkDocId = (klucz) => String(klucz).replaceAll('/', '_');
+
+/*
+ * Mapy „zamawiający → województwo” z BZP (2026-11-01, `lib/wojewodztwoZamawiajacego.js`) — trzy dokumenty `meta`
+ * (nazwy ~11 tys. wpisów, miasta, miejscowniki), każdy jako lista „klucz\twoj” (bezpieczniej niż mapa z kluczami
+ * z dowolnymi znakami). Wczytanie: 3 odczyty, pamięć instancji na 6 h.
+ */
+const DOK_MAP_ZAMAWIAJACYCH = { poNazwie: 'mapa_zam_nazwy', poMiescie: 'mapa_zam_miasta', poMiejscowniku: 'mapa_zam_miejscowniki' };
+let pamiecMapZamawiajacych = null;
+
+export const mapaZamawiajacych = {
+  async zapisz(mapy, teraz = nowIso()) {
+    for (const [pole, doc] of Object.entries(DOK_MAP_ZAMAWIAJACYCH)) {
+      const wpisy = [...(mapy[pole] ?? new Map())].map(([k, v]) => `${k}\t${v}`);
+      await db().collection('meta').doc(doc).set({ wpisy, liczba: wpisy.length, zbudowano_o: teraz });
+    }
+    pamiecMapZamawiajacych = { mapy, o: Date.now() };
+  },
+
+  /** @returns {Promise<{poNazwie: Map, poMiescie: Map, poMiejscowniku: Map, zbudowano_o: string|null}|null>} */
+  async wczytaj({ swiezoscMs = 6 * 3_600_000 } = {}) {
+    if (pamiecMapZamawiajacych && Date.now() - pamiecMapZamawiajacych.o < swiezoscMs) return pamiecMapZamawiajacych.mapy;
+    const snapy = await db().getAll(...Object.values(DOK_MAP_ZAMAWIAJACYCH).map((d) => db().collection('meta').doc(d)));
+    if (!snapy.every((s) => s.exists)) return null;
+    const mapy = { zbudowano_o: snapy[0].get('zbudowano_o') ?? null };
+    Object.keys(DOK_MAP_ZAMAWIAJACYCH).forEach((pole, i) => {
+      mapy[pole] = new Map((snapy[i].get('wpisy') ?? []).map((w) => { const t = String(w).lastIndexOf('\t'); return [w.slice(0, t), w.slice(t + 1)]; }));
+    });
+    pamiecMapZamawiajacych = { mapy, o: Date.now() };
+    return mapy;
+  },
+};
 
 /*
  * Radar wygasających umów (2026-10-31): gotowe kubełki dział CPV × województwo (i dział w kraju)
