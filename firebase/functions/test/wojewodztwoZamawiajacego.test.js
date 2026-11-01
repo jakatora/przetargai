@@ -43,6 +43,7 @@ test('przypisanie: dokładna nazwa, „Gmina X”, „… w X”; nieznane i dwu
 test('job: mapa starsza niż tydzień → przebudowa; województwo tylko PZ/ePP bez regionu, TED nietknięty', async () => {
   const mapy = { ...zbudujMapy(REKORDY), zbudowano_o: '2026-10-01T00:00:00.000Z' };
   const zapisy = [];
+  const kopie = [];
   let przebudowano = 0;
   const w = await runWojewodztwaZamawiajacych({
     teraz: Date.parse('2026-11-01T03:40:00Z'),
@@ -57,11 +58,13 @@ test('job: mapa starsza niż tydzień → przebudowa; województwo tylko PZ/ePP 
         { id: 'ted:5', source: 'ted', organization: 'Komenda Wojewódzka Policji w Łodzi', wojewodztwo: null },
       ],
       ustawWojewodztwaZNazwy: async (lista) => { zapisy.push(...lista.map((x) => [x.id, x.wojewodztwo])); return lista.length; },
+      wojewodztwoDoKopii: async (id, woj) => { kopie.push([id, woj]); return 2; },
     },
   });
   assert.equal(przebudowano, 1);
   assert.deepEqual(zapisy, [['pz:1', 'PL10'], ['epp:2', 'PL18']]);
-  assert.deepEqual([w.ok, w.kandydaci, w.przypisane], [true, 3, 2]);
+  assert.deepEqual([w.ok, w.kandydaci, w.przypisane, w.kopie], [true, 3, 2, 4]);
+  assert.deepEqual(kopie, [['pz:1', 'PL10'], ['epp:2', 'PL18']], 'województwo trafia też do kopii w feedach i Zapisanych');
 });
 
 test('nowa pozycja z listy: województwo z nazwy z oznaczeniem; bez mapy albo z regionem — bez zmian', () => {

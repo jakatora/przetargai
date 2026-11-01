@@ -88,3 +88,16 @@ test('zapiszSzczegolPz z daneSwz: wadium z SWZ na przetargu, kryteria z SWZ tylk
   await tenders.zapiszSzczegolPz(tender.id, { zalaczniki: [] }, undefined, { daneSwz: async () => ({ kryteria: null, wadium: { wymagane: null, kwota: null, sprzeczne: true } }) });
   assert.equal((await tenders.findById(tender.id)).wadium_wymagane, null);
 });
+
+test('wojewodztwoDoKopii: województwo nadane później trafia do dopasowań i Zapisanych tego przetargu', async () => {
+  const uid = `${ZNAK}-woj`;
+  const db = getFirestore();
+  await db.collection('users').doc(uid).set({ email: `${uid}@test.pl` });
+  const { tender } = await tenders.upsert({ ...baza(`pz:${ZNAK}-w`), source: 'platformazakupowa' });
+  const { match } = await matches.create({ userId: uid, tenderId: tender.id, score: 70, scorer: 'heuristic', tender });
+  await saved.add(uid, match);
+  assert.equal((await db.doc(`users/${uid}/matches/${tender.id}`).get()).get('tender_wojewodztwo'), null);
+  assert.equal(await tenders.wojewodztwoDoKopii(tender.id, 'PL18'), 2);
+  assert.equal((await db.doc(`users/${uid}/matches/${tender.id}`).get()).get('tender_wojewodztwo'), 'PL18');
+  assert.equal((await db.doc(`users/${uid}/saved/${tender.id}`).get()).get('tender_wojewodztwo'), 'PL18');
+});

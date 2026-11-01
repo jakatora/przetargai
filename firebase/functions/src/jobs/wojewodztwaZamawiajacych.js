@@ -16,6 +16,8 @@ import { nauczModel, przewidzDzial, modelDoTekstu, modelZTekstu } from '../lib/d
  */
 export const ZRODLA_BEZ_REGIONU = new Set(['platformazakupowa', 'epropublico']);
 export const SWIEZOSC_MAPY_DNI = 7;
+/** Ile przetargów z nowo nadanym województwem przenosi je do kopii w jednym przebiegu (2 zapytania na przetarg). */
+export const MAKS_KOPII_NA_PRZEBIEG = 300;
 
 /** Przebudowa mapy i modelu z BZP: rozstrzygnięcia z `dni` (strony po 1000) + otwarte ogłoszenia BZP. */
 export async function runMapaZamawiajacych({
@@ -83,6 +85,12 @@ export async function runWojewodztwaZamawiajacych({
   }
   try {
     await przetargi.ustawWojewodztwaZNazwy(doZapisu);
+    // Kopie powstałe, zanim przetarg miał województwo (1.11 było ich 110 na 32 kontach) — karta listy czyta kopię.
+    // Nowe pozycje list dostają województwo przy wczytaniu, więc tu zwykle zostaje garść; sufit na przebieg.
+    wynik.kopie = 0;
+    for (const z of doZapisu.filter((x) => x.wojewodztwo).slice(0, MAKS_KOPII_NA_PRZEBIEG)) {
+      wynik.kopie += await przetargi.wojewodztwoDoKopii(z.id, z.wojewodztwo);
+    }
   } catch (err) {
     wynik.bledy += 1;
     logger.warn({ err: err.message, ile: doZapisu.length }, 'Województwo/dział z nazwy: zapis nie powiódł się');

@@ -1184,6 +1184,21 @@ export const tenders = {
     return lista.length;
   },
 
+  /** Województwo nadane później (z nazwy) także do kopii w feedach i Zapisanych — karta listy czyta kopię. */
+  async wojewodztwoDoKopii(id, wojewodztwo) {
+    const [zapisane, dopasowania] = await Promise.all([
+      db().collectionGroup('saved').where('tender_id', '==', id).select().get(),
+      db().collectionGroup('matches').where('tender_id', '==', id).select().get(),
+    ]);
+    const refy = [...zapisane.docs, ...dopasowania.docs].map((d) => d.ref);
+    for (let i = 0; i < refy.length; i += 400) {
+      const batch = db().batch();
+      for (const ref of refy.slice(i, i + 400)) batch.update(ref, { tender_wojewodztwo: wojewodztwo });
+      await batch.commit();
+    }
+    return refy.length;
+  },
+
   /**
    * Przetargi BZP/TED z terminem ofert w [od, do] — kandydaci do odczytu informacji z otwarcia ofert dla całego
    * rynku (2026-11-01, `jobs/otwarcieRynku.js`). Tylko pola potrzebne jobowi; indeks jednopolowy `deadline`.
