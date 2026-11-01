@@ -16,7 +16,7 @@ import { ocenDlaKlienta, porownajWarunki } from './ai.js';
 import { backfillUser, generateMatchesForAllUsers } from './matching.js';
 import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from './platformaZakupowa.js';
-import { kryteriaZSwzPz } from './kryteriaSwzPz.js';
+import { daneZSwzPz } from './kryteriaSwzPz.js';
 import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, idPostepowaniaEz } from './eZamowieniaDokumenty.js';
 
 /** Ile szczegółów platformazakupowa.pl dociągamy w JEDNYM przebiegu (żądania do obcego serwisu). */
@@ -81,7 +81,7 @@ async function odpadaNaWarunkach(user, tenderId, { porownaj, teraz, wersja }) {
  */
 export async function pracujDlaUzytkownika(user, pool, {
   teraz = nowIso(), ocen = ocenDlaKlienta, porownaj = porownajWarunki, stanAi = { kolejneBledy: 0 }, budzetMs = Infinity,
-  szczegolPz = pobierzSzczegolPzDomyslnie, budzetSzczegolowPz = { pozostalo: MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG }, kryteriaSwz = kryteriaZSwzPz,
+  szczegolPz = pobierzSzczegolPzDomyslnie, budzetSzczegolowPz = { pozostalo: MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG }, kryteriaSwz = daneZSwzPz,
   dokumentyEz = pobierzDokumentyEzDomyslnie, budzetDokumentowEz = { pozostalo: MAKS_DOKUMENTOW_EZ_NA_PRZEBIEG },
 } = {}) {
   const koniec = Date.now() + budzetMs;
@@ -214,7 +214,8 @@ export async function pracujDlaUzytkownika(user, pool, {
         if (sz) {
           tender.pz_szczegol = sz;
           // Kryteria z tabeli platformy (2026-11-01) trafiają też do kopii w dopasowaniu („Tylko cena” na karcie).
-          Object.assign(tender, await tenders.zapiszSzczegolPz(tender.id, sz, teraz, { zSwz: kryteriaSwz }));
+          // Z SWZ (jedno pobranie): kryteria, gdy brak w tabeli i u bliźniaka, oraz wadium (platforma go nie podaje).
+          Object.assign(tender, await tenders.zapiszSzczegolPz(tender.id, sz, teraz, { daneSwz: kryteriaSwz }));
         }
       } catch (err) {
         logger.warn({ err: err.message, id: tender.id }, 'platformazakupowa: szczegół przed oceną nie powiódł się');

@@ -41,3 +41,30 @@ export function parsujWadium(htmlBody) {
   if (!kwoty.length) return { wymagane: true, kwota: null, wieleCzesci: false };
   return { wymagane: true, kwota: kwoty[0], wieleCzesci: kwoty.length > 1 };
 }
+
+/**
+ * Wadium z TREŚCI SWZ (2026-11-01) — dla platformazakupowa.pl, której lista i szczegół wadium nie podają.
+ * „Zamawiający wymaga wniesienia wadium w wysokości 5 000,00 zł”, „Wadium wynosi 20 000,00 PLN”, „…w wysokości:
+ * 1 500,00 ( słownie … ) PLN”, „nie wymaga wniesienia / składania wadium”. Kwota: z walutą albo z groszami, bez
+ * „00/100” ze słownego zapisu. Przy częściach kilka kwot — pierwsza + `wieleCzesci`, jak w BZP. Nic pewnego →
+ * `wymagane: null` (nie wiemy). Zmierzone na 14 SWZ z platformy (1.11): 13 rozpoznanych, kwoty zgodne z treścią.
+ * @param {string[]|string} linie tekst SWZ
+ */
+const NIE_WYMAGA = /nie\s+wymaga\s+(?:od\s+wykonawc\S*\s+)?(?:wniesienia|złożenia|składania|wnoszenia)?\s*wadium|wadium\s+nie\s+jest\s+wymagane|nie\s+przewiduje\s+(?:obowiązku\s+)?(?:wniesienia\s+)?wadium|odstępuje\s+od\s+(?:żądania\s+)?wadium/i;
+const WYMAGA = /wymaga\s+(?:od\s+wykonawc\S*\s+)?(?:wniesienia|złożenia|składania|wnoszenia)\s+wadium|wadium\s+w\s+(?:wysoko\S+|kwocie)|wadium\s+wynosi|zabezpieczon\S*\s+wadium|zabezpieczenia\s+(?:swojej\s+)?oferty\s+wadium|wnieść\s+wadium/i;
+const KWOTA_WADIUM = /(?<![\d/])(\d{1,3}(?:[\s.]?\d{3})*|\d+)(,\d{2})?(?![\d/])\s*(zł|PLN|złotych)?/gi;
+
+export function parsujWadiumSwz(linie) {
+  const tekst = (Array.isArray(linie) ? linie.join(' ') : String(linie ?? '')).replace(/\s+/g, ' ').replace(/(\d)\s+,(\d{2})\b/g, '$1,$2');
+  if (NIE_WYMAGA.test(tekst)) return { wymagane: false, kwota: null };
+  // Spis treści („WYMAGANIA DOTYCZĄCE WADIUM ..... 29”) nie jest zdaniem — pierwsze wystąpienie z czasownikiem.
+  const m = WYMAGA.exec(tekst);
+  if (!m) return { wymagane: null, kwota: null };
+  const okno = tekst.slice(m.index, m.index + OKNO_ZNAKOW);
+  const kwoty = [...okno.matchAll(KWOTA_WADIUM)]
+    .filter((k) => k[2] || k[3])
+    .map((k) => liczbaZeStringu(k[1]))
+    .filter((k) => k && k >= 100);
+  if (!kwoty.length) return { wymagane: true, kwota: null, wieleCzesci: false };
+  return { wymagane: true, kwota: kwoty[0], wieleCzesci: new Set(kwoty).size > 1 };
+}

@@ -1,6 +1,7 @@
 import { czySwz } from './eZamowieniaDokumenty.js';
 import { liniePdf } from './tekstPdf.js';
 import { parsujKryteriaSwz } from '../lib/kryteriaSwz.js';
+import { parsujWadiumSwz } from '../lib/wadium.js';
 import { pobierzPdfBase64 } from '../jobs/autoAnalizaSwz.js';
 
 /*
@@ -25,4 +26,16 @@ export async function kryteriaZSwzPz(szczegol, { pobierz = pobierzPdfBase64, czy
   if (!plik) return null;
   const linie = await czytaj(Buffer.from(await pobierz(plik.url), 'base64'));
   return parsujKryteriaSwz((Array.isArray(linie) ? linie : []).map((l) => (typeof l === 'string' ? l : l?.tekst ?? '')));
+}
+
+/**
+ * Jedno pobranie SWZ, dwa odczyty (2026-11-01): kryteria oceny i wadium (`lib/wadium.js` → `parsujWadiumSwz`) —
+ * platforma nie podaje żadnego z nich. Brak SWZ w PDF → null.
+ * @returns {Promise<{kryteria: object|null, wadium: {wymagane: boolean|null, kwota: number|null, wieleCzesci?: boolean}}|null>}
+ */
+export async function daneZSwzPz(szczegol, { pobierz = pobierzPdfBase64, czytaj = liniePdf } = {}) {
+  const plik = plikSwzPz(szczegol);
+  if (!plik) return null;
+  const linie = (await czytaj(Buffer.from(await pobierz(plik.url), 'base64')) ?? []).map((l) => (typeof l === 'string' ? l : l?.tekst ?? ''));
+  return { kryteria: parsujKryteriaSwz(linie), wadium: parsujWadiumSwz(linie) };
 }

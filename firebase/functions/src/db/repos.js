@@ -1070,11 +1070,19 @@ export const tenders = {
    * `zSwz` (`services/kryteriaSwzPz.js`): ostatnia deska — kryteria z treści SWZ, gdy nie ma ich ani w tabeli,
    * ani u bliźniaka. Wstrzykiwane przez wołającego, bo to pobranie PDF-a, a repozytorium nie chodzi do sieci.
    */
-  async zapiszSzczegolPz(id, szczegol, teraz = nowIso(), { zSwz = null } = {}) {
+  async zapiszSzczegolPz(id, szczegol, teraz = nowIso(), { zSwz = null, daneSwz = null } = {}) {
     let pola = polaKryteriow(szczegol?.kryteria);
     // Postępowanie z ustawy: w tabeli platformy same dokumenty — kryteria bierzemy od bliźniaka z BZP/TED.
     if (!pola.kryteria) pola = await this.kryteriaOdBlizniaka(id).catch(() => ({}));
     if (!pola.kryteria && zSwz) pola = polaKryteriow(await zSwz(szczegol).catch(() => null));
+    // `daneSwz` (`services/kryteriaSwzPz.js` → `daneZSwzPz`, 2026-11-01): jedno pobranie SWZ — kryteria, gdy dalej
+    // ich brak, i wadium, którego platforma nie podaje wcale (`wymagane: null` = nie wiemy, nic nie zapisujemy).
+    if (daneSwz) {
+      const zSwzWynik = await daneSwz(szczegol).catch(() => null);
+      if (!pola.kryteria && zSwzWynik?.kryteria) pola = polaKryteriow(zSwzWynik.kryteria);
+      const w = zSwzWynik?.wadium;
+      if (w && w.wymagane !== null) pola = { ...pola, wadium_wymagane: w.wymagane, wadium_kwota: w.kwota ?? null, wadium_wiele_czesci: w.wieleCzesci === true };
+    }
     await db().collection('tenders').doc(id).update({ pz_szczegol: szczegol, pz_szczegol_o: teraz, ...pola });
     return pola;
   },

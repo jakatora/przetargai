@@ -71,3 +71,23 @@ test('kryteriaZSwzPz: pobiera tylko SWZ, czyta tekst i parsuje; bez SWZ nie chod
   assert.equal(await kryteriaZSwzPz({ zalaczniki: [] }, { pobierz, czytaj }), null);
   assert.equal(pobrane.length, 1);
 });
+
+test('wadium z SWZ: kwota z walutą albo z groszami, „nie wymaga”, bez słownego „00/100”; brak wzmianki — null', async () => {
+  const { parsujWadiumSwz } = await import('../src/lib/wadium.js');
+  assert.deepEqual(parsujWadiumSwz(['XVII. WYMAGANIA DOTYCZĄCE WADIUM 1. Wykonawca zobowiązany jest do zabezpieczenia swojej oferty wadium w wysokości: 3 000 ,00 zł (słownie: trzy tysiące 00/100 złotych) .']), { wymagane: true, kwota: 3000, wieleCzesci: false });
+  assert.deepEqual(parsujWadiumSwz(['XXI. WYMAGANIA DOTYCZĄCE WADIUM 1. Wykonawca zobowiązany jest wnieść wadium przed upływem terminu składania ofert. Wadium wynosi 20 000,00 PLN (słownie : dwadzieścia tysięcy złotych 00/100 ).']).kwota, 20000);
+  assert.equal(parsujWadiumSwz(['1. Wykonawca zobowiązany jest wnieść wadium przed upływem terminu składania ofert w wysokości: 1 500,00 ( słownie: jeden tysiąc pięćset złotych 00/100 ) PLN.']).kwota, 1500);
+  assert.deepEqual(parsujWadiumSwz(['XII. WYMAGANIA DOTYCZĄCE WADIUM Zamawiający nie wymaga wniesienia wadium. XIII. TERMIN']), { wymagane: false, kwota: null });
+  assert.deepEqual(parsujWadiumSwz(['XX. WYMAGANIA DOTYCZĄCE WADIUM. ZAMAWIAJĄCY nie wymaga składania wadium.']), { wymagane: false, kwota: null });
+  assert.deepEqual(parsujWadiumSwz(['Zapytanie ofertowe na dostawę mebli. Termin realizacji 30 dni.']), { wymagane: null, kwota: null });
+});
+
+test('daneZSwzPz: jedno pobranie, kryteria i wadium z tego samego tekstu', async () => {
+  const { daneZSwzPz } = await import('../src/services/kryteriaSwzPz.js');
+  let pobran = 0;
+  const w = await daneZSwzPz({ zalaczniki: [{ nazwa: 'SWZ', rozszerzenie: 'pdf', url: 'https://platformazakupowa.pl/file/7' }] }, {
+    pobierz: async () => { pobran += 1; return Buffer.from('%PDF-').toString('base64'); },
+    czytaj: async () => [...F.pz_1390119.split('. '), 'XII Wymagania dotyczące wadium. Zamawiający nie wymaga wniesienia wadium.'],
+  });
+  assert.deepEqual([pobran, proste(w.kryteria), w.wadium], [1, [['Cena', 60, 'cena'], ['Gwarancja', 40, 'gwarancja']], { wymagane: false, kwota: null }]);
+});

@@ -73,3 +73,14 @@ test('skrót kryteriów: nowe dopasowanie i zapisane go kopiują; stare kopie uz
   assert.equal((await db.doc(`users/${uid}/matches/${stary.id}`).get()).get('tender_kryteria_skrot').reszta, 0);
   assert.ok(drugi.uzupelnione <= w.uzupelnione - 1, 'powtórka nie przepisuje uzupełnionych');
 });
+
+test('zapiszSzczegolPz z daneSwz: wadium z SWZ na przetargu, kryteria z SWZ tylko gdy brak w tabeli', async () => {
+  const { tender } = await tenders.upsert({ externalId: `pz:${Date.now()}77`, title: 'Remont dachu', organization: 'Gmina', deadline: '2099-01-01T00:00:00.000Z', source: 'platformazakupowa' });
+  const kryteriaSwz = { lista: [{ nazwa: 'Cena', waga: 100, udzial: 100, rodzaj: 'cena' }], sposob: 'procentowo', rozne_w_czesciach: false, pozacenowe: false };
+  const pola = await tenders.zapiszSzczegolPz(tender.id, { zalaczniki: [] }, undefined, { daneSwz: async () => ({ kryteria: kryteriaSwz, wadium: { wymagane: true, kwota: 9000, wieleCzesci: false } }) });
+  assert.deepEqual([pola.wadium_wymagane, pola.wadium_kwota, pola.kryterium_oceny], [true, 9000, 'tylko_cena']);
+  const t = await tenders.findById(tender.id);
+  assert.deepEqual([t.wadium_wymagane, t.wadium_kwota, t.wadium_wiele_czesci, t.kryteria.length], [true, 9000, false, 1]);
+  const bezWiedzy = await tenders.zapiszSzczegolPz(tender.id, { zalaczniki: [] }, undefined, { daneSwz: async () => ({ kryteria: null, wadium: { wymagane: null, kwota: null } }) });
+  assert.equal(bezWiedzy.wadium_wymagane, undefined, '„nie wiemy” niczego nie nadpisuje');
+});
