@@ -11,6 +11,8 @@ import { runWynikiAggregation } from '../jobs/aggregateResults.js';
 import { pobierzOgloszeniaBzp, pobierzSuroweWynikiDnia } from '../services/bzp.js';
 import { pobierzOgloszeniaTedDnia } from '../services/ted.js';
 import { pobierzSzczegol as pobierzSzczegolPz } from '../services/platformaZakupowa.js';
+import { pobierzSzczegolBk, normalizujOgloszenieBk, TEMPO_BK } from '../services/bazaKonkurencyjnosci.js';
+import { stanTempa } from '../lib/tempoZapytan.js';
 import { parsujWynik } from '../lib/wynikiParser.js';
 import { runUmowyWygasajace } from '../jobs/umowyWygasajace.js';
 import { przeliczProfil } from '../services/pracownik.js';
@@ -140,6 +142,28 @@ router.post('/kryteria-ted-wstecz', ah(async (req, res) => {
  * „Kryteria i warunki formalne” pobrany od nowa i zapisany razem z polami kryteriów. Do 15 na
  * wywołanie — platforma wymaga cichego SSO na każde ogłoszenie (~2 s).
  */
+/**
+ * Kryteria oceny dla wskazanych przetargów z Bazy Konkurencyjności (2026-11-01): szczegół z API BK
+ * (z jego własnym tempem zapytań) → `uzupelnijKryteria`, tylko tam, gdzie listy nie ma. Do 30 na wywołanie.
+ */
+router.post('/kryteria-bk', ah(async (req, res) => {
+  const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).filter(Boolean).slice(0, 30);
+  if (!ids.length) throw badRequest('Podaj ids (do 30)');
+  const ogloszenia = [];
+  const przykladyBledow = [];
+  // Wspólne tempo dla całej partii (400 ms odstępu, przerwa po 403) — jak w oknie BK.
+  const tempo = stanTempa(TEMPO_BK);
+  for (const id of ids) {
+    try {
+      const t = normalizujOgloszenieBk(await pobierzSzczegolBk(String(id).replace(/^bk[:_]/, ''), { tempo }));
+      if (t) ogloszenia.push(t);
+    } catch (err) {
+      if (przykladyBledow.length < 3) przykladyBledow.push(`${id}: ${String(err.message).slice(0, 160)}`);
+    }
+  }
+  res.json({ pobrane: ogloszenia.length, ...(await tenders.uzupelnijKryteria(ogloszenia)), przyklady_bledow: przykladyBledow });
+}));
+
 const ODSTEP_PZ_MS = 3000;
 router.post('/kryteria-pz', ah(async (req, res) => {
   const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).filter(Boolean).slice(0, 15);

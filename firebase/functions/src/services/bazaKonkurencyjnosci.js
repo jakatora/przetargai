@@ -3,6 +3,8 @@ import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
 import { stanTempa, pobierzZPonowieniem } from '../lib/tempoZapytan.js';
 import { warunkiZBk } from '../lib/warunkiUdzialu.js';
+import { kryteriaZBk } from '../lib/kryteriaBk.js';
+import { polaKryteriow } from '../lib/ogloszenieMeta.js';
 
 /*
  * Baza Konkurencyjności — rejestr zamówień finansowanych z FUNDUSZY EUROPEJSKICH.
@@ -199,6 +201,8 @@ export function normalizujOgloszenieBk(json) {
     rodzaj: tekst(pierwszy(pozycje)?.category?.name),
     // Warunki udziału (spec §6.1) — jedyna treść ogłoszenia, którą zachowujemy poza nagłówkiem.
     warunki_udzialu: warunkiZBk(orders),
+    // Za co są punkty (2026-11-01): kryteria zamówień (`evaluation_criteria`) w polach jak z BZP.
+    ...polaKryteriow(kryteriaZBk(orders)),
     /*
      * `raw` to NAGŁÓWEK, a nie cały ekran szczegółów: `terms_of_contract_change`
      * i opisy pozycji bywają kilkukilobajtową prozą, a dokument Firestore ma limit

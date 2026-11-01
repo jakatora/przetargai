@@ -1,0 +1,84 @@
+{
+ "292505": [
+  {
+   "evaluation_criteria": [
+    {
+     "price_criterion": true,
+     "description": "Zamawiający dokona oceny ofert, na podstawie kryteriów oceny: „Cena Łączna Netto” zgodnie z zapisami Zapytania. Cena musi uwzględniać wszystkie wymagania specyfikacji określonej w formularzu ofertowym oraz obejmować wszelkie koszty. W postępowaniu zostanie wybrana oferta o największej liczbie pkt"
+    },
+    {
+     "price_criterion": true,
+     "description": "Sposób obliczania pkt. w ramach kryterium „Cena Łączna netto” (wyboru wykonawcy):\nC=C_N/C_O  x[100] gdzie:\nC–liczba punktów przyznanych Oferentowi\nCN–najniższa zaoferowana cena w postępowaniu bez podatku od towarów i usług,\nCO–cena zaoferowana w ofercie badanej bez podatku od towarów i usług"
+    }
+   ]
+  }
+ ],
+ "293090": [
+  {
+   "evaluation_criteria": [
+    {
+     "price_criterion": true,
+     "description": "Cena\n\nWaga liczby punktów: 50\n\nPunktacja zostanie przydzielona zgodnie z treścią Zapytania ofertowego, w szczególności pkt. 15 oraz jego załącznikami."
+    },
+    {
+     "price_criterion": false,
+     "description": "Doświadczenie \n\nWaga liczby punktów: 10\n\nPunktacja zostanie przydzielona zgodnie z treścią Zapytania ofertowego, w szczególności pkt. 15 oraz jego załącznikami."
+    },
+    {
+     "price_criterion": false,
+     "description": "Termin Dostawy \n\nWaga liczby punktów: 40\n\nPunktacja zostanie przydzielona zgodnie z treścią Zapytania ofertowego, w szczególności pkt. 15 oraz jego załącznikami."
+    }
+   ]
+  }
+ ],
+ "293390": [
+  {
+   "evaluation_criteria": [
+    {
+     "price_criterion": true,
+     "description": "Liczba punktów w ocenie (C) = (cena w ofercie z najniższą ceną (Cn)/cena badanej oferty (Co)) X waga kryterium (50%) X 100\nInaczej:\nC=(Cn/Co)x50%x100\nC-Liczba punktów w ocenie wg kryterium „CENA BRUTTO”\nCn- CENA z oferty z najniższą ceną \nCo - CENA z ocenianej oferty\n50% - waga kryterium"
+    },
+    {
+     "price_criterion": false,
+     "description": "Okres gwarancji: \nG =Go/Gn   x 100 pkt x 25%\n\ngdzie:\nG – liczba punktów w ramach kryterium „Gwarancja”, \nGo – Okres gwarancji w ofercie ocenianej \nGn – najdłuższy zaoferowany okres gwarancji.\n25% - waga kryterium\nWięcej informacji w zapytaniu ofertowym nr 2/09/FEPZ/1.6/2026"
+    },
+    {
+     "price_criterion": false,
+     "description": "Okres realizacji w dniach:\nR=(Rn/Ro)x25%x100\nR-Liczba punktów w ocenie wg kryterium „Okres realizacji w dniach”\nRn- ilość dni realizacji usługi z oferty z najkrótszym terminem realizacji \nRo - okres realizacji z ocenianej oferty\n25% - waga kryterium\nWięcej w zapytaniu ofert. nr: 2/09/FEPZ/1.6/2026"
+    }
+   ]
+  }
+ ],
+ "293876": [
+  {
+   "evaluation_criteria": [
+    {
+     "price_criterion": true,
+     "description": "Kryterium I: Cena netto przedmiotu zamówienia – waga punktowa 60. Szczegóły: Zapytanie ofertowe, pkt.10 OCENA OFERT"
+    },
+    {
+     "price_criterion": false,
+     "description": "Kryterium II: Okres gwarancji na przedmiot zamówienia – waga punktowa 30. Szczegóły: Zapytanie ofertowe, pkt.10 OCENA OFERT\nKryterium ocenione będzie według następująco:\n0 pkt – od 0 do 12 miesięcy włącznie\n10 pkt – od 13 do 24 miesięcy włącznie\n20 pkt – powyżej 24 miesięcy"
+    },
+    {
+     "price_criterion": false,
+     "description": "Kryterium III: Zielone kryterium / Poziom zużycia energii elektrycznej - waga punktowa 10. Szczegóły: Zapytanie ofertowe, pkt.10 OCENA OFERT\nOcena będzie następująca:\n0 pkt – pobór energii równy lub powyżej 440kWh na dobę\n10 pkt – pobór energii poniżej 440kWh na dobę"
+    }
+   ]
+  }
+ ],
+ "294707": [
+  {
+   "evaluation_criteria": [
+    {
+     "price_criterion": true,
+     "description": "Cena brutto /\t80 pkt / C = (najniższa cena brutto / cena brutto oferty badanej) × 80"
+    },
+    {
+     "price_criterion": false,
+     "description": "Okres gwarancji i wsparcia / 20 pkt / 24 miesiące – 0 pkt; 30 miesięcy – 10 pkt; 36 miesięcy lub więcej – 20 pkt"
+    }
+   ]
+  }
+ ]
+}
