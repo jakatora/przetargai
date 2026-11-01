@@ -1,3 +1,5 @@
+import { czynnikIleDac } from './benchmarkOtwarcia.js';
+
 /*
  * Karta „Czy warto startować?" — czysta logika, zero I/O i zero AI.
  *
@@ -450,7 +452,7 @@ function czynnikPoprzedniejEdycji(p) {
   };
 }
 
-export function kartaStartu({ tender, benchmarki, profil = null, teraz = Date.now(), poprzednia = null } = {}) {
+export function kartaStartu({ tender, benchmarki, profil = null, teraz = Date.now(), poprzednia = null, otwarcie = null } = {}) {
   const { zrodlo, kubelek } = wybierzBenchmark(benchmarki);
 
   const czynniki = [
@@ -463,6 +465,8 @@ export function kartaStartu({ tender, benchmarki, profil = null, teraz = Date.no
     czynnikWadium(tender),
     czynnikStalegoWykonawcy(benchmarki?.zamawiajacy),
     czynnikPoprzedniejEdycji(poprzednia),
+    // „Ile dać” (2026-11-01, `lib/benchmarkOtwarcia.js`): najniższa oferta / budżet z informacji z otwarcia.
+    czynnikIleDac(otwarcie, tender),
   ].filter(Boolean);
 
   const werdykt = werdyktZCzynnikow(czynniki);

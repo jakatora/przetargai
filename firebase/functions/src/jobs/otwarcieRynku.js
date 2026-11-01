@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
-import { tenders } from '../db/repos.js';
+import { tenders, benchmarkRynku } from '../db/repos.js';
+import { zbudujBenchmarkOtwarcia } from '../lib/benchmarkOtwarcia.js';
 import { pobierzDokumenty, idPostepowaniaEz } from '../services/eZamowieniaDokumenty.js';
 import { rodzajDokumentu } from '../lib/noweDokumenty.js';
 import { parsujOtwarcie, scalOtwarcie } from '../lib/otwarcieOfert.js';
@@ -97,5 +98,15 @@ export async function runOtwarcieRynku({
   wynik.ok = wynik.bledy === 0;
   wynik.durationMs = Date.now() - start;
   logger.info(wynik, 'runOtwarcieRynku: zakończono');
+  return wynik;
+}
+
+/** Przeliczenie benchmarku „ile dać” z przetargów z informacją z otwarcia (raz na dobę, kubełki `otw:` w `benchmark`). */
+export async function runBenchmarkOtwarcia({ przetargi = tenders, repo = benchmarkRynku } = {}) {
+  const lista = await przetargi.zOtwarciem();
+  const kubelki = zbudujBenchmarkOtwarcia(lista);
+  const zapisane = await repo.zapisz(kubelki);
+  const wynik = { ok: true, przetargow: lista.length, kubelkow: zapisane };
+  logger.info(wynik, 'runBenchmarkOtwarcia: zakończono');
   return wynik;
 }

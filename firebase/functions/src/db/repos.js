@@ -1147,6 +1147,13 @@ export const tenders = {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
+  /** Przetargi z liczbą ofert z informacji z otwarcia (benchmark „ile dać”, 2026-11-01) — tylko potrzebne pola. */
+  async zOtwarciem({ limit = 30_000 } = {}) {
+    const snap = await db().collection('tenders').where('otwarcie_ofert.oferty', '>=', 1)
+      .select('cpv_main', 'wojewodztwo', 'otwarcie_ofert').limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
   /** Wynik próby odczytu otwarcia (job rynku): przetarg + kopie w feedach i Zapisanych, gdy liczby się zmieniły. */
   async zapiszOtwarcieRynku(id, { otwarcie = null, poprzednie = null, proba }) {
     await db().collection('tenders').doc(id).update({ ...(otwarcie ? { otwarcie_ofert: otwarcie } : {}), otwarcie_rynek: proba });

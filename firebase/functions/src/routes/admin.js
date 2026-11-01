@@ -238,6 +238,12 @@ router.post('/otwarcie-rynku', ah(async (req, res) => {
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
+/** Ręczne przeliczenie benchmarku „ile dać” (kubełki `otw:`). */
+router.post('/benchmark-otwarcia', ah(async (req, res) => {
+  const { runBenchmarkOtwarcia } = await import('../jobs/otwarcieRynku.js');
+  res.json(await runBenchmarkOtwarcia());
+}));
+
 router.post('/benchmark', ah(async (req, res) => {
   const wynik = await runBenchmarkRynku();
   res.json(wynik);
