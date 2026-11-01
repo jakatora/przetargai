@@ -20828,8 +20828,29 @@ function selectRealbudMp75lDelivery(basket, order) {
   return { costGrosze: 0, carrier: rate.title, payment: payments[0].title };
 }
 
+// artifacts/api-server/src/lib/mapei-supplies.ts
+var MAPEI_SUPPLY_SOURCES = [
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-10l-KONCENTRAT-GRUNTUJACY-GRUNT/15704
+  { "id": "rabdom-primer-g-pro-10l", "ean": "8022452241147", "name": "MAPEI PRIMER G PRO 10l KONCENTRAT GRUNTUJ\u0104CY GRUNT", "brand": "Mapei", "category": "primer", "packageSize": 10, "unit": "l", "store": "Rab-Dom", "format": "shoper-api", "productId": 15704, "retailerSku": "37971", "apiProductCode": "37971", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-10l-KONCENTRAT-GRUNTUJACY-GRUNT/15704", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_38733_500_500/primer-g-10l.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-KONCENTRAT-GRUNTUJACY-GRUNT-20L/10828
+  { "id": "rabdom-primer-g-pro-20l", "ean": "8022452241154", "name": "MAPEI PRIMER G PRO KONCENTRAT GRUNTUJ\u0104CY GRUNT 20L", "brand": "Mapei", "category": "primer", "packageSize": 20, "unit": "l", "store": "Rab-Dom", "format": "shoper-api", "productId": 10828, "retailerSku": "37718", "apiProductCode": "37718", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-KONCENTRAT-GRUNTUJACY-GRUNT-20L/10828", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_19103_500_500/4_primer-g-pro_20l_pl_4aaf7bd94b4c46708f4e182628687303.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/Folia-w-plynie-hydroizolacyjna-MAPEI-Mapegum-WPS-3kg/16590
+  { "id": "rabdom-mapegum-wps-3kg", "ean": "8022452249266", "name": "Folia w p\u0142ynie hydroizolacyjna MAPEI Mapegum WPS 3kg", "brand": "Mapei", "category": "waterproofing", "packageSize": 3, "unit": "kg", "store": "Rab-Dom", "format": "shoper-api", "productId": 16590, "retailerSku": "59458", "apiProductCode": "59458", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/Folia-w-plynie-hydroizolacyjna-MAPEI-Mapegum-WPS-3kg/16590", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_48728_500_500/Opakowanie-folii-w-plynie-hydroizalacyjnej-o-pojemnosci-3kg.webp", "pickupRequiresConfirmation": true },
+  // source: https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875
+  { "id": "rabdom-mapegum-wps-20kg", "ean": "8022452242502", "name": "MAPEI Mapegum WPS 20kg HYDROIZOLACJA P\u0141YNNA FOLIA", "brand": "Mapei", "category": "waterproofing", "packageSize": 20, "unit": "kg", "store": "Rab-Dom", "format": "shoper-api", "productId": 9875, "retailerSku": "36196", "apiProductCode": "36196", "apiPurchaseUnit": "szt.", "url": "https://www.rabdom.pl/pl/p/MAPEI-Mapegum-WPS-20kg-HYDROIZOLACJA-PLYNNA-FOLIA/9875", "imageUrl": "https://www.rabdom.pl/environment/cache/images/productGfx_17482_500_500/Zrzut-ekranu-2022-02-12-090849.webp", "pickupRequiresConfirmation": true }
+];
+function confirmMapeiSupplyPurchase(item, source) {
+  const reviewed6 = MAPEI_SUPPLY_SOURCES.find((row) => row.id === source.id);
+  if (!reviewed6) return false;
+  const keys = ["ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "retailerSku", "apiProductCode", "apiPurchaseUnit", "url"];
+  if (keys.some((key) => source[key] !== reviewed6[key]) || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1 || item.id !== reviewed6.productId || item.ean !== reviewed6.ean || item.code !== reviewed6.retailerSku || item.name !== reviewed6.name || item.url !== reviewed6.url || item.unit?.name !== "szt." || item.unit.floating_point !== false || item.package !== "0") throw Error("product_package_not_confirmed");
+  if (item.producer?.id !== 57 || item.producer.name !== "Mapei") throw Error("product_brand_not_confirmed");
+  return true;
+}
+
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...MAPEI_SUPPLY_SOURCES,
   ...NORGIPS_JOINT_TAPE_SOURCES,
   // source: https://hipper.pl/puszka-podtynkowa-laczeniowa-60-mm-pro-z-wkretami-elektro-plast-956340504
   // source: https://www.elektro-plast.com.pl/download/EPN_CENNIK_2024_05.02.2024.pdf
@@ -22345,6 +22366,12 @@ var RETAIL_SOURCES = [
   ...KNAUF_PLASTER_SOURCES
 ];
 var RETAIL_NAME_ALIASES = {
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-10l-KONCENTRAT-GRUNTUJACY-GRUNT/15704
+  "Mapei Primer G Pro \u2014 koncentrat gruntuj\u0105cy 10 l": "8022452241147",
+  // source: https://www.rabdom.pl/pl/p/MAPEI-PRIMER-G-PRO-KONCENTRAT-GRUNTUJACY-GRUNT-20L/10828
+  "Mapei Primer G Pro \u2014 koncentrat gruntuj\u0105cy 20 l": "8022452241154",
+  // source: https://www.rabdom.pl/pl/p/Folia-w-plynie-hydroizolacyjna-MAPEI-Mapegum-WPS-3kg/16590
+  "Mapei Mapegum WPS \u2014 folia w p\u0142ynie 3 kg": "8022452249266",
   // source: https://www.plus-market.pl/pl/p/Tynk-maszynowy-gipsowy-Knauf-MP-75-L-30-kg-lekki/15716
   "Knauf MP 75 L \u2014 lekki tynk maszynowy 30 kg": "5902367206451",
   // source: https://www.rabdom.pl/pl/p/Knauf-GOLDBAND-Reczny-tynk-gipsowy-30kg/2022
@@ -25908,6 +25935,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  confirmMapeiSupplyPurchase(item, source);
   confirmKnaufPlasterPurchase(item, source);
   if (source.id === "ehw-wago-221415-25" && (source.store !== "Elektro-Hurt" || source.ean !== "4055143234658" || source.productId !== 462 || source.packageSize !== 25 || source.unit !== "szt" || source.apiPurchaseUnit !== "szt." || source.retailerSku !== "WAGO-125138*25" || source.packageDescription !== "Z\u0142\u0105czka 221-415 opakowanie 25 sztuk." || item.ean !== source.ean || item.name !== source.name || item.producer?.name !== "WAGO")) throw Error("product_package_not_confirmed");
   if (source.id === "liderzy-goodhome-arilla-light-grey-25m2" && (source.ean !== "5059340969732" || source.productId !== 33716 || source.packageSize !== 2.5 || source.unit !== "m2" || source.brand !== "GoodHome" || source.store !== "LiderzyCen" || source.format !== "shoper-api" || source.retailerSku !== "ctma_5059340969732" || source.apiPurchaseUnit !== "szt." || item.ean !== source.ean || item.producer?.name !== "GoodHome" || item.name !== source.name)) throw Error("product_package_not_confirmed");
