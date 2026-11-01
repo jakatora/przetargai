@@ -311,6 +311,31 @@ router.patch('/me', authRequired, ah(async (req, res) => {
   res.json({ user: publicUser(await users.findById(req.user.id)) });
 }));
 
+/*
+ * NIP firmy po rejestracji (2026-11-01). Karta firmy bierze dane z Białej listy VAT po NIP-ie, ale do
+ * dziś NIP zostawał w telefonie — żadne konto nie miało `company_nip`, więc radar nie chował własnych
+ * umów firmy, a alert „Twoja umowa wraca do przetargu” nie miał po czym szukać. `null` = usuń.
+ */
+const nipSchema = z.object({ company_nip: z.string().max(20).nullable() });
+
+router.put('/me/nip', authRequired, ah(async (req, res) => {
+  const data = parseBody(nipSchema, req.body);
+  let nip = null;
+  if (data.company_nip?.trim()) {
+    nip = normalizeNip(data.company_nip);
+    if (!isValidNip(nip)) throw badRequest('Nieprawidłowy NIP (niepoprawna suma kontrolna)');
+  }
+  let user;
+  try {
+    user = await users.ustawNip(req.user.id, nip);
+  } catch (err) {
+    if (err.code === 'DUPLICATE_NIP') throw conflict('Ten NIP ma już inne konto w PrzetargAI. Jeśli to Twoja firma, napisz do nas — przepiszemy go.');
+    throw err;
+  }
+  audit({ userId: req.user.id, action: 'update_nip', ip: req.ip });
+  res.json({ user: publicUser(user) });
+}));
+
 // `platform` (2026-10-29, apka od 1.2.1): bez niej nie dało się stwierdzić, czy push dochodzi na iPhone
 // (klucz APNs) — `/health.push.urzadzenia` liczy tokeny per platforma. Starsze apki jej nie wysyłają.
 const pushTokenSchema = z.object({ push_token: z.string().min(1).max(300), platform: z.enum(['ios', 'android', 'web']).optional() });

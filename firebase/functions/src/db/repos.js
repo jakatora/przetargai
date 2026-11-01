@@ -111,6 +111,42 @@ export const users = {
     return q.empty ? null : userSnap(q.docs[0]);
   },
 
+  /**
+   * NIP firmy po rejestracji (2026-11-01) — Karta firmy wypełnia się z Białej listy VAT, ale NIP
+   * zostawał tylko w telefonie, więc żadne konto na produkcji go nie miało, a funkcje serwera
+   * oparte na NIP-ie (własne umowy w radarze, „Twoi konkurenci” bez siebie) nie działały.
+   * Ta sama rezerwacja unikalności co przy rejestracji: zajęcie nowego i zwolnienie starego
+   * w JEDNEJ transakcji. `null` = usuń NIP z konta.
+   * @throws {Error} err.code === 'DUPLICATE_NIP', gdy NIP ma inne konto
+   */
+  async ustawNip(id, nip) {
+    const ts = nowIso();
+    await db().runTransaction(async (tx) => {
+      const ref = db().collection('users').doc(id);
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw Object.assign(new Error('Nie ma takiego konta'), { code: 'NOT_FOUND' });
+      const stary = snap.data().company_nip ?? null;
+      if (stary === nip) return;
+      if (nip) {
+        const rezerwacja = await tx.get(UNIQUE(`nip:${nip}`));
+        if (rezerwacja.exists && rezerwacja.data()?.uid !== id) {
+          throw Object.assign(new Error('NIP przypisany do innego konta'), { code: 'DUPLICATE_NIP' });
+        }
+        if (!rezerwacja.exists) tx.create(UNIQUE(`nip:${nip}`), { uid: id, created_at: ts });
+      }
+      if (stary) tx.delete(UNIQUE(`nip:${stary}`));
+      tx.update(ref, { company_nip: nip ?? null, updated_at: ts });
+    });
+    return this.findById(id);
+  },
+
+  /** Konta z NIP-em firmy (alert o własnych kończących się umowach). Nierówność — indeks automatyczny. */
+  async zNipem() {
+    const snap = await db().collection('users').where('company_nip', '!=', null)
+      .select('company_nip', 'company_name', 'email', 'push_token').get();
+    return snap.docs.map(userSnap);
+  },
+
   async findByStripeCustomer(customerId) {
     const q = await db().collection('users').where('stripe_customer_id', '==', customerId).limit(1).get();
     return q.empty ? null : userSnap(q.docs[0]);
@@ -1031,7 +1067,8 @@ export const tenders = {
     if (!nip) return [];
     const snap = await db().collection('tenders')
       .where('zamawiajacy_nip', '==', String(nip))
-      .select('title', 'cpv_main', 'budget', 'published_at', 'deadline', 'url', 'source')
+      // anulowany/zastapiony_przez/postepowanie_id: „Twoje umowy” (2026-11-01) odsiewają nimi następców.
+      .select('title', 'cpv_main', 'budget', 'published_at', 'deadline', 'url', 'source', 'anulowany', 'zastapiony_przez', 'postepowanie_id')
       .limit(limit)
       .get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -2437,6 +2474,23 @@ export const rozstrzygniecia = {
    * konkurenta. Dwa zapytania, bo BZP podaje NIP zwycięzcy, a TED tylko nazwę; wynik bez duplikatów.
    * Nazwa krótsza niż 3 znaki po normalizacji nie idzie do zapytania (za ogólna).
    */
+  /**
+   * Umowy wykonawcy (po NIP-ie zwycięzcy) z końcem od dnia `od` — „Twoje umowy” w radarze
+   * i alert o ogłoszonym następcy (2026-11-01). Indeks: zwyciezcy_nip CONTAINS + opublikowano DESC;
+   * koniec filtrowany po odczycie — firma ma najwyżej kilkaset wygranych.
+   */
+  async umowyWykonawcy(nip, { od, limit = 300 } = {}) {
+    const n = normNip(nip);
+    if (!n) return [];
+    const snap = await db().collection('rozstrzygniecia')
+      .where('zwyciezcy_nip', 'array-contains', n)
+      .orderBy('opublikowano', 'desc')
+      .select('externalId', 'tytul', 'zamawiajacy', 'zamawiajacyNip', 'miasto', 'wojewodztwo', 'cpv', 'rodzaj', 'czesci', 'tenderId', 'koniec_umowy', 'opublikowano')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => d.data()).filter((w) => w.koniec_umowy && (!od || w.koniec_umowy >= od));
+  },
+
   async dlaWykonawcy({ nip = null, nazwa = null } = {}, { limit = 300 } = {}) {
     const zapytania = [];
     const n = normNip(nip);

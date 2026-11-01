@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import { okresUmowy, parsujWynik } from '../src/lib/wynikiParser.js';
 import {
-  koniecUmowyWyniku, czyCykliczna, pozycjaUmowy, zbudujKubelkiUmow, kluczeUmowUzytkownika, wybierzUmowy, nastepcyUmow, MIN_DLUGOSC_DNI,
+  koniecUmowyWyniku, czyCykliczna, pozycjaUmowy, zbudujKubelkiUmow, kluczeUmowUzytkownika, wybierzUmowy, nastepcyUmow, twojeUmowy, alertTwojejUmowy, MIN_DLUGOSC_DNI,
 } from '../src/lib/umowyWygasajace.js';
 
 /*
@@ -149,4 +149,19 @@ test('następca u brokera ubezpieczeniowego: jeden NIP, wiele gmin — tylko pra
   const slaby = nastepcyUmow([umowa('sp', { koniec: '2026-12-30', tytul: 'Sprzątanie pomieszczeń biurowych Urzędu Gminy' })],
     [otwarty('sp2', 'Sprzątanie i ochrona pomieszczeń magazynowych w Urzędzie Gminy')], { teraz: TERAZ });
   assert.deepEqual([slaby.get('sp')?.tender_id, slaby.get('sp')?.pewny], ['sp2', false]);
+});
+
+test('twoje umowy: kończące się w horyzoncie, ogłoszone pierwsze; alert tylko przy pewnym następcy, klucz stały', () => {
+  const wyniki = [
+    umowa('a', { koniec: '2026-11-20', tytul: 'Odbiór odpadów komunalnych z terenu gminy' }),
+    umowa('b', { koniec: '2027-03-01', tytul: 'Sprzątanie szkoły podstawowej' }),
+    umowa('c', { koniec: '2026-10-01', tytul: 'Zakończona' }),
+  ];
+  const lista = twojeUmowy({ wyniki, otwarte: [otwarty('t/b 1', 'Sprzątanie szkoły podstawowej 2027', { deadline: '2026-11-12T23:00:00.000Z' })], teraz: TERAZ });
+  assert.deepEqual(lista.map((u) => [u.id, u.nastepca?.tender_id ?? null, u.dni_do_konca]), [['b', 't/b 1', 121], ['a', null, 20]]);
+  const alert = alertTwojejUmowy(lista[0]);
+  assert.deepEqual([alert.klucz, alert.typ, alert.ton, alert.tender_id], ['umowa_b_t_b_1', 'umowa_nastepca', 'ostrzezenie', 't/b 1']);
+  assert.equal(alert.tresc.pl, 'Gmina b: nowy przetarg już ogłoszony, a Twoja umowa kończy się 01.03.2027. Oferty do 13.11.2026. Złóż ofertę, żeby jej nie oddać.');
+  assert.equal(alertTwojejUmowy(lista[1]), null, 'bez następcy nie ma alertu');
+  assert.equal(alertTwojejUmowy({ ...lista[0], nastepca: { ...lista[0].nastepca, pewny: false } }), null, 'słaby następca — tylko na liście, bez pushu');
 });

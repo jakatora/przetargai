@@ -242,3 +242,76 @@ export function wybierzUmowy({ kubelki, teraz = Date.now(), wlasnyNip = null, li
     }));
   return { umowy, w_kubelkach: wKubelkach, juz_ogloszone: juzOgloszone };
 }
+
+/*
+ * TWOJE UMOWY (2026-11-01). Radar chowa umowy, które firma sama wykonuje („wie, kiedy się kończą”),
+ * ale to właśnie ich następców najłatwiej przegapić: zamawiający ogłasza przetarg 1–2 miesiące przed
+ * końcem, a firma dowiaduje się, gdy umowa już przepadła. Tu zbieramy je osobno i ostrzegamy.
+ */
+
+const dataPLzIso = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso ?? '')); return m ? `${m[3]}.${m[2]}.${m[1]}` : null; };
+/** Termin ofert w dniu kalendarzowym w Polsce (północ PL zapisana w UTC to poprzedni dzień). */
+const terminPL = (iso) => {
+  const t = Date.parse(String(iso ?? ''));
+  return Number.isFinite(t) ? new Date(t).toLocaleDateString('pl-PL', { timeZone: 'Europe/Warsaw', day: '2-digit', month: '2-digit', year: 'numeric' }) : null;
+};
+
+/**
+ * Umowy firmy kończące się w horyzoncie radaru, z następcą — ogłoszone pierwsze.
+ * @param {object[]} wyniki rozstrzygnięcia, w których firma wygrała (po NIP-ie)
+ * @param {object[]} otwarte otwarte przetargi zamawiających tych umów
+ */
+export function twojeUmowy({ wyniki, otwarte, teraz = Date.now(), horyzontDni = HORYZONT_DNI }) {
+  const odDnia = dzienIso(teraz);
+  const doDnia = dzienIso(teraz + horyzontDni * DZIEN_MS);
+  const nastepcy = nastepcyUmow(wyniki, otwarte, { teraz });
+  const poId = new Map();
+  for (const w of Array.isArray(wyniki) ? wyniki : []) {
+    const poz = pozycjaUmowy(w, { odDnia, doDnia });
+    if (!poz?.id || poId.has(poz.id)) continue;
+    poId.set(poz.id, {
+      ...poz,
+      nastepca: nastepcy.get(poz.id) ?? null,
+      dni_do_konca: Math.round((msDnia(poz.koniec) - msDnia(odDnia)) / DZIEN_MS),
+      region_nazwa: poz.wojewodztwo ? WOJEWODZTWA[poz.wojewodztwo] ?? null : null,
+    });
+  }
+  return [...poId.values()].sort(kolejnoscUmow);
+}
+
+/**
+ * Alert „Twoja umowa wraca do przetargu” do centrum alertów + push. Tylko pewny następca —
+ * przy słabym podobieństwie tytułów fałszywy alarm kosztowałby zaufanie do wszystkich alertów.
+ * Klucz = umowa × przetarg: ten sam alert zapisany drugi raz zostaje jednym wpisem.
+ * @returns {object|null}
+ */
+export function alertTwojejUmowy(umowa) {
+  const n = umowa?.nastepca;
+  if (!n?.tender_id || !n.pewny || !umowa.id) return null;
+  const czysc = (s) => String(s).replace(/[/\s]/g, '_');
+  const tytul = String(umowa.tytul ?? 'umowa').slice(0, 90);
+  const zamawiajacy = umowa.zamawiajacy ?? 'Zamawiający';
+  const koniec = dataPLzIso(umowa.koniec);
+  const termin = terminPL(n.deadline);
+  return {
+    klucz: `umowa_${czysc(umowa.id)}_${czysc(n.tender_id)}`,
+    typ: 'umowa_nastepca',
+    tender_id: n.tender_id,
+    ton: 'ostrzezenie',
+    tytul: {
+      pl: `Twoja umowa wraca do przetargu: ${tytul}`,
+      en: `Your contract is up for tender again: ${tytul}`,
+    },
+    tresc: {
+      pl: `${zamawiajacy}: nowy przetarg już ogłoszony${koniec ? `, a Twoja umowa kończy się ${koniec}` : ''}.${termin ? ` Oferty do ${termin}.` : ''} Złóż ofertę, żeby jej nie oddać.`,
+      en: `${zamawiajacy}: the new tender is out${koniec ? ` and your contract ends on ${koniec}` : ''}.${termin ? ` Bids due ${termin}.` : ''} Bid to keep it.`,
+    },
+    pozycje: [{
+      tender_id: n.tender_id,
+      tytul: n.tytul ?? null,
+      organizacja: zamawiajacy,
+      deadline: n.deadline ?? null,
+      zrodlo: n.zrodlo ?? null,
+    }],
+  };
+}

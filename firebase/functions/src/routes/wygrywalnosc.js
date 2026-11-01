@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
 import { tenders, users, benchmarkRynku, powiazaniaSwz, rozstrzygniecia, limitPytanSwz, umowyWygasajace } from '../db/repos.js';
-import { kluczeUmowUzytkownika, wybierzUmowy, HORYZONT_DNI } from '../lib/umowyWygasajace.js';
+import { kluczeUmowUzytkownika, wybierzUmowy, twojeUmowy, HORYZONT_DNI } from '../lib/umowyWygasajace.js';
 import { planEfektywny } from '../lib/plan.js';
 import { ktoWygrywa } from '../lib/ktoWygrywa.js';
 import { kluczePartnerow, wybierzPartnerow } from '../lib/partnerzy.js';
@@ -220,15 +220,34 @@ router.get('/wykonawca', ah(async (req, res) => {
  * w ciągu ~7 miesięcy — zamawiający niedługo ogłosi ten sam przetarg. Gotowe kubełki z joba
  * `umowyWygasajacePrzelicz`, zero AI. Bez CPV w karcie — `dostepne: false`, nie błąd.
  */
+/**
+ * Umowy, które firma SAMA wykonuje i które się kończą (2026-11-01), z następcą, jeśli zamawiający już
+ * ogłosił nowy przetarg. Bez NIP-u w koncie — null (ekran podpowiada, żeby go podać). Odczyt na żywo:
+ * kilkaset wygranych firmy + ogłoszenia ich zamawiających (po NIP-ie, bez indeksu złożonego).
+ */
+async function umowyFirmy(user, teraz = Date.now()) {
+  if (!user.company_nip) return null;
+  const wyniki = await rozstrzygniecia.umowyWykonawcy(user.company_nip, { od: new Date(teraz).toISOString().slice(0, 10) });
+  const nipy = [...new Set(wyniki.map((w) => w.zamawiajacyNip ?? w.zamawiajacy_nip).filter(Boolean))].slice(0, 40);
+  const otwarte = (await Promise.all(nipy.map(async (nip) => (await tenders.poNipieZamawiajacego(nip, { limit: 300 }))
+    .map((t) => ({ ...t, zamawiajacy_nip: nip }))))).flat();
+  return twojeUmowy({ wyniki, otwarte, teraz });
+}
+
 router.get('/umowy-wygasajace', ah(async (req, res) => {
   const { dzialy, regiony, klucze } = kluczeUmowUzytkownika(req.user);
+  // Własne umowy nie zależą od CPV w karcie — firma z NIP-em widzi je i bez branż.
+  const twoje = await umowyFirmy(req.user).catch((err) => {
+    logger.warn({ err: err.message, userId: req.user.id }, 'Radar umów: nie odczytano umów firmy');
+    return null;
+  });
   if (!dzialy.length) {
-    res.json({ dostepne: false, powod: 'brak_cpv_w_karcie', umowy: [] });
+    res.json({ dostepne: false, powod: 'brak_cpv_w_karcie', umowy: [], twoje });
     return;
   }
   const kubelki = await umowyWygasajace.pobierzWiele(klucze);
   const { umowy, w_kubelkach: wKubelkach, juz_ogloszone: juzOgloszone } = wybierzUmowy({ kubelki, wlasnyNip: req.user.company_nip ?? null });
-  res.json({ dostepne: true, dzialy, regiony, horyzont_dni: HORYZONT_DNI, w_kubelkach: wKubelkach, juz_ogloszone: juzOgloszone, umowy });
+  res.json({ dostepne: true, dzialy, regiony, horyzont_dni: HORYZONT_DNI, w_kubelkach: wKubelkach, juz_ogloszone: juzOgloszone, umowy, twoje });
 }));
 
 router.get('/moi-konkurenci', ah(async (req, res) => {
