@@ -111,26 +111,40 @@ router.post('/kryteria-wstecz', ah(async (req, res) => {
 }));
 
 /**
- * Kryteria oceny dla zapisanych przetargów TED z jednej doby publikacji (2026-11-01) — jak
- * `/kryteria-wstecz` dla BZP: tylko tam, gdzie listy jeszcze nie ma, bez tworzenia dokumentów.
+ * Kryteria oceny dla zapisanych przetargów TED (2026-11-01) — jak `/kryteria-wstecz` dla BZP: tylko
+ * tam, gdzie listy jeszcze nie ma, bez tworzenia dokumentów. Doba TED to ~6 s, a limiter admina
+ * wpuszcza 20 wywołań na 15 min — dlatego zakres `od`…`do` (do 20 dób, od nowszej) w jednym wywołaniu.
  */
+const MAKS_DOB_TED = 20;
 router.post('/kryteria-ted-wstecz', ah(async (req, res) => {
-  const dzien = String(req.body?.dzien ?? '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dzien) || Number.isNaN(Date.parse(dzien))) throw badRequest('Podaj dzien w formacie RRRR-MM-DD');
-  const ogloszenia = await pobierzOgloszeniaTedDnia(dzien);
-  const wynik = await tenders.uzupelnijKryteria(ogloszenia);
-  res.json({ dzien, pobrane: ogloszenia.length, ...wynik });
+  const dataOk = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d));
+  const od = String(req.body?.od ?? req.body?.dzien ?? '');
+  const doDnia = String(req.body?.do ?? req.body?.dzien ?? '');
+  if (!dataOk(od) || !dataOk(doDnia) || doDnia > od) throw badRequest('Podaj od i do (RRRR-MM-DD, od >= do) albo dzien');
+  const doby = [];
+  for (let t = Date.parse(od); t >= Date.parse(doDnia) && doby.length < MAKS_DOB_TED; t -= 86_400_000) doby.push(new Date(t).toISOString().slice(0, 10));
+  const razem = { pobrane: 0, z_kryteriami: 0, istniejace: 0, uzupelnione: 0 };
+  const dni = [];
+  for (const dzien of doby) {
+    const ogloszenia = await pobierzOgloszeniaTedDnia(dzien);
+    const wynik = await tenders.uzupelnijKryteria(ogloszenia);
+    dni.push({ dzien, pobrane: ogloszenia.length, ...wynik });
+    razem.pobrane += ogloszenia.length;
+    for (const k of ['z_kryteriami', 'istniejace', 'uzupelnione']) razem[k] += wynik[k];
+  }
+  res.json({ od, do: doby.at(-1), ...razem, dni });
 }));
 
 /**
  * Kryteria oceny dla wskazanych przetargów z platformazakupowa.pl (2026-11-01): szczegół z tabelą
- * „Kryteria i warunki formalne” pobrany od nowa i zapisany razem z polami kryteriów. Do 20 na
+ * „Kryteria i warunki formalne” pobrany od nowa i zapisany razem z polami kryteriów. Do 15 na
  * wywołanie — platforma wymaga cichego SSO na każde ogłoszenie (~2 s).
  */
+const ODSTEP_PZ_MS = 3000;
 router.post('/kryteria-pz', ah(async (req, res) => {
-  const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).filter(Boolean).slice(0, 20);
-  if (!ids.length) throw badRequest('Podaj ids (do 20)');
-  const wynik = { sprawdzone: 0, z_kryteriami: 0, bledy: 0 };
+  const ids = (Array.isArray(req.body?.ids) ? req.body.ids : []).map(String).filter(Boolean).slice(0, 15);
+  if (!ids.length) throw badRequest('Podaj ids (do 15)');
+  const wynik = { sprawdzone: 0, z_kryteriami: 0, bledy: 0, przyklady_bledow: [] };
   for (const id of ids) {
     const t = await tenders.findById(id);
     if (!t || t.source !== 'platformazakupowa') continue;
@@ -138,9 +152,12 @@ router.post('/kryteria-pz', ah(async (req, res) => {
     try {
       const pola = await tenders.zapiszSzczegolPz(t.id, await pobierzSzczegolPz(String(t.bzp_external_id ?? t.id).replace(/^pz:/, '')));
       if (pola.kryteria) wynik.z_kryteriami += 1;
-    } catch {
+    } catch (err) {
       wynik.bledy += 1;
+      if (wynik.przyklady_bledow.length < 3) wynik.przyklady_bledow.push(`${id}: ${String(err.message).slice(0, 160)}`);
     }
+    // Platforma zaczęła odmawiać po ~20 szczegółach pod rząd (1.11) — odstęp między ogłoszeniami.
+    await new Promise((r) => { setTimeout(r, ODSTEP_PZ_MS); });
   }
   res.json(wynik);
 }));
