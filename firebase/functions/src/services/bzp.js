@@ -437,26 +437,40 @@ export function czyZDoby(notice, dzien) {
   return String(data).slice(0, 10) === dzien;
 }
 
-/** Jedna doba surowych ogłoszeń o wyniku, z docinaniem po województwach na suficie. */
-export async function pobierzSuroweWynikiDnia(dzien) {
+/** Jedna doba surowych ogłoszeń danego typu, z docinaniem po województwach na suficie. */
+async function suroweDnia(noticeType, dzien) {
   const okno = oknoDoby(dzien);
-  const zDnia = await zapytanieSurowe({ noticeType: 'TenderResultNotice', ...okno });
+  const zDnia = await zapytanieSurowe({ noticeType, ...okno });
   if (zDnia.length < SUFIT_ZAPYTANIA) return zDnia.filter((n) => czyZDoby(n, dzien));
 
   const mapa = new Map(zDnia.map((n) => [idSurowego(n), n]));
   for (const woj of WOJEWODZTWA_TERYT) {
     try {
-      const zWoj = await zapytanieSurowe({ noticeType: 'TenderResultNotice', ...okno, province: woj });
+      const zWoj = await zapytanieSurowe({ noticeType, ...okno, province: woj });
       for (const n of zWoj) mapa.set(idSurowego(n), n);
     } catch (err) {
-      logger.error({ err: err.message, dzien, woj }, 'BZP wyniki: województwo pominięte');
+      logger.error({ err: err.message, dzien, woj, noticeType }, 'BZP: województwo pominięte');
     }
   }
   const zebrane = [...mapa.values()];
   const wDobie = zebrane.filter((n) => czyZDoby(n, dzien));
   if (wDobie.length !== zebrane.length) {
-    logger.info({ dzien, zebrane: zebrane.length, wDobie: wDobie.length },
-      'BZP wyniki: odsiano ogłoszenia spoza doby (filtr województwa ignoruje górną granicę okna)');
+    logger.info({ dzien, noticeType, zebrane: zebrane.length, wDobie: wDobie.length },
+      'BZP: odsiano ogłoszenia spoza doby (filtr województwa ignoruje górną granicę okna)');
   }
   return wDobie;
+}
+
+/** Jedna doba surowych ogłoszeń o wyniku, z docinaniem po województwach na suficie. */
+export async function pobierzSuroweWynikiDnia(dzien) {
+  return suroweDnia('TenderResultNotice', dzien);
+}
+
+/**
+ * Jedna doba „ogłoszeń o zmianie ogłoszenia” (2026-11-01, `lib/zmianaTerminuBzp.js`). Pomiar 30.10: 383 na dobę
+ * (pod sufitem 500 — zwykle jedno zapytanie), 285 przesuwa termin składania ofert.
+ * UWAGA: `bzpNumber` to tu numer samego ogłoszenia o zmianie; numer zmienianego ogłoszenia jest tylko w treści.
+ */
+export async function pobierzSuroweZmianyDnia(dzien) {
+  return suroweDnia('NoticeUpdateNotice', dzien);
 }

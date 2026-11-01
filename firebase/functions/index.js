@@ -165,6 +165,11 @@ export const bzpOknoFetch = onSchedule(
   async () => {
     const { runBzpOkno } = await import('./src/jobs/oknoBzp.js');
     const wynik = await runBzpOkno();
+    // Przesunięte terminy (2026-11-01): BZP podaje je osobnym ogłoszeniem o zmianie, nie w ogłoszeniu o zamówieniu.
+    const { runZmianyTerminowBzp } = await import('./src/jobs/zmianyTerminowBzp.js');
+    const terminy = await runZmianyTerminowBzp().catch((err) => ({ ok: false, error: err.message }));
+    if (!terminy.ok) console.error(JSON.stringify({ severity: 'ERROR', message: 'bzpOknoFetch: zmiany terminów z błędami', ...terminy }));
+    else console.log(JSON.stringify({ severity: 'INFO', message: 'bzpOknoFetch: zmiany terminów', ...terminy }));
 
     if (!wynik.ok) {
       console.error(JSON.stringify({ severity: 'ERROR', message: 'bzpOknoFetch NIE POWIÓDŁ SIĘ', ...wynik }));

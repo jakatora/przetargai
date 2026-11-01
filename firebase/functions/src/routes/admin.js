@@ -252,6 +252,18 @@ router.post('/wojewodztwa-zamawiajacych', ah(async (req, res) => {
   res.json({ przebudowa, ...(await runWojewodztwaZamawiajacych()) });
 }));
 
+/**
+ * Przesunięte terminy z ogłoszeń o zmianie BZP (2026-11-01). Uzupełnienie wstecz oknami od najstarszego:
+ * `dni` (≤ 15) dób kończących się `do_dni_temu` (≤ 90) dób temu.
+ */
+router.post('/zmiany-terminow', ah(async (req, res) => {
+  const { runZmianyTerminowBzp, DNI_DOMYSLNIE } = await import('../jobs/zmianyTerminowBzp.js');
+  const dni = Math.min(15, Math.max(1, Number(req.body?.dni) || DNI_DOMYSLNIE));
+  const doDniTemu = Math.min(90, Math.max(0, Number(req.body?.do_dni_temu) || 0));
+  const wynik = await runZmianyTerminowBzp({ dni, doDniTemu, powiadamiaj: req.body?.powiadamiaj !== false });
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
 /** Ręczny przebieg: unieważnione zapisane przetargi ogłoszone ponownie (2026-11-01). */
 router.post('/ponowne-ogloszenia', ah(async (req, res) => {
   const { runPonowneOgloszenia } = await import('../jobs/ponowneOgloszenia.js');

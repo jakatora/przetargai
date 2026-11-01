@@ -907,6 +907,9 @@ export const tenders = {
     ustaw('status_zrodla', t.status_zrodla);
     ustaw('umowa_zmieniona_o', t.umowa_zmieniona_o);
     ustaw('umowa_zmiana_opis', t.umowa_zmiana_opis);
+    // Termin z ogłoszenia o zmianie BZP (2026-11-01): publikacja zastosowanej zmiany — starsza jej nie nadpisze.
+    ustaw('termin_zmiana_o', t.termin_zmiana_o);
+    ustaw('termin_zmiana_numer', t.termin_zmiana_numer);
 
     /*
      * Porównujemy stan PRZED z tym, co realnie zapiszemy — nie z surowym wejściem.
