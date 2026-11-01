@@ -3,6 +3,7 @@ import { parsujWynik } from '../lib/wynikiParser.js';
 import { pobierzSuroweWynikiDnia, dniWZakresie } from '../services/bzp.js';
 import { pobierzWynikiTed, pobierzModyfikacjeTed } from '../services/tedWyniki.js';
 import { rozstrzygniecia, modyfikacjeUmow, oknoWynikow as repoOkna } from '../db/repos.js';
+import { runWynikiZapisanych } from './wynikiZapisanych.js';
 
 /*
  * OKNO ROZSTRZYGNIĘĆ (etap 6) — kompletne źródło „co się w tych przetargach stało".
@@ -122,6 +123,7 @@ export async function runOknoWynikow({
   pobierzDzienBzp = pobierzSuroweWynikiDnia,
   pobierzTed = pobierzWynikiTed,
   pobierzModyfikacje = pobierzModyfikacjeTed,
+  powiadomZapisane = runWynikiZapisanych,
 } = {}) {
   const start = Date.now();
   const dzisiaj = new Date(teraz).toISOString().slice(0, 10);
@@ -140,6 +142,7 @@ export async function runOknoWynikow({
   const pominieteDni = [];
   let zapisaneBzp = 0;
   let czesciBzp = 0;
+  const wynikiBzp = [];
 
   for (const dzien of doPobrania) {
     if (Date.now() - start > budzetMs) {
@@ -154,12 +157,19 @@ export async function runOknoWynikow({
       const { zapisane, czesci } = await rozstrzygniecia.zapiszWiele(sparsowane);
       zapisaneBzp += zapisane;
       czesciBzp += czesci;
+      wynikiBzp.push(...sparsowane);
       raport.push({ dzien, ogloszen: zapisane, czesci, blad: null });
     } catch (err) {
       raport.push({ dzien, ogloszen: 0, czesci: 0, blad: err.message });
       logger.error({ err: err.message, dzien }, 'okno wyników: doba BZP pominięta');
     }
   }
+
+  // Wynik zapisanego przetargu (2026-11-01): kto wygrał i za ile — do centrum alertów konta, które go zapisało.
+  const zapisanych = await powiadomZapisane(wynikiBzp, { teraz }).catch((err) => {
+    logger.error({ err: err.message }, 'okno wyników: powiadomienia o wynikach zapisanych pominięte');
+    return { blad: err.message };
+  });
 
   let zapisaneTed = 0;
   let czesciTed = 0;
@@ -230,6 +240,7 @@ export async function runOknoWynikow({
     ted_ogloszen: zapisaneTed,
     ted_czesci: czesciTed,
     modyfikacji_umow: zapisaneModyfikacje,
+    wyniki_zapisanych: zapisanych,
     error_modyfikacji: bladModyfikacji,
     durationMs: Date.now() - start,
     zakonczony_o: new Date().toISOString(),

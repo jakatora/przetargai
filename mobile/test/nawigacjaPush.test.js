@@ -72,3 +72,9 @@ test('swz_questions_reminder → Kalendarz terminów z podświetleniem terminu p
 test('swz_questions_reminder bez tender_id → Kalendarz bez podświetlenia', () => {
   assert.deepEqual(celPush({ type: 'swz_questions_reminder' }), { ekran: 'KalendarzTerminow', params: {} });
 });
+
+test('radar umów, nowe dokumenty i wynik zapisanego przetargu → centrum alertów z podświetleniem', () => {
+  for (const type of ['umowa_nastepca', 'nowe_dokumenty', 'wynik_przetargu']) {
+    assert.deepEqual(celPush({ type, klucz: 'wynik_bzp_1' }), { ekran: 'CentrumAlertow', params: { podswietlKlucz: 'wynik_bzp_1' } });
+  }
+});

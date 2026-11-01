@@ -55,6 +55,8 @@ export function celPush(data) {
     case 'umowa_nastepca':
     // Nowe dokumenty w zapisanym przetargu (2026-11-01): wyjaśnienia i zmiany SWZ z e-Zamówień.
     case 'nowe_dokumenty':
+    // Wynik zapisanego przetargu (2026-11-01): kto wygrał i za ile — z ogłoszenia o wyniku w BZP.
+    case 'wynik_przetargu':
       return {
         ekran: 'CentrumAlertow',
         params: data.klucz ? { podswietlKlucz: String(data.klucz) } : {},
