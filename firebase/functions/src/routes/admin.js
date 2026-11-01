@@ -234,7 +234,9 @@ router.post('/monitor-dokumentow', ah(async (req, res) => {
 router.post('/otwarcie-rynku', ah(async (req, res) => {
   const { runOtwarcieRynku } = await import('../jobs/otwarcieRynku.js');
   const limit = Math.min(500, Math.max(1, Number(req.body?.limit) || 220));
-  const wynik = await runOtwarcieRynku({ limit, budzetMs: 240_000 });
+  // `od_h` (≤ 336): uzupełnienie wstecz — przetargi do 14 dni po terminie.
+  const odH = Math.min(336, Math.max(6, Number(req.body?.od_h) || 72));
+  const wynik = await runOtwarcieRynku({ limit, budzetMs: 240_000, odH });
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 

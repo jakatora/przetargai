@@ -44,12 +44,14 @@ export function doProby(t, teraz) {
 export async function runOtwarcieRynku({
   teraz = Date.now(), limit = 500, budzetMs = 420_000, przetargi = tenders,
   pobierz = pobierzDokumenty, czytajOtwarcie = czytajOtwarcieDomyslnie, czekaj = (ms) => new Promise((ok) => { setTimeout(ok, ms); }),
+  odH = OKNO_OD_H,
 } = {}) {
   const start = Date.now();
   const wynik = { ok: true, kandydaci: 0, sprawdzone: 0, z_plikami: 0, odczytane: 0, z_ofertami: 0, kopie: 0, bledy_platformy: 0, bledy: 0 };
-  const od = new Date(teraz - OKNO_OD_H * 3_600_000).toISOString();
+  // `odH` > 72 tylko przy uzupełnieniu wstecz (trasa admina) — harmonogram trzyma okno 6–72 h.
+  const od = new Date(teraz - odH * 3_600_000).toISOString();
   const doIso = new Date(teraz - OKNO_DO_H * 3_600_000).toISOString();
-  const kandydaci = (await przetargi.doOtwarciaRynku(od, doIso))
+  const kandydaci = (await przetargi.doOtwarciaRynku(od, doIso, { limit: odH > OKNO_OD_H ? 20_000 : 3000 }))
     .filter((t) => doProby(t, teraz))
     // Najpierw te, które jeszcze nie miały próby, potem najstarszy termin.
     .sort((a, b) => (a.otwarcie_rynek?.proby ?? 0) - (b.otwarcie_rynek?.proby ?? 0) || String(a.deadline).localeCompare(String(b.deadline)));
