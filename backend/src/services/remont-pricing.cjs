@@ -22886,6 +22886,7 @@ function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, polici
   const baskets = [...candidates.values()];
   const known = baskets.filter((basket) => basket.totalGrosze !== null).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
   result.best = known[0] ?? null;
+  result.cheapestSingleStore = known.find((basket) => basket.stores.length === 1) ?? null;
   result.alternatives = known.slice(1, 4);
   result.lowerBound = baskets.sort((a, b) => a.lowerBoundGrosze - b.lowerBoundGrosze || a.stores.length - b.stores.length)[0] ?? null;
   result.status = result.best && (!result.lowerBound || result.best.totalGrosze <= result.lowerBound.lowerBoundGrosze) ? "compared" : "needs_delivery_costs";
@@ -23644,6 +23645,13 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   const first = /* @__PURE__ */ new Map();
   for (const [key, order] of ordered) if (!first.has(order.store)) first.set(order.store, key);
   const priority = new Set(candidates.slice(0, 3).flatMap((orders) => orders.map(signature)));
+  const singleStoreCandidates = candidates.filter((orders) => orders.length === 1);
+  const cheapestSingleByStore = /* @__PURE__ */ new Map();
+  for (const [order] of singleStoreCandidates) {
+    const previous = cheapestSingleByStore.get(order.store);
+    if (!previous || order.materialsGrosze < previous.materialsGrosze) cheapestSingleByStore.set(order.store, order);
+  }
+  for (const order of cheapestSingleByStore.values()) priority.add(signature(order));
   for (const key of first.values()) priority.add(key);
   const smallest = /* @__PURE__ */ new Map();
   for (const [key, order] of [...ordered].reverse()) if (!smallest.has(order.store)) smallest.set(order.store, key);
@@ -23678,6 +23686,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   await quoteKeys([...priority]);
   const confirmedUpperBound = Math.min(...candidates.flatMap((orders) => orders.every((order) => order.quote && order.totalGrosze !== null && Date.parse(order.quote.expiresAt) > Date.now()) ? [orders.reduce((sum, order) => sum + order.totalGrosze, 0)] : []));
   const canStillWin = new Set(candidates.filter((orders) => {
+    if (orders.length === 1) return true;
     if (!Number.isFinite(confirmedUpperBound)) return true;
     const optimisticMaterials = orders.reduce((sum, order) => sum + (supportsCartPricing(order.store) && !order.quote ? 0 : order.materialsGrosze - order.lines.reduce((packs, line2) => packs + line2.packages.reduce((count, pack) => count + pack.count, 0), 0)), 0);
     return optimisticMaterials <= confirmedUpperBound;
@@ -23708,6 +23717,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
   result.comparedBasketCount = known.length;
   result.best = known[0] ?? null;
   result.alternatives = known.slice(1, 4);
+  result.cheapestSingleStore = known.find((basket) => basket.stores.length === 1) ?? null;
   result.lowerBound = baskets.sort((a, b) => a.lowerBoundGrosze - b.lowerBoundGrosze)[0] ?? null;
   if (!result.best) {
     const unquoted = (basket) => basket.stores.filter((store) => store.deliveryGrosze === null).length;
