@@ -1721,6 +1721,12 @@ export const matches = {
    * Tytuły najświeższych dopasowań od `sinceIso` (do cotygodniowego przeglądu).
    * Filtr i sortowanie po tym samym polu `created_at` — obsługuje indeks jednopolowy.
    */
+  /** CPV i województwa dopasowań od `sinceIso` (profil z tego, co konto dostaje — 2026-11-01, podwykonawstwo). */
+  async profilDopasowan(userId, sinceIso, limit = 200) {
+    const snap = await matchCol(userId).where('created_at', '>=', sinceIso).select('tender_cpv', 'tender_wojewodztwo').limit(limit).get();
+    return snap.docs.map((d) => ({ cpv: d.get('tender_cpv') ?? null, wojewodztwo: d.get('tender_wojewodztwo') ?? null }));
+  },
+
   async recentTitlesSince(userId, sinceIso, limit = 5) {
     const snap = await matchCol(userId)
       .where('created_at', '>=', sinceIso)

@@ -36,6 +36,24 @@ export function duzeKontrakty(wyniki, { minKwota = MIN_KWOTA_KONTRAKTU } = {}) {
   return lista;
 }
 
+/**
+ * Działy i województwa z DOPASOWAŃ konta — gdy karta ich nie ma (1.11: województwa w karcie miały 3 konta na 31).
+ * Bierzemy tylko te, które stanowią co najmniej `minUdzial` dopasowań: profil ma odzwierciedlać, gdzie konto
+ * pracuje, a nie pojedyncze przypadki.
+ */
+export function profilZDopasowan(dopasowania, { minUdzial = 0.2, maksDzialow = 3, maksRegionow = 2 } = {}) {
+  const lista = Array.isArray(dopasowania) ? dopasowania : [];
+  const top = (klucze, maks) => {
+    const n = new Map();
+    for (const k of klucze) if (k) n.set(k, (n.get(k) ?? 0) + 1);
+    return [...n].filter(([, c]) => c >= Math.max(2, lista.length * minUdzial)).sort((a, b) => b[1] - a[1]).slice(0, maks).map(([k]) => k);
+  };
+  return {
+    dzialy: top(lista.map((d) => dzialCpv(d.cpv)), maksDzialow),
+    regiony: top(lista.map((d) => normWojewodztwo(d.wojewodztwo)), maksRegionow),
+  };
+}
+
 /** Dla konta: działy i województwa z karty, bez własnych wygranych; największe pierwsze. Bez regionów — nic. */
 export function kontraktyDlaKonta(kontrakty, { dzialy = [], regiony = [], wlasnyNip = null, limit = 3 } = {}) {
   if (!dzialy.length || !regiony.length) return [];

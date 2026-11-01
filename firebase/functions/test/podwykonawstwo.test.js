@@ -54,3 +54,17 @@ test('kontraktyTygodnia: czyta strony do końca i zwraca kontrakty', async () =>
 test('dostawy (działy poniżej 45) odpadają — podwykonawców szuka się przy robotach i usługach', () => {
   assert.deepEqual(duzeKontrakty([wynik({ cpv: ['09310000-5'] }), wynik({ cpv: ['90910000-9'] })]).map((k) => k.dzial), ['90']);
 });
+
+test('profil z dopasowań: działy i regiony od 20% udziału; konto bez karty dostaje kontrakty z regionu, w którym pracuje', async () => {
+  const { profilZDopasowan } = await import('../src/lib/podwykonawstwo.js');
+  const { podwykonawstwoDlaKonta } = await import('../src/jobs/weeklyDigest.js');
+  const dop = [
+    ...Array.from({ length: 6 }, () => ({ cpv: '45233140-2', wojewodztwo: '18' })),
+    ...Array.from({ length: 3 }, () => ({ cpv: '45453000-7', wojewodztwo: '12' })),
+    { cpv: '90910000-9', wojewodztwo: '02' },
+  ];
+  assert.deepEqual(profilZDopasowan(dop), { dzialy: ['45'], regiony: ['18', '12'] });
+  const kontrakty = duzeKontrakty([wynik(), wynik({ tytul: 'Dolny Śląsk', wojewodztwo: '02' })]);
+  const lista = await podwykonawstwoDlaKonta({ id: 'u1', cpv_codes: [], regiony: [] }, kontrakty, Date.now(), { dopasowania: { profilDopasowan: async () => dop } });
+  assert.deepEqual(lista.map((k) => k.tytul), ['Przebudowa DW 886']);
+});

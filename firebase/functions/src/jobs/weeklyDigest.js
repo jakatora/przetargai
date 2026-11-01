@@ -4,7 +4,7 @@ import { skrotDokumentow } from '../lib/digestTresc.js';
 import { kluczeUmowUzytkownika, wybierzUmowy } from '../lib/umowyWygasajace.js';
 import { kluczeKonkurentowUzytkownika, twoiKonkurenci, wygraneKonkurentow, normNip } from '../lib/profilKonkurenta.js';
 import { sendEmail, weeklyDigestEmail } from '../services/email.js';
-import { duzeKontrakty, kontraktyDlaKonta } from '../lib/podwykonawstwo.js';
+import { duzeKontrakty, kontraktyDlaKonta, profilZDopasowan } from '../lib/podwykonawstwo.js';
 
 /**
  * Duże kontrakty z tygodnia (podwykonawstwo, 2026-11-01) — rozstrzygnięcia czytane RAZ na przebieg, nie per konto.
@@ -20,6 +20,18 @@ export async function kontraktyTygodnia(odDnia, { repo = rozstrzygniecia, maksSt
     kursor = strona.kursor;
   }
   return duzeKontrakty(wyniki);
+}
+
+/** Kontrakty dla konta: działy i regiony z karty, a gdy ich brak — z dopasowań z 30 dni (`profilZDopasowan`). */
+export async function podwykonawstwoDlaKonta(user, kontrakty, now = Date.now(), { dopasowania = matches } = {}) {
+  if (!kontrakty?.length) return [];
+  let { dzialy, regiony } = kluczeKonkurentowUzytkownika(user);
+  if (!dzialy.length || !regiony.length) {
+    const zDopasowan = profilZDopasowan(await dopasowania.profilDopasowan(user.id, new Date(now - 30 * 86_400_000).toISOString()));
+    if (!dzialy.length) dzialy = zDopasowan.dzialy;
+    if (!regiony.length) regiony = zDopasowan.regiony;
+  }
+  return kontraktyDlaKonta(kontrakty, { dzialy, regiony, wlasnyNip: user.company_nip ?? null });
 }
 
 /**
@@ -164,8 +176,10 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: sekcja wyników pominięta');
           return [];
         });
-        const { dzialy, regiony } = kluczeKonkurentowUzytkownika(user);
-        const podwykonawstwo = kontraktyDlaKonta(kontrakty, { dzialy, regiony, wlasnyNip: user.company_nip ?? null });
+        const podwykonawstwo = await podwykonawstwoDlaKonta(user, kontrakty, now).catch((err) => {
+          logger.warn({ err: err.message, userId: user.id }, 'Przegląd: podwykonawstwo konta pominięte');
+          return [];
+        });
         const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy, dokumenty, wyniki, podwykonawstwo });
         wynik = await sendEmail({ to: user.email, ...tresc });
       } catch (err) {
