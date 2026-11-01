@@ -71,3 +71,20 @@ test('nowa pozycja z listy: województwo z nazwy z oznaczeniem; bez mapy albo z 
   assert.equal(wojewodztwoNowejPozycji(t, null), t);
   assert.equal(wojewodztwoNowejPozycji(null, m), null);
 });
+
+test('dział CPV z tytułu: model z przykładów BZP, pewny wynik przy jednoznacznych słowach; nowa pozycja i karta go używają', async () => {
+  const { nauczModel, przewidzDzial, modelDoTekstu, modelZTekstu } = await import('../src/lib/dzialCpvZTytulu.js');
+  const { kluczeBenchmarku } = await import('../src/services/kartaStartu.js');
+  const przyklady = [
+    ...Array.from({ length: 30 }, (_, i) => ({ tytul: `Remont nawierzchni drogi gminnej nr ${i} w miejscowości`, cpv: '45233140-2' })),
+    ...Array.from({ length: 30 }, (_, i) => ({ tytul: `Dostawa artykułów spożywczych żywności dla szkoły ${i}`, cpv: '15800000-6' })),
+    ...Array.from({ length: 30 }, (_, i) => ({ tytul: `Odbiór i zagospodarowanie odpadów komunalnych rejon ${i}`, cpv: '90500000-2' })),
+  ];
+  const model = modelZTekstu(modelDoTekstu(nauczModel(przyklady)), nauczModel(przyklady).dzialy, nauczModel(przyklady).n);
+  assert.equal(przewidzDzial('Przebudowa nawierzchni drogi powiatowej', model)?.dzial, '45');
+  assert.equal(przewidzDzial('Dostawa artykułów spożywczych do przedszkola', model)?.dzial, '15');
+  assert.equal(przewidzDzial('Sukcesywna dostawa żywności do przedszkola', model), null, 'jedno słowo to za mało przy progu 0,99');
+  assert.equal(przewidzDzial('Usługa doradztwa podatkowego', model), null, 'nieznane słowa — brak zgadywania');
+  assert.equal(wojewodztwoNowejPozycji({ title: 'Odbiór odpadów komunalnych z nieruchomości', organization: 'X', cpvMain: null }, null, model).cpv_dzial_z_tytulu, '90');
+  assert.deepEqual(kluczeBenchmarku({ cpv_main: null, cpv_dzial_z_tytulu: '45', wojewodztwo: 'PL18' }), { zamawiajacy: null, dzialRegion: 'cpv:45|18', dzialKraj: 'cpv:45' });
+});

@@ -25,7 +25,7 @@ export function obserwacjaOtwarcia(t) {
 
 /** Klucze kubełków przetargu: dział CPV w województwie, potem w kraju. */
 export function kluczeOtwarcia(tender) {
-  const dzial = dzialCpv(tender?.cpv_main ?? tender?.cpv);
+  const dzial = dzialCpv(tender?.cpv_main ?? tender?.cpv) ?? (/^\d{2}$/.test(String(tender?.cpv_dzial_z_tytulu ?? '')) ? tender.cpv_dzial_z_tytulu : null);
   const woj = normWojewodztwo(tender?.wojewodztwo);
   return { region: dzial && woj ? `${PRZEDROSTEK}${dzial}|${woj}` : null, kraj: dzial ? `${PRZEDROSTEK}${dzial}` : null };
 }

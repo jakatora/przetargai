@@ -4,7 +4,7 @@ import { pustyLicznik } from '../lib/licznikZrodla.js';
 import { kluczOgloszenia, PRIORYTET_ZRODEL } from '../lib/dedupZrodel.js';
 import { ZRODLO, pobierzStrone, pobierzSzczegol, normalizujOgloszenieEpp, fetchHttps } from '../services/eProPublico.js';
 import { mapaZamawiajacych } from '../db/repos.js';
-import { wojewodztwoNowejPozycji } from './wojewodztwaZamawiajacych.js';
+import { wojewodztwoNowejPozycji, wczytajModelCpv } from './wojewodztwaZamawiajacych.js';
 
 /*
  * OKNO E-PROPUBLICO (2026-10-25). Co 6 h cała lista (strona po stronie, aż do pustej; sufit 100),
@@ -27,6 +27,7 @@ export async function runOknoEpp({
   let szczegolyPozostalo = maksSzczegolow;
   // Lista nie podaje regionu — województwo z nazwy zamawiającego (mapa z BZP, 2026-11-01).
   const mapy = await mapaZamawiajacych.wczytaj().catch(() => null);
+  const modelCpv = await wczytajModelCpv().catch(() => null);
   try {
     for (let strona = 1; strona <= maksStron; strona++) {
       if (Date.now() - start > budzetMs) { wynik.przerwane_budzetem = true; break; }
@@ -37,7 +38,7 @@ export async function runOknoEpp({
       licznik.odrzucone += odrzucone;
       if (!pozycje.length) break;
       wynik.strony = strona;
-      const znormalizowane = pozycje.map((p) => wojewodztwoNowejPozycji(normalizujOgloszenieEpp(p), mapy));
+      const znormalizowane = pozycje.map((p) => wojewodztwoNowejPozycji(normalizujOgloszenieEpp(p), mapy, modelCpv));
       const istniejace = await tenders.poKluczuDedup(znormalizowane.map((t) => (t ? kluczOgloszenia(t) : null)).filter(Boolean)).catch(() => new Map());
       for (const t of znormalizowane) {
         if (!t) { licznik.odrzucone++; continue; }

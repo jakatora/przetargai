@@ -744,6 +744,8 @@ export const tenders = {
       wojewodztwo: t.wojewodztwo ?? null,
       // PZ/ePP (2026-11-01): województwo wywnioskowane z nazwy zamawiającego, nie z danych źródła.
       ...(t.wojewodztwo_z_nazwy ? { wojewodztwo_z_nazwy: true } : {}),
+      // PZ/ePP: dział CPV z tytułu (`lib/dzialCpvZTytulu.js`) — tylko do kluczy kubełków karty startu.
+      ...(t.cpv_dzial_z_tytulu ? { cpv_dzial_z_tytulu: t.cpv_dzial_z_tytulu } : {}),
       // Warunki udziału (spec §6.1) — wycinek ≤3000 znaków albo {tekst:null, zrodlo:'swz'}.
       warunki_udzialu: t.warunki_udzialu ?? null,
       /*
@@ -1147,15 +1149,23 @@ export const tenders = {
   /** Otwarte przetargi (termin ≥ `od`) z polami do przypisania województwa po nazwie zamawiającego (2026-11-01). */
   async otwarteDoWojewodztwa(od, { limit = 30_000 } = {}) {
     const snap = await db().collection('tenders').where('deadline', '>=', od)
-      .select('source', 'organization', 'wojewodztwo').limit(limit).get();
+      .select('source', 'organization', 'wojewodztwo', 'title', 'cpv_main', 'cpv_dzial_z_tytulu').limit(limit).get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
-  /** Województwa wywnioskowane z nazwy zamawiającego (PZ, ePP) — z oznaczeniem, że to szacunek; partie po 400. */
+  /**
+   * Dane wywnioskowane dla PZ/ePP (2026-11-01): województwo z nazwy zamawiającego (`wojewodztwo` + znacznik)
+   * i dział CPV z tytułu (`cpv_dzial_z_tytulu`) — tylko podane pola; partie po 400.
+   */
   async ustawWojewodztwaZNazwy(lista) {
     for (let i = 0; i < lista.length; i += 400) {
       const batch = db().batch();
-      for (const { id, wojewodztwo } of lista.slice(i, i + 400)) batch.update(db().collection('tenders').doc(id), { wojewodztwo, wojewodztwo_z_nazwy: true });
+      for (const { id, wojewodztwo, cpvDzial } of lista.slice(i, i + 400)) {
+        batch.update(db().collection('tenders').doc(id), {
+          ...(wojewodztwo ? { wojewodztwo, wojewodztwo_z_nazwy: true } : {}),
+          ...(cpvDzial ? { cpv_dzial_z_tytulu: cpvDzial } : {}),
+        });
+      }
       await batch.commit();
     }
     return lista.length;
@@ -2800,6 +2810,23 @@ const benchmarkDocId = (klucz) => String(klucz).replaceAll('/', '_');
  */
 const DOK_MAP_ZAMAWIAJACYCH = { poNazwie: 'mapa_zam_nazwy', poMiescie: 'mapa_zam_miasta', poMiejscowniku: 'mapa_zam_miejscowniki' };
 let pamiecMapZamawiajacych = null;
+
+/* Model „tytuł → dział CPV” (2026-11-01, `lib/dzialCpvZTytulu.js`): jeden dokument `meta`, słowa zwartym tekstem. */
+let pamiecModeluCpv = null;
+export const modelCpvTytulu = {
+  async zapisz({ tekst, dzialy, n }, teraz = nowIso()) {
+    await db().collection('meta').doc('model_cpv_tytulu').set({ slowa: tekst, dzialy, n, zbudowano_o: teraz });
+    pamiecModeluCpv = null;
+  },
+  /** @returns {Promise<{tekst: string, dzialy: object, n: number, zbudowano_o: string}|null>} */
+  async wczytaj({ swiezoscMs = 6 * 3_600_000 } = {}) {
+    if (pamiecModeluCpv && Date.now() - pamiecModeluCpv.o < swiezoscMs) return pamiecModeluCpv.dane;
+    const snap = await db().collection('meta').doc('model_cpv_tytulu').get();
+    const dane = snap.exists ? { tekst: snap.get('slowa') ?? '', dzialy: snap.get('dzialy') ?? {}, n: snap.get('n') ?? 0, zbudowano_o: snap.get('zbudowano_o') ?? null } : null;
+    pamiecModeluCpv = { dane, o: Date.now() };
+    return dane;
+  },
+};
 
 export const mapaZamawiajacych = {
   async zapisz(mapy, teraz = nowIso()) {

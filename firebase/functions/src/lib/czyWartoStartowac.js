@@ -480,6 +480,9 @@ export function kartaStartu({ tender, benchmarki, profil = null, teraz = Date.no
       ? { ...kubelek.probka, zrodla: kubelek.zrodla ?? [], etykieta: kubelek.etykieta ?? null }
       : null,
     czynniki,
-    zastrzezenie: ZASTRZEZENIE,
+    // Branża z tytułu (PZ/ePP nie podają CPV) — mówimy wprost, z czego są liczby.
+    zastrzezenie: !tender?.cpv_main && tender?.cpv_dzial_z_tytulu
+      ? `${ZASTRZEZENIE} Branżę (dział CPV) wywnioskowaliśmy z tytułu — ta platforma nie podaje kodów CPV.`
+      : ZASTRZEZENIE,
   };
 }

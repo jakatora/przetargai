@@ -24,7 +24,8 @@ import { kluczeOtwarcia } from '../lib/benchmarkOtwarcia.js';
  * mówi, DLACZEGO kubełka nie było (np. ogłoszenie bez CPV).
  */
 export function kluczeBenchmarku(tender) {
-  const dzial = dzialCpv(tender?.cpv_main ?? tender?.cpv);
+  // PZ/ePP bez CPV (2026-11-01): dział wywnioskowany z tytułu (`cpv_dzial_z_tytulu`).
+  const dzial = dzialCpv(tender?.cpv_main ?? tender?.cpv) ?? (/^\d{2}$/.test(String(tender?.cpv_dzial_z_tytulu ?? '')) ? tender.cpv_dzial_z_tytulu : null);
   const woj = normWojewodztwo(tender?.wojewodztwo);
   const nip = tender?.zamawiajacy_nip ?? null;
   return {

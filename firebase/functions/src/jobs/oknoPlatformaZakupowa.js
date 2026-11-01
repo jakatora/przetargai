@@ -3,7 +3,7 @@ import { oknoPz as repoOkna, tenders } from '../db/repos.js';
 import { pustyLicznik } from '../lib/licznikZrodla.js';
 import { ZRODLO, POZYCJI_NA_STRONE, pobierzStrone, normalizujOgloszeniePz } from '../services/platformaZakupowa.js';
 import { mapaZamawiajacych } from '../db/repos.js';
-import { wojewodztwoNowejPozycji } from './wojewodztwaZamawiajacych.js';
+import { wojewodztwoNowejPozycji, wczytajModelCpv } from './wojewodztwaZamawiajacych.js';
 import { kluczOgloszenia, PRIORYTET_ZRODEL } from '../lib/dedupZrodel.js';
 
 /*
@@ -40,6 +40,7 @@ export async function runOknoPz({
   const strony = planStron({ checkpoint, stronNaPrzebieg });
   // Lista nie podaje regionu — województwo z nazwy zamawiającego (mapa z BZP, 2026-11-01). Brak mapy = jak dotąd.
   const mapy = await mapaZamawiajacych.wczytaj().catch(() => null);
+  const modelCpv = await wczytajModelCpv().catch(() => null);
   let ostatniaPelna = true;
   try {
     for (let i = 0; i < strony.length; i++) {
@@ -52,7 +53,7 @@ export async function runOknoPz({
       wynik.strony.push(strona);
       // Ten sam przetarg mógł już wejść z BZP/TED/BK (cykl dobowy) — wtedy nie tworzymy kopii,
       // tylko dopisujemy link platformy jako rejestr poboczny (lib/dedupZrodel: klucz tożsamości).
-      const znormalizowane = pozycje.map((poz) => wojewodztwoNowejPozycji(normalizujOgloszeniePz(poz), mapy));
+      const znormalizowane = pozycje.map((poz) => wojewodztwoNowejPozycji(normalizujOgloszeniePz(poz), mapy, modelCpv));
       const istniejace = await tenders.poKluczuDedup(znormalizowane.map((t) => (t ? kluczOgloszenia(t) : null)).filter(Boolean)).catch(() => new Map());
       for (const t of znormalizowane) {
         if (!t) { licznik.odrzucone++; continue; }
