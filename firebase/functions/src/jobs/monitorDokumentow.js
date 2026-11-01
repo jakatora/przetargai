@@ -32,12 +32,13 @@ const DNI_PO_TERMINIE = 14;
 
 export async function runMonitorDokumentow({
   teraz = nowIso(), pobierz = pobierzDokumenty, wyslijPush = sendPush, wyslijEmail = sendEmail,
-  limit = 30, budzetMs = 150_000, czytajOtwarcie = czytajOtwarcieDomyslnie,
+  limit = 80, budzetMs = 150_000, czytajOtwarcie = czytajOtwarcieDomyslnie,
 } = {}) {
   const start = Date.now();
   const wynik = { ok: true, wpisow: 0, przetargow: 0, sprawdzone: 0, z_nowymi: 0, alerty: 0, push: 0, email: 0, bledy_platformy: 0, bledy: 0 };
   const od = new Date(Date.parse(teraz) - DNI_PO_TERMINIE * 86_400_000).toISOString();
-  // Zapisane (alert z pushem) + czołówka feedu (wynik ≥ 80, tylko centrum alertów): leniwy użytkownik nie
+  // Zapisane (alert z pushem) + czołówka feedu (wynik ≥ 70, do 40 na konto, tylko centrum alertów; 1.11: ~950
+  // przetargów BZP, 80 na przebieg co 2 h = pełny cykl w kilkanaście godzin): leniwy użytkownik nie
   // zapisuje, a wyjaśnienia SWZ dotyczą i jego. Zapis wygrywa z dopasowaniem tego samego przetargu.
   const zapisane = (await saved.otwarteWszystkich(od)).map((w) => ({ ...w, zapisany: true }));
   const dopasowane = (await saved.najlepszeDopasowaniaWszystkich(od).catch(() => [])).map((w) => ({ ...w, zapisany: false }));

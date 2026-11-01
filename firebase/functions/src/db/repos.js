@@ -1844,7 +1844,7 @@ export const saved = {
    * `od` = najwcześniejszy termin — po terminie przychodzi informacja z otwarcia ofert.
    * @returns {Promise<{userId: string, tenderId: string, saved_at: string|null}[]>}
    */
-  async najlepszeDopasowaniaWszystkich(od, { minWynik = 80, naKonto = 15 } = {}) {
+  async najlepszeDopasowaniaWszystkich(od, { minWynik = 70, naKonto = 40 } = {}) {
     const konta = await db().collection('users').select().get();
     const wynik = [];
     for (const konto of konta.docs) {
