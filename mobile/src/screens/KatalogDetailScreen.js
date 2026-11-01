@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
 import Screen from '../components/Screen';
 import Button from '../components/Button';
@@ -18,7 +18,8 @@ import { opisCpv } from '../lib/cpv';
 import { opisWadium } from '../lib/wadium';
 import { opisKryterium, opisCzesci } from '../lib/ogloszenieMeta';
 import { pelnaNazwaZrodla } from '../lib/zrodlaDanych';
-import { normalizujOgloszenie } from '../lib/skrotOgloszenia';
+import { normalizujOgloszenie, czyNiepelneOgloszenie, scalOgloszenie } from '../lib/skrotOgloszenia';
+import { api } from '../api/client';
 
 /*
  * Szczegóły ogłoszenia z trybu „Wszystkie" (P1-3).
@@ -48,8 +49,17 @@ export default function KatalogDetailScreen({ route, navigation }) {
   // niepełnym ogłoszeniem: rejestr jako napis albo pod starym kluczem `source`,
   // czasem bez rejestru w ogóle. Normalizacja zamienia go na metryczkę, a brak
   // rejestru oznacza jako NIEZNANY — zamiast domyślnego „BZP" (2026-09-25).
-  // Pełnego ogłoszenia nie dociągamy: backend nie ma trasy `/tenders/:id`.
-  const tender = normalizujOgloszenie(route?.params?.tender);
+  // Okrojone ogłoszenie (bez pól katalogu) dociągamy z `GET /tenders/:id` (2026-11-01) — bez tego ekran
+  // mówił „wartość: nie podano”, „CPV: brak danych”, choć przetarg je ma. Błąd sieci = zostaje to, co przyszło.
+  const wejscie = route?.params?.tender;
+  const [pelne, setPelne] = useState(null);
+  useEffect(() => {
+    if (!czyNiepelneOgloszenie(wejscie)) return undefined;
+    let aktywny = true;
+    api.ogloszenie(wejscie.id).then((d) => { if (aktywny) setPelne(d?.tender ?? null); }).catch(() => {});
+    return () => { aktywny = false; };
+  }, [wejscie?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const tender = normalizujOgloszenie(scalOgloszenie(wejscie, pelne));
 
   if (!tender) {
     return (

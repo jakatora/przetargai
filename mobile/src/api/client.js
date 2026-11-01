@@ -226,6 +226,8 @@ export const api = {
   pracownikPrzywroc: (tenderId) => request(`/pracownik/przywroc/${encodeURIComponent(tenderId)}`, { method: 'POST', body: {} }),
   kartaFirmy: () => request('/pracownik/karta'),
   zapiszKarteFirmy: (body) => request('/pracownik/karta', { method: 'PUT', body }),
+  /** Jedno ogłoszenie po id (2026-11-01) — ekran ogłoszenia otwarty spoza katalogu dociąga pełne dane. */
+  ogloszenie: (id) => request(`/tenders/${encodeURIComponent(id)}`),
   propozycjaKarty: (klucz, akcja) => request(`/pracownik/propozycje/${encodeURIComponent(klucz)}`, { method: 'POST', body: { akcja } }),
   warunkiUdzialu: (matchId) => request(`/matches/${encodeURIComponent(matchId)}/warunki`),
   ustawMaileSelekcji: (wlaczone) => request('/auth/me', { method: 'PATCH', body: { powiadomienia_pracownik_email: wlaczone } }),

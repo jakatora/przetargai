@@ -141,3 +141,15 @@ test('radar planu: przekazuje link, termin, datę publikacji i zamawiającego; r
   assert.equal(t.zrodloNieznane, true);
   assert.equal(linkDoOryginalu(t), 'https://ezamowienia.gov.pl/x');
 });
+
+test('okrojone ogłoszenie (radar umów, alert) dociągamy; pełne z katalogu nie; serwer nad okrojonym', async () => {
+  const { czyNiepelneOgloszenie, scalOgloszenie } = await import('../src/lib/skrotOgloszenia.js');
+  assert.equal(czyNiepelneOgloszenie({ id: 't1', title: 'X', deadline: '2026-11-10' }), true);
+  assert.equal(czyNiepelneOgloszenie({ id: 't1', title: 'X', cpv: null }), false, 'pozycja katalogu ma klucz cpv');
+  assert.equal(czyNiepelneOgloszenie({ title: 'bez id' }), false);
+  assert.equal(czyNiepelneOgloszenie(null), false);
+  const scalone = scalOgloszenie({ id: 't1', title: 'Krótki', organization: 'Gmina', source: 'bzp' }, { id: 't1', title: 'Pełny tytuł', budget: 120000, cpv: '90910000-9', organization: null });
+  assert.deepEqual([scalone.title, scalone.budget, scalone.cpv, scalone.organization, scalone.source], ['Pełny tytuł', 120000, '90910000-9', 'Gmina', 'bzp']);
+  const okrojone = { id: 't1' };
+  assert.equal(scalOgloszenie(okrojone, null), okrojone);
+});

@@ -11,8 +11,8 @@ import { metryczkaZrodla } from './zrodlaDanych.js';
  * Konkurencyjności pokazywało się jako „BZP", znikał przycisk „Otwórz oryginał",
  * a termin był „nieznany", choć ekran-źródło go znał.
  *
- * Backend nie ma trasy pojedynczego ogłoszenia z katalogu (`/tenders` to tylko
- * lista), więc nie dociągamy — każdy ekran-źródło przekazuje wszystko, co ma,
+ * Od 2026-11-01 backend ma `GET /tenders/:id` — ekran dociąga pełne ogłoszenie, gdy dostał
+ * okrojone (`czyNiepelneOgloszenie`). Do tego czasu każdy ekran-źródło przekazuje wszystko, co ma,
  * a rejestru, którego nikt nie podał, NIE zgadujemy (`zrodloNieznane`).
  */
 
@@ -27,6 +27,22 @@ function zrodloZ(wartosc) {
  * `zrodlo` jako napis albo stary klucz `source` zamieniamy na metryczkę; brak
  * jakiejkolwiek informacji o rejestrze = `zrodloNieznane: true` (nie „BZP").
  */
+/**
+ * Okrojone ogłoszenie (z radaru umów, alertu, radaru planów, kalendarza) nie ma pól katalogu —
+ * nawet pustych. Pozycja katalogu ma klucz `cpv` zawsze (czasem z null), więc jego brak = dociągnij.
+ */
+export function czyNiepelneOgloszenie(tender) {
+  return Boolean(tender?.id) && !Object.prototype.hasOwnProperty.call(tender, 'cpv');
+}
+
+/** Pełne ogłoszenie z serwera nad okrojonym: pola serwera wygrywają, czego serwer nie zna — zostaje. */
+export function scalOgloszenie(okrojone, pelne) {
+  if (!pelne || typeof pelne !== 'object') return okrojone;
+  const wynik = { ...okrojone };
+  for (const [k, v] of Object.entries(pelne)) if (v !== null && v !== undefined) wynik[k] = v;
+  return wynik;
+}
+
 export function normalizujOgloszenie(tender) {
   if (!tender || typeof tender !== 'object') return null;
   const zrodlo = zrodloZ(tender.zrodlo) ?? zrodloZ(tender.source);

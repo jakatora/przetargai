@@ -107,6 +107,18 @@ router.get('/', ah(async (req, res) => {
   });
 }));
 
+/*
+ * Jedno ogłoszenie po id (2026-11-01). Ekran ogłoszenia bywa otwierany spoza katalogu — z radaru umów
+ * („nowy przetarg już ogłoszony”), alertu, radaru planów, kalendarza — z samym tytułem i terminem.
+ * Bez tej trasy pokazywał „Wartość: nie podano w ogłoszeniu” i „CPV: brak danych”, choć przetarg je ma.
+ * Ten sam kształt co pozycja katalogu (`publicTender`), bez AI i bez rejestrów — jeden odczyt.
+ */
+router.get('/:id', ah(async (req, res) => {
+  const [tender, znaczniki] = await Promise.all([tenders.findById(req.params.id), pobierzZnacznikiZrodel()]);
+  if (!tender) throw notFound('Ogłoszenie nie zostało znalezione');
+  res.json({ tender: publicTender(tender, znaczniki) });
+}));
+
 export default router;
 
 /*

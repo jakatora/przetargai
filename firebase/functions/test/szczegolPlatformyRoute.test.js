@@ -82,3 +82,17 @@ test('postępowanie z ustawy: tabela platformy bez kryteriów → kryteria od bl
     _ustawPobieranieSzczegoluPz(null);
   }
 });
+
+test('GET /tenders/:id: pełne ogłoszenie jak w katalogu (wartość, CPV, skrót kryteriów); brak → 404; bez logowania → 401', async () => {
+  const t = await token();
+  const { tender } = await tenders.upsert({ externalId: `2026/BZP 01${ZNAK}/01`, title: 'Sprzątanie urzędu w 2027 r.', organization: 'Gmina', deadline: '2099-02-01T09:00:00.000Z', source: 'bzp',
+    budget: 412000, cpvMain: '90910000-9', kryteria: [{ nazwa: 'Cena', waga: 100, udzial: 100, rodzaj: 'cena' }], kryterium_oceny: 'tylko_cena' });
+  const odp = await fetch(`${BAZA}/tenders/${encodeURIComponent(tender.id)}`, { headers: { Authorization: `Bearer ${t}` } });
+  assert.equal(odp.status, 200);
+  const { tender: pelne } = await odp.json();
+  assert.deepEqual([pelne.id, pelne.budget, pelne.cpv, pelne.kryteria_skrot?.kryteria?.[0]?.rodzaj, pelne.zrodlo?.kod], [tender.id, 412000, '90910000-9', 'cena', 'bzp']);
+  assert.equal((await fetch(`${BAZA}/tenders/nie-ma-takiego`, { headers: { Authorization: `Bearer ${t}` } })).status, 404);
+  assert.equal((await fetch(`${BAZA}/tenders/${encodeURIComponent(tender.id)}`)).status, 401);
+  const filtry = await fetch(`${BAZA}/tenders/filtry`, { headers: { Authorization: `Bearer ${t}` } });
+  assert.equal(filtry.status, 200, '/filtry nie wpada w /:id');
+});
