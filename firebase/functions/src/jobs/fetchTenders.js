@@ -11,6 +11,7 @@ import { scalMiedzyZrodlami, kluczOgloszenia } from '../lib/dedupZrodel.js';
 import { pustyLicznikAi, zbierajStatystykiAi, ocenStanAi } from '../lib/stanAi.js';
 import { alarmujAwarieAi } from './alarmAi.js';
 import { alarmujCichePusteZrodla } from './alarmZrodla.js';
+import { runWersjeTed } from './wersjeTed.js';
 
 /**
  * Rejestr źródeł ogłoszeń (D-039). Każde źródło zwraca ZNORMALIZOWANE przetargi
@@ -251,6 +252,8 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     logger.warn({ err: err.message }, 'cykl: sprawdzenie kopii z platformazakupowa.pl nie powiodło się — zapis bez scalania');
   }
   let zastapioneKopie = 0;
+  // Nowa wersja ogłoszenia TED (zmiana terminu itp.) to nowa publikacja tego samego postępowania (2026-11-01).
+  const postepowaniaTed = new Set();
 
   /* ── FAZA 3: zapis ──────────────────────────────────────────────────────── */
 
@@ -271,6 +274,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
       if (created) {
         noweTenders += 1;
         if (statystyki[nazwa]) statystyki[nazwa].newTenders += 1;
+        if (notice.source === 'ted' && notice.postepowanie_id) postepowaniaTed.add(notice.postepowanie_id);
       }
       const kopia = kopiePlatformy.get(String(notice?.externalId));
       if (kopia && tender?.id && kopia.id !== tender.id) {
@@ -323,6 +327,15 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     });
   }
 
+  // Starsze wersje ogłoszeń TED ustępują nowym — przed dopasowaniami, żeby nie wróciły do puli.
+  let wersjeTed = null;
+  if (postepowaniaTed.size) {
+    wersjeTed = await runWersjeTed({ postepowania: postepowaniaTed }).catch((err) => {
+      logger.warn({ err: err.message }, 'fetchTenders: oznaczanie starych wersji TED nie powiodło się');
+      return null;
+    });
+  }
+
   // Nowe ogłoszenia są w bazie — cache puli w tej instancji jest już nieaktualny.
   tenders.odswiezPule();
 
@@ -359,6 +372,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
 
   return zapiszSladZAi({
     ok: true, fetched, newTenders: noweTenders, skipped: pominiete, zastapione_kopie_platformy: zastapioneKopie,
+    zastapione_wersje_ted: wersjeTed?.zastapione ?? 0,
     /*
      * Utracone zapisy NIE dają czystego sukcesu (2026-09-25), ale też nie `ok: false`:
      * to wywróciłoby cały dzienny cykl razem z policzonymi już dopasowaniami, a dane

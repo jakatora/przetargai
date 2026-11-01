@@ -283,6 +283,8 @@ export function pasujeDoFiltrow(tender, filtry, terazIso) {
   if (!tender) return false;
   // Anulowane postępowanie ma wciąż otwarty termin, ale już nie istnieje.
   if (tender.anulowany === true) return false;
+  // Duplikat: stara wersja ogłoszenia TED albo kopia z platformy zastąpiona przez rejestr wiodący (2026-11-01).
+  if (tender.zastapiony_przez) return false;
 
   if (filtry.zrodlo && (tender.source ?? 'bzp') !== filtry.zrodlo) return false;
   if (filtry.region && kodWojewodztwa(tender.wojewodztwo) !== filtry.region) return false;

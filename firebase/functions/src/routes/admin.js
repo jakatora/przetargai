@@ -264,6 +264,14 @@ router.post('/zmiany-terminow', ah(async (req, res) => {
   res.status(wynik.ok ? 200 : 503).json(wynik);
 }));
 
+/** Starsze wersje ogłoszeń TED → `zastapiony_przez` + termin aktualnej (2026-11-01); `maks` ≤ 600 na wywołanie. */
+router.post('/wersje-ted', ah(async (req, res) => {
+  const { runWersjeTed } = await import('../jobs/wersjeTed.js');
+  const maks = Math.min(600, Math.max(1, Number(req.body?.maks) || 300));
+  const wynik = await runWersjeTed({ maks });
+  res.status(wynik.ok ? 200 : 503).json(wynik);
+}));
+
 /** Ręczny przebieg: unieważnione zapisane przetargi ogłoszone ponownie (2026-11-01). */
 router.post('/ponowne-ogloszenia', ah(async (req, res) => {
   const { runPonowneOgloszenia } = await import('../jobs/ponowneOgloszenia.js');

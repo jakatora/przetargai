@@ -1034,6 +1034,41 @@ export const tenders = {
     await db().collection('tenders').doc(id).update({ zastapiony_przez: przezId, zastapiony_o: teraz });
   },
 
+  /** Dokumenty TED jednego postępowania — wersje ogłoszenia (2026-11-01, `jobs/wersjeTed.js`). Indeks automatyczny. */
+  async tedPoPostepowaniu(postepowanieId) {
+    if (!postepowanieId) return [];
+    const snap = await db().collection('tenders').where('postepowanie_id', '==', String(postepowanieId))
+      .select('source', 'published_at', 'deadline', 'zastapiony_przez', 'postepowanie_id').limit(50).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((t) => t.source === 'ted');
+  },
+
+  /** TED z terminem od `od` (uzupełnianie wstecz wersji): zakres po `deadline`, źródło w pamięci. */
+  async tedDoWersji(od, { limit = 40_000 } = {}) {
+    const snap = await db().collection('tenders').where('deadline', '>=', od)
+      .select('source', 'published_at', 'deadline', 'zastapiony_przez', 'postepowanie_id').limit(limit).get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((t) => t.source === 'ted');
+  },
+
+  /**
+   * Starsza wersja ogłoszenia TED ustępuje aktualnej (2026-11-01): `zastapiony_przez` (poza pulą i katalogiem),
+   * termin aktualnej wersji — także w kopiach w Zapisanych (z przypomnieniem) i feedach — oraz znacznik
+   * `tender_zastapiony_przez` w kopiach feedu, po którym trasa listy ukrywa duplikat. Bez historii zmian.
+   * @returns {Promise<number>} ile kopii w feedach oznaczono
+   */
+  async zastapWersje(staraId, aktualna, teraz = nowIso()) {
+    await db().collection('tenders').doc(staraId).update({
+      zastapiony_przez: aktualna.id, zastapiony_o: teraz, ...(aktualna.deadline ? { deadline: aktualna.deadline } : {}),
+    });
+    if (aktualna.deadline) await uzgodnijKopiePrzetargu(staraId, { deadline: aktualna.deadline }, teraz);
+    const kopie = await db().collectionGroup('matches').where('tender_id', '==', staraId).select().get();
+    for (let i = 0; i < kopie.docs.length; i += 400) {
+      const batch = db().batch();
+      for (const d of kopie.docs.slice(i, i + 400)) batch.update(d.ref, { tender_zastapiony_przez: aktualna.id });
+      await batch.commit();
+    }
+    return kopie.size;
+  },
+
   /** Dopisuje link do rejestru pobocznego, jeśli jeszcze go nie ma (po źródle + externalId). */
   async dodajZrodloAlternatywne(id, wpis) {
     const ref = db().collection('tenders').doc(id);
@@ -1785,6 +1820,14 @@ export const matches = {
 
     const snap = await q.limit(limit).get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /** Które z podanych przetargów konto ma w feedzie — jeden `getAll` (duplikaty wersji TED, 2026-11-01). */
+  async istniejace(userId, tenderIds) {
+    const unikalne = [...new Set((tenderIds ?? []).filter(Boolean).map(String))];
+    if (!unikalne.length) return new Set();
+    const snapy = await db().getAll(...unikalne.map((id) => matchCol(userId).doc(id)), { fieldMask: [] });
+    return new Set(snapy.filter((s) => s.exists).map((s) => s.id));
   },
 
   /** Kursor wskazujący ostatni element strony — do przekazania jako `before`. */

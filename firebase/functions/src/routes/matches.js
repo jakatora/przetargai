@@ -54,7 +54,11 @@ router.get('/', ah(async (req, res) => {
   // Pełna strona ⇒ prawdopodobnie jest kolejna. Krótsza ⇒ to koniec.
   const nastepny = rows.length === limit ? matches.kursorZ(rows[rows.length - 1]) : null;
   // Odrzucone (przez klienta albo selekcję) nie wracają do listy — kursor liczony z pełnej strony.
-  const widoczne = rows.filter((r) => !r.odrzucony_przez_klienta && !r.odrzucony_przez_pracownika);
+  const nieodrzucone = rows.filter((r) => !r.odrzucony_przez_klienta && !r.odrzucony_przez_pracownika);
+  // Stara wersja ogłoszenia TED (2026-11-01, `jobs/wersjeTed.js`) znika, gdy konto ma w feedzie też aktualną.
+  const zastapione = nieodrzucone.filter((r) => r.tender_zastapiony_przez).map((r) => r.tender_zastapiony_przez);
+  const maAktualna = zastapione.length ? await matches.istniejace(req.user.id, zastapione) : new Set();
+  const widoczne = nieodrzucone.filter((r) => !maAktualna.has(r.tender_zastapiony_przez));
 
   /*
    * Wyjaśnienie liczy się TU, z profilu i zdenormalizowanych pól przetargu —
