@@ -1054,11 +1054,14 @@ export const tenders = {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
-  /** TED z terminem od `od` (uzupełnianie wstecz wersji): zakres po `deadline`, źródło w pamięci. */
+  /**
+   * TED z terminem od `od` (uzupełnianie wstecz wersji). Filtr źródła W ZAPYTANIU (indeks source+deadline): 2.11 wszystkich
+   * przetargów z takim terminem było 38 642 przy limicie 40 000 — zakres bez źródła zaczynał ucinać najdalsze terminy.
+   */
   async tedDoWersji(od, { limit = 40_000 } = {}) {
-    const snap = await db().collection('tenders').where('deadline', '>=', od)
+    const snap = await db().collection('tenders').where('source', '==', 'ted').where('deadline', '>=', od)
       .select('source', 'published_at', 'deadline', 'url', 'zastapiony_przez', 'postepowanie_id').limit(limit).get();
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((t) => t.source === 'ted');
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
   /**
@@ -2452,11 +2455,13 @@ export const evaluations = {
 
   /** Decyzja selekcji (spec §4.5). Odrzucony niesie dane przetargu — lista odrzuconych bez JOIN-a. */
   async zapiszDecyzje(userId, tenderId, { decyzja, przyczyna = null, etap, szczegol = null, score = null, scorer = null,
-    criteriaHash, tender = null, teraz = nowIso() }) {
+    criteriaHash, tender = null, progDni = null, teraz = nowIso() }) {
     const rekord = {
       score: score === null ? null : Math.round(score), scorer, criteria_hash: criteriaHash, evaluated_at: teraz,
       decyzja, przyczyna, etap, szczegol,
     };
+    // Próg dni przy odrzuceniu „termin” — powrót do oceny tylko, gdy próg potem SPADNIE (lib/swiezoscOceny.js).
+    if (progDni !== null) rekord.prog_dni = progDni;
     if (decyzja === 'odrzucony' && tender) {
       Object.assign(rekord, {
         tytul: tender.title ?? null, zamawiajacy: tender.organization ?? null, termin: tender.deadline ?? null,

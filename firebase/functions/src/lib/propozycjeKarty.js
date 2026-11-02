@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { normalize, stem } from './textNorm.js';
 import { kodWojewodztwa, WOJEWODZTWA } from './wojewodztwa.js';
-import { kartaZUzytkownika, formalnePuste } from './kartaFirmy.js';
+import { kartaZUzytkownika, formalnePuste, MIN_DNI_ZAPYTANIA } from './kartaFirmy.js';
 
 /*
  * Propozycje zmian karty z odrzuceń klienta (spec §5.3) — bez AI. Twardych reguł nie
@@ -126,7 +126,9 @@ export function propozycjeKarty(user, teraz) {
   const terminy = odrzucenia('termin').filter((s) => Number.isInteger(s.dni_do_terminu));
   if (terminy.length >= PROG_POWTORZEN) {
     const nowa = Math.min(60, Math.max(...terminy.map((s) => s.dni_do_terminu)) + 1);
-    if (nowa > karta.min_dni_oferta) {
+    // Bez własnego progu zapytania ofertowe przechodzą już od 3 dni — to one najczęściej wracają jako „za mało czasu”.
+    const obecnyProg = karta.min_dni_jawne ? karta.min_dni_oferta : Math.min(karta.min_dni_oferta, MIN_DNI_ZAPYTANIA);
+    if (nowa > obecnyProg) {
       dodaj({ pole: 'min_dni_oferta', nowa_wartosc: nowa, akcja: 'zmien', dowody: terminy.map((s) => s.tytul).slice(0, 3), opis: {
         pl: `Odrzuciłeś ${terminy.length} przetargi, bo było za mało czasu. Pomijać przetargi, do których terminu zostało mniej niż ${nowa} dni?`,
         en: `You rejected ${terminy.length} tenders for lack of time. Skip tenders with fewer than ${nowa} days left?`,
@@ -155,7 +157,8 @@ export function zastosujPropozycje(user, propozycja) {
     cpvCodes: user?.cpv_codes ?? [],
     regiony: user?.regiony ?? [],
     wartoscMax: typeof user?.wartosc_max === 'number' ? user.wartosc_max : null,
-    karta: { opis: k.opis, wykluczenia: [...k.wykluczenia], wartosc_min: k.wartosc_min, min_dni_oferta: k.min_dni_oferta, formalne: k.formalne },
+    karta: { opis: k.opis, wykluczenia: [...k.wykluczenia], wartosc_min: k.wartosc_min,
+      min_dni_oferta: k.min_dni_jawne ? k.min_dni_oferta : null, formalne: k.formalne },
   };
   switch (propozycja.pole) {
     case 'wykluczenia': zapis.karta.wykluczenia = [...k.wykluczenia, propozycja.nowa_wartosc].slice(0, MAKS_WYKLUCZEN); break;

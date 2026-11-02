@@ -191,7 +191,10 @@ router.put('/karta', ah(async (req, res) => {
     opis: d.opis === undefined ? obecna.opis : (d.opis || null),
     wykluczenia: d.wykluczenia ?? obecna.wykluczenia,
     wartosc_min: d.wartosc_min === undefined ? obecna.wartosc_min : d.wartosc_min,
-    min_dni_oferta: d.min_dni_oferta ?? obecna.min_dni_oferta,
+    // Formularz w apce wysyła próg ZAWSZE (domyślnie 5) — zapisujemy go tylko, gdy klient go zmienił. Inaczej zostaje,
+    // jak był: brak = próg domyślny, przy którym zapytania ofertowe dostają 3 dni (kartaFirmy.minDniDlaPrzetargu).
+    min_dni_oferta: d.min_dni_oferta !== undefined && d.min_dni_oferta !== obecna.min_dni_oferta
+      ? d.min_dni_oferta : (obecna.min_dni_jawne ? obecna.min_dni_oferta : null),
     formalne: d.formalne ? { ...obecna.formalne, ...d.formalne } : obecna.formalne,
   };
   const wartoscMax = d.wartosc_max === undefined ? (req.user.wartosc_max ?? null) : d.wartosc_max;

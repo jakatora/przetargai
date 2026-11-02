@@ -14,7 +14,8 @@ import { tenders, rozstrzygniecia } from '../db/repos.js';
  *   • WSZYSTKIE wyniki postępowania (nie tylko z tego przebiegu) mają wyłącznie unieważnione części,
  *   • liczba części przetargu jest ZNANA (BZP: `liczba_czesci`; TED: terminy części w `raw_data`) i wyniki
  *     obejmują co najmniej tyle różnych części,
- *   • przetarg opublikowano nie później niż pierwszy wynik (ponowne ogłoszenie z tym samym identyfikatorem zostaje).
+ *   • przetarg opublikowano PRZED dniem pierwszego wyniku (ponowne ogłoszenie z tym samym identyfikatorem zostaje,
+ *     także wydane tego samego dnia co unieważnienie — oryginał nie może mieć wyniku w dniu publikacji).
  *   • w `wynikiOknoFetch`: postępowania z wyników tego przebiegu, `/admin/uniewaznione`: z rozstrzygnięć z `dni`.
  */
 const wszystkieUniewaznione = (w) => Array.isArray(w?.czesci) && w.czesci.length > 0 && w.czesci.every((c) => c?.uniewaznione);
@@ -46,7 +47,7 @@ export function pewnieUniewazniony(t, wynikiPostepowania) {
   if (numery.size < czesci) return false;
   const pierwszyWynik = wyniki.map((w) => String(w.opublikowano ?? '').slice(0, 10)).filter(Boolean).sort()[0];
   const opublikowano = String(t?.published_at ?? '').slice(0, 10);
-  return !(pierwszyWynik && opublikowano && opublikowano > pierwszyWynik);
+  return !(pierwszyWynik && opublikowano && opublikowano >= pierwszyWynik);
 }
 
 export async function runUniewaznioneZWyniku({

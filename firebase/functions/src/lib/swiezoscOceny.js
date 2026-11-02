@@ -1,3 +1,5 @@
+import { MIN_DNI_DOMYSLNIE } from './kartaFirmy.js';
+
 /*
  * Czy wcześniejsza decyzja selekcji jest wciąż AKTUALNA dla tego przetargu (2026-10-25,
  * follow-up pracownika „termin jako odrzucenie trwałe"). Baza Konkurencyjności i BZP
@@ -18,8 +20,11 @@ export function ocenaAktualna(ocena, { tender = null, criteriaHash, potrzebaDni 
     if (Number.isFinite(byl) && Number.isFinite(jest) && jest > byl) return false;
     // Reguła złagodniała (2026-11-02: zapytania ofertowe 3 dni zamiast 5) — gdy przy OBECNYM progu przetarg zdąży,
     // odrzucenie przestaje obowiązywać. Bez zmiany wersji karty, więc reszta ocen (i koszt AI) zostaje.
+    // Tylko gdy próg SPADŁ od odrzucenia (ślad bez `prog_dni` powstał przy domyślnych 5 dniach): inaczej odrzucenie
+    // AI z przyczyną „termin” przy 3–4 dniach wracałoby do płatnej oceny w każdym przebiegu.
     if (typeof potrzebaDni === 'function' && Number.isFinite(jest) && teraz) {
-      if ((jest - Date.parse(teraz)) / 86_400_000 >= potrzebaDni(tender)) return false;
+      const potrzeba = potrzebaDni(tender);
+      if ((ocena.prog_dni ?? MIN_DNI_DOMYSLNIE) > potrzeba && (jest - Date.parse(teraz)) / 86_400_000 >= potrzeba) return false;
     }
   }
   return true;

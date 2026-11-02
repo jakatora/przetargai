@@ -64,6 +64,17 @@ test('PUT /pracownik/karta: walidacja „od ≤ do” i zapis', async () => {
   assert.ok(!braki.includes('opis'));
 });
 
+test('PUT /pracownik/karta: domyślne 5 dni z formularza nie staje się własnym progiem (zapytania ofertowe — 3 dni)', async () => {
+  const k = await konto();
+  const zapisz = (body) => fetch(`${BAZA}/pracownik/karta`, { method: 'PUT', headers: k.h, body: JSON.stringify(body) });
+  assert.equal((await zapisz({ opis: 'Dachy', min_dni_oferta: 5 })).status, 200);
+  assert.equal((await users.findById(k.id)).karta.min_dni_oferta, null, 'formularz wysłał domyślne 5');
+  assert.equal((await zapisz({ min_dni_oferta: 8 })).status, 200);
+  assert.equal((await users.findById(k.id)).karta.min_dni_oferta, 8);
+  assert.equal((await zapisz({ opis: 'Dachy i rynny', min_dni_oferta: 8 })).status, 200);
+  assert.equal((await users.findById(k.id)).karta.min_dni_oferta, 8, 'własny próg zostaje przy kolejnym zapisie');
+});
+
 test('POST /pracownik/odrzuc: sygnał, znika z /matches; zła przyczyna 400; cudze/nieistniejące 404', async () => {
   const k = await konto();
   const inny = await konto();

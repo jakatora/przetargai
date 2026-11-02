@@ -66,6 +66,16 @@ test('za małe: „od” = największa odrzucona kwota w górę; termin: maks dn
   assert.deepEqual(p.find((x) => x.pole === 'min_dni_oferta').nowa_wartosc, 9);
 });
 
+test('termin bez własnego progu: zapytania z 3–4 dniami odrzucone → propozycja 5 dni (zapytania przechodzą od 3)', () => {
+  const user = { pracownik_sygnaly: ['A', 'B', 'C'].map((t) => odrz(t, 'termin', { termin: '2026-10-25T12:00:00.000Z' })) };
+  assert.equal(propozycjeKarty(user, TERAZ).find((x) => x.pole === 'min_dni_oferta')?.nowa_wartosc, 5);
+  const jawny = { ...user, karta: { min_dni_oferta: 5 } };
+  assert.equal(propozycjeKarty(jawny, TERAZ).find((x) => x.pole === 'min_dni_oferta'), undefined, 'klient już ma własne 5 dni');
+  const z = zastosujPropozycje(user, { pole: 'min_dni_oferta', nowa_wartosc: 5 });
+  assert.equal(z.karta.min_dni_oferta, 5, 'przyjęta propozycja = własny próg');
+  assert.equal(zastosujPropozycje(user, { pole: 'wartosc_max', nowa_wartosc: 7 }).karta.min_dni_oferta, null, 'inna propozycja nie utrwala domyślnych 5');
+});
+
 test('warunki przy pustej części formalnej → kreator krok 5', () => {
   const [p] = propozycjeKarty({ pracownik_sygnaly: [odrz('A', 'warunki'), odrz('B', 'warunki'), odrz('C', 'warunki')] }, TERAZ);
   assert.deepEqual([p.pole, p.akcja, p.krok], ['formalne', 'otworz_kreator', 5]);

@@ -1,5 +1,5 @@
 import { normalizujPrzyczyne } from './przyczyny.js';
-import { kartaZUzytkownika } from './kartaFirmy.js';
+import { kartaZUzytkownika, minDniDlaPrzetargu } from './kartaFirmy.js';
 import { kodWojewodztwa, WOJEWODZTWA } from './wojewodztwa.js';
 
 /*
@@ -45,7 +45,8 @@ export function zbudujPromptSelekcji({ user, tender, przyklady = { zapisane: [],
     `- Nie bierze: ${k.wykluczenia.join(', ') || '(nic nie wykluczono)'}`,
     `- Teren: ${teren.join(', ') || 'cała Polska'}`,
     `- Skala zamówień: od ${kwota(k.wartosc_min)} do ${kwota(user?.wartosc_max ?? null)}`,
-    `- Potrzebuje co najmniej ${k.min_dni_oferta} dni na przygotowanie oferty`,
+    // Ten sam próg co reguła „termin” (2026-11-02: AI z „5 dni” odrzucało zapytania z 3–4 dniami, które reguła przepuściła).
+    `- Potrzebuje co najmniej ${minDniDlaPrzetargu(k, tender)} dni na przygotowanie oferty`,
     '',
     '<przyklady>',
     `Klient ZAPISAŁ (takie chce): ${(przyklady.zapisane ?? []).map(dane).join(' | ') || '(brak)'}`,

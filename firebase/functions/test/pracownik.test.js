@@ -79,7 +79,8 @@ test('odrzucenie „termin” nie jest wieczne: po PRZEDŁUŻENIU terminu przez 
   const krotki = await przetarg('Remont dachu przedszkola', { deadline: zaDni(2) });
   const w1 = await pracujDlaUzytkownika(u, [krotki], { teraz: teraz() });
   assert.deepEqual([w1.wybrane, w1.odrzucone.termin], [0, 1]);
-  assert.equal((await evaluations.pobierz(u.id, krotki.id)).przyczyna, 'termin');
+  const slad = await evaluations.pobierz(u.id, krotki.id);
+  assert.deepEqual([slad.przyczyna, slad.prog_dni], ['termin', 5], 'próg przy odrzuceniu w śladzie (BZP, karta domyślna)');
 
   const bezZmian = await pracujDlaUzytkownika(await users.findById(u.id), [krotki], { teraz: teraz() });
   assert.deepEqual([bezZmian.wybrane, bezZmian.odrzucone.termin], [0, 0], 'ten sam termin = ta sama decyzja, bez ponownej oceny');

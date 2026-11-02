@@ -38,3 +38,12 @@ test('odrzucenie „termin” traci ważność, gdy przy OBECNYM progu przetarg 
   assert.equal(ocenaAktualna(ocena, { tender, criteriaHash: 'v1' }), true, 'bez progu — stara reguła');
   assert.equal(ocenaAktualna({ ...ocena, przyczyna: 'branza' }, { tender, criteriaHash: 'v1', potrzebaDni: () => 3, teraz }), true, 'inne przyczyny bez zmian');
 });
+
+test('odrzucenie „termin” przy OBECNYM progu jest ostateczne — bez pętli płatnej oceny AI co przebieg', () => {
+  const tender = { id: 'bk:1', source: 'baza_konkurencyjnosci', deadline: '2026-11-06T10:00:00.000Z' };
+  const teraz = '2026-11-02T10:00:00.000Z'; // 4 dni do terminu
+  const ai = { criteria_hash: 'v1', decyzja: 'odrzucony', przyczyna: 'termin', etap: 'ai', termin: tender.deadline, prog_dni: 3 };
+  assert.equal(ocenaAktualna(ai, { tender, criteriaHash: 'v1', potrzebaDni: () => 3, teraz }), true, 'AI odrzuciło przy progu 3 — zostaje');
+  assert.equal(ocenaAktualna({ ...ai, prog_dni: 5 }, { tender, criteriaHash: 'v1', potrzebaDni: () => 3, teraz }), false, 'próg spadł z 5 do 3 — raz wraca');
+  assert.equal(ocenaAktualna({ ...ai, prog_dni: 7 }, { tender, criteriaHash: 'v1', potrzebaDni: () => 7, teraz }), true, 'własny próg klienta bez zmian');
+});

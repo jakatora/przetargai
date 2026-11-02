@@ -22,6 +22,14 @@ test('prompt niesie kartę, przykłady i dane przetargu w znacznikach', () => {
   assert.match(SYSTEM_PROMPT_SELEKCJI, /nieznana.*nie jest powodem odrzucenia/);
 });
 
+test('prompt: próg dni ten sam co reguła „termin” — zapytania ofertowe 3 dni, własny próg klienta wszędzie', () => {
+  const domyslny = { keywords: ['dach'] };
+  const zapytanie = { ...TENDER, source: 'baza_konkurencyjnosci' };
+  assert.ok(zbudujPromptSelekcji({ user: domyslny, tender: zapytanie, teraz: TERAZ }).includes('co najmniej 3 dni'));
+  assert.ok(zbudujPromptSelekcji({ user: domyslny, tender: TENDER, teraz: TERAZ }).includes('co najmniej 5 dni'), 'BZP');
+  assert.ok(zbudujPromptSelekcji({ user: USER, tender: zapytanie, teraz: TERAZ }).includes('co najmniej 7 dni'), 'próg z karty');
+});
+
 test('prompt bez karty i bez przykładów nie ma „undefined”', () => {
   const p = zbudujPromptSelekcji({ user: { keywords: ['x'] }, tender: { title: 'Y' }, teraz: TERAZ });
   assert.ok(!p.includes('undefined'));

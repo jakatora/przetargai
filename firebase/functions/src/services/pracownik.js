@@ -141,6 +141,7 @@ export async function pracujDlaUzytkownika(user, pool, {
   const odrzuc = async (tender, { przyczyna, etap, szczegol = null, score = null, scorer = null }) => {
     await evaluations.zapiszDecyzje(user.id, tender.id, {
       decyzja: 'odrzucony', przyczyna, etap, szczegol, score, scorer, criteriaHash: wersja, tender, teraz,
+      progDni: przyczyna === 'termin' ? minDniDlaPrzetargu(karta, tender) : null,
     });
     wynik.odrzucone[przyczyna] = (wynik.odrzucone[przyczyna] ?? 0) + 1;
     await schowaj(tender.id, przyczyna, szczegol);

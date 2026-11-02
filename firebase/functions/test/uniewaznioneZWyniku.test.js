@@ -25,6 +25,7 @@ test('pewność: znana liczba części pokryta, wszystkie wyniki unieważnione, 
   assert.equal(pewnieUniewazniony(bzp, [{ czesci: [U(1), U(2)] }, { czesci: [{ numer: 2, uniewaznione: false }] }]), false, 'inny wynik rozstrzyga część');
   assert.equal(pewnieUniewazniony({ ...bzp, liczba_czesci: null }, [{ czesci: [U(1)] }]), false, 'liczba części nieznana');
   assert.equal(pewnieUniewazniony({ ...bzp, published_at: '2026-10-21T00:00:00Z' }, [{ czesci: [U(1), U(2)], opublikowano: '2026-10-20' }]), false, 'ogłoszony po wyniku');
+  assert.equal(pewnieUniewazniony({ ...bzp, published_at: '2026-10-20T09:00:00Z' }, [{ czesci: [U(1), U(2)], opublikowano: '2026-10-20' }]), false, 'ponowne ogłoszenie w dniu unieważnienia');
   assert.equal(pewnieUniewazniony(bzp, []), false);
 
   const ted = (n) => ({ source: 'ted', raw_data: JSON.stringify({ 'deadline-receipt-tender-date-lot': Array(n).fill('2026-11-04+01:00') }) });

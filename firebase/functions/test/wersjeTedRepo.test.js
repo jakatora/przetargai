@@ -81,3 +81,14 @@ test('stara wersja: zastąpiona, termin aktualnej w przetargu i kopiach; feed uk
   const powtorka = await runWersjeTed({ postepowania: [pid] });
   assert.deepEqual([powtorka.zastapione, powtorka.przeniesione_oceny, powtorka.przeniesione_dopasowania], [0, 0, 0], 'powtórka nic nie robi');
 });
+
+test('tedDoWersji: tylko TED z terminem od daty — źródło w zapytaniu, nie w pamięci (limit nie ucina TED-ów)', async () => {
+  const nr = String(Date.now()).slice(-7);
+  const { tender: ted } = await tenders.upsert({ title: 'Dostawa odczynników', source: 'ted', externalId: `ted:${nr}-2026`, deadline: zaDni(40) });
+  const { tender: bzp } = await tenders.upsert({ title: 'Dostawa odczynników', externalId: `2026/BZP ${nr}/01`, deadline: zaDni(40) });
+  const ids = (await tenders.tedDoWersji(new Date().toISOString())).map((t) => t.id);
+  assert.ok(ids.includes(ted.id));
+  assert.ok(!ids.includes(bzp.id), 'BZP nie wchodzi do zapytania');
+  const zLimitem = await tenders.tedDoWersji(new Date().toISOString(), { limit: 1 });
+  assert.equal(zLimitem[0]?.source, 'ted', 'limit liczy już same TED-y');
+});
