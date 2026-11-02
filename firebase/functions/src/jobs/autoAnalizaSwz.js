@@ -26,6 +26,14 @@ export const MAKS_NA_PRZEBIEG = 6;
 export const MAKS_NA_KLIENTA_DOBE = 2;
 export const OKNO_WYBRANYCH_MS = 48 * 3_600_000;
 export const MAKS_BAJTOW_PDF = 5 * 1024 * 1024;
+/*
+ * SWZ ponad 5 MB (2026-11-02: 1 z 31 analiz od 20.10 kończyła się „SWZ ma 16 MB — limit 5 MB”, a przetarg zostawał bez
+ * analizy — próba jest jedna). Do 25 MB czytamy tekst TUTAJ (pdfjs) i wysyłamy go jako `swz`; backend przyjmuje tekst
+ * do 2 mln znaków i 50 tys. linii, a do AI i tak idzie najwyżej 120 tys. znaków. Strony do cytatów przepadają — trudno.
+ */
+export const MAKS_BAJTOW_DUZEJ_SWZ = 25 * 1024 * 1024;
+export const MAKS_ZNAKOW_SWZ_TEKSTEM = 400_000;
+const MAKS_LINII_SWZ_TEKSTEM = 40_000;
 export const LIMIT_POBRANIA_MS = 25_000;
 /*
  * Analiza AI dłuższej SWZ trwa ponad domyślne 30 s mostu — pierwszy przebieg na produkcji (28.10) skończył
@@ -56,12 +64,22 @@ export function dokumentyPrzetargu(tender) {
   return [];
 }
 
+const SWZ_UJEDNOLICONA = /po\s*zmian|ujednolicon|jednolit|zmienion\w*\s+(swz|siwz|specyfikacj)|(swz|siwz)\s*[-–_]?\s*zmienion|aktualn\w*\s+(swz|siwz|wersj)/i;
+const PISMO_O_ZMIANIE = /^\s*(zmiana|zmiany|informacja|wyja[sś]nieni|pismo|modyfikacj|odpowied)/i;
+
 /** Najlepszy kandydat na SWZ: PDF z SWZ/specyfikacją, najpierw NIE „Załącznik… do SWZ”. */
 export function wybierzSwz(dokumenty) {
   const kandydaci = (Array.isArray(dokumenty) ? dokumenty : []).filter((d) => d?.url && DOZWOLONE_HOSTY.test(d.url) && czySwz(d)
-    && !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_PDF));
+    && !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_DUZEJ_SWZ));
   const zalacznik = (d) => /za[lł][aą]cznik/i.test(`${d.nazwa ?? ''} ${d.plik ?? ''}`);
-  return kandydaci.find((d) => !zalacznik(d)) ?? null;
+  const maly = (d) => !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_PDF);
+  // Wersja ujednolicona po zmianach (2026-11-02, 2026/BZP 00508332: analiza wzięła skan „SWZ” z 29.10, a obok była
+  // „SWZ po zmianach” z 2.11 z tekstem) — najnowsza przed oryginałem. Pismo „Zmiana SWZ” to lista zmian, nie SWZ.
+  const poZmianach = kandydaci
+    .filter((d) => !zalacznik(d) && SWZ_UJEDNOLICONA.test(`${d.nazwa ?? ''} ${d.plik ?? ''}`) && !PISMO_O_ZMIANIE.test(String(d.nazwa ?? d.plik ?? '')))
+    .sort((a, b) => String(b.opublikowano ?? '').localeCompare(String(a.opublikowano ?? '')));
+  // Plik ≤ 5 MB idzie do backendu jako PDF (strony do cytatów); większy — czytany tekstem, gdy innego nie ma.
+  return poZmianach.find(maly) ?? poZmianach[0] ?? kandydaci.find((d) => !zalacznik(d) && maly(d)) ?? kandydaci.find((d) => !zalacznik(d)) ?? null;
 }
 
 /*
@@ -97,7 +115,7 @@ export function wybierzPrzedmiar(dokumenty, pominiete = []) {
 }
 
 /** Pobranie pliku zamawiającego (≤ 5 MB, tylko dozwolone hosty) → Buffer. */
-async function pobierzPlik(url, { fetchFn = fetch, limitMs = LIMIT_POBRANIA_MS, etykieta = 'SWZ', accept = 'application/pdf' } = {}) {
+async function pobierzPlik(url, { fetchFn = fetch, limitMs = LIMIT_POBRANIA_MS, etykieta = 'SWZ', accept = 'application/pdf', maksBajtow = MAKS_BAJTOW_PDF } = {}) {
   if (!DOZWOLONE_HOSTY.test(String(url ?? ''))) throw Object.assign(new Error(`Pobranie ${etykieta}: niedozwolony adres`), { przejsciowy: false });
   const res = await fetchFn(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PrzetargAI/1.0; +https://przetarg-ai.pl)', Accept: accept },
@@ -105,7 +123,9 @@ async function pobierzPlik(url, { fetchFn = fetch, limitMs = LIMIT_POBRANIA_MS, 
   });
   if (!res.ok) throw Object.assign(new Error(`Pobranie ${etykieta}: HTTP ${res.status}`), { przejsciowy: res.status >= 500 || res.status === 429 });
   const bufor = Buffer.from(await res.arrayBuffer());
-  if (bufor.length > MAKS_BAJTOW_PDF) throw Object.assign(new Error(`${etykieta} ma ${Math.round(bufor.length / 1048576)} MB — limit 5 MB`), { przejsciowy: false });
+  if (bufor.length > maksBajtow) {
+    throw Object.assign(new Error(`${etykieta} ma ${Math.round(bufor.length / 1048576)} MB — limit ${Math.round(maksBajtow / 1048576)} MB`), { przejsciowy: false, zaDuzy: true });
+  }
   return bufor;
 }
 
@@ -114,6 +134,14 @@ export async function pobierzPdfBase64(url, opcje = {}) {
   const bufor = await pobierzPlik(url, opcje);
   if (bufor.subarray(0, 5).toString('latin1') !== '%PDF-') throw Object.assign(new Error('Pobrany plik nie jest PDF-em'), { przejsciowy: false });
   return bufor.toString('base64');
+}
+
+/** Tekst SWZ ponad 5 MB (do 25 MB, tylko PDF z warstwą tekstową); null = skan albo nie PDF. */
+export async function tekstDuzejSwz(swz, { fetchFn = fetch, czytajPdf = liniePdf } = {}) {
+  const bufor = await pobierzPlik(swz.url, { fetchFn, maksBajtow: MAKS_BAJTOW_DUZEJ_SWZ, limitMs: 60_000 });
+  if (bufor.subarray(0, 5).toString('latin1') !== '%PDF-') return null;
+  const tekst = (await czytajPdf(bufor)).slice(0, MAKS_LINII_SWZ_TEKSTEM).join('\n').slice(0, MAKS_ZNAKOW_SWZ_TEKSTEM);
+  return tekst.trim() ? tekst : null;
 }
 
 /** Tekst dokumentu (PDF z warstwą tekstową albo .docx); null = pusty, skan albo inny format. */
@@ -132,15 +160,26 @@ export async function tekstDokumentu(dokument, { fetchFn = fetch, czytajPdf = li
  */
 export async function analizujDlaKlienta(user, tender, swz, {
   modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, umowa = null, przedmiar = null, czytajDokument = tekstDokumentu,
+  czytajDuzaSwz = tekstDuzejSwz,
 } = {}) {
-  const pdf = await pobierzPdf(swz.url);
+  let pdf = null;
+  let swzTekstem = null;
+  try {
+    pdf = await pobierzPdf(swz.url);
+  } catch (err) {
+    if (!err.zaDuzy) throw err;
+    swzTekstem = await czytajDuzaSwz(swz);
+    if (!swzTekstem) return { status: 'nieczytelny_pdf', blad: `${err.message}; tekstu nie da się odczytać` };
+  }
   const czytaj = (dok, etykieta) => (dok ? czytajDokument(dok, { etykieta }).catch((err) => {
     logger.warn({ err: err.message, tender: tender.id }, `Auto-SWZ: ${etykieta} nie został odczytany — analiza bez niego`);
     return null;
   }) : null);
   const [trescUmowy, trescPrzedmiaru] = await Promise.all([czytaj(umowa, 'wzór umowy'), czytaj(przedmiar, 'przedmiar')]);
   const nazwa = (d) => String(d.nazwa ?? d.plik ?? '').slice(0, 200);
-  const zUmowa = { ...(trescUmowy ? { umowa: nazwa(umowa) } : {}), ...(trescPrzedmiaru ? { przedmiar: nazwa(przedmiar) } : {}) };
+  const zUmowa = {
+    ...(trescUmowy ? { umowa: nazwa(umowa) } : {}), ...(trescPrzedmiaru ? { przedmiar: nazwa(przedmiar) } : {}), ...(swzTekstem ? { swz_tekstem: true } : {}),
+  };
   const nowe = await modul(user, {
     metoda: 'POST', sciezka: '/swz/postepowania',
     dane: { nazwa: String(tender.title ?? 'Przetarg').slice(0, 300), ...(tender.deadline ? { termin_skladania_ofert: tender.deadline } : {}) },
@@ -151,7 +190,8 @@ export async function analizujDlaKlienta(user, tender, swz, {
   let analiza;
   try {
     analiza = await modul(user, { metoda: 'POST', sciezka: `/swz/postepowania/${postepowanieId}/analiza`, dane: {
-      swz_pdf_base64: pdf, ...(trescUmowy ? { umowa: trescUmowy } : {}), ...(trescPrzedmiaru ? { przedmiar: trescPrzedmiaru } : {}),
+      ...(pdf ? { swz_pdf_base64: pdf } : { swz: swzTekstem }),
+      ...(trescUmowy ? { umowa: trescUmowy } : {}), ...(trescPrzedmiaru ? { przedmiar: trescPrzedmiaru } : {}),
     }, limitMs: LIMIT_ANALIZY_MS });
   } catch (err) {
     // Zerwanie/limit czasu PO wysłaniu: backend zapisał treść SWZ przed AI i najpewniej dokończy analizę —
@@ -218,7 +258,7 @@ export function alertAnalizy(tender, liczbaPytan, teraz) {
 export async function runAutoAnalizaSwz({
   teraz = nowIso(), maksNaPrzebieg = MAKS_NA_PRZEBIEG, maksNaKlientaDobe = MAKS_NA_KLIENTA_DOBE,
   wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, czytajDokument = tekstDokumentu,
-  budzetMs = 480_000,
+  czytajDuzaSwz = tekstDuzejSwz, budzetMs = 480_000,
 } = {}) {
   const start = Date.now();
   const wynik = { ok: true, klienci: 0, kandydaci: 0, analizy: 0, gotowe: 0, bez_analizy: 0, nieczytelne: 0, bledy: 0, naprawione: 0, pominiete_limit: 0, przerwane_budzetem: false };
@@ -258,7 +298,7 @@ export async function runAutoAnalizaSwz({
         try {
           const umowa = wybierzUmowe(dokumenty, swz);
           rezultat = await analizujDlaKlienta(user, tender, swz, {
-            modul, pobierzPdf, umowa, przedmiar: wybierzPrzedmiar(dokumenty, [swz, umowa]), czytajDokument,
+            modul, pobierzPdf, umowa, przedmiar: wybierzPrzedmiar(dokumenty, [swz, umowa]), czytajDokument, czytajDuzaSwz,
           });
         } catch (err) {
           rezultat = { status: 'blad', blad: err.message };

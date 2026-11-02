@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { users, tenders, matches, powiazaniaSwz, autoSwz, alerty } = await import('../src/db/repos.js');
-const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, wybierzPrzedmiar, tekstDokumentu } = await import('../src/jobs/autoAnalizaSwz.js');
+const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, wybierzPrzedmiar, tekstDokumentu, tekstDuzejSwz } = await import('../src/jobs/autoAnalizaSwz.js');
 const { zbudujDocx } = await import('../src/lib/docx.js');
 
 /*
@@ -77,6 +77,14 @@ test('tekstDokumentu: .docx i PDF z warstwą tekstową → tekst; inny format �
   await assert.rejects(tekstDokumentu({ url: 'https://evil.example/u.pdf' }, { fetchFn: odp(docx) }), /niedozwolony adres/);
 });
 
+test('wybierzSwz: wersja ujednolicona po zmianach (najnowsza) przed oryginałem; pismo „Zmiana SWZ” to nie SWZ', () => {
+  const ez = (nazwa, opublikowano) => ({ nazwa, rozszerzenie: 'pdf', opublikowano, url: `https://ezamowienia.gov.pl/x/${encodeURIComponent(nazwa)}` });
+  // 2026/BZP 00508332 (2.11): skan „SWZ” z 29.10 (16 MB, bez tekstu) i „SWZ po zmianach” z 2.11 z tekstem.
+  assert.equal(wybierzSwz([ez('SWZ', '2026-10-29'), ez('pytania i odpowiedzi', '2026-11-02'), ez('SWZ po zmianach', '2026-11-02')]).nazwa, 'SWZ po zmianach');
+  assert.equal(wybierzSwz([ez('SWZ', '2026-10-01'), ez('Zmiana SWZ nr 1 - zmiana terminu', '2026-10-05')]).nazwa, 'SWZ');
+  assert.equal(wybierzSwz([ez('SWZ', '2026-10-01'), ez('SWZ - tekst jednolity', '2026-10-05'), ez('SWZ ujednolicona v2', '2026-10-09')]).nazwa, 'SWZ ujednolicona v2');
+});
+
 test('alertAnalizy: tylko przy pytaniach; termin pytań w treści, gdy znany i nieminiony', () => {
   assert.equal(alertAnalizy({ id: 't', title: 'X', source: 'bzp', deadline: '2099-01-01T00:00:00.000Z' }, 0, TERAZ), null);
   const a = alertAnalizy({ id: 't', title: 'Remont', source: 'bzp', deadline: '2026-11-20T09:00:00.000Z' }, 5, TERAZ);
@@ -110,7 +118,9 @@ test('dokumentyPrzetargu + wybierzSwz dla platformazakupowa: załączniki szczeg
   const d = dokumentyPrzetargu(t);
   assert.equal(d.length, 4);
   assert.equal(d[2].rozszerzenie, 'pdf', 'rozszerzenie z nazwy pliku');
-  assert.equal(wybierzSwz(d).url, 'https://platformazakupowa.pl/file/get_new/swz.pdf', 'pomija > 5 MB, „Załącznik do SWZ” i obcy host');
+  assert.equal(wybierzSwz(d).url, 'https://platformazakupowa.pl/file/get_new/swz.pdf', 'woli ≤ 5 MB, pomija „Załącznik do SWZ” i obcy host');
+  assert.equal(wybierzSwz([d[0], d[1]]).url, 'https://platformazakupowa.pl/file/get_new/duzy.pdf', 'jedyna SWZ ponad 5 MB — czytana tekstem');
+  assert.equal(wybierzSwz([{ ...d[0], rozmiar_kb: 26 * 1024 }]), null, 'ponad 25 MB — nie');
   assert.deepEqual(dokumentyPrzetargu({ source: 'ted' }), []);
 });
 
@@ -172,6 +182,35 @@ test('przebieg: wzór umowy idzie do analizy jako tekst (sprzeczności SWZ ↔ u
   assert.deepEqual([w2.gotowe, w2.z_umowa], [1, undefined], 'błąd umowy nie zatrzymuje analizy SWZ');
   assert.equal('umowa' in wyw2[1].dane || 'przedmiar' in wyw2[1].dane, false);
   assert.equal((await autoSwz.pobierz(s2.id, t2.id)).umowa, undefined);
+});
+
+test('SWZ ponad 5 MB: tekst czytany w Functions idzie jako `swz` (bez PDF-a); skan → „nieczytelny_pdf” bez wywołań', async () => {
+  const zaDuza = async () => { throw Object.assign(new Error('SWZ ma 16 MB — limit 5 MB'), { zaDuzy: true }); };
+  const s = await klient();
+  await wybrany(s);
+  const wyw = [];
+  const w = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul: modulOk(wyw), pobierzPdf: zaDuza,
+    czytajDuzaSwz: async () => 'Rozdział I. Zamawiający…' });
+  assert.equal(w.gotowe, 1);
+  assert.equal(wyw[1].dane.swz, 'Rozdział I. Zamawiający…');
+  assert.equal('swz_pdf_base64' in wyw[1].dane, false);
+
+  const s2 = await klient();
+  const t2 = await wybrany(s2);
+  const wyw2 = [];
+  const w2 = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s2], modul: modulOk(wyw2), pobierzPdf: zaDuza, czytajDuzaSwz: async () => null });
+  assert.deepEqual([w2.nieczytelne, wyw2.length], [1, 0], 'bez tekstu — bez płatnego wywołania');
+  assert.equal((await autoSwz.pobierz(s2.id, t2.id)).status, 'nieczytelny_pdf');
+});
+
+test('tekstDuzejSwz: do 25 MB, tylko PDF; większy plik → błąd z limitem 25 MB', async () => {
+  const U = 'https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/x/s1';
+  const odp = (buf) => async () => ({ ok: true, arrayBuffer: async () => buf });
+  const duzy = Buffer.concat([Buffer.from('%PDF-1.7'), Buffer.alloc(6 * 1024 * 1024)]);
+  assert.equal(await tekstDuzejSwz({ url: U }, { fetchFn: odp(duzy), czytajPdf: async () => ['SWZ', 'Rozdział I'] }), 'SWZ\nRozdział I');
+  assert.equal(await tekstDuzejSwz({ url: U }, { fetchFn: odp(Buffer.alloc(6 * 1024 * 1024)) }), null, 'nie PDF');
+  await assert.rejects(tekstDuzejSwz({ url: U }, { fetchFn: odp(Buffer.alloc(25 * 1024 * 1024 + 1)) }), /limit 25 MB/);
+  await assert.rejects(pobierzPdfBase64(U, { fetchFn: odp(duzy) }), (err) => err.zaDuzy === true && /limit 5 MB/.test(err.message));
 });
 
 test('przebieg: przetarg z platformazakupowa z SWZ w załącznikach → analiza i powiązanie', async () => {
