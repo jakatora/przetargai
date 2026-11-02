@@ -4903,5 +4903,70 @@
     "sourceUrl": "https://alnar.pl/wolfcraft-zestaw-do-montazu-paneli-p-6949.html",
     "evidenceSha256": "8c817ade4e404b0d6ccbb09dff2e506d007db218dc357b9a7cfffbf5a70c2cfb",
     "validUntil": null
+  },
+  {
+    "sourceId": "fugi-mapeband-w-10m",
+    "ean": "8022452113932",
+    "name": "Taśma uszczelniająca MAPEI MAPEBAND W opakowanie 10mb",
+    "imageUrl": "https://fugi.pl/wp-content/uploads/2020/04/MAPEBAND-W-TAŚMA_2.jpg",
+    "priceGrosze": 9350,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T06:34:37.268Z",
+    "sourceUrl": "https://fugi.pl/produkt/mapeband-w-mapei-tasma-uszczelniajaca-120mm-op-10mb/",
+    "evidenceSha256": "26d69dc6626041cf3412eaebc5bc1ce4726d51d796a6ab5607835150ab159198",
+    "validUntil": null
+  },
+  {
+    "sourceId": "fugi-mapeband-w-floor-300",
+    "ean": "8022452113895",
+    "name": "Mankiet uszczelniający MAPEI MAPEBAND W 300mm x 300mm",
+    "imageUrl": "https://fugi.pl/wp-content/uploads/2020/04/MAPEBAND-W-MANKIET-USZCZEL.-300x300-1-1.jpg",
+    "priceGrosze": 2190,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T06:34:37.898Z",
+    "sourceUrl": "https://fugi.pl/produkt/mapeband-w-mankiet-300x300mm/",
+    "evidenceSha256": "c4d4651868c24216f1547db5d4315ab528f5c0803713443263ed82d4d004d9f3",
+    "validUntil": null
+  },
+  {
+    "sourceId": "fugi-mapeband-w-corner-external",
+    "ean": "8022452113789",
+    "name": "Narożnik zewnątrzny MAPEI MAPEBAND W profil 270°",
+    "imageUrl": "https://fugi.pl/wp-content/uploads/2020/04/MAPEBAND-W-NAROŻNIK-ZEWNĘTRZNY.jpg",
+    "priceGrosze": 1330,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T06:34:38.425Z",
+    "sourceUrl": "https://fugi.pl/produkt/mapeband-w-mapei-naroznik-uszczelniajacy-zewnetrzny-90/",
+    "evidenceSha256": "81a209b658fbbf410c5119bfa22cbe3f730abb639ab4c18c62aa9dc40f244e2d",
+    "validUntil": null
+  },
+  {
+    "sourceId": "fugi-mapeband-w-cuff-2",
+    "ean": "8022452113925",
+    "name": "Mankiety uszczelniające MAPEI MAPEBAND W 120x120mm PAKIET 2szt",
+    "imageUrl": "https://fugi.pl/wp-content/uploads/2020/04/MAPEBAND-MANKIET-SCIENNY-120X120_2.jpg",
+    "priceGrosze": 2690,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T06:34:38.908Z",
+    "sourceUrl": "https://fugi.pl/produkt/mapeband-w-mankiet-120x120mm/",
+    "evidenceSha256": "44a1a3904715d9eb1aceec4e92d9417e0b9200f38c8025cbc9cb5a49d8a9e2d7",
+    "validUntil": null
+  },
+  {
+    "sourceId": "fugi-mapeband-w-corner-internal",
+    "ean": "8022452113802",
+    "name": "Narożnik wewnętrzny MAPEI MAPEBAND W profil 90°",
+    "imageUrl": "https://fugi.pl/wp-content/uploads/2020/04/MAPEBAND-W-NAROZNIK-WEW.-1.jpg",
+    "priceGrosze": 1330,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T06:34:39.445Z",
+    "sourceUrl": "https://fugi.pl/produkt/mapeband-w-mapei-naroznik-uszczelniajacy-wewnetrzny-90/",
+    "evidenceSha256": "33eca36d8bed91608eeac0f5402201e859b04b91f0458acfa7c067cae4df01d6",
+    "validUntil": null
   }
 ]
