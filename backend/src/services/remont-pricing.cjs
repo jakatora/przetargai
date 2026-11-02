@@ -19762,6 +19762,7 @@ var optionsSchema = external_exports2.object({
   region: external_exports2.string().nullish(),
   store: external_exports2.string().nullish(),
   refreshPrices: external_exports2.boolean().optional(),
+  includeStoreChoices: external_exports2.boolean().optional(),
   delivery: external_exports2.object({
     mode: external_exports2.enum(["shipping", "pickup"]),
     method: external_exports2.enum(["automatic", "manual"]).optional(),
@@ -28953,7 +28954,14 @@ function createRemontService(options = {}) {
         const sources = RETAIL_SOURCES.filter((source) => requestedProductIds.has(retailProductId(source)) || materials.some((material) => !material.ean && !RETAIL_NAME_ALIASES[material.name] && source.skuIdentity && source.category === material.category && normalizeProductName(retailProductName(source)) === normalizeProductName(material.name)));
         priceRefresh = await refreshProjectSources(sources);
       }
-      const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, parsed.data.options ?? {}, catalog(parsed.data.options?.delivery?.mode === "pickup").deps);
+      const requestOptions = parsed.data.options ?? {};
+      const snapshot = catalog(requestOptions.delivery?.mode === "pickup").deps;
+      const estimate = await estimateProjectCostFromCalculation({}, parsed.data.jobs, requestOptions, snapshot);
+      let storeChoiceComparison;
+      if (!stageOnly && requestOptions.store && requestOptions.includeStoreChoices) {
+        const alternatives = serializeProject(await estimateProjectCostFromCalculation({}, parsed.data.jobs, { ...requestOptions, store: void 0 }, snapshot));
+        storeChoiceComparison = { stages: alternatives.stages, consolidated: alternatives.consolidated, storeComparison: alternatives.storeComparison };
+      }
       res.setHeader("Cache-Control", "no-store");
       const serialized = serializeProject(estimate);
       const itemCount = parsed.data.jobs.reduce((count, job) => count + job.materials.length, 0);
@@ -28971,7 +28979,8 @@ function createRemontService(options = {}) {
         ...serialized,
         coverage: status(),
         priceRefresh,
-        deliveryComparison
+        deliveryComparison,
+        ...storeChoiceComparison ? { storeChoiceComparison } : {}
       });
     } catch {
       res.status(503).json({ error: "pricing_unavailable" });
