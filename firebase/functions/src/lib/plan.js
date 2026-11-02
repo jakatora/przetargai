@@ -6,7 +6,8 @@
  * subskrypcją i nie wolno jej z nią pomylić — inaczej zakup w trakcie próby
  * zostałby odrzucony jako „już aktywna”.
  */
-export const PROBA_DNI = 7;
+// Miesiąc (30 dni) od 2026-11-02 — decyzja właściciela; wcześniej 7 dni.
+export const PROBA_DNI = 30;
 const DOBA_MS = 86_400_000;
 
 /** Koniec próby liczony od chwili rejestracji. */

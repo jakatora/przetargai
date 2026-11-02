@@ -116,7 +116,7 @@ export function publicUser(user) {
      */
     regiony: user.regiony ?? [],
     wartosc_max: user.wartosc_max ?? null,
-    // Plan EFEKTYWNY (spec §15): płatny Standard albo 7-dniowa próba. `premium_tier` zostaje
+    // Plan EFEKTYWNY (spec §15): płatny Standard albo miesięczna (30 dni) próba. `premium_tier` zostaje
     // rozliczeniowy — stara apka zna tylko jego i w próbie pokaże Free.
     plan: planEfektywny(user),
     proba: stanProby(user),

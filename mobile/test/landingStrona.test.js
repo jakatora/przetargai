@@ -168,7 +168,7 @@ test('licznik ogłoszeń: bez pobranej wartości strona nie pokazuje żadnej lic
   assert.match(skrypt, /\.catch\(function \(\) \{\}\)/, 'błąd pobierania zostawia tekst z HTML');
 });
 
-test('powiadomienia są obiecywane tylko w opisie planów (cennik: Standard z próbą 7 dni)', () => {
+test('powiadomienia są obiecywane tylko w opisie planów (cennik: Standard z miesięczną próbą)', () => {
   const bezCennika = html
     .replace(/<section class="section" id="cennik">[\s\S]*?<\/section>/, '')
     .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '')
@@ -177,7 +177,8 @@ test('powiadomienia są obiecywane tylko w opisie planów (cennik: Standard z pr
   assert.doesNotMatch(wezel('SoftwareApplication').description, /powiadamia/i);
   // Cennik i opis planu w danych strukturalnych — Standard po zmianie selekcji (spec §8), z próbą bez karty.
   assert.match(html, /<li>Przegląd co 3 godziny i <strong>powiadomienia od razu<\/strong><\/li>/);
-  assert.match(html, /7 dni Standard za darmo po rejestracji — bez karty\./);
+  assert.match(html, /Miesiąc \(30 dni\) Standard za darmo po rejestracji — bez karty\./);
+  assert.doesNotMatch(html, /7 dni (próby|planu Standard|pełny plan|masz pełny)|przez 7 dni/, 'próba trwa miesiąc — bez starych „7 dni”');
   assert.match(html, /Subskrypcję aktywujesz z poziomu aplikacji\. Faktura VAT automatycznie\./);
 });
 

@@ -6,7 +6,7 @@ import { mailProbyPrzypomnienie, mailProbyKoniec, dniDoKoncaProby } from '../lib
 import { users } from '../db/repos.js';
 import { sendEmail } from './email.js';
 
-/* Maile 7-dniowej próby Standard (spec §15) — w przebiegu 12:00, każdy rodzaj raz. */
+/* Maile miesięcznej próby Standard (spec §15) — w przebiegu 12:00, każdy rodzaj raz. */
 const PRZYPOMNIENIE_MS = 48 * 3_600_000;
 const KONIEC_WAZNY_MS = 7 * 86_400_000;
 

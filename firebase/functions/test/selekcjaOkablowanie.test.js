@@ -21,13 +21,13 @@ test('index.js: pracownikCo3h co 3 h po oknach BZP/BK, strefa Warszawa, sekrety 
   for (const s of ['JWT_SECRET', 'ANTHROPIC_API_KEY', 'RESEND_API_KEY']) assert.ok(blok.includes(s), s);
 });
 
-test('rejestracja przez API daje 7 dni próby Standard', async () => {
+test('rejestracja przez API daje miesiąc (30 dni) próby Standard', async () => {
   const odp = await fetch(`${BAZA}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: `so-${process.pid}-${Date.now()}@t.pl`, password: 'tajnehaslo123', keywords: ['dach'] }) });
   assert.equal(odp.status, 201);
   const { user } = await odp.json();
   const zBazy = await users.findById(user.id);
-  assert.equal(Math.round((Date.parse(zBazy.proba_do) - Date.parse(zBazy.created_at)) / 86_400_000), 7);
+  assert.equal(Math.round((Date.parse(zBazy.proba_do) - Date.parse(zBazy.created_at)) / 86_400_000), 30);
   assert.equal(zBazy.premium_tier, 'free', 'rozliczeniowo nadal Free');
 });
 
