@@ -70,7 +70,15 @@ var ATLAS_WODER_E_PACKS = [{ ean: "5905400514483", size: 2 }, { ean: "5905400514
 var CERESIT_VIVA_WHITE_FAMILY = "ceresit-viva-white01-kg-v1";
 var CERESIT_VIVA_WHITE_FAMILY_NAME = "Ceresit Fuga Viva White 01 \u2014 dob\xF3r wiader 2/4 kg";
 var CERESIT_VIVA_WHITE_PACKS = [{ ean: "9000101173451", size: 2 }, { ean: "9000101175134", size: 4 }];
+var CERESIT_VIVA_GREY_FAMILY = "ceresit-viva-grey07-kg-v1";
+var CERESIT_VIVA_GREY_FAMILY_NAME = "Ceresit Fuga Viva Grey 07 \u2014 dob\xF3r wiader 2/4 kg";
+var CERESIT_VIVA_GREY_PACKS = [{ ean: "9000101173499", size: 2 }, { ean: "9000101174854", size: 4 }];
+var CERESIT_VIVA_MANHATTAN_FAMILY = "ceresit-viva-manhattan10-kg-v1";
+var CERESIT_VIVA_MANHATTAN_FAMILY_NAME = "Ceresit Fuga Viva Manhattan 10 \u2014 dob\xF3r wiader 2/4 kg";
+var CERESIT_VIVA_MANHATTAN_PACKS = [{ ean: "9000101173536", size: 2 }, { ean: "9000101174991", size: 4 }];
 var REVIEWED_PACKAGE_FAMILIES = [
+  { key: CERESIT_VIVA_GREY_FAMILY, name: CERESIT_VIVA_GREY_FAMILY_NAME, category: "grout", unit: "kg", packs: CERESIT_VIVA_GREY_PACKS },
+  { key: CERESIT_VIVA_MANHATTAN_FAMILY, name: CERESIT_VIVA_MANHATTAN_FAMILY_NAME, category: "grout", unit: "kg", packs: CERESIT_VIVA_MANHATTAN_PACKS },
   { key: CERESIT_VIVA_WHITE_FAMILY, name: CERESIT_VIVA_WHITE_FAMILY_NAME, category: "grout", unit: "kg", packs: CERESIT_VIVA_WHITE_PACKS },
   { key: V33_CABINET_FAMILY, name: V33_CABINET_FAMILY_NAME, category: "cabinet-paint", unit: "ml", packs: V33_CABINET_PACKS },
   { key: PRIMER_G_PRO_FAMILY, name: PRIMER_G_PRO_FAMILY_NAME, category: "primer", unit: "l", packs: PRIMER_G_PRO_PACKS },
@@ -80,7 +88,7 @@ var REVIEWED_PACKAGE_FAMILIES = [
   { key: KNAUF_SUPER_FINISH_FAMILY, name: KNAUF_SUPER_FINISH_FAMILY_NAME, category: "skim-coat", unit: "kg", packs: KNAUF_SUPER_FINISH_PACKS },
   { key: ATLAS_WODER_E_FAMILY, name: ATLAS_WODER_E_FAMILY_NAME, category: "waterproofing", unit: "kg", packs: ATLAS_WODER_E_PACKS }
 ];
-var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY, KNAUF_SUPER_FINISH_FAMILY, ATLAS_WODER_E_FAMILY, CERESIT_VIVA_WHITE_FAMILY];
+var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY, KNAUF_SUPER_FINISH_FAMILY, ATLAS_WODER_E_FAMILY, CERESIT_VIVA_WHITE_FAMILY, CERESIT_VIVA_GREY_FAMILY, CERESIT_VIVA_MANHATTAN_FAMILY];
 var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
 function reviewedPackageFamily(query, unit) {
   return REVIEWED_PACKAGE_FAMILIES.find((f) => query.packageFamily === f.key && !query.ean && !query.gtin && query.category === f.category && unit === f.unit && normalized(query.normalizedName ?? "") === normalized(f.name));
@@ -20142,8 +20150,23 @@ var CERESIT_VIVA_SOURCES = [
   // source: https://buduj24.pl/produkt/19506,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-white-01
   { id: "buduj24-ceresit-viva-white-2kg", ean: "9000101173451", name: "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 2KG White 01", category: "grout", brand: "Ceresit", packageSize: 2, unit: "kg", store: "Buduj24", format: "buduj24", url: "https://buduj24.pl/produkt/19506,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-white-01", imageUrl: "https://buduj24.pl/files/_product/19506/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(1).png" },
   // source: https://buduj24.pl/produkt/19564,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-white-01
-  { id: "buduj24-ceresit-viva-white-4kg", ean: "9000101175134", name: "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 4KG White 01", category: "grout", brand: "Ceresit", packageSize: 4, unit: "kg", store: "Buduj24", format: "buduj24", url: "https://buduj24.pl/produkt/19564,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-white-01", imageUrl: "https://buduj24.pl/files/_product/19564/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(1).png" }
+  { id: "buduj24-ceresit-viva-white-4kg", ean: "9000101175134", name: "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 4KG White 01", category: "grout", brand: "Ceresit", packageSize: 4, unit: "kg", store: "Buduj24", format: "buduj24", url: "https://buduj24.pl/produkt/19564,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-white-01", imageUrl: "https://buduj24.pl/files/_product/19564/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(1).png" },
+  // source: https://buduj24.pl/produkt/19544,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-grey-07
+  { "id": "buduj24-ceresit-viva-grey-2kg", "ean": "9000101173499", "name": "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 2KG Grey 07", "category": "grout", "brand": "Ceresit", "packageSize": 2, "unit": "kg", "store": "Buduj24", "format": "buduj24", "url": "https://buduj24.pl/produkt/19544,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-grey-07", "imageUrl": "https://buduj24.pl/files/_product/19544/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(3).png" },
+  // source: https://buduj24.pl/produkt/19562,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-grey-07
+  { "id": "buduj24-ceresit-viva-grey-4kg", "ean": "9000101174854", "name": "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 4KG Grey 07", "category": "grout", "brand": "Ceresit", "packageSize": 4, "unit": "kg", "store": "Buduj24", "format": "buduj24", "url": "https://buduj24.pl/produkt/19562,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-grey-07", "imageUrl": "https://buduj24.pl/files/_product/19562/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(3).png" },
+  // source: https://buduj24.pl/produkt/19516,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-manhattan-10
+  { "id": "buduj24-ceresit-viva-manhattan-2kg", "ean": "9000101173536", "name": "CERESIT FUGA VIVA ELASTYCZNA CEMENTOWA 1-8 MM 2KG MANHATTAN 10", "category": "grout", "brand": "Ceresit", "packageSize": 2, "unit": "kg", "store": "Buduj24", "format": "buduj24", "url": "https://buduj24.pl/produkt/19516,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-manhattan-10", "imageUrl": "https://buduj24.pl/files/_product/19516/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy.png" },
+  // source: https://buduj24.pl/produkt/19561,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-manhattan-10
+  { "id": "buduj24-ceresit-viva-manhattan-4kg", "ean": "9000101174991", "name": "CERESIT FUGA VIVA ELASTYCZNA CEMENTOWA 1-8 MM 4KG MANHATTAN 10", "category": "grout", "brand": "Ceresit", "packageSize": 4, "unit": "kg", "store": "Buduj24", "format": "buduj24", "url": "https://buduj24.pl/produkt/19561,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-manhattan-10", "imageUrl": "https://buduj24.pl/files/_product/19561/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy.png" },
+  // source: https://www.abud.pl/product-pol-67336-Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-01-White.html
+  { "id": "abud-ceresit-viva-white-2kg", "ean": "9000101173451", "name": "Fuga elastyczna Viva 1-8mm 2kg Ceresit Kolor: 01 White", "category": "grout", "brand": "Ceresit", "packageSize": 2, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 67336, "apiPurchaseUnit": "op.", "variant": ["Viva", "2 kg", "01 White"], "pickupRequiresConfirmation": true, "url": "https://www.abud.pl/product-pol-67336-Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-01-White.html", "imageUrl": "https://www.abud.pl/hpeciai/15652d1b95dc2db15d1504b29743e501/pol_pl_Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-01-White-67336_1.webp" },
+  // source: https://www.abud.pl/product-pol-67395-Fuga-elastyczna-Viva-1-8mm-4kg-Ceresit-Kolor-01-White.html
+  { "id": "abud-ceresit-viva-white-4kg", "ean": "9000101175134", "name": "Fuga elastyczna Viva 1-8mm 4kg Ceresit Kolor: 01 White", "category": "grout", "brand": "Ceresit", "packageSize": 4, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 67395, "apiPurchaseUnit": "op.", "variant": ["Viva", "4 kg", "01 White"], "pickupRequiresConfirmation": true, "url": "https://www.abud.pl/product-pol-67395-Fuga-elastyczna-Viva-1-8mm-4kg-Ceresit-Kolor-01-White.html", "imageUrl": "https://www.abud.pl/hpeciai/1c258eaa40fa69cb118e831b8e155111/pol_pl_Fuga-elastyczna-Viva-1-8mm-4kg-Ceresit-Kolor-01-White-67395_1.webp" },
+  // source: https://www.abud.pl/product-pol-67342-Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-10-Manhattan.html
+  { "id": "abud-ceresit-viva-manhattan-2kg", "ean": "9000101173536", "name": "Fuga elastyczna Viva 1-8mm 2kg Ceresit Kolor: 10 Manhattan", "category": "grout", "brand": "Ceresit", "packageSize": 2, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 67342, "apiPurchaseUnit": "op.", "variant": ["Viva", "2 kg", "10 Manhattan"], "pickupRequiresConfirmation": true, "url": "https://www.abud.pl/product-pol-67342-Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-10-Manhattan.html", "imageUrl": "https://www.abud.pl/hpeciai/c6c324e48687930a9efdd88ae7a6b15a/pol_pl_Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-10-Manhattan-67342_1.webp" }
 ];
+var makers = { "buduj24-ceresit-viva-white-2kg": "CER-3141510", "buduj24-ceresit-viva-white-4kg": "3147322", "buduj24-ceresit-viva-grey-2kg": "314155", "buduj24-ceresit-viva-grey-4kg": "3147084", "buduj24-ceresit-viva-manhattan-2kg": "3141558", "buduj24-ceresit-viva-manhattan-4kg": "3147168", "abud-ceresit-viva-white-2kg": "3141510", "abud-ceresit-viva-white-4kg": "3147322", "abud-ceresit-viva-manhattan-2kg": "3141558" };
 var one2 = (values) => {
   if (values.length !== 1) throw Error("viva_purchase_not_confirmed");
   return values[0];
@@ -20154,11 +20177,15 @@ var path = (url2) => {
   return u.origin + decodeURIComponent(u.pathname).replaceAll("+", " ");
 };
 function ceresitVivaStock(html, product, source) {
-  if (!source.id.startsWith("buduj24-ceresit-viva-")) return void 0;
+  if (!/^(buduj24|abud)-ceresit-viva-/.test(source.id)) return void 0;
   const reviewed6 = CERESIT_VIVA_SOURCES.find((s) => s.id === source.id);
-  if (!reviewed6 || ["ean", "name", "category", "brand", "packageSize", "unit", "store", "format", "url", "imageUrl"].some((key) => source[key] !== reviewed6[key]) || source.skuIdentity || source.purchaseMultiple && source.purchaseMultiple !== 1 || source.minimumPackages && source.minimumPackages !== 1) throw Error("viva_source_not_reviewed");
+  if (!reviewed6 || ["ean", "name", "category", "brand", "packageSize", "unit", "store", "format", "url", "imageUrl", "productId", "apiPurchaseUnit"].some((key) => source[key] !== reviewed6[key]) || source.skuIdentity || source.purchaseMultiple && source.purchaseMultiple !== 1 || source.minimumPackages && source.minimumPackages !== 1) throw Error("viva_source_not_reviewed");
+  if (source.store === "ABUD") {
+    if (product.gtin13 !== source.ean || product.name !== source.name || text2(one2(elements(clean(html), (_a, tag) => tag === "h1"))) !== source.name || product.brand?.name !== "Ceresit" || product.productID !== "mpn:" + makers[source.id] || product.image !== source.imageUrl || source.variant?.join("|") !== reviewed6.variant?.join("|")) throw Error("viva_identity_not_confirmed");
+    return void 0;
+  }
   const main = one2(elements(clean(html), (a) => /\/Product$/.test(a.itemtype ?? ""))), form2 = one2(elements(main, (a) => a.id === "form_product"));
-  const manufacturer = reviewed6.packageSize === 2 ? "CER-3141510" : "3147322", identifiers = one2(elements(main, (a) => cls(a, "product-identifiers")));
+  const manufacturer = makers[source.id], identifiers = one2(elements(main, (a) => cls(a, "product-identifiers")));
   if (product.gtin13 !== source.ean || product.name !== source.name || text2(one2(elements(main, (a) => a.itemprop === "brand"))) !== "CERESIT" || !text2(identifiers).endsWith("Kod producenta: " + manufacturer) || path(product.image) !== path(reviewed6.imageUrl)) throw Error("viva_identity_not_confirmed");
   const add2 = one2(elements(form2, (a) => a.name === "add")), pid = new URL(source.url).pathname.match(/^\/produkt\/(\d+),/)?.[1];
   if (attrs(add2).value !== pid || text2(one2(elements(form2, (a) => cls(a, "product-unit")))) !== "szt.") throw Error("viva_purchase_unit_not_confirmed");
@@ -20733,7 +20760,7 @@ var AnonymousShop = class {
       return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
     }
     if (action === "add") {
-      if (![6883, 6892, 6901, 65390, 65373, 50450, 6900, 50414, 27095, 6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121, 27268, 42372].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
+      if (![6883, 6892, 6901, 65390, 65373, 50450, 6900, 50414, 27095, 6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121, 27268, 42372, 67336, 67395, 67342].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
       return JSON.parse(await this.read("/basketchange.php", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
     }
     if (action !== "shipping" || Object.keys(args).length) throw Error("invalid_cart_action");
@@ -24466,6 +24493,28 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     if (perStore.every(Boolean)) addGroupedPlan(perStore.map((plan) => plan.packages), true);
   }
   if (materialPlans.every(Boolean)) addGroupedPlan(materialPlans.map((plan) => plan.packages), materialPlans.every((plan) => plan.packages.length === 1));
+  homogeneousCandidates: if (materialPlans.every(Boolean)) for (const [index2, group] of groups.entries()) {
+    if (group.cutRoll) continue;
+    const variants = group.offers.filter((o) => isComparableOffer(o, now.getTime())).flatMap((o) => buildPackageVariants([o], group.product));
+    const sizes = [...new Set(variants.map((v) => v.packageSize))];
+    if (sizes.length < 2) continue;
+    for (const size of sizes) {
+      const homogeneous = mixedPackagePlans(group.totalQuantity, variants.filter((v) => v.packageSize === size), group.requiredBySize, 64, 1e4);
+      for (const plan of homogeneous.plans) {
+        if (proposed.size >= 64) break homogeneousCandidates;
+        addGroupedPlan(materialPlans.map((other, i) => i === index2 ? plan.packages : other.packages), false);
+      }
+    }
+  }
+  mixedFamilyCandidates: if (materialPlans.every(Boolean)) for (const [index2, group] of groups.entries()) {
+    if (group.cutRoll) continue;
+    const variants = group.offers.filter((o) => isComparableOffer(o, now.getTime())).flatMap((o) => buildPackageVariants([o], group.product));
+    if (new Set(variants.map((v) => v.packageSize)).size < 2) continue;
+    for (const plan of mixedPackagePlans(group.totalQuantity, variants, group.requiredBySize, 32, 1e4).plans) {
+      if (proposed.size >= 96) break mixedFamilyCandidates;
+      addGroupedPlan(materialPlans.map((other, i) => i === index2 ? plan.packages : other.packages), false);
+    }
+  }
   const orderedOptions = options.map((option) => option.sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId)));
   function addBase(selected) {
     if (selected.some((pack) => !pack)) return;
@@ -24699,7 +24748,7 @@ var relaySecretValid = (secret) => typeof secret === "string" && /^[a-f0-9]{64}$
 
 // artifacts/api-server/src/lib/quote-relay-client.ts
 function quoteRelayEnabled(store) {
-  return process.env.REMONT_QUOTE_RELAY_MODE === "client" && ["ABUD", "ChemiaDoParkietu25", "eTak"].includes(store) && relaySecretValid(process.env.REMONT_QUOTE_RELAY_SECRET);
+  return process.env.REMONT_QUOTE_RELAY_MODE === "client" && ["ABUD", "ChemiaDoParkietu25", "eTak", "Buduj24"].includes(store) && relaySecretValid(process.env.REMONT_QUOTE_RELAY_SECRET);
 }
 async function requestRelay(payload, fetchImpl, secret) {
   if (!relaySecretValid(secret)) throw Error("invalid_basket");
@@ -24731,11 +24780,12 @@ async function requestRelay(payload, fetchImpl, secret) {
   return data.result;
 }
 async function quoteThroughRelay(order, postalCode, fetchImpl = fetch, secret = process.env.REMONT_QUOTE_RELAY_SECRET) {
-  if (!["ABUD", "ChemiaDoParkietu25", "eTak"].includes(order.store) || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
+  if (!["ABUD", "ChemiaDoParkietu25", "eTak", "Buduj24"].includes(order.store) || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
   const result = await requestRelay({ version: 1, action: "quote", basket: order, postalCode }, fetchImpl, secret);
   if ("quote" in result) {
     const receipt = Date.now(), checked = Date.parse(result.quote?.checkedAt), expires = Date.parse(result.quote?.expiresAt), duration3 = expires - checked;
-    if (result.quote?.postalCode !== postalCode || result.quote?.destinationScope !== "postal_code" || !Number.isSafeInteger(result.quote.costGrosze) || result.quote.costGrosze < 0 || !Number.isFinite(checked) || !Number.isFinite(expires) || expires <= receipt || checked > receipt + 5e3 || duration3 <= 0 || duration3 > 6e5) throw Error("quote_unavailable");
+    const destination2 = order.store === "Buduj24" ? result.quote?.basis === "retailer_basket_national" && result.quote.destinationScope === "PL" && result.quote.postalCode === void 0 && result.quote.sourceUrl === "https://buduj24.pl/cart" && result.quote.cartPricing === void 0 && result.quote.materialsRoundingGrosze === void 0 && /^[a-f0-9]{64}$/.test(result.quote.evidenceSha256 ?? "") : result.quote?.postalCode === postalCode && result.quote?.destinationScope === "postal_code";
+    if (!destination2 || !Number.isSafeInteger(result.quote.costGrosze) || result.quote.costGrosze < 0 || !Number.isFinite(checked) || !Number.isFinite(expires) || expires <= receipt || checked > receipt + 5e3 || duration3 <= 0 || duration3 > 6e5) throw Error("quote_unavailable");
     if ((result.quote.cartPricing !== void 0 || result.quote.materialsRoundingGrosze !== void 0) && quotedMaterialsGrosze(order, result.quote) === null) throw Error("quote_unavailable");
     if (order.store === "eTak" && (result.quote.sourceUrl !== "https://etak.eu/pl/basketedit.html" || result.quote.basis !== "retailer_basket_postcode" || !Number.isSafeInteger(result.quote.materialsRoundingGrosze) || result.quote.cartPricing !== void 0)) throw Error("quote_unavailable");
     if (checked > receipt) {
@@ -27147,7 +27197,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   confirmDecowantSource(source);
   confirmKnaufFinishSource(source);
   if (source.disabledReason) throw Error(source.disabledReason);
-  if (source.format === "idosell" && quoteRelayEnabled(source.store)) {
+  if ((source.format === "idosell" || source.format === "buduj24" && source.store === "Buduj24") && quoteRelayEnabled(source.store)) {
     const originalFetch = fetchImpl, deadline = AbortSignal.timeout(2e4);
     fetchImpl = (input2, init) => originalFetch(input2, { ...init, signal: AbortSignal.any([deadline, ...init?.signal ? [init.signal] : []]) });
     try {
@@ -27487,6 +27537,28 @@ async function quoteElmas(order, fetchImpl) {
   if (last.cost !== first.cost || selected.selectedDelivery?.id !== ELMAS_HOME_CARRIER || selected.selectedDelivery?.name !== "InPost Kurier" || amount6(selected.selectedDelivery?.price) !== last.cost || selected.selectedDelivery?.mapType || selected.discountCode !== void 0 || selected.giftCard !== void 0) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
   return { quote: { costGrosze: last.cost, carrier: "InPost Kurier", payment: "Przelewy24", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ELMAS_ORIGIN + "/order/form", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify({ country: "PL", store: order.store, materialsGrosze: order.materialsGrosze, lines: order.lines, evidence, initial, selected })).digest("hex") } };
+}
+
+// artifacts/api-server/src/lib/buduj-national-cache.ts
+function budujNationalBasketKey(order) {
+  if (order.store !== "Buduj24" || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze < 1 || order.lines.length < 1 || order.lines.length > 20) return null;
+  const seen = /* @__PURE__ */ new Set(), rows = [];
+  let total = 0;
+  for (const line2 of order.lines) {
+    if (line2.packages.length < 1 || line2.packages.length > 20) return null;
+    for (const pack of line2.packages) {
+      const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === "Buduj24" && s.format === "buduj24" && !s.disabledReason);
+      const unit = (u) => u === "mb" ? "m" : u ?? "";
+      if (!source || seen.has(source.id) || line2.product.id !== "remont-" + source.ean || unit(line2.unit) !== unit(source.unit) || pack.store !== "Buduj24" || pack.url !== source.url || pack.packageSize !== source.packageSize || pack.cutRoll !== void 0 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || pack.maxPackages !== void 0 && (!Number.isSafeInteger(pack.maxPackages) || pack.count > pack.maxPackages) || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze < 1 || !Number.isSafeInteger(pack.lineCostGrosze) || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze) return null;
+      const minimum = pack.minimumPackages ?? 1, multiple = pack.purchaseMultiple ?? 1;
+      if (!Number.isSafeInteger(minimum) || minimum < 1 || !Number.isSafeInteger(multiple) || multiple < 1 || pack.count < minimum || pack.count % multiple) return null;
+      seen.add(source.id);
+      total += pack.lineCostGrosze;
+      rows.push([source.id, source.ean, source.url, source.unit, source.packageSize, pack.count, pack.unitPriceGrosze, minimum, multiple]);
+    }
+  }
+  if (!Number.isSafeInteger(total) || total !== order.materialsGrosze) return null;
+  return JSON.stringify(["Buduj24", "PL", total, rows.sort((a, b) => String(a[0]).localeCompare(String(b[0])))]);
 }
 
 // artifacts/api-server/src/lib/chemia-delivery.ts
@@ -28545,7 +28617,7 @@ async function quoteSkyshop(order, fetchImpl) {
 // artifacts/api-server/src/lib/abud-delivery.ts
 var import_node_crypto31 = require("node:crypto");
 var ORIGIN8 = "https://www.abud.pl";
-var IDS = ["abud-aks-ydyp-3x15-25m", "abud-aks-ydyp-3x15-50m", "abud-aks-ydyp-3x25-50m", "abud-aks-ydyp-3x25-5m", "abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg", "abud-knauf-superfinish-54kg", "abud-knauf-superfinish-28kg"];
+var IDS = ["abud-aks-ydyp-3x15-25m", "abud-aks-ydyp-3x15-50m", "abud-aks-ydyp-3x25-50m", "abud-aks-ydyp-3x25-5m", "abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg", "abud-knauf-superfinish-54kg", "abud-knauf-superfinish-28kg", ...["abud-ceresit-viva-white-2kg", "abud-ceresit-viva-white-4kg", "abud-ceresit-viva-manhattan-2kg"]];
 function money11(value2, formatted) {
   if (!["string", "number"].includes(typeof value2)) throw Error("invalid_money");
   const amount8 = parsePriceToGrosze(value2);
@@ -29071,20 +29143,31 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
   }));
   const pages = createCheckoutPageReader();
   const cache = /* @__PURE__ */ new Map();
-  const elmasNational = /* @__PURE__ */ new Map();
-  const nationalKey = (order) => order.store === "Elmas" ? elmasNationalBasketKey(order) : null;
-  const validNational = (result, now) => {
+  const nationalQuotes = /* @__PURE__ */ new Map();
+  const nationalKey = (order) => order.store === "Elmas" ? elmasNationalBasketKey(order) : order.store === "Buduj24" ? budujNationalBasketKey(order) : null;
+  const validNational = (order, result, now) => {
     if (!result || !("quote" in result)) return false;
     const q = result.quote, checked = Date.parse(q.checkedAt), expires = Date.parse(q.expiresAt);
-    return q.basis === "retailer_basket_national" && q.destinationScope === "PL" && q.postalCode === void 0 && q.sourceUrl === "https://sklep-elmas.pl/order/form" && Number.isSafeInteger(q.costGrosze) && q.costGrosze >= 0 && /^[a-f0-9]{64}$/.test(q.evidenceSha256 ?? "") && Number.isFinite(checked) && checked <= now && expires > now && expires <= checked + 6e5;
+    const source = order.store === "Elmas" ? "https://sklep-elmas.pl/order/form" : "https://buduj24.pl/cart";
+    return q.basis === "retailer_basket_national" && q.destinationScope === "PL" && q.postalCode === void 0 && q.sourceUrl === source && (order.store !== "Buduj24" || q.cartPricing === void 0 && q.materialsRoundingGrosze === void 0) && Number.isSafeInteger(q.costGrosze) && q.costGrosze >= 0 && /^[a-f0-9]{64}$/.test(q.evidenceSha256 ?? "") && Number.isFinite(checked) && checked <= now && expires > now && expires <= checked + 6e5;
+  };
+  const rememberNational = (order, row, now = Date.now()) => {
+    const key = nationalKey(order);
+    if (!key || row.until <= now || !validNational(order, row.confirmed, now)) return;
+    nationalQuotes.delete(key);
+    if (nationalQuotes.size >= 64) nationalQuotes.delete(nationalQuotes.keys().next().value);
+    nationalQuotes.set(key, row);
   };
   const cachedNational = (order, now = Date.now()) => {
     const key = nationalKey(order);
     if (!key) return null;
-    const row = elmasNational.get(key);
+    const row = nationalQuotes.get(key);
     if (!row) return null;
-    if (row.until > now && validNational(row.confirmed, now)) return row.confirmed;
-    elmasNational.delete(key);
+    if (row.until > now && validNational(order, row.confirmed, now)) {
+      rememberNational(order, row, now);
+      return row.confirmed;
+    }
+    nationalQuotes.delete(key);
     return null;
   };
   const queue = new QuoteQueue();
@@ -29093,7 +29176,11 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return null;
     if (order.store === "Elmas" && !nationalKey(order)) return null;
     const row = cache.get(keyFor(order, postalCode)), now = Date.now();
-    return row && row.until > now && row.confirmed && "quote" in row.confirmed && Date.parse(row.confirmed.quote.expiresAt) > now ? row.confirmed : cachedNational(order, now);
+    if (row && row.until > now && row.confirmed && "quote" in row.confirmed && Date.parse(row.confirmed.quote.expiresAt) > now) {
+      rememberNational(order, row, now);
+      return row.confirmed;
+    }
+    return cachedNational(order, now);
   };
   const quote2 = async (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
@@ -29104,14 +29191,17 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
     if (national) return national;
     const key = keyFor(order, postalCode);
     const cached3 = cache.get(key);
-    if (cached3 && cached3.until > Date.now()) return cached3.result;
-    if (sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
+    if (cached3 && cached3.until > Date.now()) {
+      rememberNational(order, cached3);
+      return cached3.result;
+    }
+    if (!quoteRelayEnabled(order.store) && sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
     const pending = (async () => {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
-        if (sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
+        if (!quoteRelayEnabled(order.store) && sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
         let nativeFetch = fetchImpl;
         if (quoteRelayEnabled(order.store)) {
           const deadline = AbortSignal.timeout(2e4);
@@ -29162,11 +29252,7 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
       if ("quote" in result) {
         const row = { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result), confirmed: result };
         cache.set(key, row);
-        const countryKey = nationalKey(order);
-        if (countryKey && validNational(result, Date.now())) {
-          if (elmasNational.size >= 64 && !elmasNational.has(countryKey)) elmasNational.delete(elmasNational.keys().next().value);
-          elmasNational.set(countryKey, row);
-        }
+        rememberNational(order, row);
       } else if (result.reason === "quote_busy") cache.delete(key);
       else cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
     }
