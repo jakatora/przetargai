@@ -4890,5 +4890,18 @@
     "sourceUrl": "https://topboden.pl/podklad-pod-panele/arbiton-optima-aquastop-podklady-pod-panele-laminowane",
     "evidenceSha256": "88ce3853bd2b0e622fc358bf8b0d0bc0e6ed6f7ed3d8757fd251114565f1223e",
     "validUntil": "2026-11-04"
+  },
+  {
+    "sourceId": "alnar-wolfcraft-6931000-kit",
+    "ean": "4006885693104",
+    "name": "WOLFCRAFT ZESTAW DO MONTAŻU PANELI",
+    "imageUrl": "https://alnar.pl/images/6931000.jpg",
+    "priceGrosze": 4900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T05:30:51.661Z",
+    "sourceUrl": "https://alnar.pl/wolfcraft-zestaw-do-montazu-paneli-p-6949.html",
+    "evidenceSha256": "8c817ade4e404b0d6ccbb09dff2e506d007db218dc357b9a7cfffbf5a70c2cfb",
+    "validUntil": null
   }
 ]
