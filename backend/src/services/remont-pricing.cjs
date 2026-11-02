@@ -23384,6 +23384,9 @@ function confirmRetailSkuProduct(html, product, source) {
   return { ...verified, sku: sku.manufacturerSku };
 }
 
+// artifacts/api-server/src/lib/preferred-delivery.ts
+var import_node_crypto2 = require("node:crypto");
+
 // lib/pricing-service/src/delivery.ts
 function compareDeliveredBaskets(stages, settings = { mode: "shipping" }, policies = [], now = /* @__PURE__ */ new Date()) {
   const groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
@@ -24197,13 +24200,58 @@ function recombineQuotedOrders(candidates, orders, groups, postalCode, existing,
   return { baskets: [...winners.values()], limited, states, steps };
 }
 
+// lib/pricing-service/src/preferred-delivery-plan.ts
+function rememberDeliveryAllocation(basket) {
+  if (!basket.stores.length || basket.stores.length > DELIVERY_LIMITS.stores) return null;
+  const plan = basket.stores.map((order) => ({ store: order.store, packs: order.lines.flatMap((line2) => line2.packages.map((pack) => ({
+    offerId: pack.offerId,
+    productId: line2.product.id,
+    unit: line2.unit,
+    packageSize: pack.packageSize,
+    count: pack.count
+  }))) }));
+  if (basket.stores.some((order) => order.lines.some((line2) => line2.packages.some((pack) => pack.cutRoll))) || plan.reduce((n, o) => n + o.packs.length, 0) > 1e3) return null;
+  return plan;
+}
+function rebuildDeliveryAllocation(plan, groups, now, blocked = /* @__PURE__ */ new Set()) {
+  if (!groups.length || groups.some((group) => group.cutRoll) || !plan.length || plan.length > DELIVERY_LIMITS.stores) return null;
+  if (plan.reduce((n, o) => n + o.packs.length, 0) > 1e3 || new Set(plan.map((o) => o.store)).size !== plan.length) return null;
+  const purchased = groups.map(() => []), seen = /* @__PURE__ */ new Set(), orders = [];
+  for (const intent of plan) {
+    if (!intent.packs.length || blocked.has(intent.store)) return null;
+    const order = { store: intent.store, materialsGrosze: 0, deliveryGrosze: null, deliveryMinimumGrosze: 0, totalGrosze: null, source: "unknown", lines: [] };
+    for (const pack of intent.packs) {
+      if (seen.has(pack.offerId) || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > DELIVERY_LIMITS.packagesPerProduct) return null;
+      seen.add(pack.offerId);
+      const matches = groups.flatMap((group2, index3) => group2.offers.filter((o) => o.id === pack.offerId && o.store === intent.store && isComparableOffer(o, now.getTime())).map((offer2) => ({ group: group2, index: index3, offer: offer2 })));
+      if (matches.length !== 1) return null;
+      const { group, index: index2, offer } = matches[0], variant = buildPackageVariants([offer], group.product)[0];
+      if (!variant || variant.packageSize !== pack.packageSize || (variant.product ?? group.product).id !== pack.productId || group.unit !== pack.unit || pack.count % (variant.purchaseMultiple ?? 1) !== 0 || pack.count < (variant.minimumPackages ?? 1) || pack.count > (variant.maxPackages ?? Infinity)) return null;
+      const actual = { ...variant, count: pack.count, lineCostGrosze: variant.unitPriceGrosze * pack.count };
+      if (!Number.isSafeInteger(actual.lineCostGrosze) || actual.unitPriceGrosze <= 0) return null;
+      purchased[index2].push(actual);
+      let line2 = order.lines.find((line3) => line3.product.id === pack.productId);
+      if (!line2) {
+        line2 = { product: variant.product ?? group.product, unit: group.unit, packages: [] };
+        order.lines.push(line2);
+      }
+      line2.packages.push(actual);
+      order.materialsGrosze += actual.lineCostGrosze;
+    }
+    if (!Number.isSafeInteger(order.materialsGrosze)) return null;
+    orders.push(order);
+  }
+  if (groups.some((group, index2) => !irreduciblePackagePlan(group.totalQuantity, purchased[index2], group.requiredBySize))) return null;
+  return orders.sort((a, b) => a.store.localeCompare(b.store));
+}
+
 // lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
 var MAX_PROPOSED = 256;
 var signature = (order) => order.lines.flatMap((line2) => line2.packages.map((pack) => `${pack.offerId}:${pack.count}:${pack.unitPriceGrosze}:${pack.packageSize}:${JSON.stringify(pack.cutRoll ?? null)}`)).sort().join("|");
 var removable = (pack) => pack.count - (pack.purchaseMultiple ?? 1) >= (pack.minimumPackages ?? 1) ? pack.purchaseMultiple ?? 1 : pack.count;
-async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
+async function compareAutomaticDelivery(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}, preferredPlan) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   const limits = /* @__PURE__ */ new Map(), cache = /* @__PURE__ */ new Map();
   let allowNewQuotes = true, partitionSearchLimited = false, quoteBudget = MAX_STORE_BASKETS, reserveHit = false;
@@ -24251,10 +24299,10 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
       return [{ ...offer, maxPackages: Math.min(offer.maxPackages ?? Infinity, limit.maxPackages) }];
     }) }) }));
     optionalPartitions = false;
-    result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+    result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores, preferredPlan);
     if (settings.allowSeparateOrders === true && result.best && revision === [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|")) {
       optionalPartitions = true;
-      result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+      result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores, preferredPlan);
     } else if (settings.allowSeparateOrders === true && result.purchasePlan) {
       result.searchLimited = true;
     }
@@ -24265,7 +24313,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
         if (extra.baselineExpired) {
           const previous = allowNewQuotes;
           allowNewQuotes = false;
-          result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+          result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores, preferredPlan);
           allowNewQuotes = previous;
           result.extraPackageOption = null;
           result.searchLimited = true;
@@ -24278,7 +24326,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     };
     await addExtra();
     if (reserveHit && cache.size < MAX_STORE_BASKETS) {
-      result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+      result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores, preferredPlan);
       await addExtra();
     }
     const next = [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|");
@@ -24293,7 +24341,7 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
   }
   return result;
 }
-async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}) {
+async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}, preferredPlan) {
   if (settings.mode === "pickup" || settings.method === "manual") return compareDeliveredBaskets(stages, settings, policies, now);
   let groups = groupProjectByProduct(stages).filter((group) => group.totalQuantity > 0);
   const stores = [...new Set(groups.flatMap((g) => g.offers.filter((o) => isComparableOffer(o, now.getTime())).map((o) => o.store)))].sort();
@@ -24337,7 +24385,7 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
       for (const order of orders) unique2.set(signature(order), order);
     }
     result.searchLimited = true;
-    return quoteAndRank(candidates2, unique2, result, settings, knownOnly, now, allGroups);
+    return quoteAndRank(candidates2, unique2, result, settings, knownOnly, now, allGroups, preferredPlan);
   }
   const tooLarge = () => {
     result.status = "limit_exceeded";
@@ -24345,8 +24393,8 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
   };
   const activeStores = [...new Set(groups.flatMap((group) => group.offers.filter((offer) => isComparableOffer(offer, now.getTime())).map((offer) => offer.store)))].sort();
   if (groups.length > DELIVERY_LIMITS.products || activeStores.length > DELIVERY_LIMITS.stores) return tooLarge();
-  if (groups.length > 20 || activeStores.length > 10) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
-  if (groups.some((group) => group.cutRoll)) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
+  if (groups.length > 20 || activeStores.length > 10) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now, preferredPlan);
+  if (groups.some((group) => group.cutRoll)) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now, preferredPlan);
   const choices = [];
   let candidateCount = 1;
   for (const group of groups) {
@@ -24356,14 +24404,14 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
     if (group.requiredBySize || sizes.some((size) => size !== sizes[0])) {
       const mixed = mixedPackagePlans(group.totalQuantity, offers.flatMap((offer) => buildPackageVariants([offer], group.product)), group.requiredBySize);
       candidateCount *= mixed.plans.length;
-      if (mixed.limited || candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
+      if (mixed.limited || candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now, preferredPlan);
       if (!mixed.plans.length) return tooLarge();
       choices.push(mixed.plans.map((plan) => plan.packages));
       continue;
     }
     const count = computePackagesNeeded(group.totalQuantity, sizes[0]);
     if (!Number.isSafeInteger(count) || count > DELIVERY_LIMITS.packagesPerProduct) return tooLarge();
-    if (count > 60) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
+    if (count > 60) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now, preferredPlan);
     const variants = [];
     const visit = (index2, remaining, packs) => {
       if (variants.length > MAX_CANDIDATES) return;
@@ -24388,7 +24436,7 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
     visit(0, count, []);
     candidateCount *= variants.length;
     if (!variants.length) return tooLarge();
-    if (candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
+    if (candidateCount > MAX_CANDIDATES) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now, preferredPlan);
     choices.push(variants);
   }
   const candidates = [], unique = /* @__PURE__ */ new Map();
@@ -24418,10 +24466,10 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
     candidates.push(actual);
   }
   enumerate(0, []);
-  if (unique.size > MAX_STORE_BASKETS) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
-  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups);
+  if (unique.size > MAX_STORE_BASKETS) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now, preferredPlan);
+  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups, preferredPlan);
 }
-async function compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now) {
+async function compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now, preferredPlan) {
   const options = groups.map((group) => {
     const offers = group.offers.filter((offer) => isComparableOffer(offer, now.getTime()));
     if (group.cutRoll) return offers.flatMap((offer) => {
@@ -24588,9 +24636,20 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     result.status = "limit_exceeded";
     return result;
   }
-  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups);
+  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups, preferredPlan);
 }
-async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups) {
+async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups, preferredPlan) {
+  const preferred = preferredPlan && rebuildDeliveryAllocation(preferredPlan, groups, now, new Set(result.unavailableStores?.map((item) => item.store)));
+  const preferredKeys = /* @__PURE__ */ new Set();
+  if (preferred) {
+    for (const order of preferred) {
+      const key2 = signature(order);
+      preferredKeys.add(key2);
+      if (!unique.has(key2)) unique.set(key2, order);
+    }
+    const key = (orders) => orders.map((order) => order.store + ":" + signature(order)).sort().join("|");
+    if (!candidates.some((orders) => key(orders) === key(preferred))) candidates.unshift(preferred);
+  }
   const failures = new Map((result.unavailableStores ?? []).map((item) => [item.store, item.reason]));
   const orderFailures = /* @__PURE__ */ new Map();
   const unavailableIntegrations = new Set(failures.keys());
@@ -24640,7 +24699,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
       }
     }));
   };
-  await quoteKeys([...priority]);
+  await quoteKeys([.../* @__PURE__ */ new Set([...preferredKeys, ...priority])]);
   const confirmedCandidates = candidates.filter(
     (orders) => orders.every((order) => order.quote && order.totalGrosze !== null && Date.parse(order.quote.expiresAt) > Date.now())
   ).sort((a, b) => a.reduce((sum, o) => sum + o.totalGrosze, 0) - b.reduce((sum, o) => sum + o.totalGrosze, 0) || a.length - b.length);
@@ -24652,7 +24711,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
     const optimisticMaterials = orders.reduce((sum, order) => sum + (supportsCartPricing(order.store) && !order.quote ? 0 : order.materialsGrosze - order.lines.reduce((packs, line2) => packs + line2.packages.reduce((count, pack) => count + pack.count, 0), 0)), 0);
     return optimisticMaterials <= confirmedUpperBound;
   }).flatMap((orders) => orders.map(signature)));
-  await quoteKeys(ordered.map(([key]) => key).filter((key) => !priority.has(key) && canStillWin.has(key)));
+  await quoteKeys(ordered.map(([key]) => key).filter((key) => !priority.has(key) && !preferredKeys.has(key) && canStillWin.has(key)));
   for (const order of unique.values()) if (order.quote && Date.parse(order.quote.expiresAt) <= Date.now()) {
     order.materialsGrosze = order.quote.cartPricing?.baseMaterialsGrosze ?? order.materialsGrosze - (order.quote.materialsRoundingGrosze ?? 0);
     delete order.quote;
@@ -24712,8 +24771,8 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
 }
 
 // lib/pricing-service/src/selected-store-delivery.ts
-async function compareDeliveryWithAvailablePart(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}, selectedStore) {
-  const comparison = await compareAutomaticDelivery(stages, settings, quoteBasket, policies, now, knownUnavailableStores);
+async function compareDeliveryWithAvailablePart(stages, settings, quoteBasket, policies = [], now = /* @__PURE__ */ new Date(), knownUnavailableStores = {}, selectedStore, preferredPlan) {
+  const comparison = await compareAutomaticDelivery(stages, settings, quoteBasket, policies, now, knownUnavailableStores, preferredPlan);
   if (!selectedStore || comparison.status !== "partial" || comparison.best || settings.mode !== "shipping" || settings.method === "manual" || !/^\d{2}-\d{3}$/.test(settings.postalCode ?? "")) return comparison;
   const selected = stages.map((stage) => ({ ...stage, lines: stage.lines.map((line2) => line2.resolved ? { ...line2, offers: line2.offers.filter((o) => o.store === selectedStore && isComparableOffer(o, now.getTime())) } : line2) }));
   const unresolved = selected.flatMap((s) => s.lines).filter((l) => !l.resolved && l.quantity > 0);
@@ -24731,18 +24790,55 @@ async function compareDeliveryWithAvailablePart(stages, settings, quoteBasket, p
   return { ...comparison, ...part.stockLimits?.length ? { stockLimits: part.stockLimits } : {}, availablePart: { store: selectedStore, productCount: accepted.size, basket, ...!basket ? { unavailableReason: part.stockLimits?.length ? "insufficient_stock" : part.unavailableStores?.find((s) => s.store === selectedStore)?.reason ?? "quote_unavailable" } : {} } };
 }
 
+// artifacts/api-server/src/lib/preferred-delivery.ts
+var stable2 = (value2) => JSON.stringify(value2, (_key, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((key) => [key, v[key]])) : v);
+function createPreferredDeliveryComparison(now = Date.now, maxEntries = 64) {
+  const memory = /* @__PURE__ */ new Map();
+  const capacity = Math.min(64, Math.max(0, Math.floor(maxEntries)));
+  return async (...args) => {
+    const [stages, settings, quote2, policies, date6, unavailable, selectedStore] = args;
+    const automatic = settings.mode === "shipping" && settings.method !== "manual" && /^\d{2}-\d{3}$/.test(settings.postalCode ?? "");
+    const groups = automatic ? groupProjectByProduct(stages).filter((g) => g.totalQuantity > 0) : [];
+    const eligible = automatic && groups.length > 0 && !groups.some((g) => g.cutRoll) && !stages.some((s) => s.lines.some((l) => !l.resolved && l.quantity > 0));
+    const key = eligible ? (0, import_node_crypto2.createHash)("sha256").update(stable2([
+      settings.postalCode,
+      settings.allowSeparateOrders === true,
+      settings.allowExtraPackages === true,
+      selectedStore ?? null,
+      groups.map((g) => [g.product.id, g.unit, g.totalQuantity, g.requiredBySize ?? null]).sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+    ])).digest("hex") : null;
+    const time4 = now();
+    for (const [key2, entry] of memory) if (time4 - entry.savedAt >= 2 * 60 * 60 * 1e3 || entry.savedAt > time4) memory.delete(key2);
+    const previous = key ? memory.get(key) : void 0;
+    if (previous && key) {
+      memory.delete(key);
+      memory.set(key, previous);
+    }
+    const result = await compareDeliveryWithAvailablePart(stages, settings, quote2, policies, date6, unavailable, selectedStore, previous?.allocation);
+    if (key && capacity > 0 && result.best && result.missingProductCount === 0 && result.best.totalGrosze !== null && result.best.stores.every((o) => o.quote && Date.parse(o.quote.expiresAt) > now())) {
+      const allocation = rememberDeliveryAllocation(result.best);
+      if (allocation) {
+        memory.delete(key);
+        memory.set(key, { savedAt: now(), allocation });
+        while (memory.size > capacity) memory.delete(memory.keys().next().value);
+      }
+    }
+    return result;
+  };
+}
+
 // artifacts/api-server/src/lib/quote-relay-client.ts
-var import_node_crypto3 = require("node:crypto");
+var import_node_crypto4 = require("node:crypto");
 
 // artifacts/api-server/src/lib/quote-relay-auth.ts
-var import_node_crypto2 = require("node:crypto");
+var import_node_crypto3 = require("node:crypto");
 var QUOTE_RELAY_URL = "https://asystent-remontu-web-production.up.railway.app/internal/retailer-delivery";
-var relayDigest = (body) => (0, import_node_crypto2.createHash)("sha256").update(body).digest("hex");
+var relayDigest = (body) => (0, import_node_crypto3.createHash)("sha256").update(body).digest("hex");
 function relaySignature(secret, kind, timestamp2, nonce, body) {
-  return (0, import_node_crypto2.createHmac)("sha256", secret).update([kind, timestamp2, nonce, relayDigest(body)].join("\n")).digest("hex");
+  return (0, import_node_crypto3.createHmac)("sha256", secret).update([kind, timestamp2, nonce, relayDigest(body)].join("\n")).digest("hex");
 }
 function equalSignature(actual, expected) {
-  return typeof actual === "string" && /^[a-f0-9]{64}$/.test(actual) && (0, import_node_crypto2.timingSafeEqual)(Buffer.from(actual, "hex"), Buffer.from(expected, "hex"));
+  return typeof actual === "string" && /^[a-f0-9]{64}$/.test(actual) && (0, import_node_crypto3.timingSafeEqual)(Buffer.from(actual, "hex"), Buffer.from(expected, "hex"));
 }
 var relaySecretValid = (secret) => typeof secret === "string" && /^[a-f0-9]{64}$/.test(secret);
 
@@ -24754,7 +24850,7 @@ async function requestRelay(payload, fetchImpl, secret) {
   if (!relaySecretValid(secret)) throw Error("invalid_basket");
   const body = JSON.stringify(payload);
   if (Buffer.byteLength(body) > 65536) throw Error("invalid_basket");
-  const timestamp2 = String(Date.now()), nonce = (0, import_node_crypto3.randomBytes)(24).toString("hex"), signature2 = relaySignature(secret, "request", timestamp2, nonce, body);
+  const timestamp2 = String(Date.now()), nonce = (0, import_node_crypto4.randomBytes)(24).toString("hex"), signature2 = relaySignature(secret, "request", timestamp2, nonce, body);
   const response = await fetchImpl(QUOTE_RELAY_URL, { method: "POST", headers: { "Content-Type": "application/json", "X-Remont-Time": timestamp2, "X-Remont-Nonce": nonce, "X-Remont-Signature": signature2 }, body, redirect: "error", signal: AbortSignal.timeout(2e4) });
   if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) throw Error("quote_unavailable");
   const reader = response.body?.getReader();
@@ -24803,7 +24899,7 @@ async function readThroughRelay(source, fetchImpl = fetch, secret = process.env.
 }
 
 // artifacts/api-server/src/lib/etak-delivery.ts
-var import_node_crypto19 = require("node:crypto");
+var import_node_crypto20 = require("node:crypto");
 
 // artifacts/api-server/src/lib/elmas-product.ts
 var one4 = (rows, reason = "product_identity_ambiguous") => {
@@ -24909,7 +25005,7 @@ function readEtakCard(html, source) {
 }
 
 // artifacts/api-server/src/lib/dekorator.ts
-var import_node_crypto4 = require("node:crypto");
+var import_node_crypto5 = require("node:crypto");
 var origin = "https://dekoratormarket.pl";
 var sourceId2 = "dekorator-arbiton-secura-thermo-6m2";
 var one5 = (values, reason = "basket_not_confirmed") => {
@@ -25029,11 +25125,11 @@ async function quoteDekorator(order, fetchImpl) {
   const cart = await client.text("/koszyk.html"), costGrosze = confirmDekoratorCart(cart, pack.count, pack.unitPriceGrosze);
   if (confirmDekoratorSummary(shipment.podsumowanie, order.materialsGrosze) !== costGrosze || confirmDekoratorSummary(payment.podsumowanie, order.materialsGrosze) !== costGrosze) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier PODK\u0141ADY I LISTWY", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin + "/koszyk.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto4.createHash)("sha256").update(raw + cart + JSON.stringify([check2, shipment, payment])).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier PODK\u0141ADY I LISTWY", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin + "/koszyk.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(raw + cart + JSON.stringify([check2, shipment, payment])).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/alnar.ts
-var import_node_crypto5 = require("node:crypto");
+var import_node_crypto6 = require("node:crypto");
 var origin2 = "https://alnar.pl";
 var sourceId3 = ALNAR_SOURCE.id;
 var one6 = (values, reason = "basket_not_confirmed") => {
@@ -25145,11 +25241,11 @@ async function quoteAlnar(order, fetchImpl) {
     if (text2(shipment.wysylka_free) !== "Zam\xF3wienia powy\u017Cej 299,00 z\u0142 s\u0105 wysy\u0142ane na nasz koszt na terenie Polski. Do darmowej wysy\u0142ki brakuje Ci: " + remaining + " z\u0142") throw Error("purchase_rules_changed");
   } else if (text2(shipment.wysylka_free) !== "") throw Error("purchase_rules_changed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier po przedp\u0142acie", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin2 + "/koszyk.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto5.createHash)("sha256").update(raw + cart + JSON.stringify([check2, shipment, payment])).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier po przedp\u0142acie", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin2 + "/koszyk.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(raw + cart + JSON.stringify([check2, shipment, payment])).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/fugi.ts
-var import_node_crypto6 = require("node:crypto");
+var import_node_crypto7 = require("node:crypto");
 var ORIGIN2 = "https://fugi.pl";
 var one7 = (values, reason = "basket_not_confirmed") => {
   if (values.length !== 1) throw Error(reason);
@@ -25210,7 +25306,7 @@ async function productWithClient(source, client) {
 async function readFugiProduct(source, fetchImpl) {
   confirmFugiSource(source);
   const p = await productWithClient(source, new AnonymousShop(ORIGIN2, fetchImpl, AbortSignal.timeout(15e3), 4));
-  return { ...p, evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(p.raw + JSON.stringify(p.api)).digest("hex") };
+  return { ...p, evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(p.raw + JSON.stringify(p.api)).digest("hex") };
 }
 function destination(value2, postcode) {
   if (!value2 || value2.country !== "PL" || value2.postcode !== postcode || Object.entries(value2).some(([k, v]) => !["country", "postcode"].includes(k) && v !== "")) throw Error("country_not_confirmed");
@@ -25292,11 +25388,11 @@ async function quoteFugi(order, postalCode, fetchImpl) {
     if (chosen.length !== 1 || chosen[0].rate_id !== rate.rate_id || chosen[0].cost !== rate.cost) throw Error("basket_not_confirmed");
   }
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: rate.cost, carrier: rate.name.replace("&#8211;", "\u2013"), payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN2 + "/koszyk/", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto6.createHash)("sha256").update(JSON.stringify([...evidence, located, selected, final])).digest("hex") } };
+  return { quote: { costGrosze: rate.cost, carrier: rate.name.replace("&#8211;", "\u2013"), payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN2 + "/koszyk/", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify([...evidence, located, selected, final])).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/integra.ts
-var import_node_crypto7 = require("node:crypto");
+var import_node_crypto8 = require("node:crypto");
 var INTEGRA_ORIGIN = "https://integra-bielinscy.pl";
 var POLICY = "/content/1-koszty-dostawy";
 var PRODUCTS2 = {
@@ -25388,7 +25484,7 @@ async function readIntegraProduct(source, fetchImpl) {
   const context = integraContext(await client.text("/koszyk?action=show"));
   country(context);
   const proof = confirmIntegraCart(context.cart, /* @__PURE__ */ new Map([[source.productId, { source, count: 1, priceGrosze: page.priceGrosze }]]));
-  return { ...page, evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify([proof, page.imageUrl])).digest("hex") };
+  return { ...page, evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(JSON.stringify([proof, page.imageUrl])).digest("hex") };
 }
 function integraTariff(html, materials, grams) {
   const safe = clean(html), main = one8(elements(safe, (a) => a.id === "content")), text6 = text2(main);
@@ -25423,11 +25519,11 @@ async function quoteIntegra(order, fetchImpl) {
   const proof = confirmIntegraCart(context.cart, expected);
   if (proof.total !== materials) throw Error("basket_not_confirmed");
   const policy = await client.text(POLICY), costGrosze = integraTariff(policy, materials, grams), checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier InPost", payment: "Przedp\u0142ata", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: INTEGRA_ORIGIN + POLICY, basis: "retailer_tariff_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto7.createHash)("sha256").update(JSON.stringify({ proof, policy, grams, costGrosze })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier InPost", payment: "Przedp\u0142ata", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: INTEGRA_ORIGIN + POLICY, basis: "retailer_tariff_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(JSON.stringify({ proof, policy, grams, costGrosze })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/mlazienka.ts
-var import_node_crypto8 = require("node:crypto");
+var import_node_crypto9 = require("node:crypto");
 var origin3 = "https://www.mlazienka.pl";
 var sourceId4 = "mlazienka-cersanit-ovida-50";
 var one9 = (nodes, reason = "basket_not_confirmed") => {
@@ -25517,7 +25613,7 @@ async function nativeCart(source, count, client) {
 }
 async function readMlazienkaProduct(source, fetchImpl) {
   const current2 = await nativeCart(source, 1, new AnonymousShop(origin3, fetchImpl, AbortSignal.timeout(15e3), 8));
-  return { ...current2.product, ...current2.stock === void 0 ? {} : { stockPackages: current2.stock }, evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(current2.raw + current2.cart).digest("hex") };
+  return { ...current2.product, ...current2.stock === void 0 ? {} : { stockPackages: current2.stock }, evidenceSha256: (0, import_node_crypto9.createHash)("sha256").update(current2.raw + current2.cart).digest("hex") };
 }
 async function quoteMlazienka(order, fetchImpl) {
   if (order.store !== "m\u0141azienka" || order.lines.length !== 1 || order.lines[0].unit !== "szt" || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
@@ -25532,11 +25628,11 @@ async function quoteMlazienka(order, fetchImpl) {
   const policy = clean(await client.text("/koszty-dostawy")), policyText = text2(policy);
   if (!/Produkty średnie Umywalki Miski WC Stelaże podtynkowe Zlewozmywaki Przesyłka kurierska 0 , 00 zł/.test(policyText) || !policyText.includes("Koszt dostawy zagranicznej jest uzale\u017Cniony od r\xF3\u017Cnych czynnik\xF3w i jest obliczany indywidualnie.")) throw Error("no_home_delivery");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier (bez wniesienia)", payment: "Przelew zwyk\u0142y", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin3 + "/koszyk.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto8.createHash)("sha256").update(current2.raw + cart + JSON.stringify(updated) + policy).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier (bez wniesienia)", payment: "Przelew zwyk\u0142y", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin3 + "/koszyk.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto9.createHash)("sha256").update(current2.raw + cart + JSON.stringify(updated) + policy).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/retail-pages.ts
-var import_node_crypto18 = require("node:crypto");
+var import_node_crypto19 = require("node:crypto");
 
 // artifacts/api-server/src/lib/shopify-product.ts
 function confirmShopifyProduct(product, source) {
@@ -25611,7 +25707,7 @@ function confirmRetailIdentity(html, product, source) {
 }
 
 // artifacts/api-server/src/lib/woocommerce-product.ts
-var import_node_crypto9 = require("node:crypto");
+var import_node_crypto10 = require("node:crypto");
 var cls7 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var one10 = (values, reason) => {
   if (values.length !== 1) throw Error(reason);
@@ -25667,11 +25763,11 @@ async function readWooProduct(source, fetchImpl) {
   if (cents2(all.total_items) + cents2(all.total_items_tax) !== amount8 || cents2(all.total_discount) !== 0 || cents2(all.total_discount_tax) !== 0 || cents2(all.total_fees) !== 0 || cents2(all.total_fees_tax) !== 0 || cart.coupons?.length || cart.fees?.length) throw Error("basket_not_confirmed");
   const imageUrl = item.images?.[0]?.src;
   if (typeof imageUrl !== "string" || !imageUrl.startsWith("https://")) throw Error("product_photo_not_confirmed");
-  return { name: card.name, priceGrosze: amount8, imageUrl, evidenceSha256: (0, import_node_crypto9.createHash)("sha256").update(JSON.stringify([raw, cart])).digest("hex") };
+  return { name: card.name, priceGrosze: amount8, imageUrl, evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(JSON.stringify([raw, cart])).digest("hex") };
 }
 
 // artifacts/api-server/src/lib/irbud-woo.ts
-var import_node_crypto10 = require("node:crypto");
+var import_node_crypto11 = require("node:crypto");
 var ORIGIN3 = "https://irbudsklep.pl";
 var cls8 = (a, s) => a.class?.split(/\s+/).includes(s) ?? false;
 var one11 = (a, reason) => {
@@ -25738,7 +25834,7 @@ async function prepareIrbudCart(source, count, fetchImpl) {
 }
 async function readIrbudProduct(source, fetchImpl) {
   const p = await prepareIrbudCart(source, 1, fetchImpl);
-  return { ...p, evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
+  return { ...p, evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
 }
 async function quoteIrbud(order, postalCode, fetchImpl) {
   if (order.store !== "IRBUD" || !/^\d{2}-\d{3}$/.test(postalCode) || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
@@ -25763,11 +25859,11 @@ async function quoteIrbud(order, postalCode, fetchImpl) {
   if (!final.payment_methods?.includes("bacs") || chosen?.length !== 1 || chosen[0].rate_id !== rate.rate_id || cents3(chosen[0].price) + cents3(chosen[0].taxes) !== cost) throw Error("basket_not_confirmed");
   if (!final.has_calculated_shipping || final.shipping_rates?.length !== 1 || final.shipping_rates[0].destination?.country !== "PL" || final.shipping_rates[0].destination?.postcode !== postalCode) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: cost, carrier: rate.name, payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN3 + "/koszyk/", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto10.createHash)("sha256").update(JSON.stringify([...p.evidence, located, final])).digest("hex") } };
+  return { quote: { costGrosze: cost, carrier: rate.name, payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN3 + "/koszyk/", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify([...p.evidence, located, final])).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/pati-woo.ts
-var import_node_crypto11 = require("node:crypto");
+var import_node_crypto12 = require("node:crypto");
 var ORIGIN4 = "https://patiartstudio.pl";
 var PRODUCTS3 = {
   "pati-cersanit-carina-k98-0068": { id: 1550, sku: "K98-0068", ean: "5907720651077", name: "CERSANIT CARINA DESKA DUROPLASTOWA BIA\u0141A K98-0068", url: ORIGIN4 + "/produkt/cersanit-deska-carina-zwykla-k98-0068/", image: ORIGIN4 + "/wp-content/uploads/2021/06/132.jpg", brand: "Cersanit", packageSize: 1, unit: "szt" },
@@ -25857,7 +25953,7 @@ async function prepare(packs, fetchImpl) {
 }
 async function readPatiProduct(source, fetchImpl) {
   const p = await prepare([{ source, count: 1 }], fetchImpl);
-  return { ...p.cards[0], evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
+  return { ...p.cards[0], evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
 }
 async function quotePati(order, postalCode, fetchImpl) {
   if (order.store !== "Pati Art Studio" || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
@@ -25893,12 +25989,12 @@ async function quotePati(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto11.createHash)("sha256").update(JSON.stringify([...p.evidence, located, final])).digest("hex")
+    evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify([...p.evidence, located, final])).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/budshop-woo.ts
-var import_node_crypto12 = require("node:crypto");
+var import_node_crypto13 = require("node:crypto");
 var ORIGIN5 = "https://budshop24.pl";
 var PRODUCTS4 = [{
   sourceId: "budshop-atlas-cerplast-15kg",
@@ -26048,7 +26144,7 @@ async function prepare2(entries, fetchImpl) {
 async function readBudshopProduct(source, fetchImpl) {
   reviewed5(source);
   const result = await prepare2([{ source, count: 1 }], fetchImpl);
-  return { ...result.card, evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify(result.evidence)).digest("hex") };
+  return { ...result.card, evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(JSON.stringify(result.evidence)).digest("hex") };
 }
 async function quoteBudshop(order, postalCode, fetchImpl) {
   if (order.store !== "Budshop24" || !/^\d{2}-\d{3}$/.test(postalCode) || !order.lines.length || order.lines.some((line2) => line2.packages.length !== 1 || line2.unit !== "kg")) throw Error("invalid_basket");
@@ -26096,12 +26192,12 @@ async function quoteBudshop(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto12.createHash)("sha256").update(JSON.stringify([...result.evidence, located, final])).digest("hex")
+    evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(JSON.stringify([...result.evidence, located, final])).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/kowalczyk-magento.ts
-var import_node_crypto13 = require("node:crypto");
+var import_node_crypto14 = require("node:crypto");
 var ORIGIN6 = "https://sklep-kowalczyk.pl";
 var reviews = [
   ...KOWALCZYK_PLASTER_REVIEWS,
@@ -26213,7 +26309,7 @@ async function prepare3(wanted, fetchImpl) {
 }
 async function readKowalczykProduct(source, fetchImpl) {
   const p = await prepare3([{ source, count: 1, priceGrosze: 0 }], fetchImpl);
-  return { priceGrosze: p.wanted[0].priceGrosze, imageUrl: p.images.get(source.id), evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
+  return { priceGrosze: p.wanted[0].priceGrosze, imageUrl: p.images.get(source.id), evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify(p.evidence)).digest("hex") };
 }
 async function quoteKowalczyk(order, postalCode, fetchImpl) {
   if (order.store !== "E-Kowalczyk" || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
@@ -26243,11 +26339,11 @@ async function quoteKowalczyk(order, postalCode, fetchImpl) {
   const ship = one12(final.total_segments.filter((row) => row.code === "shipping"), "basket_not_confirmed");
   if (ship.title !== "Wysy\u0142ka i obs\u0142uga (InPost Kurier - Kurier)") throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: cost, carrier: "InPost Kurier", payment: paymentTitle, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN6 + "/checkout/cart/", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto13.createHash)("sha256").update(JSON.stringify([...p.evidence, { postalCode, methods, payment, initial, final }])).digest("hex") } };
+  return { quote: { costGrosze: cost, carrier: "InPost Kurier", payment: paymentTitle, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN6 + "/checkout/cart/", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify([...p.evidence, { postalCode, methods, payment, initial, final }])).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/qshop-product.ts
-var import_node_crypto14 = require("node:crypto");
+var import_node_crypto15 = require("node:crypto");
 var TOKMET_ORIGIN = "https://sklep.tokmet.pl";
 var TOKMET_URL = TOKMET_ORIGIN + "/wezyk_do_baterii_stojacej_38_x_m101_l__30_cm_dluga_koncowka-2806i";
 var TOKMET_NAME = 'W\u0118\u017BYK DO BATERII STOJ\u0104CEJ 3/8" x M10*1 L - 30 CM D\u0141UGA KO\u0143C\xD3WKA';
@@ -26306,11 +26402,11 @@ async function readTokmetProduct(source, fetchImpl) {
   if (!text3(clean(empty)).includes("Tw\xF3j koszyk jest pusty") || elements(empty, (a) => /^qty\[|^cart_qty_type\[/.test(a.id ?? "")).length) throw Error("basket_not_confirmed");
   const added = await client.text("/_dynamic_cart.php?action=add&itemId=2806&qty=1&dbv=&view_only_price=false"), cart = await client.text("/cart.php");
   confirmTokmetCart(cart, current2.priceGrosze);
-  return { stock: current2.stock, product: { "@type": "Product", name: source.name, gtin13: source.ean, brand: source.brand, image: current2.imageUrl, offers: { "@type": "Offer", price: (current2.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, evidenceSha256: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify([list, card, empty, added, cart])).digest("hex") };
+  return { stock: current2.stock, product: { "@type": "Product", name: source.name, gtin13: source.ean, brand: source.brand, image: current2.imageUrl, offers: { "@type": "Offer", price: (current2.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", availability: "https://schema.org/InStock", url: source.url } }, evidenceSha256: (0, import_node_crypto15.createHash)("sha256").update(JSON.stringify([list, card, empty, added, cart])).digest("hex") };
 }
 
 // artifacts/api-server/src/lib/topboden-product.ts
-var import_node_crypto15 = require("node:crypto");
+var import_node_crypto16 = require("node:crypto");
 var TOPBODEN_API = "https://api.topboden.pl";
 function confirmTopbodenProduct(product, source, count = source.purchaseMultiple ?? 1) {
   const underlay = confirmTopbodenUnderlaySource(source);
@@ -26378,7 +26474,7 @@ async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMul
   if (records.length !== 1 || !(reviewedNativePack ? accessoryIdentity : records[0].name?.startsWith(product.name))) throw Error("product_identity_not_confirmed");
   const offer = records[0].offers;
   if (offer?.priceCurrency !== "PLN" || parsePriceToGrosze(offer.price) !== confirmed.priceGrosze || !/\/InStock$/.test(String(offer.availability))) throw Error("retailer_gross_price_not_confirmed");
-  return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto15.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
+  return { ...confirmed, product, validUntil: offer.priceValidUntil ?? null, evidenceSha256: (0, import_node_crypto16.createHash)("sha256").update(JSON.stringify([product, html])).digest("hex") };
 }
 
 // artifacts/api-server/src/lib/prestashop-product.ts
@@ -26519,7 +26615,7 @@ function readKrasnyStock(html, source) {
 }
 
 // artifacts/api-server/src/lib/bmb.ts
-var import_node_crypto16 = require("node:crypto");
+var import_node_crypto17 = require("node:crypto");
 var BMB_ORIGIN = "https://bmbtechnologie.pl";
 var BMB_BASKET = "/order/basket.html";
 var NAME = "\u015Arodek gruntuj\u0105cy Knauf Grundiermittel 60 15KG";
@@ -26603,7 +26699,7 @@ async function readBmbCart(source, count, fetchImpl, expectedPrice) {
   await client.text(BMB_BASKET, { "add_product[5454]": String(count) });
   const cart = await client.text(BMB_BASKET);
   confirmBmbBasket(cart, source, count, product.priceGrosze);
-  return { product, cart, evidenceSha256: (0, import_node_crypto16.createHash)("sha256").update(page).update(cart).digest("hex") };
+  return { product, cart, evidenceSha256: (0, import_node_crypto17.createHash)("sha256").update(page).update(cart).digest("hex") };
 }
 async function quoteBmb(order, fetchImpl) {
   if (order.store !== "BMB Technologie" || order.lines.length !== 1 || order.lines[0].packages.length !== 1) throw Error("invalid_basket");
@@ -26959,7 +27055,7 @@ function inspectKronosferaProduct(html, source) {
 }
 
 // artifacts/api-server/src/lib/skyshop-product.ts
-var import_node_crypto17 = require("node:crypto");
+var import_node_crypto18 = require("node:crypto");
 var MATBUD_ORIGIN = "https://centrummatbud.pl";
 var MATBUD_URL = MATBUD_ORIGIN + "/Styropian-elewacyjny-10-cm-Yetico-Gamma-Fasada-044-3m2-op-p96729";
 var MATBUD_NAME = "Styropian elewacyjny 10 cm Yetico Gamma Fasada 044 3m2/op";
@@ -27062,7 +27158,7 @@ function confirmSkyshopBasket(cart, expected) {
   }
   return cart;
 }
-var skyshopEvidenceHash = (evidence) => (0, import_node_crypto17.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex");
+var skyshopEvidenceHash = (evidence) => (0, import_node_crypto18.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex");
 
 // artifacts/api-server/src/lib/retail-pages.ts
 function objects(value2) {
@@ -27181,7 +27277,7 @@ function parseRetailPage(html, source, observedAt) {
     availability: "in_stock",
     observedAt: observedAt.toISOString(),
     sourceUrl: source.url,
-    evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(html).digest("hex"),
+    evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(html).digest("hex"),
     validUntil: eligibleOffers.map((offer) => offer.priceValidUntil).filter((value2) => typeof value2 === "string").sort()[0] ?? null
   };
 }
@@ -27283,7 +27379,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       image: item.imageUrl,
       offers: { "@type": "Offer", price: (item.priceGrosze / 100).toFixed(2), priceCurrency: "PLN", url: source.url, availability: "https://schema.org/InStock" }
     })}</script>`;
-    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
+    return { ...parseRetailPage(html, source, /* @__PURE__ */ new Date()), evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(JSON.stringify([raw2, cart.currency])).digest("hex") };
   }
   const api = source.format === "shoper-api";
   const requestUrl = api ? `${new URL(source.url).origin}/webapi/front/pl_PL/products/PLN/${shoperProductId(source)}` : source.url;
@@ -27331,7 +27427,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
       offers: { "@type": "Offer", price: gross3.final_float, priceCurrency: "PLN", url: item.url, availability: "https://schema.org/InStock" }
     })}</script>`;
     const observation = parseRetailPage(html, source, /* @__PURE__ */ new Date());
-    return { ...observation, evidenceSha256: (0, import_node_crypto18.createHash)("sha256").update(raw).digest("hex") };
+    return { ...observation, evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(raw).digest("hex") };
   }
   if (source.pickupOnly && source.browserReviewAllowed) throw Error("browser_location_review_required");
   if (source.browserReviewAllowed && new URL(source.url).origin === "https://www.castorama.pl" && ["m2", "m"].includes(source.unit)) throw Error("browser_package_review_required");
@@ -27484,12 +27580,12 @@ async function quoteEtak(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto19.createHash)("sha256").update(JSON.stringify({ observations, destination: destination2, basket: confirmed.basket, shipping, postalCode })).digest("hex")
+    evidenceSha256: (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify({ observations, destination: destination2, basket: confirmed.basket, shipping, postalCode })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/elmas-delivery.ts
-var import_node_crypto20 = require("node:crypto");
+var import_node_crypto21 = require("node:crypto");
 var amount6 = (value2) => {
   if (typeof value2 !== "number" || !Number.isFinite(value2) || value2 < 0) throw Error("basket_not_confirmed");
   const n = parsePriceToGrosze(String(value2));
@@ -27536,7 +27632,7 @@ async function quoteElmas(order, fetchImpl) {
   const first = home(initial), defaultCost = amount6(initial.selectedDelivery?.price), selected = await client.elmasShipping({ ...args, selected: true, previousTotalGrosze: order.materialsGrosze + defaultCost }), last = home(selected);
   if (last.cost !== first.cost || selected.selectedDelivery?.id !== ELMAS_HOME_CARRIER || selected.selectedDelivery?.name !== "InPost Kurier" || amount6(selected.selectedDelivery?.price) !== last.cost || selected.selectedDelivery?.mapType || selected.discountCode !== void 0 || selected.giftCard !== void 0) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze: last.cost, carrier: "InPost Kurier", payment: "Przelewy24", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ELMAS_ORIGIN + "/order/form", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify({ country: "PL", store: order.store, materialsGrosze: order.materialsGrosze, lines: order.lines, evidence, initial, selected })).digest("hex") } };
+  return { quote: { costGrosze: last.cost, carrier: "InPost Kurier", payment: "Przelewy24", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ELMAS_ORIGIN + "/order/form", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto21.createHash)("sha256").update(JSON.stringify({ country: "PL", store: order.store, materialsGrosze: order.materialsGrosze, lines: order.lines, evidence, initial, selected })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/buduj-national-cache.ts
@@ -27562,7 +27658,7 @@ function budujNationalBasketKey(order) {
 }
 
 // artifacts/api-server/src/lib/chemia-delivery.ts
-var import_node_crypto21 = require("node:crypto");
+var import_node_crypto22 = require("node:crypto");
 
 // artifacts/api-server/src/lib/idosell-basket.ts
 function money6(value2, formatted) {
@@ -27643,11 +27739,11 @@ async function quoteChemia(order, postalCode, fetchImpl) {
   const basket = await client.chemia("add", { count: pack.count });
   confirmIdosellBasket(basket, [{ source, count: pack.count, price: pack.unitPriceGrosze }], order.materialsGrosze);
   const shipping = await client.chemia("shipping", { postalCode }), best = selectChemiaShipping(shipping), now = /* @__PURE__ */ new Date();
-  return { quote: { ...best, payment: "P\u0142atno\u015B\u0107 z g\xF3ry", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN7 + "/basketedit.php", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto21.createHash)("sha256").update(JSON.stringify({ observation: observed.evidenceSha256, basket, shipping, postalCode })).digest("hex") } };
+  return { quote: { ...best, payment: "P\u0142atno\u015B\u0107 z g\xF3ry", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ORIGIN7 + "/basketedit.php", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto22.createHash)("sha256").update(JSON.stringify({ observation: observed.evidenceSha256, basket, shipping, postalCode })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/ewinyl.ts
-var import_node_crypto22 = require("node:crypto");
+var import_node_crypto23 = require("node:crypto");
 var text4 = (node) => text2(node).replace(/&#122;&#322;/g, "z\u0142");
 var marked = (node, name) => new RegExp("\\s" + name + "(?:\\s|=|>)").test(node.match(/^<[^>]+>/)?.[0] ?? "");
 function money7(scope) {
@@ -27731,14 +27827,14 @@ async function quoteEwinyl(order, postalCode, fetchImpl) {
   const safe = clean(checkout), payment = one3(elements(safe, (a, t) => t === "input" && a.name === "payment_method").filter((n) => marked(n, "checked")));
   if (attrs2(payment).value !== "bacs" || text4(one3(elements(safe, (a, t) => t === "label" && a.for === attrs2(payment).id))) !== "Przelew bankowy" || money7(one3(elements(byClass3(safe, "order-total"), (_a, t) => t === "strong"))) !== materials + shipping.costGrosze) throw Error("basket_not_confirmed");
   const checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { ...shipping, payment: "Przelew bankowy", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: EWINYL_ORIGIN + "/koszyk/", destinationScope: "postal_code", postalCode, basis: "retailer_basket_postcode", evidenceSha256: (0, import_node_crypto22.createHash)("sha256").update(evidence.join("\n")).digest("hex") } };
+  return { quote: { ...shipping, payment: "Przelew bankowy", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: EWINYL_ORIGIN + "/koszyk/", destinationScope: "postal_code", postalCode, basis: "retailer_basket_postcode", evidenceSha256: (0, import_node_crypto23.createHash)("sha256").update(evidence.join("\n")).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/retailer-delivery.ts
-var import_node_crypto35 = require("node:crypto");
+var import_node_crypto36 = require("node:crypto");
 
 // artifacts/api-server/src/lib/retailer-checkouts.ts
-var import_node_crypto23 = require("node:crypto");
+var import_node_crypto24 = require("node:crypto");
 
 // artifacts/api-server/src/lib/quote-queue.ts
 var QuoteQueue = class {
@@ -27828,7 +27924,7 @@ function quote(order, costGrosze, carrier, payment, evidence, postalCode, dispat
     basis: postalCode ? "retailer_basket_postcode" : "retailer_basket_national",
     destinationScope: postalCode ? "postal_code" : "PL",
     ...postalCode ? { postalCode, dispatchFrom } : {},
-    evidenceSha256: (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto24.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function expectedPacks(order) {
@@ -27965,7 +28061,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
     confirmSeweraBasket(basket, expected, order.materialsGrosze, department.name);
   } catch (error40) {
     if (!(error40 instanceof SeweraStockError)) throw error40;
-    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto23.createHash)("sha256").update(basket).digest("hex");
+    const checkedAt = /* @__PURE__ */ new Date(), evidenceSha256 = (0, import_node_crypto24.createHash)("sha256").update(basket).digest("hex");
     return { reason: "insufficient_stock", stockLimits: error40.shortages.map((shortage) => {
       const { pack } = prepared.find((item) => item.source.url === shortage.url);
       const product = order.lines.find((line2) => line2.packages.some((item) => item.offerId === pack.offerId)).product;
@@ -28006,7 +28102,7 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
       personal_collection: "0"
     });
     const price2 = readSeweraPayment(response);
-    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto23.createHash)("sha256").update(response).digest("hex") });
+    if (price2) options.push({ ...price2, carrier: method["data-name"], hash: (0, import_node_crypto24.createHash)("sha256").update(response).digest("hex") });
   }
   const best = options.sort((a, b) => a.costGrosze - b.costGrosze)[0];
   if (!best) throw Error("no_home_delivery");
@@ -28081,7 +28177,7 @@ async function quoteBuduj24(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/cezar-delivery.ts
-var import_node_crypto24 = require("node:crypto");
+var import_node_crypto25 = require("node:crypto");
 async function quoteCezar(order, postalCode, fetchImpl) {
   const origin7 = "https://cezar.eu";
   const client = new AnonymousShop(origin7, fetchImpl, AbortSignal.timeout(12e3), retailerRequestBudget(order.lines.reduce((n, line2) => n + line2.packages.length, 0)));
@@ -28127,12 +28223,12 @@ async function quoteCezar(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto24.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates2.shipping_rates })).digest("hex")
+    evidenceSha256: (0, import_node_crypto25.createHash)("sha256").update(JSON.stringify({ postalCode, currency: cart.currency, items: cart.items.map((i) => ({ id: i.id, count: i.quantity, price: i.final_price })), rates: rates2.shipping_rates })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/topboden-delivery.ts
-var import_node_crypto25 = require("node:crypto");
+var import_node_crypto26 = require("node:crypto");
 async function quoteTopboden(order, fetchImpl) {
   const signal = AbortSignal.timeout(12e3), client = new AnonymousShop(TOPBODEN_API, fetchImpl, signal, retailerRequestBudget(order.lines.length));
   const proofs = [], categories = [], seen = /* @__PURE__ */ new Set();
@@ -28164,11 +28260,11 @@ async function quoteTopboden(order, fetchImpl) {
     return Math.max(...applicable);
   });
   const costGrosze = materials >= Math.round(rate.minOrderValue * 100) ? 0 : Math.max(...prices), checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto25.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "Kurier", payment: "Przelew tradycyjny", checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: "https://topboden.pl/dostawa-i-platnosc", destinationScope: "PL", basis: "retailer_tariff_national", evidenceSha256: (0, import_node_crypto26.createHash)("sha256").update(JSON.stringify({ products: proofs, tariff: data, materials, country: "PL", costGrosze })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/prestashop-delivery.ts
-var import_node_crypto26 = require("node:crypto");
+var import_node_crypto27 = require("node:crypto");
 var origin4 = "https://www.eelektryka.com";
 var attrs13 = (node) => attrs(node.match(/^<[^>]+>/)?.[0] ?? "");
 var input = (html, name) => attrs13(exactlyOne(elements(html, (a, tag) => tag === "input" && a.name === name), "basket_not_confirmed"));
@@ -28240,12 +28336,12 @@ async function quotePrestashop(order, fetchImpl) {
     sourceUrl: origin4 + "/index.php?controller=specialorderpayment",
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto26.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
+    evidenceSha256: (0, import_node_crypto27.createHash)("sha256").update(JSON.stringify({ products: verified, country: "Poland", carrier: best.id, selected })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/certusoft-delivery.ts
-var import_node_crypto27 = require("node:crypto");
+var import_node_crypto28 = require("node:crypto");
 var origin5 = "https://hipper.pl";
 var money8 = (value2) => {
   if (typeof value2 !== "number" || !Number.isFinite(value2) || value2 < 0) throw Error("invalid_money");
@@ -28334,12 +28430,12 @@ async function quoteCertusoft(order, fetchImpl) {
     sourceUrl: origin5 + "/koszyk",
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto27.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
+    evidenceSha256: (0, import_node_crypto28.createHash)("sha256").update(JSON.stringify({ products: [...expected], carrier: best.id, cost: best.cost, payment: payment.csPaymentsTypesId, total })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/modna-delivery.ts
-var import_node_crypto28 = require("node:crypto");
+var import_node_crypto29 = require("node:crypto");
 function confirmModnaCart(html, orderHtml, expected, materials) {
   const safe = clean(html), cart = modnaById(safe, "cart_summary_block");
   if (text2(modnaById(cart, "currency")) !== "PLN") throw Error("retailer_currency_not_confirmed");
@@ -28413,11 +28509,11 @@ async function quoteModna(order, fetchImpl) {
   if (!expected.length) throw Error("invalid_basket");
   const confirmed = confirmModnaCart(await client.text("/cart/"), await client.text("/order/"), expected, order.materialsGrosze);
   const checkedAt = /* @__PURE__ */ new Date();
-  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto28.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
+  return { quote: { ...confirmed, checkedAt: checkedAt.toISOString(), expiresAt: new Date(checkedAt.getTime() + 6e5).toISOString(), sourceUrl: MODNA_ORIGIN + "/cart/", destinationScope: "PL", basis: "retailer_basket_national", evidenceSha256: (0, import_node_crypto29.createHash)("sha256").update(JSON.stringify({ products: expected, materials: order.materialsGrosze, ...confirmed, country: "PL" })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/folnet-delivery.ts
-var import_node_crypto29 = require("node:crypto");
+var import_node_crypto30 = require("node:crypto");
 var money9 = (value2, formatted) => {
   if (typeof value2 !== "string" || !/^\d+\.\d{2}$/.test(value2) || typeof formatted !== "string" || !/^[\d\s,.]+\s*zł$/.test(formatted)) throw Error("invalid_money");
   const amount8 = parsePriceToGrosze(value2), visible = parsePriceToGrosze(formatted.replace(/\s*zł$/, ""));
@@ -28465,11 +28561,11 @@ async function quoteFolnet(order, fetchImpl) {
   for (const [id, item] of wanted) query.set(`products[${id}][uniw][quantity]`, String(item.count));
   const raw = await client.text("/ajax/get-deliveries.php?" + query, { getAjax: "true" });
   const response = JSON.parse(raw), best = selectFolnetHomeRate(response, materials), now = /* @__PURE__ */ new Date();
-  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto29.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
+  return { quote: { ...best, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://folnet.pl/pl/delivery.html", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto30.createHash)("sha256").update(JSON.stringify({ products: [...wanted], response })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/kronosfera-delivery.ts
-var import_node_crypto30 = require("node:crypto");
+var import_node_crypto31 = require("node:crypto");
 var cls11 = (a, name) => a.class?.split(/\s+/).includes(name) ?? false;
 var only4 = (values) => {
   if (values.length !== 1) throw Error("basket_not_confirmed");
@@ -28541,7 +28637,7 @@ async function quoteKronosfera(order, fetchImpl) {
   }
   if (materials !== order.materialsGrosze) throw Error("basket_not_confirmed");
   const raw = await client.text("/koszyk"), selected = confirmKronosferaCart(raw, wanted, materials), now = /* @__PURE__ */ new Date();
-  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto30.createHash)("sha256").update(raw).digest("hex") } };
+  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: "https://kronosfera.pl/dostawa", basis: "retailer_basket_national", destinationScope: "PL", dispatchFrom: "Strzelce Opolskie", evidenceSha256: (0, import_node_crypto31.createHash)("sha256").update(raw).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/skyshop-delivery.ts
@@ -28615,7 +28711,7 @@ async function quoteSkyshop(order, fetchImpl) {
 }
 
 // artifacts/api-server/src/lib/abud-delivery.ts
-var import_node_crypto31 = require("node:crypto");
+var import_node_crypto32 = require("node:crypto");
 var ORIGIN8 = "https://www.abud.pl";
 var IDS = ["abud-aks-ydyp-3x15-25m", "abud-aks-ydyp-3x15-50m", "abud-aks-ydyp-3x25-50m", "abud-aks-ydyp-3x25-5m", "abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg", "abud-knauf-superfinish-54kg", "abud-knauf-superfinish-28kg", ...["abud-ceresit-viva-white-2kg", "abud-ceresit-viva-white-4kg", "abud-ceresit-viva-manhattan-2kg"]];
 function money11(value2, formatted) {
@@ -28689,12 +28785,12 @@ async function quoteAbud(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto31.createHash)("sha256").update(JSON.stringify({ observations, destination: destination2, postalCode, basket, shipping })).digest("hex")
+    evidenceSha256: (0, import_node_crypto32.createHash)("sha256").update(JSON.stringify({ observations, destination: destination2, postalCode, basket, shipping })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/izosystems-delivery.ts
-var import_node_crypto32 = require("node:crypto");
+var import_node_crypto33 = require("node:crypto");
 var money12 = (text6, n) => n === 0 && text6 === "Za darmo!" ? 0 : izoMoney(text6, n);
 var value = (html, id) => text2(izoOne(elements(html, (a) => a.id === id), "basket_not_confirmed"));
 async function quoteIzosystems(order, postalCode, fetchImpl) {
@@ -28747,11 +28843,11 @@ async function quoteIzosystems(order, postalCode, fetchImpl) {
   const inputValue = (name) => izoAttrs(izoOne(elements(paymentHtml, (a, t) => t === "input" && a.name === name), "basket_not_confirmed")).value;
   if (inputValue("kb_payment_fee_payment-option-1") !== "z\u01420" || inputValue("kb_payment_fee_status_payment-option-1") !== "0" || inputValue("kb_payment_fee_applicable_payment-option-1") !== "0" || inputValue("kb_payment_fee_currency") !== "z\u0142" || Number(inputValue("kb_payment_fee_total_payment-option-1")) * 100 !== total) throw Error("basket_not_confirmed");
   const now = /* @__PURE__ */ new Date();
-  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto32.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
+  return { quote: { costGrosze, carrier: "DHL, GLS", payment: "Przelew bankowy", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: IZOSYSTEMS_ORIGIN + "/zamowienie", basis: "retailer_basket_postcode", destinationScope: "postal_code", postalCode, evidenceSha256: (0, import_node_crypto33.createHash)("sha256").update(JSON.stringify({ product: product.name, ean: source.ean, count: pack.count, price: product.priceGrosze, country: "PL", postalCode, addressId, carrier: "992", shipping, total, cart: confirmed.html, fees: 0 })).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/unimet-delivery.ts
-var import_node_crypto33 = require("node:crypto");
+var import_node_crypto34 = require("node:crypto");
 var one19 = (values, reason = "basket_not_confirmed") => {
   if (values.length !== 1) throw Error(reason);
   return values[0];
@@ -28840,12 +28936,12 @@ async function quoteUnimet(order, postalCode, fetchImpl) {
     basis: "retailer_basket_postcode",
     destinationScope: "postal_code",
     postalCode,
-    evidenceSha256: (0, import_node_crypto33.createHash)("sha256").update(JSON.stringify({ ean: source.ean, count: pack.count, price: pack.unitPriceGrosze, postalCode, carriers, selected, summary, total: expected + cost })).digest("hex")
+    evidenceSha256: (0, import_node_crypto34.createHash)("sha256").update(JSON.stringify({ ean: source.ean, count: pack.count, price: pack.unitPriceGrosze, postalCode, carriers, selected, summary, total: expected + cost })).digest("hex")
   } };
 }
 
 // artifacts/api-server/src/lib/kronodom-delivery.ts
-var import_node_crypto34 = require("node:crypto");
+var import_node_crypto35 = require("node:crypto");
 var origin6 = "https://kronodom.pl";
 var sourceId5 = "kronodom-arbiton-secura-thermo-6m2";
 var one20 = (nodes, reason = "basket_not_confirmed") => {
@@ -28922,7 +29018,7 @@ async function quoteKronodom(order, fetchImpl) {
     if (!/powyżej 2999 zł - Darmowa wysyłka/.test(policy)) throw Error("no_home_delivery");
   }
   const now = /* @__PURE__ */ new Date();
-  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin6 + "/order/checkout/cart", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto34.createHash)("sha256").update(cart + policy).digest("hex") } };
+  return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin6 + "/order/checkout/cart", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto35.createHash)("sha256").update(cart + policy).digest("hex") } };
 }
 
 // artifacts/api-server/src/lib/retailer-connection.ts
@@ -29127,7 +29223,7 @@ async function quoteShoper(order, fetchImpl) {
     sourceUrl: `${origin7}/pl/basket`,
     basis: "retailer_basket_national",
     destinationScope: "PL",
-    evidenceSha256: (0, import_node_crypto35.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
+    evidenceSha256: (0, import_node_crypto36.createHash)("sha256").update(JSON.stringify(evidence)).digest("hex")
   } };
 }
 function quoteBeforeDeadline(quoter, order, postalCode, deadline, now = Date.now()) {
@@ -29389,11 +29485,11 @@ function isLeroyBrowserSource(source) {
 }
 
 // artifacts/api-server/src/lib/retail-history.ts
-var import_node_crypto36 = require("node:crypto");
+var import_node_crypto37 = require("node:crypto");
 var RETENTION_MS = 90 * 864e5;
 var MAX_POINTS = 60;
 function historyIdentity(s) {
-  return (0, import_node_crypto36.createHash)("sha256").update(JSON.stringify([s.id, s.ean, s.skuIdentity, s.dispatchDepartment, s.store, s.url, s.brand, s.category, s.packageSize, s.unit, s.format, s.productId, s.variantId, s.apiProductCode, s.retailerSku, s.retailerUnitId, s.productUuid, s.retailUnit, s.packageDescription, s.purchaseMultiple, s.minimumPackages])).digest("hex");
+  return (0, import_node_crypto37.createHash)("sha256").update(JSON.stringify([s.id, s.ean, s.skuIdentity, s.dispatchDepartment, s.store, s.url, s.brand, s.category, s.packageSize, s.unit, s.format, s.productId, s.variantId, s.apiProductCode, s.retailerSku, s.retailerUnitId, s.productUuid, s.retailUnit, s.packageDescription, s.purchaseMultiple, s.minimumPackages])).digest("hex");
 }
 var RetailPriceHistory = class {
   constructor(sources, validate) {
@@ -29533,6 +29629,7 @@ function catalogRefreshOffers(sources, observations, activeIds, confirmedIds, hi
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
 function createRemontService(options = {}) {
+  const compareDeliveryWithAvailablePart2 = createPreferredDeliveryComparison();
   const connections = createRetailerConnectionGuard(options.fetchImpl ?? fetch, RETAIL_SOURCES.map((source) => source.url));
   const quoteBasket = options.basketQuoter ?? createRetailerQuoter(connections.fetch, connections);
   const observations = /* @__PURE__ */ new Map();
@@ -29840,7 +29937,7 @@ function createRemontService(options = {}) {
       const serialized = serializeProject(estimate);
       const itemCount = parsed.data.jobs.reduce((count, job) => count + job.materials.length, 0);
       const deadline = Date.now() + (itemCount >= 9 && itemCount <= 20 ? 35e3 : 2e4);
-      const deliveryComparison = stageOnly ? void 0 : await compareDeliveryWithAvailablePart(
+      const deliveryComparison = stageOnly ? void 0 : await compareDeliveryWithAvailablePart2(
         estimate.stages,
         parsed.data.options?.delivery ?? { mode: "shipping" },
         (order, postalCode) => ["Castorama", "OBI"].includes(order.store) ? quoteBasket(order, postalCode) : quoteBeforeDeadline(quoteBasket, order, postalCode, deadline),
