@@ -444,16 +444,24 @@ async function suroweDnia(noticeType, dzien) {
   if (zDnia.length < SUFIT_ZAPYTANIA) return zDnia.filter((n) => czyZDoby(n, dzien));
 
   const mapa = new Map(zDnia.map((n) => [idSurowego(n), n]));
+  let pominiete = 0;
   for (const woj of WOJEWODZTWA_TERYT) {
     try {
       const zWoj = await zapytanieSurowe({ noticeType, ...okno, province: woj });
       for (const n of zWoj) mapa.set(idSurowego(n), n);
     } catch (err) {
+      pominiete += 1;
       logger.error({ err: err.message, dzien, woj, noticeType }, 'BZP: województwo pominięte');
     }
   }
   const zebrane = [...mapa.values()];
   const wDobie = zebrane.filter((n) => czyZDoby(n, dzien));
+  /*
+   * Doba z pominiętym województwem jest NIEKOMPLETNA (2026-11-02: 403 z e-Zamówień o 17:05 przy wynikach) — wołający
+   * zapisuje to, co jest, ale nie zamyka doby (jobs/oknoWynikow.js). Wcześniej błąd był tylko logowany, a okno wyników
+   * domykało dobę bez wyników z tego województwa — przepadały na stałe (wygrane, alerty zapisanych, unieważnienia).
+   */
+  if (pominiete) wDobie.pominieteWojewodztwa = pominiete;
   if (wDobie.length !== zebrane.length) {
     logger.info({ dzien, noticeType, zebrane: zebrane.length, wDobie: wDobie.length },
       'BZP: odsiano ogłoszenia spoza doby (filtr województwa ignoruje górną granicę okna)');

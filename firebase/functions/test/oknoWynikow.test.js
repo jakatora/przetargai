@@ -112,6 +112,20 @@ describe('okno rozstrzygnięć — przebieg', () => {
     assert.ok(przekazane.every((w) => w.tenderId));
   });
 
+  test('doba z pominiętym województwem (403): wyniki zapisane, ale doba zostaje OTWARTA do ponownego pobrania', async () => {
+    const czesciowe = Object.assign([wynikBzp], { pominieteWojewodztwa: 1 });
+    await runOknoWynikow({
+      dniBzp: 2, dniTed: 1, teraz: Date.UTC(2026, 9, 4), // 2026-10-04 — doba nietknięta przez inne testy
+      pobierzDzienBzp: async (dzien) => (dzien === '2026-10-03' ? czesciowe : []),
+      pobierzTed: async () => [], pobierzModyfikacje: async () => [],
+    });
+    const stan = await oknoWynikow.wczytaj();
+    assert.equal(stan.dni['2026-10-03'].kompletny, false);
+    assert.match(stan.dni['2026-10-03'].blad, /pominięte województwa: 1/);
+    assert.ok(wybierzDniWynikow({ dni: ['2026-10-03', '2026-10-04'], checkpoint: stan, dzisiaj: '2026-10-04' }).includes('2026-10-03'));
+    assert.ok(await rozstrzygniecia.poPostepowaniu(wynikBzp.tenderId), 'to, co pobrane, jest zapisane');
+  });
+
   test('zapisane rozstrzygnięcie da się znaleźć po identyfikatorze POSTĘPOWANIA', async () => {
     await runOknoWynikow({
       dniBzp: 1, dniTed: 1, teraz: DZIS,

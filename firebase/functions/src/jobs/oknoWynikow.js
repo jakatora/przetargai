@@ -162,7 +162,9 @@ export async function runOknoWynikow({
       zapisaneBzp += zapisane;
       czesciBzp += czesci;
       wynikiBzp.push(...sparsowane);
-      raport.push({ dzien, ogloszen: zapisane, czesci, blad: null });
+      // Pominięte województwo (403) = doba otwarta: następny przebieg pobierze ją znowu (zapis jest idempotentny).
+      const blad = surowe.pominieteWojewodztwa ? `pominięte województwa: ${surowe.pominieteWojewodztwa}` : null;
+      raport.push({ dzien, ogloszen: zapisane, czesci, blad });
     } catch (err) {
       raport.push({ dzien, ogloszen: 0, czesci: 0, blad: err.message });
       logger.error({ err: err.message, dzien }, 'okno wyników: doba BZP pominięta');
