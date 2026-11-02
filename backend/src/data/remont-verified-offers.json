@@ -4721,5 +4721,70 @@
     "sourceUrl": "https://realbud.com/pl/p/Gladz-KNAUF-SUPER-FINISH-28-kg%2C-gotowa-masa-szpachlowa/75056672",
     "evidenceSha256": "fb02e9e99faec0a4450f7cbd28d6375a6daffbc07f9fd68d2be8715ba6793d9d",
     "validUntil": null
+  },
+  {
+    "sourceId": "lobo-atlas-woder-e-2kg",
+    "ean": "5905400514483",
+    "name": "ATLAS WODER E Szybkoschnąca folia w płynie 2 KG",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_129684_500_500/ATLAS-WODER-E-Szybkoschnaca-folia-w-plynie-2-KG.webp",
+    "priceGrosze": 4890,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T01:56:58.742Z",
+    "sourceUrl": "https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-2-kg",
+    "evidenceSha256": "5469973b644663fefc56360a2e36aed10cbbc4881d9823939579ed90b21f52ba",
+    "validUntil": null
+  },
+  {
+    "sourceId": "lobo-atlas-woder-e-5kg",
+    "ean": "5905400514490",
+    "name": "ATLAS WODER E Szybkoschnąca folia w płynie 5 KG",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_122194_500_500/ATLAS-WODER-E-Szybkoschnaca-folia-w-plynie-5-KG.webp",
+    "priceGrosze": 9900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T01:56:58.812Z",
+    "sourceUrl": "https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-5-kg",
+    "evidenceSha256": "7418ffab54095e289d62d19f86362cee4fc67a6651f149294fa10be55495ddb8",
+    "validUntil": null
+  },
+  {
+    "sourceId": "lobo-atlas-woder-e-15kg",
+    "ean": "5905400514506",
+    "name": "ATLAS WODER E Szybkoschnąca folia w płynie 15 KG",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_142134_500_500/ATLAS-WODER-E-Szybkoschnaca-folia-w-plynie-15-KG.webp",
+    "priceGrosze": 24900,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T01:56:58.911Z",
+    "sourceUrl": "https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-15-kg",
+    "evidenceSha256": "a068c21a7f08108b3c4ed76cc1dd8dd4d9e82ba2b3e9f74bad23ff432eda75ce",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-woder-e-2kg",
+    "ean": "5905400514483",
+    "name": "Folia w płynie szybkoschnąca Woder E 2kg Atlas",
+    "imageUrl": "https://sklep.sewera.pl/photo/186397/folia-w-plynie-szybkoschnaca-woder-e-2kg-atlas.webp",
+    "priceGrosze": 5799,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T01:57:00.261Z",
+    "sourceUrl": "https://sklep.sewera.pl/folia-w-plynie-szybkoschnaca-woder-e-2kg-atlas-p11568",
+    "evidenceSha256": "3c6724063461ad0c1bcb6fd21bd7ba8eee5227984476e578de573294a701a550",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-atlas-woder-e-5kg",
+    "ean": "5905400514490",
+    "name": "Folia w płynie szybkoschnąca Woder E 5kg Atlas",
+    "imageUrl": "https://sklep.sewera.pl/photo/186396/folia-w-plynie-szybkoschnaca-woder-e-5kg-atlas.webp",
+    "priceGrosze": 10300,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T01:57:01.576Z",
+    "sourceUrl": "https://sklep.sewera.pl/folia-w-plynie-szybkoschnaca-woder-e-5kg-atlas-p11569",
+    "evidenceSha256": "17b07b917089d3b131ec33679ea6e3d6d32611bdf6d54de77b8a7aa6dcefacf3",
+    "validUntil": null
   }
 ]

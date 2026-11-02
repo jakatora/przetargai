@@ -64,15 +64,19 @@ var CT17_TRANSPARENT_PACKS = [{ ean: "5900089218653", size: 5 }, { ean: "5900089
 var KNAUF_SUPER_FINISH_FAMILY = "knauf-super-finish-kg-v1";
 var KNAUF_SUPER_FINISH_FAMILY_NAME = "Knauf Super Finish \u2014 dob\xF3r dost\u0119pnych opakowa\u0144";
 var KNAUF_SUPER_FINISH_PACKS = [{ ean: "5901793357959", size: 5.4 }, { ean: "5901793357942", size: 20 }, { ean: "5901793357935", size: 28 }];
+var ATLAS_WODER_E_FAMILY = "atlas-woder-e-kg-v1";
+var ATLAS_WODER_E_FAMILY_NAME = "Atlas Woder E \u2014 dob\xF3r dost\u0119pnych opakowa\u0144";
+var ATLAS_WODER_E_PACKS = [{ ean: "5905400514483", size: 2 }, { ean: "5905400514490", size: 5 }, { ean: "5905400514506", size: 15 }];
 var REVIEWED_PACKAGE_FAMILIES = [
   { key: V33_CABINET_FAMILY, name: V33_CABINET_FAMILY_NAME, category: "cabinet-paint", unit: "ml", packs: V33_CABINET_PACKS },
   { key: PRIMER_G_PRO_FAMILY, name: PRIMER_G_PRO_FAMILY_NAME, category: "primer", unit: "l", packs: PRIMER_G_PRO_PACKS },
   { key: MAPEGUM_WPS_FAMILY, name: MAPEGUM_WPS_FAMILY_NAME, category: "waterproofing", unit: "kg", packs: MAPEGUM_WPS_PACKS },
   { key: CT17_PROFI_FAMILY, name: CT17_PROFI_FAMILY_NAME, category: "primer", unit: "l", packs: CT17_PROFI_PACKS },
   { key: CT17_TRANSPARENT_FAMILY, name: CT17_TRANSPARENT_FAMILY_NAME, category: "primer", unit: "l", packs: CT17_TRANSPARENT_PACKS },
-  { key: KNAUF_SUPER_FINISH_FAMILY, name: KNAUF_SUPER_FINISH_FAMILY_NAME, category: "skim-coat", unit: "kg", packs: KNAUF_SUPER_FINISH_PACKS }
+  { key: KNAUF_SUPER_FINISH_FAMILY, name: KNAUF_SUPER_FINISH_FAMILY_NAME, category: "skim-coat", unit: "kg", packs: KNAUF_SUPER_FINISH_PACKS },
+  { key: ATLAS_WODER_E_FAMILY, name: ATLAS_WODER_E_FAMILY_NAME, category: "waterproofing", unit: "kg", packs: ATLAS_WODER_E_PACKS }
 ];
-var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY, KNAUF_SUPER_FINISH_FAMILY];
+var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY, KNAUF_SUPER_FINISH_FAMILY, ATLAS_WODER_E_FAMILY];
 var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
 function reviewedPackageFamily(query, unit) {
   return REVIEWED_PACKAGE_FAMILIES.find((f) => query.packageFamily === f.key && !query.ean && !query.gtin && query.category === f.category && unit === f.unit && normalized(query.normalizedName ?? "") === normalized(f.name));
@@ -19990,6 +19994,32 @@ function serializeProject(project) {
   };
 }
 
+// artifacts/api-server/src/lib/atlas-woder-packs.ts
+var ATLAS_WODER_E_SOURCES = [
+  // source: https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-2-kg
+  { "id": "lobo-atlas-woder-e-2kg", "ean": "5905400514483", "name": "ATLAS WODER E Szybkoschn\u0105ca folia w p\u0142ynie 2 KG", "brand": "Atlas", "category": "waterproofing", "packageSize": 2, "unit": "kg", "store": "Lobo", "format": "shoper-api", "productId": 55847, "apiProductCode": "n.Woder E - 02", "retailerSku": "n.Woder E - 02", "apiPurchaseUnit": "szt.", "variant": ["WODER E", "2 KG"], "pickupRequiresConfirmation": true, "url": "https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-2-kg", "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_129684_500_500/ATLAS-WODER-E-Szybkoschnaca-folia-w-plynie-2-KG.webp" },
+  // source: https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-5-kg
+  { "id": "lobo-atlas-woder-e-5kg", "ean": "5905400514490", "name": "ATLAS WODER E Szybkoschn\u0105ca folia w p\u0142ynie 5 KG", "brand": "Atlas", "category": "waterproofing", "packageSize": 5, "unit": "kg", "store": "Lobo", "format": "shoper-api", "productId": 54319, "apiProductCode": "n.WODER E-055", "retailerSku": "n.WODER E-055", "apiPurchaseUnit": "szt.", "variant": ["WODER E", "5 KG"], "pickupRequiresConfirmation": true, "url": "https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-5-kg", "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_122194_500_500/ATLAS-WODER-E-Szybkoschnaca-folia-w-plynie-5-KG.webp" },
+  // source: https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-15-kg
+  { "id": "lobo-atlas-woder-e-15kg", "ean": "5905400514506", "name": "ATLAS WODER E Szybkoschn\u0105ca folia w p\u0142ynie 15 KG", "brand": "Atlas", "category": "waterproofing", "packageSize": 15, "unit": "kg", "store": "Lobo", "format": "shoper-api", "productId": 59282, "apiProductCode": "n.Woder E - 15", "retailerSku": "n.Woder E - 15", "apiPurchaseUnit": "szt.", "variant": ["WODER E", "15 KG"], "pickupRequiresConfirmation": true, "url": "https://lobo.pl/atlas-woder-e-szybkoschnaca-folia-w-plynie-15-kg", "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_142134_500_500/ATLAS-WODER-E-Szybkoschnaca-folia-w-plynie-15-KG.webp" },
+  // source: https://sklep.sewera.pl/folia-w-plynie-szybkoschnaca-woder-e-2kg-atlas-p11568
+  { "id": "sewera-atlas-woder-e-2kg", "ean": "5905400514483", "name": "Folia w p\u0142ynie szybkoschn\u0105ca Woder E 2kg Atlas", "brand": "Atlas", "category": "waterproofing", "packageSize": 2, "unit": "kg", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["Woder E", "2kg"], "pickupRequiresConfirmation": true, "url": "https://sklep.sewera.pl/folia-w-plynie-szybkoschnaca-woder-e-2kg-atlas-p11568", "imageUrl": "https://sklep.sewera.pl/photo/186397/folia-w-plynie-szybkoschnaca-woder-e-2kg-atlas.webp" },
+  // source: https://sklep.sewera.pl/folia-w-plynie-szybkoschnaca-woder-e-5kg-atlas-p11569
+  { "id": "sewera-atlas-woder-e-5kg", "ean": "5905400514490", "name": "Folia w p\u0142ynie szybkoschn\u0105ca Woder E 5kg Atlas", "brand": "Atlas", "category": "waterproofing", "packageSize": 5, "unit": "kg", "store": "Sewera", "format": "sewera", "retailUnit": "SZT", "variant": ["Woder E", "5kg"], "pickupRequiresConfirmation": true, "url": "https://sklep.sewera.pl/folia-w-plynie-szybkoschnaca-woder-e-5kg-atlas-p11569", "imageUrl": "https://sklep.sewera.pl/photo/186396/folia-w-plynie-szybkoschnaca-woder-e-5kg-atlas.webp" }
+];
+function confirmAtlasWoderSource(source) {
+  const reviewed6 = ATLAS_WODER_E_SOURCES.find((row) => row.id === source.id);
+  if (!reviewed6) return;
+  const keys = ["ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "retailerSku", "apiProductCode", "apiPurchaseUnit", "retailUnit", "url"];
+  if (keys.some((key) => source[key] !== reviewed6[key]) || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1) throw Error("product_package_not_confirmed");
+}
+function confirmAtlasWoderPurchase(item, source) {
+  const reviewed6 = ATLAS_WODER_E_SOURCES.find((row) => row.id === source.id && row.store === "Lobo");
+  if (!reviewed6) return;
+  confirmAtlasWoderSource(source);
+  if (item.id !== reviewed6.productId || item.ean !== reviewed6.ean || item.name !== reviewed6.name || item.code !== reviewed6.apiProductCode || item.url !== reviewed6.url || item.producer?.id !== 81 || item.producer.name !== "ATLAS" || item.unit?.name !== "szt." || item.unit.floating_point !== false || item.package !== "0") throw Error("product_package_not_confirmed");
+}
+
 // artifacts/api-server/src/lib/ceresit-primers.ts
 var CERESIT_PRIMER_SOURCES = [
   // source: https://buduj24.pl/produkt/16299,ceresit-grunt-ct17-transparent-gleboko-penetrujacy-5l
@@ -21025,6 +21055,7 @@ function confirmKnaufFinishPurchase(item, source) {
 
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...ATLAS_WODER_E_SOURCES,
   ...KNAUF_FINISH_SOURCES,
   ...PAINTING_TAPE_SOURCES,
   // source: https://sklep.sewera.pl/folia-w-plynie-mapegum-wps-5kg-mapei-p7751
@@ -26242,6 +26273,7 @@ function retailPriceIsValid(validUntil, now) {
   return Date.parse(validUntil) >= now.getTime();
 }
 async function readRetailSource(source, fetchImpl = fetch) {
+  confirmAtlasWoderSource(source);
   if (source.disabledReason) throw Error(source.disabledReason);
   if (source.format === "idosell" && quoteRelayEnabled(source.store)) {
     const originalFetch = fetchImpl, deadline = AbortSignal.timeout(2e4);
@@ -26380,6 +26412,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   return parseRetailPage(raw, source, /* @__PURE__ */ new Date());
 }
 function confirmShoperPurchaseUnit(item, source) {
+  confirmAtlasWoderPurchase(item, source);
   confirmKnaufFinishPurchase(item, source);
   confirmPaintingTapePurchase(item, source);
   confirmMapeiSupplyPurchase(item, source);
