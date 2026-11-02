@@ -24179,9 +24179,11 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     }) }) }));
     optionalPartitions = false;
     result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
-    if (settings.allowSeparateOrders === true && revision === [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|")) {
+    if (settings.allowSeparateOrders === true && result.best && revision === [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|")) {
       optionalPartitions = true;
       result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+    } else if (settings.allowSeparateOrders === true && result.purchasePlan) {
+      result.searchLimited = true;
     }
     quoteBudget = MAX_STORE_BASKETS;
     const addExtra = async () => {
@@ -24495,6 +24497,7 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
 }
 async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups) {
   const failures = new Map((result.unavailableStores ?? []).map((item) => [item.store, item.reason]));
+  const orderFailures = /* @__PURE__ */ new Map();
   const unavailableIntegrations = new Set(failures.keys());
   const invalidMaterialOrders = /* @__PURE__ */ new Set();
   const ordered = [...unique.entries()].sort((a, b) => b[1].lines.length - a[1].lines.length || b[1].materialsGrosze - a[1].materialsGrosze);
@@ -24529,12 +24532,15 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
             order.totalGrosze = order.materialsGrosze + outcome.quote.costGrosze;
             order.source = "retailer";
           } else {
-            failures.set(order.store, "reason" in outcome ? outcome.reason : "invalid_quote");
+            const reason = "reason" in outcome ? outcome.reason : "invalid_quote";
+            failures.set(order.store, reason);
+            orderFailures.set(key, reason);
             if ("reason" in outcome && ["price_changed", "product_unavailable", "insufficient_stock", "purchase_rules_changed"].includes(outcome.reason)) invalidMaterialOrders.add(key);
             if ("reason" in outcome && outcome.reason === "insufficient_stock" && outcome.stockLimits?.length) stockChanged = true;
           }
         } catch {
           failures.set(order.store, "quote_unavailable");
+          orderFailures.set(key, "quote_unavailable");
         }
       }
     }));
@@ -24560,6 +24566,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
     order.totalGrosze = null;
     order.source = "unknown";
     failures.set(order.store, "quote_expired");
+    orderFailures.set(signature(order), "quote_expired");
   }
   const baskets = candidates.map((orders) => {
     const actual = orders.map((o) => applyCartPrices(unique.get(signature(o))));
@@ -24594,6 +24601,11 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
     const unquoted = (basket) => basket.stores.filter((store) => store.deliveryGrosze === null).length;
     result.purchasePlan = [...baskets].filter((basket) => basket.totalGrosze === null).sort((a, b) => unquoted(a) - unquoted(b) || a.lowerBoundGrosze - b.lowerBoundGrosze || a.stores.length - b.stores.length)[0] ?? null;
     if (result.purchasePlan) result.purchasePlanBasis = "fewest_unquoted_stores";
+  }
+  for (const order of result.purchasePlan?.stores ?? []) {
+    if (order.deliveryGrosze !== null) continue;
+    const reason = orderFailures.get(signature(order));
+    if (reason) failures.set(order.store, reason);
   }
   const quotedStores = new Set([...unique.values()].filter((o) => o.quote).map((o) => o.store));
   const unresolvedFailures = [...failures.keys()].filter((store) => unavailableIntegrations.has(store) || baskets.some((basket) => basket.stores.some((order) => order.store === store && order.deliveryGrosze === null)));
