@@ -27539,6 +27539,28 @@ async function quoteElmas(order, fetchImpl) {
   return { quote: { costGrosze: last.cost, carrier: "InPost Kurier", payment: "Przelewy24", checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: ELMAS_ORIGIN + "/order/form", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify({ country: "PL", store: order.store, materialsGrosze: order.materialsGrosze, lines: order.lines, evidence, initial, selected })).digest("hex") } };
 }
 
+// artifacts/api-server/src/lib/buduj-national-cache.ts
+function budujNationalBasketKey(order) {
+  if (order.store !== "Buduj24" || !Number.isSafeInteger(order.materialsGrosze) || order.materialsGrosze < 1 || order.lines.length < 1 || order.lines.length > 20) return null;
+  const seen = /* @__PURE__ */ new Set(), rows = [];
+  let total = 0;
+  for (const line2 of order.lines) {
+    if (line2.packages.length < 1 || line2.packages.length > 20) return null;
+    for (const pack of line2.packages) {
+      const source = RETAIL_SOURCES.find((s) => s.id === pack.offerId && s.store === "Buduj24" && s.format === "buduj24" && !s.disabledReason);
+      const unit = (u) => u === "mb" ? "m" : u ?? "";
+      if (!source || seen.has(source.id) || line2.product.id !== "remont-" + source.ean || unit(line2.unit) !== unit(source.unit) || pack.store !== "Buduj24" || pack.url !== source.url || pack.packageSize !== source.packageSize || pack.cutRoll !== void 0 || !Number.isSafeInteger(pack.count) || pack.count < 1 || pack.count > MAX_RETAIL_PACKAGES || pack.maxPackages !== void 0 && (!Number.isSafeInteger(pack.maxPackages) || pack.count > pack.maxPackages) || !Number.isSafeInteger(pack.unitPriceGrosze) || pack.unitPriceGrosze < 1 || !Number.isSafeInteger(pack.lineCostGrosze) || pack.lineCostGrosze !== pack.count * pack.unitPriceGrosze) return null;
+      const minimum = pack.minimumPackages ?? 1, multiple = pack.purchaseMultiple ?? 1;
+      if (!Number.isSafeInteger(minimum) || minimum < 1 || !Number.isSafeInteger(multiple) || multiple < 1 || pack.count < minimum || pack.count % multiple) return null;
+      seen.add(source.id);
+      total += pack.lineCostGrosze;
+      rows.push([source.id, source.ean, source.url, source.unit, source.packageSize, pack.count, pack.unitPriceGrosze, minimum, multiple]);
+    }
+  }
+  if (!Number.isSafeInteger(total) || total !== order.materialsGrosze) return null;
+  return JSON.stringify(["Buduj24", "PL", total, rows.sort((a, b) => String(a[0]).localeCompare(String(b[0])))]);
+}
+
 // artifacts/api-server/src/lib/chemia-delivery.ts
 var import_node_crypto21 = require("node:crypto");
 
@@ -29121,20 +29143,31 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
   }));
   const pages = createCheckoutPageReader();
   const cache = /* @__PURE__ */ new Map();
-  const elmasNational = /* @__PURE__ */ new Map();
-  const nationalKey = (order) => order.store === "Elmas" ? elmasNationalBasketKey(order) : null;
-  const validNational = (result, now) => {
+  const nationalQuotes = /* @__PURE__ */ new Map();
+  const nationalKey = (order) => order.store === "Elmas" ? elmasNationalBasketKey(order) : order.store === "Buduj24" ? budujNationalBasketKey(order) : null;
+  const validNational = (order, result, now) => {
     if (!result || !("quote" in result)) return false;
     const q = result.quote, checked = Date.parse(q.checkedAt), expires = Date.parse(q.expiresAt);
-    return q.basis === "retailer_basket_national" && q.destinationScope === "PL" && q.postalCode === void 0 && q.sourceUrl === "https://sklep-elmas.pl/order/form" && Number.isSafeInteger(q.costGrosze) && q.costGrosze >= 0 && /^[a-f0-9]{64}$/.test(q.evidenceSha256 ?? "") && Number.isFinite(checked) && checked <= now && expires > now && expires <= checked + 6e5;
+    const source = order.store === "Elmas" ? "https://sklep-elmas.pl/order/form" : "https://buduj24.pl/cart";
+    return q.basis === "retailer_basket_national" && q.destinationScope === "PL" && q.postalCode === void 0 && q.sourceUrl === source && (order.store !== "Buduj24" || q.cartPricing === void 0 && q.materialsRoundingGrosze === void 0) && Number.isSafeInteger(q.costGrosze) && q.costGrosze >= 0 && /^[a-f0-9]{64}$/.test(q.evidenceSha256 ?? "") && Number.isFinite(checked) && checked <= now && expires > now && expires <= checked + 6e5;
+  };
+  const rememberNational = (order, row, now = Date.now()) => {
+    const key = nationalKey(order);
+    if (!key || row.until <= now || !validNational(order, row.confirmed, now)) return;
+    nationalQuotes.delete(key);
+    if (nationalQuotes.size >= 64) nationalQuotes.delete(nationalQuotes.keys().next().value);
+    nationalQuotes.set(key, row);
   };
   const cachedNational = (order, now = Date.now()) => {
     const key = nationalKey(order);
     if (!key) return null;
-    const row = elmasNational.get(key);
+    const row = nationalQuotes.get(key);
     if (!row) return null;
-    if (row.until > now && validNational(row.confirmed, now)) return row.confirmed;
-    elmasNational.delete(key);
+    if (row.until > now && validNational(order, row.confirmed, now)) {
+      rememberNational(order, row, now);
+      return row.confirmed;
+    }
+    nationalQuotes.delete(key);
     return null;
   };
   const queue = new QuoteQueue();
@@ -29143,7 +29176,11 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return null;
     if (order.store === "Elmas" && !nationalKey(order)) return null;
     const row = cache.get(keyFor(order, postalCode)), now = Date.now();
-    return row && row.until > now && row.confirmed && "quote" in row.confirmed && Date.parse(row.confirmed.quote.expiresAt) > now ? row.confirmed : cachedNational(order, now);
+    if (row && row.until > now && row.confirmed && "quote" in row.confirmed && Date.parse(row.confirmed.quote.expiresAt) > now) {
+      rememberNational(order, row, now);
+      return row.confirmed;
+    }
+    return cachedNational(order, now);
   };
   const quote2 = async (order, postalCode) => {
     if (!/^\d{2}-\d{3}$/.test(postalCode)) return { reason: "invalid_postal_code" };
@@ -29154,7 +29191,10 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
     if (national) return national;
     const key = keyFor(order, postalCode);
     const cached3 = cache.get(key);
-    if (cached3 && cached3.until > Date.now()) return cached3.result;
+    if (cached3 && cached3.until > Date.now()) {
+      rememberNational(order, cached3);
+      return cached3.result;
+    }
     if (!quoteRelayEnabled(order.store) && sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
     const pending = (async () => {
@@ -29212,11 +29252,7 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
       if ("quote" in result) {
         const row = { until: Math.min(Date.now() + TTL, Date.parse(result.quote.expiresAt)) - 6e4, result: Promise.resolve(result), confirmed: result };
         cache.set(key, row);
-        const countryKey = nationalKey(order);
-        if (countryKey && validNational(result, Date.now())) {
-          if (elmasNational.size >= 64 && !elmasNational.has(countryKey)) elmasNational.delete(elmasNational.keys().next().value);
-          elmasNational.set(countryKey, row);
-        }
+        rememberNational(order, row);
       } else if (result.reason === "quote_busy") cache.delete(key);
       else cache.set(key, { until: Date.now() + 3e4, result: Promise.resolve(result) });
     }
