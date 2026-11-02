@@ -20011,6 +20011,24 @@ function serializeProject(project) {
   };
 }
 
+// artifacts/api-server/src/lib/brush-sources.ts
+var BRUSH_SOURCES = [{
+  id: "sewera-kraus-a50-brush",
+  ean: "5904178020035",
+  name: "P\u0119dzel angielski 50mm Kraus",
+  brand: "Kraus",
+  category: "paint-brush",
+  packageSize: 1,
+  unit: "szt",
+  store: "Sewera",
+  format: "sewera",
+  retailUnit: "SZT",
+  variant: ["50 mm"],
+  pickupRequiresConfirmation: true,
+  url: "https://sklep.sewera.pl/pedzel-angielski-50mm-kraus-p22518",
+  imageUrl: "https://sklep.sewera.pl/photo/359076/pedzel-angielski-50mm-kraus.webp"
+}];
+
 // artifacts/api-server/src/lib/retail-microdata.ts
 var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
 var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
@@ -21487,6 +21505,7 @@ function confirmKnaufFinishSource(source) {
 
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...BRUSH_SOURCES,
   ...CERESIT_VIVA_SOURCES,
   ...RIGIPS_CORNER_SOURCES,
   ...HIPPER_PAINT_SOURCES,
