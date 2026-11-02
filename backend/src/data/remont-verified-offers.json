@@ -4864,5 +4864,31 @@
     "sourceUrl": "https://www.sklepdecowant.pl/pl/p/ATLAS-WODER-E-FOLIA-IZOLACYJNA-15-KG/367",
     "evidenceSha256": "36ea8bfd63e950daad50f1697607a856a07f382461d5ea3ca8b5b165818f00be",
     "validUntil": null
+  },
+  {
+    "sourceId": "topboden-optima-thermo-aquastop-10m2",
+    "ean": "5905167881811",
+    "name": "Podkład pod panele Arbiton Optima Thermo Aquastop - 1.5mm - do paneli laminowanych",
+    "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167881811_P_02.webp",
+    "priceGrosze": 15500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T04:52:21.450Z",
+    "sourceUrl": "https://topboden.pl/podklad-pod-panele/arbiton-optima-thermo-aquastop-podklady-pod-panele-laminowane",
+    "evidenceSha256": "45317e4cd495d8dda711517e764816279e5a26161373628b09579734df3eb1c1",
+    "validUntil": "2026-11-04"
+  },
+  {
+    "sourceId": "topboden-optima-aquastop-10m2",
+    "ean": "5905167881804",
+    "name": "Podkład pod panele Arbiton Optima Aquastop - 2mm - do paneli laminowanych",
+    "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167881804_P_02.webp",
+    "priceGrosze": 17500,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T04:52:21.825Z",
+    "sourceUrl": "https://topboden.pl/podklad-pod-panele/arbiton-optima-aquastop-podklady-pod-panele-laminowane",
+    "evidenceSha256": "88ce3853bd2b0e622fc358bf8b0d0bc0e6ed6f7ed3d8757fd251114565f1223e",
+    "validUntil": "2026-11-04"
   }
 ]
