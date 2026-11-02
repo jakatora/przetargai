@@ -4799,5 +4799,70 @@
     "sourceUrl": "https://sklep.sewera.pl/szpachla-do-spoinowania-super-finish-28kg-knauf-p15481",
     "evidenceSha256": "c1361d5f88ceedfd318159d6e1f331ceb267ce440d44dbdef185dfe626ababb6",
     "validUntil": null
+  },
+  {
+    "sourceId": "decowant-atlas-hydroband-125-10m",
+    "ean": "5905400602807",
+    "name": "ATLAS HYDROBAND 3G taśma uszczelniająca 125 mm × 10 m",
+    "imageUrl": "https://www.sklepdecowant.pl/environment/cache/images/productGfx_1099_500_500/AT-HYDROBAND-3G-TASMA-USZCZELNIAJACA-A-10.jpg",
+    "priceGrosze": 11999,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T03:40:35.297Z",
+    "sourceUrl": "https://www.sklepdecowant.pl/pl/p/ATLAS-HYDROBAND-3G-tasma-uszczelniajaca-125-mm-10-m/370",
+    "evidenceSha256": "224da5e9edfb5ed44f73bd4f883f58af2666b09676aa2a47df249e8cd90efaa6",
+    "validUntil": null
+  },
+  {
+    "sourceId": "decowant-atlas-hydroband-internal",
+    "ean": "4260112880754",
+    "name": "ATLAS HYDROBAND 3G NAROŻNIK WEWNĘTRZNY",
+    "imageUrl": "https://www.sklepdecowant.pl/environment/cache/images/productGfx_952_500_500/ATLAS-HYDROBAND-3G-NAROZNIK-WEWNETRZNY.jpg",
+    "priceGrosze": 1287,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T03:40:35.379Z",
+    "sourceUrl": "https://www.sklepdecowant.pl/pl/p/ATLAS-HYDROBAND-3G-NAROZNIK-WEWNETRZNY/318",
+    "evidenceSha256": "40dc8f2aa11a645f0e21ec477a5ff38571a85ba77689377282ff13011c049660",
+    "validUntil": null
+  },
+  {
+    "sourceId": "decowant-atlas-hydroband-external",
+    "ean": "4260112880761",
+    "name": "ATLAS HYDROBAND 3G NAROŻNIK ZEWNĘTRZNY",
+    "imageUrl": "https://www.sklepdecowant.pl/environment/cache/images/productGfx_954_500_500/ATLAS-HYDROBAND-3G-NAROZNIK-ZEWNETRZNY.jpg",
+    "priceGrosze": 1218,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T03:40:35.476Z",
+    "sourceUrl": "https://www.sklepdecowant.pl/pl/p/ATLAS-HYDROBAND-3G-NAROZNIK-ZEWNETRZNY/319",
+    "evidenceSha256": "bc25735c0c1ac311b18152cd8904125ac34082287381b98f6fdb2d1d7ad9afce",
+    "validUntil": null
+  },
+  {
+    "sourceId": "decowant-atlas-woder-e-5kg",
+    "ean": "5905400514490",
+    "name": "ATLAS WODER E-FOLIA IZOLACYJNA 5 KG",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_122194_500_500/ATLAS-WODER-E-Szybkoschnaca-folia-w-plynie-5-KG.webp",
+    "priceGrosze": 11999,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T03:40:35.576Z",
+    "sourceUrl": "https://www.sklepdecowant.pl/pl/p/ATLAS-WODER-E-FOLIA-IZOLACYJNA-5-KG/317",
+    "evidenceSha256": "71f8d7c84cd36cab52d3f4f5fa65a8506d324ac28c6b701655c4eca3ea6cad41",
+    "validUntil": null
+  },
+  {
+    "sourceId": "decowant-atlas-woder-e-15kg",
+    "ean": "5905400514506",
+    "name": "ATLAS WODER E-FOLIA IZOLACYJNA 15 KG",
+    "imageUrl": "https://lobo.pl/environment/cache/images/productGfx_142134_500_500/ATLAS-WODER-E-Szybkoschnaca-folia-w-plynie-15-KG.webp",
+    "priceGrosze": 32987,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T03:40:35.678Z",
+    "sourceUrl": "https://www.sklepdecowant.pl/pl/p/ATLAS-WODER-E-FOLIA-IZOLACYJNA-15-KG/367",
+    "evidenceSha256": "36ea8bfd63e950daad50f1697607a856a07f382461d5ea3ca8b5b165818f00be",
+    "validUntil": null
   }
 ]
