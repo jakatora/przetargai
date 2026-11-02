@@ -5,9 +5,12 @@
  */
 export const MAKS_ZNAKOW_WARUNKOW = 3000;
 
-function przytnij(tekst) {
-  const t = String(tekst ?? '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-  return t.length > MAKS_ZNAKOW_WARUNKOW ? `${t.slice(0, MAKS_ZNAKOW_WARUNKOW - 1)}…` : t;
+// BZP (2026-11-02): pkt 5.4 bywa dłuższy (ze wstępem o wykluczeniu) — zdolność techniczna stoi na końcu, nie ucinamy jej.
+export const MAKS_ZNAKOW_WARUNKOW_BZP = 5000;
+
+function przytnij(tekst, maks = MAKS_ZNAKOW_WARUNKOW) {
+  const t = String(tekst ?? '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  return t.length > maks ? `${t.slice(0, maks - 1)}…` : t;
 }
 
 const unikalne = (lista) => [...new Set(lista.map((s) => String(s).trim()).filter(Boolean))];
@@ -33,14 +36,30 @@ export function warunkiZTed(notice) {
   return null;
 }
 
+/** htmlBody BZP → tekst z podziałem na linie (punkty „5.4.)” zaczynają się od nowej linii). */
+function tekstBzp(html) {
+  return String(html ?? '')
+    .replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|li|div|h\d|tr)>/gi, '\n').replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)));
+}
+
 /**
- * BZP: sekcja warunków w htmlBody.
- *
- * Format niezmierzony (e-Zamówienia w przerwie technicznej od 2026-10-23 wieczorem,
- * HTTP 403 na całej platformie) — pułapka z pamięci projektu: formatu BZP się NIE zgaduje.
- * Do czasu pomiaru na żywo BZP nie niesie warunków, a aplikacja mówi „warunki w SWZ”.
- * Zadanie „zmierzyć BZP i włączyć warunkiZBzp” jest w STAN projektu.
+ * BZP: sekcja V ogłoszenia o zamówieniu (zmierzone 2026-11-02 na 30 ogłoszeniach z 30.10): „5.3.) Warunki udziału
+ * w postępowaniu: Tak|Nie”, przy „Tak” — „5.4.) Nazwa i opis warunków udziału w postępowaniu.” i opis do
+ * następnego punktu (5.5.). „Nie” = zamawiający nie stawia warunków (`brak_warunkow` — porównanie z kartą bez AI).
+ * Brak punktu 5.3 (inny rodzaj ogłoszenia) — null, jak dotąd.
  */
-export function warunkiZBzp(_htmlBody) {
-  return null;
+export function warunkiZBzp(htmlBody) {
+  const t = tekstBzp(htmlBody);
+  const flaga = t.match(/5\.3\.?\)?\s*Warunki udziału w postępowaniu:\s*(Tak|Nie)\b/i);
+  if (!flaga) return null;
+  if (/^nie$/i.test(flaga[1])) return { tekst: null, zrodlo: 'ogloszenie', brak_warunkow: true };
+  const naglowek = /5\.4\.?\)?\s*Nazwa i opis warunków udziału w postępowaniu\.?/i;
+  const od = t.search(naglowek);
+  if (od < 0) return { tekst: null, zrodlo: 'swz' };
+  const reszta = t.slice(od).replace(naglowek, '');
+  const koniec = reszta.search(/\s5\.(?:[5-9]|1\d)\.?\)|SEKCJA VI\b/);
+  const tekst = przytnij(koniec >= 0 ? reszta.slice(0, koniec) : reszta, MAKS_ZNAKOW_WARUNKOW_BZP);
+  return tekst ? { tekst, zrodlo: 'ogloszenie' } : { tekst: null, zrodlo: 'swz' };
 }

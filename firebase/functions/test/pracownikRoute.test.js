@@ -140,6 +140,9 @@ test('GET /matches/:id/warunki: Free → plan; Standard bez tekstu → brak_teks
   const std = await konto({ plan: 'standard' });
   const bez = await wybrany(std.id);
   assert.equal((await get(std, `/matches/${bez.id}/warunki`)).body.powod, 'brak_tekstu');
+  const bezWarunkow = await wybrany(std.id, { warunki_udzialu: { tekst: null, zrodlo: 'ogloszenie', brak_warunkow: true } });
+  const bw = (await get(std, `/matches/${bezWarunkow.id}/warunki`)).body;
+  assert.deepEqual([bw.warunki?.werdykt, bw.warunki?.brak_warunkow], ['spelniasz', true], 'BZP 5.3 „Nie” — spełniasz bez karty i bez AI');
   const z = await wybrany(std.id, { warunki_udzialu: { tekst: 'Obrót 2 mln zł', zrodlo: 'ogloszenie' } });
   const odp = (await get(std, `/matches/${z.id}/warunki`)).body;
   assert.deepEqual([odp.powod, odp.tekst], ['brak_karty', 'Obrót 2 mln zł']);

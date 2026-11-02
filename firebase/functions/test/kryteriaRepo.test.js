@@ -101,3 +101,19 @@ test('wojewodztwoDoKopii: województwo nadane później trafia do dopasowań i Z
   assert.equal((await db.doc(`users/${uid}/matches/${tender.id}`).get()).get('tender_wojewodztwo'), 'PL18');
   assert.equal((await db.doc(`users/${uid}/saved/${tender.id}`).get()).get('tender_wojewodztwo'), 'PL18');
 });
+
+test('uzupelnijWarunki (BZP 2026-11-02): tylko istniejące dokumenty bez warunków; „brak warunków” też się zapisuje', async () => {
+  const bez = `${ZNAK}-w1`;
+  const zWarunkami = `${ZNAK}-w2`;
+  await tenders.upsert({ ...baza(bez) });
+  await tenders.upsert({ ...baza(zWarunkami), warunki_udzialu: { tekst: 'Obrót 1 mln zł', zrodlo: 'ogloszenie' } });
+  const wynik = await tenders.uzupelnijWarunki([
+    { externalId: bez, warunki_udzialu: { tekst: null, zrodlo: 'ogloszenie', brak_warunkow: true } },
+    { externalId: zWarunkami, warunki_udzialu: { tekst: 'Inne', zrodlo: 'ogloszenie' } },
+    { externalId: `${ZNAK}-w-nie-ma`, warunki_udzialu: { tekst: 'X', zrodlo: 'ogloszenie' } },
+    { externalId: `${ZNAK}-w-pusto`, warunki_udzialu: null },
+  ]);
+  assert.deepEqual(wynik, { z_warunkami: 3, istniejace: 2, uzupelnione: 1 });
+  assert.equal((await tenders.findById(tenderDocId(bez))).warunki_udzialu.brak_warunkow, true);
+  assert.equal((await tenders.findById(tenderDocId(zWarunkami))).warunki_udzialu.tekst, 'Obrót 1 mln zł', 'istniejących nie nadpisujemy');
+});

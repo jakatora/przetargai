@@ -1023,6 +1023,29 @@ export const tenders = {
     return { z_kryteriami: zLista.length, istniejace, uzupelnione };
   },
 
+  /** Warunki udziału BZP (2026-11-02, `lib/warunkiUdzialu.warunkiZBzp`) — tylko istniejące dokumenty bez nich. */
+  async uzupelnijWarunki(ogloszenia) {
+    const zWarunkami = (ogloszenia ?? []).filter((o) => o?.warunki_udzialu);
+    let istniejace = 0;
+    let uzupelnione = 0;
+    for (let i = 0; i < zWarunkami.length; i += 300) {
+      const czesc = zWarunkami.slice(i, i + 300);
+      const snapy = await db().getAll(...czesc.map((o) => db().collection('tenders').doc(tenderDocId(o.externalId))), { fieldMask: ['warunki_udzialu'] });
+      const batch = db().batch();
+      let wPartii = 0;
+      snapy.forEach((snap, j) => {
+        if (!snap.exists) return;
+        istniejace += 1;
+        if (snap.get('warunki_udzialu') != null) return;
+        batch.update(snap.ref, { warunki_udzialu: czesc[j].warunki_udzialu });
+        wPartii += 1;
+      });
+      if (wPartii) await batch.commit();
+      uzupelnione += wPartii;
+    }
+    return { z_warunkami: zWarunkami.length, istniejace, uzupelnione };
+  },
+
   async findById(id) {
     return userSnap(await db().collection('tenders').doc(id).get());
   },

@@ -113,6 +113,15 @@ router.post('/kryteria-wstecz', ah(async (req, res) => {
   res.json({ dzien, pobrane: ogloszenia.length, ...wynik });
 }));
 
+/** Warunki udziału BZP (2026-11-02) — jak `/kryteria-wstecz`: doba BZP, tylko istniejące dokumenty bez warunków, bez AI. */
+router.post('/warunki-wstecz', ah(async (req, res) => {
+  const dzien = String(req.body?.dzien ?? '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dzien) || Number.isNaN(Date.parse(dzien))) throw badRequest('Podaj dzien w formacie RRRR-MM-DD');
+  const ogloszenia = await pobierzOgloszeniaBzp({ from: dzien, to: dzien });
+  const wynik = await tenders.uzupelnijWarunki(ogloszenia);
+  res.json({ dzien, pobrane: ogloszenia.length, ...wynik });
+}));
+
 /**
  * Kryteria oceny dla zapisanych przetargów TED (2026-11-01) — jak `/kryteria-wstecz` dla BZP: tylko
  * tam, gdzie listy jeszcze nie ma, bez tworzenia dokumentów. Doba TED to ~6 s, a limiter admina

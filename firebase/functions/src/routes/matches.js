@@ -289,6 +289,11 @@ router.get('/:id/warunki', ah(async (req, res) => {
   const tender = await tenders.findById(row.tender_id);
   const wu = tender?.warunki_udzialu ?? null;
   if (!wu) { res.json({ warunki: null, powod: 'brak_tekstu' }); return; }
+  // BZP pkt 5.3 „Warunki udziału: Nie” (2026-11-02) — nie ma czego porównywać: spełniasz, bez AI i bez limitu.
+  if (wu.brak_warunkow) {
+    res.json({ warunki: { werdykt: 'spelniasz', wymagania: [], brak_warunkow: true }, tekst: 'Zamawiający nie stawia warunków udziału w postępowaniu (pkt 5.3 ogłoszenia).' });
+    return;
+  }
   if (!wu.tekst) { res.json({ warunki: null, powod: 'w_swz' }); return; }
   if (formalnePuste(req.user)) { res.json({ warunki: null, powod: 'brak_karty', tekst: wu.tekst }); return; }
 
