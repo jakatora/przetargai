@@ -6,6 +6,8 @@ import { users, matches, tenders, powiazaniaSwz, autoSwz, alerty } from '../db/r
 import { terminPytan } from '../lib/przypomnieniePytan.js';
 import { czySwz } from '../services/eZamowieniaDokumenty.js';
 import { wywolajModulPrzetargowy } from '../services/mostRailway.js';
+import { liniePdf } from '../services/tekstPdf.js';
+import { czytajDocx } from '../lib/kontrolaPlikowOferty.js';
 
 /*
  * AUTOMATYCZNA ANALIZA SWZ (2026-10-28). Selekcja wybiera przetarg z BZP i dociąga z e-Zamówień listę
@@ -62,26 +64,71 @@ export function wybierzSwz(dokumenty) {
   return kandydaci.find((d) => !zalacznik(d)) ?? null;
 }
 
-/** Pobranie PDF-a SWZ (≤ 5 MB, nagłówek %PDF) → base64. */
-export async function pobierzPdfBase64(url, { fetchFn = fetch, limitMs = LIMIT_POBRANIA_MS } = {}) {
-  if (!DOZWOLONE_HOSTY.test(String(url ?? ''))) throw Object.assign(new Error('Pobranie SWZ: niedozwolony adres'), { przejsciowy: false });
+/*
+ * WZÓR UMOWY W ANALIZIE (2026-11-02). Analiza AI na backendzie szuka też sprzeczności SWZ ↔ wzór umowy
+ * (`backend/src/services/analizaSwz.js`), ale auto-SWZ wysyłało sam PDF SWZ — nie było z czym porównać. Pomiar 2.11:
+ * 46 z 300 przetargów z listą e-Zamówień ma osobny wzór umowy / projektowane postanowienia w PDF albo .docx
+ * (.doc i .zip nie czytamy). Pobieramy go obok SWZ i wysyłamy jako tekst (`umowa`); błąd = analiza bez umowy, jak dotąd.
+ * Koszt: backend tnie łączną treść dokumentów do 120 tys. znaków, więc wywołanie AI nie rośnie ponad dotychczasowy sufit.
+ */
+const WZOR_UMOWY = /wz[oó]r\w*\s+umow|projekt\w*\s+umow|projektowane\s+postanowienia|istotne\s+postanowienia|postanowienia\s+umow|\b[pi]pu\b|(^|[\s_.\-–])umowa($|[\s_.\-–])/i;
+const NIE_WZOR = /zmian\w*\s+umow|aneks|do\s+umowy|rozwi[aą]zani/i;
+export const MAKS_ZNAKOW_UMOWY = 200_000;
+
+const rozszerzenieDokumentu = (d) => String(d?.rozszerzenie ?? (String(d?.plik ?? d?.nazwa ?? '').match(/\.([a-z0-9]{1,5})$/i)?.[1] ?? '')).toLowerCase();
+
+/** Wzór umowy (PDF albo .docx) z listy dokumentów — inny plik niż wybrana SWZ. */
+export function wybierzUmowe(dokumenty, swz = null) {
+  return (Array.isArray(dokumenty) ? dokumenty : []).find((d) => {
+    const opis = `${d?.nazwa ?? ''} ${d?.plik ?? ''}`;
+    return d?.url && d.url !== swz?.url && DOZWOLONE_HOSTY.test(d.url) && ['pdf', 'docx'].includes(rozszerzenieDokumentu(d))
+      && WZOR_UMOWY.test(opis) && !NIE_WZOR.test(opis) && !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_PDF);
+  }) ?? null;
+}
+
+/** Pobranie pliku zamawiającego (≤ 5 MB, tylko dozwolone hosty) → Buffer. */
+async function pobierzPlik(url, { fetchFn = fetch, limitMs = LIMIT_POBRANIA_MS, etykieta = 'SWZ', accept = 'application/pdf' } = {}) {
+  if (!DOZWOLONE_HOSTY.test(String(url ?? ''))) throw Object.assign(new Error(`Pobranie ${etykieta}: niedozwolony adres`), { przejsciowy: false });
   const res = await fetchFn(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PrzetargAI/1.0; +https://przetarg-ai.pl)', Accept: 'application/pdf' },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PrzetargAI/1.0; +https://przetarg-ai.pl)', Accept: accept },
     signal: AbortSignal.timeout(limitMs),
   });
-  if (!res.ok) throw Object.assign(new Error(`Pobranie SWZ: HTTP ${res.status}`), { przejsciowy: res.status >= 500 || res.status === 429 });
+  if (!res.ok) throw Object.assign(new Error(`Pobranie ${etykieta}: HTTP ${res.status}`), { przejsciowy: res.status >= 500 || res.status === 429 });
   const bufor = Buffer.from(await res.arrayBuffer());
-  if (bufor.length > MAKS_BAJTOW_PDF) throw Object.assign(new Error(`SWZ ma ${Math.round(bufor.length / 1048576)} MB — limit 5 MB`), { przejsciowy: false });
+  if (bufor.length > MAKS_BAJTOW_PDF) throw Object.assign(new Error(`${etykieta} ma ${Math.round(bufor.length / 1048576)} MB — limit 5 MB`), { przejsciowy: false });
+  return bufor;
+}
+
+/** Pobranie PDF-a SWZ (≤ 5 MB, nagłówek %PDF) → base64. */
+export async function pobierzPdfBase64(url, opcje = {}) {
+  const bufor = await pobierzPlik(url, opcje);
   if (bufor.subarray(0, 5).toString('latin1') !== '%PDF-') throw Object.assign(new Error('Pobrany plik nie jest PDF-em'), { przejsciowy: false });
   return bufor.toString('base64');
+}
+
+/** Tekst wzoru umowy (PDF z warstwą tekstową albo .docx); null = pusty, skan albo inny format. */
+export async function tekstUmowy(dokument, { fetchFn = fetch, czytajPdf = liniePdf } = {}) {
+  const bufor = await pobierzPlik(dokument.url, { fetchFn, etykieta: 'wzoru umowy', accept: '*/*' });
+  let linie = null;
+  if (bufor.subarray(0, 5).toString('latin1') === '%PDF-') linie = await czytajPdf(bufor);
+  else if (bufor.length > 4 && bufor.readUInt32LE(0) === 0x04034b50) linie = czytajDocx(bufor).linie;
+  const tekst = (linie ?? []).join('\n').slice(0, MAKS_ZNAKOW_UMOWY);
+  return tekst.trim() ? tekst : null;
 }
 
 /**
  * Analiza jednego przetargu dla jednego klienta. Zakłada, że znacznik jest już zajęty.
  * @returns {Promise<{status: string, postepowanie_id?: string, liczba_pytan?: number, blad?: string}>}
  */
-export async function analizujDlaKlienta(user, tender, swz, { modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64 } = {}) {
+export async function analizujDlaKlienta(user, tender, swz, {
+  modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, umowa = null, czytajUmowe = tekstUmowy,
+} = {}) {
   const pdf = await pobierzPdf(swz.url);
+  const trescUmowy = umowa ? await czytajUmowe(umowa).catch((err) => {
+    logger.warn({ err: err.message, tender: tender.id }, 'Auto-SWZ: wzór umowy nie został odczytany — analiza bez niego');
+    return null;
+  }) : null;
+  const zUmowa = trescUmowy ? { umowa: String(umowa.nazwa ?? umowa.plik ?? 'wzór umowy').slice(0, 200) } : {};
   const nowe = await modul(user, {
     metoda: 'POST', sciezka: '/swz/postepowania',
     dane: { nazwa: String(tender.title ?? 'Przetarg').slice(0, 300), ...(tender.deadline ? { termin_skladania_ofert: tender.deadline } : {}) },
@@ -91,12 +138,12 @@ export async function analizujDlaKlienta(user, tender, swz, { modul = wywolajMod
 
   let analiza;
   try {
-    analiza = await modul(user, { metoda: 'POST', sciezka: `/swz/postepowania/${postepowanieId}/analiza`, dane: { swz_pdf_base64: pdf }, limitMs: LIMIT_ANALIZY_MS });
+    analiza = await modul(user, { metoda: 'POST', sciezka: `/swz/postepowania/${postepowanieId}/analiza`, dane: { swz_pdf_base64: pdf, ...(trescUmowy ? { umowa: trescUmowy } : {}) }, limitMs: LIMIT_ANALIZY_MS });
   } catch (err) {
     // Zerwanie/limit czasu PO wysłaniu: backend zapisał treść SWZ przed AI i najpewniej dokończy analizę —
     // wiążemy postępowanie (checklista i plan już z niego korzystają), żeby koszt nie poszedł na marne.
     await powiazaniaSwz.ustaw(user.id, tender.id, { postepowanieId, nazwa: tender.title ?? null });
-    return { status: 'tresc_bez_analizy', postepowanie_id: postepowanieId, blad: `analiza AI: ${err.message}` };
+    return { status: 'tresc_bez_analizy', postepowanie_id: postepowanieId, blad: `analiza AI: ${err.message}`, ...zUmowa };
   }
   // 400 = PDF bez warstwy tekstowej / za długi — backend NIE zapisał treści: bez powiązania (pusta analiza
   // tylko by myliła). Inne wyniki (201, 429 limit, 503 budżet/AI) — treść SWZ zapisana przed AI, więc
@@ -104,8 +151,8 @@ export async function analizujDlaKlienta(user, tender, swz, { modul = wywolajMod
   if (analiza.status === 400 || analiza.status === 413) return { status: 'nieczytelny_pdf', postepowanie_id: postepowanieId, blad: analiza.dane?.error?.message ?? `HTTP ${analiza.status}` };
   await powiazaniaSwz.ustaw(user.id, tender.id, { postepowanieId, nazwa: tender.title ?? null });
   return analiza.status === 201
-    ? { status: 'gotowe', postepowanie_id: postepowanieId, liczba_pytan: Number(analiza.dane?.liczba ?? 0) }
-    : { status: 'tresc_bez_analizy', postepowanie_id: postepowanieId, blad: `analiza AI: HTTP ${analiza.status}` };
+    ? { status: 'gotowe', postepowanie_id: postepowanieId, liczba_pytan: Number(analiza.dane?.liczba ?? 0), ...zUmowa }
+    : { status: 'tresc_bez_analizy', postepowanie_id: postepowanieId, blad: `analiza AI: HTTP ${analiza.status}`, ...zUmowa };
 }
 
 /**
@@ -156,7 +203,8 @@ export function alertAnalizy(tender, liczbaPytan, teraz) {
 
 export async function runAutoAnalizaSwz({
   teraz = nowIso(), maksNaPrzebieg = MAKS_NA_PRZEBIEG, maksNaKlientaDobe = MAKS_NA_KLIENTA_DOBE,
-  wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, budzetMs = 480_000,
+  wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, czytajUmowe = tekstUmowy,
+  budzetMs = 480_000,
 } = {}) {
   const start = Date.now();
   const wynik = { ok: true, klienci: 0, kandydaci: 0, analizy: 0, gotowe: 0, bez_analizy: 0, nieczytelne: 0, bledy: 0, naprawione: 0, pominiete_limit: 0, przerwane_budzetem: false };
@@ -184,7 +232,8 @@ export async function runAutoAnalizaSwz({
         if (await autoSwz.pobierz(user.id, m.tender_id)) continue;
         if (await powiazaniaSwz.pobierz(user.id, m.tender_id)) continue;
         const tender = await tenders.findById(m.tender_id);
-        const swz = wybierzSwz(dokumentyPrzetargu(tender));
+        const dokumenty = dokumentyPrzetargu(tender);
+        const swz = wybierzSwz(dokumenty);
         if (!swz) continue;
         wynik.kandydaci++;
         // Zajęcie PRZED płatnym wywołaniem — create() w transakcji: druga instancja dostaje false.
@@ -193,7 +242,7 @@ export async function runAutoAnalizaSwz({
         zostalo--;
         let rezultat;
         try {
-          rezultat = await analizujDlaKlienta(user, tender, swz, { modul, pobierzPdf });
+          rezultat = await analizujDlaKlienta(user, tender, swz, { modul, pobierzPdf, umowa: wybierzUmowe(dokumenty, swz), czytajUmowe });
         } catch (err) {
           rezultat = { status: 'blad', blad: err.message };
         }
@@ -201,6 +250,7 @@ export async function runAutoAnalizaSwz({
         else if (rezultat.status === 'tresc_bez_analizy') wynik.bez_analizy++;
         else if (rezultat.status === 'nieczytelny_pdf') wynik.nieczytelne++;
         else wynik.bledy++;
+        if (rezultat.umowa) wynik.z_umowa = (wynik.z_umowa ?? 0) + 1;
         await autoSwz.zakoncz(user.id, tender.id, { ...rezultat, teraz: nowIso() });
         const alert = rezultat.status === 'gotowe' ? alertAnalizy(tender, rezultat.liczba_pytan, teraz) : null;
         if (alert) {

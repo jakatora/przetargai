@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { users, tenders, matches, powiazaniaSwz, autoSwz, alerty } = await import('../src/db/repos.js');
-const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu } = await import('../src/jobs/autoAnalizaSwz.js');
+const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, tekstUmowy } = await import('../src/jobs/autoAnalizaSwz.js');
+const { zbudujDocx } = await import('../src/lib/docx.js');
 
 /*
  * Automatyczna analiza SWZ (2026-10-28): płatne AI na backendzie, więc testy pilnują przede wszystkim
@@ -30,6 +31,7 @@ async function wybrany(user, { dokumenty = 'swz', source = 'bzp' } = {}) {
   const { tender } = await tenders.upsert({ externalId: `2026/BZP aswz${ZNAK}${seq}/01`, title: `Remont dachu ${seq}`, organization: 'Gmina', deadline: '2099-01-01T00:00:00.000Z', source, postepowanie_id: pid });
   if (dokumenty === 'swz') await tenders.zapiszDokumentyEz(tender.id, dokSwz(pid), TERAZ);
   if (dokumenty === 'brak') await tenders.zapiszDokumentyEz(tender.id, [], TERAZ);
+  if (typeof dokumenty === 'function') await tenders.zapiszDokumentyEz(tender.id, dokumenty(pid), TERAZ);
   await matches.createWithEvaluation({ userId: user.id, tenderId: tender.id, score: 80, reasoning: 'dach', tender });
   return tender;
 }
@@ -44,6 +46,31 @@ test('wybierzSwz: właściwa specyfikacja przed „Załącznikiem do SWZ”; bez
   assert.equal(wybierzSwz(dokSwz('x')).plik, 'SWZ.pdf');
   assert.equal(wybierzSwz([{ nazwa: 'OPZ', plik: 'opz.docx', rozszerzenie: 'docx', url: 'u' }]), null);
   assert.equal(wybierzSwz(null), null);
+});
+
+test('wybierzUmowe: wzór umowy / projektowane postanowienia (PDF, .docx) obok SWZ; zmiana umowy, .doc i obcy host — nie', () => {
+  const ez = (n, nazwa, rozszerzenie) => ({ id: `u${n}`, nazwa, rozszerzenie, url: `https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/x/u${n}` });
+  const swz = ez(1, 'Specyfikacja Warunków Zamówienia', 'pdf');
+  assert.equal(wybierzUmowe([swz, ez(2, 'Załącznik nr 6 do SWZ - Wzór umowy', 'pdf')], swz).id, 'u2');
+  assert.equal(wybierzUmowe([ez(3, 'Załącznik nr 3 - Projektowane postanowienia umowy', 'docx')]).id, 'u3');
+  assert.equal(wybierzUmowe([ez(4, 'UMOWA', 'docx')]).id, 'u4');
+  for (const [nazwa, rozszerzenie] of [['Zmiana umowy', 'docx'], ['Załącznik nr 2 do umowy - protokół', 'pdf'], ['Projekt umowy', 'doc'], ['Formularz ofertowy', 'pdf']]) {
+    assert.equal(wybierzUmowe([ez(5, nazwa, rozszerzenie)]), null, nazwa);
+  }
+  assert.equal(wybierzUmowe([{ ...ez(6, 'Wzór umowy', 'pdf'), url: 'https://evil.example/umowa.pdf' }]), null, 'obcy host');
+  assert.equal(wybierzUmowe([swz], swz), null, 'nie ten sam plik co SWZ');
+});
+
+test('tekstUmowy: .docx i PDF z warstwą tekstową → tekst; inny format → null; obcy host → błąd', async () => {
+  const U = 'https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/x/u1';
+  const odp = (buf) => async () => ({ ok: true, arrayBuffer: async () => buf });
+  const docx = zbudujDocx({ nazwa: 'Wzór umowy', tresc: '§ 1. Przedmiot umowy\n§ 5. Kara umowna 0,5% za każdy dzień zwłoki' });
+  assert.match(await tekstUmowy({ url: U }, { fetchFn: odp(docx) }), /Kara umowna 0,5%/);
+  const pdfBuf = Buffer.from('%PDF-1.7 ...');
+  assert.equal(await tekstUmowy({ url: U }, { fetchFn: odp(pdfBuf), czytajPdf: async () => ['§ 1', 'Termin: 30 dni'] }), '§ 1\nTermin: 30 dni');
+  assert.equal(await tekstUmowy({ url: U }, { fetchFn: odp(pdfBuf), czytajPdf: async () => [] }), null, 'skan bez tekstu');
+  assert.equal(await tekstUmowy({ url: U }, { fetchFn: odp(Buffer.from('<html>')) }), null);
+  await assert.rejects(tekstUmowy({ url: 'https://evil.example/u.pdf' }, { fetchFn: odp(docx) }), /niedozwolony adres/);
 });
 
 test('alertAnalizy: tylko przy pytaniach; termin pytań w treści, gdy znany i nieminiony', () => {
@@ -114,6 +141,30 @@ test('przebieg: Standard z SWZ → postępowanie, analiza z PDF, powiązanie i z
   const wyw2 = [];
   await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul: modulOk(wyw2), pobierzPdf: pdf });
   assert.equal(wyw2.length, 0);
+});
+
+test('przebieg: wzór umowy idzie do analizy jako tekst (sprzeczności SWZ ↔ umowa); nieczytelny — analiza bez niego', async () => {
+  const s = await klient();
+  const zUmowa = (pid) => [...dokSwz(pid), { id: `${pid}_3`, nazwa: 'Załącznik nr 6 do SWZ - Wzór umowy', plik: 'umowa.docx', rozszerzenie: 'docx', url: `https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/${pid}/${pid}_3` }];
+  const t1 = await wybrany(s, { dokumenty: zUmowa });
+  const wyw = [];
+  const czytane = [];
+  const w = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul: modulOk(wyw), pobierzPdf: pdf,
+    czytajUmowe: async (d) => { czytane.push(d.plik); return '§ 5. Kary umowne'; } });
+  assert.deepEqual([w.gotowe, w.z_umowa], [1, 1]);
+  assert.deepEqual(czytane, ['umowa.docx']);
+  assert.equal(wyw[1].dane.umowa, '§ 5. Kary umowne');
+  assert.equal(wyw[1].dane.swz_pdf_base64, 'JVBERi0xLjcK');
+  assert.equal((await autoSwz.pobierz(s.id, t1.id)).umowa, 'Załącznik nr 6 do SWZ - Wzór umowy');
+
+  const s2 = await klient();
+  const t2 = await wybrany(s2, { dokumenty: zUmowa });
+  const wyw2 = [];
+  const w2 = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s2], modul: modulOk(wyw2), pobierzPdf: pdf,
+    czytajUmowe: async () => { throw new Error('Pobranie wzoru umowy: HTTP 400'); } });
+  assert.deepEqual([w2.gotowe, w2.z_umowa], [1, undefined], 'błąd umowy nie zatrzymuje analizy SWZ');
+  assert.equal('umowa' in wyw2[1].dane, false);
+  assert.equal((await autoSwz.pobierz(s2.id, t2.id)).umowa, undefined);
 });
 
 test('przebieg: przetarg z platformazakupowa z SWZ w załącznikach → analiza i powiązanie', async () => {
