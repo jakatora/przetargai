@@ -5060,5 +5060,33 @@
     "sourceUrl": "https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-3m-rigips-p7500",
     "evidenceSha256": "7cd0bff724bcdb79cd6429303a808c416e3b211c02df9845c325daca044ebfdc",
     "validUntil": null
+  },
+  {
+    "sourceId": "buduj24-ceresit-viva-white-2kg",
+    "ean": "9000101173451",
+    "name": "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 2KG White 01",
+    "stockPackages": 1,
+    "imageUrl": "https://buduj24.pl/files/_product/19506/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(1).png",
+    "priceGrosze": 3544,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T13:54:13.756Z",
+    "sourceUrl": "https://buduj24.pl/produkt/19506,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-white-01",
+    "evidenceSha256": "dc96c4bf8d7d1f1ce9fdc0e65a6b137af3450753fe334526a4cd8af50912528d",
+    "validUntil": "2026-11-16"
+  },
+  {
+    "sourceId": "buduj24-ceresit-viva-white-4kg",
+    "ean": "9000101175134",
+    "name": "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 4KG White 01",
+    "stockPackages": 3,
+    "imageUrl": "https://buduj24.pl/files/_product/19564/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(1).png",
+    "priceGrosze": 5939,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T13:54:14.218Z",
+    "sourceUrl": "https://buduj24.pl/produkt/19564,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-white-01",
+    "evidenceSha256": "150386fd95f965e74f8f301cce7cc9e3103cdf4468c301ceb3177ca09817b391",
+    "validUntil": "2026-11-16"
   }
 ]
