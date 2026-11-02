@@ -19999,6 +19999,42 @@ function serializeProject(project) {
   };
 }
 
+// artifacts/api-server/src/lib/hipper-paints.ts
+var HIPPER_PAINT_SOURCES = [{
+  id: "hipper-sniezka-barwy-173-5l",
+  ean: "5903973139188",
+  name: "\u015Anie\u017Cka Barwy Natury Bia\u0142y 173 5L farba lateksowa",
+  brand: "\u015Anie\u017Cka",
+  category: "paint",
+  packageSize: 5,
+  unit: "l",
+  store: "HIPPER",
+  format: "certusoft",
+  productId: 956234361,
+  retailerUnitId: 956413761,
+  apiPurchaseUnit: "szt",
+  pickupRequiresConfirmation: true,
+  url: "https://hipper.pl/sniezka-barwy-natury-bialy-173-5l-farba-lateksowa-956234361"
+}];
+function isReviewedHipperPaint(source) {
+  const reviewed6 = HIPPER_PAINT_SOURCES.find((row) => row.id === source.id);
+  if (!reviewed6) return false;
+  for (const key of ["ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productId", "retailerUnitId", "apiPurchaseUnit", "url", "pickupRequiresConfirmation"]) {
+    if (source[key] !== reviewed6[key]) throw Error("retailer_unit_not_confirmed");
+  }
+  if ((source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1 || source.skuIdentity !== void 0) throw Error("retailer_unit_not_confirmed");
+  return true;
+}
+function confirmHipperPaintCard(card, source) {
+  if (!isReviewedHipperPaint(source)) return;
+  const features = card?.dataSets?.features?.rows, row = card?.dataSets?.itemCard?.rows?.[0];
+  if (row?.itemName !== source.name || !Array.isArray(features)) throw Error("retailer_unit_not_confirmed");
+  for (const [name, value2] of [["Pojemno\u015B\u0107", "5 l"], ["Symbol koloru", "173"], ["Marka", "\u015Anie\u017Cka"], ["Kolekcja", "\u015Anie\u017Cka Barwy Natury"], ["Wyko\u0144czenie", "Mat"], ["Rodzaj", "Lateksowa"]]) {
+    const matches = features.filter((row2) => row2.featureDesc?.trim() === name);
+    if (matches.length !== 1 || matches[0].featureValue !== value2) throw Error("retailer_unit_not_confirmed");
+  }
+}
+
 // artifacts/api-server/src/lib/kowalczyk-plasters.ts
 var KOWALCZYK_PLASTER_REVIEWS = [
   // source: https://sklep-kowalczyk.pl/knauf-goldband-gipsowa-zaprawa-tynkarska-5kg-507331-52455-52455.html
@@ -21374,6 +21410,7 @@ function confirmKnaufFinishSource(source) {
 
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...HIPPER_PAINT_SOURCES,
   ...KOWALCZYK_PLASTER_SOURCES,
   ...FUGI_SOURCES,
   ...ALNAR_SOURCES,
@@ -26529,11 +26566,13 @@ function readCertusoftProduct(html, source) {
   const singlePiece = source.unit === "szt" && source.packageSize === 1 && source.id !== "hipper-norgips-cross-100" && !source.id.startsWith("hipper-aks-") && !NORGIPS_JOINT_TAPE_SOURCES.some((reviewed6) => reviewed6.id === source.id);
   const reviewedCable = source.id === "hipper-aks-ydyp-3x25-25m" && isReviewedAksCableSource(source);
   const reviewedJointTape = isReviewedNorgipsJointTape(source);
-  if (!singlePiece && !reviewedRoll && !reviewedBottle && !reviewedCarton && !reviewedCable && !reviewedJointTape || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
+  const reviewedPaint = isReviewedHipperPaint(source);
+  if (!singlePiece && !reviewedRoll && !reviewedBottle && !reviewedCarton && !reviewedCable && !reviewedJointTape && !reviewedPaint || source.apiPurchaseUnit !== "szt" || (source.purchaseMultiple ?? 1) !== 1) throw Error("retailer_unit_not_confirmed");
   const state2 = readCertusoftState(html), card = state2.csAppWindowsUtils?.csAppWindows?.csB2BItemCard;
   const rows = card?.dataSets?.itemCard?.rows;
   if (!Array.isArray(rows) || rows.length !== 1) throw Error("product_identity_ambiguous");
   const row = rows[0], schema = JSON.parse(row.structuredData ?? "null");
+  confirmHipperPaintCard(card, source);
   if (row.EAN !== source.ean || schema?.sku !== source.ean || schema.mpn !== String(source.productId) || row.csItemsId !== source.productId || row.csItemsUnitsId !== source.retailerUnitId) throw Error("product_ean_not_confirmed");
   if (typeof row.itemName !== "string" || typeof schema.name !== "string" || nameText(row.itemName) !== nameText(schema.name) || schema.brand?.name !== source.brand || "/" + row.appWindowIdentRoute !== url2.pathname) throw Error("product_identity_not_confirmed");
   if (row.stockUnit !== "szt" || row.quantityUnits !== 1 || row.isNegative !== 0) throw Error("purchase_rules_changed");

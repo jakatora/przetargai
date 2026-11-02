@@ -5020,5 +5020,19 @@
     "sourceUrl": "https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html",
     "evidenceSha256": "5cf0aec9dad59fc758df287c57d8e8733b70e297a448213607dc453c46e3fef4",
     "validUntil": null
+  },
+  {
+    "sourceId": "hipper-sniezka-barwy-173-5l",
+    "ean": "5903973139188",
+    "name": "Śnieżka Barwy Natury Biały 173 5L farba lateksowa",
+    "stockPackages": 11,
+    "imageUrl": "https://hipper.pl/api/attachment/get/C3095A86-0FCB-46FF-A52A-63855FB53DDB/ImageIdent/csPhotos|PhotoMed|C9BA9C65-9EA1-494C-BD0D-6253ED37D8E5|1/%C5%9Anie%C5%BCka%20Barwy%20Natury%20Bia%C5%82y%20173%205L%20farba%20lateksowa.webp",
+    "priceGrosze": 9999,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T09:59:22.030Z",
+    "sourceUrl": "https://hipper.pl/sniezka-barwy-natury-bialy-173-5l-farba-lateksowa-956234361",
+    "evidenceSha256": "6c0cb6feca0dd1535b3e5795e87bb1f8756b53bb815f4ca112d83f786d95458c",
+    "validUntil": null
   }
 ]
