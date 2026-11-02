@@ -195,6 +195,7 @@ export default function KartaFirmyScreen({ route, navigation }) {
       multiline={Boolean(opcje.wieloliniowe)}
       keyboardType={opcje.liczba ? 'numeric' : 'default'}
       maxLength={opcje.maks}
+      hint={opcje.wskazowka}
     />
   );
 
@@ -263,7 +264,12 @@ export default function KartaFirmyScreen({ route, navigation }) {
         <View>
           {uproszczony ? null : pole(form.wartosc_min, ustaw('wartosc_min'), t('Najmniejsza wartość zamówienia (zł)', 'Smallest contract value (PLN)'), t('Np. 50 000', 'E.g. 50,000'), { liczba: true })}
           {pole(form.wartosc_max, ustaw('wartosc_max'), t('Największa wartość zamówienia (zł)', 'Largest contract value (PLN)'), t('Np. 2 000 000', 'E.g. 2,000,000'), { liczba: true })}
-          {uproszczony ? null : pole(form.min_dni_oferta, ustaw('min_dni_oferta'), t('Ile dni potrzebujesz na ofertę (1–60)', 'Days you need to bid (1–60)'), '5', { liczba: true })}
+          {uproszczony ? null : pole(form.min_dni_oferta, ustaw('min_dni_oferta'), t('Ile dni potrzebujesz na ofertę (1–60)', 'Days you need to bid (1–60)'), '5', {
+            liczba: true,
+            // Serwer (kartaFirmy.minDniDlaPrzetargu): bez własnej liczby zapytania ofertowe spoza ustawy od 3 dni.
+            wskazowka: t('Domyślnie 5 dni przy przetargach z ustawy i 3 dni przy zapytaniach ofertowych (formularz cenowy). Wpisz inną liczbę, a będzie obowiązywać wszędzie.',
+              'By default 5 days for statutory tenders and 3 days for requests for quotation (price form only). Enter another number and it applies everywhere.'),
+          })}
         </View>
       ) : null}
 
