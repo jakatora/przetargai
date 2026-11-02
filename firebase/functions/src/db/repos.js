@@ -2440,12 +2440,12 @@ export const evaluations = {
    * przez to stracić przetargu, na który teraz zdąży.
    * @param {object[]} lista przetargi (potrzebne `id` i `deadline`)
    */
-  async idsAktualne(userId, lista, criteriaHash) {
+  async idsAktualne(userId, lista, criteriaHash, { potrzebaDni = null, teraz = null } = {}) {
     if (!lista.length) return new Set();
     const snaps = await db().getAll(...lista.map((t) => evalCol(userId).doc(t.id)));
     const wynik = new Set();
     snaps.forEach((s, i) => {
-      if (s.exists && ocenaAktualna(s.data(), { tender: lista[i], criteriaHash })) wynik.add(s.id);
+      if (s.exists && ocenaAktualna(s.data(), { tender: lista[i], criteriaHash, potrzebaDni, teraz })) wynik.add(s.id);
     });
     return wynik;
   },

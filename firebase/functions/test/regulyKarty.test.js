@@ -80,3 +80,17 @@ test('zamówienie w częściach: granica = średnia część; wadium dla kilku c
   assert.deepEqual(dolnaGranicaWartosci({ budget: 100, liczba_czesci: 1 }), { kwota: 100, zrodlo: 'wartosc', czesci: 1 });
   assert.deepEqual(dolnaGranicaWartosci({ budget: 100, liczba_czesci: 'x' }), { kwota: 100, zrodlo: 'wartosc', czesci: 1 });
 });
+
+test('termin dla zapytań ofertowych (2026-11-02): domyślna karta 3 dni, BZP 5 dni, własny próg klienta wszędzie', () => {
+  const domyslny = { keywords: ['dach'], karta: {} };
+  const za4Dni = '2026-10-25T10:00:00.000Z';
+  assert.equal(sprawdzReguly(domyslny, T({ source: 'platformazakupowa', deadline: za4Dni, wojewodztwo: null }), TERAZ), null, 'PZ: 4 dni wystarczą');
+  assert.equal(sprawdzReguly(domyslny, T({ source: 'logintrade', deadline: za4Dni, wojewodztwo: null }), TERAZ), null);
+  const bzp = sprawdzReguly(domyslny, T({ source: 'bzp', deadline: za4Dni, wojewodztwo: null }), TERAZ);
+  assert.equal(bzp.przyczyna, 'termin', 'BZP: dalej 5 dni');
+  assert.match(bzp.szczegol.pl, /co najmniej 5\./);
+  const pz2 = sprawdzReguly(domyslny, T({ source: 'platformazakupowa', deadline: '2026-10-23T10:00:00.000Z', wojewodztwo: null }), TERAZ);
+  assert.match(pz2.szczegol.pl, /zostało 2 dni, a potrzebujesz co najmniej 3\./);
+  // Klient sam ustawił 5 — obowiązuje także przy zapytaniach.
+  assert.equal(sprawdzReguly(USER, T({ source: 'platformazakupowa', deadline: za4Dni }), TERAZ).przyczyna, 'termin');
+});

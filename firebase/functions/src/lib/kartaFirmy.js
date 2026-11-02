@@ -9,6 +9,21 @@ import { z } from 'zod';
  */
 export const MIN_DNI_DOMYSLNIE = 5;
 
+/*
+ * Zapytania ofertowe spoza ustawy (2026-11-02): oferta to zwykle formularz cenowy, nie JEDZ i dokumenty — szykuje się
+ * ją w dzień. Domyślne 5 dni odcinało od razu 19% nowych ogłoszeń platformazakupowa.pl i 54% Logintrade (pomiar
+ * 2.11: mediana PZ 7,4 dnia od pobrania do terminu). Bez własnego progu na karcie — 3 dni; próg ustawiony
+ * przez klienta obowiązuje wszędzie.
+ */
+export const MIN_DNI_ZAPYTANIA = 3;
+export const ZRODLA_ZAPYTAN = new Set(['platformazakupowa', 'logintrade', 'baza_konkurencyjnosci', 'epropublico']);
+
+/** Ile dni na ofertę potrzebuje klient przy TYM przetargu (karta z `kartaZUzytkownika`). */
+export function minDniDlaPrzetargu(karta, tender) {
+  if (karta?.min_dni_jawne) return karta.min_dni_oferta;
+  return ZRODLA_ZAPYTAN.has(tender?.source) ? Math.min(MIN_DNI_ZAPYTANIA, karta?.min_dni_oferta ?? MIN_DNI_DOMYSLNIE) : (karta?.min_dni_oferta ?? MIN_DNI_DOMYSLNIE);
+}
+
 const kwota = z.number().nonnegative().max(1e12).nullable().optional();
 
 /** Ciało `PUT /pracownik/karta`. Każde pole opcjonalne: brak = „nie zmieniam”. */
@@ -41,6 +56,7 @@ export function kartaZUzytkownika(user) {
     wykluczenia: Array.isArray(k.wykluczenia) ? k.wykluczenia : [],
     wartosc_min: liczbaLubNull(k.wartosc_min),
     min_dni_oferta: Number.isInteger(k.min_dni_oferta) ? k.min_dni_oferta : MIN_DNI_DOMYSLNIE,
+    min_dni_jawne: Number.isInteger(k.min_dni_oferta),
     formalne: {
       obrot_roczny: liczbaLubNull(f.obrot_roczny),
       referencja_kwota: liczbaLubNull(f.referencja_kwota),

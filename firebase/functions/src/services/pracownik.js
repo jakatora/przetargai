@@ -3,7 +3,7 @@ import { nowIso } from '../lib/ids.js';
 import { logger } from '../lib/logger.js';
 import { heuristicScore } from '../lib/scoring.js';
 import { planEfektywny } from '../lib/plan.js';
-import { wersjaKarty, formalnePuste, wersjaFormalnych } from '../lib/kartaFirmy.js';
+import { wersjaKarty, formalnePuste, wersjaFormalnych, kartaZUzytkownika, minDniDlaPrzetargu } from '../lib/kartaFirmy.js';
 import { sprawdzReguly } from '../lib/regulyKarty.js';
 import { przykladyDlaAi } from '../lib/sygnaly.js';
 import { pustyLicznikPrzyczyn } from '../lib/przyczyny.js';
@@ -91,6 +91,7 @@ export async function pracujDlaUzytkownika(user, pool, {
 
   const plan = planEfektywny(user, teraz);
   const wersja = wersjaKarty(user);
+  const karta = kartaZUzytkownika(user);
   const pelnyPrzeglad = !user.pracownik_ostatni_przebieg || user.pracownik_wersja !== wersja;
   const czyNowy = (t) => pelnyPrzeglad || String(t.fetched_at ?? '') > user.pracownik_ostatni_przebieg;
 
@@ -125,7 +126,7 @@ export async function pracujDlaUzytkownika(user, pool, {
   const swiezi = [];
   for (let start = 0; start < ranked.length && swiezi.length < CANDIDATE_HEAD; start += OKNO_KANDYDATOW) {
     const okno = ranked.slice(start, start + OKNO_KANDYDATOW);
-    const ocenione = await evaluations.idsAktualne(user.id, okno.map((x) => x.tender), wersja);
+    const ocenione = await evaluations.idsAktualne(user.id, okno.map((x) => x.tender), wersja, { potrzebaDni: (t) => minDniDlaPrzetargu(karta, t), teraz });
     for (const k of okno) if (!ocenione.has(k.tender.id)) swiezi.push(k);
     if (start + OKNO_KANDYDATOW >= MAKS_PRZEJRZANYCH) break;
   }

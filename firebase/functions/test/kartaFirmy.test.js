@@ -20,9 +20,10 @@ test('przyczyny: zamknięta lista z etykietami PL i EN', () => {
 test('karta starego konta: wartości domyślne zamiast undefined', () => {
   const k = kartaZUzytkownika({ keywords: ['droga'] });
   assert.deepEqual(k, {
-    opis: null, wykluczenia: [], wartosc_min: null, min_dni_oferta: MIN_DNI_DOMYSLNIE,
+    opis: null, wykluczenia: [], wartosc_min: null, min_dni_oferta: MIN_DNI_DOMYSLNIE, min_dni_jawne: false,
     formalne: { obrot_roczny: null, referencja_kwota: null, referencja_opis: null, uprawnienia: [] },
   });
+  assert.equal(kartaZUzytkownika({ karta: { min_dni_oferta: 5 } }).min_dni_jawne, true, 'próg ustawiony przez klienta');
 });
 
 test('wersjaKarty: niezależna od kolejności list, wrażliwa na każdą twardą regułę i opis', () => {

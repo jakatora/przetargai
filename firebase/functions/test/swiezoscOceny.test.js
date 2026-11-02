@@ -28,3 +28,13 @@ test('inne przyczyny nie zależą od terminu — przedłużenie ich nie otwiera'
     assert.equal(ocenaAktualna(slad, { tender: { deadline: termin(30) }, criteriaHash: H }), true, przyczyna);
   }
 });
+
+test('odrzucenie „termin” traci ważność, gdy przy OBECNYM progu przetarg zdąży (złagodzona reguła zapytań, 2026-11-02)', () => {
+  const ocena = { criteria_hash: 'v1', decyzja: 'odrzucony', przyczyna: 'termin', termin: '2026-11-06T10:00:00.000Z' };
+  const tender = { id: 'pz:1', source: 'platformazakupowa', deadline: '2026-11-06T10:00:00.000Z' };
+  const teraz = '2026-11-02T10:00:00.000Z'; // 4 dni do terminu
+  assert.equal(ocenaAktualna(ocena, { tender, criteriaHash: 'v1', potrzebaDni: () => 3, teraz }), false, 'zdąży przy 3 dniach — wraca do lejka');
+  assert.equal(ocenaAktualna(ocena, { tender, criteriaHash: 'v1', potrzebaDni: () => 5, teraz }), true, 'przy 5 dniach dalej odrzucony');
+  assert.equal(ocenaAktualna(ocena, { tender, criteriaHash: 'v1' }), true, 'bez progu — stara reguła');
+  assert.equal(ocenaAktualna({ ...ocena, przyczyna: 'branza' }, { tender, criteriaHash: 'v1', potrzebaDni: () => 3, teraz }), true, 'inne przyczyny bez zmian');
+});

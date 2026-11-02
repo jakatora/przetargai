@@ -1,6 +1,6 @@
 import { matchKeywords } from './textNorm.js';
 import { kodWojewodztwa, WOJEWODZTWA } from './wojewodztwa.js';
-import { kartaZUzytkownika } from './kartaFirmy.js';
+import { kartaZUzytkownika, minDniDlaPrzetargu } from './kartaFirmy.js';
 
 /*
  * Twarde reguły karty firmy (spec §4.3) — bez AI i bez kosztu. Odrzucenie jest
@@ -88,11 +88,13 @@ export function sprawdzReguly(user, tender, teraz) {
   const termin = Date.parse(tender?.deadline ?? '');
   if (Number.isFinite(termin)) {
     const dni = (termin - Date.parse(teraz)) / DOBA_MS;
-    if (dni < karta.min_dni_oferta) {
+    // Zapytania ofertowe spoza ustawy przy domyślnej karcie: 3 dni zamiast 5 (`minDniDlaPrzetargu`).
+    const potrzeba = minDniDlaPrzetargu(karta, tender);
+    if (dni < potrzeba) {
       const zostalo = Math.max(0, Math.floor(dni));
       return { przyczyna: 'termin', szczegol: {
-        pl: `Do terminu ofert zostało ${zostalo} dni, a potrzebujesz co najmniej ${karta.min_dni_oferta}.`,
-        en: `${zostalo} days left to bid, and you need at least ${karta.min_dni_oferta}.`,
+        pl: `Do terminu ofert zostało ${zostalo} dni, a potrzebujesz co najmniej ${potrzeba}.`,
+        en: `${zostalo} days left to bid, and you need at least ${potrzeba}.`,
       } };
     }
   }
