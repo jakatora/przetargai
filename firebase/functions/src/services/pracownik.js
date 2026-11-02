@@ -12,7 +12,8 @@ import {
   AI_PREFILTER_MIN, AI_CALLS_PER_DAY, CANDIDATE_HEAD, OKNO_KANDYDATOW, MAKS_PRZEJRZANYCH,
 } from '../lib/limityAi.js';
 import { users, tenders, matches, evaluations, aiQuota, dziennik, warunkiQuota, backfillCooldown } from '../db/repos.js';
-import { ocenDlaKlienta, porownajWarunki } from './ai.js';
+import { ocenDlaKlienta, porownajWarunki, zaproponujProfil } from './ai.js';
+import { czasNaSugestie, opisDlaSugestii, noweZSugestii, DNI_BEZ_DOPASOWAN } from '../lib/sugestiaProfilu.js';
 import { backfillUser, generateMatchesForAllUsers } from './matching.js';
 import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from './platformaZakupowa.js';
@@ -72,6 +73,27 @@ async function odpadaNaWarunkach(user, tenderId, { porownaj, teraz, wersja }) {
 }
 
 /**
+ * Konto bez dopasowań od 30 dni (lib/sugestiaProfilu.js): AI podpowiada profil z katalogu kodów, pula liczy, ile
+ * otwartych przetargów by pasowało, a zapis na koncie staje się propozycją w panelu („Przyjmij”). AI zwróciło null
+ * (wyłączone, limit budżetu, błąd) — nic nie zapisujemy, kolejny przebieg spróbuje znowu (bez kosztu).
+ */
+export async function rozwazSugestieProfilu(user, pool, { teraz, zaproponuj = zaproponujProfil, prog = env.MATCH_CONFIDENCE_THRESHOLD } = {}) {
+  if (!czasNaSugestie(user, teraz)) return null;
+  if (await matches.countSince(user.id, new Date(Date.parse(teraz) - DNI_BEZ_DOPASOWAN * 86_400_000).toISOString()) > 0) return null;
+  const sugestia = await zaproponuj(opisDlaSugestii(user), { userId: user.id });
+  if (!sugestia) return null;
+  const nowe = noweZSugestii(user, sugestia);
+  const profil = { keywords: [...(user.keywords ?? []), ...nowe.keywords], cpv_codes: [...(user.cpv_codes ?? []), ...nowe.cpv] };
+  const pasuja = nowe.keywords.length || nowe.cpv.length ? pool.filter((t) => heuristicScore(profil, t).score >= prog) : [];
+  const zapis = {
+    ...nowe, w_puli: pasuja.length, przyklady: pasuja.slice(0, 3).map((t) => String(t.title ?? '').slice(0, 160)),
+    dla_wersji: wersjaKarty(user), o: teraz,
+  };
+  await users.zapiszSugestieProfilu(user.id, zapis);
+  return zapis;
+}
+
+/**
  * Jeden przebieg selekcji dla jednego klienta.
  * @param {object} user dokument użytkownika (z kartą i sygnałami)
  * @param {object[]} pool otwarte przetargi (POLA_PULI) — czytane RAZ dla wszystkich
@@ -82,7 +104,7 @@ async function odpadaNaWarunkach(user, tenderId, { porownaj, teraz, wersja }) {
 export async function pracujDlaUzytkownika(user, pool, {
   teraz = nowIso(), ocen = ocenDlaKlienta, porownaj = porownajWarunki, stanAi = { kolejneBledy: 0 }, budzetMs = Infinity,
   szczegolPz = pobierzSzczegolPzDomyslnie, budzetSzczegolowPz = { pozostalo: MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG }, kryteriaSwz = daneZSwzPz,
-  dokumentyEz = pobierzDokumentyEzDomyslnie, budzetDokumentowEz = { pozostalo: MAKS_DOKUMENTOW_EZ_NA_PRZEBIEG },
+  dokumentyEz = pobierzDokumentyEzDomyslnie, budzetDokumentowEz = { pozostalo: MAKS_DOKUMENTOW_EZ_NA_PRZEBIEG }, zaproponuj = zaproponujProfil,
 } = {}) {
   const koniec = Date.now() + budzetMs;
   const poCzasie = () => Date.now() >= koniec;
@@ -249,6 +271,10 @@ export async function pracujDlaUzytkownika(user, pool, {
     }
   }
 
+  if (!wynik.wybrane) {
+    await rozwazSugestieProfilu(user, pool, { teraz, zaproponuj })
+      .catch((err) => logger.warn({ err: err.message, userId: user.id }, 'Podpowiedź profilu dla konta bez dopasowań nie powiodła się'));
+  }
   await dziennik.dopisz(user.id, dobaWarszawska(teraz), {
     przejrzane: wynik.przejrzane, wybrane: wynik.wybrane, oczekuje: wynik.oczekuje,
     odrzucone: wynik.odrzucone, aiWywolan: wynik.aiCalls, teraz,

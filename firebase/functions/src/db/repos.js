@@ -142,6 +142,11 @@ export const users = {
     return this.findById(id);
   },
 
+  /** Podpowiedź profilu dla konta bez dopasowań (lib/sugestiaProfilu.js) — propozycja w panelu. */
+  async zapiszSugestieProfilu(id, sugestia) {
+    await db().collection('users').doc(id).update({ profil_sugestia: sugestia });
+  },
+
   /** Nazwa firmy z rejestru — tylko gdy konto jej nie ma (nie nadpisuje tego, co wpisał klient). */
   async uzupelnijNazweFirmy(id, nazwa) {
     const ref = db().collection('users').doc(id);

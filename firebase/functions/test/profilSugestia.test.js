@@ -13,13 +13,22 @@ import { parsujSugestie, buildProfilPrompt } from '../src/lib/profilSugestia.js'
 
 const DOBRA = JSON.stringify({
   keywords: ['kostka brukowa', 'układanie chodników', 'roboty drogowe'],
-  cpv: ['45233222-1', '45233200-1'],
+  cpv: ['45233140-2', '45230000'],
 });
 
 test('parsuje słowa i CPV z poprawnego JSON', () => {
   const s = parsujSugestie(DOBRA);
   assert.deepEqual(s.keywords, ['kostka brukowa', 'układanie chodników', 'roboty drogowe']);
-  assert.deepEqual(s.cpv, ['45233222', '45233200'], 'CPV do 8 cyfr, bez sufiksu kontrolnego');
+  assert.deepEqual(s.cpv, ['45233140', '45230000'], 'CPV do 8 cyfr, bez sufiksu kontrolnego');
+});
+
+test('kody spoza katalogu pickera odrzucone, frazy dłuższe niż 3 wyrazy też (2026-11-02: zmyślone kody dla posadzek)', () => {
+  const s = parsujSugestie(JSON.stringify({
+    keywords: ['posadzka żywiczna', 'układanie posadzki żywicznej w halach', 'chodnik'],
+    cpv: ['45262000', '45261000', '45430000-0', '90910000'],
+  }));
+  assert.deepEqual(s.keywords, ['posadzka żywiczna', 'chodnik']);
+  assert.deepEqual(s.cpv, ['45430000', '90910000']);
 });
 
 test('wyłuskuje JSON otoczony prozą modelu', () => {
@@ -48,14 +57,15 @@ test('śmieci / brak JSON → puste listy (nie wywala się)', () => {
 
 // ---------------- buildProfilPrompt ----------------
 
-test('prompt niesie opis firmy i prosi o JSON', () => {
+test('prompt niesie opis firmy, katalog kodów pickera i prosi o JSON', () => {
   const p = buildProfilPrompt('Kładę kostkę brukową i buduję ogrodzenia');
   assert.match(p, /kostkę brukową/);
   assert.match(p, /CPV/);
   assert.match(p, /keywords/);
+  assert.match(p, /<katalog>[\s\S]*45430000 Podłogi i okładziny ścian[\s\S]*<\/katalog>/);
 });
 
 test('prompt obcina zbyt długi opis (obrona przed nadużyciem)', () => {
   const p = buildProfilPrompt('x'.repeat(5000));
-  assert.ok(p.length < 3000, 'opis przycięty');
+  assert.equal(p.match(/<opis>\n(x*)\n<\/opis>/)[1].length, 600, 'opis przycięty');
 });

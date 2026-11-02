@@ -5,7 +5,7 @@ process.env.ANTHROPIC_API_KEY = ''; // features.ai = false → heurystyka decydu
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { users, tenders, matches, evaluations, dziennik } = await import('../src/db/repos.js');
-const { pracujDlaUzytkownika } = await import('../src/services/pracownik.js');
+const { pracujDlaUzytkownika, rozwazSugestieProfilu } = await import('../src/services/pracownik.js');
 const { dobaWarszawska } = await import('../src/lib/czasPolski.js');
 
 const PUSTE_FORMALNE = { obrot_roczny: null, referencja_kwota: null, referencja_opis: null, uprawnienia: [] };
@@ -92,4 +92,28 @@ test('odrzucenie „termin” nie jest wieczne: po PRZEDŁUŻENIU terminu przez 
   const w3 = await pracujDlaUzytkownika(await users.findById(u.id), [przedluzony], { teraz: teraz() });
   assert.deepEqual([w3.wybrane, w3.odrzucone.termin], [1, 0], 'przedłużony termin → ocena od nowa → wybrany');
   assert.equal((await evaluations.pobierz(u.id, krotki.id)).decyzja, 'wybrany');
+});
+
+test('konto bez dopasowań od miesiąca: AI podpowiada profil RAZ na 14 dni, pula liczy dowód, propozycja na koncie', async () => {
+  const u = await users.create({ email: `prs${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['Remont posadzka żywica'] });
+  const posadzka = await przetarg('Wykonanie posadzki w hali sportowej', { cpvMain: '45432100' });
+  const inny = await przetarg('Dostawa paliwa', { cpvMain: '09130000' });
+  const zaDni = (n) => new Date(Date.now() + n * 86_400_000).toISOString();
+  const wolania = [];
+  const zaproponuj = async (opis) => { wolania.push(opis); return { keywords: ['posadzka'], cpv: ['45430000'] }; };
+
+  const w = await pracujDlaUzytkownika(await users.findById(u.id), [posadzka, inny], { teraz: zaDni(3), zaproponuj });
+  assert.equal(w.wybrane, 0);
+  assert.deepEqual(wolania, ['Słowa: Remont posadzka żywica']);
+  const s = (await users.findById(u.id)).profil_sugestia;
+  assert.deepEqual([s.keywords, s.cpv, s.w_puli, s.przyklady], [['posadzka'], ['45430000'], 1, ['Wykonanie posadzki w hali sportowej']]);
+
+  await pracujDlaUzytkownika(await users.findById(u.id), [posadzka, inny], { teraz: zaDni(4), zaproponuj });
+  assert.equal(wolania.length, 1, 'drugi przebieg w ciągu 14 dni — bez AI');
+
+  const zDopasowaniem = await users.create({ email: `prs${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['x'] });
+  await matches.create({ userId: zDopasowaniem.id, tenderId: inny.id, score: 80, tender: inny });
+  assert.equal(await rozwazSugestieProfilu(await users.findById(zDopasowaniem.id), [posadzka], { teraz: zaDni(3), zaproponuj }), null);
+  assert.equal(wolania.length, 1, 'konto z dopasowaniem — bez AI');
+  assert.equal(await rozwazSugestieProfilu(await users.findById(u.id), [posadzka], { teraz: zaDni(30), zaproponuj: async () => null }), null, 'AI bez odpowiedzi — nic nie zapisujemy');
 });

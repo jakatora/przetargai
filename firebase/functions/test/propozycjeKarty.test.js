@@ -108,3 +108,17 @@ test('kwoty: propozycja nie tworzy przedziału „od” > „do” (przegląd 20
   // „od” 900 tys. przy „do” 800 tys. — też nie.
   assert.deepEqual(propozycjeKarty({ wartosc_max: 800_000, pracownik_sygnaly: male }, TERAZ), []);
 });
+
+test('profil podpowiedziany dla konta bez dopasowań: propozycja z dowodem; znika po zmianie profilu albo bez pokrycia', async () => {
+  const { wersjaKarty } = await import('../src/lib/kartaFirmy.js');
+  const user = { keywords: ['Remont posadzka żywica'], cpv_codes: [] };
+  const sug = { keywords: ['posadzka żywiczna'], cpv: ['45430000'], w_puli: 126, przyklady: ['Wykonanie posadzki'], dla_wersji: wersjaKarty(user), o: TERAZ };
+  const [p] = propozycjeKarty({ ...user, profil_sugestia: sug }, TERAZ);
+  assert.equal(p.pole, 'profil');
+  assert.match(p.opis.pl, /Dopisać słowa: „posadzka żywiczna” i kod CPV: 45430000 \(Podłogi i okładziny ścian\)\? Wstępnie pasuje do tego dziś 126 przetargów/);
+  assert.deepEqual(p.dowody, ['Wykonanie posadzki']);
+  assert.equal(propozycjeKarty({ ...user, keywords: ['posadzka'], profil_sugestia: sug }, TERAZ).length, 0, 'klient sam zmienił profil');
+  assert.equal(propozycjeKarty({ ...user, profil_sugestia: { ...sug, w_puli: 0 } }, TERAZ).length, 0, 'nic by nie pasowało');
+  const z = zastosujPropozycje({ ...user, profil_sugestia: sug }, p);
+  assert.deepEqual([z.keywords, z.cpvCodes], [['Remont posadzka żywica', 'posadzka żywiczna'], ['45430000']]);
+});

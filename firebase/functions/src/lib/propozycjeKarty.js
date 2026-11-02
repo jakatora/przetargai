@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { normalize, stem } from './textNorm.js';
 import { kodWojewodztwa, WOJEWODZTWA } from './wojewodztwa.js';
-import { kartaZUzytkownika, formalnePuste, MIN_DNI_ZAPYTANIA } from './kartaFirmy.js';
+import { kartaZUzytkownika, formalnePuste, MIN_DNI_ZAPYTANIA, wersjaKarty } from './kartaFirmy.js';
+import { opisSugestii } from './sugestiaProfilu.js';
 
 /*
  * Propozycje zmian karty z odrzuceń klienta (spec §5.3) — bez AI. Twardych reguł nie
@@ -49,6 +50,14 @@ export function propozycjeKarty(user, teraz) {
   const karta = kartaZUzytkownika(user);
   const wynik = [];
   const dodaj = (p) => wynik.push({ ...p, klucz: kluczPropozycji(p.pole, p.nowa_wartosc) });
+
+  // Konto bez dopasowań od miesiąca — profil podpowiedziany przez AI (services/pracownik.rozwazSugestieProfilu);
+  // znika, gdy klient sam zmieni profil (inna wersja karty) albo gdy nic by nie pasowało.
+  const sug = user?.profil_sugestia;
+  if (sug?.w_puli > 0 && (sug.keywords?.length || sug.cpv?.length) && sug.dla_wersji === wersjaKarty(user)) {
+    dodaj({ pole: 'profil', nowa_wartosc: { keywords: sug.keywords ?? [], cpv: sug.cpv ?? [] }, akcja: 'zmien',
+      dowody: sug.przyklady ?? [], opis: opisSugestii(sug) });
+  }
 
   const branza = odrzucenia('branza');
   if (branza.length >= PROG_POWTORZEN && karta.wykluczenia.length < MAKS_WYKLUCZEN) {
@@ -166,6 +175,10 @@ export function zastosujPropozycje(user, propozycja) {
     case 'wartosc_max': zapis.wartoscMax = propozycja.nowa_wartosc; break;
     case 'wartosc_min': zapis.karta.wartosc_min = propozycja.nowa_wartosc; break;
     case 'min_dni_oferta': zapis.karta.min_dni_oferta = propozycja.nowa_wartosc; break;
+    case 'profil':
+      zapis.keywords = [...new Set([...zapis.keywords, ...(propozycja.nowa_wartosc.keywords ?? [])])].slice(0, 30);
+      zapis.cpvCodes = [...new Set([...zapis.cpvCodes, ...(propozycja.nowa_wartosc.cpv ?? [])])].slice(0, 30);
+      break;
     default: throw new Error(`Propozycji „${propozycja.pole}” nie stosuje się automatycznie`);
   }
   return zapis;
