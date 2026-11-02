@@ -82,8 +82,8 @@ export function subscriptionActiveEmail(companyName) {
 }
 
 // Cotygodniowy przegląd — treść w czystej `budujDigest` (testowana bez configu).
-export function weeklyDigestEmail({ companyName, liczba, tytuly, konkurenci = [], umowy = [], dokumenty = [], wyniki = [], podwykonawstwo = [] }) {
-  return budujDigest({ companyName, liczba, tytuly, konkurenci, umowy, dokumenty, wyniki, podwykonawstwo });
+export function weeklyDigestEmail({ companyName, liczba, tytuly, konkurenci = [], umowy = [], dokumenty = [], wyniki = [], podwykonawstwo = [], linkNip = null }) {
+  return budujDigest({ companyName, liczba, tytuly, konkurenci, umowy, dokumenty, wyniki, podwykonawstwo, linkNip });
 }
 
 // Reset hasła — token jako KOD do wpisania w apce (bez deep-linków). Jednorazowy, ważny 1 h.

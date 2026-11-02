@@ -52,7 +52,7 @@ export function skrotDokumentow(alert) {
 const opisKontraktu = (k) => [k.tytul, k.zamawiajacy, kwotaKrotko(k.kwota)].filter(Boolean).join(' · ');
 const ktoKontrakt = (k) => `${k.wykonawca.nazwa}${k.wykonawca.miasto ? ` (${k.wykonawca.miasto})` : ''}`;
 
-export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [], dokumenty = [], wyniki = [], podwykonawstwo = [] }) {
+export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konkurenci = [], umowy = [], dokumenty = [], wyniki = [], podwykonawstwo = [], linkNip = null }) {
   const n = Math.max(0, Math.floor(liczba));
   const rzeczownik = odmienPrzetargi(n);
   const subject = `Twój tygodniowy przegląd: ${n} ${rzeczownik}`;
@@ -104,7 +104,14 @@ export function budujDigest({ companyName = null, liczba = 0, tytuly = [], konku
   const podwykHtml = kontrakty.length
     ? `<p><b>Duże kontrakty</b> w Twojej branży i regionie — wykonawca może szukać podwykonawców:</p><ul>${kontrakty.map((k) => `<li><b>${esc(ktoKontrakt(k))}</b> — ${esc(opisKontraktu(k))}</li>`).join('')}</ul>`
     : '';
-  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${wynikiText}${dokumentyText}${konkurenciText}${umowyText}${podwykText}\n\n`
+  // „Podaj NIP” (2026-11-02, services/nipZMaila.js) — tylko konto bez NIP-u; jednorazowy link bez logowania.
+  const nipText = linkNip
+    ? `\n\nPodaj NIP firmy — 30 sekund, bez logowania: ${linkNip}\nDzięki niemu sami sprawdzimy, czy wygrałeś, które miejsce zajęła Twoja oferta po otwarciu ofert i kiedy kończą się Twoje umowy.`
+    : '';
+  const nipHtml = linkNip
+    ? `<p style="background:#eef4ff;padding:12px;border-radius:8px"><b>Podaj NIP firmy</b> — 30 sekund, bez logowania. Dzięki niemu sami sprawdzimy, czy wygrałeś, które miejsce zajęła Twoja oferta po otwarciu ofert i kiedy kończą się Twoje umowy. <a href="${esc(linkNip)}">Podaj NIP</a></p>`
+    : '';
+  const text = `Dzień dobry,\n\n${wstepText}${tytulyText}${wynikiText}${dokumentyText}${konkurenciText}${umowyText}${podwykText}${nipText}\n\n`
     + `Otwórz aplikację PrzetargAI, aby zobaczyć szczegóły i zdecydować, w które startujesz.\n\n`
     + `Zespół PrzetargAI\n\n`
     + `Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.`;
@@ -121,6 +128,7 @@ ${dokumentyHtml}
 ${konkurenciHtml}
 ${umowyHtml}
 ${podwykHtml}
+${nipHtml}
 <p>Otwórz aplikację <b>PrzetargAI</b>, aby zobaczyć szczegóły i zdecydować, w które startujesz.</p>
 <p>Zespół PrzetargAI</p>
 <p style="font-size:12px;color:#667085">Nie chcesz tego podsumowania? Odpisz na tę wiadomość, a wyłączymy je dla Twojego konta.</p>`;

@@ -142,6 +142,16 @@ export const users = {
     return this.findById(id);
   },
 
+  /** Nazwa firmy z rejestru — tylko gdy konto jej nie ma (nie nadpisuje tego, co wpisał klient). */
+  async uzupelnijNazweFirmy(id, nazwa) {
+    const ref = db().collection('users').doc(id);
+    await db().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists || String(snap.data().company_name ?? '').trim()) return;
+      tx.update(ref, { company_name: nazwa, updated_at: nowIso() });
+    });
+  },
+
   /** Konta z NIP-em firmy (alert o własnych kończących się umowach). Nierówność — indeks automatyczny. */
   async zNipem() {
     const snap = await db().collection('users').where('company_nip', '!=', null)

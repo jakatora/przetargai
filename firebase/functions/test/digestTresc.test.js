@@ -92,3 +92,12 @@ test('budujDigest: rozstrzygnięcia zapisanych przetargów przed dokumentami; be
   assert.match(d.html, /<li><b>Remont &lt;dachu&gt;<\/b> — Wygrał BUDREM/);
   assert.ok(!budujDigest({ liczba: 1 }).text.includes('Rozstrzygnięcia'));
 });
+
+test('budujDigest: „Podaj NIP” tylko z linkiem (konto bez NIP-u), link w tekście i w HTML', () => {
+  const link = 'https://api.example/maile/nip?token=abc&x=1';
+  const d = budujDigest({ liczba: 2, tytuly: ['A'], linkNip: link });
+  assert.match(d.text, /Podaj NIP firmy — 30 sekund, bez logowania: https:\/\/api\.example\/maile\/nip\?token=abc&x=1/);
+  assert.match(d.html, /<a href="https:\/\/api\.example\/maile\/nip\?token=abc&amp;x=1">Podaj NIP<\/a>/);
+  const bez = budujDigest({ liczba: 2, tytuly: ['A'] });
+  assert.doesNotMatch(bez.text + bez.html, /Podaj NIP/);
+});

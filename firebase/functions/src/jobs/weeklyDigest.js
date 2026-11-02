@@ -5,6 +5,7 @@ import { kluczeUmowUzytkownika, wybierzUmowy } from '../lib/umowyWygasajace.js';
 import { kluczeKonkurentowUzytkownika, twoiKonkurenci, wygraneKonkurentow, normNip } from '../lib/profilKonkurenta.js';
 import { sendEmail, weeklyDigestEmail } from '../services/email.js';
 import { duzeKontrakty, kontraktyDlaKonta, profilZDopasowan } from '../lib/podwykonawstwo.js';
+import { linkNipu } from '../services/nipZMaila.js';
 
 /**
  * Duże kontrakty z tygodnia (podwykonawstwo, 2026-11-01) — rozstrzygnięcia czytane RAZ na przebieg, nie per konto.
@@ -193,7 +194,11 @@ export async function runWeeklyDigest({ now = Date.now(), oknoDni = 7 } = {}) {
           logger.warn({ err: err.message, userId: user.id }, 'Przegląd: podwykonawstwo konta pominięte');
           return [];
         });
-        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy, dokumenty, wyniki, podwykonawstwo });
+        const linkNip = user.company_nip ? null : await linkNipu(user.id).catch((err) => {
+          logger.warn({ err: err.message, userId: user.id }, 'Przegląd: link „Podaj NIP” pominięty');
+          return null;
+        });
+        const tresc = weeklyDigestEmail({ companyName: user.company_name, liczba, tytuly, konkurenci, umowy, dokumenty, wyniki, podwykonawstwo, linkNip });
         wynik = await sendEmail({ to: user.email, ...tresc });
       } catch (err) {
         wynik = { sent: false, error: err.message };
