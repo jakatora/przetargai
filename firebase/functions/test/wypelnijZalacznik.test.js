@@ -104,3 +104,35 @@ test('odmiana liczby pól w temacie e-maila', async () => {
   const { liczbaPol } = await import('../src/lib/wypelnijZalacznik.js');
   assert.deepEqual([1, 2, 5, 12, 22, 25].map(liczbaPol), ['1 pole', '2 pola', '5 pól', '12 pól', '22 pola', '25 pól']);
 });
+
+test('tabela „etykieta | pusta komórka” (BK 295653): nazwa, adres, NIP, kontakt wpisane do pustych komórek; cena do ręcznego', () => {
+  const kom = (t) => `<w:tc><w:tcPr/>${t ? akapit(t) : '<w:p><w:pPr/></w:p>'}</w:tc>`;
+  const wiersz = (a, b) => `<w:tr>${kom(a)}${kom(b)}</w:tr>`;
+  const tabela = `<w:tbl>${wiersz('Nazwa*', '')}${wiersz('Adres*', '')}${wiersz('NIP*', '')}${wiersz('Dane kontaktowe: imię nazwisko, numer telefonu, e-mail*', '')}${wiersz('Cena netto*', '')}${wiersz('Uwagi', 'bez uwag')}</w:tbl>`;
+  const { plik, wypelnione, do_uzupelnienia } = wypelnijDocx(docx([akapit('Formularz ofertowy'), tabela]), DANE, { dzis: '2026-11-02' });
+  assert.deepEqual(wypelnione.map((w) => w.pole), ['nazwa', 'adres', 'nip', 'kontakt']);
+  const tekst = tekstWyniku(plik);
+  for (const oczekiwane of ['Budmax Sp. z o.o.', 'ul. Polna 3, 35-001 Rzeszów', '813-000-00-01', 'Jan Kowalski, tel. 600 100 200, biuro@budmax.pl']) assert.ok(tekst.includes(oczekiwane), oczekiwane);
+  assert.ok(do_uzupelnienia.some((d) => /Cena netto/.test(d.etykieta)), 'cena — wykonawca wpisuje sam');
+  assert.ok(tekst.includes('bez uwag'), 'komórka z treścią nietknięta');
+});
+
+test('podpis POD blokiem kropek (BK 295848): pola z podpisu po kolei na linie; „Miejscowość i data” pod linią', () => {
+  const { plik, wypelnione } = wypelnijDocx(docx([
+    akapit(KROPKI), akapit('Miejscowość i data'),
+    akapit('Oferent'), akapit(KROPKI), '<w:p><w:pPr/></w:p>', akapit(KROPKI), akapit(KROPKI), akapit('Nazwa i adres, telefon, e-mail Wykonawcy'),
+    akapit('Stowarzyszenie X, ul. Długa 1'),
+  ]), DANE, { dzis: '2026-11-02' });
+  const tekst = tekstWyniku(plik).filter((t) => t.trim());
+  assert.deepEqual(tekst.slice(0, 7), ['Rzeszów, 02.11.2026', 'Miejscowość i data', 'Oferent', 'Budmax Sp. z o.o.', 'ul. Polna 3, 35-001 Rzeszów',
+    'tel. 600 100 200, biuro@budmax.pl', 'Nazwa i adres, telefon, e-mail Wykonawcy']);
+  assert.equal(wypelnione.length, 4);
+});
+
+test('etykiety tabel z e-Zamówień: siedziba z miejscowością = adres; strona internetowa — nie adres firmy; KRS w podpisie bloku', () => {
+  assert.equal(poleDlaEtykiety('lub Siedziba (ulica, nr domu, kod pocztowy, miejscowość, województwo)'), 'adres');
+  assert.equal(poleDlaEtykiety('Strona internetowa (adres)'), null);
+  assert.equal(poleDlaEtykiety('Miejscowość'), 'miejscowosc');
+  const { wypelnione } = wypelnijDocx(docx([akapit(KROPKI), akapit('(pełna nazwa/firma, adres, w zależności od podmiotu: NIP/PESEL, KRS/CEiDG)'), akapit('reprezentowany przez:')]), DANE);
+  assert.equal(wypelnione[0].wartosc, 'Budmax Sp. z o.o., ul. Polna 3, 35-001 Rzeszów, 813-000-00-01, KRS 0000123456');
+});

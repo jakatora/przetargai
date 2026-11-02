@@ -162,11 +162,16 @@ const REGULY = [
 
 /** Pole dla etykiety (ostatnie trafienie wygrywa) albo null. „Zamawiający” za słowem kluczowym → pomiń. */
 export function poleDlaEtykiety(etykieta) {
-  const e = norm(etykieta).slice(-90);
+  // „Nazwa*”, „NIP*:” (formularze tabelaryczne Bazy Konkurencyjności, 2026-11-02) — gwiazdka obowiązkowości to nie treść.
+  const e = norm(etykieta).slice(-90).replace(/[\s*:]+$/, '');
   if (!e) return null;
-  // Sama etykieta „Wykonawca:” / „Dane Wykonawcy:” = nazwa. Gdy „Wykonawcy” tylko kończy dłuższą
+  // Sama etykieta „Wykonawca:” / „Dane Wykonawcy:” / „Oferent” = nazwa. Gdy „Wykonawcy” tylko kończy dłuższą
   // etykietę („Adres siedziby Wykonawcy:”, „adres e-mail Wykonawcy”), decyduje wcześniejsze słowo.
-  if (/^(dane\s+)?wykonawc\S*(\s*\/\s*wykonawc\S*)?\s*:?$/.test(e)) return 'nazwa';
+  if (/^(dane\s+)?(wykonawc|oferent)\S*(\s*\/\s*wykonawc\S*)?\s*:?$/.test(e)) return 'nazwa';
+  // „Dane kontaktowe: imię nazwisko, numer telefonu, e-mail” — jedno miejsce na osobę, telefon i e-mail.
+  if (/imie i nazwisko|osob\S* do kontakt|dane kontaktowe/.test(e) && /telefon/.test(e) && /e-?mail/.test(e)) return 'kontakt';
+  // „Strona internetowa (adres)” — adresu strony nie mamy w danych firmy; nie wpisujemy adresu siedziby.
+  if (/strona internetow|www|adres strony/.test(e)) return null;
   let najlepsze = null;
   for (const r of REGULY) {
     r.re.lastIndex = 0;
@@ -180,6 +185,8 @@ export function poleDlaEtykiety(etykieta) {
   if (/zamawiajac(ego|y)\b/.test(e.slice(najlepsze.poz)) && najlepsze.pole !== 'reczne') return 'pomin';
   // „(miejscowość, data)” pod linią kropek → jedno pole z obydwoma.
   if (/miejscowosc/.test(e) && /data/.test(e)) return 'miejscowosc_data';
+  // „Siedziba (ulica, nr domu, kod pocztowy, miejscowość…)” — miejscowość jest tu częścią adresu.
+  if (najlepsze.pole === 'miejscowosc' && /adres|siedzib|ulica|kod pocztowy/.test(e)) return 'adres';
   // „Nazwa i adres Wykonawcy” → oba w jednym miejscu.
   if ((najlepsze.pole === 'nazwa' || najlepsze.pole === 'adres') && /nazw/.test(e) && /adres|siedzib/.test(e) && !/e-?mail/.test(e)) return 'nazwa_adres';
   return najlepsze.pole;
@@ -194,15 +201,87 @@ function wartoscPola(pole, dane, dzis) {
   if (pole === 'data') return data;
   if (pole === 'miejscowosc_data') return d('miejscowosc') ? `${d('miejscowosc')}, ${data}` : '';
   if (pole === 'nazwa_adres') return d('nazwa') && d('adres') ? `${d('nazwa')}, ${d('adres')}` : '';
+  if (pole === 'kontakt') return [d('reprezentant'), d('telefon') && `tel. ${d('telefon')}`, d('email')].filter(Boolean).join(', ');
   if (POLA_DANYCH.includes(pole)) return d(pole);
+  if (String(pole).startsWith('lista:')) {
+    return pole.slice(6).split(',').map((x) => (x === 'telefon' && d('telefon') ? `tel. ${d('telefon')}` : wartoscPola(x, dane, dzis))).filter(Boolean).join(', ');
+  }
   return '';
 }
 
 const ETYKIETY_POL = {
   nazwa: 'nazwa wykonawcy', adres: 'adres', nip: 'NIP', regon: 'REGON', rejestr: 'KRS/CEIDG', reprezentant: 'osoba',
   stanowisko: 'stanowisko', email: 'e-mail', telefon: 'telefon', miejscowosc: 'miejscowość', data: 'data', miejscowosc_data: 'miejscowość i data',
-  nazwa_adres: 'nazwa i adres',
+  nazwa_adres: 'nazwa i adres', kontakt: 'osoba, telefon, e-mail',
 };
+
+/*
+ * PODPIS POD BLOKIEM KROPEK (2026-11-02, formularz BK 295848): „…… / …… / …… / Nazwa i adres, telefon, e-mail
+ * Wykonawcy” — opis stoi POD liniami, nie przed nimi. Pola z podpisu idą po kolei na linie bloku; ostatnia
+ * linia bierze resztę. Podpis liczy się tylko, gdy pod nim NIE ma kolejnej linii kropek (wtedy to etykieta
+ * następnego pola, jak dotąd).
+ */
+const POLA_PODPISU = [
+  ['nazwa', /nazw/], ['adres', /adres|siedzib/], ['nip', /\bnip\b/], ['regon', /regon/], ['telefon', /telefon|\btel\b/],
+  ['email', /e-?mail/], ['rejestr', /\bkrs\b|ceidg/], ['miejscowosc', /miejscowosc/], ['data', /\bdata\b/],
+];
+const samaKropkowa = (a) => Boolean(a?.tekst?.trim()) && miejscaDoWpisania(a.tekst).length > 0 && !norm(a.tekst.replace(/[._…]/g, ''));
+export function polaZPodpisuBloku(ak) {
+  const wynik = new Map();
+  // Puste akapity między liniami (odstępy w formularzu) nie przerywają bloku.
+  const idx = ak.map((_, i) => i).filter((i) => ak[i].tekst.trim());
+  for (let p = 0; p < idx.length; p++) {
+    if (!samaKropkowa(ak[idx[p]]) || (p > 0 && samaKropkowa(ak[idx[p - 1]]))) continue;
+    let q = p;
+    while (q + 1 < idx.length && samaKropkowa(ak[idx[q + 1]])) q++;
+    const podpis = ak[idx[q + 1]]?.tekst?.trim() ?? '';
+    const n = norm(podpis.replace(/^\(|\)$/g, ''));
+    const pola = POLA_PODPISU.filter(([, re]) => re.test(n)).sort((a, b) => n.search(a[1]) - n.search(b[1])).map(([pole]) => pole);
+    if (podpis && podpis.length <= 120 && !miejscaDoWpisania(podpis).length && !samaKropkowa(ak[idx[q + 2]])
+      && !/podpis|pieczec/.test(n) && pola.length > 1) {
+      const linie = idx.slice(p, q + 1);
+      linie.forEach((i, k) => {
+        const czesc = k < linie.length - 1 ? pola.slice(k, k + 1) : pola.slice(k);
+        if (czesc.length) wynik.set(i, { pole: `lista:${czesc.join(',')}`, etykieta: krotko(podpis) });
+      });
+    }
+    p = q;
+  }
+  return wynik;
+}
+
+/*
+ * TABELA „ETYKIETA | PUSTA KOMÓRKA” (2026-11-02, formularz BK 295653: „Nazwa* | ”, „NIP* | ”) — miejsca do wpisania
+ * nie ma w tekście, więc dotąd nic nie wypełnialiśmy. Wiersz bez tabel zagnieżdżonych; komórka z etykietą, za nią
+ * komórka bez tekstu → wartość wstawiona jako nowy run w pierwszym akapicie pustej komórki.
+ */
+export function pusteKomorki(xml) {
+  const wynik = [];
+  const reWiersz = /<w:tr[ >][\s\S]*?<\/w:tr>/g;
+  let w;
+  while ((w = reWiersz.exec(xml))) {
+    if (w[0].includes('<w:tbl')) continue;
+    const komorki = [];
+    const reKom = /<w:tc>[\s\S]*?<\/w:tc>|<w:tc [\s\S]*?<\/w:tc>/g;
+    let k;
+    while ((k = reKom.exec(w[0]))) {
+      const od = w.index + k.index;
+      const ak = akapity(k[0]).map((a) => ({ ...a, od: a.od + od, do: a.do + od }));
+      komorki.push({ tekst: ak.map((a) => a.tekst).join(' ').trim(), akapity: ak, xml: k[0], od });
+    }
+    for (let n = 0; n + 1 < komorki.length; n++) {
+      const etykieta = komorki[n].tekst;
+      const cel = komorki[n + 1];
+      if (!etykieta || cel.tekst || !cel.akapity.length) continue;
+      const pierwszy = cel.akapity[0];
+      const zamkniecie = xml.lastIndexOf('</w:p>', pierwszy.do);
+      if (zamkniecie < pierwszy.od) continue;
+      wynik.push({ etykieta, wstawW: zamkniecie });
+      n++;
+    }
+  }
+  return wynik;
+}
 const krotko = (s) => String(s ?? '').replace(/[._…]{3,}/g, '…').replace(/\s+/g, ' ').trim().slice(-70);
 
 /**
@@ -221,6 +300,7 @@ export function wypelnijDocx(buf, dane, { dzis = new Date().toISOString().slice(
   const wypelnione = [];
   const doUzupelnienia = [];
   const podmiany = [];
+  const zPodpisu = polaZPodpisuBloku(ak);
 
   ak.forEach((a, i) => {
     const miejsca = miejscaDoWpisania(a.tekst);
@@ -237,6 +317,7 @@ export function wypelnijDocx(buf, dane, { dzis = new Date().toISOString().slice(
       // Opis w nawiasie za kropkami jest dokładniejszy niż tekst przed nimi.
       const kandydaci = po.startsWith('(') ? [po.slice(1, po.indexOf(')') > 0 ? po.indexOf(')') : undefined), przed] : [przed];
       const samaLinia = !norm(a.tekst.slice(0, mj.od)) && !norm(a.tekst.slice(mj.do).replace(/^\s*\(.*\)\s*$/, ''));
+      if (samaLinia && zPodpisu.has(i)) return zPodpisu.get(i);
       if (samaLinia) {
         const poprzedni = ak.slice(0, i).reverse().find((x) => x.tekst.trim());
         // Linia kropek tuż pod inną linią do wypełnienia to jej ciąg dalszy — nie nowe pole.
@@ -268,7 +349,7 @@ export function wypelnijDocx(buf, dane, { dzis = new Date().toISOString().slice(
       }
       const wartosc = wartoscPola(pole, dane, dzis);
       if (!wartosc) {
-        doUzupelnieniaAkapitu.unshift({ etykieta: etykieta || ETYKIETY_POL[pole], powod: `brak „${ETYKIETY_POL[pole]}” w danych firmy` });
+        doUzupelnieniaAkapitu.unshift({ etykieta: etykieta || ETYKIETY_POL[pole], powod: `brak „${ETYKIETY_POL[pole] ?? etykieta}” w danych firmy` });
         continue;
       }
       const { od, do: koniec } = miejsca[k];
@@ -293,6 +374,16 @@ export function wypelnijDocx(buf, dane, { dzis = new Date().toISOString().slice(
       if (nowe[n] !== w.tekst) podmiany.push({ od: w.od, do: w.do, xml: `<w:t xml:space="preserve">${doXml(nowe[n])}</w:t>` });
     });
   });
+
+  for (const kom of pusteKomorki(xml)) {
+    const pole = poleDlaEtykiety(kom.etykieta);
+    if (!pole || pole === 'pomin') continue;
+    if (pole === 'reczne') { doUzupelnienia.push({ etykieta: krotko(kom.etykieta), powod: 'wpisz sam (cena, termin, liczby)' }); continue; }
+    const wartosc = wartoscPola(pole, dane, dzis);
+    if (!wartosc) { doUzupelnienia.push({ etykieta: krotko(kom.etykieta), powod: `brak „${ETYKIETY_POL[pole] ?? pole}” w danych firmy` }); continue; }
+    podmiany.push({ od: kom.wstawW, do: kom.wstawW, xml: `<w:r><w:t xml:space="preserve">${doXml(wartosc)}</w:t></w:r>` });
+    wypelnione.push({ pole, etykieta: krotko(kom.etykieta), wartosc });
+  }
 
   let wynikXml = xml;
   for (const p of podmiany.sort((x, y) => y.od - x.od)) wynikXml = wynikXml.slice(0, p.od) + p.xml + wynikXml.slice(p.do);
