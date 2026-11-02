@@ -140,3 +140,11 @@ test('matchKeywords — pusty profil lub pusty tekst daje pustą listę', () => 
 test('matchKeywords — nie duplikuje słowa trafionego wielokrotnie', () => {
   assert.deepEqual(matchKeywords(['droga'], 'Droga gminna i droga powiatowa'), ['droga']);
 });
+
+test('znane fałszywe przedłużenia rdzeni nie trafiają (2026-11-02): pracownik ≠ prace, ziemniaki ≠ ziemne, biegły ≠ biegi', () => {
+  assert.deepEqual(matchKeywords(['prace'], 'Zakup odzieży dla pracowników'), []);
+  assert.deepEqual(matchKeywords(['roboty ziemne'], 'Dostawa ziemniaków do stołówki'), []);
+  assert.deepEqual(matchKeywords(['biegi'], 'Badanie sprawozdania przez biegłego rewidenta'), []);
+  assert.deepEqual(matchKeywords(['roboty'], 'Dostawa odzieży robotniczej'), []);
+  assert.deepEqual(matchKeywords(['prace', 'biegi', 'wynajem', 'budowa'], 'Prace i roboty budowlane, wynajmu sprzętu na biegu'), ['prace', 'biegi', 'wynajem', 'budowa'], 'odmiany zostają');
+});

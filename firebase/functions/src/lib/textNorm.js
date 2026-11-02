@@ -73,9 +73,25 @@ function stemTokens(text) {
  * Dłuższe rdzenie dopuszczają dopasowanie prefiksowe ("drog" ⊂ "drogow"),
  * krótkie wymagają równości ("gaz" nie może trafiać w "gazet").
  */
+/*
+ * Znane FAŁSZYWE przedłużenia rdzeni (2026-11-02, pomiar na 17 455 otwartych tytułach × rdzenie 4–5 liter z profili):
+ * „prace” → „pracownik/pracowni” (356 trafień), „ziemne” → „ziemniaki” (24), „czas” → „cząstkowy/czasopismo”,
+ * „biegi” → „biegły (rewident)”, „roboty” → „robotnicza (odzież)/robotyczny”, „zawody” → „zawodzie”. To inne słowa,
+ * nie odmiana — reguła fonetyczna ich nie odróżnia (odcięłaby też „wynajem → wynajmu”, „budowa → budowlany”).
+ */
+const FALSZYWE_PRZEDLUZENIA = {
+  prac: ['pracown', 'pracodaw'],
+  ziemn: ['ziemniak', 'ziemniacz'],
+  czas: ['czastk', 'czastek', 'czasopism'],
+  bieg: ['biegl'],
+  robot: ['robotnicz', 'robotyczn', 'robotyk', 'robotyzac'],
+  zawod: ['zawodz'],
+};
+
 function hitsToken(keywordStem, tokenStems) {
   if (keywordStem.length >= MIN_PREFIX) {
-    return tokenStems.some((t) => t.startsWith(keywordStem));
+    const falszywe = FALSZYWE_PRZEDLUZENIA[keywordStem] ?? [];
+    return tokenStems.some((t) => t.startsWith(keywordStem) && !falszywe.some((f) => t.startsWith(f)));
   }
   return tokenStems.includes(keywordStem);
 }
