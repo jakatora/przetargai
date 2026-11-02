@@ -14,7 +14,7 @@ import { AppError, badRequest, conflict, notFound, serviceUnavailable, tooMany }
 import { features } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { zapytajModulPrzetargowy, wywolajModulPrzetargowy } from '../services/mostRailway.js';
-import { dokumentyPrzetargu, wybierzSwz, pobierzPdfBase64 } from '../jobs/autoAnalizaSwz.js';
+import { dokumentyDoAnalizy, wybierzSwz, pobierzPdfBase64 } from '../jobs/autoAnalizaSwz.js';
 import { pobierzDokumenty as pobierzDokumentyEz, idPostepowaniaEz } from '../services/eZamowieniaDokumenty.js';
 import { zbudujChecklisteOferty } from '../lib/checklistaOferty.js';
 import { zapiszPoAnalizieSwz } from '../services/zapisPoAnalizie.js';
@@ -148,12 +148,13 @@ const wejsciePytania = z.object({ pytanie: z.string().trim().min(3).max(500) });
 export const LIMIT_PYTAN_SWZ_DARMOWY = 3;
 
 async function postepowanieZTrescia(user, tender) {
-  let dokumenty = dokumentyPrzetargu(tender);
+  let dokumenty = await dokumentyDoAnalizy(tender).catch(() => []);
   if (!dokumenty.length && idPostepowaniaEz(tender)) {
     dokumenty = await pobierzDokumentyEz(idPostepowaniaEz(tender));
     await tenders.zapiszDokumentyEz(tender.id, dokumenty);
   }
-  const swz = wybierzSwz(dokumenty);
+  // `/tresc-pdf` przyjmuje tylko PDF — zapytanie ofertowe w .docx tu pomijamy (auto-analiza czyta je tekstem).
+  const swz = wybierzSwz(dokumenty.filter((d) => d.rozszerzenie === 'pdf'), { zrodlo: tender.source });
   if (!swz) throw conflict('W dokumentach tego przetargu nie ma SWZ w PDF. Otwórz Radar SWZ i wklej treść specyfikacji — wtedy odpowiemy.');
   let pdf;
   try {

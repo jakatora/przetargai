@@ -149,6 +149,23 @@ export function statusOgloszenia(json) {
   return tekst(wyodrebnijOgloszenie(json)?.status?.label);
 }
 
+/**
+ * Załączniki ogłoszenia (2026-11-02) — do auto-analizy i „Zapytaj SWZ” (jobs/autoAnalizaSwz.dokumentyDoAnalizy):
+ * „Zapytanie ofertowe” to odpowiednik SWZ. Pliki pod publicznym `/api/files/{id}` (sprawdzone 2.11 na 4 ogłoszeniach:
+ * HTTP 200, PDF z warstwą tekstową). `name` bywa bez rozszerzenia — format bierzemy z nazwy pliku.
+ */
+export function zalacznikiBk(json) {
+  const wersja = wyodrebnijWersje(json);
+  return (Array.isArray(wersja.attachments) ? wersja.attachments : []).filter((z) => z?.file?.uri).map((z) => {
+    const plik = tekst(z.file?.name) ?? tekst(z.name) ?? '';
+    return {
+      id: String(z.id ?? z.file.id), nazwa: tekst(z.name) ?? plik, plik,
+      rozszerzenie: (plik.match(/\.([a-z0-9]{1,5})$/i)?.[1] ?? '').toLowerCase() || null,
+      url: new URL(z.file.uri, `${API_BASE}/`).toString(), opublikowano: tekst(z.origin?.publication_date),
+    };
+  });
+}
+
 /** Publiczny link do ogłoszenia — ten sam adres, który widzi człowiek w portalu. */
 export function linkOgloszenia(id) {
   return `${PUBLIC_BASE}/ogloszenia/${id}`;

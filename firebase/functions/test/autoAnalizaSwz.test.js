@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { users, tenders, matches, powiazaniaSwz, autoSwz, alerty } = await import('../src/db/repos.js');
-const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, wybierzPrzedmiar, tekstDokumentu, tekstDuzejSwz } = await import('../src/jobs/autoAnalizaSwz.js');
+const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, wybierzPrzedmiar, tekstDokumentu, tekstDuzejSwz, dokumentyDoAnalizy } = await import('../src/jobs/autoAnalizaSwz.js');
 const { zbudujDocx } = await import('../src/lib/docx.js');
 
 /*
@@ -311,4 +311,56 @@ test('wynik modułu sprawdzany: 400 (PDF-skan) → bez powiązania; 429/503 → 
   assert.equal(w.bledy, 1);
   assert.equal((await autoSwz.pobierz(s3.id, zly.id)).status, 'blad');
   assert.equal(await powiazaniaSwz.pobierz(s3.id, zly.id), null);
+});
+
+test('zapytanie ofertowe (BK, platformazakupowa): „Zapytanie ofertowe….pdf” to główny dokument; erraty, odpowiedzi i załączniki — nie', () => {
+  const bk = (nazwa) => ({ nazwa, rozszerzenie: 'pdf', url: `https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl/api/files/${nazwa.length}` });
+  const docs = [bk('Zapytanie ofertowe-lampy wewnętrzne-Errata do ogłoszenia.pdf'), bk('Załącznik nr 1 do zapytania ofertowego.pdf'),
+    bk('Odpowiedzi na pytania do zapytania.pdf'), bk('Zapytanie ofertowe-lampy wewnętrzne.pdf')];
+  assert.equal(wybierzSwz(docs, { zrodlo: 'baza_konkurencyjnosci' }).nazwa, 'Zapytanie ofertowe-lampy wewnętrzne.pdf');
+  assert.equal(wybierzSwz(docs), null, 'bez źródła zapytań — tylko SWZ');
+  const pz = { nazwa: 'Zapytanie ofertowe.pdf', rozszerzenie: 'pdf', url: 'https://platformazakupowa.pl/file/get_new/zo.pdf' };
+  assert.equal(wybierzSwz([pz], { zrodlo: 'platformazakupowa' }).nazwa, 'Zapytanie ofertowe.pdf');
+  assert.equal(wybierzSwz([pz], { zrodlo: 'bzp' }), null);
+  const word = { ...bk('Zapytanie ofertowe 2.0_remont pomieszczeń.pdf'), nazwa: 'Zapytanie ofertowe 2.0_remont pomieszczeń.docx', rozszerzenie: 'docx' };
+  assert.equal(wybierzSwz([word], { zrodlo: 'baza_konkurencyjnosci' }).rozszerzenie, 'docx', 'tylko Word — bierzemy Worda');
+  assert.equal(wybierzSwz([word, docs[3]], { zrodlo: 'baza_konkurencyjnosci' }).rozszerzenie, 'pdf', 'PDF przed Wordem');
+});
+
+test('dokumentyDoAnalizy: BK — załączniki ze szczegółu ogłoszenia (id bez prefiksu); inne źródła bez żądania', async () => {
+  const { default: fixture } = await import('./fixtures/bk-szczegol-292028.json', { with: { type: 'json' } });
+  const pytane = [];
+  const d = await dokumentyDoAnalizy({ id: 'bk:292028', source: 'baza_konkurencyjnosci' }, { szczegolBk: async (id) => { pytane.push(id); return fixture; } });
+  assert.deepEqual(pytane, ['292028']);
+  assert.equal(d.length, 3);
+  assert.equal(d[0].url, 'https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl/api/files/3080166');
+  assert.equal(wybierzSwz(d, { zrodlo: 'baza_konkurencyjnosci' }).plik, "ZO'PB3'03-Zapytanie-Wynajem+catering-LSOS2026.pdf");
+  assert.deepEqual(await dokumentyDoAnalizy({ source: 'bzp', ez_dokumenty: [{ id: 'x' }] }, { szczegolBk: async () => { throw new Error('nie wolno'); } }), [{ id: 'x' }]);
+});
+
+test('przebieg: zapytanie z Bazy Konkurencyjności → załączniki ze szczegółu, analiza zapytania ofertowego', async () => {
+  const { default: fixture } = await import('./fixtures/bk-szczegol-292028.json', { with: { type: 'json' } });
+  const s = await klient();
+  const { tender } = await tenders.upsert({ externalId: `bk:aswz${ZNAK}${++seq}`, title: `Wynajem sali ${seq}`, organization: 'Fundacja', deadline: '2099-01-01T00:00:00.000Z', source: 'baza_konkurencyjnosci' });
+  await matches.createWithEvaluation({ userId: s.id, tenderId: tender.id, score: 80, reasoning: 'sala', tender });
+  const wyw = [];
+  const pobrane = [];
+  const w = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul: modulOk(wyw),
+    pobierzPdf: async (url) => { pobrane.push(url); return 'JVBERi0xLjcK'; }, szczegolBk: async () => fixture, czytajDokument: async () => null });
+  assert.equal(w.gotowe, 1);
+  assert.deepEqual(pobrane, ['https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl/api/files/3080166']);
+  assert.equal((await powiazaniaSwz.pobierz(s.id, tender.id)).postepowanie_id, 'p1');
+
+  // Zapytanie tylko w .docx → tekst czytany tutaj, backend dostaje `swz`, bez pobierania PDF-a.
+  const s2 = await klient();
+  const { tender: t2 } = await tenders.upsert({ externalId: `bk:aswz${ZNAK}${++seq}`, title: `Remont ${seq}`, organization: 'Szkoła', deadline: '2099-01-01T00:00:00.000Z', source: 'baza_konkurencyjnosci' });
+  await matches.createWithEvaluation({ userId: s2.id, tenderId: t2.id, score: 80, reasoning: 'remont', tender: t2 });
+  const tylkoWord = { data: { advertisement: { attachments: [{ id: 1, name: 'Zapytanie ofertowe 2.0_remont pomieszczeń', file: { id: 9, name: 'Zapytanie ofertowe 2.0_remont pomieszczeń.docx', uri: '/api/files/9' } }] } } };
+  const wyw2 = [];
+  const w2 = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s2], modul: modulOk(wyw2),
+    pobierzPdf: async () => { throw new Error('PDF nie powinien być pobierany'); }, szczegolBk: async () => tylkoWord,
+    czytajDokument: async (d) => (d.rozszerzenie === 'docx' ? '§ 1. Przedmiot zapytania' : null) });
+  assert.equal(w2.gotowe, 1);
+  assert.equal(wyw2[1].dane.swz, '§ 1. Przedmiot zapytania');
+  assert.equal('swz_pdf_base64' in wyw2[1].dane, false);
 });

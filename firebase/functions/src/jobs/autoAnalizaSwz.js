@@ -6,6 +6,7 @@ import { users, matches, tenders, powiazaniaSwz, autoSwz, alerty } from '../db/r
 import { terminPytan } from '../lib/przypomnieniePytan.js';
 import { czySwz } from '../services/eZamowieniaDokumenty.js';
 import { wywolajModulPrzetargowy } from '../services/mostRailway.js';
+import { pobierzSzczegolBk, zalacznikiBk, ZRODLO as ZRODLO_BK } from '../services/bazaKonkurencyjnosci.js';
 import { liniePdf } from '../services/tekstPdf.js';
 import { czytajDocx } from '../lib/kontrolaPlikowOferty.js';
 
@@ -46,9 +47,14 @@ export const LIMIT_ANALIZY_MS = 240_000;
  * Źródła plików (2026-10-29): e-Zamówienia (BZP) i platformazakupowa.pl — tam załączniki z publicznymi
  * linkami ma szczegół pobrany przez selekcję (`pz_szczegol.zalaczniki`; sonda: 23 z 40 ma SWZ w PDF).
  * Adres pliku pochodzi z cudzej strony, więc pobieramy WYŁĄCZNIE z tych domen.
+ * Baza Konkurencyjności (2026-11-02): od progu 3 dni dla zapytań (5e8c234) selekcja wybiera ich więcej (16:10 — 6),
+ * a bez tego zostawały bez analizy; załączniki ze szczegółu ogłoszenia (`dokumentyDoAnalizy`).
  */
-export const DOZWOLONE_HOSTY = /^https:\/\/([a-z0-9-]+\.)*(ezamowienia\.gov\.pl|platformazakupowa\.pl)\//i;
-export const ZRODLA_AUTO_SWZ = new Set(['bzp', 'ted', 'platformazakupowa']);
+export const DOZWOLONE_HOSTY = /^https:\/\/([a-z0-9-]+\.)*(ezamowienia\.gov\.pl|platformazakupowa\.pl|bazakonkurencyjnosci\.funduszeeuropejskie\.gov\.pl)\//i;
+export const ZRODLA_AUTO_SWZ = new Set(['bzp', 'ted', 'platformazakupowa', ZRODLO_BK]);
+// Zapytanie ofertowe (BK, platformazakupowa spoza Pzp) nie ma SWZ — jej rolę gra „Zapytanie ofertowe….pdf”.
+const ZRODLA_ZAPYTAN = new Set(['platformazakupowa', ZRODLO_BK]);
+const NIE_GLOWNY = /errata|korekt|sprostowan|wyja[sś]nien|odpowied|zmian|\bpytani/i;
 
 /** Dokumenty przetargu w jednym kształcie (`nazwa`, `plik`, `rozszerzenie`, `url`, `rozmiar_kb?`). */
 export function dokumentyPrzetargu(tender) {
@@ -64,13 +70,33 @@ export function dokumentyPrzetargu(tender) {
   return [];
 }
 
+/** Jak `dokumentyPrzetargu`, a dla Bazy Konkurencyjności — załączniki ze szczegółu ogłoszenia (jedno żądanie). */
+export async function dokumentyDoAnalizy(tender, { szczegolBk = pobierzSzczegolBk } = {}) {
+  if (tender?.source !== ZRODLO_BK) return dokumentyPrzetargu(tender);
+  return zalacznikiBk(await szczegolBk(String(tender.id ?? '').replace(/^bk[:_]/, '')));
+}
+
 const SWZ_UJEDNOLICONA = /po\s*zmian|ujednolicon|jednolit|zmienion\w*\s+(swz|siwz|specyfikacj)|(swz|siwz)\s*[-–_]?\s*zmienion|aktualn\w*\s+(swz|siwz|wersj)/i;
 const PISMO_O_ZMIANIE = /^\s*(zmiana|zmiany|informacja|wyja[sś]nieni|pismo|modyfikacj|odpowied)/i;
 
-/** Najlepszy kandydat na SWZ: PDF z SWZ/specyfikacją, najpierw NIE „Załącznik… do SWZ”. */
-export function wybierzSwz(dokumenty) {
-  const kandydaci = (Array.isArray(dokumenty) ? dokumenty : []).filter((d) => d?.url && DOZWOLONE_HOSTY.test(d.url) && czySwz(d)
-    && !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_DUZEJ_SWZ));
+/**
+ * Główny dokument zapytania ofertowego: PDF albo .docx z „zapytanie” w nazwie, bez errat, korekt, odpowiedzi i zmian
+ * (BK 295848: „Zapytanie ofertowe 2.0_remont pomieszczeń.docx” — tylko Word). Przy obu formatach wygrywa PDF.
+ */
+function czyZapytanie(d) {
+  const opis = `${d?.nazwa ?? ''} ${d?.plik ?? ''}`;
+  return ['pdf', 'docx'].includes(d?.rozszerzenie) && /zapytani/i.test(opis) && !NIE_GLOWNY.test(opis);
+}
+
+/**
+ * Najlepszy kandydat na SWZ: PDF z SWZ/specyfikacją, najpierw NIE „Załącznik… do SWZ”.
+ * @param {{zrodlo?: string}} [opcje] źródło przetargu — przy zapytaniach ofertowych także „Zapytanie ofertowe….pdf”
+ */
+export function wybierzSwz(dokumenty, { zrodlo = null } = {}) {
+  const glowny = (d) => czySwz(d) || (ZRODLA_ZAPYTAN.has(zrodlo) && czyZapytanie(d));
+  const kandydaci = (Array.isArray(dokumenty) ? dokumenty : []).filter((d) => d?.url && DOZWOLONE_HOSTY.test(d.url) && glowny(d)
+    && !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_DUZEJ_SWZ))
+    .sort((a, b) => Number(a.rozszerzenie !== 'pdf') - Number(b.rozszerzenie !== 'pdf'));
   const zalacznik = (d) => /za[lł][aą]cznik/i.test(`${d.nazwa ?? ''} ${d.plik ?? ''}`);
   const maly = (d) => !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_PDF);
   // Wersja ujednolicona po zmianach (2026-11-02, 2026/BZP 00508332: analiza wzięła skan „SWZ” z 29.10, a obok była
@@ -164,12 +190,18 @@ export async function analizujDlaKlienta(user, tender, swz, {
 } = {}) {
   let pdf = null;
   let swzTekstem = null;
-  try {
-    pdf = await pobierzPdf(swz.url);
-  } catch (err) {
-    if (!err.zaDuzy) throw err;
-    swzTekstem = await czytajDuzaSwz(swz);
-    if (!swzTekstem) return { status: 'nieczytelny_pdf', blad: `${err.message}; tekstu nie da się odczytać` };
+  if (swz.rozszerzenie === 'docx') {
+    // Zapytanie ofertowe tylko w Wordzie — tekst stąd, backend dostaje `swz` jak przy dużej SWZ.
+    swzTekstem = await czytajDokument(swz, { etykieta: 'zapytania ofertowego' });
+    if (!swzTekstem) return { status: 'nieczytelny_pdf', blad: 'Zapytanie ofertowe w .docx bez tekstu' };
+  } else {
+    try {
+      pdf = await pobierzPdf(swz.url);
+    } catch (err) {
+      if (!err.zaDuzy) throw err;
+      swzTekstem = await czytajDuzaSwz(swz);
+      if (!swzTekstem) return { status: 'nieczytelny_pdf', blad: `${err.message}; tekstu nie da się odczytać` };
+    }
   }
   const czytaj = (dok, etykieta) => (dok ? czytajDokument(dok, { etykieta }).catch((err) => {
     logger.warn({ err: err.message, tender: tender.id }, `Auto-SWZ: ${etykieta} nie został odczytany — analiza bez niego`);
@@ -258,7 +290,7 @@ export function alertAnalizy(tender, liczbaPytan, teraz) {
 export async function runAutoAnalizaSwz({
   teraz = nowIso(), maksNaPrzebieg = MAKS_NA_PRZEBIEG, maksNaKlientaDobe = MAKS_NA_KLIENTA_DOBE,
   wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, czytajDokument = tekstDokumentu,
-  czytajDuzaSwz = tekstDuzejSwz, budzetMs = 480_000,
+  czytajDuzaSwz = tekstDuzejSwz, szczegolBk = pobierzSzczegolBk, budzetMs = 480_000,
 } = {}) {
   const start = Date.now();
   const wynik = { ok: true, klienci: 0, kandydaci: 0, analizy: 0, gotowe: 0, bez_analizy: 0, nieczytelne: 0, bledy: 0, naprawione: 0, pominiete_limit: 0, przerwane_budzetem: false };
@@ -286,8 +318,11 @@ export async function runAutoAnalizaSwz({
         if (await autoSwz.pobierz(user.id, m.tender_id)) continue;
         if (await powiazaniaSwz.pobierz(user.id, m.tender_id)) continue;
         const tender = await tenders.findById(m.tender_id);
-        const dokumenty = dokumentyPrzetargu(tender);
-        const swz = wybierzSwz(dokumenty);
+        const dokumenty = await dokumentyDoAnalizy(tender, { szczegolBk }).catch((err) => {
+          logger.warn({ err: err.message, tender: tender.id }, 'Auto-SWZ: lista dokumentów niedostępna — przetarg pominięty w tym przebiegu');
+          return [];
+        });
+        const swz = wybierzSwz(dokumenty, { zrodlo: tender.source });
         if (!swz) continue;
         wynik.kandydaci++;
         // Zajęcie PRZED płatnym wywołaniem — create() w transakcji: druga instancja dostaje false.
