@@ -8,6 +8,7 @@ test('wypełniamy tylko .docx z e-Zamówień i platformazakupowa.pl', () => {
   const url = 'https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/a/a_1';
   assert.equal(czyMoznaWypelnic({ url, rozszerzenie: 'docx' }), true);
   assert.equal(czyMoznaWypelnic({ url, plik: 'Formularz ofertowy.DOCX' }), true);
+  assert.equal(czyMoznaWypelnic({ url: 'https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl/api/files/3080167', rozszerzenie: 'docx' }), true, 'formularz z Bazy Konkurencyjności');
   assert.equal(czyMoznaWypelnic({ url, rozszerzenie: 'doc' }), false);
   assert.equal(czyMoznaWypelnic({ url, rozszerzenie: 'pdf' }), false);
   assert.equal(czyMoznaWypelnic({ url: 'https://evil.example/f.docx', rozszerzenie: 'docx' }), false);

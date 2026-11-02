@@ -23,7 +23,8 @@ export function liczbaPol(n) {
   const d = n % 100;
   return `${n} ${j >= 2 && j <= 4 && !(d >= 12 && d <= 14) ? 'pola' : 'pól'}`;
 }
-const HOST_ZALACZNIKA = /^https:\/\/([a-z0-9-]+\.)*(ezamowienia\.gov\.pl|platformazakupowa\.pl)\//i;
+// Baza Konkurencyjności (2026-11-02): formularze ofertowe zapytań w .docx pod publicznym /api/files/{id}.
+const HOST_ZALACZNIKA = /^https:\/\/([a-z0-9-]+\.)*(ezamowienia\.gov\.pl|platformazakupowa\.pl|bazakonkurencyjnosci\.funduszeeuropejskie\.gov\.pl)\//i;
 const MAKS_PRZEKIEROWAN = 3;
 
 /**
@@ -35,7 +36,7 @@ export async function pobierzZalacznik(url, { fetchFn = fetch, limitMs = 20_000 
   const blad = (status, komunikat) => Object.assign(new Error(komunikat), { status });
   let adres = String(url ?? '');
   for (let skok = 0; skok <= MAKS_PRZEKIEROWAN; skok++) {
-    if (!HOST_ZALACZNIKA.test(adres)) throw blad(400, 'Wypełniamy tylko załączniki z e-Zamówień i platformazakupowa.pl.');
+    if (!HOST_ZALACZNIKA.test(adres)) throw blad(400, 'Wypełniamy tylko załączniki z e-Zamówień, platformazakupowa.pl i Bazy Konkurencyjności.');
     let res;
     try {
       res = await fetchFn(adres, {

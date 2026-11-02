@@ -16,14 +16,16 @@ import { swzZZalacznikow, parametryRadaruZPlatformy } from '../lib/zalacznikiPla
  * plik sam — użytkownik nie szuka specyfikacji i nic nie wgrywa. Postępowanie prowadzone poza
  * platformą = pusta lista (SWZ jest wtedy na stronie zamawiającego — link „Oryginał” wyżej).
  * Pokazuje się dla BZP i TED z `postepowanie_id` (2026-11-01: ogłoszenie unijne z Polski ma ten sam
- * identyfikator na e-Zamówieniach; prowadzone poza platformą = pusta lista).
+ * identyfikator na e-Zamówieniach; prowadzone poza platformą = pusta lista) oraz dla Bazy Konkurencyjności
+ * (2026-11-02: zapytanie ofertowe, formularz ofertowy w Wordzie — „Wypełnij moimi danymi”, projekt umowy).
  */
 export default function DokumentyEZamowienia({ tender, navigation }) {
   const styles = useStyle(tworzStyleDokumentow);
   const { t } = useJezyk();
   const [stan, setStan] = useState({ laduje: false, dokumenty: Array.isArray(tender?.ez_dokumenty) ? tender.ez_dokumenty : null, blad: null });
   const kod = tender?.zrodlo?.kod ?? tender?.source;
-  if ((kod !== 'bzp' && kod !== 'ted') || !tender?.id || !tender?.postepowanie_id) return null;
+  const bk = kod === 'baza_konkurencyjnosci';
+  if (!tender?.id || !(bk || ((kod === 'bzp' || kod === 'ted') && tender?.postepowanie_id))) return null;
 
   async function pobierz() {
     setStan({ laduje: true, dokumenty: null, blad: null });
@@ -40,7 +42,8 @@ export default function DokumentyEZamowienia({ tender, navigation }) {
   return (
     <View style={styles.box}>
       {!dokumenty ? (
-        <Button title={t('Pobierz SWZ i załączniki z e-Zamówień', 'Fetch the tender documents from e-Zamówienia')} variant="ghost" loading={stan.laduje} onPress={pobierz} />
+        <Button title={bk ? t('Pobierz zapytanie ofertowe i załączniki z Bazy Konkurencyjności', 'Fetch the inquiry documents from Baza Konkurencyjności')
+          : t('Pobierz SWZ i załączniki z e-Zamówień', 'Fetch the tender documents from e-Zamówienia')} variant="ghost" loading={stan.laduje} onPress={pobierz} />
       ) : null}
       {stan.blad ? <Text style={styles.blad}>{stan.blad}</Text> : null}
       {dokumenty ? (

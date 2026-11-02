@@ -29,6 +29,7 @@ test('przy przetargu: BZP z postępowaniem e-Zamówień albo platformazakupowa.p
   assert.equal(czyMoznaPytacPrzetargu({ id: 't1', zrodlo: { kod: 'platformazakupowa' } }), true);
   assert.equal(czyMoznaPytacPrzetargu({ id: 't1', source: 'bzp' }), false, 'BZP bez postępowania na e-Zamówieniach nie ma dokumentów');
   assert.equal(czyMoznaPytacPrzetargu({ id: 't1', source: 'ted' }), false);
+  assert.equal(czyMoznaPytacPrzetargu({ id: 'bk:1', source: 'baza_konkurencyjnosci' }), true, 'zapytanie ofertowe z BK (2026-11-02)');
   assert.equal(czyMoznaPytacPrzetargu(null), false);
 });
 

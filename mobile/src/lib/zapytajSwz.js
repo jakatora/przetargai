@@ -30,11 +30,14 @@ export function czyMoznaPytacSwz(trescSwz) {
   return trescSwz?.zrodlo === 'wklejona' || trescSwz?.zrodlo === 'wersja';
 }
 
-/** Przy przetargu: BZP (z identyfikatorem postępowania e-Zamówień) albo platformazakupowa.pl — tam są dokumenty z SWZ. */
+/**
+ * Przy przetargu: BZP (z identyfikatorem postępowania e-Zamówień), platformazakupowa.pl albo Baza Konkurencyjności
+ * (2026-11-02: serwer bierze „Zapytanie ofertowe” w PDF z załączników ogłoszenia) — tam są dokumenty.
+ */
 export function czyMoznaPytacPrzetargu(tender) {
   const kod = tender?.zrodlo?.kod ?? tender?.source;
   if (!tender?.id) return false;
-  return (kod === 'bzp' && Boolean(tender.postepowanie_id)) || kod === 'platformazakupowa';
+  return (kod === 'bzp' && Boolean(tender.postepowanie_id)) || kod === 'platformazakupowa' || kod === 'baza_konkurencyjnosci';
 }
 
 export function poprawnePytanie(tekst) {

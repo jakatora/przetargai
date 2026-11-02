@@ -5,7 +5,7 @@ const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { tenders, matches } = await import('../src/db/repos.js');
 const { createApp } = await import('../src/app.js');
-const { _ustawPobieranieDokumentowEz } = await import('../src/routes/tenders.js');
+const { _ustawPobieranieDokumentowEz, _ustawSzczegolBk } = await import('../src/routes/tenders.js');
 
 const app = await createApp();
 const serwer = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
@@ -64,4 +64,24 @@ test('GET /matches/:id dla ogłoszenia BZP niesie postepowanie_id i zapisane ez_
   await tenders.zapiszDokumentyEz(tender.id, DOKUMENTY);
   const po = await (await fetch(`${BAZA}/matches/${encodeURIComponent(tender.id)}`, { headers: { Authorization: `Bearer ${t}` } })).json();
   assert.equal(po.match.tender.ez_dokumenty[0].plik, 'SWZ.pdf');
+});
+
+test('POST /tenders/:id/dokumenty-ezamowienia dla Bazy Konkurencyjności: załączniki ze szczegółu ogłoszenia, cache jak przy BZP', async () => {
+  const { token: t } = await konto();
+  const { tender } = await tenders.upsert({ externalId: `bk:${ZNAK}5`, title: 'Wynajem sali', organization: 'Fundacja', deadline: '2099-01-01T00:00:00.000Z', source: 'baza_konkurencyjnosci' });
+  const { default: fixture } = await import('./fixtures/bk-szczegol-292028.json', { with: { type: 'json' } });
+  const pytane = [];
+  _ustawSzczegolBk(async (id) => { pytane.push(id); return fixture; });
+  try {
+    const dane = await (await fetch(`${BAZA}/tenders/${encodeURIComponent(tender.id)}/dokumenty-ezamowienia`, { method: 'POST', headers: { Authorization: `Bearer ${t}` } })).json();
+    assert.deepEqual(pytane, [`${ZNAK}5`]);
+    assert.equal(dane.dokumenty.length, 3);
+    assert.equal(dane.dokumenty[1].rozszerzenie, 'docx', 'formularz w Wordzie — do „Wypełnij moimi danymi”');
+    assert.match(dane.dokumenty[1].url, /^https:\/\/bazakonkurencyjnosci\.funduszeeuropejskie\.gov\.pl\/api\/files\/\d+$/);
+    const drugi = await (await fetch(`${BAZA}/tenders/${encodeURIComponent(tender.id)}/dokumenty-ezamowienia`, { method: 'POST', headers: { Authorization: `Bearer ${t}` } })).json();
+    assert.equal(drugi.cached, true);
+    assert.equal(pytane.length, 1);
+  } finally {
+    _ustawSzczegolBk(null);
+  }
 });

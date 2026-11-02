@@ -88,6 +88,8 @@ test('pobieranie: tylko e-Zamówienia/platformazakupowa, przekierowanie sprawdza
   const odp = (status, body, location) => ({ status, ok: status >= 200 && status < 300, headers: { get: (h) => (h === 'location' ? location ?? null : null) }, arrayBuffer: async () => body });
   const ok = 'https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/a/a_1';
   await assert.rejects(pobierzZalacznik('https://evil.example/plik.docx', { fetchFn: async () => odp(200, Buffer.alloc(0)) }), (e) => e.status === 400);
+  const docx = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0, 0]);
+  assert.equal((await pobierzZalacznik('https://bazakonkurencyjnosci.funduszeeuropejskie.gov.pl/api/files/3080167', { fetchFn: async () => odp(200, docx) })).length, 6, 'formularz z Bazy Konkurencyjności (2026-11-02)');
   await assert.rejects(pobierzZalacznik(ok, { fetchFn: async () => odp(302, null, 'https://evil.example/x') }), (e) => e.status === 400, 'przekierowanie poza listę');
   await assert.rejects(pobierzZalacznik(ok, { fetchFn: async () => odp(200, Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 1, 2])) }), (e) => e.status === 422 && /\.doc/.test(e.message));
   await assert.rejects(pobierzZalacznik(ok, { fetchFn: async () => odp(200, Buffer.from('%PDF-1.7')) }), (e) => e.status === 422 && /PDF/.test(e.message));

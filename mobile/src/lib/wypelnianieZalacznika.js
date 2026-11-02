@@ -2,10 +2,11 @@
  * „Wypełnij moimi danymi” (2026-10-31): formularz zamawiającego w Wordzie wypełniony danymi firmy
  * wpisanymi raz w „Dokumentach do oferty”. Logika poza komponentem — testowalna w Node.
  */
-const HOST = /^https:\/\/([a-z0-9-]+\.)*(ezamowienia\.gov\.pl|platformazakupowa\.pl)\//i;
+// Baza Konkurencyjności (2026-11-02): formularze ofertowe zapytań w .docx — serwer przyjmuje ten sam host.
+const HOST = /^https:\/\/([a-z0-9-]+\.)*(ezamowienia\.gov\.pl|platformazakupowa\.pl|bazakonkurencyjnosci\.funduszeeuropejskie\.gov\.pl)\//i;
 const POLA = ['nazwa', 'adres', 'nip', 'regon', 'rejestr', 'reprezentant', 'stanowisko', 'email', 'telefon', 'miejscowosc'];
 
-/** Tylko .docx z e-Zamówień / platformazakupowa.pl (stary .doc i PDF się nie da). */
+/** Tylko .docx z e-Zamówień / platformazakupowa.pl / Bazy Konkurencyjności (stary .doc i PDF się nie da). */
 export function czyMoznaWypelnic(dokument) {
   if (!dokument?.url || !HOST.test(dokument.url)) return false;
   const roz = String(dokument.rozszerzenie ?? '').toLowerCase();
