@@ -5034,5 +5034,31 @@
     "sourceUrl": "https://hipper.pl/sniezka-barwy-natury-bialy-173-5l-farba-lateksowa-956234361",
     "evidenceSha256": "6c0cb6feca0dd1535b3e5795e87bb1f8756b53bb815f4ca112d83f786d95458c",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-rigips-alu-corner-235-25m",
+    "ean": "5905637118041",
+    "name": "Narożnik aluminiowy 23,5x23,5mm 2,5m Rigips",
+    "imageUrl": "https://sklep.sewera.pl/photo/195931/naroznik-aluminiowy-23-5x23-5mm-2-5m-rigips.webp",
+    "priceGrosze": 809,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T12:44:07.120Z",
+    "sourceUrl": "https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-2-5m-rigips-p7501",
+    "evidenceSha256": "a33dbf242ec51d83e33a86037613bd094ffc034e9d3632bac376b2a7a63d19b1",
+    "validUntil": null
+  },
+  {
+    "sourceId": "sewera-rigips-alu-corner-235-3m",
+    "ean": "5905637118058",
+    "name": "Narożnik aluminiowy 23,5x23,5mm 3m Rigips",
+    "imageUrl": "https://sklep.sewera.pl/photo/195935/naroznik-aluminiowy-23-5x23-5mm-3m-rigips.webp",
+    "priceGrosze": 967,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T12:44:12.722Z",
+    "sourceUrl": "https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-3m-rigips-p7500",
+    "evidenceSha256": "7cd0bff724bcdb79cd6429303a808c416e3b211c02df9845c325daca044ebfdc",
+    "validUntil": null
   }
 ]
