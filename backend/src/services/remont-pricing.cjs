@@ -27820,6 +27820,64 @@ async function quoteKronodom(order, fetchImpl) {
   return { quote: { ...selected, checkedAt: now.toISOString(), expiresAt: new Date(now.getTime() + 6e5).toISOString(), sourceUrl: origin5 + "/order/checkout/cart", basis: "retailer_basket_national", destinationScope: "PL", evidenceSha256: (0, import_node_crypto31.createHash)("sha256").update(cart + policy).digest("hex") } };
 }
 
+// artifacts/api-server/src/lib/retailer-connection.ts
+var RETAILER_CONNECTION_COOLDOWN_MS = 3e4;
+var CONNECTION_CODES = /* @__PURE__ */ new Set(["UND_ERR_CONNECT_TIMEOUT", "ETIMEDOUT", "ECONNREFUSED", "ENETUNREACH", "EHOSTUNREACH", "ENOTFOUND", "EAI_AGAIN"]);
+function connectionFailure(error40) {
+  const pending = [error40], seen = /* @__PURE__ */ new Set();
+  for (let i = 0; i < 8 && pending.length; i++) {
+    const item = pending.shift();
+    if (!item || typeof item !== "object" || seen.has(item)) continue;
+    seen.add(item);
+    const value2 = item;
+    if (typeof value2.code === "string" && CONNECTION_CODES.has(value2.code)) return true;
+    if (value2.cause) pending.push(value2.cause);
+    if (Array.isArray(value2.errors)) pending.push(...value2.errors.slice(0, 8));
+  }
+  return false;
+}
+function createRetailerConnectionGuard(fetchImpl, reviewedUrls, now = Date.now) {
+  const origin6 = (url2) => {
+    try {
+      const u = new URL(url2);
+      return u.protocol === "https:" ? u.origin : null;
+    } catch {
+      return null;
+    }
+  };
+  const reviewed6 = new Set(reviewedUrls.map(origin6).filter((value2) => value2 !== null));
+  const unavailableUntil = /* @__PURE__ */ new Map();
+  const isUnavailable = (url2) => {
+    const host = origin6(url2);
+    if (!host || !reviewed6.has(host)) return false;
+    const until = unavailableUntil.get(host);
+    if (until === void 0) return false;
+    if (until > now()) return true;
+    unavailableUntil.delete(host);
+    return false;
+  };
+  const confirmAvailable = (url2) => {
+    const host = origin6(url2);
+    if (host) unavailableUntil.delete(host);
+  };
+  const guardedFetch = async (input2, init) => {
+    const url2 = input2 instanceof Request ? input2.url : String(input2), host = origin6(url2);
+    if (isUnavailable(url2)) throw Error("retailer_connection_unavailable");
+    try {
+      const response = await fetchImpl(input2, init);
+      confirmAvailable(url2);
+      return response;
+    } catch (error40) {
+      if (host && reviewed6.has(host) && !init?.signal?.aborted && !(input2 instanceof Request && input2.signal.aborted) && connectionFailure(error40)) {
+        unavailableUntil.set(host, now() + RETAILER_CONNECTION_COOLDOWN_MS);
+        throw new Error("retailer_connection_unavailable", { cause: error40 });
+      }
+      throw error40;
+    }
+  };
+  return { fetch: guardedFetch, isUnavailable, confirmAvailable };
+}
+
 // artifacts/api-server/src/lib/retailer-delivery.ts
 var ORIGINS = {
   // source: https://sklep.instato.pl/pl/static/czas-i-koszty-dostawy.html
@@ -27968,7 +28026,13 @@ function quoteBeforeDeadline(quoter, order, postalCode, deadline, now = Date.now
   if (now < deadline) return quoter(order, postalCode);
   return Promise.resolve(quoter.cached?.(order, postalCode) ?? { reason: "quote_timeout" });
 }
-function createRetailerQuoter(fetchImpl = fetch) {
+function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
+  const connections = connectionGuard ?? createRetailerConnectionGuard(fetchImpl, RETAIL_SOURCES.map((source) => source.url));
+  fetchImpl = connections.fetch;
+  const sourceUrls = (order) => order.lines.flatMap((line2) => line2.packages.flatMap((pack) => {
+    const source = RETAIL_SOURCES.find((source2) => source2.id === pack.offerId && source2.store === order.store && source2.url === pack.url);
+    return source ? [source.url] : [];
+  }));
   const pages = createCheckoutPageReader();
   const cache = /* @__PURE__ */ new Map();
   const elmasNational = /* @__PURE__ */ new Map();
@@ -28005,11 +28069,13 @@ function createRetailerQuoter(fetchImpl = fetch) {
     const key = keyFor(order, postalCode);
     const cached3 = cache.get(key);
     if (cached3 && cached3.until > Date.now()) return cached3.result;
+    if (sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
     const pending = (async () => {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
+        if (sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
         let nativeFetch = fetchImpl;
         if (quoteRelayEnabled(order.store)) {
           const deadline = AbortSignal.timeout(2e4);
@@ -28020,7 +28086,11 @@ function createRetailerQuoter(fetchImpl = fetch) {
           } catch {
             relayed = { reason: "quote_unavailable" };
           }
-          if ("quote" in relayed || relayed.reason !== "quote_unavailable") return relayed;
+          if ("quote" in relayed) {
+            for (const url2 of sourceUrls(order)) connections.confirmAvailable(url2);
+            return relayed;
+          }
+          if (!["quote_unavailable", "retailer_connection_unavailable"].includes(relayed.reason)) return relayed;
           if (deadline.aborted) return relayed;
         }
         if (order.store === "eTak") return await quoteEtak(order, postalCode, nativeFetch);
@@ -28042,7 +28112,7 @@ function createRetailerQuoter(fetchImpl = fetch) {
         if (order.store === "ABUD") return await quoteAbud(order, postalCode, nativeFetch);
         return await (order.store === "Kronosfera" ? quoteKronosfera(order, fetchImpl) : order.store === "Folnet" ? quoteFolnet(order, fetchImpl) : order.store === "Modna \u0141azienka" ? quoteModna(order, fetchImpl) : order.store === "HIPPER" ? quoteCertusoft(order, fetchImpl) : order.store === "Eelektryka" ? quotePrestashop(order, fetchImpl) : order.store === "TopBoden" ? quoteTopboden(order, fetchImpl) : order.store === "Sewera" ? quoteSewera(order, postalCode, fetchImpl, pages) : order.store === "Buduj24" ? quoteBuduj24(order, fetchImpl) : order.store === "Cezar" ? quoteCezar(order, postalCode, fetchImpl) : quoteShoper(order, fetchImpl));
       } catch (error40) {
-        return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed", "retailer_rate_limited"].includes(error40.message) ? error40.message : "quote_unavailable" };
+        return { reason: error40 instanceof Error && error40.message === "retailer_out_of_stock" ? "product_unavailable" : error40 instanceof Error && ["price_changed", "product_unavailable", "insufficient_stock", "basket_not_confirmed", "no_home_delivery", "address_required", "purchase_rules_changed", "retailer_rate_limited", "retailer_connection_unavailable"].includes(error40.message) ? error40.message : "quote_unavailable" };
       } finally {
         release();
       }
@@ -28338,7 +28408,8 @@ function catalogRefreshOffers(sources, observations, activeIds, confirmedIds, hi
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
 var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
 function createRemontService(options = {}) {
-  const quoteBasket = options.basketQuoter ?? createRetailerQuoter(options.fetchImpl);
+  const connections = createRetailerConnectionGuard(options.fetchImpl ?? fetch, RETAIL_SOURCES.map((source) => source.url));
+  const quoteBasket = options.basketQuoter ?? createRetailerQuoter(connections.fetch, connections);
   const observations = /* @__PURE__ */ new Map();
   const errors = /* @__PURE__ */ new Map();
   const withdrawnAt = /* @__PURE__ */ new Map();
@@ -28470,7 +28541,8 @@ function createRemontService(options = {}) {
     const read = (async () => {
       let succeeded = false;
       try {
-        accept(await readRetailSource(source, options.fetchImpl));
+        accept(await readRetailSource(source, connections.fetch));
+        connections.confirmAvailable(source.url);
         errors.delete(source.id);
         succeeded = true;
       } catch (error40) {
