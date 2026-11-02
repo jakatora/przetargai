@@ -25,6 +25,7 @@ import eksportRouter from './routes/eksport.js';
 import ofertaRouter from './routes/oferta.js';
 import pracownikRouter, { wypisRouter } from './routes/pracownik.js';
 import nipZMailaRouter from './routes/nipZMaila.js';
+import profilZMailaRouter from './routes/profilZMaila.js';
 
 /**
  * Aplikacja Express opakowana w jedną funkcję HTTPS (D-024).
@@ -100,7 +101,7 @@ export function createApp() {
   app.use('/matches', apiLimiter, matchesRouter);
   // Selekcja pod klienta (ekran „Twoje przetargi”); `/pracownik/wypisz` działa bez logowania.
   app.use('/pracownik', apiLimiter, pracownikRouter);
-  app.use('/maile', apiLimiter, wypisRouter, nipZMailaRouter);
+  app.use('/maile', apiLimiter, wypisRouter, nipZMailaRouter, profilZMailaRouter);
   /*
    * Katalog calego rynku (P1-1) — tryb „Wszystkie" na glownej liscie. Osobny od
    * /matches, bo /matches z definicji pokazuje WYCINEK przyciety profilem i planem.

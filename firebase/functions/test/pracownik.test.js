@@ -101,19 +101,36 @@ test('konto bez dopasowań od miesiąca: AI podpowiada profil RAZ na 14 dni, pul
   const zaDni = (n) => new Date(Date.now() + n * 86_400_000).toISOString();
   const wolania = [];
   const zaproponuj = async (opis) => { wolania.push(opis); return { keywords: ['posadzka'], cpv: ['45430000'] }; };
+  const maile = [];
+  const wyslijMail = async (m) => { maile.push(m); return { sent: true }; };
 
-  const w = await pracujDlaUzytkownika(await users.findById(u.id), [posadzka, inny], { teraz: zaDni(3), zaproponuj });
+  const dzien = () => false;
+  const noc = () => true;
+  await pracujDlaUzytkownika(await users.findById(u.id), [posadzka, inny], { teraz: zaDni(3), zaproponuj, wyslijMail, czyCisza: noc });
+  assert.equal(maile.length, 0, 'w ciszy nocnej mail czeka');
+  const w = await pracujDlaUzytkownika(await users.findById(u.id), [posadzka, inny], { teraz: zaDni(3.2), zaproponuj, wyslijMail, czyCisza: dzien });
   assert.equal(w.wybrane, 0);
   assert.deepEqual(wolania, ['Słowa: Remont posadzka żywica']);
   const s = (await users.findById(u.id)).profil_sugestia;
   assert.deepEqual([s.keywords, s.cpv, s.w_puli, s.przyklady], [['posadzka'], ['45430000'], 1, ['Wykonanie posadzki w hali sportowej']]);
+  assert.equal(maile.length, 1, 'jeden mail z propozycją');
+  assert.equal(maile[0].to, u.email);
+  assert.match(maile[0].text, /kod CPV 45430000 \(Podłogi i okładziny ścian\)[\s\S]*\/maile\/profil\?token=/);
+  assert.ok(s.mail_o, 'mail_o zapisany po wysyłce');
 
-  await pracujDlaUzytkownika(await users.findById(u.id), [posadzka, inny], { teraz: zaDni(4), zaproponuj });
+  await pracujDlaUzytkownika(await users.findById(u.id), [posadzka, inny], { teraz: zaDni(4), zaproponuj, wyslijMail, czyCisza: dzien });
   assert.equal(wolania.length, 1, 'drugi przebieg w ciągu 14 dni — bez AI');
+  assert.equal(maile.length, 1, 'i bez drugiego maila');
+
+  const bezMaili = await users.create({ email: `prs${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['Remont posadzka żywica'] });
+  await users.ustawPowiadomieniaEmail(bezMaili.id, false);
+  await rozwazSugestieProfilu(await users.findById(bezMaili.id), [posadzka], { teraz: zaDni(3), zaproponuj, wyslij: wyslijMail, czyCisza: dzien });
+  assert.equal(maile.length, 1, 'klient wyłączył maile — propozycja tylko w panelu');
+  assert.equal((await users.findById(bezMaili.id)).profil_sugestia.w_puli, 1);
 
   const zDopasowaniem = await users.create({ email: `prs${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['x'] });
   await matches.create({ userId: zDopasowaniem.id, tenderId: inny.id, score: 80, tender: inny });
   assert.equal(await rozwazSugestieProfilu(await users.findById(zDopasowaniem.id), [posadzka], { teraz: zaDni(3), zaproponuj }), null);
-  assert.equal(wolania.length, 1, 'konto z dopasowaniem — bez AI');
+  assert.equal(wolania.length, 2, 'konto z dopasowaniem — bez AI (2. wywołanie to konto bez maili)');
   assert.equal(await rozwazSugestieProfilu(await users.findById(u.id), [posadzka], { teraz: zaDni(30), zaproponuj: async () => null }), null, 'AI bez odpowiedzi — nic nie zapisujemy');
 });

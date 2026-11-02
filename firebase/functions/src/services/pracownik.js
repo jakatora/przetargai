@@ -7,13 +7,15 @@ import { wersjaKarty, formalnePuste, wersjaFormalnych, kartaZUzytkownika, minDni
 import { sprawdzReguly } from '../lib/regulyKarty.js';
 import { przykladyDlaAi } from '../lib/sygnaly.js';
 import { pustyLicznikPrzyczyn } from '../lib/przyczyny.js';
-import { dobaWarszawska } from '../lib/czasPolski.js';
+import { dobaWarszawska, ciszaNocna } from '../lib/czasPolski.js';
 import {
   AI_PREFILTER_MIN, AI_CALLS_PER_DAY, CANDIDATE_HEAD, OKNO_KANDYDATOW, MAKS_PRZEJRZANYCH,
 } from '../lib/limityAi.js';
 import { users, tenders, matches, evaluations, aiQuota, dziennik, warunkiQuota, backfillCooldown } from '../db/repos.js';
 import { ocenDlaKlienta, porownajWarunki, zaproponujProfil } from './ai.js';
 import { czasNaSugestie, opisDlaSugestii, noweZSugestii, DNI_BEZ_DOPASOWAN } from '../lib/sugestiaProfilu.js';
+import { linkProfilu, mailSugestii } from './profilZMaila.js';
+import { sendEmail } from './email.js';
 import { backfillUser, generateMatchesForAllUsers } from './matching.js';
 import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from './platformaZakupowa.js';
@@ -75,21 +77,35 @@ async function odpadaNaWarunkach(user, tenderId, { porownaj, teraz, wersja }) {
 /**
  * Konto bez dopasowań od 30 dni (lib/sugestiaProfilu.js): AI podpowiada profil z katalogu kodów, pula liczy, ile
  * otwartych przetargów by pasowało, a zapis na koncie staje się propozycją w panelu („Przyjmij”). AI zwróciło null
- * (wyłączone, limit budżetu, błąd) — nic nie zapisujemy, kolejny przebieg spróbuje znowu (bez kosztu).
+ * (wyłączone, limit budżetu, błąd) — nic nie zapisujemy, kolejny przebieg spróbuje znowu (bez kosztu). Gdy coś by
+ * pasowało — jeden mail z linkiem „Dopisz do profilu” (services/profilZMaila.js), chyba że klient wyłączył maile;
+ * w ciszy nocnej (21–7) mail czeka na pierwszy dzienny przebieg, o ile propozycja jest wciąż aktualna.
+ * @returns {Promise<object|null>} nowa sugestia z tego przebiegu albo null
  */
-export async function rozwazSugestieProfilu(user, pool, { teraz, zaproponuj = zaproponujProfil, prog = env.MATCH_CONFIDENCE_THRESHOLD } = {}) {
-  if (!czasNaSugestie(user, teraz)) return null;
-  if (await matches.countSince(user.id, new Date(Date.parse(teraz) - DNI_BEZ_DOPASOWAN * 86_400_000).toISOString()) > 0) return null;
-  const sugestia = await zaproponuj(opisDlaSugestii(user), { userId: user.id });
-  if (!sugestia) return null;
-  const nowe = noweZSugestii(user, sugestia);
-  const profil = { keywords: [...(user.keywords ?? []), ...nowe.keywords], cpv_codes: [...(user.cpv_codes ?? []), ...nowe.cpv] };
-  const pasuja = nowe.keywords.length || nowe.cpv.length ? pool.filter((t) => heuristicScore(profil, t).score >= prog) : [];
-  const zapis = {
-    ...nowe, w_puli: pasuja.length, przyklady: pasuja.slice(0, 3).map((t) => String(t.title ?? '').slice(0, 160)),
-    dla_wersji: wersjaKarty(user), o: teraz,
-  };
-  await users.zapiszSugestieProfilu(user.id, zapis);
+export async function rozwazSugestieProfilu(user, pool, {
+  teraz, zaproponuj = zaproponujProfil, prog = env.MATCH_CONFIDENCE_THRESHOLD, wyslij = sendEmail, czyCisza = ciszaNocna,
+} = {}) {
+  let zapis = null;
+  if (czasNaSugestie(user, teraz)
+    && await matches.countSince(user.id, new Date(Date.parse(teraz) - DNI_BEZ_DOPASOWAN * 86_400_000).toISOString()) === 0) {
+    const sugestia = await zaproponuj(opisDlaSugestii(user), { userId: user.id });
+    if (sugestia) {
+      const nowe = noweZSugestii(user, sugestia);
+      const profil = { keywords: [...(user.keywords ?? []), ...nowe.keywords], cpv_codes: [...(user.cpv_codes ?? []), ...nowe.cpv] };
+      const pasuja = nowe.keywords.length || nowe.cpv.length ? pool.filter((t) => heuristicScore(profil, t).score >= prog) : [];
+      zapis = {
+        ...nowe, w_puli: pasuja.length, przyklady: pasuja.slice(0, 3).map((t) => String(t.title ?? '').slice(0, 160)),
+        dla_wersji: wersjaKarty(user), o: teraz,
+      };
+      await users.zapiszSugestieProfilu(user.id, zapis);
+    }
+  }
+  const s = zapis ?? user.profil_sugestia;
+  if (s && !s.mail_o && s.w_puli > 0 && s.dla_wersji === wersjaKarty(user) && !czyCisza(teraz)
+    && user.email && user.powiadomienia_pracownik_email !== false) {
+    const wynik = await wyslij({ to: user.email, ...mailSugestii({ sugestia: s, link: await linkProfilu(user.id) }) });
+    if (wynik?.sent) await users.zapiszSugestieProfilu(user.id, { ...s, mail_o: teraz });
+  }
   return zapis;
 }
 
@@ -105,6 +121,7 @@ export async function pracujDlaUzytkownika(user, pool, {
   teraz = nowIso(), ocen = ocenDlaKlienta, porownaj = porownajWarunki, stanAi = { kolejneBledy: 0 }, budzetMs = Infinity,
   szczegolPz = pobierzSzczegolPzDomyslnie, budzetSzczegolowPz = { pozostalo: MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG }, kryteriaSwz = daneZSwzPz,
   dokumentyEz = pobierzDokumentyEzDomyslnie, budzetDokumentowEz = { pozostalo: MAKS_DOKUMENTOW_EZ_NA_PRZEBIEG }, zaproponuj = zaproponujProfil,
+  wyslijMail = sendEmail, czyCisza = ciszaNocna,
 } = {}) {
   const koniec = Date.now() + budzetMs;
   const poCzasie = () => Date.now() >= koniec;
@@ -272,7 +289,7 @@ export async function pracujDlaUzytkownika(user, pool, {
   }
 
   if (!wynik.wybrane) {
-    await rozwazSugestieProfilu(user, pool, { teraz, zaproponuj })
+    await rozwazSugestieProfilu(user, pool, { teraz, zaproponuj, wyslij: wyslijMail, czyCisza })
       .catch((err) => logger.warn({ err: err.message, userId: user.id }, 'Podpowiedź profilu dla konta bez dopasowań nie powiodła się'));
   }
   await dziennik.dopisz(user.id, dobaWarszawska(teraz), {
