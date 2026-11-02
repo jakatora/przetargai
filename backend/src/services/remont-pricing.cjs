@@ -24493,6 +24493,19 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     if (perStore.every(Boolean)) addGroupedPlan(perStore.map((plan) => plan.packages), true);
   }
   if (materialPlans.every(Boolean)) addGroupedPlan(materialPlans.map((plan) => plan.packages), materialPlans.every((plan) => plan.packages.length === 1));
+  homogeneousCandidates: if (materialPlans.every(Boolean)) for (const [index2, group] of groups.entries()) {
+    if (group.cutRoll) continue;
+    const variants = group.offers.filter((o) => isComparableOffer(o, now.getTime())).flatMap((o) => buildPackageVariants([o], group.product));
+    const sizes = [...new Set(variants.map((v) => v.packageSize))];
+    if (sizes.length < 2) continue;
+    for (const size of sizes) {
+      const homogeneous = mixedPackagePlans(group.totalQuantity, variants.filter((v) => v.packageSize === size), group.requiredBySize, 64, 1e4);
+      for (const plan of homogeneous.plans) {
+        if (proposed.size >= 64) break homogeneousCandidates;
+        addGroupedPlan(materialPlans.map((other, i) => i === index2 ? plan.packages : other.packages), false);
+      }
+    }
+  }
   const orderedOptions = options.map((option) => option.sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId)));
   function addBase(selected) {
     if (selected.some((pack) => !pack)) return;
