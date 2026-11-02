@@ -27668,11 +27668,23 @@ function confirmSeweraBasket(html, expected, total, dispatchFrom = "Katowice") {
     const input2 = attr4(one17(elements(row, (a) => a.name === "amount")));
     const pid = attr4(one17(elements(row, (a) => a.wybierz !== void 0))).wybierz;
     if (Number(input2.value) !== wanted.count || pid !== wanted.pid || checkoutMoney(tdValue(row, "Cena brutto:")) !== wanted.price || checkoutMoney(tdValue(row, "Warto\u015B\u0107:")) !== wanted.count * wanted.price) throw Error("basket_not_confirmed");
-    if (stock) {
-      const maxPackages = Number(stock[1].replace(",", "."));
-      if (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || !Number.isSafeInteger(maxPackages) || maxPackages < 0) throw Error("basket_not_confirmed");
-      if (maxPackages < wanted.count) shortages.push({ url: wanted.url, count: wanted.count, price: wanted.price, maxPackages });
+    let maxPackages;
+    if (input2.max !== void 0) {
+      if (!/^\d+(?:[.,]\d{1,4})?$/.test(input2.max)) throw Error("basket_not_confirmed");
+      maxPackages = Number(input2.max.replace(",", "."));
+      if (!Number.isSafeInteger(maxPackages) || maxPackages < 0) throw Error("basket_not_confirmed");
     }
+    const unavailable = elements(row, (a) => cls9(a, "basket-no-product")).some((node) => text2(node) === "Towar nie mo\u017Ce zosta\u0107 zam\xF3wiony - brak w magazynie!");
+    if (stock) {
+      const statedStock = Number(stock[1].replace(",", "."));
+      if (stock[2].toUpperCase() !== (wanted.retailUnit ?? "SZT") || !Number.isSafeInteger(statedStock) || statedStock < 0 || maxPackages !== void 0 && maxPackages !== statedStock) throw Error("basket_not_confirmed");
+      maxPackages = statedStock;
+    }
+    if (unavailable) {
+      if (maxPackages !== void 0 && maxPackages !== 0) throw Error("basket_not_confirmed");
+      maxPackages = 0;
+    }
+    if (maxPackages !== void 0 && maxPackages < wanted.count) shortages.push({ url: wanted.url, count: wanted.count, price: wanted.price, maxPackages });
   }
   const sum = text2(one17(elements(table, (a) => cls9(a, "basket_sum")))).replace(/^Razem do zapłaty:\s*/, "");
   if (checkoutMoney(sum) !== total) throw Error("basket_not_confirmed");
