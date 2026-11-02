@@ -14433,27 +14433,31 @@ function mergePackageFamilyGroups(groups) {
 }
 
 // lib/pricing-service/src/mixed-package-plans.ts
+function packagePlanCovers(required2, packs, locked = {}) {
+  const meets = (available, quantity) => quantity <= 0 || available > 0 && available + 1e-7 >= quantity;
+  return meets(packs.reduce((n, p) => n + p.count * p.packageSize, 0), required2) && Object.entries(locked).every(([size, quantity]) => meets(packs.filter((p) => String(p.packageSize) === size).reduce((n, p) => n + p.count * p.packageSize, 0), quantity));
+}
+function irreduciblePackagePlan(required2, packs, locked = {}) {
+  if (!packagePlanCovers(required2, packs, locked)) return false;
+  return packs.every((pack, index2) => {
+    const step = pack.purchaseMultiple ?? 1;
+    const smaller = pack.count - step >= (pack.minimumPackages ?? 1) ? { ...pack, count: pack.count - step } : null;
+    return !packagePlanCovers(required2, packs.flatMap((row, n) => n === index2 ? smaller ? [smaller] : [] : [row]), locked);
+  });
+}
 function mixedPackagePlans(required2, variants, locked = {}, maxPlans = 4096, maxVisits = 1e5) {
   const plans = [];
   let visits = 0, limited = false;
   const eligible = variants.filter((v) => Number.isFinite(v.packageSize) && v.packageSize > 0 && Number.isSafeInteger(v.unitPriceGrosze) && v.unitPriceGrosze > 0);
   if (!Number.isFinite(required2) || required2 <= 0 || !eligible.length) return { plans, limited };
   const ordered = [...eligible].sort((a, b) => b.packageSize - a.packageSize || a.offerId.localeCompare(b.offerId));
-  const meets = (available, quantity) => quantity <= 0 || available > 0 && available + 1e-7 >= quantity;
-  const covers = (packs) => meets(packs.reduce((n, p) => n + p.count * p.packageSize, 0), required2) && Object.entries(locked).every(([size, quantity]) => meets(packs.filter((p) => String(p.packageSize) === size).reduce((n, p) => n + p.count * p.packageSize, 0), quantity));
   const visit = (index2, packs, coverage) => {
     if (++visits > maxVisits || plans.length >= maxPlans) {
       limited = true;
       return;
     }
     if (index2 === ordered.length) {
-      if (!covers(packs)) return;
-      for (let i = 0; i < packs.length; i++) {
-        const pack = packs[i], step = pack.purchaseMultiple ?? 1;
-        const smaller = pack.count - step >= (pack.minimumPackages ?? 1) ? { ...pack, count: pack.count - step } : null;
-        const changed = packs.flatMap((row, n) => n === i ? smaller ? [smaller] : [] : [row]);
-        if (covers(changed)) return;
-      }
+      if (!irreduciblePackagePlan(required2, packs, locked)) return;
       const totalGrosze = packs.reduce((n, p) => n + p.lineCostGrosze, 0);
       if (!Number.isSafeInteger(totalGrosze)) return;
       plans.push({ packages: packs, totalGrosze, requiredQuantity: required2, coveredQuantity: coverage, overage: Math.max(0, coverage - required2) });
@@ -23607,6 +23611,151 @@ async function findExtraPackageOption(base, stages, postcode, quoteBasket) {
   return { option, confirmed, searched: selected.length > 0, baselineExpired };
 }
 
+// lib/pricing-service/src/quoted-order-combinations.ts
+var MAX_STATES = 1e5;
+var MAX_STEPS = 2e6;
+var MAX_MEMO_BYTES = 2e6;
+var stable = (value2) => JSON.stringify(value2, (_key, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((key) => [key, v[key]])) : v);
+var atom = (line2, pack) => stable([line2.product.id, line2.unit, pack.packageSize, pack.cutRoll ?? null]);
+var basketKey = (basket) => stable(basket.stores.map((order) => [order.store, order.lines.flatMap((line2) => line2.packages.map((pack) => [atom(line2, pack), pack.offerId, pack.count, pack.unitPriceGrosze])).sort()]).sort());
+function quantities(orders) {
+  const result = /* @__PURE__ */ new Map();
+  for (const order of orders) for (const line2 of order.lines) for (const pack of line2.packages) {
+    if (!Number.isSafeInteger(pack.count) || pack.count < 1 || !Number.isFinite(pack.packageSize) || pack.packageSize <= 0) return null;
+    const key = atom(line2, pack), count = (result.get(key) ?? 0) + pack.count;
+    if (!Number.isSafeInteger(count)) return null;
+    result.set(key, count);
+  }
+  return result;
+}
+function recombineQuotedOrders(candidates, orders, groups, postalCode, existing, now = Date.now(), maxStates = MAX_STATES) {
+  let states = 0, steps = 0, limited = false;
+  const stateLimit = Math.max(0, Math.min(MAX_STATES, maxStates));
+  const validOrder = (order) => {
+    const q = order.quote;
+    return order.source === "retailer" && q && order.totalGrosze !== null && order.deliveryGrosze === q.costGrosze && [order.materialsGrosze, order.deliveryGrosze, order.totalGrosze].every((n) => typeof n === "number" && Number.isSafeInteger(n) && n >= 0) && order.totalGrosze === order.materialsGrosze + order.deliveryGrosze && (q.destinationScope === "PL" || q.postalCode === postalCode) && Date.parse(q.checkedAt) <= now && Date.parse(q.expiresAt) > now;
+  };
+  const rows = orders.filter(validOrder).map((order) => ({ order, coverage: quantities([order]) })).filter((row) => !!row.coverage).sort((a, b) => a.order.totalGrosze - b.order.totalGrosze || a.order.store.localeCompare(b.order.store) || stable([...a.coverage]).localeCompare(stable([...b.coverage])));
+  if (!rows.length) return { baskets: [], limited, states, steps };
+  const stores = [...new Set(rows.map((row) => row.order.store))].sort(), masks = new Map(stores.map((store, index2) => [store, 1n << BigInt(index2)]));
+  const membership = /* @__PURE__ */ new Map();
+  groups.forEach((group, index2) => group.offers.forEach((offer) => {
+    const entries = membership.get(offer.id) ?? [];
+    if (!entries.includes(index2)) entries.push(index2);
+    membership.set(offer.id, entries);
+  }));
+  const validPurchases = (selected) => {
+    const packs = groups.map(() => /* @__PURE__ */ new Map());
+    for (const order of selected) for (const line2 of order.lines) for (const pack of line2.packages) {
+      const matches = (membership.get(pack.offerId) ?? []).filter((index3) => groups[index3].unit === line2.unit), index2 = matches[0];
+      if (matches.length !== 1) return false;
+      const offer = groups[index2].offers.find((offer2) => offer2.id === pack.offerId);
+      if (offer.store !== order.store) return false;
+      const key = stable([pack.offerId, pack.packageSize, pack.cutRoll ?? null]), previous = packs[index2].get(key), count2 = (previous?.count ?? 0) + pack.count;
+      packs[index2].set(key, { ...pack, count: count2, purchaseMultiple: offer.purchaseMultiple ?? 1, minimumPackages: offer.minimumPackages ?? 1, maxPackages: Math.min(offer.maxPackages ?? Infinity, pack.maxPackages ?? Infinity) });
+    }
+    return groups.every((group, index2) => {
+      const actual = [...packs[index2].values()];
+      if (!actual.length) return group.totalQuantity <= 0;
+      if (actual.some((pack) => pack.count % (pack.purchaseMultiple ?? 1) !== 0 || pack.count < (pack.minimumPackages ?? 1) || pack.count > (pack.maxPackages ?? Infinity))) return false;
+      return group.cutRoll ? true : irreduciblePackagePlan(group.totalQuantity, actual, group.requiredBySize);
+    });
+  };
+  const known = existing.filter((b) => b.totalGrosze !== null && b.stores.every(validOrder)).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
+  const targets = /* @__PURE__ */ new Map();
+  for (const plan of [...known.slice(0, 1).map((b) => b.stores), ...candidates]) {
+    const target = quantities(plan);
+    if (target) targets.set(stable([...target].sort()), target);
+  }
+  let cheapest, cheaperBound = known[0]?.totalGrosze ?? Infinity, cheapestStores = known[0]?.stores.length ?? Infinity;
+  let fewer, fewerBound = Infinity;
+  const winners = /* @__PURE__ */ new Map();
+  function search(storeLimit, fewerPass) {
+    for (const target of targets.values()) {
+      let visit2 = function(cost, used, selected) {
+        if (limited) return;
+        if (states >= stateLimit) {
+          limited = true;
+          return;
+        }
+        states++;
+        const bound = fewerPass ? fewerBound : cheaperBound;
+        if (cost > bound || selected.length > storeLimit) return;
+        const open = remaining.flatMap((count2, index2) => count2 ? [index2] : []);
+        if (!open.length) {
+          if (!validPurchases(selected)) return;
+          const materialsGrosze = selected.reduce((n, o) => n + o.materialsGrosze, 0), deliveryGrosze = selected.reduce((n, o) => n + o.deliveryGrosze, 0);
+          if (!Number.isSafeInteger(materialsGrosze) || !Number.isSafeInteger(deliveryGrosze) || !Number.isSafeInteger(materialsGrosze + deliveryGrosze)) return;
+          const basket = { stores: [...selected].sort((a, b) => a.store.localeCompare(b.store)), materialsGrosze, deliveryGrosze, totalGrosze: cost, lowerBoundGrosze: cost };
+          if (fewerPass) {
+            if (cost < fewerBound || cost === fewerBound && selected.length < (fewer?.stores.length ?? Infinity)) {
+              fewer = basket;
+              fewerBound = cost;
+            }
+          } else if (cost < cheaperBound || cost === cheaperBound && selected.length < cheapestStores) {
+            cheapest = basket;
+            cheaperBound = cost;
+            cheapestStores = selected.length;
+          }
+          return;
+        }
+        if (selected.length === storeLimit) return;
+        const memoKey = used.toString(36) + "|" + open.map((index2) => index2 + ":" + remaining[index2]).join(",");
+        if ((memo.get(memoKey) ?? Infinity) <= cost) return;
+        if (memoBytes + memoKey.length * 2 < MAX_MEMO_BYTES) {
+          if (!memo.has(memoKey)) memoBytes += memoKey.length * 2;
+          memo.set(memoKey, cost);
+        }
+        let choices = [];
+        for (const index2 of open) {
+          const available = byKey[index2].filter((row) => (used & row.mask) === 0n && fits(row));
+          if (limited || !available.length) return;
+          if (!choices.length || available.length < choices.length) choices = available;
+        }
+        for (const row of choices) {
+          const next = cost + row.order.totalGrosze;
+          if (!Number.isSafeInteger(next) || next > (fewerPass ? fewerBound : cheaperBound)) continue;
+          for (const p of row.coverage) remaining[p.index] -= p.count;
+          visit2(next, used | row.mask, [...selected, row.order]);
+          for (const p of row.coverage) remaining[p.index] += p.count;
+          if (limited) return;
+        }
+      };
+      var visit = visit2;
+      if (limited) return;
+      const keys = [...target.keys()].sort(), remaining = keys.map((key) => target.get(key)), indices = new Map(keys.map((key, index2) => [key, index2]));
+      const eligible = rows.flatMap((row) => {
+        const coverage = [...row.coverage].map(([key, count2]) => ({ index: indices.get(key), count: count2 }));
+        if (coverage.some((p) => p.index === void 0 || p.count > (target.get(keys[p.index]) ?? 0))) return [];
+        return [{ ...row, mask: masks.get(row.order.store), coverage }];
+      });
+      const byKey = keys.map((_key, index2) => eligible.filter((row) => row.coverage.some((p) => p.index === index2))), memo = /* @__PURE__ */ new Map();
+      let memoBytes = 0;
+      const fits = (row) => {
+        for (const p of row.coverage) {
+          if (steps >= MAX_STEPS) {
+            limited = true;
+            return false;
+          }
+          steps++;
+          if (p.count > remaining[p.index]) return false;
+        }
+        return true;
+      };
+      visit2(0, 0n, []);
+    }
+  }
+  search(stores.length, false);
+  if (cheapest) winners.set(basketKey(cheapest), cheapest);
+  const count = cheapest?.stores.length ?? known[0]?.stores.length ?? Infinity;
+  if (count > 1 && !limited) {
+    fewerBound = known.filter((b) => b.stores.length < count).reduce((n, b) => Math.min(n, b.totalGrosze), Infinity);
+    search(Math.min(stores.length, count - 1), true);
+    if (fewer) winners.set(basketKey(fewer), fewer);
+  }
+  return { baskets: [...winners.values()], limited, states, steps };
+}
+
 // lib/pricing-service/src/automatic-delivery.ts
 var MAX_CANDIDATES = 4096;
 var MAX_STORE_BASKETS = 80;
@@ -23745,7 +23894,7 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
       for (const order of orders) unique2.set(signature(order), order);
     }
     result.searchLimited = true;
-    return quoteAndRank(candidates2, unique2, result, settings, knownOnly, now);
+    return quoteAndRank(candidates2, unique2, result, settings, knownOnly, now, allGroups);
   }
   const tooLarge = () => {
     result.status = "limit_exceeded";
@@ -23827,7 +23976,7 @@ async function compareAutomaticDeliveryOnce(stages, settings, quoteBasket, polic
   }
   enumerate(0, []);
   if (unique.size > MAX_STORE_BASKETS) return compareSelectedBaskets(groups, activeStores, result, settings, quoteBasket, now);
-  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now);
+  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups);
 }
 async function compareSelectedBaskets(groups, stores, result, settings, quoteBasket, now) {
   const options = groups.map((group) => {
@@ -23974,9 +24123,9 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     result.status = "limit_exceeded";
     return result;
   }
-  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now);
+  return quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups);
 }
-async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now) {
+async function quoteAndRank(candidates, unique, result, settings, quoteBasket, now, groups) {
   const failures = new Map((result.unavailableStores ?? []).map((item) => [item.store, item.reason]));
   const unavailableIntegrations = new Set(failures.keys());
   const invalidMaterialOrders = /* @__PURE__ */ new Set();
@@ -24056,7 +24205,17 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
       lowerBoundGrosze: materialsGrosze + actual.reduce((sum, o) => sum + (o.deliveryGrosze ?? 0), 0)
     };
   }).filter((b) => b.stores.every((order) => !invalidMaterialOrders.has(signature(order))) && [b.materialsGrosze, b.lowerBoundGrosze, b.totalGrosze ?? 0].every(Number.isSafeInteger));
-  const known = baskets.filter((b) => b.totalGrosze !== null).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
+  if (result.searchLimited) {
+    const combined = recombineQuotedOrders(candidates, [...unique.values()].filter((order) => !invalidMaterialOrders.has(signature(order))).map(applyCartPrices), groups, settings.postalCode, baskets);
+    const key = (basket) => JSON.stringify(basket.stores.map((order) => [order.store, signature(order)]).sort());
+    const present = new Set(baskets.map(key));
+    for (const basket of combined.baskets) if (!present.has(key(basket))) {
+      baskets.push(basket);
+      present.add(key(basket));
+    }
+    if (combined.limited) result.searchLimited = true;
+  }
+  const known = baskets.filter((b) => b.totalGrosze !== null && b.stores.every((order) => order.quote && Date.parse(order.quote.expiresAt) > Date.now())).sort((a, b) => a.totalGrosze - b.totalGrosze || a.stores.length - b.stores.length);
   result.comparedBasketCount = known.length;
   result.best = known[0] ?? null;
   result.alternatives = known.slice(1, 4);
@@ -25391,8 +25550,8 @@ function inspectTokmetProduct(listHtml, cardHtml, source) {
   return { priceGrosze, stock: Number(stock), imageUrl };
 }
 function confirmTokmetCart(html, priceGrosze) {
-  const safe = clean(html), quantities = elements(safe, (a) => /^qty\[/.test(a.id ?? "")), ids = elements(safe, (a) => /^cart_qty_type\[/.test(a.id ?? ""));
-  if (quantities.length !== 1 || attrs8(quantities[0]).id !== "qty[1]" || attrs8(quantities[0]).value !== "1" || !/^cart_operate\.UpdateQty\(event,'1','2806','\d+'\)$/.test(attrs8(quantities[0]).onkeyup ?? "") || ids.length !== 1 || attrs8(ids[0]).id !== "cart_qty_type[2806]" || attrs8(ids[0]).value !== "0") throw Error("basket_not_confirmed");
+  const safe = clean(html), quantities2 = elements(safe, (a) => /^qty\[/.test(a.id ?? "")), ids = elements(safe, (a) => /^cart_qty_type\[/.test(a.id ?? ""));
+  if (quantities2.length !== 1 || attrs8(quantities2[0]).id !== "qty[1]" || attrs8(quantities2[0]).value !== "1" || !/^cart_operate\.UpdateQty\(event,'1','2806','\d+'\)$/.test(attrs8(quantities2[0]).onkeyup ?? "") || ids.length !== 1 || attrs8(ids[0]).id !== "cart_qty_type[2806]" || attrs8(ids[0]).value !== "0") throw Error("basket_not_confirmed");
   const links = elements(safe, (a, t) => t === "a" && a.href === "cart.php?action=remove_item&id=2806");
   if (links.length !== 1) throw Error("basket_not_confirmed");
   const prices = elements(safe, (a) => a.class === "step3_data").map(text3).filter((s) => /^\d[\d ,.]*zł$/.test(s));
@@ -25607,9 +25766,9 @@ function readKrasnyStock(html, source) {
   const blocks = elements(clean(html), (a, tag) => tag === "div" && a.type === "productStocks" && a.class?.split(/\s+/).includes("one-product-stocks-info") === true);
   if (blocks.length !== 1) throw Error("retailer_stock_not_confirmed");
   const warehouses = elements(blocks[0], (a) => a.class?.split(/\s+/).includes("one-product-stocks-info__warehouse") === true);
-  const quantities = elements(blocks[0], (a, tag) => tag === "div" && a.class === "mx-1");
-  if (warehouses.length !== 1 || text2(warehouses[0]) !== "Magazyn Centralny" || quantities.length !== 1) throw Error("retailer_stock_not_confirmed");
-  const match = text2(quantities[0]).match(/^(\d{1,9}) szt\.$/);
+  const quantities2 = elements(blocks[0], (a, tag) => tag === "div" && a.class === "mx-1");
+  if (warehouses.length !== 1 || text2(warehouses[0]) !== "Magazyn Centralny" || quantities2.length !== 1) throw Error("retailer_stock_not_confirmed");
+  const match = text2(quantities2[0]).match(/^(\d{1,9}) szt\.$/);
   if (!match) throw Error("retailer_stock_not_confirmed");
   const stock = Number(match[1]);
   if (stock === 0) throw Error("retailer_out_of_stock");
@@ -27861,8 +28020,8 @@ async function quoteKronodom(order, fetchImpl) {
   const refreshed = Array.isArray(added.events) ? added.events.filter((e) => e.eventName === "OrderRefreshEvent") : [];
   const logistic = Array.isArray(added.events) ? added.events.filter((e) => e.eventName === "postUpdateOrder") : [];
   if (added.code !== "200" || !Array.isArray(added.modals) || added.modals.length || refreshed.length !== 1 || logistic.length !== 1 || logistic[0].data?.resultOrder?.logisticDTO?.validAll !== true || logistic[0].data.resultOrder.logisticDTO.errorLogId !== null) throw Error("basket_not_confirmed");
-  const quantities = refreshed[0].data?.determinantQuantities;
-  if (!Array.isArray(quantities) || quantities.length !== 1 || quantities[0].determinant !== "op-423" || quantities[0].quantity !== pack.count * 6 || quantities[0].shortcut !== "m2") throw Error("basket_not_confirmed");
+  const quantities2 = refreshed[0].data?.determinantQuantities;
+  if (!Array.isArray(quantities2) || quantities2.length !== 1 || quantities2[0].determinant !== "op-423" || quantities2[0].quantity !== pack.count * 6 || quantities2[0].shortcut !== "m2") throw Error("basket_not_confirmed");
   const cart = await client.text("/cart/"), selected = confirmKronodomCart(cart, pack.count, pack.unitPriceGrosze);
   let policy = "";
   if (selected.costGrosze === 0) {
