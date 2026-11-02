@@ -70,7 +70,15 @@ var ATLAS_WODER_E_PACKS = [{ ean: "5905400514483", size: 2 }, { ean: "5905400514
 var CERESIT_VIVA_WHITE_FAMILY = "ceresit-viva-white01-kg-v1";
 var CERESIT_VIVA_WHITE_FAMILY_NAME = "Ceresit Fuga Viva White 01 \u2014 dob\xF3r wiader 2/4 kg";
 var CERESIT_VIVA_WHITE_PACKS = [{ ean: "9000101173451", size: 2 }, { ean: "9000101175134", size: 4 }];
+var CERESIT_VIVA_GREY_FAMILY = "ceresit-viva-grey07-kg-v1";
+var CERESIT_VIVA_GREY_FAMILY_NAME = "Ceresit Fuga Viva Grey 07 \u2014 dob\xF3r wiader 2/4 kg";
+var CERESIT_VIVA_GREY_PACKS = [{ ean: "9000101173499", size: 2 }, { ean: "9000101174854", size: 4 }];
+var CERESIT_VIVA_MANHATTAN_FAMILY = "ceresit-viva-manhattan10-kg-v1";
+var CERESIT_VIVA_MANHATTAN_FAMILY_NAME = "Ceresit Fuga Viva Manhattan 10 \u2014 dob\xF3r wiader 2/4 kg";
+var CERESIT_VIVA_MANHATTAN_PACKS = [{ ean: "9000101173536", size: 2 }, { ean: "9000101174991", size: 4 }];
 var REVIEWED_PACKAGE_FAMILIES = [
+  { key: CERESIT_VIVA_GREY_FAMILY, name: CERESIT_VIVA_GREY_FAMILY_NAME, category: "grout", unit: "kg", packs: CERESIT_VIVA_GREY_PACKS },
+  { key: CERESIT_VIVA_MANHATTAN_FAMILY, name: CERESIT_VIVA_MANHATTAN_FAMILY_NAME, category: "grout", unit: "kg", packs: CERESIT_VIVA_MANHATTAN_PACKS },
   { key: CERESIT_VIVA_WHITE_FAMILY, name: CERESIT_VIVA_WHITE_FAMILY_NAME, category: "grout", unit: "kg", packs: CERESIT_VIVA_WHITE_PACKS },
   { key: V33_CABINET_FAMILY, name: V33_CABINET_FAMILY_NAME, category: "cabinet-paint", unit: "ml", packs: V33_CABINET_PACKS },
   { key: PRIMER_G_PRO_FAMILY, name: PRIMER_G_PRO_FAMILY_NAME, category: "primer", unit: "l", packs: PRIMER_G_PRO_PACKS },
@@ -80,7 +88,7 @@ var REVIEWED_PACKAGE_FAMILIES = [
   { key: KNAUF_SUPER_FINISH_FAMILY, name: KNAUF_SUPER_FINISH_FAMILY_NAME, category: "skim-coat", unit: "kg", packs: KNAUF_SUPER_FINISH_PACKS },
   { key: ATLAS_WODER_E_FAMILY, name: ATLAS_WODER_E_FAMILY_NAME, category: "waterproofing", unit: "kg", packs: ATLAS_WODER_E_PACKS }
 ];
-var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY, KNAUF_SUPER_FINISH_FAMILY, ATLAS_WODER_E_FAMILY, CERESIT_VIVA_WHITE_FAMILY];
+var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY, KNAUF_SUPER_FINISH_FAMILY, ATLAS_WODER_E_FAMILY, CERESIT_VIVA_WHITE_FAMILY, CERESIT_VIVA_GREY_FAMILY, CERESIT_VIVA_MANHATTAN_FAMILY];
 var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
 function reviewedPackageFamily(query, unit) {
   return REVIEWED_PACKAGE_FAMILIES.find((f) => query.packageFamily === f.key && !query.ean && !query.gtin && query.category === f.category && unit === f.unit && normalized(query.normalizedName ?? "") === normalized(f.name));
@@ -20142,8 +20150,23 @@ var CERESIT_VIVA_SOURCES = [
   // source: https://buduj24.pl/produkt/19506,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-white-01
   { id: "buduj24-ceresit-viva-white-2kg", ean: "9000101173451", name: "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 2KG White 01", category: "grout", brand: "Ceresit", packageSize: 2, unit: "kg", store: "Buduj24", format: "buduj24", url: "https://buduj24.pl/produkt/19506,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-white-01", imageUrl: "https://buduj24.pl/files/_product/19506/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(1).png" },
   // source: https://buduj24.pl/produkt/19564,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-white-01
-  { id: "buduj24-ceresit-viva-white-4kg", ean: "9000101175134", name: "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 4KG White 01", category: "grout", brand: "Ceresit", packageSize: 4, unit: "kg", store: "Buduj24", format: "buduj24", url: "https://buduj24.pl/produkt/19564,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-white-01", imageUrl: "https://buduj24.pl/files/_product/19564/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(1).png" }
+  { id: "buduj24-ceresit-viva-white-4kg", ean: "9000101175134", name: "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 4KG White 01", category: "grout", brand: "Ceresit", packageSize: 4, unit: "kg", store: "Buduj24", format: "buduj24", url: "https://buduj24.pl/produkt/19564,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-white-01", imageUrl: "https://buduj24.pl/files/_product/19564/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(1).png" },
+  // source: https://buduj24.pl/produkt/19544,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-grey-07
+  { "id": "buduj24-ceresit-viva-grey-2kg", "ean": "9000101173499", "name": "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 2KG Grey 07", "category": "grout", "brand": "Ceresit", "packageSize": 2, "unit": "kg", "store": "Buduj24", "format": "buduj24", "url": "https://buduj24.pl/produkt/19544,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-grey-07", "imageUrl": "https://buduj24.pl/files/_product/19544/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(3).png" },
+  // source: https://buduj24.pl/produkt/19562,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-grey-07
+  { "id": "buduj24-ceresit-viva-grey-4kg", "ean": "9000101174854", "name": "CERESIT Fuga VIVA elastyczna CEMENTOWA 1-8 MM 4KG Grey 07", "category": "grout", "brand": "Ceresit", "packageSize": 4, "unit": "kg", "store": "Buduj24", "format": "buduj24", "url": "https://buduj24.pl/produkt/19562,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-grey-07", "imageUrl": "https://buduj24.pl/files/_product/19562/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy%20(3).png" },
+  // source: https://buduj24.pl/produkt/19516,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-manhattan-10
+  { "id": "buduj24-ceresit-viva-manhattan-2kg", "ean": "9000101173536", "name": "CERESIT FUGA VIVA ELASTYCZNA CEMENTOWA 1-8 MM 2KG MANHATTAN 10", "category": "grout", "brand": "Ceresit", "packageSize": 2, "unit": "kg", "store": "Buduj24", "format": "buduj24", "url": "https://buduj24.pl/produkt/19516,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-2kg-manhattan-10", "imageUrl": "https://buduj24.pl/files/_product/19516/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy.png" },
+  // source: https://buduj24.pl/produkt/19561,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-manhattan-10
+  { "id": "buduj24-ceresit-viva-manhattan-4kg", "ean": "9000101174991", "name": "CERESIT FUGA VIVA ELASTYCZNA CEMENTOWA 1-8 MM 4KG MANHATTAN 10", "category": "grout", "brand": "Ceresit", "packageSize": 4, "unit": "kg", "store": "Buduj24", "format": "buduj24", "url": "https://buduj24.pl/produkt/19561,ceresit-fuga-viva-elastyczna-cementowa-1-8-mm-4kg-manhattan-10", "imageUrl": "https://buduj24.pl/files/_product/19561/Kopia%20%E2%80%93%20Projekt%20bez%20nazwy.png" },
+  // source: https://www.abud.pl/product-pol-67336-Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-01-White.html
+  { "id": "abud-ceresit-viva-white-2kg", "ean": "9000101173451", "name": "Fuga elastyczna Viva 1-8mm 2kg Ceresit Kolor: 01 White", "category": "grout", "brand": "Ceresit", "packageSize": 2, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 67336, "apiPurchaseUnit": "op.", "variant": ["Viva", "2 kg", "01 White"], "pickupRequiresConfirmation": true, "url": "https://www.abud.pl/product-pol-67336-Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-01-White.html", "imageUrl": "https://www.abud.pl/hpeciai/15652d1b95dc2db15d1504b29743e501/pol_pl_Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-01-White-67336_1.webp" },
+  // source: https://www.abud.pl/product-pol-67395-Fuga-elastyczna-Viva-1-8mm-4kg-Ceresit-Kolor-01-White.html
+  { "id": "abud-ceresit-viva-white-4kg", "ean": "9000101175134", "name": "Fuga elastyczna Viva 1-8mm 4kg Ceresit Kolor: 01 White", "category": "grout", "brand": "Ceresit", "packageSize": 4, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 67395, "apiPurchaseUnit": "op.", "variant": ["Viva", "4 kg", "01 White"], "pickupRequiresConfirmation": true, "url": "https://www.abud.pl/product-pol-67395-Fuga-elastyczna-Viva-1-8mm-4kg-Ceresit-Kolor-01-White.html", "imageUrl": "https://www.abud.pl/hpeciai/1c258eaa40fa69cb118e831b8e155111/pol_pl_Fuga-elastyczna-Viva-1-8mm-4kg-Ceresit-Kolor-01-White-67395_1.webp" },
+  // source: https://www.abud.pl/product-pol-67342-Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-10-Manhattan.html
+  { "id": "abud-ceresit-viva-manhattan-2kg", "ean": "9000101173536", "name": "Fuga elastyczna Viva 1-8mm 2kg Ceresit Kolor: 10 Manhattan", "category": "grout", "brand": "Ceresit", "packageSize": 2, "unit": "kg", "store": "ABUD", "format": "idosell", "productId": 67342, "apiPurchaseUnit": "op.", "variant": ["Viva", "2 kg", "10 Manhattan"], "pickupRequiresConfirmation": true, "url": "https://www.abud.pl/product-pol-67342-Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-10-Manhattan.html", "imageUrl": "https://www.abud.pl/hpeciai/c6c324e48687930a9efdd88ae7a6b15a/pol_pl_Fuga-elastyczna-Viva-1-8mm-2kg-Ceresit-Kolor-10-Manhattan-67342_1.webp" }
 ];
+var makers = { "buduj24-ceresit-viva-white-2kg": "CER-3141510", "buduj24-ceresit-viva-white-4kg": "3147322", "buduj24-ceresit-viva-grey-2kg": "314155", "buduj24-ceresit-viva-grey-4kg": "3147084", "buduj24-ceresit-viva-manhattan-2kg": "3141558", "buduj24-ceresit-viva-manhattan-4kg": "3147168", "abud-ceresit-viva-white-2kg": "3141510", "abud-ceresit-viva-white-4kg": "3147322", "abud-ceresit-viva-manhattan-2kg": "3141558" };
 var one2 = (values) => {
   if (values.length !== 1) throw Error("viva_purchase_not_confirmed");
   return values[0];
@@ -20154,11 +20177,15 @@ var path = (url2) => {
   return u.origin + decodeURIComponent(u.pathname).replaceAll("+", " ");
 };
 function ceresitVivaStock(html, product, source) {
-  if (!source.id.startsWith("buduj24-ceresit-viva-")) return void 0;
+  if (!/^(buduj24|abud)-ceresit-viva-/.test(source.id)) return void 0;
   const reviewed6 = CERESIT_VIVA_SOURCES.find((s) => s.id === source.id);
-  if (!reviewed6 || ["ean", "name", "category", "brand", "packageSize", "unit", "store", "format", "url", "imageUrl"].some((key) => source[key] !== reviewed6[key]) || source.skuIdentity || source.purchaseMultiple && source.purchaseMultiple !== 1 || source.minimumPackages && source.minimumPackages !== 1) throw Error("viva_source_not_reviewed");
+  if (!reviewed6 || ["ean", "name", "category", "brand", "packageSize", "unit", "store", "format", "url", "imageUrl", "productId", "apiPurchaseUnit"].some((key) => source[key] !== reviewed6[key]) || source.skuIdentity || source.purchaseMultiple && source.purchaseMultiple !== 1 || source.minimumPackages && source.minimumPackages !== 1) throw Error("viva_source_not_reviewed");
+  if (source.store === "ABUD") {
+    if (product.gtin13 !== source.ean || product.name !== source.name || text2(one2(elements(clean(html), (_a, tag) => tag === "h1"))) !== source.name || product.brand?.name !== "Ceresit" || product.productID !== "mpn:" + makers[source.id] || product.image !== source.imageUrl || source.variant?.join("|") !== reviewed6.variant?.join("|")) throw Error("viva_identity_not_confirmed");
+    return void 0;
+  }
   const main = one2(elements(clean(html), (a) => /\/Product$/.test(a.itemtype ?? ""))), form2 = one2(elements(main, (a) => a.id === "form_product"));
-  const manufacturer = reviewed6.packageSize === 2 ? "CER-3141510" : "3147322", identifiers = one2(elements(main, (a) => cls(a, "product-identifiers")));
+  const manufacturer = makers[source.id], identifiers = one2(elements(main, (a) => cls(a, "product-identifiers")));
   if (product.gtin13 !== source.ean || product.name !== source.name || text2(one2(elements(main, (a) => a.itemprop === "brand"))) !== "CERESIT" || !text2(identifiers).endsWith("Kod producenta: " + manufacturer) || path(product.image) !== path(reviewed6.imageUrl)) throw Error("viva_identity_not_confirmed");
   const add2 = one2(elements(form2, (a) => a.name === "add")), pid = new URL(source.url).pathname.match(/^\/produkt\/(\d+),/)?.[1];
   if (attrs(add2).value !== pid || text2(one2(elements(form2, (a) => cls(a, "product-unit")))) !== "szt.") throw Error("viva_purchase_unit_not_confirmed");
@@ -20733,7 +20760,7 @@ var AnonymousShop = class {
       return JSON.parse(await this.read("/ajax/client-new.php?checkDeliveryZipcode=true&region_id=1143020003&zipcode=" + args.postalCode, void 0, false));
     }
     if (action === "add") {
-      if (![6883, 6892, 6901, 65390, 65373, 50450, 6900, 50414, 27095, 6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121, 27268, 42372].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
+      if (![6883, 6892, 6901, 65390, 65373, 50450, 6900, 50414, 27095, 6204, 64835, 17848, 63790, 1456, 63463, 1452, 5708, 7965, 1121, 27268, 42372, 67336, 67395, 67342].includes(args.productId ?? 0) || !Number.isSafeInteger(args.count) || args.count < 1 || args.count > MAX_RETAIL_PACKAGES || args.postalCode !== void 0) throw Error("invalid_cart_action");
       return JSON.parse(await this.read("/basketchange.php", new URLSearchParams({ getAjax: "true", mode: "1", product: String(args.productId), size: "onesize", number: String(args.count) }).toString(), false));
     }
     if (action !== "shipping" || Object.keys(args).length) throw Error("invalid_cart_action");
@@ -24466,6 +24493,28 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
     if (perStore.every(Boolean)) addGroupedPlan(perStore.map((plan) => plan.packages), true);
   }
   if (materialPlans.every(Boolean)) addGroupedPlan(materialPlans.map((plan) => plan.packages), materialPlans.every((plan) => plan.packages.length === 1));
+  homogeneousCandidates: if (materialPlans.every(Boolean)) for (const [index2, group] of groups.entries()) {
+    if (group.cutRoll) continue;
+    const variants = group.offers.filter((o) => isComparableOffer(o, now.getTime())).flatMap((o) => buildPackageVariants([o], group.product));
+    const sizes = [...new Set(variants.map((v) => v.packageSize))];
+    if (sizes.length < 2) continue;
+    for (const size of sizes) {
+      const homogeneous = mixedPackagePlans(group.totalQuantity, variants.filter((v) => v.packageSize === size), group.requiredBySize, 64, 1e4);
+      for (const plan of homogeneous.plans) {
+        if (proposed.size >= 64) break homogeneousCandidates;
+        addGroupedPlan(materialPlans.map((other, i) => i === index2 ? plan.packages : other.packages), false);
+      }
+    }
+  }
+  mixedFamilyCandidates: if (materialPlans.every(Boolean)) for (const [index2, group] of groups.entries()) {
+    if (group.cutRoll) continue;
+    const variants = group.offers.filter((o) => isComparableOffer(o, now.getTime())).flatMap((o) => buildPackageVariants([o], group.product));
+    if (new Set(variants.map((v) => v.packageSize)).size < 2) continue;
+    for (const plan of mixedPackagePlans(group.totalQuantity, variants, group.requiredBySize, 32, 1e4).plans) {
+      if (proposed.size >= 96) break mixedFamilyCandidates;
+      addGroupedPlan(materialPlans.map((other, i) => i === index2 ? plan.packages : other.packages), false);
+    }
+  }
   const orderedOptions = options.map((option) => option.sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId)));
   function addBase(selected) {
     if (selected.some((pack) => !pack)) return;
@@ -28545,7 +28594,7 @@ async function quoteSkyshop(order, fetchImpl) {
 // artifacts/api-server/src/lib/abud-delivery.ts
 var import_node_crypto31 = require("node:crypto");
 var ORIGIN8 = "https://www.abud.pl";
-var IDS = ["abud-aks-ydyp-3x15-25m", "abud-aks-ydyp-3x15-50m", "abud-aks-ydyp-3x25-50m", "abud-aks-ydyp-3x25-5m", "abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg", "abud-knauf-superfinish-54kg", "abud-knauf-superfinish-28kg"];
+var IDS = ["abud-aks-ydyp-3x15-25m", "abud-aks-ydyp-3x15-50m", "abud-aks-ydyp-3x25-50m", "abud-aks-ydyp-3x25-5m", "abud-aks-ydyp-3x15-5m", "abud-aks-ydyp-3x15-100m", "abud-aks-ydyp-3x25-25m", "abud-aks-ydyp-3x25-100m", "abud-soudal-26a-5kg", "abud-teflon-12x10", "abud-pex-elbow-16x16", "abud-fischer-wst140k-2", "abud-dulux-rapidry-white-matt-1l", "abud-koelner-fs3525-1000", "abud-koelner-ws3595-1000", "abud-koelner-fx06k040-200", "abud-metylan-remover-500ml", "abud-acrylputz-st10-20kg", "abud-atlas-unigrunt-5kg", "abud-knauf-superfinish-54kg", "abud-knauf-superfinish-28kg", ...["abud-ceresit-viva-white-2kg", "abud-ceresit-viva-white-4kg", "abud-ceresit-viva-manhattan-2kg"]];
 function money11(value2, formatted) {
   if (!["string", "number"].includes(typeof value2)) throw Error("invalid_money");
   const amount8 = parsePriceToGrosze(value2);
