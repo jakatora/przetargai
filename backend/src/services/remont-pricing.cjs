@@ -24748,7 +24748,7 @@ var relaySecretValid = (secret) => typeof secret === "string" && /^[a-f0-9]{64}$
 
 // artifacts/api-server/src/lib/quote-relay-client.ts
 function quoteRelayEnabled(store) {
-  return process.env.REMONT_QUOTE_RELAY_MODE === "client" && ["ABUD", "ChemiaDoParkietu25", "eTak"].includes(store) && relaySecretValid(process.env.REMONT_QUOTE_RELAY_SECRET);
+  return process.env.REMONT_QUOTE_RELAY_MODE === "client" && ["ABUD", "ChemiaDoParkietu25", "eTak", "Buduj24"].includes(store) && relaySecretValid(process.env.REMONT_QUOTE_RELAY_SECRET);
 }
 async function requestRelay(payload, fetchImpl, secret) {
   if (!relaySecretValid(secret)) throw Error("invalid_basket");
@@ -24780,11 +24780,12 @@ async function requestRelay(payload, fetchImpl, secret) {
   return data.result;
 }
 async function quoteThroughRelay(order, postalCode, fetchImpl = fetch, secret = process.env.REMONT_QUOTE_RELAY_SECRET) {
-  if (!["ABUD", "ChemiaDoParkietu25", "eTak"].includes(order.store) || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
+  if (!["ABUD", "ChemiaDoParkietu25", "eTak", "Buduj24"].includes(order.store) || !/^\d{2}-\d{3}$/.test(postalCode)) throw Error("invalid_basket");
   const result = await requestRelay({ version: 1, action: "quote", basket: order, postalCode }, fetchImpl, secret);
   if ("quote" in result) {
     const receipt = Date.now(), checked = Date.parse(result.quote?.checkedAt), expires = Date.parse(result.quote?.expiresAt), duration3 = expires - checked;
-    if (result.quote?.postalCode !== postalCode || result.quote?.destinationScope !== "postal_code" || !Number.isSafeInteger(result.quote.costGrosze) || result.quote.costGrosze < 0 || !Number.isFinite(checked) || !Number.isFinite(expires) || expires <= receipt || checked > receipt + 5e3 || duration3 <= 0 || duration3 > 6e5) throw Error("quote_unavailable");
+    const destination2 = order.store === "Buduj24" ? result.quote?.basis === "retailer_basket_national" && result.quote.destinationScope === "PL" && result.quote.postalCode === void 0 && result.quote.sourceUrl === "https://buduj24.pl/cart" && result.quote.cartPricing === void 0 && result.quote.materialsRoundingGrosze === void 0 && /^[a-f0-9]{64}$/.test(result.quote.evidenceSha256 ?? "") : result.quote?.postalCode === postalCode && result.quote?.destinationScope === "postal_code";
+    if (!destination2 || !Number.isSafeInteger(result.quote.costGrosze) || result.quote.costGrosze < 0 || !Number.isFinite(checked) || !Number.isFinite(expires) || expires <= receipt || checked > receipt + 5e3 || duration3 <= 0 || duration3 > 6e5) throw Error("quote_unavailable");
     if ((result.quote.cartPricing !== void 0 || result.quote.materialsRoundingGrosze !== void 0) && quotedMaterialsGrosze(order, result.quote) === null) throw Error("quote_unavailable");
     if (order.store === "eTak" && (result.quote.sourceUrl !== "https://etak.eu/pl/basketedit.html" || result.quote.basis !== "retailer_basket_postcode" || !Number.isSafeInteger(result.quote.materialsRoundingGrosze) || result.quote.cartPricing !== void 0)) throw Error("quote_unavailable");
     if (checked > receipt) {
@@ -27196,7 +27197,7 @@ async function readRetailSource(source, fetchImpl = fetch) {
   confirmDecowantSource(source);
   confirmKnaufFinishSource(source);
   if (source.disabledReason) throw Error(source.disabledReason);
-  if (source.format === "idosell" && quoteRelayEnabled(source.store)) {
+  if ((source.format === "idosell" || source.format === "buduj24" && source.store === "Buduj24") && quoteRelayEnabled(source.store)) {
     const originalFetch = fetchImpl, deadline = AbortSignal.timeout(2e4);
     fetchImpl = (input2, init) => originalFetch(input2, { ...init, signal: AbortSignal.any([deadline, ...init?.signal ? [init.signal] : []]) });
     try {
@@ -29154,13 +29155,13 @@ function createRetailerQuoter(fetchImpl = fetch, connectionGuard) {
     const key = keyFor(order, postalCode);
     const cached3 = cache.get(key);
     if (cached3 && cached3.until > Date.now()) return cached3.result;
-    if (sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
+    if (!quoteRelayEnabled(order.store) && sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
     if (cache.size >= 256) cache.delete(cache.keys().next().value);
     const pending = (async () => {
       const release = await queue.acquire();
       if (!release) return { reason: "quote_busy" };
       try {
-        if (sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
+        if (!quoteRelayEnabled(order.store) && sourceUrls(order).some((url2) => connections.isUnavailable(url2))) return { reason: "retailer_connection_unavailable" };
         let nativeFetch = fetchImpl;
         if (quoteRelayEnabled(order.store)) {
           const deadline = AbortSignal.timeout(2e4);
