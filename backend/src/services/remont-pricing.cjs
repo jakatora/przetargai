@@ -23776,6 +23776,17 @@ async function quoteRequiredDispatch(order, base, atomic, postcode, limited) {
 }
 
 // lib/pricing-service/src/order-partitions.ts
+async function readIndependentCarts(values, read) {
+  const results = new Array(values.length);
+  let cursor = 0;
+  await Promise.all(Array.from({ length: Math.min(3, values.length) }, async () => {
+    while (cursor < values.length) {
+      const index2 = cursor++;
+      results[index2] = await read(values[index2]);
+    }
+  }));
+  return results;
+}
 function withOrderPartitions(atomic, limited, allowOptional = () => true) {
   return async (order, postcode) => {
     const base = await atomic(order, postcode), count = order.lines.length;
@@ -23820,11 +23831,9 @@ function withOrderPartitions(atomic, limited, allowOptional = () => true) {
     if (count <= 5) {
       const all = (1 << count) - 1, parts = /* @__PURE__ */ new Map([[all, best]]);
       const masks = [.../* @__PURE__ */ new Set([...Array.from({ length: count }, (_, i) => 1 << i), ...Array.from({ length: count }, (_, i) => all ^ 1 << i), ...Array.from({ length: all - 1 }, (_, i) => i + 1)])];
-      for (const mask of masks) {
-        if (mask === all) continue;
-        const part = await read(Array.from({ length: count }, (_, i) => i).filter((i) => mask & 1 << i));
-        if (part) parts.set(mask, part);
-      }
+      const properMasks = masks.filter((mask) => mask !== all);
+      const quoted = await readIndependentCarts(properMasks, (mask) => read(Array.from({ length: count }, (_, i) => i).filter((i) => mask & 1 << i)));
+      for (const [index2, part] of quoted.entries()) if (part) parts.set(properMasks[index2], part);
       const memo = /* @__PURE__ */ new Map([[0, []]]);
       const solve = (mask) => {
         if (memo.has(mask)) return memo.get(mask);
@@ -23843,10 +23852,11 @@ function withOrderPartitions(atomic, limited, allowOptional = () => true) {
       best = solve(all) ?? best;
     } else {
       limited();
-      for (let i = 0; i < Math.min(count, 8); i++) {
+      const quoted = await readIndependentCarts(Array.from({ length: Math.min(count, 8) }, (_, i) => i), async (i) => {
         const one21 = await read([i]), rest = await read(Array.from({ length: count }, (_, j) => j).filter((j) => j !== i));
-        if (one21 && rest && total([...one21, ...rest]) < total(best)) best = [...one21, ...rest];
-      }
+        return one21 && rest ? [...one21, ...rest] : null;
+      });
+      for (const parts of quoted) if (parts && total(parts) < total(best)) best = parts;
     }
     const costGrosze = total(best);
     if (best.length < 2 || costGrosze >= quotedOrderTotal(order, base.quote) || !Number.isSafeInteger(costGrosze) || best.some((part) => !currentDeliveryQuote(part.quote, postcode)) || best.reduce((n, p) => n + p.order.materialsGrosze, 0) !== order.materialsGrosze) return base;
