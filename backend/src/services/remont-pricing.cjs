@@ -24699,8 +24699,7 @@ async function quoteAndRank(candidates, unique, result, settings, quoteBasket, n
       }
     }));
   };
-  await quoteKeys([...preferredKeys]);
-  await quoteKeys([...priority].filter((key) => !preferredKeys.has(key)));
+  await quoteKeys([.../* @__PURE__ */ new Set([...preferredKeys, ...priority])]);
   const confirmedCandidates = candidates.filter(
     (orders) => orders.every((order) => order.quote && order.totalGrosze !== null && Date.parse(order.quote.expiresAt) > Date.now())
   ).sort((a, b) => a.reduce((sum, o) => sum + o.totalGrosze, 0) - b.reduce((sum, o) => sum + o.totalGrosze, 0) || a.length - b.length);
@@ -24803,7 +24802,7 @@ function createPreferredDeliveryComparison(now = Date.now, maxEntries = 64) {
     const eligible = automatic && groups.length > 0 && !groups.some((g) => g.cutRoll) && !stages.some((s) => s.lines.some((l) => !l.resolved && l.quantity > 0));
     const key = eligible ? (0, import_node_crypto2.createHash)("sha256").update(stable2([
       settings.postalCode,
-      settings.allowSeparateOrders !== false,
+      settings.allowSeparateOrders === true,
       settings.allowExtraPackages === true,
       selectedStore ?? null,
       groups.map((g) => [g.product.id, g.unit, g.totalQuantity, g.requiredBySize ?? null]).sort((a, b) => String(a[0]).localeCompare(String(b[0])))
