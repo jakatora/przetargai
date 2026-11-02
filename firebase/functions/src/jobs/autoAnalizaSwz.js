@@ -70,10 +70,12 @@ export function wybierzSwz(dokumenty) {
  * 46 z 300 przetargów z listą e-Zamówień ma osobny wzór umowy / projektowane postanowienia w PDF albo .docx
  * (.doc i .zip nie czytamy). Pobieramy go obok SWZ i wysyłamy jako tekst (`umowa`); błąd = analiza bez umowy, jak dotąd.
  * Koszt: backend tnie łączną treść dokumentów do 120 tys. znaków, więc wywołanie AI nie rośnie ponad dotychczasowy sufit.
+ * Tak samo PRZEDMIAR robót w PDF (11 z 92 przetargów z dokumentami; .zip i .xlsx nie czytamy) — sprzeczności SWZ ↔ przedmiar
+ * (ilości, klasy materiału). Oba pliki pobierane równolegle.
  */
 const WZOR_UMOWY = /wz[oó]r\w*\s+umow|projekt\w*\s+umow|projektowane\s+postanowienia|istotne\s+postanowienia|postanowienia\s+umow|\b[pi]pu\b|(^|[\s_.\-–])umowa($|[\s_.\-–])/i;
 const NIE_WZOR = /zmian\w*\s+umow|aneks|do\s+umowy|rozwi[aą]zani/i;
-export const MAKS_ZNAKOW_UMOWY = 200_000;
+export const MAKS_ZNAKOW_DOKUMENTU = 200_000;
 
 const rozszerzenieDokumentu = (d) => String(d?.rozszerzenie ?? (String(d?.plik ?? d?.nazwa ?? '').match(/\.([a-z0-9]{1,5})$/i)?.[1] ?? '')).toLowerCase();
 
@@ -84,6 +86,14 @@ export function wybierzUmowe(dokumenty, swz = null) {
     return d?.url && d.url !== swz?.url && DOZWOLONE_HOSTY.test(d.url) && ['pdf', 'docx'].includes(rozszerzenieDokumentu(d))
       && WZOR_UMOWY.test(opis) && !NIE_WZOR.test(opis) && !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_PDF);
   }) ?? null;
+}
+
+/** Przedmiar robót w PDF — inny plik niż SWZ i wzór umowy. */
+export function wybierzPrzedmiar(dokumenty, pominiete = []) {
+  const zajete = new Set(pominiete.filter(Boolean).map((d) => d.url));
+  return (Array.isArray(dokumenty) ? dokumenty : []).find((d) => d?.url && !zajete.has(d.url) && DOZWOLONE_HOSTY.test(d.url)
+    && rozszerzenieDokumentu(d) === 'pdf' && /przedmiar/i.test(`${d?.nazwa ?? ''} ${d?.plik ?? ''}`)
+    && !(typeof d.rozmiar_kb === 'number' && d.rozmiar_kb * 1024 > MAKS_BAJTOW_PDF)) ?? null;
 }
 
 /** Pobranie pliku zamawiającego (≤ 5 MB, tylko dozwolone hosty) → Buffer. */
@@ -106,13 +116,13 @@ export async function pobierzPdfBase64(url, opcje = {}) {
   return bufor.toString('base64');
 }
 
-/** Tekst wzoru umowy (PDF z warstwą tekstową albo .docx); null = pusty, skan albo inny format. */
-export async function tekstUmowy(dokument, { fetchFn = fetch, czytajPdf = liniePdf } = {}) {
-  const bufor = await pobierzPlik(dokument.url, { fetchFn, etykieta: 'wzoru umowy', accept: '*/*' });
+/** Tekst dokumentu (PDF z warstwą tekstową albo .docx); null = pusty, skan albo inny format. */
+export async function tekstDokumentu(dokument, { fetchFn = fetch, czytajPdf = liniePdf, etykieta = 'dokumentu' } = {}) {
+  const bufor = await pobierzPlik(dokument.url, { fetchFn, etykieta, accept: '*/*' });
   let linie = null;
   if (bufor.subarray(0, 5).toString('latin1') === '%PDF-') linie = await czytajPdf(bufor);
   else if (bufor.length > 4 && bufor.readUInt32LE(0) === 0x04034b50) linie = czytajDocx(bufor).linie;
-  const tekst = (linie ?? []).join('\n').slice(0, MAKS_ZNAKOW_UMOWY);
+  const tekst = (linie ?? []).join('\n').slice(0, MAKS_ZNAKOW_DOKUMENTU);
   return tekst.trim() ? tekst : null;
 }
 
@@ -121,14 +131,16 @@ export async function tekstUmowy(dokument, { fetchFn = fetch, czytajPdf = linieP
  * @returns {Promise<{status: string, postepowanie_id?: string, liczba_pytan?: number, blad?: string}>}
  */
 export async function analizujDlaKlienta(user, tender, swz, {
-  modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, umowa = null, czytajUmowe = tekstUmowy,
+  modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, umowa = null, przedmiar = null, czytajDokument = tekstDokumentu,
 } = {}) {
   const pdf = await pobierzPdf(swz.url);
-  const trescUmowy = umowa ? await czytajUmowe(umowa).catch((err) => {
-    logger.warn({ err: err.message, tender: tender.id }, 'Auto-SWZ: wzór umowy nie został odczytany — analiza bez niego');
+  const czytaj = (dok, etykieta) => (dok ? czytajDokument(dok, { etykieta }).catch((err) => {
+    logger.warn({ err: err.message, tender: tender.id }, `Auto-SWZ: ${etykieta} nie został odczytany — analiza bez niego`);
     return null;
-  }) : null;
-  const zUmowa = trescUmowy ? { umowa: String(umowa.nazwa ?? umowa.plik ?? 'wzór umowy').slice(0, 200) } : {};
+  }) : null);
+  const [trescUmowy, trescPrzedmiaru] = await Promise.all([czytaj(umowa, 'wzór umowy'), czytaj(przedmiar, 'przedmiar')]);
+  const nazwa = (d) => String(d.nazwa ?? d.plik ?? '').slice(0, 200);
+  const zUmowa = { ...(trescUmowy ? { umowa: nazwa(umowa) } : {}), ...(trescPrzedmiaru ? { przedmiar: nazwa(przedmiar) } : {}) };
   const nowe = await modul(user, {
     metoda: 'POST', sciezka: '/swz/postepowania',
     dane: { nazwa: String(tender.title ?? 'Przetarg').slice(0, 300), ...(tender.deadline ? { termin_skladania_ofert: tender.deadline } : {}) },
@@ -138,7 +150,9 @@ export async function analizujDlaKlienta(user, tender, swz, {
 
   let analiza;
   try {
-    analiza = await modul(user, { metoda: 'POST', sciezka: `/swz/postepowania/${postepowanieId}/analiza`, dane: { swz_pdf_base64: pdf, ...(trescUmowy ? { umowa: trescUmowy } : {}) }, limitMs: LIMIT_ANALIZY_MS });
+    analiza = await modul(user, { metoda: 'POST', sciezka: `/swz/postepowania/${postepowanieId}/analiza`, dane: {
+      swz_pdf_base64: pdf, ...(trescUmowy ? { umowa: trescUmowy } : {}), ...(trescPrzedmiaru ? { przedmiar: trescPrzedmiaru } : {}),
+    }, limitMs: LIMIT_ANALIZY_MS });
   } catch (err) {
     // Zerwanie/limit czasu PO wysłaniu: backend zapisał treść SWZ przed AI i najpewniej dokończy analizę —
     // wiążemy postępowanie (checklista i plan już z niego korzystają), żeby koszt nie poszedł na marne.
@@ -203,7 +217,7 @@ export function alertAnalizy(tender, liczbaPytan, teraz) {
 
 export async function runAutoAnalizaSwz({
   teraz = nowIso(), maksNaPrzebieg = MAKS_NA_PRZEBIEG, maksNaKlientaDobe = MAKS_NA_KLIENTA_DOBE,
-  wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, czytajUmowe = tekstUmowy,
+  wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, czytajDokument = tekstDokumentu,
   budzetMs = 480_000,
 } = {}) {
   const start = Date.now();
@@ -242,7 +256,10 @@ export async function runAutoAnalizaSwz({
         zostalo--;
         let rezultat;
         try {
-          rezultat = await analizujDlaKlienta(user, tender, swz, { modul, pobierzPdf, umowa: wybierzUmowe(dokumenty, swz), czytajUmowe });
+          const umowa = wybierzUmowe(dokumenty, swz);
+          rezultat = await analizujDlaKlienta(user, tender, swz, {
+            modul, pobierzPdf, umowa, przedmiar: wybierzPrzedmiar(dokumenty, [swz, umowa]), czytajDokument,
+          });
         } catch (err) {
           rezultat = { status: 'blad', blad: err.message };
         }
@@ -251,6 +268,7 @@ export async function runAutoAnalizaSwz({
         else if (rezultat.status === 'nieczytelny_pdf') wynik.nieczytelne++;
         else wynik.bledy++;
         if (rezultat.umowa) wynik.z_umowa = (wynik.z_umowa ?? 0) + 1;
+        if (rezultat.przedmiar) wynik.z_przedmiarem = (wynik.z_przedmiarem ?? 0) + 1;
         await autoSwz.zakoncz(user.id, tender.id, { ...rezultat, teraz: nowIso() });
         const alert = rezultat.status === 'gotowe' ? alertAnalizy(tender, rezultat.liczba_pytan, teraz) : null;
         if (alert) {
