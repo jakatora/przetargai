@@ -19999,6 +19999,21 @@ function serializeProject(project) {
   };
 }
 
+// artifacts/api-server/src/lib/topboden-underlays.ts
+var TOPBODEN_UNDERLAY_SOURCES = [
+  // source: https://topboden.pl/podklad-pod-panele/arbiton-optima-thermo-aquastop-podklady-pod-panele-laminowane
+  { "id": "topboden-optima-thermo-aquastop-10m2", "ean": "5905167881811", "name": "Podk\u0142ad pod panele Arbiton Optima Thermo Aquastop - 1.5mm - do paneli laminowanych", "brand": "Arbiton", "category": "underlay", "packageSize": 10, "unit": "m2", "store": "TopBoden", "format": "topboden-api", "productUuid": "72ace8a7-643a-4f87-a517-e98e05d476c0", "apiPurchaseUnit": "m<sup>2</sup>", "variant": ["Optima", "Thermo", "Aquastop"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/podklad-pod-panele/arbiton-optima-thermo-aquastop-podklady-pod-panele-laminowane", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167881811_P_02.webp" },
+  // source: https://topboden.pl/podklad-pod-panele/arbiton-optima-aquastop-podklady-pod-panele-laminowane
+  { "id": "topboden-optima-aquastop-10m2", "ean": "5905167881804", "name": "Podk\u0142ad pod panele Arbiton Optima Aquastop - 2mm - do paneli laminowanych", "brand": "Arbiton", "category": "underlay", "packageSize": 10, "unit": "m2", "store": "TopBoden", "format": "topboden-api", "productUuid": "fb3e962e-5389-4fca-b7d0-4e63d2c1b29d", "apiPurchaseUnit": "m<sup>2</sup>", "variant": ["Optima", "Aquastop"], "pickupRequiresConfirmation": true, "url": "https://topboden.pl/podklad-pod-panele/arbiton-optima-aquastop-podklady-pod-panele-laminowane", "imageUrl": "https://topboden.pl/media/cache/gallery/photos/webp/5905167881804_P_02.webp" }
+];
+function confirmTopbodenUnderlaySource(source) {
+  const reviewed6 = TOPBODEN_UNDERLAY_SOURCES.find((s) => s.id === source.id);
+  if (!reviewed6) return false;
+  const fields = ["id", "ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "productUuid", "apiPurchaseUnit", "url"];
+  if (fields.some((key) => source[key] !== reviewed6[key]) || source.variant?.join("|") !== reviewed6.variant?.join("|") || (source.purchaseMultiple ?? 1) !== 1 || (source.minimumPackages ?? 1) !== 1) throw Error("product_package_not_confirmed");
+  return true;
+}
+
 // artifacts/api-server/src/lib/decowant-supplies.ts
 var DECOWANT_SOURCES = [
   // source: https://www.sklepdecowant.pl/pl/p/ATLAS-HYDROBAND-3G-tasma-uszczelniajaca-125-mm-10-m/370
@@ -21097,6 +21112,7 @@ function confirmKnaufFinishSource(source) {
 
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...TOPBODEN_UNDERLAY_SOURCES,
   ...DECOWANT_SOURCES,
   ...ATLAS_WODER_E_SOURCES,
   ...KNAUF_FINISH_SOURCES,
@@ -25607,8 +25623,10 @@ async function readTokmetProduct(source, fetchImpl) {
 var import_node_crypto13 = require("node:crypto");
 var TOPBODEN_API = "https://api.topboden.pl";
 function confirmTopbodenProduct(product, source, count = source.purchaseMultiple ?? 1) {
+  const underlay = confirmTopbodenUnderlaySource(source);
   if (!source.productUuid || !/^[a-f0-9-]{36}$/.test(source.productUuid) || product?.uuid !== source.productUuid || product.ean !== source.ean || product.data?.logisticData?.ean !== source.ean) throw Error("product_ean_not_confirmed");
   if (product.brand?.name !== source.brand || typeof product.name !== "string") throw Error("product_brand_not_confirmed");
+  if (underlay && (product.name !== source.name || product.technicalParameters?.thickness !== (source.ean === "5905167881811" ? "1.5" : "2") || product.technicalParameters?.moisture_insulation !== "1")) throw Error("product_package_not_confirmed");
   const units2 = product.units, multiple = source.purchaseMultiple ?? 1;
   const accessoryPacks = {
     "topboden-indo-inside-gloss-2": ["5905167726037", "9d18849b-1174-4fb0-a0ef-f78e5ee3e03f", 2, "szt"],
@@ -25627,16 +25645,16 @@ function confirmTopbodenProduct(product, source, count = source.purchaseMultiple
   const supply = supplies[source.id];
   if (supply && (source.ean !== supply[0] || source.productUuid !== supply[1] || source.packageSize !== supply[2] || source.unit !== supply[3] || source.apiPurchaseUnit !== supply[4] || multiple !== 1)) throw Error("product_package_not_confirmed");
   if (units2 && Number.isSafeInteger(units2.multiple) && Number.isSafeInteger(units2.minOrderQuantity) && (units2.multiple !== multiple || units2.minOrderQuantity !== multiple)) throw Error("purchase_rules_changed");
-  const nativeUnit = supply ? supply[4] : accessory ? "opk." : glue ? "szt." : source.unit, nativeOrderUnit = accessory ? "opk." : "szt.", nativePackSize = supply ? supply[5] : accessory || glue ? 1 : source.packageSize;
+  const nativeUnit = underlay ? "m<sup>2</sup>" : supply ? supply[4] : accessory ? "opk." : glue ? "szt." : source.unit, nativeOrderUnit = accessory || underlay ? "opk." : "szt.", nativePackSize = supply ? supply[5] : accessory || glue ? 1 : source.packageSize;
   if (!Number.isSafeInteger(multiple) || multiple < 1 || multiple > 1e4 || !units2 || units2.orderUnit !== nativeOrderUnit || units2.priceListUnit !== nativeUnit || units2.basicUnit !== nativeUnit || !Number.isFinite(units2.numerator) || !Number.isFinite(units2.denominator) || units2.denominator <= 0 || units2.numerator / units2.denominator !== nativePackSize || units2.multiple !== multiple || units2.minOrderQuantity !== multiple) throw Error("retailer_unit_not_confirmed");
   if (!Number.isSafeInteger(count) || count < multiple || count % multiple || count > 1e4) throw Error("purchase_multiple_required");
   if (product.available === false) throw Error("retailer_out_of_stock");
   if (product.available !== true || !Number.isFinite(product.baseUnitStock)) throw Error("retailer_stock_not_confirmed");
   if (product.baseUnitStock < count * nativePackSize) throw Error(count === multiple ? "retailer_out_of_stock" : "insufficient_stock");
   const price2 = product.price;
-  const regularReviewedPrice = (glue || supply) && product.promotionCode?.code === "EXTRA20" && product.promotionCode?.discount === "20" && product.promotionCode?.freeProductsMessage === null && price2?.isDiscount === false && price2.discountValue === 0 && ["discountNetPrice", "discountGrossPrice", "discountPackageNetPrice", "discountPackageGrossPrice"].every((key) => price2[key] === null) && price2.grossPrice * nativePackSize === price2.packageGrossPrice;
+  const regularReviewedPrice = (glue || supply || underlay) && product.promotionCode?.code === "EXTRA20" && product.promotionCode?.discount === "20" && product.promotionCode?.freeProductsMessage === null && price2?.isDiscount === false && price2.discountValue === 0 && ["discountNetPrice", "discountGrossPrice", "discountPackageNetPrice", "discountPackageGrossPrice"].every((key) => price2[key] === null) && price2.grossPrice * nativePackSize === price2.packageGrossPrice;
   if (!price2 || typeof price2.isDiscount !== "boolean" || product.promotionCode && !regularReviewedPrice) throw Error("conditional_price_not_supported");
-  if (supply && (!Number.isSafeInteger(price2.grossPrice) || price2.grossPrice <= 0 || price2.grossPrice * nativePackSize !== price2.packageGrossPrice)) throw Error("retailer_gross_price_not_confirmed");
+  if ((supply || underlay) && (!Number.isSafeInteger(price2.grossPrice) || price2.grossPrice <= 0 || price2.grossPrice * nativePackSize !== price2.packageGrossPrice)) throw Error("retailer_gross_price_not_confirmed");
   const priceGrosze = price2.isDiscount ? price2.discountPackageGrossPrice : price2.packageGrossPrice;
   if (!Number.isSafeInteger(priceGrosze) || priceGrosze <= 0) throw Error("retailer_gross_price_not_confirmed");
   const photo = product.images?.find((image) => image.category === "Packshot") ?? product.images?.[0];
@@ -25648,6 +25666,7 @@ function confirmTopbodenProduct(product, source, count = source.purchaseMultiple
 }
 async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMultiple ?? 1, signal = AbortSignal.timeout(12e3)) {
   if (new URL(source.url).origin !== "https://topboden.pl") throw Error("invalid_retailer_origin");
+  const underlay = confirmTopbodenUnderlaySource(source);
   const api = new AnonymousShop(TOPBODEN_API, fetchImpl, signal), page = new AnonymousShop("https://topboden.pl", fetchImpl, signal);
   const product = await api.json("/api/product/by-uuid/" + source.productUuid);
   const confirmed = confirmTopbodenProduct(product, source, count);
@@ -25664,7 +25683,7 @@ async function readTopbodenProduct(source, fetchImpl, count = source.purchaseMul
       return [];
     }
   }).filter((item) => item?.["@type"] === "Product");
-  const reviewedNativePack = source.apiPurchaseUnit === "opk." || ["topboden-strongman-300ml", "topboden-aquaprotec-vapour-10m2", "topboden-arbiton-izo-floor-tape-25m"].includes(source.id);
+  const reviewedNativePack = underlay || source.apiPurchaseUnit === "opk." || ["topboden-strongman-300ml", "topboden-aquaprotec-vapour-10m2", "topboden-arbiton-izo-floor-tape-25m"].includes(source.id);
   const accessoryIdentity = reviewedNativePack && records.length === 1 && typeof product.metaTitle === "string" && product.metaTitle.length > 0 && card.metaTitle === product.metaTitle && records[0].name === product.metaTitle && records[0].brand === source.brand && typeof records[0].image === "string" && records[0].image.includes(source.ean);
   if (records.length !== 1 || !(reviewedNativePack ? accessoryIdentity : records[0].name?.startsWith(product.name))) throw Error("product_identity_not_confirmed");
   const offer = records[0].offers;
