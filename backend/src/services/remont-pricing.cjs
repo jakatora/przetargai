@@ -19999,6 +19999,155 @@ function serializeProject(project) {
   };
 }
 
+// artifacts/api-server/src/lib/retail-microdata.ts
+var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+var decode = (text6) => text6.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+var text2 = (html) => decode(html.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+function attrs(tag) {
+  const result = {};
+  for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) result[match[1].toLowerCase()] = decode(match[2] ?? match[3]);
+  return result;
+}
+function elements(html, predicate) {
+  const result = [];
+  for (const match of html.matchAll(TAG)) {
+    if (match[0].startsWith("</") || !predicate(attrs(match[0]), match[1].toLowerCase())) continue;
+    if (["meta", "link", "img", "input", "br"].includes(match[1].toLowerCase()) || /\/>$/.test(match[0])) {
+      result.push(match[0]);
+      continue;
+    }
+    let depth = 1;
+    for (const next of html.slice(match.index + match[0].length).matchAll(TAG)) {
+      if (next[1].toLowerCase() !== match[1].toLowerCase()) continue;
+      depth += next[0].startsWith("</") ? -1 : 1;
+      if (depth === 0) {
+        result.push(html.slice(match.index, match.index + match[0].length + next.index + next[0].length));
+        break;
+      }
+    }
+  }
+  return result;
+}
+function one(values, error40) {
+  if (values.length !== 1) throw new Error(error40);
+  return values[0];
+}
+function property(html, key) {
+  const value2 = one(elements(html, (a2) => a2.itemprop === key), `microdata_${key}_ambiguous`);
+  const a = attrs(value2.match(TAG)?.[0] ?? "");
+  return a.content ?? a.href ?? a.src ?? text2(value2);
+}
+function labelled(html, label, tag) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`<${tag}\\b[^>]*>\\s*${escaped}\\s*<\\/${tag}>([\\s\\S]*?)<\\/div>`, "gi");
+  return text2(one([...html.matchAll(regex)].map((match) => match[1]), "microdata_identity_ambiguous"));
+}
+function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
+  const safe = clean(html);
+  const product = one(elements(safe, (a) => /\/Product$/.test(a.itemtype ?? "")), "microdata_product_ambiguous");
+  const offer = one(elements(product, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "microdata_offer_ambiguous");
+  const price2 = property(offer, "price");
+  const currency2 = property(offer, "priceCurrency");
+  const name = format === "unimet" ? text2(one(elements(product, (a, tag) => a.itemprop === "name" && tag === "h1"), "microdata_name_ambiguous")) : property(product, "name");
+  const images = elements(product, (a) => a.itemprop === "image").map((element5) => {
+    const a = attrs(element5.match(TAG)?.[0] ?? "");
+    return a.content ?? a.src ?? a.href;
+  }).filter((value2) => Boolean(value2));
+  const image = images[0] ? new URL(decodeURIComponent(images[0]), url2).href : null;
+  if (format === "unimet") {
+    const visible = text2(one(elements(offer, (a) => a.itemprop === "price"), "retailer_gross_price_not_confirmed"));
+    const grossLabel = text2(one(elements(product, (a) => a.class === "tax-shipping-delivery-label"), "retailer_gross_price_not_confirmed"));
+    if (grossLabel !== "SZT Brutto" || Number(visible.replace(/\s|zł/g, "").replace(",", ".")) !== Number(price2)) throw Error("retailer_gross_price_mismatch");
+    const brand = text2(one(elements(product, (a) => a.itemprop === "brand"), "microdata_brand_ambiguous")).replace(/^Marka\s*/, "");
+    return {
+      "@type": "Product",
+      name,
+      gtin13: property(product, "gtin13"),
+      brand,
+      image,
+      offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
+    };
+  }
+  if (format === "shoper" || format === "buduj24") {
+    const ean2 = property(product, "gtin");
+    const gross4 = format === "shoper" ? text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false), "retailer_gross_price_not_confirmed")) : text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("product-price-gross") ?? false), "retailer_gross_price_not_confirmed"));
+    const amount9 = gross4.replace(/\s|zł/g, "").replace(",", ".");
+    if (Number(amount9) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
+    const expiry = elements(offer, (a) => a.itemprop === "priceValidUntil");
+    const descriptions = elements(product, (a) => a.itemprop === "description");
+    const description = descriptions.length === 1 ? text2(descriptions[0]) : "";
+    return {
+      "@type": "Product",
+      name,
+      gtin13: ean2,
+      image,
+      description,
+      offers: {
+        "@type": "Offer",
+        price: price2,
+        priceCurrency: currency2,
+        url: url2,
+        availability: property(offer, "availability"),
+        ...expiry.length ? { priceValidUntil: property(offer, "priceValidUntil") } : {}
+      }
+    };
+  }
+  if (format === "sewera") {
+    const ean2 = labelled(product, "Kod kreskowy:", "strong");
+    const brand = labelled(product, "Producent:", "strong");
+    const stock = labelled(product, "Dost\u0119pne:", "strong");
+    const stockCount = stock.match(/^([0-9]+)\s+(SZT|OPA)$/i);
+    if (!stockCount || stockCount[2].toUpperCase() !== retailUnit) throw new Error("retailer_stock_not_confirmed");
+    const gross4 = text2(one(elements(offer, (a) => a.class === "priceShow"), "retailer_gross_price_not_confirmed"));
+    const grossMatch = gross4.match(/^([\d ,.]+)\s*zł\s*brutto\s*\/\s*(SZT|OPA)$/i);
+    const amount9 = grossMatch?.[2].toUpperCase() === retailUnit ? grossMatch[1].replace(/\s/g, "").replace(",", ".") : void 0;
+    if (amount9 === void 0 || Number(amount9) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
+    const description = elements(product, (a) => a.itemprop === "description").length ? property(product, "description") : "";
+    return {
+      "@type": "Product",
+      name,
+      description,
+      gtin13: ean2,
+      brand: { name: brand },
+      image,
+      offers: {
+        "@type": "Offer",
+        price: price2,
+        priceCurrency: currency2,
+        url: url2,
+        availability: Number(stockCount[1]) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+      }
+    };
+  }
+  const ean = labelled(product, "Kod EAN:", "em");
+  const gross3 = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value2) => /z VAT/i.test(value2)), "retailer_gross_price_not_confirmed");
+  const amount8 = gross3.match(/^([\d ,.]+)\s*zł\s*z VAT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
+  if (amount8 === void 0 || Number(amount8) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
+  return {
+    "@type": "Product",
+    name,
+    gtin13: ean,
+    image,
+    offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
+  };
+}
+
+// artifacts/api-server/src/lib/rigips-corners.ts
+var RIGIPS_CORNER_SOURCES = [
+  // source: https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-2-5m-rigips-p7501
+  { id: "sewera-rigips-alu-corner-235-25m", ean: "5905637118041", name: "Naro\u017Cnik aluminiowy 23,5x23,5mm 2,5m Rigips", brand: "Rigips", category: "drywall-accessory", packageSize: 2.5, unit: "mb", store: "Sewera", format: "sewera", retailUnit: "SZT", variant: ["23,5x23,5mm", "2,5m"], pickupRequiresConfirmation: true, url: "https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-2-5m-rigips-p7501", imageUrl: "https://sklep.sewera.pl/photo/195931/naroznik-aluminiowy-23-5x23-5mm-2-5m-rigips.webp" },
+  // source: https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-3m-rigips-p7500
+  { id: "sewera-rigips-alu-corner-235-3m", ean: "5905637118058", name: "Naro\u017Cnik aluminiowy 23,5x23,5mm 3m Rigips", brand: "Rigips", category: "drywall-accessory", packageSize: 3, unit: "mb", store: "Sewera", format: "sewera", retailUnit: "SZT", variant: ["23,5x23,5mm", "3m"], pickupRequiresConfirmation: true, url: "https://sklep.sewera.pl/naroznik-aluminiowy-23-5x23-5mm-3m-rigips-p7500", imageUrl: "https://sklep.sewera.pl/photo/195935/naroznik-aluminiowy-23-5x23-5mm-3m-rigips.webp" }
+];
+function confirmRigipsCorner(html, product, source) {
+  const reviewed6 = RIGIPS_CORNER_SOURCES.find((s) => s.id === source.id);
+  if (!reviewed6) return;
+  if (!["ean", "name", "brand", "category", "packageSize", "unit", "store", "format", "retailUnit", "url", "imageUrl", "pickupRequiresConfirmation"].every((k) => source[k] === reviewed6[k]) || source.variant?.join("|") !== reviewed6.variant.join("|") || (source.minimumPackages ?? 1) !== 1 || (source.purchaseMultiple ?? 1) !== 1 || source.skuIdentity !== void 0) throw Error("product_package_not_confirmed");
+  const safe = clean(html), code = source.packageSize === 2.5 ? "11511804" : "11511805";
+  if (product.name !== source.name || product.gtin13 !== source.ean || product.image !== source.imageUrl || labelled(safe, "Producent:", "strong") !== "RIGIPS" || labelled(safe, "Kod producenta:", "strong") !== code) throw Error("product_identity_not_confirmed");
+}
+
 // artifacts/api-server/src/lib/hipper-paints.ts
 var HIPPER_PAINT_SOURCES = [{
   id: "hipper-sniezka-barwy-173-5l",
@@ -20344,140 +20493,6 @@ function isReviewedAksCableSource(source) {
 
 // artifacts/api-server/src/lib/dekork.ts
 var import_node_crypto = require("node:crypto");
-
-// artifacts/api-server/src/lib/retail-microdata.ts
-var TAG = /<\/?([a-z][\w:-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
-var clean = (html) => html.replace(/<!--[\s\S]*?-->/g, "").replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
-var decode = (text6) => text6.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-var text2 = (html) => decode(html.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
-function attrs(tag) {
-  const result = {};
-  for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) result[match[1].toLowerCase()] = decode(match[2] ?? match[3]);
-  return result;
-}
-function elements(html, predicate) {
-  const result = [];
-  for (const match of html.matchAll(TAG)) {
-    if (match[0].startsWith("</") || !predicate(attrs(match[0]), match[1].toLowerCase())) continue;
-    if (["meta", "link", "img", "input", "br"].includes(match[1].toLowerCase()) || /\/>$/.test(match[0])) {
-      result.push(match[0]);
-      continue;
-    }
-    let depth = 1;
-    for (const next of html.slice(match.index + match[0].length).matchAll(TAG)) {
-      if (next[1].toLowerCase() !== match[1].toLowerCase()) continue;
-      depth += next[0].startsWith("</") ? -1 : 1;
-      if (depth === 0) {
-        result.push(html.slice(match.index, match.index + match[0].length + next.index + next[0].length));
-        break;
-      }
-    }
-  }
-  return result;
-}
-function one(values, error40) {
-  if (values.length !== 1) throw new Error(error40);
-  return values[0];
-}
-function property(html, key) {
-  const value2 = one(elements(html, (a2) => a2.itemprop === key), `microdata_${key}_ambiguous`);
-  const a = attrs(value2.match(TAG)?.[0] ?? "");
-  return a.content ?? a.href ?? a.src ?? text2(value2);
-}
-function labelled(html, label, tag) {
-  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(`<${tag}\\b[^>]*>\\s*${escaped}\\s*<\\/${tag}>([\\s\\S]*?)<\\/div>`, "gi");
-  return text2(one([...html.matchAll(regex)].map((match) => match[1]), "microdata_identity_ambiguous"));
-}
-function readRetailMicrodata(html, format, url2, retailUnit = "SZT") {
-  const safe = clean(html);
-  const product = one(elements(safe, (a) => /\/Product$/.test(a.itemtype ?? "")), "microdata_product_ambiguous");
-  const offer = one(elements(product, (a) => a.itemprop === "offers" && /\/Offer$/.test(a.itemtype ?? "")), "microdata_offer_ambiguous");
-  const price2 = property(offer, "price");
-  const currency2 = property(offer, "priceCurrency");
-  const name = format === "unimet" ? text2(one(elements(product, (a, tag) => a.itemprop === "name" && tag === "h1"), "microdata_name_ambiguous")) : property(product, "name");
-  const images = elements(product, (a) => a.itemprop === "image").map((element5) => {
-    const a = attrs(element5.match(TAG)?.[0] ?? "");
-    return a.content ?? a.src ?? a.href;
-  }).filter((value2) => Boolean(value2));
-  const image = images[0] ? new URL(decodeURIComponent(images[0]), url2).href : null;
-  if (format === "unimet") {
-    const visible = text2(one(elements(offer, (a) => a.itemprop === "price"), "retailer_gross_price_not_confirmed"));
-    const grossLabel = text2(one(elements(product, (a) => a.class === "tax-shipping-delivery-label"), "retailer_gross_price_not_confirmed"));
-    if (grossLabel !== "SZT Brutto" || Number(visible.replace(/\s|zł/g, "").replace(",", ".")) !== Number(price2)) throw Error("retailer_gross_price_mismatch");
-    const brand = text2(one(elements(product, (a) => a.itemprop === "brand"), "microdata_brand_ambiguous")).replace(/^Marka\s*/, "");
-    return {
-      "@type": "Product",
-      name,
-      gtin13: property(product, "gtin13"),
-      brand,
-      image,
-      offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
-    };
-  }
-  if (format === "shoper" || format === "buduj24") {
-    const ean2 = property(product, "gtin");
-    const gross4 = format === "shoper" ? text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false), "retailer_gross_price_not_confirmed")) : text2(one(elements(offer, (a) => a.class?.split(/\s+/).includes("product-price-gross") ?? false), "retailer_gross_price_not_confirmed"));
-    const amount9 = gross4.replace(/\s|zł/g, "").replace(",", ".");
-    if (Number(amount9) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
-    const expiry = elements(offer, (a) => a.itemprop === "priceValidUntil");
-    const descriptions = elements(product, (a) => a.itemprop === "description");
-    const description = descriptions.length === 1 ? text2(descriptions[0]) : "";
-    return {
-      "@type": "Product",
-      name,
-      gtin13: ean2,
-      image,
-      description,
-      offers: {
-        "@type": "Offer",
-        price: price2,
-        priceCurrency: currency2,
-        url: url2,
-        availability: property(offer, "availability"),
-        ...expiry.length ? { priceValidUntil: property(offer, "priceValidUntil") } : {}
-      }
-    };
-  }
-  if (format === "sewera") {
-    const ean2 = labelled(product, "Kod kreskowy:", "strong");
-    const brand = labelled(product, "Producent:", "strong");
-    const stock = labelled(product, "Dost\u0119pne:", "strong");
-    const stockCount = stock.match(/^([0-9]+)\s+(SZT|OPA)$/i);
-    if (!stockCount || stockCount[2].toUpperCase() !== retailUnit) throw new Error("retailer_stock_not_confirmed");
-    const gross4 = text2(one(elements(offer, (a) => a.class === "priceShow"), "retailer_gross_price_not_confirmed"));
-    const grossMatch = gross4.match(/^([\d ,.]+)\s*zł\s*brutto\s*\/\s*(SZT|OPA)$/i);
-    const amount9 = grossMatch?.[2].toUpperCase() === retailUnit ? grossMatch[1].replace(/\s/g, "").replace(",", ".") : void 0;
-    if (amount9 === void 0 || Number(amount9) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
-    const description = elements(product, (a) => a.itemprop === "description").length ? property(product, "description") : "";
-    return {
-      "@type": "Product",
-      name,
-      description,
-      gtin13: ean2,
-      brand: { name: brand },
-      image,
-      offers: {
-        "@type": "Offer",
-        price: price2,
-        priceCurrency: currency2,
-        url: url2,
-        availability: Number(stockCount[1]) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-      }
-    };
-  }
-  const ean = labelled(product, "Kod EAN:", "em");
-  const gross3 = one(elements(offer, (a) => a.class?.split(/\s+/).includes("main-price") ?? false).map(text2).filter((value2) => /z VAT/i.test(value2)), "retailer_gross_price_not_confirmed");
-  const amount8 = gross3.match(/^([\d ,.]+)\s*zł\s*z VAT$/i)?.[1].replace(/\s/g, "").replace(",", ".");
-  if (amount8 === void 0 || Number(amount8) !== Number(price2)) throw new Error("retailer_gross_price_mismatch");
-  return {
-    "@type": "Product",
-    name,
-    gtin13: ean,
-    image,
-    offers: { "@type": "Offer", price: price2, priceCurrency: currency2, url: property(offer, "url"), availability: property(offer, "availability") }
-  };
-}
 
 // artifacts/api-server/src/lib/unimet-purchase.ts
 var UNIMET_ORIGIN = "https://www.unimet.pl";
@@ -21410,6 +21425,7 @@ function confirmKnaufFinishSource(source) {
 
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
+  ...RIGIPS_CORNER_SOURCES,
   ...HIPPER_PAINT_SOURCES,
   ...KOWALCZYK_PLASTER_SOURCES,
   ...FUGI_SOURCES,
@@ -27009,6 +27025,7 @@ function parseRetailPage(html, source, observedAt) {
   }
   const product = source.skuIdentity ? products.find((item) => item.sku === retailSkuCode(source) && !item.gtin13 && !item.gtin) : products.find((item) => String(item.gtin13 ?? item.gtin ?? "") === source.ean);
   if (!product) throw new Error("product_ean_not_confirmed");
+  confirmRigipsCorner(html, product, source);
   const name = String(product.name ?? "");
   const normalize = (value2) => normalizeProductName(value2.replace(/(\d|mm|cm|m)\s*[x×/]\s*(?=\d)/gi, "$1 x ").replace(/(\d)([a-zA-Z])/g, "$1 $2"));
   const normalized2 = normalize(name);
@@ -27756,6 +27773,10 @@ function seweraHomeDeliveryMethods(checkout) {
     return a.name === "dostawa" && a["data-personal-collection"] === "0" && a.disabled === void 0 && (/kurier/i.test(name) || /^(DHL|Raben) - Paleta do \d+\s*kg$/i.test(name)) && !/indywidual|zapytani|odbiór|paczkomat/i.test(name);
   }).filter((node) => !/\sdisabled(?:\s|=|>)/i.test(node.match(/^<[^>]+>/)?.[0] ?? "")).map(attr4);
 }
+function seweraUnquotedDeliveryReason(checkout) {
+  const local = elements(clean(checkout), (a) => a.name === "dostawa" && a["data-personal-collection"] === "3" && (a.value === "12" && a["data-name"] === "Transport Sewera do 50km" || a.value === "162" && a["data-name"] === "Transport HDS wycena indywidualna")).filter((node) => !/\sdisabled(?:\s|=|>)/i.test(node.match(/^<[^>]+>/)?.[0] ?? ""));
+  return local.length ? "retailer_transport_quote_required" : "no_home_delivery";
+}
 async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price, client) => client.text(_url2)) {
   const packs = expectedPacks(order);
   const configured = packs.filter(({ source }) => source.dispatchDepartment);
@@ -27837,7 +27858,8 @@ async function quoteSewera(order, postalCode, fetchImpl, pages = (_url2, _price,
   const country2 = one17(elements(checkout, (a) => a.id === "selectCountryUser"));
   if (!elements(country2, (a) => a.value === "1").some((n) => text2(n) === "Polska")) throw Error("country_not_confirmed");
   const methods = seweraHomeDeliveryMethods(checkout);
-  if (!methods.length || methods.length > 5) throw Error("no_home_delivery");
+  if (!methods.length) return { reason: seweraUnquotedDeliveryReason(checkout) };
+  if (methods.length > 5) throw Error("no_home_delivery");
   const options = [];
   for (const method of methods) {
     const response = await client.text("/ajax/ax_default.php?operation=get_order_delivery_cost", {
