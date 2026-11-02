@@ -24506,6 +24506,15 @@ async function compareSelectedBaskets(groups, stores, result, settings, quoteBas
       }
     }
   }
+  mixedFamilyCandidates: if (materialPlans.every(Boolean)) for (const [index2, group] of groups.entries()) {
+    if (group.cutRoll) continue;
+    const variants = group.offers.filter((o) => isComparableOffer(o, now.getTime())).flatMap((o) => buildPackageVariants([o], group.product));
+    if (new Set(variants.map((v) => v.packageSize)).size < 2) continue;
+    for (const plan of mixedPackagePlans(group.totalQuantity, variants, group.requiredBySize, 32, 1e4).plans) {
+      if (proposed.size >= 96) break mixedFamilyCandidates;
+      addGroupedPlan(materialPlans.map((other, i) => i === index2 ? plan.packages : other.packages), false);
+    }
+  }
   const orderedOptions = options.map((option) => option.sort((a, b) => a.lineCostGrosze - b.lineCostGrosze || a.offerId.localeCompare(b.offerId)));
   function addBase(selected) {
     if (selected.some((pack) => !pack)) return;
