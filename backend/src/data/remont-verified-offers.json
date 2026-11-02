@@ -4968,5 +4968,57 @@
     "sourceUrl": "https://fugi.pl/produkt/mapeband-w-mapei-naroznik-uszczelniajacy-wewnetrzny-90/",
     "evidenceSha256": "33eca36d8bed91608eeac0f5402201e859b04b91f0458acfa7c067cae4df01d6",
     "validUntil": null
+  },
+  {
+    "sourceId": "kowalczyk-knauf-goldband-5kg",
+    "ean": "5901793354729",
+    "name": "KNAUF Goldband Gipsowa Zaprawa Tynkarska 5kg (507331)",
+    "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5901793354729.png",
+    "priceGrosze": 1335,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T07:52:44.518Z",
+    "sourceUrl": "https://sklep-kowalczyk.pl/knauf-goldband-gipsowa-zaprawa-tynkarska-5kg-507331-52455-52455.html",
+    "evidenceSha256": "6f7c9688fb8ab0c0e3dc82c3697fc26ecd86093912e650db3add89d85a527bb2",
+    "validUntil": null
+  },
+  {
+    "sourceId": "kowalczyk-knauf-goldband-10kg",
+    "ean": "5901793351162",
+    "name": "KNAUF Goldband Gipsowa Zaprawa Tynkarska 10kg (94713)",
+    "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/5/9/5901793351162.png",
+    "priceGrosze": 2155,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T07:52:45.530Z",
+    "sourceUrl": "https://sklep-kowalczyk.pl/knauf-goldband-gipsowa-zaprawa-tynkarska-10-kg-94713-52454-52454.html",
+    "evidenceSha256": "384922b8e08fcd88777315beed4a66195a17a3a4f6c378115b99521852d274db",
+    "validUntil": null
+  },
+  {
+    "sourceId": "kowalczyk-knauf-betokontakt-5kg",
+    "ean": "4006379051014",
+    "name": "KNAUF Grunt Betokontakt 5kg/op. 80szt/pal.(21023)",
+    "imageUrl": "https://sklep-kowalczyk.pl/media/catalog/product/cache/d24a34bded6d2df740ef66d66d2112c9/4/0/4006379051014.jpg",
+    "priceGrosze": 6588,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T07:52:46.601Z",
+    "sourceUrl": "https://sklep-kowalczyk.pl/knauf-grunt-betokontakt-5kg.html",
+    "evidenceSha256": "b43cd46e9e24a61185844f81ee6aa0e875ba463bb075c5249f4ceac199a1f770",
+    "validUntil": null
+  },
+  {
+    "sourceId": "unimet-corner-mesh-25m",
+    "ean": "5900308102411",
+    "name": "NAROŻNIK ALUMINIOWY Z SIATKĄ 70*70 - 250CM",
+    "imageUrl": "https://www.unimet.pl/2006367-large_default/naroznik-aluminiowy-z-siatka-7070-250cm.webp",
+    "priceGrosze": 635,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T08:21:06.642Z",
+    "sourceUrl": "https://www.unimet.pl/narozniki-6/262771-naroznik-aluminiowy-z-siatka-7070-250cm-5900308102411.html",
+    "evidenceSha256": "5cf0aec9dad59fc758df287c57d8e8733b70e297a448213607dc453c46e3fef4",
+    "validUntil": null
   }
 ]
