@@ -2,7 +2,7 @@ import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
 import { planEfektywny } from '../lib/plan.js';
 import { poczatekDobyWarszawskiej } from '../lib/czasPolski.js';
-import { users, matches, tenders, powiazaniaSwz, autoSwz, alerty } from '../db/repos.js';
+import { users, matches, tenders, powiazaniaSwz, autoSwz, alerty, saved } from '../db/repos.js';
 import { terminPytan } from '../lib/przypomnieniePytan.js';
 import { czySwz } from '../services/eZamowieniaDokumenty.js';
 import { wywolajModulPrzetargowy } from '../services/mostRailway.js';
@@ -287,6 +287,19 @@ export function alertAnalizy(tender, liczbaPytan, teraz) {
   };
 }
 
+/**
+ * Kolejność kandydatów (2026-11-02): limit to 2 analizy na klienta na dobę, a po dołożeniu zapytań z BK i platformy
+ * kandydatów jest więcej — miejsca dostają najpierw przetargi ZAPISANE przez klienta (jawna chęć startu), potem
+ * najwyżej ocenione; po terminie — wcale. Wcześniej: kolejność dopasowania (najnowsze), więc słabszy dzisiejszy
+ * wybór wypychał lepszy wczorajszy.
+ */
+export function kolejnoscKandydatow(wybrane, { zapisane = new Set(), teraz }) {
+  const t = Date.parse(teraz);
+  return wybrane
+    .filter((m) => !m.tender_deadline || !(Date.parse(m.tender_deadline) <= t))
+    .sort((a, b) => Number(zapisane.has(b.tender_id)) - Number(zapisane.has(a.tender_id)) || (Number(b.score) || 0) - (Number(a.score) || 0));
+}
+
 export async function runAutoAnalizaSwz({
   teraz = nowIso(), maksNaPrzebieg = MAKS_NA_PRZEBIEG, maksNaKlientaDobe = MAKS_NA_KLIENTA_DOBE,
   wczytajUzytkownikow = () => users.all(), modul = wywolajModulPrzetargowy, pobierzPdf = pobierzPdfBase64, czytajDokument = tekstDokumentu,
@@ -301,7 +314,8 @@ export async function runAutoAnalizaSwz({
     wynik.klienci = klienci.length;
     for (const user of klienci) {
       if (wynik.analizy >= maksNaPrzebieg) break;
-      const wybrane = (await matches.wybraneOd(user.id, odWybranych)).filter((m) => ZRODLA_AUTO_SWZ.has(m.tender_source));
+      const wybrane = kolejnoscKandydatow((await matches.wybraneOd(user.id, odWybranych)).filter((m) => ZRODLA_AUTO_SWZ.has(m.tender_source)),
+        { zapisane: new Set(await saved.ids(user.id).catch(() => [])), teraz });
       // Naprawy po limicie czasu nie kosztują AI i nie liczą się do limitów — przed nimi.
       for (const m of wybrane) {
         const z = await autoSwz.pobierz(user.id, m.tender_id);

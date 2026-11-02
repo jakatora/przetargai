@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { users, tenders, matches, powiazaniaSwz, autoSwz, alerty } = await import('../src/db/repos.js');
-const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, wybierzPrzedmiar, tekstDokumentu, tekstDuzejSwz, dokumentyDoAnalizy } = await import('../src/jobs/autoAnalizaSwz.js');
+const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, wybierzPrzedmiar, tekstDokumentu, tekstDuzejSwz, dokumentyDoAnalizy, kolejnoscKandydatow } = await import('../src/jobs/autoAnalizaSwz.js');
 const { zbudujDocx } = await import('../src/lib/docx.js');
 
 /*
@@ -363,4 +363,11 @@ test('przebieg: zapytanie z Bazy Konkurencyjności → załączniki ze szczegó�
   assert.equal(w2.gotowe, 1);
   assert.equal(wyw2[1].dane.swz, '§ 1. Przedmiot zapytania');
   assert.equal('swz_pdf_base64' in wyw2[1].dane, false);
+});
+
+test('kolejność kandydatów do limitu analiz: zapisane najpierw, potem wynik; po terminie — wcale', () => {
+  const m = (tender_id, score, tender_deadline = '2099-01-01T00:00:00.000Z') => ({ tender_id, score, tender_deadline });
+  const lista = kolejnoscKandydatow([m('nowy-slaby', 61), m('stary-mocny', 92), m('zapisany', 70), m('po-terminie', 99, '2026-10-01T00:00:00.000Z')],
+    { zapisane: new Set(['zapisany']), teraz: TERAZ });
+  assert.deepEqual(lista.map((x) => x.tender_id), ['zapisany', 'stary-mocny', 'nowy-slaby']);
 });
