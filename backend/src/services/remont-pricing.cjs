@@ -61,14 +61,18 @@ var CT17_PROFI_PACKS = [{ ean: "5900089617050", size: 5 }, { ean: "5900089617081
 var CT17_TRANSPARENT_FAMILY = "ceresit-ct17-transparent-litres-v1";
 var CT17_TRANSPARENT_FAMILY_NAME = "Ceresit CT 17 Transparent \u2014 dob\xF3r opakowa\u0144 5/10 l";
 var CT17_TRANSPARENT_PACKS = [{ ean: "5900089218653", size: 5 }, { ean: "5900089218677", size: 10 }];
+var KNAUF_SUPER_FINISH_FAMILY = "knauf-super-finish-kg-v1";
+var KNAUF_SUPER_FINISH_FAMILY_NAME = "Knauf Super Finish \u2014 dob\xF3r dost\u0119pnych opakowa\u0144";
+var KNAUF_SUPER_FINISH_PACKS = [{ ean: "5901793357959", size: 5.4 }, { ean: "5901793357942", size: 20 }, { ean: "5901793357935", size: 28 }];
 var REVIEWED_PACKAGE_FAMILIES = [
   { key: V33_CABINET_FAMILY, name: V33_CABINET_FAMILY_NAME, category: "cabinet-paint", unit: "ml", packs: V33_CABINET_PACKS },
   { key: PRIMER_G_PRO_FAMILY, name: PRIMER_G_PRO_FAMILY_NAME, category: "primer", unit: "l", packs: PRIMER_G_PRO_PACKS },
   { key: MAPEGUM_WPS_FAMILY, name: MAPEGUM_WPS_FAMILY_NAME, category: "waterproofing", unit: "kg", packs: MAPEGUM_WPS_PACKS },
   { key: CT17_PROFI_FAMILY, name: CT17_PROFI_FAMILY_NAME, category: "primer", unit: "l", packs: CT17_PROFI_PACKS },
-  { key: CT17_TRANSPARENT_FAMILY, name: CT17_TRANSPARENT_FAMILY_NAME, category: "primer", unit: "l", packs: CT17_TRANSPARENT_PACKS }
+  { key: CT17_TRANSPARENT_FAMILY, name: CT17_TRANSPARENT_FAMILY_NAME, category: "primer", unit: "l", packs: CT17_TRANSPARENT_PACKS },
+  { key: KNAUF_SUPER_FINISH_FAMILY, name: KNAUF_SUPER_FINISH_FAMILY_NAME, category: "skim-coat", unit: "kg", packs: KNAUF_SUPER_FINISH_PACKS }
 ];
-var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY];
+var REVIEWED_PACKAGE_FAMILY_KEYS = [V33_CABINET_FAMILY, PRIMER_G_PRO_FAMILY, MAPEGUM_WPS_FAMILY, CT17_PROFI_FAMILY, CT17_TRANSPARENT_FAMILY, KNAUF_SUPER_FINISH_FAMILY];
 var normalized = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9]/g, "");
 function reviewedPackageFamily(query, unit) {
   return REVIEWED_PACKAGE_FAMILIES.find((f) => query.packageFamily === f.key && !query.ean && !query.gtin && query.category === f.category && unit === f.unit && normalized(query.normalizedName ?? "") === normalized(f.name));
@@ -23325,13 +23329,14 @@ async function quoteRequiredDispatch(order, base, atomic, postcode, limited) {
 }
 
 // lib/pricing-service/src/order-partitions.ts
-function withOrderPartitions(atomic, limited) {
+function withOrderPartitions(atomic, limited, allowOptional = () => true) {
   return async (order, postcode) => {
     const base = await atomic(order, postcode), count = order.lines.length;
     if ("reason" in base && base.reason === "requires_separate_dispatch" && order.store === "Sewera" && count >= 2 && order.lines.every((line2) => line2.packages.length === 1)) {
       return quoteRequiredDispatch(order, base, atomic, postcode, limited);
     }
     if (!("quote" in base) || !currentDeliveryQuote(base.quote, postcode) || base.quote.orders || !count || quotedMaterialsGrosze(order, base.quote) === null) return base;
+    if (!allowOptional()) return base;
     if (base.quote.materialsRoundingGrosze !== void 0) {
       if (count > 1 || order.lines.some((l) => l.packages.some((p) => p.count > 1))) limited();
       return base;
@@ -23600,9 +23605,10 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
     cache.set(key, pending);
     return pending;
   };
+  let optionalPartitions = false;
   const quoteOrders = settings.allowSeparateOrders === true ? withOrderPartitions(quoteWithStock, () => {
     partitionSearchLimited = true;
-  }) : quoteWithStock;
+  }, () => optionalPartitions) : quoteWithStock;
   let result;
   for (let attempt = 0; attempt < 4; attempt++) {
     allowNewQuotes = attempt < 3;
@@ -23615,7 +23621,12 @@ async function compareAutomaticDelivery(stages, settings, quoteBasket, policies 
       if (limit.maxPackages === 0) return [];
       return [{ ...offer, maxPackages: Math.min(offer.maxPackages ?? Infinity, limit.maxPackages) }];
     }) }) }));
+    optionalPartitions = false;
     result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+    if (settings.allowSeparateOrders === true && revision === [...limits].map(([id, limit]) => `${id}:${limit.maxPackages}`).sort().join("|")) {
+      optionalPartitions = true;
+      result = await compareAutomaticDeliveryOnce(constrained, settings, quoteOrders, policies, now, knownUnavailableStores);
+    }
     quoteBudget = MAX_STORE_BASKETS;
     const addExtra = async () => {
       if (settings.allowExtraPackages === true && result.best) {
