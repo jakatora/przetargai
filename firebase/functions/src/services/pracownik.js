@@ -13,7 +13,7 @@ import {
 } from '../lib/limityAi.js';
 import { users, tenders, matches, evaluations, aiQuota, dziennik, warunkiQuota, backfillCooldown } from '../db/repos.js';
 import { ocenDlaKlienta, porownajWarunki, zaproponujProfil } from './ai.js';
-import { czasNaSugestie, opisDlaSugestii, noweZSugestii, DNI_BEZ_DOPASOWAN } from '../lib/sugestiaProfilu.js';
+import { czasNaSugestie, kontoDojrzale, opisDlaSugestii, noweZSugestii, DNI_BEZ_DOPASOWAN } from '../lib/sugestiaProfilu.js';
 import { linkProfilu, mailSugestii } from './profilZMaila.js';
 import { sendEmail } from './email.js';
 import { backfillUser, generateMatchesForAllUsers } from './matching.js';
@@ -83,10 +83,10 @@ async function odpadaNaWarunkach(user, tenderId, { porownaj, teraz, wersja }) {
  * @returns {Promise<object|null>} nowa sugestia z tego przebiegu albo null
  */
 export async function rozwazSugestieProfilu(user, pool, {
-  teraz, zaproponuj = zaproponujProfil, prog = env.MATCH_CONFIDENCE_THRESHOLD, wyslij = sendEmail, czyCisza = ciszaNocna,
+  teraz, zaproponuj = zaproponujProfil, prog = env.MATCH_CONFIDENCE_THRESHOLD, wyslij = sendEmail, czyCisza = ciszaNocna, pustaPula = false,
 } = {}) {
   let zapis = null;
-  if (czasNaSugestie(user, teraz)
+  if (czasNaSugestie(user, teraz, { pustaPula })
     && await matches.countSince(user.id, new Date(Date.parse(teraz) - DNI_BEZ_DOPASOWAN * 86_400_000).toISOString()) === 0) {
     const sugestia = await zaproponuj(opisDlaSugestii(user), { userId: user.id });
     if (sugestia) {
@@ -101,7 +101,7 @@ export async function rozwazSugestieProfilu(user, pool, {
     }
   }
   const s = zapis ?? user.profil_sugestia;
-  if (s && !s.mail_o && s.w_puli > 0 && s.dla_wersji === wersjaKarty(user) && !czyCisza(teraz)
+  if (s && !s.mail_o && s.w_puli > 0 && s.dla_wersji === wersjaKarty(user) && !czyCisza(teraz) && kontoDojrzale(user, teraz)
     && user.email && user.powiadomienia_pracownik_email !== false) {
     const wynik = await wyslij({ to: user.email, ...mailSugestii({ sugestia: s, link: await linkProfilu(user.id) }) });
     if (wynik?.sent) await users.zapiszSugestieProfilu(user.id, { ...s, mail_o: teraz });
@@ -289,7 +289,7 @@ export async function pracujDlaUzytkownika(user, pool, {
   }
 
   if (!wynik.wybrane) {
-    await rozwazSugestieProfilu(user, pool, { teraz, zaproponuj, wyslij: wyslijMail, czyCisza })
+    await rozwazSugestieProfilu(user, pool, { teraz, zaproponuj, wyslij: wyslijMail, czyCisza, pustaPula: ranked.length === 0 })
       .catch((err) => logger.warn({ err: err.message, userId: user.id }, 'Podpowiedź profilu dla konta bez dopasowań nie powiodła się'));
   }
   await dziennik.dopisz(user.id, dobaWarszawska(teraz), {

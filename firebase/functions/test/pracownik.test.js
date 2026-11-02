@@ -134,3 +134,19 @@ test('konto bez dopasowań od miesiąca: AI podpowiada profil RAZ na 14 dni, pul
   assert.equal(wolania.length, 2, 'konto z dopasowaniem — bez AI (2. wywołanie to konto bez maili)');
   assert.equal(await rozwazSugestieProfilu(await users.findById(u.id), [posadzka], { teraz: zaDni(30), zaproponuj: async () => null }), null, 'AI bez odpowiedzi — nic nie zapisujemy');
 });
+
+test('świeże konto, którego profil nie łapie w puli NIC: propozycja od razu (panel), mail dopiero po 2 dniach', async () => {
+  const u = await users.create({ email: `prs${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['Remont posadzka żywica'] });
+  const posadzka = await przetarg('Wykonanie posadzki w magazynie', { cpvMain: '45432100' });
+  const maile = [];
+  const opcje = { zaproponuj: async () => ({ keywords: ['posadzka'], cpv: ['45430000'] }), wyslijMail: async (m) => { maile.push(m); return { sent: true }; }, czyCisza: () => false };
+  await pracujDlaUzytkownika(await users.findById(u.id), [posadzka], { teraz: teraz(), ...opcje });
+  const s = (await users.findById(u.id)).profil_sugestia;
+  assert.deepEqual([s?.cpv, s?.w_puli, maile.length], [['45430000'], 1, 0], 'propozycja od razu, bez maila do świeżego konta');
+  await pracujDlaUzytkownika(await users.findById(u.id), [posadzka], { teraz: new Date(Date.now() + 3 * 86_400_000).toISOString(), ...opcje });
+  assert.equal(maile.length, 1, 'po 2 dniach bez przyjęcia — mail');
+
+  const zKandydatem = await users.create({ email: `prs${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['posadzka'] });
+  await pracujDlaUzytkownika(await users.findById(zKandydatem.id), [posadzka], { teraz: teraz(), ...opcje, wyslijMail: async () => ({ sent: false }) });
+  assert.equal((await users.findById(zKandydatem.id)).profil_sugestia, undefined, 'profil coś łapie — świeże konto bez podpowiedzi');
+});

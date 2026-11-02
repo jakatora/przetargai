@@ -13,11 +13,20 @@ export const MIN_WIEK_KONTA_DNI = 2;
 export const ODSTEP_SUGESTII_DNI = 14;
 const DOBA_MS = 86_400_000;
 
-/** Czy przebieg ma zapytać AI o profil (bez liczenia dopasowań — to robi wołający, bo wymaga odczytu). */
-export function czasNaSugestie(user, teraz) {
+/** Konto starsze niż 2 dni — dopiero wtedy mail (świeży klient jest w apce i widzi propozycję w panelu). */
+export function kontoDojrzale(user, teraz) {
+  return Date.parse(user?.created_at ?? '') <= Date.parse(teraz) - MIN_WIEK_KONTA_DNI * DOBA_MS;
+}
+
+/**
+ * Czy przebieg ma zapytać AI o profil (bez liczenia dopasowań — to robi wołający, bo wymaga odczytu).
+ * `pustaPula`: profil nie łapie w puli ANI JEDNEGO kandydata (heurystyka 0 dla wszystkich) — wtedy od razu, także
+ * przy rejestracji, bo to nie „spokojny tydzień”, tylko profil, który niczego nie znajdzie.
+ */
+export function czasNaSugestie(user, teraz, { pustaPula = false } = {}) {
   if (!(user?.keywords?.length || user?.cpv_codes?.length)) return false;
   const t = Date.parse(teraz);
-  if (!(Date.parse(user.created_at ?? '') <= t - MIN_WIEK_KONTA_DNI * DOBA_MS)) return false;
+  if (!pustaPula && !kontoDojrzale(user, teraz)) return false;
   const ostatnia = Date.parse(user.profil_sugestia?.o ?? '');
   return !(ostatnia > t - ODSTEP_SUGESTII_DNI * DOBA_MS);
 }
