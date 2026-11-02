@@ -4786,5 +4786,18 @@
     "sourceUrl": "https://sklep.sewera.pl/folia-w-plynie-szybkoschnaca-woder-e-5kg-atlas-p11569",
     "evidenceSha256": "17b07b917089d3b131ec33679ea6e3d6d32611bdf6d54de77b8a7aa6dcefacf3",
     "validUntil": null
+  },
+  {
+    "sourceId": "sewera-knauf-superfinish-28kg",
+    "ean": "5901793357935",
+    "name": "Szpachla do spoinowania Super Finish 28kg Knauf",
+    "imageUrl": "https://sklep.sewera.pl/photo/281568/szpachla-do-spoinowania-super-finish-28kg-knauf.webp",
+    "priceGrosze": 9690,
+    "currency": "PLN",
+    "availability": "in_stock",
+    "observedAt": "2026-11-02T02:18:30.634Z",
+    "sourceUrl": "https://sklep.sewera.pl/szpachla-do-spoinowania-super-finish-28kg-knauf-p15481",
+    "evidenceSha256": "c1361d5f88ceedfd318159d6e1f331ceb267ce440d44dbdef185dfe626ababb6",
+    "validUntil": null
   }
 ]
