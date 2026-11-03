@@ -22005,6 +22005,21 @@ var RETAIL_SOURCES = [
     "format": "sewera",
     "url": "https://sklep.sewera.pl/ceresit-fuga-ce40-01-wodoodporna-elastyczna-2kg-p9147"
   },
+  // source: https://viverto.pl/fuga-elastyczna-ce-40-aquastatic-bialy-01-2-kg-ceresit/
+  // source: https://dm.henkel-dam.com/is/content/henkel/Cennik-Henkel-ACB
+  {
+    id: "viverto-ceresit-ce40-white-2kg",
+    ean: "5900089140015",
+    name: "Fuga Elastyczna CE 40 Aquastatic Bia\u0142y 01 2 kg Ceresit",
+    category: "grout",
+    brand: "Ceresit",
+    packageSize: 2,
+    unit: "kg",
+    store: "Viverto",
+    format: "jsonld",
+    pickupRequiresConfirmation: true,
+    url: "https://viverto.pl/fuga-elastyczna-ce-40-aquastatic-bialy-01-2-kg-ceresit/"
+  },
   // source: https://sklep.zino.pl/pl/p/Akrylit-W-plus-snieznobiala-5l-Dekoral/2071
   // source: https://www.obi.pl/biale-farby-do-scian/dekoral-emulsja-akrylit-w-bialy-5-l/p/1237502
   {
@@ -27237,10 +27252,20 @@ function parseRetailPage(html, source, observedAt) {
   else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax", "irbud-woo", "krasny"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
-      products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
+      const entities = objects(JSON.parse(script[1]));
+      const isProduct = (item) => [item["@type"]].flat().includes("Product");
+      if (source.id === "viverto-ceresit-ce40-white-2kg") {
+        for (const page of entities.filter((item) => item["@type"] === "WebPage")) {
+          const primary = page.mainEntity;
+          if (primary && !Array.isArray(primary) && isProduct(primary)) products.push(primary);
+        }
+      } else {
+        products.push(...entities.filter(isProduct));
+      }
     } catch {
     }
   }
+  if (source.id === "viverto-ceresit-ce40-white-2kg" && products.length !== 1) throw Error("product_identity_ambiguous");
   if (source.format === "idosell" || source.format === "fixero" || source.format === "rodimax") {
     if (products.length !== 1) throw Error("product_identity_ambiguous");
     if (source.format === "idosell") products[0] = idosellPromotion(products[0], observedAt);
