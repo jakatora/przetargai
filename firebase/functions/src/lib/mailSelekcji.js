@@ -44,6 +44,7 @@ export function mailSelekcji({ pozycje, raport = null, plan = 'free', linkWypisu
     ...pozycje.flatMap((p) => [
       `• ${p.tytul}${p.organizacja ? ` — ${p.organizacja}` : ''} (${termin(p.termin)})`,
       ...(p.punkty ?? []).slice(0, 2).map((x) => `  – ${x}`),
+      ...(p.bez_warunkow ? ['  ✓ Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.'] : []),
       ...(p.krok ? [`  Pierwszy krok: ${p.krok}`] : []),
     ]),
     '',
@@ -56,7 +57,8 @@ export function mailSelekcji({ pozycje, raport = null, plan = 'free', linkWypisu
   const html = `<p>Dzień dobry,</p>
 <p>wybraliśmy przetargi pasujące do Twojej firmy:</p>
 <ul>${pozycje.map((p) => `<li><b>${esc(p.tytul)}</b>${p.organizacja ? ` — ${esc(p.organizacja)}` : ''} (${esc(termin(p.termin))})${
-    (p.punkty ?? []).slice(0, 2).map((x) => `<br>– ${esc(x)}`).join('')}${p.krok ? `<br>Pierwszy krok: ${esc(p.krok)}` : ''}</li>`).join('')}</ul>
+    (p.punkty ?? []).slice(0, 2).map((x) => `<br>– ${esc(x)}`).join('')}${p.bez_warunkow ? '<br>✓ Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.' : ''}${
+    p.krok ? `<br>Pierwszy krok: ${esc(p.krok)}` : ''}</li>`).join('')}</ul>
 ${raportZdanie ? `<p>${esc(raportZdanie)}</p>` : ''}
 <p>Szczegóły i uzasadnienie znajdziesz w aplikacji PrzetargAI: <a href="${esc(linkAplikacji)}">${esc(linkAplikacji)}</a></p>
 <p style="font-size:12px;color:#5b6577">Nie chcesz tych maili? <a href="${esc(linkWypisu)}">Wyłącz je</a>.</p>`;

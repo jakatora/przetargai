@@ -47,3 +47,10 @@ test('maile próby', () => {
   assert.equal(k.subject, 'Próba Standard się skończyła — od dziś 5 przetargów dziennie');
   assert.ok(k.text.includes('Konto') && k.text.includes('99 zł'));
 });
+
+test('mail: przetarg bez warunków udziału ma osobną linię (poza limitem 2 punktów)', () => {
+  const m = mailSelekcji({ pozycje: [{ ...POZ, punkty: ['A', 'B'], bez_warunkow: true }], plan: 'standard', ...LINKI });
+  assert.match(m.text, /– A\n {2}– B\n {2}✓ Bez warunków udziału/);
+  assert.match(m.html, /<br>✓ Bez warunków udziału/);
+  assert.doesNotMatch(mailSelekcji({ pozycje: [POZ], plan: 'standard', ...LINKI }).text, /Bez warunków/);
+});

@@ -5,6 +5,7 @@ import { heuristicScore } from '../lib/scoring.js';
 import { planEfektywny } from '../lib/plan.js';
 import { wersjaKarty, formalnePuste, wersjaFormalnych, kartaZUzytkownika, minDniDlaPrzetargu } from '../lib/kartaFirmy.js';
 import { sprawdzReguly } from '../lib/regulyKarty.js';
+import { PUNKT_BEZ_WARUNKOW } from '../lib/warunkiUdzialu.js';
 import { przykladyDlaAi } from '../lib/sygnaly.js';
 import { pustyLicznikPrzyczyn } from '../lib/przyczyny.js';
 import { dobaWarszawska, ciszaNocna } from '../lib/czasPolski.js';
@@ -45,7 +46,7 @@ export const MAKS_KOLEJNYCH_BLEDOW_AI = 3;
  */
 export const BUDZET_PRZELICZENIA_MS = 20_000;
 
-export const PUNKT_BEZ_WARUNKOW = 'Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.';
+export { PUNKT_BEZ_WARUNKOW };
 
 function punktyZHeurystyki(h) {
   const punkty = [];

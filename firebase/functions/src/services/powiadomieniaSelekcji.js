@@ -4,6 +4,7 @@ import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
 import { planEfektywny } from '../lib/plan.js';
 import { ciszaNocna, dobaWarszawska } from '../lib/czasPolski.js';
+import { PUNKT_BEZ_WARUNKOW } from '../lib/warunkiUdzialu.js';
 import { mailSelekcji, odmianaPrzetargow } from '../lib/mailSelekcji.js';
 import { terminPytan } from '../lib/przypomnieniePytan.js';
 import { matches, alerty, magicLinks, dziennik, znacznikMailaSelekcji } from '../db/repos.js';
@@ -34,7 +35,9 @@ function pozycjeZ(lista, { zKrokiem, teraz }) {
       tytul: m.tender_title ?? 'Przetarg',
       organizacja: m.tender_organization ?? null,
       termin: m.tender_deadline ?? null,
-      punkty: (m.uzasadnienie ?? []).slice(0, 2),
+      // „Bez warunków udziału” osobną linią — mail pokazuje tylko 2 punkty, a ten stoi na końcu uzasadnienia.
+      punkty: (m.uzasadnienie ?? []).filter((p) => p !== PUNKT_BEZ_WARUNKOW).slice(0, 2),
+      bez_warunkow: (m.uzasadnienie ?? []).includes(PUNKT_BEZ_WARUNKOW),
       krok: pytania?.lokalnie?.etykieta ? `pytania do SWZ najpóźniej ${pytania.lokalnie.etykieta}` : null,
     };
   });

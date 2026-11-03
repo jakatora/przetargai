@@ -5,6 +5,9 @@
  */
 export const MAKS_ZNAKOW_WARUNKOW = 3000;
 
+/** Punkt uzasadnienia wyboru przy BZP pkt 5.3 „Warunki udziału: Nie” (2026-11-03) — też osobna linia w mailu. */
+export const PUNKT_BEZ_WARUNKOW = 'Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.';
+
 // BZP (2026-11-02): pkt 5.4 bywa dłuższy (ze wstępem o wykluczeniu) — zdolność techniczna stoi na końcu, nie ucinamy jej.
 export const MAKS_ZNAKOW_WARUNKOW_BZP = 5000;
 
