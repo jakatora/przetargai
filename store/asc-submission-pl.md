@@ -260,7 +260,7 @@ Więcej źródeł i pełna kontrola nad listą przetargów:
 ### 5.2 Demo Account
 | Pole | Wartość |
 |---|---|
-| **User name** | `apple-review@przetargai.demo` |
+| **User name** | `apple-review@przetargai.test` |
 | **Password** | `AppleReview2026!` |
 
 ### 5.3 Contact Information
@@ -276,7 +276,7 @@ Więcej źródeł i pełna kontrola nad listą przetargów:
 PrzetargAI is a B2B SaaS tool for Polish small/medium businesses. The app monitors the public procurement bulletin (BZP — Biuletyn Zamówień Publicznych) and uses Claude AI (Anthropic) to match tenders to the company's profile based on keywords and CPV codes.
 
 DEMO ACCOUNT (pre-configured construction industry profile):
-- Email: apple-review@przetargai.demo
+- Email: apple-review@przetargai.test
 - Password: AppleReview2026!
 
 After login you'll see 5 real tender matches from the Polish public procurement bulletin (BZP) with AI-generated relevance scores (72-92) and reasoning in Polish. The matching algorithm runs server-side using Claude Haiku 4.5 model.
@@ -378,7 +378,7 @@ Najczęstsze powody odrzucenia metadata (NIE binarki):
 |---|---|
 | Privacy Policy URL nie działa | sprawdź `https://jakatora.github.io/przetargai/polityka-prywatnosci.html` w przeglądarce |
 | Screenshots zawierają placeholder text (`reallygreatsite.com`) | wgraj nowe screenshoty z prawdziwej apki |
-| Demo account nie działa | upewnij się że konto `apple-review@przetargai.demo` istnieje w produkcyjnej bazie + ma matche w feedzie |
+| Demo account nie działa | upewnij się że konto `apple-review@przetargai.test` istnieje w produkcyjnej bazie + ma matche w feedzie |
 | Subscription terms / pricing nie zgadza się z opisem | zostaw 99 PLN/mc spójnie wszędzie |
 | Wymaga login bez wyjaśnienia po co | dodać w Notes for Reviewer kontekst (już mamy) |
 
@@ -391,7 +391,7 @@ Przed Submit upewnij się że konto Apple reviewera **działa**:
 ```bash
 curl -X POST https://backend-production-a43e3.up.railway.app/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"apple-review@przetargai.demo","password":"AppleReview2026!"}'
+  -d '{"email":"apple-review@przetargai.test","password":"AppleReview2026!"}'
 ```
 
 Powinien zwrócić `200` z `token`. Jeśli `401` lub coś innego — konto trzeba odtworzyć (admin endpoint backendu).
@@ -407,7 +407,7 @@ Powinien zwrócić `200` z `token`. Jeśli `401` lub coś innego — konto trzeb
 - **Terms URL**: `https://jakatora.github.io/przetargai/regulamin.html`
 - **Support URL**: `https://jakatora.github.io/przetargai/`
 - **Backend**: `https://backend-production-a43e3.up.railway.app`
-- **Demo: Apple reviewer**: `apple-review@przetargai.demo` / `AppleReview2026!`
+- **Demo: Apple reviewer**: `apple-review@przetargai.test` / `AppleReview2026!`
 - **Demo: Google reviewer**: `play-review@przetargai.demo` / `PlayReview2026!`
 
 ---
