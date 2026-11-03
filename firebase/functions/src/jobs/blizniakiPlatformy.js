@@ -62,7 +62,7 @@ export async function przeniesKopieNaBzp(pary) {
   return { ...w, odswiezone: w.dopasowania ? await matches.odswiezPrzeniesione(wiodace) : 0 };
 }
 
-export async function scalBlizniakiPlatformy({ teraz = nowIso(), sucho = false } = {}) {
+export async function scalBlizniakiPlatformy({ teraz = nowIso(), sucho = false, limit = Infinity } = {}) {
   const kopie = [];
   const juzZastapione = [];
   for (const zrodlo of ZRODLA_KOPII) {
@@ -74,6 +74,7 @@ export async function scalBlizniakiPlatformy({ teraz = nowIso(), sucho = false }
   const kandydaci = await kandydaciWiodacy(kopie);
   const pary = [];
   for (const kopia of kopie) {
+    if (pary.length >= limit) break; // duże scalenie w kilku wywołaniach — limit trasy 300 s
     const wiodacy = wiodacyKopii(kopia, kandydaci);
     if (wiodacy) pary.push({ kopia, wiodacy });
   }

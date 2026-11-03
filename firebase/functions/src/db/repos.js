@@ -1094,18 +1094,23 @@ export const tenders = {
     const pola = ['title', 'organization', 'deadline', 'source', 'url', 'bzp_external_id', 'zastapiony_przez', 'zrodla_alternatywne'];
     const wynik = new Map();
     for (const t of await this.polaWielu(ids, pola)) if ((t.source ?? 'bzp') === source) wynik.set(t.id, t);
+    const col = db().collection('tenders');
     const unikalne = [...new Set(terminy.filter((d) => typeof d === 'string' && d))];
+    const zapytania = [];
     for (let i = 0; i < unikalne.length; i += 30) {
-      const snap = await db().collection('tenders').where('source', '==', source)
-        .where('deadline', 'in', unikalne.slice(i, i + 30)).select(...pola).get();
-      for (const d of snap.docs) wynik.set(d.id, { id: d.id, ...d.data() });
+      zapytania.push(() => col.where('source', '==', source).where('deadline', 'in', unikalne.slice(i, i + 30)).select(...pola).get());
     }
     // Termin z samą datą (TED) — cała doba warszawska terminów podanych w `dobyTerminow` (zakres, ten sam indeks).
     for (const doba of new Set(dobyTerminow.filter((d) => typeof d === 'string' && d).map(dobaWarszawska))) {
-      const snap = await db().collection('tenders').where('source', '==', source)
+      zapytania.push(() => col.where('source', '==', source)
         .where('deadline', '>=', poczatekDobyWarszawskiej(`${doba}T12:00:00.000Z`)).where('deadline', '<=', doUtcIso(doba))
-        .select(...pola).get();
-      for (const d of snap.docs) wynik.set(d.id, { id: d.id, ...d.data() });
+        .select(...pola).get());
+    }
+    // Po 10 naraz — scalanie wstecz to ~250 zapytań (3.11: 118 s jedno po drugim).
+    for (let i = 0; i < zapytania.length; i += 10) {
+      for (const snap of await Promise.all(zapytania.slice(i, i + 10).map((z) => z()))) {
+        for (const d of snap.docs) wynik.set(d.id, { id: d.id, ...d.data() });
+      }
     }
     return [...wynik.values()];
   },
