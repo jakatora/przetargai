@@ -45,6 +45,8 @@ export const MAKS_KOLEJNYCH_BLEDOW_AI = 3;
  */
 export const BUDZET_PRZELICZENIA_MS = 20_000;
 
+export const PUNKT_BEZ_WARUNKOW = 'Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.';
+
 function punktyZHeurystyki(h) {
   const punkty = [];
   if (h.matchedKeywords.length) punkty.push(`Tytuł trafia w Twoje słowa: ${h.matchedKeywords.join(', ')}.`);
@@ -185,7 +187,10 @@ export async function pracujDlaUzytkownika(user, pool, {
     wynik.odrzucone[przyczyna] = (wynik.odrzucone[przyczyna] ?? 0) + 1;
     await schowaj(tender.id, przyczyna, szczegol);
   };
-  const wybierz = async (tender, { score, punkty, scorer, ocenaBezAi, ostateczna }) => {
+  const wybierz = async (tender, { score, punkty: punktyWyboru, scorer, ocenaBezAi, ostateczna }) => {
+    // „Bez warunków udziału” (BZP pkt 5.3, 2026-11-02) — klient widzi to w uzasadnieniu bez otwierania ogłoszenia.
+    const punkty = tender.warunki_udzialu?.brak_warunkow && !punktyWyboru.some((p) => /warunk\S* udzia/i.test(p))
+      ? [...punktyWyboru, PUNKT_BEZ_WARUNKOW] : punktyWyboru;
     const { created, odrzuconyNaWarunkach } = await matches.utworzWybrany({
       userId: user.id, tender, score, punkty, scorer, ocenaBezAi, criteriaHash: wersja, zapiszSlad: ostateczna,
       wersjaFormalnych: wersjaFormalnych(user), teraz,

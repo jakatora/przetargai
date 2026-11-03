@@ -95,3 +95,8 @@ test('prompt: szczegół platformazakupowa.pl (tryb, wymagania) wchodzi do danyc
   assert.ok(wym.length <= 1200 && wym.startsWith('Remont dachu szkoły'));
   assert.ok(!zbudujPromptSelekcji({ user: USER, tender: TENDER, teraz: TERAZ }).includes('Tryb postępowania'), 'bez szczegółu nic nie dopisujemy');
 });
+
+test('prompt: brak warunków udziału (BZP pkt 5.3) trafia do danych przetargu; bez znacznika — nie', () => {
+  assert.ok(zbudujPromptSelekcji({ user: USER, tender: { ...TENDER, warunki_udzialu: { brak_warunkow: true } }, teraz: TERAZ }).includes('Warunki udziału: brak'));
+  assert.ok(!zbudujPromptSelekcji({ user: USER, tender: TENDER, teraz: TERAZ }).includes('Warunki udziału'));
+});

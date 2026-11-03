@@ -5,7 +5,7 @@ process.env.ANTHROPIC_API_KEY = ''; // features.ai = false → heurystyka decydu
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { users, tenders, matches, evaluations, dziennik } = await import('../src/db/repos.js');
-const { pracujDlaUzytkownika, rozwazSugestieProfilu } = await import('../src/services/pracownik.js');
+const { pracujDlaUzytkownika, rozwazSugestieProfilu, PUNKT_BEZ_WARUNKOW } = await import('../src/services/pracownik.js');
 const { dobaWarszawska } = await import('../src/lib/czasPolski.js');
 
 const PUSTE_FORMALNE = { obrot_roczny: null, referencja_kwota: null, referencja_opis: null, uprawnienia: [] };
@@ -149,4 +149,18 @@ test('świeże konto, którego profil nie łapie w puli NIC: propozycja od razu 
   const zKandydatem = await users.create({ email: `prs${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['posadzka'] });
   await pracujDlaUzytkownika(await users.findById(zKandydatem.id), [posadzka], { teraz: teraz(), ...opcje, wyslijMail: async () => ({ sent: false }) });
   assert.equal((await users.findById(zKandydatem.id)).profil_sugestia, undefined, 'profil coś łapie — świeże konto bez podpowiedzi');
+});
+
+test('przetarg BZP bez warunków udziału: punkt w uzasadnieniu wyboru; pula niesie sam znacznik, bez opisu warunków', async () => {
+  const u = await klient();
+  const bez = await przetarg('Remont dachu szkoły podstawowej', { warunki_udzialu: { tekst: null, zrodlo: 'ogloszenie', brak_warunkow: true } });
+  const zWarunkami = await przetarg('Remont dachu przychodni', { warunki_udzialu: { tekst: 'Obrót 2 mln zł', zrodlo: 'ogloszenie' } });
+  const pula = (await tenders.openPool()).filter((t) => [bez.id, zWarunkami.id].includes(t.id));
+  assert.deepEqual(pula.find((t) => t.id === bez.id).warunki_udzialu, { brak_warunkow: true });
+  assert.equal(pula.find((t) => t.id === zWarunkami.id).warunki_udzialu?.tekst, undefined, 'opis warunków nie wchodzi do puli');
+  await pracujDlaUzytkownika(u, pula, { teraz: teraz() });
+  const m1 = await matches.detail(u.id, bez.id);
+  const m2 = await matches.detail(u.id, zWarunkami.id);
+  assert.ok(m1.uzasadnienie.includes(PUNKT_BEZ_WARUNKOW));
+  assert.ok(!m2.uzasadnienie.includes(PUNKT_BEZ_WARUNKOW));
 });

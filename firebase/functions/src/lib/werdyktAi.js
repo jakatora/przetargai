@@ -60,6 +60,8 @@ export function zbudujPromptSelekcji({ user, tender, przyklady = { zapisane: [],
     `Kody CPV: ${dane(tender?.cpv_main) || '(brak)'}`,
     `Wartość: ${kwota(tender?.budget ?? null)}`,
     `Wadium: ${kwota(tender?.wadium_kwota ?? null)}`,
+    // BZP pkt 5.3 (2026-11-02): brak warunków udziału — dla małej firmy argument za startem.
+    ...(tender?.warunki_udzialu?.brak_warunkow ? ['Warunki udziału: brak (zamawiający nie stawia warunków)'] : []),
     `Województwo: ${woj}`,
     `Rodzaj: ${dane(tender?.rodzaj) || dane(tender?.pz_szczegol?.rodzaj) || '(brak)'}`,
     `Dni do terminu ofert: ${dni ?? 'nieznane'}`,
