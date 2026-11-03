@@ -1803,6 +1803,13 @@ function rekordDopasowania({ userId, tenderId, score, reasoning, scorer, tender,
     scorer,
     notified: 0,
     created_at: teraz,
+    ...polaTenderuDopasowania(tender),
+  };
+}
+
+/** Zdenormalizowane pola przetargu w dopasowaniu (feed bez odczytu `tenders`). */
+export function polaTenderuDopasowania(tender) {
+  return {
     tender_title: tender?.title ?? null,
     tender_organization: tender?.organization ?? null,
     tender_budget: tender?.budget ?? null,
@@ -1822,6 +1829,28 @@ function rekordDopasowania({ userId, tenderId, score, reasoning, scorer, tender,
 }
 
 export const matches = {
+  /**
+   * Dopasowania przeniesione z kopii z platformy na wpis BZP (`przeniesiono_z`, jobs/blizniakiPlatformy.js) dostają
+   * pola przetargu z BZP — przeniesienie kopiuje pola kopii. `wiodace` = Map id → przetarg. Zwraca liczbę poprawionych.
+   */
+  async odswiezPrzeniesione(wiodace) {
+    const ids = [...wiodace.keys()];
+    let ile = 0;
+    for (let i = 0; i < ids.length; i += 30) {
+      const snap = await db().collectionGroup('matches').where('tender_id', 'in', ids.slice(i, i + 30))
+        .select('tender_id', 'tender_source', 'przeniesiono_z').get();
+      const doPoprawy = snap.docs.filter((d) => d.get('przeniesiono_z')
+        && d.get('tender_source') !== (wiodace.get(d.get('tender_id'))?.source ?? 'bzp'));
+      for (let j = 0; j < doPoprawy.length; j += 400) {
+        const batch = db().batch();
+        for (const d of doPoprawy.slice(j, j + 400)) batch.update(d.ref, polaTenderuDopasowania(wiodace.get(d.get('tender_id'))));
+        await batch.commit();
+      }
+      ile += doPoprawy.length;
+    }
+    return ile;
+  },
+
   /**
    * Tworzy dopasowanie. docId = tenderId → duplikat niemożliwy z konstrukcji
    * (odpowiednik ON CONFLICT DO NOTHING). `tender` = zdenormalizowane pola do feedu.

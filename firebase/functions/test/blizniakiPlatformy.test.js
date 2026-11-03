@@ -31,9 +31,18 @@ test('sucho → same liczby; potem kopia poza pulą, link przy BZP, znacznik w f
   assert.equal((await tenders.findById(obca.id)).zastapiony_przez ?? null, null, 'inny zamawiający — zostaje osobno');
   assert.deepEqual((await tenders.findById(bzp.id)).zrodla_alternatywne.map((z) => z.url), [kopia.url]);
   assert.equal((await getFirestore().doc(`users/${u.id}/matches/${kopia.id}`).get()).get('tender_zastapiony_przez'), bzp.id);
+  // Klient miał tylko kopię — dostaje wpis BZP z polami z BZP, bez nowego powiadomienia.
+  const przeniesiony = (await getFirestore().doc(`users/${u.id}/matches/${bzp.id}`).get()).data();
+  assert.deepEqual([przeniesiony.tender_source, przeniesiony.tender_title, przeniesiony.tender_organization, przeniesiony.przeniesiono_z],
+    ['bzp', bzp.title, 'GMINA GORZYCE', kopia.id]);
+  assert.equal(przeniesiony.tender_zastapiony_przez, undefined);
+  assert.deepEqual(przeniesiony.uzasadnienie, ['Remont']);
 
-  await scalBlizniakiPlatformy({ teraz: '2098-01-01T00:00:00.000Z' });
+  await getFirestore().doc(`users/${u.id}/matches/${bzp.id}`).update({ status: 'przygotowanie' });
+  const drugi = await scalBlizniakiPlatformy({ teraz: '2098-01-01T00:00:00.000Z' });
   assert.equal((await tenders.findById(bzp.id)).zrodla_alternatywne.length, 1, 'zastąpiona kopia nie wraca do porównania');
+  assert.ok(drugi.juz_zastapione >= 1);
+  assert.equal((await getFirestore().doc(`users/${u.id}/matches/${bzp.id}`).get()).get('status'), 'przygotowanie', 'drugi przebieg nie nadpisuje');
 });
 
 test('nowy wpis z okna BZP zastępuje wcześniejszą kopię z e-ProPublico (inna pisownia zamawiającego); bez terminu — nic', async () => {
@@ -41,7 +50,12 @@ test('nowy wpis z okna BZP zastępuje wcześniejszą kopię z e-ProPublico (inna
   const { tender: kopia } = await tenders.upsert({ externalId: `epp:${ZNAK}-bl`, title: `65-PN-26 Implanty ortopedyczne ${ZNAK}`, organization: 'Szpital Miejski w Gliwicach Sp. z o.o.', deadline: termin, source: 'epropublico', url: `https://e-propublico.pl/${ZNAK}` });
   const { tender: bzp } = await tenders.upsert({ externalId: `2097/BZP 0${ZNAK}`, title: `Implanty ortopedyczne ${ZNAK}`, organization: 'SZPITAL MIEJSKI W GLIWICACH SPÓŁKA Z O.O.', deadline: termin, source: 'bzp' });
   assert.equal(await zastapKopieDlaBzp([{ id: 'x', title: 'y', organization: 'z', deadline: null }]), 0);
+  const u = await users.create({ email: `bp2${ZNAK}@t.pl`, passwordHash: 'h', keywords: ['implanty'] });
+  await matches.utworzWybrany({ userId: u.id, tender: kopia, score: 70, punkty: ['Implanty'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: true });
   assert.equal(await zastapKopieDlaBzp([{ id: bzp.id, title: bzp.title, organization: bzp.organization, deadline: bzp.deadline }]), 1);
+  const przeniesiony = (await getFirestore().doc(`users/${u.id}/matches/${bzp.id}`).get()).data();
+  assert.deepEqual([przeniesiony.tender_source, przeniesiony.przeniesiono_z], ['bzp', kopia.id]);
+  assert.equal((await getFirestore().doc(`users/${u.id}/evaluations/${bzp.id}`).get()).get('decyzja'), 'wybrany', 'ślad oceny przeniesiony — bez ponownego AI');
   assert.equal((await tenders.findById(kopia.id)).zastapiony_przez, bzp.id);
   assert.deepEqual((await tenders.findById(bzp.id)).zrodla_alternatywne.map((z) => z.source), ['epropublico']);
 });

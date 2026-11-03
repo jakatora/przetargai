@@ -8,6 +8,7 @@ import { pobierzBkZWznowieniem, zatwierdzCheckpointBk } from './oknoBk.js';
 import { tenders, cykl, tenderDocId } from '../db/repos.js';
 import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
 import { scalMiedzyZrodlami, kluczOgloszenia, toSamoPostepowanie } from '../lib/dedupZrodel.js';
+import { przeniesKopieNaBzp } from './blizniakiPlatformy.js';
 import { pustyLicznikAi, zbierajStatystykiAi, ocenStanAi } from '../lib/stanAi.js';
 import { alarmujAwarieAi } from './alarmAi.js';
 import { alarmujCichePusteZrodla } from './alarmZrodla.js';
@@ -267,6 +268,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     logger.warn({ err: err.message }, 'cykl: sprawdzenie kopii z platformazakupowa.pl nie powiodło się — zapis bez scalania');
   }
   let zastapioneKopie = 0;
+  const przeniesienia = [];
   // Nowa wersja ogłoszenia TED (zmiana terminu itp.) to nowa publikacja tego samego postępowania (2026-11-01).
   const postepowaniaTed = new Set();
 
@@ -293,7 +295,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
       }
       for (const kopia of kopiePlatformy.get(String(notice?.externalId)) ?? []) {
         if (!tender?.id || kopia.id === tender.id) continue;
-        await tenders.oznaczZastapiony(kopia.id, tender.id).then(() => { zastapioneKopie += 1; }).catch((err) => {
+        await tenders.oznaczZastapiony(kopia.id, tender.id).then(() => { zastapioneKopie += 1; przeniesienia.push({ kopiaId: kopia.id, wiodacyId: tender.id }); }).catch((err) => {
           logger.warn({ err: err.message, kopia: kopia.id }, 'cykl: nie udało się oznaczyć kopii z platformy jako zastąpionej');
         });
       }
@@ -312,6 +314,8 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
         'fetchTenders: pominięto ogłoszenie, którego nie dało się zapisać');
     }
   }
+  // Klienci z samą kopią z platformy dostają wpis BZP (bez oceny AI i powiadomienia) — jobs/blizniakiPlatformy.js.
+  await przeniesKopieNaBzp(przeniesienia).catch((err) => logger.warn({ err: err.message }, 'cykl: przeniesienie kopii na BZP nie powiodło się'));
 
   /*
    * Checkpointy okien zamykamy DOPIERO TERAZ, po zapisie (2026-09-25). Dawniej
