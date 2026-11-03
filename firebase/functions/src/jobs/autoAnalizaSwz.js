@@ -23,8 +23,10 @@ import { czytajDocx } from '../lib/kontrolaPlikowOferty.js';
  * TRANSAKCYJNIE przed płatnym wywołaniem — ponowienie Schedulera ani druga instancja nie zdublują
  * analizy. Jedna próba na przetarg (porażka zostaje zapisana; klient może uruchomić Radar ręcznie).
  */
-export const MAKS_NA_PRZEBIEG = 6;
-export const MAKS_NA_KLIENTA_DOBE = 2;
+// 2026-11-03: z 2/klienta i 6/przebieg kandydaci czekali po kilka przebiegów (`pominiete_limit` 3–5); analiza Haiku to
+// ~0,20 zł, 11 analiz/dobę → górne ryzyko +3 zł/dobę, a backend ma bramkę budżetu miesięcznego.
+export const MAKS_NA_PRZEBIEG = 8;
+export const MAKS_NA_KLIENTA_DOBE = 4;
 export const OKNO_WYBRANYCH_MS = 48 * 3_600_000;
 export const MAKS_BAJTOW_PDF = 5 * 1024 * 1024;
 /*
@@ -288,7 +290,7 @@ export function alertAnalizy(tender, liczbaPytan, teraz) {
 }
 
 /**
- * Kolejność kandydatów (2026-11-02): limit to 2 analizy na klienta na dobę, a po dołożeniu zapytań z BK i platformy
+ * Kolejność kandydatów (2026-11-02): limit to kilka analiz na klienta na dobę, a po dołożeniu zapytań z BK i platformy
  * kandydatów jest więcej — miejsca dostają najpierw przetargi ZAPISANE przez klienta (jawna chęć startu), potem
  * najwyżej ocenione; po terminie — wcale. Wcześniej: kolejność dopasowania (najnowsze), więc słabszy dzisiejszy
  * wybór wypychał lepszy wczorajszy.

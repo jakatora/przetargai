@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { users, tenders, matches, powiazaniaSwz, autoSwz, alerty } = await import('../src/db/repos.js');
-const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, wybierzPrzedmiar, tekstDokumentu, tekstDuzejSwz, dokumentyDoAnalizy, kolejnoscKandydatow } = await import('../src/jobs/autoAnalizaSwz.js');
+const { runAutoAnalizaSwz, wybierzSwz, pobierzPdfBase64, alertAnalizy, dokumentyPrzetargu, wybierzUmowe, wybierzPrzedmiar, tekstDokumentu, tekstDuzejSwz, dokumentyDoAnalizy, kolejnoscKandydatow, MAKS_NA_KLIENTA_DOBE } = await import('../src/jobs/autoAnalizaSwz.js');
 const { zbudujDocx } = await import('../src/lib/docx.js');
 
 /*
@@ -225,12 +225,12 @@ test('przebieg: przetarg z platformazakupowa z SWZ w załącznikach → analiza 
   assert.ok(await powiazaniaSwz.pobierz(s.id, tender.id));
 });
 
-test('limity kosztu: najwyżej 2 analizy na klienta na dobę i maksNaPrzebieg na przebieg', async () => {
+test('limity kosztu: najwyżej MAKS_NA_KLIENTA_DOBE analiz na klienta na dobę i maksNaPrzebieg na przebieg', async () => {
   const s = await klient();
-  for (let i = 0; i < 4; i++) await wybrany(s);
+  for (let i = 0; i < MAKS_NA_KLIENTA_DOBE + 2; i++) await wybrany(s);
   const wyw = [];
   const w = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul: modulOk(wyw), pobierzPdf: pdf });
-  assert.equal(w.analizy, 2, 'limit dobowy klienta');
+  assert.equal(w.analizy, MAKS_NA_KLIENTA_DOBE, 'limit dobowy klienta');
   const w2 = await runAutoAnalizaSwz({ teraz: TERAZ, wczytajUzytkownikow: async () => [s], modul: modulOk([]), pobierzPdf: pdf });
   assert.equal(w2.analizy, 0);
   assert.equal(w2.pominiete_limit, 1);
