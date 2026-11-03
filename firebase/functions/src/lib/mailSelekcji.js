@@ -1,6 +1,7 @@
 import { esc } from './html.js';
 import { dobaWarszawska } from './czasPolski.js';
 import { ETYKIETY_PRZYCZYN } from './przyczyny.js';
+import { odmienPrzetargi } from './digestTresc.js';
 
 /*
  * Mail z wybranymi przetargami (spec §7, §14). Czysty szablon — bez configu i sieci.
@@ -84,5 +85,33 @@ ${raportZdanie ? `<p>${esc(raportZdanie)}</p>` : ''}
 <p>Szczegóły i uzasadnienie znajdziesz w aplikacji PrzetargAI: <a href="${esc(linkAplikacji)}">${esc(linkAplikacji)}</a></p>
 <p style="font-size:12px;color:#5b6577">Nie chcesz tych maili? <a href="${esc(linkWypisu)}">Wyłącz je</a>.</p>`;
 
+  return { subject, text, html };
+}
+
+/**
+ * Osobny mail „Gdzie pracujesz?” dla konta, do którego wybrane poszły pushem (Standard — mail z wybranymi tylko, gdy
+ * push nie dotrze). 3.11: wszystkie 5 kont na próbie miało push, więc pytanie z maila wybranych do nich nie trafiało.
+ */
+export function mailTerenu({ link, wybrane, wojewodztw, linkWypisu }) {
+  const subject = 'Przetargi z całej Polski — zaznacz, gdzie pracujesz';
+  const zdanie = `Właśnie wybraliśmy dla Ciebie ${wybrane} ${odmienPrzetargi(wybrane)} z ${wojewodztw} województw, `
+    + 'bo nie wiemy, gdzie bierzesz zlecenia.';
+  const text = [
+    'Dzień dobry,',
+    '',
+    zdanie,
+    'Zaznacz swoje województwa — przetargi z pozostałych pominiemy od razu i w kolejnych powiadomieniach:',
+    link,
+    '',
+    'Pracujesz w całej Polsce? Na tej samej stronie wybierz „Biorę z całej Polski” — nie zapytamy więcej.',
+    '',
+    `Nie chcesz maili o wybranych przetargach? Wyłącz je: ${linkWypisu}`,
+  ].join('\n');
+  const html = `<p>Dzień dobry,</p>
+<p>${esc(zdanie)}</p>
+<p>Zaznacz swoje województwa — przetargi z pozostałych pominiemy od razu i w kolejnych powiadomieniach:</p>
+<p><a href="${esc(link)}"><b>Wybierz województwa</b></a></p>
+<p>Pracujesz w całej Polsce? Na tej samej stronie wybierz „Biorę z całej Polski” — nie zapytamy więcej.</p>
+<p style="font-size:12px;color:#5b6577">Nie chcesz maili o wybranych przetargach? <a href="${esc(linkWypisu)}">Wyłącz je</a>.</p>`;
   return { subject, text, html };
 }

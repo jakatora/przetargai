@@ -5,7 +5,7 @@ import { nowIso } from '../lib/ids.js';
 import { planEfektywny } from '../lib/plan.js';
 import { ciszaNocna, dobaWarszawska } from '../lib/czasPolski.js';
 import { PUNKT_BEZ_WARUNKOW } from '../lib/warunkiUdzialu.js';
-import { mailSelekcji, odmianaPrzetargow } from '../lib/mailSelekcji.js';
+import { mailSelekcji, mailTerenu, odmianaPrzetargow } from '../lib/mailSelekcji.js';
 import { terminPytan } from '../lib/przypomnieniePytan.js';
 import { matches, alerty, magicLinks, dziennik, znacznikMailaSelekcji, users } from '../db/repos.js';
 import { czasPytacOTeren, liczbaWojewodztw, linkTerenu } from './terenZMaila.js';
@@ -21,6 +21,7 @@ import { dostarcz } from '../jobs/monitorWyszukiwan.js';
  * Idempotencja: `notified` na dopasowaniu + znacznik maila doby (Free) + klucz alertu (Standard).
  */
 export const OKNO_POWIADOMIEN_MS = 36 * 3_600_000;
+export const MIN_WOJEWODZTW_PYTANIA = 3;
 const WYPIS_TTL_MIN = 30 * 24 * 60;
 
 async function linkWypisu(userId) {
@@ -131,5 +132,16 @@ export async function powiadomPoPrzebiegu(user, { tryb = 'dzienny', teraz = nowI
     });
   }
   await matches.markNotifiedBatch(user.id, ids);
+  // Wybrane poszły pushem, a konto bez województw dostaje je z całej Polski — pytanie o teren osobnym mailem
+  // (raz na 7 dni, tylko gdy wybrane są z ≥ 3 województw; błąd nie psuje powiadomienia).
+  const wojewodztw = liczbaWojewodztw(lista);
+  if (kanal !== 'email' && mailWlaczony && wojewodztw >= MIN_WOJEWODZTW_PYTANIA && czasPytacOTeren(user, teraz)) {
+    try {
+      const m = mailTerenu({ link: await linkTerenu(user.id), wybrane: lista.length, wojewodztw, linkWypisu: await linkWypisu(user.id) });
+      if ((await wyslijEmail({ to: user.email, ...m }))?.sent) await users.oznaczPytanieOTeren(user.id, teraz);
+    } catch (err) {
+      logger.warn({ err: err.message, userId: user.id }, 'Mail z pytaniem o teren nie wysłany');
+    }
+  }
   return kanal;
 }

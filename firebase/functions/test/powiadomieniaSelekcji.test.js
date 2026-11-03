@@ -141,3 +141,24 @@ test('mail z wybranymi: przy każdej pozycji link „Nie dla nas” do /maile/oc
   assert.deepEqual(linki.map((l) => decodeURIComponent(l.split('&m=')[1])).sort(), [...ids].sort());
   assert.equal(new Set(linki.map((l) => l.split('&m=')[0])).size, 1, 'jeden token na mail');
 });
+
+test('Standard z pushem, wybrane z ≥ 3 województw, konto bez terenu: osobny mail „Gdzie pracujesz?” raz na tydzień', async () => {
+  const u = await users.create({ email: `ps${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['dach'] });
+  await users.setTier(u.id, 'standard');
+  await users.setPushToken(u.id, 'ExponentPushToken[ps-teren-2]');
+  for (const woj of ['podkarpackie', 'mazowieckie', 'pomorskie']) {
+    const { tender } = await tenders.upsert({ externalId: `ps-${process.pid}-${++seq}`, title: `Remont dachu ${seq}`, deadline: '2099-01-01T00:00:00.000Z', wojewodztwo: woj });
+    await matches.utworzWybrany({ userId: u.id, tender, score: 80, punkty: ['Dachy'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: true });
+  }
+  const n = nadawcy();
+  assert.equal(await powiadomPoPrzebiegu(await users.findById(u.id), { tryb: 'co3h', teraz: DZIEN, ...n }), 'push');
+  assert.equal(n.wyslane.email.length, 1);
+  assert.equal(n.wyslane.email[0].subject, 'Przetargi z całej Polski — zaznacz, gdzie pracujesz');
+  assert.match(n.wyslane.email[0].text, /wybraliśmy dla Ciebie 3 przetargi z 3 województw[\s\S]*\/maile\/teren\?token=/);
+  assert.equal((await users.findById(u.id)).teren_pytanie_o, DZIEN);
+
+  const { tender } = await tenders.upsert({ externalId: `ps-${process.pid}-${++seq}`, title: 'Remont dachu kolejny', deadline: '2099-01-01T00:00:00.000Z', wojewodztwo: 'opolskie' });
+  await matches.utworzWybrany({ userId: u.id, tender, score: 80, punkty: ['Dachy'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: true });
+  await powiadomPoPrzebiegu(await users.findById(u.id), { tryb: 'co3h', teraz: '2026-10-21T13:30:00.000Z', ...n });
+  assert.equal(n.wyslane.email.length, 1, 'ten sam tydzień — bez drugiego maila');
+});
