@@ -131,3 +131,13 @@ test('Standard z działającym pushem: mail nie wychodzi, więc pytanie o teren 
   assert.equal(n.wyslane.email.length, 0);
   assert.equal((await users.findById(user.id)).teren_pytanie_o ?? null, null);
 });
+
+test('mail z wybranymi: przy każdej pozycji link „Nie dla nas” do /maile/ocena z id dopasowania', async () => {
+  const { user, ids } = await kontoZWybranymi(2);
+  const n = nadawcy();
+  await powiadomPoPrzebiegu(user, { teraz: DZIEN, ...n });
+  const linki = [...n.wyslane.email[0].text.matchAll(/Nie dla nas\? (\S+)/g)].map((x) => x[1]);
+  assert.equal(linki.length, 2);
+  assert.deepEqual(linki.map((l) => decodeURIComponent(l.split('&m=')[1])).sort(), [...ids].sort());
+  assert.equal(new Set(linki.map((l) => l.split('&m=')[0])).size, 1, 'jeden token na mail');
+});

@@ -72,3 +72,10 @@ test('mail: najwyżej 10 przetargów, reszta jednym zdaniem; temat liczy wszystk
   assert.match(m.html, /<p>…i jeszcze 3 — wszystkie zobaczysz w aplikacji\.<\/p>/);
   assert.doesNotMatch(mailSelekcji({ pozycje: pozycje.slice(0, 10), plan: 'standard', ...LINKI }).text, /i jeszcze/);
 });
+
+test('mail: „Nie dla nas” przy pozycji z linkiem (tekst i HTML), bez linku — nic', () => {
+  const m = mailSelekcji({ pozycje: [{ ...POZ, link_odrzuc: 'https://api/maile/ocena?token=t&m=bzp%3A1' }], plan: 'free', ...LINKI });
+  assert.match(m.text, /\n {2}Nie dla nas\? https:\/\/api\/maile\/ocena\?token=t&m=bzp%3A1/);
+  assert.match(m.html, /<a href="https:\/\/api\/maile\/ocena\?token=t&amp;m=bzp%3A1"[^>]*>Nie dla nas<\/a>/);
+  assert.doesNotMatch(mailSelekcji({ pozycje: [POZ], plan: 'free', ...LINKI }).text, /Nie dla nas/);
+});

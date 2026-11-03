@@ -9,6 +9,7 @@ import { mailSelekcji, odmianaPrzetargow } from '../lib/mailSelekcji.js';
 import { terminPytan } from '../lib/przypomnieniePytan.js';
 import { matches, alerty, magicLinks, dziennik, znacznikMailaSelekcji, users } from '../db/repos.js';
 import { czasPytacOTeren, liczbaWojewodztw, linkTerenu } from './terenZMaila.js';
+import { linkOceny, linkDoPozycji } from './ocenaZMaila.js';
 import { sendPush } from './push.js';
 import { sendEmail } from './email.js';
 import { dostarcz } from '../jobs/monitorWyszukiwan.js';
@@ -33,6 +34,7 @@ function pozycjeZ(lista, { zKrokiem, teraz }) {
       ? terminPytan({ id: m.tender_id, source: m.tender_source, deadline: m.tender_deadline }, teraz)
       : null;
     return {
+      id: m.id,
       tytul: m.tender_title ?? 'Przetarg',
       organizacja: m.tender_organization ?? null,
       termin: m.tender_deadline ?? null,
@@ -66,8 +68,10 @@ export async function powiadomPoPrzebiegu(user, { tryb = 'dzienny', teraz = nowI
       teren = { link: await linkTerenu(user.id), wojewodztw: liczbaWojewodztw(lista) };
       terenWMailu = true;
     }
+    // „Nie dla nas” przy każdej pozycji — jeden wielokrotny link na mail (services/ocenaZMaila.js).
+    const ocena = await linkOceny(user.id);
     return mailSelekcji({
-      pozycje, plan, raport: await dziennik.pobierz(user.id, doba),
+      pozycje: pozycje.map((p) => ({ ...p, link_odrzuc: linkDoPozycji(ocena, p.id) })), plan, raport: await dziennik.pobierz(user.id, doba),
       linkWypisu: await linkWypisu(user.id), linkAplikacji: env.APP_LINK_URL, teren,
     });
   };

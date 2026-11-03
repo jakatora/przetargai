@@ -61,6 +61,7 @@ export function mailSelekcji({ pozycje: wszystkie, raport = null, plan = 'free',
       ...(p.punkty ?? []).slice(0, 2).map((x) => `  – ${x}`),
       ...(p.bez_warunkow ? ['  ✓ Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.'] : []),
       ...(p.krok ? [`  Pierwszy krok: ${p.krok}`] : []),
+      ...(p.link_odrzuc ? [`  Nie dla nas? ${p.link_odrzuc}`] : []),
     ]),
     ...(zdanieReszty ? ['', zdanieReszty] : []),
     '',
@@ -75,7 +76,8 @@ export function mailSelekcji({ pozycje: wszystkie, raport = null, plan = 'free',
 <p>wybraliśmy przetargi pasujące do Twojej firmy:</p>
 <ul>${pozycje.map((p) => `<li><b>${esc(p.tytul)}</b>${p.organizacja ? ` — ${esc(p.organizacja)}` : ''} (${esc(termin(p.termin))})${
     (p.punkty ?? []).slice(0, 2).map((x) => `<br>– ${esc(x)}`).join('')}${p.bez_warunkow ? '<br>✓ Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.' : ''}${
-    p.krok ? `<br>Pierwszy krok: ${esc(p.krok)}` : ''}</li>`).join('')}</ul>
+    p.krok ? `<br>Pierwszy krok: ${esc(p.krok)}` : ''}${
+    p.link_odrzuc ? `<br><a href="${esc(p.link_odrzuc)}" style="font-size:13px;color:#5b6577">Nie dla nas</a>` : ''}</li>`).join('')}</ul>
 ${zdanieReszty ? `<p>${esc(zdanieReszty)}</p>` : ''}
 ${terenZdanie ? `<p>${esc(terenZdanie)} <a href="${esc(teren.link)}"><b>Wybierz województwa</b></a></p>` : ''}
 ${raportZdanie ? `<p>${esc(raportZdanie)}</p>` : ''}
