@@ -29685,6 +29685,8 @@ function createRemontService(options = {}) {
   const lastReadAt = /* @__PURE__ */ new Map();
   const lastReadSucceeded = /* @__PURE__ */ new Map();
   let lastAttemptAt = null;
+  let fullRefreshStartedAt = null;
+  let fullRefreshCompletedAt = null;
   const acceptedSource = (observation) => {
     if (!observation || typeof observation !== "object") return;
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
@@ -29850,7 +29852,9 @@ function createRemontService(options = {}) {
   }
   function refresh() {
     if (fullRefreshPromise) return fullRefreshPromise;
+    fullRefreshStartedAt = (/* @__PURE__ */ new Date()).toISOString();
     fullRefreshPromise = refreshSources(RETAIL_SOURCES).then(() => {
+      fullRefreshCompletedAt = (/* @__PURE__ */ new Date()).toISOString();
     }).finally(() => {
       fullRefreshPromise = null;
     });
@@ -29871,8 +29875,25 @@ function createRemontService(options = {}) {
     };
   }
   function status() {
+    const now = Date.now();
     const { offers } = catalog();
-    const eligible = offers.filter((offer) => isComparableOffer(offer));
+    const eligible = offers.filter((offer) => isComparableOffer(offer, now));
+    const activeIds = new Set(eligible.map((offer) => offer.id));
+    const online = RETAIL_SOURCES.filter((source) => !source.disabledReason && !source.pickupOnly);
+    const stores = /* @__PURE__ */ new Map();
+    for (const source of online) {
+      const stats = stores.get(source.store) ?? { reviewed: 0, current: 0, olderThanCycle: 0, readErrors: 0, outOfStock: 0, manualReviewRequired: 0 };
+      const error40 = errors.get(source.id);
+      stats.reviewed++;
+      if (activeIds.has(source.id)) {
+        stats.current++;
+        if (now - Date.parse(observations.get(source.id).observedAt) > REFRESH_INTERVAL_MS) stats.olderThanCycle++;
+      }
+      if (error40 === "browser_refresh_required") stats.manualReviewRequired++;
+      else if (error40 === "retailer_out_of_stock") stats.outOfStock++;
+      else if (error40) stats.readErrors++;
+      stores.set(source.store, stats);
+    }
     return {
       status: eligible.length > 0 ? "ok" : "no-current-offers",
       offers: eligible.length,
@@ -29886,11 +29907,21 @@ function createRemontService(options = {}) {
       pickupOnlyStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupOnly).map((source) => source.store))],
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
       delivery: retailerDeliveryCapabilities(),
+      monitoring: {
+        checkedAt: new Date(now).toISOString(),
+        refreshIntervalMs: REFRESH_INTERVAL_MS,
+        scheduled: options.background !== false,
+        fullRefreshStartedAt,
+        fullRefreshCompletedAt,
+        fullRefreshRunning: fullRefreshPromise !== null,
+        cacheError: errors.get("cache") ?? null,
+        stores: [...stores].map(([store, stats]) => ({ store, ...stats }))
+      },
       sources: RETAIL_SOURCES.map((source) => ({
         id: source.id,
         store: source.store,
         checkedAt: observations.get(source.id)?.observedAt ?? null,
-        active: eligible.some((offer) => offer.id === source.id),
+        active: activeIds.has(source.id),
         error: source.disabledReason ?? errors.get(source.id) ?? null,
         ...observations.get(source.id)?.stockPackages !== void 0 ? { stockPackages: observations.get(source.id).stockPackages } : {},
         ...observations.get(source.id)?.verification ? { verification: observations.get(source.id).verification } : {}
@@ -29902,6 +29933,7 @@ function createRemontService(options = {}) {
     res.json(status());
   });
   router.get("/pricing/health", (_req, res) => {
+    res.set("Cache-Control", "no-store");
     res.json(status());
   });
   router.get("/pricing/catalog-availability", (_req, res) => {
