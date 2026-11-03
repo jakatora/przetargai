@@ -25,3 +25,18 @@ test('cykl dobowy: ogłoszenie z BZP zastępuje wcześniejszą kopię z platform
   assert.ok(pula.some((t) => t.id === zBzp.id), 'wpis BZP w puli');
   assert.ok(!pula.some((t) => t.id === kopia.id), 'kopia platformy poza pulą');
 });
+
+test('cykl dobowy: kopia z platformy z numerem BZP i inną nazwą zamawiającego też ustępuje; kopia w feedzie dostaje znacznik', async () => {
+  const { getFirestore } = await import('firebase-admin/firestore');
+  const { users, matches } = await import('../src/db/repos.js');
+  const nr = `0${ZNAK}`;
+  const { tender: kopia } = await tenders.upsert({ externalId: `pz:${ZNAK}2`, title: `2099/BZP ${nr} (ZP.272.19.2099) Ochrona mienia bazy Referatu w Jaworze`, organization: 'Starostwo Powiatowe w Jaworze', deadline: '2099-03-02T09:00:00.000Z', source: 'platformazakupowa', url: `https://platformazakupowa.pl/transakcja/${ZNAK}2` });
+  const u = await users.create({ email: `czk${ZNAK}@t.pl`, passwordHash: 'h', keywords: ['ochrona'] });
+  await matches.utworzWybrany({ userId: u.id, tender: kopia, score: 80, punkty: ['Ochrona'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: false });
+  const ogloszenieBzp = { externalId: `2099/BZP ${nr}`, title: 'Ochrona mienia bazy Referatu w Jaworze', organization: 'POWIAT JAWORSKI', deadline: '2099-03-02T09:00:00.000Z', source: 'bzp', url: 'https://ezamowienia.gov.pl/mp-client/y' };
+  const wynik = await runTenderFetch({ zrodla: [{ nazwa: 'bzp', pobierz: async () => [ogloszenieBzp] }], alarmujAi: async () => {}, alarmujZrodla: async () => {} });
+  assert.equal(wynik.zastapione_kopie_platformy, 1);
+  const zBzp = await tenders.findById(`2099~BZP_${nr}`);
+  assert.equal((await tenders.findById(kopia.id)).zastapiony_przez, zBzp.id);
+  assert.equal((await getFirestore().doc(`users/${u.id}/matches/${kopia.id}`).get()).get('tender_zastapiony_przez'), zBzp.id);
+});

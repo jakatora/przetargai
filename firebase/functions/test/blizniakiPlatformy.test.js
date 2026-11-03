@@ -1,0 +1,47 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+/*
+ * Scalenie wstecz bliźniaków BZP na platformazakupowa.pl (2026-11-03): „sucho” niczego nie zapisuje; potem kopia
+ * schodzi z puli, wpis BZP dostaje link kopii (raz), a kopia w feedzie klienta — znacznik, po którym lista ją chowa.
+ */
+process.env.ANTHROPIC_API_KEY = '';
+const { polaczZEmulatorem } = await import('./emulator.js');
+await polaczZEmulatorem();
+const { getFirestore } = await import('firebase-admin/firestore');
+const { tenders, users, matches } = await import('../src/db/repos.js');
+const { scalBlizniakiPlatformy, zastapKopieDlaBzp } = await import('../src/jobs/blizniakiPlatformy.js');
+
+const ZNAK = `${process.pid}${Date.now()}`.slice(-7);
+
+test('sucho → same liczby; potem kopia poza pulą, link przy BZP, znacznik w feedzie; drugi przebieg nic nie dubluje', async () => {
+  const termin = `2098-0${1 + (Number(ZNAK) % 9)}-1${Number(ZNAK) % 10}T09:00:00.000Z`;
+  const { tender: bzp } = await tenders.upsert({ externalId: `2098/BZP 0${ZNAK}`, title: `Remont świetlicy wiejskiej w Gorzycach ${ZNAK}`, organization: 'GMINA GORZYCE', deadline: termin, source: 'bzp' });
+  const { tender: kopia } = await tenders.upsert({ externalId: `pz:${ZNAK}7`, title: `RG.271.5.2098 Remont świetlicy wiejskiej w Gorzycach ${ZNAK}`, organization: 'Urząd Gminy Gorzyce', deadline: termin, source: 'platformazakupowa', url: `https://platformazakupowa.pl/transakcja/${ZNAK}7` });
+  const obca = (await tenders.upsert({ externalId: `pz:${ZNAK}8`, title: `Remont świetlicy wiejskiej w Gorzycach ${ZNAK}`, organization: 'Gmina Przeworsk', deadline: termin, source: 'platformazakupowa' })).tender;
+  const u = await users.create({ email: `bp${ZNAK}@t.pl`, passwordHash: 'h', keywords: ['remont'] });
+  await matches.utworzWybrany({ userId: u.id, tender: kopia, score: 80, punkty: ['Remont'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: false });
+
+  const sucho = await scalBlizniakiPlatformy({ sucho: true, teraz: '2098-01-01T00:00:00.000Z' });
+  assert.ok(sucho.blizniaki >= 1);
+  assert.equal((await tenders.findById(kopia.id)).zastapiony_przez ?? null, null, 'sucho — bez zapisu');
+
+  await scalBlizniakiPlatformy({ teraz: '2098-01-01T00:00:00.000Z' });
+  assert.equal((await tenders.findById(kopia.id)).zastapiony_przez, bzp.id);
+  assert.equal((await tenders.findById(obca.id)).zastapiony_przez ?? null, null, 'inny zamawiający — zostaje osobno');
+  assert.deepEqual((await tenders.findById(bzp.id)).zrodla_alternatywne.map((z) => z.url), [kopia.url]);
+  assert.equal((await getFirestore().doc(`users/${u.id}/matches/${kopia.id}`).get()).get('tender_zastapiony_przez'), bzp.id);
+
+  await scalBlizniakiPlatformy({ teraz: '2098-01-01T00:00:00.000Z' });
+  assert.equal((await tenders.findById(bzp.id)).zrodla_alternatywne.length, 1, 'zastąpiona kopia nie wraca do porównania');
+});
+
+test('nowy wpis z okna BZP zastępuje wcześniejszą kopię z e-ProPublico (inna pisownia zamawiającego); bez terminu — nic', async () => {
+  const termin = `2097-0${1 + (Number(ZNAK) % 9)}-2${Number(ZNAK) % 8}T08:00:00.000Z`;
+  const { tender: kopia } = await tenders.upsert({ externalId: `epp:${ZNAK}-bl`, title: `65-PN-26 Implanty ortopedyczne ${ZNAK}`, organization: 'Szpital Miejski w Gliwicach Sp. z o.o.', deadline: termin, source: 'epropublico', url: `https://e-propublico.pl/${ZNAK}` });
+  const { tender: bzp } = await tenders.upsert({ externalId: `2097/BZP 0${ZNAK}`, title: `Implanty ortopedyczne ${ZNAK}`, organization: 'SZPITAL MIEJSKI W GLIWICACH SPÓŁKA Z O.O.', deadline: termin, source: 'bzp' });
+  assert.equal(await zastapKopieDlaBzp([{ id: 'x', title: 'y', organization: 'z', deadline: null }]), 0);
+  assert.equal(await zastapKopieDlaBzp([{ id: bzp.id, title: bzp.title, organization: bzp.organization, deadline: bzp.deadline }]), 1);
+  assert.equal((await tenders.findById(kopia.id)).zastapiony_przez, bzp.id);
+  assert.deepEqual((await tenders.findById(bzp.id)).zrodla_alternatywne.map((z) => z.source), ['epropublico']);
+});

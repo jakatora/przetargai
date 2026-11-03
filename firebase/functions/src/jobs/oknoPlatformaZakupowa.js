@@ -4,7 +4,7 @@ import { pustyLicznik } from '../lib/licznikZrodla.js';
 import { ZRODLO, POZYCJI_NA_STRONE, pobierzStrone, normalizujOgloszeniePz } from '../services/platformaZakupowa.js';
 import { mapaZamawiajacych } from '../db/repos.js';
 import { wojewodztwoNowejPozycji, wczytajModelCpv } from './wojewodztwaZamawiajacych.js';
-import { kluczOgloszenia, PRIORYTET_ZRODEL } from '../lib/dedupZrodel.js';
+import { kluczOgloszenia, PRIORYTET_ZRODEL, idBzpZTytulu, znajdzBlizniakaBzp } from '../lib/dedupZrodel.js';
 
 /*
  * OKNO PLATFORMAZAKUPOWA.PL (2026-10-25). Co godzinę 2 strony listy po 100 pozycji; kursor
@@ -55,11 +55,17 @@ export async function runOknoPz({
       // tylko dopisujemy link platformy jako rejestr poboczny (lib/dedupZrodel: klucz tożsamości).
       const znormalizowane = pozycje.map((poz) => wojewodztwoNowejPozycji(normalizujOgloszeniePz(poz), mapy, modelCpv));
       const istniejace = await tenders.poKluczuDedup(znormalizowane.map((t) => (t ? kluczOgloszenia(t) : null)).filter(Boolean)).catch(() => new Map());
+      // Bliźniak z BZP, którego klucz nie łapie (numer BZP / znak sprawy w tytule, inna nazwa zamawiającego) — 2026-11-03.
+      const zBzp = await tenders.doPorownaniaBlizniakow('bzp', {
+        ids: znormalizowane.map((t) => idBzpZTytulu(t?.title)).filter(Boolean),
+        terminy: znormalizowane.map((t) => t?.deadline),
+      }).catch((err) => { logger.warn({ err: err.message }, 'platformazakupowa: bliźniaki BZP niedostępne'); return []; });
       for (const t of znormalizowane) {
         if (!t) { licznik.odrzucone++; continue; }
         const poz = { id: t.externalId.replace(/^pz:/, '') };
         const klucz = kluczOgloszenia(t);
-        const wiodacy = klucz ? (istniejace.get(klucz) ?? []).find((d) => d.source !== ZRODLO && PRIORYTET_ZRODEL.indexOf(d.source) < PRIORYTET_ZRODEL.indexOf(ZRODLO)) : null;
+        const wiodacy = (klucz ? (istniejace.get(klucz) ?? []).find((d) => d.source !== ZRODLO && PRIORYTET_ZRODEL.indexOf(d.source) < PRIORYTET_ZRODEL.indexOf(ZRODLO)) : null)
+          ?? znajdzBlizniakaBzp(t, zBzp);
         if (wiodacy) {
           try {
             await tenders.dodajZrodloAlternatywne(wiodacy.id, { source: ZRODLO, externalId: t.externalId, url: t.url });

@@ -54,3 +54,21 @@ test('mail: przetarg bez warunków udziału ma osobną linię (poza limitem 2 pu
   assert.match(m.html, /<br>✓ Bez warunków udziału/);
   assert.doesNotMatch(mailSelekcji({ pozycje: [POZ], plan: 'standard', ...LINKI }).text, /Bez warunków/);
 });
+
+test('mail: pytanie o teren z liczbą województw tylko z linkiem', () => {
+  const m = mailSelekcji({ pozycje: [POZ], plan: 'free', ...LINKI, teren: { link: 'https://api/maile/teren?token=t1', wojewodztw: 9 } });
+  assert.match(m.text, /z całej Polski — te pochodzą z 9 województw\. Bierzesz zlecenia tylko w swojej okolicy\? Zaznacz województwa — resztę pominiemy: https:\/\/api\/maile\/teren\?token=t1/);
+  assert.match(m.html, /<a href="https:\/\/api\/maile\/teren\?token=t1"><b>Wybierz województwa<\/b><\/a>/);
+  assert.doesNotMatch(mailSelekcji({ pozycje: [POZ], plan: 'free', ...LINKI, teren: { link: 'x', wojewodztw: 1 } }).text, /pochodzą/);
+  assert.doesNotMatch(mailSelekcji({ pozycje: [POZ], plan: 'free', ...LINKI }).text, /okolicy/);
+});
+
+test('mail: najwyżej 10 przetargów, reszta jednym zdaniem; temat liczy wszystkie', () => {
+  const pozycje = Array.from({ length: 13 }, (_, i) => ({ ...POZ, tytul: `Przetarg nr ${i + 1}` }));
+  const m = mailSelekcji({ pozycje, plan: 'standard', ...LINKI });
+  assert.equal(m.subject, 'Mamy dla Ciebie 13 nowych przetargów');
+  assert.ok(m.text.includes('Przetarg nr 10') && !m.text.includes('Przetarg nr 11'));
+  assert.match(m.text, /…i jeszcze 3 — wszystkie zobaczysz w aplikacji\./);
+  assert.match(m.html, /<p>…i jeszcze 3 — wszystkie zobaczysz w aplikacji\.<\/p>/);
+  assert.doesNotMatch(mailSelekcji({ pozycje: pozycje.slice(0, 10), plan: 'standard', ...LINKI }).text, /i jeszcze/);
+});

@@ -5,9 +5,9 @@ import { pobierzBzpZWznowieniem, zatwierdzCheckpointBzp } from './oknoBzp.js';
 import { cyklDzienny } from '../services/pracownik.js';
 import { wyslijMaileProby } from '../services/mailProby.js';
 import { pobierzBkZWznowieniem, zatwierdzCheckpointBk } from './oknoBk.js';
-import { tenders, cykl } from '../db/repos.js';
+import { tenders, cykl, tenderDocId } from '../db/repos.js';
 import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
-import { scalMiedzyZrodlami, kluczOgloszenia } from '../lib/dedupZrodel.js';
+import { scalMiedzyZrodlami, kluczOgloszenia, toSamoPostepowanie } from '../lib/dedupZrodel.js';
 import { pustyLicznikAi, zbierajStatystykiAi, ocenStanAi } from '../lib/stanAi.js';
 import { alarmujAwarieAi } from './alarmAi.js';
 import { alarmujCichePusteZrodla } from './alarmZrodla.js';
@@ -243,10 +243,25 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     for (const n of scalone.ogloszenia) {
       const klucz = kluczOgloszenia(n);
       const kopia = klucz ? (znalezione.get(klucz) ?? []).find((d) => d.source === 'platformazakupowa' && !d.zastapiony_przez) : null;
-      if (!kopia) continue;
-      kopiePlatformy.set(String(n.externalId), kopia);
-      const juz = (n.zrodla_alternatywne ?? []).some((z) => z?.source === 'platformazakupowa');
-      if (!juz) n.zrodla_alternatywne = [...(n.zrodla_alternatywne ?? []), { source: 'platformazakupowa', externalId: kopia.bzp_external_id, url: kopia.url }];
+      if (kopia) kopiePlatformy.set(String(n.externalId), [kopia]);
+    }
+    // Bliźniaki, których klucz nie łapie (2026-11-03, lib/dedupZrodel.js): numer BZP / znak sprawy w tytule, inna nazwa
+    // zamawiającego. Kandydaci z platformazakupowa.pl i e-ProPublico po terminie; z każdego źródła jeden pasujący.
+    const bezKopii = scalone.ogloszenia.filter((n) => (n.source ?? 'bzp') === 'bzp' && !kopiePlatformy.has(String(n.externalId)));
+    for (const zrodlo of bezKopii.length ? ['platformazakupowa', 'epropublico'] : []) {
+      const kandydaci = (await tenders.doPorownaniaBlizniakow(zrodlo, { terminy: bezKopii.map((n) => n.deadline) })).filter((k) => !k.zastapiony_przez);
+      for (const n of bezKopii) {
+        const wpis = { id: tenderDocId(n.externalId), title: n.title, organization: n.organization, deadline: n.deadline };
+        const pasujace = kandydaci.filter((k) => toSamoPostepowanie(k, wpis));
+        if (pasujace.length === 1) kopiePlatformy.set(String(n.externalId), [...(kopiePlatformy.get(String(n.externalId)) ?? []), { ...pasujace[0], source: zrodlo }]);
+      }
+    }
+    for (const n of scalone.ogloszenia) {
+      for (const kopia of kopiePlatformy.get(String(n.externalId)) ?? []) {
+        const zrodlo = kopia.source ?? 'platformazakupowa';
+        const juz = (n.zrodla_alternatywne ?? []).some((z) => z?.source === zrodlo);
+        if (!juz) n.zrodla_alternatywne = [...(n.zrodla_alternatywne ?? []), { source: zrodlo, externalId: kopia.bzp_external_id, url: kopia.url }];
+      }
     }
   } catch (err) {
     logger.warn({ err: err.message }, 'cykl: sprawdzenie kopii z platformazakupowa.pl nie powiodło się — zapis bez scalania');
@@ -276,8 +291,8 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
         if (statystyki[nazwa]) statystyki[nazwa].newTenders += 1;
         if (notice.source === 'ted' && notice.postepowanie_id) postepowaniaTed.add(notice.postepowanie_id);
       }
-      const kopia = kopiePlatformy.get(String(notice?.externalId));
-      if (kopia && tender?.id && kopia.id !== tender.id) {
+      for (const kopia of kopiePlatformy.get(String(notice?.externalId)) ?? []) {
+        if (!tender?.id || kopia.id === tender.id) continue;
         await tenders.oznaczZastapiony(kopia.id, tender.id).then(() => { zastapioneKopie += 1; }).catch((err) => {
           logger.warn({ err: err.message, kopia: kopia.id }, 'cykl: nie udało się oznaczyć kopii z platformy jako zastąpionej');
         });

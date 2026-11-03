@@ -16,6 +16,7 @@ import { pobierzSzczegolBk, normalizujOgloszenieBk, TEMPO_BK } from '../services
 import { stanTempa } from '../lib/tempoZapytan.js';
 import { parsujWynik } from '../lib/wynikiParser.js';
 import { runUmowyWygasajace } from '../jobs/umowyWygasajace.js';
+import { scalBlizniakiPlatformy } from '../jobs/blizniakiPlatformy.js';
 import { przeliczProfil } from '../services/pracownik.js';
 import { tenders, users, rozstrzygniecia, matches as dopasowania } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
@@ -111,6 +112,11 @@ router.post('/kryteria-wstecz', ah(async (req, res) => {
   const ogloszenia = await pobierzOgloszeniaBzp({ from: dzien, to: dzien });
   const wynik = await tenders.uzupelnijKryteria(ogloszenia);
   res.json({ dzien, pobrane: ogloszenia.length, ...wynik });
+}));
+
+/** Bliźniaki BZP na platformazakupowa.pl (2026-11-03) — scalenie otwartych kopii sprzed zmiany; `sucho` = same liczby. */
+router.post('/blizniaki-platformy', ah(async (req, res) => {
+  res.json(await scalBlizniakiPlatformy({ sucho: req.body?.sucho === true }));
 }));
 
 /** Warunki udziału BZP (2026-11-02) — jak `/kryteria-wstecz`: doba BZP, tylko istniejące dokumenty bez warunków, bez AI. */

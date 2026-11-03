@@ -145,3 +145,71 @@ export function scalMiedzyZrodlami(wedlugZrodel) {
 
   return { ogloszenia: wynik, duplikaty, wgZrodla };
 }
+
+/*
+ * BLIŹNIAK Z BZP NA PLATFORMIE (2026-11-03). Klucz wyżej wymaga zgodnego zamawiającego i tytułu co do znaku, a
+ * platformazakupowa.pl pisze oba po swojemu: tytuł poprzedza znakiem sprawy albo numerem BZP („2026/BZP 00514967
+ * (ZP.272.19.2026) Ochrona mienia…”), zamawiającego nazywa urzędem zamiast jednostki („Starostwo Powiatowe
+ * w Jaworze” ↔ „POWIAT JAWORSKI”). Pomiar 3.11: z 4582 otwartych ogłoszeń platformy 1264 miało bliźniaka w BZP
+ * (ten sam termin co do minuty i tytuł, podobny zamawiający), a klucz złapał 6; 14 kont miało ten sam przetarg
+ * wybrany dwa razy. Asymetria ryzyka jak wyżej: numer BZP w tytule rozstrzyga sam, bez niego potrzeba zgodnego
+ * terminu, tytułu I wspólnego członu nazwy zamawiającego.
+ */
+const NUMER_BZP = /(\d{4})\/BZP\s*(\d{8})/;
+
+/** Id dokumentu ogłoszenia BZP z numeru w tytule (`2026~BZP_00514967`, jak `tenderDocId`) albo null. */
+export function idBzpZTytulu(tytul) {
+  const m = String(tytul ?? '').match(NUMER_BZP);
+  return m ? `${m[1]}~BZP_${m[2]}` : null;
+}
+
+/** Tytuł bez numeru BZP i wiodących znaków sprawy („05/Żyw/D/26”, „ZP.271.27.2026”), po normalizacji. */
+export function tytulDoPorownania(tytul) {
+  let t = String(tytul ?? '').replace(/\d{4}\/BZP\s*\d{8}(\/\d{2})?/g, ' ').trim();
+  // Wiodące tokeny z cyfrą (znak sprawy, czasem powtórzony) i nawias ze znakiem po numerze BZP.
+  for (let i = 0; i < 3; i++) t = t.replace(/^(\([^)]*\d[^)]*\)|[\p{L}0-9][\p{L}0-9./_-]*\d[\p{L}0-9./_-]*)\s+/u, '');
+  return normalize(t).replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+/** Człony nazw, które nie odróżniają zamawiających (4 pierwsze litery po normalizacji). */
+const OGOLNE_CZLONY = new Set(['gmin', 'mias', 'miej', 'powi', 'urza', 'urze', 'woje', 'samo', 'publ', 'zakl', 'osro',
+  'cent', 'zesp', 'spec', 'jedn', 'wojs', 'inst', 'uniw', 'skar', 'pans', 'spol', 'odpo', 'ogra', 'akcy', 'regi', 'kraj',
+  'zarz', 'dyre', 'gene', 'kome', 'komu', 'prze', 'szko', 'opie', 'zdro', 'medy', 'klin', 'sluz', 'kult', 'spor', 'rekr',
+  'gosp', 'nier', 'obsl', 'admi', 'star', 'pols', 'szpi', 'rzec', 'dzia', 'firm', 'wspo']);
+
+function czlonyZamawiajacego(nazwa) {
+  return new Set(normalize(nazwa ?? '').replace(/[^a-z0-9]+/g, ' ').split(' ')
+    .filter((w) => (/^\d+$/.test(w) ? w.length >= 3 : w.length >= 4))
+    .map((w) => (/^\d+$/.test(w) ? w : w.slice(0, 4)))
+    .filter((w) => !OGOLNE_CZLONY.has(w)));
+}
+
+/** Wspólny znaczący człon nazwy („jawo”, „4101”) — „Szpital w Zambrowie” ≠ „Jednostka Wojskowa 4101”. */
+export function podobniZamawiajacy(a, b) {
+  const A = czlonyZamawiajacego(a);
+  for (const x of czlonyZamawiajacego(b)) if (A.has(x)) return true;
+  return false;
+}
+
+/**
+ * Czy ogłoszenie z platformy (`kopia`) to to samo postępowanie co wpis BZP (`bzp`). Numer BZP w tytule rozstrzyga
+ * sam (także po zmianie terminu); bez niego: termin co do minuty + tytuł (równy albo jeden zawiera drugi, krótszy
+ * ≥ 25 znaków) + podobny zamawiający.
+ */
+export function toSamoPostepowanie(kopia, bzp) {
+  const numer = idBzpZTytulu(kopia?.title);
+  if (numer) return numer === bzp?.id;
+  const d1 = String(kopia?.deadline ?? '').slice(0, 16);
+  if (d1.length < 16 || d1 !== String(bzp?.deadline ?? '').slice(0, 16)) return false;
+  const t1 = tytulDoPorownania(kopia.title);
+  const t2 = tytulDoPorownania(bzp.title);
+  if (!t1 || !t2) return false;
+  const zgodny = t1 === t2 || (Math.min(t1.length, t2.length) >= 25 && (t1.includes(t2) || t2.includes(t1)));
+  return zgodny && podobniZamawiajacy(kopia.organization, bzp.organization);
+}
+
+/** Jedyny wpis BZP pasujący do kopii z platformy; dwa pasujące bez numeru BZP = niepewne, null. */
+export function znajdzBlizniakaBzp(kopia, kandydaci) {
+  const pasujace = new Map((kandydaci ?? []).filter((b) => b && !b.zastapiony_przez && toSamoPostepowanie(kopia, b)).map((b) => [b.id, b]));
+  return pasujace.size === 1 ? [...pasujace.values()][0] : null;
+}

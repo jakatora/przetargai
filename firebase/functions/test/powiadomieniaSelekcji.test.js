@@ -101,3 +101,33 @@ test('REVIEW FOCUS 3: Standard po przerwanym przebiegu (wpis w Centrum już jest
   assert.equal(await powiadomPoPrzebiegu(user, { tryb: 'co3h', teraz: DZIEN, ...n }), 'juz_wyslane');
   assert.equal(n.wyslane.push.length, 1);
 });
+
+test('konto bez terenu: mail pyta o województwa (link do /maile/teren) najwyżej raz na tydzień; z terenem — nie', async () => {
+  const { user } = await kontoZWybranymi(1);
+  const n = nadawcy();
+  await powiadomPoPrzebiegu(user, { teraz: DZIEN, ...n });
+  assert.match(n.wyslane.email[0].text, /Bierzesz zlecenia tylko w swojej okolicy\? Zaznacz województwa — resztę pominiemy: \S+\/maile\/teren\?token=/);
+  assert.match(n.wyslane.email[0].html, /<b>Wybierz województwa<\/b><\/a>/);
+  const po = await users.findById(user.id);
+  assert.equal(po.teren_pytanie_o, DZIEN);
+
+  const { tender } = await tenders.upsert({ externalId: `ps-${process.pid}-${++seq}`, title: 'Remont dachu jutro', deadline: '2099-01-01T00:00:00.000Z' });
+  await matches.utworzWybrany({ userId: user.id, tender, score: 80, punkty: ['Dachy'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: true });
+  await powiadomPoPrzebiegu(po, { teraz: '2026-10-22T10:30:00.000Z', ...n });
+  assert.equal(n.wyslane.email.length, 2);
+  assert.doesNotMatch(n.wyslane.email[1].text, /maile\/teren/, 'dzień później — bez ponownego pytania');
+
+  const z = await kontoZWybranymi(1);
+  await users.ustawTeren(z.user.id, { regiony: ['18'] });
+  const n2 = nadawcy();
+  await powiadomPoPrzebiegu(await users.findById(z.user.id), { teraz: DZIEN, ...n2 });
+  assert.doesNotMatch(n2.wyslane.email[0].text, /maile\/teren/);
+});
+
+test('Standard z działającym pushem: mail nie wychodzi, więc pytanie o teren nie jest zużyte', async () => {
+  const { user } = await kontoZWybranymi(1, { tier: 'standard', push: 'ExponentPushToken[ps-teren]' });
+  const n = nadawcy();
+  assert.equal(await powiadomPoPrzebiegu(user, { tryb: 'co3h', teraz: DZIEN, ...n }), 'push');
+  assert.equal(n.wyslane.email.length, 0);
+  assert.equal((await users.findById(user.id)).teren_pytanie_o ?? null, null);
+});

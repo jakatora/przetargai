@@ -1,7 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { oknoEpp as repoOkna, tenders } from '../db/repos.js';
 import { pustyLicznik } from '../lib/licznikZrodla.js';
-import { kluczOgloszenia, PRIORYTET_ZRODEL } from '../lib/dedupZrodel.js';
+import { kluczOgloszenia, PRIORYTET_ZRODEL, idBzpZTytulu, znajdzBlizniakaBzp } from '../lib/dedupZrodel.js';
 import { ZRODLO, pobierzStrone, pobierzSzczegol, normalizujOgloszenieEpp, fetchHttps } from '../services/eProPublico.js';
 import { mapaZamawiajacych } from '../db/repos.js';
 import { wojewodztwoNowejPozycji, wczytajModelCpv } from './wojewodztwaZamawiajacych.js';
@@ -40,10 +40,16 @@ export async function runOknoEpp({
       wynik.strony = strona;
       const znormalizowane = pozycje.map((p) => wojewodztwoNowejPozycji(normalizujOgloszenieEpp(p), mapy, modelCpv));
       const istniejace = await tenders.poKluczuDedup(znormalizowane.map((t) => (t ? kluczOgloszenia(t) : null)).filter(Boolean)).catch(() => new Map());
+      // Bliźniak z BZP, którego klucz nie łapie (inna nazwa zamawiającego) — 2026-11-03, 45 ze 136 otwartych.
+      const zBzp = await tenders.doPorownaniaBlizniakow('bzp', {
+        ids: znormalizowane.map((t) => idBzpZTytulu(t?.title)).filter(Boolean),
+        terminy: znormalizowane.map((t) => t?.deadline),
+      }).catch((err) => { logger.warn({ err: err.message }, 'e-ProPublico: bliźniaki BZP niedostępne'); return []; });
       for (const t of znormalizowane) {
         if (!t) { licznik.odrzucone++; continue; }
         const klucz = kluczOgloszenia(t);
-        const wiodacy = klucz ? (istniejace.get(klucz) ?? []).find((d) => d.source !== ZRODLO && PRIORYTET_ZRODEL.indexOf(d.source) < PRIORYTET_ZRODEL.indexOf(ZRODLO)) : null;
+        const wiodacy = (klucz ? (istniejace.get(klucz) ?? []).find((d) => d.source !== ZRODLO && PRIORYTET_ZRODEL.indexOf(d.source) < PRIORYTET_ZRODEL.indexOf(ZRODLO)) : null)
+          ?? znajdzBlizniakaBzp(t, zBzp);
         if (wiodacy) {
           try { await tenders.dodajZrodloAlternatywne(wiodacy.id, { source: ZRODLO, externalId: t.externalId, url: t.url }); wynik.scalone_z_rejestrem++; } catch (err) {
             logger.warn({ err: err.message, id: t.externalId }, 'e-ProPublico: dopisanie linku do rejestru wiodącego nie powiodło się');

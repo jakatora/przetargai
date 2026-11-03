@@ -70,3 +70,19 @@ test('przetarg obecny już w BZP (ten sam tytuł, zamawiający, dzień terminu):
   await runOknoPz({ fetchFn: async () => ({ ok: true, text: async () => fixtureZ(5000) }), odstepMs: 0 });
   assert.equal((await tenders.findById(bzp.id)).zrodla_alternatywne.length, 1);
 });
+
+test('bliźniak z BZP (2026-11-03): numer BZP w tytule albo termin + tytuł + podobny zamawiający — bez kopii, link do wpisu BZP', async () => {
+  const nr = `0${ZNAK}`;
+  const { tender: poNumerze } = await tenders.upsert({ externalId: `2026/BZP ${nr}`, title: 'Fartuchy ochronne jednorazowe', organization: 'ZM SKIBA', deadline: '2026-11-30T10:00:00.000Z', source: 'bzp' });
+  const tytulSzczecin = 'Wprowadzenie i utrzymanie czasowej organizacji ruchu w zakresie oznakowania pionowego i poziomego na terenie miasta Szczecin na potrzeby przeprowadzenia wydarzenia w dniach 9-15.11.2026';
+  const { tender: poTytule } = await tenders.upsert({ externalId: `bzp-tyt-${ZNAK}`, title: tytulSzczecin, organization: 'ŻEGLUGA SZCZECIŃSKA TURYSTYKA', deadline: '2026-10-25T20:00:00.000Z', source: 'bzp' });
+  await oknoPz.zapisz({ nastepna_strona: 1 });
+  const html = fixtureZ(6000).replace('Fartuchy foliowe do branży spożywczej', `2026/BZP ${nr} (ZP.1.2026) Fartuchy foliowe ${ZNAK}`)
+    .replace(tytulSzczecin, `ZOR.2.2026 ${tytulSzczecin}`);
+  const w = await runOknoPz({ fetchFn: async () => ({ ok: true, text: async () => html }), odstepMs: 0 });
+  assert.deepEqual([w.scalone_z_rejestrem, w.nowe], [2, 1]);
+  assert.equal(await tenders.findById(`pz:${ZNAK}${1390256 + 6000}`), null);
+  assert.equal(await tenders.findById(`pz:${ZNAK}${1395208 + 6000}`), null);
+  assert.deepEqual((await tenders.findById(poNumerze.id)).zrodla_alternatywne.map((z) => z.url), [`https://platformazakupowa.pl/transakcja/${ZNAK}${1390256 + 6000}`]);
+  assert.equal((await tenders.findById(poTytule.id)).zrodla_alternatywne.length, 1);
+});

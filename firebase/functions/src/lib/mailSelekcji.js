@@ -29,12 +29,27 @@ export function zdanieRaportu(raport) {
     + `odrzuciliśmy ${razem}${top.length ? ` (${top.join(', ')})` : ''}.`;
 }
 
-export function mailSelekcji({ pozycje, raport = null, plan = 'free', linkWypisu, linkAplikacji }) {
-  const n = pozycje.length;
+/** Pytanie o teren dla konta bez województw (services/terenZMaila.js); null = nie pytamy. */
+export function zdanieTerenu(teren) {
+  if (!teren?.link) return null;
+  const ile = teren.wojewodztw >= 2 ? ` — te pochodzą z ${teren.wojewodztw} województw` : '';
+  return `Wybieramy dla Ciebie przetargi z całej Polski${ile}. Bierzesz zlecenia tylko w swojej okolicy? `
+    + 'Zaznacz województwa — resztę pominiemy:';
+}
+
+/** Mail pokazuje najwyżej tyle przetargów (kolejność od wywołującego — najlepiej ocenione pierwsze); reszta w apce. */
+export const MAKS_W_MAILU = 10;
+
+export function mailSelekcji({ pozycje: wszystkie, raport = null, plan = 'free', linkWypisu, linkAplikacji, teren = null }) {
+  const n = wszystkie.length;
+  const pozycje = wszystkie.slice(0, MAKS_W_MAILU);
+  const reszta = n - pozycje.length;
+  const zdanieReszty = reszta > 0 ? `…i jeszcze ${reszta} — wszystkie zobaczysz w aplikacji.` : null;
   const subject = plan === 'standard' && n === 1
     ? `Nowy przetarg dla Twojej firmy: ${pozycje[0].tytul}`.slice(0, 140)
     : `Mamy dla Ciebie ${odmianaPrzetargow(n)}`;
   const raportZdanie = zdanieRaportu(raport);
+  const terenZdanie = zdanieTerenu(teren);
 
   const text = [
     'Dzień dobry,',
@@ -47,7 +62,9 @@ export function mailSelekcji({ pozycje, raport = null, plan = 'free', linkWypisu
       ...(p.bez_warunkow ? ['  ✓ Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.'] : []),
       ...(p.krok ? [`  Pierwszy krok: ${p.krok}`] : []),
     ]),
+    ...(zdanieReszty ? ['', zdanieReszty] : []),
     '',
+    ...(terenZdanie ? [`${terenZdanie} ${teren.link}`, ''] : []),
     ...(raportZdanie ? [raportZdanie, ''] : []),
     `Szczegóły i uzasadnienie: otwórz aplikację PrzetargAI (${linkAplikacji}).`,
     '',
@@ -59,6 +76,8 @@ export function mailSelekcji({ pozycje, raport = null, plan = 'free', linkWypisu
 <ul>${pozycje.map((p) => `<li><b>${esc(p.tytul)}</b>${p.organizacja ? ` — ${esc(p.organizacja)}` : ''} (${esc(termin(p.termin))})${
     (p.punkty ?? []).slice(0, 2).map((x) => `<br>– ${esc(x)}`).join('')}${p.bez_warunkow ? '<br>✓ Bez warunków udziału — wystarczy oświadczenie o braku podstaw wykluczenia.' : ''}${
     p.krok ? `<br>Pierwszy krok: ${esc(p.krok)}` : ''}</li>`).join('')}</ul>
+${zdanieReszty ? `<p>${esc(zdanieReszty)}</p>` : ''}
+${terenZdanie ? `<p>${esc(terenZdanie)} <a href="${esc(teren.link)}"><b>Wybierz województwa</b></a></p>` : ''}
 ${raportZdanie ? `<p>${esc(raportZdanie)}</p>` : ''}
 <p>Szczegóły i uzasadnienie znajdziesz w aplikacji PrzetargAI: <a href="${esc(linkAplikacji)}">${esc(linkAplikacji)}</a></p>
 <p style="font-size:12px;color:#5b6577">Nie chcesz tych maili? <a href="${esc(linkWypisu)}">Wyłącz je</a>.</p>`;

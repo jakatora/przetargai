@@ -179,3 +179,35 @@ test('PRIORYTET_ZRODEL zaczyna się od BZP — rejestru urzędowego dla Pzp', ()
     'BK jest rejestrem beneficjenta, nie zamawiającego publicznego — ustępuje obu urzędowym',
   );
 });
+
+test('bliźniak BZP na platformie (2026-11-03): numer BZP w tytule rozstrzyga; bez niego termin + tytuł + wspólny człon zamawiającego', async () => {
+  const { idBzpZTytulu, tytulDoPorownania, podobniZamawiajacy, toSamoPostepowanie, znajdzBlizniakaBzp } = await import('../src/lib/dedupZrodel.js');
+  assert.equal(idBzpZTytulu('2026/BZP 00514967 (ZP.272.19.2026) Ochrona mienia bazy'), '2026~BZP_00514967');
+  assert.equal(idBzpZTytulu('Ochrona mienia'), null);
+  assert.equal(tytulDoPorownania('2026/BZP 00514967 (ZP.272.19.2026) Ochrona mienia bazy'), 'ochrona mienia bazy');
+  assert.equal(tytulDoPorownania('05/Żyw/D/26 SUKCESYWNA DOSTAWA OWOCÓW'), 'sukcesywna dostawa owocow');
+  assert.equal(tytulDoPorownania('U/39/2026 U/39/2026 Przeprowadzenie szkoleń'), 'przeprowadzenie szkolen', 'znak sprawy powtórzony');
+  assert.equal(tytulDoPorownania('Remont 2 budynków'), 'remont 2 budynkow', 'cyfra w środku zostaje');
+
+  assert.equal(podobniZamawiajacy('Starostwo Powiatowe w Jaworze', 'POWIAT JAWORSKI'), true);
+  assert.equal(podobniZamawiajacy('Jednostka Wojskowa 4101', 'Jednostka Wojskowa Nr 4101'), true, 'numer jednostki');
+  assert.equal(podobniZamawiajacy('Urząd Miejski w Żninie', 'Gmina Żnin'), true);
+  assert.equal(podobniZamawiajacy('Szpital Powiatowy w Zambrowie', 'Jednostka Wojskowa Nr 4101'), false);
+  assert.equal(podobniZamawiajacy('Gmina Stęszew', 'Gmina Porąbka'), false, 'same człony ogólne nie wystarczą');
+
+  const bzp = { id: '2026~BZP_00514967', title: 'Ochrona mienia bazy Referatu Zarząd Dróg Powiatowych Starostwa Powiatowego w Jaworze', organization: 'POWIAT JAWORSKI', deadline: '2026-11-10T09:00:00.000Z' };
+  const zNumerem = { title: '2026/BZP 00514967 (ZP.272.19.2026) Ochrona mienia bazy Referatu Zarząd Dróg Powiatowych St', organization: 'Starostwo Powiatowe w Jaworze', deadline: '2026-11-12T09:00:00.000Z' };
+  assert.equal(toSamoPostepowanie(zNumerem, bzp), true, 'numer BZP — także po zmianie terminu');
+  assert.equal(toSamoPostepowanie(zNumerem, { ...bzp, id: '2026~BZP_00000001' }), false, 'inny numer = inne postępowanie');
+  const bezNumeru = { title: 'ZP.272.19.2026 Ochrona mienia bazy Referatu Zarząd Dróg Powiatowych Starostwa Powiatowego w Jaworze', organization: 'Starostwo Powiatowe w Jaworze', deadline: '2026-11-10T09:00:00.000Z' };
+  assert.equal(toSamoPostepowanie(bezNumeru, bzp), true);
+  assert.equal(toSamoPostepowanie({ ...bezNumeru, deadline: '2026-11-10T10:00:00.000Z' }, bzp), false, 'inny termin');
+  assert.equal(toSamoPostepowanie({ ...bezNumeru, organization: 'Gmina Przeworsk' }, bzp), false, 'inny zamawiający');
+  const krotki = { title: 'Dostawa materiałów medycznych', organization: 'Szpital w Zambrowie', deadline: '2026-11-10T09:00:00.000Z' };
+  assert.equal(toSamoPostepowanie(krotki, { id: 'b', title: 'Dostawa materiałów medycznych dla JW. 4101 w Lublińcu', organization: 'Jednostka Wojskowa Nr 4101', deadline: krotki.deadline }), false,
+    'krótki tytuł zawarty w dłuższym i inny zamawiający');
+
+  assert.equal(znajdzBlizniakaBzp(bezNumeru, [bzp]).id, bzp.id);
+  assert.equal(znajdzBlizniakaBzp(bezNumeru, [bzp, { ...bzp, id: 'inny' }]), null, 'dwa pasujące bez numeru = niepewne');
+  assert.equal(znajdzBlizniakaBzp(bezNumeru, [{ ...bzp, zastapiony_przez: 'x' }]), null);
+});

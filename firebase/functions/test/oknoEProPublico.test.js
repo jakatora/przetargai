@@ -58,6 +58,15 @@ test('rejestr wiodący (BZP) o tym samym kluczu → link poboczny zamiast kopii'
   assert.equal((await tenders.findById(bzp.id)).zrodla_alternatywne[0].source, 'epropublico');
 });
 
+test('bliźniak z BZP bez zgodnego klucza (znak sprawy w tytule, inna pisownia zamawiającego) → link poboczny zamiast kopii', async () => {
+  const { tender: bzp } = await tenders.upsert({ externalId: `bzp-epp-bl-${ZNAK}`, title: 'Implanty ortopedyczne', organization: 'SZPITAL MIEJSKI W GLIWICACH SPÓŁKA Z O.O.', deadline: '2026-10-29T10:00:00.000Z', source: 'bzp' });
+  const lista = listaZ('29.10.2026 11:00:00').replace(/f00f[0-9a-f]{8}/g, `f00f${ZNAK.slice(0, 4)}1111`);
+  const w = await runOknoEpp({ fetchFn: serwer({ lista }), odstepMs: 0 });
+  assert.equal(w.scalone_z_rejestrem, 1);
+  assert.equal(await tenders.findById(`epp:418b6e4f-0f4b-4eca-b635-f00f${ZNAK.slice(0, 4)}1111`), null);
+  assert.deepEqual((await tenders.findById(bzp.id)).zrodla_alternatywne.map((z) => z.source), ['epropublico']);
+});
+
 test('503 ze źródła: ok=false ze śladem', async () => {
   const w = await runOknoEpp({ fetchFn: async () => ({ ok: false, status: 503, text: async () => '' }), odstepMs: 0 });
   assert.equal(w.ok, false);

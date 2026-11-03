@@ -3,6 +3,7 @@ import { env } from '../config.js';
 import { pobierzOgloszeniaBzp, dniWZakresie } from '../services/bzp.js';
 import { oknoBzp as repoOkna, tenders } from '../db/repos.js';
 import { pustyLicznik } from '../lib/licznikZrodla.js';
+import { zastapKopieDlaBzp } from './blizniakiPlatformy.js';
 
 /*
  * OKNO POBIERANIA BZP z checkpointem (P0-2).
@@ -237,10 +238,14 @@ export async function runBzpOkno({ budzetMs = BUDZET_OKNA_MS } = {}) {
   let nowe = 0;
   let pominiete = 0;
   const nieudane = new Set();
+  const noweWpisy = [];
   for (const ogloszenie of ogloszenia) {
     try {
-      const { created } = await tenders.upsert(ogloszenie);
-      if (created) nowe += 1;
+      const { created, tender } = await tenders.upsert(ogloszenie);
+      if (created) {
+        nowe += 1;
+        if (tender?.id) noweWpisy.push({ id: tender.id, title: tender.title, organization: tender.organization, deadline: tender.deadline });
+      }
     } catch (err) {
       pominiete += 1;
       nieudane.add(String(ogloszenie?.externalId));
@@ -248,6 +253,11 @@ export async function runBzpOkno({ budzetMs = BUDZET_OKNA_MS } = {}) {
         'bzpOkno: pominięto ogłoszenie, którego nie dało się zapisać');
     }
   }
+  // Kopie z platformazakupowa.pl / e-ProPublico sprzed ogłoszenia BZP schodzą z puli (2026-11-03, bliźniaki).
+  const zastapioneKopie = await zastapKopieDlaBzp(noweWpisy).catch((err) => {
+    logger.warn({ err: err.message }, 'bzpOkno: zastąpienie kopii z platform nie powiodło się');
+    return 0;
+  });
   if (nowe > 0) tenders.odswiezPule();
 
   // Checkpoint DOPIERO teraz — doby z nieudanym zapisem zostają otwarte (2026-09-25).
@@ -267,6 +277,7 @@ export async function runBzpOkno({ budzetMs = BUDZET_OKNA_MS } = {}) {
     error: blad ?? bladZapisu,
     fetched: ogloszenia.length,
     newTenders: nowe,
+    zastapione_kopie_platform: zastapioneKopie,
     skipped: pominiete,
     surowe: licznik.surowe,
     odrzucone: licznik.odrzucone,

@@ -157,6 +157,18 @@ export const users = {
     });
   },
 
+  /** Teren z maila (services/terenZMaila.js): województwa albo świadome „cała Polska” (wtedy już nie pytamy). */
+  async ustawTeren(id, { regiony = [], calaPolska = false }) {
+    await db().collection('users').doc(id).update(calaPolska
+      ? { teren_cala_polska: true, updated_at: nowIso() }
+      : { regiony, teren_cala_polska: false, updated_at: nowIso() });
+    return this.findById(id);
+  },
+
+  async oznaczPytanieOTeren(id, teraz = nowIso()) {
+    await db().collection('users').doc(id).update({ teren_pytanie_o: teraz });
+  },
+
   /** Konta z NIP-em firmy (alert o własnych kończących się umowach). Nierówność — indeks automatyczny. */
   async zNipem() {
     const snap = await db().collection('users').where('company_nip', '!=', null)
@@ -1073,9 +1085,73 @@ export const tenders = {
     return wynik;
   },
 
-  /** Kopia z rejestru pobocznego ustępuje wpisowi wiodącemu — znika z puli dopasowań, dokument zostaje. */
+  /**
+   * Kandydaci do porównania bliźniaków BZP ↔ platforma (lib/dedupZrodel.js `toSamoPostepowanie`): wpisy danego
+   * źródła po id oraz po terminie (`in` po 30; indeks źródło+termin). Same pola porównania.
+   */
+  async doPorownaniaBlizniakow(source, { ids = [], terminy = [] } = {}) {
+    const pola = ['title', 'organization', 'deadline', 'source', 'url', 'bzp_external_id', 'zastapiony_przez', 'zrodla_alternatywne'];
+    const wynik = new Map();
+    for (const t of await this.polaWielu(ids, pola)) if ((t.source ?? 'bzp') === source) wynik.set(t.id, t);
+    const unikalne = [...new Set(terminy.filter((d) => typeof d === 'string' && d))];
+    for (let i = 0; i < unikalne.length; i += 30) {
+      const snap = await db().collection('tenders').where('source', '==', source)
+        .where('deadline', 'in', unikalne.slice(i, i + 30)).select(...pola).get();
+      for (const d of snap.docs) wynik.set(d.id, { id: d.id, ...d.data() });
+    }
+    return [...wynik.values()];
+  },
+
+  /** Otwarte wpisy jednego źródła z polami porównania bliźniaków (indeks źródło+termin). */
+  async otwarteZeZrodla(source, teraz = nowIso()) {
+    const snap = await db().collection('tenders').where('source', '==', source).where('deadline', '>=', teraz)
+      .select('title', 'organization', 'deadline', 'url', 'bzp_external_id', 'zastapiony_przez').get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  },
+
+  /**
+   * Scalenie bliźniaków wsadowo (2026-11-03, jobs/blizniakiPlatformy.js): wpis wiodący dostaje link kopii jako
+   * źródło poboczne (bez powtórzeń), kopia schodzi z puli. `pary` = [{ kopia, wiodacy }] z polami porównania.
+   */
+  async scalBlizniakiWsadowo(pary, teraz = nowIso()) {
+    for (let i = 0; i < pary.length; i += 200) {
+      const batch = db().batch();
+      for (const { kopia, wiodacy } of pary.slice(i, i + 200)) {
+        const lista = Array.isArray(wiodacy.zrodla_alternatywne) ? wiodacy.zrodla_alternatywne : [];
+        const wpis = { source: kopia.source ?? 'platformazakupowa', externalId: kopia.bzp_external_id ?? null, url: kopia.url ?? null };
+        if (!lista.some((z) => z?.source === wpis.source && (z?.externalId ?? null) === wpis.externalId)) {
+          wiodacy.zrodla_alternatywne = [...lista, wpis];
+          batch.update(db().collection('tenders').doc(wiodacy.id), { zrodla_alternatywne: wiodacy.zrodla_alternatywne });
+        }
+        batch.update(db().collection('tenders').doc(kopia.id), { zastapiony_przez: wiodacy.id, zastapiony_o: teraz });
+      }
+      await batch.commit();
+    }
+  },
+
+  /**
+   * Kopia z rejestru pobocznego ustępuje wpisowi wiodącemu — znika z puli dopasowań, dokument zostaje. Kopie w feedach
+   * dostają `tender_zastapiony_przez` (jak wersje TED): lista chowa je, gdy klient ma też wpis wiodący (2026-11-03).
+   */
   async oznaczZastapiony(id, przezId, teraz = nowIso()) {
     await db().collection('tenders').doc(id).update({ zastapiony_przez: przezId, zastapiony_o: teraz });
+    await this.oznaczKopieWFeedach(new Map([[id, przezId]]));
+  },
+
+  /** `tender_zastapiony_przez` w kopiach feedów (collectionGroup po `tender_id`, `in` po 30). Zwraca liczbę kopii. */
+  async oznaczKopieWFeedach(wiodacyKopii) {
+    const ids = [...wiodacyKopii.keys()];
+    let ile = 0;
+    for (let i = 0; i < ids.length; i += 30) {
+      const snap = await db().collectionGroup('matches').where('tender_id', 'in', ids.slice(i, i + 30)).select('tender_id').get();
+      for (let j = 0; j < snap.docs.length; j += 400) {
+        const batch = db().batch();
+        for (const d of snap.docs.slice(j, j + 400)) batch.update(d.ref, { tender_zastapiony_przez: wiodacyKopii.get(d.get('tender_id')) });
+        await batch.commit();
+      }
+      ile += snap.size;
+    }
+    return ile;
   },
 
   /** Dokumenty TED jednego postępowania — wersje ogłoszenia (2026-11-01, `jobs/wersjeTed.js`). Indeks automatyczny. */
@@ -2036,6 +2112,10 @@ export const matches = {
       .map((d) => d.id));
   },
 
+  /**
+   * Kopie z platformy, które klient ma na liście obok wpisu BZP tego samego postępowania (lib/dedupZrodel.js,
+   * bliźniaki), schodzą z listy — bez śladu w „Odrzuconych”, to nie ocena. Zwraca liczbę schowanych.
+   */
   /** Dopasowanie odrzucone przy ponownej ocenie schodzi z listy (ślad decyzji zapisuje lejek). */
   async schowajOdrzucony(userId, tenderId, { przyczyna, szczegol = null, teraz = nowIso() }) {
     await matchCol(userId).doc(tenderId).update({ odrzucony_przez_pracownika: { przyczyna, szczegol, o: teraz } });

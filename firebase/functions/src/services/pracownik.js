@@ -128,7 +128,7 @@ export async function pracujDlaUzytkownika(user, pool, {
 } = {}) {
   const koniec = Date.now() + budzetMs;
   const poCzasie = () => Date.now() >= koniec;
-  const wynik = { przejrzane: 0, wybrane: 0, oczekuje: 0, odrzucone: pustyLicznikPrzyczyn(), aiCalls: 0, nowe: [] };
+  const wynik = { przejrzane: 0, wybrane: 0, oczekuje: 0, odrzucone: pustyLicznikPrzyczyn(), aiCalls: 0, nowe: [], schowane: 0 };
   if (!user.keywords?.length && !user.cpv_codes?.length) return wynik;
 
   const plan = planEfektywny(user, teraz);
@@ -148,6 +148,15 @@ export async function pracujDlaUzytkownika(user, pool, {
     if (przyczyna === 'termin' || !doSchowania.has(tenderId)) return;
     doSchowania.delete(tenderId);
     await matches.schowajOdrzucony(user.id, tenderId, { przyczyna, szczegol, teraz });
+    wynik.schowane++;
+  };
+  const odrzuc = async (tender, { przyczyna, etap, szczegol = null, score = null, scorer = null }) => {
+    await evaluations.zapiszDecyzje(user.id, tender.id, {
+      decyzja: 'odrzucony', przyczyna, etap, szczegol, score, scorer, criteriaHash: wersja, tender, teraz,
+      progDni: przyczyna === 'termin' ? minDniDlaPrzetargu(karta, tender) : null,
+    });
+    wynik.odrzucone[przyczyna] = (wynik.odrzucone[przyczyna] ?? 0) + 1;
+    await schowaj(tender.id, przyczyna, szczegol);
   };
 
   const ranked = [];
@@ -155,11 +164,19 @@ export async function pracujDlaUzytkownika(user, pool, {
     const nowy = czyNowy(tender);
     if (nowy) wynik.przejrzane++;
     const h = heuristicScore(user, tender);
-    if (h.score > 0) ranked.push({ tender, h });
-    else {
+    if (h.score <= 0) {
       if (nowy) wynik.odrzucone.branza++;
       await schowaj(tender.id, 'branza');
+      continue;
     }
+    // Pełny przegląd: widoczne dopasowanie, które łamie twardą regułę (nowy teren, „nie bierzemy”, wartość), schodzi
+    // z listy od razu — nie dopiero, gdy trafi do okna kandydatów (120 na przebieg; 3.11 konto bez terenu miało
+    // 573 wybrane z 16 województw). Reguła nie woła AI. „Termin” nie chowa — kandydat idzie dalej jak dotąd.
+    if (doSchowania.has(tender.id)) {
+      const regula = sprawdzReguly(user, tender, teraz);
+      if (regula && regula.przyczyna !== 'termin') { await odrzuc(tender, { ...regula, etap: 'regula' }); continue; }
+    }
+    ranked.push({ tender, h });
   }
   ranked.sort((a, b) => b.h.score - a.h.score);
 
@@ -180,14 +197,6 @@ export async function pracujDlaUzytkownika(user, pool, {
   const przyklady = przykladyDlaAi(user.pracownik_sygnaly);
   const prog = env.MATCH_CONFIDENCE_THRESHOLD;
 
-  const odrzuc = async (tender, { przyczyna, etap, szczegol = null, score = null, scorer = null }) => {
-    await evaluations.zapiszDecyzje(user.id, tender.id, {
-      decyzja: 'odrzucony', przyczyna, etap, szczegol, score, scorer, criteriaHash: wersja, tender, teraz,
-      progDni: przyczyna === 'termin' ? minDniDlaPrzetargu(karta, tender) : null,
-    });
-    wynik.odrzucone[przyczyna] = (wynik.odrzucone[przyczyna] ?? 0) + 1;
-    await schowaj(tender.id, przyczyna, szczegol);
-  };
   const wybierz = async (tender, { score, punkty: punktyWyboru, scorer, ocenaBezAi, ostateczna }) => {
     // „Bez warunków udziału” (BZP pkt 5.3, 2026-11-02) — klient widzi to w uzasadnieniu bez otwierania ogłoszenia.
     const punkty = tender.warunki_udzialu?.brak_warunkow && !punktyWyboru.some((p) => /warunk\S* udzia/i.test(p))
@@ -375,7 +384,7 @@ export async function przeliczProfil(user, { wymus = false, budzetMs = BUDZET_PR
     return { created: 0, evaluated: 0, aiCalls: 0, pominiety: true };
   }
   const w = await pracujDlaUzytkownika(user, await tenders.openPool(), { budzetMs });
-  return { created: w.wybrane, evaluated: w.przejrzane, aiCalls: w.aiCalls };
+  return { created: w.wybrane, evaluated: w.przejrzane, aiCalls: w.aiCalls, schowane: w.schowane };
 }
 
 /** Cykl 12:00 (jobs/fetchTenders.js): selekcja albo stary silnik — wg przełącznika. */

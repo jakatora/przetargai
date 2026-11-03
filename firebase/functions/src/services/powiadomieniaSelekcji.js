@@ -7,7 +7,8 @@ import { ciszaNocna, dobaWarszawska } from '../lib/czasPolski.js';
 import { PUNKT_BEZ_WARUNKOW } from '../lib/warunkiUdzialu.js';
 import { mailSelekcji, odmianaPrzetargow } from '../lib/mailSelekcji.js';
 import { terminPytan } from '../lib/przypomnieniePytan.js';
-import { matches, alerty, magicLinks, dziennik, znacznikMailaSelekcji } from '../db/repos.js';
+import { matches, alerty, magicLinks, dziennik, znacznikMailaSelekcji, users } from '../db/repos.js';
+import { czasPytacOTeren, liczbaWojewodztw, linkTerenu } from './terenZMaila.js';
 import { sendPush } from './push.js';
 import { sendEmail } from './email.js';
 import { dostarcz } from '../jobs/monitorWyszukiwan.js';
@@ -52,13 +53,29 @@ export async function powiadomPoPrzebiegu(user, { tryb = 'dzienny', teraz = nowI
   if (!lista.length) return 'brak';
 
   const ids = lista.map((m) => m.id);
-  const pozycje = pozycjeZ(lista, { zKrokiem: plan === 'standard', teraz });
+  // Najlepiej ocenione pierwsze — mail pokazuje najwyżej 10 (lib/mailSelekcji.js), reszta czeka w apce.
+  const pozycje = pozycjeZ([...lista].sort((a, b) => (b.confidence_score ?? 0) - (a.confidence_score ?? 0)), { zKrokiem: plan === 'standard', teraz });
   const doba = dobaWarszawska(teraz);
   const mailWlaczony = user.powiadomienia_pracownik_email !== false && Boolean(user.email);
-  const trescMaila = async () => mailSelekcji({
-    pozycje, plan, raport: await dziennik.pobierz(user.id, doba),
-    linkWypisu: await linkWypisu(user.id), linkAplikacji: env.APP_LINK_URL,
-  });
+  // Konto bez województw: raz na tydzień pytamy o teren (link do strony z województwami, bez logowania).
+  // Tydzień liczy się od maila, który naprawdę wyszedł — push zamiast maila (Standard) nie zużywa pytania.
+  let terenWMailu = false;
+  const trescMaila = async () => {
+    let teren = null;
+    if (czasPytacOTeren(user, teraz)) {
+      teren = { link: await linkTerenu(user.id), wojewodztw: liczbaWojewodztw(lista) };
+      terenWMailu = true;
+    }
+    return mailSelekcji({
+      pozycje, plan, raport: await dziennik.pobierz(user.id, doba),
+      linkWypisu: await linkWypisu(user.id), linkAplikacji: env.APP_LINK_URL, teren,
+    });
+  };
+  const wyslijMail = async (to) => {
+    const w = await wyslijEmail({ to, ...(await trescMaila()) });
+    if (w?.sent && terenWMailu) await users.oznaczPytanieOTeren(user.id, teraz);
+    return w;
+  };
 
   if (plan === 'free') {
     let dostarczono = false;
@@ -71,7 +88,7 @@ export async function powiadomPoPrzebiegu(user, { tryb = 'dzienny', teraz = nowI
       dostarczono = (w?.sent ?? 0) > 0;
     }
     if (mailWlaczony && await znacznikMailaSelekcji.zarezerwuj(user.id, doba)) {
-      const w = await wyslijEmail({ to: user.email, ...(await trescMaila()) });
+      const w = await wyslijMail(user.email);
       if (w?.sent || w?.odrzuconyAdresat) await znacznikMailaSelekcji.potwierdz(user.id, doba, { emailId: w?.id ?? null });
       else await znacznikMailaSelekcji.zwolnij(user.id, doba);
       dostarczono = dostarczono || Boolean(w?.sent);
@@ -102,11 +119,11 @@ export async function powiadomPoPrzebiegu(user, { tryb = 'dzienny', teraz = nowI
 
   let kanal = 'centrum';
   if (user.push_token || mailWlaczony) {
-    const mail = mailWlaczony ? await trescMaila() : null;
+    // Treść maila (i jednorazowe linki) dopiero, gdy push nie dotarł i mail naprawdę wychodzi.
     kanal = await dostarcz({
       user: mailWlaczony ? user : { ...user, email: null },
       alert, wyslijPush,
-      wyslijEmail: ({ to }) => wyslijEmail({ to, ...mail }),
+      wyslijEmail: ({ to }) => wyslijMail(to),
     });
   }
   await matches.markNotifiedBatch(user.id, ids);

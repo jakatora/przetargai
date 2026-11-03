@@ -222,3 +222,26 @@ test('wybrany z BZP: po wyborze dociągane dokumenty z e-Zamówień (SWZ z linki
   await pracujDlaUzytkownika(u4, [await przetarg('Remont dachu hali (BZP)', { source: 'bzp', postepowanie_id: ID })], { teraz: teraz(), dokumentyEz: async () => { pobran3++; return DOK; }, budzetDokumentowEz: { pozostalo: 0 }, ocen: biore(['Pasuje']) });
   assert.equal(pobran3, 0);
 });
+
+test('nowy teren: wybrane spoza niego schodzą z listy od razu, przed oknem kandydatów i bez AI; zapisane zostają', async () => {
+  // 3.11: konto bez terenu miało 573 wybrane z 16 województw — po ustawieniu terenu ocena 120 kandydatów na przebieg
+  // chowałaby resztę przez kilka przebiegów.
+  const u = await klient();
+  const tu = await przetarg('Remont dachu w Rzeszowie');
+  const daleko = await przetarg('Remont dachu w Szczecinie', { wojewodztwo: 'zachodniopomorskie' });
+  const zapisany = await przetarg('Remont dachu w Koszalinie', { wojewodztwo: 'zachodniopomorskie' });
+  await pracujDlaUzytkownika(u, [tu, daleko, zapisany], { teraz: teraz(), ocen: biore() });
+  await saved.add(u.id, await matches.detail(u.id, zapisany.id));
+
+  const po = await users.zapiszKarte(u.id, { companyName: null, keywords: ['dach'], cpvCodes: [], regiony: ['18'], wartoscMax: null,
+    karta: { opis: 'Dachy', wykluczenia: [], wartosc_min: null, min_dni_oferta: 5,
+      formalne: { obrot_roczny: null, referencja_kwota: null, referencja_opis: null, uprawnienia: [] } } });
+  const ocenione = [];
+  const w = await pracujDlaUzytkownika(po, [tu, daleko, zapisany], { teraz: teraz(), ocen: async (_u, t) => { ocenione.push(t.id); return biore()(); } });
+  assert.equal(w.schowane, 1);
+  assert.equal((await matches.detail(u.id, daleko.id)).odrzucony_przez_pracownika?.przyczyna, 'teren');
+  assert.equal((await evaluations.pobierz(u.id, daleko.id)).etap, 'regula');
+  assert.equal((await matches.detail(u.id, zapisany.id)).odrzucony_przez_pracownika ?? null, null, 'zapisany — klient nad nim pracuje');
+  assert.ok(!ocenione.includes(daleko.id) && !ocenione.includes(zapisany.id), 'spoza terenu bez pytania AI');
+  assert.equal(w.odrzucone.teren, 2);
+});
