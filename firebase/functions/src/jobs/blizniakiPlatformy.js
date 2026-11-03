@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
-import { idBzpZTytulu, znajdzBlizniakaBzp, toSamoPostepowanie } from '../lib/dedupZrodel.js';
+import { idBzpZTytulu, znajdzBlizniakaBzp, toSamoPostepowanie, bezGodziny } from '../lib/dedupZrodel.js';
+import { dobaWarszawska } from '../lib/czasPolski.js';
 import { tenders, evaluations, matches } from '../db/repos.js';
 
 /*
@@ -11,6 +12,36 @@ import { tenders, evaluations, matches } from '../db/repos.js';
  * chowa kopię, gdy klient ma też wpis BZP). `sucho` = tylko liczby, bez zapisu.
  */
 export const ZRODLA_KOPII = ['platformazakupowa', 'epropublico'];
+
+/**
+ * Kandydaci z rejestrów wiodących dla kopii z platform: BZP (numer z tytułu + termin co do minuty) i TED (termin
+ * z samą datą — doba kopii; po doprecyzowaniu godziny — termin kopii). 2026-11-03: 1034 kopie przetargów z TED.
+ */
+export async function kandydaciWiodacy(kopie) {
+  const lista = (kopie ?? []).filter(Boolean);
+  const terminy = lista.map((k) => k.deadline);
+  const [bzp, ted] = await Promise.all([
+    tenders.doPorownaniaBlizniakow('bzp', { ids: lista.map((k) => idBzpZTytulu(k.title)).filter(Boolean), terminy }),
+    tenders.doPorownaniaBlizniakow('ted', { terminy, dobyTerminow: terminy }),
+  ]);
+  return { bzp, ted };
+}
+
+/** Wpis wiodący dla kopii: najpierw BZP, potem TED (kolejność `PRIORYTET_ZRODEL`). */
+export const wiodacyKopii = (kopia, kandydaci) =>
+  znajdzBlizniakaBzp(kopia, kandydaci.bzp) ?? znajdzBlizniakaBzp(kopia, kandydaci.ted);
+
+/**
+ * TED zna samą datę (koniec doby), platforma — godzinę składania ofert tego samego dnia. Wpis wiodący dostaje tę
+ * godzinę (wcześniejszą niż „do końca dnia” — bezpieczny kierunek), także w kopiach feedów i Zapisanych.
+ */
+export async function doprecyzujTerminWiodacego(wiodacy, kopia) {
+  if (!bezGodziny(wiodacy?.deadline) || !kopia?.deadline || bezGodziny(kopia.deadline)) return false;
+  if (dobaWarszawska(wiodacy.deadline) !== dobaWarszawska(kopia.deadline)) return false;
+  await tenders.doprecyzujTermin(wiodacy.id, kopia.deadline);
+  wiodacy.deadline = kopia.deadline;
+  return true;
+}
 
 /** Pola wpisu BZP potrzebne przeniesionym dopasowaniom (`polaTenderuDopasowania`). */
 const POLA_WIODACEGO = ['title', 'organization', 'budget', 'currency', 'deadline', 'url', 'cpv_main', 'source', 'wojewodztwo',
@@ -40,20 +71,23 @@ export async function scalBlizniakiPlatformy({ teraz = nowIso(), sucho = false }
       else juzZastapione.push({ kopiaId: k.id, wiodacyId: k.zastapiony_przez });
     }
   }
-  const kandydaci = await tenders.doPorownaniaBlizniakow('bzp', {
-    ids: kopie.map((k) => idBzpZTytulu(k.title)).filter(Boolean),
-    terminy: kopie.map((k) => k.deadline),
-  });
+  const kandydaci = await kandydaciWiodacy(kopie);
   const pary = [];
   for (const kopia of kopie) {
-    const wiodacy = znajdzBlizniakaBzp(kopia, kandydaci);
+    const wiodacy = wiodacyKopii(kopia, kandydaci);
     if (wiodacy) pary.push({ kopia, wiodacy });
   }
-  const wynik = { kopie_otwarte: kopie.length, kandydaci_bzp: kandydaci.length, blizniaki: pary.length, kopie_w_feedach: 0,
-    juz_zastapione: juzZastapione.length, przeniesione: null, sucho };
+  const zTed = pary.filter((p) => p.wiodacy.source === 'ted').length;
+  const wynik = { kopie_otwarte: kopie.length, kandydaci_bzp: kandydaci.bzp.length, kandydaci_ted: kandydaci.ted.length,
+    blizniaki: pary.length, z_ted: zTed, terminy_doprecyzowane: 0, kopie_w_feedach: 0, juz_zastapione: juzZastapione.length, przeniesione: null, sucho };
   if (sucho) return { ...wynik, przyklady: pary.slice(0, 5).map((p) => `${p.kopia.title} ⇒ ${p.wiodacy.title}`) };
   if (pary.length) {
     await tenders.scalBlizniakiWsadowo(pary, teraz);
+    // Po 8 naraz — każdy termin to też kopie w feedach i Zapisanych (uzgodnijKopiePrzetargu).
+    for (let i = 0; i < pary.length; i += 8) {
+      const w = await Promise.all(pary.slice(i, i + 8).map((p) => doprecyzujTerminWiodacego(p.wiodacy, p.kopia).catch(() => false)));
+      wynik.terminy_doprecyzowane += w.filter(Boolean).length;
+    }
     wynik.kopie_w_feedach = await tenders.oznaczKopieWFeedach(new Map(pary.map((p) => [p.kopia.id, p.wiodacy.id])));
   }
   // Także kopie zastąpione wcześniej (scalenie 3.11 przed przenoszeniem, cykl, okno BZP) — przeniesienie jest idempotentne.

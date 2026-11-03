@@ -211,3 +211,16 @@ test('bliźniak BZP na platformie (2026-11-03): numer BZP w tytule rozstrzyga; b
   assert.equal(znajdzBlizniakaBzp(bezNumeru, [bzp, { ...bzp, id: 'inny' }]), null, 'dwa pasujące bez numeru = niepewne');
   assert.equal(znajdzBlizniakaBzp(bezNumeru, [{ ...bzp, zastapiony_przez: 'x' }]), null);
 });
+
+test('termin z samą datą (TED): zgodny z każdą godziną tej samej doby warszawskiej, nie z sąsiednią', async () => {
+  const { terminyZgodne, toSamoPostepowanie, bezGodziny } = await import('../src/lib/dedupZrodel.js');
+  assert.equal(bezGodziny('2026-11-03T22:59:59.999Z'), true);
+  assert.equal(bezGodziny('2026-07-03T21:59:59.999Z'), true, 'lato (CEST)');
+  assert.equal(bezGodziny('2026-11-03T09:00:00.000Z'), false);
+  assert.equal(terminyZgodne('2026-11-03T22:59:59.999Z', '2026-11-03T06:30:00.000Z'), true);
+  assert.equal(terminyZgodne('2026-11-03T06:30:00.000Z', '2026-11-03T22:59:59.999Z'), true);
+  assert.equal(terminyZgodne('2026-11-03T22:59:59.999Z', '2026-11-03T23:30:00.000Z'), false, '00:30 następnego dnia w Warszawie');
+  assert.equal(terminyZgodne('2026-11-03T09:00:00.000Z', '2026-11-03T10:00:00.000Z'), false, 'dwie godziny — muszą być równe');
+  const ted = { id: 'ted:1-2026', title: 'Kompleksowa dostawa paliwa gazowego dla szpitala', organization: 'SZPITAL WOJEWÓDZKI W KOSZALINIE', deadline: '2026-11-03T22:59:59.999Z' };
+  assert.equal(toSamoPostepowanie({ title: 'DZP.271.64.2026 Kompleksowa dostawa paliwa gazowego dla szpitala', organization: 'Szpital Wojewódzki im. M. Kopernika w Koszalinie', deadline: '2026-11-03T10:00:00.000Z' }, ted), true);
+});

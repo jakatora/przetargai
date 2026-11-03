@@ -15,6 +15,7 @@ import { koniecUmowyWyniku } from '../lib/umowyWygasajace.js';
 import { skrotKryteriow, polaKryteriow } from '../lib/ogloszenieMeta.js';
 import { kryteriaBlizniaka } from '../lib/blizniakKryteriow.js';
 import { doUtcIso } from '../lib/daty.js';
+import { dobaWarszawska, poczatekDobyWarszawskiej } from '../lib/czasPolski.js';
 import { normNazwa } from '../lib/ktoWygrywa.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
@@ -1089,7 +1090,7 @@ export const tenders = {
    * Kandydaci do porównania bliźniaków BZP ↔ platforma (lib/dedupZrodel.js `toSamoPostepowanie`): wpisy danego
    * źródła po id oraz po terminie (`in` po 30; indeks źródło+termin). Same pola porównania.
    */
-  async doPorownaniaBlizniakow(source, { ids = [], terminy = [] } = {}) {
+  async doPorownaniaBlizniakow(source, { ids = [], terminy = [], dobyTerminow = [] } = {}) {
     const pola = ['title', 'organization', 'deadline', 'source', 'url', 'bzp_external_id', 'zastapiony_przez', 'zrodla_alternatywne'];
     const wynik = new Map();
     for (const t of await this.polaWielu(ids, pola)) if ((t.source ?? 'bzp') === source) wynik.set(t.id, t);
@@ -1099,7 +1100,20 @@ export const tenders = {
         .where('deadline', 'in', unikalne.slice(i, i + 30)).select(...pola).get();
       for (const d of snap.docs) wynik.set(d.id, { id: d.id, ...d.data() });
     }
+    // Termin z samą datą (TED) — cała doba warszawska terminów podanych w `dobyTerminow` (zakres, ten sam indeks).
+    for (const doba of new Set(dobyTerminow.filter((d) => typeof d === 'string' && d).map(dobaWarszawska))) {
+      const snap = await db().collection('tenders').where('source', '==', source)
+        .where('deadline', '>=', poczatekDobyWarszawskiej(`${doba}T12:00:00.000Z`)).where('deadline', '<=', doUtcIso(doba))
+        .select(...pola).get();
+      for (const d of snap.docs) wynik.set(d.id, { id: d.id, ...d.data() });
+    }
     return [...wynik.values()];
+  },
+
+  /** Termin z samą datą (TED) dostaje godzinę z kopii z platformy tego samego dnia — także w kopiach feedów i Zapisanych. */
+  async doprecyzujTermin(id, deadline, teraz = nowIso()) {
+    await db().collection('tenders').doc(id).update({ deadline, termin_z_kopii: true });
+    await uzgodnijKopiePrzetargu(id, { deadline }, teraz);
   },
 
   /** Otwarte wpisy jednego źródła z polami porównania bliźniaków (indeks źródło+termin). */

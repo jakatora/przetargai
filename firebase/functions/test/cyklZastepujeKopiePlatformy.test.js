@@ -40,3 +40,13 @@ test('cykl dobowy: kopia z platformy z numerem BZP i inną nazwą zamawiającego
   assert.equal((await tenders.findById(kopia.id)).zastapiony_przez, zBzp.id);
   assert.equal((await getFirestore().doc(`users/${u.id}/matches/${kopia.id}`).get()).get('tender_zastapiony_przez'), zBzp.id);
 });
+
+test('cykl dobowy: ogłoszenie TED z samą datą zastępuje kopię z platformy i dostaje z niej godzinę', async () => {
+  const { tender: kopia } = await tenders.upsert({ externalId: `pz:${ZNAK}3`, title: `ZP/7/2099 Dostawa pieczywa i wyrobów cukierniczych ${ZNAK}`, organization: 'Szpital Powiatowy w Jarosławiu', deadline: '2099-03-03T07:15:00.000Z', source: 'platformazakupowa', url: `https://platformazakupowa.pl/transakcja/${ZNAK}3` });
+  const ogloszenieTed = { externalId: `ted:${ZNAK}-2099`, title: `Dostawa pieczywa i wyrobów cukierniczych ${ZNAK}`, organization: 'SZPITAL POWIATOWY W JAROSŁAWIU', deadline: '2099-03-03T22:59:59.999Z', source: 'ted', url: 'https://ted.europa.eu/x' };
+  const wynik = await runTenderFetch({ zrodla: [{ nazwa: 'ted', pobierz: async () => [ogloszenieTed] }], alarmujAi: async () => {}, alarmujZrodla: async () => {} });
+  assert.equal(wynik.zastapione_kopie_platformy, 1);
+  const zTed = await tenders.findById(`ted:${ZNAK}-2099`);
+  assert.equal(zTed.deadline, '2099-03-03T07:15:00.000Z', 'godzina z platformy');
+  assert.equal((await tenders.findById(kopia.id)).zastapiony_przez, zTed.id);
+});

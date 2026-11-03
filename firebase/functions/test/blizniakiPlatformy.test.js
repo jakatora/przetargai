@@ -59,3 +59,19 @@ test('nowy wpis z okna BZP zastępuje wcześniejszą kopię z e-ProPublico (inna
   assert.equal((await tenders.findById(kopia.id)).zastapiony_przez, bzp.id);
   assert.deepEqual((await tenders.findById(bzp.id)).zrodla_alternatywne.map((z) => z.source), ['epropublico']);
 });
+
+test('kopia przetargu z TED (termin z samą datą): scalona, TED dostaje godzinę z platformy — także w przeniesionym dopasowaniu', async () => {
+  const doba = `2096-0${1 + (Number(ZNAK) % 9)}-1${Number(ZNAK) % 10}`;
+  const koniecDoby = (await import('../src/lib/daty.js')).doUtcIso(doba);
+  const { tender: ted } = await tenders.upsert({ externalId: `ted:${ZNAK}-2096`, title: `Kompleksowa dostawa paliwa gazowego dla szpitala ${ZNAK}`, organization: 'SZPITAL WOJEWÓDZKI W KOSZALINIE', deadline: koniecDoby, source: 'ted' });
+  const { tender: kopia } = await tenders.upsert({ externalId: `pz:${ZNAK}9`, title: `DZP.271.64.2096 Kompleksowa dostawa paliwa gazowego dla szpitala ${ZNAK}`, organization: 'Szpital Wojewódzki im. M. Kopernika w Koszalinie', deadline: `${doba}T09:00:00.000Z`, source: 'platformazakupowa', url: `https://platformazakupowa.pl/transakcja/${ZNAK}9` });
+  const u = await users.create({ email: `bp3${ZNAK}@t.pl`, passwordHash: 'h', keywords: ['paliwo'] });
+  await matches.utworzWybrany({ userId: u.id, tender: kopia, score: 75, punkty: ['Paliwo'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: false });
+
+  const w = await scalBlizniakiPlatformy({ teraz: '2096-01-01T00:00:00.000Z' });
+  assert.ok(w.z_ted >= 1 && w.terminy_doprecyzowane >= 1);
+  assert.equal((await tenders.findById(kopia.id)).zastapiony_przez, ted.id);
+  assert.equal((await tenders.findById(ted.id)).deadline, `${doba}T09:00:00.000Z`, 'godzina z platformy zamiast końca doby');
+  const przeniesiony = (await getFirestore().doc(`users/${u.id}/matches/${ted.id}`).get()).data();
+  assert.deepEqual([przeniesiony.tender_source, przeniesiony.tender_deadline], ['ted', `${doba}T09:00:00.000Z`]);
+});

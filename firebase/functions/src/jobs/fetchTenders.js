@@ -7,8 +7,9 @@ import { wyslijMaileProby } from '../services/mailProby.js';
 import { pobierzBkZWznowieniem, zatwierdzCheckpointBk } from './oknoBk.js';
 import { tenders, cykl, tenderDocId } from '../db/repos.js';
 import { pustyLicznik, zliczDuplikaty } from '../lib/licznikZrodla.js';
-import { scalMiedzyZrodlami, kluczOgloszenia, toSamoPostepowanie } from '../lib/dedupZrodel.js';
+import { scalMiedzyZrodlami, kluczOgloszenia, toSamoPostepowanie, bezGodziny } from '../lib/dedupZrodel.js';
 import { przeniesKopieNaBzp } from './blizniakiPlatformy.js';
+import { dobaWarszawska } from '../lib/czasPolski.js';
 import { pustyLicznikAi, zbierajStatystykiAi, ocenStanAi } from '../lib/stanAi.js';
 import { alarmujAwarieAi } from './alarmAi.js';
 import { alarmujCichePusteZrodla } from './alarmZrodla.js';
@@ -248,9 +249,13 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     }
     // Bliźniaki, których klucz nie łapie (2026-11-03, lib/dedupZrodel.js): numer BZP / znak sprawy w tytule, inna nazwa
     // zamawiającego. Kandydaci z platformazakupowa.pl i e-ProPublico po terminie; z każdego źródła jeden pasujący.
-    const bezKopii = scalone.ogloszenia.filter((n) => (n.source ?? 'bzp') === 'bzp' && !kopiePlatformy.has(String(n.externalId)));
+    // TED (termin z samą datą) szuka kopii po całej dobie terminu — kopie z platform znają godzinę.
+    const bezKopii = scalone.ogloszenia.filter((n) => ['bzp', 'ted'].includes(n.source ?? 'bzp') && !kopiePlatformy.has(String(n.externalId)));
     for (const zrodlo of bezKopii.length ? ['platformazakupowa', 'epropublico'] : []) {
-      const kandydaci = (await tenders.doPorownaniaBlizniakow(zrodlo, { terminy: bezKopii.map((n) => n.deadline) })).filter((k) => !k.zastapiony_przez);
+      const kandydaci = (await tenders.doPorownaniaBlizniakow(zrodlo, {
+        terminy: bezKopii.map((n) => n.deadline),
+        dobyTerminow: bezKopii.filter((n) => bezGodziny(n.deadline)).map((n) => n.deadline),
+      })).filter((k) => !k.zastapiony_przez);
       for (const n of bezKopii) {
         const wpis = { id: tenderDocId(n.externalId), title: n.title, organization: n.organization, deadline: n.deadline };
         const pasujace = kandydaci.filter((k) => toSamoPostepowanie(k, wpis));
@@ -259,6 +264,10 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
     }
     for (const n of scalone.ogloszenia) {
       for (const kopia of kopiePlatformy.get(String(n.externalId)) ?? []) {
+        // Termin z samą datą dostaje godzinę z kopii tego samego dnia (wcześniejszą — bezpieczny kierunek).
+        if (bezGodziny(n.deadline) && kopia.deadline && !bezGodziny(kopia.deadline) && dobaWarszawska(n.deadline) === dobaWarszawska(kopia.deadline)) {
+          n.deadline = kopia.deadline;
+        }
         const zrodlo = kopia.source ?? 'platformazakupowa';
         const juz = (n.zrodla_alternatywne ?? []).some((z) => z?.source === zrodlo);
         if (!juz) n.zrodla_alternatywne = [...(n.zrodla_alternatywne ?? []), { source: zrodlo, externalId: kopia.bzp_external_id, url: kopia.url }];

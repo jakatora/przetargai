@@ -86,3 +86,16 @@ test('bliźniak z BZP (2026-11-03): numer BZP w tytule albo termin + tytuł + po
   assert.deepEqual((await tenders.findById(poNumerze.id)).zrodla_alternatywne.map((z) => z.url), [`https://platformazakupowa.pl/transakcja/${ZNAK}${1390256 + 6000}`]);
   assert.equal((await tenders.findById(poTytule.id)).zrodla_alternatywne.length, 1);
 });
+
+test('kopia przetargu z TED (termin z samą datą): bez kopii, TED dostaje godzinę składania ofert z platformy', async () => {
+  const tytul = 'Szacowanie wartości zamówienia - Dostawa krzeseł i foteli Akademii Marynarki Wojennej (FERS.03.01-IP.08-0177/24-00)';
+  const { tender: ted } = await tenders.upsert({ externalId: `ted:${ZNAK}-amw`, title: `${tytul} ${ZNAK}`, organization: 'AKADEMIA MARYNARKI WOJENNEJ', deadline: '2026-10-25T22:59:59.999Z', source: 'ted' });
+  await oknoPz.zapisz({ nastepna_strona: 1 });
+  const html = fixtureZ(7000).replace(tytul, `${tytul} ${ZNAK}`);
+  const w = await runOknoPz({ fetchFn: async () => ({ ok: true, text: async () => html }), odstepMs: 0 });
+  assert.equal(w.ok, true);
+  assert.equal(await tenders.findById(`pz:${ZNAK}${1393682 + 7000}`), null, 'kopia nie powstała');
+  const poZmianie = await tenders.findById(ted.id);
+  assert.deepEqual(poZmianie.zrodla_alternatywne.map((z) => z.source), ['platformazakupowa']);
+  assert.equal(poZmianie.deadline, '2026-10-25T21:58:00.000Z');
+});

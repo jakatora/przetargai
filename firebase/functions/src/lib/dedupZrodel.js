@@ -1,4 +1,5 @@
 import { normalize } from './textNorm.js';
+import { dobaWarszawska } from './czasPolski.js';
 
 /*
  * Deduplikacja MIĘDZY rejestrami ogłoszeń (etap 3).
@@ -192,15 +193,30 @@ export function podobniZamawiajacy(a, b) {
 }
 
 /**
- * Czy ogłoszenie z platformy (`kopia`) to to samo postępowanie co wpis BZP (`bzp`). Numer BZP w tytule rozstrzyga
- * sam (także po zmianie terminu); bez niego: termin co do minuty + tytuł (równy albo jeden zawiera drugi, krótszy
- * ≥ 25 znaków) + podobny zamawiający.
+ * Termin z samą datą (TED, BZP bez godziny) to koniec doby warszawskiej (lib/daty.js `doUtcIso`): 22:59:59.999Z zimą,
+ * 21:59:59.999Z latem. Pomiar 3.11: TED ma tak WSZYSTKIE terminy — porównanie co do minuty nie złapało żadnej z 1034
+ * kopii przetargów z TED na platformazakupowa.pl (ten sam dzień, tytuł i zamawiający).
+ */
+const KONIEC_DOBY = /T2[12]:59:59\.999Z$/;
+export const bezGodziny = (iso) => typeof iso === 'string' && KONIEC_DOBY.test(iso);
+
+/** Ten sam termin: co do minuty, a gdy któraś strona zna samą datę — ta sama doba warszawska. */
+export function terminyZgodne(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length < 16 || b.length < 16) return false;
+  if (a.slice(0, 16) === b.slice(0, 16)) return true;
+  if (!bezGodziny(a) && !bezGodziny(b)) return false;
+  return dobaWarszawska(a) === dobaWarszawska(b);
+}
+
+/**
+ * Czy ogłoszenie z platformy (`kopia`) to to samo postępowanie co wpis rejestru wiodącego (BZP albo TED). Numer BZP
+ * w tytule rozstrzyga sam (także po zmianie terminu); bez niego: termin (`terminyZgodne`) + tytuł (równy albo jeden
+ * zawiera drugi, krótszy ≥ 25 znaków) + podobny zamawiający.
  */
 export function toSamoPostepowanie(kopia, bzp) {
   const numer = idBzpZTytulu(kopia?.title);
   if (numer) return numer === bzp?.id;
-  const d1 = String(kopia?.deadline ?? '').slice(0, 16);
-  if (d1.length < 16 || d1 !== String(bzp?.deadline ?? '').slice(0, 16)) return false;
+  if (!terminyZgodne(String(kopia?.deadline ?? ''), String(bzp?.deadline ?? ''))) return false;
   const t1 = tytulDoPorownania(kopia.title);
   const t2 = tytulDoPorownania(bzp.title);
   if (!t1 || !t2) return false;
@@ -208,7 +224,7 @@ export function toSamoPostepowanie(kopia, bzp) {
   return zgodny && podobniZamawiajacy(kopia.organization, bzp.organization);
 }
 
-/** Jedyny wpis BZP pasujący do kopii z platformy; dwa pasujące bez numeru BZP = niepewne, null. */
+/** Jedyny wpis rejestru wiodącego pasujący do kopii z platformy; dwa pasujące bez numeru BZP = niepewne, null. */
 export function znajdzBlizniakaBzp(kopia, kandydaci) {
   const pasujace = new Map((kandydaci ?? []).filter((b) => b && !b.zastapiony_przez && toSamoPostepowanie(kopia, b)).map((b) => [b.id, b]));
   return pasujace.size === 1 ? [...pasujace.values()][0] : null;
