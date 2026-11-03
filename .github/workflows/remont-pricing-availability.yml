@@ -1,0 +1,50 @@
+name: Asystent Remontu pricing availability
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: remont-pricing-availability
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check production pricing readiness
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { setTimeout as delay } from 'node:timers/promises';
+
+          async function check() {
+            const url = 'https://backend-production-a43e3.up.railway.app/api/remont/pricing/readiness';
+            let lastFailure;
+            for (let attempt = 1; attempt <= 4; attempt++) {
+              try {
+                const response = await fetch(url, { signal: AbortSignal.timeout(15000), redirect: 'error' });
+                const body = await response.json();
+                if (response.ok && body.ready === true && body.offers > 0 && Number.isFinite(Date.parse(body.fullRefreshCompletedAt))) {
+                  console.log(`Pricing ready: ${body.offers} offers, last full cycle ${body.fullRefreshCompletedAt}`);
+                  return;
+                }
+                const reasons = Array.isArray(body.problems)
+                  ? body.problems.filter(reason => typeof reason === 'string' && /^[a-z_]+$/.test(reason)).join(', ')
+                  : '';
+                lastFailure = `HTTP ${response.status}${reasons ? ': ' + reasons : ''}`;
+              } catch (error) {
+                lastFailure = error.name;
+              }
+              console.log(`Attempt ${attempt}/4: ${lastFailure}`);
+              if (attempt < 4) await delay(60000);
+            }
+            console.error(`::error::Asystent Remontu pricing readiness failed: ${lastFailure}`);
+            process.exitCode = 1;
+          }
+
+          await check();
+          NODE
