@@ -29883,18 +29883,37 @@ function createRemontService(options = {}) {
     const eligible = offers.filter((offer) => isComparableOffer(offer, now));
     const activeIds = new Set(eligible.map((offer) => offer.id));
     const online = RETAIL_SOURCES.filter((source) => !source.disabledReason && !source.pickupOnly);
+    const emptyStoreStats = () => ({
+      reviewed: 0,
+      current: 0,
+      olderThanCycle: 0,
+      readErrors: 0,
+      outOfStock: 0,
+      manualReviewRequired: 0,
+      readErrorBreakdown: { httpNotFound: 0, rateLimited: 0, httpServer: 0, httpOther: 0, timeout: 0, connection: 0, other: 0 }
+    });
     const stores = /* @__PURE__ */ new Map();
     for (const source of online) {
-      const stats = stores.get(source.store) ?? { reviewed: 0, current: 0, olderThanCycle: 0, readErrors: 0, outOfStock: 0, manualReviewRequired: 0 };
+      const stats = stores.get(source.store) ?? emptyStoreStats();
       const error40 = errors.get(source.id);
       stats.reviewed++;
       if (activeIds.has(source.id)) {
         stats.current++;
         if (now - Date.parse(observations.get(source.id).observedAt) > REFRESH_INTERVAL_MS) stats.olderThanCycle++;
       }
-      if (error40 === "browser_refresh_required") stats.manualReviewRequired++;
+      if (error40 === "browser_refresh_required" || error40 === "browser_package_review_required") stats.manualReviewRequired++;
       else if (error40 === "retailer_out_of_stock") stats.outOfStock++;
-      else if (error40) stats.readErrors++;
+      else if (error40) {
+        stats.readErrors++;
+        const breakdown = stats.readErrorBreakdown;
+        if (error40 === "retailer_http_404") breakdown.httpNotFound++;
+        else if (error40 === "retailer_http_429" || error40 === "retailer_rate_limited") breakdown.rateLimited++;
+        else if (/^retailer_http_5\d\d$/.test(error40)) breakdown.httpServer++;
+        else if (/^retailer_http_\d{3}$/.test(error40)) breakdown.httpOther++;
+        else if (error40 === "The operation was aborted due to timeout" || error40 === "quote_timeout") breakdown.timeout++;
+        else if (error40 === "retailer_connection_unavailable" || error40 === "fetch failed") breakdown.connection++;
+        else breakdown.other++;
+      }
       stores.set(source.store, stats);
     }
     return {
