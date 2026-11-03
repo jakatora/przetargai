@@ -93,7 +93,11 @@ export async function powiadomPoPrzebiegu(user, { tryb = 'dzienny', teraz = nowI
       dostarczono = (w?.sent ?? 0) > 0;
     }
     if (mailWlaczony && await znacznikMailaSelekcji.zarezerwuj(user.id, doba)) {
-      const w = await wyslijMail(user.email);
+      // Błąd przy budowie treści (linki jednorazowe, raport dnia) zwalnia rezerwację — inaczej mail doby przepada.
+      const w = await wyslijMail(user.email).catch(async (err) => {
+        await znacznikMailaSelekcji.zwolnij(user.id, doba);
+        throw err;
+      });
       if (w?.sent || w?.odrzuconyAdresat) await znacznikMailaSelekcji.potwierdz(user.id, doba, { emailId: w?.id ?? null });
       else await znacznikMailaSelekcji.zwolnij(user.id, doba);
       dostarczono = dostarczono || Boolean(w?.sent);

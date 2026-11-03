@@ -117,7 +117,7 @@ router.post('/kryteria-wstecz', ah(async (req, res) => {
 /** Bliźniaki BZP/TED na platformach (2026-11-03) — scalenie otwartych kopii sprzed zmiany; `sucho` = same liczby, `limit` par. */
 router.post('/blizniaki-platformy', ah(async (req, res) => {
   const limit = Number.isInteger(req.body?.limit) && req.body.limit > 0 ? req.body.limit : Infinity;
-  res.json(await scalBlizniakiPlatformy({ sucho: req.body?.sucho === true, limit }));
+  res.json(await scalBlizniakiPlatformy({ sucho: req.body?.sucho === true, limit, tylkoZastapione: req.body?.tylko_zastapione === true }));
 }));
 
 /** Warunki udziału BZP (2026-11-02) — jak `/kryteria-wstecz`: doba BZP, tylko istniejące dokumenty bez warunków, bez AI. */

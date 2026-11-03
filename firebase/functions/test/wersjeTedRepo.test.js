@@ -92,3 +92,21 @@ test('tedDoWersji: tylko TED z terminem od daty — źródło w zapytaniu, nie w
   const zLimitem = await tenders.tedDoWersji(new Date().toISOString(), { limit: 1 });
   assert.equal(zLimitem[0]?.source, 'ted', 'limit liczy już same TED-y');
 });
+
+test('zastapWersje: godzina z platformy (termin_z_kopii) przechodzi na nową wersję z samą datą tego samego dnia', async () => {
+  const z = `${process.pid}${Date.now()}`.slice(-7);
+  const { tender: stara } = await tenders.upsert({ externalId: `ted:${z}1-2095`, title: 'Dostawa paliwa', organization: 'Szpital', deadline: '2095-03-03T22:59:59.999Z', source: 'ted' });
+  await tenders.doprecyzujTermin(stara.id, '2095-03-03T09:00:00.000Z');
+  const { tender: nowa } = await tenders.upsert({ externalId: `ted:${z}2-2095`, title: 'Dostawa paliwa', organization: 'Szpital', deadline: '2095-03-03T22:59:59.999Z', source: 'ted' });
+  const aktualna = { id: nowa.id, deadline: nowa.deadline };
+  await tenders.zastapWersje(stara.id, aktualna);
+  assert.equal((await tenders.findById(nowa.id)).deadline, '2095-03-03T09:00:00.000Z', 'nowa wersja z godziną');
+  assert.equal((await tenders.findById(stara.id)).deadline, '2095-03-03T09:00:00.000Z', 'stara nie cofnięta na koniec doby');
+  assert.equal(aktualna.deadline, '2095-03-03T09:00:00.000Z', 'przeniesienie dopasowań dostaje godzinę');
+
+  const { tender: inna } = await tenders.upsert({ externalId: `ted:${z}3-2095`, title: 'Dostawa paliwa', organization: 'Szpital', deadline: '2095-03-05T22:59:59.999Z', source: 'ted' });
+  const { tender: stara2 } = await tenders.upsert({ externalId: `ted:${z}4-2095`, title: 'Dostawa paliwa', organization: 'Szpital', deadline: '2095-03-03T22:59:59.999Z', source: 'ted' });
+  await tenders.doprecyzujTermin(stara2.id, '2095-03-03T09:00:00.000Z');
+  await tenders.zastapWersje(stara2.id, { id: inna.id, deadline: inna.deadline });
+  assert.equal((await tenders.findById(inna.id)).deadline, '2095-03-05T22:59:59.999Z', 'przedłużony termin (inny dzień) zostaje');
+});

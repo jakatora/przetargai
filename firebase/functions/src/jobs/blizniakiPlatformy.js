@@ -59,19 +59,21 @@ export async function przeniesKopieNaBzp(pary) {
   const w = await evaluations.przeniesNaWersje(pary.filter((p) => wiodace.has(p.wiodacyId)).map((p) => ({
     staraId: p.kopiaId, aktualna: { id: p.wiodacyId, deadline: wiodace.get(p.wiodacyId).deadline, url: wiodace.get(p.wiodacyId).url },
   })));
-  return { ...w, odswiezone: w.dopasowania ? await matches.odswiezPrzeniesione(wiodace) : 0 };
+  // Zawsze — przebieg przerwany między przeniesieniem a odświeżeniem zostawiłby pola kopii (przegląd 2026-11-03).
+  return { ...w, odswiezone: await matches.odswiezPrzeniesione(wiodace) };
 }
 
-export async function scalBlizniakiPlatformy({ teraz = nowIso(), sucho = false, limit = Infinity } = {}) {
+export async function scalBlizniakiPlatformy({ teraz = nowIso(), sucho = false, limit = Infinity, tylkoZastapione = false } = {}) {
   const kopie = [];
   const juzZastapione = [];
   for (const zrodlo of ZRODLA_KOPII) {
     for (const k of await tenders.otwarteZeZrodla(zrodlo, teraz)) {
       if (!k.zastapiony_przez) kopie.push({ ...k, source: zrodlo });
-      else juzZastapione.push({ kopiaId: k.id, wiodacyId: k.zastapiony_przez });
+      else juzZastapione.push({ kopiaId: k.id, wiodacyId: k.zastapiony_przez, deadline: k.deadline });
     }
   }
-  const kandydaci = await kandydaciWiodacy(kopie);
+  // `tylkoZastapione`: samo uzupełnienie wcześniejszych scaleń (bez szukania nowych par — to ~100 s zapytań).
+  const kandydaci = tylkoZastapione ? { bzp: [], ted: [] } : await kandydaciWiodacy(kopie);
   const pary = [];
   for (const kopia of kopie) {
     if (pary.length >= limit) break; // duże scalenie w kilku wywołaniach — limit trasy 300 s
@@ -91,7 +93,17 @@ export async function scalBlizniakiPlatformy({ teraz = nowIso(), sucho = false, 
     }
     wynik.kopie_w_feedach = await tenders.oznaczKopieWFeedach(new Map(pary.map((p) => [p.kopia.id, p.wiodacy.id])));
   }
-  // Także kopie zastąpione wcześniej (scalenie 3.11 przed przenoszeniem, cykl, okno BZP) — przeniesienie jest idempotentne.
+  // Kopie zastąpione wcześniej (scalenie przed przenoszeniem, cykl, okno BZP, przebieg przerwany limitem trasy) dostają
+  // to samo co nowe: znacznik w feedach, godzinę dla TED bez godziny i przeniesienie — wszystko idempotentne.
+  if (juzZastapione.length) {
+    wynik.kopie_w_feedach += await tenders.oznaczKopieWFeedach(new Map(juzZastapione.map((z) => [z.kopiaId, z.wiodacyId])));
+    const wiodace = new Map((await tenders.polaWielu(juzZastapione.map((z) => z.wiodacyId), ['deadline', 'source'])).map((t) => [t.id, t]));
+    const doTerminu = juzZastapione.filter((z) => wiodace.get(z.wiodacyId) && bezGodziny(wiodace.get(z.wiodacyId).deadline));
+    for (let i = 0; i < doTerminu.length; i += 8) {
+      const w = await Promise.all(doTerminu.slice(i, i + 8).map((z) => doprecyzujTerminWiodacego(wiodace.get(z.wiodacyId), { deadline: z.deadline }).catch(() => false)));
+      wynik.terminy_doprecyzowane += w.filter(Boolean).length;
+    }
+  }
   wynik.przeniesione = await przeniesKopieNaBzp([...juzZastapione, ...pary.map((p) => ({ kopiaId: p.kopia.id, wiodacyId: p.wiodacy.id }))]);
   logger.info(wynik, 'Bliźniaki BZP na platformie scalone');
   return wynik;

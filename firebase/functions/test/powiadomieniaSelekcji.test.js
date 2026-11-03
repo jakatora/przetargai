@@ -162,3 +162,20 @@ test('Standard z pushem, wybrane z ≥ 3 województw, konto bez terenu: osobny m
   await powiadomPoPrzebiegu(await users.findById(u.id), { tryb: 'co3h', teraz: '2026-10-21T13:30:00.000Z', ...n });
   assert.equal(n.wyslane.email.length, 1, 'ten sam tydzień — bez drugiego maila');
 });
+
+test('Free: błąd przy budowie maila zwalnia rezerwację doby — kolejny przebieg wysyła', async () => {
+  const { user } = await kontoZWybranymi(1);
+  const n = nadawcy();
+  await assert.rejects(powiadomPoPrzebiegu(user, { teraz: DZIEN, ...n, wyslijEmail: async () => { throw new Error('Firestore niedostępny'); } }));
+  assert.equal(await powiadomPoPrzebiegu(user, { teraz: DZIEN, ...n }), 'dostarczono');
+  assert.equal(n.wyslane.email.length, 1);
+});
+
+test('powiadomienie pomija kopię z platformy, gdy konto ma wpis wiodący (scalenie w nocy)', async () => {
+  const { user, ids } = await kontoZWybranymi(1);
+  const { tender: kopia } = await tenders.upsert({ externalId: `pz:ps${process.pid}${++seq}`, title: 'Remont dachu kopia', deadline: '2099-01-01T00:00:00.000Z', source: 'platformazakupowa' });
+  await matches.utworzWybrany({ userId: user.id, tender: kopia, score: 80, punkty: ['Dachy'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: true });
+  await getFirestore().doc(`users/${user.id}/matches/${kopia.id}`).update({ tender_zastapiony_przez: ids[0] });
+  const lista = await matches.doPowiadomienia(user.id, '2000-01-01T00:00:00.000Z');
+  assert.deepEqual(lista.map((m) => m.id), ids);
+});

@@ -224,3 +224,10 @@ test('termin z samą datą (TED): zgodny z każdą godziną tej samej doby warsz
   const ted = { id: 'ted:1-2026', title: 'Kompleksowa dostawa paliwa gazowego dla szpitala', organization: 'SZPITAL WOJEWÓDZKI W KOSZALINIE', deadline: '2026-11-03T22:59:59.999Z' };
   assert.equal(toSamoPostepowanie({ title: 'DZP.271.64.2026 Kompleksowa dostawa paliwa gazowego dla szpitala', organization: 'Szpital Wojewódzki im. M. Kopernika w Koszalinie', deadline: '2026-11-03T10:00:00.000Z' }, ted), true);
 });
+
+test('zamawiający z różnymi numerami to różne jednostki (przegląd 2026-11-03)', async () => {
+  const { podobniZamawiajacy } = await import('../src/lib/dedupZrodel.js');
+  assert.equal(podobniZamawiajacy('Szkoła Podstawowa nr 3 w Krakowie', 'Szkoła Podstawowa nr 5 w Krakowie'), false);
+  assert.equal(podobniZamawiajacy('Zespół Szkół nr 2 w Gorlicach', 'ZESPÓŁ SZKÓŁ NR 2 W GORLICACH'), true);
+  assert.equal(podobniZamawiajacy('Komenda Wojewódzka Policji w Katowicach', 'KWP w Katowicach 40-038'), true, 'numer tylko po jednej stronie — nie rozstrzyga');
+});

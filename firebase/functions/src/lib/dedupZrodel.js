@@ -176,7 +176,7 @@ export function tytulDoPorownania(tytul) {
 const OGOLNE_CZLONY = new Set(['gmin', 'mias', 'miej', 'powi', 'urza', 'urze', 'woje', 'samo', 'publ', 'zakl', 'osro',
   'cent', 'zesp', 'spec', 'jedn', 'wojs', 'inst', 'uniw', 'skar', 'pans', 'spol', 'odpo', 'ogra', 'akcy', 'regi', 'kraj',
   'zarz', 'dyre', 'gene', 'kome', 'komu', 'prze', 'szko', 'opie', 'zdro', 'medy', 'klin', 'sluz', 'kult', 'spor', 'rekr',
-  'gosp', 'nier', 'obsl', 'admi', 'star', 'pols', 'szpi', 'rzec', 'dzia', 'firm', 'wspo']);
+  'gosp', 'nier', 'obsl', 'admi', 'star', 'pols', 'szpi', 'rzec', 'dzia', 'firm', 'wspo', 'pods', 'przy', 'zlob']);
 
 function czlonyZamawiajacego(nazwa) {
   return new Set(normalize(nazwa ?? '').replace(/[^a-z0-9]+/g, ' ').split(' ')
@@ -185,8 +185,16 @@ function czlonyZamawiajacego(nazwa) {
     .filter((w) => !OGOLNE_CZLONY.has(w)));
 }
 
-/** Wspólny znaczący człon nazwy („jawo”, „4101”) — „Szpital w Zambrowie” ≠ „Jednostka Wojskowa 4101”. */
+const numery = (nazwa) => new Set(normalize(nazwa ?? '').match(/\d+/g) ?? []);
+
+/**
+ * Wspólny znaczący człon nazwy („jawo”, „4101”) — „Szpital w Zambrowie” ≠ „Jednostka Wojskowa 4101”. Gdy obie nazwy
+ * mają numery i żaden się nie powtarza, to różne jednostki („Szkoła Podstawowa nr 3” ≠ „nr 5 w Krakowie”).
+ */
 export function podobniZamawiajacy(a, b) {
+  const nA = numery(a);
+  const nB = numery(b);
+  if (nA.size && nB.size && ![...nA].some((n) => nB.has(n))) return false;
   const A = czlonyZamawiajacego(a);
   for (const x of czlonyZamawiajacego(b)) if (A.has(x)) return true;
   return false;

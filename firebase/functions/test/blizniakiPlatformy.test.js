@@ -75,3 +75,15 @@ test('kopia przetargu z TED (termin z samą datą): scalona, TED dostaje godzin�
   const przeniesiony = (await getFirestore().doc(`users/${u.id}/matches/${ted.id}`).get()).data();
   assert.deepEqual([przeniesiony.tender_source, przeniesiony.tender_deadline], ['ted', `${doba}T09:00:00.000Z`]);
 });
+
+test('kopia zastąpiona wcześniej (przebieg przerwany): kolejne scalanie dokłada znacznik w feedzie i godzinę TED', async () => {
+  const doba = `2095-0${1 + (Number(ZNAK) % 9)}-2${Number(ZNAK) % 8}`;
+  const { tender: ted } = await tenders.upsert({ externalId: `ted:${ZNAK}-2095`, title: `Dostawa pieczywa ${ZNAK}`, organization: 'SZPITAL W JAROSŁAWIU', deadline: (await import('../src/lib/daty.js')).doUtcIso(doba), source: 'ted' });
+  const { tender: kopia } = await tenders.upsert({ externalId: `pz:${ZNAK}5`, title: `Dostawa pieczywa ${ZNAK}`, organization: 'Szpital w Jarosławiu', deadline: `${doba}T07:15:00.000Z`, source: 'platformazakupowa' });
+  const u = await users.create({ email: `bp4${ZNAK}@t.pl`, passwordHash: 'h', keywords: ['pieczywo'] });
+  await matches.utworzWybrany({ userId: u.id, tender: kopia, score: 75, punkty: ['Pieczywo'], scorer: 'ai', ocenaBezAi: false, criteriaHash: 'v', zapiszSlad: false });
+  await getFirestore().doc(`tenders/${kopia.id}`).update({ zastapiony_przez: ted.id }); // jak po przerwaniu po scalBlizniakiWsadowo
+  await scalBlizniakiPlatformy({ teraz: '2095-01-01T00:00:00.000Z' });
+  assert.equal((await getFirestore().doc(`users/${u.id}/matches/${kopia.id}`).get()).get('tender_zastapiony_przez'), ted.id);
+  assert.equal((await tenders.findById(ted.id)).deadline, `${doba}T07:15:00.000Z`);
+});

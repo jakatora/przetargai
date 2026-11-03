@@ -9,7 +9,7 @@ import {
   planZapytania, pasujeDoFiltrow, rozmiarPobrania, SKAN_STRONA, SKAN_MAKS,
 } from '../lib/katalogPrzetargow.js';
 import { kluczZmiany, wykryjZmiany } from '../lib/zmianyOgloszenia.js';
-import { kluczOgloszenia } from '../lib/dedupZrodel.js';
+import { kluczOgloszenia, bezGodziny } from '../lib/dedupZrodel.js';
 import { kluczeZwyciezcow, normNip } from '../lib/profilKonkurenta.js';
 import { koniecUmowyWyniku } from '../lib/umowyWygasajace.js';
 import { skrotKryteriow, polaKryteriow } from '../lib/ogloszenieMeta.js';
@@ -1162,13 +1162,15 @@ export const tenders = {
     const ids = [...wiodacyKopii.keys()];
     let ile = 0;
     for (let i = 0; i < ids.length; i += 30) {
-      const snap = await db().collectionGroup('matches').where('tender_id', 'in', ids.slice(i, i + 30)).select('tender_id').get();
-      for (let j = 0; j < snap.docs.length; j += 400) {
+      const snap = await db().collectionGroup('matches').where('tender_id', 'in', ids.slice(i, i + 30)).select('tender_id', 'tender_zastapiony_przez').get();
+      // Tylko brakujące — scalanie wstecz woła to także dla kopii zastąpionych wcześniej (idempotentnie).
+      const doOznaczenia = snap.docs.filter((d) => d.get('tender_zastapiony_przez') !== wiodacyKopii.get(d.get('tender_id')));
+      for (let j = 0; j < doOznaczenia.length; j += 400) {
         const batch = db().batch();
-        for (const d of snap.docs.slice(j, j + 400)) batch.update(d.ref, { tender_zastapiony_przez: wiodacyKopii.get(d.get('tender_id')) });
+        for (const d of doOznaczenia.slice(j, j + 400)) batch.update(d.ref, { tender_zastapiony_przez: wiodacyKopii.get(d.get('tender_id')) });
         await batch.commit();
       }
-      ile += snap.size;
+      ile += doOznaczenia.length;
     }
     return ile;
   },
@@ -1206,6 +1208,15 @@ export const tenders = {
    * @returns {Promise<number>} ile kopii w feedach oznaczono
    */
   async zastapWersje(staraId, aktualna, teraz = nowIso()) {
+    // Godzina z platformy (`doprecyzujTermin`, 2026-11-03) przechodzi na nową wersję tego samego dnia, gdy ta znów
+    // ma samą datę — inaczej sprostowanie TED cofnęłoby termin z „10:00” na „do końca dnia” (później = groźnie).
+    const stara = (await db().collection('tenders').doc(staraId).get()).data() ?? {};
+    if (stara.termin_z_kopii && !bezGodziny(stara.deadline) && bezGodziny(aktualna.deadline)
+      && dobaWarszawska(stara.deadline) === dobaWarszawska(aktualna.deadline)) {
+      await db().collection('tenders').doc(aktualna.id).update({ deadline: stara.deadline, termin_z_kopii: true });
+      await uzgodnijKopiePrzetargu(aktualna.id, { deadline: stara.deadline }, teraz);
+      aktualna.deadline = stara.deadline;
+    }
     await db().collection('tenders').doc(staraId).update({
       zastapiony_przez: aktualna.id, zastapiony_o: teraz, ...(aktualna.deadline ? { deadline: aktualna.deadline } : {}),
     });
@@ -2191,7 +2202,13 @@ export const matches = {
 
   /** Wybrane od `odIso`, o których klient jeszcze nie wie (`notified !== 1`). */
   async doPowiadomienia(userId, odIso) {
-    return (await this.wybraneOd(userId, odIso)).filter((r) => r.notified !== 1);
+    const lista = (await this.wybraneOd(userId, odIso)).filter((r) => r.notified !== 1);
+    // Kopia z platformy / stara wersja TED, gdy konto ma wpis wiodący (jak lista w apce) — bez tego scalenie w nocy
+    // dawało poranny mail z tym samym przetargiem dwa razy (przegląd 2026-11-03).
+    const zastapione = lista.filter((r) => r.tender_zastapiony_przez).map((r) => r.tender_zastapiony_przez);
+    if (!zastapione.length) return lista;
+    const maWiodacy = await this.istniejace(userId, zastapione);
+    return lista.filter((r) => !maWiodacy.has(r.tender_zastapiony_przez));
   },
 };
 
