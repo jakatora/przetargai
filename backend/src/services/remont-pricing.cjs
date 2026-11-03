@@ -22690,6 +22690,9 @@ var RETAIL_SOURCES = [
   // The plain MP75 25kg barcode; not MP75L or a 20kg/30kg pack.
   // source: https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd
   { id: "castorama-knauf-mp75-25kg", ean: "5902367206352", name: "Tynk maszynowy Knauf MP 75 25 kg", category: "plaster", brand: "Knauf", packageSize: 25, unit: "kg", variant: ["Tynk maszynowy Knauf MP 75 25 kg"], store: "Castorama", pickupRequiresConfirmation: true, browserReviewAllowed: true, url: "https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd" },
+  // source: https://www.bricoman.pl/produkty/tynk-gipsowy-maszynowy-knauf-mp-75-25-kg-20444235.html
+  // source: https://knauf.com/sk-SK/p/produkt/mp-75-10256_0105
+  { id: "bricoman-knauf-mp75-25kg", ean: "5901793355085", name: "Tynk gipsowy maszynowy Knauf MP 75 25 kg", category: "plaster", brand: "Knauf", packageSize: 25, unit: "kg", store: "Bricoman", pickupRequiresConfirmation: true, url: "https://www.bricoman.pl/produkty/tynk-gipsowy-maszynowy-knauf-mp-75-25-kg-20444235.html" },
   // Explicit right 70cm leaf; it must not replace the user's left/80cm choice.
   // source: https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd
   { id: "castorama-opp-klasyk-70-right", ean: "5063022524034", name: "Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e", category: "door-leaf", brand: "OPP", packageSize: 1, unit: "szt", variant: ["Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e"], store: "Castorama", pickupRequiresConfirmation: true, browserReviewAllowed: true, url: "https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd" },
