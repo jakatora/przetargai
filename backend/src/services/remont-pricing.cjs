@@ -29674,6 +29674,17 @@ function catalogRefreshOffers(sources, observations, activeIds, confirmedIds, hi
 
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
+var CATALOG_REFRESH_GRACE_MS = 15 * 60 * 1e3;
+function catalogReadinessProblems(now, offers, monitoring) {
+  const problems = [];
+  if (!monitoring.scheduled) problems.push("refresh_disabled");
+  if (monitoring.cacheError) problems.push("cache_error");
+  if (offers === 0) problems.push("no_comparable_offers");
+  const completedAt = Date.parse(monitoring.fullRefreshCompletedAt ?? "");
+  if (!Number.isFinite(completedAt)) problems.push("no_completed_refresh");
+  else if (now - completedAt > REFRESH_INTERVAL_MS + CATALOG_REFRESH_GRACE_MS) problems.push("refresh_overdue");
+  return problems;
+}
 var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
 function createRemontService(options = {}) {
   const compareDeliveryWithAvailablePart2 = createPreferredDeliveryComparison();
@@ -29967,6 +29978,17 @@ function createRemontService(options = {}) {
   router.get("/pricing/health", (_req, res) => {
     res.set("Cache-Control", "no-store");
     res.json(status());
+  });
+  router.get("/pricing/readiness", (_req, res) => {
+    const { offers, monitoring } = status();
+    const problems = catalogReadinessProblems(Date.parse(monitoring.checkedAt), offers, monitoring);
+    res.set("Cache-Control", "no-store");
+    res.status(problems.length ? 503 : 200).json({
+      ready: problems.length === 0,
+      problems,
+      offers,
+      fullRefreshCompletedAt: monitoring.fullRefreshCompletedAt
+    });
   });
   router.get("/pricing/catalog-availability", (_req, res) => {
     res.set("Cache-Control", "no-store");
