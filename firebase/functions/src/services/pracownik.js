@@ -22,6 +22,7 @@ import { powiadomPoPrzebiegu } from './powiadomieniaSelekcji.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from './platformaZakupowa.js';
 import { daneZSwzPz } from './kryteriaSwzPz.js';
 import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, idPostepowaniaEz } from './eZamowieniaDokumenty.js';
+import { dokumentyZKopiiPlatformy, czyDokumentyZKopii } from './dokumentyZPlatformy.js';
 
 /** Ile szczegółów platformazakupowa.pl dociągamy w JEDNYM przebiegu (żądania do obcego serwisu). */
 export const MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG = 10;
@@ -124,6 +125,7 @@ export async function pracujDlaUzytkownika(user, pool, {
   teraz = nowIso(), ocen = ocenDlaKlienta, porownaj = porownajWarunki, stanAi = { kolejneBledy: 0 }, budzetMs = Infinity,
   szczegolPz = pobierzSzczegolPzDomyslnie, budzetSzczegolowPz = { pozostalo: MAKS_SZCZEGOLOW_PZ_NA_PRZEBIEG }, kryteriaSwz = daneZSwzPz,
   dokumentyEz = pobierzDokumentyEzDomyslnie, budzetDokumentowEz = { pozostalo: MAKS_DOKUMENTOW_EZ_NA_PRZEBIEG }, zaproponuj = zaproponujProfil,
+  dokumentyZKopii = dokumentyZKopiiPlatformy,
   wyslijMail = sendEmail, czyCisza = ciszaNocna,
 } = {}) {
   const koniec = Date.now() + budzetMs;
@@ -230,6 +232,17 @@ export async function pracujDlaUzytkownika(user, pool, {
       } catch (err) {
         tender.ez_dokumenty_blad = true;
         logger.warn({ err: err.message, id: tender.id }, 'e-Zamówienia: dokumenty po wyborze nie powiodły się');
+      }
+    }
+    // e-Zamówienia nie znają postępowania (inna platforma) — załączniki ze scalonej kopii z platformazakupowa.pl
+    // (2026-11-03: 160 z 283 wybranych BZP bez dokumentów, 77 z kopią). Ten sam budżet żądań, ten sam znacznik błędu.
+    if (czyDokumentyZKopii(tender) && !tender.ez_dokumenty_blad && budzetDokumentowEz.pozostalo > 0) {
+      budzetDokumentowEz.pozostalo--;
+      try {
+        if ((await dokumentyZKopii(tender, { teraz }))?.length) wynik.dokumentyZKopii = (wynik.dokumentyZKopii ?? 0) + 1;
+      } catch (err) {
+        tender.ez_dokumenty_blad = true;
+        logger.warn({ err: err.message, id: tender.id }, 'platformazakupowa: dokumenty z kopii po wyborze nie powiodły się');
       }
     }
   };

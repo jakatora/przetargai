@@ -11,6 +11,7 @@ import { notFound } from '../lib/errors.js';
 import { pobierzSzczegol as pobierzSzczegolPzDomyslnie, ZRODLO as ZRODLO_PZ } from '../services/platformaZakupowa.js';
 import { pobierzDokumenty as pobierzDokumentyEzDomyslnie, idPostepowaniaEz } from '../services/eZamowieniaDokumenty.js';
 import { pobierzSzczegolBk as pobierzSzczegolBkDomyslnie, zalacznikiBk, ZRODLO as ZRODLO_BK } from '../services/bazaKonkurencyjnosci.js';
+import { dokumentyZKopiiPlatformy, idPzZAlternatywnych } from '../services/dokumentyZPlatformy.js';
 import {
   ZRODLA, SORTOWANIA, STATUSY_TERMINU, LIMIT_MAKS,
   normalizujFiltry, odciskFiltrow, kodujKursor, dekodujKursor, opisFiltrow,
@@ -136,6 +137,9 @@ export function _ustawPobieranieDokumentowEz(fn) { pobierzDokumentyEz = fn ?? po
 let pobierzSzczegolBk = pobierzSzczegolBkDomyslnie;
 /** Tylko testy: atrapa szczegółu Bazy Konkurencyjności. */
 export function _ustawSzczegolBk(fn) { pobierzSzczegolBk = fn ?? pobierzSzczegolBkDomyslnie; }
+let szczegolPzKopii = null;
+/** Test: szczegół platformazakupowa.pl dla dokumentów z kopii (services/dokumentyZPlatformy.js). */
+export function _ustawSzczegolPzKopii(fn) { szczegolPzKopii = fn; }
 /** Tylko dla testów: podmiana pobierania (bez sieci). */
 export function _ustawPobieranieSzczegoluPz(fn) { pobierzSzczegolPz = fn ?? pobierzSzczegolPzDomyslnie; }
 
@@ -169,14 +173,22 @@ router.post('/:id/dokumenty-ezamowienia', ah(async (req, res) => {
   // (.docx — „Wypełnij moimi danymi”), projekt umowy; ta sama lista i ten sam cache (`ez_dokumenty`).
   const bk = tender.source === ZRODLO_BK;
   const idEz = bk ? null : idPostepowaniaEz(tender);
-  if (!bk && !idEz) throw badRequest('Ogłoszenie nie ma identyfikatora postępowania na e-Zamówieniach');
+  // Postępowanie poza e-Zamówieniami ze scaloną kopią z platformazakupowa.pl (2026-11-03) — jej załączniki.
+  const zKopii = !bk && Boolean(idPzZAlternatywnych(tender));
+  if (!bk && !idEz && !zKopii) throw badRequest('Ogłoszenie nie ma identyfikatora postępowania na e-Zamówieniach');
   const teraz = nowIso();
   const swiezy = Array.isArray(tender.ez_dokumenty) && tender.ez_dokumenty_o && (Date.parse(teraz) - Date.parse(tender.ez_dokumenty_o)) < CACHE_SZCZEGOLU_PZ_MS;
-  if (swiezy) {
-    res.json({ dokumenty: tender.ez_dokumenty, pobrano_o: tender.ez_dokumenty_o, cached: true });
+  if (swiezy && (tender.ez_dokumenty.length || !zKopii)) {
+    res.json({ dokumenty: tender.ez_dokumenty, pobrano_o: tender.ez_dokumenty_o, cached: true, zrodlo: tender.ez_dokumenty_zrodlo ?? null });
     return;
   }
-  const dokumenty = bk ? zalacznikiBk(await pobierzSzczegolBk(String(tender.id).replace(/^bk[:_]/, ''))) : await pobierzDokumentyEz(idEz);
-  await tenders.zapiszDokumentyEz(tender.id, dokumenty, teraz);
-  res.json({ dokumenty, pobrano_o: teraz, cached: false });
+  let dokumenty = bk ? zalacznikiBk(await pobierzSzczegolBk(String(tender.id).replace(/^bk[:_]/, ''))) : (idEz ? await pobierzDokumentyEz(idEz) : []);
+  let zrodlo = null;
+  if (!dokumenty.length && zKopii) {
+    dokumenty = await dokumentyZKopiiPlatformy({ ...tender, ez_dokumenty: [] }, { teraz, ...(szczegolPzKopii ? { szczegolPz: szczegolPzKopii } : {}) }) ?? [];
+    zrodlo = ZRODLO_PZ;
+  } else {
+    await tenders.zapiszDokumentyEz(tender.id, dokumenty, teraz);
+  }
+  res.json({ dokumenty, pobrano_o: teraz, cached: false, zrodlo });
 }));

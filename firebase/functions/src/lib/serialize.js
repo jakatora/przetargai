@@ -60,6 +60,8 @@ export function publicTender(row, znaczniki = {}) {
     currency: row.currency ?? 'PLN',
     deadline: row.deadline ?? null,
     url: row.url ?? null,
+    // Strona platformy postępowania (pkt 3.1 BZP) — tam SWZ i oferta, gdy e-Zamówienia nie znają postępowania.
+    strona_postepowania: row.strona_postepowania ?? null,
     cpv: row.cpv_main ?? null,
     numer: row.numer ?? null,
     source: row.source ?? 'bzp',

@@ -234,3 +234,16 @@ export function skrotKryteriow(tender) {
     rozne_w_czesciach: k.rozne_w_czesciach,
   };
 }
+
+/**
+ * Pkt 3.1 ogłoszenia o zamówieniu: adres strony prowadzonego postępowania (2026-11-03). Gdy to nie e-Zamówienia
+ * (ezamawiajacy.pl, smartpzp, eb2b…), tam są SWZ i składanie ofert — portal e-Zamówień takiego postępowania nie zna
+ * (3.11: 160 z 283 wybranych BZP bez dokumentów). Zwraca https-adres albo null.
+ */
+export function parsujStronePostepowania(htmlBody) {
+  const t = czysty(htmlBody);
+  const m = t.match(/3\.1\.\)\s*Adres strony internetowej prowadzonego post[eę]powania\s*(https?:\/\/\S+)/i);
+  if (!m) return null;
+  const adres = m[1].replace(/[),.;]+$/, '');
+  return /^https?:\/\/[^\s<>"']+$/.test(adres) ? adres.slice(0, 500) : null;
+}

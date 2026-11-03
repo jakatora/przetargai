@@ -38,3 +38,26 @@ export function parametryRadaruZPlatformy({ tender, zalacznik } = {}) {
   if (typeof tender.deadline === 'string' && tender.deadline) params.termin = tender.deadline;
   return params;
 }
+
+/**
+ * Strona platformy, na której toczy się postępowanie (pkt 3.1 ogłoszenia BZP, 2026-11-03) — gdy to NIE e-Zamówienia
+ * (ezamawiajacy.pl, smartpzp, eb2b…). Tam są SWZ i składanie ofert, a portal e-Zamówień takiego postępowania nie zna.
+ * @returns {{url: string, host: string}|null}
+ */
+export function stronaPlatformy(tender) {
+  const url = tender?.strona_postepowania;
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return null;
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    if (/(^|\.)ezamowienia\.gov\.pl$/i.test(host)) return null;
+    return { url, host };
+  } catch {
+    return null;
+  }
+}
+
+/** Host plików do podpisu pod listą („Pliki pobierają się z …”). */
+export function hostDokumentow(dokumenty) {
+  const url = (Array.isArray(dokumenty) ? dokumenty : []).find((d) => typeof d?.url === 'string')?.url;
+  try { return url ? new URL(url).hostname.replace(/^www\./, '') : 'ezamowienia.gov.pl'; } catch { return 'ezamowienia.gov.pl'; }
+}

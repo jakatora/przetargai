@@ -593,6 +593,8 @@ const POLA_PULI = [
   'warunki_udzialu.brak_warunkow',
   // PZ/ePP (2026-11-01): dział CPV z tytułu — słaby sygnał w heurystyce dla profili opartych na kodach.
   'cpv_dzial_z_tytulu',
+  // Kopia z platformy przy wpisie BZP/TED (2026-11-03): dokumenty z niej, gdy e-Zamówienia nie znają postępowania.
+  'zrodla_alternatywne',
 ];
 
 /**
@@ -798,6 +800,8 @@ export const tenders = {
        * więc bez tego pola rozstrzygnięcie nie ma po czym trafić do przetargu.
        */
       postepowanie_id: t.postepowanie_id ?? null,
+      // Pkt 3.1 BZP (2026-11-03): strona platformy, na której toczy się postępowanie (SWZ, składanie ofert).
+      strona_postepowania: t.strona_postepowania ?? null,
       // NIP zamawiającego — klucz benchmarku per zamawiający (etap 6).
       zamawiajacy_nip: t.zamawiajacy_nip ? String(t.zamawiajacy_nip) : null,
       raw_data: raw,
@@ -857,10 +861,11 @@ export const tenders = {
          * nigdy by się z nimi nie spięły.
          */
         if ((t.postepowanie_id && !dane.postepowanie_id)
-            || (t.zamawiajacy_nip && !dane.zamawiajacy_nip)) {
+            || (t.zamawiajacy_nip && !dane.zamawiajacy_nip) || (t.strona_postepowania && !dane.strona_postepowania)) {
           const klucze = {};
           if (t.postepowanie_id && !dane.postepowanie_id) klucze.postepowanie_id = t.postepowanie_id;
           if (t.zamawiajacy_nip && !dane.zamawiajacy_nip) klucze.zamawiajacy_nip = String(t.zamawiajacy_nip);
+          if (t.strona_postepowania && !dane.strona_postepowania) klucze.strona_postepowania = t.strona_postepowania;
           await ref.update(klucze);
           return { tender: { id, ...dane, ...klucze }, created: false };
         }
@@ -1448,8 +1453,10 @@ export const tenders = {
   },
 
   /** Dokumenty postępowania z e-Zamówień (SWZ, załączniki z linkami) — cache 24 h przy ogłoszeniu (2026-10-26). */
-  async zapiszDokumentyEz(id, dokumenty, teraz = nowIso()) {
-    await db().collection('tenders').doc(id).update({ ez_dokumenty: Array.isArray(dokumenty) ? dokumenty : [], ez_dokumenty_o: teraz });
+  async zapiszDokumentyEz(id, dokumenty, teraz = nowIso(), { zrodlo = null } = {}) {
+    // `zrodlo` (2026-11-03): lista z kopii na platformazakupowa.pl zamiast e-Zamówień (services/dokumentyZPlatformy.js).
+    await db().collection('tenders').doc(id).update({ ez_dokumenty: Array.isArray(dokumenty) ? dokumenty : [], ez_dokumenty_o: teraz,
+      ...(zrodlo ? { ez_dokumenty_zrodlo: zrodlo } : {}) });
   },
 
   /**

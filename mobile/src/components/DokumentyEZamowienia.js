@@ -7,7 +7,7 @@ import { api } from '../api/client';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
-import { swzZZalacznikow, parametryRadaruZPlatformy } from '../lib/zalacznikiPlatformy';
+import { swzZZalacznikow, parametryRadaruZPlatformy, stronaPlatformy, hostDokumentow } from '../lib/zalacznikiPlatformy';
 
 /**
  * Dokumenty postępowania z e-Zamówień (2026-10-26): ogłoszenie BZP ma identyfikator postępowania,
@@ -39,8 +39,13 @@ export default function DokumentyEZamowienia({ tender, navigation }) {
 
   const dokumenty = stan.dokumenty;
   const swz = dokumenty ? swzZZalacznikow(dokumenty) : [];
+  // Postępowanie na innej platformie (pkt 3.1 BZP): tam SWZ i oferta — przycisk zawsze, listy z e-Zamówień może nie być.
+  const platforma = stronaPlatformy(tender);
   return (
     <View style={styles.box}>
+      {platforma ? (
+        <Button title={t(`Otwórz postępowanie na ${platforma.host}`, `Open the procedure on ${platforma.host}`)} onPress={() => Linking.openURL(platforma.url).catch(() => {})} />
+      ) : null}
       {!dokumenty ? (
         <Button title={bk ? t('Pobierz zapytanie ofertowe i załączniki z Bazy Konkurencyjności', 'Fetch the inquiry documents from Baza Konkurencyjności')
           : t('Pobierz SWZ i załączniki z e-Zamówień', 'Fetch the tender documents from e-Zamówienia')} variant="ghost" loading={stan.laduje} onPress={pobierz} />
@@ -65,10 +70,12 @@ export default function DokumentyEZamowienia({ tender, navigation }) {
                 {czyMoznaWypelnic(d) ? <WypelnijZalacznik dokument={d} navigation={navigation} tenderId={tender.id} /> : null}
               </Pressable>
             ))}
-            <Text style={styles.podpis}>{t('Pliki pobierają się z ezamowienia.gov.pl — bez logowania.', 'Files download from ezamowienia.gov.pl — no sign-in needed.')}</Text>
+            <Text style={styles.podpis}>{t(`Pliki pobierają się z ${hostDokumentow(dokumenty)} — bez logowania.`, `Files download from ${hostDokumentow(dokumenty)} — no sign-in needed.`)}</Text>
           </View>
         ) : (
-          <Text style={styles.podpis}>{t('To postępowanie nie jest prowadzone na e-Zamówieniach — SWZ znajdziesz pod linkiem do oryginału.', 'This procedure is not run on e-Zamówienia — the tender documents are at the original link.')}</Text>
+          <Text style={styles.podpis}>{platforma
+            ? t(`To postępowanie toczy się na ${platforma.host} — SWZ i składanie ofert są tam (przycisk wyżej).`, `This procedure runs on ${platforma.host} — the documents and bidding are there (button above).`)
+            : t('To postępowanie nie jest prowadzone na e-Zamówieniach — SWZ znajdziesz pod linkiem do oryginału.', 'This procedure is not run on e-Zamówienia — the tender documents are at the original link.')}</Text>
         )
       ) : null}
     </View>

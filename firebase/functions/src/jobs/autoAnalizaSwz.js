@@ -7,6 +7,7 @@ import { terminPytan } from '../lib/przypomnieniePytan.js';
 import { czySwz } from '../services/eZamowieniaDokumenty.js';
 import { wywolajModulPrzetargowy } from '../services/mostRailway.js';
 import { pobierzSzczegolBk, zalacznikiBk, ZRODLO as ZRODLO_BK } from '../services/bazaKonkurencyjnosci.js';
+import { dokumentyZKopiiPlatformy, czyDokumentyZKopii } from '../services/dokumentyZPlatformy.js';
 import { liniePdf } from '../services/tekstPdf.js';
 import { czytajDocx } from '../lib/kontrolaPlikowOferty.js';
 
@@ -73,9 +74,11 @@ export function dokumentyPrzetargu(tender) {
 }
 
 /** Jak `dokumentyPrzetargu`, a dla Bazy Konkurencyjności — załączniki ze szczegółu ogłoszenia (jedno żądanie). */
-export async function dokumentyDoAnalizy(tender, { szczegolBk = pobierzSzczegolBk } = {}) {
-  if (tender?.source !== ZRODLO_BK) return dokumentyPrzetargu(tender);
-  return zalacznikiBk(await szczegolBk(String(tender.id ?? '').replace(/^bk[:_]/, '')));
+export async function dokumentyDoAnalizy(tender, { szczegolBk = pobierzSzczegolBk, dokumentyZKopii = dokumentyZKopiiPlatformy } = {}) {
+  if (tender?.source === ZRODLO_BK) return zalacznikiBk(await szczegolBk(String(tender.id ?? '').replace(/^bk[:_]/, '')));
+  // BZP/TED bez dokumentów z e-Zamówień, ze scaloną kopią z platformazakupowa.pl (2026-11-03) — jej załączniki.
+  if (czyDokumentyZKopii(tender)) return (await dokumentyZKopii(tender)) ?? [];
+  return dokumentyPrzetargu(tender);
 }
 
 const SWZ_UJEDNOLICONA = /po\s*zmian|ujednolicon|jednolit|zmienion\w*\s+(swz|siwz|specyfikacj)|(swz|siwz)\s*[-–_]?\s*zmienion|aktualn\w*\s+(swz|siwz|wersj)/i;

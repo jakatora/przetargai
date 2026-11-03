@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { swzZZalacznikow, parametryRadaruZPlatformy, linkPlatformy } from '../src/lib/zalacznikiPlatformy.js';
+import { swzZZalacznikow, parametryRadaruZPlatformy, linkPlatformy, stronaPlatformy, hostDokumentow } from '../src/lib/zalacznikiPlatformy.js';
 import { wstepneDaneRadaru } from '../src/lib/radarSwz.js';
 
 const Z = (nazwa, extra = {}) => ({ nazwa, rozszerzenie: 'pdf', rozmiar_kb: 800, opublikowano: null, url: 'https://platformazakupowa.pl/file/get_new/abc.pdf', ...extra });
@@ -60,4 +60,14 @@ test('e-Zamówienia (2026-10-26): link DownloadDocument przechodzi jak załączn
   const params = parametryRadaruZPlatformy({ tender, zalacznik: swz[0] });
   assert.equal(params.pdfUrl, url);
   assert.equal(wstepneDaneRadaru(params).pdfUrl, url, 'Radar przyjmuje host ezamowienia.gov.pl');
+});
+
+test('stronaPlatformy: adres z pkt 3.1 BZP poza e-Zamówieniami → przycisk; e-Zamówienia / brak → null', () => {
+  assert.deepEqual(stronaPlatformy({ strona_postepowania: 'https://enmedia.ezamawiajacy.pl/pn/ENMEDIA/demand/333005/notice/public/details' }),
+    { url: 'https://enmedia.ezamawiajacy.pl/pn/ENMEDIA/demand/333005/notice/public/details', host: 'enmedia.ezamawiajacy.pl' });
+  assert.equal(stronaPlatformy({ strona_postepowania: 'https://ezamowienia.gov.pl/mp-client/search/list/ocds-1' }), null);
+  assert.equal(stronaPlatformy({ strona_postepowania: 'nie-adres' }), null);
+  assert.equal(stronaPlatformy({}), null);
+  assert.equal(hostDokumentow([{ url: 'https://platformazakupowa.pl/file/get_new/a.pdf' }]), 'platformazakupowa.pl');
+  assert.equal(hostDokumentow([]), 'ezamowienia.gov.pl');
 });

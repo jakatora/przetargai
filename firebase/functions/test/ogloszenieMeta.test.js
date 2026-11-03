@@ -50,3 +50,15 @@ test('warunkowa wzmianka bez liczby → null (to nie deklaracja podziału)', () 
   assert.equal(parsujCzesci('gdy zamówienie zostanie podzielone na części, do przygotowania...'), null);
   assert.equal(parsujCzesci(''), null);
 });
+
+test('parsujStronePostepowania: pkt 3.1 — adres platformy albo e-Zamówień; bez punktu null', async () => {
+  const { parsujStronePostepowania } = await import('../src/lib/ogloszenieMeta.js');
+  const { readFileSync } = await import('node:fs');
+  assert.equal(parsujStronePostepowania(readFileSync(new URL('./fixtures/bzp-warunki.html', import.meta.url), 'utf8')),
+    'https://enmedia.ezamawiajacy.pl/pn/ENMEDIA/demand/333005/notice/public/details');
+  assert.equal(parsujStronePostepowania(readFileSync(new URL('./fixtures/bzp-warunki-brak.html', import.meta.url), 'utf8')),
+    'https://ezamowienia.gov.pl/mp-client/search/list/ocds-148610-21557e02-e724-40cc-8f78-9d6b1e9f4478');
+  assert.equal(parsujStronePostepowania('<h3>3.1.) Adres strony internetowej prowadzonego postępowania</h3> https://smartpzp.pl/x/y, <h3>3.2.)</h3>'), 'https://smartpzp.pl/x/y');
+  assert.equal(parsujStronePostepowania('<h3>3.1.) Adres strony internetowej prowadzonego postępowania</h3> <h3>3.2.)</h3>'), null);
+  assert.equal(parsujStronePostepowania(null), null);
+});

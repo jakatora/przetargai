@@ -2,7 +2,7 @@ import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { doUtcIso } from '../lib/daty.js';
 import { parsujWadium } from '../lib/wadium.js';
-import { parsujKryterium, parsujKryteria, parsujCzesci } from '../lib/ogloszenieMeta.js';
+import { parsujKryterium, parsujKryteria, parsujCzesci, parsujStronePostepowania } from '../lib/ogloszenieMeta.js';
 import { warunkiZBzp } from '../lib/warunkiUdzialu.js';
 import { stanTempa, pobierzZPonowieniem, TEMPO_DOMYSLNE } from '../lib/tempoZapytan.js';
 
@@ -135,6 +135,7 @@ export function normalizeNotice(raw) {
     kryteria_rozne_czesci: kryteria?.rozne_w_czesciach ?? false,
     liczba_czesci: liczbaCzesci,
     warunki_udzialu: warunki,
+    strona_postepowania: parsujStronePostepowania(htmlBody),
     // Wymiary do statystyk wyników (R17): rodzaj + województwo (PL+TERYT).
     rodzaj: firstOf(raw, ['orderType']),
     wojewodztwo: firstOf(raw, ['organizationProvince']),
