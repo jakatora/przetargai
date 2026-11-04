@@ -21506,6 +21506,71 @@ function confirmKnaufFinishSource(source) {
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
   ...BRUSH_SOURCES,
+  ...[
+  {
+    "id": "sewera-stalco-s010124205-tape-measure",
+    "ean": "5905947919611",
+    "name": "Miara zwijana 5m x 19mm gumowana Stalco",
+    "brand": "Stalco",
+    "category": "tape-measure",
+    "packageSize": 1,
+    "unit": "szt",
+    "retailUnit": "SZT",
+    "store": "Sewera",
+    "format": "sewera",
+    "variant": [
+      "5m",
+      "19mm"
+    ],
+    "pickupRequiresConfirmation": true,
+    "url": "https://sklep.sewera.pl/miara-zwijana-5m-x-19mm-gumowana-stalco-p20547",
+    "imageUrl": "https://sklep.sewera.pl/photo/292162/miara-zwijana-5m-x-19mm-gumowana-stalco.webp"
+  },
+  {
+    "id": "sewera-hardy-0146-323734k-tray",
+    "ean": "5905061980771",
+    "name": "Kuweta malarska 37x34 cm Hardy",
+    "brand": "Hardy",
+    "category": "paint-tray",
+    "packageSize": 1,
+    "unit": "szt",
+    "retailUnit": "SZT",
+    "store": "Sewera",
+    "format": "sewera",
+    "variant": [
+      "37x34"
+    ],
+    "pickupRequiresConfirmation": true,
+    "url": "https://sklep.sewera.pl/kuweta-malarska-37x34-cm-hardy-p6310",
+    "imageUrl": "https://sklep.sewera.pl/photo/308205/kuweta-malarska-37x34-cm-hardy.webp"
+  },
+  {
+    "id": "sewera-tytan-10003240-caulk-gun",
+    "ean": "5903518042997",
+    "name": "Wyciskacz do kartuszy szkieletowy 310ml Tytan",
+    "brand": "Tytan",
+    "category": "caulk-gun",
+    "packageSize": 1,
+    "unit": "szt",
+    "retailUnit": "SZT",
+    "store": "Sewera",
+    "format": "sewera",
+    "variant": [
+      "310ml"
+    ],
+    "pickupRequiresConfirmation": true,
+    "url": "https://sklep.sewera.pl/wyciskacz-do-kartuszy-szkieletowy-310ml-tytan-p18099",
+    "imageUrl": "https://sklep.sewera.pl/photo/256251/wyciskacz-do-kartuszy-szkieletowy-310ml-tytan.webp"
+  }
+],
+  {
+  id:'sewera-kraus-l19-brush',ean:'5904178021308',
+  name:'Pędzel ławkowiec 190mm Kraus',brand:'Kraus',category:'paint-brush',
+  packageSize:1,unit:'szt',store:'Sewera',format:'sewera',retailUnit:'SZT',
+  variant:['190 mm'],pickupRequiresConfirmation:true,
+  url:'https://sklep.sewera.pl/pedzel-lawkowiec-190mm-kraus-p22550',
+  imageUrl:'https://sklep.sewera.pl/photo/359210/pedzel-lawkowiec-190mm-kraus.webp',
+},
   { id:'sewera-hardy-maxprofi-18cm',ean:'5905061052744',name:'Wałek malarski Maxprofi 18cm runo 12mm Hardy',
     brand:'Hardy',category:'paint-roller',packageSize:1,unit:'szt',store:'Sewera',format:'sewera',retailUnit:'SZT',
     variant:['Maxprofi','18cm','12mm'],pickupRequiresConfirmation:true,
