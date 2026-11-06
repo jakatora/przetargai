@@ -81,6 +81,12 @@ const schema = z.object({
 
   SENTRY_DSN_BACKEND: z.string().default(''),
 
+  // Spoina (/api/spoina) — kod logowania SMS-em przez SMSAPI.pl. Brak tokenu = wysyłka
+  // wyłączona; firmy logują się wtedy stałym kodem ustawionym przy zakładaniu (pilotaż).
+  SPOINA_SMSAPI_TOKEN: z.string().default(''),
+  // Nazwa nadawcy zarejestrowana w SMSAPI; pusta = domyślny nadawca konta.
+  SPOINA_SMS_FROM: z.string().default(''),
+
   B2_ACCOUNT_ID: z.string().default(''),
   B2_APP_KEY: z.string().default(''),
   B2_BUCKET: z.string().default('przetargai-backups'),
