@@ -65,6 +65,8 @@ export function createApp() {
     ['/api/przetarg/radar-planow', '10mb'],
     // Spoina: pierwsze urządzenie firmy publikuje cały stan naraz (setki małych dokumentów).
     ['/api/spoina/docs', '2mb'],
+    // Spoina: zdjęcie karty z budowy w base64 (telefon zmniejsza je do ~1 MB).
+    ['/api/spoina/files', '2mb'],
   ];
   for (const [trasa, limit] of PARSERY_TRAS) app.use(trasa, express.json({ limit }));
 

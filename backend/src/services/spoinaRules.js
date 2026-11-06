@@ -15,6 +15,7 @@ export const ROLES = ['office', 'toolroom', 'foreman', 'worker'];
 /** Kolekcje obiektów (dokument to obiekt z polem `id` równym id z klucza). */
 export const ENTITY_COLLECTIONS = [
   'workers', 'crews', 'sites', 'assignments', 'gear', 'handovers', 'hours', 'leaves', 'messages', 'faults',
+  'incidents', 'cards',
 ];
 /** Kolekcje-zbiory: sam klucz jest informacją, wartością jest `true`. */
 export const SET_COLLECTIONS = ['shortages', 'absent', 'attendanceOk', 'reminded'];
@@ -116,6 +117,10 @@ export function visible(ctx, key, doc) {
   if (col === 'workers') return id === me ? doc : colleague(doc);
   if (col === 'crews') return doc;
   if (col === 'messages') return doc.workerId === me ? doc : undefined;
+  // Wypadek albo zagrożenie widzi zgłaszający, jego brygadzista i biuro.
+  if (col === 'incidents') return doc.workerId === me || ctx.team.has(doc.workerId) ? doc : undefined;
+  // Zdjęcie karty z budowy: kto je zrobił, jego brygadzista i biuro.
+  if (col === 'cards') return doc.workerId === me || ctx.team.has(doc.workerId) ? doc : undefined;
   if (col === 'meta') return id === 'settings' ? settingsPublic(doc) : undefined;
 
   if (ctx.toolroom) {
@@ -227,6 +232,19 @@ export function decide(ctx, key, cur, change) {
     if (patching && cur.workerId === me && only(changed, ['read']) && next.read === true) return ok(next);
     if (creating && ctx.toolroom) return ok(next);
     return no('nie można zmienić tej wiadomości');
+  }
+  if (col === 'incidents') {
+    // Każdy może zgłosić wypadek albo zagrożenie i cofnąć własną pomyłkę; przyjmuje je biuro.
+    if (creating && next.workerId === me && next.handled === false) return ok(next);
+    if (deleting && cur.workerId === me && !cur.handled) return ok(null);
+    return no('zgłoszenia przyjmuje biuro');
+  }
+  if (col === 'cards') {
+    // Kartę z budowy dodaje osoba z terenu do SWOJEJ budowy; usunąć może własną.
+    if (creating && ctx.field && next.workerId === me && ctx.mySites.has(next.siteId)
+      && typeof next.fileId === 'string') return ok(next);
+    if (deleting && cur.workerId === me) return ok(null);
+    return no('kartę z budowy dodaje brygadzista albo pracownik tej budowy');
   }
   if (col === 'leaves') {
     if (creating && next.workerId === me && next.status === 'pending') return ok(next);

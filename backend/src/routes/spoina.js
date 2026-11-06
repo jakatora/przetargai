@@ -10,6 +10,7 @@ import {
   sessionMember, startLogin, tokenKey, updateCompany, verifyLogin, zmiany,
 } from '../services/spoinaStore.js';
 import { sendLoginCode, smsEnabled } from '../services/spoinaSms.js';
+import { deleteFile, readFile, saveFile } from '../services/spoinaFiles.js';
 
 /*
  * Spoina — aplikacja firmy spawalniczej (kadry, budowy, delegowanie ekip, sprzęt).
@@ -21,6 +22,7 @@ import { sendLoginCode, smsEnabled } from '../services/spoinaSms.js';
  *   GET  /docs?since=<rev>&wait=<s>       → dokumenty firmy widoczne dla tej osoby; `wait`
  *                                           trzyma połączenie do pierwszej zmiany (na żywo)
  *   POST /docs         { changes }        → zapis zmian pól, pod kontrolą uprawnień roli
+ *   POST /files        { mime, data }     → zdjęcie (base64) → { id }; GET/DELETE /files/:id
  *   /admin/companies                      → zakładanie firm (nagłówek x-admin-key)
  *
  * Uprawnienia ról: services/spoinaRules.js. Dane i sesje: services/spoinaStore.js.
@@ -45,6 +47,15 @@ const docsLimiter = rateLimit({
     const token = bearer(req);
     return token ? `spoina:${tokenKey(token)}` : `ip:${ipKeyGenerator(req.ip ?? '')}`;
   },
+});
+// Zdjęcia: kilka kart dziennie na urządzenie wystarcza; limit chroni wspólny wolumen.
+const uploadLimiter = rateLimit({
+  windowMs: 10 * 60_000, max: 30, standardHeaders: true, legacyHeaders: false,
+  keyGenerator: (req) => {
+    const token = bearer(req);
+    return token ? `spoina-up:${tokenKey(token)}` : `ip:${ipKeyGenerator(req.ip ?? '')}`;
+  },
+  message: { error: { code: 'RATE_LIMITED', message: 'Za dużo zdjęć naraz. Spróbuj za kilka minut.' } },
 });
 const adminLimiter = rateLimit({ windowMs: 15 * 60_000, max: 30, standardHeaders: true, legacyHeaders: false });
 
@@ -133,6 +144,28 @@ router.post('/docs', docsLimiter, sessionRequired, ah(async (req, res) => {
   }
   res.json(result);
 }));
+
+// ── Zdjęcia (karta z budowy) ─────────────────────────────────────────────────
+
+const fileSchema = z.object({ mime: z.string().max(40), data: z.string().min(16) });
+
+router.post('/files', uploadLimiter, sessionRequired, ah(async (req, res) => {
+  const parsed = fileSchema.safeParse(req.body);
+  if (!parsed.success) throw badRequest('Wymagane pola: mime, data');
+  res.status(201).json(await saveFile(req.spoina, parsed.data));
+}));
+
+router.get('/files/:id', docsLimiter, sessionRequired, ah(async (req, res) => {
+  const { mime, body } = await readFile(req.spoina, req.params.id);
+  res.set('Content-Type', mime);
+  res.set('Cache-Control', 'private, max-age=31536000, immutable'); // plik pod danym id nigdy się nie zmienia
+  res.send(body);
+}));
+
+router.delete('/files/:id', docsLimiter, sessionRequired, (req, res) => {
+  deleteFile(req.spoina, req.params.id);
+  res.json({ ok: true });
+});
 
 // ── Administracja: zakładanie firm ───────────────────────────────────────────
 

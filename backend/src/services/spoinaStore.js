@@ -124,6 +124,11 @@ function visibleJson(ctx, state, key) {
   return v === d.obj ? d.json : JSON.stringify(v);
 }
 
+/** Uprawnienia osoby (rola, ekipa, budowy) na bieżącym stanie firmy. */
+export function contextFor(member) {
+  return buildContext(loadState(member.companyId), member);
+}
+
 // ── Odczyt ───────────────────────────────────────────────────────────────────
 
 /** Numer ostatniej zmiany w firmie. */

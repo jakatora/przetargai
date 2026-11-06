@@ -227,3 +227,27 @@ test('kształt: id zgodne z kluczem, znana rola, zbiory tylko true', () => {
   assert.ok(zmiana(ctx, 'sites/S1', { x: 1 }).reject);
   assert.equal(zmiana(ctx, 'sites/nie-ma', null).next, null);
 });
+
+test('wypadek: zgłasza każdy, widzi zgłaszający, brygadzista i biuro, przyjmuje biuro', () => {
+  const state = firma();
+  const i = { id: 'i1', workerId: 'mazur', siteId: 'S1', at: '2026-11-05T10:42:00.000', injury: true, note: 'upadek z rusztowania', handled: false };
+  const mazur = jako(state, 'mazur');
+  assert.ok(zmiana(mazur, 'incidents/i1', { v: i }).next);
+  assert.ok(zmiana(mazur, 'incidents/i1', { v: { ...i, workerId: 'pawlak' } }).reject, 'nie w cudzym imieniu');
+  assert.ok(zmiana(mazur, 'incidents/i1', { v: { ...i, handled: true } }).reject);
+  assert.ok(zmiana(jako(state, 'zbyszek'), 'incidents/i2', { v: { ...i, id: 'i2', workerId: 'zbyszek' } }).next, 'narzędziownia też może zgłosić');
+
+  state.docs['incidents/i1'] = i;
+  assert.ok(widzi(jako(state, 'mazur'), 'incidents/i1'));
+  assert.ok(widzi(jako(state, 'kowal'), 'incidents/i1'), 'brygadzista ekipy');
+  assert.ok(widzi(jako(state, 'anna'), 'incidents/i1'));
+  assert.equal(widzi(jako(state, 'pawlak'), 'incidents/i1'), undefined);
+  assert.equal(widzi(jako(state, 'zbyszek'), 'incidents/i1'), undefined);
+
+  assert.ok(zmiana(jako(state, 'mazur'), 'incidents/i1', { p: { handled: true } }).reject);
+  assert.ok(zmiana(jako(state, 'kowal'), 'incidents/i1', { p: { handled: true } }).reject);
+  assert.equal(zmiana(jako(state, 'anna'), 'incidents/i1', { p: { handled: true } }).next.handled, true);
+  assert.equal(zmiana(jako(state, 'mazur'), 'incidents/i1', null).next, null, 'cofnięcie własnej pomyłki');
+  state.docs['incidents/i1'] = { ...i, handled: true };
+  assert.ok(zmiana(jako(state, 'mazur'), 'incidents/i1', null).reject, 'przyjętego zgłoszenia nie da się usunąć');
+});

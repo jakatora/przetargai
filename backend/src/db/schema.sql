@@ -502,3 +502,16 @@ CREATE TABLE IF NOT EXISTS spoina_sessions (
   expires_at   TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_spoina_sessions_member ON spoina_sessions(company_id, worker_id);
+
+-- Zdjęcia wgrane z telefonu (karta godzin podpisana na budowie). Treść pliku leży na
+-- wolumenie obok bazy; tu tylko metryka i właściciel, po którym serwer pilnuje dostępu.
+CREATE TABLE IF NOT EXISTS spoina_files (
+  id         TEXT PRIMARY KEY,
+  company_id TEXT NOT NULL REFERENCES spoina_companies(id) ON DELETE CASCADE,
+  owner_id   TEXT NOT NULL,                     -- id pracownika, który wgrał plik
+  mime       TEXT NOT NULL,                     -- 'image/jpeg'|'image/png'|'image/webp'
+  bytes      INTEGER NOT NULL,
+  sha256     TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_spoina_files_company ON spoina_files(company_id);

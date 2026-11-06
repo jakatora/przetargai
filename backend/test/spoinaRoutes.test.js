@@ -13,6 +13,8 @@ import fs from 'node:fs';
 const DB_FILE = path.join(os.tmpdir(), `przetargai-spoina-rt-${process.pid}.db`);
 process.env.DATABASE_PATH = DB_FILE;
 process.env.SPOINA_SMSAPI_TOKEN = ''; // bez bramki SMS — firmy testowe logują się stałym kodem
+const STORAGE_DIR = path.join(os.tmpdir(), `przetargai-spoina-rt-pliki-${process.pid}`);
+process.env.SPOINA_STORAGE_DIR = STORAGE_DIR;
 
 const { migrate } = await import('../src/db/migrate.js');
 const { db } = await import('../src/db/index.js');
@@ -35,6 +37,7 @@ after(() => {
   server.close();
   db.close();
   for (const s of ['', '-wal', '-shm']) fs.rmSync(`${DB_FILE}${s}`, { force: true });
+  fs.rmSync(STORAGE_DIR, { recursive: true, force: true });
 });
 
 async function call(method, sciezka, { token, body, admin } = {}) {
@@ -244,6 +247,53 @@ test('wylogowanie unieważnia token', async () => {
   const token = sesja('601 100 004', '246810');
   assert.equal((await call('POST', '/auth/logout', { token })).status, 200);
   assert.equal((await call('GET', '/me', { token })).status, 401);
+});
+
+test('zdjęcie karty z budowy: wgrywa pracownik, widzi biuro, nie widzi inny pracownik ani inna firma', async () => {
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(600, 7)]);
+  const mazur = sesja('601 100 004', '246810');
+  store.applyChanges({ companyId: firma.companyId, workerId: firma.workerId, role: 'office' }, {
+    'workers/nowy': { v: pracownik('nowy', 'Nowy Kolega', '601 100 077', 'worker') },
+  });
+  const kolega = sesja('601 100 077', '246810');
+  const obca = sesja('602 200 001', '135790');
+
+  assert.equal((await call('POST', '/files', { body: { mime: 'image/jpeg', data: jpeg.toString('base64') } })).status, 401);
+  assert.equal((await call('POST', '/files', { token: mazur, body: { mime: 'application/pdf', data: jpeg.toString('base64') } })).status, 400);
+  assert.equal((await call('POST', '/files', { token: mazur, body: { mime: 'image/png', data: jpeg.toString('base64') } })).status, 400, 'treść nie zgadza się z typem');
+  assert.equal((await call('POST', '/files', { token: mazur, body: { mime: 'image/jpeg', data: Buffer.concat([jpeg, Buffer.alloc(1_300_000)]).toString('base64') } })).status, 400, 'za duże');
+
+  const up = await call('POST', '/files', { token: mazur, body: { mime: 'image/jpeg', data: jpeg.toString('base64') } });
+  assert.equal(up.status, 201);
+  assert.equal(up.json.bytes, jpeg.length);
+  const id = up.json.id;
+
+  const pobierz = async (token) => {
+    const res = await fetch(`${base}${ROOT}/files/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+    return { status: res.status, type: res.headers.get('content-type'), body: Buffer.from(await res.arrayBuffer()) };
+  };
+  const mine = await pobierz(mazur);
+  assert.equal(mine.status, 200);
+  assert.equal(mine.type, 'image/jpeg');
+  assert.ok(mine.body.equals(jpeg), 'plik wraca bajt w bajt');
+  assert.equal((await pobierz(firma.biuro)).status, 200);
+  assert.equal((await pobierz(kolega)).status, 404);
+  assert.equal((await pobierz(obca)).status, 404);
+  assert.equal((await call('GET', '/files/../../etc', { token: mazur })).status, 404);
+
+  // dokument karty: tylko do własnej budowy i tylko we własnym imieniu
+  const karta = { id: 'k1', siteId: 'S1', week: '2026-11-02', fileId: id, workerId: 'mazur', at: '2026-11-06T15:00:00.000' };
+  const zapis = await call('POST', '/docs', {
+    token: mazur,
+    body: { changes: { 'cards/k1': { v: karta }, 'cards/k2': { v: { ...karta, id: 'k2', siteId: 'S2' } }, 'cards/k3': { v: { ...karta, id: 'k3', workerId: 'nowy' } } } },
+  });
+  assert.deepEqual(zapis.json.rejected.map((r) => r.key).sort(), ['cards/k2', 'cards/k3']);
+  assert.ok((await call('GET', '/docs', { token: firma.biuro })).json.docs['cards/k1']);
+  assert.equal((await call('GET', '/docs', { token: kolega })).json.docs['cards/k1'], undefined);
+
+  assert.equal((await call('DELETE', `/files/${id}`, { token: kolega })).status, 404);
+  assert.equal((await call('DELETE', `/files/${id}`, { token: mazur })).status, 200);
+  assert.equal((await pobierz(firma.biuro)).status, 404);
 });
 
 test('kod SMS: jednorazowy, ważny 10 minut, z limitem wysyłek', () => {
