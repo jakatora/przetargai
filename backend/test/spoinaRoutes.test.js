@@ -248,6 +248,9 @@ test('wylogowanie unieważnia token', async () => {
 
 test('kod SMS: jednorazowy, ważny 10 minut, z limitem wysyłek', () => {
   const t0 = Date.now() + 3_600_000;
+  // firma ze stałym kodem nie wysyła SMS-ów (numery pokazowe mogą należeć do obcych osób)
+  assert.equal(store.startLogin('601 100 004', { smsReady: true, now: t0 - 120_000 }).code, null);
+  store.updateCompany(firma.companyId, { fixedCode: null });
   const { phone, code } = store.startLogin('601 100 004', { smsReady: true, now: t0 });
   assert.equal(phone, '48601100004');
   assert.match(code, /^\d{6}$/);

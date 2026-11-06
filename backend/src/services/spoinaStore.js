@@ -325,8 +325,10 @@ export function startLogin(phoneInput, opts = {}) {
   }
   if (sentCount >= CODE_MAX_PER_WINDOW) throw tooMany('Za dużo próśb o kod. Spróbuj za godzinę.');
 
-  const known = membersByPhone(phone).length > 0;
-  const code = known && opts.smsReady ? String(crypto.randomInt(0, 1_000_000)).padStart(6, '0') : null;
+  // Firma ze stałym kodem (pokazowa, pilotaż) nie dostaje SMS-ów: jej numery bywają
+  // zmyślone, a zmyślony numer może należeć do obcej osoby.
+  const needsSms = membersByPhone(phone).some((m) => !m.fixed_code_hash);
+  const code = needsSms && opts.smsReady ? String(crypto.randomInt(0, 1_000_000)).padStart(6, '0') : null;
   db.prepare(`
     INSERT INTO spoina_login_codes (phone, code_hash, expires_at, attempts, locked_until, sent_at, sent_count, window_start)
     VALUES (?, ?, ?, 0, NULL, ?, ?, ?)
