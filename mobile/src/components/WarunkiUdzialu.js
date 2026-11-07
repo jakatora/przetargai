@@ -6,6 +6,7 @@ import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { ETYKIETY_WERDYKTU, ETYKIETY_STATUSU, opisPowodu } from '../lib/warunkiUdzialu';
+import { POKAZUJ_ZAKUP } from '../lib/kanal';
 
 /**
  * Sekcja „Warunki udziału” w szczegółach (spec §6.2). Porównanie kosztuje (AI), więc
@@ -36,9 +37,11 @@ export default function WarunkiUdzialu({ match, plan, navigation, onUpgrade }) {
       <View style={styles.box}>
         {tytul}
         <Text style={styles.tekst}>{t(opisPowodu('plan'))}</Text>
-        <Pressable onPress={onUpgrade} accessibilityRole="button">
-          <Text style={styles.cta}>{t('Przejdź na Standard — 99 zł/mc →', 'Upgrade to Standard — PLN 99/mo →')}</Text>
-        </Pressable>
+        {POKAZUJ_ZAKUP && onUpgrade ? (
+          <Pressable onPress={onUpgrade} accessibilityRole="button">
+            <Text style={styles.cta}>{t('Przejdź na Standard — 99 zł/mc →', 'Upgrade to Standard — PLN 99/mo →')}</Text>
+          </Pressable>
+        ) : null}
       </View>
     );
   }

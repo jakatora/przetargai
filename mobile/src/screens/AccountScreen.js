@@ -17,6 +17,7 @@ import { srodowiskoPotwierdzen, komunikat } from '../services/srodowiskoPotwierd
 // Ten sam adres, co w Polityce prywatności i Regulaminie (docs/*.html) — spójny kanał kontaktu.
 import { useJezyk } from '../context/JezykContext';
 import { opisProby } from '../lib/selekcja';
+import { POKAZUJ_ZAKUP } from '../lib/kanal';
 
 const KONTAKT_EMAIL = 'jakatora68@gmail.com';
 
@@ -242,7 +243,8 @@ export default function AccountScreen({ navigation }) {
             style={styles.gap}
           />
         </View>
-      ) : (
+      ) : POKAZUJ_ZAKUP ? (
+        // Build z Google Play (lib/kanal.js) nie pokazuje zakupu przez Stripe ani ceny.
         <View style={styles.upgradeCard}>
           <Text style={styles.upgradeTitle}>{t('Przejdź na Standard', 'Upgrade to Standard')}</Text>
           <Text style={styles.upgradeText}>
@@ -255,7 +257,7 @@ export default function AccountScreen({ navigation }) {
             style={styles.gap}
           />
         </View>
-      )}
+      ) : null}
 
       {__DEV__ ? (
         <View style={styles.demoCard}>

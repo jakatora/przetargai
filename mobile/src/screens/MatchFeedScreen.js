@@ -27,6 +27,7 @@ import KatalogWszystkich from '../components/KatalogWszystkich';
 import PanelWyboru from '../components/PanelWyboru';
 import { NastepnyKrok } from '../components/Wyjasnienie';
 import { TRYBY, TRYB_DOMYSLNY, KLUCZ_TRYBU, normalizujTryb } from '../lib/katalogPrzetargow';
+import { KANAL, POKAZUJ_ZAKUP } from '../lib/kanal';
 
 // Znacznik ostatniej wizyty na feedzie — do wykrywania „nowych" przetargów.
 const KLUCZ_OSTATNIA_WIZYTA = 'przetargai.feed_ostatnia_wizyta';
@@ -231,7 +232,7 @@ export default function MatchFeedScreen({ navigation }) {
       // Nowa wersja dla instalacji poza sklepami — czysta decyzja w lib/aktualizacja.js, best-effort.
       Promise.all([pobierzNajnowszaWersje(), storage.getItem(KLUCZ_ODLOZONEJ_AKTUALIZACJI).catch(() => null)])
         .then(([najnowsza, odlozona]) => {
-          const d = decyzjaAktualizacji({ biezaca: Constants.expoConfig?.version, najnowsza, platforma: Platform.OS, odlozona });
+          const d = decyzjaAktualizacji({ biezaca: Constants.expoConfig?.version, najnowsza, platforma: Platform.OS, odlozona, kanal: KANAL });
           setAktualizacja(d.pokaz ? d : null);
         })
         .catch(() => setAktualizacja(null));
@@ -368,7 +369,7 @@ export default function MatchFeedScreen({ navigation }) {
               navigation={navigation}
               odswiezenie={odswiezPanel}
               onWybraneIds={setWybraneDzis}
-              onUpgrade={przejdzNaStandard}
+              onUpgrade={POKAZUJ_ZAKUP ? przejdzNaStandard : null}
               onZmiana={poZmianieWPanelu}
             />
             {/* Baner „nowe od ostatniej wizyty" — to jest „powiadomienie" wewnątrz apki. */}
@@ -387,7 +388,8 @@ export default function MatchFeedScreen({ navigation }) {
             ) : null}
 
             {/* Zachęta do Standard oparta na realnych liczbach (D-055 — FOMO na Free). */}
-            {zacheta?.pokaz ? (
+            {/* Build z Google Play (lib/kanal.js): bez zachęty — to zakup przez Stripe. */}
+            {POKAZUJ_ZAKUP && zacheta?.pokaz ? (
               <Pressable style={styles.fomo} onPress={przejdzNaStandard} disabled={upgrading} accessibilityRole="button">
                 <Text style={styles.fomoTytul}>{zacheta.tytul}</Text>
                 <Text style={styles.fomoOpis}>{zacheta.opis}</Text>

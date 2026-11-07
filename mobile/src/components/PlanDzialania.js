@@ -6,6 +6,7 @@ import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
 import { formatDate } from '../lib/format';
 import { zbudujPlanDzialania } from '../lib/planDzialania';
+import { POKAZUJ_ZAKUP } from '../lib/kanal';
 
 /** Plan działania do oferty (spec §6.3) — kroki z terminami, każdy otwiera istniejące narzędzie. */
 export default function PlanDzialania({ match, plan, navigation, onUpgrade }) {
@@ -31,9 +32,13 @@ export default function PlanDzialania({ match, plan, navigation, onUpgrade }) {
       {plan !== 'standard' ? (
         <View>
           {kroki.slice(0, 3).map((k) => <Text key={k.klucz} style={[styles.krok, styles.zablokowany]}>{`• ${t(k.tytul)}`}</Text>)}
-          <Pressable onPress={onUpgrade} accessibilityRole="button">
-            <Text style={styles.cta}>{t('Pełny plan z terminami jest w planie Standard →', 'The full plan with deadlines is on the Standard plan →')}</Text>
-          </Pressable>
+          {POKAZUJ_ZAKUP && onUpgrade ? (
+            <Pressable onPress={onUpgrade} accessibilityRole="button">
+              <Text style={styles.cta}>{t('Pełny plan z terminami jest w planie Standard →', 'The full plan with deadlines is on the Standard plan →')}</Text>
+            </Pressable>
+          ) : (
+            <Text style={[styles.krok, styles.zablokowany]}>{t('Pełny plan z terminami jest w planie Standard.', 'The full plan with deadlines is on the Standard plan.')}</Text>
+          )}
         </View>
       ) : kroki.map((k) => (
         <Pressable

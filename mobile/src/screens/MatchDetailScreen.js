@@ -46,6 +46,7 @@ import * as WebBrowser from 'expo-web-browser';
 import ArkuszOdrzucenia from '../components/ArkuszOdrzucenia';
 import WarunkiUdzialu from '../components/WarunkiUdzialu';
 import PlanDzialania from '../components/PlanDzialania';
+import { POKAZUJ_ZAKUP } from '../lib/kanal';
 
 /** Etykieta etapu kontroli (STATUSY_KONTROLI); brak kontroli → pierwszy etap „Nowa". */
 function etykietaEtapuKontroli(status) {
@@ -812,8 +813,8 @@ export default function MatchDetailScreen({ route, navigation }) {
         </View>
       ) : null}
       <Wyjasnienie wyjasnienie={match.wyjasnienie} />
-      <WarunkiUdzialu match={match} plan={plan} navigation={navigation} onUpgrade={przejdzNaStandard} />
-      <PlanDzialania match={match} plan={plan} navigation={navigation} onUpgrade={przejdzNaStandard} />
+      <WarunkiUdzialu match={match} plan={plan} navigation={navigation} onUpgrade={POKAZUJ_ZAKUP ? przejdzNaStandard : null} />
+      <PlanDzialania match={match} plan={plan} navigation={navigation} onUpgrade={POKAZUJ_ZAKUP ? przejdzNaStandard : null} />
 
       {/*
         Źródło pierwotne, czas ostatniej synchronizacji i link do ORYGINAŁU (P1-3).

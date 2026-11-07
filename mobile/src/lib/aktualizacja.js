@@ -4,7 +4,8 @@
  * Strona `https://przetarg-ai.pl/wersja.json` (publikowana z `landing/wersja.json`, pilnowana
  * testem `landingStrona` = wersja z `app.json`) mówi, co jest najnowsze; tu czysta decyzja,
  * czy i co pokazać. Sklepy (iOS zawsze, Android z Google Play) mają własne aktualizacje —
- * na iOS nic nie pokazujemy, na Androidzie wskazujemy obie drogi.
+ * na iOS i w buildzie z Google Play (kanał 'play', 2026-11-07) nic nie pokazujemy; APK ze strony
+ * dostaje obie drogi.
  */
 export const KLUCZ_ODLOZONEJ_AKTUALIZACJI = 'przetargai.aktualizacja_odlozona';
 export const ADRES_WERSJI = 'https://przetarg-ai.pl/wersja.json';
@@ -24,11 +25,14 @@ export function porownajWersje(a, b) {
 const WZORZEC_WERSJI = /^\d+(\.\d+){0,3}$/;
 
 /**
- * @param {{biezaca: string, najnowsza: string|null|undefined, platforma: string, odlozona?: string|null}} w
+ * `kanal` z `lib/kanal.js`: build z Google Play ('play') aktualizuje się tylko przez Play — polityka
+ * Device and Network Abuse zabrania podsuwania APK ze strony, więc tam nic nie pokazujemy.
+ * @param {{biezaca: string, najnowsza: string|null|undefined, platforma: string, odlozona?: string|null, kanal?: string}} w
  * @returns {{pokaz: boolean, najnowsza: string|null, url: string, komunikat: {pl: string, en: string}}}
  */
-export function decyzjaAktualizacji({ biezaca, najnowsza, platforma, odlozona = null } = {}) {
+export function decyzjaAktualizacji({ biezaca, najnowsza, platforma, odlozona = null, kanal = 'strona' } = {}) {
   const nic = { pokaz: false, najnowsza: null, url: ADRES_POBIERANIA, komunikat: { pl: '', en: '' } };
+  if (kanal === 'play') return nic;
   if (typeof najnowsza !== 'string' || !WZORZEC_WERSJI.test(najnowsza.trim())) return nic;
   const nowa = najnowsza.trim();
   if (!WZORZEC_WERSJI.test(String(biezaca ?? '').trim())) return nic;

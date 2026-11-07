@@ -31,6 +31,13 @@ test('decyzja: nowa wersja na web i Androidzie → baner z właściwą drogą; i
   assert.equal(decyzjaAktualizacji({}).pokaz, false);
 });
 
+test('decyzja: build z Google Play (kanał play) nigdy nie podsuwa APK ze strony — aktualizuje go tylko Play', () => {
+  const wpis = { biezaca: '1.2.2', najnowsza: '1.2.3', platforma: 'android' };
+  assert.equal(decyzjaAktualizacji({ ...wpis, kanal: 'play' }).pokaz, false, 'Play: bez paska');
+  assert.equal(decyzjaAktualizacji({ ...wpis, kanal: 'strona' }).pokaz, true, 'APK ze strony: pasek jak dotąd');
+  assert.equal(decyzjaAktualizacji(wpis).pokaz, true, 'domyślnie kanał strony');
+});
+
 test('wersjaZOdpowiedzi + pobierzNajnowszaWersje: poprawny JSON → wersja; 404/śmieci/wyjątek → null', async () => {
   assert.equal(wersjaZOdpowiedzi({ wersja: '1.1.7' }), '1.1.7');
   assert.equal(wersjaZOdpowiedzi({ wersja: 'nowa' }), null);

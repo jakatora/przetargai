@@ -89,10 +89,12 @@ sekret nasłuchu w env `HARNESS_WEBHOOK_SECRET`). Bezpiecznik: odmawia pracy na 
    (rejestruje bundle `pl.przetargai.app` + włącza Push Notifications).
 3. **Codemagic UI (2 min)**: wgraj keystore `~/.api-keys/przetargai/przetargai-upload.jks`
    jako referencję **przetargai_keystore** (hasła w pliku .properties obok).
-4. **Google Play — decyzja płatności**: Play Billing ALBO ukrycie CTA zakupu
-   w buildzie Android (blockers.md; opis sklepu już oczyszczony).
-   Do publikacji Play potrzebny też `GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS`
-   (api-keys.md §13) — nie ma go w vaultach.
+4. **Google Play — płatności (ROZWIĄZANE 2026-11-07)**: AAB dla Play budowany z
+   `EXPO_PUBLIC_KANAL=kanal-google-play` nie pokazuje zakupu Stripe, ceny ani paska
+   „pobierz APK” (`mobile/src/lib/kanal.js`); APK ze strony bez zmian. Przepis na dwa
+   przebiegi gradle i sprawdzenie pliku: `runbooks/android-kanaly.md`.
+   Publikacja Play przez API: konto `dr-capsules-publisher` (`~/.api-keys/dr-capsules-play-publisher.json`)
+   ma dostęp do `pl.przetargai.app` (wysyłka 1.2.2 7.11).
 5. **Przełączenie apki na Firebase** (dopiero po dobie stabilnego crona):
    `EXPO_PUBLIC_API_URL` w Codemagic + wygaszenie crona/webhooka Railway
    (`wdrozenie-firebase.md` etap 6).

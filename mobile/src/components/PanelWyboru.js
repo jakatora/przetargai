@@ -15,6 +15,7 @@ import {
   opisKoncaProby, KLUCZ_KONCA_PROBY,
 } from '../lib/selekcja';
 import { OPISY_BRAKOW } from '../lib/kartaFirmy';
+import { POKAZUJ_ZAKUP } from '../lib/kanal';
 
 /**
  * Górna część ekranu „Twoje przetargi” (spec §10): raport dnia, próba Standard, braki karty,
@@ -109,6 +110,8 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
   const czekaja = zdanieOczekujacych(dzien.raport?.oczekuje, dzien.plan);
   const grupy = grupujOdrzucone(dzien.odrzucone?.wg_przyczyny);
   const brak = (dzien.braki_karty ?? [])[0];
+  // Build z Google Play (lib/kanal.js): informacja o próbie i planie zostaje, zakup i cena znikają.
+  const zakup = POKAZUJ_ZAKUP && typeof onUpgrade === 'function';
   const razem = dzien.raport?.odrzucone_razem ?? 0;
 
   return (
@@ -120,19 +123,27 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
         {czekaja ? <Text style={styles.raportDrobny}>{t(czekaja)}</Text> : null}
       </View>
 
-      {koniecProby ? (
+      {koniecProby ? (zakup ? (
         <Pressable style={styles.brak} onPress={onUpgrade} accessibilityRole="button">
           <Text style={styles.brakTekst}>{t(koniecProby)}</Text>
           <Text style={styles.brakCta}>{t('Przejdź na Standard — 99 zł/mc', 'Upgrade to Standard — PLN 99/mo')}</Text>
         </Pressable>
-      ) : null}
+      ) : (
+        <View style={styles.brak}>
+          <Text style={styles.brakTekst}>{t(koniecProby)}</Text>
+        </View>
+      )) : null}
 
-      {proba ? (
+      {proba ? (zakup ? (
         <Pressable style={styles.proba} onPress={onUpgrade} accessibilityRole="button">
           <Text style={styles.probaTekst}>{t(proba)}</Text>
           <Text style={styles.probaCta}>{t('Przejdź na Standard — 99 zł/mc', 'Upgrade to Standard — PLN 99/mo')}</Text>
         </Pressable>
-      ) : null}
+      ) : (
+        <View style={styles.proba}>
+          <Text style={styles.probaTekst}>{t(proba)}</Text>
+        </View>
+      )) : null}
 
       {brak && OPISY_BRAKOW[brak] ? (
         <Pressable style={styles.brak} onPress={() => navigation.navigate('KartaFirmy', { krok: OPISY_BRAKOW[brak].krok })} accessibilityRole="button">
@@ -207,10 +218,12 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
               ))}
               {dzien.odrzucone?.lista_dostepna ? (
                 <Button title={t('Pokaż listę odrzuconych', 'Show rejected list')} variant="ghost" onPress={() => navigation.navigate('Odrzucone')} />
-              ) : (
+              ) : zakup ? (
                 <Pressable onPress={onUpgrade} accessibilityRole="button">
                   <Text style={styles.brakCta}>{t('Pełna lista odrzuconych z przyczynami jest w planie Standard', 'The full rejected list with reasons is on the Standard plan')}</Text>
                 </Pressable>
+              ) : (
+                <Text style={styles.raportDrobny}>{t('Pełna lista odrzuconych z przyczynami jest w planie Standard', 'The full rejected list with reasons is on the Standard plan')}</Text>
               )}
             </View>
           ) : null}
