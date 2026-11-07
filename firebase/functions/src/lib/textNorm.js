@@ -96,6 +96,50 @@ function hitsToken(keywordStem, tokenStems) {
   return tokenStems.includes(keywordStem);
 }
 
+/*
+ * Skróty i nazwy branż (2026-11-07). Klient wpisuje „P-poż”, „PV”, „wod-kan”, „elektryka”, a tytuły mówią
+ * „przeciwpożarowej”, „fotowoltaicznej”, „wodno-kanalizacyjnej”, „instalacji elektrycznej” — rdzenie się nie spotkają
+ * („fotowoltaik” ≠ „fotowoltaiczn”, „kanalizacj” ≠ „kanalizacyjn”). Pomiar na 13 723 otwartych tytułach: P-poż 9 → 55,
+ * PV 5 → 62, fotowoltaika 0 → 58, wod-kan 5 → 24, elektryka 0 → 47, kanalizacja 110 → 137, wentylacja 17 → 38.
+ * GRUPY są równoważne (każdy człon rozwija się w pozostałe). JEDNOKIERUNKOWE: nazwa branży → frazy pracy, bo sam
+ * przymiotnik łapie co innego („elektrycznej” to w 9 na 10 tytułów dostawa prądu, „hydraulicznej” — prasy i oleje).
+ * Rozwinięcie tylko zwiększa liczbę kandydatów; o wyborze dalej decyduje ocena AI.
+ */
+const GRUPY_SKROTOW = [
+  ['p.poż', 'ppoż', 'przeciwpożarowy'],
+  ['c.o.', 'centralne ogrzewanie'],
+  ['wod-kan', 'wodno-kanalizacyjny', 'wodociągowo-kanalizacyjny'],
+  ['PV', 'fotowoltaika', 'fotowoltaiczny'],
+  ['OZE', 'odnawialne źródła energii', 'odnawialnych źródeł energii'],
+  ['kanalizacja', 'kanalizacyjny'],
+  ['wentylacja', 'wentylacyjny'],
+  ['klimatyzacja', 'klimatyzacyjny'],
+  ['termomodernizacja', 'termomodernizacyjny'],
+  ['melioracja', 'melioracyjny'],
+];
+const JEDNOKIERUNKOWE = {
+  elektryka: ['instalacja elektryczna', 'roboty elektryczne', 'prace elektryczne'],
+  hydraulika: ['instalacja sanitarna', 'instalacja wodno-kanalizacyjna', 'instalacja wodociągowa', 'centralne ogrzewanie'],
+};
+
+/** Klucz słownika: rdzenie słowa złączone spacją („P-poż” i „p.poż.” → „p poz”). */
+const kluczSlowa = (slowo) => stemTokens(slowo).join(' ');
+
+const ROZWINIECIA = (() => {
+  const mapa = new Map();
+  const dodaj = (klucz, formy) => mapa.set(klucz, [...new Set([...(mapa.get(klucz) ?? []), ...formy])]);
+  for (const grupa of GRUPY_SKROTOW) {
+    for (const forma of grupa) dodaj(kluczSlowa(forma), grupa.filter((f) => kluczSlowa(f) !== kluczSlowa(forma)));
+  }
+  for (const [slowo, formy] of Object.entries(JEDNOKIERUNKOWE)) dodaj(kluczSlowa(slowo), formy);
+  return mapa;
+})();
+
+/** Formy, w które rozwija się słowo kluczowe klienta (puste = brak w słowniku). */
+export function rozwinieciaSlowa(slowo) {
+  return ROZWINIECIA.get(kluczSlowa(slowo)) ?? [];
+}
+
 /**
  * Zwraca te słowa kluczowe profilu, które trafiają w tekst.
  * Fraza wielowyrazowa ("kostka brukowa") wymaga trafienia KAŻDEGO ze swoich rdzeni.
@@ -110,11 +154,13 @@ export function matchKeywords(keywords, text) {
 
   const hits = [];
   for (const keyword of keywords) {
-    const parts = stemTokens(keyword);
-    if (!parts.length) continue;
-    if (parts.every((part) => hitsToken(part, tokenStems)) && !hits.includes(keyword)) {
-      hits.push(keyword);
-    }
+    if (hits.includes(keyword)) continue;
+    // Słowo klienta albo któraś z jego form ze słownika skrótów — trafienie zapisujemy jako słowo klienta.
+    const trafia = [keyword, ...rozwinieciaSlowa(keyword)].some((forma) => {
+      const parts = stemTokens(forma);
+      return parts.length > 0 && parts.every((part) => hitsToken(part, tokenStems));
+    });
+    if (trafia) hits.push(keyword);
   }
   return hits;
 }
