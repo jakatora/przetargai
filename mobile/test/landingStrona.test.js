@@ -154,17 +154,18 @@ test('sitemap i robots wskazują tę samą domenę co strona, a każdy adres ma 
 });
 
 test('licznik ogłoszeń: bez pobranej wartości strona nie pokazuje żadnej liczby', () => {
-  const liczba = html.match(/<div class="stat__num" data-stat="nowe24h">([^<]*)<\/div>/);
-  const opis = html.match(/<p data-stat-opis="nowe24h">([^<]*)<\/p>/);
+  // Licznik z 7 dni (2026-11-07): w weekend dobowa liczba spadała do ~200 i wyglądała jak martwa baza.
+  const liczba = html.match(/<div class="stat__num" data-stat="nowe7dni">([^<]*)<\/div>/);
+  const opis = html.match(/<p data-stat-opis="nowe7dni">([^<]*)<\/p>/);
   assert.ok(liczba && opis, 'pole licznika i jego opis istnieją');
   assert.doesNotMatch(liczba[1], /\d/, 'w HTML nie ma liczby „na zapas"');
-  assert.doesNotMatch(opis[1], /na żywo|ostatniej dobie/, 'opis zastępczy nie udaje statystyki');
+  assert.doesNotMatch(opis[1], /na żywo|ostatniej dobie|ostatnich 7 dniach/, 'opis zastępczy nie udaje statystyki');
   assert.doesNotMatch(widoczne, /300\+/);
 
   // Skrypt wstawia liczbę i opis „na żywo" razem, dopiero po poprawnej odpowiedzi.
   const skrypt = html.slice(html.lastIndexOf('<script>'));
-  assert.match(skrypt, /if \(!d \|\| typeof d\.nowe24h !== 'number' \|\| !\(d\.nowe24h > 0\)\) return;/);
-  assert.match(skrypt, /el\.textContent = [\s\S]*opis\.textContent = 'nowych ogłoszeń w ostatniej dobie — na żywo z naszej bazy';/);
+  assert.match(skrypt, /if \(!d \|\| typeof d\.nowe7dni !== 'number' \|\| !\(d\.nowe7dni > 0\)\) return;/);
+  assert.match(skrypt, /el\.textContent = [\s\S]*opis\.textContent = 'nowych ogłoszeń w ostatnich 7 dniach — na żywo z naszej bazy';/);
   assert.match(skrypt, /\.catch\(function \(\) \{\}\)/, 'błąd pobierania zostawia tekst z HTML');
 });
 
@@ -246,9 +247,25 @@ test('strony prawne: dane usługodawcy zamiast szablonu, z datą aktualizacji', 
   }
 });
 
+test('ekrany aplikacji (2026-11-07): każdy zrzut istnieje, ma opis, wymiary i leniwe ładowanie; sekcja mówi, że dane są przykładowe', () => {
+  const sekcja = html.match(/<section class="section aplikacja" id="aplikacja">([\s\S]*?)<\/section>/);
+  assert.ok(sekcja, 'sekcja #aplikacja istnieje');
+  assert.match(czysty(sekcja[1]), /Dane firmy i przetargów na zrzutach są przykładowe/);
+  const obrazy = [...sekcja[1].matchAll(/<img [^>]*>/g)].map((m) => m[0]);
+  assert.ok(obrazy.length >= 3, 'co najmniej trzy ekrany');
+  for (const img of obrazy) {
+    const src = img.match(/src="([^"]+)"/)[1];
+    assert.ok(fs.existsSync(path.join(LANDING, src)), `brak pliku ${src}`);
+    assert.match(img, /alt="[^"]{20,}"/, `${src}: opis dla czytnika ekranu`);
+    assert.match(img, /width="\d+" height="\d+"/, `${src}: wymiary (bez skoku układu)`);
+    assert.match(img, /loading="lazy"/, `${src}: leniwe ładowanie`);
+  }
+  assert.match(html, /<a href="#aplikacja">/, 'link w nawigacji');
+});
+
 test('treści z żywej strony nie zostały cofnięte', () => {
   assert.match(html, /<section class="section section--soft" id="narzedzia">/);
-  assert.match(html, /data-stat="nowe24h"/);
+  assert.match(html, /data-stat="nowe7dni"/);
   assert.match(html, /api \+ '\/stats\/public'/);
   assert.match(html, /Baza Konkurencyjności/);
   assert.match(html, /PrzetargAI jest niezależną, prywatną aplikacją\./);

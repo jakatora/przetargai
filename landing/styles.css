@@ -319,6 +319,21 @@ section[id], main[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
   border: 2px solid var(--blue); color: var(--blue); font-weight: 800; font-size: 16px;
 }
 
+/* Prawdziwe ekrany aplikacji (2026-11-07): granatowy pas, telefon w ciemnej ramce, podpis pod spodem */
+.aplikacja { background: var(--navy); color: var(--on-navy); }
+.aplikacja .section__title { color: var(--on-navy); }
+.aplikacja .section__sub { color: var(--on-navy-muted); }
+.ekrany { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; }
+.ekrany:focus-visible { outline: 2px solid var(--marker); outline-offset: 6px; border-radius: var(--radius); }
+.ekran figure { display: flex; flex-direction: column; gap: 22px; }
+.telefon {
+  border-radius: 34px; padding: 8px; background: #050b16; max-width: 280px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+.telefon img { width: 100%; height: auto; border-radius: 27px; background: #f3f6fa; }
+.ekran h3 { font-size: 19px; margin-bottom: 6px; color: var(--on-navy); }
+.ekran p { font-size: 16px; color: var(--on-navy-muted); }
+
 /* Narzędzia */
 .narzedzia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 40px; }
 .narzedzie { padding: 26px 0; border-top: 1px solid var(--line); }
@@ -404,6 +419,17 @@ section[id], main[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
   .etap:nth-child(2)::before { display: none; }
   .narzedzia { grid-template-columns: repeat(2, 1fr); }
   .cta__inner { grid-template-columns: 1fr; }
+  /* Ekrany: poziome przewijanie z zatrzaskiem; następny telefon wystaje, więc widać, że jest więcej */
+  .ekrany {
+    grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: min(74vw, 272px);
+    overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+    margin: 0 -24px; padding: 0 24px 12px; scroll-padding-left: 24px; gap: 20px;
+  }
+  .ekran { scroll-snap-align: start; }
+}
+
+@media (max-width: 400px) {
+  .ekrany { margin: 0 -16px; padding: 0 16px 12px; scroll-padding-left: 16px; }
 }
 
 @media (max-width: 880px) {
