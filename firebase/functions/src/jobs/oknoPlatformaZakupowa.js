@@ -60,11 +60,16 @@ export async function runOknoPz({
       const zRejestrow = await kandydaciWiodacy(znormalizowane).catch((err) => {
         logger.warn({ err: err.message }, 'platformazakupowa: bliźniaki z BZP/TED niedostępne'); return { bzp: [], ted: [] };
       });
+      // Raz scalona pozycja zostaje przy wpisie wiodącym, także gdy termin zmienił się tu wcześniej niż w BZP (2026-11-07).
+      const podpiete = await tenders.wiodacePoZrodleAlternatywnym(ZRODLO, znormalizowane.filter(Boolean)).catch((err) => {
+        logger.warn({ err: err.message }, 'platformazakupowa: podpięte pozycje niedostępne'); return new Map();
+      });
       for (const t of znormalizowane) {
         if (!t) { licznik.odrzucone++; continue; }
         const poz = { id: t.externalId.replace(/^pz:/, '') };
         const klucz = kluczOgloszenia(t);
         const wiodacy = (klucz ? (istniejace.get(klucz) ?? []).find((d) => d.source !== ZRODLO && PRIORYTET_ZRODEL.indexOf(d.source) < PRIORYTET_ZRODEL.indexOf(ZRODLO)) : null)
+          ?? podpiete.get(t.externalId)
           ?? wiodacyKopii(t, zRejestrow);
         if (wiodacy) {
           try {

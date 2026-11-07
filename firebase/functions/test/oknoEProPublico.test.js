@@ -6,6 +6,7 @@ const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { tenders, oknoEpp } = await import('../src/db/repos.js');
 const { runOknoEpp } = await import('../src/jobs/oknoEProPublico.js');
+const { linkOgloszenia } = await import('../src/services/eProPublico.js');
 
 const LISTA = readFileSync(new URL('./fixtures/epropublico-lista.html', import.meta.url), 'utf8');
 const SZCZEGOL = readFileSync(new URL('./fixtures/epropublico-szczegol.html', import.meta.url), 'utf8');
@@ -65,6 +66,39 @@ test('bliźniak z BZP bez zgodnego klucza (znak sprawy w tytule, inna pisownia z
   assert.equal(w.scalone_z_rejestrem, 1);
   assert.equal(await tenders.findById(`epp:418b6e4f-0f4b-4eca-b635-f00f${ZNAK.slice(0, 4)}1111`), null);
   assert.deepEqual((await tenders.findById(bzp.id)).zrodla_alternatywne.map((z) => z.source), ['epropublico']);
+});
+
+test('pozycja raz podpięta do BZP, a termin zmienił się tu wcześniej niż w BZP → dalej link, bez kopii (prod 4–6.11: 3 duplikaty)', async () => {
+  // BZP ze STARYM terminem i inną pisownią: ani klucz, ani szukanie bliźniaka po terminie go nie znajdą.
+  const { tender: bzp } = await tenders.upsert({ externalId: `bzp-epp-link-${ZNAK}`, title: 'Implanty ortopedyczne (65-PN-26)', organization: 'SZPITAL MIEJSKI GLIWICE', deadline: '2026-10-20T07:00:00.000Z', source: 'bzp' });
+  const zPrzyrostkiem = (p) => listaZ('31.10.2026 09:00:00').replace(/f00f[0-9a-f]{8}/g, `f00f${ZNAK.slice(0, 4)}${p}`);
+  // Kontrola: bez podpięcia ta pozycja zakłada osobny wpis — tak powstały duplikaty.
+  const bez = await runOknoEpp({ fetchFn: serwer({ lista: zPrzyrostkiem('3333') }), odstepMs: 0 });
+  assert.equal(bez.nowe, 1);
+  assert.ok(await tenders.findById(`epp:418b6e4f-0f4b-4eca-b635-f00f${ZNAK.slice(0, 4)}3333`));
+  // Pozycja podpięta wcześniej (jak przy publikacji, gdy terminy były zgodne).
+  const id = `epp:418b6e4f-0f4b-4eca-b635-f00f${ZNAK.slice(0, 4)}2222`;
+  await tenders.dodajZrodloAlternatywne(bzp.id, { source: 'epropublico', externalId: id, url: linkOgloszenia(id.replace(/^epp:/, '')) });
+  const w = await runOknoEpp({ fetchFn: serwer({ lista: zPrzyrostkiem('2222') }), odstepMs: 0 });
+  assert.equal(w.nowe, 0);
+  assert.equal(w.scalone_z_rejestrem, 1);
+  assert.equal(await tenders.findById(id), null, 'kopia NIE powstała');
+  assert.equal((await tenders.findById(bzp.id)).zrodla_alternatywne.length, 1, 'link się nie dubluje');
+});
+
+test('wiodacePoZrodleAlternatywnym: zastąpiona wersja przegrywa z aktualną; inne źródło i obce pozycje pominięte', async () => {
+  const id = `epp:wybor-${ZNAK}`;
+  const url = linkOgloszenia(`wybor-${ZNAK}`);
+  const { tender: stary } = await tenders.upsert({ externalId: `ted-stary-${ZNAK}`, title: 'A', organization: 'B', deadline: '2026-11-20T10:00:00.000Z', source: 'ted' });
+  const { tender: nowy } = await tenders.upsert({ externalId: `ted-nowy-${ZNAK}`, title: 'A', organization: 'B', deadline: '2026-11-27T10:00:00.000Z', source: 'ted' });
+  for (const t of [stary, nowy]) await tenders.dodajZrodloAlternatywne(t.id, { source: 'epropublico', externalId: id, url });
+  const { getFirestore } = await import('firebase-admin/firestore');
+  await getFirestore().collection('tenders').doc(stary.id).update({ zastapiony_przez: nowy.id });
+  const m = await tenders.wiodacePoZrodleAlternatywnym('epropublico', [{ externalId: id, url }, { externalId: `epp:obca-${ZNAK}`, url: 'x' }]);
+  assert.deepEqual([...m.keys()], [id]);
+  assert.equal(m.get(id).id, nowy.id);
+  assert.equal(m.get(id).source, 'ted');
+  assert.equal((await tenders.wiodacePoZrodleAlternatywnym('platformazakupowa', [{ externalId: id, url }])).size, 0, 'inne źródło');
 });
 
 test('503 ze źródła: ok=false ze śladem', async () => {

@@ -1288,6 +1288,41 @@ export const tenders = {
     return true;
   },
 
+  /**
+   * Wpisy wiodące (BZP/TED/BK), które JUŻ mają podpiętą pozycję platformy w `zrodla_alternatywne` (2026-11-07).
+   * Zamawiający zmienia termin: platforma pokazuje nowy od razu, nasz wpis BZP dostaje go dopiero w oknie zmian
+   * BZP — w tej przerwie szukanie bliźniaka po terminie nie trafia i raz scalona pozycja zakładała drugi wpis
+   * (prod 4–6.11: 3 duplikaty z e-ProPublico, każdy z linkiem w BZP od dnia publikacji). Raz podpięta pozycja
+   * zostaje przy wpisie wiodącym. Zapytanie po dokładnym wpisie — tak, jak zapisuje go `dodajZrodloAlternatywne`
+   * (adres pozycji wynika z jej numeru, więc jest stały). Wpis zastąpiony nowszą wersją przegrywa z aktualnym.
+   * `pozycje` = [{ externalId, url }] jednego źródła. Zwraca Map externalId → { id, source, deadline }.
+   */
+  async wiodacePoZrodleAlternatywnym(source, pozycje) {
+    const wpisy = [];
+    const widziane = new Set();
+    for (const p of pozycje ?? []) {
+      if (!p?.externalId || widziane.has(p.externalId)) continue;
+      widziane.add(p.externalId);
+      wpisy.push({ source, externalId: p.externalId, url: p.url ?? null });
+    }
+    const wynik = new Map();
+    for (let i = 0; i < wpisy.length; i += 30) {
+      const snap = await db().collection('tenders').where('zrodla_alternatywne', 'array-contains-any', wpisy.slice(i, i + 30))
+        .select('source', 'deadline', 'zastapiony_przez', 'zrodla_alternatywne').get();
+      for (const d of snap.docs) {
+        if (d.get('source') === source) continue;
+        const wiodacy = { id: d.id, source: d.get('source'), deadline: d.get('deadline') ?? null, zastapiony: Boolean(d.get('zastapiony_przez')) };
+        for (const z of d.get('zrodla_alternatywne') ?? []) {
+          if (z?.source !== source || !widziane.has(z.externalId)) continue;
+          const obecny = wynik.get(z.externalId);
+          if (!obecny || (obecny.zastapiony && !wiodacy.zastapiony)) wynik.set(z.externalId, wiodacy);
+        }
+      }
+    }
+    for (const [k, w] of wynik) wynik.set(k, { id: w.id, source: w.source, deadline: w.deadline });
+    return wynik;
+  },
+
   /** Pola ze strony szczegółu rejestru (e-ProPublico): tylko to, co podano; puste nie kasują. */
   async uzupelnijZeSzczegolu(id, { rodzaj, publishedAt, tryb_postepowania, deadline } = {}) {
     const pola = {};

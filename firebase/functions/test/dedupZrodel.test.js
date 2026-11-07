@@ -181,7 +181,7 @@ test('PRIORYTET_ZRODEL zaczyna się od BZP — rejestru urzędowego dla Pzp', ()
 });
 
 test('bliźniak BZP na platformie (2026-11-03): numer BZP w tytule rozstrzyga; bez niego termin + tytuł + wspólny człon zamawiającego', async () => {
-  const { idBzpZTytulu, tytulDoPorownania, podobniZamawiajacy, toSamoPostepowanie, znajdzBlizniakaBzp } = await import('../src/lib/dedupZrodel.js');
+  const { idBzpZTytulu, tytulDoPorownania, podobniZamawiajacy, toSamoPostepowanie, znajdzBlizniakaBzp, znakiSprawy } = await import('../src/lib/dedupZrodel.js');
   assert.equal(idBzpZTytulu('2026/BZP 00514967 (ZP.272.19.2026) Ochrona mienia bazy'), '2026~BZP_00514967');
   assert.equal(idBzpZTytulu('Ochrona mienia'), null);
   assert.equal(tytulDoPorownania('2026/BZP 00514967 (ZP.272.19.2026) Ochrona mienia bazy'), 'ochrona mienia bazy');
@@ -206,6 +206,16 @@ test('bliźniak BZP na platformie (2026-11-03): numer BZP w tytule rozstrzyga; b
   const krotki = { title: 'Dostawa materiałów medycznych', organization: 'Szpital w Zambrowie', deadline: '2026-11-10T09:00:00.000Z' };
   assert.equal(toSamoPostepowanie(krotki, { id: 'b', title: 'Dostawa materiałów medycznych dla JW. 4101 w Lublińcu', organization: 'Jednostka Wojskowa Nr 4101', deadline: krotki.deadline }), false,
     'krótki tytuł zawarty w dłuższym i inny zamawiający');
+
+  // Prod 7.11: dwa postępowania tej samej uczelni o tej samej nazwie i terminie, różne znaki sprawy.
+  const u44 = { id: 'u44', title: 'U/44/2026 - Przeprowadzenie szkoleń dla pracowników Uniwersytetu Opolskiego', organization: 'Uniwersytet Opolski', deadline: '2026-11-12T09:00:00.000Z' };
+  assert.equal(toSamoPostepowanie({ title: 'U/42/2026 U/42/2026 Przeprowadzenie szkoleń dla pracowników Uniwersytetu Opolskiego', organization: 'UNIWERSYTET OPOLSKI', deadline: u44.deadline }, u44), false, 'inny znak sprawy = inne postępowanie');
+  assert.equal(toSamoPostepowanie({ title: 'U/44/2026 U/44/2026 - Przeprowadzenie szkoleń dla pracowników Uniwersytetu Opolskiego', organization: 'UNIWERSYTET OPOLSKI', deadline: u44.deadline }, u44), true, 'ten sam znak sprawy');
+  assert.equal(toSamoPostepowanie({ ...bezNumeru, title: bezNumeru.title.replace('ZP.272.19.2026', '272.19.2026') }, { ...bzp, title: `ZP.272.19.2026 ${bzp.title}` }), true, 'inny zapis tego samego numeru');
+  assert.equal(toSamoPostepowanie({ ...bezNumeru, title: `ZP.272.18.2026 ${bzp.title}` }, { ...bzp, title: `ZP.272.19.2026 ${bzp.title}` }), false);
+  assert.deepEqual([...znakiSprawy('U/42/2026 U/42/2026 Szkolenia')], ['422026']);
+  assert.deepEqual([...znakiSprawy('Remont 2 budynków')], [], 'krótka liczba w środku tytułu to nie znak sprawy');
+  assert.deepEqual([...znakiSprawy('2026/BZP 00514967 (ZP.272.19.2026) Ochrona')], ['272192026'], 'numer BZP pominięty');
 
   assert.equal(znajdzBlizniakaBzp(bezNumeru, [bzp]).id, bzp.id);
   assert.equal(znajdzBlizniakaBzp(bezNumeru, [bzp, { ...bzp, id: 'inny' }]), null, 'dwa pasujące bez numeru = niepewne');

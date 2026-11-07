@@ -87,6 +87,20 @@ test('bliźniak z BZP (2026-11-03): numer BZP w tytule albo termin + tytuł + po
   assert.equal((await tenders.findById(poTytule.id)).zrodla_alternatywne.length, 1);
 });
 
+test('pozycja raz podpięta do BZP, a termin zmienił się na platformie wcześniej niż w BZP → dalej link, bez kopii (2026-11-07)', async () => {
+  // BZP z innym tytułem, zamawiającym i STARYM terminem — łączy go z pozycją tylko wcześniejsze podpięcie.
+  const { tender: bzp } = await tenders.upsert({ externalId: `bzp-pz-link-${ZNAK}`, title: 'Odzież ochronna dla zakładu', organization: 'SKIBA ZM', deadline: '2026-10-21T10:00:00.000Z', source: 'bzp' });
+  const id = `pz:${ZNAK}${1390256 + 9000}`;
+  await tenders.dodajZrodloAlternatywne(bzp.id, { source: 'platformazakupowa', externalId: id, url: `https://platformazakupowa.pl/transakcja/${ZNAK}${1390256 + 9000}` });
+  await oknoPz.zapisz({ nastepna_strona: 1 });
+  const w = await runOknoPz({ fetchFn: async () => ({ ok: true, text: async () => fixtureZ(9000, '29-10-2026 12:00:00') }), odstepMs: 0 });
+  assert.equal(w.ok, true);
+  assert.ok(w.scalone_z_rejestrem >= 1, 'podpięta pozycja zostaje przy BZP');
+  assert.equal(await tenders.findById(id), null, 'kopia NIE powstała');
+  assert.ok(await tenders.findById(`pz:${ZNAK}${1393682 + 9000}`), 'pozycja bez podpięcia i bez bliźniaka wchodzi normalnie');
+  assert.equal((await tenders.findById(bzp.id)).zrodla_alternatywne.length, 1);
+});
+
 test('kopia przetargu z TED (termin z samą datą): bez kopii, TED dostaje godzinę składania ofert z platformy', async () => {
   const tytul = 'Szacowanie wartości zamówienia - Dostawa krzeseł i foteli Akademii Marynarki Wojennej (FERS.03.01-IP.08-0177/24-00)';
   const { tender: ted } = await tenders.upsert({ externalId: `ted:${ZNAK}-amw`, title: `${tytul} ${ZNAK}`, organization: 'AKADEMIA MARYNARKI WOJENNEJ', deadline: '2026-10-25T22:59:59.999Z', source: 'ted' });

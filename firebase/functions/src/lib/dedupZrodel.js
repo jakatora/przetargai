@@ -229,7 +229,27 @@ export function toSamoPostepowanie(kopia, bzp) {
   const t2 = tytulDoPorownania(bzp.title);
   if (!t1 || !t2) return false;
   const zgodny = t1 === t2 || (Math.min(t1.length, t2.length) >= 25 && (t1.includes(t2) || t2.includes(t1)));
-  return zgodny && podobniZamawiajacy(kopia.organization, bzp.organization);
+  if (!zgodny || !podobniZamawiajacy(kopia.organization, bzp.organization)) return false;
+  // Oba tytuły ze znakiem sprawy, ale o innych cyfrach („U/42/2026” ≠ „U/44/2026”) = dwa postępowania tego samego
+  // zamawiającego o tej samej nazwie (prod 7.11: scalanie wstecz łączyło U/42 z U/44). Inny zapis tego samego
+  // numeru („ZP.271.27.2026” / „271.27.2026”) ma te same cyfry, więc dalej łączy.
+  const z1 = znakiSprawy(kopia.title);
+  const z2 = znakiSprawy(bzp.title);
+  return !(z1.size && z2.size && ![...z1].some((z) => z2.has(z)));
+}
+
+/** Cyfry wiodących znaków sprawy z tytułu („U/42/2026 U/42/2026 Szkolenia” → {„422026”}); bez numeru BZP i krótkich liczb. */
+export function znakiSprawy(tytul) {
+  let t = String(tytul ?? '').replace(/\d{4}\/BZP\s*\d{8}(\/\d{2})?/g, ' ').trim();
+  const znaki = new Set();
+  for (let i = 0; i < 3; i++) {
+    const m = t.match(/^(\([^)]*\d[^)]*\)|[\p{L}0-9][\p{L}0-9./_-]*\d[\p{L}0-9./_-]*)\s+/u);
+    if (!m) break;
+    const cyfry = m[1].replace(/\D+/g, '');
+    if (cyfry.length >= 3) znaki.add(cyfry);
+    t = t.slice(m[0].length);
+  }
+  return znaki;
 }
 
 /** Jedyny wpis rejestru wiodącego pasujący do kopii z platformy; dwa pasujące bez numeru BZP = niepewne, null. */
