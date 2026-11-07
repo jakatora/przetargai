@@ -21506,6 +21506,76 @@ function confirmKnaufFinishSource(source) {
 // artifacts/api-server/src/lib/retail-catalog.ts
 var RETAIL_SOURCES = [
   ...BRUSH_SOURCES,
+  ...[
+  {
+    "id": "sewera-stalco-s010124205-tape-measure",
+    "ean": "5905947919611",
+    "name": "Miara zwijana 5m x 19mm gumowana Stalco",
+    "brand": "Stalco",
+    "category": "tape-measure",
+    "packageSize": 1,
+    "unit": "szt",
+    "retailUnit": "SZT",
+    "store": "Sewera",
+    "format": "sewera",
+    "variant": [
+      "5m",
+      "19mm"
+    ],
+    "pickupRequiresConfirmation": true,
+    "url": "https://sklep.sewera.pl/miara-zwijana-5m-x-19mm-gumowana-stalco-p20547",
+    "imageUrl": "https://sklep.sewera.pl/photo/292162/miara-zwijana-5m-x-19mm-gumowana-stalco.webp"
+  },
+  {
+    "id": "sewera-hardy-0146-323734k-tray",
+    "ean": "5905061980771",
+    "name": "Kuweta malarska 37x34 cm Hardy",
+    "brand": "Hardy",
+    "category": "paint-tray",
+    "packageSize": 1,
+    "unit": "szt",
+    "retailUnit": "SZT",
+    "store": "Sewera",
+    "format": "sewera",
+    "variant": [
+      "37x34"
+    ],
+    "pickupRequiresConfirmation": true,
+    "url": "https://sklep.sewera.pl/kuweta-malarska-37x34-cm-hardy-p6310",
+    "imageUrl": "https://sklep.sewera.pl/photo/308205/kuweta-malarska-37x34-cm-hardy.webp"
+  },
+  {
+    "id": "sewera-tytan-10003240-caulk-gun",
+    "ean": "5903518042997",
+    "name": "Wyciskacz do kartuszy szkieletowy 310ml Tytan",
+    "brand": "Tytan",
+    "category": "caulk-gun",
+    "packageSize": 1,
+    "unit": "szt",
+    "retailUnit": "SZT",
+    "store": "Sewera",
+    "format": "sewera",
+    "variant": [
+      "310ml"
+    ],
+    "pickupRequiresConfirmation": true,
+    "url": "https://sklep.sewera.pl/wyciskacz-do-kartuszy-szkieletowy-310ml-tytan-p18099",
+    "imageUrl": "https://sklep.sewera.pl/photo/256251/wyciskacz-do-kartuszy-szkieletowy-310ml-tytan.webp"
+  }
+],
+  {
+  id:'sewera-kraus-l19-brush',ean:'5904178021308',
+  name:'Pędzel ławkowiec 190mm Kraus',brand:'Kraus',category:'paint-brush',
+  packageSize:1,unit:'szt',store:'Sewera',format:'sewera',retailUnit:'SZT',
+  variant:['190 mm'],pickupRequiresConfirmation:true,
+  url:'https://sklep.sewera.pl/pedzel-lawkowiec-190mm-kraus-p22550',
+  imageUrl:'https://sklep.sewera.pl/photo/359210/pedzel-lawkowiec-190mm-kraus.webp',
+},
+  { id:'sewera-hardy-maxprofi-18cm',ean:'5905061052744',name:'Wałek malarski Maxprofi 18cm runo 12mm Hardy',
+    brand:'Hardy',category:'paint-roller',packageSize:1,unit:'szt',store:'Sewera',format:'sewera',retailUnit:'SZT',
+    variant:['Maxprofi','18cm','12mm'],pickupRequiresConfirmation:true,
+    url:'https://sklep.sewera.pl/walek-maxprofi-18cm-raczka-11mm-hardy-p12761',
+    imageUrl:'https://sklep.sewera.pl/photo/309526/walek-malarski-maxprofi-18cm-runo-12mm-hardy.webp' },
   ...CERESIT_VIVA_SOURCES,
   ...RIGIPS_CORNER_SOURCES,
   ...HIPPER_PAINT_SOURCES,
@@ -22004,6 +22074,21 @@ var RETAIL_SOURCES = [
     "store": "Sewera",
     "format": "sewera",
     "url": "https://sklep.sewera.pl/ceresit-fuga-ce40-01-wodoodporna-elastyczna-2kg-p9147"
+  },
+  // source: https://viverto.pl/fuga-elastyczna-ce-40-aquastatic-bialy-01-2-kg-ceresit/
+  // source: https://dm.henkel-dam.com/is/content/henkel/Cennik-Henkel-ACB
+  {
+    id: "viverto-ceresit-ce40-white-2kg",
+    ean: "5900089140015",
+    name: "Fuga Elastyczna CE 40 Aquastatic Bia\u0142y 01 2 kg Ceresit",
+    category: "grout",
+    brand: "Ceresit",
+    packageSize: 2,
+    unit: "kg",
+    store: "Viverto",
+    format: "jsonld",
+    pickupRequiresConfirmation: true,
+    url: "https://viverto.pl/fuga-elastyczna-ce-40-aquastatic-bialy-01-2-kg-ceresit/"
   },
   // source: https://sklep.zino.pl/pl/p/Akrylit-W-plus-snieznobiala-5l-Dekoral/2071
   // source: https://www.obi.pl/biale-farby-do-scian/dekoral-emulsja-akrylit-w-bialy-5-l/p/1237502
@@ -22675,6 +22760,9 @@ var RETAIL_SOURCES = [
   // The plain MP75 25kg barcode; not MP75L or a 20kg/30kg pack.
   // source: https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd
   { id: "castorama-knauf-mp75-25kg", ean: "5902367206352", name: "Tynk maszynowy Knauf MP 75 25 kg", category: "plaster", brand: "Knauf", packageSize: 25, unit: "kg", variant: ["Tynk maszynowy Knauf MP 75 25 kg"], store: "Castorama", pickupRequiresConfirmation: true, browserReviewAllowed: true, url: "https://www.castorama.pl/tynk-maszynowy-knauf-mp-75-25-kg/5902367206352_CAPL.prd" },
+  // source: https://www.bricoman.pl/produkty/tynk-gipsowy-maszynowy-knauf-mp-75-25-kg-20444235.html
+  // source: https://knauf.com/sk-SK/p/produkt/mp-75-10256_0105
+  { id: "bricoman-knauf-mp75-25kg", ean: "5901793355085", name: "Tynk gipsowy maszynowy Knauf MP 75 25 kg", category: "plaster", brand: "Knauf", packageSize: 25, unit: "kg", store: "Bricoman", pickupRequiresConfirmation: true, url: "https://www.bricoman.pl/produkty/tynk-gipsowy-maszynowy-knauf-mp-75-25-kg-20444235.html" },
   // Explicit right 70cm leaf; it must not replace the user's left/80cm choice.
   // source: https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd
   { id: "castorama-opp-klasyk-70-right", ean: "5063022524034", name: "Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e", category: "door-leaf", brand: "OPP", packageSize: 1, unit: "szt", variant: ["Drzwi z podci\u0119ciem OPP Klasyk 70 prawe bia\u0142e"], store: "Castorama", pickupRequiresConfirmation: true, browserReviewAllowed: true, url: "https://www.castorama.pl/drzwi-z-podcieciem-opp-klasyk-70-prawe-biale/5063022524034_CAPL.prd" },
@@ -27237,10 +27325,20 @@ function parseRetailPage(html, source, observedAt) {
   else if (source.format && !["jsonld", "shoper-api", "shopify-api", "idosell", "fixero", "rodimax", "irbud-woo", "krasny"].includes(source.format)) products.push(readRetailMicrodata(html, source.format, source.url, source.retailUnit));
   for (const script of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
-      products.push(...objects(JSON.parse(script[1])).filter((item) => [item["@type"]].flat().includes("Product")));
+      const entities = objects(JSON.parse(script[1]));
+      const isProduct = (item) => [item["@type"]].flat().includes("Product");
+      if (source.id === "viverto-ceresit-ce40-white-2kg") {
+        for (const page of entities.filter((item) => item["@type"] === "WebPage")) {
+          const primary = page.mainEntity;
+          if (primary && !Array.isArray(primary) && isProduct(primary)) products.push(primary);
+        }
+      } else {
+        products.push(...entities.filter(isProduct));
+      }
     } catch {
     }
   }
+  if (source.id === "viverto-ceresit-ce40-white-2kg" && products.length !== 1) throw Error("product_identity_ambiguous");
   if (source.format === "idosell" || source.format === "fixero" || source.format === "rodimax") {
     if (products.length !== 1) throw Error("product_identity_ambiguous");
     if (source.format === "idosell") products[0] = idosellPromotion(products[0], observedAt);
@@ -29646,6 +29744,17 @@ function catalogRefreshOffers(sources, observations, activeIds, confirmedIds, hi
 
 // artifacts/api-server/src/shared-backend.ts
 var REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1e3;
+var CATALOG_REFRESH_GRACE_MS = 15 * 60 * 1e3;
+function catalogReadinessProblems(now, offers, monitoring) {
+  const problems = [];
+  if (!monitoring.scheduled) problems.push("refresh_disabled");
+  if (monitoring.cacheError) problems.push("cache_error");
+  if (offers === 0) problems.push("no_comparable_offers");
+  const completedAt = Date.parse(monitoring.fullRefreshCompletedAt ?? "");
+  if (!Number.isFinite(completedAt)) problems.push("no_completed_refresh");
+  else if (now - completedAt > REFRESH_INTERVAL_MS + CATALOG_REFRESH_GRACE_MS) problems.push("refresh_overdue");
+  return problems;
+}
 var normalUnit = (value2) => ({ litr: "l", litry: "l", "m\xB2": "m2", "szt.": "szt" })[value2] ?? value2;
 function createRemontService(options = {}) {
   const compareDeliveryWithAvailablePart2 = createPreferredDeliveryComparison();
@@ -29660,6 +29769,8 @@ function createRemontService(options = {}) {
   const lastReadAt = /* @__PURE__ */ new Map();
   const lastReadSucceeded = /* @__PURE__ */ new Map();
   let lastAttemptAt = null;
+  let fullRefreshStartedAt = null;
+  let fullRefreshCompletedAt = null;
   const acceptedSource = (observation) => {
     if (!observation || typeof observation !== "object") return;
     const source = RETAIL_SOURCES.find((source2) => source2.id === observation.sourceId);
@@ -29825,7 +29936,9 @@ function createRemontService(options = {}) {
   }
   function refresh() {
     if (fullRefreshPromise) return fullRefreshPromise;
+    fullRefreshStartedAt = (/* @__PURE__ */ new Date()).toISOString();
     fullRefreshPromise = refreshSources(RETAIL_SOURCES).then(() => {
+      fullRefreshCompletedAt = (/* @__PURE__ */ new Date()).toISOString();
     }).finally(() => {
       fullRefreshPromise = null;
     });
@@ -29846,8 +29959,49 @@ function createRemontService(options = {}) {
     };
   }
   function status() {
+    const now = Date.now();
     const { offers } = catalog();
-    const eligible = offers.filter((offer) => isComparableOffer(offer));
+    const eligible = offers.filter((offer) => isComparableOffer(offer, now));
+    const activeIds = new Set(eligible.map((offer) => offer.id));
+    const online = RETAIL_SOURCES.filter((source) => !source.disabledReason && !source.pickupOnly);
+    const emptyStoreStats = () => ({
+      reviewed: 0,
+      current: 0,
+      olderThanCycle: 0,
+      expiredPrices: 0,
+      readErrors: 0,
+      outOfStock: 0,
+      manualReviewRequired: 0,
+      readErrorBreakdown: { httpNotFound: 0, rateLimited: 0, httpServer: 0, httpOther: 0, timeout: 0, connection: 0, other: 0 }
+    });
+    const stores = /* @__PURE__ */ new Map();
+    for (const source of online) {
+      const stats = stores.get(source.store) ?? emptyStoreStats();
+      const error40 = errors.get(source.id);
+      stats.reviewed++;
+      const observation = observations.get(source.id);
+      const age = observation ? now - Date.parse(observation.observedAt) : null;
+      if (activeIds.has(source.id)) {
+        stats.current++;
+        if (age !== null && age > REFRESH_INTERVAL_MS) stats.olderThanCycle++;
+      } else if (observation && age !== null && (age > MAX_COMPARABLE_OFFER_AGE_MS || observation.validUntil && !retailPriceIsValid(observation.validUntil, new Date(now)) || observation.verification && Date.parse(observation.verification.expiresAt) <= now)) {
+        stats.expiredPrices++;
+      }
+      if (error40 === "browser_refresh_required" || error40 === "browser_package_review_required") stats.manualReviewRequired++;
+      else if (error40 === "retailer_out_of_stock") stats.outOfStock++;
+      else if (error40) {
+        stats.readErrors++;
+        const breakdown = stats.readErrorBreakdown;
+        if (error40 === "retailer_http_404") breakdown.httpNotFound++;
+        else if (error40 === "retailer_http_429" || error40 === "retailer_rate_limited") breakdown.rateLimited++;
+        else if (/^retailer_http_5\d\d$/.test(error40)) breakdown.httpServer++;
+        else if (/^retailer_http_\d{3}$/.test(error40)) breakdown.httpOther++;
+        else if (error40 === "The operation was aborted due to timeout" || error40 === "quote_timeout") breakdown.timeout++;
+        else if (error40 === "retailer_connection_unavailable" || error40 === "fetch failed") breakdown.connection++;
+        else breakdown.other++;
+      }
+      stores.set(source.store, stats);
+    }
     return {
       status: eligible.length > 0 ? "ok" : "no-current-offers",
       offers: eligible.length,
@@ -29861,11 +30015,26 @@ function createRemontService(options = {}) {
       pickupOnlyStores: [...new Set(RETAIL_SOURCES.filter((source) => source.pickupOnly).map((source) => source.store))],
       scope: { channel: "online", currency: "PLN", deliveryIncluded: false, locationAdjusted: false },
       delivery: retailerDeliveryCapabilities(),
+      monitoring: {
+        checkedAt: new Date(now).toISOString(),
+        refreshIntervalMs: REFRESH_INTERVAL_MS,
+        scheduled: options.background !== false,
+        fullRefreshStartedAt,
+        fullRefreshCompletedAt,
+        fullRefreshRunning: fullRefreshPromise !== null,
+        cacheError: errors.get("cache") ?? null,
+        stores: [...stores].map(([store, stats]) => ({
+          store,
+          ...stats,
+          freshWithinCycle: stats.current - stats.olderThanCycle,
+          withoutComparablePrice: stats.reviewed - stats.current
+        }))
+      },
       sources: RETAIL_SOURCES.map((source) => ({
         id: source.id,
         store: source.store,
         checkedAt: observations.get(source.id)?.observedAt ?? null,
-        active: eligible.some((offer) => offer.id === source.id),
+        active: activeIds.has(source.id),
         error: source.disabledReason ?? errors.get(source.id) ?? null,
         ...observations.get(source.id)?.stockPackages !== void 0 ? { stockPackages: observations.get(source.id).stockPackages } : {},
         ...observations.get(source.id)?.verification ? { verification: observations.get(source.id).verification } : {}
@@ -29877,7 +30046,19 @@ function createRemontService(options = {}) {
     res.json(status());
   });
   router.get("/pricing/health", (_req, res) => {
+    res.set("Cache-Control", "no-store");
     res.json(status());
+  });
+  router.get("/pricing/readiness", (_req, res) => {
+    const { offers, monitoring } = status();
+    const problems = catalogReadinessProblems(Date.parse(monitoring.checkedAt), offers, monitoring);
+    res.set("Cache-Control", "no-store");
+    res.status(problems.length ? 503 : 200).json({
+      ready: problems.length === 0,
+      problems,
+      offers,
+      fullRefreshCompletedAt: monitoring.fullRefreshCompletedAt
+    });
   });
   router.get("/pricing/catalog-availability", (_req, res) => {
     res.set("Cache-Control", "no-store");
