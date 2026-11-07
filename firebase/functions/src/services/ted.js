@@ -217,3 +217,26 @@ export async function pobierzOgloszeniaTedDnia(dzien, { rozmiarStrony = 250, mak
   }
   return zebrane;
 }
+
+/**
+ * Województwo realizacji (`lib/nuts.js wojewodztwoRealizacji`) dla podanych numerów publikacji TED (2026-11-07) —
+ * uzupełnianie ogłoszeń pobranych przed 25.10, kiedy NUTS jeszcze nie zapisywaliśmy (7.11: 1069 otwartych bez
+ * województwa, więc reguła „teren” ich nie odsiewała). Zwraca Map numer → kod TERYT albo null (kilka województw).
+ */
+export async function pobierzWojewodztwaTed(numery, { fetchFn = fetch, rozmiar = 100 } = {}) {
+  const wynik = new Map();
+  const lista = [...new Set((numery ?? []).filter((n) => /^\d{1,9}-\d{4}$/.test(String(n))))];
+  for (let i = 0; i < lista.length; i += rozmiar) {
+    const czesc = lista.slice(i, i + rozmiar);
+    const odpowiedz = await fetchFn(`${env.TED_API_BASE_URL}/v3/notices/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: `publication-number IN (${czesc.join(' ')})`, fields: ['buyer-country-sub', 'place-of-performance-subdiv-lot'], limit: rozmiar }),
+    });
+    if (!odpowiedz.ok) throw new Error(`TED API odpowiedziało ${odpowiedz.status}`);
+    for (const n of (await odpowiedz.json()).notices ?? []) {
+      wynik.set(n['publication-number'], wojewodztwoRealizacji({ miejsca: n['place-of-performance-subdiv-lot'], siedziba: n['buyer-country-sub'] }));
+    }
+  }
+  return wynik;
+}

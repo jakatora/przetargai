@@ -16,6 +16,23 @@ export function czyOdrzuconyAdresat(error) {
 }
 
 /**
+ * Czy adres (albo wszystkie adresy listy) odbił wcześniej maila (jobs/odbiciaMaili.js, 2026-11-07). Wysyłka do
+ * odbitego adresu psuje reputację nadawcy. Błąd odczytu = wysyłamy (lepiej mail za dużo niż zgubiony).
+ */
+export async function czyAdresOdbity(to, { repo = null } = {}) {
+  const adresy = [to ?? []].flat().filter(Boolean);
+  if (!adresy.length) return false;
+  try {
+    const r = repo ?? (await import('../db/repos.js')).odbiteAdresy;
+    const wyniki = await Promise.all(adresy.map((a) => r.czy(a)));
+    return wyniki.every(Boolean);
+  } catch (err) {
+    logger.warn({ err: err.message }, 'Odczyt odbitych adresów nieudany — wysyłam');
+    return false;
+  }
+}
+
+/**
  * Wysyła email transakcyjny przez Resend.
  * Bez RESEND_API_KEY działa w trybie degradacji (loguje treść, nie wysyła).
  * `odrzuconyAdresat: true` = trwałe odrzucenie adresu (patrz czyOdrzuconyAdresat).
@@ -24,6 +41,10 @@ export async function sendEmail({ to, subject, html, text, attachments }) {
   if (!resend) {
     logger.warn({ to, subject }, 'Email pominięty — brak RESEND_API_KEY (tryb degradacji)');
     return { sent: false, degraded: true };
+  }
+  if (await czyAdresOdbity(to)) {
+    logger.info({ subject }, 'Email pominięty — adres odbity wcześniej (odbite_adresy)');
+    return { sent: false, odrzuconyAdresat: true, odbity: true };
   }
   try {
     const { data, error } = await resend.emails.send({

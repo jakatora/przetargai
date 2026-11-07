@@ -32,6 +32,10 @@ export function powodyAlarmu(odpowiedz) {
   if (d.ai?.ok === false) powody.push({ kod: 'ai', opis: `oceny AI padają (${Object.keys(d.ai?.bledy_wg_typu ?? {}).join(', ') || 'błąd'})` });
   if (d.push?.ok === false) powody.push({ kod: 'push', opis: `powiadomienia push nie docierają (${d.push?.ostatni_blad ?? 'błąd'})` });
   if (d.auto_swz?.ok === false) powody.push({ kod: 'auto_swz', opis: `automatyczna analiza SWZ przerwana (${d.auto_swz?.error ?? 'błąd'})` });
+  if (d.maile?.ok === false) {
+    const proc = typeof d.maile?.odsetek === 'number' ? `${Math.round(d.maile.odsetek * 100)}% odbitych w dobie` : (d.maile?.error ?? 'błąd odczytu');
+    powody.push({ kod: 'maile', opis: `maile odbijają się albo nie da się tego sprawdzić (${proc}) — reputacja nadawcy` });
+  }
   // 503 bez rozpoznanego powodu — i tak alarm (nowa reguła w /health, której strażnik nie zna).
   if (!powody.length && (odpowiedz.status >= 500 || d.status !== 'ok')) powody.push({ kod: 'status', opis: `/health zgłasza „${d.status ?? odpowiedz.status}”` });
   return powody;

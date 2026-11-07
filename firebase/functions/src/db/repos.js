@@ -17,6 +17,7 @@ import { kryteriaBlizniaka } from '../lib/blizniakKryteriow.js';
 import { doUtcIso } from '../lib/daty.js';
 import { dobaWarszawska, poczatekDobyWarszawskiej } from '../lib/czasPolski.js';
 import { normNazwa } from '../lib/ktoWygrywa.js';
+import { normalizujAdres as normalizujAdresMaila, idAdresu as idAdresuMaila } from '../lib/odbiciaMaili.js';
 import { wygasaO, wpisIndeksu, podzielNaCzesci } from '../lib/indeksPlanow.js';
 
 /*
@@ -156,6 +157,22 @@ export const users = {
       if (!snap.exists || String(snap.data().company_name ?? '').trim()) return;
       tx.update(ref, { company_name: nazwa, updated_at: nowIso() });
     });
+  },
+
+  /**
+   * Konta z terenem dostają w najbliższym przebiegu pełny przegląd (`pracownik_wersja` ≠ wersja karty): wybrane, które
+   * teraz łamią regułę „teren”, schodzą z listy (2026-11-07 — po uzupełnieniu województw TED). Bez ponownej oceny AI:
+   * ślady decyzji mają bieżącą wersję karty. Zwraca liczbę kont.
+   */
+  async wymusPrzegladKontZTerenem() {
+    const snap = await db().collection('users').select('regiony').get();
+    const zTerenem = snap.docs.filter((d) => (d.get('regiony') ?? []).length);
+    for (let i = 0; i < zTerenem.length; i += 400) {
+      const batch = db().batch();
+      for (const d of zTerenem.slice(i, i + 400)) batch.update(d.ref, { pracownik_wersja: 'przeglad-terenu' });
+      await batch.commit();
+    }
+    return zTerenem.length;
   },
 
   /** Teren z maila (services/terenZMaila.js): województwa albo świadome „cała Polska” (wtedy już nie pytamy). */
@@ -1120,6 +1137,31 @@ export const tenders = {
     return [...wynik.values()];
   },
 
+  /**
+   * Województwa uzupełnione wstecz (2026-11-07, jobs/tedWojewodztwa.js): `kody` = Map id przetargu → kod TERYT.
+   * Także kopia w feedach (`tender_wojewodztwo` — filtr regionu w apce). Zwraca liczbę zmienionych kopii.
+   */
+  async ustawWojewodztwa(kody) {
+    const pary = [...kody.entries()].filter(([, kod]) => kod);
+    for (let i = 0; i < pary.length; i += 400) {
+      const batch = db().batch();
+      for (const [id, kod] of pary.slice(i, i + 400)) batch.update(db().collection('tenders').doc(id), { wojewodztwo: kod });
+      await batch.commit();
+    }
+    let kopie = 0;
+    for (let i = 0; i < pary.length; i += 30) {
+      const czesc = new Map(pary.slice(i, i + 30));
+      const snap = await db().collectionGroup('matches').where('tender_id', 'in', [...czesc.keys()]).select('tender_id').get();
+      for (let j = 0; j < snap.docs.length; j += 400) {
+        const batch = db().batch();
+        for (const d of snap.docs.slice(j, j + 400)) batch.update(d.ref, { tender_wojewodztwo: czesc.get(d.get('tender_id')) });
+        await batch.commit();
+      }
+      kopie += snap.size;
+    }
+    return kopie;
+  },
+
   /** Termin z samą datą (TED) dostaje godzinę z kopii z platformy tego samego dnia — także w kopiach feedów i Zapisanych. */
   async doprecyzujTermin(id, deadline, teraz = nowIso()) {
     await db().collection('tenders').doc(id).update({ deadline, termin_z_kopii: true });
@@ -1129,7 +1171,7 @@ export const tenders = {
   /** Otwarte wpisy jednego źródła z polami porównania bliźniaków (indeks źródło+termin). */
   async otwarteZeZrodla(source, teraz = nowIso()) {
     const snap = await db().collection('tenders').where('source', '==', source).where('deadline', '>=', teraz)
-      .select('title', 'organization', 'deadline', 'url', 'bzp_external_id', 'zastapiony_przez').get();
+      .select('title', 'organization', 'deadline', 'url', 'bzp_external_id', 'zastapiony_przez', 'wojewodztwo').get();
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   },
 
@@ -3545,6 +3587,48 @@ export const stanPushRepo = {
   async zapisz(slad) {
     if (!slad) return;
     await STAN_PUSH_REF().set(slad, { mergeFields: Object.keys(slad) });
+  },
+};
+
+/**
+ * Odbite adresy e-mail (2026-11-07, lib/odbiciaMaili.js): `sendEmail` ich nie obsługuje. Id = skrót adresu.
+ * Usunięcie dokumentu (ręcznie) przywraca wysyłkę — np. gdy klient naprawił skrzynkę.
+ */
+const ODBITE_COL = () => db().collection('odbite_adresy');
+export const odbiteAdresy = {
+  async czy(adres) {
+    if (!normalizujAdresMaila(adres)) return false;
+    return (await ODBITE_COL().doc(idAdresuMaila(adres)).get()).exists;
+  },
+  /** `adresy` = Map adres → {typ, o}; zwraca, ile adresów było nowych. */
+  async zapisz(adresy, teraz = nowIso()) {
+    const lista = [...(adresy ?? new Map()).entries()];
+    let nowe = 0;
+    for (let i = 0; i < lista.length; i += 100) {
+      const czesc = lista.slice(i, i + 100);
+      const snapy = await db().getAll(...czesc.map(([adres]) => ODBITE_COL().doc(idAdresuMaila(adres))), { fieldMask: [] });
+      const batch = db().batch();
+      czesc.forEach(([adres, { typ, o }], j) => {
+        if (!snapy[j].exists) nowe++;
+        batch.set(ODBITE_COL().doc(idAdresuMaila(adres)), {
+          email: normalizujAdresMaila(adres), typ, ostatnie_o: o, zapisano_o: teraz,
+          ...(snapy[j].exists ? {} : { pierwsze_o: o }),
+        }, { merge: true });
+      });
+      await batch.commit();
+    }
+    return nowe;
+  },
+};
+
+const STAN_ODBIC_REF = () => db().collection('_health').doc('maile_odbicia');
+export const stanOdbic = {
+  async wczytaj() {
+    const doc = await STAN_ODBIC_REF().get();
+    return doc.exists ? doc.data() : null;
+  },
+  async zapiszPrzebieg(wynik) {
+    await STAN_ODBIC_REF().set({ ostatni_przebieg: wynik }, { mergeFields: ['ostatni_przebieg'] });
   },
 };
 

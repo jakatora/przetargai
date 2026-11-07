@@ -364,6 +364,28 @@ export const ltOknoFetch = onSchedule(
  * Strażnik zdrowia (2026-10-29) — co godzinę o :45: odpytuje publiczny /health i pisze do właściciela,
  * gdy problem trwa ≥ 2 pomiary (np. cykl dzienny się nie odbył — 27.10 nikt się nie dowiedział).
  */
+/*
+ * Odbicia maili (2026-11-07, src/jobs/odbiciaMaili.js): co 6 h lista wysłanych z Resend → odbite adresy do blokady
+ * w sendEmail i odsetek odbić do /health. Idempotentne (zapis z merge), więc ponowienia są bezpieczne.
+ */
+export const odbiciaMailiCo6h = onSchedule(
+  {
+    maxInstances: 3,
+    ...PONOWIENIA_IDEMPOTENTNE,
+    schedule: '50 */6 * * *',
+    timeZone: 'Europe/Warsaw',
+    timeoutSeconds: 120,
+    memory: '256MiB',
+    secrets: [JWT_SECRET, RESEND_API_KEY],
+  },
+  async () => {
+    const { runOdbiciaMaili } = await import('./src/jobs/odbiciaMaili.js');
+    const wynik = await runOdbiciaMaili();
+    console.log(JSON.stringify({ severity: wynik.za_wysokie ? 'WARNING' : 'INFO', message: 'odbiciaMaili zakończony', ...wynik }));
+    if (!wynik.ok) throw new Error(`odbiciaMaili: ${wynik.error}`);
+  },
+);
+
 export const strazZdrowiaCo1h = onSchedule(
   {
     // Zadania cykliczne: 3 instancje (2026-10-28). Przy 1 Cloud Run odrzucał zimny start. Wdrażać partiami.

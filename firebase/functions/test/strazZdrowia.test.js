@@ -66,3 +66,13 @@ test('runStrazZdrowia: nieudana wysyłka zwalnia znacznik — kolejny pomiar wys
   assert.match(maile[0].text, /InvalidCredentials/);
   assert.equal((await alarmZdrowia.wczytaj()).stan, 'wyslany');
 });
+
+test('powodyAlarmu: maile odbijają się ponad próg → kod „maile” z odsetkiem; brak sekcji albo ok → nic', () => {
+  const z = zdrowe();
+  z.cialo.maile = { ok: false, odsetek: 0.4, maili_24h: 30 };
+  const p = powodyAlarmu(z);
+  assert.deepEqual(p.map((x) => x.kod), ['maile']);
+  assert.match(p[0].opis, /40% odbitych w dobie/);
+  assert.deepEqual(powodyAlarmu({ ...zdrowe(), cialo: { ...zdrowe().cialo, maile: { ok: true, odsetek: 0.01 } } }), []);
+  assert.deepEqual(powodyAlarmu(zdrowe()), [], 'stary /health bez sekcji maile');
+});

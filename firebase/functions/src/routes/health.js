@@ -2,7 +2,8 @@ import { zrodlaCichoPusteWCyklu } from '../lib/zrodlaCichoPuste.js';
 import { Router } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { env } from '../config.js';
-import { cykl, tenders, users, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, oknoLt, stanPushRepo, autoSwz, umowyWygasajace } from '../db/repos.js';
+import { cykl, tenders, users, oknoBzp, oknoBk, oknoWynikow, oknoPlanow, oknoPz, oknoEpp, oknoLt, stanPushRepo, autoSwz, umowyWygasajace, stanOdbic } from '../db/repos.js';
+import { odbiciaZaWysokie } from '../lib/odbiciaMaili.js';
 import { ocenStanPush } from '../lib/stanPush.js';
 import { logger } from '../lib/logger.js';
 import { ocenStanAi } from '../lib/stanAi.js';
@@ -53,6 +54,7 @@ router.get('/', async (_req, res) => {
   let stanUmow = null;
   let stanPush = null;
   let stanAutoSwz = null;
+  let stanMaili = null;
   let urzadzenia = null;
   let stanOknaWynikow = null;
   let stanOknaPlanow = null;
@@ -60,13 +62,14 @@ router.get('/', async (_req, res) => {
   try {
     await getFirestore().collection('_health').limit(1).get();
     dbOk = true;
-    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanOknaLt, stanPush, stanAutoSwz, urzadzenia, stanUmow] = await Promise.all([
+    [ostatniCykl, stanOkna, stanOknaBk, stanOknaWynikow, stanOknaPlanow, stanOknaPz, stanOknaEpp, stanOknaLt, stanPush, stanAutoSwz, urzadzenia, stanUmow, stanMaili] = await Promise.all([
       cykl.ostatniPrzebieg(), oknoBzp.wczytaj(), oknoBk.wczytaj(), oknoWynikow.wczytaj(),
       oknoPlanow.wczytaj(), oknoPz.wczytaj().catch(() => null), oknoEpp.wczytaj().catch(() => null), oknoLt.wczytaj().catch(() => null),
       stanPushRepo.wczytaj().catch(() => null),
       autoSwz.wczytajPrzebieg().catch(() => null),
       users.urzadzeniaPush().catch(() => null),
       umowyWygasajace.wczytajPrzebieg().catch(() => null),
+      stanOdbic.wczytaj().catch(() => null),
     ]);
   } catch { /* zgłoszone w polu db */ }
 
@@ -325,6 +328,21 @@ router.get('/', async (_req, res) => {
         bledy: stanAutoSwz.ostatni_przebieg.bledy ?? null,
         naprawione: stanAutoSwz.ostatni_przebieg.naprawione ?? null,
         error: stanAutoSwz.ostatni_przebieg.error ?? null,
+      }
+      : null,
+    /*
+     * Odbicia maili (2026-11-07, jobs/odbiciaMaili.js): odsetek odbitych w dobie. Informacyjne — bez 503; `ok: false`
+     * powyżej 5% (przy ≥ 20 mailach) zapala alarm strażnika. 7.11 przed blokadą: 40% (konta testowe i fikcyjne).
+     */
+    maile: stanMaili?.ostatni_przebieg
+      ? {
+        ok: !odbiciaZaWysokie(stanMaili.ostatni_przebieg) && stanMaili.ostatni_przebieg.ok !== false,
+        zakonczony_o: stanMaili.ostatni_przebieg.zakonczony_o ?? null,
+        maili_24h: stanMaili.ostatni_przebieg.maili_24h ?? null,
+        odbite_24h: stanMaili.ostatni_przebieg.odbite_24h ?? null,
+        odsetek: stanMaili.ostatni_przebieg.odsetek ?? null,
+        odbite_adresy: stanMaili.ostatni_przebieg.odbite_adresy ?? null,
+        error: stanMaili.ostatni_przebieg.error ?? null,
       }
       : null,
     push: {

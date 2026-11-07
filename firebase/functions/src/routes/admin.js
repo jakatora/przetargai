@@ -17,6 +17,8 @@ import { stanTempa } from '../lib/tempoZapytan.js';
 import { parsujWynik } from '../lib/wynikiParser.js';
 import { runUmowyWygasajace } from '../jobs/umowyWygasajace.js';
 import { scalBlizniakiPlatformy } from '../jobs/blizniakiPlatformy.js';
+import { runOdbiciaMaili } from '../jobs/odbiciaMaili.js';
+import { runTedWojewodztwa } from '../jobs/tedWojewodztwa.js';
 import { przeliczProfil } from '../services/pracownik.js';
 import { tenders, users, rozstrzygniecia, matches as dopasowania } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
@@ -118,6 +120,17 @@ router.post('/kryteria-wstecz', ah(async (req, res) => {
 router.post('/blizniaki-platformy', ah(async (req, res) => {
   const limit = Number.isInteger(req.body?.limit) && req.body.limit > 0 ? req.body.limit : Infinity;
   res.json(await scalBlizniakiPlatformy({ sucho: req.body?.sucho === true, limit, tylkoZastapione: req.body?.tylko_zastapione === true }));
+}));
+
+/** Odbicia maili (2026-11-07) — jak zadanie co 6 h, z dłuższym oknem wstecz (`godzin`, do 30 dni). */
+router.post('/odbicia-maili', ah(async (req, res) => {
+  const godzin = Number.isInteger(req.body?.godzin) && req.body.godzin > 0 ? Math.min(req.body.godzin, 720) : 48;
+  res.json(await runOdbiciaMaili({ godzin, maksStron: 60 }));
+}));
+
+/** Województwa otwartych ogłoszeń TED sprzed 25.10 (2026-11-07) — z NUTS z API TED, bez AI. */
+router.post('/ted-wojewodztwa', ah(async (req, res) => {
+  res.json(await runTedWojewodztwa());
 }));
 
 /** Warunki udziału BZP (2026-11-02) — jak `/kryteria-wstecz`: doba BZP, tylko istniejące dokumenty bez warunków, bez AI. */
