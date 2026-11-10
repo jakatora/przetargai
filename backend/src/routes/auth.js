@@ -6,7 +6,7 @@ import { ah } from '../lib/asyncHandler.js';
 import { authRequired, signToken } from '../middleware/auth.js';
 import { users, passwordResets } from '../db/repos.js';
 import { isValidNip, normalizeNip } from '../lib/nip.js';
-import { badRequest, conflict, unauthorized, forbidden } from '../lib/errors.js';
+import { AppError, badRequest, conflict, unauthorized, forbidden } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicUser } from '../lib/serialize.js';
 import { createUpgradeLink } from '../services/magicLink.js';
@@ -59,6 +59,10 @@ router.post('/register', ah(async (req, res) => {
   // PRZED jakimkolwiek odczytem bazy: 403 bez podpisu także dla zajętego adresu, więc
   // nie da się nim sondować, które konta pomostowe istnieją (2026-09-25).
   const kontoPomostowe = jestAdresemMostu(data.email, env.MOST_EMAIL_DOMENA);
+  if (!kontoPomostowe && !env.LEGACY_REGISTRATION_ENABLED) {
+    throw new AppError(403, 'LEGACY_REGISTRATION_DISABLED',
+      'Załóż konto w aktualnej aplikacji PrzetargAI. Rejestracja przez starszy serwer jest wyłączona.');
+  }
   if (kontoPomostowe && env.MOST_WYMAGAJ_PODPISU
     && !poprawnyPodpisMostu(data.email, req.get('X-Most-Podpis'), env.JWT_SECRET)) {
     audit({ userId: null, action: 'register_most_bez_podpisu', ip: req.ip });
