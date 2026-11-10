@@ -2404,6 +2404,22 @@ export const saved = {
   },
 
   /**
+   * „Nie dla nas” przy zapisanym przetargu (2026-11-10, audyt ścieżki): zdejmuje go z Zapisanych, żeby nie budził
+   * przypomnieniami 7/3/1 ani alertami o zmianach SWZ. Złożonej albo rozstrzygniętej oferty nie ruszamy — to już
+   * historia firmy (wynik, zwrot wadium). Zwraca true, gdy wpis usunięto.
+   */
+  async usunPoOdrzuceniu(userId, tenderId) {
+    const ref = savedCol(userId).doc(tenderId);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return false;
+      if (['zlozona', 'wygrana', 'przegrana'].includes(doc.data().status)) return false;
+      tx.delete(ref);
+      return true;
+    });
+  },
+
+  /**
    * Ustawia etap pracy nad zapisanym przetargiem (D-054 — warsztat przetargu).
    * Status jest już znormalizowany przez wołającego. Zwraca null, gdy przetarg
    * nie jest zapisany (nie ma czego etapować).

@@ -383,7 +383,7 @@ export default function AccountScreen({ navigation }) {
         */}
         <View style={styles.prawneRzad}>
           <Pressable
-            onPress={() => WebBrowser.openBrowserAsync('https://przetargai.web.app/polityka-prywatnosci')}
+            onPress={() => WebBrowser.openBrowserAsync('https://przetarg-ai.pl/polityka-prywatnosci')}
             accessibilityRole="link"
             hitSlop={8}
           >
@@ -391,7 +391,7 @@ export default function AccountScreen({ navigation }) {
           </Pressable>
           <Text style={styles.zrodloPodpis}>·</Text>
           <Pressable
-            onPress={() => WebBrowser.openBrowserAsync('https://przetargai.web.app/regulamin')}
+            onPress={() => WebBrowser.openBrowserAsync('https://przetarg-ai.pl/regulamin')}
             accessibilityRole="link"
             hitSlop={8}
           >

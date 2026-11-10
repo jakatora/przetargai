@@ -7,7 +7,7 @@ import { badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { logger } from '../lib/logger.js';
 import { esc } from '../lib/html.js';
-import { users, tenders, matches, evaluations, dziennik, magicLinks } from '../db/repos.js';
+import { users, tenders, matches, evaluations, dziennik, magicLinks, saved } from '../db/repos.js';
 import { planEfektywny, stanProby } from '../lib/plan.js';
 import { kartaSchema, kartaZUzytkownika, publicKarta, brakiKarty, wersjaKarty } from '../lib/kartaFirmy.js';
 import { PRZYCZYNY, PRZYCZYNY_KLIENTA, pustyLicznikPrzyczyn } from '../lib/przyczyny.js';
@@ -130,12 +130,15 @@ router.post('/odrzuc/:matchId', ah(async (req, res) => {
     przyczyna: wynik.data.przyczyna, komentarz: wynik.data.komentarz ?? null, teraz,
   });
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
+  // Odrzucony nie może dalej siedzieć w Zapisanych z przypomnieniami i alertami (audyt 2026-11-10).
+  const zZapisanych = await saved.usunPoOdrzuceniu(req.user.id, row.tender_id ?? row.id)
+    .catch((err) => { logger.error({ err: err.message, userId: req.user.id }, 'Odrzucony nie zdjęty z Zapisanych'); return false; });
   await users.dodajSygnal(req.user.id, zbudujSygnal({
     typ: 'odrzucenie', tenderId: row.tender_id, tytul: row.tender_title, wojewodztwo: kodWojewodztwa(row.tender_wojewodztwo),
     wartosc: row.tender_budget, termin: row.tender_deadline, przyczyna: wynik.data.przyczyna, komentarz: wynik.data.komentarz, teraz,
   }));
-  audit({ userId: req.user.id, action: 'reject_match', detail: { matchId: row.id, przyczyna: wynik.data.przyczyna }, ip: req.ip });
-  res.json({ ok: true });
+  audit({ userId: req.user.id, action: 'reject_match', detail: { matchId: row.id, przyczyna: wynik.data.przyczyna, zZapisanych }, ip: req.ip });
+  res.json({ ok: true, usuniety_z_zapisanych: zZapisanych });
 }));
 
 router.post('/przywroc/:tenderId', ah(async (req, res) => {

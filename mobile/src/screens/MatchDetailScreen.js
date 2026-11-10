@@ -82,7 +82,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleSzczegolow);
   const { t } = useJezyk();
-  const { isSaved, toggle } = useSaved();
+  const { isSaved, toggle, refresh: odswiezZapisane } = useSaved();
   const { match } = route?.params ?? {};
   const tender = match?.tender;
   const ocena = opisOceny(match?.scorer);
@@ -278,8 +278,10 @@ export default function MatchDetailScreen({ route, navigation }) {
   async function odrzuc(przyczyna, komentarz) {
     setOdrzucanie(true);
     try {
-      await api.pracownikOdrzuc(match.id, przyczyna, komentarz);
+      const wynik = await api.pracownikOdrzuc(match.id, przyczyna, komentarz);
       setArkusz(false);
+      // Odrzucony schodzi z Zapisanych na serwerze (bez przypomnień i alertów) — odśwież gwiazdki.
+      if (wynik?.usuniety_z_zapisanych) odswiezZapisane?.();
       navigation.goBack();
     } catch (err) {
       Alert.alert(t('Błąd', 'Error'), err.message);
@@ -298,8 +300,8 @@ export default function MatchDetailScreen({ route, navigation }) {
       t(`Termin składania ofert: ${formatDate(tender.deadline)}`, `Bid deadline: ${formatDate(tender.deadline)}`),
       tender.url || null,
       t(
-        '— znalezione w PrzetargAI, monitoring przetargów publicznych: https://przetargai.web.app',
-        '— found with PrzetargAI, public tender monitoring: https://przetargai.web.app',
+        '— znalezione w PrzetargAI, monitoring przetargów publicznych: https://przetarg-ai.pl',
+        '— found with PrzetargAI, public tender monitoring: https://przetarg-ai.pl',
       ),
     ].filter(Boolean);
     try {

@@ -29,7 +29,7 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
   const { t } = useJezyk();
   const { kolory } = useTheme();
   const styles = useStyle(tworzStylePanelu);
-  const { isSaved, toggle } = useSaved();
+  const { isSaved, toggle, refresh: odswiezZapisane } = useSaved();
   const [dzien, setDzien] = useState(null);
   const [blad, setBlad] = useState(null);
   const [rozwiniete, setRozwiniete] = useState(false);
@@ -77,8 +77,10 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
     if (!doOdrzucenia) return;
     setZapisywanie(true);
     try {
-      await api.pracownikOdrzuc(doOdrzucenia.id, przyczyna, komentarz);
+      const wynik = await api.pracownikOdrzuc(doOdrzucenia.id, przyczyna, komentarz);
       setDoOdrzucenia(null);
+      // Serwer zdejmuje odrzucony z Zapisanych (bez przypomnień) — gwiazdki w apce muszą to zobaczyć.
+      if (wynik?.usuniety_z_zapisanych) odswiezZapisane?.();
       await wczytaj();
       onZmiana?.();
     } catch (err) {

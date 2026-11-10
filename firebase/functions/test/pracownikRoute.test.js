@@ -87,6 +87,25 @@ test('POST /pracownik/odrzuc: sygnał, znika z /matches; zła przyczyna 400; cud
   assert.equal((await users.findById(k.id)).pracownik_sygnaly[0].przyczyna, 'teren');
 });
 
+test('POST /pracownik/odrzuc przy zapisanym: schodzi z Zapisanych (bez przypomnień); złożona oferta zostaje', async () => {
+  const k = await konto();
+  const put = (sciezka, body) => fetch(`${BAZA}${sciezka}`, { method: 'PUT', headers: k.h, body: body ? JSON.stringify(body) : undefined });
+  const t = await wybrany(k.id);
+  assert.equal((await put(`/matches/${t.id}/save`)).status, 200);
+  assert.equal((await put(`/matches/${t.id}/status`, { status: 'przygotowuje' })).status, 200);
+  const odp = await post(k, `/pracownik/odrzuc/${t.id}`, { przyczyna: 'teren' });
+  assert.equal(odp.status, 200);
+  assert.equal(odp.body.usuniety_z_zapisanych, true);
+  assert.ok(!(await get(k, '/matches/saved')).body.saved.some((z) => z.tender.id === t.id), 'nie ma go w Zapisanych');
+
+  const zlozony = await wybrany(k.id);
+  await put(`/matches/${zlozony.id}/save`);
+  await put(`/matches/${zlozony.id}/status`, { status: 'zlozona' });
+  const odp2 = await post(k, `/pracownik/odrzuc/${zlozony.id}`, { przyczyna: 'teren' });
+  assert.equal(odp2.body.usuniety_z_zapisanych, false);
+  assert.ok((await get(k, '/matches/saved')).body.saved.some((z) => z.tender.id === zlozony.id), 'złożona oferta zostaje w historii');
+});
+
 test('GET /pracownik/odrzucone: Free → powód plan; Standard → lista', async () => {
   const free = await konto({ plan: 'free' });
   assert.equal((await get(free, '/pracownik/odrzucone')).body.powod, 'plan');
