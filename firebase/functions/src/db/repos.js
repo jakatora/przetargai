@@ -2349,8 +2349,12 @@ export const saved = {
     const konta = await db().collection('users').select().get();
     const wynik = [];
     for (const konto of konta.docs) {
-      const snap = await matchCol(konto.id).where('tender_deadline', '>=', od).select('tender_id', 'confidence_score', 'created_at').get();
+      const snap = await matchCol(konto.id).where('tender_deadline', '>=', od)
+        .select('tender_id', 'confidence_score', 'created_at', 'odrzucony_przez_klienta', 'odrzucony_przez_pracownika').get();
       snap.docs
+        // Odrzucone („Nie dla nas” albo przez selekcję) nie są „z Twojej listy” — bez alertów i bez zużywania
+        // limitu przebiegu monitoringu (audyt ścieżki 2026-11-10).
+        .filter((d) => !d.get('odrzucony_przez_klienta') && !d.get('odrzucony_przez_pracownika'))
         .map((d) => ({ tenderId: d.get('tender_id') ?? d.id, wynik: Number(d.get('confidence_score')) || 0, od: d.get('created_at') ?? null }))
         .filter((m) => m.wynik >= minWynik)
         .sort((x, y) => y.wynik - x.wynik)
