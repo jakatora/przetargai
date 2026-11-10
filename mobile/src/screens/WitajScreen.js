@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
+import CpvPicker from '../components/CpvPicker';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius, typografia } from '../theme';
@@ -48,6 +49,8 @@ export default function WitajScreen({ navigation }) {
   const [dobieranie, setDobieranie] = useState(false);
   const [info, setInfo] = useState(null);
   const [zapis, setZapis] = useState(false);
+  // Ściąga CPV (2026-11-10) — przeniesiona z rejestracji, która pyta już tylko o e-mail i hasło.
+  const [sciagaOtwarta, setSciagaOtwarta] = useState(false);
   // Szybka ścieżka (2026-11-01): sam NIP → kody CPV i regiony z wygranych przetargów, słowa z ich tytułów.
   const [nip, setNip] = useState(user?.company_nip ?? '');
   const [zNipu, setZNipu] = useState(false);
@@ -164,18 +167,19 @@ export default function WitajScreen({ navigation }) {
       </View>
 
       <View style={styles.szybko}>
-        <Text style={styles.krok}>{t('Najszybciej: wpisz NIP firmy', 'Fastest: enter your company NIP')}</Text>
+        {/* Kroki 2026-11-10: NIP to krok 1 (najszybsza droga), opis firmy — alternatywa bez numeru, potem krok 2. */}
+        <View style={styles.krokRzad}>
+          <Text style={styles.krokNumer}>1</Text>
+          <Text style={styles.krok}>{t('Wpisz NIP firmy — to najszybciej', 'Enter your company NIP — the fastest way')}</Text>
+        </View>
         <Text style={styles.szybkoOpis}>
           {t('Branże i regiony dobierzemy z przetargów, które już wygrałeś — bez opisywania.', 'We pick industries and regions from tenders you have already won — no description needed.')}
         </Text>
-        <TextField value={nip} onChangeText={setNip} placeholder="7941844550" keyboardType="numeric" maxLength={13} />
+        <TextField value={nip} onChangeText={setNip} placeholder={t('np. 7941844550', 'e.g. 7941844550')} keyboardType="numeric" maxLength={13} />
         <Button title={t('Dobierz z NIP-u', 'Fill in from NIP')} onPress={dobierzZNipu} loading={zNipu} variant="ghost" style={styles.gapMaly} />
       </View>
 
-      <View style={styles.krokRzad}>
-        <Text style={styles.krokNumer}>1</Text>
-        <Text style={styles.krok}>{t('…albo opisz firmę jednym zdaniem', '…or describe your company in one sentence')}</Text>
-      </View>
+      <Text style={[styles.krok, styles.albo]}>{t('…albo opisz firmę jednym zdaniem', '…or describe your company in one sentence')}</Text>
       <TextField
         value={opis}
         onChangeText={setOpis}
@@ -211,6 +215,10 @@ export default function WitajScreen({ navigation }) {
         hint={t('Po przecinku — jeśli nie znasz, zostaw AI powyżej', 'Comma-separated — if you do not know them, use the suggestion above')}
         style={styles.polCpv}
       />
+      <Pressable onPress={() => setSciagaOtwarta(true)} hitSlop={8} accessibilityRole="button">
+        <Text style={styles.linkSciagi}>{t('Nie znasz kodów? Otwórz ściągę CPV →', 'Do not know the codes? Open the CPV cheat sheet →')}</Text>
+      </Pressable>
+      <CpvPicker widoczny={sciagaOtwarta} onClose={() => setSciagaOtwarta(false)} wartosc={cpv} onChange={setCpv} />
 
       <Button title={t('Zapisz i zacznij', 'Save and start')} onPress={zapiszIStart} loading={zapis} style={styles.gap} />
       <Button title={t('Pomiń na razie', 'Skip for now')} onPress={pomin} variant="ghost" style={styles.gapMaly} />
@@ -225,6 +233,7 @@ export default function WitajScreen({ navigation }) {
 }
 
 const tworzStyleWitaj = tworzStyle((k) => ({
+  albo: { marginTop: spacing.lg, marginBottom: spacing.sm },
   // Powitanie na „atramencie" — ten sam ciemny blok co raport pracownika na liście przetargów.
   hero: {
     backgroundColor: k.atrament,
@@ -245,6 +254,7 @@ const tworzStyleWitaj = tworzStyle((k) => ({
   szybko: { backgroundColor: k.wyroznienie, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.sm },
   szybkoOpis: { fontSize: 13, color: k.textMuted, lineHeight: 19, marginTop: 2, marginBottom: spacing.sm },
   polCpv: { marginBottom: spacing.xs },
+  linkSciagi: { color: k.blue, fontSize: 14, fontWeight: '600', marginBottom: spacing.sm },
   info: { fontSize: 14, color: k.blue, fontWeight: '600', marginTop: spacing.sm, lineHeight: 20 },
   stopka: { fontSize: 13, color: k.textMuted, textAlign: 'center', marginTop: spacing.md, lineHeight: 18 },
 }));

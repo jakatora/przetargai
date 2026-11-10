@@ -94,7 +94,6 @@ export default function LoginScreen({ navigation }) {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        placeholder="••••••••"
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button title={t('Zaloguj się', 'Sign in')} onPress={handleLogin} loading={loading} />
