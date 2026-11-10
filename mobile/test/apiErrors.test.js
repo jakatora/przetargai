@@ -55,3 +55,19 @@ test('ApiError — zachowuje się jak zwykły Error (message, instanceof, stack)
   assert.equal(err.name, 'ApiError');
   assert.ok(typeof err.stack === 'string');
 });
+
+test('bladOdpowiedzi — 429/5xx/413 bez komunikatu serwera mówią, co zrobić (audyt 2026-11-10)', () => {
+  assert.match(bladOdpowiedzi(429, null).message, /odczekaj/);
+  assert.match(bladOdpowiedzi(503, null).message, /chwilowo niedostępny/);
+  assert.match(bladOdpowiedzi(413, null).message, /za duży/);
+  assert.equal(bladOdpowiedzi(429, { error: { message: 'Limit pytań' } }).message, 'Limit pytań', 'komunikat serwera ma pierwszeństwo');
+});
+
+test('bladCzasu — inny komunikat niż brak internetu, token zostaje (status 0)', async () => {
+  const { bladCzasu } = await import('../src/api/errors.js');
+  const err = bladCzasu();
+  assert.equal(err.status, 0);
+  assert.equal(err.wygaslaSesja, false);
+  assert.equal(err.przekroczonoCzas, true);
+  assert.match(err.message, /nie odpowiedział na czas/);
+});

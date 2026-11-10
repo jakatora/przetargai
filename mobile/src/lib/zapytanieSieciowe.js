@@ -35,11 +35,13 @@ const domyslneCzekanie = (ms) => new Promise((r) => setTimeout(r, ms));
 export async function wyslijZLimitem(url, opcje, { fetchFn = fetch, limitMs, ponowienia = 0, czekaj = domyslneCzekanie }) {
   for (let proba = 0; ; proba += 1) {
     const kontroler = new AbortController();
-    const zegar = setTimeout(() => kontroler.abort(), limitMs);
+    let poLimicie = false;
+    const zegar = setTimeout(() => { poLimicie = true; kontroler.abort(); }, limitMs);
     try {
       return await fetchFn(url, { ...opcje, signal: kontroler.signal });
     } catch (err) {
-      if (proba >= ponowienia) throw err;
+      // Przerwanie po NASZYM limicie czasu ≠ brak sieci — klient pokazuje inny komunikat (2026-11-10).
+      if (proba >= ponowienia) throw poLimicie ? Object.assign(new Error('Przekroczono limit czasu'), { przekroczonoCzas: true }) : err;
     } finally {
       clearTimeout(zegar);
     }

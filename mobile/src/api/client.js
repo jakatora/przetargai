@@ -1,5 +1,5 @@
 import { API_URL } from '../config';
-import { bladOdpowiedzi, bladSieci } from './errors';
+import { bladOdpowiedzi, bladSieci, bladCzasu } from './errors';
 import { wyslijZLimitem, parametryDlaMetody } from '../lib/zapytanieSieciowe';
 import { parametryProfilu } from '../lib/profilKonkurenta';
 
@@ -20,21 +20,29 @@ export function onSesjaWygasla(handler) {
   naWygasnieciesesji = handler;
 }
 
-async function request(path, { method = 'GET', body, auth = true } = {}) {
+/**
+ * @param {{method?: string, body?: any, auth?: boolean, limitMs?: number, ponowienia?: number}} [opcje]
+ *   `limitMs`/`ponowienia` nadpisują domyślne dla metody — wolne trasy AI (pytanie do SWZ, wyjaśnienie)
+ *   dostają dłuższy limit i BEZ automatycznego ponowienia (powtórka = drugi raz zużyty limit dzienny).
+ */
+async function request(path, { method = 'GET', body, auth = true, limitMs, ponowienia } = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  if (auth && authToken) headers.Authorization = `Bearer ${authToken}`;
+  // Token, z którym POSZŁO żądanie — 401 ze starego żądania nie może wylogować nowej sesji (2026-11-10).
+  const tokenZadania = auth ? authToken : null;
+  if (tokenZadania) headers.Authorization = `Bearer ${tokenZadania}`;
 
   let res;
   try {
     // Limit czasu + jedno ponowienie odczytu — zawieszone łącze kończy się błędem
     // sieci z „Spróbuj ponownie", a nie wiecznym spinnerem.
+    const domyslne = parametryDlaMetody(method);
     res = await wyslijZLimitem(
       API_URL + path,
       { method, headers, body: body ? JSON.stringify(body) : undefined },
-      parametryDlaMetody(method),
+      { limitMs: limitMs ?? domyslne.limitMs, ponowienia: ponowienia ?? domyslne.ponowienia },
     );
-  } catch {
-    throw bladSieci();
+  } catch (err) {
+    throw err?.przekroczonoCzas ? bladCzasu() : bladSieci();
   }
 
   let data = null;
@@ -48,13 +56,16 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     const err = bladOdpowiedzi(res.status, data);
     // Wygasła sesja na trasie wymagającej tokenu — wyloguj raz, globalnie.
     // Na trasach publicznych (logowanie) 401 znaczy „złe hasło", nie „wyloguj".
-    if (err.wygaslaSesja && auth && authToken && naWygasnieciesesji) {
+    if (err.wygaslaSesja && tokenZadania && authToken === tokenZadania && naWygasnieciesesji) {
       naWygasnieciesesji();
     }
     throw err;
   }
   return data;
 }
+
+/** Wolne trasy AI (pytanie do SWZ z pobraniem PDF, wyjaśnienie) — 150 s, bez automatycznego ponowienia. */
+const TRASA_AI = { limitMs: 150_000, ponowienia: 0 };
 
 /**
  * Żądanie o PLIK (web / Windows): zwraca Blob i nazwę z nagłówka `X-Plik` (ustawianego przez
@@ -204,7 +215,7 @@ export const api = {
    * Wyjaśnienie AI ogłoszenia (D-052). Odpowiedź: { streszczenie, cached } gdy się
    * udało, albo { streszczenie: null, powod, komunikat } przy limicie/niedostępności.
    */
-  getStreszczenie: (id) => request(`/matches/${id}/streszczenie`),
+  getStreszczenie: (id) => request(`/matches/${id}/streszczenie`, TRASA_AI),
   /** Statystyki rozstrzygniętych postępowań dla przetargu (R17): { wyniki } albo { wyniki: null }. */
   getWyniki: (id) => request(`/matches/${id}/wyniki`),
   /** Statystyki + zachęta do Standard oparta na realnych liczbach (D-055). */
@@ -270,9 +281,9 @@ export const api = {
   /** Pytanie do SWZ (płatne AI) — odpowiedź z treści SWZ i cytaty sprawdzone w tekście. */
   /** Pytanie do SWZ przy przetargu — serwer sam bierze SWZ w PDF i wiąże analizę (2026-10-31). */
   zapytajSwzPrzetargu: (tenderId, pytanie) =>
-    request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/zapytaj-swz`, { method: 'POST', body: { pytanie } }),
+    request(`/wygrywalnosc/tender/${encodeURIComponent(tenderId)}/zapytaj-swz`, { method: 'POST', body: { pytanie }, ...TRASA_AI }),
   radarZapytajSwz: (id, pytanie) =>
-    request(`/api/przetarg/swz/postepowania/${id}/zapytaj`, { method: 'POST', body: { pytanie } }),
+    request(`/api/przetarg/swz/postepowania/${id}/zapytaj`, { method: 'POST', body: { pytanie }, ...TRASA_AI }),
   /** Wchłonięcie nowo opublikowanej wersji SWZ → wersjonowanie + wpis zmiany (diff). */
   /** Oznacza pytania (np. po udostępnieniu wniosku): { ids: [...], status: 'wyslane' } → { pytania }. */
   radarPytaniaStatus: (id, payload) =>

@@ -15,14 +15,17 @@ const SavedContext = createContext(null);
 export function SavedProvider({ children }) {
   const { user } = useAuth();
   const [ids, setIds] = useState(() => new Set());
+  // Czy zbiór pochodzi z serwera. Po nieudanym starcie (słaba sieć) pusty zbiór NIE znaczy „nic nie
+  // zapisano” — przełącznik na ★ wysłałby zapis zamiast usunięcia (audyt 2026-11-10).
+  const [wczytane, setWczytane] = useState(false);
 
   // Wczytanie zapisanych po zalogowaniu (i wyczyszczenie po wylogowaniu).
   useEffect(() => {
     let aktywny = true;
-    if (!user) { setIds(new Set()); return undefined; }
+    if (!user) { setIds(new Set()); setWczytane(false); return undefined; }
     api.getSavedIds()
-      .then((d) => { if (aktywny) setIds(new Set(d.ids || [])); })
-      .catch(() => {}); // brak zapisanych / offline — zostaje pusty zbiór
+      .then((d) => { if (aktywny) { setIds(new Set(d.ids || [])); setWczytane(true); } })
+      .catch(() => { if (aktywny) setWczytane(false); }); // offline — dociągniemy przy pierwszym przełączeniu
     return () => { aktywny = false; };
   }, [user?.id]);
 
@@ -32,7 +35,12 @@ export function SavedProvider({ children }) {
    * @returns {Promise<boolean>} nowy stan (true = zapisany)
    */
   const toggle = useCallback(async (tenderId) => {
-    const byloZapisane = ids.has(tenderId);
+    let aktualne = ids;
+    if (!wczytane) {
+      const d = await api.getSavedIds().catch(() => null);
+      if (d) { aktualne = new Set(d.ids || []); setIds(aktualne); setWczytane(true); }
+    }
+    const byloZapisane = aktualne.has(tenderId);
     setIds((prev) => {
       const nast = new Set(prev);
       if (byloZapisane) nast.delete(tenderId); else nast.add(tenderId);
@@ -50,12 +58,12 @@ export function SavedProvider({ children }) {
       });
       throw err;
     }
-  }, [ids]);
+  }, [ids, wczytane]);
 
   /** Wymuszone odświeżenie (np. po wejściu na ekran „Zapisane"). */
   const refresh = useCallback(async () => {
     const d = await api.getSavedIds().catch(() => null);
-    if (d) setIds(new Set(d.ids || []));
+    if (d) { setIds(new Set(d.ids || [])); setWczytane(true); }
   }, []);
 
   const wartosc = useMemo(() => ({
