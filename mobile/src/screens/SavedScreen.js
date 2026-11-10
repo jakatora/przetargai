@@ -21,6 +21,7 @@ import * as storage from '../lib/storage';
 import { useAuth } from '../context/AuthContext';
 import { eksportujNaEmail } from '../services/eksportCsv';
 import { kolejnoscZapisanych } from '../lib/kolejnoscZapisanych';
+import { utworzLicznikZadan } from '../lib/licznikZadan';
 
 export default function SavedScreen({ navigation }) {
   const { kolory } = useTheme();
@@ -35,8 +36,10 @@ export default function SavedScreen({ navigation }) {
   const [bladZapisu, setBladZapisu] = useState(false);
   const [zajete, setZajete] = useState(() => new Set());
   const blokady = useRef(new Set());
+  const odczyty = useRef(utworzLicznikZadan());
   function rozpocznij(id) {
     if (blokady.current.has(id)) return false;
+    odczyty.current.nowe(); // wcześniejszy GET nie może cofnąć decyzji użytkownika
     blokady.current.add(id); setZajete(new Set(blokady.current));
     setBladZapisu(false);
     return true;
@@ -46,22 +49,31 @@ export default function SavedScreen({ navigation }) {
   }
 
   const wczytaj = useCallback(async () => {
+    // Odczyt w trakcie zapisu mógłby zwrócić poprzedni stan serwera.
+    if (blokady.current.size) return;
+    const nr = odczyty.current.nowe();
     try {
       const d = await api.getSaved();
+      if (!odczyty.current.czyAktualne(nr)) return;
+      if (!Array.isArray(d?.saved)) throw new Error('Invalid saved response');
       // Co pilne — na górze (najbliższy termin), historia na dole; przy edycji etapu lista nie skacze.
-      setItems(kolejnoscZapisanych(d.saved || []));
+      setItems(kolejnoscZapisanych(d.saved));
       setBlad(false);
     } catch {
       // Offline/awaria — zostaje ostatnia lista, ale gdy nie mamy CZEGO pokazać,
       // musimy odróżnić „nie masz zapisanych" od „nie udało się wczytać" (inaczej
       // user widzi mylący pusty stan). Wzór jak w feedzie.
-      setBlad(true);
+      if (odczyty.current.czyAktualne(nr)) setBlad(true);
     } finally {
-      setLoading(false);
+      if (odczyty.current.czyAktualne(nr)) setLoading(false);
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { wczytaj(); }, [wczytaj]));
+  useFocusEffect(useCallback(() => {
+    void wczytaj();
+    // Także po zmianie konta: nawigator jest montowany od nowa dla user.id.
+    return () => { odczyty.current.nowe(); };
+  }, [wczytaj]));
 
   async function usun(tenderId) {
     if (!rozpocznij(tenderId)) return;
@@ -192,9 +204,18 @@ export default function SavedScreen({ navigation }) {
       keyExtractor={(item) => item.id}
       contentContainerStyle={items.length ? styles.list : styles.listEmpty}
       ListHeaderComponent={<View>
+        {blad && items.length ? <View>
+          <Text accessibilityRole="alert" style={{ color: kolory.danger }}>
+            {t('Nie udało się odświeżyć listy. Pokazujemy ostatnio wczytane dane.',
+              'Could not refresh the list. Showing previously loaded data.')}
+          </Text>
+          <Pressable onPress={wczytaj} accessibilityRole="button" style={styles.ponowBtn}>
+            <Text style={styles.ponowBtnTekst}>{t('Spróbuj ponownie', 'Try again')}</Text>
+          </Pressable>
+        </View> : null}
         {bladZapisu ? <Text accessibilityRole="alert" style={{ color: kolory.danger, marginBottom: spacing.md }}>
-          {t('Nie udało się zapisać zmiany. Poprzednie ustawienie zostało zachowane. Sprawdź połączenie i spróbuj ponownie.',
-            'Could not save the change. Your previous setting was kept. Check your connection and try again.')}
+          {t('Nie udało się potwierdzić zapisu zmiany. Pokazujemy poprzednie ustawienie. Sprawdź połączenie i spróbuj ponownie.',
+            'Could not confirm the change was saved. Showing the previous setting. Check your connection and try again.')}
         </Text> : null}
         {items.length ? (
         <View style={styles.widokiRzad}>
