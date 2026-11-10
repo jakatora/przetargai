@@ -460,6 +460,8 @@ export default function MatchFeedScreen({ navigation }) {
               </View>
             ) : null}
 
+            {/* Nagłówek pełnej listy (2026-11-10) — zamiast „Wcześniej” nad pasem „Łatwiejszy start”; pod nim grupy Dziś/Wczoraj. */}
+            <Text style={[styles.ppTytulSekcji, styles.listaNaglowek]}>{t('Wszystkie Twoje dopasowania', 'All your matches')}</Text>
             {/* Wyszukiwarka — po tytule i zamawiającym, z tolerancją odmian (D-051) — i przycisk filtrów. */}
             <View style={styles.szukajIFiltry}>
             <View style={styles.szukajRzad}>
@@ -855,6 +857,7 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   ppBand: { marginBottom: spacing.md },
   ppNaglowek: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   ppTytulSekcji: { ...typografia.sekcja, color: k.text },
+  listaNaglowek: { marginTop: spacing.lg, marginBottom: spacing.sm },
   ppUstaw: { fontSize: 14, fontWeight: '700', color: k.blue, paddingVertical: 6 },
   ppZaproszenie: {
     backgroundColor: k.surface,

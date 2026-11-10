@@ -43,8 +43,9 @@ test('KRYTYCZNE: skrót na kartę pokazuje tylko sygnały, które ZADZIAŁAŁY',
     sygnal('wartosc', 'brak'),
   ]));
   assert.deepEqual(skrot.map((s) => s.typ), ['cpv', 'slowa']);
-  assert.match(skrot[0].tekst.pl, /45233222/);
-  assert.match(skrot[1].tekst.pl, /droga/);
+  // Po ludzku (2026-11-10): „Twoja branża” zamiast numeru CPV, słowo z profilu w cudzysłowie.
+  assert.equal(skrot[0].tekst.pl, 'Twoja branża');
+  assert.equal(skrot[1].tekst.pl, '„droga” z Twojego profilu');
 });
 
 test('skrót na kartę jest KRÓTKI — najwyżej dwa znaczniki', () => {

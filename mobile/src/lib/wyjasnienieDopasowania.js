@@ -45,13 +45,13 @@ function odmienSlowa(n) {
 function tekstSkrotu(s) {
   if (s.typ === 'cpv' && s.wartosci?.length) {
     // Druga pozycja to kod OGŁOSZENIA — ten, który użytkownik zobaczy w rejestrze.
-    const kod = s.wartosci[1] ?? s.wartosci[0];
-    return { pl: `CPV ${kod}`, en: `CPV ${kod}` };
+    // Po ludzku zamiast numeru (przegląd oczami pracownika 2026-11-10) — kod widać w szczegółach przetargu.
+    return { pl: 'Twoja branża', en: 'your industry' };
   }
   if (s.typ === 'slowa' && s.wartosci?.length) {
     const ile = s.wartosci.length;
     return ile === 1
-      ? { pl: `słowo: ${s.wartosci[0]}`, en: `keyword: ${s.wartosci[0]}` }
+      ? { pl: `„${s.wartosci[0]}” z Twojego profilu`, en: `"${s.wartosci[0]}" from your profile` }
       : { pl: `${ile} ${odmienSlowa(ile)} z profilu`, en: `${ile} profile keywords` };
   }
   if (s.typ === 'region') return { pl: 'Twój region', en: 'your region' };

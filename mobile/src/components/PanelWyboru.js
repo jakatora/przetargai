@@ -16,6 +16,8 @@ import {
 } from '../lib/selekcja';
 import { OPISY_BRAKOW } from '../lib/kartaFirmy';
 import { POKAZUJ_ZAKUP } from '../lib/kanal';
+import { krokiBiore } from '../lib/szczegolyPrzetargu';
+import { opisTerminu } from '../lib/termin';
 
 /**
  * Górna część ekranu „Twoje przetargi” (spec §10): raport dnia, próba Standard, braki karty,
@@ -35,6 +37,9 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
   const [zapisywanie, setZapisywanie] = useState(false);
   const [propozycjaWToku, setPropozycjaWToku] = useState(null);
   const [koniecProbyPokazany, setKoniecProbyPokazany] = useState(undefined);
+  // „Biorę” na karcie (2026-11-10) — jak w szczegółach: zapis + przypomnienie + etap; ids wziętych w tej wizycie.
+  const [wziete, setWziete] = useState(() => new Set());
+  const [bioreId, setBioreId] = useState(null);
   const dzienRef = useRef(null);
 
   const wczytaj = useCallback(async () => {
@@ -81,6 +86,24 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
     } finally {
       setZapisywanie(false);
     }
+  }
+
+  async function biore(m) {
+    if (bioreId) return;
+    setBioreId(m.id);
+    const termin = opisTerminu(m.tender?.deadline);
+    const kroki = krokiBiore({ zapisany: isSaved(m.id), przypomnienie: m.reminder_enabled === true, maTermin: Boolean(m.tender?.deadline) && !termin.minal, status: m.status || undefined });
+    try {
+      if (kroki.includes('zapisz')) await toggle(m.id);
+    } catch (err) {
+      setBioreId(null);
+      zgloszBlad(t('Nie udało się zapisać przetargu', 'Could not save the tender'), err);
+      return;
+    }
+    if (kroki.includes('przypomnienie')) await api.setReminder(m.id, true).catch(() => {});
+    if (kroki.includes('etap')) await api.setStatus(m.id, 'przygotowuje').catch(() => {});
+    setWziete((stare) => new Set([...stare, m.id]));
+    setBioreId(null);
   }
 
   async function propozycja(p, akcja) {
@@ -152,16 +175,6 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
         </Pressable>
       ) : null}
 
-      {(dzien.propozycje ?? []).map((p) => (
-        <View key={p.klucz} style={styles.propozycja}>
-          <Text style={styles.propozycjaTekst}>{t(p.opis)}</Text>
-          <View style={styles.rzad}>
-            <Button title={t('Przyjmij', 'Accept')} loading={propozycjaWToku === p.klucz} onPress={() => propozycja(p, 'przyjmij')} style={styles.przyciskPol} />
-            <Button title={t('Nie teraz', 'Not now')} variant="ghost" disabled={Boolean(propozycjaWToku)} onPress={() => propozycja(p, 'nie_teraz')} style={styles.przyciskPol} />
-          </View>
-        </View>
-      ))}
-
       <Text style={styles.sekcja}>{t('Dziś wybrane dla Ciebie', 'Picked for you today')}</Text>
       {(dzien.wybrane ?? []).length === 0 ? (
         <Text style={styles.drobny}>{t('Dziś nic nie pasuje do Twojej firmy. Wcześniejsze wybory są niżej.', 'Nothing fits your company today. Earlier picks are below.')}</Text>
@@ -184,18 +197,36 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
             </View>
           ) : null}
           {m.ocena_bez_ai ? (
-            <Text style={styles.drobny}>{t('Ocena wstępna — sprawdzimy ją jeszcze raz.', 'Preliminary assessment — we will re-check it.')}</Text>
+            <Text style={styles.drobny}>{t('Wybrany wstępnie, bez oceny AI — AI sprawdzi go przy najbliższym przeglądzie.', 'Picked provisionally, without an AI review — AI will check it in the next review.')}</Text>
           ) : null}
           <View style={styles.rzad}>
-            <Button
-              title={isSaved(m.id) ? t('Zapisany', 'Saved') : t('Zapisz', 'Save')}
-              variant="ghost"
-              onPress={() => toggle(m.id).catch((err) => zgloszBlad(t('Nie udało się zapisać przetargu', 'Could not save the tender'), err))}
-              style={[styles.przyciskPol, styles.przyciskMaly]}
-            />
-            <Button title={t('Odrzuć', 'Reject')} variant="ghost" onPress={() => setDoOdrzucenia(m)} style={[styles.przyciskPol, styles.przyciskMaly]} />
+            {wziete.has(m.id) || (isSaved(m.id) && m.status === 'przygotowuje') ? (
+              <View style={[styles.przyciskPol, styles.wzietyStan]}>
+                <Ikona nazwa="ok" rozmiar={16} kolor={kolory.sukcesAkcent} />
+                <Text style={styles.wzietyTekst}>{t('Bierzesz', 'Bidding')}</Text>
+              </View>
+            ) : (
+              <Button
+                title={t('Biorę', 'I will bid')}
+                loading={bioreId === m.id}
+                onPress={() => biore(m)}
+                style={[styles.przyciskPol, styles.przyciskMaly]}
+              />
+            )}
+            <Button title={t('Nie dla nas', 'Not for us')} variant="ghost" onPress={() => setDoOdrzucenia(m)} style={[styles.przyciskPol, styles.przyciskMaly]} />
           </View>
         </Pressable>
+      ))}
+
+      {/* Propozycje zmian w karcie POD wyborem dnia (2026-11-10) — najpierw decyzje, potem porządki. */}
+      {(dzien.propozycje ?? []).map((p) => (
+        <View key={p.klucz} style={styles.propozycja}>
+          <Text style={styles.propozycjaTekst}>{t(p.opis)}</Text>
+          <View style={styles.rzad}>
+            <Button title={t('Przyjmij', 'Accept')} loading={propozycjaWToku === p.klucz} onPress={() => propozycja(p, 'przyjmij')} style={styles.przyciskPol} />
+            <Button title={t('Nie teraz', 'Not now')} variant="ghost" disabled={Boolean(propozycjaWToku)} onPress={() => propozycja(p, 'nie_teraz')} style={styles.przyciskPol} />
+          </View>
+        </View>
       ))}
 
       {grupy.length ? (
@@ -229,8 +260,6 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
           ) : null}
         </View>
       ) : null}
-
-      <Text style={styles.sekcja}>{t('Wcześniej', 'Earlier')}</Text>
 
       <ArkuszOdrzucenia
         widoczny={Boolean(doOdrzucenia)}
@@ -269,6 +298,8 @@ const tworzStylePanelu = tworzStyle((k) => ({
   rzad: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   przyciskPol: { flex: 1 },
   przyciskMaly: { minHeight: 42, paddingVertical: 8 },
+  wzietyStan: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, minHeight: 42, borderRadius: radius.md, backgroundColor: k.sukcesTlo },
+  wzietyTekst: { fontSize: 15, fontWeight: '800', color: k.text },
   odrzucone: { marginTop: spacing.sm, backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, paddingHorizontal: spacing.md },
   odrzuconeNaglowek: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48 },
   odrzuconeTytul: { fontSize: 15, fontWeight: '700', color: k.text },

@@ -97,7 +97,7 @@ function MatchCard({ match, onOtworz, nowe = false }) {
         <ScoreBadge score={match.confidence_score} />
         <View style={styles.body}>
           {nowe ? <Text style={styles.noweChip}>{t('Nowe', 'New')}</Text> : null}
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={styles.title} numberOfLines={3}>
             {tender.title}
           </Text>
           {tender.organization ? (
@@ -142,7 +142,12 @@ function MatchCard({ match, onOtworz, nowe = false }) {
         Dlaczego widzisz ten przetarg (P1-4) — najwyżej dwa znaczniki i tylko
         te sygnały, które zadziałały. Liczone bez AI, z profilu i ogłoszenia.
       */}
-      <ZnacznikiWyjasnienia wyjasnienie={match.wyjasnienie} />
+      {/* Powód po ludzku zamiast kodu CPV (2026-11-10): pierwsze zdanie uzasadnienia wyboru, gdy jest. */}
+      {(match.uzasadnienie ?? []).length ? (
+        <Text style={styles.powod} numberOfLines={2}>{`✓ ${match.uzasadnienie[0]}`}</Text>
+      ) : (
+        <ZnacznikiWyjasnienia wyjasnienie={match.wyjasnienie} />
+      )}
       {/*
         Źródło pierwotne + czas ostatniej synchronizacji (P1-3). Bez drugiej
         informacji cichy feed wygląda tak samo przy spokojnym tygodniu
@@ -220,6 +225,7 @@ const tworzStyleKarty = tworzStyle((k) => ({
   body: { flex: 1 },
   title: { ...typografia.karta, color: k.text },
   org: { fontSize: 13, lineHeight: 18, color: k.textMuted, marginTop: 4 },
+  powod: { fontSize: 13, lineHeight: 18, color: k.sukcesAkcent, fontWeight: '600', marginTop: spacing.sm },
   deadline: { fontSize: 13, color: k.textMuted },
   deadlineData: { color: k.text, fontWeight: '700' },
 }));
