@@ -29,7 +29,15 @@ test('alert: zmiana i wyjaśnienia są pilne, otwarcie ofert — „zobacz ceny 
   const tender = { id: '2026~BZP_00500001~01', title: 'Remont dachu szkoły', organization: 'Gmina X', deadline: '2026-11-05T09:00:00Z' };
   const a = alertNowychDokumentow({ tender, nowe: [{ id: 'ocds-1_3', nazwa: 'Wyjaśnienia treści SWZ nr 1' }, { id: 'ocds-1_4', nazwa: 'Modyfikacja nr 1' }] });
   assert.deepEqual([a.typ, a.ton, a.klucz, a.tender_id], ['nowe_dokumenty', 'ostrzezenie', 'dok_2026~BZP_00500001~01_ocds-1_4', tender.id]);
-  assert.match(a.tresc.pl, /^Zamawiający opublikował zmianę dokumentów, wyjaśnienia treści SWZ \(2\)\. Sprawdź przed złożeniem oferty/);
+  assert.match(a.tresc.pl, /^Zamawiający opublikował zmianę SWZ lub jej załączników, wyjaśnienia treści SWZ \(2\)\. Sprawdź przed złożeniem oferty/);
+  // Tytuł mówi, co się stało (2026-11-10) — widać go w pushu na zablokowanym ekranie.
+  assert.equal(a.tytul.pl, 'Zmieniono SWZ w zapisanym przetargu: Remont dachu szkoły');
+  const tytul = (nazwy, opcje = {}) => alertNowychDokumentow({ tender, nowe: nazwy.map((nazwa, i) => ({ id: `t-${i}`, nazwa })), ...opcje }).tytul.pl;
+  assert.equal(tytul(['Zmiana terminu składania ofert', 'SWZ po zmianie']), 'Zmieniono SWZ i termin ofert w zapisanym przetargu: Remont dachu szkoły');
+  assert.equal(tytul(['Zmiana terminu składania ofert']), 'Nowy termin ofert w zapisanym przetargu: Remont dachu szkoły');
+  assert.equal(tytul(['Odpowiedzi na pytania']), 'Wyjaśnienia SWZ w zapisanym przetargu: Remont dachu szkoły');
+  assert.equal(tytul(['Informacja z otwarcia ofert'], { zapisany: false }), 'Otwarcie ofert w przetargu z Twojej listy: Remont dachu szkoły');
+  assert.equal(tytul(['Plik bez opisu']), 'Nowe dokumenty w zapisanym przetargu: Remont dachu szkoły');
   const o = alertNowychDokumentow({ tender, nowe: [{ id: 'ocds-1_5', nazwa: 'Informacja z otwarcia ofert' }] });
   assert.equal(o.ton, 'neutral');
   assert.match(o.tresc.pl, /informację z otwarcia ofert \(1\)\. Zobacz, jakie ceny dali konkurenci\./);

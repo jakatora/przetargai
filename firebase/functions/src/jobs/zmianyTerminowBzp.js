@@ -1,7 +1,7 @@
 import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
 import { pobierzSuroweZmianyDnia } from '../services/bzp.js';
-import { zmianaTerminu, najnowszeZmiany, alertZmianyTerminu } from '../lib/zmianaTerminuBzp.js';
+import { zmianaTerminu, najnowszeZmiany, alertZmianyTerminu, zmianaOgloszenia, alertZmianyOgloszenia } from '../lib/zmianaTerminuBzp.js';
 import { tenders, tenderDocId, saved, users, alerty } from '../db/repos.js';
 import { sendPush } from '../services/push.js';
 import { sendEmail } from '../services/email.js';
@@ -14,6 +14,10 @@ import { dostarcz } from './monitorWyszukiwan.js';
  * dopasowaniach z przeliczonym przypomnieniem. Konta, które przetarg zapisały albo analizowały, dostają alert
  * (gdy nowy termin jeszcze nie minął). Tylko tam, gdzie termin u nas jest inny — powtórka nic nie zapisuje.
  * Koszt: 1–2 zapytania BZP na dobę, jeden `getAll` terminów, a przy zmianach — odczyt zaangażowanych kont.
+ *
+ * Zmiany ogłoszenia bez terminu (2026-11-10, `zmianaOgloszenia`): warunki udziału, wadium, przedmiot, umowa — ten sam
+ * krąg kont dostaje „Zmiana ogłoszenia w zapisanym przetargu” z listą zmienionych pozycji (przetarg jeszcze otwarty).
+ * Ogłoszenie, które zmienia termin i coś jeszcze, daje jeden alert terminu z dopiskiem „Zmienił też: …”.
  */
 export const DNI_DOMYSLNIE = 2;
 const ROWNOLEGLE = 8;
@@ -24,8 +28,9 @@ export async function runZmianyTerminowBzp({
   teraz = Date.now(), dni = DNI_DOMYSLNIE, doDniTemu = 0, powiadamiaj = true, pobierzDzien = pobierzSuroweZmianyDnia,
   przetargi = tenders, zapisane = saved, konta = users, alertyRepo = alerty, wyslijPush = sendPush, wyslijEmail = sendEmail,
 } = {}) {
-  const wynik = { ok: true, dob: 0, ogloszen: 0, zmian_terminu: 0, w_bazie: 0, zaktualizowane: 0, alerty: 0, bledy: 0 };
+  const wynik = { ok: true, dob: 0, ogloszen: 0, zmian_terminu: 0, w_bazie: 0, zaktualizowane: 0, alerty: 0, zmian_ogloszen: 0, alerty_ogloszen: 0, bledy: 0 };
   const zmiany = [];
+  const zmianyOgloszen = new Map();
   // Okno: `dni` dób kończących się `doDniTemu` dób temu (uzupełnianie wstecz), od najstarszej.
   for (let i = dni - 1; i >= 0; i--) {
     const dzien = dobaWarszawska(teraz - (doDniTemu + i) * 86_400_000);
@@ -35,7 +40,9 @@ export async function runZmianyTerminowBzp({
       wynik.ogloszen += surowe.length;
       for (const n of surowe) {
         const z = zmianaTerminu(n);
-        if (z) zmiany.push(z);
+        const o = zmianaOgloszenia(n);
+        if (z) zmiany.push(o?.pozycje?.length ? { ...z, inne: o.pozycje } : z);
+        else if (o?.pozycje?.length) zmianyOgloszen.set(o.numer ?? `${o.numerZmienianego}|${o.opublikowano}`, o);
       }
     } catch (err) {
       wynik.bledy += 1;
@@ -76,7 +83,7 @@ export async function runZmianyTerminowBzp({
       if (!zmienione) return;
       wynik.zaktualizowane += 1;
       if (!powiadamiaj || !(Date.parse(z.nowyTermin) > teraz)) return;
-      const alert = alertZmianyTerminu({ tender: t, staryTermin: t.deadline, nowyTermin: z.nowyTermin });
+      const alert = alertZmianyTerminu({ tender: t, staryTermin: t.deadline, nowyTermin: z.nowyTermin, inne: z.inne ?? [] });
       for (const userId of await kontaPrzetargu(t.id)) {
         const { nowy } = await alertyRepo.dodaj(userId, alert, nowIso());
         if (!nowy) continue;
@@ -92,6 +99,31 @@ export async function runZmianyTerminowBzp({
   // ~280 zmian terminu na dobę, każda to kilka operacji (przetarg, historia, kopie) — po kilka naraz, żeby
   // uzupełnianie wstecz oknami mieściło się w limicie trasy (300 s).
   for (let i = 0; i < najnowsze.length; i += ROWNOLEGLE) await Promise.all(najnowsze.slice(i, i + ROWNOLEGLE).map(obsluz));
+
+  // Zmiany ogłoszenia bez terminu: tylko alert (przetargu nie zmieniamy) do kont, które go zapisały albo analizowały.
+  const ogloszenia = [...zmianyOgloszen.values()];
+  wynik.zmian_ogloszen = ogloszenia.length;
+  if (powiadamiaj && ogloszenia.length) {
+    const przetargiOgloszen = new Map((await przetargi.polaWielu([...new Set(ogloszenia.map((o) => tenderDocId(o.numerZmienianego)))], ['deadline', 'title', 'organization']))
+      .map((t) => [t.id, t]));
+    for (const o of ogloszenia) {
+      const t = przetargiOgloszen.get(tenderDocId(o.numerZmienianego));
+      if (!t || !(Date.parse(t.deadline ?? '') > teraz)) continue; // nie mamy go albo już po terminie
+      try {
+        const alert = alertZmianyOgloszenia({ tender: t, pozycje: o.pozycje, numer: o.numer });
+        for (const userId of await kontaPrzetargu(t.id)) {
+          const { nowy } = await alertyRepo.dodaj(userId, alert, nowIso());
+          if (!nowy) continue;
+          wynik.alerty_ogloszen += 1;
+          if (!uzytkownicy.has(userId)) uzytkownicy.set(userId, await konta.findById(userId).catch(() => null));
+          await dostarcz({ user: uzytkownicy.get(userId), alert, wyslijPush, wyslijEmail });
+        }
+      } catch (err) {
+        wynik.bledy += 1;
+        logger.warn({ err: err.message, numer: o.numer }, 'Zmiany ogłoszeń BZP: alert nie powiódł się');
+      }
+    }
+  }
   wynik.ok = wynik.bledy === 0;
   wynik.zakonczony_o = nowIso();
   logger.info(wynik, 'runZmianyTerminowBzp: zakończono');

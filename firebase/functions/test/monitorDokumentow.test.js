@@ -33,7 +33,7 @@ test('nowe wyjaśnienia → alert raz; ta sama lista → nic; nowa modyfikacja �
   assert.ok(pierwszy.ok && pierwszy.sprawdzone >= 1);
   const moje = () => email.filter((m2) => m2.to === `md-${ZNAK}@t.pl`);
   assert.equal(moje().length, 1);
-  assert.match(moje()[0].subject, /^Nowe dokumenty w zapisanym przetargu: Remont dachu szkoły/);
+  assert.match(moje()[0].subject, /^Wyjaśnienia SWZ w zapisanym przetargu: Remont dachu szkoły/);
   assert.match(moje()[0].text, /wyjaśnienia treści SWZ \(1\)/);
 
   await runMonitorDokumentow(opcje());
@@ -42,7 +42,8 @@ test('nowe wyjaśnienia → alert raz; ta sama lista → nic; nowa modyfikacja �
   lista = [...lista, { id: `${POSTEPOWANIE}_3`, nazwa: 'Modyfikacja nr 1', opublikowano: new Date().toISOString() }];
   await runMonitorDokumentow(opcje());
   assert.equal(moje().length, 2);
-  assert.match(moje()[1].text, /zmianę dokumentów \(1\)/);
+  assert.match(moje()[1].text, /zmianę SWZ lub jej załączników \(1\)/);
+  assert.match(moje()[1].subject, /^Zmieniono SWZ w zapisanym przetargu: Remont dachu szkoły/);
   const wpisy = await alerty.lista(user.id);
   assert.deepEqual(wpisy.map((a) => a.typ), ['nowe_dokumenty', 'nowe_dokumenty']);
   assert.equal((await tenders.findById(tender.id)).ez_dokumenty.length, 3, 'lista zostaje jako cache ekranu');
@@ -68,7 +69,7 @@ test('czołówka feedu (wynik ≥ 80, bez zapisu): wpis w centrum alertów, bez 
     wyslijPush: async (...a) => { push.push(a); return { sent: 1 }; }, wyslijEmail: async (m) => { email.push(m); },
   });
   const wpisy = await alerty.lista(user.id);
-  assert.deepEqual(wpisy.map((a) => [a.typ, a.tytul.pl]), [['nowe_dokumenty', 'Nowe dokumenty w przetargu z Twojej listy: Dostawa paliwa']]);
+  assert.deepEqual(wpisy.map((a) => [a.typ, a.tytul.pl]), [['nowe_dokumenty', 'Wyjaśnienia SWZ w przetargu z Twojej listy: Dostawa paliwa']]);
   assert.equal(email.filter((m) => m.to === `md2-${z}@t.pl`).length, 0, 'bez maila');
   assert.deepEqual(await alerty.lista(slaby.id), [], 'dopasowanie 55 nie jest monitorowane');
 });
@@ -197,7 +198,7 @@ test('przetarg z analizą SWZ (powiązanie Radaru albo gotowa auto-analiza), bez
     pobierz: async (id) => (id === post ? [{ id: `${post}_4`, nazwa: 'Zmiana treści SWZ', rozszerzenie: 'pdf', opublikowano: new Date(Date.now() + 60_000).toISOString() }] : []),
   });
   const alert = (await alerty.lista(user.id)).find((a) => a.tender_id === tender.id);
-  assert.match(alert.tytul.pl, /^Nowe dokumenty w zapisanym przetargu/);
+  assert.match(alert.tytul.pl, /^Zmieniono SWZ w zapisanym przetargu/);
   assert.equal(doreczone.length, 2);
   assert.ok((await alerty.lista(drugi.id)).some((x) => x.tender_id === tender.id));
 });

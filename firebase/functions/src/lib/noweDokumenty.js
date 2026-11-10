@@ -51,7 +51,7 @@ const OPIS_RODZAJU = {
   termin: { pl: 'zmianę terminu składania ofert', en: 'a new bid deadline' },
   informacja: { pl: 'komunikat dla wykonawców', en: 'a notice to bidders' },
   wyjasnienia: { pl: 'wyjaśnienia treści SWZ', en: 'clarifications of the tender documents' },
-  zmiana: { pl: 'zmianę dokumentów', en: 'a change to the tender documents' },
+  zmiana: { pl: 'zmianę SWZ lub jej załączników', en: 'a change to the tender documents' },
   otwarcie: { pl: 'informację z otwarcia ofert', en: 'the bid opening report' },
   rozstrzygniecie: { pl: 'informację o wyborze oferty', en: 'the award decision' },
   inne: { pl: 'nowe pliki', en: 'new files' },
@@ -100,6 +100,26 @@ function opisWybranych(wybor) {
   return { pl: `Wybrano ofertę: ${pl}${ile.pl}.`, en: `Selected bid: ${en}${ile.en}.` };
 }
 
+/*
+ * Tytuł mówi, CO się stało (2026-11-10): „Zmieniono SWZ w zapisanym przetargu” zamiast ogólnego „Nowe dokumenty” —
+ * push widać na zablokowanym ekranie, a zmiana SWZ wymaga reakcji przed złożeniem oferty.
+ */
+const NAGLOWKI = [
+  [(r) => r.includes('zmiana') && r.includes('termin'), { pl: 'Zmieniono SWZ i termin ofert', en: 'Tender documents and deadline changed' }],
+  [(r) => r.includes('zmiana'), { pl: 'Zmieniono SWZ', en: 'Tender documents changed' }],
+  [(r) => r.includes('termin'), { pl: 'Nowy termin ofert', en: 'New bid deadline' }],
+  [(r) => r.includes('wyjasnienia'), { pl: 'Wyjaśnienia SWZ', en: 'Clarifications of the tender documents' }],
+  [(r) => r.includes('rozstrzygniecie'), { pl: 'Rozstrzygnięcie', en: 'Award decision' }],
+  [(r) => r.includes('otwarcie'), { pl: 'Otwarcie ofert', en: 'Bid opening' }],
+];
+
+function tytulAlertu(rodzaje, zapisany, tytul) {
+  const naglowek = NAGLOWKI.find(([pasuje]) => pasuje(rodzaje))?.[1] ?? { pl: 'Nowe dokumenty', en: 'New documents' };
+  return zapisany
+    ? { pl: `${naglowek.pl} w zapisanym przetargu: ${tytul}`, en: `${naglowek.en} in a saved tender: ${tytul}` }
+    : { pl: `${naglowek.pl} w przetargu z Twojej listy: ${tytul}`, en: `${naglowek.en} in a tender from your list: ${tytul}` };
+}
+
 /**
  * Alert do centrum alertów + push. Klucz = przetarg × najnowszy nowy dokument — ten sam stan
  * zapisany drugi raz zostaje jednym wpisem (ponowienie przebiegu nie wyśle drugiego pushu).
@@ -133,9 +153,7 @@ export function alertNowychDokumentow({ tender, nowe, zapisany = true, otwarcie 
     typ: 'nowe_dokumenty',
     tender_id: tender.id,
     ton: wybranoNip(wybor, nipKonta) && decyzja ? 'sukces' : pilne || decyzja ? 'ostrzezenie' : 'neutral',
-    tytul: zapisany
-      ? { pl: `Nowe dokumenty w zapisanym przetargu: ${tytul}`, en: `New documents in a saved tender: ${tytul}` }
-      : { pl: `Nowe dokumenty w przetargu z Twojej listy: ${tytul}`, en: `New documents in a tender from your list: ${tytul}` },
+    tytul: tytulAlertu(rodzaje, zapisany, tytul),
     tresc: {
       pl: `Zamawiający opublikował ${lista('pl')} (${nowe.length}).${dopisek.pl}${nazwy ? ` ${nazwy}` : ''}`,
       en: `The buyer published ${lista('en')} (${nowe.length}).${dopisek.en}${nazwy ? ` ${nazwy}` : ''}`,

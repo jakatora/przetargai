@@ -38,3 +38,49 @@ export function wersjeDoZastapienia(dokumenty) {
   const starsze = (dokumenty ?? []).filter((d) => d?.id && d.id !== aktualna.id && d.zastapiony_przez !== aktualna.id);
   return { aktualna, starsze };
 }
+
+/*
+ * ALERT O NOWEJ WERSJI OGŁOSZENIA TED (2026-11-10). Sprostowanie w TED to nowa wersja ogłoszenia — termin, warunki
+ * albo dokumenty. Dotąd stara wersja tylko ustępowała, a konto, które przetarg zapisało, nie dostawało nic; dokumenty
+ * TED leżą zwykle poza e-Zamówieniami (1.11: pliki u 7 z 80), więc monitoring dokumentów tego nie widział.
+ * Klucz = aktualna wersja: kilka zapisanych starych wersji tego samego postępowania daje jeden alert.
+ */
+const czystyKlucz = (s) => String(s).replace(/[/\s:.]/g, '_');
+const KONIEC_DOBY = /T2[12]:59:59\.999Z$/;
+
+function terminTed(iso) {
+  const t = Date.parse(String(iso ?? ''));
+  if (!Number.isFinite(t)) return null;
+  const opcje = { timeZone: 'Europe/Warsaw', day: '2-digit', month: '2-digit', year: 'numeric' };
+  // TED zna często samą datę (koniec doby warszawskiej) — wtedy bez godziny, żeby nie udawać „23:59”.
+  return KONIEC_DOBY.test(String(iso))
+    ? new Date(t).toLocaleDateString('pl-PL', opcje)
+    : new Date(t).toLocaleString('pl-PL', { ...opcje, hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * @param {{tender: {id: string, title?: string, organization?: string, deadline?: string}, staryTermin?: string|null}} wejscie
+ *   `tender` = aktualna wersja; `staryTermin` = termin wersji, którą konto zapisało
+ */
+export function alertNowejWersjiTed({ tender, staryTermin = null }) {
+  if (!tender?.id) return null;
+  const tytul = String(tender.title ?? 'przetarg').slice(0, 90);
+  const nowy = terminTed(tender.deadline);
+  const stary = terminTed(staryTermin);
+  const zmianaTerminu = nowy && stary && nowy !== stary;
+  const termin = zmianaTerminu
+    ? { pl: ` Nowy termin ofert: ${nowy} (było ${stary}) — przypomnienie ustawiliśmy na nowy termin.`, en: ` New bid deadline: ${nowy} (was ${stary}) — your reminder follows the new date.` }
+    : nowy ? { pl: ` Termin ofert bez zmian: ${nowy}.`, en: ` Bid deadline unchanged: ${nowy}.` } : { pl: '', en: '' };
+  return {
+    klucz: `ted_wersja_${czystyKlucz(tender.id)}`,
+    typ: 'zmiany',
+    tender_id: tender.id,
+    ton: 'ostrzezenie',
+    tytul: { pl: `Zmiana ogłoszenia w zapisanym przetargu: ${tytul}`, en: `Notice changed in a saved tender: ${tytul}` },
+    tresc: {
+      pl: `${tender.organization ?? 'Zamawiający'} opublikował w TED sprostowanie ogłoszenia (nową wersję).${termin.pl} Sprawdź zmiany i dokumenty przed złożeniem oferty.`,
+      en: `${tender.organization ?? 'The buyer'} published a corrigendum (a new version of the notice) in TED.${termin.en} Check the changes and documents before you bid.`,
+    },
+    pozycje: [{ tender_id: tender.id, tytul: tender.title ?? null, organizacja: tender.organization ?? null, deadline: tender.deadline ?? null, zrodlo: 'ted' }],
+  };
+}

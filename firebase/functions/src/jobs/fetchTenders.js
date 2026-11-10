@@ -358,7 +358,7 @@ export async function runTenderFetch({ zrodla = domyslneZrodla(), alarmujAi = al
   // Starsze wersje ogłoszeń TED ustępują nowym — przed dopasowaniami, żeby nie wróciły do puli.
   let wersjeTed = null;
   if (postepowaniaTed.size) {
-    wersjeTed = await runWersjeTed({ postepowania: postepowaniaTed }).catch((err) => {
+    wersjeTed = await runWersjeTed({ postepowania: postepowaniaTed, powiadamiaj: true }).catch((err) => {
       logger.warn({ err: err.message }, 'fetchTenders: oznaczanie starych wersji TED nie powiodło się');
       return null;
     });
