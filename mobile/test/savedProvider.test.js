@@ -91,3 +91,28 @@ test('odrzucona mutacja przywraca poprzednią gwiazdkę i przekazuje błąd do U
   await assert.rejects(value.toggle('t1'), /rejected/);
   assert.equal(states[0].has('t1'), true);
 });
+
+test('jawny zamiar zapisu lub usunięcia nie odwraca operacji po odczycie serwera', async () => {
+  for (const desired of [true, false]) {
+    let writes = 0;
+    const { value, states } = provider({
+      getSavedIds: async () => ({ ids: desired ? ['t1'] : [] }),
+      saveTender: async () => { writes++; }, unsaveTender: async () => { writes++; },
+    });
+    assert.equal(await value.toggle('t1', desired), desired);
+    assert.equal(writes, 0, 'stan już zgodny z zamiarem: bez przeciwnej operacji');
+    assert.equal(states[0].has('t1'), desired);
+  }
+});
+
+test('odświeżenie odróżnia znany pusty zbiór od błędu i nie wykonuje zapisu', async () => {
+  let ok = false;
+  const { value, states } = provider({ getSavedIds: async () => ok ? { ids: [] } : null });
+  assert.equal(value.ready, false);
+  assert.equal(await value.refresh(), false);
+  assert.equal(states[1], false);
+  ok = true;
+  assert.equal(await value.refresh(), true);
+  assert.equal(states[1], true);
+  assert.equal(states[0].size, 0);
+});

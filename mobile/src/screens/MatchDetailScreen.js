@@ -170,7 +170,7 @@ export default function MatchDetailScreen({ route, navigation }) {
 
   async function przelaczZapis() {
     try {
-      const teraz = await toggle(match.id);
+      const teraz = await toggle(match.id, !zapisany);
       if (!teraz) setPrzypomnienie(false); // usunięto z zakładek → przypomnienie też gaśnie
       else if (maTermin) setPrzypomnienie(true); // serwer włącza przypomnienie przy nowym zapisie (2026-11-10)
     } catch (err) {
@@ -182,7 +182,7 @@ export default function MatchDetailScreen({ route, navigation }) {
     setPrzypomnienie(wartosc);
     try {
       // Przypomnienie wymaga zapisu — gdy przetarg nie jest jeszcze w zakładkach, dopisz go.
-      if (wartosc && !zapisany) await toggle(match.id);
+      if (wartosc && !zapisany) await toggle(match.id, true);
       const stan = await api.setReminder(match.id, wartosc);
       setPrzypomnienie(stan.reminder_enabled);
     } catch (err) {
@@ -195,7 +195,7 @@ export default function MatchDetailScreen({ route, navigation }) {
     const poprzedni = status;
     setStatus(nowy); // optymistycznie
     try {
-      if (!zapisany) await toggle(match.id); // etap wymaga zapisu — dopisz do zakładek
+      if (!zapisany) await toggle(match.id, true); // etap wymaga zapisu — dopisz do zakładek
       await api.setStatus(match.id, nowy);
       // Przegrana → uruchom ścieżkę odwołania (podzadanie 13/13): załóż kontrolę,
       // wylicz termin KIO i zaplanuj przypomnienie o zbliżającym się terminie.
@@ -244,7 +244,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   async function zapiszNotatke() {
     setNotatkaZapis('zapisywanie');
     try {
-      if (!zapisany) await toggle(match.id);
+      if (!zapisany) await toggle(match.id, true);
       const stan = await api.setNotatka(match.id, notatka);
       setNotatka(stan.notatka);
       setNotatkaZapis('zapisano');
@@ -318,7 +318,7 @@ export default function MatchDetailScreen({ route, navigation }) {
     setBioreTrwa(true);
     const kroki = krokiBiore({ zapisany, przypomnienie, maTermin, status });
     try {
-      if (kroki.includes('zapisz')) await toggle(match.id);
+      if (kroki.includes('zapisz')) await toggle(match.id, true);
     } catch (err) {
       setBioreTrwa(false);
       Alert.alert(t('Nie udało się zapisać przetargu', 'Could not save the tender'), err.message);

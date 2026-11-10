@@ -96,7 +96,7 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
     const termin = opisTerminu(m.tender?.deadline);
     const kroki = krokiBiore({ zapisany: isSaved(m.id), przypomnienie: m.reminder_enabled === true, maTermin: Boolean(m.tender?.deadline) && !termin.minal, status: m.status || undefined });
     try {
-      if (kroki.includes('zapisz')) await toggle(m.id);
+      if (kroki.includes('zapisz')) await toggle(m.id, true);
     } catch (err) {
       setBioreId(null);
       zgloszBlad(t('Nie udało się zapisać przetargu', 'Could not save the tender'), err);

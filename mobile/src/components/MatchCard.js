@@ -14,7 +14,7 @@ import { ZnacznikiWyjasnienia } from './Wyjasnienie';
 
 /** Przycisk zakładki — ★ zapisany (brand), ☆ do zapisania. Nie nawiguje. */
 export function SaveStar({ tenderId, styles, kolory }) {
-  const { isSaved, toggle } = useSaved();
+  const { isSaved, toggle, refresh, ready } = useSaved();
   const { t } = useJezyk();
   const [bladZapisu, setBladZapisu] = useState(false);
   const [zapisWToku, setZapisWToku] = useState(false);
@@ -25,7 +25,11 @@ export function SaveStar({ tenderId, styles, kolory }) {
     blokada.current = true;
     setZapisWToku(true);
     setBladZapisu(false);
-    try { await toggle(tenderId); }
+    try {
+      if (!ready) {
+        if (!(await refresh())) throw new Error('Nieznany stan zapisu');
+      } else await toggle(tenderId, !zapisany);
+    }
     catch { setBladZapisu(true); }
     finally { blokada.current = false; setZapisWToku(false); }
   }
@@ -37,11 +41,11 @@ export function SaveStar({ tenderId, styles, kolory }) {
         hitSlop={12}
         accessibilityRole="button"
         accessibilityState={{ selected: zapisany, busy: zapisWToku, disabled: zapisWToku }}
-        accessibilityLabel={zapisany ? t('Usuń z zapisanych', 'Remove from saved') : t('Zapisz przetarg', 'Save tender')}
+        accessibilityLabel={!ready ? t('Sprawdź stan zapisu', 'Check saved status') : zapisany ? t('Usuń z zapisanych', 'Remove from saved') : t('Zapisz przetarg', 'Save tender')}
         style={styles.gwiazdka}
       >
         <Text style={[styles.gwiazdkaZnak, { color: zapisany ? kolory.blue : kolory.textMuted }]}>
-          {zapisany ? '★' : '☆'}
+          {!ready ? '?' : zapisany ? '★' : '☆'}
         </Text>
       </Pressable>
       {bladZapisu ? <Text accessibilityRole="alert" style={{ color: kolory.text }}>

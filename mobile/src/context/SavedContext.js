@@ -12,6 +12,11 @@ import { useAuth } from './AuthContext';
 
 const SavedContext = createContext(null);
 
+function odczytaneIds(data) {
+  if (!Array.isArray(data?.ids)) throw new Error('Nie udało się odczytać zapisanych przetargów.');
+  return new Set(data.ids);
+}
+
 export function SavedProvider({ children }) {
   const { user } = useAuth();
   const [ids, setIds] = useState(() => new Set());
@@ -24,7 +29,7 @@ export function SavedProvider({ children }) {
     let aktywny = true;
     if (!user) { setIds(new Set()); setWczytane(false); return undefined; }
     api.getSavedIds()
-      .then((d) => { if (aktywny) { setIds(new Set(d.ids || [])); setWczytane(true); } })
+      .then((d) => { if (aktywny) { setIds(odczytaneIds(d)); setWczytane(true); } })
       .catch(() => { if (aktywny) setWczytane(false); }); // offline — dociągniemy przy pierwszym przełączeniu
     return () => { aktywny = false; };
   }, [user?.id]);
@@ -34,25 +39,28 @@ export function SavedProvider({ children }) {
    * cofa zmianę — użytkownik nie zobaczy „zapisano", jeśli serwer odrzucił.
    * @returns {Promise<boolean>} nowy stan (true = zapisany)
    */
-  const toggle = useCallback(async (tenderId) => {
+  const toggle = useCallback(async (tenderId, desired) => {
     let aktualne = ids;
     if (!wczytane) {
       // Nie zgaduj operacji po błędzie odczytu: pusty lokalny zbiór nie
       // oznacza, że przetarg nie jest już zapisany na serwerze.
       const d = await api.getSavedIds();
-      if (!Array.isArray(d?.ids)) throw new Error('Nie udało się odczytać zapisanych przetargów.');
-      aktualne = new Set(d.ids); setIds(aktualne); setWczytane(true);
+      aktualne = odczytaneIds(d); setIds(aktualne); setWczytane(true);
     }
     const byloZapisane = aktualne.has(tenderId);
+    // Akcje „Biorę”, „Zapisz” i „Usuń” przekazują zamiar. Dociągnięcie
+    // stanu po offline nie może odwrócić żądanej operacji.
+    const bedzieZapisane = typeof desired === 'boolean' ? desired : !byloZapisane;
+    if (bedzieZapisane === byloZapisane) return bedzieZapisane;
     setIds((prev) => {
       const nast = new Set(prev);
-      if (byloZapisane) nast.delete(tenderId); else nast.add(tenderId);
+      if (bedzieZapisane) nast.add(tenderId); else nast.delete(tenderId);
       return nast;
     });
     try {
-      if (byloZapisane) await api.unsaveTender(tenderId);
-      else await api.saveTender(tenderId);
-      return !byloZapisane;
+      if (bedzieZapisane) await api.saveTender(tenderId);
+      else await api.unsaveTender(tenderId);
+      return bedzieZapisane;
     } catch (err) {
       setIds((prev) => { // cofnij
         const nast = new Set(prev);
@@ -65,16 +73,20 @@ export function SavedProvider({ children }) {
 
   /** Wymuszone odświeżenie (np. po wejściu na ekran „Zapisane"). */
   const refresh = useCallback(async () => {
-    const d = await api.getSavedIds().catch(() => null);
-    if (d) { setIds(new Set(d.ids || [])); setWczytane(true); }
+    try {
+      const d = await api.getSavedIds();
+      setIds(odczytaneIds(d)); setWczytane(true);
+      return true;
+    } catch { setWczytane(false); return false; }
   }, []);
 
   const wartosc = useMemo(() => ({
     isSaved: (id) => ids.has(id),
     liczba: ids.size,
+    ready: wczytane,
     toggle,
     refresh,
-  }), [ids, toggle, refresh]);
+  }), [ids, wczytane, toggle, refresh]);
 
   return <SavedContext.Provider value={wartosc}>{children}</SavedContext.Provider>;
 }

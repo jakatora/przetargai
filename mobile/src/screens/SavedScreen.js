@@ -53,7 +53,7 @@ export default function SavedScreen({ navigation }) {
 
   async function usun(tenderId) {
     setItems((prev) => prev.filter((s) => s.tender.id !== tenderId));
-    toggle(tenderId).catch(() => wczytaj()); // przy błędzie przywróć z serwera
+    toggle(tenderId, false).catch(() => wczytaj()); // przy błędzie przywróć z serwera
   }
 
   async function zmienStatus(item, nowy) {
