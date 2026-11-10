@@ -74,7 +74,8 @@ const TRASA_AI = { limitMs: 150_000, ponowienia: 0 };
  */
 async function requestBlob(path, { method = 'POST', body } = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  const tokenZadania = authToken;
+  if (tokenZadania) headers.Authorization = `Bearer ${tokenZadania}`;
   let res;
   try {
     res = await wyslijZLimitem(API_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined }, parametryDlaMetody(method));
@@ -85,13 +86,24 @@ async function requestBlob(path, { method = 'POST', body } = {}) {
     let data = null;
     try { data = await res.json(); } catch { /* bez treści */ }
     const err = bladOdpowiedzi(res.status, data);
-    if (err.wygaslaSesja && authToken && naWygasnieciesesji) naWygasnieciesesji();
+    if (err.wygaslaSesja && tokenZadania && authToken === tokenZadania && naWygasnieciesesji) {
+      naWygasnieciesesji();
+    }
     throw err;
+  }
+  // Plik ze starego konta nie może trafić do eksportu/udostępnienia po
+  // przełączeniu sesji, nawet jeśli serwer poprawnie odpowiedział 200.
+  if (authToken !== tokenZadania) {
+    throw new Error('Konto zostało zmienione. Pobierz dokument ponownie.');
   }
   const naglowek = res.headers?.get?.('x-plik');
   let nazwaPliku = null;
   try { nazwaPliku = naglowek ? decodeURIComponent(naglowek) : null; } catch { nazwaPliku = null; }
-  return { blob: await res.blob(), nazwaPliku, typMime: res.headers?.get?.('content-type') ?? 'application/octet-stream' };
+  const blob = await res.blob();
+  if (authToken !== tokenZadania) {
+    throw new Error('Konto zostało zmienione. Pobierz dokument ponownie.');
+  }
+  return { blob, nazwaPliku, typMime: res.headers?.get?.('content-type') ?? 'application/octet-stream' };
 }
 
 /** Klient REST backendu PrzetargAI. */
