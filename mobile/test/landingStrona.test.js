@@ -190,6 +190,20 @@ test('powiadomienia są obiecywane tylko w opisie planów i przy pilnowaniu ZAPI
   assert.match(html, /<div class="pilnuje">[\s\S]*Pilnuje tego, co weźmiesz/);
 });
 
+test('limity i kanały opisane tak, jak działa backend (review Codexa 2026-11-11)', () => {
+  // Standard: pytania do SWZ idą przez Railway i dzielą dobową pulę AI 30/użytkownika (PRZETARG_AI_DAILY_LIMIT_PER_USER)
+  // z analizą SWZ — strona nie może obiecywać „bez limitu”. Free: 3 pytania dziennie (limit w Functions i w moście).
+  assert.doesNotMatch(html, /SWZ[^<"]{0,40}bez (dziennego )?limitu/i, 'pytania do SWZ mają dobowy limit także w Standard');
+  assert.match(html, /<li>Zapytaj SWZ i analizy SWZ — do 30 dziennie<\/li>/);
+  assert.match(html, /<li>Zapytaj SWZ — 3 pytania dziennie<\/li>/);
+  // E-mail zapasowy: przy braku zgody na powiadomienia (brak tokenu) albo odrzuconej wysyłce push
+  // (`dostarcz` w jobs/monitorWyszukiwan.js) — nie „gdy powiadomienie nie dotrze” (niedoręczeń po przyjęciu nie wykrywamy).
+  const pytanie = wezel('FAQPage').mainEntity.find((q) => q.name === 'Czy dowiem się, że zamawiający zmienił SWZ albo termin?');
+  assert.ok(pytanie, 'pytanie o zmiany jest w danych strukturalnych');
+  assert.match(pytanie.acceptedAnswer.text, /nie ma zgody na powiadomienia/);
+  assert.doesNotMatch(html, /gdy powiadomienie nie dotrze|gdy push nie dotrze/i);
+});
+
 test('źródła ogłoszeń: trzy rejestry w FAQ i w stopce, z działającymi adresami urzędowymi', () => {
   const faq = wezel('FAQPage').mainEntity.find((q) => q.name === 'Skąd pochodzą dane o przetargach?');
   for (const rejestr of [/Biuletynu Zamówień Publicznych/, /TED/, /Bazy Konkurencyjności/]) {
