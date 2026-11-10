@@ -10,7 +10,8 @@ import { planEfektywny } from '../lib/plan.js';
 import { LIMIT_PYTAN_SWZ_DARMOWY } from './wygrywalnosc.js';
 
 /** Pytanie do SWZ w Radarze (Railway) — ta sama płatna odpowiedź AI co `POST /wygrywalnosc/tender/:id/zapytaj-swz`. */
-const PYTANIE_SWZ = /^\/swz\/postepowania\/[^/?#]+\/zapytaj\/?(?:[?#]|$)/;
+// Express dopasowuje trasy bez rozróżniania wielkości liter; limit musi robić to samo.
+const PYTANIE_SWZ = /^\/swz\/postepowania\/[^/?#]+\/zapytaj\/?(?:[?#]|$)/i;
 
 /*
  * MOST `/api/przetarg/*` → Railway (P0-4).

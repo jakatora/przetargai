@@ -89,3 +89,12 @@ test('Standard: bez limitu; inne trasy Radaru SWZ (lista) nie zużywają licznik
   for (let i = 0; i < 5; i++) assert.equal((await zapytaj(free, '/api/przetarg/swz/postepowania')).status, 200, 'POST listy/nowego postępowania bez limitu pytań');
   assert.equal((await zapytaj(free)).status, 200, 'pytanie nadal dostępne');
 });
+
+test('Free: wielkość liter w trasie nie omija limitu przed Railway', async () => {
+  const token = await konto();
+  const zadania = podstawRailway();
+  for (let i = 0; i < LIMIT_PYTAN_SWZ_DARMOWY; i++) assert.equal((await zapytaj(token)).status, 200);
+  const ponad = await zapytaj(token, '/api/przetarg/SWZ/POSTEPOWANIA/77/ZAPYTAJ');
+  assert.equal(ponad.status, 429);
+  assert.equal(zadania.length, LIMIT_PYTAN_SWZ_DARMOWY, 'wariant wielkich liter nie dotarł do Railway');
+});
