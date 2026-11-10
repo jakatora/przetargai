@@ -69,6 +69,16 @@ test('brak danych firmy → pole zostaje i trafia do listy; znaki XML w danych s
   assert.deepEqual(w.do_uzupelnienia, [{ etykieta: 'REGON:', powod: 'brak „REGON” w danych firmy' }]);
 });
 
+test('„bomba ZIP”: wpis rozpakowujący się ponad sufit → błąd 413, bez wyczerpania pamięci; zwykły DOCX czyta się dalej', async () => {
+  const { MAKS_WPISU_ZIP } = await import('../src/lib/wypelnijZalacznik.js');
+  // Zera kompresują się ~1000:1 — kilkadziesiąt kB w archiwum, > 40 MB po rozpakowaniu.
+  const bomba = zbudujZip([{ nazwa: 'word/document.xml', dane: Buffer.alloc(MAKS_WPISU_ZIP + 1024) }]);
+  assert.ok(bomba.length < 1024 * 1024, 'archiwum jest małe');
+  assert.throws(() => czytajZip(bomba), (err) => err.status === 413 && /zbyt dużego rozmiaru/.test(err.message));
+  const zwykly = zbudujZip([{ nazwa: 'word/document.xml', dane: Buffer.from('<w:document/>') }]);
+  assert.equal(czytajZip(zwykly)[0].dane.toString(), '<w:document/>');
+});
+
 test('miejsca do wpisania i etykiety', () => {
   assert.deepEqual(miejscaDoWpisania('itd... i ......... oraz ___ i _____'), [{ od: 9, do: 18 }, { od: 30, do: 35 }]);
   assert.equal(poleDlaEtykiety('Wykonawca:'), 'nazwa');

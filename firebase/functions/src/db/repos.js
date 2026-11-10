@@ -4420,6 +4420,20 @@ export const limitPytanSwz = {
 };
 
 /** Kontrole plików oferty dziennie (2026-10-31) — odczyt PDF-ów to CPU instancji API. */
+/** Pobranie CSV katalogu (audyt 2026-11-10): każde żądanie skanuje do 50 tys. ogłoszeń — dobowy licznik na konto. */
+export const limitEksportuKatalogu = {
+  async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
+    const ref = db().collection('users').doc(userId).collection('limity').doc(`eksport_katalogu_${dzien}`);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const wykonane = doc.exists ? (doc.data().wykonane ?? 0) : 0;
+      if (wykonane >= limit) return false;
+      tx.set(ref, { wykonane: wykonane + 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+};
+
 export const limitKontroliOferty = {
   async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
     const ref = db().collection('users').doc(userId).collection('limity').doc(`kontrola_oferty_${dzien}`);

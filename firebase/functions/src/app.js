@@ -52,7 +52,12 @@ export function createApp() {
    * zapisu na każde żądanie). Właściwym bezpiecznikiem kosztów AI jest `aiQuota`
    * (per użytkownik, w bazie), nie ten limiter.
    */
-  const wspolne = { standardHeaders: true, legacyHeaders: false, keyGenerator: kluczKlienta };
+  // Odpowiedź limitera w tym samym kształcie co reszta błędów API — apka pokazuje komunikat zamiast
+  // „Błąd serwera (429)” (audyt 2026-11-10; przy CGNAT wiele osób dzieli jedno IP).
+  const wspolne = {
+    standardHeaders: true, legacyHeaders: false, keyGenerator: kluczKlienta,
+    message: { error: { code: 'ZA_DUZO_ZADAN', message: 'Za dużo prób w krótkim czasie — odczekaj chwilę i spróbuj ponownie.' } },
+  };
 
   const apiLimiter = rateLimit({ windowMs: 60_000, max: 120, ...wspolne });
 
@@ -87,7 +92,8 @@ export function createApp() {
   const adminLimiter = rateLimit({ windowMs: 15 * 60_000, max: 20, ...wspolne });
 
   app.use('/webhooks', webhooksRouter);
-  app.use('/health', healthRouter);
+  // /health robi kilkanaście odczytów bazy na wywołanie i jest publiczny — limiter jak reszta API (audyt 2026-11-10).
+  app.use('/health', apiLimiter, healthRouter);
   // Publiczne statystyki (dowód społeczny na ekranie logowania) — bez auth, z limiterem.
   app.use('/stats', apiLimiter, statsRouter);
   // Dokumenty wymagane przez App Store / Google Play (bez landingu — D-016).
