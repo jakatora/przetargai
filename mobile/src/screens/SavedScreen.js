@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   FlatList, View, Text, Pressable, ActivityIndicator, Switch,
 } from 'react-native';
@@ -32,6 +32,18 @@ export default function SavedScreen({ navigation }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [blad, setBlad] = useState(false);
+  const [bladZapisu, setBladZapisu] = useState(false);
+  const [zajete, setZajete] = useState(() => new Set());
+  const blokady = useRef(new Set());
+  function rozpocznij(id) {
+    if (blokady.current.has(id)) return false;
+    blokady.current.add(id); setZajete(new Set(blokady.current));
+    setBladZapisu(false);
+    return true;
+  }
+  function zakoncz(id) {
+    blokady.current.delete(id); setZajete(new Set(blokady.current));
+  }
 
   const wczytaj = useCallback(async () => {
     try {
@@ -52,11 +64,16 @@ export default function SavedScreen({ navigation }) {
   useFocusEffect(useCallback(() => { wczytaj(); }, [wczytaj]));
 
   async function usun(tenderId) {
-    setItems((prev) => prev.filter((s) => s.tender.id !== tenderId));
-    toggle(tenderId, false).catch(() => wczytaj()); // przy błędzie przywróć z serwera
+    if (!rozpocznij(tenderId)) return;
+    try {
+      await toggle(tenderId, false);
+      setItems((prev) => prev.filter((s) => s.tender.id !== tenderId));
+    } catch { setBladZapisu(true); }
+    finally { zakoncz(tenderId); }
   }
 
   async function zmienStatus(item, nowy) {
+    if (!rozpocznij(item.tender.id)) return;
     const poprzedni = item.status || STATUS_DOMYSLNY;
     setItems((prev) => prev.map((s) =>
       s.tender.id === item.tender.id ? { ...s, status: nowy } : s));
@@ -73,10 +90,12 @@ export default function SavedScreen({ navigation }) {
     } catch {
       setItems((prev) => prev.map((s) =>
         s.tender.id === item.tender.id ? { ...s, status: poprzedni } : s));
-    }
+      setBladZapisu(true);
+    } finally { zakoncz(item.tender.id); }
   }
 
   async function przelaczPrzypomnienie(item, wartosc) {
+    if (!rozpocznij(item.tender.id)) return;
     // Optymistycznie; przy błędzie cofamy.
     setItems((prev) => prev.map((s) =>
       s.tender.id === item.tender.id ? { ...s, reminder_enabled: wartosc } : s));
@@ -88,8 +107,9 @@ export default function SavedScreen({ navigation }) {
           : s));
     } catch {
       setItems((prev) => prev.map((s) =>
-        s.tender.id === item.tender.id ? { ...s, reminder_enabled: !wartosc } : s));
-    }
+        s.tender.id === item.tender.id ? { ...s, reminder_enabled: item.reminder_enabled } : s));
+      setBladZapisu(true);
+    } finally { zakoncz(item.tender.id); }
   }
 
   if (loading) {
@@ -108,6 +128,9 @@ export default function SavedScreen({ navigation }) {
       // Karta to zwykły View: NAWIGUJE tylko górny wiersz. Gdyby cała karta była
       // Pressable, przełącznik przypomnienia (na web) otwierałby szczegóły.
       <View style={styles.card}>
+        {zajete.has(tender.id) ? <Text accessibilityLiveRegion="polite" style={styles.przypOpis}>
+          {t('Zapisywanie zmiany…', 'Saving change…')}
+        </Text> : null}
         <Pressable
           style={styles.row}
           onPress={() => navigation.navigate('MatchDetail', { match: item })}
@@ -130,14 +153,14 @@ export default function SavedScreen({ navigation }) {
             {zmiany ? <Text style={[styles.kryteria, styles.zmiany]} numberOfLines={1}>{t(zmiany.pl, zmiany.en)}</Text> : null}
             {otwarcie ? <Text style={[styles.kryteria, styles.kryteriaPozacenowe]} numberOfLines={1}>{otwarcie}</Text> : null}
           </View>
-          <Pressable accessibilityRole="button" onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
+          <Pressable accessibilityRole="button" disabled={zajete.has(tender.id)} onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
             <Text style={[styles.gwiazdkaZnak, { color: kolory.blue }]}>★</Text>
           </Pressable>
         </Pressable>
 
         <View style={styles.etapBlok}>
           <Text style={styles.etapEtykieta}>{t('Etap', 'Stage')}</Text>
-          <StatusPicker wartosc={item.status || STATUS_DOMYSLNY} onChange={(v) => zmienStatus(item, v)} />
+          <StatusPicker disabled={zajete.has(tender.id)} wartosc={item.status || STATUS_DOMYSLNY} onChange={(v) => zmienStatus(item, v)} />
         </View>
 
         <View style={styles.przypomnienie}>
@@ -155,7 +178,7 @@ export default function SavedScreen({ navigation }) {
           <Switch
             value={item.reminder_enabled}
             onValueChange={(v) => przelaczPrzypomnienie(item, v)}
-            disabled={!maTermin}
+            disabled={!maTermin || zajete.has(tender.id)}
             trackColor={{ true: kolory.blue }}
           />
         </View>
@@ -168,7 +191,12 @@ export default function SavedScreen({ navigation }) {
       data={items}
       keyExtractor={(item) => item.id}
       contentContainerStyle={items.length ? styles.list : styles.listEmpty}
-      ListHeaderComponent={items.length ? (
+      ListHeaderComponent={<View>
+        {bladZapisu ? <Text accessibilityRole="alert" style={{ color: kolory.danger, marginBottom: spacing.md }}>
+          {t('Nie udało się zapisać zmiany. Poprzednie ustawienie zostało zachowane. Sprawdź połączenie i spróbuj ponownie.',
+            'Could not save the change. Your previous setting was kept. Check your connection and try again.')}
+        </Text> : null}
+        {items.length ? (
         <View style={styles.widokiRzad}>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('Pulpit')} accessibilityRole="button">
             <Text style={styles.widokBtnTekst}>📋  {t('Pulpit', 'Dashboard')}</Text>
@@ -184,7 +212,7 @@ export default function SavedScreen({ navigation }) {
             <Text style={styles.widokBtnTekst}>📤  {t('Excel', 'Excel')}</Text>
           </Pressable>
         </View>
-      ) : null}
+      ) : null}</View>}
       renderItem={renderItem}
       ListEmptyComponent={blad ? (
         <View style={styles.center}>
