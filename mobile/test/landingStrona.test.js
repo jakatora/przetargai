@@ -169,10 +169,14 @@ test('licznik ogłoszeń: bez pobranej wartości strona nie pokazuje żadnej lic
   assert.match(skrypt, /\.catch\(function \(\) \{\}\)/, 'błąd pobierania zostawia tekst z HTML');
 });
 
-test('powiadomienia są obiecywane tylko w opisie planów (cennik: Standard z miesięczną próbą)', () => {
+test('powiadomienia są obiecywane tylko w opisie planów i przy pilnowaniu ZAPISANYCH (cennik: Standard z miesięczną próbą)', () => {
+  // 2026-11-10: alerty o zmianach zapisanych przetargów (SWZ, termin, wyjaśnienia, wynik) i przypomnienia 7/3/1
+  // działają w KAŻDYM planie (push, awaryjnie e-mail) — pas „Pilnuje tego, co weźmiesz” i pytanie w FAQ mogą o nich mówić.
   const bezCennika = html
     .replace(/<section class="section" id="cennik">[\s\S]*?<\/section>/, '')
     .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '')
+    .replace(/<div class="pilnuje">[\s\S]*?<\/ul>\s*<\/div>\s*<\/div>/, '')
+    .replace(/<details class="faq">\s*<summary>Czy dowiem się, że zamawiający zmienił SWZ albo termin\?<\/summary>[\s\S]*?<\/details>/, '')
     .replace(/<!--[\s\S]*?-->/g, '');
   assert.doesNotMatch(czysty(bezCennika), /push|powiadomieni|powiadamia/i);
   assert.doesNotMatch(wezel('SoftwareApplication').description, /powiadamia/i);
@@ -180,7 +184,10 @@ test('powiadomienia są obiecywane tylko w opisie planów (cennik: Standard z mi
   assert.match(html, /<li>Przegląd co 3 godziny i <strong>powiadomienia od razu<\/strong><\/li>/);
   assert.match(html, /Miesiąc \(30 dni\) Standard za darmo po rejestracji — bez karty\./);
   assert.doesNotMatch(html, /7 dni (próby|planu Standard|pełny plan|masz pełny)|przez 7 dni/, 'próba trwa miesiąc — bez starych „7 dni”');
-  assert.match(html, /Subskrypcję aktywujesz z poziomu aplikacji\. Faktura VAT automatycznie\./);
+  assert.match(html, /Subskrypcję aktywujesz z poziomu aplikacji\./);
+  // Faktury nie są dziś wystawiane automatycznie (FAKTUROWANIE_ENABLED=false) — strona nie może tego obiecywać (audyt 2026-11-10).
+  assert.doesNotMatch(html, /fakturę VAT|Faktura VAT/i);
+  assert.match(html, /<div class="pilnuje">[\s\S]*Pilnuje tego, co weźmiesz/);
 });
 
 test('źródła ogłoszeń: trzy rejestry w FAQ i w stopce, z działającymi adresami urzędowymi', () => {
