@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useRef, useState } from 'react';
 import { Pressable, View, Text } from 'react-native';
 import { radius, spacing, typografia } from '../theme';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
@@ -16,20 +16,39 @@ import { ZnacznikiWyjasnienia } from './Wyjasnienie';
 export function SaveStar({ tenderId, styles, kolory }) {
   const { isSaved, toggle } = useSaved();
   const { t } = useJezyk();
+  const [bladZapisu, setBladZapisu] = useState(false);
+  const [zapisWToku, setZapisWToku] = useState(false);
+  const blokada = useRef(false);
   const zapisany = isSaved(tenderId);
+  async function przelacz() {
+    if (blokada.current) return;
+    blokada.current = true;
+    setZapisWToku(true);
+    setBladZapisu(false);
+    try { await toggle(tenderId); }
+    catch { setBladZapisu(true); }
+    finally { blokada.current = false; setZapisWToku(false); }
+  }
   return (
-    <Pressable
-      onPress={() => { toggle(tenderId).catch(() => {}); }}
-      hitSlop={12}
-      accessibilityRole="button"
-      accessibilityState={{ selected: zapisany }}
-      accessibilityLabel={zapisany ? t('Usuń z zapisanych', 'Remove from saved') : t('Zapisz przetarg', 'Save tender')}
-      style={styles.gwiazdka}
-    >
-      <Text style={[styles.gwiazdkaZnak, { color: zapisany ? kolory.blue : kolory.textMuted }]}>
-        {zapisany ? '★' : '☆'}
-      </Text>
-    </Pressable>
+    <>
+      <Pressable
+        onPress={przelacz}
+        disabled={zapisWToku}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityState={{ selected: zapisany, busy: zapisWToku, disabled: zapisWToku }}
+        accessibilityLabel={zapisany ? t('Usuń z zapisanych', 'Remove from saved') : t('Zapisz przetarg', 'Save tender')}
+        style={styles.gwiazdka}
+      >
+        <Text style={[styles.gwiazdkaZnak, { color: zapisany ? kolory.blue : kolory.textMuted }]}>
+          {zapisany ? '★' : '☆'}
+        </Text>
+      </Pressable>
+      {bladZapisu ? <Text accessibilityRole="alert" style={{ color: kolory.text }}>
+        {t('Nie udało się potwierdzić zmiany zapisu. Sprawdź połączenie i spróbuj ponownie.',
+          'Could not confirm the saved status change. Check your connection and try again.')}
+      </Text> : null}
+    </>
   );
 }
 

@@ -37,8 +37,11 @@ export function SavedProvider({ children }) {
   const toggle = useCallback(async (tenderId) => {
     let aktualne = ids;
     if (!wczytane) {
-      const d = await api.getSavedIds().catch(() => null);
-      if (d) { aktualne = new Set(d.ids || []); setIds(aktualne); setWczytane(true); }
+      // Nie zgaduj operacji po błędzie odczytu: pusty lokalny zbiór nie
+      // oznacza, że przetarg nie jest już zapisany na serwerze.
+      const d = await api.getSavedIds();
+      if (!Array.isArray(d?.ids)) throw new Error('Nie udało się odczytać zapisanych przetargów.');
+      aktualne = new Set(d.ids); setIds(aktualne); setWczytane(true);
     }
     const byloZapisane = aktualne.has(tenderId);
     setIds((prev) => {

@@ -1,0 +1,93 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import { build } from 'esbuild';
+import { fileURLToPath } from 'node:url';
+
+// Wykonujemy rzeczywisty SavedProvider, podmieniając wyłącznie React i API.
+// Pominięty efekt startowy odtwarza stan po nieudanym pierwszym odczycie.
+const bundled = await build({
+  entryPoints: [fileURLToPath(new URL('../src/context/SavedContext.js', import.meta.url))],
+  bundle: true, write: false, format: 'cjs', platform: 'node',
+  loader: { '.js': 'jsx' }, jsxFactory: 'h',
+  plugins: [{ name: 'boundaries', setup(b) {
+    b.onResolve({ filter: /^(react|\.\.\/api\/client|\.\/AuthContext)$/ },
+      ({ path }) => ({ path, external: true }));
+  } }],
+});
+
+function provider(api) {
+  const states = [];
+  const react = {
+    createContext: () => ({ Provider: 'provider' }),
+    useCallback: (fn) => fn, useContext: () => null, useEffect: () => {},
+    useMemo: (fn) => fn(),
+    useState(initial) {
+      const slot = states.length;
+      states.push(typeof initial === 'function' ? initial() : initial);
+      return [states[slot], (value) => {
+        states[slot] = typeof value === 'function' ? value(states[slot]) : value;
+      }];
+    },
+  };
+  const module = { exports: {} };
+  const context = {
+    module, exports: module.exports,
+    h: (_type, props) => props.value,
+    require(name) {
+      if (name === 'react') return react;
+      if (name === '../api/client') return { api };
+      if (name === './AuthContext') return { useAuth: () => ({ user: { id: 'u1' } }) };
+      throw new Error(`Unexpected import ${name}`);
+    },
+  };
+  vm.runInNewContext(bundled.outputFiles[0].text, context);
+  return { value: module.exports.SavedProvider({ children: null }), states };
+}
+
+test('błąd odczytu przed przełączeniem: żadnej mutacji ani optymistycznej gwiazdki', async () => {
+  let writes = 0;
+  const { value, states } = provider({
+    getSavedIds: async () => { throw new Error('offline'); },
+    saveTender: async () => { writes++; }, unsaveTender: async () => { writes++; },
+  });
+  await assert.rejects(value.toggle('t1'), /offline/);
+  assert.equal(writes, 0);
+  assert.equal(states[0].size, 0);
+  assert.equal(states[1], false);
+});
+
+test('pusta albo błędna odpowiedź nie jest pustą listą zapisanych', async () => {
+  for (const response of [null, {}, { ids: null }, { ids: 't1' }]) {
+    let writes = 0;
+    const { value } = provider({
+      getSavedIds: async () => response,
+      saveTender: async () => { writes++; }, unsaveTender: async () => { writes++; },
+    });
+    await assert.rejects(value.toggle('t1'));
+    assert.equal(writes, 0);
+  }
+});
+
+test('odczyt serwera wybiera właściwą operację, także po nieudanym starcie', async () => {
+  for (const saved of [true, false]) {
+    const calls = [];
+    const { value, states } = provider({
+      getSavedIds: async () => ({ ids: saved ? ['t1'] : [] }),
+      saveTender: async (id) => calls.push(['save', id]),
+      unsaveTender: async (id) => calls.push(['unsave', id]),
+    });
+    assert.equal(await value.toggle('t1'), !saved);
+    assert.deepEqual(calls, [[saved ? 'unsave' : 'save', 't1']]);
+    assert.equal(states[0].has('t1'), !saved);
+  }
+});
+
+test('odrzucona mutacja przywraca poprzednią gwiazdkę i przekazuje błąd do UI', async () => {
+  const { value, states } = provider({
+    getSavedIds: async () => ({ ids: ['t1'] }),
+    unsaveTender: async () => { throw new Error('rejected'); },
+  });
+  await assert.rejects(value.toggle('t1'), /rejected/);
+  assert.equal(states[0].has('t1'), true);
+});
