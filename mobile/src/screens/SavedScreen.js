@@ -20,6 +20,7 @@ import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio'
 import * as storage from '../lib/storage';
 import { useAuth } from '../context/AuthContext';
 import { eksportujNaEmail } from '../services/eksportCsv';
+import { kolejnoscZapisanych } from '../lib/kolejnoscZapisanych';
 
 export default function SavedScreen({ navigation }) {
   const { kolory } = useTheme();
@@ -35,7 +36,8 @@ export default function SavedScreen({ navigation }) {
   const wczytaj = useCallback(async () => {
     try {
       const d = await api.getSaved();
-      setItems(d.saved || []);
+      // Co pilne — na górze (najbliższy termin), historia na dole; przy edycji etapu lista nie skacze.
+      setItems(kolejnoscZapisanych(d.saved || []));
       setBlad(false);
     } catch {
       // Offline/awaria — zostaje ostatnia lista, ale gdy nie mamy CZEGO pokazać,
