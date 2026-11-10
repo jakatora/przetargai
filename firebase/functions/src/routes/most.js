@@ -5,6 +5,12 @@ import { authRequired } from '../middleware/auth.js';
 import {
   idRailwayDlaUzytkownika, przekaz, tozsamoscPrzepadla, sciezkaMostu,
 } from '../services/mostRailway.js';
+import { limitPytanSwz } from '../db/repos.js';
+import { planEfektywny } from '../lib/plan.js';
+import { LIMIT_PYTAN_SWZ_DARMOWY } from './wygrywalnosc.js';
+
+/** Pytanie do SWZ w Radarze (Railway) — ta sama płatna odpowiedź AI co `POST /wygrywalnosc/tender/:id/zapytaj-swz`. */
+const PYTANIE_SWZ = /^\/swz\/postepowania\/[^/?#]+\/zapytaj\/?(?:[?#]|$)/;
 
 /*
  * MOST `/api/przetarg/*` → Railway (P0-4).
@@ -52,6 +58,21 @@ router.use(async (req, res, next) => {
    * (testy, lokalny serwer) `rawBody` nie istnieje, więc zostaje bufor z express.raw().
    */
   const cialo = Buffer.isBuffer(req.rawBody) ? req.rawBody : req.body;
+
+  /*
+   * Limit pytań do SWZ w planie darmowym (audyt 2026-11-10): stał tylko przy pytaniu z ekranu przetargu,
+   * a Radar SWZ w apce pyta tą rurą wprost — Free miał ~30 pytań dziennie (limit Railway) zamiast 3.
+   * Jeden wspólny licznik dla obu dróg; odmowa PRZED ruchem do Railway.
+   */
+  if (req.method === 'POST' && PYTANIE_SWZ.test(req.url) && planEfektywny(req.user) !== 'standard'
+    && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY))) {
+    return res.status(429).json({
+      error: {
+        code: 'LIMIT_PYTAN_SWZ',
+        message: `W planie darmowym możesz zadać ${LIMIT_PYTAN_SWZ_DARMOWY} pytania do SWZ dziennie. W planie Standard pytasz bez tego limitu.`,
+      },
+    });
+  }
 
   try {
     let idRailway = await idRailwayDlaUzytkownika(req.user);
