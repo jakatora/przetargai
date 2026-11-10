@@ -141,6 +141,16 @@ test('preferencja użytkownika: przypomnienie wyłączone — bez wysyłki', asy
   assert.equal(dla(wyslane, tenderId).length, 0);
 });
 
+test('oferta już złożona (etap w Zapisanych) — bez przypomnienia o pytaniach', async () => {
+  const userId = await uzytkownik();
+  const tenderId = await zapisanyPrzetarg(userId);
+  await saved.setStatus(userId, tenderId, 'zlozona');
+  const { wyslane, wyslij } = dostawca();
+  const wynik = await runPrzypomnieniaPytanSwz({ teraz: W_OKNIE, wyslij });
+  assert.equal(dla(wyslane, tenderId).length, 0);
+  assert.ok(wynik.po_zlozeniu >= 1);
+});
+
 test('rejestr bez ustawowego terminu pytań (Baza Konkurencyjności) — bez zmyślonego terminu i bez wysyłki', async () => {
   const userId = await uzytkownik();
   const tenderId = await zapisanyPrzetarg(userId, { source: 'bk' });
