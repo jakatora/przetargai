@@ -16,12 +16,13 @@ const bundled = await build({
   } }],
 });
 
-function provider(api) {
+function provider(api, { start = false } = {}) {
   const states = [];
+  const effects = [];
   const react = {
     createContext: () => ({ Provider: 'provider' }),
-    useCallback: (fn) => fn, useContext: () => null, useEffect: () => {},
-    useMemo: (fn) => fn(),
+    useCallback: (fn) => fn, useContext: () => null, useEffect: (effect) => effects.push(effect),
+    useMemo: (fn) => fn(), useRef: (value) => ({ current: value }),
     useState(initial) {
       const slot = states.length;
       states.push(typeof initial === 'function' ? initial() : initial);
@@ -42,7 +43,9 @@ function provider(api) {
     },
   };
   vm.runInNewContext(bundled.outputFiles[0].text, context);
-  return { value: module.exports.SavedProvider({ children: null }), states };
+  const value = module.exports.SavedProvider({ children: null });
+  const cleanups = start ? effects.map((effect) => effect()) : [];
+  return { value, states, unmount: () => cleanups.forEach((cleanup) => cleanup?.()) };
 }
 
 test('błąd odczytu przed przełączeniem: żadnej mutacji ani optymistycznej gwiazdki', async () => {
@@ -115,4 +118,75 @@ test('odświeżenie odróżnia znany pusty zbiór od błędu i nie wykonuje zapi
   assert.equal(await value.refresh(), true);
   assert.equal(states[1], true);
   assert.equal(states[0].size, 0);
+});
+
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+const tick = () => new Promise((resolve) => setImmediate(resolve));
+
+test('odczyt rozpoczęty przed zapisem nie cofa nowszej decyzji', async () => {
+  const read = deferred();
+  const calls = [];
+  const { value, states } = provider({
+    getSavedIds: () => { calls.push('read'); return read.promise; },
+    saveTender: async () => { calls.push('save'); },
+  });
+  const refresh = value.refresh();
+  const save = value.toggle('t1', true);
+  await tick();
+  assert.deepEqual(calls, ['read']);
+  read.resolve({ ids: [] });
+  await Promise.all([refresh, save]);
+  assert.deepEqual(calls, ['read', 'save']);
+  assert.equal(states[0].has('t1'), true);
+});
+
+test('dwa ekrany: zapis i usunięcie kończą się w kolejności decyzji użytkownika', async () => {
+  const write = deferred(); const calls = [];
+  const { value, states } = provider({
+    getSavedIds: async () => ({ ids: [] }),
+    saveTender: () => { calls.push('save'); return write.promise; },
+    unsaveTender: async () => { calls.push('unsave'); },
+  });
+  const save = value.toggle('t1', true);
+  const remove = value.toggle('t1', false);
+  await tick();
+  assert.deepEqual(calls, ['save']);
+  assert.equal(states[0].has('t1'), true);
+  write.resolve();
+  await Promise.all([save, remove]);
+  assert.deepEqual(calls, ['save', 'unsave']);
+  assert.equal(states[0].has('t1'), false);
+});
+
+test('błąd pierwszego zapisu nie blokuje następnego przetargu', async () => {
+  const calls = [];
+  const { value, states } = provider({
+    getSavedIds: async () => ({ ids: [] }),
+    saveTender: async (id) => { calls.push(id); if (id === 't1') throw new Error('offline'); },
+  });
+  const first = assert.rejects(value.toggle('t1', true), /offline/);
+  const second = value.toggle('t2', true);
+  await Promise.all([first, second]);
+  assert.deepEqual(calls, ['t1', 't2']);
+  assert.equal(states[0].has('t1'), false);
+  assert.equal(states[0].has('t2'), true);
+});
+
+test('zmiana konta anuluje mutację oczekującą na poprzedni odczyt', async () => {
+  const read = deferred(); let writes = 0;
+  const { value, unmount } = provider({
+    getSavedIds: () => read.promise,
+    saveTender: async () => { writes++; },
+  }, { start: true });
+  const save = value.toggle('t1', true);
+  const rejected = assert.rejects(save, /Konto zostało zmienione/);
+  await tick();
+  unmount();
+  read.resolve({ ids: [] });
+  await rejected;
+  assert.equal(writes, 0);
 });

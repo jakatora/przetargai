@@ -1,5 +1,5 @@
 import {
-  createContext, useCallback, useContext, useEffect, useMemo, useState,
+  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { api } from '../api/client';
 import { useAuth } from './AuthContext';
@@ -30,63 +30,73 @@ function SavedAccountProvider({ userId, children }) {
   // zapisano” — przełącznik na ★ wysłałby zapis zamiast usunięcia (audyt 2026-11-10).
   const [wczytane, setWczytane] = useState(false);
 
-  // Wczytanie zapisanych po zalogowaniu (i wyczyszczenie po wylogowaniu).
-  useEffect(() => {
-    let aktywny = true;
-    if (!userId) { setIds(new Set()); setWczytane(false); return undefined; }
-    api.getSavedIds()
-      .then((d) => { if (aktywny) { setIds(odczytaneIds(d)); setWczytane(true); } })
-      .catch(() => { if (aktywny) setWczytane(false); }); // offline — dociągniemy przy pierwszym przełączeniu
-    return () => { aktywny = false; };
-  }, [userId]);
+  // Wszystkie odczyty i mutacje korzystają z jednej kolejki konta.
+  // Spóźniony refresh nie może nadpisać nowszego zapisu; dwie karty
+  // tego samego przetargu nie mogą wysłać sprzecznych operacji równolegle.
+  const current = useRef({ ids: new Set(), ready: false });
+  const pending = useRef(Promise.resolve());
+  const active = useRef(true);
+  const serial = useCallback((operation) => {
+    const result = pending.current.then(() => {
+      if (!active.current) throw new Error('Konto zostało zmienione. Odśwież dane ponownie.');
+      return operation();
+    });
+    pending.current = result.catch(() => {});
+    return result;
+  }, []);
+  const publish = useCallback((nextIds, ready) => {
+    current.current = { ids: nextIds, ready };
+    setIds(nextIds); setWczytane(ready);
+  }, []);
 
   /**
    * Zapisz / usuń z zakładek. Optymistycznie zmienia ikonę, a przy błędzie
    * cofa zmianę — użytkownik nie zobaczy „zapisano", jeśli serwer odrzucił.
    * @returns {Promise<boolean>} nowy stan (true = zapisany)
    */
-  const toggle = useCallback(async (tenderId, desired) => {
+  const toggle = useCallback((tenderId, desired) => serial(async () => {
     if (!userId) throw new Error('Zaloguj się, aby zapisać przetarg.');
-    let aktualne = ids;
-    if (!wczytane) {
+    let aktualne = current.current.ids;
+    if (!current.current.ready) {
       // Nie zgaduj operacji po błędzie odczytu: pusty lokalny zbiór nie
       // oznacza, że przetarg nie jest już zapisany na serwerze.
       const d = await api.getSavedIds();
-      aktualne = odczytaneIds(d); setIds(aktualne); setWczytane(true);
+      aktualne = odczytaneIds(d); publish(aktualne, true);
     }
+    if (!active.current) throw new Error('Konto zostało zmienione. Odśwież dane ponownie.');
     const byloZapisane = aktualne.has(tenderId);
     // Akcje „Biorę”, „Zapisz” i „Usuń” przekazują zamiar. Dociągnięcie
     // stanu po offline nie może odwrócić żądanej operacji.
     const bedzieZapisane = typeof desired === 'boolean' ? desired : !byloZapisane;
     if (bedzieZapisane === byloZapisane) return bedzieZapisane;
-    setIds((prev) => {
-      const nast = new Set(prev);
-      if (bedzieZapisane) nast.add(tenderId); else nast.delete(tenderId);
-      return nast;
-    });
+    const next = new Set(aktualne);
+    if (bedzieZapisane) next.add(tenderId); else next.delete(tenderId);
+    publish(next, true);
     try {
       if (bedzieZapisane) await api.saveTender(tenderId);
       else await api.unsaveTender(tenderId);
       return bedzieZapisane;
     } catch (err) {
-      setIds((prev) => { // cofnij
-        const nast = new Set(prev);
-        if (byloZapisane) nast.add(tenderId); else nast.delete(tenderId);
-        return nast;
-      });
+      publish(aktualne, true);
       throw err;
     }
-  }, [ids, wczytane, userId]);
+  }), [serial, publish, userId]);
 
   /** Wymuszone odświeżenie (np. po wejściu na ekran „Zapisane"). */
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(() => serial(async () => {
     if (!userId) return false;
     try {
       const d = await api.getSavedIds();
-      setIds(odczytaneIds(d)); setWczytane(true);
+      publish(odczytaneIds(d), true);
       return true;
-    } catch { setWczytane(false); return false; }
-  }, [userId]);
+    } catch { publish(current.current.ids, false); return false; }
+  }), [serial, publish, userId]);
+
+  useEffect(() => {
+    active.current = true;
+    if (userId) void refresh().catch(() => {});
+    return () => { active.current = false; };
+  }, [userId, refresh]);
 
   const wartosc = useMemo(() => ({
     isSaved: (id) => ids.has(id),
