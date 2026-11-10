@@ -47,6 +47,7 @@ import ArkuszOdrzucenia from '../components/ArkuszOdrzucenia';
 import WarunkiUdzialu from '../components/WarunkiUdzialu';
 import PlanDzialania from '../components/PlanDzialania';
 import { POKAZUJ_ZAKUP } from '../lib/kanal';
+import { pasekDecyzji, krokiBiore, grupyNarzedzi, liczbaNarzedzi } from '../lib/szczegolyPrzetargu';
 
 /** Etykieta etapu kontroli (STATUSY_KONTROLI); brak kontroli → pierwszy etap „Nowa". */
 function etykietaEtapuKontroli(status) {
@@ -107,6 +108,10 @@ export default function MatchDetailScreen({ route, navigation }) {
   // Poprzetargowa kontrola oferty zwycięzcy (podzadanie 6/13) — tylko dla przegranej.
   const [kontrola, setKontrola] = useState(null);
   const [wniosekBusy, setWniosekBusy] = useState(false);
+  // Ekran szczegółów 2026-11-10: narzędzia i szczegóły oceny zwinięte, „Biorę” w pasku na dole.
+  const [narzedziaOtwarte, setNarzedziaOtwarte] = useState(false);
+  const [ocenaOtwarta, setOcenaOtwarta] = useState(false);
+  const [bioreTrwa, setBioreTrwa] = useState(false);
 
   useEffect(() => {
     if (!match?.id) return undefined;
@@ -303,8 +308,89 @@ export default function MatchDetailScreen({ route, navigation }) {
     }
   }
 
+  // „Biorę” (2026-11-10): zapis + przypomnienie 7/3/1 + etap „Przygotowuję ofertę” jednym ruchem
+  // (`lib/szczegolyPrzetargu.krokiBiore`). Zapis jest warunkiem reszty; przypomnienie i etap — najlepiej jak się da.
+  async function biore() {
+    if (bioreTrwa) return;
+    setBioreTrwa(true);
+    const kroki = krokiBiore({ zapisany, przypomnienie, maTermin, status });
+    try {
+      if (kroki.includes('zapisz')) await toggle(match.id);
+    } catch (err) {
+      setBioreTrwa(false);
+      Alert.alert(t('Nie udało się zapisać przetargu', 'Could not save the tender'), err.message);
+      return;
+    }
+    if (kroki.includes('przypomnienie')) {
+      try {
+        const stan = await api.setReminder(match.id, true);
+        setPrzypomnienie(stan.reminder_enabled);
+      } catch { /* przypomnienie włączysz przełącznikiem niżej */ }
+    }
+    if (kroki.includes('etap')) {
+      try {
+        await api.setStatus(match.id, 'przygotowuje');
+        setStatus('przygotowuje');
+      } catch { /* etap zmienisz niżej */ }
+    }
+    setBioreTrwa(false);
+  }
+
+  // Parametry tras narzędzi (lista i kolejność: `lib/szczegolyPrzetargu.grupyNarzedzi`).
+  const nazwa = { nazwa: tender.title };
+  const parametryNarzedzi = {
+    KartaDecyzji: { match, wyniki: wynikiSurowe },
+    CzyWarto: { matchId: match.id, tenderId: tender?.id ?? match.tender_id ?? null, tytul: tender?.title },
+    SymulatorPlynnosci: nazwa,
+    SciezkaDoOferty: { match },
+    ChecklistaOferty: paramsChecklisty,
+    DokumentyOferty: { match },
+    KalkulatorCeny: { ...nazwa, match, rynek: wartoscOrient ?? null, budzet: Number.isFinite(Number(tender.budget)) && Number(tender.budget) > 0 ? Number(tender.budget) : null },
+    SprawdzarkaCeny: { ...nazwa, tenderId: tender.id },
+    KalkulatorPunktow: nazwa,
+    SymulatorPunktacji: nazwa,
+    KontrolerGwarancji: { ...nazwa, tenderId: tender.id },
+    KontrolaOferty: { match },
+    RejestratorOferty: { termin: tender.deadline, postepowanieId: match.id, nazwa: tender.title },
+    OdpowiedzNaWezwanie: { match },
+    StraznikWezwania: nazwa,
+    ObronaCeny: nazwa,
+    KaryUmowne: nazwa,
+    TerminZwiazania: nazwa,
+    WizjaLokalna: nazwa,
+    Konsorcjum: nazwa,
+    Tajemnica: nazwa,
+    Samooczyszczenie: nazwa,
+    Kreator118: undefined,
+    KalkulatorTerminow: nazwa,
+    PoWygranej: { match },
+    ZabezpieczenieZwrot: nazwa,
+    KalkulatorOdsetek: nazwa,
+  };
+  const grupy = grupyNarzedzi({ status, maChecklista: !!paramsChecklisty });
+  const pasek = pasekDecyzji({ zapisany, przypomnienie, status, terminMinal: termin.minal, maTermin });
+  const uzasadnienie = match.uzasadnienie ?? [];
+
   return (
-    <Screen scroll>
+    <Screen
+      scroll
+      stopka={pasek.widoczny ? (
+        <View>
+          {pasek.podpis ? <Text style={styles.pasekPodpis}>{t(pasek.podpis)}</Text> : null}
+          <View style={styles.pasekPrzyciski}>
+            {pasek.glowna.akcja === 'biore' ? (
+              <Button title={t(pasek.glowna.etykieta)} onPress={biore} loading={bioreTrwa} style={styles.pasekGlowny} />
+            ) : (
+              <View style={[styles.pasekGlowny, styles.pasekStan]}>
+                <Ikona nazwa="ok" rozmiar={18} kolor={kolory.sukcesAkcent} />
+                <Text style={styles.pasekStanTekst}>{t(pasek.glowna.etykieta)}</Text>
+              </View>
+            )}
+            <Button title={t('Nie dla nas', 'Not for us')} variant="ghost" onPress={() => setArkusz(true)} style={styles.pasekDrugi} />
+          </View>
+        </View>
+      ) : null}
+    >
       <View style={styles.headerRow}>
         <ScoreBadge score={match.confidence_score} size="lg" />
         <View style={styles.headerTresc}>
@@ -382,50 +468,115 @@ export default function MatchDetailScreen({ route, navigation }) {
         </View>
       ) : null}
 
-      <KtoWygrywa tender={tender} />
+      {/* DECYZJA (2026-11-10): najpierw to, co rozstrzyga „biorę czy nie” — jedno uzasadnienie zamiast czterech. */}
+      <Text style={styles.sectionTitle}>{t('Dlaczego to wybraliśmy', 'Why we picked this')}</Text>
+      <View style={styles.card}>
+        {uzasadnienie.length ? uzasadnienie.map((p) => (
+          <View key={p} style={styles.uzasadnienieRzad}>
+            <Ikona nazwa="ok" rozmiar={16} kolor={kolory.sukcesAkcent} />
+            <Text style={styles.uzasadnienieTekst}>{p}</Text>
+          </View>
+        )) : (
+          <Text style={styles.reasoning}>{match.reasoning || t('Brak uzasadnienia.', 'No rationale provided.')}</Text>
+        )}
+        <Pressable
+          onPress={() => setOcenaOtwarta((v) => !v)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: ocenaOtwarta }}
+          style={styles.rozwinRzad}
+        >
+          <Text style={styles.rozwinTekst}>
+            {ocenaOtwarta ? t('Zwiń szczegóły oceny', 'Hide scoring details') : t('Jak to oceniliśmy', 'How we scored it')}
+          </Text>
+        </Pressable>
+        {ocenaOtwarta ? (
+          <View>
+            {uzasadnienie.length && match.reasoning ? <Text style={styles.reasoning}>{match.reasoning}</Text> : null}
+            {/* Model czy sama heurystyka — użytkownik ma prawo wiedzieć, na czym opiera się liczba (audyt 2026-07-10). */}
+            <View style={styles.zrodloOceny}>
+              <Text style={styles.zrodloEtykieta}>{t(ocena.etykieta)}</Text>
+              <Text style={styles.zrodloOpis}>{t(ocena.opis)}</Text>
+            </View>
+            <Wyjasnienie wyjasnienie={match.wyjasnienie} />
+          </View>
+        ) : null}
+      </View>
+
+      <WarunkiUdzialu match={match} plan={plan} navigation={navigation} onUpgrade={POKAZUJ_ZAKUP ? przejdzNaStandard : null} />
       <KryteriaOceny tender={tender} onPytania={setPytaniaKryteriow} />
+
+      {/*
+        Źródło pierwotne, czas ostatniej synchronizacji i link do ORYGINAŁU (P1-3).
+        Ofertę składa się w rejestrze, nie w tej aplikacji — adres oryginału jest
+        więc najważniejszym wyjściem z tego ekranu.
+      */}
+      <View style={styles.zrodloBox}>
+        <Text style={styles.zrodloNazwaRejestru}>{t(pelnaNazwaZrodla(tender.zrodlo?.kod ?? tender.source))}</Text>
+        <PodpisZrodla zrodlo={tender.zrodlo ?? { kod: tender.source }} />
+        <PrzyciskOryginalu tender={tender} />
+        <SzczegolPlatformy tender={tender} navigation={navigation} />
+        <DokumentyEZamowienia tender={tender} navigation={navigation} />
+      </View>
+      <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />
       <ZapytajSwzPrzetargu tender={tender} pytaniaDodatkowe={pytaniaKryteriow} />
-      <PartnerzyPrzetargu tender={tender} />
 
-      <Pressable
-        style={({ pressed }) => [styles.decyzjaCta, pressed && styles.ctaWcisniete]}
-        onPress={() => navigation.navigate('KartaDecyzji', { match, wyniki: wynikiSurowe })}
-        accessibilityRole="button"
-      >
-        <Text style={styles.decyzjaCtaTytul}>{t('Startować czy odpuścić?', 'Bid or pass?')}</Text>
-        <Text style={styles.decyzjaCtaOpis}>
+      <Text style={styles.sectionTitle}>{t('Wyjaśnienie AI', 'AI explanation')}</Text>
+      <View style={styles.card}>
+        <Text style={styles.strPodtytul}>
           {t(
-            'Szybki werdykt GO / ROZWAŻ / ODPUŚĆ z czerwonymi flagami — zanim włożysz pracę w ofertę.',
-            'A quick GO / CONSIDER / PASS verdict with red flags — before you put work into a bid.',
+            'Prosty opis ogłoszenia przygotowany przez AI na podstawie danych przetargu (nie zastępuje pełnej specyfikacji (SWZ)).',
+            'A plain-language summary of the notice prepared by AI from the tender data (it does not replace the full tender specification (SWZ)).',
           )}
         </Text>
-        <Text style={styles.decyzjaCtaLink}>{t('Oceń ten przetarg', 'Assess this tender')}</Text>
-      </Pressable>
 
-      <Pressable
-        style={({ pressed }) => [styles.sciezkaCta, pressed && styles.ctaWcisniete]}
-        onPress={() => navigation.navigate('SciezkaDoOferty', { match })}
-        accessibilityRole="button"
-      >
-        <Text style={styles.sciezkaCtaTytul}>{t('Krok po kroku do oferty', 'Step by step to your bid')}</Text>
-        <Text style={styles.sciezkaCtaOpis}>
-          {t(
-            'Przewodnik: co zrobić na każdym etapie — od SWZ po złożenie oferty. Odhaczaj postęp.',
-            'A guide to every stage — from the tender documents (SWZ) to submitting your bid. Tick off your progress.',
-          )}
-        </Text>
-        <Text style={styles.sciezkaCtaLink}>{t('Otwórz przewodnik', 'Open the guide')}</Text>
-      </Pressable>
+        {streszczenie ? (
+          <View style={styles.strTresc}>
+            <Text style={styles.strAkapit}>{streszczenie.czego_dotyczy}</Text>
 
-      {/* Bezpośrednie wejście do checklisty — dotąd tylko z dołu ekranu „Czy warto". */}
-      {paramsChecklisty ? (
-        <Button
-          title={t('Co muszę mieć do dnia składania', 'What I need by submission day')}
-          onPress={() => navigation.navigate('ChecklistaOferty', paramsChecklisty)}
-          variant="ghost"
-          style={styles.checklistaCta}
-        />
-      ) : null}
+            {streszczenie.dokumenty?.length ? (
+              <View style={styles.strBlok}>
+                <Text style={styles.strNaglowek}>{t('Co zwykle trzeba przygotować', 'What you usually need to prepare')}</Text>
+                {streszczenie.dokumenty.map((d, i) => (
+                  <View key={i} style={styles.strPunktRzad}>
+                    <View style={styles.strKropka} />
+                    <Text style={styles.strPunkt}><Text style={styles.zakreslenie}>{d}</Text></Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            {streszczenie.na_co_uwaga ? (
+              <View style={styles.strBlok}>
+                <Text style={styles.strNaglowek}>{t('Na co zwrócić uwagę', 'What to watch out for')}</Text>
+                <Text style={styles.strAkapit}>{streszczenie.na_co_uwaga}</Text>
+              </View>
+            ) : null}
+
+            {streszczenie.ocena ? (
+              <View style={styles.strBlok}>
+                <Text style={styles.strNaglowek}>{t('Ocena dla małej firmy', 'Assessment for a small firm')}</Text>
+                <Text style={styles.strAkapit}>{streszczenie.ocena}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : strLoading ? (
+          <View style={styles.strLadowanie}>
+            <ActivityIndicator color={kolory.blue} />
+            <Text style={styles.strLadowanieTekst}>{t('AI analizuje ogłoszenie…', 'AI is analysing the notice…')}</Text>
+          </View>
+        ) : (
+          <View style={styles.strStart}>
+            {strBlad ? <Text style={styles.strBlad}>{strBlad}</Text> : null}
+            <Button
+              title={strBlad ? t('Spróbuj ponownie', 'Try again') : t('Wyjaśnij ten przetarg', 'Explain this tender')}
+              onPress={wyjasnij}
+              variant="ghost"
+            />
+          </View>
+        )}
+      </View>
+
+      <PlanDzialania match={match} plan={plan} navigation={navigation} onUpgrade={POKAZUJ_ZAKUP ? przejdzNaStandard : null} />
 
       {wyniki ? (
         <>
@@ -441,6 +592,10 @@ export default function MatchDetailScreen({ route, navigation }) {
         </>
       ) : null}
 
+      <KtoWygrywa tender={tender} />
+      <PartnerzyPrzetargu tender={tender} />
+
+      <Text style={styles.sectionTitle}>{t('Twoja praca nad przetargiem', 'Your work on this tender')}</Text>
       <View style={styles.akcjeCard}>
         <Pressable
           onPress={przelaczZapis}
@@ -472,173 +627,39 @@ export default function MatchDetailScreen({ route, navigation }) {
             trackColor={{ true: kolory.blue }}
           />
         </View>
-      </View>
 
-      {/*
-        Karta decyzji stoi PRZED symulatorem płynności świadomie: najpierw pytanie
-        „czy w tym w ogóle wygrasz", potem „czy udźwigniesz kontrakt". Odwrotna
-        kolejność każe liczyć finansowanie przetargu, który trzeba odpuścić.
-      */}
-      <Text style={styles.sectionTitle}>{t('Czy warto tu startować', 'Is it worth bidding here')}</Text>
-      <View style={styles.card}>
-        <Text style={styles.strPodtytul}>
-          {t(
-            'Ile firm zwykle startuje u tego zamawiającego, jaka cena tam wygrywa i jak często postępowania kończą się unieważnieniem. Liczby z rozstrzygnięć BZP i TED — bez obietnicy „procentu szans", bo o wyniku decyduje treść Twojej oferty.',
-            'How many firms usually bid with this contracting authority, what price wins there and how often procedures end up cancelled. Figures from BZP and TED award notices — with no promised "win percentage", because the content of your bid decides the outcome.',
-          )}
-        </Text>
-        <Button
-          title={t('Sprawdź, czy warto startować', 'Check if it is worth bidding')}
-          onPress={() => navigation.navigate('CzyWarto', {
-            matchId: match.id,
-            tenderId: tender?.id ?? match.tender_id ?? null,
-            tytul: tender?.title,
-          })}
-          variant="primary"
-          style={styles.gap}
-        />
-      </View>
+        <View style={styles.pracaOdstep}>
+          <Text style={styles.warsztatEtykieta}>{t('Etap', 'Stage')}</Text>
+          <StatusPicker wartosc={status} onChange={zmienStatus} />
 
-      <Text style={styles.sectionTitle}>
-        {t('Zanim wystartujesz — policz płynność', 'Before you bid — check your cash flow')}
-      </Text>
-      <View style={styles.card}>
-        <Text style={styles.strPodtytul}>
-          {t(
-            'Sprawdź, ile własnej gotówki musisz wyłożyć, zanim zamawiający zapłaci — i czy Twoja poduszka to udźwignie. Symulator czyta warunki płatności z SWZ i wzoru umowy, a wynik (luka pomostowa i konkretne ruchy) to wsad do decyzji „startować czy nie" obok szansy na wygraną.',
-            'See how much of your own cash you must put up before the contracting authority pays — and whether your cushion can take it. The simulator reads the payment terms from the SWZ and the draft contract, and the result (the bridging gap and concrete moves) feeds the "bid or not" decision alongside your chance of winning.',
-          )}
-        </Text>
-        <Button
-          title={t('Otwórz symulator płynności', 'Open the cash-flow simulator')}
-          onPress={() => navigation.navigate('SymulatorPlynnosci', { nazwa: tender.title })}
-          variant="primary"
-          style={styles.gap}
-        />
-      </View>
-
-      <Text style={styles.sectionTitle}>
-        {t('Podpisujesz umowę? Odzyskaj zabezpieczenie', 'Signing the contract? Get your performance security back')}
-      </Text>
-      <View style={styles.card}>
-        <Text style={styles.strPodtytul}>
-          {t(
-            'Zabezpieczenie należytego wykonania (zwykle 5% ceny) to Twoje pieniądze zamrożone u zamawiającego. Policzymy harmonogram zwrotu (art. 453 Pzp) i zaalarmujemy w dniu, w którym możesz żądać pieniędzy — z gotowym wezwaniem. Przed podpisem porównamy koszt: zamrozić gotówkę czy zapłacić za gwarancję bankową.',
-            'Performance security (usually 5% of the price) is your money frozen with the contracting authority. We will work out the refund schedule (Art. 453 Pzp) and alert you on the day you can claim the money — with a ready-made demand letter. Before you sign, we will compare the cost: freezing cash or paying for a bank guarantee.',
-          )}
-        </Text>
-        <Button
-          title={t('Otwórz odzyskiwacz zabezpieczenia', 'Open the performance security recovery tool')}
-          onPress={() => navigation.navigate('ZabezpieczenieZwrot', { nazwa: tender.title })}
-          variant="primary"
-          style={styles.gap}
-        />
-      </View>
-
-      <Text style={styles.sectionTitle}>{t('Narzędzia do tej oferty', 'Tools for this bid')}</Text>
-      <View style={styles.kartaListy}>
-        <Text style={[styles.strPodtytul, styles.kartaListyWstep]}>
-          {t(
-            'Nie musisz być najtańszy — sprawdź, o ile drożej możesz dać, wygrywając kryteriami. Zanim złożysz wadium gwarancją, przekontroluj jej treść. A gdy przyjdzie wezwanie do uzupełnienia — odlicz czas i nie odpadnij formalnie.',
-            'You do not have to be the cheapest — see how much higher you can price and still win on the criteria. Before you lodge bid security as a guarantee, check its wording. And when a request to supplement documents arrives — count down the time and avoid a formal rejection.',
-          )}
-        </Text>
-        <WierszAkcji tytul={t('Kalkulator ceny ofertowej', 'Bid price calculator')} onPress={() => navigation.navigate('KalkulatorCeny', { nazwa: tender.title, match, rynek: wartoscOrient ?? null, budzet: Number.isFinite(Number(tender.budget)) && Number(tender.budget) > 0 ? Number(tender.budget) : null })} />
-        <WierszAkcji tytul={t('Sprawdzarka formularza cenowego', 'Price form checker')} onPress={() => navigation.navigate('SprawdzarkaCeny', { nazwa: tender.title, tenderId: tender.id })} />
-        <WierszAkcji tytul={t('Kalkulator punktów (cena punktu)', 'Points calculator (price per point)')} onPress={() => navigation.navigate('KalkulatorPunktow', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Symulator punktacji oferty', 'Bid scoring simulator')} onPress={() => navigation.navigate('SymulatorPunktacji', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Kontroler gwarancji wadialnej', 'Bid security guarantee checker')} onPress={() => navigation.navigate('KontrolerGwarancji', { nazwa: tender.title, tenderId: tender.id })} />
-        <WierszAkcji tytul={t('Strażnik wezwania do uzupełnienia', 'Supplement request guard')} onPress={() => navigation.navigate('StraznikWezwania', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Asystent obrony ceny (art. 224)', 'Low-price defence assistant (Art. 224)')} onPress={() => navigation.navigate('ObronaCeny', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Kalkulator kar umownych', 'Contractual penalties calculator')} onPress={() => navigation.navigate('KaryUmowne', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Odsetki za opóźnienie + rekompensata', 'Late payment interest + compensation')} onPress={() => navigation.navigate('KalkulatorOdsetek', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Strażnik terminu związania ofertą', 'Bid validity period guard')} onPress={() => navigation.navigate('TerminZwiazania', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Wykrywacz obowiązkowej wizji lokalnej', 'Mandatory site visit detector')} onPress={() => navigation.navigate('WizjaLokalna', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Strażnik oświadczenia konsorcjum (art. 117)', 'Consortium statement guard (Art. 117)')} onPress={() => navigation.navigate('Konsorcjum', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Tarcza tajemnicy przedsiębiorstwa', 'Trade secret shield')} onPress={() => navigation.navigate('Tajemnica', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Kreator samooczyszczenia (art. 110)', 'Self-cleaning wizard (Art. 110)')} onPress={() => navigation.navigate('Samooczyszczenie', { nazwa: tender.title })} />
-        <WierszAkcji tytul={t('Pożycz doświadczenie (art. 118)', 'Borrow experience (Art. 118)')} onPress={() => navigation.navigate('Kreator118')} />
-        <WierszAkcji tytul={t('Kalkulator terminów (dni robocze, święta)', 'Deadline calculator (working days, holidays)')} onPress={() => navigation.navigate('KalkulatorTerminow', { nazwa: tender.title })} ostatni />
-      </View>
-
-      <Text style={styles.sectionTitle}>{t('Etap i notatki', 'Stage and notes')}</Text>
-      <View style={styles.card}>
-        <Text style={styles.strPodtytul}>
-          {t(
-            'Prowadź ten przetarg: ustaw etap pracy i zapisz własne notatki (np. jakie dokumenty zebrać, o co dopytać zamawiającego).',
-            'Track this tender: set the work stage and keep your own notes (e.g. which documents to gather, what to ask the contracting authority).',
-          )}
-        </Text>
-
-        <Text style={styles.warsztatEtykieta}>{t('Etap', 'Stage')}</Text>
-        <StatusPicker wartosc={status} onChange={zmienStatus} />
-
-        <Text style={[styles.warsztatEtykieta, styles.warsztatOdstep]}>{t('Moja notatka', 'My note')}</Text>
-        <TextInput
-          style={styles.notatka}
-          value={notatka}
-          onChangeText={(tekst) => { setNotatka(tekst); setNotatkaZapis('idle'); }}
-          placeholder={t(
-            'np. Zebrać: KRS, referencje z 2 podobnych robót. Dopytać o termin realizacji.',
-            'e.g. Gather: company register extract, references from 2 similar works. Ask about the completion date.',
-          )}
-          placeholderTextColor={kolory.textMuted}
-          multiline
-          textAlignVertical="top"
-        />
-        <View style={styles.notatkaStopka}>
-          <Text style={styles.notatkaStan}>
-            {notatkaZapis === 'zapisywanie'
-              ? t('Zapisywanie…', 'Saving…')
-              : notatkaZapis === 'zapisano' ? t('Zapisano ✓', 'Saved ✓') : ' '}
-          </Text>
-          <Button
-            title={t('Zapisz notatkę', 'Save note')}
-            onPress={zapiszNotatke}
-            variant="ghost"
-            loading={notatkaZapis === 'zapisywanie'}
-            style={styles.notatkaBtn}
+          <Text style={[styles.warsztatEtykieta, styles.warsztatOdstep]}>{t('Moja notatka', 'My note')}</Text>
+          <TextInput
+            style={styles.notatka}
+            value={notatka}
+            onChangeText={(tekst) => { setNotatka(tekst); setNotatkaZapis('idle'); }}
+            placeholder={t(
+              'np. Zebrać: KRS, referencje z 2 podobnych robót. Dopytać o termin realizacji.',
+              'e.g. Gather: company register extract, references from 2 similar works. Ask about the completion date.',
+            )}
+            placeholderTextColor={kolory.textMuted}
+            multiline
+            textAlignVertical="top"
           />
+          <View style={styles.notatkaStopka}>
+            <Text style={styles.notatkaStan}>
+              {notatkaZapis === 'zapisywanie'
+                ? t('Zapisywanie…', 'Saving…')
+                : notatkaZapis === 'zapisano' ? t('Zapisano ✓', 'Saved ✓') : ' '}
+            </Text>
+            <Button
+              title={t('Zapisz notatkę', 'Save note')}
+              onPress={zapiszNotatke}
+              variant="ghost"
+              loading={notatkaZapis === 'zapisywanie'}
+              style={styles.notatkaBtn}
+            />
+          </View>
         </View>
-      </View>
-
-      <Text style={styles.sectionTitle}>
-        {t('Składasz ofertę? Włącz rejestrator', 'Submitting a bid? Turn on the recorder')}
-      </Text>
-      <View style={styles.card}>
-        <Text style={styles.strPodtytul}>
-          {t(
-            'Rejestrator prowadzi wysyłkę krok po kroku i utrwala dowody (zrzuty, suma kontrolna oferty, przebieg sesji). Jeśli platforma zawiedzie, jednym ruchem złożysz pakiet dowodowy i pismo o przedłużenie terminu — złóż ofertę z zapasem 24 h przed terminem.',
-            'The recorder walks you through submission step by step and preserves evidence (screenshots, the bid checksum, the session log). If the platform fails, you can put together the evidence pack and a deadline extension request in one move — submit your bid with a 24 h margin before the deadline.',
-          )}
-        </Text>
-        <Button
-          title={t('Dokumenty do oferty w 1 klik', 'Bid documents in one tap')}
-          onPress={() => navigation.navigate('DokumentyOferty', { match })}
-          style={styles.gap}
-        />
-        <Button
-          title={t('Lista kontrolna przed wysłaniem', 'Pre-submission checklist')}
-          onPress={() => navigation.navigate('KontrolaOferty', { match })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Dostałeś wezwanie? Odpowiedź w 1 klik', 'Got a request from the buyer? Reply in one tap')}
-          onPress={() => navigation.navigate('OdpowiedzNaWezwanie', { match })}
-          variant="ghost"
-          style={styles.gap}
-        />
-        <Button
-          title={t('Otwórz rejestrator oferty', 'Open the bid recorder')}
-          onPress={() => navigation.navigate('RejestratorOferty', {
-            termin: tender.deadline,
-            postepowanieId: match.id,
-            nazwa: tender.title,
-          })}
-          variant="primary"
-          style={styles.gap}
-        />
       </View>
 
       {status === 'wygrana' ? (
@@ -726,121 +747,42 @@ export default function MatchDetailScreen({ route, navigation }) {
         </>
       ) : null}
 
-      <Text style={styles.sectionTitle}>{t('Wyjaśnienie AI', 'AI explanation')}</Text>
-      <View style={styles.card}>
-        <Text style={styles.strPodtytul}>
-          {t(
-            'Prosty opis ogłoszenia przygotowany przez AI na podstawie danych przetargu (nie zastępuje pełnej specyfikacji SIWZ).',
-            'A plain-language summary of the notice prepared by AI from the tender data (it does not replace the full tender specification, SIWZ).',
-          )}
-        </Text>
-
-        {streszczenie ? (
-          <View style={styles.strTresc}>
-            <Text style={styles.strAkapit}>{streszczenie.czego_dotyczy}</Text>
-
-            {streszczenie.dokumenty?.length ? (
-              <View style={styles.strBlok}>
-                <Text style={styles.strNaglowek}>{t('Co zwykle trzeba przygotować', 'What you usually need to prepare')}</Text>
-                {streszczenie.dokumenty.map((d, i) => (
-                  <View key={i} style={styles.strPunktRzad}>
-                    <View style={styles.strKropka} />
-                    <Text style={styles.strPunkt}><Text style={styles.zakreslenie}>{d}</Text></Text>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-
-            {streszczenie.na_co_uwaga ? (
-              <View style={styles.strBlok}>
-                <Text style={styles.strNaglowek}>{t('Na co zwrócić uwagę', 'What to watch out for')}</Text>
-                <Text style={styles.strAkapit}>{streszczenie.na_co_uwaga}</Text>
-              </View>
-            ) : null}
-
-            {streszczenie.ocena ? (
-              <View style={styles.strBlok}>
-                <Text style={styles.strNaglowek}>{t('Ocena dla małej firmy', 'Assessment for a small firm')}</Text>
-                <Text style={styles.strAkapit}>{streszczenie.ocena}</Text>
-              </View>
-            ) : null}
-          </View>
-        ) : strLoading ? (
-          <View style={styles.strLadowanie}>
-            <ActivityIndicator color={kolory.blue} />
-            <Text style={styles.strLadowanieTekst}>{t('AI analizuje ogłoszenie…', 'AI is analysing the notice…')}</Text>
-          </View>
-        ) : (
-          <View style={styles.strStart}>
-            {strBlad ? <Text style={styles.strBlad}>{strBlad}</Text> : null}
-            <Button
-              title={strBlad ? t('Spróbuj ponownie', 'Try again') : t('Wyjaśnij ten przetarg', 'Explain this tender')}
-              onPress={wyjasnij}
-              variant="ghost"
-            />
-          </View>
-        )}
-      </View>
-
-      <Text style={styles.sectionTitle}>{t('Dlaczego to dopasowanie?', 'Why this match?')}</Text>
-      <View style={styles.card}>
-        <Text style={styles.reasoning}>{match.reasoning || t('Brak uzasadnienia.', 'No rationale provided.')}</Text>
-        {/*
-          Backend zapisuje, czy ocenił model, czy sama heurystyka — ale aplikacja
-          tego nie pokazywała. Mechaniczne trafienie w słowo kluczowe wyglądało
-          identycznie jak ocena AI (audyt 2026-07-10). To kwestia zaufania:
-          użytkownik ma prawo wiedzieć, na czym opiera się liczba na karcie.
-        */}
-        <View style={styles.zrodloOceny}>
-          <Text style={styles.zrodloEtykieta}>{t(ocena.etykieta)}</Text>
-          <Text style={styles.zrodloOpis}>{t(ocena.opis)}</Text>
+      {/* NARZĘDZIA (2026-11-10): jedna zwinięta sekcja w grupach zamiast pięciu kart i szesnastu wierszy. */}
+      <Pressable
+        style={({ pressed }) => [styles.narzedziaNaglowek, pressed && styles.ctaWcisniete]}
+        onPress={() => setNarzedziaOtwarte((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: narzedziaOtwarte }}
+      >
+        <View style={styles.narzedziaTresc}>
+          <Text style={styles.narzedziaTytul}>
+            {t(`Narzędzia do tej oferty (${liczbaNarzedzi(grupy)})`, `Tools for this bid (${liczbaNarzedzi(grupy)})`)}
+          </Text>
+          <Text style={styles.narzedziaOpis}>
+            {t('Decyzja, cena i punkty, dokumenty, pisma i terminy', 'Decision, price and points, documents, letters and deadlines')}
+          </Text>
         </View>
-      </View>
-
-      {/*
-        Wyjaśnienie dopasowania (P1-4): cztery sygnały z konkretami zamiast jednego
-        zdania. Liczone z profilu i ogłoszenia — bez wywołania AI.
-      */}
-      {(match.uzasadnienie ?? []).length ? (
-        <View style={styles.zrodloBox}>
-          <Text style={styles.sectionTitle}>{t('Dlaczego to wybraliśmy', 'Why we picked this')}</Text>
-          {match.uzasadnienie.map((p) => (
-            <View key={p} style={styles.uzasadnienieRzad}>
-              <Ikona nazwa="ok" rozmiar={16} kolor={kolory.sukcesAkcent} />
-              <Text style={styles.uzasadnienieTekst}>{p}</Text>
-            </View>
+        <Text style={styles.narzedziaStrzalka}>{narzedziaOtwarte ? '▴' : '▾'}</Text>
+      </Pressable>
+      {narzedziaOtwarte ? grupy.map((g) => (
+        <View key={g.klucz} style={[styles.kartaListy, styles.gap]}>
+          <Text style={[styles.grupaNarzedzi, styles.kartaListyWstep]}>{t(g.tytul)}</Text>
+          {g.pozycje.map((n, i) => (
+            <WierszAkcji
+              key={n.ekran}
+              tytul={t(n.tytul)}
+              opis={n.opis ? t(n.opis) : undefined}
+              onPress={() => navigation.navigate(n.ekran, parametryNarzedzi[n.ekran])}
+              ostatni={i === g.pozycje.length - 1}
+            />
           ))}
         </View>
-      ) : null}
-      <Wyjasnienie wyjasnienie={match.wyjasnienie} />
-      <WarunkiUdzialu match={match} plan={plan} navigation={navigation} onUpgrade={POKAZUJ_ZAKUP ? przejdzNaStandard : null} />
-      <PlanDzialania match={match} plan={plan} navigation={navigation} onUpgrade={POKAZUJ_ZAKUP ? przejdzNaStandard : null} />
-
-      {/*
-        Źródło pierwotne, czas ostatniej synchronizacji i link do ORYGINAŁU (P1-3).
-        Ofertę składa się w rejestrze, nie w tej aplikacji — adres oryginału jest
-        więc najważniejszym wyjściem z tego ekranu.
-      */}
-      <View style={styles.zrodloBox}>
-        <Text style={styles.zrodloNazwaRejestru}>{t(pelnaNazwaZrodla(tender.zrodlo?.kod ?? tender.source))}</Text>
-        <PodpisZrodla zrodlo={tender.zrodlo ?? { kod: tender.source }} />
-        <PrzyciskOryginalu tender={tender} />
-        <SzczegolPlatformy tender={tender} navigation={navigation} />
-        <DokumentyEZamowienia tender={tender} navigation={navigation} />
-      </View>
-      <ZrodlaAlternatywne zrodla={tender.zrodla_alternatywne} />
+      )) : null}
 
       <Button
         title={t('Udostępnij przetarg', 'Share tender')}
         variant="ghost"
         onPress={udostepnij}
-        style={styles.gap}
-      />
-
-      <Button
-        title={t('Odrzuć — nie pasuje do mojej firmy', 'Reject — not a fit for my company')}
-        variant="ghost"
-        onPress={() => setArkusz(true)}
         style={styles.gap}
       />
       <ArkuszOdrzucenia widoczny={arkusz} onAnuluj={() => setArkusz(false)} onOdrzuc={odrzuc} zapisywanie={odrzucanie} />
@@ -957,6 +899,26 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   uzasadnienieRzad: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', marginTop: 6 },
   uzasadnienieTekst: { flex: 1, fontSize: 15, lineHeight: 21, color: k.text },
   gap: { marginTop: spacing.md },
+  // Ekran szczegółów 2026-11-10: pasek decyzji, rozwijane szczegóły oceny, zwinięte narzędzia, karta „Twoja praca”.
+  pasekPodpis: { fontSize: 13, color: k.textMuted, lineHeight: 18, marginBottom: spacing.xs },
+  pasekPrzyciski: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  // 1,3 : 1 — „Nie dla nas” mieści się w jednej linii na telefonie 375 px, a „Bierzesz ten przetarg” też.
+  pasekGlowny: { flex: 1.3 },
+  pasekDrugi: { flex: 1 },
+  pasekStan: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, minHeight: 48, borderRadius: radius.md, backgroundColor: k.sukcesTlo },
+  pasekStanTekst: { fontSize: 15, fontWeight: '800', color: k.text },
+  rozwinRzad: { marginTop: spacing.md, paddingVertical: spacing.xs, alignSelf: 'flex-start' },
+  rozwinTekst: { fontSize: 14, fontWeight: '700', color: k.blue },
+  pracaOdstep: { paddingBottom: spacing.md, borderTopWidth: 1, borderTopColor: k.border },
+  narzedziaNaglowek: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl,
+    backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, padding: spacing.md,
+  },
+  narzedziaTresc: { flex: 1 },
+  narzedziaTytul: { fontSize: 16, fontWeight: '800', color: k.text },
+  narzedziaOpis: { fontSize: 13, color: k.textMuted, marginTop: 2, lineHeight: 18 },
+  narzedziaStrzalka: { fontSize: 18, color: k.textMuted },
+  grupaNarzedzi: { fontSize: 13, fontWeight: '800', color: k.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
   benchmarkKarta: {
     backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border,
     padding: spacing.md, marginTop: spacing.md,
