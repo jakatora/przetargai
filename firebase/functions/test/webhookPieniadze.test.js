@@ -74,7 +74,7 @@ test('checkout no_payment_required (kupon 100% / trial) AKTYWUJE Standard', asyn
       object: {
         id: `cs_npr_${process.pid}`,
         payment_status: 'no_payment_required',
-        client_reference_id: user.id,
+        mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
         customer: 'cus_npr',
         subscription: 'sub_npr',
         amount_total: 0,
@@ -115,7 +115,7 @@ test('checkout OPŁACONY aktywuje Standard, zapisuje Stripe ID i wystawia faktur
       object: {
         id: sesja,
         payment_status: 'paid',
-        client_reference_id: user.id,
+        mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
         customer: 'cus_wp1',
         subscription: 'sub_wp1',
         amount_total: 24477,
@@ -153,7 +153,7 @@ test('aktywacja przelicza feed lejkiem selekcji: wykluczenie z karty działa, de
 
   await handleEvent({
     type: 'checkout.session.completed',
-    data: { object: { id: `cs_lejek_${process.pid}`, payment_status: 'paid', client_reference_id: user.id,
+    data: { object: { id: `cs_lejek_${process.pid}`, payment_status: 'paid', mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
       customer: 'cus_lejek', subscription: 'sub_lejek', amount_total: 9900 } },
   });
 
@@ -190,6 +190,21 @@ test('checkout Fittera jest ignorowany (obsługuje go backend Railway)', async (
   const po = await users.findById(user.id);
   assert.equal(po.premium_tier, 'free', 'zdarzenie Fittera nie może zmieniać usera PrzetargAI');
   assert.equal(wywolaniaFakturowni, 0);
+});
+
+test('obcy checkout na wspólnym koncie Stripe (bez projektu PrzetargAI / jednorazowy) z naszym uid NIE aktywuje Standard', async () => {
+  for (const [id, obiekt] of [
+    [`cs_obcy_${process.pid}`, { mode: 'payment' }], // np. Payment Link z client_reference_id w adresie
+    [`cs_bezproj_${process.pid}`, { mode: 'subscription' }],
+    [`cs_jednoraz_${process.pid}`, { mode: 'payment', metadata: { project: 'przetargai' } }],
+  ]) {
+    const user = await dodajUsera();
+    fakturowniaDziala();
+    await handleEvent({ type: 'checkout.session.completed', data: { object: { id, payment_status: 'paid', client_reference_id: user.id, ...obiekt } } });
+    const po = await users.findById(user.id);
+    assert.equal(po.premium_tier, 'free', `${id}: brak aktywacji`);
+    assert.equal(wywolaniaFakturowni, 0, `${id}: bez faktury`);
+  }
 });
 
 // ---------------- invoice.paid (odnowienia) ----------------
@@ -355,7 +370,7 @@ test('ORKIESTRACJA: błąd obsługi zwalnia rezerwację zdarzenia i zwraca 500 (
       object: {
         id: `cs_evtfail_${process.pid}`,
         payment_status: 'paid',
-        client_reference_id: user.id,
+        mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
         amount_total: 24477,
       },
     },
@@ -378,7 +393,7 @@ test('ORKIESTRACJA: sukces domyka zdarzenie na stałe — duplikat dostaje ciche
       object: {
         id: `cs_evtok_${process.pid}`,
         payment_status: 'paid',
-        client_reference_id: user.id,
+        mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
         amount_total: 24477,
       },
     },
@@ -403,7 +418,7 @@ test('ORKIESTRACJA: błąd markDone NIE zwalnia rezerwacji (mniejsze zło niż g
       object: {
         id: `cs_markfail_${process.pid}`,
         payment_status: 'paid',
-        client_reference_id: user.id,
+        mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
         amount_total: 24477,
       },
     },
