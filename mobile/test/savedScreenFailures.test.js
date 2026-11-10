@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { przypomnieniaWstrzymane } from '../src/lib/statusPrzetargu.js';
 import { utworzLicznikZadan } from '../src/lib/licznikZadan.js';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -14,7 +15,7 @@ const bundle = await build({
 });
 function screen(overrides = {}) {
   const slots = []; let cursor = 0; let focused;
-  const item = { id: 's1', tender: { id: 't1', title: 'Budowa', deadline: '2099-01-01' }, status: 'nowy', reminder_enabled: false };
+  const item = { id: 's1', tender: { id: 't1', title: 'Budowa', deadline: '2099-01-01' }, status: 'rozwazam', reminder_enabled: false };
   const api = { getSaved: async () => ({ saved: [item] }), ...overrides };
   const hooks = {
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = typeof initial === 'function' ? initial() : initial;
@@ -39,7 +40,7 @@ function screen(overrides = {}) {
     '../lib/zmianyDokumentow': { znacznikZmian: () => null, znacznikOtwarcia: () => null },
     '../components/MatchCard': { ScoreBadge: 'ScoreBadge' },
     '../components/StatusPicker': { __esModule: true, default: 'StatusPicker' },
-    '../lib/statusPrzetargu': { STATUS_DOMYSLNY: 'nowy' },
+    '../lib/statusPrzetargu': { STATUS_DOMYSLNY: 'rozwazam', przypomnieniaWstrzymane },
     '../lib/kolejnoscZapisanych': { kolejnoscZapisanych: x => x },
   };
   const module = { exports: {} };
@@ -68,8 +69,8 @@ test('odrzucone usunięcie zachowuje kartę i wyjaśnia błąd bez ponownego odc
 });
 test('odrzucony status przywraca poprzedni etap i wyjaśnia błąd', async () => {
   const state = screen({ setStatus: async () => { throw Error('offline'); } }); await tick();
-  await find(card(state), n => n.type === 'StatusPicker').props.onChange('oferta_zlozona');
-  assert.equal(state.render().props.data[0].status, 'nowy');
+  await find(card(state), n => n.type === 'StatusPicker').props.onChange('zlozona');
+  assert.equal(state.render().props.data[0].status, 'rozwazam');
   assert.equal(errorVisible(state), true);
 });
 test('odrzucone przypomnienie przywraca ustawienie i odblokowuje ponowienie', async () => {
@@ -96,7 +97,7 @@ function deferred() {
   const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
   return { promise, resolve, reject };
 }
-const savedItem = id => ({ id: `saved-${id}`, tender: { id, title: id, deadline: '2099-01-01' }, status: 'nowy', reminder_enabled: false });
+const savedItem = id => ({ id: `saved-${id}`, tender: { id, title: id, deadline: '2099-01-01' }, status: 'rozwazam', reminder_enabled: false });
 
 test('starsza odpowiedź nie zastępuje nowszej listy', async () => {
   const old = deferred(); const recent = deferred(); let reads = 0;
@@ -135,8 +136,19 @@ test('wejście w trakcie zapisu nie pobiera starego stanu z serwera', async () =
     getSaved: async () => { reads++; return { saved: [savedItem('t1')] }; },
     setStatus: () => write.promise,
   }); await tick();
-  const pending = find(card(state), n => n.type === 'StatusPicker').props.onChange('oferta_zlozona');
+  const pending = find(card(state), n => n.type === 'StatusPicker').props.onChange('zlozona');
   state.focus(); assert.equal(reads, 1);
   write.resolve(); await pending;
-  assert.equal(state.render().props.data[0].status, 'oferta_zlozona');
+  assert.equal(state.render().props.data[0].status, 'zlozona');
+});
+
+test('po złożeniu przypomnienia są opisane jako wstrzymane, a preferencja pozostaje edytowalna', async () => {
+  const state = screen({ getSaved: async () => ({ saved: [{ ...savedItem('t1'), status: 'zlozona', reminder_enabled: true }] }) });
+  await tick();
+  const tree = card(state);
+  assert.ok(find(tree, n => n.type === 'Text' && n.children.includes('Przypomnienia wstrzymane')));
+  const control = find(tree, n => n.type === 'Switch');
+  assert.equal(control.props.value, true);
+  assert.equal(control.props.disabled, false);
+  assert.equal(control.props.accessibilityLabel, 'Przypomnienia po powrocie do przygotowania oferty');
 });

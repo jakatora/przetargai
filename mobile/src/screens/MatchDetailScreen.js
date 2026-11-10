@@ -14,7 +14,7 @@ import WierszAkcji from '../components/WierszAkcji';
 import { opisBrakuPrzypomnienia, opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
 import { formatDate, formatBudget } from '../lib/format';
-import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
+import { STATUS_DOMYSLNY, przypomnieniaWstrzymane } from '../lib/statusPrzetargu';
 import {
   wczytajKontrole,
   oznaczWniosekWyslany,
@@ -616,14 +616,18 @@ export default function MatchDetailScreen({ route, navigation }) {
 
         <View style={styles.przypRzad}>
           <View style={styles.przypInfo}>
-            <Text style={styles.przypTytul}>{t('Przypomnij przed terminem', 'Remind me before the deadline')}</Text>
+            <Text style={styles.przypTytul}>{przypomnieniaWstrzymane(status) ? t('Przypomnienia wstrzymane', 'Reminders paused') : t('Przypomnij przed terminem', 'Remind me before the deadline')}</Text>
             <Text style={styles.przypOpis}>
-              {maTermin
+              {przypomnieniaWstrzymane(status)
+                ? t('Na tym etapie nie wysyłamy przypomnień o składaniu oferty. Przełącznik określa, czy mają działać po powrocie do przygotowania oferty, jeśli termin jeszcze nie minął.',
+                  'Bid submission reminders are paused at this stage. The switch sets whether to resume them if you return to preparing the bid before its deadline.')
+                : maTermin
                 ? t('Push na 7, 3 i 1 dzień przed terminem składania ofert.', 'A push 7, 3 and 1 day before the bid deadline.')
                 : t(brakPrzypomnienia.pl, brakPrzypomnienia.en)}
             </Text>
           </View>
           <Switch
+            accessibilityLabel={przypomnieniaWstrzymane(status) ? t('Przypomnienia po powrocie do przygotowania oferty', 'Reminders when returning to bid preparation') : t('Przypomnij przed terminem', 'Remind me before the deadline')}
             value={przypomnienie}
             onValueChange={przelaczPrzypomnienie}
             disabled={!maTermin}

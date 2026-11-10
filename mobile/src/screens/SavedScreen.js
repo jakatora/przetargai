@@ -14,7 +14,7 @@ import { ScoreBadge } from '../components/MatchCard';
 import { znacznikKryteriow } from '../lib/kryteriaOceny';
 import { znacznikZmian, znacznikOtwarcia } from '../lib/zmianyDokumentow';
 import StatusPicker from '../components/StatusPicker';
-import { STATUS_DOMYSLNY } from '../lib/statusPrzetargu';
+import { STATUS_DOMYSLNY, przypomnieniaWstrzymane } from '../lib/statusPrzetargu';
 import { uruchomSciezkeOdwolania } from '../lib/orkiestratorOdwolania';
 import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio';
 import * as storage from '../lib/storage';
@@ -177,9 +177,12 @@ export default function SavedScreen({ navigation }) {
 
         <View style={styles.przypomnienie}>
           <View style={styles.przypInfo}>
-            <Text style={styles.przypTytul}>{t('Przypomnij przed terminem', 'Remind me before the deadline')}</Text>
+            <Text style={styles.przypTytul}>{przypomnieniaWstrzymane(item.status) ? t('Przypomnienia wstrzymane', 'Reminders paused') : t('Przypomnij przed terminem', 'Remind me before the deadline')}</Text>
             <Text style={styles.przypOpis}>
-              {maTermin
+              {przypomnieniaWstrzymane(item.status)
+                ? t('Na tym etapie nie wysyłamy przypomnień o składaniu oferty. Przełącznik określa, czy mają działać po powrocie do przygotowania oferty, jeśli termin jeszcze nie minął.',
+                  'Bid submission reminders are paused at this stage. The switch sets whether to resume them if you return to preparing the bid before its deadline.')
+                : maTermin
                 ? (item.reminder_enabled
                   ? t('Powiadomimy Cię na 7, 3 i 1 dzień przed terminem składania ofert.',
                     'We will notify you 7, 3 and 1 day before the bid submission deadline.')
@@ -188,6 +191,7 @@ export default function SavedScreen({ navigation }) {
             </Text>
           </View>
           <Switch
+            accessibilityLabel={przypomnieniaWstrzymane(item.status) ? t('Przypomnienia po powrocie do przygotowania oferty', 'Reminders when returning to bid preparation') : t('Przypomnij przed terminem', 'Remind me before the deadline')}
             value={item.reminder_enabled}
             onValueChange={(v) => przelaczPrzypomnienie(item, v)}
             disabled={!maTermin || zajete.has(tender.id)}
