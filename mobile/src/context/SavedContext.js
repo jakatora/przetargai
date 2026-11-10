@@ -19,6 +19,12 @@ function odczytaneIds(data) {
 
 export function SavedProvider({ children }) {
   const { user } = useAuth();
+  // Zmiana konta tworzy nowy stan PRZED renderem dzieci. Sam efekt
+  // czyszczący po renderze pokazywałby na chwilę zapisane poprzedniej osoby.
+  return <SavedAccountProvider key={user?.id ?? 'signed-out'} userId={user?.id}>{children}</SavedAccountProvider>;
+}
+
+function SavedAccountProvider({ userId, children }) {
   const [ids, setIds] = useState(() => new Set());
   // Czy zbiór pochodzi z serwera. Po nieudanym starcie (słaba sieć) pusty zbiór NIE znaczy „nic nie
   // zapisano” — przełącznik na ★ wysłałby zapis zamiast usunięcia (audyt 2026-11-10).
@@ -27,12 +33,12 @@ export function SavedProvider({ children }) {
   // Wczytanie zapisanych po zalogowaniu (i wyczyszczenie po wylogowaniu).
   useEffect(() => {
     let aktywny = true;
-    if (!user) { setIds(new Set()); setWczytane(false); return undefined; }
+    if (!userId) { setIds(new Set()); setWczytane(false); return undefined; }
     api.getSavedIds()
       .then((d) => { if (aktywny) { setIds(odczytaneIds(d)); setWczytane(true); } })
       .catch(() => { if (aktywny) setWczytane(false); }); // offline — dociągniemy przy pierwszym przełączeniu
     return () => { aktywny = false; };
-  }, [user?.id]);
+  }, [userId]);
 
   /**
    * Zapisz / usuń z zakładek. Optymistycznie zmienia ikonę, a przy błędzie
@@ -40,6 +46,7 @@ export function SavedProvider({ children }) {
    * @returns {Promise<boolean>} nowy stan (true = zapisany)
    */
   const toggle = useCallback(async (tenderId, desired) => {
+    if (!userId) throw new Error('Zaloguj się, aby zapisać przetarg.');
     let aktualne = ids;
     if (!wczytane) {
       // Nie zgaduj operacji po błędzie odczytu: pusty lokalny zbiór nie
@@ -69,16 +76,17 @@ export function SavedProvider({ children }) {
       });
       throw err;
     }
-  }, [ids, wczytane]);
+  }, [ids, wczytane, userId]);
 
   /** Wymuszone odświeżenie (np. po wejściu na ekran „Zapisane"). */
   const refresh = useCallback(async () => {
+    if (!userId) return false;
     try {
       const d = await api.getSavedIds();
       setIds(odczytaneIds(d)); setWczytane(true);
       return true;
     } catch { setWczytane(false); return false; }
-  }, []);
+  }, [userId]);
 
   const wartosc = useMemo(() => ({
     isSaved: (id) => ids.has(id),

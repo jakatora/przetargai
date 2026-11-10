@@ -61,6 +61,12 @@ async function request(path, { method = 'GET', body, auth = true, limitMs, ponow
     }
     throw err;
   }
+  // Dotyczy także 200: spóźniony profil/lista starego użytkownika nie może
+  // nadpisać widoku nowego konta. Publiczne logowanie nie jest związane
+  // z tokenem sesji i pozostaje poza tą kontrolą.
+  if (auth && authToken !== tokenZadania) {
+    throw new Error('Konto zostało zmienione. Odśwież dane ponownie.');
+  }
   return data;
 }
 

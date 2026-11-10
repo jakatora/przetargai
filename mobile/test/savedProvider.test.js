@@ -33,7 +33,7 @@ function provider(api) {
   const module = { exports: {} };
   const context = {
     module, exports: module.exports,
-    h: (_type, props) => props.value,
+    h: (type, props) => typeof type === 'function' ? type(props) : props.value,
     require(name) {
       if (name === 'react') return react;
       if (name === '../api/client') return { api };

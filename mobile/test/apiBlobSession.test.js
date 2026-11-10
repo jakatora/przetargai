@@ -97,3 +97,45 @@ test('bieżąca sesja pobiera plik wraz z nazwą i typem', async () => {
   assert.equal(result.nazwaPliku, 'Pismo test.docx');
   assert.equal(result.typMime, 'application/test');
 });
+
+test('stary profil JSON nie jest zwracany po zmianie konta ani wylogowaniu', async () => {
+  for (const nextToken of ['new-test-session', null]) {
+    const c = client(); let expired = 0;
+    c.onSesjaWygasla(() => expired++);
+    c.setAuthToken('old-test-session');
+    const pending = c.api.getMe();
+    c.setAuthToken(nextToken);
+    c.requests[0].resolve({ ok: true, json: async () => ({ user: { id: 'old-user' } }) });
+    await assert.rejects(pending, /Konto zostało zmienione/);
+    assert.equal(expired, 0);
+  }
+});
+
+test('zmiana konta podczas dekodowania JSON nie przepuszcza starego profilu', async () => {
+  const c = client(); let finishJson;
+  c.setAuthToken('old-test-session');
+  const pending = c.api.getMe();
+  c.requests[0].resolve({ ok: true, json: () => new Promise((resolve) => { finishJson = resolve; }) });
+  await new Promise((resolve) => setImmediate(resolve));
+  c.setAuthToken('new-test-session');
+  finishJson({ user: { id: 'old-user' } });
+  await assert.rejects(pending, /Konto zostało zmienione/);
+});
+
+test('profil bieżącej sesji wraca poprawnie', async () => {
+  const c = client();
+  c.setAuthToken('current-test-session');
+  const pending = c.api.getMe();
+  c.requests[0].resolve({ ok: true, json: async () => ({ user: { id: 'current-user' } }) });
+  assert.equal((await pending).user.id, 'current-user');
+});
+
+test('publiczne logowanie nie jest powiązane z poprzednim tokenem', async () => {
+  const c = client();
+  c.setAuthToken('old-test-session');
+  const pending = c.api.login({ email: 'test@example.invalid', password: 'test-only' });
+  assert.equal(c.requests[0].options.headers.Authorization, undefined);
+  c.setAuthToken(null);
+  c.requests[0].resolve({ ok: true, json: async () => ({ token: 'login-result' }) });
+  assert.equal((await pending).token, 'login-result');
+});
