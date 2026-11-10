@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNoteDraft } from '../hooks/useNoteDraft';
 import { View, Text, Alert, Pressable, Switch, ActivityIndicator, TextInput, Share } from 'react-native';
 import { udostepnijTekst } from '../lib/udostepnianie';
 import { api } from '../api/client';
@@ -100,8 +101,10 @@ export default function MatchDetailScreen({ route, navigation }) {
   const [strBlad, setStrBlad] = useState(null);
   // Warsztat przetargu (D-054) — etap pracy + prywatna notatka (znane, gdy wszedł z „Zapisane").
   const [status, setStatus] = useState(match?.status || STATUS_DOMYSLNY);
-  const [notatka, setNotatka] = useState(match?.notatka || '');
-  const [notatkaZapis, setNotatkaZapis] = useState('idle'); // idle | zapisywanie | zapisano
+  const notatkaDraft = useNoteDraft(match?.notatka || '', async (text) => {
+    if (!zapisany) await toggle(match.id, true);
+    return api.setNotatka(match.id, text);
+  });
   // Statystyki wyników (R17) — lekki odczyt, pobierany raz na wejściu (bez kosztu AI).
   const [wyniki, setWyniki] = useState(null);
   const [wynikiSurowe, setWynikiSurowe] = useState(null); // do auto-prefillu karty decyzji
@@ -242,16 +245,8 @@ export default function MatchDetailScreen({ route, navigation }) {
   }
 
   async function zapiszNotatke() {
-    setNotatkaZapis('zapisywanie');
-    try {
-      if (!zapisany) await toggle(match.id, true);
-      const stan = await api.setNotatka(match.id, notatka);
-      setNotatka(stan.notatka);
-      setNotatkaZapis('zapisano');
-    } catch (err) {
-      setNotatkaZapis('idle');
-      Alert.alert(t('Błąd', 'Error'), err.message);
-    }
+    try { await notatkaDraft.save(); }
+    catch (err) { Alert.alert(t('Błąd', 'Error'), err.message); }
   }
 
   async function wyjasnij() {
@@ -642,8 +637,8 @@ export default function MatchDetailScreen({ route, navigation }) {
           <Text style={[styles.warsztatEtykieta, styles.warsztatOdstep]}>{t('Moja notatka', 'My note')}</Text>
           <TextInput
             style={styles.notatka}
-            value={notatka}
-            onChangeText={(tekst) => { setNotatka(tekst); setNotatkaZapis('idle'); }}
+            value={notatkaDraft.text}
+            onChangeText={notatkaDraft.change}
             placeholder={t(
               'np. Zebrać: KRS, referencje z 2 podobnych robót. Dopytać o termin realizacji.',
               'e.g. Gather: company register extract, references from 2 similar works. Ask about the completion date.',
@@ -653,16 +648,18 @@ export default function MatchDetailScreen({ route, navigation }) {
             textAlignVertical="top"
           />
           <View style={styles.notatkaStopka}>
-            <Text style={styles.notatkaStan}>
-              {notatkaZapis === 'zapisywanie'
+            <Text accessibilityLiveRegion="polite" style={[styles.notatkaStan, notatkaDraft.status === 'error' && { color: kolory.danger }]}>
+              {notatkaDraft.busy
                 ? t('Zapisywanie…', 'Saving…')
-                : notatkaZapis === 'zapisano' ? t('Zapisano ✓', 'Saved ✓') : ' '}
+                : notatkaDraft.status === 'saved' ? t('Zapisano ✓', 'Saved ✓')
+                  : notatkaDraft.status === 'dirty' ? t('Masz niezapisane zmiany', 'You have unsaved changes')
+                    : notatkaDraft.status === 'error' ? t('Zapis niepotwierdzony — spróbuj ponownie', 'Save not confirmed — try again') : ' '}
             </Text>
             <Button
               title={t('Zapisz notatkę', 'Save note')}
               onPress={zapiszNotatke}
               variant="ghost"
-              loading={notatkaZapis === 'zapisywanie'}
+              loading={notatkaDraft.busy}
               style={styles.notatkaBtn}
             />
           </View>
