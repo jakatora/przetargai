@@ -294,6 +294,13 @@ export default function MatchFeedScreen({ navigation }) {
 
   // Odświeżenie listy przy każdym wejściu na ekran.
   useFocusEffect(useCallback(() => { load(); }, [load]));
+  // Licznik nieprzeczytanych alertów na dzwonku — po każdym powrocie na ekran (best-effort).
+  const [nieprzeczytane, setNieprzeczytane] = useState(0);
+  useFocusEffect(useCallback(() => {
+    let aktywny = true;
+    api.getAlerty(1).then((d) => { if (aktywny) setNieprzeczytane(Number(d?.nieprzeczytane) || 0); }).catch(() => {});
+    return () => { aktywny = false; };
+  }, []));
 
   // Odrzucenie w panelu albo przyjęta propozycja karty — lista pod spodem pobiera się na nowo
   // (panel sam już się odświeżył, więc bez ponownego przeładowania panelu).
@@ -308,15 +315,25 @@ export default function MatchFeedScreen({ navigation }) {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerAkcje}>
-          <Pressable accessibilityRole="button"
-            onPress={() => navigation.navigate('Narzedzia')}
-            hitSlop={12}
-            accessibilityLabel={t('Wszystkie narzędzia', 'All tools')}
-          >
-            <Text style={styles.headerBtn}>{t('Narzędzia', 'Tools')}</Text>
-          </Pressable>
+          {/* Nagłówek (2026-11-10): „Zapisane” podpisane zamiast samej gwiazdki i dzwonek alertów z licznikiem —
+              tu trafiają zmiany SWZ zapisanych przetargów. Narzędzia: w Koncie i w szczegółach przetargu. */}
           <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Saved')} hitSlop={12} accessibilityLabel={t('Zapisane przetargi', 'Saved tenders')}>
-            <Text style={styles.headerGwiazdka}>★</Text>
+            <Text style={styles.headerBtn}>{t('Zapisane', 'Saved')}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.navigate('CentrumAlertow')}
+            hitSlop={12}
+            accessibilityLabel={nieprzeczytane ? t(`Alerty, nowe: ${nieprzeczytane}`, `Alerts, new: ${nieprzeczytane}`) : t('Alerty', 'Alerts')}
+          >
+            <View>
+              <Ikona nazwa="dzwonek" rozmiar={22} kolor={kolory.blue} />
+              {nieprzeczytane ? (
+                <View style={styles.dzwonekLicznik}>
+                  <Text style={styles.dzwonekLicznikTekst}>{nieprzeczytane > 9 ? '9+' : String(nieprzeczytane)}</Text>
+                </View>
+              ) : null}
+            </View>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel={t('Konto', 'Account')} onPress={() => navigation.navigate('Account')} hitSlop={12}>
             <Text style={styles.headerBtn}>{t('Konto', 'Account')}</Text>
@@ -324,7 +341,7 @@ export default function MatchFeedScreen({ navigation }) {
         </View>
       ),
     });
-  }, [navigation, styles, t]);
+  }, [navigation, styles, t, nieprzeczytane, kolory]);
 
   /**
    * Feed dopasowań („Dla mnie"). Wydzielony do funkcji, bo ekran renderuje
@@ -996,6 +1013,11 @@ const tworzStyleFeedu = tworzStyle((k) => ({
   stopka: { paddingVertical: spacing.lg },
   headerAkcje: { flexDirection: 'row', alignItems: 'center', gap: 18, marginRight: 16 },
   headerGwiazdka: { color: k.blue, fontSize: 22, lineHeight: 26, fontWeight: '700' },
+  dzwonekLicznik: {
+    position: 'absolute', top: -6, right: -10, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9,
+    backgroundColor: k.danger, alignItems: 'center', justifyContent: 'center',
+  },
+  dzwonekLicznikTekst: { color: k.bg, fontSize: 11, fontWeight: '800' },
   headerBtn: { color: k.blue, fontWeight: '700', fontSize: 15 },
   list: { padding: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xxl, width: '100%', maxWidth: 760, alignSelf: 'center' },
   listEmpty: { flexGrow: 1 },

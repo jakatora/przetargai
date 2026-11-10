@@ -85,7 +85,7 @@ export function grupujAlerty(alerty, terazMs = Date.now(), jezyk = 'pl') {
 /** Pustka ma tłumaczyć, skąd biorą się alerty — inaczej wygląda jak awaria. */
 export function opisPustegoCentrum(jezyk = 'pl') {
   return tr({
-    pl: 'Nie masz jeszcze żadnych alertów. Zapisz wyszukiwanie w trybie „Wszystkie" i włącz alert — powiadomimy Cię o nowych przetargach i o zmianach terminu, wartości albo o anulowaniu postępowania.',
-    en: 'No alerts yet. Save a search in “All” mode and turn the alert on — we will notify you about new tenders and about changes to the deadline, value, or a cancellation.',
+    pl: 'Nie masz jeszcze żadnych alertów. Tu trafią zmiany w zapisanych przetargach — zmiana SWZ, nowy termin, wyjaśnienia, wynik — i nowe przetargi z zapisanych wyszukiwań. Wystarczy wziąć przetarg („Biorę”) albo zapisać wyszukiwanie.',
+    en: 'No alerts yet. Changes to your saved tenders land here — changed tender documents, a new deadline, clarifications, the result — plus new tenders from saved searches. Just take a tender ("I will bid") or save a search.',
   }, jezyk);
 }

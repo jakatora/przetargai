@@ -6,7 +6,7 @@ import { View, Text } from 'react-native';
  * Kreska 2 pt jak w ikonach strony (styl Lucide). Ikona jest dekoracją: etykietę dostępności
  * ma element, w którym stoi (przycisk, wiersz), więc tu wszystko jest ukryte przed czytnikiem.
  *
- * @param {'szukaj'|'zamknij'|'dalej'|'dokument'|'filtr'|'ok'|'uwaga'} nazwa
+ * @param {'szukaj'|'zamknij'|'dalej'|'dokument'|'filtr'|'ok'|'uwaga'|'dzwonek'} nazwa
  * @param {number} rozmiar bok kwadratu w pt (domyślnie 18)
  * @param {string} kolor kolor kreski — zawsze z palety motywu
  */
@@ -39,6 +39,17 @@ export default function Ikona({ nazwa, rozmiar = 18, kolor }) {
     return (
       <View {...wspolne} style={[pudlo, { alignItems: 'center', justifyContent: 'center' }]}>
         <View style={{ width: b, height: b, borderTopWidth: kreska, borderRightWidth: kreska, borderColor: kolor, transform: [{ translateX: -b * 0.2 }, { rotate: '45deg' }] }} />
+      </View>
+    );
+  }
+  if (nazwa === 'dzwonek') {
+    // Dzwonek alertów (2026-11-10): czasza z zaokrągloną górą, podstawa i serce pod spodem.
+    const szer = s * 0.62;
+    return (
+      <View {...wspolne} style={[pudlo, { alignItems: 'center' }]}>
+        <View style={{ position: 'absolute', top: s * 0.1, width: szer, height: s * 0.58, borderTopLeftRadius: szer / 2, borderTopRightRadius: szer / 2, borderWidth: kreska, borderBottomWidth: 0, borderColor: kolor }} />
+        <View style={{ position: 'absolute', top: s * 0.66, width: s * 0.86, height: kreska, borderRadius: kreska, backgroundColor: kolor }} />
+        <View style={{ position: 'absolute', top: s * 0.76, width: s * 0.2, height: s * 0.14, borderBottomLeftRadius: s * 0.1, borderBottomRightRadius: s * 0.1, backgroundColor: kolor }} />
       </View>
     );
   }

@@ -324,16 +324,7 @@ export default function AccountScreen({ navigation }) {
         />
       </View>
 
-      <Text style={styles.sectionTitle}>{t('Kalkulatory', 'Calculators')}</Text>
-      <View style={styles.lista}>
-        <WierszAkcji tytul={t('Kalkulator terminów Pzp', 'Procurement deadline calculator')} onPress={() => navigation.navigate('KalkulatorTerminow')} />
-        <WierszAkcji tytul={t('Kalkulator ceny ofertowej', 'Bid price calculator')} onPress={() => navigation.navigate('KalkulatorCeny')} />
-        <WierszAkcji tytul={t('Sprawdzarka formularza cenowego', 'Price form checker')} onPress={() => navigation.navigate('SprawdzarkaCeny')} />
-        <WierszAkcji tytul={t('Symulator punktacji oferty', 'Bid scoring simulator')} onPress={() => navigation.navigate('SymulatorPunktacji')} />
-        <WierszAkcji tytul={t('Kalkulator kar umownych', 'Contractual penalty calculator')} onPress={() => navigation.navigate('KaryUmowne')} />
-        <WierszAkcji tytul={t('Odsetki za opóźnienie + rekompensata', 'Late-payment interest + compensation')} onPress={() => navigation.navigate('KalkulatorOdsetek')} ostatni />
-      </View>
-
+      {/* Kalkulatory są w „Wszystkie narzędzia” i w szczegółach przetargu — bez trzeciej kopii tutaj (2026-11-10). */}
       <Text style={styles.sectionTitle}>{t('Język', 'Language')}</Text>
       <View style={styles.motywy} accessibilityRole="radiogroup">
         {jezyki.map((kod) => {
