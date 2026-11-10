@@ -111,17 +111,18 @@ export default function CentrumAlertowScreen({ navigation }) {
         <RefreshControl refreshing={odswiezanie} onRefresh={() => wczytaj({ odswiez: true })} tintColor={kolory.blue} />
       }
     >
-      <View style={styles.naglowek}>
-        <Text style={styles.tytul}>{t('Alerty i zmiany', 'Alerts and changes')}</Text>
-        {plakietka ? (
+      {/* Tytuł „Alerty i zmiany” jest już w pasku nawigacji — tu tylko licznik nieprzeczytanych (2026-11-10). */}
+      {plakietka ? (
+        <View style={styles.naglowek}>
+          <Text style={styles.tytul}>{t('Nieprzeczytane', 'Unread')}</Text>
           <Text
             style={styles.plakietka}
             accessibilityLabel={t(`${nieprzeczytane} nieprzeczytanych alertów`, `${nieprzeczytane} unread alerts`)}
           >
             {plakietka}
           </Text>
-        ) : null}
-      </View>
+        </View>
+      ) : null}
 
       {nieprzeczytane > 0 ? (
         <Pressable onPress={oznaczWszystkie} accessibilityRole="button" hitSlop={8}>
@@ -196,7 +197,7 @@ const tworzStyleCentrum = tworzStyle((k) => ({
   tresc: { padding: spacing.lg, paddingBottom: spacing.xl },
   srodek: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   naglowek: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  tytul: { fontSize: 20, fontWeight: '800', color: k.text },
+  tytul: { fontSize: 16, fontWeight: '700', color: k.text },
   akapit: { fontSize: 14, color: k.textMuted, lineHeight: 20, marginTop: spacing.xs },
   plakietka: {
     fontSize: 12,
