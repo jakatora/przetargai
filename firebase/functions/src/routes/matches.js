@@ -130,13 +130,21 @@ router.put('/:id/save', ah(async (req, res) => {
   const row = await matches.detail(req.user.id, req.params.id);
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
   const created = await saved.add(req.user.id, row);
+  // Nowy zapis = od razu przypomnienie 7/3/1 przed terminem (2026-11-10, przegląd oczami pracownika): kto zapisuje
+  // przetarg, chce zdążyć, a przełącznika nikt nie szukał. Ponowny zapis zostawia ustawienia (wyłączone zostaje
+  // wyłączone); bez przyszłego terminu przypomnienia nie ma. Działa też w wydanych wersjach apki — bez buildu.
+  let przypomnienie = null;
+  if (created) {
+    przypomnienie = await saved.setReminder(req.user.id, row.tender_id ?? row.id, true)
+      .catch((err) => { logger.error({ err: err.message, userId: req.user.id }, 'Przypomnienie przy zapisie nie włączone'); return null; });
+  }
   // Sygnał „takie chcę” dla selekcji (spec §5.1) — błąd zapisu sygnału nie psuje zakładki.
   await users.dodajSygnal(req.user.id, zbudujSygnal({
     typ: 'zapis', tenderId: row.tender_id, tytul: row.tender_title, wojewodztwo: kodWojewodztwa(row.tender_wojewodztwo),
     wartosc: row.tender_budget, termin: row.tender_deadline, teraz: new Date().toISOString(),
   })).catch((err) => logger.error({ err: err.message, userId: req.user.id }, 'Sygnał zapisu nie zapisany'));
   audit({ userId: req.user.id, action: 'save_tender', detail: { tenderId: row.id }, ip: req.ip });
-  res.json({ saved: true, created });
+  res.json({ saved: true, created, ...(przypomnienie ? { reminder_enabled: przypomnienie.reminder_enabled === true } : {}) });
 }));
 
 /** Usuwa przetarg z zakładek. */

@@ -172,6 +172,7 @@ export default function MatchDetailScreen({ route, navigation }) {
     try {
       const teraz = await toggle(match.id);
       if (!teraz) setPrzypomnienie(false); // usunięto z zakładek → przypomnienie też gaśnie
+      else if (maTermin) setPrzypomnienie(true); // serwer włącza przypomnienie przy nowym zapisie (2026-11-10)
     } catch (err) {
       Alert.alert(t('Błąd', 'Error'), err.message);
     }

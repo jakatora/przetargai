@@ -55,6 +55,8 @@ test('zapis → lista → idempotencja → usunięcie', async () => {
   assert.equal(zapis.status, 200);
   const t1 = await zapis.json();
   assert.equal(t1.saved, true); assert.equal(t1.created, true);
+  // 2026-11-10: nowy zapis włącza przypomnienie 7/3/1 (termin w przyszłości).
+  assert.equal(t1.reminder_enabled, true, 'zapis = przypomnienie przed terminem');
 
   const lista = await (await fetch(`${BAZA}/matches/saved`, { headers: auth(token) })).json();
   assert.equal(lista.count, 1);
@@ -62,9 +64,14 @@ test('zapis → lista → idempotencja → usunięcie', async () => {
   assert.equal(lista.saved[0].tender.source, 'ted', 'źródło zachowane do etykiety w apce');
   assert.equal(lista.saved[0].confidence_score, 88);
 
+  // Świadomie wyłączone przypomnienie zostaje wyłączone przy ponownym zapisie.
+  await fetch(`${BAZA}/matches/${id}/reminder`, { method: 'PUT', headers: auth(token), body: JSON.stringify({ enabled: false }) });
   // Ponowny zapis: idempotentny, nie dubluje.
   const t2 = await (await fetch(`${BAZA}/matches/${id}/save`, { method: 'PUT', headers: auth(token) })).json();
   assert.equal(t2.created, false, 'drugi zapis nie tworzy nowego wpisu');
+  assert.equal(t2.reminder_enabled, undefined, 'ponowny zapis nie rusza przypomnienia');
+  const poPonownym = (await (await fetch(`${BAZA}/matches/saved`, { headers: auth(token) })).json()).saved[0];
+  assert.equal(poPonownym.reminder_enabled, false, 'wyłączone zostaje wyłączone');
   assert.equal((await (await fetch(`${BAZA}/matches/saved`, { headers: auth(token) })).json()).count, 1);
 
   const usun = await fetch(`${BAZA}/matches/${id}/save`, { method: 'DELETE', headers: auth(token) });
