@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 const LANDING = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'landing');
 const html = fs.readFileSync(path.join(LANDING, 'index.html'), 'utf8');
-const DOMENA = 'https://przetargai.web.app';
+const DOMENA = 'https://przetarg-ai.pl';
 
 /** Treść widoczna dla człowieka: bez komentarzy, skryptów i znaczników. */
 const widoczne = html
@@ -41,7 +41,7 @@ test('adres kanoniczny, Open Graph i dane strukturalne wskazują jedną, potwier
   assert.ok(fs.existsSync(path.join(LANDING, 'og-image.png')), 'obraz podglądu istnieje w landing/');
   // Żadnej innej domeny własnej w adresach — ani wygasłej, ani niepotwierdzonej.
   assert.doesNotMatch(html, /https?:\/\/(www\.)?przetargai\.pl/);
-  assert.doesNotMatch(html, /https?:\/\/(www\.)?przetarg-ai\.pl/);
+  assert.doesNotMatch(html, /https?:\/\/przetargai\.web\.app/);
 });
 
 test('cena planu Standard: 99 zł brutto w cenniku i w danych strukturalnych', () => {
@@ -142,12 +142,14 @@ test('sitemap i robots wskazują tę samą domenę co strona, a każdy adres ma 
     const sciezka = adres.slice(DOMENA.length);
     const plik = sciezka === '/' ? 'index.html' : `${sciezka.slice(1)}.html`;
     assert.ok(fs.existsSync(path.join(LANDING, plik)), `sitemap wskazuje ${sciezka}, a nie ma landing/${plik}`);
+    const strona = fs.readFileSync(path.join(LANDING, plik), 'utf8');
+    assert.ok(strona.includes(`<link rel="canonical" href="${adres}" />`), `adres kanoniczny ${plik} odpowiada mapie strony`);
   }
 
   assert.match(robots, new RegExp(`^Sitemap: ${DOMENA}/sitemap\\.xml\\s*$`, 'm'));
   assert.match(robots, /^Disallow: \/upgrade$/m, 'strony płatności zostają poza indeksem');
   for (const plik of [sitemap, robots]) {
-    assert.doesNotMatch(plik, /przetargai\.pl|przetarg-ai\.pl/);
+    assert.doesNotMatch(plik, /przetargai\.pl|przetargai\.web\.app/);
   }
   // Adres kanoniczny strony głównej jest pierwszym adresem mapy.
   assert.match(html, new RegExp(`<link rel="canonical" href="${adresy[0]}" />`));
