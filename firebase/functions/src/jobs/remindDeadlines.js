@@ -34,6 +34,9 @@ export const ODSTEP_PONOWIENIA_MS = 60 * 60_000;
 /** Błędy biletów Expo, których ponawianie nic nie da (martwy token urządzenia). */
 const TRWALE_BLEDY_PUSH = new Set(['DeviceNotRegistered']);
 
+/** Etapy pracy, po których przypomnienie o terminie składania ofert nie ma sensu. */
+const ETAPY_PO_ZLOZENIU = new Set(['zlozona', 'wygrana', 'przegrana']);
+
 /** Treść przypomnienia wg etapu (7/3/1 dnia, 0 = ostatnie wezwanie). */
 function opisEtapu(etap) {
   if (etap === 7) return 'Zostało 7 dni do składania ofert';
@@ -47,7 +50,7 @@ export async function runReminderCheck({ wyslijEmail = sendEmail } = {}) {
   const due = await saved.dueReminders();
   const wynik = {
     ok: true, due: due.length, sent: 0, nieudane: 0, porzucone: 0, anulowane: 0,
-    przeplanowane: 0, zakonczone: 0, zajete: 0, bezTokenu: 0, emaile: 0, bledy: 0, durationMs: 0,
+    przeplanowane: 0, zakonczone: 0, poZlozeniu: 0, zajete: 0, bezTokenu: 0, emaile: 0, bledy: 0, durationMs: 0,
   };
   if (!due.length) {
     wynik.durationMs = Date.now() - startedAt;
@@ -91,6 +94,14 @@ async function obsluzWpis(wpis, wynik, tokenFor, wyslijEmail) {
     await saved.zakonczPrzypomnienie(wpis.userId, wpis.tenderId, 'anulowany');
     wynik.anulowane++;
     logger.info({ userId: wpis.userId, tenderId: wpis.tenderId }, 'Przypomnienie zamknięte — przetarg anulowany');
+    return;
+  }
+
+  // 1b) Oferta już złożona albo rozstrzygnięta (etap w „Zapisanych”) — „zostały 3 dni do składania ofert” to fałszywy
+  // alarm dla kogoś, kto już złożył (audyt ścieżki 2026-11-10). Zamykamy przypomnienie bez pusha.
+  if (ETAPY_PO_ZLOZENIU.has(wpis.status)) {
+    await saved.zakonczPrzypomnienie(wpis.userId, wpis.tenderId, 'oferta_zlozona');
+    wynik.poZlozeniu++;
     return;
   }
 

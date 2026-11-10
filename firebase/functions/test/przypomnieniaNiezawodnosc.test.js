@@ -165,6 +165,20 @@ test('przetarg ANULOWANY w źródle → brak pusha, przypomnienie zamknięte', a
   assert.equal(due.length, 0, 'anulowane nie wraca jako wymagalne');
 });
 
+test('oferta ZŁOŻONA (etap w Zapisanych) → brak pusha „zostały dni do składania”, przypomnienie zamknięte', async () => {
+  const { userId, token } = await uzytkownik();
+  const { tenderId } = await wymagalne(userId);
+  await saved.setStatus(userId, tenderId, 'zlozona');
+
+  const wynik = await runReminderCheck();
+  assert.equal(pushe.get(token) ?? 0, 0, 'po złożeniu oferty nie przypominamy o składaniu');
+  assert.ok(wynik.poZlozeniu >= 1);
+  const po = await wpis(userId, tenderId);
+  assert.equal(po.reminder_zakonczone_powod, 'oferta_zlozona');
+  const due = (await saved.dueReminders()).filter((d) => d.userId === userId && d.tenderId === tenderId);
+  assert.equal(due.length, 0);
+});
+
 test('termin PRZESUNIĘTY w źródle → etap liczony od nowego terminu, brak przedwczesnego pusha', async () => {
   const { userId, token } = await uzytkownik();
   const { tenderId, externalId } = await wymagalne(userId, '2099-01-03T10:00:00.000Z');
