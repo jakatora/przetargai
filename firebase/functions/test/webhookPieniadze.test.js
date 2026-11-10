@@ -52,7 +52,8 @@ test('checkout NIEOPŁACONY (przelew w drodze) nie aktywuje planu ani faktury', 
 
   await handleEvent({
     type: 'checkout.session.completed',
-    data: { object: { id: sesja, payment_status: 'unpaid', client_reference_id: user.id } },
+    data: { object: { id: sesja, payment_status: 'unpaid', mode: 'subscription',
+      metadata: { project: 'przetargai' }, client_reference_id: user.id } },
   });
 
   const po = await users.findById(user.id);
