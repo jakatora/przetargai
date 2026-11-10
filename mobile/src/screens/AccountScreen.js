@@ -437,7 +437,6 @@ export default function AccountScreen({ navigation }) {
           value={haslo}
           onChangeText={setHaslo}
           secureTextEntry
-          placeholder="••••••••"
         />
         <Button
           title={t('Usuń konto na zawsze', 'Delete account forever')}

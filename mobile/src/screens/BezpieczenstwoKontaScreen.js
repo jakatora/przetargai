@@ -87,7 +87,6 @@ export default function BezpieczenstwoKontaScreen() {
         value={aktualne}
         onChangeText={setAktualne}
         secureTextEntry
-        placeholder="••••••••"
       />
       <TextField
         label="Nowe hasło"
@@ -102,7 +101,6 @@ export default function BezpieczenstwoKontaScreen() {
         value={powtorz}
         onChangeText={setPowtorz}
         secureTextEntry
-        placeholder="••••••••"
         error={powtorz.length > 0 && nowe !== powtorz ? 'Hasła nie są takie same.' : undefined}
       />
       <Button
@@ -132,7 +130,6 @@ export default function BezpieczenstwoKontaScreen() {
         value={hasloEmail}
         onChangeText={setHasloEmail}
         secureTextEntry
-        placeholder="••••••••"
       />
       <Button
         title="Zmień adres e-mail"

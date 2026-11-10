@@ -69,10 +69,12 @@ export default function LoginScreen({ navigation }) {
             {t(`${formatLiczba(stats.lacznie)} ${odmienPrzetargi(stats.lacznie)} w bazie`, `${formatLiczba(stats.lacznie)} tenders in the database`)}
           </Text>
           <Text style={styles.spolecznyOpis}>
-            {stats.nowe24h > 0
-              ? t(`W ostatniej dobie przybyło ${stats.nowe24h} nowych. `, `${stats.nowe24h} new ones arrived in the last 24 hours. `)
-              : stats.nowe7dni > 0
-                ? t(`W tym tygodniu przybyło ${stats.nowe7dni} nowych. `, `${stats.nowe7dni} new ones arrived this week. `)
+            {/* Tydzień zamiast doby (2026-11-10): w poniedziałek rano „ostatnia doba” to kilkanaście sztuk
+                i wygląda na martwą bazę; strona przetarg-ai.pl też pokazuje 7 dni. */}
+            {stats.nowe7dni > 0
+              ? t(`W ostatnich 7 dniach przybyło ${formatLiczba(stats.nowe7dni)} nowych. `, `${formatLiczba(stats.nowe7dni)} new ones arrived in the last 7 days. `)
+              : stats.nowe24h > 0
+                ? t(`W ostatniej dobie przybyło ${formatLiczba(stats.nowe24h)} nowych. `, `${formatLiczba(stats.nowe24h)} new ones arrived in the last 24 hours. `)
                 : ''}
             {t('Załóż konto i nie przegap swoich.', 'Create an account so you do not miss yours.')}
           </Text>

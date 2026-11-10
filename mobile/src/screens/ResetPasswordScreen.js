@@ -67,7 +67,6 @@ export default function ResetPasswordScreen({ navigation }) {
         value={haslo2}
         onChangeText={setHaslo2}
         secureTextEntry
-        placeholder="••••••••"
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button title={t('Ustaw hasło i zaloguj', 'Set password and sign in')} onPress={ustaw} loading={loading} />
