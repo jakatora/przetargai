@@ -100,6 +100,7 @@ async function obsluzWpis(wpis, { teraz, wyslij, wyslijEmail, tokenDla, wynik })
 
   // 2) Rezerwacja PRZED wysyłką.
   const rez = await przypomnieniaPytan.zarezerwuj(wpis.userId, wpis.tenderId, { termin: pozycja.at, teraz });
+  if (rez.stan === 'po_zlozeniu') { wynik.po_zlozeniu++; return; } // etap zmieniony tuż przed wysyłką
   if (rez.stan !== 'zarezerwowane') { wynik.zajete++; return; }
 
   const zakoncz = (stan, { proby = rez.proby, ponowPo = null } = {}) => przypomnieniaPytan.zakoncz(

@@ -181,7 +181,7 @@ router.put('/:id/status', ah(async (req, res) => {
   const stan = await saved.setStatus(req.user.id, req.params.id, status);
   if (!stan) throw notFound('Najpierw zapisz ten przetarg');
   audit({ userId: req.user.id, action: 'set_status', detail: { tenderId: req.params.id, status }, ip: req.ip });
-  res.json({ status, dostepne: STATUSY });
+  res.json({ status, dostepne: STATUSY, ...(stan.przypomnienie_wznowione ? { przypomnienie_wznowione: true } : {}) });
 }));
 
 /** Zapisuje prywatną notatkę do zapisanego przetargu (D-054). */

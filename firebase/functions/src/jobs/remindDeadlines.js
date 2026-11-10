@@ -34,9 +34,6 @@ export const ODSTEP_PONOWIENIA_MS = 60 * 60_000;
 /** Błędy biletów Expo, których ponawianie nic nie da (martwy token urządzenia). */
 const TRWALE_BLEDY_PUSH = new Set(['DeviceNotRegistered']);
 
-/** Etapy pracy, po których przypomnienie o terminie składania ofert nie ma sensu. */
-const ETAPY_PO_ZLOZENIU = new Set(['zlozona', 'wygrana', 'przegrana']);
-
 /** Treść przypomnienia wg etapu (7/3/1 dnia, 0 = ostatnie wezwanie). */
 function opisEtapu(etap) {
   if (etap === 7) return 'Zostało 7 dni do składania ofert';
@@ -97,20 +94,14 @@ async function obsluzWpis(wpis, wynik, tokenFor, wyslijEmail) {
     return;
   }
 
-  // 1b) Oferta już złożona albo rozstrzygnięta (etap w „Zapisanych”) — „zostały 3 dni do składania ofert” to fałszywy
-  // alarm dla kogoś, kto już złożył (audyt ścieżki 2026-11-10). Zamykamy przypomnienie bez pusha.
-  if (ETAPY_PO_ZLOZENIU.has(wpis.status)) {
-    await saved.zakonczPrzypomnienie(wpis.userId, wpis.tenderId, 'oferta_zlozona');
-    wynik.poZlozeniu++;
-    return;
-  }
-
   // 2) Rezerwacja etapu PRZED wysyłką (transakcja, z aktualnym terminem).
   const rez = await saved.zarezerwujEtap(wpis.userId, wpis.tenderId, {
     etap: wpis.remind_etap,
     remindAt: wpis.remind_at,
     termin: tender?.deadline ?? null,
   });
+  // Oferta złożona / rozstrzygnięta (etap czytany w transakcji, audyt 2026-11-10) — bez pusha „zostały dni do składania”.
+  if (rez.stan === 'po_zlozeniu') { wynik.poZlozeniu++; return; }
   if (rez.stan === 'przeplanowany') { wynik.przeplanowane++; return; }
   if (rez.stan === 'zakonczony') { wynik.zakonczone++; return; }
   if (rez.stan !== 'zarezerwowany') { wynik.zajete++; return; } // obsłużył inny przebieg / wpis zniknął

@@ -106,6 +106,33 @@ test('POST /pracownik/odrzuc przy zapisanym: schodzi z Zapisanych (bez przypomni
   assert.ok((await get(k, '/matches/saved')).body.saved.some((z) => z.tender.id === zlozony.id), 'złożona oferta zostaje w historii');
 });
 
+test('POST /pracownik/odrzuc: awaria zdejmowania z Zapisanych → 503 (nie „ok”), ponowienie kończy sprawę bez podwójnego sygnału', async () => {
+  const { saved } = await import('../src/db/repos.js');
+  const k = await konto();
+  const t = await wybrany(k.id);
+  await fetch(`${BAZA}/matches/${t.id}/save`, { method: 'PUT', headers: k.h });
+  const sygnalyPrzed = (await users.findById(k.id)).pracownik_sygnaly?.length ?? 0;
+
+  const oryginal = saved.usunPoOdrzuceniu;
+  saved.usunPoOdrzuceniu = async () => { throw new Error('Firestore UNAVAILABLE'); };
+  let awaria;
+  try {
+    awaria = await post(k, `/pracownik/odrzuc/${t.id}`, { przyczyna: 'teren' });
+  } finally {
+    saved.usunPoOdrzuceniu = oryginal;
+  }
+  assert.equal(awaria.status, 503);
+  assert.match(awaria.body.error.message, /spróbuj ponownie/);
+  assert.ok((await get(k, '/matches/saved')).body.saved.some((z) => z.tender.id === t.id), 'wpis został — nic nie udajemy');
+  assert.equal((await users.findById(k.id)).pracownik_sygnaly?.length ?? 0, sygnalyPrzed, 'bez sygnału przy awarii');
+
+  const ponowienie = await post(k, `/pracownik/odrzuc/${t.id}`, { przyczyna: 'teren' });
+  assert.equal(ponowienie.status, 200);
+  assert.equal(ponowienie.body.usuniety_z_zapisanych, true);
+  assert.ok(!(await get(k, '/matches/saved')).body.saved.some((z) => z.tender.id === t.id));
+  assert.equal((await users.findById(k.id)).pracownik_sygnaly.length, sygnalyPrzed + 1, 'jeden sygnał po ponowieniu');
+});
+
 test('GET /pracownik/odrzucone: Free → powód plan; Standard → lista', async () => {
   const free = await konto({ plan: 'free' });
   assert.equal((await get(free, '/pracownik/odrzucone')).body.powod, 'plan');

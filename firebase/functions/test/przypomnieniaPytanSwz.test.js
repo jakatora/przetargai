@@ -151,6 +151,25 @@ test('oferta już złożona (etap w Zapisanych) — bez przypomnienia o pytaniac
   assert.ok(wynik.po_zlozeniu >= 1);
 });
 
+test('WYŚCIG: etap „złożona” ustawiony po odczycie kandydatów — rezerwacja w transakcji odmawia; cofnięcie etapu przywraca wysyłkę', async () => {
+  const { przypomnieniaPytan } = await import('../src/db/repos.js');
+  const userId = await uzytkownik();
+  const tenderId = await zapisanyPrzetarg(userId);
+  const migawka = await przypomnieniaPytan.kandydaci({ od: '2098-03-01T00:00:00.000Z', doKiedy: '2098-03-31T00:00:00.000Z' });
+  await saved.setStatus(userId, tenderId, 'zlozona');
+  const oryginal = przypomnieniaPytan.kandydaci;
+  przypomnieniaPytan.kandydaci = async () => migawka.filter((w) => w.userId === userId);
+  const { wyslane, wyslij } = dostawca();
+  try {
+    const wynik = await runPrzypomnieniaPytanSwz({ teraz: W_OKNIE, wyslij });
+    assert.equal(dla(wyslane, tenderId).length, 0);
+    assert.equal(wynik.po_zlozeniu, 1);
+  } finally { przypomnieniaPytan.kandydaci = oryginal; }
+  await saved.setStatus(userId, tenderId, 'przygotowuje');
+  await runPrzypomnieniaPytanSwz({ teraz: W_OKNIE, wyslij });
+  assert.equal(dla(wyslane, tenderId).length, 1, 'po cofnięciu etapu przypomnienie o pytaniach wraca');
+});
+
 test('rejestr bez ustawowego terminu pytań (Baza Konkurencyjności) — bez zmyślonego terminu i bez wysyłki', async () => {
   const userId = await uzytkownik();
   const tenderId = await zapisanyPrzetarg(userId, { source: 'bk' });

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
 import { env } from '../config.js';
-import { badRequest, notFound } from '../lib/errors.js';
+import { AppError, badRequest, notFound } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { logger } from '../lib/logger.js';
 import { esc } from '../lib/html.js';
@@ -131,8 +131,15 @@ router.post('/odrzuc/:matchId', ah(async (req, res) => {
   });
   if (!row) throw notFound('Dopasowanie nie zostało znalezione');
   // Odrzucony nie może dalej siedzieć w Zapisanych z przypomnieniami i alertami (audyt 2026-11-10).
-  const zZapisanych = await saved.usunPoOdrzuceniu(req.user.id, row.tender_id ?? row.id)
-    .catch((err) => { logger.error({ err: err.message, userId: req.user.id }, 'Odrzucony nie zdjęty z Zapisanych'); return false; });
+  // Awaria bazy = uczciwy błąd 503 i ponowienie (review Codexa): oznaczenie odrzucenia jest idempotentne,
+  // a sygnał dla selekcji dopisujemy dopiero PO zdjęciu z Zapisanych — powtórka nie dubluje sygnału.
+  let zZapisanych;
+  try {
+    zZapisanych = await saved.usunPoOdrzuceniu(req.user.id, row.tender_id ?? row.id);
+  } catch (err) {
+    logger.error({ err: err.message, userId: req.user.id, matchId: row.id }, 'Odrzucony nie zdjęty z Zapisanych');
+    throw new AppError(503, 'ZAPISANE_NIE_ZDJETE', 'Nie udało się zdjąć przetargu z Zapisanych — spróbuj ponownie za chwilę.');
+  }
   await users.dodajSygnal(req.user.id, zbudujSygnal({
     typ: 'odrzucenie', tenderId: row.tender_id, tytul: row.tender_title, wojewodztwo: kodWojewodztwa(row.tender_wojewodztwo),
     wartosc: row.tender_budget, termin: row.tender_deadline, przyczyna: wynik.data.przyczyna, komentarz: wynik.data.komentarz, teraz,

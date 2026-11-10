@@ -2300,6 +2300,13 @@ export const matches = {
 
 const savedCol = (userId) => db().collection('users').doc(userId).collection('saved');
 
+/**
+ * Etapy pracy, po których przypomnienia o składaniu ofert i pytaniach do SWZ nie mają sensu (audyt 2026-11-10).
+ * Sprawdzane WEWNĄTRZ transakcji rezerwacji (review Codexa: wyścig ze zmianą etapu między odczytem
+ * wymagalnych a wysyłką), a cofnięcie etapu do aktywnego wznawia przypomnienie (`setStatus`).
+ */
+export const STATUSY_PO_ZLOZENIU = new Set(['zlozona', 'wygrana', 'przegrana']);
+
 export const saved = {
   /**
    * Zapisane przetargi WSZYSTKICH kont z terminem od `od` (monitoring nowych dokumentów, 2026-11-01).
@@ -2428,12 +2435,29 @@ export const saved = {
    * Status jest już znormalizowany przez wołającego. Zwraca null, gdy przetarg
    * nie jest zapisany (nie ma czego etapować).
    */
-  async setStatus(userId, tenderId, status) {
+  async setStatus(userId, tenderId, status, teraz = nowIso()) {
     const ref = savedCol(userId).doc(tenderId);
-    const doc = await ref.get();
-    if (!doc.exists) return null;
-    await ref.update({ status, status_at: nowIso() });
-    return { status };
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return null;
+      const d = doc.data();
+      const pola = { status, status_at: teraz };
+      // Cofnięcie z „Oferta złożona” (albo wyniku) do etapu w grze wznawia przypomnienie, które job zamknął
+      // z powodu złożenia — od najbliższego PRZYSZŁEGO etapu 7/3/1, bez nadrabiania minionych.
+      let wznowione = false;
+      if (!STATUSY_PO_ZLOZENIU.has(status) && d.reminder_enabled === true && d.reminder_zakonczone_powod === 'oferta_zlozona') {
+        const nast = nastepneRemind(d.tender_deadline, teraz, d.reminded_stages ?? []);
+        if (nast) {
+          Object.assign(pola, {
+            remind_at: nast.at, remind_etap: nast.etap, reminder_notified: false, remind_proby: 0,
+            reminder_zakonczone_powod: FieldValue.delete(),
+          });
+          wznowione = true;
+        }
+      }
+      tx.update(ref, pola);
+      return { status, przypomnienie_wznowione: wznowione };
+    });
   },
 
   /** Zapisuje prywatną notatkę do zapisanego przetargu. Notatka już oczyszczona. */
@@ -2552,6 +2576,12 @@ export const saved = {
       if (d.reminder_enabled !== true || d.reminder_notified === true
           || d.remind_etap !== etap || d.remind_at !== remindAt) {
         return { stan: 'zajete' };
+      }
+      // Oferta już złożona / rozstrzygnięta — status czytany W transakcji, więc zmiana etapu tuż przed
+      // wysyłką też wygrywa. Zamknięcie z powodem; cofnięcie etapu wznowi (`setStatus`).
+      if (STATUSY_PO_ZLOZENIU.has(d.status)) {
+        tx.update(ref, { reminder_notified: true, reminder_zakonczone_powod: 'oferta_zlozona', remind_proby: 0 });
+        return { stan: 'po_zlozeniu' };
       }
 
       const wyslane = (d.reminded_stages ?? []).filter((x) => typeof x === 'number');
@@ -4586,6 +4616,8 @@ export const przypomnieniaPytan = {
       if (!snap.exists) return { stan: 'brak_wpisu' };
       const d = snap.data();
       if (d.reminder_enabled !== true) return { stan: 'wylaczone' };
+      // Etap czytany w transakcji (wyścig ze złożeniem oferty). Bez zapisu — cofnięcie etapu działa samo.
+      if (STATUSY_PO_ZLOZENIU.has(d.status)) return { stan: 'po_zlozeniu' };
       const p = d.przypomnienie_pytan?.termin === termin ? d.przypomnienie_pytan : null;
       if (p) {
         if (p.stan === 'wyslane' || p.stan === 'porzucone') return { stan: 'zajete' };
