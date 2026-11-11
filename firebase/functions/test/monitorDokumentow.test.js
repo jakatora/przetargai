@@ -10,7 +10,17 @@ process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { tenders, saved, users, alerty, matches, powiazaniaSwz } = await import('../src/db/repos.js');
-const { runMonitorDokumentow } = await import('../src/jobs/monitorDokumentow.js');
+const { runMonitorDokumentow: monitorDokumentow } = await import('../src/jobs/monitorDokumentow.js');
+
+// Pełny zestaw dzieli bazę emulatora: wcześniejszy test może zostawić zapisany
+// przetarg z platformazakupowa.pl. Podmiana samego `pobierz` nie izoluje wtedy
+// sieci — domyślne pobierzPz idzie do prawdziwej platformy, z retry i odstępami.
+// Test platformy poniżej przekazuje własne pobierzPz jawnie.
+const runMonitorDokumentow = (options) => monitorDokumentow({
+  pobierzPz: async () => [],
+  czekaj: async () => {},
+  ...options,
+});
 
 const ZNAK = `${process.pid}${Date.now()}`.slice(-8);
 const POSTEPOWANIE = `ocds-148610-${ZNAK.padStart(8, '0').slice(0, 8)}-1111-2222-3333-444455556666`;
