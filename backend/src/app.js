@@ -30,6 +30,7 @@ import symulatorPlynnosciRouter from './routes/symulatorPlynnosci.js';
 import radarPlanowRouter from './routes/radarPlanow.js';
 import zabezpieczenieZwrotRouter from './routes/zabezpieczenieZwrot.js';
 import smartspizarkaPricesRouter from './routes/smartspizarkaPrices.js';
+import spoinaRouter from './routes/spoina.js';
 
 /** Buduje i konfiguruje aplikację Express. */
 export function createApp() {
@@ -62,6 +63,10 @@ export function createApp() {
     ['/api/przetarg/czarna-skrzynka', '10mb'],
     ['/api/przetarg/symulator-plynnosci', '10mb'],
     ['/api/przetarg/radar-planow', '10mb'],
+    // Spoina: pierwsze urządzenie firmy publikuje cały stan naraz (setki małych dokumentów).
+    ['/api/spoina/docs', '2mb'],
+    // Spoina: zdjęcie karty z budowy w base64 (telefon zmniejsza je do ~1 MB).
+    ['/api/spoina/files', '2mb'],
   ];
   for (const [trasa, limit] of PARSERY_TRAS) app.use(trasa, express.json({ limit }));
 
@@ -171,6 +176,11 @@ export function createApp() {
   // lub terminu → pola ceny null (nigdy nie fabrykuj). Małe payloady → globalny parser
   // JSON (1 MB) wystarcza; pod wspólnym limiterem API (120/min/IP) jak reszta tras.
   app.use('/api/smartspizarka/prices', apiLimiter, smartspizarkaPricesRouter);
+  // Spoina — aplikacja firmy spawalniczej (kadry, budowy, ekipy, sprzęt). Logowanie kodem
+  // SMS, dokumenty firmy pod kontrolą uprawnień ról, długie odpytywanie zamiast gniazd.
+  // Limitery są w samym routerze: logowanie po IP, dane po URZĄDZENIU (cała ekipa na jednym
+  // Wi-Fi to jeden adres — wspólny limit 120/min/IP odcinałby ją przy zwykłej pracy).
+  app.use('/api/spoina', spoinaRouter);
   app.use('/', legalRouter); // /polityka-prywatnosci, /regulamin
 
   // The browser must read the limiter's wait before making another quote request.
