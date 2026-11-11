@@ -578,7 +578,7 @@ export default function RadarSwzScreen({ route, navigation }) {
         />
       ) : null}
 
-      <ZapytajSwz postepowanieId={wybraneId} trescSwz={detal.tresc_swz} />
+      <ZapytajSwz key={wybraneId} postepowanieId={wybraneId} trescSwz={detal.tresc_swz} />
 
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>{t('Wygeneruj pytania z treści SWZ', 'Generate questions from the tender documents')}</Text>

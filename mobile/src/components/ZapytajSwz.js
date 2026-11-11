@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import TextField from './TextField';
 import Button from './Button';
@@ -21,23 +21,32 @@ export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null,
   const [laduje, setLaduje] = useState(false);
   const [blad, setBlad] = useState(null);
   const [odpowiedzi, setOdpowiedzi] = useState([]);
+  const wysylanie = useRef(false);
+  const aktywny = useRef(true);
+  useEffect(() => {
+    aktywny.current = true;
+    return () => { aktywny.current = false; };
+  }, []);
 
   // Radar: pytamy postępowanie, które ma treść SWZ. Przetarg: własna funkcja (serwer sam bierze SWZ z PDF-a).
   if (!zapytajFn && (!postepowanieId || !czyMoznaPytacSwz(trescSwz))) return null;
 
   async function zapytaj(tekst) {
     const p = String(tekst ?? '').trim();
-    if (laduje || !poprawnePytanie(p)) return;
+    if (!aktywny.current || wysylanie.current || !poprawnePytanie(p)) return;
+    wysylanie.current = true;
     setLaduje(true);
     setBlad(null);
     try {
       const wynik = zapytajFn ? await zapytajFn(p) : await api.radarZapytajSwz(postepowanieId, p);
+      if (!aktywny.current) return;
       setOdpowiedzi((stare) => [{ ...wynik, pytanie: p }, ...stare].slice(0, 5));
-      setPytanie('');
+      setPytanie((aktualne) => aktualne.trim() === p ? '' : aktualne);
     } catch (err) {
-      setBlad(err.message);
+      if (aktywny.current) setBlad(err.message || t('Nie udało się uzyskać odpowiedzi. Spróbuj ponownie.', 'Could not get an answer. Please try again.'));
     } finally {
-      setLaduje(false);
+      wysylanie.current = false;
+      if (aktywny.current) setLaduje(false);
     }
   }
 
@@ -64,7 +73,7 @@ export default function ZapytajSwz({ postepowanieId, trescSwz, zapytajFn = null,
         returnKeyType="send"
       />
       <Button title={t('Zapytaj', 'Ask')} onPress={() => zapytaj(pytanie)} loading={laduje} disabled={!poprawnePytanie(pytanie)} />
-      {blad ? <Text style={styles.blad}>{blad}</Text> : null}
+      {blad ? <Text accessibilityRole="alert" style={styles.blad}>{blad}</Text> : null}
 
       {odpowiedzi.map((o, i) => {
         const opis = opisStatusuOdpowiedzi(o.status);
@@ -99,6 +108,7 @@ export function ZapytajSwzPrzetargu({ tender, pytaniaDodatkowe = [] }) {
   if (!czyMoznaPytacPrzetargu(tender)) return null;
   return (
     <ZapytajSwz
+      key={tender.id}
       zapytajFn={(p) => api.zapytajSwzPrzetargu(tender.id, p)}
       pytaniaDodatkowe={pytaniaDodatkowe}
       podpowiedzPierwszego={t('Pierwsze pytanie trwa dłużej — pobieramy SWZ z platformy.', 'The first question takes longer — we fetch the documents.')}
