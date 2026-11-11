@@ -42,21 +42,26 @@ async function przetarg(dokumenty) {
 }
 const SWZ_PDF = { nazwa: 'SWZ', plik: 'SWZ.pdf', rozszerzenie: 'pdf', url: 'https://ezamowienia.gov.pl/mp-readmodels/api/Tender/DownloadDocument/ocds-1/ocds-1_2' };
 
-function podstawRailway() {
+function podstawRailway(failures = {}) {
   const zadania = [];
   globalThis.fetch = async (url, opcje = {}) => {
     const adres = String(url);
-    if (adres === SWZ_PDF.url) return new Response(Buffer.from('%PDF-1.4 tresc swz'), { status: 200 });
+    if (adres === SWZ_PDF.url) {
+      if (failures.pdf) throw Error('PDF download unavailable');
+      return new Response(Buffer.from('%PDF-1.4 tresc swz'), { status: 200 });
+    }
     if (!adres.startsWith(env.MOST_RAILWAY_URL)) return oryginalnyFetch(url, opcje);
     const sciezka = new URL(adres).pathname;
     zadania.push(`${opcje.method ?? 'GET'} ${sciezka}`);
     if (sciezka === '/auth/register') return Response.json({ user: { id: `rw-${licznik}` } }, { status: 201 });
     if (sciezka === '/api/przetarg/swz/postepowania') return Response.json({ postepowanie: { id: 'pst-1' } }, { status: 201 });
     if (sciezka === '/api/przetarg/swz/postepowania/pst-1/tresc-pdf') {
+      if (failures.text) return Response.json({error:{message:'PDF unreadable'}},{status:422});
       assert.equal(JSON.parse(opcje.body.toString()).swz_pdf_base64, Buffer.from('%PDF-1.4 tresc swz').toString('base64'));
       return Response.json({ znakow: 120 }, { status: 200 });
     }
     if (sciezka === '/api/przetarg/swz/postepowania/pst-1/zapytaj') {
+      if (failures.question) throw Error('Response lost after forwarding');
       return Response.json({ odpowiedz: 'Wadium 4 000,00 zł.', status: 'potwierdzone', cytaty: [{ tekst: 'wadium w wysokości 4 000,00 zł', potwierdzony: true }] }, { status: 200 });
     }
     return Response.json({ error: 'atrapa: nieobsługiwana ścieżka' }, { status: 500 });
@@ -105,6 +110,46 @@ test('bez SWZ w PDF → 409 z instrukcją; za krótkie pytanie → 400; bez toke
   assert.match((await r.json()).error.message, /Radar SWZ/);
   assert.equal((await zapytaj(token, tender.id, 'a')).status, 400);
   assert.equal((await fetch(`${BAZA}/wygrywalnosc/tender/${tender.id}/zapytaj-swz`, { method: 'POST' })).status, 401);
+});
+
+test('brak PDF nie zużywa pytań: po dodaniu dokumentu pozostają trzy próby', async () => {
+  const { token } = await uzytkownik();
+  const tender = await przetarg([{nazwa:'Formularz',rozszerzenie:'docx',url:'https://ezamowienia.gov.pl/form'}]);
+  const zadania = podstawRailway();
+  for(let i=0;i<3;i++) assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,409);
+  assert.equal(zadania.length,0);
+  await tenders.zapiszDokumentyEz(tender.id,[SWZ_PDF]);
+  for(let i=0;i<3;i++) assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,200);
+  assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,429);
+});
+
+for (const failure of ['pdf','text']) {
+  test(`nieudane przygotowanie (${failure}) nie odbiera pytań po naprawie`, async () => {
+    const {token}=await uzytkownik(); const tender=await przetarg([SWZ_PDF]);
+    const failures={[failure]:true};const requests=podstawRailway(failures);
+    for(let i=0;i<3;i++)assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,failure==='pdf'?502:422);
+    assert.equal(requests.filter(p=>p.endsWith('/zapytaj')).length,0);
+    failures[failure]=false;
+    for(let i=0;i<3;i++)assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,200);
+    assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,429);
+  });
+}
+
+test('nieznany wynik po wysłaniu pytania nadal zużywa próbę', async () => {
+  const {token}=await uzytkownik();const tender=await przetarg([SWZ_PDF]);
+  const requests=podstawRailway({question:true});
+  for(let i=0;i<3;i++)assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,500);
+  assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,429);
+  assert.equal(requests.filter(p=>p.endsWith('/zapytaj')).length,3);
+});
+
+test('wyczerpany limit blokuje przygotowanie nowego PDF przed pobraniem', async () => {
+  const {token}=await uzytkownik();const tender=await przetarg([SWZ_PDF]);
+  const failures={};const requests=podstawRailway(failures);
+  for(let i=0;i<3;i++)assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,200);
+  const other=await przetarg([SWZ_PDF]);failures.pdf=true;requests.length=0;
+  assert.equal((await zapytaj(token,other.id,'Jakie wadium?')).status,429);
+  assert.equal(requests.length,0);
 });
 
 test('plan darmowy: 3 pytania dziennie, czwarte 429 z zachętą do Standardu; Standard bez limitu', async () => {

@@ -4437,6 +4437,12 @@ const pytaniaSwzDoc = (userId, dzien) =>
   db().collection('users').doc(userId).collection('limity').doc(`pytania_swz_${dzien}`);
 
 export const limitPytanSwz = {
+  // Read-only preflight avoids downloading/preparing a PDF after exhaustion.
+  // It is not a reservation: callers still use the transaction before AI.
+  async dostepny(userId, limit, dzien = nowIso().slice(0, 10)) {
+    const doc = await pytaniaSwzDoc(userId, dzien).get();
+    return (doc.exists ? (doc.data().zadane ?? 0) : 0) < limit;
+  },
   async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
     const ref = pytaniaSwzDoc(userId, dzien);
     return db().runTransaction(async (tx) => {
