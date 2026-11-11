@@ -191,11 +191,19 @@ router.post('/tender/:id/zapytaj-swz', ah(async (req, res) => {
   // preparation failures must not spend a question before it can be sent.
   let postepowanieId = powiazanie?.postepowanie_id
     ?? await postepowanieZTrescia(req.user, tender);
-  if (darmowy && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY))) {
-    throw tooMany(limitMessage);
-  }
-
-  const pytaj = (id) => wywolajModulPrzetargowy(req.user, { metoda: 'POST', sciezka: `/swz/postepowania/${id}/zapytaj`, dane: { pytanie: parsed.data.pytanie }, limitMs: 60_000 });
+  const pytaj = async (id) => {
+    const dzien = new Date().toISOString().slice(0, 10);
+    if (darmowy && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY, dzien))) {
+      throw tooMany(limitMessage);
+    }
+    const wynik = await wywolajModulPrzetargowy(req.user, { metoda: 'POST', sciezka: `/swz/postepowania/${id}/zapytaj`, dane: { pytanie: parsed.data.pytanie }, limitMs: 60_000 });
+    // Railway returns these before AI: missing owned analysis or missing text.
+    // Do not compensate transport failures or other statuses: AI may have run.
+    if (darmowy && (wynik.status === 404 || wynik.status === 409)) {
+      await limitPytanSwz.zwolnij(req.user.id, dzien);
+    }
+    return wynik;
+  };
   let odp = await pytaj(postepowanieId);
   // Analiza usunięta (404) albo bez treści (409) → treść z PDF-a i jeszcze raz.
   if (odp.status === 404 || odp.status === 409) {

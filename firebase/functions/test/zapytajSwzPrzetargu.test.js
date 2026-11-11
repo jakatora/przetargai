@@ -14,7 +14,7 @@ const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 
 const { createApp } = await import('../src/app.js');
-const { users, tenders, powiazaniaSwz } = await import('../src/db/repos.js');
+const { users, tenders, powiazaniaSwz, limitPytanSwz } = await import('../src/db/repos.js');
 const { signToken } = await import('../src/middleware/auth.js');
 const { env } = await import('../src/config.js');
 
@@ -53,6 +53,9 @@ function podstawRailway(failures = {}) {
     if (!adres.startsWith(env.MOST_RAILWAY_URL)) return oryginalnyFetch(url, opcje);
     const sciezka = new URL(adres).pathname;
     zadania.push(`${opcje.method ?? 'GET'} ${sciezka}`);
+    if (sciezka === '/api/przetarg/swz/postepowania/stale/zapytaj') {
+      return Response.json({error:{message:'Missing SWZ'}},{status:failures.staleStatus ?? 404});
+    }
     if (sciezka === '/auth/register') return Response.json({ user: { id: `rw-${licznik}` } }, { status: 201 });
     if (sciezka === '/api/przetarg/swz/postepowania') return Response.json({ postepowanie: { id: 'pst-1' } }, { status: 201 });
     if (sciezka === '/api/przetarg/swz/postepowania/pst-1/tresc-pdf') {
@@ -71,6 +74,30 @@ function podstawRailway(failures = {}) {
 
 const zapytaj = (token, id, pytanie) => fetch(`${BAZA}/wygrywalnosc/tender/${encodeURIComponent(id)}/zapytaj-swz`, {
   method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ pytanie }),
+});
+
+for (const status of [404, 409]) {
+  test(`stare powiązanie ${status}: nieudana naprawa nie zabiera pytań`, async () => {
+    const {token,uid}=await uzytkownik();
+    const tender=await przetarg([]);
+    await powiazaniaSwz.ustaw(uid,tender.id,{postepowanieId:'stale',nazwa:'Old'});
+    podstawRailway({staleStatus:status});
+    for(let i=0;i<3;i++) assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,409);
+    await tenders.zapiszDokumentyEz(tender.id,[SWZ_PDF]);
+    for(let i=0;i<3;i++) assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,200);
+    assert.equal((await zapytaj(token,tender.id,'Jakie wadium?')).status,429);
+  });
+}
+
+test('zwolnienie dotyczy dnia rezerwacji i nie narusza równoległego pytania', async () => {
+  const {uid}=await uzytkownik();
+  const old='2026-11-10'; const next='2026-11-11';
+  for(const day of [old,next]) for(let i=0;i<3;i++) assert.equal(await limitPytanSwz.zarezerwuj(uid,3,day),true);
+  await limitPytanSwz.zwolnij(uid,old);
+  assert.equal(await limitPytanSwz.zarezerwuj(uid,3,next),false,'nowy dzień bez zwrotu');
+  const reserved=await Promise.all(Array.from({length:4},()=>limitPytanSwz.zarezerwuj(uid,3,old)));
+  assert.equal(reserved.filter(Boolean).length,1,'dokładnie jedno zwolnione miejsce');
+  await assert.rejects(()=>limitPytanSwz.zwolnij(uid),/Reservation day required/);
 });
 
 test('pierwsze pytanie: SWZ z PDF → postępowanie z treścią (bez analizy) → powiązanie → odpowiedź; drugie od razu', async () => {

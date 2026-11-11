@@ -4437,6 +4437,19 @@ const pytaniaSwzDoc = (userId, dzien) =>
   db().collection('users').doc(userId).collection('limity').doc(`pytania_swz_${dzien}`);
 
 export const limitPytanSwz = {
+  // Internal compensation, exactly once after a confirmed pre-AI rejection.
+  // Require the reservation day so a midnight response cannot refund tomorrow.
+  async zwolnij(userId, dzien) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dzien ?? '')) throw new Error('Reservation day required');
+    const ref = pytaniaSwzDoc(userId, dzien);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const zadane = doc.exists ? (doc.data().zadane ?? 0) : 0;
+      if (zadane <= 0) return false;
+      tx.set(ref, { zadane: zadane - 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
   // Read-only preflight avoids downloading/preparing a PDF after exhaustion.
   // It is not a reservation: callers still use the transaction before AI.
   async dostepny(userId, limit, dzien = nowIso().slice(0, 10)) {
