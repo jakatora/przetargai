@@ -1,6 +1,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
+import express from 'express';
 
 /*
  * MOST: dzienny limit pytań do SWZ w planie darmowym (audyt 2026-11-10).
@@ -27,6 +28,11 @@ const app = createApp();
 const serwer = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
 const PORT = serwer.address().port;
 test.after(() => serwer.close());
+const runtime = express();
+runtime.use(express.json({ verify: (req, _res, bytes) => { req.rawBody = bytes; } }));
+runtime.use(createApp());
+const runtimeServer = runtime.listen(0);
+test.after(() => runtimeServer.close());
 
 const oryginalnyFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = oryginalnyFetch; });
@@ -50,11 +56,10 @@ function podstawRailway() {
   return zadania;
 }
 
-function zapytaj(token, sciezka = '/api/przetarg/swz/postepowania/77/zapytaj') {
-  const cialo = JSON.stringify({ pytanie: 'Jakie wadium?' });
+function zapytaj(token, sciezka = '/api/przetarg/swz/postepowania/77/zapytaj', cialo = JSON.stringify({ pytanie: 'Jakie wadium?' }), port = PORT) {
   return new Promise((resolve, reject) => {
     const req = http.request({
-      host: '127.0.0.1', port: PORT, path: sciezka, method: 'POST',
+      host: '127.0.0.1', port, path: sciezka, method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(cialo) },
     }, (res) => {
       let tresc = '';
@@ -65,6 +70,19 @@ function zapytaj(token, sciezka = '/api/przetarg/swz/postepowania/77/zapytaj') {
     req.end(cialo);
   });
 }
+
+test('Free: invalid questions never consume quota or reach Railway', async () => {
+ for (const port of [PORT, runtimeServer.address().port]) {
+  const token = await konto();
+  const requests = podstawRailway();
+  for (const body of ['{', '{}', '{"pytanie":" "}', '{"pytanie":42}', JSON.stringify({pytanie:'x'.repeat(501)})]) {
+    assert.equal((await zapytaj(token, undefined, body, port)).status, 400, body);
+  }
+  assert.equal(requests.length, 0);
+  for (let i=0;i<LIMIT_PYTAN_SWZ_DARMOWY;i++) assert.equal((await zapytaj(token, undefined, undefined, port)).status, 200);
+  assert.equal((await zapytaj(token, undefined, undefined, port)).status, 429);
+ }
+});
 
 test('Free: po 3 pytaniach przez most — 429 i brak ruchu do Railway', async () => {
   const token = await konto();

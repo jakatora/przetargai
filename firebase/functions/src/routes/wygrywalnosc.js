@@ -144,7 +144,7 @@ router.get('/tender/:id/kto-wygrywa', ah(async (req, res) => {
  * (`/tresc-pdf`) i wiążemy z przetargiem — każde następne pytanie idzie od razu. Koszt pilnują bramki
  * Railway (budżet AI i dobowy limit użytkownika); pytanie bez SWZ w PDF → 409 z instrukcją.
  */
-const wejsciePytania = z.object({ pytanie: z.string().trim().min(3).max(500) });
+export const wejsciePytania = z.object({ pytanie: z.string().trim().min(3).max(500) });
 export const LIMIT_PYTAN_SWZ_DARMOWY = 3;
 
 async function postepowanieZTrescia(user, tender) {
