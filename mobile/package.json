@@ -31,5 +31,8 @@
   "private": true,
   "devDependencies": {
     "esbuild": "^0.24.0"
+  },
+  "overrides": {
+    "postcss": "8.5.32"
   }
 }
