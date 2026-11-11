@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
 /*
@@ -12,8 +12,22 @@ import assert from 'node:assert/strict';
 
 process.env.ANTHROPIC_API_KEY = '';
 
-const { polaczZEmulatorem } = await import('./emulator.js');
+const { wymagajEmulatora, polaczZEmulatorem } = await import('./emulator.js');
+wymagajEmulatora();
+// Ingestion tests exercise real persistence but must not select tenders for
+// accounts left by other suites (which can fetch real procurement documents).
+const { initializeApp } = await import('firebase-admin/app');
+initializeApp({ projectId: `demo-przetargai-sources-${process.pid}` });
 await polaczZEmulatorem();
+
+const network = mock.method(globalThis, 'fetch', async () => {
+  throw new Error('Source ingestion test attempted an external request');
+});
+after(() => {
+  const calls = network.mock.callCount();
+  network.mock.restore();
+  assert.equal(calls, 0, 'all source responses are fixtures; no external requests');
+});
 
 const { runTenderFetch } = await import('../src/jobs/fetchTenders.js');
 const { tenders, matches, tenderDocId } = await import('../src/db/repos.js');
