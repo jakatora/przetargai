@@ -312,3 +312,15 @@ test('hosting oddaje wersja.json z CORS (baner „jest nowa wersja” w apce Win
   const cors = regula.headers.find((h) => h.key === 'Access-Control-Allow-Origin');
   assert.equal(cors?.value, '*');
 });
+
+
+test('powrót ze Stripe nie potwierdza płatności samym adresem strony', () => {
+  const relative = 'upgrade/success.html';
+  const page = fs.readFileSync(path.join(LANDING, relative), 'utf8');
+  assert.match(page, /Ta strona nie potwierdza opłacenia subskrypcji/);
+  assert.match(page, /po potwierdzeniu płatności przez operatora/);
+  assert.doesNotMatch(page, /została aktywowana|Masz teraz nielimitowane|Faktura VAT trafi|Subskrypcja aktywna/);
+  assert.match(page, /href="\/styles\.css"/);
+  assert.ok(fs.existsSync(path.join(LANDING, 'styles.css')));
+  assert.match(page, /href="mailto:jakatora68@gmail\.com"/);
+});
