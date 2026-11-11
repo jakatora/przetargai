@@ -52,9 +52,13 @@ export function zbudujPlanDzialania({ match, terminPytan = null, swzPowiazana = 
   return kroki.map((k) => {
     const t = Date.parse(k.termin ?? '');
     const minal = Number.isFinite(t) && k.klucz !== 'decyzja' && t < teraz && !k.wykonany;
+    const tenderId = parametryNarzedzia('ChecklistaOferty', match)?.tenderId;
+    const parametry = k.klucz === 'pytania'
+      ? (tenderId != null ? { podswietlTenderId: tenderId, podswietlKod: 'pytania' } : null)
+      : parametryNarzedzia(k.ekran, match);
     return {
       ...k,
-      parametry: parametryNarzedzia(k.ekran, match),
+      parametry,
       minal,
       pilny: Number.isFinite(t) && !k.wykonany && !minal && k.klucz !== 'decyzja' && t - teraz <= PILNE_MS,
     };

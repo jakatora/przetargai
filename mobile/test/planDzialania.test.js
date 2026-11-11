@@ -47,3 +47,16 @@ test('plan opens the final checklist with the current tender, not the shared gen
     assert.equal(step.parametry.match?.tender?.id, id);
   }
 });
+
+
+test('question deadline opens calendar focused on this tender and question deadline', () => {
+  const step = zbudujPlanDzialania({ match: MATCH, terminPytan: '2030-01-01' }).find(k => k.klucz === 'pytania');
+  assert.deepEqual(step.parametry, { podswietlTenderId: MATCH.tender.id, podswietlKod: 'pytania' });
+});
+
+
+test('question calendar uses fallback tender id and disables entry without one', () => {
+  const step = match => zbudujPlanDzialania({ match, terminPytan: '2030-01-01' }).find(k => k.klucz === 'pytania');
+  assert.deepEqual(step({ tender_id: 'legacy-1' }).parametry, { podswietlTenderId: 'legacy-1', podswietlKod: 'pytania' });
+  assert.equal(step({ id: 'match-only' }).parametry, null);
+});
