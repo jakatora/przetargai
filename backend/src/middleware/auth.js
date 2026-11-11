@@ -6,7 +6,12 @@ import { uruchomJakoUzytkownik } from '../lib/kontekstZadania.js';
 
 /** Podpisuje token JWT dla użytkownika (ważność z JWT_TTL_DAYS). */
 export function signToken(userId) {
-  return jwt.sign({ sub: userId }, env.JWT_SECRET, { expiresIn: `${env.JWT_TTL_DAYS}d` });
+  const user = users.findById(userId);
+  if (!user || !Number.isSafeInteger(user.session_version) || user.session_version < 0) {
+    throw unauthorized('Konto nie jest dostępne');
+  }
+  return jwt.sign({ sub: userId, ver: user.session_version }, env.JWT_SECRET,
+    { algorithm: 'HS256', expiresIn: `${env.JWT_TTL_DAYS}d` });
 }
 
 /**
@@ -20,7 +25,7 @@ export function zweryfikowanySub(req) {
   const header = req.headers.authorization || '';
   if (!header.startsWith('Bearer ')) return null;
   try {
-    const { sub } = jwt.verify(header.slice(7).trim(), env.JWT_SECRET);
+    const { sub } = jwt.verify(header.slice(7).trim(), env.JWT_SECRET, { algorithms: ['HS256'] });
     return typeof sub === 'string' && sub ? sub : null;
   } catch {
     return null;
@@ -35,13 +40,20 @@ export function authRequired(req, res, next) {
 
   let payload;
   try {
-    payload = jwt.verify(token, env.JWT_SECRET);
+    payload = jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'] });
   } catch {
     return next(unauthorized('Nieprawidłowy lub wygasły token'));
   }
 
+  if (typeof payload.sub !== 'string' || !payload.sub) return next(unauthorized('Nieprawidłowa sesja'));
   const user = users.findById(payload.sub);
   if (!user) return next(unauthorized('Konto nie istnieje'));
+  // Pre-migration tokens lack ver and represent version 0. A password reset
+  // increments the stored version, revoking those and every older session.
+  const version = Object.hasOwn(payload, 'ver') ? payload.ver : 0;
+  if (!Number.isSafeInteger(version) || version < 0 || version !== user.session_version) {
+    return next(unauthorized('Sesja wygasła. Zaloguj się ponownie.'));
+  }
   req.user = user;
   // Reszta łańcucha żądania biegnie w kontekście użytkownika — warstwa płatnego AI
   // liczy z niego dobowy limit per użytkownik także tam, gdzie wołający nie przekazuje

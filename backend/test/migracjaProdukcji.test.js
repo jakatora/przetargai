@@ -87,6 +87,7 @@ test('migracja: na istniejącej bazie wykonują się WSZYSTKIE migracje po kolei
     '014_czarna_skrzynka_termin',
     '015_swz_tresc_wklejona',
     '016_swz_tresc_strony',
+    '017_user_session_version',
   ]);
 });
 
@@ -96,6 +97,7 @@ test('migracja: płacący klient przetrwał nietknięty', () => {
   assert.equal(u.premium_tier, 'standard', 'plan płatny nie może przepaść');
   assert.equal(u.stripe_subscription_id, 'sub_123');
   assert.equal(u.push_token, 'ExpoToken[x]');
+  assert.equal(u.session_version, 0, 'istniejące konto zachowuje wersję starych sesji');
   assert.deepEqual(JSON.parse(u.keywords), ['droga']);
 });
 
@@ -240,5 +242,5 @@ test('migracja 015: tabela treści SWZ wklejonej do analizy na zmigrowanej produ
 test('migracja: ponowne uruchomienie niczego nie zmienia (idempotencja)', () => {
   const drugie = migrate();
   assert.deepEqual(drugie.applied, []);
-  assert.equal(drugie.skipped, 16); // 16 migracji (001–016) — wszystkie już zastosowane
+  assert.equal(drugie.skipped, 17); // 17 migracji (001–017) — wszystkie już zastosowane
 });
