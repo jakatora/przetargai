@@ -72,6 +72,35 @@ after(() => {
   for (const s of ['', '-wal', '-shm']) fs.rmSync(`${DB_FILE}${s}`, { force: true });
 });
 
+test('HTTP: malformed or interrupted AI is an error, not an empty successful analysis', async () => {
+  const invalid = [
+    { text: 'Nie mogę odpowiedzieć.', stop: 'end_turn' },
+    { text: '{}', stop: 'end_turn' },
+    { text: '{"pytania":[{"tresc":42}]}', stop: 'end_turn' },
+    { text: '{"pytania":[]}', stop: 'max_tokens' },
+    { text: '{"pytania":[]}', stop: 'refusal' },
+  ];
+  for (const [index, response] of invalid.entries()) {
+    const post = postepowaniaSwz.create({ userId, nazwa: `Invalid AI ${index}` });
+    const beforeCalls = aiUsage.monthCallCount();
+    ustawKlientaAnthropic({ messages: { create: async () => ({
+      content: [{ type: 'text', text: response.text }], stop_reason: response.stop,
+      usage: { input_tokens: 12, output_tokens: 8 },
+    }) } });
+    const result = await fetch(`${base}/api/przetarg/swz/postepowania/${post.id}/analiza`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ swz: 'Wymagana gwarancja na roboty budowlane.' }),
+    });
+    assert.equal(result.status, 503, response.text + '/' + response.stop);
+    const body = await result.json();
+    assert.match(JSON.stringify(body), /niepełn|niepoprawn/i);
+    assert.equal(pytaniaSwz.listForPostepowanie(post.id).length, 0);
+    assert.equal(aiUsage.monthCallCount(), beforeCalls + 1, 'Paid response remains accounted for');
+  }
+  ustawKlientaAnthropic(fakeKlient([]));
+  assert.deepEqual(await analizujSwz({ swz: 'Spójna dokumentacja.' }), [], 'Valid empty result remains supported');
+});
+
 // ── Część 1: czyste funkcje (bez klienta AI) ─────────────────────────────────
 
 test('budujPromptSwz — pakuje trzy dokumenty w rozłączne znaczniki (ochrona przed prompt injection)', () => {
