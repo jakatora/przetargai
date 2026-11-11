@@ -14,7 +14,7 @@ function screen({read=async()=>new Set(),save=async()=>{}}={}) {
  };
  const modules={react:hooks,'react-native':{View:'View',Text:'Text',Pressable:'Pressable',ActivityIndicator:'ActivityIndicator'},'../context/ThemeContext':{useTheme:()=>({kolory:{}}),useStyle:()=>({}),tworzStyle:f=>f},'../context/JezykContext':{useJezyk:()=>({t:pl=>pl})},'../theme':{spacing:{},radius:{}},'../lib/storage':{},'../lib/kontrolaOferty':{podsumujKontrole,wczytajKontroleOferty:(_s,id,options)=>read(id,options),zapiszKontroleOferty:(_s,id,value)=>{writes.push({id,value:[...value]});return save(id,value);}}};
  const module={exports:{}};vm.runInNewContext(bundle.outputFiles[0].text,{module,exports:module.exports,Set,React:{Fragment:'Fragment'},h:(type,props,...children)=>({type,props:props||{},children}),require:n=>modules[n]||{__esModule:true,default:n.split('/').at(-1)}});
- return {render(){cursor=0;const view=module.exports.KontrolaOfertyContent({route:{params:{match:{tender:{id:'A'}}}}});while(effects.length)effects.shift()();return view;},unmount(){cleanups.forEach(f=>f?.());},writes,wrapper:id=>module.exports.default({route:{params:{match:{tender:{id}}}}})};
+ return {render(){cursor=0;const view=module.exports.KontrolaOfertyContent({route:{params:{match:{tender:{id:'A'}}}}});while(effects.length)effects.shift()();return view;},unmount(){cleanups.forEach(f=>f?.());},writes,wrapperMatch:match=>module.exports.default({route:{params:{match}}}),wrapper:id=>module.exports.default({route:{params:{match:{tender:{id}}}}})};
 }
 function find(n,p){if(!n||typeof n!=='object')return;if(Array.isArray(n)){for(const c of n){const r=find(c,p);if(r)return r;}return;}if(p(n))return n;return find(n.children,p);}
 const tick=()=>new Promise(r=>setImmediate(r));
@@ -40,4 +40,9 @@ test('tender switch remounts checklist and file report state',()=>{
 });
 test('late save after leaving cannot change abandoned UI',async()=>{
  let done;const s=screen({save:()=>new Promise(r=>{done=r;})});await ready(s);const pending=checkbox(s).props.onPress();s.unmount();done();await pending;assert.equal(checkbox(s).props.accessibilityState.checked,false);
+});
+
+
+test('legacy tender_id scopes checklist independently without nested tender id',()=>{
+ const s=screen();assert.equal(s.wrapperMatch({tender_id:'legacy-A'}).props.key,'legacy-A');assert.equal(s.wrapperMatch({tender_id:'legacy-B'}).props.key,'legacy-B');
 });

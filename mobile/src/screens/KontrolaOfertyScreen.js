@@ -14,7 +14,7 @@ import { useJezyk } from '../context/JezykContext';
  * Odhaczaj przed wysyłką; komplet = „gotowe do wysłania". Logika w lib/kontrolaOferty.js.
  */
 export default function KontrolaOfertyScreen({ route }) {
-  const tenderId = route?.params?.match?.tender?.id ?? 'generic';
+  const tenderId = route?.params?.match?.tender?.id ?? route?.params?.match?.tender_id ?? 'generic';
   return <KontrolaOfertyContent key={tenderId} route={route} />;
 }
 
@@ -24,7 +24,7 @@ export function KontrolaOfertyContent({ route }) {
   const styles = useStyle(tworzStyleKontroli);
   const match = route?.params?.match ?? null;
   const nazwa = match?.tender?.title ?? route?.params?.nazwa ?? null;
-  const tenderId = match?.tender?.id ?? 'generic';
+  const tenderId = match?.tender?.id ?? match?.tender_id ?? 'generic';
 
   const [wykonane, setWykonane] = useState(() => new Set());
   const [gotowe, setGotowe] = useState(false);
@@ -83,7 +83,7 @@ export function KontrolaOfertyContent({ route }) {
         listę przed wysyłką — najlepiej „świeżym okiem" osoby, która nie tworzyła oferty.
       </Text>
 
-      <KontrolaPlikowOferty tenderId={match?.tender?.id ?? null} />
+      <KontrolaPlikowOferty tenderId={match?.tender?.id ?? match?.tender_id ?? null} />
       {blad ? <Text accessibilityRole="alert">{blad}</Text> : null}
       {zapisuje ? <Text accessibilityLiveRegion="polite">{t('Zapisywanie…', 'Saving…')}</Text> : null}
 

@@ -38,3 +38,12 @@ test('przetarg bez terminu: plan bez dat, nic nie jest pilne', () => {
   const plan = zbudujPlanDzialania({ match: { ...MATCH, tender: { ...MATCH.tender, deadline: null } }, teraz: TERAZ });
   assert.ok(plan.filter((k) => k.klucz !== 'decyzja').every((k) => k.termin === null && !k.pilny));
 });
+
+
+test('plan opens the final checklist with the current tender, not the shared generic list', () => {
+  for (const id of ['A', 'B']) {
+    const match = { id: `match-${id}`, tender: { id, title: `Tender ${id}` } };
+    const step = zbudujPlanDzialania({ match }).find(k => k.ekran === 'KontrolaOferty');
+    assert.equal(step.parametry.match?.tender?.id, id);
+  }
+});
