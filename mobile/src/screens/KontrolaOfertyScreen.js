@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import Screen from '../components/Screen';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
@@ -6,6 +6,7 @@ import { spacing, radius } from '../theme';
 import * as storage from '../lib/storage';
 import { podsumujKontrole, wczytajKontroleOferty, zapiszKontroleOferty } from '../lib/kontrolaOferty';
 import KontrolaPlikowOferty from '../components/KontrolaPlikowOferty';
+import { useJezyk } from '../context/JezykContext';
 
 /**
  * „KONTROLA OFERTY PRZED WYSŁANIEM" — lista kontrolna wyłapująca powtarzalne błędy formalne,
@@ -13,6 +14,12 @@ import KontrolaPlikowOferty from '../components/KontrolaPlikowOferty';
  * Odhaczaj przed wysyłką; komplet = „gotowe do wysłania". Logika w lib/kontrolaOferty.js.
  */
 export default function KontrolaOfertyScreen({ route }) {
+  const tenderId = route?.params?.match?.tender?.id ?? 'generic';
+  return <KontrolaOfertyContent key={tenderId} route={route} />;
+}
+
+export function KontrolaOfertyContent({ route }) {
+  const { t } = useJezyk();
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleKontroli);
   const match = route?.params?.match ?? null;
@@ -21,26 +28,49 @@ export default function KontrolaOfertyScreen({ route }) {
 
   const [wykonane, setWykonane] = useState(() => new Set());
   const [gotowe, setGotowe] = useState(false);
+  const [blad, setBlad] = useState(null);
+  const [zapisuje, setZapisuje] = useState(false);
+  const [proba, setProba] = useState(0);
+  const zajety = useRef(false);
+  const aktywnyWidok = useRef(false);
+
+  useEffect(() => {
+    aktywnyWidok.current = true;
+    return () => { aktywnyWidok.current = false; };
+  }, []);
 
   useEffect(() => {
     let aktywny = true;
-    wczytajKontroleOferty(storage, tenderId)
+    setBlad(null);
+    wczytajKontroleOferty(storage, tenderId, { strict: true })
       .then((z) => { if (aktywny) { setWykonane(z); setGotowe(true); } })
-      .catch(() => { if (aktywny) setGotowe(true); });
+      .catch(() => { if (aktywny) setBlad(t('Nie udało się odczytać listy. Spróbuj ponownie.', 'Could not load the checklist. Please retry.')); });
     return () => { aktywny = false; };
-  }, [tenderId]);
+  }, [tenderId, proba]);
 
-  function przelacz(klucz) {
-    setWykonane((prev) => {
-      const next = new Set(prev);
-      if (next.has(klucz)) next.delete(klucz); else next.add(klucz);
-      zapiszKontroleOferty(storage, tenderId, next).catch(() => {});
-      return next;
-    });
+  async function przelacz(klucz) {
+    if (zajety.current || !gotowe || !aktywnyWidok.current) return;
+    zajety.current = true;
+    setZapisuje(true);
+    setBlad(null);
+    const next = new Set(wykonane);
+    if (next.has(klucz)) next.delete(klucz); else next.add(klucz);
+    try {
+      await zapiszKontroleOferty(storage, tenderId, next);
+      if (aktywnyWidok.current) setWykonane(next);
+    } catch {
+      if (aktywnyWidok.current) setBlad(t('Nie zapisano zmiany. Zaznacz punkt ponownie, aby spróbować jeszcze raz.', 'Change was not saved. Select the item again to retry.'));
+    } finally {
+      zajety.current = false;
+      if (aktywnyWidok.current) setZapisuje(false);
+    }
   }
 
   if (!gotowe) {
-    return <View style={styles.center}><ActivityIndicator size="large" color={kolory.blue} /></View>;
+    return <View style={styles.center}>{blad ? <>
+      <Text accessibilityRole="alert">{blad}</Text>
+      <Pressable accessibilityRole="button" onPress={() => setProba(v => v + 1)}><Text>{t('Spróbuj ponownie', 'Retry')}</Text></Pressable>
+    </> : <ActivityIndicator size="large" color={kolory.blue} />}</View>;
   }
 
   const w = podsumujKontrole(wykonane);
@@ -54,6 +84,8 @@ export default function KontrolaOfertyScreen({ route }) {
       </Text>
 
       <KontrolaPlikowOferty tenderId={match?.tender?.id ?? null} />
+      {blad ? <Text accessibilityRole="alert">{blad}</Text> : null}
+      {zapisuje ? <Text accessibilityLiveRegion="polite">{t('Zapisywanie…', 'Saving…')}</Text> : null}
 
       <View style={[styles.hero, w.gotowe && { backgroundColor: kolory.sukcesTlo, borderColor: kolory.sukcesAkcent }]}>
         <View style={styles.heroGora}>
@@ -74,9 +106,10 @@ export default function KontrolaOfertyScreen({ route }) {
         <Pressable
           key={p.klucz}
           onPress={() => przelacz(p.klucz)}
+          disabled={zapisuje}
           style={styles.pozycja}
           accessibilityRole="checkbox"
-          accessibilityState={{ checked: p.wykonany }}
+          accessibilityState={{ checked: p.wykonany, disabled: zapisuje }}
           accessibilityLabel={p.tytul}
         >
           <View style={[styles.check, p.wykonany && styles.checkOn]}>
