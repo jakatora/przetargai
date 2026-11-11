@@ -77,20 +77,23 @@ router.use(async (req, res, next) => {
   /*
    * Limit pytań do SWZ w planie darmowym (audyt 2026-11-10): stał tylko przy pytaniu z ekranu przetargu,
    * a Radar SWZ w apce pyta tą rurą wprost — Free miał ~30 pytań dziennie (limit Railway) zamiast 3.
-   * Jeden wspólny licznik dla obu dróg; odmowa PRZED ruchem do Railway.
+   * Jeden wspólny licznik dla obu dróg; odmowa PRZED wysłaniem pytania do Railway.
+   * Przygotowanie tożsamości nie uruchamia analizy ani płatnego AI.
    */
-  if (pytanieSwz && planEfektywny(req.user) !== 'standard'
-    && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY))) {
-    return res.status(429).json({
-      error: {
-        code: 'LIMIT_PYTAN_SWZ',
-        message: `W planie darmowym możesz zadać ${LIMIT_PYTAN_SWZ_DARMOWY} pytania do SWZ dziennie. W planie Standard pytasz bez tego limitu.`,
-      },
-    });
-  }
-
   try {
     let idRailway = await idRailwayDlaUzytkownika(req.user);
+    // Identity setup does not invoke AI. A failure there must not consume a
+    // question. Reserve immediately before forwarding; once sent, a timeout
+    // has an unknown outcome and cannot safely refund the attempt.
+    if (pytanieSwz && planEfektywny(req.user) !== 'standard'
+      && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY))) {
+      return res.status(429).json({
+        error: {
+          code: 'LIMIT_PYTAN_SWZ',
+          message: `W planie darmowym możesz zadać ${LIMIT_PYTAN_SWZ_DARMOWY} pytania do SWZ dziennie. W planie Standard pytasz bez tego limitu.`,
+        },
+      });
+    }
     let odpowiedz = await przekaz({
       metoda: req.method,
       sciezka: req.url,

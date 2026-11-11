@@ -38,10 +38,10 @@ const oryginalnyFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = oryginalnyFetch; });
 
 let seq = 0;
-async function konto({ standard = false } = {}) {
+async function konto({ standard = false, mapped = true } = {}) {
   seq++;
   const u = await users.create({ email: `mlim-${process.pid}-${seq}@t.pl`, passwordHash: 'x' });
-  await users.ustawMostRailway(u.id, `rail-mlim-${process.pid}-${seq}`);
+  if (mapped) await users.ustawMostRailway(u.id, `rail-mlim-${process.pid}-${seq}`);
   if (standard) await users.setTier(u.id, 'standard');
   else await getFirestore().collection('users').doc(u.id).update({ proba_do: null });
   return signToken(u.id, 0);
@@ -82,6 +82,41 @@ test('Free: invalid questions never consume quota or reach Railway', async () =>
   for (let i=0;i<LIMIT_PYTAN_SWZ_DARMOWY;i++) assert.equal((await zapytaj(token, undefined, undefined, port)).status, 200);
   assert.equal((await zapytaj(token, undefined, undefined, port)).status, 429);
  }
+});
+
+test('Free: failure before identity mapping preserves all question attempts', async () => {
+  const token = await konto({ mapped: false });
+  let unavailable = true, questionCalls = 0;
+  globalThis.fetch = async url => {
+    if (String(url).endsWith('/auth/register')) {
+      if (unavailable) throw Error('identity connection unavailable');
+      return new Response(JSON.stringify({user:{id:'recovered-'+seq}}), {status:201});
+    }
+    questionCalls++;
+    return new Response('{"odpowiedz":"ok"}', {status:200});
+  };
+  for (let i=0;i<3;i++) assert.equal((await zapytaj(token)).status,502);
+  assert.equal(questionCalls,0,'no AI question was forwarded');
+  unavailable=false;
+  for (let i=0;i<LIMIT_PYTAN_SWZ_DARMOWY;i++) assert.equal((await zapytaj(token)).status,200);
+  assert.equal((await zapytaj(token)).status,429);
+  assert.equal(questionCalls,LIMIT_PYTAN_SWZ_DARMOWY);
+});
+
+test('Free: ambiguous failure after forwarding still consumes an attempt', async () => {
+  const token=await konto(); let questionCalls=0;
+  globalThis.fetch=async()=>{questionCalls++;throw Error('response lost after request');};
+  for(let i=0;i<LIMIT_PYTAN_SWZ_DARMOWY;i++)assert.equal((await zapytaj(token)).status,502);
+  assert.equal((await zapytaj(token)).status,429);
+  assert.equal(questionCalls,LIMIT_PYTAN_SWZ_DARMOWY);
+});
+
+test('Free: concurrent requests cannot exceed the shared question limit', async () => {
+  const token=await konto();const requests=podstawRailway();
+  const results=await Promise.all(Array.from({length:6},()=>zapytaj(token)));
+  assert.equal(results.filter(r=>r.status===200).length,LIMIT_PYTAN_SWZ_DARMOWY);
+  assert.equal(results.filter(r=>r.status===429).length,6-LIMIT_PYTAN_SWZ_DARMOWY);
+  assert.equal(requests.length,LIMIT_PYTAN_SWZ_DARMOWY);
 });
 
 test('Free: po 3 pytaniach przez most — 429 i brak ruchu do Railway', async () => {
