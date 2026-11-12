@@ -3,6 +3,7 @@ import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { api } from '../api/client';
 import Button from './Button';
 import ArkuszOdrzucenia from './ArkuszOdrzucenia';
+import { StanLadowania } from './Stan';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { useSaved } from '../context/SavedContext';
@@ -137,7 +138,7 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
     }
   }
 
-  if (!dzien && !blad) return <ActivityIndicator style={styles.ladowanie} />;
+  if (!dzien && !blad) return <StanLadowania karty={2} />;
   if (!dzien) {
     // 503 „wyłączony” = funkcja świadomie wyłączona — bez komunikatu. Inny błąd (słaba sieć) nie może
     // po cichu schować dziennego wyboru: karta z ponowieniem (audyt 2026-11-10).

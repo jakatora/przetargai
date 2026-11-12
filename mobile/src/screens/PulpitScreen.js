@@ -3,6 +3,7 @@ import { View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
+import { StanLadowania } from '../components/Stan';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
@@ -63,7 +64,7 @@ export default function PulpitScreen({ navigation }) {
   const stan = stanPulpitu({ ladowanie: loading, blad, lacznie });
 
   if (stan === 'ladowanie') {
-    return <View style={styles.center}><ActivityIndicator size="large" color={kolory.blue} /></View>;
+    return <Screen scroll><StanLadowania karty={4} /></Screen>;
   }
 
   if (stan === 'blad') {

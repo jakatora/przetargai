@@ -7,6 +7,7 @@ import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
+import { StanLadowania } from '../components/Stan';
 import { grupujAlerty, etykietaPlakietki, opisPustegoCentrum } from '../lib/centrumAlertow';
 import { ogloszenieZAlertu } from '../lib/skrotOgloszenia';
 
@@ -86,7 +87,7 @@ export default function CentrumAlertowScreen({ navigation }) {
   if (ladowanie && !alerty.length && !blad) {
     return (
       <Screen>
-        <View style={styles.srodek}><ActivityIndicator size="large" color={kolory.blue} /></View>
+        <StanLadowania karty={3} />
       </Screen>
     );
   }

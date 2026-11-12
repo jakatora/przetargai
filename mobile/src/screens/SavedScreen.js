@@ -14,6 +14,7 @@ import { ScoreBadge } from '../components/MatchCard';
 import { znacznikKryteriow } from '../lib/kryteriaOceny';
 import { znacznikZmian, znacznikOtwarcia } from '../lib/zmianyDokumentow';
 import StatusPicker from '../components/StatusPicker';
+import { StanLadowania } from '../components/Stan';
 import { STATUS_DOMYSLNY, przypomnieniaWstrzymane } from '../lib/statusPrzetargu';
 import { uruchomSciezkeOdwolania } from '../lib/orkiestratorOdwolania';
 import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio';
@@ -126,7 +127,7 @@ export default function SavedScreen({ navigation }) {
   }
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color={kolory.blue} /></View>;
+    return <View style={styles.list}><StanLadowania karty={3} /></View>;
   }
 
   function renderItem({ item }) {
