@@ -229,7 +229,10 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
           {nastepny ? <Text style={styles.gotoweDrobny}>{t(nastepny)}</Text> : null}
           {postep.wziete > 0 ? (
             <Button title={t('Moje oferty', 'My bids')} variant="ghost" onPress={() => navigation.navigate('Pulpit')} />
-          ) : null}
+          ) : (
+            // Wszystko odrzucone = wybór był nietrafiony — najkrótsza droga do poprawy to karta firmy (seria 2 runda 6).
+            <Button title={t('Popraw kartę firmy', 'Adjust your company card')} variant="ghost" onPress={() => navigation.navigate('KartaFirmy')} />
+          )}
         </View>
       ) : null}
       {/* „Nic nie pasuje” tylko, gdy selekcja naprawdę nic dziś nie wybrała — nie po odrzuceniu wszystkiego (wtedy „Na dziś gotowe”). */}
