@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
-const { zmianaOgloszenia, alertZmianyOgloszenia, alertZmianyTerminu } = await import('../src/lib/zmianaTerminuBzp.js');
+const { zmianaOgloszenia, alertZmianyOgloszenia, alertZmianyTerminu, zmianyPrzedPo, opisZmiany, tekstOgloszenia } = await import('../src/lib/zmianaTerminuBzp.js');
 const { alertNowejWersjiTed } = await import('../src/lib/wersjeTed.js');
 const { runZmianyTerminowBzp } = await import('../src/jobs/zmianyTerminowBzp.js');
 const { runWersjeTed } = await import('../src/jobs/wersjeTed.js');
@@ -29,6 +29,27 @@ test('parser zmiany ogłoszenia (prawdziwe ogłoszenia): pozycje bez terminów; 
   assert.deepEqual(wg('2026/BZP 00510617/01').pozycje, [], 'same terminy (8.1, 8.3, 8.4) — to obsługuje alert terminu');
   assert.equal(wg('2026/BZP 00510575/01'), null, 'zmiana ogłoszenia o wykonaniu umowy');
   assert.equal(zmianaOgloszenia({ htmlBody: '<p>brak numeru</p>' }), null);
+});
+
+test('„było → jest” z prawdziwego ogłoszenia BZP: wartości przed i po, dodano/usunięto, bez terminów (2026-11-12)', () => {
+  const n = FIXTURE.find((x) => x.noticeNumber === '2026/BZP 00510761/01');
+  assert.deepEqual(zmianyPrzedPo(tekstOgloszenia(n.htmlBody)), [
+    { pozycja: '4.2.10. Data końcowa okresu obowiązywania', przed: '2026-11-30', po: '2026-12-15' },
+    { pozycja: '7.5. Zamawiający uwzględnił aspekty społeczne, środowiskowe,…', przed: 'NIE', po: 'TAK' },
+    { pozycja: '7.6. Zamawiający przewiduje następujące wymagania związane z…', przed: '', po: 'w zakresie zatrudnienia na podstawie stosunku pracy, w okolicznościach, o…' },
+  ]);
+  assert.deepEqual(zmianaOgloszenia(n).zmiany.map((z) => z.pozycja), zmianaOgloszenia(n).pozycje, 'te same pozycje co lista');
+  assert.equal(opisZmiany({ pozycja: '6.4. Wadium', przed: '5000 zł', po: '10000 zł' }), '6.4. Wadium: było „5000 zł”, jest „10000 zł”');
+  assert.equal(opisZmiany({ pozycja: '7.6. Wymagania', przed: '', po: 'zatrudnienie na umowę o pracę' }), '7.6. Wymagania: dodano „zatrudnienie na umowę o pracę”');
+  assert.equal(opisZmiany({ pozycja: '5.4. Warunki', przed: 'dwie roboty', po: '' }), '5.4. Warunki: usunięto „dwie roboty”');
+
+  const tender = { id: '2026~BZP_00490611', title: 'Dostawa paliw', organization: 'Gmina Krasne', deadline: '2026-11-20T09:00:00.000Z' };
+  const o = zmianaOgloszenia(zmianaWarunkow('2026/BZP 00500202', '2026/BZP 00510999/01'));
+  const a = alertZmianyOgloszenia({ tender, pozycje: o.pozycje, numer: o.numer, zmiany: o.zmiany });
+  assert.equal(a.tresc.pl, 'Gmina Krasne zmienił ogłoszenie w BZP: 5.4. Nazwa i opis warunków udziału w postępowaniu: było „dwie roboty”, jest „jedna robota”. Sprawdź zmiany przed złożeniem oferty — oferta, która ich nie uwzględnia, może zostać odrzucona.');
+  assert.deepEqual(a.zmiany, [{ pozycja: '5.4. Nazwa i opis warunków udziału w postępowaniu', przed: 'dwie roboty', po: 'jedna robota' }]);
+  const t = alertZmianyTerminu({ tender, staryTermin: '2026-11-13T10:00:00.000Z', nowyTermin: '2026-11-20T10:00:00.000Z', inne: o.pozycje, inneZmiany: o.zmiany });
+  assert.match(t.tresc.pl, /Zmienił też: 5\.4\. Nazwa i opis warunków udziału w postępowaniu: było „dwie roboty”, jest „jedna robota” — sprawdź/);
 });
 
 test('alerty: zmiana ogłoszenia z listą pozycji, termin z dopiskiem „Zmienił też”, klucz na ogłoszenie o zmianie', () => {
