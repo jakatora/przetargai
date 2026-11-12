@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import Screen from '../components/Screen';
 import { StanLadowania } from '../components/Stan';
+import { podsumowanieZapisanych } from '../lib/kolejnoscZapisanych';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
@@ -53,6 +54,7 @@ export default function PulpitScreen({ navigation }) {
 
   const { grupy, lacznie, wymagaUwagi, lejek, skutecznosc } = zbudujPulpit(saved);
   const [odswiezanie, setOdswiezanie] = useState(false);
+  const najblizszy = podsumowanieZapisanych(saved)?.termin ?? null;
   const odswiez = async () => { setOdswiezanie(true); await wczytaj(); setOdswiezanie(false); };
 
   const kolorEtapu = (wartosc) => {
@@ -120,7 +122,7 @@ export default function PulpitScreen({ navigation }) {
         <Text style={[styles.podsumUwaga, { color: wymagaUwagi > 0 ? kolory.ostrzezenieTekst : kolory.textMuted }]}>
           {wymagaUwagi > 0
             ? t(`${wymagaUwagi} wymaga uwagi — pilny termin`, `${wymagaUwagi} need attention — deadline close`)
-            : t('Nic pilnego na dziś', 'Nothing urgent today')}
+            : najblizszy ? t(`Nic pilnego · ${najblizszy.pl}`, `Nothing urgent · ${najblizszy.en}`) : t('Nic pilnego na dziś', 'Nothing urgent today')}
         </Text>
         {/* Lejek etapów (2026-11-12): proporcje jednym rzutem oka + legenda z liczbami. */}
         <View style={styles.lejekPasek} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">

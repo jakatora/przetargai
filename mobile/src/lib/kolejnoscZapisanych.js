@@ -50,5 +50,6 @@ export function podsumowanieZapisanych(wpisy, teraz = new Date().toISOString()) 
   const ile = n === 1 ? '1 przetarg w grze' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? `${n} przetargi w grze` : `${n} przetargów w grze`;
   const kiedy = dni === 0 ? 'najbliższy termin dziś' : dni === 1 ? 'najbliższy termin jutro' : `najbliższy termin za ${dni} dni`;
   const whenEn = dni === 0 ? 'nearest deadline today' : dni === 1 ? 'nearest deadline tomorrow' : `nearest deadline in ${dni} days`;
-  return { pl: `${ile} · ${kiedy}`, en: `${n} in play · ${whenEn}`, pilne: dni <= 3 };
+  // `termin` — sama druga połowa zdania, dla „Moich ofert” (seria 2 runda 7).
+  return { pl: `${ile} · ${kiedy}`, en: `${n} in play · ${whenEn}`, pilne: dni <= 3, termin: { pl: kiedy, en: whenEn } };
 }
