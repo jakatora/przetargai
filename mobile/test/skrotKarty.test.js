@@ -7,19 +7,21 @@ test('pełna karta: opis, wykluczenia, nazwy województw, widełki kwot; każdy 
     opis: 'Termomodernizacje, dachy i elewacje budynków publicznych',
     wykluczenia: ['drogi', 'mosty', 'dostawy', 'usługi sprzątania', 'IT'],
     regiony: ['18', '12'], wartosc_min: 50000, wartosc_max: 5000000,
+    formalne: { obrot_roczny: 3000000, referencja_kwota: 2300000, uprawnienia: ['budowlane', 'drogowe'] },
   });
   assert.deepEqual(w.map((x) => [x.klucz, x.wartosc, x.krok]), [
     ['zakres', 'Termomodernizacje, dachy i elewacje budynków publicznych', 1],
     ['wykluczenia', 'drogi, mosty, dostawy, usługi sprzątania i 1 więcej', 2],
     ['teren', 'Podkarpackie, Małopolskie', 3],
     ['skala', '50 tys. zł – 5 mln zł', 4],
+    ['formalne', 'obrót 3 mln zł · referencja 2,3 mln zł · uprawnienia: 2', 5],
   ]);
-  assert.equal(wypelnienieKarty(w), 4);
+  assert.equal(wypelnienieKarty(w), 5);
 });
 
 test('pusta karta: wszystko do uzupełnienia; bez opisu — słowa kluczowe; sama górna kwota', () => {
   const pusta = skrotKartyFirmy(null);
-  assert.deepEqual(pusta.map((x) => x.wartosc), [null, null, null, null]);
+  assert.deepEqual(pusta.map((x) => x.wartosc), [null, null, null, null, null]);
   assert.equal(wypelnienieKarty(pusta), 0);
   const w = skrotKartyFirmy({ keywords: ['dach', 'elewacja'], wartosc_max: 1500000, regiony: Array.from({ length: 16 }, (_, i) => String(2 + i * 2).padStart(2, '0')) });
   assert.equal(w[0].wartosc, 'dach, elewacja');
