@@ -6,7 +6,7 @@ import { ah } from '../lib/asyncHandler.js';
 import { authRequired, signToken } from '../middleware/auth.js';
 import { users, passwordResets } from '../db/repos.js';
 import { isValidNip, normalizeNip } from '../lib/nip.js';
-import { badRequest, conflict, unauthorized, forbidden } from '../lib/errors.js';
+import { AppError, badRequest, conflict, unauthorized, forbidden } from '../lib/errors.js';
 import { audit } from '../lib/audit.js';
 import { publicUser } from '../lib/serialize.js';
 import { createUpgradeLink } from '../services/magicLink.js';
@@ -59,6 +59,10 @@ router.post('/register', ah(async (req, res) => {
   // PRZED jakimkolwiek odczytem bazy: 403 bez podpisu także dla zajętego adresu, więc
   // nie da się nim sondować, które konta pomostowe istnieją (2026-09-25).
   const kontoPomostowe = jestAdresemMostu(data.email, env.MOST_EMAIL_DOMENA);
+  if (!kontoPomostowe && !env.LEGACY_REGISTRATION_ENABLED) {
+    throw new AppError(403, 'LEGACY_REGISTRATION_DISABLED',
+      'Załóż konto w aktualnej aplikacji PrzetargAI. Rejestracja przez starszy serwer jest wyłączona.');
+  }
   if (kontoPomostowe && env.MOST_WYMAGAJ_PODPISU
     && !poprawnyPodpisMostu(data.email, req.get('X-Most-Podpis'), env.JWT_SECRET)) {
     audit({ userId: null, action: 'register_most_bez_podpisu', ip: req.ip });
@@ -121,7 +125,10 @@ router.post('/login', ah(async (req, res) => {
   const user = users.findByEmail(data.email.toLowerCase().trim());
   const ok = await bcrypt.compare(data.password, user?.password_hash ?? DUMMY_HASH);
 
-  if (!user || !ok) {
+  // A password reset can complete while bcrypt yields. Never issue a fresh
+  // session based on the old hash after that reset.
+  const currentUser = user ? users.findById(user.id) : null;
+  if (!user || !ok || !currentUser || currentUser.password_hash !== user.password_hash) {
     audit({ userId: user?.id ?? null, action: 'login_failed', ip: req.ip });
     throw unauthorized('Nieprawidłowy email lub hasło');
   }
@@ -173,19 +180,21 @@ const resetSchema = z.object({
  */
 router.post('/reset-password', ah(async (req, res) => {
   const data = parseBody(resetSchema, req.body);
-  const rec = passwordResets.findByHash(hashToken(data.token.trim()));
+  const tokenHash = hashToken(data.token.trim());
+  const rec = passwordResets.findByHash(tokenHash);
+  const expires = Date.parse(rec?.expires_at ?? '');
 
-  if (!rec || rec.used_at || new Date(rec.expires_at).getTime() < Date.now()) {
+  if (!rec || rec.used_at || !Number.isFinite(expires) || expires <= Date.now()) {
     audit({ userId: rec?.user_id ?? null, action: 'reset_password_invalid', ip: req.ip });
     throw badRequest('Kod resetu jest nieprawidłowy lub wygasł. Poproś o nowy.');
   }
 
   const passwordHash = await bcrypt.hash(data.password, 12);
-  users.setPassword(rec.user_id, passwordHash);
-  passwordResets.deleteForUser(rec.user_id); // zużyty + unieważnij ewentualne inne tokeny
-  audit({ userId: rec.user_id, action: 'reset_password', ip: req.ip });
+  const userId = passwordResets.completeReset(tokenHash, passwordHash);
+  if (!userId) throw badRequest('Kod resetu jest nieprawidłowy lub wygasł. Poproś o nowy.');
+  audit({ userId, action: 'reset_password', ip: req.ip });
 
-  const user = users.findById(rec.user_id);
+  const user = users.findById(userId);
   res.json({ ok: true, token: signToken(user.id), user: publicUser(user) });
 }));
 

@@ -144,7 +144,7 @@ router.get('/tender/:id/kto-wygrywa', ah(async (req, res) => {
  * (`/tresc-pdf`) i wiążemy z przetargiem — każde następne pytanie idzie od razu. Koszt pilnują bramki
  * Railway (budżet AI i dobowy limit użytkownika); pytanie bez SWZ w PDF → 409 z instrukcją.
  */
-const wejsciePytania = z.object({ pytanie: z.string().trim().min(3).max(500) });
+export const wejsciePytania = z.object({ pytanie: z.string().trim().min(3).max(500) });
 export const LIMIT_PYTAN_SWZ_DARMOWY = 3;
 
 async function postepowanieZTrescia(user, tender) {
@@ -180,16 +180,33 @@ router.post('/tender/:id/zapytaj-swz', ah(async (req, res) => {
   if (!features.most) throw serviceUnavailable('Moduł analizy SWZ jest chwilowo wyłączony');
   const tender = await tenders.findById(req.params.id);
   if (!tender) throw notFound('Przetarg nie został znaleziony');
-  if (planEfektywny(req.user) !== 'standard' && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY))) {
-    throw tooMany(`W planie darmowym możesz zadać ${LIMIT_PYTAN_SWZ_DARMOWY} pytania do SWZ dziennie. W planie Standard pytasz bez tego limitu.`);
-  }
-
   const powiazanie = await powiazaniaSwz.pobierz(req.user.id, tender.id);
-  let postepowanieId = powiazanie?.postepowanie_id ?? null;
-  const pytaj = (id) => wywolajModulPrzetargowy(req.user, { metoda: 'POST', sciezka: `/swz/postepowania/${id}/zapytaj`, dane: { pytanie: parsed.data.pytanie }, limitMs: 60_000 });
-  let odp = postepowanieId ? await pytaj(postepowanieId) : null;
-  // Brak powiązania, analiza usunięta (404) albo bez treści (409) → treść z PDF-a i jeszcze raz.
-  if (!odp || odp.status === 404 || odp.status === 409) {
+  const darmowy = planEfektywny(req.user) !== 'standard';
+  const limitMessage = `W planie darmowym możesz zadać ${LIMIT_PYTAN_SWZ_DARMOWY} pytania do SWZ dziennie. W planie Standard pytasz bez tego limitu.`;
+  if (darmowy && !powiazanie?.postepowanie_id
+    && !(await limitPytanSwz.dostepny(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY))) {
+    throw tooMany(limitMessage);
+  }
+  // Preparing the initial text does not call AI. Missing/unreadable PDFs or
+  // preparation failures must not spend a question before it can be sent.
+  let postepowanieId = powiazanie?.postepowanie_id
+    ?? await postepowanieZTrescia(req.user, tender);
+  const pytaj = async (id) => {
+    const dzien = new Date().toISOString().slice(0, 10);
+    if (darmowy && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY, dzien))) {
+      throw tooMany(limitMessage);
+    }
+    const wynik = await wywolajModulPrzetargowy(req.user, { metoda: 'POST', sciezka: `/swz/postepowania/${id}/zapytaj`, dane: { pytanie: parsed.data.pytanie }, limitMs: 60_000 });
+    // Railway returns these before AI: missing owned analysis or missing text.
+    // Do not compensate transport failures or other statuses: AI may have run.
+    if (darmowy && (wynik.status === 404 || wynik.status === 409)) {
+      await limitPytanSwz.zwolnij(req.user.id, dzien);
+    }
+    return wynik;
+  };
+  let odp = await pytaj(postepowanieId);
+  // Analiza usunięta (404) albo bez treści (409) → treść z PDF-a i jeszcze raz.
+  if (odp.status === 404 || odp.status === 409) {
     postepowanieId = await postepowanieZTrescia(req.user, tender);
     odp = await pytaj(postepowanieId);
   }

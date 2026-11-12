@@ -165,6 +165,67 @@ test('przetarg ANULOWANY w źródle → brak pusha, przypomnienie zamknięte', a
   assert.equal(due.length, 0, 'anulowane nie wraca jako wymagalne');
 });
 
+test('oferta ZŁOŻONA (etap w Zapisanych) → brak pusha „zostały dni do składania”, przypomnienie zamknięte', async () => {
+  const { userId, token } = await uzytkownik();
+  const { tenderId } = await wymagalne(userId);
+  await saved.setStatus(userId, tenderId, 'zlozona');
+
+  const wynik = await runReminderCheck();
+  assert.equal(pushe.get(token) ?? 0, 0, 'po złożeniu oferty nie przypominamy o składaniu');
+  assert.ok(wynik.poZlozeniu >= 1);
+  const po = await wpis(userId, tenderId);
+  assert.equal(po.reminder_zakonczone_powod, 'oferta_zlozona');
+  const due = (await saved.dueReminders()).filter((d) => d.userId === userId && d.tenderId === tenderId);
+  assert.equal(due.length, 0);
+});
+
+test('WYŚCIG: etap zmieniony na „złożona” PO odczycie wymagalnych, PRZED rezerwacją → brak pusha (status czytany w transakcji)', async () => {
+  const { userId, token } = await uzytkownik();
+  const { tenderId } = await wymagalne(userId);
+  // Job odczytał listę wymagalnych, kiedy etap był jeszcze „rozważam”…
+  const migawka = (await saved.dueReminders()).filter((w) => w.userId === userId);
+  assert.equal(migawka[0].status ?? 'rozwazam', 'rozwazam');
+  // …a użytkownik w tej chwili oznacza „Oferta złożona”.
+  await saved.setStatus(userId, tenderId, 'zlozona');
+  const oryginal = saved.dueReminders;
+  saved.dueReminders = async () => migawka;
+  let wynik;
+  try { wynik = await runReminderCheck(); } finally { saved.dueReminders = oryginal; }
+  assert.equal(pushe.get(token) ?? 0, 0, 'stara migawka nie może wysłać „zostały dni do składania”');
+  assert.equal(wynik.poZlozeniu, 1);
+  assert.equal((await wpis(userId, tenderId)).reminder_zakonczone_powod, 'oferta_zlozona');
+});
+
+test('WZNOWIENIE: cofnięcie etapu „złożona” → „przygotowuję” planuje najbliższy przyszły etap i push znów dochodzi', async () => {
+  const { userId, token } = await uzytkownik();
+  const { tenderId } = await wymagalne(userId);
+  await saved.setStatus(userId, tenderId, 'zlozona');
+  await runReminderCheck();
+  assert.equal((await wpis(userId, tenderId)).reminder_notified, true, 'zamknięte po złożeniu');
+
+  const stan = await saved.setStatus(userId, tenderId, 'przygotowuje');
+  assert.equal(stan.przypomnienie_wznowione, true);
+  const po = await wpis(userId, tenderId);
+  assert.equal(po.reminder_notified, false);
+  assert.equal(po.reminder_zakonczone_powod, undefined, 'powód zamknięcia usunięty');
+  assert.equal(po.remind_etap, 7, 'termin 2099 — najbliższy przyszły etap to 7 dni');
+  assert.ok(po.remind_at > new Date().toISOString(), 'bez nadrabiania minionych etapów');
+
+  // Etap staje się wymagalny → push dochodzi.
+  await ref(userId, tenderId).update({ remind_at: '2000-01-01T00:00:00.000Z' });
+  await runReminderCheck();
+  assert.equal(pushe.get(token), 1);
+
+  // Ręcznie wyłączone przypomnienie NIE wraca przy zmianie etapu.
+  const drugi = await wymagalne(userId);
+  await saved.setStatus(userId, drugi.tenderId, 'zlozona');
+  await runReminderCheck();
+  await saved.setReminder(userId, drugi.tenderId, false);
+  const stan2 = await saved.setStatus(userId, drugi.tenderId, 'przygotowuje');
+  assert.equal(stan2.przypomnienie_wznowione, false);
+  assert.equal((await wpis(userId, drugi.tenderId)).reminder_enabled, false);
+});
+
 test('termin PRZESUNIĘTY w źródle → etap liczony od nowego terminu, brak przedwczesnego pusha', async () => {
   const { userId, token } = await uzytkownik();
   const { tenderId, externalId } = await wymagalne(userId, '2099-01-03T10:00:00.000Z');

@@ -234,5 +234,16 @@ export async function analizujSwz({ swz = '', umowa = '', przedmiar = '' } = {})
     .filter((b) => b.type === 'text')
     .map((b) => b.text)
     .join('\n');
+  // A broken/refused/truncated response is not evidence that the documents
+  // contain no issues. Keep the paid usage above, but never save partial drafts
+  // or return a successful empty analysis in this case.
+  const parsed = wyodrebnijJson(text);
+  const complete = resp.stop_reason == null || resp.stop_reason === 'end_turn';
+  const valid = parsed && Array.isArray(parsed.pytania)
+    && parsed.pytania.every((item) => item && typeof item === 'object'
+      && typeof item.tresc === 'string' && item.tresc.trim().length > 0);
+  if (!complete || !valid) {
+    throw serviceUnavailable('AI zwróciło niepełną lub niepoprawną analizę SWZ. Spróbuj ponownie — ten wynik nie został zapisany jako zakończona analiza.');
+  }
   return parsujPytania(text);
 }

@@ -38,3 +38,25 @@ test('przetarg bez terminu: plan bez dat, nic nie jest pilne', () => {
   const plan = zbudujPlanDzialania({ match: { ...MATCH, tender: { ...MATCH.tender, deadline: null } }, teraz: TERAZ });
   assert.ok(plan.filter((k) => k.klucz !== 'decyzja').every((k) => k.termin === null && !k.pilny));
 });
+
+
+test('plan opens the final checklist with the current tender, not the shared generic list', () => {
+  for (const id of ['A', 'B']) {
+    const match = { id: `match-${id}`, tender: { id, title: `Tender ${id}` } };
+    const step = zbudujPlanDzialania({ match }).find(k => k.ekran === 'KontrolaOferty');
+    assert.equal(step.parametry.match?.tender?.id, id);
+  }
+});
+
+
+test('question deadline opens calendar focused on this tender and question deadline', () => {
+  const step = zbudujPlanDzialania({ match: MATCH, terminPytan: '2030-01-01' }).find(k => k.klucz === 'pytania');
+  assert.deepEqual(step.parametry, { podswietlTenderId: MATCH.tender.id, podswietlKod: 'pytania' });
+});
+
+
+test('question calendar uses fallback tender id and disables entry without one', () => {
+  const step = match => zbudujPlanDzialania({ match, terminPytan: '2030-01-01' }).find(k => k.klucz === 'pytania');
+  assert.deepEqual(step({ tender_id: 'legacy-1' }).parametry, { podswietlTenderId: 'legacy-1', podswietlKod: 'pytania' });
+  assert.equal(step({ id: 'match-only' }).parametry, null);
+});

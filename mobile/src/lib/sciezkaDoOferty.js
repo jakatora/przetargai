@@ -163,6 +163,7 @@ export function parametryNarzedzia(ekran, match) {
       return params;
     }
     case 'DokumentyOferty':
+    case 'KontrolaOferty':
     case 'OdpowiedzNaWezwanie':
     case 'PoWygranej':
     case 'ZwrotWadium':

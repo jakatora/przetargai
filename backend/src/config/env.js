@@ -78,6 +78,10 @@ const schema = z.object({
    */
   MOST_EMAIL_DOMENA: z.string().trim().toLowerCase().default('most.przetarg-ai.pl'),
   MOST_WYMAGAJ_PODPISU: flaga(true),
+  // Nowe konta użytkowników powstają w Firebase, gdzie obowiązuje plan i limit Free.
+  // Stara rejestracja Railway omijała tę politykę. Nie wyłącza logowania istniejących
+  // kont ani podpisanej rejestracji mostu. true wyłącznie dla świadomego trybu legacy.
+  LEGACY_REGISTRATION_ENABLED: flaga(false),
 
   SENTRY_DSN_BACKEND: z.string().default(''),
 

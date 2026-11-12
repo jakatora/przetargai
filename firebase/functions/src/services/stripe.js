@@ -186,7 +186,15 @@ export async function zaplanujAnulowanieNaKoniecOkresu(subscriptionId) {
   if (!stripe || !subscriptionId) return { zaplanowana: false, koniecOkresuMs: null };
   try {
     const sub = await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true });
-    const koniec = typeof sub.current_period_end === 'number' ? sub.current_period_end * 1000 : null;
+    // Stripe od Basil przenosi okres do pozycji subskrypcji. Termin anulowania
+    // jest nadrzędny; przy niejednoznacznych okresach nie zgadujemy daty dostępu.
+    const poprawnaData = (value) => Number.isFinite(value) && value > 0;
+    const okresy = sub.items?.data?.map((item) => item.current_period_end) ?? [];
+    const wspolnyOkres = okresy.length > 0 && okresy.every((value) => poprawnaData(value) && value === okresy[0])
+      ? okresy[0] : null;
+    const sekundy = poprawnaData(sub.cancel_at) ? sub.cancel_at
+      : poprawnaData(sub.current_period_end) ? sub.current_period_end : wspolnyOkres;
+    const koniec = sekundy === null ? null : sekundy * 1000;
     return { zaplanowana: true, koniecOkresuMs: koniec };
   } catch (err) {
     // Subskrypcja już nie istnieje → traktujemy jak brak czego anulować, nie błąd.

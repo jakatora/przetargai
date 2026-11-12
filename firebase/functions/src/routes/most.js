@@ -5,12 +5,19 @@ import { authRequired } from '../middleware/auth.js';
 import {
   idRailwayDlaUzytkownika, przekaz, tozsamoscPrzepadla, sciezkaMostu,
 } from '../services/mostRailway.js';
+import { limitPytanSwz } from '../db/repos.js';
+import { planEfektywny } from '../lib/plan.js';
+import { LIMIT_PYTAN_SWZ_DARMOWY, wejsciePytania } from './wygrywalnosc.js';
+
+/** Pytanie do SWZ w Radarze (Railway) — ta sama płatna odpowiedź AI co `POST /wygrywalnosc/tender/:id/zapytaj-swz`. */
+// Express dopasowuje trasy bez rozróżniania wielkości liter; limit musi robić to samo.
+const PYTANIE_SWZ = /^\/swz\/postepowania\/[^/?#]+\/zapytaj\/?(?:[?#]|$)/i;
 
 /*
  * MOST `/api/przetarg/*` → Railway (P0-4).
  *
- * To jest GŁUPIA RURA na bajtach, z JEDNYM wyjątkiem: tłumaczy tożsamość.
- * Nie parsuje ciała, nie zna kontraktu modułów, nie zmienia kształtu odpowiedzi.
+ * Przekazuje bajty i tłumaczy tożsamość. Wyjątek: pytania do SWZ waliduje
+ * przed rezerwacją wspólnego limitu. Nie zmienia przekazywanego ciała ani odpowiedzi.
  * Dzięki temu publiczny kontrakt aplikacji się NIE zmienia — ekrany Sejfu,
  * Radarów, Symulatora i Czarnej skrzynki dostają dokładnie to, co dotąd dostawały
  * w trybie deweloperskim, wskazującym wprost na Railway.
@@ -52,9 +59,41 @@ router.use(async (req, res, next) => {
    * (testy, lokalny serwer) `rawBody` nie istnieje, więc zostaje bufor z express.raw().
    */
   const cialo = Buffer.isBuffer(req.rawBody) ? req.rawBody : req.body;
+  const pytanieSwz = req.method === 'POST' && PYTANIE_SWZ.test(req.url);
+  // Validate before reserving a free question. Keep the original bytes for
+  // forwarding; this exception shares the direct question route's contract.
+  if (pytanieSwz) {
+    let input;
+    try {
+      input = Buffer.isBuffer(cialo) ? JSON.parse(cialo.toString('utf8')) : cialo;
+    } catch { /* Invalid JSON is a validation error, not a consumed question. */ }
+    if (!wejsciePytania.safeParse(input).success) {
+      return res.status(400).json({
+        error: { code: 'BAD_REQUEST', message: 'Wpisz pytanie do SWZ (od 3 do 500 znaków).' },
+      });
+    }
+  }
 
+  /*
+   * Limit pytań do SWZ w planie darmowym (audyt 2026-11-10): stał tylko przy pytaniu z ekranu przetargu,
+   * a Radar SWZ w apce pyta tą rurą wprost — Free miał ~30 pytań dziennie (limit Railway) zamiast 3.
+   * Jeden wspólny licznik dla obu dróg; odmowa PRZED wysłaniem pytania do Railway.
+   * Przygotowanie tożsamości nie uruchamia analizy ani płatnego AI.
+   */
   try {
     let idRailway = await idRailwayDlaUzytkownika(req.user);
+    // Identity setup does not invoke AI. A failure there must not consume a
+    // question. Reserve immediately before forwarding; once sent, a timeout
+    // has an unknown outcome and cannot safely refund the attempt.
+    if (pytanieSwz && planEfektywny(req.user) !== 'standard'
+      && !(await limitPytanSwz.zarezerwuj(req.user.id, LIMIT_PYTAN_SWZ_DARMOWY))) {
+      return res.status(429).json({
+        error: {
+          code: 'LIMIT_PYTAN_SWZ',
+          message: `W planie darmowym możesz zadać ${LIMIT_PYTAN_SWZ_DARMOWY} pytania do SWZ dziennie. W planie Standard pytasz bez tego limitu.`,
+        },
+      });
+    }
     let odpowiedz = await przekaz({
       metoda: req.method,
       sciezka: req.url,

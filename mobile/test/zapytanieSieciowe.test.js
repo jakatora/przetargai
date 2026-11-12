@@ -51,3 +51,14 @@ test('parametryDlaMetody: tylko GET jest ponawiany; zapisy mają dłuższy limit
   assert.deepEqual(parametryDlaMetody('POST'), { limitMs: 60_000, ponowienia: 0 });
   assert.deepEqual(parametryDlaMetody('DELETE'), { limitMs: 60_000, ponowienia: 0 });
 });
+
+test('przerwanie po limicie czasu jest oznaczone (przekroczonoCzas), zwykły błąd sieci — nie', async () => {
+  await assert.rejects(
+    wyslijZLimitem('u', {}, { fetchFn: wiszacyFetch(), limitMs: 20, ponowienia: 0 }),
+    (err) => err.przekroczonoCzas === true,
+  );
+  await assert.rejects(
+    wyslijZLimitem('u', {}, { fetchFn: async () => { throw new TypeError('Network request failed'); }, limitMs: 1000, ponowienia: 0 }),
+    (err) => err.przekroczonoCzas !== true,
+  );
+});

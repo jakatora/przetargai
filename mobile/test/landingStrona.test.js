@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 const LANDING = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'landing');
 const html = fs.readFileSync(path.join(LANDING, 'index.html'), 'utf8');
-const DOMENA = 'https://przetargai.web.app';
+const DOMENA = 'https://przetarg-ai.pl';
 
 /** Treść widoczna dla człowieka: bez komentarzy, skryptów i znaczników. */
 const widoczne = html
@@ -41,7 +41,7 @@ test('adres kanoniczny, Open Graph i dane strukturalne wskazują jedną, potwier
   assert.ok(fs.existsSync(path.join(LANDING, 'og-image.png')), 'obraz podglądu istnieje w landing/');
   // Żadnej innej domeny własnej w adresach — ani wygasłej, ani niepotwierdzonej.
   assert.doesNotMatch(html, /https?:\/\/(www\.)?przetargai\.pl/);
-  assert.doesNotMatch(html, /https?:\/\/(www\.)?przetarg-ai\.pl/);
+  assert.doesNotMatch(html, /https?:\/\/przetargai\.web\.app/);
 });
 
 test('cena planu Standard: 99 zł brutto w cenniku i w danych strukturalnych', () => {
@@ -142,12 +142,14 @@ test('sitemap i robots wskazują tę samą domenę co strona, a każdy adres ma 
     const sciezka = adres.slice(DOMENA.length);
     const plik = sciezka === '/' ? 'index.html' : `${sciezka.slice(1)}.html`;
     assert.ok(fs.existsSync(path.join(LANDING, plik)), `sitemap wskazuje ${sciezka}, a nie ma landing/${plik}`);
+    const strona = fs.readFileSync(path.join(LANDING, plik), 'utf8');
+    assert.ok(strona.includes(`<link rel="canonical" href="${adres}" />`), `adres kanoniczny ${plik} odpowiada mapie strony`);
   }
 
   assert.match(robots, new RegExp(`^Sitemap: ${DOMENA}/sitemap\\.xml\\s*$`, 'm'));
   assert.match(robots, /^Disallow: \/upgrade$/m, 'strony płatności zostają poza indeksem');
   for (const plik of [sitemap, robots]) {
-    assert.doesNotMatch(plik, /przetargai\.pl|przetarg-ai\.pl/);
+    assert.doesNotMatch(plik, /przetargai\.pl|przetargai\.web\.app/);
   }
   // Adres kanoniczny strony głównej jest pierwszym adresem mapy.
   assert.match(html, new RegExp(`<link rel="canonical" href="${adresy[0]}" />`));
@@ -169,10 +171,14 @@ test('licznik ogłoszeń: bez pobranej wartości strona nie pokazuje żadnej lic
   assert.match(skrypt, /\.catch\(function \(\) \{\}\)/, 'błąd pobierania zostawia tekst z HTML');
 });
 
-test('powiadomienia są obiecywane tylko w opisie planów (cennik: Standard z miesięczną próbą)', () => {
+test('powiadomienia są obiecywane tylko w opisie planów i przy pilnowaniu ZAPISANYCH (cennik: Standard z miesięczną próbą)', () => {
+  // 2026-11-10: alerty o zmianach zapisanych przetargów (SWZ, termin, wyjaśnienia, wynik) i przypomnienia 7/3/1
+  // działają w KAŻDYM planie (push, awaryjnie e-mail) — pas „Pilnuje tego, co weźmiesz” i pytanie w FAQ mogą o nich mówić.
   const bezCennika = html
     .replace(/<section class="section" id="cennik">[\s\S]*?<\/section>/, '')
     .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/, '')
+    .replace(/<div class="pilnuje">[\s\S]*?<\/ul>\s*<\/div>\s*<\/div>/, '')
+    .replace(/<details class="faq">\s*<summary>Czy dowiem się, że zamawiający zmienił SWZ albo termin\?<\/summary>[\s\S]*?<\/details>/, '')
     .replace(/<!--[\s\S]*?-->/g, '');
   assert.doesNotMatch(czysty(bezCennika), /push|powiadomieni|powiadamia/i);
   assert.doesNotMatch(wezel('SoftwareApplication').description, /powiadamia/i);
@@ -180,7 +186,24 @@ test('powiadomienia są obiecywane tylko w opisie planów (cennik: Standard z mi
   assert.match(html, /<li>Przegląd co 3 godziny i <strong>powiadomienia od razu<\/strong><\/li>/);
   assert.match(html, /Miesiąc \(30 dni\) Standard za darmo po rejestracji — bez karty\./);
   assert.doesNotMatch(html, /7 dni (próby|planu Standard|pełny plan|masz pełny)|przez 7 dni/, 'próba trwa miesiąc — bez starych „7 dni”');
-  assert.match(html, /Subskrypcję aktywujesz z poziomu aplikacji\. Faktura VAT automatycznie\./);
+  assert.match(html, /Subskrypcję aktywujesz z poziomu aplikacji\./);
+  // Faktury nie są dziś wystawiane automatycznie (FAKTUROWANIE_ENABLED=false) — strona nie może tego obiecywać (audyt 2026-11-10).
+  assert.doesNotMatch(html, /fakturę VAT|Faktura VAT/i);
+  assert.match(html, /<div class="pilnuje">[\s\S]*Pilnuje tego, co weźmiesz/);
+});
+
+test('limity i kanały opisane tak, jak działa backend (review Codexa 2026-11-11)', () => {
+  // Standard: pytania do SWZ idą przez Railway i dzielą dobową pulę AI 30/użytkownika (PRZETARG_AI_DAILY_LIMIT_PER_USER)
+  // z analizą SWZ — strona nie może obiecywać „bez limitu”. Free: 3 pytania dziennie (limit w Functions i w moście).
+  assert.doesNotMatch(html, /SWZ[^<"]{0,40}bez (dziennego )?limitu/i, 'pytania do SWZ mają dobowy limit także w Standard');
+  assert.match(html, /<li>Zapytaj SWZ i analizy SWZ — do 30 dziennie<\/li>/);
+  assert.match(html, /<li>Zapytaj SWZ — 3 pytania dziennie<\/li>/);
+  // E-mail zapasowy: przy braku zgody na powiadomienia (brak tokenu) albo odrzuconej wysyłce push
+  // (`dostarcz` w jobs/monitorWyszukiwan.js) — nie „gdy powiadomienie nie dotrze” (niedoręczeń po przyjęciu nie wykrywamy).
+  const pytanie = wezel('FAQPage').mainEntity.find((q) => q.name === 'Czy dowiem się, że zamawiający zmienił SWZ albo termin?');
+  assert.ok(pytanie, 'pytanie o zmiany jest w danych strukturalnych');
+  assert.match(pytanie.acceptedAnswer.text, /nie ma zgody na powiadomienia/);
+  assert.doesNotMatch(html, /gdy powiadomienie nie dotrze|gdy push nie dotrze/i);
 });
 
 test('źródła ogłoszeń: trzy rejestry w FAQ i w stopce, z działającymi adresami urzędowymi', () => {
@@ -208,11 +231,11 @@ test('strona pobierania: wersja APK = wersja aplikacji, a suma SHA-256 to suma w
   assert.ok(link, 'link do APK z wersją i rozmiarem');
   assert.equal(link[1], wersjaAplikacji, 'wersja APK na stronie = expo.version z mobile/app.json');
 
-  // Dokładnie jedna suma kontrolna i jest to suma APK 1.2.2 podpisanego kluczem przesyłania
-  // (CN=PrzetargAI, O=Jakatora; build lokalny 2026-11-01, 68 052 439 B).
+  // Dokładnie jedna suma kontrolna i jest to suma APK 1.2.10 (vc33) podpisanego kluczem przesyłania
+  // (CN=PrzetargAI, O=Jakatora; build lokalny 2026-11-10, 68073547 B).
   const sumy = [...pobierz.matchAll(/<code>([0-9a-f]{64})<\/code>/g)].map((m) => m[1]);
-  assert.deepEqual(sumy, ['77b2f225a63adb9907f58b460d04af3c0ffabffd1cce1e145478e8bfad4cec9d']);
-  assert.equal(Number(link[2]), Math.round(68_052_439 / 1024 / 1024), 'rozmiar w MB zgodny z plikiem');
+  assert.deepEqual(sumy, ['02890386c88ceb31f04f1cdb1205a2018d2b89334146036bd234caef70d9e1bd']);
+  assert.equal(Number(link[2]), Math.round(68073547 / 1024 / 1024), 'rozmiar w MB zgodny z plikiem');
   assert.doesNotMatch(pobierz, /8f9c92799fd27919df294ea7e567e7833cd100c00976cec9ff95a9a9de0e26b9/, 'suma poprzedniego APK (1.2.1) usunięta');
 
   // Jeśli plik leży obok strony (katalog hostingu / lokalna kopia; w repo go nie ma),
@@ -288,4 +311,16 @@ test('hosting oddaje wersja.json z CORS (baner „jest nowa wersja” w apce Win
   assert.ok(regula, 'firebase.json: brak nagłówków dla /wersja.json');
   const cors = regula.headers.find((h) => h.key === 'Access-Control-Allow-Origin');
   assert.equal(cors?.value, '*');
+});
+
+
+test('powrót ze Stripe nie potwierdza płatności samym adresem strony', () => {
+  const relative = 'upgrade/success.html';
+  const page = fs.readFileSync(path.join(LANDING, relative), 'utf8');
+  assert.match(page, /Ta strona nie potwierdza opłacenia subskrypcji/);
+  assert.match(page, /po potwierdzeniu płatności przez operatora/);
+  assert.doesNotMatch(page, /została aktywowana|Masz teraz nielimitowane|Faktura VAT trafi|Subskrypcja aktywna/);
+  assert.match(page, /href="\/styles\.css"/);
+  assert.ok(fs.existsSync(path.join(LANDING, 'styles.css')));
+  assert.match(page, /href="mailto:jakatora68@gmail\.com"/);
 });

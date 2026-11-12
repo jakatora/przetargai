@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useJezyk } from '../context/JezykContext';
 import { View, Text, Pressable, ActivityIndicator, Share } from 'react-native';
 import { udostepnijTekst } from '../lib/udostepnianie';
@@ -99,23 +99,39 @@ export default function RadarSwzScreen({ route, navigation }) {
       /* brak danych firmy — wniosek z kropkami do uzupełnienia */
     }
     const dok = generujWniosekOWyjasnienie({ wykonawca, postepowanie, pytania, dzisiaj: new Date().toISOString() });
-    let udostepniono = false;
     try {
-      const wynik = await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
-      // iOS mówi „dismissedAction" przy anulowaniu; Android zawsze „sharedAction" — traktujemy jako wysłane.
-      udostepniono = !wynik?.anulowano;
-    } catch {
-      /* anulowane */
+      await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
+    } catch (err) {
+      if (aktywnePostepowanie.current === postepowanie.id) {
+        setBladAkcji(err.message || t('Nie udało się udostępnić pisma. Spróbuj ponownie.', 'Could not share the letter. Try again.'));
+      }
     }
-    if (!udostepniono) return;
-    // Jedno żądanie zamiast klikania każdego pytania: szkice → „wysłane".
-    const szkice = pytania.filter((q) => q.status === 'szkic').map((q) => String(q.id));
-    if (!szkice.length) return;
+    // Arkusz udostępniania lub schowek nie potwierdza złożenia pisma.
+  }
+
+  async function potwierdzZlozenie(postepowanie, pytania) {
+    const id = postepowanie.id;
+    const ids = pytania.filter(q => q.status === 'szkic').map(q => String(q.id));
+    if (!ids.length || zapisPytanRef.current || aktywnePostepowanie.current !== id) return;
+    zapisPytanRef.current = true;
+    setZapisPytan(true);
+    setBladAkcji(null);
     try {
-      await api.radarPytaniaStatus(postepowanie.id, { ids: szkice, status: 'wyslane' });
-      await odswiezDetalCicho(postepowanie.id);
-    } catch {
-      /* status zaktualizuje się przy następnym odczycie */
+      await api.radarPytaniaStatus(id, { ids, status: 'wyslane' });
+      if (aktywnePostepowanie.current === id) {
+        setDetal(obecny => obecny?.postepowanie?.id !== id ? obecny : {
+          ...obecny,
+          pytania: obecny.pytania.map(q => ids.includes(String(q.id)) && q.status === 'szkic'
+            ? { ...q, status: 'wyslane' } : q),
+        });
+      }
+    } catch (err) {
+      if (aktywnePostepowanie.current === id) {
+        setBladAkcji(t('Nie potwierdzono zapisu statusu. Spróbuj ponownie. ', 'Status update was not confirmed. Try again. ') + (err.message || ''));
+      }
+    } finally {
+      zapisPytanRef.current = false;
+      setZapisPytan(false);
     }
   }
   // Wejście z przetargu (ścieżka) niesie nazwę i daty z ogłoszenia; z katalogu narzędzi
@@ -186,6 +202,11 @@ export default function RadarSwzScreen({ route, navigation }) {
   const [wysylam, setWysylam] = useState(false);
   const [wyslijWynik, setWyslijWynik] = useState(null);
   const [bladAkcji, setBladAkcji] = useState(null);
+  const aktywnePostepowanie = useRef(null);
+  const zapisPytanRef = useRef(false);
+  const [zapisPytan, setZapisPytan] = useState(false);
+  useEffect(() => () => { aktywnePostepowanie.current = null; }, []);
+
 
   // Dopasowanie sejfu dokumentów do TEGO postępowania (sejf 7/7). Leniwe: liczymy
   // dopiero na żądanie (backend porównuje sejf z wymaganiami SWZ względem dnia złożenia).
@@ -222,6 +243,7 @@ export default function RadarSwzScreen({ route, navigation }) {
   }
 
   function otworz(id) {
+    aktywnePostepowanie.current = id;
     setWybraneId(id);
     setMode('detal');
     setWyslijWynik(null);
@@ -250,6 +272,7 @@ export default function RadarSwzScreen({ route, navigation }) {
   }
 
   function wroc() {
+    aktywnePostepowanie.current = null;
     setMode('lista');
     setWybraneId(null);
     setDetal(null);
@@ -572,13 +595,28 @@ export default function RadarSwzScreen({ route, navigation }) {
       )}
       {pytania.length > 0 ? (
         <Button
-          title={t('Złóż wniosek o wyjaśnienie SWZ (pismo w 1 klik)', 'Request clarification of the tender documents (one-tap letter)')}
+          title={t('Udostępnij pismo z pytaniami', 'Share the question letter')}
           variant="ghost"
           onPress={() => udostepnijWniosek(postepowanie, pytania)}
         />
       ) : null}
 
-      <ZapytajSwz postepowanieId={wybraneId} trescSwz={detal.tresc_swz} />
+      {pytania.some(p => p.status === 'szkic') ? (
+        <View>
+          <Text style={styles.kartaOpis}>{t(
+            'Udostępnienie lub skopiowanie pisma nie oznacza jego złożenia. Po złożeniu pytań na platformie zamawiającego potwierdź to poniżej.',
+            'Sharing or copying the letter does not submit it. Confirm below after submitting the questions on the contracting authority’s platform.',
+          )}</Text>
+          <Button
+            title={zapisPytan ? t('Zapisuję status…', 'Saving status…') : t('Potwierdzam złożenie wszystkich pytań ze szkicu', 'Confirm all draft questions were submitted')}
+            variant="ghost"
+            disabled={zapisPytan}
+            onPress={() => potwierdzZlozenie(postepowanie, pytania)}
+          />
+        </View>
+      ) : null}
+
+      <ZapytajSwz key={wybraneId} postepowanieId={wybraneId} trescSwz={detal.tresc_swz} />
 
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>{t('Wygeneruj pytania z treści SWZ', 'Generate questions from the tender documents')}</Text>

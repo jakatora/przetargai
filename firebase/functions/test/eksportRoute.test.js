@@ -86,6 +86,21 @@ describe('GET /eksport/*.csv', () => {
   });
 });
 
+describe('GET /eksport/katalog.csv — dzienny limit (audyt 2026-11-10)', () => {
+  test('po limicie pobrań na dobę → 429 z komunikatem; inne konto nietknięte', async () => {
+    const { LIMIT_KATALOGU_CSV_DZIENNIE } = await import('../src/routes/eksport.js');
+    const { limitEksportuKatalogu } = await import('../src/db/repos.js');
+    const { token, userId } = await konto();
+    // Licznik doby wyczerpany bez skanowania katalogu N razy.
+    for (let i = 0; i < LIMIT_KATALOGU_CSV_DZIENNIE; i++) await limitEksportuKatalogu.zarezerwuj(userId, LIMIT_KATALOGU_CSV_DZIENNIE);
+    const odp = await fetch(`${BAZA}/eksport/katalog.csv?cpv=33100000`, { headers: naglowki(token) });
+    assert.equal(odp.status, 429);
+    assert.match((await odp.json()).error.message, /Dzienny limit pobrań katalogu/);
+    const inny = await konto();
+    assert.equal((await fetch(`${BAZA}/eksport/katalog.csv?cpv=33100000`, { headers: naglowki(inny.token) })).status, 200);
+  });
+});
+
 describe('POST /eksport/wyslij', () => {
   test('wysyła na adres z KONTA, nie z żądania', async () => {
     const { token } = await konto();

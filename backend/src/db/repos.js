@@ -46,7 +46,8 @@ const _userSetTier = lazy(`UPDATE users SET premium_tier = ?, updated_at = ? WHE
 const _userSetStripeCustomer = lazy(`UPDATE users SET stripe_customer_id = ?, updated_at = ? WHERE id = ?`);
 const _userDelete = lazy('DELETE FROM users WHERE id = ?');
 const _userSetStripeSub = lazy(`UPDATE users SET stripe_subscription_id = ?, updated_at = ? WHERE id = ?`);
-const _userSetPassword = lazy(`UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?`);
+const _userSetPassword = lazy(`UPDATE users SET password_hash = ?, updated_at = ?,
+  session_version = session_version + 1 WHERE id = ?`);
 
 export const users = {
   create({ companyNip, companyName, email, passwordHash, keywords = [], cpvCodes = [] }) {
@@ -135,6 +136,27 @@ export const passwordResets = {
   },
   deleteForUser(userId) {
     _prDeleteForUser().run(userId);
+  },
+  /** Claim the still-valid reset and replace the password in one transaction.
+   * Hashing happens before this call; concurrent requests must recheck here. */
+  completeReset(tokenHash, passwordHash, nowMs = Date.now()) {
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      const record = _prByHash().get(tokenHash);
+      const expires = Date.parse(record?.expires_at ?? '');
+      if (!record || record.used_at || !Number.isFinite(expires) || expires <= nowMs) {
+        db.exec('ROLLBACK');
+        return null;
+      }
+      const changed = _userSetPassword().run(passwordHash, nowIso(), record.user_id);
+      if (changed.changes !== 1) throw new Error('Reset account is unavailable');
+      _prDeleteForUser().run(record.user_id);
+      db.exec('COMMIT');
+      return record.user_id;
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
   },
 };
 

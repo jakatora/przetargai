@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   company_name           TEXT,
   email                  TEXT NOT NULL UNIQUE,
   password_hash          TEXT NOT NULL,
+  session_version        INTEGER NOT NULL DEFAULT 0 CHECK (session_version >= 0),
   premium_tier           TEXT NOT NULL DEFAULT 'free'
                            CHECK (premium_tier IN ('free', 'standard')),
   keywords               TEXT NOT NULL DEFAULT '[]',   -- JSON: string[]

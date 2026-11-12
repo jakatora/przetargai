@@ -16,3 +16,9 @@ export const STATUS_DOMYSLNY = 'rozwazam';
 export function etykietaStatusu(wartosc) {
   return (STATUSY.find((s) => s.wartosc === wartosc) ?? STATUSY[0]).etykieta;
 }
+
+// Zgodne z STATUSY_PO_ZLOZENIU w repozytorium backendu: preferencja zostaje,
+// ale job nie wysyła przypomnień o składaniu po złożeniu lub rozstrzygnięciu.
+export function przypomnieniaWstrzymane(status) {
+  return ['zlozona', 'wygrana', 'przegrana'].includes(status);
+}

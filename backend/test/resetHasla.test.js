@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
+import jwt from 'jsonwebtoken';
 
 /*
  * Odzyskiwanie hasła (reset mailem). Zabezpieczenia pod testem:
@@ -22,6 +23,7 @@ const { migrate } = await import('../src/db/migrate.js');
 migrate();
 
 const { passwordResets } = await import('../src/db/repos.js');
+const { env } = await import('../src/config/env.js');
 const { createApp } = await import('../src/app.js');
 
 const hashToken = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
@@ -29,6 +31,7 @@ const hashToken = (t) => crypto.createHash('sha256').update(String(t)).digest('h
 let server;
 let base;
 let userId;
+let originalToken;
 
 async function post(url, body) {
   const r = await fetch(`${base}${url}`, {
@@ -45,6 +48,7 @@ before(async () => {
   const reg = await post('/auth/register', { email: 'reset@test.pl', password: 'stareHaslo123' });
   assert.equal(reg.status, 201, 'rejestracja OK');
   userId = reg.json.user.id;
+  originalToken = reg.json.token;
 });
 
 after(() => {
@@ -73,6 +77,10 @@ test('forgot-password: token zapisany jako HASH, nie plaintext', async () => {
 });
 
 test('reset-password: poprawny kod ustawia nowe hasło i loguje; stare hasło przestaje działać', async () => {
+  const legacyToken = jwt.sign({ sub: userId }, env.JWT_SECRET, { expiresIn: '1h' });
+  assert.equal((await fetch(`${base}/auth/me`, {
+    headers: { authorization: `Bearer ${legacyToken}` },
+  })).status, 200, 'wdrożenie nie wylogowuje istniejącej sesji bez resetu');
   passwordResets.deleteForUser(userId);
   passwordResets.create({
     userId,
@@ -82,6 +90,17 @@ test('reset-password: poprawny kod ustawia nowe hasło i loguje; stare hasło pr
   const reset = await post('/auth/reset-password', { token: 'KOD-TESTOWY-123456', password: 'noweHaslo999' });
   assert.equal(reset.status, 200);
   assert.ok(reset.json.token, 'zwraca JWT — użytkownik od razu zalogowany');
+  const oldSession = await fetch(`${base}/auth/me`, {
+    headers: { authorization: `Bearer ${originalToken}` },
+  });
+  assert.equal(oldSession.status, 401, 'reset unieważnia sesję sprzed zmiany hasła');
+  assert.equal((await fetch(`${base}/auth/me`, {
+    headers: { authorization: `Bearer ${legacyToken}` },
+  })).status, 401, 'reset unieważnia także sesję sprzed migracji');
+  const newSession = await fetch(`${base}/auth/me`, {
+    headers: { authorization: `Bearer ${reset.json.token}` },
+  });
+  assert.equal(newSession.status, 200, 'nowa sesja po resecie działa');
 
   const nowe = await post('/auth/login', { email: 'reset@test.pl', password: 'noweHaslo999' });
   assert.equal(nowe.status, 200, 'nowe hasło działa');
@@ -114,4 +133,19 @@ test('reset-password: WYGASŁY kod odrzucony', async () => {
 test('reset-password: nieznany kod odrzucony', async () => {
   const r = await post('/auth/reset-password', { token: 'ZUPELNIE-LOSOWY-KOD', password: 'cokolwiek123' });
   assert.equal(r.status, 400);
+});
+
+test('reset-password: równoczesne użycie kodu zmienia hasło tylko raz', async () => {
+  passwordResets.deleteForUser(userId);
+  passwordResets.create({
+    userId, tokenHash: hashToken('KOD-ROWNOCZESNY-123'),
+    expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+  });
+  const passwords = ['pierwszyReset123', 'drugiReset456'];
+  const results = await Promise.all(passwords.map(password =>
+    post('/auth/reset-password', { token: 'KOD-ROWNOCZESNY-123', password })));
+  assert.deepEqual(results.map(result => result.status).sort(), [200, 400]);
+  const accepted = results.findIndex(result => result.status === 200);
+  assert.equal((await post('/auth/login', { email: 'reset@test.pl', password: passwords[accepted] })).status, 200);
+  assert.equal((await post('/auth/login', { email: 'reset@test.pl', password: passwords[1 - accepted] })).status, 401);
 });
