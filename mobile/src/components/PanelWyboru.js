@@ -262,6 +262,11 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
               ))}
             </View>
           ) : null}
+          {m.decyzja_szefa?.decyzja ? (
+            <Text style={m.decyzja_szefa.decyzja === 'tak' ? styles.terminDni : styles.terminPilny}>
+              {m.decyzja_szefa.decyzja === 'tak' ? t('Szef: startujemy', 'Boss: we bid') : t('Szef: nie startujemy', 'Boss: we pass')}
+            </Text>
+          ) : null}
           {m.ocena_bez_ai ? (
             <Text style={styles.drobny}>{t('Wybrany wstępnie, bez oceny AI — AI sprawdzi go przy najbliższym przeglądzie.', 'Picked provisionally, without an AI review — AI will check it in the next review.')}</Text>
           ) : null}
