@@ -2277,6 +2277,11 @@ export const matches = {
     await matchCol(userId).doc(matchId).update({ warunki });
   },
 
+  /** Decyzja z linku „Wyślij szefowi do decyzji” (2026-11-12): `{decyzja: 'tak'|'nie', o}` na dopasowaniu. */
+  async zapiszDecyzjeSzefa(userId, matchId, decyzja) {
+    await matchCol(userId).doc(matchId).update({ decyzja_szefa: decyzja });
+  },
+
   /** Wybrane od chwili `odIso` (np. początek doby), bez odrzuconych — „Dziś wybrane”. */
   async wybraneOd(userId, odIso) {
     const snap = await matchCol(userId).where('created_at', '>=', odIso).orderBy('created_at', 'desc').limit(200).get();

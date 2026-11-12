@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
+import { linkDecyzji, wiadomoscDoSzefa } from '../services/decyzjaSzefa.js';
 import { authRequired } from '../middleware/auth.js';
 import { matches, feedback, saved, tenders, streszczenieQuota, wynikiStats, users, warunkiQuota } from '../db/repos.js';
 import { kluczWyniku } from '../lib/wynikiAgregacja.js';
@@ -145,6 +146,18 @@ router.put('/:id/save', ah(async (req, res) => {
   })).catch((err) => logger.error({ err: err.message, userId: req.user.id }, 'Sygnał zapisu nie zapisany'));
   audit({ userId: req.user.id, action: 'save_tender', detail: { tenderId: row.id }, ip: req.ip });
   res.json({ saved: true, created, ...(przypomnienie ? { reminder_enabled: przypomnienie.reminder_enabled === true } : {}) });
+}));
+
+/**
+ * „Wyślij szefowi do decyzji” (2026-11-12): link do strony z przetargiem i przyciskami Startujemy / Nie startujemy
+ * + gotowa wiadomość do udostępnienia. Link przypięty do tego dopasowania, 7 dni (services/decyzjaSzefa.js).
+ */
+router.post('/:id/do-decyzji', ah(async (req, res) => {
+  const row = await matches.detail(req.user.id, req.params.id);
+  if (!row) throw notFound('Dopasowanie nie zostało znalezione');
+  const { url, wazny_do } = await linkDecyzji(req.user.id, row.id);
+  audit({ userId: req.user.id, action: 'boss_link', detail: { matchId: row.id }, ip: req.ip });
+  res.json({ url, wazny_do, wiadomosc: wiadomoscDoSzefa({ row, url }) });
 }));
 
 /** Usuwa przetarg z zakładek. */

@@ -115,6 +115,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   const [narzedziaOtwarte, setNarzedziaOtwarte] = useState(false);
   const [ocenaOtwarta, setOcenaOtwarta] = useState(false);
   const [bioreTrwa, setBioreTrwa] = useState(false);
+  const [doSzefaTrwa, setDoSzefaTrwa] = useState(false);
 
   useEffect(() => {
     if (!match?.id) return undefined;
@@ -282,6 +283,21 @@ export default function MatchDetailScreen({ route, navigation }) {
       Alert.alert(t('Błąd', 'Error'), err.message);
     } finally {
       setOdrzucanie(false);
+    }
+  }
+
+  // „Wyślij szefowi do decyzji” (2026-11-12): serwer daje link do strony z przyciskami Startujemy / Nie startujemy,
+  // a wiadomość wysyła sam użytkownik (WhatsApp, SMS, mail). Decyzja wraca alertem i pushem.
+  async function wyslijSzefowi() {
+    if (doSzefaTrwa) return;
+    setDoSzefaTrwa(true);
+    try {
+      const { wiadomosc, url } = await api.linkDoDecyzji(match.id);
+      await udostepnijTekst({ message: wiadomosc, url, title: tender.title }).catch(() => {});
+    } catch (err) {
+      Alert.alert(t('Nie udało się przygotować linku', 'Could not prepare the link'), err.message);
+    } finally {
+      setDoSzefaTrwa(false);
     }
   }
 
@@ -783,6 +799,16 @@ export default function MatchDetailScreen({ route, navigation }) {
         </View>
       )) : null}
 
+      <View style={styles.doSzefa}>
+        <Text style={styles.doSzefaTytul}>{t('Decyzję podejmuje ktoś inny?', 'Someone else decides?')}</Text>
+        <Text style={styles.doSzefaOpis}>
+          {match.decyzja_szefa?.decyzja
+            ? t(`Odpowiedź z linku: ${match.decyzja_szefa.decyzja === 'tak' ? 'startujemy' : 'nie startujemy'}.`, `Answer from the link: ${match.decyzja_szefa.decyzja === 'tak' ? 'we bid' : 'we pass'}.`)
+            : t('Wyślij szefowi link — zobaczy przetarg, termin i powody wyboru, i odpowie jednym kliknięciem, bez instalowania aplikacji. Odpowiedź dostaniesz w powiadomieniu.', 'Send your boss a link — they see the tender, deadline and reasons, and answer in one tap without the app. You get the answer as a notification.')}
+        </Text>
+        <Button title={t('Wyślij szefowi do decyzji', 'Send to the boss for a decision')} variant="ghost" loading={doSzefaTrwa} onPress={wyslijSzefowi} />
+      </View>
+
       <Button
         title={t('Udostępnij przetarg', 'Share tender')}
         variant="ghost"
@@ -878,6 +904,9 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   },
   reasoning: { fontSize: 15, color: k.text, lineHeight: 22 },
   strPodtytul: { fontSize: 14, color: k.textMuted, lineHeight: 20 },
+  doSzefa: { marginTop: spacing.lg, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, gap: spacing.sm },
+  doSzefaTytul: { fontSize: 16, fontWeight: '800', color: k.text },
+  doSzefaOpis: { fontSize: 14, lineHeight: 20, color: k.textMuted },
   warsztatEtykieta: { fontSize: 13, fontWeight: '700', color: k.textMuted, marginTop: spacing.md, marginBottom: spacing.sm },
   warsztatOdstep: { marginTop: spacing.lg },
   notatka: {
