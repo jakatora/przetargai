@@ -241,7 +241,13 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
           <Text style={styles.kartaTytul}>{m.tender?.title}</Text>
           {m.tender?.organization ? <Text style={styles.drobny}>{m.tender.organization}</Text> : null}
           {m.tender?.deadline ? (
-            <Text style={styles.drobny}>{t(`Termin ofert: ${formatDate(m.tender.deadline)}`, `Bid deadline: ${formatDate(m.tender.deadline)}`)}</Text>
+            <Text style={styles.drobny}>
+              {t(`Termin ofert: ${formatDate(m.tender.deadline)}`, `Bid deadline: ${formatDate(m.tender.deadline)}`)}
+              {/* Ile dni zostało — bez liczenia w głowie (seria 2 runda 2). */}
+              {opisTerminu(m.tender.deadline).stan !== 'brak' ? (
+                <Text style={opisTerminu(m.tender.deadline).pilny ? styles.terminPilny : styles.terminDni}>{` · ${t(opisTerminu(m.tender.deadline).etykieta)}`}</Text>
+              ) : null}
+            </Text>
           ) : null}
           {(m.uzasadnienie ?? []).length ? (
             <View style={styles.uzasadnienie}>
@@ -359,6 +365,8 @@ const tworzStylePanelu = tworzStyle((k) => ({
   wzietyTekst: { fontSize: 15, fontWeight: '800', color: k.text },
   bladKarta: { marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, gap: spacing.sm },
   bladTekst: { color: k.textMuted, fontSize: 14, lineHeight: 20 },
+  terminDni: { fontWeight: '700', color: k.text },
+  terminPilny: { fontWeight: '800', color: k.ostrzezenieTekst },
   postep: { marginBottom: spacing.sm, gap: 6 },
   postepRzad: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   postepTekst: { fontSize: 14, fontWeight: '700', color: k.text },
