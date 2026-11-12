@@ -61,9 +61,10 @@ export function wiadomoscDoSzefa({ row, url }) {
 }
 
 /** Alert dla pracownika po decyzji szefa. Klucz z chwilą decyzji — zmiana zdania budzi ponownie. */
-export function alertDecyzjiSzefa({ row, decyzja, teraz }) {
+export function alertDecyzjiSzefa({ row, decyzja, komentarz = null, teraz }) {
   const tytul = String(row.tender_title ?? 'przetarg').slice(0, 90);
   const tak = decyzja === 'tak';
+  const notatka = komentarz ? { pl: `Notatka: „${komentarz}”. `, en: `Note: “${komentarz}”. ` } : { pl: '', en: '' };
   return {
     klucz: `decyzja_${String(row.id).replace(/[/\s:.]/g, '_')}_${String(teraz).replace(/[^0-9]/g, '').slice(0, 14)}`,
     typ: 'zmiany',
@@ -71,8 +72,8 @@ export function alertDecyzjiSzefa({ row, decyzja, teraz }) {
     ton: tak ? 'neutral' : 'ostrzezenie',
     tytul: { pl: `${tak ? 'Szef: startujemy' : 'Szef: nie startujemy'} — ${tytul}`, en: `${tak ? 'Boss: we bid' : 'Boss: we pass'} — ${tytul}` },
     tresc: tak
-      ? { pl: 'Decyzja z linku „do decyzji”. Przetarg jest w Zapisanych z przypomnieniami 7, 3 i 1 dzień przed terminem i etapem „Przygotowuję ofertę”.', en: 'Decision from the “for decision” link. The tender is saved with 7/3/1-day reminders and the “Preparing the bid” stage.' }
-      : { pl: 'Decyzja z linku „do decyzji”. Przetarg zostaje na liście — odrzuć go przyciskiem „Nie dla nas”, żeby aplikacja uczyła się z przyczyny.', en: 'Decision from the “for decision” link. The tender stays on your list — reject it with “Not for us” so the app learns from the reason.' },
+      ? { pl: `${notatka.pl}Decyzja z linku „do decyzji”. Przetarg jest w Zapisanych z przypomnieniami 7, 3 i 1 dzień przed terminem i etapem „Przygotowuję ofertę”.`, en: `${notatka.en}Decision from the “for decision” link. The tender is saved with 7/3/1-day reminders and the “Preparing the bid” stage.` }
+      : { pl: `${notatka.pl}Decyzja z linku „do decyzji”. Przetarg zostaje na liście — odrzuć go przyciskiem „Nie dla nas”, żeby aplikacja uczyła się z przyczyny.`, en: `${notatka.en}Decision from the “for decision” link. The tender stays on your list — reject it with “Not for us” so the app learns from the reason.` },
     pozycje: [{ tender_id: row.tender_id ?? row.id, tytul: row.tender_title ?? null, organizacja: row.tender_organization ?? null, deadline: row.tender_deadline ?? null, zrodlo: row.tender_source ?? 'bzp' }],
   };
 }

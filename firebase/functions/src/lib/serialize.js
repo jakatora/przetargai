@@ -163,7 +163,7 @@ export function publicMatch(row, znaczniki = {}) {
     created_at: row.created_at,
     // Selekcja pod klienta (spec §4.5): punkty uzasadnienia, ocena tymczasowa, warunki udziału.
     uzasadnienie: Array.isArray(row.uzasadnienie) ? row.uzasadnienie : [],
-    decyzja_szefa: row.decyzja_szefa?.decyzja ? { decyzja: row.decyzja_szefa.decyzja, o: row.decyzja_szefa.o ?? null } : null,
+    decyzja_szefa: row.decyzja_szefa?.decyzja ? { decyzja: row.decyzja_szefa.decyzja, komentarz: row.decyzja_szefa.komentarz ?? null, o: row.decyzja_szefa.o ?? null } : null,
     ocena_bez_ai: row.ocena_bez_ai === true,
     warunki: row.warunki ?? null,
     odrzucony_przez_pracownika: row.odrzucony_przez_pracownika ?? null,

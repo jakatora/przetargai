@@ -65,6 +65,9 @@ router.get('/decyzja', ah(async (req, res) => {
   const juz = row.decyzja_szefa?.decyzja
     ? `<p style="padding:10px 12px;background:#e8effd;border-radius:8px">Obecna decyzja: <b>${row.decyzja_szefa.decyzja === 'tak' ? 'startujemy' : 'nie startujemy'}</b>. Możesz ją zmienić.</p>` : '';
   res.type('html').send(strona(`${opisPrzetargu(row)}${juz}<form method="post" action="${esc(akcja)}">`
+    + '<label style="display:block;margin-top:8px;font-size:14px;color:#526075">Notatka dla wysyłającego (opcjonalnie)'
+    + '<input type="text" name="komentarz" maxlength="140" autocomplete="off" placeholder="np. cena do 2,5 mln zł" '
+    + 'style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:12px;font-size:16px;border:1px solid #848fa2;border-radius:8px"></label>'
     + `<button type="submit" name="decyzja" value="tak" style="${PRZYCISK}background:#1d4ed8;color:#fff;border:0">Startujemy</button>`
     + `<button type="submit" name="decyzja" value="nie" style="${PRZYCISK}background:#fff;color:#0f1b2d;border:1px solid #848fa2">Nie startujemy</button>`
     + '</form><p style="color:#526075;font-size:14px;margin-top:16px">Odpowiedź trafi do osoby, która wysłała Ci ten link.</p>'));
@@ -77,9 +80,12 @@ router.post('/decyzja', express.urlencoded({ extended: false, limit: '2kb' }), a
   const decyzja = ['tak', 'nie'].includes(req.body?.decyzja) ? req.body.decyzja : null;
   if (!decyzja) { res.status(400).type('html').send(strona('<p>Wybierz „Startujemy” albo „Nie startujemy”.</p>')); return; }
 
+  // Notatka szefa (seria 2 runda 9): jedna linia, do 140 znaków, bez znaków sterujących.
+  const komentarz = typeof req.body?.komentarz === 'string'
+    ? req.body.komentarz.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 140) || null : null;
   const teraz = new Date().toISOString();
-  const bezZmian = row.decyzja_szefa?.decyzja === decyzja;
-  await matches.zapiszDecyzjeSzefa(userId, row.id, { decyzja, o: teraz });
+  const bezZmian = row.decyzja_szefa?.decyzja === decyzja && (row.decyzja_szefa?.komentarz ?? null) === komentarz;
+  await matches.zapiszDecyzjeSzefa(userId, row.id, { decyzja, komentarz, o: teraz });
   if (decyzja === 'tak') {
     // „Startujemy” = to samo co „Biorę” pracownika: zapis, przypomnienia 7/3/1, etap (tylko z „Rozważam”).
     const tenderId = row.tender_id ?? row.id;
@@ -89,7 +95,7 @@ router.post('/decyzja', express.urlencoded({ extended: false, limit: '2kb' }), a
     if (!wpis?.status || wpis.status === 'rozwazam') await saved.setStatus(userId, tenderId, 'przygotowuje');
   }
   if (!bezZmian) {
-    const alert = alertDecyzjiSzefa({ row, decyzja, teraz });
+    const alert = alertDecyzjiSzefa({ row, decyzja, komentarz, teraz });
     const { nowy } = await alerty.dodaj(userId, alert, teraz);
     if (nowy) {
       const user = await users.findById(userId).catch(() => null);

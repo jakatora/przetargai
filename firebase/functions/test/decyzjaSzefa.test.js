@@ -111,3 +111,22 @@ test('strona i wiadomość: dni do terminu, wartość i wadium (seria 2 runda 4)
   const w = wiadomoscDoSzefa({ row: { tender_title: 'Remont', tender_budget: 250000, tender_wadium_wymagane: false, tender_deadline: '2099-01-10T09:00:00.000Z' }, url: 'https://x/y' });
   assert.match(w.replace(/\u00a0/g, ' '), /Wartość: 250 000 PLN\nWadium: bez wadium\nStartujemy\?/);
 });
+
+test('notatka szefa: trafia do alertu i do apki, przycięta do 140 znaków, bez znaków sterujących (seria 2 runda 9)', async () => {
+  const k = await konto();
+  const id = await wybrany(k.id, 'Remont mostu');
+  const { url } = await (await fetch(`${BAZA}/matches/${id}/do-decyzji`, { method: 'POST', headers: k.h })).json();
+  assert.match(await (await fetch(sciezka(url))).text(), /name="komentarz" maxlength="140"/);
+  const dluga = `cena do 2,5 mln\nzł ${'x'.repeat(200)}`;
+  const post = await fetch(sciezka(url), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `decyzja=tak&komentarz=${encodeURIComponent(dluga)}` });
+  assert.equal(post.status, 200);
+  const [a] = await alerty.lista(k.id);
+  assert.match(a.tresc.pl, /^Notatka: „cena do 2,5 mln zł x+”\. Decyzja z linku/);
+  const m = (await (await fetch(`${BAZA}/matches/${id}`, { headers: k.h })).json()).match;
+  assert.equal(m.decyzja_szefa.komentarz.length, 140);
+  assert.ok(!/[\n\r]/.test(m.decyzja_szefa.komentarz));
+  // Ta sama decyzja z inną notatką to nowa informacja — nowy alert.
+  await new Promise((r) => { setTimeout(r, 1100); });
+  await fetch(sciezka(url), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'decyzja=tak&komentarz=jednak+do+3+mln' });
+  assert.equal((await alerty.lista(k.id)).length, 2);
+});
