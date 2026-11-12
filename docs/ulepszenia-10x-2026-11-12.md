@@ -35,3 +35,27 @@ została spisana po zakończeniu rund, nie w ich trakcie.
 ## Wynik
 PR `jakatora/przetargai#201`. Testy: functions 1874/1874, mobile 1438/1438, `npm run check` OK. Nic nie jest wdrożone;
 rundy 1 i 5 (serwer) działają po wdrożeniu Functions, pozostałe po nowym buildzie aplikacji.
+
+## Seria 2 — dziesięć rund w kolejności „najpierw zapisana analiza, potem zmiana”
+
+W serii 1 analiza poprzedzała zmiany, ale została spisana po fakcie. W serii 2 każda runda zaczynała się od
+sprawdzenia w kodzie (polecenie i wynik w przebiegu pracy) i zapisanego wniosku; dopiero potem była zmiana.
+
+| # | Co sprawdziłem (analiza) | Wniosek | Zmiana | Commit |
+|---|---|---|---|---|
+| 1 | Gdzie `MatchDetailScreen` używa `decyzja_szefa` | Tylko w karcie na dole ekranu (ok. 7 ekranów niżej) | Plakietka „Szef: startujemy / nie startujemy” pod tytułem | `b5d977b` |
+| 2 | Co karta panelu dnia pokazuje przy terminie; co zwraca `opisTerminu` | Sama data; gotowe „Zostało N dni” i flaga pilności nieużywane | „Termin ofert: … · Zostało 12 dni”, pilne w kolorze ostrzeżenia | `eb02691` |
+| 3 | `AKCJE_ETAPU` w „Moich ofertach” | Następny krok tylko po złożeniu; „Rozważam” i „Przygotowuję” bez podpowiedzi | Rozważam → „Startować czy odpuścić?”, Przygotowuję → „Co musisz mieć do dnia składania” | `e07925b` |
+| 4 | Jakie pola pokazuje strona decyzji; jakie są na dopasowaniu | Brak dni do terminu i wadium, choć `tender_wadium_*` są dostępne | Wiersze „Zostało” i „Wadium”; wartość i wadium w wiadomości | `d9db8fd` |
+| 5 | Wiersze `skrotKartyFirmy` a kroki karty; `formalnePuste` w trasie warunków | Skrót miał 4 z 5 kroków; bez kroku 5 serwer nie porównuje warunków udziału | Piąty wiersz „Warunki udziału” | `7e5084a` |
+| 6 | Przyciski karty „Na dziś gotowe” | Przy zerze wziętych — ślepy zaułek | „Popraw kartę firmy” | `4639b3a` |
+| 7 | Podsumowanie „Moich ofert” przy braku pilnych | „Nic pilnego na dziś” bez terminu, niespójne z Zapisanymi | „Nic pilnego · najbliższy termin za N dni” | `487f6d6` |
+| 8 | Tekst pustego centrum alertów i opis przy „Wyślij szefowi” | Nie mówiły, gdzie przyjdzie odpowiedź szefa | Oba teksty wskazują centrum alertów | `755db33` |
+| 9 | Formularz strony decyzji; komentarz przy odrzuceniu w apce | Szef nie mógł dopisać warunku do decyzji | Notatka do 140 znaków → alert i karta w apce | `1cd47f1` |
+| 10 | Znaczniki na `MatchCard` i w panelu dnia | Decyzji szefa nie widać na liście | Znacznik na karcie listy i w panelu dnia | `b10cec0` |
+
+Wpadka w rundzie 8: angielski tekst z apostrofem zepsuł składnię pliku, a commit powstał mimo czerwonych testów
+(łańcuch poleceń bez warunku). Naprawione przed wypchnięciem (commit poprawiony); od rundy 9 commit jest warunkowany
+zielonymi testami.
+
+Testy po serii 2: mobile 1438/1438, `decyzjaSzefa` 4/4; pełny zestaw functions — wynik w opisie PR.
