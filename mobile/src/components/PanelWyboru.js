@@ -232,7 +232,8 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
           ) : null}
         </View>
       ) : null}
-      {(dzien.wybrane ?? []).length === 0 ? (
+      {/* „Nic nie pasuje” tylko, gdy selekcja naprawdę nic dziś nie wybrała — nie po odrzuceniu wszystkiego (wtedy „Na dziś gotowe”). */}
+      {(dzien.wybrane ?? []).length === 0 && !postep.gotowe ? (
         <Text style={styles.drobny}>{t('Dziś nic nie pasuje do Twojej firmy. Wcześniejsze wybory są niżej.', 'Nothing fits your company today. Earlier picks are below.')}</Text>
       ) : null}
       {postep.kolejnosc.map((m) => (

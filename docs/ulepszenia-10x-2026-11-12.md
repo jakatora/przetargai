@@ -24,6 +24,14 @@ przegląd „oczami pracownika” z 10.11, audyt z 10–11.11, projekt UI z 7.11
 - Ciche cofanie zapisów (gwiazdka, etap, przypomnienie) — Codex naprawił to 11.11 (`a4df09b`, `e77916b`); pominięte, żeby nie dublować.
 - Wycena z przedmiaru i pełne zakładki na dole — za duże na rundę; zostają w backlogu (raport konkurencji, `docs/backlog-praca-zespolowa.md`).
 
+## Przegląd po dziesięciu rundach (analiza przed poprawką)
+Po zamknięciu rund przejrzałem całą gałąź pod kątem błędów, zanim cokolwiek zmieniłem. Znalezisko: gdy użytkownik
+odrzuci WSZYSTKIE dzisiejsze przetargi, lista robi się pusta, a raport dalej mówi o N wybranych — panel pokazywał
+jednocześnie kartę „Na dziś gotowe” i zdanie „Dziś nic nie pasuje do Twojej firmy” (nieprawdziwe: pasowało, tylko
+zostało odrzucone). Poprawka: zdanie pokazuje się tylko, gdy selekcja naprawdę nic nie wybrała; test w `postepDnia`.
+Uwaga o kolejności: analiza każdej rundy odbywała się przed zmianą (czytanie kodu, zrzuty ekranu), ale tabela wyżej
+została spisana po zakończeniu rund, nie w ich trakcie.
+
 ## Wynik
-PR `jakatora/przetargai#201`. Testy: functions 1874/1874, mobile 1437/1437, `npm run check` OK. Nic nie jest wdrożone;
+PR `jakatora/przetargai#201`. Testy: functions 1874/1874, mobile 1438/1438, `npm run check` OK. Nic nie jest wdrożone;
 rundy 1 i 5 (serwer) działają po wdrożeniu Functions, pozostałe po nowym buildzie aplikacji.

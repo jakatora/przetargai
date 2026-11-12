@@ -23,3 +23,9 @@ test('gotowe: wszystko wzięte albo odrzucone; bez wyboru — nie „gotowe”',
   assert.equal(postepDnia({ wybrane: [], raportWybrane: 0 }).gotowe, false);
   assert.equal(postepDnia({ wybrane: [m('a')], raportWybrane: 0 }).razem, 1, 'raport starszy niż lista — liczymy listę');
 });
+
+test('wszystko odrzucone: lista pusta, ale raport mówi o 3 wybranych → „gotowe”, a nie „nic nie pasuje”', () => {
+  const p = postepDnia({ wybrane: [], raportWybrane: 3 });
+  assert.deepEqual([p.gotowe, p.razem, p.wziete, p.zostalo], [true, 3, 0, 0]);
+  assert.match(opisGotowego(p).pl, /Żadnego dziś nie bierzesz/);
+});
