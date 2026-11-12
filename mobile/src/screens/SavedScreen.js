@@ -233,7 +233,7 @@ export default function SavedScreen({ navigation }) {
         {items.length ? (
         <View style={styles.widokiRzad}>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('Pulpit')} accessibilityRole="button">
-            <Text style={styles.widokBtnTekst}>📋  {t('Moje oferty', 'My bids')}</Text>
+            <Text style={styles.widokBtnTekst}>📋  {t('Oferty', 'Bids')}</Text>
           </Pressable>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('KalendarzTerminow')} accessibilityRole="button">
             <Text style={styles.widokBtnTekst}>📅  {t('Kalendarz', 'Calendar')}</Text>
