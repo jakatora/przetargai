@@ -152,7 +152,7 @@ export default function SavedScreen({ navigation }) {
         >
           <ScoreBadge score={item.confidence_score} />
           <View style={styles.body}>
-            <Text style={styles.title} numberOfLines={2}>{tender.title}</Text>
+            <Text style={styles.title} numberOfLines={3}>{tender.title}</Text>
             {tender.organization ? <Text style={styles.org} numberOfLines={1}>{tender.organization}</Text> : null}
             <Text style={styles.deadline}>{t('Termin', 'Deadline')}: {formatDate(tender.deadline)}</Text>
             <Text style={[styles.znacznik, termin.minal && styles.miniony, termin.pilny && styles.pilny]}>
@@ -163,7 +163,7 @@ export default function SavedScreen({ navigation }) {
                 {t(kryteria.pl, kryteria.en)}
               </Text>
             ) : null}
-            {zmiany ? <Text style={[styles.kryteria, styles.zmiany]} numberOfLines={1}>{t(zmiany.pl, zmiany.en)}</Text> : null}
+            {zmiany ? <Text style={[styles.kryteria, styles.zmiany]} numberOfLines={2}>{t(zmiany.pl, zmiany.en)}</Text> : null}
             {otwarcie ? <Text style={[styles.kryteria, styles.kryteriaPozacenowe]} numberOfLines={1}>{otwarcie}</Text> : null}
           </View>
           <Pressable accessibilityRole="button" disabled={zajete.has(tender.id)} onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
@@ -232,7 +232,7 @@ export default function SavedScreen({ navigation }) {
         {items.length ? (
         <View style={styles.widokiRzad}>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('Pulpit')} accessibilityRole="button">
-            <Text style={styles.widokBtnTekst}>📋  {t('Pulpit', 'Dashboard')}</Text>
+            <Text style={styles.widokBtnTekst}>📋  {t('Moje oferty', 'My bids')}</Text>
           </Pressable>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('KalendarzTerminow')} accessibilityRole="button">
             <Text style={styles.widokBtnTekst}>📅  {t('Kalendarz', 'Calendar')}</Text>
