@@ -413,6 +413,12 @@ export default function MatchDetailScreen({ route, navigation }) {
             <Text style={[styles.terminChip, termin.pilny && styles.terminChipPilny, termin.minal && styles.terminChipMiniony]}>
               {t(termin.etykieta)}
             </Text>
+            {/* Odpowiedź z linku „do decyzji” od razu pod tytułem (2026-11-12, seria 2 runda 1). */}
+            {match.decyzja_szefa?.decyzja ? (
+              <Text style={[styles.terminChip, match.decyzja_szefa.decyzja === 'tak' ? styles.terminChipOk : styles.terminChipPilny]}>
+                {match.decyzja_szefa.decyzja === 'tak' ? t('Szef: startujemy', 'Boss: we bid') : t('Szef: nie startujemy', 'Boss: we pass')}
+              </Text>
+            ) : null}
             {wadium ? (
               <Text style={[styles.terminChip, wadium.ostrzezenie ? styles.terminChipPilny : styles.terminChipOk]}>
                 {wadium.ostrzezenie ? t('Wymaga wadium', 'Bid security required') : t('Bez wadium', 'No bid security')}
