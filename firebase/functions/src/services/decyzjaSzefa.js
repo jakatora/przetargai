@@ -27,6 +27,26 @@ export const dataDecyzjiPL = (iso) => {
     : null;
 };
 
+/** „Zostało 5 dni” / „termin dziś” / „termin jutro”; null po terminie albo bez terminu. */
+export function zostaloDni(iso, teraz = Date.now()) {
+  const t = Date.parse(String(iso ?? ''));
+  if (!Number.isFinite(t) || t <= teraz) return null;
+  const dni = Math.floor((t - teraz) / 86_400_000);
+  return dni === 0 ? 'termin dziś' : dni === 1 ? 'termin jutro' : `${dni} dni`;
+}
+
+/** Wadium z kopii przetargu na dopasowaniu: kwota, „wymagane” bez kwoty, „bez wadium” albo null (nie wiadomo). */
+export function opisWadium(row) {
+  const kwota = Number(row?.tender_wadium_kwota);
+  if (kwota > 0) return `${Math.round(kwota).toLocaleString('pl-PL')} zł${row.tender_wadium_wiele_czesci ? ' (łącznie za części)' : ''}`;
+  if (row?.tender_wadium_wymagane === true) return 'wymagane — kwota w SWZ';
+  if (row?.tender_wadium_wymagane === false) return 'bez wadium';
+  return null;
+}
+
+export const kwotaZamowienia = (row) => (Number(row?.tender_budget) > 0
+  ? `${Math.round(Number(row.tender_budget)).toLocaleString('pl-PL')} ${row.tender_currency ?? 'PLN'}` : null);
+
 /** Gotowa wiadomość do wysłania szefowi (apka podaje ją systemowemu udostępnianiu). */
 export function wiadomoscDoSzefa({ row, url }) {
   const termin = dataDecyzjiPL(row.tender_deadline);
@@ -34,6 +54,8 @@ export function wiadomoscDoSzefa({ row, url }) {
     `Do decyzji: ${row.tender_title}`,
     row.tender_organization ? `Zamawiający: ${row.tender_organization}` : null,
     termin ? `Termin ofert: ${termin}` : null,
+    kwotaZamowienia(row) ? `Wartość: ${kwotaZamowienia(row)}` : null,
+    opisWadium(row) ? `Wadium: ${opisWadium(row)}` : null,
     `Startujemy? Odpowiedz jednym kliknięciem: ${url}`,
   ].filter(Boolean).join('\n');
 }

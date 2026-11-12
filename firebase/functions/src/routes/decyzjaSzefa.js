@@ -4,7 +4,7 @@ import { esc } from '../lib/html.js';
 import { audit } from '../lib/audit.js';
 import { logger } from '../lib/logger.js';
 import { users, matches, saved, magicLinks, alerty } from '../db/repos.js';
-import { celDecyzji, alertDecyzjiSzefa, dataDecyzjiPL } from '../services/decyzjaSzefa.js';
+import { celDecyzji, alertDecyzjiSzefa, dataDecyzjiPL, zostaloDni, opisWadium, kwotaZamowienia } from '../services/decyzjaSzefa.js';
 import { dostarcz } from '../jobs/monitorWyszukiwan.js';
 import { sendPush } from '../services/push.js';
 import { sendEmail } from '../services/email.js';
@@ -38,8 +38,9 @@ async function dopasowanieDla({ token, matchId }) {
   return { userId, row };
 }
 
-const kwota = (row) => (Number(row.tender_budget) > 0
-  ? `${Math.round(Number(row.tender_budget)).toLocaleString('pl-PL')} ${row.tender_currency ?? 'PLN'}` : null);
+const kwota = kwotaZamowienia;
+const wiersz = (etykieta, wartosc) => (wartosc
+  ? `<tr><td style="padding:6px 0;color:#526075">${esc(etykieta)}</td><td style="padding:6px 0;font-weight:700;text-align:right">${esc(wartosc)}</td></tr>` : '');
 
 function opisPrzetargu(row) {
   const termin = dataDecyzjiPL(row.tender_deadline);
@@ -48,7 +49,9 @@ function opisPrzetargu(row) {
     + (row.tender_organization ? `<p style="margin:0;color:#526075">${esc(row.tender_organization)}</p>` : '')
     + '<table style="margin:16px 0;border-collapse:collapse;width:100%">'
     + (termin ? `<tr><td style="padding:6px 0;color:#526075">Termin ofert</td><td style="padding:6px 0;font-weight:700;text-align:right">${esc(termin)}</td></tr>` : '')
-    + (kwota(row) ? `<tr><td style="padding:6px 0;color:#526075">Wartość</td><td style="padding:6px 0;font-weight:700;text-align:right">${esc(kwota(row))}</td></tr>` : '')
+    + wiersz('Zostało', zostaloDni(row.tender_deadline))
+    + wiersz('Wartość', kwota(row))
+    + wiersz('Wadium', opisWadium(row))
     + '</table>'
     + (powody.length ? `<p style="margin:0 0 4px;font-weight:700">Dlaczego aplikacja go wybrała</p><ul style="margin:0 0 8px;padding-left:20px">${powody.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '')
     + (/^https?:\/\//.test(String(row.tender_url ?? '')) ? `<p><a href="${esc(row.tender_url)}" rel="noopener noreferrer">Pełne ogłoszenie u źródła</a></p>` : '');

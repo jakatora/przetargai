@@ -50,6 +50,7 @@ test('link → strona z przetargiem (bez logowania) → „Startujemy”: zapis,
   assert.match(html, /Dachy — Twój zakres/);
   assert.match(html, /250[\s ]000 PLN/);
   assert.match(html, />Startujemy<\/button>/);
+  assert.match(html, /Zostało<\/td><td[^>]*>\d+ dni</, 'ile dni do terminu');
   assert.equal((await saved.list(k.id)).length, 0, 'GET niczego nie zmienia');
 
   const post = await fetch(sciezka(odp.url), form('tak'));
@@ -92,4 +93,21 @@ test('granice: link jest przypięty do jednego dopasowania; zły token, zła dec
 
   const inny = await konto();
   assert.equal((await fetch(`${BAZA}/matches/${a}/do-decyzji`, { method: 'POST', headers: inny.h })).status, 404, 'cudze dopasowanie');
+});
+
+test('strona i wiadomość: dni do terminu, wartość i wadium (seria 2 runda 4)', async () => {
+  const { zostaloDni, opisWadium, wiadomoscDoSzefa } = await import('../src/services/decyzjaSzefa.js');
+  const teraz = Date.parse('2026-11-12T08:00:00Z');
+  assert.equal(zostaloDni('2026-11-17T09:00:00Z', teraz), '5 dni');
+  assert.equal(zostaloDni('2026-11-13T09:00:00Z', teraz), 'termin jutro');
+  assert.equal(zostaloDni('2026-11-12T15:00:00Z', teraz), 'termin dziś');
+  assert.equal(zostaloDni('2026-11-11T09:00:00Z', teraz), null);
+  assert.equal(zostaloDni(null, teraz), null);
+  assert.equal(opisWadium({ tender_wadium_kwota: 20000 }).replace(/\u00a0/g, ' '), '20 000 zł');
+  assert.match(opisWadium({ tender_wadium_kwota: 5000, tender_wadium_wiele_czesci: true }), /łącznie za części/);
+  assert.equal(opisWadium({ tender_wadium_wymagane: true }), 'wymagane — kwota w SWZ');
+  assert.equal(opisWadium({ tender_wadium_wymagane: false }), 'bez wadium');
+  assert.equal(opisWadium({}), null);
+  const w = wiadomoscDoSzefa({ row: { tender_title: 'Remont', tender_budget: 250000, tender_wadium_wymagane: false, tender_deadline: '2099-01-10T09:00:00.000Z' }, url: 'https://x/y' });
+  assert.match(w.replace(/\u00a0/g, ' '), /Wartość: 250 000 PLN\nWadium: bez wadium\nStartujemy\?/);
 });
