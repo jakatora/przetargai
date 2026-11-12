@@ -34,3 +34,21 @@ export function kolejnoscZapisanych(wpisy, teraz = new Date().toISOString()) {
     })
     .map((x) => x.wpis);
 }
+
+/**
+ * Jedno zdanie nad listą Zapisanych (2026-11-12, runda 4): ile przetargów jest w grze i ile dni do
+ * najbliższego terminu — bez czytania wszystkich kart. `null`, gdy nic nie jest w grze.
+ * @returns {{pl: string, en: string, pilne: boolean}|null}
+ */
+export function podsumowanieZapisanych(wpisy, teraz = new Date().toISOString()) {
+  const terazMs = Date.parse(teraz);
+  const wGrze = (Array.isArray(wpisy) ? wpisy : []).filter((w) => grupa(w, terazMs) === 0);
+  if (!wGrze.length) return null;
+  const najblizszy = Math.min(...wGrze.map((w) => Date.parse(w.tender.deadline)));
+  const dni = Math.max(0, Math.floor((najblizszy - terazMs) / 86_400_000));
+  const n = wGrze.length;
+  const ile = n === 1 ? '1 przetarg w grze' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? `${n} przetargi w grze` : `${n} przetargów w grze`;
+  const kiedy = dni === 0 ? 'najbliższy termin dziś' : dni === 1 ? 'najbliższy termin jutro' : `najbliższy termin za ${dni} dni`;
+  const whenEn = dni === 0 ? 'nearest deadline today' : dni === 1 ? 'nearest deadline tomorrow' : `nearest deadline in ${dni} days`;
+  return { pl: `${ile} · ${kiedy}`, en: `${n} in play · ${whenEn}`, pilne: dni <= 3 };
+}

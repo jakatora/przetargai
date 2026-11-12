@@ -25,7 +25,7 @@ function screen(overrides = {}) {
   };
   const modules = {
     react: hooks,
-    'react-native': Object.fromEntries(['FlatList','View','Text','Pressable','ActivityIndicator','Switch'].map(n => [n,n])),
+    'react-native': Object.fromEntries(['FlatList','View','Text','Pressable','ActivityIndicator','Switch','RefreshControl'].map(n => [n,n])),
     '@react-navigation/native': { useFocusEffect: fn => { focused = fn; } },
     '../api/client': { api },
     '../lib/licznikZadan': { utworzLicznikZadan },
@@ -41,7 +41,7 @@ function screen(overrides = {}) {
     '../components/MatchCard': { ScoreBadge: 'ScoreBadge' },
     '../components/StatusPicker': { __esModule: true, default: 'StatusPicker' },
     '../lib/statusPrzetargu': { STATUS_DOMYSLNY: 'rozwazam', przypomnieniaWstrzymane },
-    '../lib/kolejnoscZapisanych': { kolejnoscZapisanych: x => x },
+    '../lib/kolejnoscZapisanych': { kolejnoscZapisanych: x => x, podsumowanieZapisanych: () => null },
   };
   const module = { exports: {} };
   vm.runInNewContext(bundle.outputFiles[0].text, { module, exports: module.exports,

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import {
-  FlatList, View, Text, Pressable, ActivityIndicator, Switch,
+  FlatList, View, Text, Pressable, ActivityIndicator, Switch, RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
@@ -20,7 +20,7 @@ import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio'
 import * as storage from '../lib/storage';
 import { useAuth } from '../context/AuthContext';
 import { eksportujNaEmail } from '../services/eksportCsv';
-import { kolejnoscZapisanych } from '../lib/kolejnoscZapisanych';
+import { kolejnoscZapisanych, podsumowanieZapisanych } from '../lib/kolejnoscZapisanych';
 import { utworzLicznikZadan } from '../lib/licznikZadan';
 
 export default function SavedScreen({ navigation }) {
@@ -34,6 +34,7 @@ export default function SavedScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [blad, setBlad] = useState(false);
   const [bladZapisu, setBladZapisu] = useState(false);
+  const [odswiezanie, setOdswiezanie] = useState(false);
   const [zajete, setZajete] = useState(() => new Set());
   const blokady = useRef(new Set());
   const odczyty = useRef(utworzLicznikZadan());
@@ -202,12 +203,19 @@ export default function SavedScreen({ navigation }) {
     );
   }
 
+  const skrot = podsumowanieZapisanych(items);
+  const odswiez = async () => { setOdswiezanie(true); await wczytaj(); setOdswiezanie(false); };
+
   return (
     <FlatList
       data={items}
       keyExtractor={(item) => item.id}
       contentContainerStyle={items.length ? styles.list : styles.listEmpty}
+      refreshControl={<RefreshControl refreshing={odswiezanie} onRefresh={odswiez} tintColor={kolory.blue} />}
       ListHeaderComponent={<View>
+        {skrot ? (
+          <Text style={[styles.skrot, skrot.pilne && { color: kolory.ostrzezenieTekst }]} accessibilityRole="summary">{t(skrot)}</Text>
+        ) : null}
         {blad && items.length ? <View>
           <Text accessibilityRole="alert" style={{ color: kolory.danger }}>
             {t('Nie udało się odświeżyć listy. Pokazujemy ostatnio wczytane dane.',
@@ -272,6 +280,7 @@ export default function SavedScreen({ navigation }) {
 
 const tworzStyleZapisanych = tworzStyle((k) => ({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
+  skrot: { fontSize: 15, fontWeight: '700', color: k.text, marginBottom: spacing.md },
   widokiRzad: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   widokBtn: {
     flex: 1,
