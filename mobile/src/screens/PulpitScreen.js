@@ -19,6 +19,9 @@ import { zbudujPulpit, stanPulpitu, KROKI_OFERTY, opisSkutecznosci } from '../li
  * złożona → wezwanie, wygrana → pierwsze dni kontraktu, przegrana → wadium wraca na wniosek.
  */
 const AKCJE_ETAPU = {
+  // Seria 2 runda 3 (2026-11-12): dwa etapy, na których oferty stoją najdłużej, też mają następny krok.
+  rozwazam: { ekran: 'CzyWarto', pl: 'Startować czy odpuścić? Sprawdź w minutę', en: 'Bid or pass? Check in a minute', params: (z) => ({ tenderId: z.tender?.id ?? z.id, matchId: z.id, tytul: z.tender?.title }) },
+  przygotowuje: { ekran: 'ChecklistaOferty', pl: 'Co musisz mieć do dnia składania', en: 'What you need by the bid date', params: (z) => ({ tenderId: z.tender?.id ?? z.id, tytul: z.tender?.title }) },
   zlozona: { ekran: 'OdpowiedzNaWezwanie', pl: 'Dostałeś wezwanie? Odpowiedź w 1 klik', en: 'Got a buyer request? Reply in one tap' },
   wygrana: { ekran: 'PoWygranej', pl: 'Pierwsze dni kontraktu i pisma', en: 'First days of the contract and letters' },
   przegrana: { ekran: 'ZwrotWadium', pl: 'Odzyskaj wadium — wniosek w 1 klik', en: 'Get the bid bond back — one-tap request' },
@@ -167,7 +170,7 @@ export default function PulpitScreen({ navigation }) {
               <Text style={styles.sciezkaPodpis}>{t(`Krok ${p.krok + 1} z 4 · ${KROKI_OFERTY[p.krok].pl}`, `Step ${p.krok + 1} of 4 · ${KROKI_OFERTY[p.krok].en}`)}</Text>
               {AKCJE_ETAPU[g.wartosc] ? (
                 <Pressable
-                  onPress={() => navigation.navigate(AKCJE_ETAPU[g.wartosc].ekran, { match: p.zrodlo })}
+                  onPress={() => navigation.navigate(AKCJE_ETAPU[g.wartosc].ekran, AKCJE_ETAPU[g.wartosc].params ? AKCJE_ETAPU[g.wartosc].params(p.zrodlo) : { match: p.zrodlo })}
                   accessibilityRole="button"
                   hitSlop={6}
                 >
