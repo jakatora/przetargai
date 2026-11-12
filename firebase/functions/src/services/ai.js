@@ -1,8 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { env, features } from '../config.js';
 import { logger } from '../lib/logger.js';
-import { costUsd } from '../lib/pricing.js';
-import { aiUsage } from '../db/repos.js';
+import { budgetedMessage, readAiBudgetBalance } from './aiBudget.js';
 import { buildSummaryPrompt, parseStreszczenie } from '../lib/streszczenie.js';
 import { buildProfilPrompt, parsujSugestie } from '../lib/profilSugestia.js';
 import { klasyfikujBladAi, zglosNiepowodzenieAi, zglosSukcesAi } from '../lib/stanAi.js';
@@ -14,10 +13,10 @@ import { SYSTEM_PROMPT_WARUNKOW, zbudujPromptWarunkow, parsujWerdyktWarunkow } f
  * 540 s (twardy limit funkcji zdarzeniowej), więc jedno zawieszone wywołanie
  * zjadłoby go w całości i zabiło dopasowania wszystkich użytkowników. Ocena
  * pojedynczego przetargu to normalnie 1–2 s; 30 s to już awaria, nie opóźnienie.
- * Jedno ponowienie wystarczy — kolejne kosztują czas, którego nie mamy.
+ * Nie ponawiamy automatycznie: nieznany wynik poprzedniej próby może być płatny.
  */
 const client = features.ai
-  ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, timeout: 30_000, maxRetries: 1 })
+  ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, timeout: 30_000, maxRetries: 0 })
   : null;
 
 const SYSTEM_PROMPT = [
@@ -91,9 +90,11 @@ function zglosPrzekroczenieBudzetu(status, rodzaj) {
 export async function budgetStatus({ swiezy = false } = {}) {
   if (!swiezy && cacheBudzetu && Date.now() < cacheBudzetu.wygasa) return cacheBudzetu.stan;
 
-  const [spent, calls] = await Promise.all([aiUsage.monthCostUsd(), aiUsage.monthCalls()]);
+  const { spentUsd: spent, calls, reservedUsd } = await readAiBudgetBalance();
   const stan = {
     spentUsd: Number(spent.toFixed(4)),
+    reservedUsd,
+    availableUsd: Math.max(0, env.AI_BUDGET_HARD_USD - spent - reservedUsd),
     softLimitUsd: env.AI_BUDGET_SOFT_USD,
     hardLimitUsd: env.AI_BUDGET_HARD_USD,
     softExceeded: spent >= env.AI_BUDGET_SOFT_USD,
@@ -187,24 +188,12 @@ export async function scoreTenderMatch(company, tender) {
 
   const model = env.AI_MATCH_MODEL;
   try {
-    const resp = await client.messages.create({
+    const resp = await budgetedMessage(client, {
       model,
       max_tokens: 300,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: buildUserPrompt(company, tender) }],
-    });
-
-    const inputTokens = resp.usage?.input_tokens ?? 0;
-    const outputTokens = resp.usage?.output_tokens ?? 0;
-    await aiUsage.record({
-      operation: 'match_scoring',
-      model,
-      inputTokens,
-      outputTokens,
-      costUsd: costUsd(model, inputTokens, outputTokens),
-      // Bez tego widać tylko, że budżet się pali — nie czyje konto go pali.
-      userId: company?.id ?? null,
-    });
+    }, { operation: 'match_scoring', userId: company?.id ?? null, hardLimitUsd: env.AI_BUDGET_HARD_USD });
 
     const text = resp.content?.find((block) => block.type === 'text')?.text ?? '';
     const ocena = parseScore(text);
@@ -244,23 +233,12 @@ export async function summarizeTender(tender, { userId = null, nowIso = new Date
 
   const model = env.AI_MATCH_MODEL;
   try {
-    const resp = await client.messages.create({
+    const resp = await budgetedMessage(client, {
       model,
       max_tokens: 600,
       system: SUMMARY_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: buildSummaryPrompt(tender, nowIso) }],
-    });
-
-    const inputTokens = resp.usage?.input_tokens ?? 0;
-    const outputTokens = resp.usage?.output_tokens ?? 0;
-    await aiUsage.record({
-      operation: 'tender_summary',
-      model,
-      inputTokens,
-      outputTokens,
-      costUsd: costUsd(model, inputTokens, outputTokens),
-      userId,
-    });
+    }, { operation: 'tender_summary', userId, hardLimitUsd: env.AI_BUDGET_HARD_USD });
 
     const text = resp.content?.find((block) => block.type === 'text')?.text ?? '';
     return parseStreszczenie(text);
@@ -287,22 +265,11 @@ export async function zaproponujProfil(opis, { userId = null } = {}) {
 
   const model = env.AI_MATCH_MODEL;
   try {
-    const resp = await client.messages.create({
+    const resp = await budgetedMessage(client, {
       model,
       max_tokens: 300,
       messages: [{ role: 'user', content: buildProfilPrompt(opis) }],
-    });
-
-    const inputTokens = resp.usage?.input_tokens ?? 0;
-    const outputTokens = resp.usage?.output_tokens ?? 0;
-    await aiUsage.record({
-      operation: 'profile_suggest',
-      model,
-      inputTokens,
-      outputTokens,
-      costUsd: costUsd(model, inputTokens, outputTokens),
-      userId,
-    });
+    }, { operation: 'profile_suggest', userId, hardLimitUsd: env.AI_BUDGET_HARD_USD });
 
     const text = resp.content?.find((block) => block.type === 'text')?.text ?? '';
     return parsujSugestie(text);
@@ -330,16 +297,9 @@ async function wywolajSelekcje({ operation, system, prompt, maxTokens, userId, p
 
   const model = env.AI_MATCH_MODEL;
   try {
-    const resp = await client.messages.create({
+    const resp = await budgetedMessage(client, {
       model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: prompt }],
-    });
-    const inputTokens = resp.usage?.input_tokens ?? 0;
-    const outputTokens = resp.usage?.output_tokens ?? 0;
-    await aiUsage.record({
-      operation, model, inputTokens, outputTokens,
-      costUsd: costUsd(model, inputTokens, outputTokens),
-      userId: userId ?? null,
-    });
+    }, { operation, userId: userId ?? null, hardLimitUsd: env.AI_BUDGET_HARD_USD });
 
     const text = resp.content?.find((block) => block.type === 'text')?.text ?? '';
     const wynik = parsuj(text);

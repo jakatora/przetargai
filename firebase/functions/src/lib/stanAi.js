@@ -39,7 +39,8 @@ export function klasyfikujBladAi(err) {
     .slice(0, MAKS_KOMUNIKAT);
 
   let typ;
-  if (status === 402 || typApi === 'billing_error' || /credit balance/i.test(komunikat)) typ = 'kredyty';
+  if (err?.code === 'AI_BUDGET_EXHAUSTED') typ = 'budzet';
+  else if (status === 402 || typApi === 'billing_error' || /credit balance/i.test(komunikat)) typ = 'kredyty';
   else if (status === 401 || status === 403
     || typApi === 'authentication_error' || typApi === 'permission_error') typ = 'autoryzacja';
   else if (status === 429 || typApi === 'rate_limit_error') typ = 'limit';
