@@ -810,7 +810,7 @@ export default function MatchDetailScreen({ route, navigation }) {
         <Text style={styles.doSzefaOpis}>
           {match.decyzja_szefa?.decyzja
             ? t(`Odpowiedź z linku: ${match.decyzja_szefa.decyzja === 'tak' ? 'startujemy' : 'nie startujemy'}.`, `Answer from the link: ${match.decyzja_szefa.decyzja === 'tak' ? 'we bid' : 'we pass'}.`)
-            : t('Wyślij szefowi link — zobaczy przetarg, termin i powody wyboru, i odpowie jednym kliknięciem, bez instalowania aplikacji. Odpowiedź dostaniesz w powiadomieniu.', 'Send your boss a link — they see the tender, deadline and reasons, and answer in one tap without the app. You get the answer as a notification.')}
+            : t('Wyślij szefowi link — zobaczy przetarg, termin i powody wyboru, i odpowie jednym kliknięciem, bez instalowania aplikacji. Odpowiedź dostaniesz w powiadomieniu i pod dzwonkiem na ekranie głównym.', 'Send your boss a link — they see the tender, deadline and reasons, and answer in one tap without the app. You get the answer as a notification and under the bell on the main screen.')}
         </Text>
         <Button title={t('Wyślij szefowi do decyzji', 'Send to the boss for a decision')} variant="ghost" loading={doSzefaTrwa} onPress={wyslijSzefowi} />
       </View>
