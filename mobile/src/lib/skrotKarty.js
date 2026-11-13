@@ -8,7 +8,7 @@ import { nazwaWojewodztwa } from './wojewodztwa.js';
 const tys = (n) => {
   const v = Number(n);
   if (!Number.isFinite(v) || v <= 0) return null;
-  if (v >= 1_000_000) return `${String(Math.round(v / 100_000) / 10).replace('.', ',')} mln zł`;
+  if (v >= 999_500) return `${String(Math.round(v / 100_000) / 10).replace('.', ',')} mln zł`;
   if (v >= 1_000) return `${Math.round(v / 1_000)} tys. zł`;
   return `${Math.round(v)} zł`;
 };

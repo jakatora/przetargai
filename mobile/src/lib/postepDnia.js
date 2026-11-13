@@ -42,8 +42,9 @@ export function opisGotowego({ razem, wziete }) {
   const pl = wziete > 0
     ? `${zdanie} Bierzesz ${wziete} — ${wziete === 1 ? 'jest' : 'są'} w Zapisanych z przypomnieniami przed terminem.`
     : `${zdanie} Żadnego dziś nie bierzesz — Twoje przyczyny poprawią jutrzejszy wybór.`;
+  const zdanieEn = razem === 1 ? "Today's tender has a decision." : `All ${razem} of today's tenders have a decision.`;
   const en = wziete > 0
-    ? `All ${razem} of today's tenders have a decision. You are bidding on ${wziete} — saved with deadline reminders.`
-    : `All ${razem} of today's tenders have a decision. None taken today — your reasons will sharpen tomorrow's picks.`;
+    ? `${zdanieEn} You are bidding on ${wziete} — saved with deadline reminders.`
+    : `${zdanieEn} None taken today — your reasons will sharpen tomorrow's picks.`;
   return { pl, en };
 }

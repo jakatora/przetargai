@@ -8,16 +8,20 @@
  * Złożone i rozstrzygnięte oferty nie są pilne — tam już nic się nie składa.
  */
 import { chwilaUplywuTerminu } from './dataUtc.js';
+import { dniDoTerminu } from './kolejnoscZapisanych.js';
 
 export const DNI_PILNE = 3;
 // Termin podany samą datą upływa z końcem tego dnia w Polsce — ta sama reguła co w reszcie apki (QA 2026-11-13).
 const chwila = (deadline) => chwilaUplywuTerminu(deadline)?.ms ?? NaN;
 const W_GRZE = new Set(['rozwazam', 'przygotowuje']);
 
-const kiedy = (ms, terazMs) => {
-  const godz = (ms - terazMs) / 3_600_000;
-  if (godz < 24) return { pl: godz < 1 ? 'termin za mniej niż godzinę' : `termin za ${Math.floor(godz)} godz.`, en: godz < 1 ? 'due in under an hour' : `due in ${Math.floor(godz)} h` };
-  const dni = Math.floor(godz / 24);
+// Dni kalendarzowe jak na kartach; godziny tylko, gdy termin jest dziś (QA 2026-11-13).
+const kiedy = (deadline, ms, terazMs) => {
+  const dni = dniDoTerminu(deadline, terazMs)?.dni ?? 0;
+  if (dni <= 0) {
+    const godz = (ms - terazMs) / 3_600_000;
+    return { pl: godz < 1 ? 'termin za mniej niż godzinę' : `termin dziś, za ${Math.floor(godz)} godz.`, en: godz < 1 ? 'due in under an hour' : `due today, in ${Math.floor(godz)} h` };
+  }
   return { pl: dni === 1 ? 'termin jutro' : `termin za ${dni} dni`, en: dni === 1 ? 'due tomorrow' : `due in ${dni} days` };
 };
 
@@ -34,7 +38,7 @@ export function pilneDzis({ zapisane = [], nieprzeczytane = 0, teraz = new Date(
     .filter(({ w, ms }) => W_GRZE.has(w?.status ?? 'rozwazam') && Number.isFinite(ms) && ms > terazMs && ms <= granica)
     .sort((a, b) => a.ms - b.ms)
     .slice(0, 3)
-    .map(({ w, ms }) => ({ klucz: `termin-${w.tender.id ?? w.id}`, rodzaj: 'termin', tytul: w.tender.title ?? '—', opis: kiedy(ms, terazMs), wpis: w }));
+    .map(({ w, ms }) => ({ klucz: `termin-${w.tender.id ?? w.id}`, rodzaj: 'termin', tytul: w.tender.title ?? '—', opis: kiedy(w.tender.deadline, ms, terazMs), wpis: w }));
   const n = Number(nieprzeczytane) || 0;
   const alerty = n > 0 ? [{
     klucz: 'alerty', rodzaj: 'alerty',

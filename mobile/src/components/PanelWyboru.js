@@ -164,7 +164,10 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
   const zakup = POKAZUJ_ZAKUP && typeof onUpgrade === 'function';
   const razem = dzien.raport?.odrzucone_razem ?? 0;
   // Postęp decyzji dnia (2026-11-12): „Do decyzji: X z N”, czekające na górze, po ostatniej — „Na dziś gotowe”.
-  const czyWziety = (m) => wziete.has(m.id) || (isSaved(m.id) && m.status === 'przygotowuje');
+  // Etap przychodzi z serwera (`status`, `zapisany` w /pracownik/dzien) — wzięty zostaje wzięty po ponownym wejściu
+  // do apki, także gdy zapisała go decyzja szefa albo oferta jest już złożona (QA 2026-11-13).
+  const ETAPY_PO_DECYZJI = ['przygotowuje', 'zlozona', 'wygrana', 'przegrana'];
+  const czyWziety = (m) => wziete.has(m.id) || ((m.zapisany ?? isSaved(m.id)) && ETAPY_PO_DECYZJI.includes(m.status));
   const postep = postepDnia({ wybrane: dzien.wybrane, raportWybrane: dzien.raport?.wybrane, czyWziety });
   const podpis = podpisPostepu(postep);
 
@@ -271,7 +274,7 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
             <Text style={styles.drobny}>{t('Wybrany wstępnie, bez oceny AI — AI sprawdzi go przy najbliższym przeglądzie.', 'Picked provisionally, without an AI review — AI will check it in the next review.')}</Text>
           ) : null}
           <View style={styles.rzad}>
-            {wziete.has(m.id) || (isSaved(m.id) && m.status === 'przygotowuje') ? (
+            {czyWziety(m) ? (
               <View style={[styles.przyciskPol, styles.wzietyStan]}>
                 <Ikona nazwa="ok" rozmiar={16} kolor={kolory.sukcesAkcent} />
                 <Text style={styles.wzietyTekst}>{t('Bierzesz', 'Bidding')}</Text>

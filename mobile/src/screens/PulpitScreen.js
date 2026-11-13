@@ -28,6 +28,9 @@ const AKCJE_ETAPU = {
   przegrana: { ekran: 'ZwrotWadium', pl: 'Odzyskaj wadium — wniosek w 1 klik', en: 'Get the bid bond back — one-tap request' },
 };
 
+// Nazwy etapów po angielsku — `STATUSY` mają tylko polskie etykiety (QA 2026-11-13).
+const ETAPY_EN = { rozwazam: 'Considering', przygotowuje: 'Preparing the bid', zlozona: 'Bid submitted', wygrana: 'Won', przegrana: 'Lost' };
+
 export default function PulpitScreen({ navigation }) {
   const { kolory } = useTheme();
   const styles = useStyle(tworzStylePulpitu);
@@ -134,7 +137,7 @@ export default function PulpitScreen({ navigation }) {
           {lejek.filter((e) => e.liczba).map((e) => (
             <View key={e.wartosc} style={styles.lejekPoz}>
               <View style={[styles.kropka, { backgroundColor: kolorEtapu(e.wartosc) }]} />
-              <Text style={styles.lejekTekst}>{e.etykieta} {e.liczba}</Text>
+              <Text style={styles.lejekTekst}>{t(e.etykieta, ETAPY_EN[e.wartosc] ?? e.etykieta)} {e.liczba}</Text>
             </View>
           ))}
         </View>
@@ -145,7 +148,7 @@ export default function PulpitScreen({ navigation }) {
         <View key={g.wartosc} style={styles.etap}>
           <View style={styles.etapNaglowek}>
             <View style={[styles.kropka, { backgroundColor: kolorEtapu(g.wartosc) }]} />
-            <Text style={styles.etapTytul}>{g.etykieta}</Text>
+            <Text style={styles.etapTytul}>{t(g.etykieta, ETAPY_EN[g.wartosc] ?? g.etykieta)}</Text>
             <Text style={styles.etapLicznik}>{g.liczba}</Text>
           </View>
 

@@ -292,8 +292,9 @@ export default function MatchDetailScreen({ route, navigation }) {
     if (doSzefaTrwa) return;
     setDoSzefaTrwa(true);
     try {
-      const { wiadomosc, url } = await api.linkDoDecyzji(match.id);
-      await udostepnijTekst({ message: wiadomosc, url, title: tender.title }).catch(() => {});
+      // Link jest już w treści wiadomości — osobne `url` dublowało go na iOS i w schowku (QA 2026-11-13).
+      const { wiadomosc } = await api.linkDoDecyzji(match.id);
+      await udostepnijTekst({ message: wiadomosc, title: tender.title }).catch(() => {});
     } catch (err) {
       Alert.alert(t('Nie udało się przygotować linku', 'Could not prepare the link'), err.message);
     } finally {

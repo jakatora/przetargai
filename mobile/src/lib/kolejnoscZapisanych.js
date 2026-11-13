@@ -10,11 +10,22 @@
  * Czysta funkcja, nie zmienia wejścia.
  */
 
-import { chwilaUplywuTerminu } from './dataUtc.js';
+import { chwilaUplywuTerminu, dzienPL, dzisiajPL, MS_DZIEN } from './dataUtc.js';
 
 const ROZSTRZYGNIETE = new Set(['wygrana', 'przegrana']);
 // Sama data = koniec tego dnia w Polsce, zapis nie-ISO nie jest zgadywany (QA 2026-11-13).
 const chwila = (deadline) => chwilaUplywuTerminu(deadline)?.ms ?? NaN;
+
+/**
+ * Dni KALENDARZOWE do terminu w Polsce — ta sama reguła co `opisTerminu` na kartach (QA 2026-11-13: liczenie pełnych
+ * dób dawało „dziś” dla terminu jutro rano i „jutro” dla terminu za 47 h). null, gdy brak terminu albo minął.
+ * @returns {{ms: number, dni: number}|null}
+ */
+export function dniDoTerminu(deadline, terazMs = Date.now()) {
+  const c = chwilaUplywuTerminu(deadline);
+  if (!c || c.ms <= terazMs) return null;
+  return { ms: c.ms, dni: Math.round((dzienPL(c.zGodzina ? c.ms : c.ms - 1) - dzisiajPL(terazMs)) / MS_DZIEN) };
+}
 
 function grupa(wpis, terazMs) {
   const status = wpis?.status ?? 'rozwazam';
@@ -48,8 +59,7 @@ export function podsumowanieZapisanych(wpisy, teraz = new Date().toISOString()) 
   const terazMs = Date.parse(teraz);
   const wGrze = (Array.isArray(wpisy) ? wpisy : []).filter((w) => grupa(w, terazMs) === 0);
   if (!wGrze.length) return null;
-  const najblizszy = Math.min(...wGrze.map((w) => chwila(w.tender.deadline)));
-  const dni = Math.max(0, Math.floor((najblizszy - terazMs) / 86_400_000));
+  const dni = Math.min(...wGrze.map((w) => dniDoTerminu(w.tender.deadline, terazMs)?.dni ?? Infinity));
   const n = wGrze.length;
   const ile = n === 1 ? '1 przetarg w grze' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? `${n} przetargi w grze` : `${n} przetargów w grze`;
   const kiedy = dni === 0 ? 'najbliższy termin dziś' : dni === 1 ? 'najbliższy termin jutro' : `najbliższy termin za ${dni} dni`;
