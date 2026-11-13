@@ -31,7 +31,9 @@ export const dataDecyzjiPL = (iso) => {
 export function zostaloDni(iso, teraz = Date.now()) {
   const t = Date.parse(String(iso ?? ''));
   if (!Number.isFinite(t) || t <= teraz) return null;
-  const dni = Math.floor((t - teraz) / 86_400_000);
+  // Dni KALENDARZOWE w Polsce (QA 2026-11-13): 20:00 dziś → jutro 10:00 to „jutro”, nie „dziś”.
+  const dzien = (ms) => Date.parse(`${new Date(ms).toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' })}T00:00:00Z`);
+  const dni = Math.round((dzien(t) - dzien(teraz)) / 86_400_000);
   return dni === 0 ? 'termin dziś' : dni === 1 ? 'termin jutro' : `${dni} dni`;
 }
 
@@ -61,18 +63,27 @@ export function wiadomoscDoSzefa({ row, url }) {
 }
 
 /** Alert dla pracownika po decyzji szefa. Klucz z chwilą decyzji — zmiana zdania budzi ponownie. */
-export function alertDecyzjiSzefa({ row, decyzja, komentarz = null, teraz }) {
+export function alertDecyzjiSzefa({ row, decyzja, komentarz = null, teraz, nr = null, wynik = null }) {
   const tytul = String(row.tender_title ?? 'przetarg').slice(0, 90);
   const tak = decyzja === 'tak';
+  // Treść z FAKTYCZNEGO wyniku (QA 2026-11-13): nie obiecujemy przypomnień po terminie ani etapu, który nie został zmieniony.
+  const skutek = wynik ?? { przypomnienie: true, etap: 'przygotowuje' };
+  const coZrobione = [
+    'Przetarg jest w Zapisanych',
+    skutek.przypomnienie ? ' z przypomnieniami 7, 3 i 1 dzień przed terminem' : '',
+    skutek.etap === 'przygotowuje' ? ' i etapem „Przygotowuję ofertę”' : '',
+    '.',
+  ].join('');
   const notatka = komentarz ? { pl: `Notatka: „${komentarz}”. `, en: `Note: “${komentarz}”. ` } : { pl: '', en: '' };
   return {
-    klucz: `decyzja_${String(row.id).replace(/[/\s:.]/g, '_')}_${String(teraz).replace(/[^0-9]/g, '').slice(0, 14)}`,
+    // Klucz z numerem zmiany decyzji, gdy go znamy: dwa równoległe kliknięcia = jeden alert (QA 2026-11-13).
+    klucz: `decyzja_${String(row.id).replace(/[/\s:.]/g, '_')}_${nr ?? String(teraz).replace(/[^0-9]/g, '').slice(0, 14)}`,
     typ: 'zmiany',
     tender_id: row.tender_id ?? row.id,
     ton: tak ? 'neutral' : 'ostrzezenie',
     tytul: { pl: `${tak ? 'Szef: startujemy' : 'Szef: nie startujemy'} — ${tytul}`, en: `${tak ? 'Boss: we bid' : 'Boss: we pass'} — ${tytul}` },
     tresc: tak
-      ? { pl: `${notatka.pl}Decyzja z linku „do decyzji”. Przetarg jest w Zapisanych z przypomnieniami 7, 3 i 1 dzień przed terminem i etapem „Przygotowuję ofertę”.`, en: `${notatka.en}Decision from the “for decision” link. The tender is saved with 7/3/1-day reminders and the “Preparing the bid” stage.` }
+      ? { pl: `${notatka.pl}Decyzja z linku „do decyzji”. ${coZrobione}`, en: `${notatka.en}Decision from the “for decision” link. The tender is saved with 7/3/1-day reminders and the “Preparing the bid” stage.` }
       : { pl: `${notatka.pl}Decyzja z linku „do decyzji”. Przetarg zostaje na liście — odrzuć go przyciskiem „Nie dla nas”, żeby aplikacja uczyła się z przyczyny.`, en: `${notatka.en}Decision from the “for decision” link. The tender stays on your list — reject it with “Not for us” so the app learns from the reason.` },
     pozycje: [{ tender_id: row.tender_id ?? row.id, tytul: row.tender_title ?? null, organizacja: row.tender_organization ?? null, deadline: row.tender_deadline ?? null, zrodlo: row.tender_source ?? 'bzp' }],
   };

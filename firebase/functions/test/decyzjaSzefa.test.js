@@ -101,6 +101,9 @@ test('strona i wiadomość: dni do terminu, wartość i wadium (seria 2 runda 4)
   assert.equal(zostaloDni('2026-11-17T09:00:00Z', teraz), '5 dni');
   assert.equal(zostaloDni('2026-11-13T09:00:00Z', teraz), 'termin jutro');
   assert.equal(zostaloDni('2026-11-12T15:00:00Z', teraz), 'termin dziś');
+  // QA 13.11: dni kalendarzowe w Polsce — wieczorem termin jutro rano to „jutro”, a 47 h to 2 dni.
+  assert.equal(zostaloDni('2026-11-13T09:00:00Z', Date.parse('2026-11-12T19:00:00Z')), 'termin jutro');
+  assert.equal(zostaloDni('2026-11-14T18:00:00Z', Date.parse('2026-11-12T19:00:00Z')), '2 dni');
   assert.equal(zostaloDni('2026-11-11T09:00:00Z', teraz), null);
   assert.equal(zostaloDni(null, teraz), null);
   assert.equal(opisWadium({ tender_wadium_kwota: 20000 }).replace(/\u00a0/g, ' '), '20 000 zł');
@@ -129,4 +132,71 @@ test('notatka szefa: trafia do alertu i do apki, przycięta do 140 znaków, bez 
   await new Promise((r) => { setTimeout(r, 1100); });
   await fetch(sciezka(url), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'decyzja=tak&komentarz=jednak+do+3+mln' });
   assert.equal((await alerty.lista(k.id)).length, 2);
+});
+
+test('QA 13.11: błąd po drodze nie gubi alertu — ponowne kliknięcie powiadamia pracownika', async () => {
+  const k = await konto();
+  const id = await wybrany(k.id, 'Remont hali');
+  const { url } = await (await fetch(`${BAZA}/matches/${id}/do-decyzji`, { method: 'POST', headers: k.h })).json();
+  const oryginal = alerty.dodaj;
+  alerty.dodaj = async () => { throw new Error('Firestore UNAVAILABLE'); };
+  let pierwszy;
+  try { pierwszy = await fetch(sciezka(url), form('tak')); } finally { alerty.dodaj = oryginal; }
+  assert.equal(pierwszy.status, 500);
+  assert.equal((await alerty.lista(k.id)).length, 0);
+  const drugi = await fetch(sciezka(url), form('tak'));
+  assert.equal(drugi.status, 200);
+  assert.equal((await alerty.lista(k.id)).length, 1, 'alert doszedł przy ponowieniu');
+  // Dwa równoległe kliknięcia tej samej decyzji = nadal jeden alert (klucz z numerem zmiany).
+  await Promise.all([fetch(sciezka(url), form('nie')), fetch(sciezka(url), form('nie'))]);
+  assert.equal((await alerty.lista(k.id)).length, 2);
+});
+
+test('QA 13.11: stan przetargu — po terminie bez formularza i 409; odrzucony wraca na listę; złożona oferta zostaje złożona; alert mówi prawdę', async () => {
+  const { getFirestore } = await import('firebase-admin/firestore');
+  const k = await konto();
+  // 1) termin minął
+  const stary = await wybrany(k.id, 'Stary przetarg');
+  const l1 = await (await fetch(`${BAZA}/matches/${stary}/do-decyzji`, { method: 'POST', headers: k.h })).json();
+  await getFirestore().collection('users').doc(k.id).collection('matches').doc(stary).update({ tender_deadline: '2020-01-01T09:00:00.000Z' });
+  const strona = await (await fetch(sciezka(l1.url))).text();
+  assert.match(strona, /Termin składania ofert już minął/);
+  assert.doesNotMatch(strona, /<form/);
+  assert.equal((await fetch(sciezka(l1.url), form('tak'))).status, 409);
+  assert.equal((await saved.list(k.id)).length, 0);
+
+  // 2) odrzucony „Nie dla nas” → „Startujemy” zdejmuje odrzucenie
+  const odrz = await wybrany(k.id, 'Odrzucony przetarg');
+  const l2 = await (await fetch(`${BAZA}/matches/${odrz}/do-decyzji`, { method: 'POST', headers: k.h })).json();
+  await matches.oznaczOdrzuconyPrzezKlienta(k.id, odrz, { przyczyna: 'teren' });
+  assert.equal((await fetch(sciezka(l2.url), form('tak'))).status, 200);
+  const lista = await (await fetch(`${BAZA}/matches`, { headers: k.h })).json();
+  assert.ok(lista.matches.some((m) => m.id === odrz), 'przetarg znów widoczny na liście');
+
+  // 3) oferta już złożona → etap zostaje, alert nie obiecuje etapu ani przypomnień
+  const zloz = await wybrany(k.id, 'Złożona oferta');
+  await fetch(`${BAZA}/matches/${zloz}/save`, { method: 'PUT', headers: k.h });
+  await fetch(`${BAZA}/matches/${zloz}/status`, { method: 'PUT', headers: k.h, body: JSON.stringify({ status: 'zlozona' }) });
+  await fetch(`${BAZA}/matches/${zloz}/reminder`, { method: 'PUT', headers: k.h, body: JSON.stringify({ enabled: false }) });
+  const l3 = await (await fetch(`${BAZA}/matches/${zloz}/do-decyzji`, { method: 'POST', headers: k.h })).json();
+  assert.equal((await fetch(sciezka(l3.url), form('tak'))).status, 200);
+  assert.equal((await saved.pobierz(k.id, zloz)).status, 'zlozona');
+  const a = (await alerty.lista(k.id)).find((x) => /Złożona oferta/.test(x.tytul.pl));
+  assert.match(a.tresc.pl, /Przetarg jest w Zapisanych\.$/);
+  assert.doesNotMatch(a.tresc.pl, /przypomnieniami|Przygotowuję/);
+});
+
+test('QA 13.11: dobowy limit linków do decyzji i etap w panelu dnia po decyzji', async () => {
+  const { limitLinkowDecyzji } = await import('../src/db/repos.js');
+  const { LIMIT_LINKOW_DECYZJI_DZIENNIE } = await import('../src/routes/matches.js');
+  const k = await konto();
+  const id = await wybrany(k.id, 'Limit linków');
+  const { url } = await (await fetch(`${BAZA}/matches/${id}/do-decyzji`, { method: 'POST', headers: k.h })).json();
+  await fetch(sciezka(url), form('tak'));
+  const dzien = await (await fetch(`${BAZA}/pracownik/dzien`, { headers: k.h })).json();
+  const m = dzien.wybrane.find((x) => x.id === id);
+  assert.deepEqual([m.zapisany, m.status, m.decyzja_szefa.decyzja], [true, 'przygotowuje', 'tak'], 'panel dnia zna etap po odświeżeniu');
+  for (let i = 0; i < LIMIT_LINKOW_DECYZJI_DZIENNIE; i++) await limitLinkowDecyzji.zarezerwuj(k.id, LIMIT_LINKOW_DECYZJI_DZIENNIE);
+  const ponad = await fetch(`${BAZA}/matches/${id}/do-decyzji`, { method: 'POST', headers: k.h });
+  assert.equal(ponad.status, 429);
 });

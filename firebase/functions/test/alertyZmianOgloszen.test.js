@@ -187,3 +187,13 @@ test('QA 13.11: parser zmian jest liniowy na urwanym tekście, nie ucina wartoś
   const t = alertZmianyTerminu({ tender, staryTermin: '2098-01-01T09:00:00.000Z', nowyTermin: '2099-01-01T09:00:00.000Z', inne: ['5.4. Warunki', '6.4. Wadium'], inneZmiany: [{ pozycja: '6.4. Wadium', przed: '5000', po: '10000' }] });
   assert.match(t.tresc.pl, /Zmienił też: 5\.4\. Warunki; 6\.4\. Wadium —/);
 });
+
+test('QA 13.11: pole zmiany przechodzi przez ZAPIS alertu (repo) do listy — inaczej karta „Było / Jest” jest martwa', async () => {
+  const { alerty, users } = await import('../src/db/repos.js');
+  const u = await users.create({ email: `zm-${process.pid}-${Date.now()}@t.pl`, passwordHash: 'x' });
+  const tender = { id: '2026~BZP_00999001', title: 'Dostawa paliw', organization: 'Gmina Krasne', deadline: '2099-11-20T09:00:00.000Z' };
+  const alert = alertZmianyOgloszenia({ tender, pozycje: ['6.4. Wadium'], numer: 'n-repo', zmiany: [{ pozycja: '6.4. Wadium', przed: '5000 zł', po: '10000 zł' }] });
+  assert.equal((await alerty.dodaj(u.id, alert)).nowy, true);
+  const [zapisany] = await alerty.lista(u.id);
+  assert.deepEqual(zapisany.zmiany, [{ pozycja: '6.4. Wadium', przed: '5000 zł', po: '10000 zł' }]);
+});

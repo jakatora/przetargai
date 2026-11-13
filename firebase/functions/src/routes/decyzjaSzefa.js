@@ -39,6 +39,7 @@ async function dopasowanieDla({ token, matchId }) {
 }
 
 const kwota = kwotaZamowienia;
+const poTerminie = (row) => { const t = Date.parse(String(row.tender_deadline ?? '')); return Number.isFinite(t) && t <= Date.now(); };
 const wiersz = (etykieta, wartosc) => (wartosc
   ? `<tr><td style="padding:6px 0;color:#526075">${esc(etykieta)}</td><td style="padding:6px 0;font-weight:700;text-align:right">${esc(wartosc)}</td></tr>` : '');
 
@@ -61,6 +62,11 @@ router.get('/decyzja', ah(async (req, res) => {
   const p = parametry(req);
   const { blad, row } = await dopasowanieDla(p);
   if (blad) { res.status(400).type('html').send(strona(`<p>${esc(blad)}</p>`)); return; }
+  // Po terminie składania nie ma o czym decydować (QA 2026-11-13) — bez przycisków i bez obietnicy przypomnień.
+  if (poTerminie(row)) {
+    res.type('html').send(strona(`${opisPrzetargu(row)}<p style="padding:10px 12px;background:#fdecec;border-radius:8px"><b>Termin składania ofert już minął.</b> Decyzji nie da się już zapisać.</p>`));
+    return;
+  }
   const akcja = `?token=${encodeURIComponent(p.token)}&m=${encodeURIComponent(p.matchId)}`;
   const juz = row.decyzja_szefa?.decyzja
     ? `<p style="padding:10px 12px;background:#e8effd;border-radius:8px">Obecna decyzja: <b>${row.decyzja_szefa.decyzja === 'tak' ? 'startujemy' : 'nie startujemy'}</b>. Możesz ją zmienić.</p>` : '';
@@ -83,19 +89,37 @@ router.post('/decyzja', express.urlencoded({ extended: false, limit: '2kb' }), a
   // Notatka szefa (seria 2 runda 9): jedna linia, do 140 znaków, bez znaków sterujących.
   const komentarz = typeof req.body?.komentarz === 'string'
     ? req.body.komentarz.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 140) || null : null;
+  if (poTerminie(row)) {
+    res.status(409).type('html').send(strona('<p><b>Termin składania ofert już minął.</b> Decyzji nie da się już zapisać.</p>'));
+    return;
+  }
   const teraz = new Date().toISOString();
-  const bezZmian = row.decyzja_szefa?.decyzja === decyzja && (row.decyzja_szefa?.komentarz ?? null) === komentarz;
-  await matches.zapiszDecyzjeSzefa(userId, row.id, { decyzja, komentarz, o: teraz });
+  const poprzednia = row.decyzja_szefa ?? null;
+  const bezZmian = poprzednia?.decyzja === decyzja && (poprzednia?.komentarz ?? null) === komentarz && poprzednia?.powiadomiono === true;
+  const nr = bezZmian ? (poprzednia.nr ?? 1) : (poprzednia?.nr ?? 0) + 1;
+  const tenderId = row.tender_id ?? row.id;
+
+  /*
+   * Kolejność (QA 2026-11-13): skutki → alert → DOPIERO zapis decyzji z `powiadomiono`. Wcześniej decyzja była
+   * zapisywana pierwsza: błąd w dalszym kroku dawał szefowi 500, a ponowne kliknięcie uznawało „bez zmian”
+   * i pracownik nigdy nie dostawał alertu. Wszystkie kroki są idempotentne, więc powtórka jest bezpieczna.
+   */
+  let wynik = null;
   if (decyzja === 'tak') {
     // „Startujemy” = to samo co „Biorę” pracownika: zapis, przypomnienia 7/3/1, etap (tylko z „Rozważam”).
-    const tenderId = row.tender_id ?? row.id;
-    const nowy = await saved.add(userId, row);
-    if (nowy) await saved.setReminder(userId, tenderId, true).catch((err) => logger.warn({ err: err.message, userId }, 'Decyzja szefa: przypomnienie nie włączone'));
-    const wpis = (await saved.list(userId)).find((z) => (z.tender_id ?? z.id) === tenderId);
-    if (!wpis?.status || wpis.status === 'rozwazam') await saved.setStatus(userId, tenderId, 'przygotowuje');
+    const nowyZapis = await saved.add(userId, row);
+    if (nowyZapis) await saved.setReminder(userId, tenderId, true).catch((err) => logger.warn({ err: err.message, userId }, 'Decyzja szefa: przypomnienie nie włączone'));
+    // Jeden dokument po id, nie lista z limitem 100 — przy wielu zapisanych starszy wpis nie był znajdowany i etap
+    // „Oferta złożona” wracał do „Przygotowuję”.
+    let wpis = await saved.pobierz(userId, tenderId);
+    if (wpis && (!wpis.status || wpis.status === 'rozwazam')) {
+      await saved.setStatus(userId, tenderId, 'przygotowuje');
+      wpis = { ...wpis, status: 'przygotowuje' };
+    }
+    wynik = { przypomnienie: wpis?.reminder_enabled === true && wpis?.reminder_notified !== true, etap: wpis?.status ?? null };
   }
   if (!bezZmian) {
-    const alert = alertDecyzjiSzefa({ row, decyzja, komentarz, teraz });
+    const alert = alertDecyzjiSzefa({ row, decyzja, komentarz, teraz, nr, wynik });
     const { nowy } = await alerty.dodaj(userId, alert, teraz);
     if (nowy) {
       const user = await users.findById(userId).catch(() => null);
@@ -103,6 +127,8 @@ router.post('/decyzja', express.urlencoded({ extended: false, limit: '2kb' }), a
         .catch((err) => logger.warn({ err: err.message, userId }, 'Decyzja szefa: powiadomienie nie wysłane'));
     }
   }
+  await matches.zapiszDecyzjeSzefa(userId, row.id, { decyzja, komentarz, o: bezZmian ? (poprzednia.o ?? teraz) : teraz, nr, powiadomiono: true },
+    { zdejmijOdrzucenie: decyzja === 'tak' && Boolean(row.odrzucony_przez_klienta) });
   audit({ userId, action: 'boss_decision', detail: { matchId: row.id, decyzja }, ip: req.ip });
   res.type('html').send(strona(`<p style="font-size:19px"><b>${decyzja === 'tak' ? 'Zapisane: startujemy.' : 'Zapisane: nie startujemy.'}</b></p>`
     + `<p>„${esc(row.tender_title)}”</p><p style="color:#526075">Osoba, która wysłała link, dostała powiadomienie. Decyzję możesz zmienić, otwierając link ponownie.</p>`));
