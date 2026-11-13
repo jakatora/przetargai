@@ -21,7 +21,7 @@ import { zbudujPulpit, stanPulpitu, KROKI_OFERTY, opisSkutecznosci } from '../li
  */
 const AKCJE_ETAPU = {
   // Seria 2 runda 3 (2026-11-12): dwa etapy, na których oferty stoją najdłużej, też mają następny krok.
-  rozwazam: { ekran: 'CzyWarto', pl: 'Startować czy odpuścić? Sprawdź w minutę', en: 'Bid or pass? Check in a minute', params: (z) => ({ tenderId: z.tender?.id ?? z.id, matchId: z.id, tytul: z.tender?.title }) },
+  rozwazam: { ekran: 'CzyWarto', pl: 'Startować czy odpuścić? Sprawdź w minutę', en: 'Bid or pass? Check in a minute', params: (z) => ({ tenderId: z.tender?.id ?? z.id, tytul: z.tender?.title }) }, // po id PRZETARGU: dopasowanie mogło zniknąć, zapis zostaje (QA 2026-11-13)
   przygotowuje: { ekran: 'ChecklistaOferty', pl: 'Co musisz mieć do dnia składania', en: 'What you need by the bid date', params: (z) => ({ tenderId: z.tender?.id ?? z.id, tytul: z.tender?.title }) },
   zlozona: { ekran: 'OdpowiedzNaWezwanie', pl: 'Dostałeś wezwanie? Odpowiedź w 1 klik', en: 'Got a buyer request? Reply in one tap' },
   wygrana: { ekran: 'PoWygranej', pl: 'Pierwsze dni kontraktu i pisma', en: 'First days of the contract and letters' },
