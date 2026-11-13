@@ -12,7 +12,7 @@
  *   kolejnosc: object[]}} `kolejnosc` — najpierw czekające na decyzję, potem wzięte (stabilnie)
  */
 export function postepDnia({ wybrane = [], raportWybrane = 0, czyWziety = () => false } = {}) {
-  const lista = Array.isArray(wybrane) ? wybrane : [];
+  const lista = (Array.isArray(wybrane) ? wybrane : []).filter(Boolean);
   const czekajace = lista.filter((m) => !czyWziety(m));
   const wziete = lista.length - czekajace.length;
   const razem = Math.max(Number(raportWybrane) || 0, lista.length);

@@ -14,7 +14,7 @@ const tys = (n) => {
 };
 
 const lista = (pozycje, maks) => {
-  const p = (Array.isArray(pozycje) ? pozycje : []).map((x) => String(x).trim()).filter(Boolean);
+  const p = (Array.isArray(pozycje) ? pozycje : []).filter((x) => typeof x === 'string' || typeof x === 'number').map((x) => String(x).trim()).filter(Boolean);
   if (!p.length) return null;
   return p.length > maks ? `${p.slice(0, maks).join(', ')} i ${p.length - maks} więcej` : p.join(', ');
 };

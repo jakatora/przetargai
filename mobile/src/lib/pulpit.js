@@ -36,7 +36,7 @@ const czasMs = (deadline) => {
  *   lacznie: number, wymagaUwagi: number}}
  */
 export function zbudujPulpit(zapisane, teraz = Date.now()) {
-  const items = (Array.isArray(zapisane) ? zapisane : []).map((it) => {
+  const items = (Array.isArray(zapisane) ? zapisane : []).filter(Boolean).map((it) => {
     const status = it?.status || STATUS_DOMYSLNY;
     const deadline = it?.tender?.deadline ?? null;
     const t = opisTerminu(deadline, teraz);

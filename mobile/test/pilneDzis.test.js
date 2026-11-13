@@ -30,3 +30,22 @@ test('nic pilnego → pusta lista; odmiana alertów; termin za chwilę', () => {
   assert.equal(pilneDzis({ nieprzeczytane: 12, teraz: TERAZ })[0].tytul.pl, '12 nowych alertów');
   assert.equal(pilneDzis({ zapisane: [w('z', '2026-11-12T08:40:00.000Z')], teraz: TERAZ })[0].opis.pl, 'termin za mniej niż godzinę');
 });
+
+test('QA 13.11: termin samą datą mija z końcem dnia w Polsce; zapis nie-ISO i puste wpisy nie wywracają', async () => {
+  const { podsumowanieZapisanych, kolejnoscZapisanych } = await import('../src/lib/kolejnoscZapisanych.js');
+  const T = '2026-11-13T18:00:00.000Z'; // 19:00 w Polsce
+  const jutro = pilneDzis({ zapisane: [w('j', '2026-11-14')], teraz: T });
+  assert.equal(jutro[0].opis.pl, 'termin jutro', 'koniec 14.11, a nie północ UTC');
+  assert.equal(podsumowanieZapisanych([w('d', '2026-11-13')], T).pl, '1 przetarg w grze · najbliższy termin dziś');
+  assert.deepEqual(kolejnoscZapisanych([w('minal', '2026-11-12'), w('dzis', '2026-11-13')], T).map((x) => x.id), ['dzis', 'minal']);
+  assert.deepEqual(pilneDzis({ zapisane: [w('pl', '14.11.2026 10:00'), null, { id: 'x' }], teraz: T }).map((x) => x.klucz), ['termin-pl']);
+});
+
+test('QA 13.11: puste wpisy i śmieci w danych nie wywracają pulpitu, paska decyzji ani skrótu karty', async () => {
+  const { zbudujPulpit } = await import('../src/lib/pulpit.js');
+  const { postepDnia } = await import('../src/lib/postepDnia.js');
+  const { skrotKartyFirmy } = await import('../src/lib/skrotKarty.js');
+  assert.equal(zbudujPulpit([null, w('a', '2026-12-01')]).lacznie, 1);
+  assert.equal(postepDnia({ wybrane: [null, { id: 'a' }], raportWybrane: 1, czyWziety: (m) => m.id === 'z' }).zostalo, 1);
+  assert.deepEqual(skrotKartyFirmy({ wykluczenia: [null, '', { a: 1 }, 'drogi'], formalne: 'zle', regiony: 'x' }).map((x) => x.wartosc), [null, 'drogi', null, null, null]);
+});

@@ -7,7 +7,11 @@
  *  • nieprzeczytane alerty (zmiana SWZ, nowy termin, wynik, decyzja szefa).
  * Złożone i rozstrzygnięte oferty nie są pilne — tam już nic się nie składa.
  */
+import { chwilaUplywuTerminu } from './dataUtc.js';
+
 export const DNI_PILNE = 3;
+// Termin podany samą datą upływa z końcem tego dnia w Polsce — ta sama reguła co w reszcie apki (QA 2026-11-13).
+const chwila = (deadline) => chwilaUplywuTerminu(deadline)?.ms ?? NaN;
 const W_GRZE = new Set(['rozwazam', 'przygotowuje']);
 
 const kiedy = (ms, terazMs) => {
@@ -26,7 +30,7 @@ export function pilneDzis({ zapisane = [], nieprzeczytane = 0, teraz = new Date(
   const terazMs = Date.parse(teraz);
   const granica = terazMs + DNI_PILNE * 86_400_000;
   const terminy = (Array.isArray(zapisane) ? zapisane : [])
-    .map((w) => ({ w, ms: Date.parse(w?.tender?.deadline ?? '') }))
+    .map((w) => ({ w, ms: chwila(w?.tender?.deadline) }))
     .filter(({ w, ms }) => W_GRZE.has(w?.status ?? 'rozwazam') && Number.isFinite(ms) && ms > terazMs && ms <= granica)
     .sort((a, b) => a.ms - b.ms)
     .slice(0, 3)
