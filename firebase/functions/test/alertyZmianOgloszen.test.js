@@ -166,3 +166,24 @@ test('job TED: nowa wersja → alert do zapisanych starszej wersji; uzupełniani
   const w2 = await runWersjeTed(bez.deps);
   assert.deepEqual([w2.zastapione, w2.alerty, bez.push.length], [1, 0, 0], 'domyślnie bez powiadomień (/admin/wersje-ted)');
 });
+
+test('QA 13.11: parser zmian jest liniowy na urwanym tekście, nie ucina wartości na cytacie „3.4.1.)”, a częściowy odczyt nie gubi pozycji', () => {
+  const marker = '3.4.1.) Opis zmiany, w tym tekst, który należy dodać lub zmienić: ';
+  const urwane = (`${marker}5.4. Warunki Przed zmianą: ${'x '.repeat(20000)}`).repeat(30);
+  const start = Date.now();
+  assert.deepEqual(zmianyPrzedPo(urwane), []);
+  assert.ok(Date.now() - start < 500, `urwany tekst policzony w ${Date.now() - start} ms`);
+
+  const cytat = `${marker}5.1. Warunek Przed zmianą: zgodnie z pkt 3.4.) SWZ dwie roboty Po zmianie: jedna robota wg 3.4.1.) SWZ ${marker}6.4. Wadium Przed zmianą: 5000 Po zmianie: 10000 2026-10-30 Biuletyn Zamówień Publicznych`;
+  assert.deepEqual(zmianyPrzedPo(cytat), [
+    { pozycja: '5.1. Warunek', przed: 'zgodnie z pkt 3.4.) SWZ dwie roboty', po: 'jedna robota wg 3.4.1.) SWZ' },
+    { pozycja: '6.4. Wadium', przed: '5000', po: '10000' },
+  ]);
+
+  const tender = { id: '2026~BZP_1', title: 'Dostawa', organization: 'Gmina', deadline: '2099-01-01T09:00:00.000Z' };
+  const czesciowy = alertZmianyOgloszenia({ tender, pozycje: ['5.4. Warunki', '6.4. Wadium'], numer: 'n1', zmiany: [{ pozycja: '6.4. Wadium', przed: '5000', po: '10000' }] });
+  assert.match(czesciowy.tresc.pl, /5\.4\. Warunki; 6\.4\. Wadium\./, 'obie pozycje w treści');
+  assert.equal(czesciowy.zmiany, undefined, 'bez niepełnej listy „było → jest”');
+  const t = alertZmianyTerminu({ tender, staryTermin: '2098-01-01T09:00:00.000Z', nowyTermin: '2099-01-01T09:00:00.000Z', inne: ['5.4. Warunki', '6.4. Wadium'], inneZmiany: [{ pozycja: '6.4. Wadium', przed: '5000', po: '10000' }] });
+  assert.match(t.tresc.pl, /Zmienił też: 5\.4\. Warunki; 6\.4\. Wadium —/);
+});
