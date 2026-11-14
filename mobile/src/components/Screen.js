@@ -13,7 +13,7 @@ import { useStyle, tworzStyle } from '../context/ThemeContext';
  * `stopka` (2026-11-10) — pasek przyklejony pod przewijaną treścią (np. „Biorę / Nie dla nas” w szczegółach
  * przetargu), z marginesem na dolną krawędź telefonu.
  */
-export default function Screen({ children, scroll = false, style, contentStyle, stopka = null }) {
+export default function Screen({ children, scroll = false, style, contentStyle, stopka = null, refreshControl }) {
   const styles = useStyle(tworzStyleEkranu);
   if (scroll) {
     return (
@@ -25,6 +25,7 @@ export default function Screen({ children, scroll = false, style, contentStyle, 
           style={styles.flex}
           contentContainerStyle={[styles.content, contentStyle]}
           keyboardShouldPersistTaps="handled"
+          refreshControl={refreshControl}
         >
           {children}
         </ScrollView>

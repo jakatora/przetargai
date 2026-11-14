@@ -252,6 +252,8 @@ export const api = {
     const s = q.toString();
     return request(`/pracownik/odrzucone${s ? `?${s}` : ''}`);
   },
+  /** „Wyślij szefowi do decyzji” (2026-11-12): { url, wazny_do, wiadomosc } — wiadomość idzie do systemowego udostępniania. */
+  linkDoDecyzji: (matchId) => request(`/matches/${encodeURIComponent(matchId)}/do-decyzji`, { method: 'POST' }),
   pracownikOdrzuc: (matchId, przyczyna, komentarz) =>
     request(`/pracownik/odrzuc/${encodeURIComponent(matchId)}`, { method: 'POST', body: { przyczyna, ...(komentarz ? { komentarz } : {}) } }),
   pracownikPrzywroc: (tenderId) => request(`/pracownik/przywroc/${encodeURIComponent(tenderId)}`, { method: 'POST', body: {} }),

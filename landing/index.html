@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PrzetargAI — aplikacja, która szuka przetargów i robi za Ciebie większość pracy</title>
-  <meta name="description" content="PrzetargAI codziennie przegląda ogłoszenia, wybiera przetargi pasujące do Twojej firmy i pomaga przygotować ofertę: wymagania SWZ, dokumenty z e-Zamówień i następny krok." />
+  <title>PrzetargAI (Przetarg AI) — aplikacja do przetargów publicznych z AI</title>
+  <meta name="description" content="PrzetargAI (Przetarg AI) codziennie przegląda ogłoszenia, wybiera przetargi publiczne pasujące do Twojej firmy i pomaga przygotować ofertę: wymagania SWZ, dokumenty z e-Zamówień i następny krok." />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0b1322" media="(prefers-color-scheme: dark)" />
@@ -39,16 +39,33 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "WebSite",
+        "@id": "https://przetarg-ai.pl/#website",
+        "name": "PrzetargAI",
+        "alternateName": ["Przetarg AI", "przetarg-ai.pl"],
+        "url": "https://przetarg-ai.pl/",
+        "inLanguage": "pl",
+        "publisher": { "@id": "https://przetarg-ai.pl/#organization" }
+      },
+      {
         "@type": "Organization",
         "@id": "https://przetarg-ai.pl/#organization",
         "name": "PrzetargAI",
+        "alternateName": "Przetarg AI",
         "url": "https://przetarg-ai.pl/",
+        "sameAs": [
+          "https://play.google.com/store/apps/details?id=pl.przetargai.app",
+          "https://apps.apple.com/pl/app/id6773018962"
+        ],
         "description": "Monitoring przetargów publicznych z Biuletynu Zamówień Publicznych dla firm budowlanych i IT.",
         "email": "jakatora68@gmail.com"
       },
       {
         "@type": "SoftwareApplication",
         "name": "PrzetargAI",
+        "alternateName": "Przetarg AI",
+        "url": "https://przetarg-ai.pl/",
+        "installUrl": "https://play.google.com/store/apps/details?id=pl.przetargai.app",
         "operatingSystem": "iOS, Android",
         "applicationCategory": "BusinessApplication",
         "description": "AI dopasowuje przetargi z BZP, TED, Bazy Konkurencyjności i platform zakupowych do profilu Twojej firmy i pokazuje trafne ogłoszenia w aplikacji. Aplikacja prowadzi też przez przygotowanie oferty: karta decyzji GO/NO-GO, kontrola oferty przed wysłaniem, kalkulatory (cena, terminy Pzp, kary umowne, punktacja), orientacyjna wartość zamówienia, kalendarz terminów i radar zamówień podprogowych.",
@@ -574,7 +591,13 @@
           <span class="brand__mark" aria-hidden="true">P</span>
           <span class="brand__name">PrzetargAI</span>
         </a>
-        <p class="footer__tag">Monitoring przetargów publicznych dla firm budowlanych i IT.</p>
+        <p class="footer__tag">PrzetargAI (Przetarg AI) — monitoring przetargów publicznych dla firm budowlanych i IT.</p>
+        <p class="footer__tag">
+          Poradniki:
+          <a href="/ai-do-przetargow">AI do przetargów publicznych</a> ·
+          <a href="/analiza-swz">Analiza SWZ z AI</a> ·
+          <a href="/gdzie-szukac-przetargow">Gdzie szukać przetargów</a>
+        </p>
         <!--
           ZGODNOŚĆ (Google Play, „twierdzenia wprowadzające w błąd", 2026-07-12):
           aplikacja podaje informacje urzędowe, więc musi wskazać oficjalne,

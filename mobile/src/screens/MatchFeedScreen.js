@@ -25,6 +25,7 @@ import { StanLadowania, StanBledu, StanPusty } from '../components/Stan';
 import { useJezyk } from '../context/JezykContext';
 import KatalogWszystkich from '../components/KatalogWszystkich';
 import PanelWyboru from '../components/PanelWyboru';
+import PilneDzis from '../components/PilneDzis';
 import { NastepnyKrok } from '../components/Wyjasnienie';
 import { TRYBY, TRYB_DOMYSLNY, KLUCZ_TRYBU, normalizujTryb } from '../lib/katalogPrzetargow';
 import { KANAL, POKAZUJ_ZAKUP } from '../lib/kanal';
@@ -382,6 +383,7 @@ export default function MatchFeedScreen({ navigation }) {
         )}
         ListHeaderComponent={
           <View>
+            <PilneDzis navigation={navigation} nieprzeczytane={nieprzeczytane} />
             <PanelWyboru
               navigation={navigation}
               odswiezenie={odswiezPanel}

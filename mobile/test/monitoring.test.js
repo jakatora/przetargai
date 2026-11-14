@@ -277,3 +277,17 @@ test('przypomnienie bez etapu nie wymysla liczby dni', () => {
   assert.equal(o.wlaczone, true);
   assert.doesNotMatch(o.opis, /null|undefined|NaN/);
 });
+
+test('opisAlertu: zmiany „było → jest” przechodzą do karty, śmieci odpadają (2026-11-12)', async () => {
+  const { opisAlertu } = await import('../src/lib/centrumAlertow.js');
+  const a = opisAlertu({ id: 'x', tytul: { pl: 'Zmiana' }, tresc: { pl: 'opis' }, zmiany: [
+    { pozycja: '6.4. Wadium', przed: '5000 zł', po: '10000 zł' },
+    { pozycja: '7.6. Wymagania', przed: '', po: 'umowa o pracę' },
+    { pozycja: 'pusta', przed: '', po: '' }, null, { przed: 'a', po: 'b' },
+  ] });
+  assert.deepEqual(a.zmiany, [
+    { pozycja: '6.4. Wadium', przed: '5000 zł', po: '10000 zł' },
+    { pozycja: '7.6. Wymagania', przed: null, po: 'umowa o pracę' },
+  ]);
+  assert.deepEqual(opisAlertu({ id: 'y' }).zmiany, []);
+});

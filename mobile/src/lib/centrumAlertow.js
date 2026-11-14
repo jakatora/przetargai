@@ -49,6 +49,11 @@ export function opisAlertu(alert, jezyk = 'pl') {
       opis: p.zmiana_opis ? tr(p.zmiana_opis, jezyk) : null,
       typZmiany: p.zmiana_typ ?? null,
     })),
+    // „Było → jest” (2026-11-12): zmiany ogłoszenia z wartościami — karta rysuje je jako pary zamiast zdania.
+    zmiany: (Array.isArray(alert?.zmiany) ? alert.zmiany : [])
+      .filter((z) => z && typeof z.pozycja === 'string' && (z.przed || z.po))
+      .slice(0, 5)
+      .map((z) => ({ pozycja: z.pozycja, przed: z.przed ? String(z.przed) : null, po: z.po ? String(z.po) : null })),
   };
 }
 
@@ -85,7 +90,7 @@ export function grupujAlerty(alerty, terazMs = Date.now(), jezyk = 'pl') {
 /** Pustka ma tłumaczyć, skąd biorą się alerty — inaczej wygląda jak awaria. */
 export function opisPustegoCentrum(jezyk = 'pl') {
   return tr({
-    pl: 'Nie masz jeszcze żadnych alertów. Tu trafią zmiany w zapisanych przetargach — zmiana SWZ, nowy termin, wyjaśnienia, wynik — i nowe przetargi z zapisanych wyszukiwań. Wystarczy wziąć przetarg („Biorę”) albo zapisać wyszukiwanie.',
-    en: 'No alerts yet. Changes to your saved tenders land here — changed tender documents, a new deadline, clarifications, the result — plus new tenders from saved searches. Just take a tender ("I will bid") or save a search.',
+    pl: 'Nie masz jeszcze żadnych alertów. Tu trafią zmiany w zapisanych przetargach — zmiana SWZ, nowy termin, wyjaśnienia, wynik — odpowiedź szefa z linku „do decyzji” i nowe przetargi z zapisanych wyszukiwań. Wystarczy wziąć przetarg („Biorę”) albo zapisać wyszukiwanie.',
+    en: 'No alerts yet. Changes to your saved tenders land here — changed tender documents, a new deadline, clarifications, the result — the answer to a “for decision” link, plus new tenders from saved searches. Just take a tender ("I will bid") or save a search.',
   }, jezyk);
 }

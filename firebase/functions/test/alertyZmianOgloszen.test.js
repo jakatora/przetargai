@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
-const { zmianaOgloszenia, alertZmianyOgloszenia, alertZmianyTerminu } = await import('../src/lib/zmianaTerminuBzp.js');
+const { zmianaOgloszenia, alertZmianyOgloszenia, alertZmianyTerminu, zmianyPrzedPo, opisZmiany, tekstOgloszenia } = await import('../src/lib/zmianaTerminuBzp.js');
 const { alertNowejWersjiTed } = await import('../src/lib/wersjeTed.js');
 const { runZmianyTerminowBzp } = await import('../src/jobs/zmianyTerminowBzp.js');
 const { runWersjeTed } = await import('../src/jobs/wersjeTed.js');
@@ -29,6 +29,27 @@ test('parser zmiany ogłoszenia (prawdziwe ogłoszenia): pozycje bez terminów; 
   assert.deepEqual(wg('2026/BZP 00510617/01').pozycje, [], 'same terminy (8.1, 8.3, 8.4) — to obsługuje alert terminu');
   assert.equal(wg('2026/BZP 00510575/01'), null, 'zmiana ogłoszenia o wykonaniu umowy');
   assert.equal(zmianaOgloszenia({ htmlBody: '<p>brak numeru</p>' }), null);
+});
+
+test('„było → jest” z prawdziwego ogłoszenia BZP: wartości przed i po, dodano/usunięto, bez terminów (2026-11-12)', () => {
+  const n = FIXTURE.find((x) => x.noticeNumber === '2026/BZP 00510761/01');
+  assert.deepEqual(zmianyPrzedPo(tekstOgloszenia(n.htmlBody)), [
+    { pozycja: '4.2.10. Data końcowa okresu obowiązywania', przed: '2026-11-30', po: '2026-12-15' },
+    { pozycja: '7.5. Zamawiający uwzględnił aspekty społeczne, środowiskowe,…', przed: 'NIE', po: 'TAK' },
+    { pozycja: '7.6. Zamawiający przewiduje następujące wymagania związane z…', przed: '', po: 'w zakresie zatrudnienia na podstawie stosunku pracy, w okolicznościach, o…' },
+  ]);
+  assert.deepEqual(zmianaOgloszenia(n).zmiany.map((z) => z.pozycja), zmianaOgloszenia(n).pozycje, 'te same pozycje co lista');
+  assert.equal(opisZmiany({ pozycja: '6.4. Wadium', przed: '5000 zł', po: '10000 zł' }), '6.4. Wadium: było „5000 zł”, jest „10000 zł”');
+  assert.equal(opisZmiany({ pozycja: '7.6. Wymagania', przed: '', po: 'zatrudnienie na umowę o pracę' }), '7.6. Wymagania: dodano „zatrudnienie na umowę o pracę”');
+  assert.equal(opisZmiany({ pozycja: '5.4. Warunki', przed: 'dwie roboty', po: '' }), '5.4. Warunki: usunięto „dwie roboty”');
+
+  const tender = { id: '2026~BZP_00490611', title: 'Dostawa paliw', organization: 'Gmina Krasne', deadline: '2026-11-20T09:00:00.000Z' };
+  const o = zmianaOgloszenia(zmianaWarunkow('2026/BZP 00500202', '2026/BZP 00510999/01'));
+  const a = alertZmianyOgloszenia({ tender, pozycje: o.pozycje, numer: o.numer, zmiany: o.zmiany });
+  assert.equal(a.tresc.pl, 'Gmina Krasne zmienił ogłoszenie w BZP: 5.4. Nazwa i opis warunków udziału w postępowaniu: było „dwie roboty”, jest „jedna robota”. Sprawdź zmiany przed złożeniem oferty — oferta, która ich nie uwzględnia, może zostać odrzucona.');
+  assert.deepEqual(a.zmiany, [{ pozycja: '5.4. Nazwa i opis warunków udziału w postępowaniu', przed: 'dwie roboty', po: 'jedna robota' }]);
+  const t = alertZmianyTerminu({ tender, staryTermin: '2026-11-13T10:00:00.000Z', nowyTermin: '2026-11-20T10:00:00.000Z', inne: o.pozycje, inneZmiany: o.zmiany });
+  assert.match(t.tresc.pl, /Zmienił też: 5\.4\. Nazwa i opis warunków udziału w postępowaniu: było „dwie roboty”, jest „jedna robota” — sprawdź/);
 });
 
 test('alerty: zmiana ogłoszenia z listą pozycji, termin z dopiskiem „Zmienił też”, klucz na ogłoszenie o zmianie', () => {
@@ -144,4 +165,35 @@ test('job TED: nowa wersja → alert do zapisanych starszej wersji; uzupełniani
   const bez = atrapyTed({ zapisaneWersje });
   const w2 = await runWersjeTed(bez.deps);
   assert.deepEqual([w2.zastapione, w2.alerty, bez.push.length], [1, 0, 0], 'domyślnie bez powiadomień (/admin/wersje-ted)');
+});
+
+test('QA 13.11: parser zmian jest liniowy na urwanym tekście, nie ucina wartości na cytacie „3.4.1.)”, a częściowy odczyt nie gubi pozycji', () => {
+  const marker = '3.4.1.) Opis zmiany, w tym tekst, który należy dodać lub zmienić: ';
+  const urwane = (`${marker}5.4. Warunki Przed zmianą: ${'x '.repeat(20000)}`).repeat(30);
+  const start = Date.now();
+  assert.deepEqual(zmianyPrzedPo(urwane), []);
+  assert.ok(Date.now() - start < 500, `urwany tekst policzony w ${Date.now() - start} ms`);
+
+  const cytat = `${marker}5.1. Warunek Przed zmianą: zgodnie z pkt 3.4.) SWZ dwie roboty Po zmianie: jedna robota wg 3.4.1.) SWZ ${marker}6.4. Wadium Przed zmianą: 5000 Po zmianie: 10000 2026-10-30 Biuletyn Zamówień Publicznych`;
+  assert.deepEqual(zmianyPrzedPo(cytat), [
+    { pozycja: '5.1. Warunek', przed: 'zgodnie z pkt 3.4.) SWZ dwie roboty', po: 'jedna robota wg 3.4.1.) SWZ' },
+    { pozycja: '6.4. Wadium', przed: '5000', po: '10000' },
+  ]);
+
+  const tender = { id: '2026~BZP_1', title: 'Dostawa', organization: 'Gmina', deadline: '2099-01-01T09:00:00.000Z' };
+  const czesciowy = alertZmianyOgloszenia({ tender, pozycje: ['5.4. Warunki', '6.4. Wadium'], numer: 'n1', zmiany: [{ pozycja: '6.4. Wadium', przed: '5000', po: '10000' }] });
+  assert.match(czesciowy.tresc.pl, /5\.4\. Warunki; 6\.4\. Wadium\./, 'obie pozycje w treści');
+  assert.equal(czesciowy.zmiany, undefined, 'bez niepełnej listy „było → jest”');
+  const t = alertZmianyTerminu({ tender, staryTermin: '2098-01-01T09:00:00.000Z', nowyTermin: '2099-01-01T09:00:00.000Z', inne: ['5.4. Warunki', '6.4. Wadium'], inneZmiany: [{ pozycja: '6.4. Wadium', przed: '5000', po: '10000' }] });
+  assert.match(t.tresc.pl, /Zmienił też: 5\.4\. Warunki; 6\.4\. Wadium —/);
+});
+
+test('QA 13.11: pole zmiany przechodzi przez ZAPIS alertu (repo) do listy — inaczej karta „Było / Jest” jest martwa', async () => {
+  const { alerty, users } = await import('../src/db/repos.js');
+  const u = await users.create({ email: `zm-${process.pid}-${Date.now()}@t.pl`, passwordHash: 'x' });
+  const tender = { id: '2026~BZP_00999001', title: 'Dostawa paliw', organization: 'Gmina Krasne', deadline: '2099-11-20T09:00:00.000Z' };
+  const alert = alertZmianyOgloszenia({ tender, pozycje: ['6.4. Wadium'], numer: 'n-repo', zmiany: [{ pozycja: '6.4. Wadium', przed: '5000 zł', po: '10000 zł' }] });
+  assert.equal((await alerty.dodaj(u.id, alert)).nowy, true);
+  const [zapisany] = await alerty.lista(u.id);
+  assert.deepEqual(zapisany.zmiany, [{ pozycja: '6.4. Wadium', przed: '5000 zł', po: '10000 zł' }]);
 });

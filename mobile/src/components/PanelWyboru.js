@@ -3,6 +3,7 @@ import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { api } from '../api/client';
 import Button from './Button';
 import ArkuszOdrzucenia from './ArkuszOdrzucenia';
+import { StanLadowania } from './Stan';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { useSaved } from '../context/SavedContext';
@@ -18,6 +19,7 @@ import { OPISY_BRAKOW } from '../lib/kartaFirmy';
 import { POKAZUJ_ZAKUP } from '../lib/kanal';
 import { krokiBiore } from '../lib/szczegolyPrzetargu';
 import { opisTerminu } from '../lib/termin';
+import { postepDnia, podpisPostepu, opisGotowego } from '../lib/postepDnia';
 
 /**
  * Górna część ekranu „Twoje przetargi” (spec §10): raport dnia, próba Standard, braki karty,
@@ -136,7 +138,7 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
     }
   }
 
-  if (!dzien && !blad) return <ActivityIndicator style={styles.ladowanie} />;
+  if (!dzien && !blad) return <StanLadowania karty={2} />;
   if (!dzien) {
     // 503 „wyłączony” = funkcja świadomie wyłączona — bez komunikatu. Inny błąd (słaba sieć) nie może
     // po cichu schować dziennego wyboru: karta z ponowieniem (audyt 2026-11-10).
@@ -161,6 +163,13 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
   // Build z Google Play (lib/kanal.js): informacja o próbie i planie zostaje, zakup i cena znikają.
   const zakup = POKAZUJ_ZAKUP && typeof onUpgrade === 'function';
   const razem = dzien.raport?.odrzucone_razem ?? 0;
+  // Postęp decyzji dnia (2026-11-12): „Do decyzji: X z N”, czekające na górze, po ostatniej — „Na dziś gotowe”.
+  // Etap przychodzi z serwera (`status`, `zapisany` w /pracownik/dzien) — wzięty zostaje wzięty po ponownym wejściu
+  // do apki, także gdy zapisała go decyzja szefa albo oferta jest już złożona (QA 2026-11-13).
+  const ETAPY_PO_DECYZJI = ['przygotowuje', 'zlozona', 'wygrana', 'przegrana'];
+  const czyWziety = (m) => wziete.has(m.id) || ((m.zapisany ?? isSaved(m.id)) && ETAPY_PO_DECYZJI.includes(m.status));
+  const postep = postepDnia({ wybrane: dzien.wybrane, raportWybrane: dzien.raport?.wybrane, czyWziety });
+  const podpis = podpisPostepu(postep);
 
   return (
     <View style={styles.panel}>
@@ -201,15 +210,50 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
       ) : null}
 
       <Text style={styles.sekcja}>{t('Dziś wybrane dla Ciebie', 'Picked for you today')}</Text>
-      {(dzien.wybrane ?? []).length === 0 ? (
+      {podpis ? (
+        <View style={styles.postep} accessibilityRole="progressbar" accessibilityLabel={t(podpis)}
+          accessibilityValue={{ min: 0, max: postep.razem, now: postep.zdecydowane }}>
+          <View style={styles.postepRzad}>
+            <Text style={styles.postepTekst}>{t(podpis)}</Text>
+            <Text style={styles.postepDrobny}>{t(`zdecydowane: ${postep.zdecydowane}`, `decided: ${postep.zdecydowane}`)}</Text>
+          </View>
+          <View style={styles.postepTor}>
+            <View style={[styles.postepWypelnienie, { width: `${Math.round((postep.zdecydowane / postep.razem) * 100)}%` }]} />
+          </View>
+        </View>
+      ) : null}
+      {postep.gotowe ? (
+        <View style={styles.gotowe} accessibilityRole="summary">
+          <View style={styles.gotoweRzad}>
+            <View style={styles.gotoweZnak}><Ikona nazwa="ok" rozmiar={18} kolor={kolory.sukcesAkcent} /></View>
+            <Text style={styles.gotoweTytul}>{t('Na dziś gotowe', 'All done for today')}</Text>
+          </View>
+          <Text style={styles.gotoweTekst}>{t(opisGotowego(postep))}</Text>
+          {nastepny ? <Text style={styles.gotoweDrobny}>{t(nastepny)}</Text> : null}
+          {postep.wziete > 0 ? (
+            <Button title={t('Moje oferty', 'My bids')} variant="ghost" onPress={() => navigation.navigate('Pulpit')} />
+          ) : (
+            // Wszystko odrzucone = wybór był nietrafiony — najkrótsza droga do poprawy to karta firmy (seria 2 runda 6).
+            <Button title={t('Popraw kartę firmy', 'Adjust your company card')} variant="ghost" onPress={() => navigation.navigate('KartaFirmy')} />
+          )}
+        </View>
+      ) : null}
+      {/* „Nic nie pasuje” tylko, gdy selekcja naprawdę nic dziś nie wybrała — nie po odrzuceniu wszystkiego (wtedy „Na dziś gotowe”). */}
+      {(dzien.wybrane ?? []).length === 0 && !postep.gotowe ? (
         <Text style={styles.drobny}>{t('Dziś nic nie pasuje do Twojej firmy. Wcześniejsze wybory są niżej.', 'Nothing fits your company today. Earlier picks are below.')}</Text>
       ) : null}
-      {(dzien.wybrane ?? []).map((m) => (
+      {postep.kolejnosc.map((m) => (
         <Pressable key={m.id} style={({ pressed }) => [styles.karta, pressed && styles.kartaWcisnieta]} onPress={() => navigation.navigate('MatchDetail', { match: m })} accessibilityRole="button">
           <Text style={styles.kartaTytul}>{m.tender?.title}</Text>
           {m.tender?.organization ? <Text style={styles.drobny}>{m.tender.organization}</Text> : null}
           {m.tender?.deadline ? (
-            <Text style={styles.drobny}>{t(`Termin ofert: ${formatDate(m.tender.deadline)}`, `Bid deadline: ${formatDate(m.tender.deadline)}`)}</Text>
+            <Text style={styles.drobny}>
+              {t(`Termin ofert: ${formatDate(m.tender.deadline)}`, `Bid deadline: ${formatDate(m.tender.deadline)}`)}
+              {/* Ile dni zostało — bez liczenia w głowie (seria 2 runda 2). */}
+              {opisTerminu(m.tender.deadline).stan !== 'brak' ? (
+                <Text style={opisTerminu(m.tender.deadline).pilny ? styles.terminPilny : styles.terminDni}>{` · ${t(opisTerminu(m.tender.deadline).etykieta)}`}</Text>
+              ) : null}
+            </Text>
           ) : null}
           {(m.uzasadnienie ?? []).length ? (
             <View style={styles.uzasadnienie}>
@@ -221,11 +265,16 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
               ))}
             </View>
           ) : null}
+          {m.decyzja_szefa?.decyzja ? (
+            <Text style={m.decyzja_szefa.decyzja === 'tak' ? styles.terminDni : styles.terminPilny}>
+              {m.decyzja_szefa.decyzja === 'tak' ? t('Szef: startujemy', 'Boss: we bid') : t('Szef: nie startujemy', 'Boss: we pass')}
+            </Text>
+          ) : null}
           {m.ocena_bez_ai ? (
             <Text style={styles.drobny}>{t('Wybrany wstępnie, bez oceny AI — AI sprawdzi go przy najbliższym przeglądzie.', 'Picked provisionally, without an AI review — AI will check it in the next review.')}</Text>
           ) : null}
           <View style={styles.rzad}>
-            {wziete.has(m.id) || (isSaved(m.id) && m.status === 'przygotowuje') ? (
+            {czyWziety(m) ? (
               <View style={[styles.przyciskPol, styles.wzietyStan]}>
                 <Ikona nazwa="ok" rozmiar={16} kolor={kolory.sukcesAkcent} />
                 <Text style={styles.wzietyTekst}>{t('Bierzesz', 'Bidding')}</Text>
@@ -327,6 +376,23 @@ const tworzStylePanelu = tworzStyle((k) => ({
   wzietyTekst: { fontSize: 15, fontWeight: '800', color: k.text },
   bladKarta: { marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, gap: spacing.sm },
   bladTekst: { color: k.textMuted, fontSize: 14, lineHeight: 20 },
+  terminDni: { fontWeight: '700', color: k.text },
+  terminPilny: { fontWeight: '800', color: k.ostrzezenieTekst },
+  postep: { marginBottom: spacing.sm, gap: 6 },
+  postepRzad: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  postepTekst: { fontSize: 14, fontWeight: '700', color: k.text },
+  postepDrobny: { fontSize: 13, color: k.textMuted },
+  postepTor: { height: 6, borderRadius: 3, backgroundColor: k.border, overflow: 'hidden' },
+  postepWypelnienie: { height: 6, borderRadius: 3, backgroundColor: k.blue },
+  gotowe: {
+    marginBottom: spacing.sm, padding: spacing.md, borderRadius: radius.lg, gap: spacing.sm,
+    backgroundColor: k.sukcesTlo, borderWidth: 1, borderColor: k.border,
+  },
+  gotoweRzad: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  gotoweZnak: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: k.surface },
+  gotoweTytul: { fontSize: 17, fontWeight: '800', color: k.text },
+  gotoweTekst: { fontSize: 15, lineHeight: 21, color: k.text },
+  gotoweDrobny: { fontSize: 13, color: k.textMuted },
   odrzucone: { marginTop: spacing.sm, backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, paddingHorizontal: spacing.md },
   odrzuconeNaglowek: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48 },
   odrzuconeTytul: { fontSize: 15, fontWeight: '700', color: k.text },

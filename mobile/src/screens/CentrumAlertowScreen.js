@@ -7,6 +7,7 @@ import Button from '../components/Button';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius } from '../theme';
+import { StanLadowania } from '../components/Stan';
 import { grupujAlerty, etykietaPlakietki, opisPustegoCentrum } from '../lib/centrumAlertow';
 import { ogloszenieZAlertu } from '../lib/skrotOgloszenia';
 
@@ -86,7 +87,7 @@ export default function CentrumAlertowScreen({ navigation }) {
   if (ladowanie && !alerty.length && !blad) {
     return (
       <Screen>
-        <View style={styles.srodek}><ActivityIndicator size="large" color={kolory.blue} /></View>
+        <StanLadowania karty={3} />
       </Screen>
     );
   }
@@ -159,6 +160,24 @@ export default function CentrumAlertowScreen({ navigation }) {
 
               <Text style={styles.kartaTresc}>{a.tresc}</Text>
 
+              {a.zmiany.length ? (
+                <View style={styles.zmiany}>
+                  {a.zmiany.map((z) => (
+                    <View key={`${a.id}-${z.pozycja}`} style={styles.zmiana}>
+                      <Text style={styles.zmianaPozycja}>{z.pozycja}</Text>
+                      {z.przed ? (
+                        <Text style={styles.zmianaPrzed}>
+                          <Text style={styles.zmianaEtykieta}>{t('Było: ', 'Was: ')}</Text>{z.przed}
+                        </Text>
+                      ) : null}
+                      <Text style={styles.zmianaPo}>
+                        <Text style={styles.zmianaEtykieta}>{z.po ? t('Jest: ', 'Now: ') : t('Usunięto', 'Removed')}</Text>{z.po ?? ''}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
               {a.pozycje.slice(0, 3).map((p) => (
                 <View key={`${a.id}-${p.tenderId}-${p.typZmiany ?? 'nowe'}`} style={styles.pozycja}>
                   <Text style={styles.pozycjaTytul} numberOfLines={2}>{p.tytul ?? '—'}</Text>
@@ -195,6 +214,12 @@ export default function CentrumAlertowScreen({ navigation }) {
 const tworzStyleCentrum = tworzStyle((k) => ({
   tlo: { flex: 1, backgroundColor: k.bg },
   tresc: { padding: spacing.lg, paddingBottom: spacing.xl },
+  zmiany: { marginTop: spacing.sm, gap: spacing.sm },
+  zmiana: { padding: spacing.sm + 2, borderRadius: radius.md, backgroundColor: k.bg, borderLeftWidth: 3, borderLeftColor: k.ostrzezenieTekst },
+  zmianaPozycja: { fontSize: 13, fontWeight: '700', color: k.text, marginBottom: 4 },
+  zmianaEtykieta: { fontWeight: '700', color: k.textMuted, textDecorationLine: 'none' },
+  zmianaPrzed: { fontSize: 14, color: k.textMuted, textDecorationLine: 'line-through' },
+  zmianaPo: { fontSize: 14, color: k.text, fontWeight: '600', marginTop: 2 },
   srodek: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   naglowek: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   tytul: { fontSize: 16, fontWeight: '700', color: k.text },

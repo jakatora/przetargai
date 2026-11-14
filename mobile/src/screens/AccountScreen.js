@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
+import FirmaWSkrocie from '../components/FirmaWSkrocie';
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
@@ -328,6 +329,7 @@ export default function AccountScreen({ navigation }) {
         {t('Czym się zajmujesz, czego nie bierzesz, gdzie pracujesz, jakie kwoty — na tej podstawie wybieramy przetargi dla Ciebie.',
           'What you do, what you do not take on, where you work and what contract sizes — we pick tenders for you based on this.')}
       </Text>
+      <FirmaWSkrocie navigation={navigation} />
       <View style={styles.lista}>
         <WierszAkcji tytul={t('Otwórz kartę firmy', 'Open company card')} onPress={() => navigation.navigate('KartaFirmy')} />
         <WierszAkcji
