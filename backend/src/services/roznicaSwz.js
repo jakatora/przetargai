@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { env, features } from '../config/env.js';
 import { logger } from '../lib/logger.js';
+import { opisZrodla, cytatZPozycji, linieZrodla } from '../lib/zrodlaSwz.js';
 import { costUsd } from '../lib/pricing.js';
 import { aiUsage, zmianySwz } from '../db/repos.js';
 import { aiBudgetAllows, zarezerwujLimitAiUzytkownika } from './ai.js';
@@ -230,7 +231,10 @@ const ZNAK = { usuniete: '-', dodane: '+', równe: ' ' };
  * @returns {string}
  */
 export function diffSwz(stary, nowy, { kontekst = 3 } = {}) {
-  const ops = operacje(stary, nowy);
+  return renderujDiff(operacje(stary, nowy), kontekst);
+}
+
+function renderujDiff(ops, kontekst) {
   if (!ops.some((o) => o.typ !== 'równe')) return '';
 
   // Które linie kontekstu (równe) zostają: te w promieniu `kontekst` od zmiany.
@@ -254,6 +258,34 @@ export function diffSwz(stary, nowy, { kontekst = 3 } = {}) {
     linie.push(`${ZNAK[o.typ]} ${o.tekst}`);
   });
   return linie.join('\n');
+}
+
+/** Jeden przebieg LCS: diff oraz dokładne pozycje zmienionych linii w obu źródłach. */
+export function porownajSwz(poprzednia = {}, nowa = {}) {
+  const stareLinie = linieZrodla(poprzednia);
+  const noweLinie = linieZrodla(nowa);
+  const ops = operacje(stareLinie.map((l) => l.tekst).join('\n'), noweLinie.map((l) => l.tekst).join('\n'));
+  const cytaty = [];
+  let a = 0;
+  let b = 0;
+  let pominiete = 0;
+  for (const op of ops) {
+    if (op.typ !== 'równe' && op.tekst.trim()) {
+      const usunieta = op.typ === 'usuniete';
+      const rekord = usunieta ? poprzednia : nowa;
+      const start = usunieta ? stareLinie[a].start : noweLinie[b].start;
+      if (cytaty.length < 100) {
+        const dowod = cytatZPozycji(rekord, start, start + op.tekst.length);
+        if (dowod) cytaty.push({ ...dowod, zmiana: usunieta ? 'usuniete' : 'dodane' });
+      } else pominiete++;
+    }
+    if (op.typ !== 'dodane') a++;
+    if (op.typ !== 'usuniete') b++;
+  }
+  return {
+    diff: renderujDiff(ops, 3),
+    porownanie: { poprzednia: opisZrodla(poprzednia), nowa: opisZrodla(nowa), cytaty, pominiete },
+  };
 }
 
 // ── Opis skutku zmiany (płatne AI) ───────────────────────────────────────────
@@ -423,15 +455,15 @@ export async function opiszSkutekZmiany({ diff = '' } = {}) {
  *          nowa: {id?: string, tresc?: string, data_publikacji?: string}}} wejscie
  * @returns {Promise<object|null>} zapisany wiersz zmiany albo null
  */
-export async function zarejestrujRoznice({ postepowanieId, poprzednia = null, nowa }) {
+export async function zarejestrujRoznice({ postepowanieId, poprzednia = null, nowa, opisAi = true }) {
   const staryTekst = poprzednia?.tresc ?? '';
   const nowyTekst = nowa?.tresc ?? '';
-  const diff = diffSwz(staryTekst, nowyTekst);
+  const { diff, porownanie } = porownajSwz({ ...poprzednia, tresc: staryTekst }, { ...nowa, tresc: nowyTekst });
   if (!diff) return null; // brak realnej zmiany treści → brak wpisu
 
   let opis = null;
   try {
-    opis = await opiszSkutekZmiany({ diff });
+    if (opisAi) opis = await opiszSkutekZmiany({ diff });
   } catch (err) {
     logger.warn({ err: err.message }, 'roznicaSwz: opis skutku niedostępny — zapis zmiany z samym diffem');
   }
@@ -448,5 +480,6 @@ export async function zarejestrujRoznice({ postepowanieId, poprzednia = null, no
     opisSkutku: opis,
     diff,
     elementyOferty,
+    porownanie,
   });
 }

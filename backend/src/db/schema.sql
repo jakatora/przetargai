@@ -267,6 +267,7 @@ CREATE TABLE IF NOT EXISTS swz_wersja (
   hash            TEXT NOT NULL,                 -- hasz treści SWZ (dedup „czy to nowa wersja?")
   tresc           TEXT,                          -- treść SWZ inline (opcjonalna, gdy trzymamy plik)
   sciezka         TEXT,                          -- ścieżka/URL do pliku SWZ (opcjonalna, gdy treść inline)
+  strony          TEXT,                          -- JSON: początki stron w niezmiennej treści wersji
   data_publikacji TEXT NOT NULL,                 -- ISO 8601 — data publikacji tej wersji przez zamawiającego
   created_at      TEXT NOT NULL,
   UNIQUE (postepowanie_id, hash)                 -- ten sam hasz w tym samym postępowaniu = ta sama wersja
@@ -281,7 +282,8 @@ CREATE TABLE IF NOT EXISTS swz_tresc_wklejona (
   hash            TEXT NOT NULL,                 -- SHA-256 treści (rozpoznanie ponowienia tej samej treści)
   tresc           TEXT NOT NULL,                 -- treść SWZ wklejona przez użytkownika do analizy
   created_at      TEXT NOT NULL,                 -- ISO 8601 — kiedy UŻYTKOWNIK ją wkleił (to NIE data publikacji)
-  strony          TEXT                           -- JSON: początki stron PDF-a w `tresc` (treść z pliku; migracja 016)
+  strony          TEXT,                          -- JSON: początki stron PDF-a w `tresc` (treść z pliku; migracja 016)
+  sciezka         TEXT
 );
 
 -- Pytania do treści SWZ (wygenerowane lub ręczne). Status prowadzi cykl życia
@@ -292,6 +294,7 @@ CREATE TABLE IF NOT EXISTS pytania_swz (
   postepowanie_id TEXT NOT NULL REFERENCES postepowanie_swz(id) ON DELETE CASCADE,
   tresc           TEXT NOT NULL,                 -- treść pytania (gotowa do wysłania)
   fragment_swz    TEXT,                          -- powiązany fragment SWZ (cytat/odniesienie)
+  zrodlo          TEXT,                          -- JSON: dowód fragmentu względem treści użytej w analizie
   status          TEXT NOT NULL DEFAULT 'szkic'
                     CHECK (status IN ('szkic', 'wyslane', 'odpowiedziane')),
   created_at      TEXT NOT NULL,
@@ -313,6 +316,7 @@ CREATE TABLE IF NOT EXISTS zmiany_swz (
   opis_skutku     TEXT,                          -- czytelny skutek zmiany (do UI/alertu)
   diff            TEXT,                          -- różnica wobec poprzedniej wersji
   elementy_oferty TEXT NOT NULL DEFAULT '[]',    -- JSON: string[] — sekcje oferty do aktualizacji
+  porownanie      TEXT,                         -- JSON: poprzednie/nowe źródło i cytaty zmian
   uwzglednione    INTEGER NOT NULL DEFAULT 0,    -- 0 = „wymaga aktualizacji" (bramka), 1 = wykonawca uwzględnił zmianę
   created_at      TEXT NOT NULL
 );

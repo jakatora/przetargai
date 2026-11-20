@@ -1,0 +1,92 @@
+{
+  "nazwa": "Konferencja „Gospodarstwa edukacyjne – korzenie wiedzy, gałęzie przyszłości”",
+  "zamawiajacy": "Wielkopolski Ośrodek Doradztwa Rolniczego w Poznaniu",
+  "numer": "AG.261.52.2026",
+  "platforma": "https://platformazakupowa.pl/transakcja/1406573",
+  "cpv": {
+    "kod": "79952000-2",
+    "rodzaj": "kod dodatkowy",
+    "strona_swz": 9
+  },
+  "uwaga": "Przykład archiwalny z publicznego postępowania. Porównujemy wybrane fragmenty pierwotnej SWZ z opublikowaną zmianą; nie przedstawiamy pisma zmieniającego jako pełnego tekstu jednolitego SWZ. Wynik przygotowano bez płatnej analizy AI.",
+  "zrodla": [
+    {
+      "nazwa": "SWZ AG.261.52.2026.pdf",
+      "url": "https://platformazakupowa.pl/file/get_new/c1fbdb54ed144ba3984f602bbed2c8e3.pdf",
+      "pdf_sha256": "56ac62f70736929c64193396df208380afe5c589a9d07f50db950ce67a11a01c",
+      "liczba_stron": 26
+    },
+    {
+      "nazwa": "Wyjaśnienienia treści SWZ 17.11.2026.pdf",
+      "url": "https://platformazakupowa.pl/file/get_new/e461f5918ff2821b207e3b0b234221ab.pdf",
+      "pdf_sha256": "ac2c99542d9081890ff42b2d72ef289d8f3f13dee11f6696f7d8648c8d451b3f",
+      "liczba_stron": 1
+    },
+    {
+      "nazwa": "Ogłoszenie o zmianie.pdf",
+      "url": "https://platformazakupowa.pl/file/get_new/ed0702b6597771a40a699259eadf12db.pdf",
+      "pdf_sha256": "af91f5f9bfdc587fc044867c914b7b256d0985a213b079aea72918974d5ce1f0",
+      "liczba_stron": 1
+    }
+  ],
+  "punkty": [
+    {
+      "nazwa": "Termin składania ofert",
+      "przed": {
+        "tekst": "Ofertę wraz z wymaganymi dokumentami należy umieścić na Platformie Zakupowej pod adresem: platformazakupowa.pl w myśl ustawy Pzp na stronie internetowej prowadzonego postępowania do dnia 18.11.2026 r. do godziny 12:00",
+        "potwierdzony": true,
+        "strona": 20,
+        "zrodlo": {
+          "rodzaj": "dokument",
+          "nazwa": "Pierwotna SWZ",
+          "url": "https://platformazakupowa.pl/file/get_new/c1fbdb54ed144ba3984f602bbed2c8e3.pdf",
+          "hash": "56ac62f70736929c64193396df208380afe5c589a9d07f50db950ce67a11a01c",
+          "hash_zakres": "plik_pdf"
+        }
+      },
+      "po": {
+        "tekst": "– pkt 2.1 – termin składania ofert wyznacza się na: 20.11.2026 r., godz. 09:00;",
+        "potwierdzony": true,
+        "strona": 1,
+        "zrodlo": {
+          "rodzaj": "dokument",
+          "nazwa": "Wyjaśnienie i zmiana z 17.11.2026",
+          "url": "https://platformazakupowa.pl/file/get_new/e461f5918ff2821b207e3b0b234221ab.pdf",
+          "hash": "ac2c99542d9081890ff42b2d72ef289d8f3f13dee11f6696f7d8648c8d451b3f",
+          "hash_zakres": "plik_pdf"
+        }
+      },
+      "opis": "Termin składania ofert zmieniono z 18 listopada 2026, godz. 12:00, na 20 listopada 2026, godz. 09:00. W przygotowaniu oferty należy stosować nowy termin.",
+      "diff": "- Ofertę wraz z wymaganymi dokumentami należy umieścić na Platformie Zakupowej pod adresem: platformazakupowa.pl w myśl ustawy Pzp na stronie internetowej prowadzonego postępowania do dnia 18.11.2026 r. do godziny 12:00\n+ – pkt 2.1 – termin składania ofert wyznacza się na: 20.11.2026 r., godz. 09:00;"
+    },
+    {
+      "nazwa": "Termin otwarcia ofert",
+      "przed": {
+        "tekst": "Otwarcie ofert nastąpi w dniu 18.11.2026 r. o godzinie 12:15",
+        "potwierdzony": true,
+        "strona": 21,
+        "zrodlo": {
+          "rodzaj": "dokument",
+          "nazwa": "Pierwotna SWZ",
+          "url": "https://platformazakupowa.pl/file/get_new/c1fbdb54ed144ba3984f602bbed2c8e3.pdf",
+          "hash": "56ac62f70736929c64193396df208380afe5c589a9d07f50db950ce67a11a01c",
+          "hash_zakres": "plik_pdf"
+        }
+      },
+      "po": {
+        "tekst": "– pkt 3.1 – termin otwarcia ofert wyznacza się na: 20.11.2026 r., godz. 09:15;",
+        "potwierdzony": true,
+        "strona": 1,
+        "zrodlo": {
+          "rodzaj": "dokument",
+          "nazwa": "Wyjaśnienie i zmiana z 17.11.2026",
+          "url": "https://platformazakupowa.pl/file/get_new/e461f5918ff2821b207e3b0b234221ab.pdf",
+          "hash": "ac2c99542d9081890ff42b2d72ef289d8f3f13dee11f6696f7d8648c8d451b3f",
+          "hash_zakres": "plik_pdf"
+        }
+      },
+      "opis": "Otwarcie ofert przesunięto z 18 listopada 2026, godz. 12:15, na 20 listopada 2026, godz. 09:15.",
+      "diff": "- Otwarcie ofert nastąpi w dniu 18.11.2026 r. o godzinie 12:15\n+ – pkt 3.1 – termin otwarcia ofert wyznacza się na: 20.11.2026 r., godz. 09:15;"
+    }
+  ]
+}

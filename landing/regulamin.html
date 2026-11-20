@@ -14,7 +14,7 @@
   <main class="legal-page">
     <a class="legal-back" href="/">← Powrót na stronę główną</a>
     <h1>Regulamin</h1>
-    <p class="updated">Ostatnia aktualizacja: 3 października 2026 r.</p>
+    <p class="updated">Ostatnia aktualizacja: 20 listopada 2026 r.</p>
 
     <h2>§1. Postanowienia ogólne</h2>
     <p>Regulamin określa zasady korzystania z aplikacji mobilnej i serwisu PrzetargAI. Usługodawcą jest
@@ -22,46 +22,61 @@
     <a href="mailto:jakatora68@gmail.com">jakatora68@gmail.com</a>.</p>
 
     <h2>§2. Definicje</h2>
-    <ul>
-      <li><strong>Usługa</strong> — monitoring i dopasowywanie przetargów BZP do profilu firmy Użytkownika.</li>
-      <li><strong>Użytkownik</strong> — przedsiębiorca korzystający z Usługi.</li>
-      <li><strong>Konto</strong> — indywidualny profil Użytkownika.</li>
-    </ul>
+<ul>
+<li><strong>Usługa</strong> — monitoring publicznych ogłoszeń, dopasowanie do profilu firmy oraz narzędzia do pracy z dokumentacją i historią SWZ.</li>
+<li><strong>Użytkownik</strong> — przedsiębiorca korzystający z Usługi.</li>
+<li><strong>Konto</strong> — indywidualny profil Użytkownika.</li>
+</ul>
+
+
 
     <h2>§3. Rodzaj i zakres usług</h2>
-    <p>Automatyczna analiza publicznych ogłoszeń o przetargach i prezentowanie Użytkownikowi tych
-    dopasowanych do profilu firmy, wraz z oceną trafności i uzasadnieniem generowanym przez AI
-    (Claude — model Anthropic).</p>
+<p>PrzetargAI zbiera ogłoszenia z BZP, TED, Bazy Konkurencyjności oraz obsługiwanych platform zakupowych. Zakres źródeł i aktualność danych są widoczne w aplikacji.</p>
+<p>Radar SWZ porównuje wersje dokumentów dodane przez Użytkownika, pokazuje różnice i umożliwia eksport zapisanej historii do TXT lub JSON. Pierwsza treść użyta do analizy jest oznaczona osobno i może obejmować tylko fragmenty SWZ. Numery stron podajemy, gdy zachowała się mapa stron PDF; nie ustalamy ich dla wklejonego tekstu. Starsze analizy mogą nie mieć zapisanych odnośników.</p>
+<p>Monitoring nowych dokumentów i wyjaśnień obejmuje obsługiwane postępowania z e-Zamówień i platformazakupowa.pl. Powiadomienia zależą od zapisania lub powiązania postępowania, planu i dostępnego kanału. Monitoring nie oznacza automatycznego pobrania każdej pełnej nowej wersji SWZ ze wszystkich platform. Nową wersję do porównania dodaje Użytkownik.</p>
+<p>Porównanie wersji i eksport mogą działać bez AI. Generowanie pytań, odpowiedzi oraz opcjonalnego opisu skutku zmian korzysta z API Anthropic i podlega limitom wykorzystania. Cytaty i lista wymagań są pomocą — treść źródłową oraz kompletność wymagań należy sprawdzić przed złożeniem oferty.</p>
+
+
 
     <h2>§4. Konto i rejestracja</h2>
-    <ul>
-      <li>Do założenia Konta wystarczy adres e-mail i hasło.</li>
-      <li>Dane firmy (NIP, nazwa) są wymagane dopiero przy wykupieniu planu płatnego — służą wystawieniu faktury VAT.</li>
-      <li>Usługa przeznaczona dla przedsiębiorców (B2B), w tym jednoosobowych działalności gospodarczych.</li>
-      <li>Użytkownik odpowiada za poufność hasła i działania na Koncie.</li>
-    </ul>
+<ul>
+<li>Do założenia Konta wystarczy adres e-mail i hasło.</li>
+<li>Dane profilu firmy, w tym kody CPV i słowa kluczowe, służą dopasowaniom. NIP może służyć powiązaniu firmy z publicznymi wynikami postępowań.</li>
+<li>Usługa przeznaczona jest dla przedsiębiorców, w tym jednoosobowych działalności gospodarczych.</li>
+<li>Użytkownik odpowiada za poufność hasła i działania na Koncie.</li>
+</ul>
+
+
 
     <h2>§5. Plany i ceny</h2>
-    <ul>
-      <li><strong>Plan Free</strong> — bezpłatny i bezterminowy, do 5 dopasowanych przetargów dziennie, bez powiadomień push.</li>
-      <li><strong>Plan Standard</strong> — 99 zł miesięcznie (brutto, zawiera VAT 23%); nielimitowane dopasowania oraz powiadomienia push.</li>
-    </ul>
+<ul>
+<li><strong>Plan Free</strong> — bezpłatny i bezterminowy, do 5 dopasowanych przetargów dziennie.</li>
+<li><strong>Próba Standard</strong> — 30 dni od rejestracji, bez podawania karty. Po próbie Konto wraca do Free, o ile Użytkownik osobno nie wykupi Standard.</li>
+<li><strong>Plan Standard</strong> — 99 zł miesięcznie brutto. Zakres funkcji i limity analiz AI są podawane w aplikacji. Cenę i okres płatności Użytkownik potwierdza przed zakupem.</li>
+</ul>
+
+
 
     <h2>§6. Płatności i faktury</h2>
-    <p>Płatności obsługuje Stripe Inc. Subskrypcja odnawiana miesięcznie. Po opłaceniu Użytkownik otrzymuje
-    fakturę VAT na e-mail. Płatność dokonywana przez stronę internetową operatora płatności, nie przez
-    zakupy w aplikacji mobilnej.</p>
+<p>Płatności obsługuje Stripe. Płatny Standard wymaga osobnego zakupu; zakończenie bezpłatnej próby samo nie rozpoczyna pobierania opłat. Subskrypcja odnawia się w miesięcznych okresach zgodnie z warunkami zaakceptowanymi przy zakupie.</p>
+<p><strong>Obecnie nie wystawiamy faktur.</strong> Aplikacja nie oferuje automatycznego wystawienia ani wysłania faktury VAT. Przed zakupem firmowym prosimy uwzględnić tę informację.</p>
+
+
 
     <h2>§7. Czas trwania i rezygnacja</h2>
-    <p>Subskrypcja Standard na okresy miesięczne. Rezygnacja możliwa w dowolnym momencie przez ekran konta.
-    Po okresie opłaconym — Konto wraca do planu Free bez utraty danych. Plan Free obowiązuje bezterminowo.</p>
+<p>Z płatnego Standard można zrezygnować na ekranie Konta. Rezygnacja wyłącza kolejne odnowienie; dostęp pozostaje do końca opłaconego okresu, a następnie Konto przechodzi na Free. Koniec samej próby nie wymaga anulowania płatnej subskrypcji. Plan Free obowiązuje bezterminowo.</p>
+
+
 
     <h2>§8. Obowiązki Użytkownika</h2>
-    <ul>
-      <li>korzystanie zgodne z prawem i Regulaminem;</li>
-      <li>niezakłócanie działania Usługi (m.in. nadmierna automatyzacja);</li>
-      <li>podanie i aktualizowanie prawdziwych danych firmy.</li>
-    </ul>
+<ul>
+<li>korzystanie zgodne z prawem i Regulaminem oraz posiadanie uprawnienia do przesłania dokumentów;</li>
+<li>niezakłócanie działania Usługi, nieomijanie limitów i niewykorzystywanie dostępu do cudzych Kont;</li>
+<li>podanie i aktualizowanie prawdziwych danych firmy.</li>
+</ul>
+<p>Dozwolona jest wewnętrzna, porównawcza ocena funkcji na własnym Koncie, z dokumentami, do których Użytkownik ma prawa, i w ramach limitów planu. Zgoda ta nie obejmuje testów obciążeniowych, obchodzenia zabezpieczeń ani dostępu do danych innych użytkowników.</p>
+
+
 
     <h2>§9. Odpowiedzialność</h2>
     <p>PrzetargAI to narzędzie wspomagające. Dane z BZP mogą podlegać zmianom po stronie zamawiających.

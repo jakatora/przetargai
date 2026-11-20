@@ -312,16 +312,18 @@ test('istniejąca wersja opublikowana: analiza jej nie rusza i niczego nie dopis
   assert.deepEqual(d.json.wymagane_typy, ['wpis_rejestr'], 'wymagania z wersji zamawiającego, nie z analizy');
 });
 
-test('wklejona treść, potem publikacje: pierwsza publikacja to baza, zmianę tworzy dopiero druga', async () => {
+test('pierwsza publikacja jest porównana z analizą, bez oznaczania analizy jako publikacji', async () => {
   trybAi('ok');
   const u = nowy('potem');
   await analiza(u, u.postId, { swz: SWZ_KRK_ZUS });
 
-  // Pierwsza prawdziwa publikacja NIE jest porównywana z wklejoną treścią.
+  // Pierwsza analiza jest uczciwie oznaczoną bazą; nie staje się opublikowaną wersją.
   const pierwsza = await odswiez(u, u.postId, { tresc: SWZ_KRS });
   assert.equal(pierwsza.json.nowe_wersje, 1);
-  assert.equal(pierwsza.json.zmiany, 0, 'brak fałszywej „opublikowanej zmiany" względem wklejonej treści');
-  assert.equal(zmianySwz.listForPostepowanie(u.postId).length, 0);
+  assert.equal(pierwsza.json.zmiany, 1);
+  assert.equal(zmianySwz.listForPostepowanie(u.postId).length, 1);
+  assert.equal(pierwsza.json.zmiany_wpisy[0].porownanie.poprzednia.rodzaj, 'pierwsza_analiza');
+  assert.equal(pierwsza.json.zmiany_wpisy[0].porownanie.poprzednia.id, null);
 
   // Nowsza wersja zamawiającego ma pierwszeństwo przed wklejoną.
   const d = await dopasuj(u, u.postId);
@@ -334,10 +336,10 @@ test('wklejona treść, potem publikacje: pierwsza publikacja to baza, zmianę t
   assert.equal((await dopasuj(u, u.postId)).json.zrodlo_swz, 'wersja');
   assert.equal(wklejoneWiersze(u.postId)[0].hash, hasz(SWZ_KRK_ZUS));
 
-  // Dopiero różnica MIĘDZY publikacjami jest zmianą.
+  // Następna aktualizacja porównuje już kolejne publikacje.
   const druga = await odswiez(u, u.postId, { tresc: `${SWZ_KRS}\nTermin realizacji: 45 dni.` });
   assert.equal(druga.json.nowe_wersje, 1);
-  assert.equal(zmianySwz.listForPostepowanie(u.postId).length, 1);
+  assert.equal(zmianySwz.listForPostepowanie(u.postId).length, 2);
 });
 
 test('body `swz` w dopasowaniu nadal ma pierwszeństwo, a jawna lista typów jest oznaczona', async () => {

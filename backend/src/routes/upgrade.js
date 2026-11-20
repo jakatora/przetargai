@@ -120,7 +120,7 @@ function pageSuccess() {
   return pageShell({
     title: 'Subskrypcja aktywna',
     glyph: '✓',
-    body: `<p>Twoja subskrypcja <strong>Standard</strong> została aktywowana. Fakturę dostaniesz e-mailem.</p>
+    body: `<p>Twoja subskrypcja <strong>Standard</strong> została aktywowana. Obecnie nie wystawiamy faktur.</p>
            <p>Wróć do aplikacji PrzetargAI — odblokowane są nielimitowane dopasowania i powiadomienia push.</p>`,
     accent: '#16a34a',
   });

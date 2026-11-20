@@ -293,6 +293,8 @@ export const api = {
   radarUtworzPostepowanie: (payload) =>
     request('/api/przetarg/swz/postepowania', { method: 'POST', body: payload }),
   radarPostepowanie: (id) => request(`/api/przetarg/swz/postepowania/${id}`),
+  radarEksport: (id, format = 'txt') => request(`/api/przetarg/swz/postepowania/${encodeURIComponent(id)}/eksport?format=${encodeURIComponent(format)}`),
+  radarZapiszTresc: (id, payload) => request(`/api/przetarg/swz/postepowania/${encodeURIComponent(id)}/tresc`, { method: 'POST', body: payload }),
   /** Analiza SWZ (płatne AI, subskrypcja) — wykryte niejasności zapisze jako szkice pytań. */
   radarAnalizuj: (id, payload) =>
     request(`/api/przetarg/swz/postepowania/${id}/analiza`, { method: 'POST', body: payload }),

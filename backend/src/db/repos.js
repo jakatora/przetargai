@@ -765,8 +765,8 @@ export const postepowaniaSwz = {
 // ---------- swz_wersja ----------
 
 const _swInsert = lazy(`
-  INSERT INTO swz_wersja (id, postepowanie_id, numer, hash, tresc, sciezka, data_publikacji, created_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO swz_wersja (id, postepowanie_id, numer, hash, tresc, sciezka, data_publikacji, created_at, strony)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(postepowanie_id, hash) DO NOTHING`);
 const _swById = lazy(`SELECT * FROM swz_wersja WHERE id = ?`);
 const _swByHash = lazy(`SELECT * FROM swz_wersja WHERE postepowanie_id = ? AND hash = ?`);
@@ -783,13 +783,13 @@ export const swzWersje = {
    * publikacji odpala się cyklicznie). `numer` liczony automatycznie, o ile nie
    * podano. Zwraca { wersja, created }.
    */
-  add({ postepowanieId, hash, tresc = null, sciezka = null, dataPublikacji = null, numer = null }) {
+  add({ postepowanieId, hash, tresc = null, sciezka = null, dataPublikacji = null, numer = null, strony = null }) {
     const existing = _swByHash().get(postepowanieId, hash);
     if (existing) return { wersja: existing, created: false };
     const id = newId();
     const ts = nowIso();
     const nr = numer ?? _swCount().get(postepowanieId).n + 1;
-    const res = _swInsert().run(id, postepowanieId, nr, hash, tresc ?? null, sciezka ?? null, dataPublikacji ?? ts, ts);
+    const res = _swInsert().run(id, postepowanieId, nr, hash, tresc ?? null, sciezka ?? null, dataPublikacji ?? ts, ts, strony == null ? null : JSON.stringify(strony));
     // Wyścig (ten sam hasz w innym wątku wpadł między SELECT a INSERT) → ON CONFLICT
     // DO NOTHING pomija wpis (changes = 0); oddaj wtedy istniejący wiersz.
     if (!res.changes) return { wersja: _swByHash().get(postepowanieId, hash), created: false };
@@ -814,8 +814,8 @@ export const swzWersje = {
  * kluczu głównym sprawia, że drugie żądanie (ponowienie, równoległe) niczego nie zmienia.
  */
 const _stwInsert = lazy(`
-  INSERT INTO swz_tresc_wklejona (postepowanie_id, hash, tresc, created_at, strony)
-  SELECT ?, ?, ?, ?, ?
+  INSERT INTO swz_tresc_wklejona (postepowanie_id, hash, tresc, created_at, strony, sciezka)
+  SELECT ?, ?, ?, ?, ?, ?
   WHERE NOT EXISTS (SELECT 1 FROM swz_wersja WHERE postepowanie_id = ?)
   ON CONFLICT(postepowanie_id) DO NOTHING`);
 const _stwGet = lazy(`SELECT * FROM swz_tresc_wklejona WHERE postepowanie_id = ?`);
@@ -827,8 +827,8 @@ export const swzTrescWklejona = {
    * Zwraca `{ wiersz, created }`: `wiersz` to treść zapisana w bazie (może być wcześniejsza
    * niż podana) albo null, gdy zapis pominięto, bo istnieje wersja opublikowana.
    */
-  zapiszPierwsza({ postepowanieId, hash, tresc, strony = null }) {
-    const res = _stwInsert().run(postepowanieId, hash, tresc, nowIso(), strony, postepowanieId);
+  zapiszPierwsza({ postepowanieId, hash, tresc, strony = null, sciezka = null }) {
+    const res = _stwInsert().run(postepowanieId, hash, tresc, nowIso(), strony, sciezka, postepowanieId);
     return { wiersz: _stwGet().get(postepowanieId) || null, created: res.changes > 0 };
   },
   get(postepowanieId) {
@@ -841,34 +841,36 @@ export const swzTrescWklejona = {
 const STATUSY_PYTANIA = new Set(['szkic', 'wyslane', 'odpowiedziane']);
 
 const _pyInsert = lazy(`
-  INSERT INTO pytania_swz (id, postepowanie_id, tresc, fragment_swz, status, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?)`);
+  INSERT INTO pytania_swz (id, postepowanie_id, tresc, fragment_swz, status, created_at, updated_at, zrodlo)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
 const _pyById = lazy(`SELECT * FROM pytania_swz WHERE id = ?`);
 const _pyList = lazy(`
   SELECT * FROM pytania_swz WHERE postepowanie_id = ? ORDER BY created_at ASC`);
 const _pySetStatus = lazy(`
   UPDATE pytania_swz SET status = ?, updated_at = ? WHERE id = ?`);
 
+const mapPytanie = (row) => row ? { ...row, zrodlo: parseJson(row.zrodlo, null) } : null;
+
 export const pytaniaSwz = {
   /** Zapisuje pytanie do SWZ. Domyślny status 'szkic'. Zwraca zapisany wiersz. */
-  create({ postepowanieId, tresc, fragmentSwz = null, status = 'szkic' }) {
+  create({ postepowanieId, tresc, fragmentSwz = null, status = 'szkic', zrodlo = null }) {
     if (!STATUSY_PYTANIA.has(status)) throw new Error(`Nieznany status pytania: ${status}`);
     const id = newId();
     const ts = nowIso();
-    _pyInsert().run(id, postepowanieId, tresc, fragmentSwz ?? null, status, ts, ts);
-    return _pyById().get(id);
+    _pyInsert().run(id, postepowanieId, tresc, fragmentSwz ?? null, status, ts, ts, zrodlo ? JSON.stringify(zrodlo) : null);
+    return mapPytanie(_pyById().get(id));
   },
   findById(id) {
-    return _pyById().get(id) || null;
+    return mapPytanie(_pyById().get(id));
   },
   listForPostepowanie(postepowanieId) {
-    return _pyList().all(postepowanieId);
+    return _pyList().all(postepowanieId).map(mapPytanie);
   },
   /** Przesuwa pytanie w cyklu życia (szkic → wysłane → odpowiedziane). */
   setStatus(id, status) {
     if (!STATUSY_PYTANIA.has(status)) throw new Error(`Nieznany status pytania: ${status}`);
     _pySetStatus().run(status, nowIso(), id);
-    return _pyById().get(id) || null;
+    return mapPytanie(_pyById().get(id));
   },
 };
 
@@ -879,6 +881,7 @@ function mapZmiana(row) {
   return {
     ...row,
     elementy_oferty: parseJson(row.elementy_oferty, []),
+    porownanie: parseJson(row.porownanie, null),
     // SQLite trzyma 0/1 — oddajemy klientowi/bramce jako boolean.
     uwzglednione: Boolean(row.uwzglednione),
   };
@@ -886,8 +889,8 @@ function mapZmiana(row) {
 
 const _zmInsert = lazy(`
   INSERT INTO zmiany_swz (
-    id, postepowanie_id, wersja_swz_id, data_publikacji, opis_skutku, diff, elementy_oferty, created_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+    id, postepowanie_id, wersja_swz_id, data_publikacji, opis_skutku, diff, elementy_oferty, created_at, porownanie
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 const _zmById = lazy(`SELECT * FROM zmiany_swz WHERE id = ?`);
 const _zmByIdForPostepowanie = lazy(`SELECT * FROM zmiany_swz WHERE id = ? AND postepowanie_id = ?`);
 const _zmList = lazy(`
@@ -902,12 +905,12 @@ export const zmianySwz = {
    * NIEuwzględniona (kolumna `uwzglednione` z DEFAULT 0) — czeka na bramkę.
    * Zwraca zapisany wiersz (z rozpakowaną listą i `uwzglednione` jako boolean).
    */
-  create({ postepowanieId, wersjaSwzId = null, dataPublikacji = null, opisSkutku = null, diff = null, elementyOferty = [] }) {
+  create({ postepowanieId, wersjaSwzId = null, dataPublikacji = null, opisSkutku = null, diff = null, elementyOferty = [], porownanie = null }) {
     const id = newId();
     const ts = nowIso();
     _zmInsert().run(
       id, postepowanieId, wersjaSwzId ?? null, dataPublikacji ?? ts,
-      opisSkutku ?? null, diff ?? null, JSON.stringify(elementyOferty ?? []), ts,
+      opisSkutku ?? null, diff ?? null, JSON.stringify(elementyOferty ?? []), ts, porownanie ? JSON.stringify(porownanie) : null,
     );
     return mapZmiana(_zmById().get(id));
   },
