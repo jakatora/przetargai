@@ -5,6 +5,7 @@ import { wyciagnijNip } from '../lib/nip.js';
 import { wojewodztwoRealizacji } from '../lib/nuts.js';
 import { warunkiZTed } from '../lib/warunkiUdzialu.js';
 import { parsujKryteriaTed } from '../lib/kryteriaTed.js';
+import { utworzKlientaTed } from '../lib/tedHttp.js';
 
 /*
  * TED (Tenders Electronic Daily) — dziennik zamówień publicznych UE.
@@ -143,6 +144,8 @@ export async function pobierzOgloszeniaTed({
   rozmiarStrony = 250,
   maksStron = 10,
   licznik,
+  budzetMs,
+  tempo,
 } = {}) {
   /*
    * `SORT BY publication-date DESC` — KLUCZOWE dla świeżości feedu.
@@ -160,9 +163,10 @@ export async function pobierzOgloszeniaTed({
 
   const zebrane = [];
   let total = Infinity;
+  const pobierz = utworzKlientaTed({ ...tempo, budzetMs, licznik });
 
   for (let page = 1; page <= maksStron && zebrane.length < total; page++) {
-    const odpowiedz = await fetch(`${env.TED_API_BASE_URL}/v3/notices/search`, {
+    const odpowiedz = await pobierz(`${env.TED_API_BASE_URL}/v3/notices/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, fields: POLA, page, limit: rozmiarStrony }),
@@ -178,7 +182,6 @@ export async function pobierzOgloszeniaTed({
     // Akumulator pomiarów okna (lib/licznikZrodla.js) — do rekonsyliacji
     // „ile TED opublikował" vs „ile weszło do bazy".
     if (licznik) {
-      licznik.zapytania += 1;
       licznik.surowe += (dane.notices ?? []).length;
       licznik.odrzucone += (dane.notices ?? []).length - strona.length;
     }
