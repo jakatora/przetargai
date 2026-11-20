@@ -5,4 +5,4 @@ Allow: /
 Disallow: /upgrade
 Disallow: /upgrade/
 
-Sitemap: https://przetargai.web.app/sitemap.xml
+Sitemap: https://przetarg-ai.pl/sitemap.xml

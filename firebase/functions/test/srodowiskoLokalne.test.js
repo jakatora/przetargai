@@ -22,6 +22,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const KATALOG_FUNKCJI = path.resolve(__dirname, '..');
 const ADRES_PRODUKCYJNY = 'https://backend-production-a43e3.up.railway.app';
 
+// Zakończ bootstrap aplikacji PRZED rejestracją testów zmieniających process.env.
+// Node 22 może uruchomić zarejestrowane testy podczas top-level await; bez tej
+// kolejności import aplikacji trafiał w chwilowe, celowo błędne środowisko testu.
+const { polaczZEmulatorem } = await import('./emulator.js');
+await polaczZEmulatorem();
+const { createApp } = await import('../src/app.js');
+const { users } = await import('../src/db/repos.js');
+const { signToken } = await import('../src/middleware/auth.js');
+
+const oryginalnyFetch = globalThis.fetch;
+afterEach(() => { globalThis.fetch = oryginalnyFetch; });
+
 let licznikImportow = 0;
 
 /** Świeża instancja config.js dla podanego środowiska (process.env przywracane). */
@@ -132,15 +144,6 @@ test('skrypty emulatora działają na projekcie demo- (bez dostępu do zasobów 
 });
 
 // ── Trasa mostu w domyślnej konfiguracji testów: zero ruchu poza maszynę ──────
-
-const { polaczZEmulatorem } = await import('./emulator.js');
-await polaczZEmulatorem();
-const { createApp } = await import('../src/app.js');
-const { users } = await import('../src/db/repos.js');
-const { signToken } = await import('../src/middleware/auth.js');
-
-const oryginalnyFetch = globalThis.fetch;
-afterEach(() => { globalThis.fetch = oryginalnyFetch; });
 
 test('domyślna konfiguracja testów: /api/przetarg/* odpowiada 503 i nie wychodzi do sieci', async () => {
   const zewnetrzne = [];

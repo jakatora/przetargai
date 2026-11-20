@@ -29,8 +29,8 @@ export const FAZY = [
  */
 export const KROKI = [
   { klucz: 'swz', faza: 'Rozeznanie', ekran: 'RadarSwz',
-    tytul: 'Przeczytaj SWZ i zrozum zamówienie',
-    opis: 'Sprawdź przedmiot, zakres, warunki udziału i kryteria oceny. Radar SWZ wyłapie pytania i zmiany specyfikacji, których nie wolno przegapić.' },
+    tytul: 'Podsumuj i porównaj SWZ',
+    opis: 'Sprawdź przedmiot, zakres, warunki udziału i kryteria oceny. W Radarze zapisz SWZ, a kolejną wersję dodaj do porównania. Różnice i historię ze źródłami sprawdzisz bez AI; pytania i podsumowanie możesz uzyskać przez AI.' },
   { klucz: 'kwalifikacja', faza: 'Rozeznanie', ekran: 'BankReferencji',
     tytul: 'Sprawdź, czy się kwalifikujesz',
     opis: 'Zweryfikuj warunki udziału (doświadczenie, potencjał) i brak podstaw wykluczenia. Upewnij się, że masz aktualne referencje na wymagany zakres i wartość.' },
@@ -163,6 +163,7 @@ export function parametryNarzedzia(ekran, match) {
       return params;
     }
     case 'DokumentyOferty':
+    case 'KontrolaOferty':
     case 'OdpowiedzNaWezwanie':
     case 'PoWygranej':
     case 'ZwrotWadium':

@@ -54,12 +54,14 @@ export function kluczKontroli(tenderId) {
   return `przetargai.kontrola-oferty.${String(tenderId).replace(/[^A-Za-z0-9._-]/g, '_')}`;
 }
 
-export async function wczytajKontroleOferty(storage, tenderId) {
+export async function wczytajKontroleOferty(storage, tenderId, { strict = false } = {}) {
   try {
     const raw = await storage.getItem(kluczKontroli(tenderId));
     const arr = raw ? JSON.parse(raw) : [];
+    if (strict && !Array.isArray(arr)) throw new Error('Invalid checklist data');
     return new Set(Array.isArray(arr) ? arr : []);
-  } catch {
+  } catch (error) {
+    if (strict) throw error;
     return new Set();
   }
 }

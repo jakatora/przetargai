@@ -22,6 +22,7 @@ import { runTedWojewodztwa } from '../jobs/tedWojewodztwa.js';
 import { przeliczProfil } from '../services/pracownik.js';
 import { tenders, users, rozstrzygniecia, matches as dopasowania } from '../db/repos.js';
 import { budgetStatus } from '../services/ai.js';
+import { pendingAiReservations, settleAiBudget } from '../services/aiBudget.js';
 import { badRequest, notFound, serviceUnavailable } from '../lib/errors.js';
 
 const router = Router();
@@ -363,6 +364,33 @@ router.get('/stats', ah(async (req, res) => {
 /** Stan budżetu AI (limit miękki / twardy). */
 router.get('/ai-budget', ah(async (req, res) => {
   res.json(await budgetStatus({ swiezy: true }));
+}));
+
+router.get('/ai-budget/reservations', ah(async (req, res) => {
+  const limit = req.query.limit === undefined ? 50 : Number(req.query.limit);
+  const cursor = req.query.cursor;
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100
+    || (cursor !== undefined && (typeof cursor !== 'string' || !/^[a-f0-9-]{36}$/.test(cursor)))) {
+    throw badRequest('Nieprawidłowy zakres listy rezerwacji.');
+  }
+  res.json(await pendingAiReservations({ limit, cursor }));
+}));
+
+// Internal reconciliation, not a refund or payment. Operator must verify provider evidence.
+router.post('/ai-budget/reservations/:id/reconcile', ah(async (req, res) => {
+  const { reference, outcome, usage, expectedAmount } = req.body ?? {};
+  if (!/^[a-f0-9-]{36}$/.test(req.params.id) || typeof reference !== 'string'
+    || reference.trim().length < 10 || reference.length > 500
+    || !['billed', 'not_billed'].includes(outcome)
+    || !Number.isSafeInteger(expectedAmount) || expectedAmount <= 0
+    || (outcome === 'billed' && (!usage || ![usage.input_tokens, usage.output_tokens]
+      .every(x => Number.isSafeInteger(x) && x >= 0)))
+    || (outcome === 'not_billed' && usage != null)) {
+    throw badRequest('Podaj potwierdzony wynik dostawcy, źródło weryfikacji i kwotę rezerwacji.');
+  }
+  const changed = await settleAiBudget({ id: req.params.id }, outcome === 'billed' ? usage : null,
+    null, { reference: reference.trim(), expectedAmount });
+  res.json({ changed, budget: await budgetStatus({ swiezy: true }) });
 }));
 
 /**

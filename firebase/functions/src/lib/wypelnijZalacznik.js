@@ -64,7 +64,12 @@ export async function pobierzZalacznik(url, { fetchFn = fetch, limitMs = 20_000 
   throw blad(502, 'Za dużo przekierowań przy pobieraniu załącznika.');
 }
 
-/** Wpisy archiwum ZIP: [{nazwa, dane}]. Rzuca przy uszkodzonym archiwum albo nieznanej kompresji. */
+/** Sufit rozpakowania jednego wpisu i całego archiwum (DOCX oferty ma zwykle kilka MB). */
+export const MAKS_WPISU_ZIP = 40 * 1024 * 1024;
+export const MAKS_ZIP_RAZEM = 80 * 1024 * 1024;
+const zaDuzy = () => Object.assign(new Error('Plik rozpakowuje się do zbyt dużego rozmiaru — sprawdź, czy to właściwy dokument.'), { status: 413 });
+
+/** Wpisy archiwum ZIP: [{nazwa, dane}]. Rzuca przy uszkodzonym archiwum, nieznanej kompresji albo „bombie ZIP” (413). */
 export function czytajZip(buf) {
   const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
   let eocd = -1;
@@ -75,6 +80,7 @@ export function czytajZip(buf) {
   const liczba = b.readUInt16LE(eocd + 10);
   let p = b.readUInt32LE(eocd + 16);
   const wpisy = [];
+  let razem = 0;
   for (let n = 0; n < liczba; n++) {
     if (b.readUInt32LE(p) !== 0x02014b50) throw new Error('Uszkodzony katalog ZIP');
     const metoda = b.readUInt16LE(p + 10);
@@ -90,8 +96,19 @@ export function czytajZip(buf) {
     const surowe = b.subarray(start, start + rozmiarSkompr);
     let dane;
     if (metoda === 0) dane = Buffer.from(surowe);
-    else if (metoda === 8) dane = inflateRawSync(surowe);
+    else if (metoda === 8) {
+      // „Bomba ZIP” (audyt 2026-11-10): pliki oferty wgrywa użytkownik — bez sufitu rozpakowanie
+      // do > 1 GB zabija instancję 512 MiB razem z żądaniami innych. Sufit na wpis i na całość.
+      try {
+        dane = inflateRawSync(surowe, { maxOutputLength: MAKS_WPISU_ZIP });
+      } catch (err) {
+        if (err?.code === 'ERR_BUFFER_TOO_LARGE' || err instanceof RangeError) throw zaDuzy();
+        throw err;
+      }
+    }
     else throw new Error(`Nieobsługiwana kompresja ZIP (${metoda})`);
+    razem += dane.length;
+    if (razem > MAKS_ZIP_RAZEM) throw zaDuzy();
     if (!nazwa.endsWith('/')) wpisy.push({ nazwa, dane });
     p += 46 + dlNazwy + dlExtra + dlKomentarza;
   }

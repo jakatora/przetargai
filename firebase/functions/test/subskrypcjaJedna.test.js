@@ -278,7 +278,7 @@ test('checkout z nową subskrypcją przy ŻYWEJ starej → alarm + audyt duplika
   const odp = await wyslijPodpisane('checkout.session.completed', {
     id: `cs_${ZNAK}_dubel`,
     payment_status: 'paid',
-    client_reference_id: user.id,
+    mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
     customer: cus,
     subscription: 'sub_nowa_6',
     amount_total: 4900,
@@ -306,7 +306,7 @@ test('checkout z nową subskrypcją, gdy stara już nie żyje → podmiana bez a
   statusyPojedyncze.set('sub_martwa_7', 'canceled');
 
   await wyslijPodpisane('checkout.session.completed', {
-    id: `cs_${ZNAK}_zastap`, payment_status: 'paid', client_reference_id: user.id,
+    id: `cs_${ZNAK}_zastap`, payment_status: 'paid', mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
     customer: cus, subscription: 'sub_nowa_7', amount_total: 4900,
   });
 
@@ -320,7 +320,7 @@ test('powtórna dostawa checkoutu tej samej subskrypcji nie jest duplikatem', as
   const cus = `cus_${ZNAK}_powtorka`;
   const user = await dodajUsera({ stripe_customer_id: cus });
   const sesja = {
-    id: `cs_${ZNAK}_powtorka`, payment_status: 'paid', client_reference_id: user.id,
+    id: `cs_${ZNAK}_powtorka`, payment_status: 'paid', mode: 'subscription', metadata: { project: 'przetargai' }, client_reference_id: user.id,
     customer: cus, subscription: 'sub_jedna_8', amount_total: 4900,
   };
   await wyslijPodpisane('checkout.session.completed', sesja);

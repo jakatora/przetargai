@@ -10,7 +10,17 @@ process.env.ANTHROPIC_API_KEY = '';
 const { polaczZEmulatorem } = await import('./emulator.js');
 await polaczZEmulatorem();
 const { tenders, saved, users, alerty, matches, powiazaniaSwz } = await import('../src/db/repos.js');
-const { runMonitorDokumentow } = await import('../src/jobs/monitorDokumentow.js');
+const { runMonitorDokumentow: monitorDokumentow } = await import('../src/jobs/monitorDokumentow.js');
+
+// Pełny zestaw dzieli bazę emulatora: wcześniejszy test może zostawić zapisany
+// przetarg z platformazakupowa.pl. Podmiana samego `pobierz` nie izoluje wtedy
+// sieci — domyślne pobierzPz idzie do prawdziwej platformy, z retry i odstępami.
+// Test platformy poniżej przekazuje własne pobierzPz jawnie.
+const runMonitorDokumentow = (options) => monitorDokumentow({
+  pobierzPz: async () => [],
+  czekaj: async () => {},
+  ...options,
+});
 
 const ZNAK = `${process.pid}${Date.now()}`.slice(-8);
 const POSTEPOWANIE = `ocds-148610-${ZNAK.padStart(8, '0').slice(0, 8)}-1111-2222-3333-444455556666`;
@@ -72,6 +82,21 @@ test('czołówka feedu (wynik ≥ 80, bez zapisu): wpis w centrum alertów, bez 
   assert.deepEqual(wpisy.map((a) => [a.typ, a.tytul.pl]), [['nowe_dokumenty', 'Wyjaśnienia SWZ w przetargu z Twojej listy: Dostawa paliwa']]);
   assert.equal(email.filter((m) => m.to === `md2-${z}@t.pl`).length, 0, 'bez maila');
   assert.deepEqual(await alerty.lista(slaby.id), [], 'dopasowanie 55 nie jest monitorowane');
+});
+
+test('czołówka feedu ODRZUCONA („Nie dla nas”) — bez wpisu w centrum alertów', async () => {
+  const z = `${ZNAK}o`;
+  const post = `ocds-148610-${String(Date.now() + 3).slice(-8)}-1111-2222-3333-121212121212`;
+  const user = await users.create({ email: `md-odrz-${z}@t.pl`, passwordHash: 'x' });
+  const { tender } = await tenders.upsert({ externalId: `2026/BZP 19${ZNAK}/01`, title: 'Remont chodnika', organization: 'Gmina R',
+    deadline: new Date(Date.now() + 6 * 86_400_000).toISOString(), source: 'bzp', postepowanie_id: post });
+  await matches.createWithEvaluation({ userId: user.id, tenderId: tender.id, score: 92, reasoning: 'chodnik', tender });
+  await matches.oznaczOdrzuconyPrzezKlienta(user.id, tender.id, { przyczyna: 'teren' });
+  await runMonitorDokumentow({
+    pobierz: async (id) => (id === post ? [{ id: `${post}_1`, nazwa: 'Odpowiedzi na pytania', opublikowano: new Date(Date.now() + 60_000).toISOString() }] : []),
+    wyslijPush: async () => ({ sent: 1 }), wyslijEmail: async () => {},
+  });
+  assert.deepEqual(await alerty.lista(user.id), [], 'odrzucony przetarg nie jest monitorowany');
 });
 
 test('podsumowanie zmian ląduje na przetargu i w kopiach (feed, Zapisane) — karta pokaże „Wyjaśnienia (1)”', async () => {

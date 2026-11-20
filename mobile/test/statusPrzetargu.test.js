@@ -21,3 +21,9 @@ test('etykietaStatusu: zwraca PL, nieznane → pierwszy etap', () => {
   assert.equal(etykietaStatusu('zlozona'), 'Oferta złożona');
   assert.equal(etykietaStatusu('kosmos'), 'Rozważam');
 });
+
+test('przypomnienia o składaniu wstrzymane tylko po złożeniu lub rozstrzygnięciu', async () => {
+  const { przypomnieniaWstrzymane } = await import('../src/lib/statusPrzetargu.js');
+  for (const status of ['zlozona', 'wygrana', 'przegrana']) assert.equal(przypomnieniaWstrzymane(status), true);
+  for (const status of ['rozwazam', 'przygotowuje', undefined]) assert.equal(przypomnieniaWstrzymane(status), false);
+});

@@ -35,6 +35,8 @@ export const MAKS_PROB_WYSYLKI_PYTAN = 3;
 /** Odstęp ponowienia po błędzie dostawcy — w praktyce najbliższy przebieg joba. */
 export const ODSTEP_PONOWIENIA_PYTAN_MS = 60 * 60_000;
 const TRWALE_BLEDY_PUSH = new Set(['DeviceNotRegistered']);
+/** Etapy pracy, po których przypominanie o pytaniach do SWZ nie ma sensu. */
+const ETAPY_PO_ZLOZENIU = new Set(['zlozona', 'wygrana', 'przegrana']);
 
 /** Najdłuższy ustawowy odstęp pytań od składania (TED: 14 dni) — zakres zapytania. */
 const MAKS_DNI_PYTAN = Math.max(reguluZrodla('bzp').dniPytania, reguluZrodla('ted').dniPytania);
@@ -46,7 +48,7 @@ export async function runPrzypomnieniaPytanSwz({ teraz = new Date().toISOString(
   const terazMs = Date.parse(teraz);
   const wynik = {
     ok: true, kandydaci: 0, sent: 0, emaile: 0, nieudane: 0, porzucone: 0, bezTokenu: 0,
-    poza_oknem: 0, bez_terminu: 0, zajete: 0, bledy: 0, durationMs: 0,
+    poza_oknem: 0, bez_terminu: 0, po_zlozeniu: 0, zajete: 0, bledy: 0, durationMs: 0,
   };
 
   // Termin pytań w oknie ⇔ termin składania w (teraz + N dni, teraz + N dni + doba]
@@ -83,6 +85,8 @@ export async function runPrzypomnieniaPytanSwz({ teraz = new Date().toISOString(
 }
 
 async function obsluzWpis(wpis, { teraz, wyslij, wyslijEmail, tokenDla, wynik }) {
+  // Oferta już złożona/rozstrzygnięta — pytania do SWZ nic już nie zmienią (audyt ścieżki 2026-11-10).
+  if (ETAPY_PO_ZLOZENIU.has(wpis.status)) { wynik.po_zlozeniu++; return; }
   // 1) Aktualny stan przetargu — wpis „Zapisanych" to kopia z chwili zapisu.
   const tender = await tenders.findById(wpis.tender_id ?? wpis.tenderId).catch(() => null);
   const pozycja = terminPytan({
@@ -96,6 +100,7 @@ async function obsluzWpis(wpis, { teraz, wyslij, wyslijEmail, tokenDla, wynik })
 
   // 2) Rezerwacja PRZED wysyłką.
   const rez = await przypomnieniaPytan.zarezerwuj(wpis.userId, wpis.tenderId, { termin: pozycja.at, teraz });
+  if (rez.stan === 'po_zlozeniu') { wynik.po_zlozeniu++; return; } // etap zmieniony tuż przed wysyłką
   if (rez.stan !== 'zarezerwowane') { wynik.zajete++; return; }
 
   const zakoncz = (stan, { proby = rez.proby, ponowPo = null } = {}) => przypomnieniaPytan.zakoncz(

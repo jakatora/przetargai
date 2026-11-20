@@ -87,6 +87,8 @@ test('migracja: na istniejącej bazie wykonują się WSZYSTKIE migracje po kolei
     '014_czarna_skrzynka_termin',
     '015_swz_tresc_wklejona',
     '016_swz_tresc_strony',
+    '017_user_session_version',
+    '018_swz_zrodla',
   ]);
 });
 
@@ -96,6 +98,7 @@ test('migracja: płacący klient przetrwał nietknięty', () => {
   assert.equal(u.premium_tier, 'standard', 'plan płatny nie może przepaść');
   assert.equal(u.stripe_subscription_id, 'sub_123');
   assert.equal(u.push_token, 'ExpoToken[x]');
+  assert.equal(u.session_version, 0, 'istniejące konto zachowuje wersję starych sesji');
   assert.deepEqual(JSON.parse(u.keywords), ['droga']);
 });
 
@@ -231,14 +234,14 @@ test('migracja 014: termin składania na sesji czarnej skrzynki na zmigrowanej p
 
 test('migracja 015: tabela treści SWZ wklejonej do analizy na zmigrowanej produkcji', () => {
   const kolumny = db.prepare('PRAGMA table_info(swz_tresc_wklejona)').all().map((c) => c.name);
-  assert.deepEqual(kolumny, ['postepowanie_id', 'hash', 'tresc', 'created_at', 'strony']); // `strony` z migracji 016
+  assert.deepEqual(kolumny, ['postepowanie_id', 'hash', 'tresc', 'created_at', 'strony', 'sciezka']); // mapa stron 016, źródło 018
   // Migracja dokłada NOWĄ tabelę i nie rusza wersji opublikowanych ani zmian.
   const wersja = db.prepare('PRAGMA table_info(swz_wersja)').all().map((c) => c.name);
-  assert.ok(wersja.includes('data_publikacji') && !wersja.includes('zrodlo'), 'swz_wersja bez zmian kształtu');
+  assert.ok(wersja.includes('data_publikacji') && wersja.includes('strony'), 'wersja zachowuje publikację i mapę stron PDF');
 });
 
 test('migracja: ponowne uruchomienie niczego nie zmienia (idempotencja)', () => {
   const drugie = migrate();
   assert.deepEqual(drugie.applied, []);
-  assert.equal(drugie.skipped, 16); // 16 migracji (001–016) — wszystkie już zastosowane
+  assert.equal(drugie.skipped, 18); // wszystkie migracje już zastosowane
 });

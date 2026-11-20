@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ah } from '../lib/asyncHandler.js';
 import { authRequired } from '../middleware/auth.js';
-import { saved, tenders, limitEksportu } from '../db/repos.js';
+import { saved, tenders, limitEksportu, limitEksportuKatalogu } from '../db/repos.js';
 import { AppError, badRequest, tooMany, serviceUnavailable } from '../lib/errors.js';
 import { nowIso } from '../lib/ids.js';
 import { normalizujFiltry, LIMIT_MAKS } from '../lib/katalogPrzetargow.js';
@@ -34,6 +34,8 @@ router.use(authRequired);
 
 /** Ile e-maili z eksportem dziennie na konto. */
 export const LIMIT_WYSYLEK_DZIENNIE = 10;
+/** Pobrań CSV katalogu na dobę — dużo ponad realne użycie, a zamyka drogę do milionów odczytów (audyt 2026-11-10). */
+export const LIMIT_KATALOGU_CSV_DZIENNIE = 20;
 
 async function eksportZapisanych(userId, teraz) {
   const wiersze = (await saved.list(userId, 500)).map(wierszZapisanego);
@@ -111,6 +113,9 @@ router.get('/zapisane.csv', ah(async (req, res) => {
 }));
 
 router.get('/katalog.csv', ah(async (req, res) => {
+  if (!(await limitEksportuKatalogu.zarezerwuj(req.user.id, LIMIT_KATALOGU_CSV_DZIENNIE))) {
+    throw tooMany(`Dzienny limit pobrań katalogu (${LIMIT_KATALOGU_CSV_DZIENNIE}) wyczerpany — spróbuj jutro.`);
+  }
   wyslijPlik(res, await eksportKatalogu(req.query, nowIso()));
 }));
 
