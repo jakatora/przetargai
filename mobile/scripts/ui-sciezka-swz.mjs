@@ -292,7 +292,7 @@ try {
     await klik(strona, 'Oznacz jako zrobione', { exact: true });
     await czekaj(strona, 'Postęp: 2/12 kroków');
     // Cofamy odhaczenie pierwszego kroku na liście → znów jest następnym działaniem.
-    await klik(strona, 'Przeczytaj SWZ i zrozum zamówienie', { exact: true });
+    await klik(strona, 'Podsumuj i porównaj SWZ', { exact: true });
     await czekaj(strona, 'Postęp: 1/12 kroków');
     await klik(strona, 'Otwórz narzędzie', { exact: true });
     await czekaj(strona, 'Weź postępowanie pod radar');
@@ -309,7 +309,8 @@ try {
   await scenariusz('katalog narzędzi bez kontekstu: Radar z pustym formularzem, bez karty powiązania', przegladarka, async (strona) => {
     const odZadania = stan.dziennik.length; // dziennik jest wspólny dla scenariuszy
     await czekaj(strona, PRZETARG.title);
-    await klik(strona, 'Narzędzia', { exact: true });
+    await klik(strona, 'Konto', { exact: true });
+    await klik(strona, 'Wszystkie narzędzia', { exact: true });
     await klik(strona, 'Radar SWZ', { exact: true });
     await czekaj(strona, 'Weź postępowanie pod radar');
     assert.equal(await pole(strona, 'np. Budowa drogi gminnej').inputValue(), '');
@@ -354,7 +355,7 @@ try {
     // Pierwsza SWZ przy niedziałającym AI: błąd jawny, a treść potwierdzona przez serwer.
     await czekaj(strona, 'Radar nie ma jeszcze treści SWZ tego postępowania');
     await pole(strona, 'Wklej tu treść SWZ…').fill(SWZ);
-    await klik(strona, 'Wygeneruj pytania', { exact: true });
+    await klik(strona, 'Wygeneruj pytania (AI)', { exact: true });
     await czekaj(strona, 'Analiza SWZ chwilowo niedostępna');
     await czekaj(strona, 'Treść SWZ jest zapisana (wklejona przez Ciebie)');
     await zrzut(strona, '5-radar-ai-503');
