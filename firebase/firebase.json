@@ -25,6 +25,24 @@
             "value": "public, max-age=300"
           }
         ]
+      },
+      {
+        "source": "/przyklad-swz-eventy",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/przyklad-swz-eventy.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
+        ]
       }
     ]
   },
