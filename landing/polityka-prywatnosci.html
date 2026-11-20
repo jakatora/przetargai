@@ -14,7 +14,7 @@
   <main class="legal-page">
     <a class="legal-back" href="/">← Powrót na stronę główną</a>
     <h1>Polityka prywatności</h1>
-    <p class="updated">Ostatnia aktualizacja: 10 lipca 2026 r.</p>
+    <p class="updated">Ostatnia aktualizacja: 20 listopada 2026 r.</p>
 
     <h2>1. Administrator danych</h2>
     <p>Administratorem danych osobowych jest <strong>Krzysztof Kapusta</strong>, Jagiełła 68, 37-203 Gniewczyna Tryniecka,
@@ -22,11 +22,14 @@
     (dalej „Administrator" lub „PrzetargAI").</p>
 
     <h2>2. Jakie dane przetwarzamy</h2>
-    <ul>
-      <li><strong>Dane konta i firmy:</strong> adres e-mail, hasło (zaszyfrowane), NIP, nazwa firmy, słowa kluczowe i kody CPV opisujące profil firmy.</li>
-      <li><strong>Dane rozliczeniowe:</strong> dane do faktury VAT; płatność obsługuje Stripe — nie przechowujemy danych karty.</li>
-      <li><strong>Dane techniczne:</strong> adres IP, dziennik audytu, token push (jeśli aktywne).</li>
-    </ul>
+<ul>
+<li><strong>Dane konta i firmy:</strong> e-mail, skrót hasła, opcjonalny NIP i nazwa, profil działalności, kody CPV, słowa kluczowe i preferencje monitoringu.</li>
+<li><strong>Dokumenty:</strong> przesłane lub pobrane SWZ, tekst wyodrębniony z PDF, historia wersji, cytaty, pytania i wyniki analiz oraz dokumenty dodane do sejfu.</li>
+<li><strong>Dane rozliczeniowe:</strong> identyfikatory płatności, subskrypcji i ich status. Płatności obsługuje Stripe; nie przechowujemy pełnych danych karty. Obecnie nie wystawiamy faktur.</li>
+<li><strong>Dane techniczne:</strong> adres IP, dziennik audytu, informacje o błędach i token push, jeśli aktywny.</li>
+</ul>
+
+
 
     <h2>3. Cele i podstawy prawne</h2>
     <ul>
@@ -35,27 +38,36 @@
       <li>bezpieczeństwo i audyt — art. 6 ust. 1 lit. f RODO.</li>
     </ul>
 
-    <h2>4. Odbiorcy danych</h2>
-    <p>Korzystamy z zaufanych dostawców usług, którzy przetwarzają dane w naszym imieniu:</p>
-    <ul>
-      <li>Google (Firebase / Google Cloud) — hosting backendu i baza danych; dane przechowywane w regionie Warszawa (europe-central2);</li>
-      <li>Stripe — obsługa płatności subskrypcyjnych;</li>
-      <li>Fakturownia — wystawianie faktur VAT;</li>
-      <li>Resend — wysyłka wiadomości transakcyjnych e-mail;</li>
-      <li>Anthropic (Claude) — analiza dopasowania przetargów przez AI;</li>
-      <li>Expo (650 Industries) — dostarczanie powiadomień push na telefon.</li>
-      <li>Meta Platforms — pomiar instalacji i zdarzeń w aplikacji oraz optymalizacja kampanii reklamowych (Meta App Events).</li>
-    </ul>
+    <h2>3a. Dokumenty i trenowanie modeli AI</h2>
+<p>PrzetargAI przetwarza profil firmy i treść dokumentów w celu wykonania wybranej usługi. Nie wykorzystujemy ich do trenowania własnych modeli ani tworzenia zbioru treningowego z dokumentów klientów.</p>
+<p>Funkcje AI przekazują niezbędne fragmenty profilu lub dokumentacji do komercyjnego API Anthropic. Według <a href="https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training" rel="noopener noreferrer">polityki dostawcy</a> dane wejściowe i wyniki komercyjnego API domyślnie nie służą trenowaniu modeli. Nie deklarujemy zerowej retencji po stronie dostawcy ani braku przetwarzania treści niezbędnej do odpowiedzi.</p>
+<p>Porównanie wersji i eksport historii nie wymagają analizy AI. W nowym panelu opis skutku przez AI jest opcjonalny; generowanie pytań i „Zapytaj SWZ” uruchamiają AI na żądanie. Osoba, która nie chce przekazywać dokumentu do dostawcy AI, powinna korzystać z porównania z wyłączonym opisem AI i nie uruchamiać tych funkcji analitycznych. Nie wymagamy zgody na trenowanie modeli, aby korzystać z podstawowego monitoringu.</p>
+
+<h2>4. Odbiorcy danych</h2>
+<p>Dostawcy niezbędni do działania Usługi obejmują:</p>
+<ul>
+<li>Google (Firebase / Google Cloud) — backend, konta i baza dopasowań w regionie europe-central2 (Warszawa);</li>
+<li>Railway — część backendu, dokumenty i historia SWZ w Unii Europejskiej;</li>
+<li>Anthropic (Claude) — przetwarzanie treści przekazanej do funkcji AI;</li>
+<li>Stripe — obsługa płatności subskrypcyjnych;</li>
+<li>Resend — wiadomości transakcyjne i powiadomienia e-mail;</li>
+<li>Expo — dostarczanie powiadomień push;</li>
+<li>Backblaze B2 — zaszyfrowane kopie zapasowe, jeśli integracja jest aktywna;</li>
+<li>Meta Platforms — pomiar zdarzeń aplikacji, jeśli funkcja pomiaru jest włączona.</li>
+</ul>
+
+
 
     <h2>5. Przekazywanie danych poza EOG</h2>
-    <p>Dane konta i dopasowań przechowujemy w Unii Europejskiej (Google Cloud, region Warszawa).
-    Część dostawców (Anthropic, Expo, Stripe) może przetwarzać dane poza Europejskim
-    Obszarem Gospodarczym, na podstawie standardowych klauzul umownych zatwierdzonych przez Komisję Europejską.</p>
+<p>Konta i dopasowania są przechowywane w regionie Google Cloud Warszawa, a dokumenty obsługiwane przez Railway — w regionie Unii Europejskiej. Część dostawców, w tym Anthropic, Expo i Stripe, może przetwarzać dane poza EOG zgodnie z warunkami przetwarzania tych usług i właściwymi mechanizmami ochrony danych. Nie deklarujemy, że wszystkie operacje AI odbywają się wyłącznie w Polsce.</p>
+
+
 
     <h2>6. Okres przechowywania</h2>
-    <p>Dane konta — przez czas korzystania z usługi oraz po jej zakończeniu w zakresie niezbędnym do rozliczeń.
-    Dane rozliczeniowe — 5 lat od końca roku, w którym wystawiono fakturę.
-    Dziennik bezpieczeństwa i zapis zużycia AI (z identyfikatorem konta) — 90 dni.</p>
+<p>Dane konta, dokumenty i zapisana historia SWZ są przechowywane przez czas korzystania z Usługi, a po jej zakończeniu w zakresie niezbędnym do wykonania obowiązków dotyczących rozliczeń i bezpieczeństwa. Dziennik bezpieczeństwa i zapis zużycia AI z identyfikatorem konta są przechowywane przez 90 dni. Historyczne dokumenty rozliczeniowe, jeśli istnieją, podlegają właściwym obowiązkom przechowywania.</p>
+<p>Eksport tworzy plik na urządzeniu Użytkownika. Na telefonie aplikacja korzysta z prywatnego katalogu cache; kopią zapisaną lub udostępnioną w innej aplikacji zarządza Użytkownik. Usunięcie Konta nie usuwa samodzielnie wyeksportowanych kopii.</p>
+
+
 
     <h2>7. Twoje prawa</h2>
     <ul>
@@ -76,8 +88,9 @@
     niezbędne do działania serwisu.</p>
 
     <h2>9. Źródło danych o przetargach</h2>
-    <p>Dane o przetargach pochodzą z publicznego BZP (ezamowienia.gov.pl) i nie stanowią danych osobowych
-    użytkowników aplikacji.</p>
+<p>Ogłoszenia i dokumenty zamawiających pochodzą z publicznych rejestrów i obsługiwanych platform. Dane konta i dokumenty przesłane przez Użytkownika są odrębną kategorią danych i służą obsłudze jego Konta oraz wybranych funkcji.</p>
+
+
 
     <h2>10. Kontakt</h2>
     <p>W sprawach ochrony danych: <a href="mailto:jakatora68@gmail.com">jakatora68@gmail.com</a>.</p>

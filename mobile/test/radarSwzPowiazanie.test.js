@@ -370,7 +370,7 @@ test('Radar SWZ: stara podpowiedź odsyłająca do pola bez zapisu zniknęła', 
   assert.match(ekran, /podpowiedzPustegoDopasowania\(dopasowanie\.zrodlo_swz\)/);
   assert.match(ekran, /lista może być niepełna/, 'koszyki sejfu w Radarze też mówią o heurystyce');
   // Po nieudanej analizie panel jest odczytywany ponownie — stan treści pochodzi z serwera.
-  const analizuj = ekran.slice(ekran.indexOf('async function analizuj()'), ekran.indexOf('async function odswiez()'));
+  const analizuj = ekran.slice(ekran.indexOf('async function analizuj('), ekran.indexOf('async function odswiez()'));
   assert.match(analizuj, /catch \(err\) \{[\s\S]*odswiezDetalCicho\(wybraneId\)/);
 });
 

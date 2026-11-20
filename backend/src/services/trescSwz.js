@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { swzWersje, swzTrescWklejona } from '../db/repos.js';
+import { bezpiecznyUrl } from '../lib/zrodlaSwz.js';
 
 /*
  * TREŚĆ SWZ POSTĘPOWANIA — skąd ją bierzemy do dopasowania dokumentów (2026-10-03).
@@ -9,7 +10,7 @@ import { swzWersje, swzTrescWklejona } from '../db/repos.js';
  *                            monitor publikacji); mają datę publikacji i zasilają
  *                            silnik różnic,
  *   • `swz_tresc_wklejona` — treść, którą użytkownik wkleił do pierwszej analizy;
- *                            nie jest publikacją i nigdy nie trafia do silnika różnic.
+ *                            nie jest publikacją; stanowi osobno oznaczoną bazę pierwszego porównania.
  *
  * Pierwszeństwo ma wersja opublikowana: jest nowsza z definicji (wklejoną zapisujemy
  * tylko, gdy żadnej wersji jeszcze nie ma) i to ją zamawiający uznaje za wiążącą.
@@ -53,7 +54,7 @@ export function trescSwzPostepowania(postepowanieId) {
     // nadal jest NOWSZA niż cokolwiek wklejonego — nie cofamy się do starszej treści.
     const tresc = wersja.tresc ?? '';
     return tresc.trim()
-      ? { zrodlo: ZRODLO_TRESCI.WERSJA, tresc, zapisana_at: wersja.created_at, strony: null }
+      ? { zrodlo: ZRODLO_TRESCI.WERSJA, tresc, zapisana_at: wersja.created_at, strony: poczatkiStron(wersja.strony, tresc) }
       : { zrodlo: ZRODLO_TRESCI.BRAK, tresc: '', zapisana_at: null, strony: null };
   }
   const wklejona = swzTrescWklejona.get(postepowanieId);
@@ -82,9 +83,23 @@ export function stanTresciSwz(postepowanieId) {
  * @returns {{zapisano: boolean, zrodlo: 'wersja'|'wklejona'|'brak', zapisana_at: string|null}}
  *   `zapisano` = ten właśnie zapis utworzył wiersz; reszta to stan PO próbie.
  */
-export function zapamietajWklejonaSwz({ postepowanieId, swz, strony = null }) {
+export function zapamietajWklejonaSwz({ postepowanieId, swz, strony = null, sciezka = null }) {
   if (typeof swz !== 'string' || !swz.trim()) return { zapisano: false, ...stanTresciSwz(postepowanieId) };
   const poczatki = poczatkiStron(strony, swz);
-  const { created } = swzTrescWklejona.zapiszPierwsza({ postepowanieId, hash: hasz(swz), tresc: swz, strony: poczatki ? JSON.stringify(poczatki) : null });
+  const { created } = swzTrescWklejona.zapiszPierwsza({ postepowanieId, hash: hasz(swz), tresc: swz, strony: poczatki ? JSON.stringify(poczatki) : null, sciezka: bezpiecznyUrl(sciezka) });
   return { zapisano: created, ...stanTresciSwz(postepowanieId) };
+}
+
+/** Rzeczywiste źródło treści; pierwsza analiza pozostaje osobnym, uczciwie oznaczonym źródłem. */
+export function rekordTresciSwz(postepowanieId) {
+  return swzWersje.latestForPostepowanie(postepowanieId)
+    ?? { ...(swzTrescWklejona.get(postepowanieId) ?? {}), rodzaj: 'pierwsza_analiza' };
+}
+
+export function historiaTresciSwz(postepowanieId) {
+  const pierwsza = swzTrescWklejona.get(postepowanieId);
+  return [
+    ...(pierwsza ? [{ ...pierwsza, rodzaj: 'pierwsza_analiza' }] : []),
+    ...swzWersje.listForPostepowanie(postepowanieId).map((w) => ({ ...w, rodzaj: 'wersja' })),
+  ];
 }

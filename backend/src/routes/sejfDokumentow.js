@@ -5,9 +5,9 @@ import { badRequest, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { db } from '../db/index.js';
 import { postepowaniaSwz } from '../db/repos.js';
-import { trescSwzPostepowania } from '../services/trescSwz.js';
+import { trescSwzPostepowania, rekordTresciSwz } from '../services/trescSwz.js';
 import { createSejfDokumentow } from '../services/sejfDokumentow.js';
-import { createDopasowanieSejfSWZ } from '../services/dopasowanieSejfSWZ.js';
+import { createDopasowanieSejfSWZ, dowodyWymagan } from '../services/dopasowanieSejfSWZ.js';
 import { jestZnanymTypem, ID_TYPOW_DOKUMENTOW, TYPY_DOKUMENTOW } from '../config/dokumentyKatalog.js';
 
 /*
@@ -254,6 +254,7 @@ router.post('/dopasowanie/:postepowanieId', authRequired, ah(async (req, res) =>
      */
     zrodlo_swz: jawnaLista ? 'lista' : (zRadaru ? zRadaru.zrodlo : 'zadanie'),
     wymagania_heurystyczne: !jawnaLista,
+    dowody_wymagan: dowodyWymagan(zRadaru ? rekordTresciSwz(postepowanie.id) : { tresc: swzTekst ?? '', rodzaj: 'tekst_uzytkownika' }, wynik.wymagane_typy),
   });
 }));
 

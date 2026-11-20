@@ -5,13 +5,17 @@ import { AppError, badRequest, conflict, notFound } from '../lib/errors.js';
 import { authRequired } from '../middleware/auth.js';
 import { postepowaniaSwz, pytaniaSwz, zmianySwz } from '../db/repos.js';
 import { analizujSwz } from '../services/analizaSwz.js';
-import { zapamietajWklejonaSwz, stanTresciSwz, trescSwzPostepowania } from '../services/trescSwz.js';
+import { zapamietajWklejonaSwz, stanTresciSwz, trescSwzPostepowania, rekordTresciSwz, historiaTresciSwz } from '../services/trescSwz.js';
 import { zapytajSwz } from '../services/pytanieDoSwz.js';
 import { odswiezPostepowanie } from '../jobs/monitorSwz.js';
 import { zbudujCheckliste, ocenBramke } from '../lib/bramkaOferty.js';
 import { terminPytanSwz } from '../lib/terminPytanSwz.js';
 import { trescDokumentu, bladLimituTresci, MAKS_ZNAKOW_TRESCI } from '../lib/limityTresci.js';
 import { ekstrahujStronyZPdf, tekstZeStronami, MAKS_BAJTOW_PDF } from '../lib/umowaEkstrakcja.js';
+import { opisZrodla, znajdzCytat, bezpiecznyUrl, mapaStron } from '../lib/zrodlaSwz.js';
+import { dowodyWymagan } from '../services/dopasowanieSejfSWZ.js';
+import { zbudujEksportSwz } from '../services/eksportSwz.js';
+import { zarejestrujRoznice } from '../services/roznicaSwz.js';
 
 /*
  * Radar SWZ — uruchomienie ANALIZY treści SWZ dla danego postępowania
@@ -129,7 +133,20 @@ router.get('/postepowania/:id', authRequired, ah(async (req, res) => {
     bramka: ocenBramke(checklista),
     // Czy i skąd Radar ma treść SWZ do dopasowania dokumentów (bez samej treści).
     tresc_swz: stanTresciSwz(postepowanie.id),
+    wersje: historiaTresciSwz(postepowanie.id).map((w) => ({ ...opisZrodla(w), ma_tresc: Boolean(w.tresc?.trim()), liczba_stron: mapaStron(w.strony, w.tresc)?.length ?? null })),
   });
+}));
+
+router.get('/postepowania/:id/eksport', authRequired, ah(async (req, res) => {
+  const postepowanie = mojePostepowanie(req);
+  const format = req.query.format ?? 'txt';
+  if (!['txt', 'json'].includes(format)) throw badRequest('Format eksportu: txt albo json.');
+  const eksport = zbudujEksportSwz({
+    postepowanie, wersje: historiaTresciSwz(postepowanie.id),
+    pytania: pytaniaSwz.listForPostepowanie(postepowanie.id), zmiany: zmianySwz.listForPostepowanie(postepowanie.id),
+    wymagania: dowodyWymagan(rekordTresciSwz(postepowanie.id)),
+  });
+  res.json({ nazwa: `${eksport.nazwa}.${format}`, typ_mime: format === 'json' ? 'application/json' : 'text/plain', tresc: format === 'json' ? eksport.json : eksport.tekst });
 }));
 
 // Wszystkie pola opcjonalne w schemacie; regułę „co najmniej jeden dokument niesie
@@ -143,6 +160,7 @@ const analizaSchema = z.object({
   swz_pdf_base64: z.string().max(Math.ceil(MAKS_BAJTOW_PDF * 4 / 3) + 4).optional(),
   umowa: trescDokumentu().optional(),
   przedmiar: trescDokumentu().optional(),
+  zrodlo_url: z.string().max(2000).refine((v) => Boolean(bezpiecznyUrl(v))).optional(),
 });
 
 /** Czy żądanie w ogóle niesie coś do analizy (SWZ, umowa lub przedmiar). */
@@ -209,7 +227,7 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
    * wersja opublikowana: nie powstaje `swz_wersja` ani wpis `zmiany_swz`, a istniejąca
    * treść (wersja zamawiającego albo wcześniejsze wklejenie) zostaje nietknięta.
    */
-  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: parsed.data.swz, strony: zPliku.strony });
+  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: parsed.data.swz, strony: zPliku.strony, sciezka: parsed.data.zrodlo_url });
 
   let pytania;
   try {
@@ -238,6 +256,7 @@ router.post('/postepowania/:id/analiza', authRequired, ah(async (req, res) => {
       postepowanieId: postepowanie.id,
       tresc: p.tresc,
       fragmentSwz: p.fragment,
+      zrodlo: znajdzCytat(p.fragment, { tresc: parsed.data.swz ?? '', strony: zPliku.strony, sciezka: parsed.data.zrodlo_url, rodzaj: 'analiza' }),
       status: 'szkic',
     }));
   }
@@ -267,7 +286,7 @@ router.post('/postepowania/:id/zapytaj', authRequired, ah(async (req, res) => {
     throw conflict('Brak treści SWZ dla tego postępowania. Wklej SWZ albo dodaj plik PDF w analizie, potem zadaj pytanie.');
   }
   const wynik = await zapytajSwz({ tresc, pytanie: parsed.data.pytanie, strony });
-  res.json({ postepowanie_id: postepowanie.id, pytanie: parsed.data.pytanie, zrodlo_tresci: zrodlo, ...wynik });
+  res.json({ postepowanie_id: postepowanie.id, pytanie: parsed.data.pytanie, zrodlo_tresci: zrodlo, zrodlo: opisZrodla(rekordTresciSwz(postepowanie.id)), ...wynik });
 }));
 
 /*
@@ -275,7 +294,18 @@ router.post('/postepowania/:id/zapytaj', authRequired, ah(async (req, res) => {
  * Functions pobiera PDF z e-Zamówień / platformy, zakłada postępowanie i zapisuje tu tekst, żeby
  * od razu odpowiadać na pytania. Zapis jak przy analizie (pierwsza wklejona treść zostaje).
  */
-const trescPdfSchema = z.object({ swz_pdf_base64: z.string().min(8).max(Math.ceil(MAKS_BAJTOW_PDF * 4 / 3) + 4) });
+const trescPdfSchema = z.object({ swz_pdf_base64: z.string().min(8).max(Math.ceil(MAKS_BAJTOW_PDF * 4 / 3) + 4), zrodlo_url: analizaSchema.shape.zrodlo_url });
+
+const trescBezAiSchema = z.object({ swz: analizaSchema.shape.swz, swz_pdf_base64: analizaSchema.shape.swz_pdf_base64, zrodlo_url: analizaSchema.shape.zrodlo_url });
+router.post('/postepowania/:id/tresc', authRequired, ah(async (req, res) => {
+  const postepowanie = mojePostepowanie(req);
+  const parsed = trescBezAiSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw bladLimituTresci(parsed.error) ?? badRequest('Podaj treść SWZ albo plik PDF.');
+  if (!parsed.data.swz?.trim() && !parsed.data.swz_pdf_base64?.trim()) throw badRequest('Podaj treść SWZ albo plik PDF.');
+  const { tekst, strony } = await swzZPliku(parsed.data);
+  const stan = zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: tekst, strony, sciezka: parsed.data.zrodlo_url });
+  res.json({ postepowanie_id: postepowanie.id, zapisano: stan.zapisano, tresc_swz: stanTresciSwz(postepowanie.id) });
+}));
 
 router.post('/postepowania/:id/tresc-pdf', authRequired, ah(async (req, res) => {
   const postepowanie = postepowaniaSwz.findByIdForUser(req.params.id, req.user.id);
@@ -283,7 +313,7 @@ router.post('/postepowania/:id/tresc-pdf', authRequired, ah(async (req, res) => 
   const parsed = trescPdfSchema.safeParse(req.body ?? {});
   if (!parsed.success) throw badRequest('Podaj plik PDF z SWZ (swz_pdf_base64).');
   const { tekst, strony } = await swzZPliku({ swz_pdf_base64: parsed.data.swz_pdf_base64 });
-  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: tekst, strony });
+  zapamietajWklejonaSwz({ postepowanieId: postepowanie.id, swz: tekst, strony, sciezka: parsed.data.zrodlo_url });
   res.json({ postepowanie_id: postepowanie.id, znakow: tekst.length, tresc_swz: stanTresciSwz(postepowanie.id) });
 }));
 
@@ -296,6 +326,9 @@ const odswiezSchema = z.object({
   sciezka: z.string().optional(),
   hash: z.string().optional(),
   dataPublikacji: z.string().optional(),
+  swz_pdf_base64: analizaSchema.shape.swz_pdf_base64,
+  zrodlo_url: analizaSchema.shape.zrodlo_url,
+  opis_ai: z.boolean().optional(),
 });
 
 router.post('/postepowania/:id/odswiez', authRequired, ah(async (req, res) => {
@@ -305,14 +338,15 @@ router.post('/postepowania/:id/odswiez', authRequired, ah(async (req, res) => {
   const parsed = odswiezSchema.safeParse(req.body ?? {});
   if (!parsed.success) throw bladLimituTresci(parsed.error) ?? badRequest('Nieprawidłowe dane odświeżenia SWZ.');
   const d = parsed.data;
+  const zPliku = await swzZPliku({ swz: d.tresc, swz_pdf_base64: d.swz_pdf_base64 });
 
   // Wersję wgraną ręcznie dokładamy tylko, gdy niesie treść lub ścieżkę — inaczej
   // nie ma czego wersjonować (monitor sam odpyta źródło).
-  const pchnietaWersja = (d.tresc?.trim() || d.sciezka?.trim())
-    ? { tresc: d.tresc ?? null, sciezka: d.sciezka ?? null, hash: d.hash ?? null, dataPublikacji: d.dataPublikacji ?? null }
+  const pchnietaWersja = (zPliku.tekst?.trim() || d.sciezka?.trim())
+    ? { tresc: zPliku.tekst ?? null, strony: zPliku.strony, sciezka: d.zrodlo_url ?? d.sciezka ?? null, hash: d.hash ?? null, dataPublikacji: d.dataPublikacji ?? null }
     : null;
 
-  const wynik = await odswiezPostepowanie({ postepowanie, pchnietaWersja });
+  const wynik = await odswiezPostepowanie({ postepowanie, pchnietaWersja, zarejestruj: (dane) => zarejestrujRoznice({ ...dane, opisAi: d.opis_ai !== false }) });
 
   res.status(200).json({
     postepowanie_id: postepowanie.id,

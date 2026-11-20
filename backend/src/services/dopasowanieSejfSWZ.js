@@ -29,6 +29,7 @@
 import { opiszDokument } from './sejfDokumentow.js';
 import { typDokumentu, TYPY_DOKUMENTOW, jestZnanymTypem } from '../config/dokumentyKatalog.js';
 import { STATUS } from './waznoscDokumentow.js';
+import { cytatZPozycji, linieZrodla } from '../lib/zrodlaSwz.js';
 
 // ── Parser treści SWZ → id wymaganych typów dokumentów ───────────────────────
 
@@ -100,6 +101,20 @@ export function wykryjWymaganeTypy(swzTekst) {
     if (wzor.frazy.some((f) => tekst.includes(f))) out.push(wzor.id);
   }
   return out; // WZORCE_TYPOW są w kolejności katalogu; każdy id dodany co najwyżej raz
+}
+
+/** Te same deterministyczne reguły, z dosłownym fragmentem i lokalizacją w źródle. */
+export function dowodyWymagan(rekord = {}, typy = wykryjWymaganeTypy(rekord.tresc)) {
+  const tresc = String(rekord.tresc ?? '');
+  const linie = linieZrodla(rekord);
+  return typy.map((typ) => {
+    const wzor = WZORCE_TYPOW.find((w) => w.id === typ);
+    const index = wzor ? linie.findIndex((linia) => wzor.frazy.some((f) => normalizuj(linia.tekst).includes(f))) : -1;
+    return {
+      typ, nazwa: typDokumentu(typ)?.nazwa ?? typ,
+      cytat: index >= 0 ? cytatZPozycji(rekord, linie[index].start, linie[index].start + linie[index].tekst.length) : null,
+    };
+  });
 }
 
 // ── Rozdział dokumentów na koszyki względem dnia złożenia ─────────────────────
