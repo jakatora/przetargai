@@ -43,7 +43,7 @@ PY
 cat ios-simulator-smoke/selected-device.json
 xcrun simctl boot "$DEVICE_ID"
 xcrun simctl bootstatus "$DEVICE_ID" -b
-open -a Simulator --args -CurrentDeviceUDID "$DEVICE_ID"
+# simctl operates headlessly; no dependency on Xcode's Simulator/DeviceHub GUI name.
 xcrun simctl install "$DEVICE_ID" "$APP"
 xcrun simctl status_bar "$DEVICE_ID" override --time '9:41' --batteryState charged --batteryLevel 100
 xcrun simctl ui "$DEVICE_ID" appearance light
