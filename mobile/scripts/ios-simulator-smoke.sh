@@ -69,6 +69,8 @@ xcrun simctl launch --console-pty "$DEVICE_ID" "$BUNDLE_ID" > ios-simulator-smok
 LAUNCH_PID=$!
 sleep 12
 xcrun simctl io "$DEVICE_ID" screenshot --display=1 ios-simulator-smoke/light.png
+xcrun simctl openurl "$DEVICE_ID" 'przetargai://sdk27-smoke'
+sleep 3
 xcrun simctl ui "$DEVICE_ID" appearance dark
 sleep 8
 xcrun simctl io "$DEVICE_ID" screenshot --display=1 ios-simulator-smoke/dark.png

@@ -23,9 +23,12 @@ def verify_ipa(path, bundle_id, minimum_sdk=27):
         raise ValueError(f"Device SDK {minimum_sdk}+ required; IPA records {sdk!r}")
     if info.get("CFBundleSupportedPlatforms") != ["iPhoneOS"]:
         raise ValueError("Expected an iPhoneOS device IPA")
+    scenes = info.get("UIApplicationSceneManifest", {}).get("UISceneConfigurations", {}).get("UIWindowSceneSessionRoleApplication", [])
+    if not scenes or not all(scene.get("UISceneDelegateClassName") for scene in scenes):
+        raise ValueError("iOS SDK 27 requires a configured UIKit scene lifecycle")
     return {key: info.get(key) for key in (
         "CFBundleIdentifier", "CFBundleShortVersionString", "CFBundleVersion",
-        "DTSDKName", "DTSDKBuild", "DTXcode", "DTXcodeBuild", "MinimumOSVersion")}
+        "DTSDKName", "DTSDKBuild", "DTXcode", "DTXcodeBuild", "MinimumOSVersion", "UIApplicationSceneManifest")}
 
 
 if __name__ == "__main__":
