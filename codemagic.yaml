@@ -89,6 +89,7 @@ workflows:
         - produkcja             # EXPO_PUBLIC_API_URL -> backend Cloud Functions (D-043)
       vars:
         PACKAGE_NAME: pl.przetargai.app
+        EXPO_PUBLIC_KANAL: kanal-google-play
       node: 24
     scripts:
       - name: Instalacja zależności

@@ -36,6 +36,13 @@ function zip(wpisy) {
 
 const SRC = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
+test('Codemagic Android ustawia kanał Google Play przed bundlowaniem', () => {
+  const yaml = fs.readFileSync(path.join(SRC, '..', '..', 'codemagic.yaml'), 'utf8');
+  const android = yaml.split('  android-release:')[1];
+  assert.ok(android, 'workflow Android musi istnieć');
+  assert.match(android, /EXPO_PUBLIC_KANAL:\s*kanal-google-play/);
+});
+
 function plikiJs(katalog) {
   return fs.readdirSync(katalog, { withFileTypes: true }).flatMap((w) => {
     const p = path.join(katalog, w.name);
