@@ -14,7 +14,7 @@ import Ikona from '../components/Ikona';
 import WierszAkcji from '../components/WierszAkcji';
 import { opisBrakuPrzypomnienia, opisOceny, opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
-import { formatDate, formatBudget } from '../lib/format';
+import { formatDeadline, formatBudget } from '../lib/format';
 import { STATUS_DOMYSLNY, przypomnieniaWstrzymane } from '../lib/statusPrzetargu';
 import {
   wczytajKontrole,
@@ -161,7 +161,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   // Jedno źródło prawdy o terminie — wcześniej `daysUntil` nie odróżniał
   // terminu minionego od nieznanego i po prostu nic nie pokazywał.
   const termin = opisTerminu(tender.deadline);
-  const deadlineText = formatDate(tender.deadline); // status terminu stoi w chipie pod tytułem
+  const deadlineText = formatDeadline(tender.deadline, t('czas polski', 'Polish time'), tender.source ?? tender.zrodlo?.kod); // status terminu stoi w chipie pod tytułem
   const maTermin = !!tender.deadline && !termin.minal;
   const brakPrzypomnienia = opisBrakuPrzypomnienia(tender.deadline);
   // Wniosek już poszedł, gdy kontrola przeszła poza etap „nowa".
@@ -292,7 +292,7 @@ export default function MatchDetailScreen({ route, navigation }) {
       tender.organization
         ? t(`Zamawiający: ${tender.organization}`, `Contracting authority: ${tender.organization}`)
         : null,
-      t(`Termin składania ofert: ${formatDate(tender.deadline)}`, `Bid deadline: ${formatDate(tender.deadline)}`),
+      t(`Termin składania ofert: ${deadlineText}`, `Bid deadline: ${deadlineText}`),
       tender.url || null,
       t(
         '— znalezione w PrzetargAI, monitoring przetargów publicznych: https://przetarg-ai.pl',

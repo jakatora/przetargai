@@ -12,7 +12,7 @@ import { ZapytajSwzPrzetargu } from '../components/ZapytajSwz';
 import { useStyle, tworzStyle } from '../context/ThemeContext';
 import { useJezyk } from '../context/JezykContext';
 import { spacing, radius, typografia } from '../theme';
-import { formatDate, formatBudget } from '../lib/format';
+import { formatDate, formatDeadline, formatBudget } from '../lib/format';
 import { opisTerminu } from '../lib/termin';
 import { opisCpv } from '../lib/cpv';
 import { opisWadium } from '../lib/wadium';
@@ -93,7 +93,7 @@ export default function KatalogDetailScreen({ route, navigation }) {
         <Wiersz
           styles={styles}
           etykieta={t('Termin składania ofert', 'Submission deadline')}
-          wartosc={formatDate(tender.deadline)}
+          wartosc={formatDeadline(tender.deadline, t('czas polski', 'Polish time'), tender.source ?? tender.zrodlo?.kod)}
         />
         <Wiersz styles={styles} etykieta={t('Województwo', 'Voivodeship')} wartosc={tender.region_nazwa} />
         <Wiersz
