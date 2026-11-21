@@ -102,7 +102,7 @@ workflows:
   # Diagnostic run: no signing, IPA or upload to App Store Connect.
   ios-simulator-check:
     name: PrzetargAI iOS SDK 27 native startup check
-    instance_type: mac_mini_m4
+    instance_type: mac_mini_m2
     max_build_duration: 45
     environment:
       groups:
