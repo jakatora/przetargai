@@ -18,13 +18,13 @@ import { znacznikKryteriow } from '../lib/kryteriaOceny';
 import { znacznikZmian } from '../lib/zmianyDokumentow';
 import {
   FILTRY_DOMYSLNE, KLUCZ_FILTROW, SORTOWANIA, STATUSY_TERMINU, ZRODLA,
-  normalizujFiltry, parametryZapytania, liczbaAktywnychFiltrow, scalStrone,
-  opisPustki, etykietaLicznika, czyResetowacKursor,
+  normalizujFiltry, parametryZapytania, liczbaAktywnychFiltrow,
+  opisPustki, etykietaLicznika,
 } from '../lib/katalogPrzetargow';
 import { etykietaZrodla } from '../lib/zrodlaDanych';
 import { useAuth } from '../context/AuthContext';
 import { eksportujNaEmail } from '../services/eksportCsv';
-import { utworzLicznikZadan } from '../lib/licznikZadan';
+import { utworzKatalogPaginowany } from '../lib/katalogPaginacja';
 
 /*
  * Tryb „Wszystkie" na głównej liście (P1-3).
@@ -111,14 +111,18 @@ export default function KatalogWszystkich({ navigation }) {
   const { user } = useAuth();
 
   const [filtry, setFiltry] = useState(FILTRY_DOMYSLNE);
+  const filtryRef = useRef(FILTRY_DOMYSLNE);
   const [panelOtwarty, setPanelOtwarty] = useState(false);
-  const [pozycje, setPozycje] = useState([]);
-  const [kursor, setKursor] = useState(null);
-  const [wyczerpano, setWyczerpano] = useState(false);
-  const [ladowanie, setLadowanie] = useState(true);
-  const [odswiezanie, setOdswiezanie] = useState(false);
-  const [dociaganie, setDociaganie] = useState(false);
-  const [blad, setBlad] = useState(null);
+  const [katalog] = useState(() => utworzKatalogPaginowany({ pobierzStrone: (p) => api.getTenders(p) }));
+  const [stan, setStan] = useState(katalog.stan);
+  const { pozycje, wyczerpano, ladowanie, odswiezanie, dociaganie, blad, przeskanowano } = stan;
+  useEffect(() => katalog.subskrybuj(setStan), [katalog]);
+  useEffect(() => () => katalog.anuluj(), [katalog]);
+  const ustawFiltry = useCallback((nowe) => {
+    filtryRef.current = nowe;
+    katalog.ustawParametry(parametryZapytania(nowe));
+    setFiltry(nowe);
+  }, [katalog]);
   // `null` = jeszcze nie wiadomo; bez tego panel filtrów migałby przy starcie.
   const [gotowe, setGotowe] = useState(false);
 
@@ -129,61 +133,32 @@ export default function KatalogWszystkich({ navigation }) {
       .then((zapis) => {
         if (!aktywny) return;
         try {
-          setFiltry(normalizujFiltry(zapis ? JSON.parse(zapis) : null));
+          ustawFiltry(normalizujFiltry(zapis ? JSON.parse(zapis) : null));
         } catch {
-          setFiltry(FILTRY_DOMYSLNE);
+          ustawFiltry(FILTRY_DOMYSLNE);
         }
       })
-      .catch(() => {})
+      .catch(() => { if (aktywny) ustawFiltry(FILTRY_DOMYSLNE); })
       .finally(() => { if (aktywny) setGotowe(true); });
     return () => { aktywny = false; };
-  }, []);
+  }, [ustawFiltry]);
 
   const zmienFiltr = useCallback((pole, wartosc) => {
-    setFiltry((poprzednie) => {
-      const nowe = normalizujFiltry({ ...poprzednie, [pole]: wartosc });
-      storage.setItem(KLUCZ_FILTROW, JSON.stringify(nowe)).catch(() => {});
-      // Kursor należy do ZESTAWU filtrów — backend odrzuci go po zmianie.
-      if (czyResetowacKursor(poprzednie, nowe)) setKursor(null);
-      return nowe;
-    });
-  }, []);
+    const nowe = normalizujFiltry({ ...filtryRef.current, [pole]: wartosc });
+    ustawFiltry(nowe);
+    storage.setItem(KLUCZ_FILTROW, JSON.stringify(nowe)).catch(() => {});
+  }, [ustawFiltry]);
 
   const wyczyscFiltry = useCallback(() => {
-    setFiltry(FILTRY_DOMYSLNE);
-    setKursor(null);
+    ustawFiltry(FILTRY_DOMYSLNE);
     storage.setItem(KLUCZ_FILTROW, JSON.stringify(FILTRY_DOMYSLNE)).catch(() => {});
-  }, []);
+  }, [ustawFiltry]);
 
   const parametry = useMemo(() => parametryZapytania(filtry), [filtry]);
   const aktywnych = useMemo(() => liczbaAktywnychFiltrow(filtry), [filtry]);
 
-  // Tylko najnowsze żądanie ma prawo zmienić listę. Przy szybkiej zmianie filtra
-  // spóźniona odpowiedź STAREGO filtra nadpisywała wyniki nowego, a dociągnięta
-  // strona starego filtra doklejała się do nowej listy (audyt 2026-09-25).
-  const licznikZadan = useRef(utworzLicznikZadan()).current;
-
-  /** Pierwsza strona (albo odświeżenie). Błąd NIE kasuje tego, co już widać. */
-  const wczytaj = useCallback(async (tryb) => {
-    const nr = licznikZadan.nowe(); // unieważnia wszystko, co jeszcze leci (także dociąganie)
-    if (tryb === 'odswiez') setOdswiezanie(true);
-    try {
-      const dane = await api.getTenders({ ...parametry, limit: 20 });
-      if (!licznikZadan.czyAktualne(nr)) return;
-      setPozycje(dane.tenders ?? []);
-      setKursor(dane.next_kursor ?? null);
-      setWyczerpano(dane.wyczerpano !== false);
-      setBlad(null);
-    } catch (err) {
-      if (licznikZadan.czyAktualne(nr)) setBlad(err.message);
-    } finally {
-      // Wskaźniki zdejmuje najnowsze żądanie — ono zawsze kończy się tym `finally`.
-      if (licznikZadan.czyAktualne(nr)) {
-        setLadowanie(false);
-        setOdswiezanie(false);
-      }
-    }
-  }, [parametry, licznikZadan]);
+  const wczytaj = useCallback((tryb) => katalog.wczytaj(tryb), [katalog]);
+  const dociagnij = useCallback(() => katalog.dociagnij(), [katalog]);
 
   /*
    * Zmiana filtrów przeładowuje pierwszą stronę — ale dopiero po chwili ciszy.
@@ -194,35 +169,7 @@ export default function KatalogWszystkich({ navigation }) {
     if (!gotowe) return undefined;
     const id = setTimeout(() => { wczytaj(); }, 350);
     return () => clearTimeout(id);
-  }, [gotowe, wczytaj]);
-
-  /**
-   * Dociąganie. `wyczerpano: false` bez kursora nie zdarza się z backendu, ale
-   * gdyby się zdarzyło, pętla i tak się zatrzyma — lista nie ma prawa kręcić się
-   * w nieskończoność na błędzie kontraktu.
-   */
-  const dociagnij = useCallback(async () => {
-    if (!kursor || dociaganie || odswiezanie || ladowanie) return;
-    // Dociąganie należy do BIEŻĄCEJ listy — nie zakłada nowej generacji, ale traci
-    // ważność, gdy w międzyczasie filtr się zmienił (strona starego filtra i jego
-    // kursor nie mogą trafić do nowej listy).
-    const nr = licznikZadan.biezace();
-    setDociaganie(true);
-    try {
-      const dane = await api.getTenders({ ...parametry, limit: 20, kursor });
-      if (!licznikZadan.czyAktualne(nr)) return;
-      setPozycje((poprzednie) => scalStrone(poprzednie, dane.tenders ?? []));
-      setKursor(dane.next_kursor ?? null);
-      setWyczerpano(dane.wyczerpano !== false);
-      setBlad(null);
-    } catch (err) {
-      // Błąd dociągania nie może skasować listy — pokazujemy pasek nad stopką.
-      if (licznikZadan.czyAktualne(nr)) setBlad(err.message);
-    } finally {
-      // Zawsze — inaczej unieważnione dociąganie zablokowałoby kolejne na stałe.
-      setDociaganie(false);
-    }
-  }, [kursor, dociaganie, odswiezanie, ladowanie, parametry, licznikZadan]);
+  }, [gotowe, parametry, wczytaj]);
 
   const licznik = etykietaLicznika({ ile: pozycje.length, wyczerpano });
 
@@ -405,19 +352,16 @@ export default function KatalogWszystkich({ navigation }) {
     </View>
   );
 
-  if (ladowanie && !pozycje.length) {
-    return <StanLadowania karty={4} />;
-  }
-
-  if (blad && !pozycje.length) {
-    return (
-      <StanBledu
-        tytul={t('Nie udało się wczytać rynku', 'Could not load the market')}
-        opis={blad}
-        onPonow={() => { setLadowanie(true); wczytaj(); }}
-      />
-    );
-  }
+  const pracuje = ladowanie || odswiezanie || dociaganie;
+  const postep = (
+    <View style={styles.stopka} accessibilityLiveRegion="polite">
+      <ActivityIndicator color={kolory.blue} accessibilityLabel={t('Przeszukujemy rynek', 'Searching the market')} />
+      <Text style={styles.pustkaTekst}>
+        {t('Przeszukujemy rynek…', 'Searching the market…')}
+        {przeskanowano > 0 ? t(` Sprawdzono ${przeskanowano} ogłoszeń.`, ` Checked ${przeskanowano} notices.`) : ''}
+      </Text>
+    </View>
+  );
 
   return (
     <FlatList
@@ -441,18 +385,22 @@ export default function KatalogWszystkich({ navigation }) {
           colors={[kolory.blue]}
         />
       )}
-      onEndReached={dociagnij}
+      onEndReached={() => { if (!blad) dociagnij(); }}
       onEndReachedThreshold={0.4}
-      ListFooterComponent={dociaganie ? (
-        <View style={styles.stopka}><ActivityIndicator color={kolory.blue} /></View>
-      ) : null}
-      ListEmptyComponent={(
+      ListFooterComponent={pozycje.length > 0 ? (pracuje ? postep : (!wyczerpano && !blad ? (
+        <Button title={t('Więcej ogłoszeń', 'More notices')} variant="ghost" onPress={dociagnij} />
+      ) : null)) : null}
+      ListEmptyComponent={pracuje ? (
+        <View>{postep}<StanLadowania karty={3} /></View>
+      ) : blad ? (
+        <StanBledu tytul={t('Nie udało się wczytać rynku', 'Could not load the market')} opis={blad} onPonow={() => wczytaj()} />
+      ) : wyczerpano ? (
         <StanPusty
           tytul={t('Brak wyników', 'No results')}
           opis={t(opisPustki(filtry))}
           akcja={aktywnych > 0 ? { tytul: t('Wyczyść filtry', 'Clear filters'), onPress: wyczyscFiltry, wariant: 'ghost' } : null}
         />
-      )}
+      ) : null}
     />
   );
 }
@@ -528,7 +476,7 @@ const tworzStyleKatalogu = tworzStyle((k) => ({
     fontSize: 15,
     color: k.text,
   },
-  poleWaskie: { flex: 1 },
+  poleWaskie: { flex: 1, minWidth: 0 },
   widelki: { flexDirection: 'row', gap: spacing.sm },
   uwaga: { fontSize: 12, color: k.textMuted, marginTop: 6, lineHeight: 17 },
   wyczysc: { marginTop: spacing.md },

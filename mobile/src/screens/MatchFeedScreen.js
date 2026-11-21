@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
-import { SectionList, ScrollView, View, Text, TextInput, RefreshControl, ActivityIndicator, Pressable, Linking, Platform } from 'react-native';
+import { SectionList, ScrollView, View, Text, TextInput, RefreshControl, ActivityIndicator, Pressable, Linking, Platform, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { komunikatPrzerwyZrodel } from '../lib/stanZrodel';
 import { decyzjaAktualizacji, KLUCZ_ODLOZONEJ_AKTUALIZACJI } from '../lib/aktualizacja';
@@ -64,6 +64,7 @@ function KartaPodprogowa({ ogloszenie, onPress, styles }) {
 }
 
 export default function MatchFeedScreen({ navigation }) {
+  const { width: szerokosc } = useWindowDimensions();
   const { kolory } = useTheme();
   const styles = useStyle(tworzStyleFeedu);
   const { t } = useJezyk();
@@ -313,6 +314,7 @@ export default function MatchFeedScreen({ navigation }) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      title: szerokosc < 360 ? t('Przetargi', 'Tenders') : t('Twoje przetargi', 'Your tenders'),
       headerRight: () => (
         <View style={styles.headerAkcje}>
           {/* Nagłówek (2026-11-10): „Zapisane” podpisane zamiast samej gwiazdki i dzwonek alertów z licznikiem —
@@ -341,7 +343,7 @@ export default function MatchFeedScreen({ navigation }) {
         </View>
       ),
     });
-  }, [navigation, styles, t, nieprzeczytane, kolory]);
+  }, [navigation, styles, t, nieprzeczytane, kolory, szerokosc]);
 
   /**
    * Feed dopasowań („Dla mnie"). Wydzielony do funkcji, bo ekran renderuje
