@@ -31,11 +31,18 @@ workflows:
         APPLE_TEAM_ID: B7J6A7R258  # poziom konta — nie jest sekretem
         XCODE_SCHEME: PrzetargAI   # nazwa schematu generowanego przez `expo prebuild`
       node: 24
-      xcode: latest
+      # `latest` previously selected SDK 26.5 and produced ITMS-90725.
+      xcode: "27.2"
       cocoapods: default
     # UWAGA: świadomie BEZ deklaratywnego bloku `ios_signing:` — robi pre-check
     # i pada na „No matching profiles found", gdy profil tworzymy dopiero w skrypcie.
     scripts:
+      - name: Kontrola narzędzi iOS
+        script: |
+          set -euo pipefail
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          python3 -m unittest discover -s mobile/scripts -p 'test_verify_ios_sdk.py'
       - name: Instalacja zależności
         script: cd mobile && npm ci
       - name: Expo prebuild (iOS)
@@ -65,9 +72,21 @@ workflows:
             --workspace "ios/$XCODE_SCHEME.xcworkspace" \
             --scheme "$XCODE_SCHEME" \
             --export-options-plist "$CM_BUILD_DIR/export_options.plist"
+      - name: Kontrola SDK gotowego IPA
+        script: |
+          set -euo pipefail
+          python3 mobile/scripts/verify_ios_sdk.py mobile/build/ios/ipa/*.ipa \
+            --bundle-id "$BUNDLE_ID" --minimum-sdk 27 \
+            --output ios-sdk-proof.json
+      - name: Kontrola uruchomienia na symulatorze iOS
+        script: bash mobile/scripts/ios-simulator-smoke.sh
     artifacts:
       - mobile/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      - ios-sdk-proof.json
+      - ios-simulator-smoke/*.png
+      - ios-simulator-smoke/*.json
+      - ios-simulator-smoke-build.log
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
