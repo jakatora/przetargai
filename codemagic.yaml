@@ -86,6 +86,10 @@ workflows:
       - ios-sdk-proof.json
       - ios-simulator-smoke/*.png
       - ios-simulator-smoke/*.json
+      - ios-simulator-smoke/*.log
+      - ios-simulator-smoke/*.txt
+      - ios-simulator-smoke/*.ips
+      - ios-simulator-smoke/*.crash
       - ios-simulator-smoke-build.log
     publishing:
       app_store_connect:
@@ -94,6 +98,36 @@ workflows:
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
+
+  # Diagnostic run: no signing, IPA or upload to App Store Connect.
+  ios-simulator-check:
+    name: PrzetargAI iOS SDK 27 native startup check
+    instance_type: mac_mini_m4
+    max_build_duration: 45
+    environment:
+      groups:
+        - produkcja
+      vars:
+        BUNDLE_ID: pl.przetargai.app
+        XCODE_SCHEME: PrzetargAI
+      node: 24
+      xcode: "27.2"
+      cocoapods: default
+    scripts:
+      - name: Instalacja zależności
+        script: cd mobile && npm ci
+      - name: Expo prebuild i CocoaPods
+        script: |
+          set -euo pipefail
+          cd mobile
+          npx expo prebuild --platform ios --no-install
+          cd ios
+          pod install
+      - name: Natywne uruchomienie z logami
+        script: bash mobile/scripts/ios-simulator-smoke.sh
+    artifacts:
+      - ios-simulator-smoke/*
+      - ios-simulator-smoke-build.log
 
   # ========================== Android ==========================
   android-release:
