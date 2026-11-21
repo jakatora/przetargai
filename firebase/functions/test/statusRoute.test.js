@@ -76,3 +76,21 @@ test('IZOLACJA: statusu cudzego przetargu nie da się ustawić', async () => {
   const odp = await fetch(`${BAZA}/matches/${id}/status`, { method: 'PUT', headers: auth(b), body: JSON.stringify({ status: 'wygrana' }) });
   assert.equal(odp.status, 404, 'B nie ma tego w swoich zapisanych');
 });
+
+test('PUT /status: cofnięcie z „złożona” po zamknięciu przypomnienia wznawia je (przypomnienie_wznowione)', async () => {
+  const { getFirestore } = await import('firebase-admin/firestore');
+  const token = await konto();
+  const id = await zapisany(token, 'Remont mostu');
+  const put = (status) => fetch(`${BAZA}/matches/${id}/status`, { method: 'PUT', headers: auth(token), body: JSON.stringify({ status }) });
+  assert.equal((await put('zlozona')).status, 200);
+  // Stan po przebiegu joba przypomnień przy złożonej ofercie (remindDeadlines → zarezerwujEtap → po_zlozeniu).
+  const uid = await userId(token);
+  await getFirestore().collection('users').doc(uid).collection('saved').doc(id)
+    .update({ reminder_notified: true, reminder_zakonczone_powod: 'oferta_zlozona' });
+  const odp = await (await put('przygotowuje')).json();
+  assert.equal(odp.status, 'przygotowuje');
+  assert.equal(odp.przypomnienie_wznowione, true);
+  const wpis = (await (await fetch(`${BAZA}/matches/saved`, { headers: auth(token) })).json()).saved.find((z) => z.tender.id === id);
+  assert.equal(wpis.reminder_enabled, true);
+  assert.ok(wpis.remind_at > new Date().toISOString());
+});

@@ -292,6 +292,22 @@ section[id], main[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
 }
 .etap h3 { font-size: 19px; margin-bottom: 8px; }
 .etap p { color: var(--muted); font-size: 16px; }
+/* Pas „Pilnuje tego, co weźmiesz” pod etapami (2026-11-10) */
+.pilnuje {
+  margin-top: 48px; display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: start;
+  padding: 28px; border: 1px solid var(--line); border-radius: 16px; background: var(--blue-tint);
+}
+.pilnuje .pilnuje__ikona { margin-bottom: 0; }
+.pilnuje h3 { font-size: 19px; margin-bottom: 8px; }
+.pilnuje p { color: var(--muted); font-size: 16px; max-width: 760px; }
+.pilnuje__lista { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.pilnuje__lista li {
+  padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line);
+  color: var(--ink); font-weight: 600; font-size: 14px;
+}
+@media (max-width: 560px) {
+  .pilnuje { grid-template-columns: 1fr; padding: 20px; }
+}
 .etap .etap__efekt {
   margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-strong);
   color: var(--ink); font-weight: 700; font-size: 14px;

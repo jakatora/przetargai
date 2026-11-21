@@ -29,7 +29,7 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
   const { t } = useJezyk();
   const { kolory } = useTheme();
   const styles = useStyle(tworzStylePanelu);
-  const { isSaved, toggle } = useSaved();
+  const { isSaved, toggle, refresh: odswiezZapisane } = useSaved();
   const [dzien, setDzien] = useState(null);
   const [blad, setBlad] = useState(null);
   const [rozwiniete, setRozwiniete] = useState(false);
@@ -52,7 +52,7 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
     } catch (err) {
       // 503 „wylaczony” albo brak sieci — lista pod spodem działa dalej. Gdy panel nadal
       // pokazuje wcześniej wczytany wybór, lista nie może go zdublować.
-      setBlad(err.message);
+      setBlad(err);
       if (!dzienRef.current) onWybraneIds?.(new Set());
     }
   }, [onWybraneIds]);
@@ -77,8 +77,10 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
     if (!doOdrzucenia) return;
     setZapisywanie(true);
     try {
-      await api.pracownikOdrzuc(doOdrzucenia.id, przyczyna, komentarz);
+      const wynik = await api.pracownikOdrzuc(doOdrzucenia.id, przyczyna, komentarz);
       setDoOdrzucenia(null);
+      // Serwer zdejmuje odrzucony z Zapisanych (bez przypomnień) — gwiazdki w apce muszą to zobaczyć.
+      if (wynik?.usuniety_z_zapisanych) odswiezZapisane?.();
       await wczytaj();
       onZmiana?.();
     } catch (err) {
@@ -94,14 +96,24 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
     const termin = opisTerminu(m.tender?.deadline);
     const kroki = krokiBiore({ zapisany: isSaved(m.id), przypomnienie: m.reminder_enabled === true, maTermin: Boolean(m.tender?.deadline) && !termin.minal, status: m.status || undefined });
     try {
-      if (kroki.includes('zapisz')) await toggle(m.id);
+      if (kroki.includes('zapisz')) await toggle(m.id, true);
     } catch (err) {
       setBioreId(null);
       zgloszBlad(t('Nie udało się zapisać przetargu', 'Could not save the tender'), err);
       return;
     }
-    if (kroki.includes('przypomnienie')) await api.setReminder(m.id, true).catch(() => {});
-    if (kroki.includes('etap')) await api.setStatus(m.id, 'przygotowuje').catch(() => {});
+    // Nowy zapis serwer sam łączy z przypomnieniem 7/3/1 (od 2026-11-10) — osobne żądanie tylko dla wcześniej zapisanych.
+    if (kroki.includes('przypomnienie') && !kroki.includes('zapisz')) await api.setReminder(m.id, true).catch(() => {});
+    if (kroki.includes('etap')) {
+      try {
+        await api.setStatus(m.id, 'przygotowuje');
+      } catch (err) {
+        // „✓ Bierzesz” tylko, gdy etap naprawdę się zapisał — inaczej po powrocie znów byłoby „Biorę” (audyt 2026-11-10).
+        setBioreId(null);
+        zgloszBlad(t('Zapisano przetarg, ale nie ustawiono etapu „Przygotowuję ofertę”', 'Saved, but the “Preparing the bid” stage was not set'), err);
+        return;
+      }
+    }
     setWziete((stare) => new Set([...stare, m.id]));
     setBioreId(null);
   }
@@ -125,7 +137,20 @@ export default function PanelWyboru({ navigation, odswiezenie = 0, onWybraneIds,
   }
 
   if (!dzien && !blad) return <ActivityIndicator style={styles.ladowanie} />;
-  if (!dzien) return null;
+  if (!dzien) {
+    // 503 „wyłączony” = funkcja świadomie wyłączona — bez komunikatu. Inny błąd (słaba sieć) nie może
+    // po cichu schować dziennego wyboru: karta z ponowieniem (audyt 2026-11-10).
+    if (blad?.status === 503) return null;
+    return (
+      <View style={styles.bladKarta}>
+        <Text style={styles.bladTekst}>
+          {t('Nie udało się wczytać dzisiejszego wyboru. ', 'Could not load today’s picks. ')}
+          {blad?.message ?? ''}
+        </Text>
+        <Button title={t('Spróbuj ponownie', 'Try again')} variant="ghost" onPress={() => { setBlad(null); wczytaj(); }} />
+      </View>
+    );
+  }
 
   const raport = zdanieRaportu(dzien.raport);
   const proba = opisProby(dzien.proba);
@@ -300,6 +325,8 @@ const tworzStylePanelu = tworzStyle((k) => ({
   przyciskMaly: { minHeight: 42, paddingVertical: 8 },
   wzietyStan: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, minHeight: 42, borderRadius: radius.md, backgroundColor: k.sukcesTlo },
   wzietyTekst: { fontSize: 15, fontWeight: '800', color: k.text },
+  bladKarta: { marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, gap: spacing.sm },
+  bladTekst: { color: k.textMuted, fontSize: 14, lineHeight: 20 },
   odrzucone: { marginTop: spacing.sm, backgroundColor: k.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, paddingHorizontal: spacing.md },
   odrzuconeNaglowek: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48 },
   odrzuconeTytul: { fontSize: 15, fontWeight: '700', color: k.text },

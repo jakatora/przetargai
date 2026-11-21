@@ -42,3 +42,11 @@ test('zapisz → wczytaj round-trip (fałszywy storage) + odporność na śmieci
   mapa.set(kluczKontroli('zly'), '{zepsuty');
   assert.equal((await wczytajKontroleOferty(storage, 'zly')).size, 0);
 });
+
+
+test('strict read surfaces storage failure and invalid JSON instead of empty checklist', async () => {
+  await assert.rejects(wczytajKontroleOferty({ getItem: async () => { throw Error('disk'); } }, 'A', { strict: true }), /disk/);
+  await assert.rejects(wczytajKontroleOferty({ getItem: async () => '{broken' }, 'A', { strict: true }));
+  await assert.rejects(wczytajKontroleOferty({ getItem: async () => '{}' }, 'A', { strict: true }));
+  assert.equal((await wczytajKontroleOferty({ getItem: async () => null }, 'A', { strict: true })).size, 0);
+});

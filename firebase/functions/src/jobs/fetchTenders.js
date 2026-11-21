@@ -41,7 +41,7 @@ function domyslneZrodla() {
     },
   ];
   if (features.ted) {
-    zrodla.push({ nazwa: 'ted', pobierz: (licznik) => pobierzOgloszeniaTed({ licznik }) });
+    zrodla.push({ nazwa: 'ted', pobierz: (licznik, opcje) => pobierzOgloszeniaTed({ ...opcje, licznik }) });
   }
   /*
    * Baza Konkurencyjności jest OSTATNIA świadomie. Budżet pobierania jest wspólny,

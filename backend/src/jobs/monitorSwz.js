@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 import { logger } from '../lib/logger.js';
 import { isMainModule, nowIso } from '../lib/ids.js';
-import { postepowaniaSwz, swzWersje } from '../db/repos.js';
+import { postepowaniaSwz, swzWersje, swzTrescWklejona } from '../db/repos.js';
 import { zarejestrujRoznice } from '../services/roznicaSwz.js';
+import { mapaStron } from '../lib/zrodlaSwz.js';
 
 /*
  * MONITOR PUBLIKACJI ZAMAWIAJĄCEGO (ulepszenie „Radar pytań i odpowiedzi do SWZ",
@@ -61,6 +62,10 @@ export async function pobierzPublikacjeSwz(_postepowanie) {
 export async function ingestujWersje({ postepowanie, kandydaci = [], zarejestruj = zarejestrujRoznice } = {}) {
   const postepowanieId = postepowanie.id;
   let poprzednia = swzWersje.latestForPostepowanie(postepowanieId);
+  if (!poprzednia) {
+    const analiza = swzTrescWklejona.get(postepowanieId);
+    if (analiza) poprzednia = { ...analiza, rodzaj: 'pierwsza_analiza' };
+  }
   let noweWersje = 0;
   let zmiany = 0;
   const wersje = [];
@@ -75,7 +80,7 @@ export async function ingestujWersje({ postepowanie, kandydaci = [], zarejestruj
     if (!hash) continue;
 
     const { wersja, created } = swzWersje.add({
-      postepowanieId, hash, tresc, sciezka, dataPublikacji: k?.dataPublikacji ?? null,
+      postepowanieId, hash, tresc, sciezka, dataPublikacji: k?.dataPublikacji ?? null, strony: mapaStron(k?.strony, tresc),
     });
     if (!created) continue; // znana wersja (ten sam hasz) — nic nowego
 

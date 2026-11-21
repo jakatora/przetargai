@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useJezyk } from '../context/JezykContext';
-import { View, Text, Pressable, ActivityIndicator, Share } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Share, Switch } from 'react-native';
 import { udostepnijTekst } from '../lib/udostepnianie';
 import { useFocusEffect } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
@@ -9,6 +9,8 @@ import { czytajPlikBase64, sprawdzPlikSwz, czytajUrlBase64 } from '../lib/plikBa
 import Screen from '../components/Screen';
 import TextField from '../components/TextField';
 import ZapytajSwz from '../components/ZapytajSwz';
+import ZrodloSwz from '../components/ZrodloSwz';
+import { zapiszEksportSwz } from '../services/eksportSwz';
 import Button from '../components/Button';
 import { api } from '../api/client';
 import { useTheme, useStyle, tworzStyle } from '../context/ThemeContext';
@@ -99,23 +101,39 @@ export default function RadarSwzScreen({ route, navigation }) {
       /* brak danych firmy — wniosek z kropkami do uzupełnienia */
     }
     const dok = generujWniosekOWyjasnienie({ wykonawca, postepowanie, pytania, dzisiaj: new Date().toISOString() });
-    let udostepniono = false;
     try {
-      const wynik = await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
-      // iOS mówi „dismissedAction" przy anulowaniu; Android zawsze „sharedAction" — traktujemy jako wysłane.
-      udostepniono = !wynik?.anulowano;
-    } catch {
-      /* anulowane */
+      await udostepnijTekst({ message: dok.tresc, title: dok.nazwa });
+    } catch (err) {
+      if (aktywnePostepowanie.current === postepowanie.id) {
+        setBladAkcji(err.message || t('Nie udało się udostępnić pisma. Spróbuj ponownie.', 'Could not share the letter. Try again.'));
+      }
     }
-    if (!udostepniono) return;
-    // Jedno żądanie zamiast klikania każdego pytania: szkice → „wysłane".
-    const szkice = pytania.filter((q) => q.status === 'szkic').map((q) => String(q.id));
-    if (!szkice.length) return;
+    // Arkusz udostępniania lub schowek nie potwierdza złożenia pisma.
+  }
+
+  async function potwierdzZlozenie(postepowanie, pytania) {
+    const id = postepowanie.id;
+    const ids = pytania.filter(q => q.status === 'szkic').map(q => String(q.id));
+    if (!ids.length || zapisPytanRef.current || aktywnePostepowanie.current !== id) return;
+    zapisPytanRef.current = true;
+    setZapisPytan(true);
+    setBladAkcji(null);
     try {
-      await api.radarPytaniaStatus(postepowanie.id, { ids: szkice, status: 'wyslane' });
-      await odswiezDetalCicho(postepowanie.id);
-    } catch {
-      /* status zaktualizuje się przy następnym odczycie */
+      await api.radarPytaniaStatus(id, { ids, status: 'wyslane' });
+      if (aktywnePostepowanie.current === id) {
+        setDetal(obecny => obecny?.postepowanie?.id !== id ? obecny : {
+          ...obecny,
+          pytania: obecny.pytania.map(q => ids.includes(String(q.id)) && q.status === 'szkic'
+            ? { ...q, status: 'wyslane' } : q),
+        });
+      }
+    } catch (err) {
+      if (aktywnePostepowanie.current === id) {
+        setBladAkcji(t('Nie potwierdzono zapisu statusu. Spróbuj ponownie. ', 'Status update was not confirmed. Try again. ') + (err.message || ''));
+      }
+    } finally {
+      zapisPytanRef.current = false;
+      setZapisPytan(false);
     }
   }
   // Wejście z przetargu (ścieżka) niesie nazwę i daty z ogłoszenia; z katalogu narzędzi
@@ -173,7 +191,7 @@ export default function RadarSwzScreen({ route, navigation }) {
     czytajUrlBase64(wstepne.pdfUrl)
       .then(({ base64 }) => {
         if (!aktywny) return;
-        setPlikSwz({ nazwa: wstepne.pdfNazwa, base64 });
+        setPlikSwz({ nazwa: wstepne.pdfNazwa, base64, zrodloUrl: wstepne.pdfUrl });
         setPdfZPlatformy({ probowano: true, laduje: false, info: `Pobrano „${wstepne.pdfNazwa}” z platformy — dotknij „Wygeneruj pytania”.` });
       })
       .catch((err) => { if (aktywny) setPdfZPlatformy({ probowano: true, laduje: false, info: err.message }); });
@@ -181,11 +199,21 @@ export default function RadarSwzScreen({ route, navigation }) {
   }, [wstepne.pdfUrl, wstepne.pdfNazwa, wybraneId, plikSwz, pdfZPlatformy.probowano]);
   const [analizuje, setAnalizuje] = useState(false);
   const [nowaWersja, setNowaWersja] = useState('');
+  const [plikNowejWersji, setPlikNowejWersji] = useState(null);
+  const [nowyUrl, setNowyUrl] = useState('');
+  const [eksportuje, setEksportuje] = useState(false);
+  const eksportTrwaRef = useRef(false);
+  const [opisAi, setOpisAi] = useState(false);
   const [odswiezam, setOdswiezam] = useState(false);
   const [zmianaBusyId, setZmianaBusyId] = useState(null);
   const [wysylam, setWysylam] = useState(false);
   const [wyslijWynik, setWyslijWynik] = useState(null);
   const [bladAkcji, setBladAkcji] = useState(null);
+  const aktywnePostepowanie = useRef(null);
+  const zapisPytanRef = useRef(false);
+  const [zapisPytan, setZapisPytan] = useState(false);
+  useEffect(() => () => { aktywnePostepowanie.current = null; }, []);
+
 
   // Dopasowanie sejfu dokumentów do TEGO postępowania (sejf 7/7). Leniwe: liczymy
   // dopiero na żądanie (backend porównuje sejf z wymaganiami SWZ względem dnia złożenia).
@@ -222,12 +250,15 @@ export default function RadarSwzScreen({ route, navigation }) {
   }
 
   function otworz(id) {
+    aktywnePostepowanie.current = id;
     setWybraneId(id);
     setMode('detal');
     setWyslijWynik(null);
     setBladAkcji(null);
     setSwzTekst('');
     setNowaWersja('');
+    setPlikNowejWersji(null);
+    setNowyUrl('');
     setDopasowanie(null);
     setBladDopasowania(null);
     wczytajDetal(id);
@@ -250,6 +281,7 @@ export default function RadarSwzScreen({ route, navigation }) {
   }
 
   function wroc() {
+    aktywnePostepowanie.current = null;
     setMode('lista');
     setWybraneId(null);
     setDetal(null);
@@ -331,13 +363,43 @@ export default function RadarSwzScreen({ route, navigation }) {
     }
   }
 
-  async function analizuj() {
+  async function wybierzNowyPdf() {
+    const id = wybraneId;
+    setBladAkcji(null);
+    try {
+      const wybor = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: false, type: 'application/pdf' });
+      if (wybor.canceled || !wybor.assets?.length) return;
+      const plik = wybor.assets[0];
+      const kontrola = sprawdzPlikSwz(plik);
+      if (!kontrola.ok) throw new Error(kontrola.blad);
+      const base64 = await czytajPlikBase64(plik.uri);
+      if (aktywnePostepowanie.current === id) { setPlikNowejWersji({ nazwa: plik.name, base64 }); setNowaWersja(''); }
+    } catch (err) { if (aktywnePostepowanie.current === id) setBladAkcji(err.message); }
+  }
+
+  async function eksportujHistorie(format) {
+    if (eksportTrwaRef.current) return;
+    eksportTrwaRef.current = true;
+    const id = wybraneId;
+    setEksportuje(true);
+    setBladAkcji(null);
+    try {
+      const plik = await api.radarEksport(id, format);
+      if (aktywnePostepowanie.current !== id) return;
+      await zapiszEksportSwz(plik);
+    } catch (err) { if (aktywnePostepowanie.current === id) setBladAkcji(err.message); }
+    finally { eksportTrwaRef.current = false; setEksportuje(false); }
+  }
+
+  async function analizuj(bezAi = false) {
     const maTekst = Boolean(swzTekst.trim());
     if ((!maTekst && !plikSwz) || analizuje) return;
     setAnalizuje(true);
     setBladAkcji(null);
     try {
-      await api.radarAnalizuj(wybraneId, maTekst ? { swz: swzTekst.trim() } : { swz_pdf_base64: plikSwz.base64 });
+      const payload = { ...(maTekst ? { swz: swzTekst.trim() } : { swz_pdf_base64: plikSwz.base64 }), ...(!maTekst && plikSwz?.zrodloUrl ? { zrodlo_url: plikSwz.zrodloUrl } : {}) };
+      if (bezAi) await api.radarZapiszTresc(wybraneId, payload);
+      else await api.radarAnalizuj(wybraneId, payload);
       setSwzTekst('');
       setPlikSwz(null);
       await wczytajDetal(wybraneId);
@@ -352,12 +414,14 @@ export default function RadarSwzScreen({ route, navigation }) {
   }
 
   async function odswiez() {
-    if (!nowaWersja.trim() || odswiezam) return;
+    if ((!nowaWersja.trim() && !plikNowejWersji) || odswiezam) return;
     setOdswiezam(true);
     setBladAkcji(null);
     try {
-      await api.radarOdswiez(wybraneId, { tresc: nowaWersja.trim() });
+      await api.radarOdswiez(wybraneId, { ...(nowaWersja.trim() ? { tresc: nowaWersja.trim() } : { swz_pdf_base64: plikNowejWersji.base64 }), ...(nowyUrl.trim() ? { zrodlo_url: nowyUrl.trim() } : {}), opis_ai: opisAi });
       setNowaWersja('');
+      setPlikNowejWersji(null);
+      setNowyUrl('');
       setWyslijWynik(null);
       await wczytajDetal(wybraneId);
     } catch (err) {
@@ -405,6 +469,7 @@ export default function RadarSwzScreen({ route, navigation }) {
   if (mode === 'lista') {
     return (
       <Screen scroll>
+        <Button title={t('Zobacz przykład SWZ — branża eventowa', 'View a tender document example — events')} variant="ghost" onPress={() => otworzLink('https://przetarg-ai.pl/przyklad-swz-eventy')} />
         <Text style={styles.wstep}>
           Radar SWZ pilnuje dwóch rzeczy: ustawowego terminu na pytania do treści SWZ
           (4 dni przed składaniem w trybie podstawowym, 14 dni powyżej progów UE — po nim
@@ -515,6 +580,8 @@ export default function RadarSwzScreen({ route, navigation }) {
       <Text style={styles.podtytul}>
         Termin składania ofert: {postepowanie.termin_skladania_ofert ? formatDate(postepowanie.termin_skladania_ofert) : 'nieznany'}
       </Text>
+      <Button title={t('Eksportuj historię SWZ (TXT)', 'Export SWZ history (TXT)')} variant="ghost" onPress={() => eksportujHistorie('txt')} loading={eksportuje} disabled={eksportuje} />
+      <Button title={t('Eksportuj dane historii (JSON)', 'Export history data (JSON)')} variant="ghost" onPress={() => eksportujHistorie('json')} disabled={eksportuje} />
 
       {bladAkcji ? (
         <View style={styles.bladCard}><Text style={styles.bladText}>{bladAkcji}</Text></View>
@@ -566,19 +633,34 @@ export default function RadarSwzScreen({ route, navigation }) {
               <Text style={styles.badgeNeutral}>{statusPytaniaEtykieta(p.status)}</Text>
             </View>
             <Text style={styles.pozycjaTresc}>{p.tresc}</Text>
-            {p.fragment_swz ? <Text style={styles.pozycjaFragment}>Dotyczy: {p.fragment_swz}</Text> : null}
+            {p.zrodlo ? <ZrodloSwz cytat={p.zrodlo} /> : p.fragment_swz ? <Text style={styles.pozycjaFragment}>Dotyczy: {p.fragment_swz}</Text> : null}
           </View>
         ))
       )}
       {pytania.length > 0 ? (
         <Button
-          title={t('Złóż wniosek o wyjaśnienie SWZ (pismo w 1 klik)', 'Request clarification of the tender documents (one-tap letter)')}
+          title={t('Udostępnij pismo z pytaniami', 'Share the question letter')}
           variant="ghost"
           onPress={() => udostepnijWniosek(postepowanie, pytania)}
         />
       ) : null}
 
-      <ZapytajSwz postepowanieId={wybraneId} trescSwz={detal.tresc_swz} />
+      {pytania.some(p => p.status === 'szkic') ? (
+        <View>
+          <Text style={styles.kartaOpis}>{t(
+            'Udostępnienie lub skopiowanie pisma nie oznacza jego złożenia. Po złożeniu pytań na platformie zamawiającego potwierdź to poniżej.',
+            'Sharing or copying the letter does not submit it. Confirm below after submitting the questions on the contracting authority’s platform.',
+          )}</Text>
+          <Button
+            title={zapisPytan ? t('Zapisuję status…', 'Saving status…') : t('Potwierdzam złożenie wszystkich pytań ze szkicu', 'Confirm all draft questions were submitted')}
+            variant="ghost"
+            disabled={zapisPytan}
+            onPress={() => potwierdzZlozenie(postepowanie, pytania)}
+          />
+        </View>
+      ) : null}
+
+      <ZapytajSwz key={wybraneId} postepowanieId={wybraneId} trescSwz={detal.tresc_swz} />
 
       <View style={styles.card}>
         <Text style={styles.kartaTytul}>{t('Wygeneruj pytania z treści SWZ', 'Generate questions from the tender documents')}</Text>
@@ -612,13 +694,15 @@ export default function RadarSwzScreen({ route, navigation }) {
         />
         {pdfZPlatformy.laduje ? <Text style={styles.pusto}>{t('Pobieram SWZ z platformazakupowa.pl…', 'Fetching the tender documents from platformazakupowa.pl…')}</Text> : null}
         {pdfZPlatformy.info ? <Text style={styles.pusto}>{pdfZPlatformy.info}</Text> : null}
-        <Button title="Wygeneruj pytania" onPress={analizuj} loading={analizuje} disabled={!swzTekst.trim() && !plikSwz} />
+        <Button title={t('Zapisz SWZ bez analizy AI', 'Save the document without AI analysis')} variant="ghost" onPress={() => analizuj(true)} loading={analizuje} disabled={!swzTekst.trim() && !plikSwz} />
+        <Button title={t('Wygeneruj pytania (AI)', 'Generate questions (AI)')} onPress={() => analizuj(false)} loading={analizuje} disabled={!swzTekst.trim() && !plikSwz} />
+        <Text style={styles.kartaOpis}>{t('Generowanie pytań wysyła treść do analizy przez AI. Samo porównanie wersji niżej może działać bez AI.', 'Generating questions sends the content for AI analysis. Version comparison below can run without AI.')}</Text>
       </View>
 
       {/* ── 2. Timeline zmian ── */}
-      <Text style={styles.sekcjaTytul}>Opublikowane zmiany ({zmiany.length})</Text>
+      <Text style={styles.sekcjaTytul}>{t('Różnice między wersjami', 'Differences between versions')} ({zmiany.length})</Text>
       {zmiany.length === 0 ? (
-        <Text style={styles.pusto}>{t('Zamawiający nie opublikował jeszcze żadnej zmiany.', 'The buyer has not published any change yet.')}</Text>
+        <Text style={styles.pusto}>{t('Nie ma jeszcze zapisanych różnic. Dodaj kolejną wersję SWZ poniżej.', 'No differences recorded yet. Add the next document version below.')}</Text>
       ) : (
         zmiany.map((z) => {
           const linie = parsujDiff(z.diff);
@@ -629,6 +713,7 @@ export default function RadarSwzScreen({ route, navigation }) {
               style={[styles.zmiana, { borderLeftColor: z.uwzglednione ? kolory.green : kolory.danger }]}
             >
               <Text style={styles.zmianaData}>{z.data_publikacji ? formatDate(z.data_publikacji) : 'bez daty'}</Text>
+              {z.porownanie?.poprzednia?.rodzaj === 'pierwsza_analiza' ? <Text style={styles.kartaOpis}>{t('Porównanie z treścią pierwszej analizy — może zawierać tylko fragmenty SWZ.', 'Compared with the initial analysis input, which may contain only parts of the document.')}</Text> : null}
               {z.opis_skutku ? (
                 <Text style={styles.zmianaOpis}>{z.opis_skutku}</Text>
               ) : (
@@ -644,6 +729,9 @@ export default function RadarSwzScreen({ route, navigation }) {
                   ))}
                 </View>
               ) : null}
+
+              {(z.porownanie?.cytaty ?? []).slice(0, 8).map((cytat, i) => <ZrodloSwz key={`cytat-${i}`} cytat={cytat} />)}
+              {(z.porownanie?.cytaty?.length ?? 0) > 8 || z.porownanie?.pominiete ? <Text style={styles.kartaOpis}>{t('Pozostałe różnice i odnośniki znajdziesz w eksporcie historii.', 'Export the history to see the remaining differences and references.')}</Text> : null}
 
               {z.elementy_oferty?.length ? (
                 <View style={styles.sekcjeRzad}>
@@ -672,15 +760,19 @@ export default function RadarSwzScreen({ route, navigation }) {
         <Text style={styles.kartaOpis}>
           Wklej nowo opublikowaną wersję SWZ — porównamy ją z poprzednią i pokażemy różnicę oraz jej skutek.
         </Text>
+        <Text style={styles.kartaOpis}>{t('Nowe wersje dodajesz samodzielnie. Jeśli nie ma jeszcze wersji w historii, porównamy z zachowaną treścią pierwszej analizy.', 'Add new versions manually. If there are no published versions yet, we compare with the saved initial analysis input.')}</Text>
         <TextField
           value={nowaWersja}
-          onChangeText={setNowaWersja}
+          onChangeText={(v) => { setNowaWersja(v); if (v.trim()) setPlikNowejWersji(null); }}
           placeholder={t('Wklej treść nowej wersji SWZ…', 'Paste the new version of the tender documents…')}
           multiline
           numberOfLines={6}
           inputStyle={styles.inputWielo}
         />
-        <Button title={t('Sprawdź zmiany', 'Check changes')} onPress={odswiez} loading={odswiezam} disabled={!nowaWersja.trim()} />
+        <Button title={plikNowejWersji ? t(`PDF: ${plikNowejWersji.nazwa} (zmień)`, `PDF: ${plikNowejWersji.nazwa} (change)`) : t('Wybierz PDF nowej wersji', 'Select the new version PDF')} variant="ghost" onPress={wybierzNowyPdf} disabled={odswiezam} />
+        <TextField label={t('Link do dokumentu źródłowego (opcjonalnie)', 'Source document link (optional)')} value={nowyUrl} onChangeText={setNowyUrl} autoCapitalize="none" placeholder="https://…" />
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}><Switch value={opisAi} onValueChange={setOpisAi} disabled={odswiezam} accessibilityLabel={t('Opis skutku zmiany przez AI', 'AI description of the change impact')} /><Text style={[styles.kartaOpis, { flex: 1 }]}>{t('Dodaj opis skutku przez AI (wysyła różnice do analizy). Wyłączone: porównanie bez AI.', 'Add an AI impact summary (sends the differences for analysis). Off: compare without AI.')}</Text></View>
+        <Button title={t('Sprawdź zmiany', 'Check changes')} onPress={odswiez} loading={odswiezam} disabled={!nowaWersja.trim() && !plikNowejWersji} />
       </View>
 
       {/* ── 3. Checklista przedwysyłkowa + bramka ── */}
@@ -730,6 +822,7 @@ export default function RadarSwzScreen({ route, navigation }) {
 
         {dopasowanie ? (
           <>
+            {(dopasowanie.dowody_wymagan ?? []).map((w) => <View key={`dowod-${w.typ}`}><Text style={styles.wpisNazwa}>{w.nazwa}</Text>{w.cytat ? <ZrodloSwz cytat={w.cytat} /> : <Text style={styles.kartaOpis}>{t('Brak potwierdzonego fragmentu źródłowego.', 'No verified source excerpt available.')}</Text>}</View>)}
             <Text style={styles.dopDzien}>
               Stan na przewidywany dzień złożenia: {formatDate(dopasowanie.dzien_zlozenia)}
             </Text>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, Pressable, Linking, Switch } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
@@ -32,6 +32,39 @@ export default function AccountScreen({ navigation }) {
   const [usuwanie, setUsuwanie] = useState(false);
   const [demoInfo, setDemoInfo] = useState(null);
   const [demoBusy, setDemoBusy] = useState(false);
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState(null);
+  const emailRequest = useRef(false);
+  const emailAccount = useRef(user.id);
+  emailAccount.current = user.id;
+  useEffect(() => {
+    emailAccount.current = user.id;
+    return () => { emailAccount.current = null; };
+  }, [user.id]);
+
+  async function ustawMaile(wlaczone) {
+    if (emailRequest.current || emailAccount.current !== user.id) return;
+    emailRequest.current = true;
+    setEmailBusy(true);
+    setEmailError(null);
+    const accountId = user.id;
+    try {
+      const wynik = await api.ustawMaileSelekcji(wlaczone);
+      if (emailAccount.current !== accountId) return;
+      if (wynik?.user?.id !== accountId ||
+          wynik.user.powiadomienia_pracownik_email !== wlaczone) {
+        throw new Error('Preference not confirmed');
+      }
+      // PATCH returns the confirmed profile. A second GET could fail or race
+      // sign-out and must not turn a successful save into an ambiguous state.
+      setUser(wynik.user);
+    } catch {
+      if (emailAccount.current === accountId) setEmailError(wlaczone);
+    } finally {
+      emailRequest.current = false;
+      if (emailAccount.current === accountId) setEmailBusy(false);
+    }
+  }
   const isStandard = user.premium_tier === 'standard';
   // Próba Standard (spec §15) — z API; stary zapis użytkownika bez pola `proba` = brak paska.
   const proba = opisProby(user.proba);
@@ -299,18 +332,26 @@ export default function AccountScreen({ navigation }) {
         <WierszAkcji tytul={t('Otwórz kartę firmy', 'Open company card')} onPress={() => navigation.navigate('KartaFirmy')} />
         <WierszAkcji
           tytul={t('Maile o nowych przetargach', 'Emails about new tenders')}
-          onPress={async () => {
-            await api.ustawMaileSelekcji(user.powiadomienia_pracownik_email === false).catch(() => {});
-            await refreshUser?.().catch(() => {});
-          }}
+          opis={emailBusy ? t('Zapisuję…', 'Saving…') : undefined}
+          onPress={emailBusy ? undefined : () => ustawMaile(user.powiadomienia_pracownik_email === false)}
           prawo={(
             <Switch
               value={user.powiadomienia_pracownik_email !== false}
-              onValueChange={async (wl) => { await api.ustawMaileSelekcji(wl).catch(() => {}); await refreshUser?.().catch(() => {}); }}
+              onValueChange={ustawMaile}
+              disabled={emailBusy}
               accessibilityLabel={t('Maile o nowych przetargach', 'Emails about new tenders')}
             />
           )}
         />
+        {emailError !== null ? (
+          <View style={{ padding: spacing.md }}>
+            <Text accessibilityRole="alert" style={styles.sectionHint}>
+              {t('Nie udało się potwierdzić zapisu ustawienia e-mail. Sprawdź połączenie i spróbuj ponownie.',
+                'Could not confirm the email preference was saved. Check your connection and try again.')}
+            </Text>
+            <Button title={t('Ponów zapis', 'Retry saving')} onPress={() => ustawMaile(emailError)} loading={emailBusy} />
+          </View>
+        ) : null}
         <WierszAkcji
           tytul={t('Otwórz bank referencji', 'Open reference bank')}
           opis={t('Pilnuje „terminu przydatności” Twojego doświadczenia (roboty 5 lat, dostawy i usługi 3 lata).',
@@ -383,7 +424,7 @@ export default function AccountScreen({ navigation }) {
         */}
         <View style={styles.prawneRzad}>
           <Pressable
-            onPress={() => WebBrowser.openBrowserAsync('https://przetargai.web.app/polityka-prywatnosci')}
+            onPress={() => WebBrowser.openBrowserAsync('https://przetarg-ai.pl/polityka-prywatnosci')}
             accessibilityRole="link"
             hitSlop={8}
           >
@@ -391,7 +432,7 @@ export default function AccountScreen({ navigation }) {
           </Pressable>
           <Text style={styles.zrodloPodpis}>·</Text>
           <Pressable
-            onPress={() => WebBrowser.openBrowserAsync('https://przetargai.web.app/regulamin')}
+            onPress={() => WebBrowser.openBrowserAsync('https://przetarg-ai.pl/regulamin')}
             accessibilityRole="link"
             hitSlop={8}
           >

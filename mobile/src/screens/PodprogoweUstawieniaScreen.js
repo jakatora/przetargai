@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Screen from '../components/Screen';
@@ -28,6 +28,10 @@ export default function PodprogoweUstawieniaScreen() {
 
   const [prefs, setPrefs] = useState(null);
   const [blad, setBlad] = useState(null);
+  const [bladOdczytu, setBladOdczytu] = useState(false);
+  const [wczytuje, setWczytuje] = useState(false);
+  const odczyt = useRef(0);
+  const aktywny = useRef(false);
 
   const [branza, setBranza] = useState('');
   const [region, setRegion] = useState('');
@@ -43,17 +47,26 @@ export default function PodprogoweUstawieniaScreen() {
   const brakObszaru = !branza.trim() && !region.trim();
 
   const wczytaj = useCallback(async () => {
-    setBlad(null);
+    if (!aktywny.current) return;
+    const numer = ++odczyt.current;
+    setWczytuje(true);
+    setBladOdczytu(false);
     try {
       const { preferencje } = await api.podprogowePreferencje();
-      setPrefs(Array.isArray(preferencje) ? preferencje : []);
-    } catch (err) {
-      setBlad(err.message);
-      setPrefs([]);
+      if (!Array.isArray(preferencje)) throw new Error('Invalid preferences response');
+      if (aktywny.current && numer === odczyt.current) setPrefs(preferencje);
+    } catch {
+      if (aktywny.current && numer === odczyt.current) setBladOdczytu(true);
+    } finally {
+      if (aktywny.current && numer === odczyt.current) setWczytuje(false);
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { wczytaj(); }, [wczytaj]));
+  useFocusEffect(useCallback(() => {
+    aktywny.current = true;
+    wczytaj();
+    return () => { aktywny.current = false; odczyt.current++; };
+  }, [wczytaj]));
 
   async function zapisz() {
     if (brakObszaru || maBledy || zapisuje) return;
@@ -154,8 +167,18 @@ export default function PodprogoweUstawieniaScreen() {
       ) : null}
 
       <Text style={styles.sekcjaTytul}>Twoje obszary</Text>
+      {bladOdczytu ? (
+        <View style={styles.bladCard}>
+          <Text accessibilityRole="alert" style={styles.bladText}>
+            {prefs === null
+              ? 'Nie udało się wczytać obszarów. Sprawdź połączenie i spróbuj ponownie.'
+              : 'Nie udało się odświeżyć obszarów. Poniżej pokazujemy ostatnio wczytaną listę.'}
+          </Text>
+          <Button title="Ponów wczytanie obszarów" onPress={wczytaj} loading={wczytuje} />
+        </View>
+      ) : null}
       {prefs === null ? (
-        <ActivityIndicator color={kolory.blue} style={styles.spinner} />
+        wczytuje ? <ActivityIndicator color={kolory.blue} style={styles.spinner} /> : null
       ) : prefs.length === 0 ? (
         <Text style={styles.pusto}>Nie masz jeszcze żadnego obszaru pod radarem.</Text>
       ) : (

@@ -145,6 +145,9 @@ export async function handleEvent(event) {
 }
 
 /** Czy zdarzenie należy do Fittera (obsługiwanego przez backend na Railway). */
+/** Znacznik projektu w metadanych sesji Checkout PrzetargAI (ustawia services/stripe.js). */
+const PROJEKT_STRIPE = 'przetargai';
+
 function nalezyDoFittera(obiekt) {
   return String(obiekt.metadata?.project ?? '').startsWith('fitter');
 }
@@ -152,6 +155,15 @@ function nalezyDoFittera(obiekt) {
 async function obsluzCheckout(session) {
   if (nalezyDoFittera(session)) {
     logger.debug({ sessionId: session.id }, 'Checkout Fittera — obsługiwany przez backend Railway');
+    return;
+  }
+  // Lista DOZWOLONYCH zamiast zakazanych (audyt 2026-11-10): konto Stripe jest wspólne z innymi apkami,
+  // a uid PrzetargAI jest widoczny w /auth/me. Obcy checkout (np. Payment Link z `client_reference_id`
+  // w adresie) z uid naszego konta dawał Standard bez końca. Nasze sesje mają `metadata.project` od
+  // 2026-09-25 (services/stripe.js), a sesje Checkout wygasają po 24 h — starszych nie ma.
+  if (session.metadata?.project !== PROJEKT_STRIPE || session.mode !== 'subscription') {
+    logger.warn({ sessionId: session.id, project: session.metadata?.project ?? null, mode: session.mode ?? null },
+      'Checkout spoza subskrypcji PrzetargAI — pomijam aktywację');
     return;
   }
 

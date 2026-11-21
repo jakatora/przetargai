@@ -2300,6 +2300,13 @@ export const matches = {
 
 const savedCol = (userId) => db().collection('users').doc(userId).collection('saved');
 
+/**
+ * Etapy pracy, po których przypomnienia o składaniu ofert i pytaniach do SWZ nie mają sensu (audyt 2026-11-10).
+ * Sprawdzane WEWNĄTRZ transakcji rezerwacji (review Codexa: wyścig ze zmianą etapu między odczytem
+ * wymagalnych a wysyłką), a cofnięcie etapu do aktywnego wznawia przypomnienie (`setStatus`).
+ */
+export const STATUSY_PO_ZLOZENIU = new Set(['zlozona', 'wygrana', 'przegrana']);
+
 export const saved = {
   /**
    * Zapisane przetargi WSZYSTKICH kont z terminem od `od` (monitoring nowych dokumentów, 2026-11-01).
@@ -2349,8 +2356,12 @@ export const saved = {
     const konta = await db().collection('users').select().get();
     const wynik = [];
     for (const konto of konta.docs) {
-      const snap = await matchCol(konto.id).where('tender_deadline', '>=', od).select('tender_id', 'confidence_score', 'created_at').get();
+      const snap = await matchCol(konto.id).where('tender_deadline', '>=', od)
+        .select('tender_id', 'confidence_score', 'created_at', 'odrzucony_przez_klienta', 'odrzucony_przez_pracownika').get();
       snap.docs
+        // Odrzucone („Nie dla nas” albo przez selekcję) nie są „z Twojej listy” — bez alertów i bez zużywania
+        // limitu przebiegu monitoringu (audyt ścieżki 2026-11-10).
+        .filter((d) => !d.get('odrzucony_przez_klienta') && !d.get('odrzucony_przez_pracownika'))
         .map((d) => ({ tenderId: d.get('tender_id') ?? d.id, wynik: Number(d.get('confidence_score')) || 0, od: d.get('created_at') ?? null }))
         .filter((m) => m.wynik >= minWynik)
         .sort((x, y) => y.wynik - x.wynik)
@@ -2404,16 +2415,49 @@ export const saved = {
   },
 
   /**
+   * „Nie dla nas” przy zapisanym przetargu (2026-11-10, audyt ścieżki): zdejmuje go z Zapisanych, żeby nie budził
+   * przypomnieniami 7/3/1 ani alertami o zmianach SWZ. Złożonej albo rozstrzygniętej oferty nie ruszamy — to już
+   * historia firmy (wynik, zwrot wadium). Zwraca true, gdy wpis usunięto.
+   */
+  async usunPoOdrzuceniu(userId, tenderId) {
+    const ref = savedCol(userId).doc(tenderId);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return false;
+      if (['zlozona', 'wygrana', 'przegrana'].includes(doc.data().status)) return false;
+      tx.delete(ref);
+      return true;
+    });
+  },
+
+  /**
    * Ustawia etap pracy nad zapisanym przetargiem (D-054 — warsztat przetargu).
    * Status jest już znormalizowany przez wołającego. Zwraca null, gdy przetarg
    * nie jest zapisany (nie ma czego etapować).
    */
-  async setStatus(userId, tenderId, status) {
+  async setStatus(userId, tenderId, status, teraz = nowIso()) {
     const ref = savedCol(userId).doc(tenderId);
-    const doc = await ref.get();
-    if (!doc.exists) return null;
-    await ref.update({ status, status_at: nowIso() });
-    return { status };
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return null;
+      const d = doc.data();
+      const pola = { status, status_at: teraz };
+      // Cofnięcie z „Oferta złożona” (albo wyniku) do etapu w grze wznawia przypomnienie, które job zamknął
+      // z powodu złożenia — od najbliższego PRZYSZŁEGO etapu 7/3/1, bez nadrabiania minionych.
+      let wznowione = false;
+      if (!STATUSY_PO_ZLOZENIU.has(status) && d.reminder_enabled === true && d.reminder_zakonczone_powod === 'oferta_zlozona') {
+        const nast = nastepneRemind(d.tender_deadline, teraz, d.reminded_stages ?? []);
+        if (nast) {
+          Object.assign(pola, {
+            remind_at: nast.at, remind_etap: nast.etap, reminder_notified: false, remind_proby: 0,
+            reminder_zakonczone_powod: FieldValue.delete(),
+          });
+          wznowione = true;
+        }
+      }
+      tx.update(ref, pola);
+      return { status, przypomnienie_wznowione: wznowione };
+    });
   },
 
   /** Zapisuje prywatną notatkę do zapisanego przetargu. Notatka już oczyszczona. */
@@ -2532,6 +2576,12 @@ export const saved = {
       if (d.reminder_enabled !== true || d.reminder_notified === true
           || d.remind_etap !== etap || d.remind_at !== remindAt) {
         return { stan: 'zajete' };
+      }
+      // Oferta już złożona / rozstrzygnięta — status czytany W transakcji, więc zmiana etapu tuż przed
+      // wysyłką też wygrywa. Zamknięcie z powodem; cofnięcie etapu wznowi (`setStatus`).
+      if (STATUSY_PO_ZLOZENIU.has(d.status)) {
+        tx.update(ref, { reminder_notified: true, reminder_zakonczone_powod: 'oferta_zlozona', remind_proby: 0 });
+        return { stan: 'po_zlozeniu' };
       }
 
       const wyslane = (d.reminded_stages ?? []).filter((x) => typeof x === 'number');
@@ -4387,6 +4437,25 @@ const pytaniaSwzDoc = (userId, dzien) =>
   db().collection('users').doc(userId).collection('limity').doc(`pytania_swz_${dzien}`);
 
 export const limitPytanSwz = {
+  // Internal compensation, exactly once after a confirmed pre-AI rejection.
+  // Require the reservation day so a midnight response cannot refund tomorrow.
+  async zwolnij(userId, dzien) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dzien ?? '')) throw new Error('Reservation day required');
+    const ref = pytaniaSwzDoc(userId, dzien);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const zadane = doc.exists ? (doc.data().zadane ?? 0) : 0;
+      if (zadane <= 0) return false;
+      tx.set(ref, { zadane: zadane - 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+  // Read-only preflight avoids downloading/preparing a PDF after exhaustion.
+  // It is not a reservation: callers still use the transaction before AI.
+  async dostepny(userId, limit, dzien = nowIso().slice(0, 10)) {
+    const doc = await pytaniaSwzDoc(userId, dzien).get();
+    return (doc.exists ? (doc.data().zadane ?? 0) : 0) < limit;
+  },
   async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
     const ref = pytaniaSwzDoc(userId, dzien);
     return db().runTransaction(async (tx) => {
@@ -4400,6 +4469,20 @@ export const limitPytanSwz = {
 };
 
 /** Kontrole plików oferty dziennie (2026-10-31) — odczyt PDF-ów to CPU instancji API. */
+/** Pobranie CSV katalogu (audyt 2026-11-10): każde żądanie skanuje do 50 tys. ogłoszeń — dobowy licznik na konto. */
+export const limitEksportuKatalogu = {
+  async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
+    const ref = db().collection('users').doc(userId).collection('limity').doc(`eksport_katalogu_${dzien}`);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const wykonane = doc.exists ? (doc.data().wykonane ?? 0) : 0;
+      if (wykonane >= limit) return false;
+      tx.set(ref, { wykonane: wykonane + 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+};
+
 export const limitKontroliOferty = {
   async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
     const ref = db().collection('users').doc(userId).collection('limity').doc(`kontrola_oferty_${dzien}`);
@@ -4552,6 +4635,8 @@ export const przypomnieniaPytan = {
       if (!snap.exists) return { stan: 'brak_wpisu' };
       const d = snap.data();
       if (d.reminder_enabled !== true) return { stan: 'wylaczone' };
+      // Etap czytany w transakcji (wyścig ze złożeniem oferty). Bez zapisu — cofnięcie etapu działa samo.
+      if (STATUSY_PO_ZLOZENIU.has(d.status)) return { stan: 'po_zlozeniu' };
       const p = d.przypomnienie_pytan?.termin === termin ? d.przypomnienie_pytan : null;
       if (p) {
         if (p.stan === 'wyslane' || p.stan === 'porzucone') return { stan: 'zajete' };

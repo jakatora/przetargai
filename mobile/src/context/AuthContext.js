@@ -29,10 +29,25 @@ export function AuthProvider({ children }) {
       } catch { /* brak dostępu do storage — traktujemy jak niepominięty */ }
 
       let token = null;
+      // Start na zapamiętanym profilu (audyt 2026-11-10): na placu budowy z jedną kreską `getMe` potrafił
+      // trzymać pusty spinner ~40 s (20 s + ponowienie). Z profilem w pamięci wchodzimy od razu, a sesję
+      // sprawdzamy w tle — 401 i tak wyloguje (niżej), a świeże dane podmienią profil.
+      let wczesnyStart = false;
       try {
         token = await getItem(TOKEN_KEY);
         if (token) {
           setAuthToken(token);
+          const zapamietany = await getItem(USER_KEY).catch(() => null);
+          if (zapamietany) {
+            try {
+              const profil = JSON.parse(zapamietany);
+              if (profil && typeof profil === 'object') {
+                setUser(profil);
+                setRestoring(false);
+                wczesnyStart = true;
+              }
+            } catch { /* uszkodzony zapis — czekamy na serwer jak dotąd */ }
+          }
           const data = await api.getMe();
           // Dane lokalne należą do konta (2026-09-25). Brak znacznika właściciela =
           // aktualizacja apki u zalogowanego użytkownika — jego dane przejmuje jego
@@ -65,7 +80,8 @@ export function AuthProvider({ children }) {
           await deleteItem(TOKEN_KEY).catch(() => {});
           await deleteItem(USER_KEY).catch(() => {});
           setAuthToken(null);
-        } else if (token) {
+          if (wczesnyStart) setUser(null); // weszliśmy na zapamiętanym profilu — sesja jednak wygasła
+        } else if (token && !wczesnyStart) {
           // Token ważny, ale serwer nieosiągalny. Sam token nie wystarczy: nawigacja
           // patrzy na `user`, więc bez profilu apka i tak pokazywała ekran logowania
           // (audyt 2026-07-10). Wchodzimy na ostatnio znanym profilu — dane odświeżą

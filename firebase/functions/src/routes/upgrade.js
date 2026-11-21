@@ -213,19 +213,20 @@ function pageShell({ title, glyph, body, accent }) {
 
 function pageSuccess() {
   return pageShell({
-    title: 'Subskrypcja aktywna',
+    title: 'Wróć do aplikacji',
     glyph: '✓',
-    body: `<p>Twoja subskrypcja <strong>Standard</strong> została aktywowana. Fakturę dostaniesz e-mailem.</p>
-           <p>Wróć do aplikacji PrzetargAI — odblokowane są nielimitowane dopasowania i powiadomienia push.</p>`,
+    body: `<p>Po potwierdzeniu płatności przez Stripe plan <strong>Standard</strong> aktywuje się automatycznie.</p>
+           <p>Wróć do PrzetargAI i sprawdź status planu w swoim profilu. Jeśli jeszcze się nie zmienił, odczekaj chwilę i odśwież widok.</p>`,
     accent: '#16a34a',
   });
 }
 
 function pageCancel() {
   return pageShell({
-    title: 'Płatność anulowana',
+    title: 'Przerwano płatność',
     glyph: '×',
-    body: `<p>Nie została pobrana żadna opłata. Możesz spróbować ponownie z poziomu aplikacji w dowolnym momencie.</p>`,
+    body: `<p>Wróć do aplikacji i sprawdź status planu przed ponowną próbą.</p>
+           <p>Jeśli wcześniej zatwierdziłeś płatność, jej potwierdzenie może jeszcze przetwarzać się w Stripe. Sam powrót na tę stronę nie anuluje aktywnej subskrypcji.</p>`,
     accent: '#dc2626',
   });
 }

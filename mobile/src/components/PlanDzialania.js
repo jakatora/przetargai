@@ -12,17 +12,22 @@ import { POKAZUJ_ZAKUP } from '../lib/kanal';
 export default function PlanDzialania({ match, plan, navigation, onUpgrade }) {
   const { t } = useJezyk();
   const styles = useStyle(tworzStylePlanu);
-  const [terminPytan, setTerminPytan] = useState(null);
-  const [swzPowiazana, setSwzPowiazana] = useState(false);
+  const [termin, setTermin] = useState(null);
+  const [powiazanie, setPowiazanie] = useState(null);
   const tenderId = match?.tender?.id ?? match?.tender_id;
+  const zakres = JSON.stringify([plan, match?.id ?? null, tenderId ?? null]);
+  const terminPytan = termin?.zakres === zakres ? termin.wartosc : null;
+  const swzPowiazana = powiazanie?.zakres === zakres ? powiazanie.wartosc : false;
 
   useEffect(() => {
     if (plan !== 'standard' || !match?.id) return undefined;
     let aktywny = true;
-    api.getMatch(match.id).then((d) => { if (aktywny) setTerminPytan(d.match?.termin_pytan ?? null); }).catch(() => {});
-    if (tenderId) api.powiazanieSwz(tenderId).then((d) => { if (aktywny) setSwzPowiazana(Boolean(d?.powiazanie)); }).catch(() => {});
+    setTermin(null);
+    setPowiazanie(null);
+    api.getMatch(match.id).then((d) => { if (aktywny) setTermin({ zakres, wartosc: d.match?.termin_pytan ?? null }); }).catch(() => {});
+    if (tenderId) api.powiazanieSwz(tenderId).then((d) => { if (aktywny) setPowiazanie({ zakres, wartosc: Boolean(d?.powiazanie) }); }).catch(() => {});
     return () => { aktywny = false; };
-  }, [plan, match?.id, tenderId]);
+  }, [plan, match?.id, tenderId, zakres]);
 
   const kroki = zbudujPlanDzialania({ match, terminPytan, swzPowiazana, etap: match?.status ?? null });
 

@@ -47,7 +47,7 @@ export async function runReminderCheck({ wyslijEmail = sendEmail } = {}) {
   const due = await saved.dueReminders();
   const wynik = {
     ok: true, due: due.length, sent: 0, nieudane: 0, porzucone: 0, anulowane: 0,
-    przeplanowane: 0, zakonczone: 0, zajete: 0, bezTokenu: 0, emaile: 0, bledy: 0, durationMs: 0,
+    przeplanowane: 0, zakonczone: 0, poZlozeniu: 0, zajete: 0, bezTokenu: 0, emaile: 0, bledy: 0, durationMs: 0,
   };
   if (!due.length) {
     wynik.durationMs = Date.now() - startedAt;
@@ -100,6 +100,8 @@ async function obsluzWpis(wpis, wynik, tokenFor, wyslijEmail) {
     remindAt: wpis.remind_at,
     termin: tender?.deadline ?? null,
   });
+  // Oferta złożona / rozstrzygnięta (etap czytany w transakcji, audyt 2026-11-10) — bez pusha „zostały dni do składania”.
+  if (rez.stan === 'po_zlozeniu') { wynik.poZlozeniu++; return; }
   if (rez.stan === 'przeplanowany') { wynik.przeplanowane++; return; }
   if (rez.stan === 'zakonczony') { wynik.zakonczone++; return; }
   if (rez.stan !== 'zarezerwowany') { wynik.zajete++; return; } // obsłużył inny przebieg / wpis zniknął
