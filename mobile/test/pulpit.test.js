@@ -46,8 +46,8 @@ test('pozycja niesie źródło do nawigacji + etykietę czasu', () => {
 });
 
 test('puste/niepoprawne wejście → zerowy pulpit', () => {
-  assert.deepEqual(zbudujPulpit([], TERAZ), { grupy: [], lacznie: 0, wymagaUwagi: 0 });
-  assert.deepEqual(zbudujPulpit(null, TERAZ), { grupy: [], lacznie: 0, wymagaUwagi: 0 });
+  { const { grupy, lacznie, wymagaUwagi, skutecznosc, lejek } = zbudujPulpit([], TERAZ); assert.deepEqual([grupy, lacznie, wymagaUwagi, skutecznosc, lejek.every((e) => e.liczba === 0)], [[], 0, 0, null, true]); }
+  { const { grupy, lacznie, wymagaUwagi, skutecznosc, lejek } = zbudujPulpit(null, TERAZ); assert.deepEqual([grupy, lacznie, wymagaUwagi, skutecznosc, lejek.every((e) => e.liczba === 0)], [[], 0, 0, null, true]); }
   assert.equal(STATUSY.length, 5);
 });
 
@@ -73,4 +73,20 @@ test('ekran Pulpitu rozróżnia błąd od pustki (strażnik źródła)', async (
   assert.match(zrodlo, /setBlad\(true\)/, 'catch wczytania ustawia błąd, nie milczy');
   assert.match(zrodlo, /Spróbuj ponownie/, 'stan błędu ma przycisk następnego kroku');
   assert.match(zrodlo, /navigate\('MatchFeed'\)/, 'pusty stan prowadzi do przetargów');
+});
+
+test('lejek, skuteczność i krok etapu (runda 3, 2026-11-12)', async () => {
+  const { krokEtapu, opisSkutecznosci, KROKI_OFERTY } = await import('../src/lib/pulpit.js');
+  const p = zbudujPulpit([
+    wpis('a', 'rozwazam', '2026-07-01T10:00:00Z'), wpis('b', 'przygotowuje', '2026-07-02T10:00:00Z'),
+    wpis('c', 'wygrana', '2026-05-01T10:00:00Z'), wpis('d', 'przegrana', '2026-05-02T10:00:00Z'), wpis('e', 'przegrana', '2026-05-03T10:00:00Z'),
+  ], TERAZ);
+  assert.deepEqual(p.lejek.map((e) => [e.wartosc, e.liczba]), [['rozwazam', 1], ['przygotowuje', 1], ['zlozona', 0], ['wygrana', 1], ['przegrana', 2]]);
+  assert.deepEqual(p.skutecznosc, { wygrane: 1, rozstrzygniete: 3 });
+  assert.equal(opisSkutecznosci(p.skutecznosc).pl, 'Wygrane: 1 z 3 rozstrzygniętych');
+  assert.equal(zbudujPulpit([wpis('a', 'rozwazam', null)], TERAZ).skutecznosc, null);
+  assert.equal(opisSkutecznosci(null), null);
+  assert.deepEqual(['rozwazam', 'przygotowuje', 'zlozona', 'wygrana', 'przegrana', 'cos'].map(krokEtapu), [0, 1, 2, 3, 3, 0]);
+  assert.equal(KROKI_OFERTY.length, 4);
+  assert.equal(p.grupy.find((g) => g.wartosc === 'przygotowuje').pozycje[0].krok, 1);
 });

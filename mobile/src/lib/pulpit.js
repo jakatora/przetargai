@@ -10,6 +10,19 @@ import { opisTerminu } from './termin.js';
 // Otwarte etapy — tu pilny termin oznacza „wymaga uwagi" (po wygranej/przegranej już nie składasz).
 const OTWARTE = new Set(['rozwazam', 'przygotowuje', 'zlozona']);
 
+/**
+ * Krok na ścieżce oferty (2026-11-12, runda 3): Rozważam → Przygotowuję → Złożona → Wynik.
+ * Wygrana i przegrana to ten sam, ostatni krok — różni je kolor, nie pozycja.
+ */
+export const KROKI_OFERTY = [
+  { pl: 'Rozważam', en: 'Considering' },
+  { pl: 'Przygotowuję', en: 'Preparing' },
+  { pl: 'Złożona', en: 'Submitted' },
+  { pl: 'Wynik', en: 'Result' },
+];
+const KROK = { rozwazam: 0, przygotowuje: 1, zlozona: 2, wygrana: 3, przegrana: 3 };
+export const krokEtapu = (status) => KROK[status] ?? 0;
+
 const czasMs = (deadline) => {
   if (!deadline) return Infinity;
   const t = new Date(deadline).getTime();
@@ -23,7 +36,7 @@ const czasMs = (deadline) => {
  *   lacznie: number, wymagaUwagi: number}}
  */
 export function zbudujPulpit(zapisane, teraz = Date.now()) {
-  const items = (Array.isArray(zapisane) ? zapisane : []).map((it) => {
+  const items = (Array.isArray(zapisane) ? zapisane : []).filter(Boolean).map((it) => {
     const status = it?.status || STATUS_DOMYSLNY;
     const deadline = it?.tender?.deadline ?? null;
     const t = opisTerminu(deadline, teraz);
@@ -37,6 +50,7 @@ export function zbudujPulpit(zapisane, teraz = Date.now()) {
       pilny: t.pilny,
       minal: t.minal,
       maTermin: t.stan !== 'brak',
+      krok: krokEtapu(status),
       zrodlo: it,
     };
   });
@@ -53,7 +67,23 @@ export function zbudujPulpit(zapisane, teraz = Date.now()) {
 
   const wymagaUwagi = items.filter((i) => OTWARTE.has(i.status) && i.pilny && !i.minal).length;
 
-  return { grupy, lacznie: items.length, wymagaUwagi };
+  // Lejek: liczba na KAŻDYM etapie (także zero — pasek pokazuje proporcje), w kolejności ścieżki.
+  const lejek = STATUSY.map((s) => ({ wartosc: s.wartosc, etykieta: s.etykieta, liczba: items.filter((i) => i.status === s.wartosc).length }));
+  // Skuteczność dopiero z rozstrzygniętych — „1 z 3” mówi więcej niż procent z jednej oferty.
+  const wygrane = items.filter((i) => i.status === 'wygrana').length;
+  const rozstrzygniete = wygrane + items.filter((i) => i.status === 'przegrana').length;
+  const skutecznosc = rozstrzygniete ? { wygrane, rozstrzygniete } : null;
+
+  return { grupy, lacznie: items.length, wymagaUwagi, lejek, skutecznosc };
+}
+
+/** Zdanie o skuteczności: „Wygrane: 1 z 3 rozstrzygniętych”. */
+export function opisSkutecznosci(s) {
+  if (!s) return null;
+  return {
+    pl: `Wygrane: ${s.wygrane} z ${s.rozstrzygniete} rozstrzygniętych`,
+    en: `Won: ${s.wygrane} of ${s.rozstrzygniete} decided`,
+  };
 }
 
 /**

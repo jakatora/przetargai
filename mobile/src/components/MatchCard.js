@@ -159,6 +159,12 @@ function MatchCard({ match, onOtworz, nowe = false }) {
         {zmiany ? (
           <Text style={[styles.kryteriaChip, styles.zmianyChip]} numberOfLines={1}>{t(zmiany.pl, zmiany.en)}</Text>
         ) : null}
+        {/* Odpowiedź z linku „do decyzji” widoczna już na liście (seria 2 runda 10). */}
+        {match.decyzja_szefa?.decyzja ? (
+          <Text style={[styles.kryteriaChip, match.decyzja_szefa.decyzja === 'tak' ? styles.kryteriaChipPozacenowe : styles.zmianyChip]} numberOfLines={1}>
+            {match.decyzja_szefa.decyzja === 'tak' ? t('Szef: startujemy', 'Boss: we bid') : t('Szef: nie startujemy', 'Boss: we pass')}
+          </Text>
+        ) : null}
         {otwarcie ? <Text style={[styles.kryteriaChip, styles.kryteriaChipPozacenowe]} numberOfLines={1}>{otwarcie}</Text> : null}
       </View>
       {/*

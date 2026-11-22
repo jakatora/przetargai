@@ -591,3 +591,10 @@ section[id], main[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
   margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line);
   color: var(--muted); font-size: 14px; text-align: center;
 }
+
+/* Strony poradnikowe (SEO 2026-11-13) — na układzie stron prawnych */
+.poradnik h2 { margin-top: 32px; }
+.poradnik li { margin-bottom: 8px; }
+.poradnik__cta { margin: 36px 0 12px; }
+.poradnik__nav { display: flex; flex-wrap: wrap; gap: 8px 20px; padding-top: 20px; border-top: 1px solid var(--line); font-weight: 600; }
+.poradnik__nav a { color: var(--blue); padding: 6px 0; }

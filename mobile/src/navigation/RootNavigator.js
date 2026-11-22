@@ -350,7 +350,7 @@ export default function RootNavigator() {
             <Stack.Screen
               name="Pulpit"
               component={PulpitScreen}
-              options={{ title: 'Moje postępowania' }}
+              options={{ title: 'Moje oferty' }}
             />
             <Stack.Screen
               name="RadarPlanow"

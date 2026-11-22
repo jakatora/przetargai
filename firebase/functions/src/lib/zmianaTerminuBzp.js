@@ -81,6 +81,56 @@ const NAZWA_ZMIENIANEGO = /Nazwa zmienianego ogłoszenia:\s*(.{3,80}?)\s*3\.2\.?
 const POZYCJA_ZMIANY = /Opis zmiany, w tym tekst, który należy dodać lub zmienić:\s*((?:\d+\.)+\d*\.?\)?\s*\S.{2,200}?)\s*Przed zmianą:/gi;
 const POZYCJE_TERMINOW = /^8\.[134]\.?\s|^Termin (?:składania|otwarcia) ofert|^Termin związania/i;
 
+/*
+ * „BYŁO → JEST” (2026-11-12): sama nazwa pozycji („5.4. Warunki udziału”) kazała otwierać BZP, żeby zobaczyć, CO się
+ * zmieniło. Ogłoszenie o zmianie ma obie wartości: „… Przed zmianą: dwie roboty Po zmianie: jedna robota”, a kolejna
+ * pozycja zaczyna się od „3.4.1.)” albo „3.4.)” (nowa sekcja); ostatnią kończy stopka „RRRR-MM-DD Biuletyn…”.
+ */
+const ZNACZNIK_ZMIANY = /Opis zmiany, w tym tekst, który należy dodać lub zmienić:/i;
+const NUMER_POZYCJI = /^\s*(?:\d+\.)+\d*\.?\)?\s*\S/;
+// Koniec wartości „Po zmianie”: początek następnej pozycji / sekcji albo stopka ogłoszenia. Pełne frazy, nie samo
+// „3.4.1.)” — nowa treść potrafi cytować punkt SWZ („wg 3.4.1.) SWZ”) i była w tym miejscu ucinana (QA 2026-11-13).
+const KONIEC_WARTOSCI = /\s*3\.4\.1\.\)\s*$|\s*3\.4\.\)\s*Identyfikator sekcji|\s*\d{4}-\d{2}-\d{2}\s+Biuletyn/i;
+
+const skrocWartosc = (v, max = 80) => {
+  const s = String(v ?? '').replace(/\s+/g, ' ').trim().replace(/[;,]+$/, '');
+  return s.length > max ? `${s.slice(0, max - 2).replace(/\s+\S*$/, '')}…` : s;
+};
+
+/**
+ * Zmiany ogłoszenia z wartościami: [{pozycja, przed, po}] (pozycja jak w `pozycjeZmianyOgloszenia`, wartości do
+ * ~80 znaków; pusta = dodano/usunięto). Bez terminów składania/otwarcia/związania — mają własny alert.
+ */
+export function zmianyPrzedPo(tekst) {
+  // Cięcie po znaczniku i indexOf zamiast jednego wyrażenia z leniwymi grupami: liniowo, także na urwanym tekście
+  // (QA 2026-11-13: 30 pozycji bez „Po zmianie” po 40 tys. znaków liczyło się 2,4 s).
+  const wynik = [];
+  for (const kawalek of String(tekst ?? '').split(ZNACZNIK_ZMIANY).slice(1)) {
+    const iPrzed = kawalek.indexOf('Przed zmianą:');
+    if (iPrzed < 0 || iPrzed > 260 || !NUMER_POZYCJI.test(kawalek)) continue;
+    const reszta = kawalek.slice(iPrzed + 'Przed zmianą:'.length);
+    const iPo = reszta.indexOf('Po zmianie:');
+    if (iPo < 0) continue;
+    let pozycja = kawalek.slice(0, iPrzed).replace(/\s+/g, ' ').trim().replace(/[.:;,]+$/, '');
+    if (pozycja.length > 70) pozycja = `${pozycja.slice(0, 68).replace(/\s+\S*$/, '')}…`;
+    if (POZYCJE_TERMINOW.test(pozycja) || wynik.some((z) => z.pozycja === pozycja)) continue;
+    const po = reszta.slice(iPo + 'Po zmianie:'.length, iPo + 'Po zmianie:'.length + 4000);
+    const koniec = po.search(KONIEC_WARTOSCI);
+    wynik.push({ pozycja, przed: skrocWartosc(reszta.slice(0, Math.min(iPo, 4000))), po: skrocWartosc(koniec >= 0 ? po.slice(0, koniec) : po) });
+  }
+  return wynik;
+}
+
+/** Jedna zmiana po ludzku: „było „X”, jest „Y””, „dodano „Y””, „usunięto „X””. */
+export function opisZmiany({ pozycja, przed, po }) {
+  if (!przed && !po) return pozycja;
+  if (!przed) return `${pozycja}: dodano „${po}”`;
+  if (!po) return `${pozycja}: usunięto „${przed}”`;
+  return `${pozycja}: było „${przed}”, jest „${po}”`;
+}
+
+const listaZmian = (zmiany) => `${zmiany.slice(0, 3).map(opisZmiany).join('; ')}${zmiany.length > 3 ? ` (i ${zmiany.length - 3} więcej)` : ''}`;
+
 /** Zmienione pozycje ogłoszenia („4.2.10. Data końcowa okresu obowiązywania”), bez powtórzeń, skrócone do ~70 znaków. */
 export function pozycjeZmianyOgloszenia(tekst) {
   const wynik = [];
@@ -108,6 +158,7 @@ export function zmianaOgloszenia(n) {
     numer: n?.noticeNumber ?? null,
     opublikowano: n?.publicationDate ?? null,
     pozycje: pozycjeZmianyOgloszenia(tekst).filter((p) => !POZYCJE_TERMINOW.test(p)),
+    zmiany: zmianyPrzedPo(tekst),
   };
 }
 
@@ -118,10 +169,13 @@ const listaPozycji = (pozycje) => `${pozycje.slice(0, 4).join('; ')}${pozycje.le
  * Alert o zmianie ogłoszenia dla kont, które przetarg zapisały albo analizowały. Klucz = przetarg × ogłoszenie
  * o zmianie: powtórka okna nie budzi drugi raz, kolejna zmiana tak.
  */
-export function alertZmianyOgloszenia({ tender, pozycje, numer }) {
+export function alertZmianyOgloszenia({ tender, pozycje, numer, zmiany = [] }) {
   if (!tender?.id || !pozycje?.length) return null;
   const tytul = String(tender.title ?? 'przetarg').slice(0, 90);
-  const lista = listaPozycji(pozycje);
+  // Z wartościami, gdy parser je znalazł (2026-11-12) — inaczej same nazwy pozycji jak dotąd.
+  // Wartości tylko, gdy parser ma je dla WSZYSTKICH pozycji — częściowy odczyt gubiłby resztę zmian (QA 2026-11-13).
+  const komplet = Array.isArray(zmiany) && zmiany.length > 0 && zmiany.length === pozycje.length;
+  const lista = komplet ? listaZmian(zmiany) : listaPozycji(pozycje);
   const kropka = /[….]$/.test(lista) ? '' : '.';
   return {
     klucz: `ogloszenie_${czystyKlucz(tender.id)}_${czystyKlucz(numer ?? pozycje.join('|').slice(0, 40))}`,
@@ -134,6 +188,7 @@ export function alertZmianyOgloszenia({ tender, pozycje, numer }) {
       en: `${tender.organization ?? 'The buyer'} changed the BZP notice: ${lista}${kropka} Check the changes before you bid — an offer that ignores them may be rejected.`,
     },
     pozycje: [{ tender_id: tender.id, tytul: tender.title ?? null, organizacja: tender.organization ?? null, deadline: tender.deadline ?? null, zrodlo: 'bzp' }],
+    ...(komplet ? { zmiany: zmiany.slice(0, 10) } : {}),
   };
 }
 
@@ -142,13 +197,14 @@ export function alertZmianyOgloszenia({ tender, pozycje, numer }) {
  * w wydanej apce. Klucz = przetarg × nowy termin: ten sam termin drugi raz nie budzi, kolejne przesunięcie tak.
  * `inne` (2026-11-10) — pozostałe pozycje zmienione tym samym ogłoszeniem (jeden push zamiast dwóch).
  */
-export function alertZmianyTerminu({ tender, staryTermin, nowyTermin, inne = [] }) {
+export function alertZmianyTerminu({ tender, staryTermin, nowyTermin, inne = [], inneZmiany = [] }) {
   if (!tender?.id || !nowyTermin) return null;
   const tytul = String(tender.title ?? 'przetarg').slice(0, 90);
   const nowy = terminPL(nowyTermin);
   const stary = terminPL(staryTermin);
   const wczesniej = Boolean(staryTermin) && Date.parse(nowyTermin) < Date.parse(staryTermin);
-  const tez = inne?.length ? { pl: ` Zmienił też: ${listaPozycji(inne)} — sprawdź przed złożeniem oferty.`, en: ` Also changed: ${listaPozycji(inne)} — check before you bid.` } : { pl: '', en: '' };
+  const opisInnych = inneZmiany?.length && inneZmiany.length === (inne?.length ?? 0) ? listaZmian(inneZmiany) : listaPozycji(inne ?? []);
+  const tez = inne?.length ? { pl: ` Zmienił też: ${opisInnych} — sprawdź przed złożeniem oferty.`, en: ` Also changed: ${opisInnych} — check before you bid.` } : { pl: '', en: '' };
   return {
     klucz: `termin_${czystyKlucz(tender.id)}_${czystyKlucz(String(nowyTermin).slice(0, 16))}`,
     typ: 'zmiany',

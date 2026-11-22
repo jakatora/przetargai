@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import {
-  FlatList, View, Text, Pressable, ActivityIndicator, Switch,
+  FlatList, View, Text, Pressable, ActivityIndicator, Switch, RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
@@ -14,13 +14,14 @@ import { ScoreBadge } from '../components/MatchCard';
 import { znacznikKryteriow } from '../lib/kryteriaOceny';
 import { znacznikZmian, znacznikOtwarcia } from '../lib/zmianyDokumentow';
 import StatusPicker from '../components/StatusPicker';
+import { StanLadowania } from '../components/Stan';
 import { STATUS_DOMYSLNY, przypomnieniaWstrzymane } from '../lib/statusPrzetargu';
 import { uruchomSciezkeOdwolania } from '../lib/orkiestratorOdwolania';
 import { zaplanujPowiadomienieOTerminieKio } from '../services/powiadomieniaKio';
 import * as storage from '../lib/storage';
 import { useAuth } from '../context/AuthContext';
 import { eksportujNaEmail } from '../services/eksportCsv';
-import { kolejnoscZapisanych } from '../lib/kolejnoscZapisanych';
+import { kolejnoscZapisanych, podsumowanieZapisanych } from '../lib/kolejnoscZapisanych';
 import { utworzLicznikZadan } from '../lib/licznikZadan';
 
 export default function SavedScreen({ navigation }) {
@@ -34,6 +35,7 @@ export default function SavedScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [blad, setBlad] = useState(false);
   const [bladZapisu, setBladZapisu] = useState(false);
+  const [odswiezanie, setOdswiezanie] = useState(false);
   const [zajete, setZajete] = useState(() => new Set());
   const blokady = useRef(new Set());
   const odczyty = useRef(utworzLicznikZadan());
@@ -125,7 +127,7 @@ export default function SavedScreen({ navigation }) {
   }
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color={kolory.blue} /></View>;
+    return <View style={styles.list}><StanLadowania karty={3} /></View>;
   }
 
   function renderItem({ item }) {
@@ -151,7 +153,7 @@ export default function SavedScreen({ navigation }) {
         >
           <ScoreBadge score={item.confidence_score} />
           <View style={styles.body}>
-            <Text style={styles.title} numberOfLines={2}>{tender.title}</Text>
+            <Text style={styles.title} numberOfLines={3}>{tender.title}</Text>
             {tender.organization ? <Text style={styles.org} numberOfLines={1}>{tender.organization}</Text> : null}
             <Text style={styles.deadline}>{t('Termin', 'Deadline')}: {formatDate(tender.deadline)}</Text>
             <Text style={[styles.znacznik, termin.minal && styles.miniony, termin.pilny && styles.pilny]}>
@@ -162,7 +164,7 @@ export default function SavedScreen({ navigation }) {
                 {t(kryteria.pl, kryteria.en)}
               </Text>
             ) : null}
-            {zmiany ? <Text style={[styles.kryteria, styles.zmiany]} numberOfLines={1}>{t(zmiany.pl, zmiany.en)}</Text> : null}
+            {zmiany ? <Text style={[styles.kryteria, styles.zmiany]} numberOfLines={2}>{t(zmiany.pl, zmiany.en)}</Text> : null}
             {otwarcie ? <Text style={[styles.kryteria, styles.kryteriaPozacenowe]} numberOfLines={1}>{otwarcie}</Text> : null}
           </View>
           <Pressable accessibilityRole="button" disabled={zajete.has(tender.id)} onPress={() => usun(tender.id)} hitSlop={12} accessibilityLabel={t('Usuń z zapisanych', 'Remove from saved')} style={styles.gwiazdka}>
@@ -202,12 +204,19 @@ export default function SavedScreen({ navigation }) {
     );
   }
 
+  const skrot = podsumowanieZapisanych(items);
+  const odswiez = async () => { setOdswiezanie(true); await wczytaj(); setOdswiezanie(false); };
+
   return (
     <FlatList
       data={items}
       keyExtractor={(item) => item.id}
       contentContainerStyle={items.length ? styles.list : styles.listEmpty}
+      refreshControl={<RefreshControl refreshing={odswiezanie} onRefresh={odswiez} tintColor={kolory.blue} />}
       ListHeaderComponent={<View>
+        {skrot ? (
+          <Text style={[styles.skrot, skrot.pilne && { color: kolory.ostrzezenieTekst }]} accessibilityRole="summary">{t(skrot)}</Text>
+        ) : null}
         {blad && items.length ? <View>
           <Text accessibilityRole="alert" style={{ color: kolory.danger }}>
             {t('Nie udało się odświeżyć listy. Pokazujemy ostatnio wczytane dane.',
@@ -224,7 +233,7 @@ export default function SavedScreen({ navigation }) {
         {items.length ? (
         <View style={styles.widokiRzad}>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('Pulpit')} accessibilityRole="button">
-            <Text style={styles.widokBtnTekst}>📋  {t('Pulpit', 'Dashboard')}</Text>
+            <Text style={styles.widokBtnTekst}>📋  {t('Oferty', 'Bids')}</Text>
           </Pressable>
           <Pressable style={styles.widokBtn} onPress={() => navigation.navigate('KalendarzTerminow')} accessibilityRole="button">
             <Text style={styles.widokBtnTekst}>📅  {t('Kalendarz', 'Calendar')}</Text>
@@ -272,6 +281,7 @@ export default function SavedScreen({ navigation }) {
 
 const tworzStyleZapisanych = tworzStyle((k) => ({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl },
+  skrot: { fontSize: 15, fontWeight: '700', color: k.text, marginBottom: spacing.md },
   widokiRzad: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   widokBtn: {
     flex: 1,

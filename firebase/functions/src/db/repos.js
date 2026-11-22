@@ -2277,6 +2277,16 @@ export const matches = {
     await matchCol(userId).doc(matchId).update({ warunki });
   },
 
+  /** Decyzja z linku „Wyślij szefowi do decyzji” (2026-11-12): `{decyzja: 'tak'|'nie', o}` na dopasowaniu. */
+  async zapiszDecyzjeSzefa(userId, matchId, decyzja, { zdejmijOdrzucenie = false } = {}) {
+    // „Startujemy” przy przetargu odrzuconym wcześniej „Nie dla nas”: odrzucenie schodzi, inaczej przetarg byłby
+    // w Zapisanych z przypomnieniami, a ukryty na liście (QA 2026-11-13).
+    await matchCol(userId).doc(matchId).update({
+      decyzja_szefa: decyzja,
+      ...(zdejmijOdrzucenie ? { odrzucony_przez_klienta: FieldValue.delete() } : {}),
+    });
+  },
+
   /** Wybrane od chwili `odIso` (np. początek doby), bez odrzuconych — „Dziś wybrane”. */
   async wybraneOd(userId, odIso) {
     const snap = await matchCol(userId).where('created_at', '>=', odIso).orderBy('created_at', 'desc').limit(200).get();
@@ -2467,6 +2477,18 @@ export const saved = {
     if (!doc.exists) return null;
     await ref.update({ notatka, notatka_at: nowIso() });
     return { notatka };
+  },
+
+  /** Jeden wpis Zapisanych po id przetargu albo null (bez limitu listy — QA 2026-11-13). */
+  async pobierz(userId, tenderId) {
+    const doc = await savedCol(userId).doc(tenderId).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
+  },
+
+  /** Etapy zapisanych przetargów: Map(tenderId → status). Dla panelu dnia — „wzięty” ma przetrwać odświeżenie. */
+  async statusy(userId) {
+    const snap = await savedCol(userId).select('status').get();
+    return new Map(snap.docs.map((d) => [d.id, d.get('status') ?? 'rozwazam']));
   },
 
   /** Lista zapisanych, najnowszy zapis pierwszy. Bez paginacji — zapisanych jest mało. */
@@ -4201,6 +4223,8 @@ export const alerty = {
       tytul: alert.tytul ?? null,
       tresc: alert.tresc ?? null,
       pozycje: alert.pozycje ?? [],
+      // „Było → jest” (2026-11-12). QA 13.11: pole było gubione przy zapisie — karta w apce nigdy by go nie dostała.
+      ...(Array.isArray(alert.zmiany) && alert.zmiany.length ? { zmiany: alert.zmiany.slice(0, 10) } : {}),
       ton: alert.ton ?? 'neutral',
       przeczytany: false,
       utworzone_o: teraz,
@@ -4469,6 +4493,20 @@ export const limitPytanSwz = {
 };
 
 /** Kontrole plików oferty dziennie (2026-10-31) — odczyt PDF-ów to CPU instancji API. */
+/** Linki „Wyślij szefowi do decyzji” — dobowy licznik na konto (QA 2026-11-13: każdy link to 7-dniowy token). */
+export const limitLinkowDecyzji = {
+  async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {
+    const ref = db().collection('users').doc(userId).collection('limity').doc(`linki_decyzji_${dzien}`);
+    return db().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const wykonane = doc.exists ? (doc.data().wykonane ?? 0) : 0;
+      if (wykonane >= limit) return false;
+      tx.set(ref, { wykonane: wykonane + 1, updated_at: nowIso() }, { merge: true });
+      return true;
+    });
+  },
+};
+
 /** Pobranie CSV katalogu (audyt 2026-11-10): każde żądanie skanuje do 50 tys. ogłoszeń — dobowy licznik na konto. */
 export const limitEksportuKatalogu = {
   async zarezerwuj(userId, limit, dzien = nowIso().slice(0, 10)) {

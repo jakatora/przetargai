@@ -74,10 +74,12 @@ router.get('/dzien', ah(async (req, res) => {
   const teraz = new Date().toISOString();
   const plan = planEfektywny(req.user, teraz);
   const doba = dobaWarszawska(teraz);
-  const [wiersze, dzis, znaczniki] = await Promise.all([
+  const [wiersze, dzis, znaczniki, etapy] = await Promise.all([
     matches.wybraneOd(req.user.id, poczatekDobyWarszawskiej(teraz)),
     dziennik.pobierz(req.user.id, doba),
     pobierzZnacznikiZrodel(),
+    // Etap z Zapisanych (QA 2026-11-13): bez niego „Bierzesz” i pasek decyzji znikały po ponownym wejściu do apki.
+    saved.statusy(req.user.id).catch(() => new Map()),
   ]);
   const odrzucone = { ...pustyLicznikPrzyczyn(), ...(dzis?.odrzucone ?? {}) };
   res.json({
@@ -96,6 +98,8 @@ router.get('/dzien', ah(async (req, res) => {
     wybrane: wiersze.map((row) => ({
       ...publicMatch(row, znaczniki),
       wyjasnienie: wyjasnijDopasowanie(req.user, przetargZDopasowania(row)),
+      zapisany: etapy.has(row.tender_id ?? row.id),
+      status: etapy.get(row.tender_id ?? row.id) ?? null,
     })),
     odrzucone: { wg_przyczyny: odrzucone, lista_dostepna: plan === 'standard' },
     propozycje: propozycjeKarty(req.user, teraz),

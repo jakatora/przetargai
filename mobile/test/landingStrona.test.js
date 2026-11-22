@@ -137,6 +137,8 @@ test('sitemap i robots wskazują tę samą domenę co strona, a każdy adres ma 
   const adresy = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   assert.deepEqual(adresy, [
     `${DOMENA}/`, `${DOMENA}/regulamin`, `${DOMENA}/polityka-prywatnosci`, `${DOMENA}/pobierz`,
+    // Poradniki (SEO 2026-11-13): strona miała jedną podstronę z treścią i nie pokazywała się na zapytania ogólne.
+    `${DOMENA}/ai-do-przetargow`, `${DOMENA}/analiza-swz`, `${DOMENA}/gdzie-szukac-przetargow`,
   ]);
   for (const adres of adresy) {
     const sciezka = adres.slice(DOMENA.length);
@@ -323,4 +325,23 @@ test('powrót ze Stripe nie potwierdza płatności samym adresem strony', () => 
   assert.match(page, /href="\/styles\.css"/);
   assert.ok(fs.existsSync(path.join(LANDING, 'styles.css')));
   assert.match(page, /href="mailto:jakatora68@gmail\.com"/);
+});
+
+test('SEO 13.11: marka w dwóch pisowniach, dane o witrynie i sklepach, poradniki podlinkowane i bez obietnic ponad kod', () => {
+  // Google poprawiał „przetargai” na „przetargi” — strona podaje wariant „Przetarg AI” i powiązania ze sklepami.
+  assert.match(html, /<title>PrzetargAI \(Przetarg AI\)/);
+  const witryna = wezel('WebSite');
+  assert.deepEqual([witryna.name, witryna.alternateName[0], witryna.url], ['PrzetargAI', 'Przetarg AI', `${DOMENA}/`]);
+  assert.ok(wezel('Organization').sameAs.some((u) => u.includes('play.google.com/store/apps/details?id=pl.przetargai.app')));
+  assert.ok(wezel('Organization').sameAs.some((u) => u.includes('apps.apple.com/pl/app/id6773018962')));
+  for (const plik of ['ai-do-przetargow', 'analiza-swz', 'gdzie-szukac-przetargow']) {
+    assert.match(html, new RegExp(`href="/${plik}"`), `strona główna linkuje do /${plik}`);
+    const strona = fs.readFileSync(path.join(LANDING, `${plik}.html`), 'utf8');
+    assert.match(strona, /<h1>[^<]{20,}<\/h1>/);
+    assert.match(strona, /<meta name="robots" content="index, follow" \/>/);
+    assert.equal((strona.match(/<h1/g) ?? []).length, 1, 'jeden nagłówek H1');
+    assert.doesNotMatch(strona, /gwarantuj|faktur|bez limitu|przetargai\.web\.app/i, 'bez obietnic, których produkt nie spełnia');
+    assert.ok(strona.replace(/<[^>]+>/g, ' ').split(/\s+/).length > 350, 'treść, nie wydmuszka');
+    JSON.parse(strona.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  }
 });

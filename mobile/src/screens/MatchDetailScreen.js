@@ -115,6 +115,7 @@ export default function MatchDetailScreen({ route, navigation }) {
   const [narzedziaOtwarte, setNarzedziaOtwarte] = useState(false);
   const [ocenaOtwarta, setOcenaOtwarta] = useState(false);
   const [bioreTrwa, setBioreTrwa] = useState(false);
+  const [doSzefaTrwa, setDoSzefaTrwa] = useState(false);
 
   useEffect(() => {
     if (!match?.id) return undefined;
@@ -285,6 +286,22 @@ export default function MatchDetailScreen({ route, navigation }) {
     }
   }
 
+  // „Wyślij szefowi do decyzji” (2026-11-12): serwer daje link do strony z przyciskami Startujemy / Nie startujemy,
+  // a wiadomość wysyła sam użytkownik (WhatsApp, SMS, mail). Decyzja wraca alertem i pushem.
+  async function wyslijSzefowi() {
+    if (doSzefaTrwa) return;
+    setDoSzefaTrwa(true);
+    try {
+      // Link jest już w treści wiadomości — osobne `url` dublowało go na iOS i w schowku (QA 2026-11-13).
+      const { wiadomosc } = await api.linkDoDecyzji(match.id);
+      await udostepnijTekst({ message: wiadomosc, title: tender.title }).catch(() => {});
+    } catch (err) {
+      Alert.alert(t('Nie udało się przygotować linku', 'Could not prepare the link'), err.message);
+    } finally {
+      setDoSzefaTrwa(false);
+    }
+  }
+
   async function udostepnij() {
     // Wykonawcy konsultują przetargi z partnerami/podwykonawcami — dajemy im to wprost.
     const linie = [
@@ -397,6 +414,12 @@ export default function MatchDetailScreen({ route, navigation }) {
             <Text style={[styles.terminChip, termin.pilny && styles.terminChipPilny, termin.minal && styles.terminChipMiniony]}>
               {t(termin.etykieta)}
             </Text>
+            {/* Odpowiedź z linku „do decyzji” od razu pod tytułem (2026-11-12, seria 2 runda 1). */}
+            {match.decyzja_szefa?.decyzja ? (
+              <Text style={[styles.terminChip, match.decyzja_szefa.decyzja === 'tak' ? styles.terminChipOk : styles.terminChipPilny]}>
+                {match.decyzja_szefa.decyzja === 'tak' ? t('Szef: startujemy', 'Boss: we bid') : t('Szef: nie startujemy', 'Boss: we pass')}
+              </Text>
+            ) : null}
             {wadium ? (
               <Text style={[styles.terminChip, wadium.ostrzezenie ? styles.terminChipPilny : styles.terminChipOk]}>
                 {wadium.ostrzezenie ? t('Wymaga wadium', 'Bid security required') : t('Bez wadium', 'No bid security')}
@@ -783,6 +806,16 @@ export default function MatchDetailScreen({ route, navigation }) {
         </View>
       )) : null}
 
+      <View style={styles.doSzefa}>
+        <Text style={styles.doSzefaTytul}>{t('Decyzję podejmuje ktoś inny?', 'Someone else decides?')}</Text>
+        <Text style={styles.doSzefaOpis}>
+          {match.decyzja_szefa?.decyzja
+            ? t(`Odpowiedź z linku: ${match.decyzja_szefa.decyzja === 'tak' ? 'startujemy' : 'nie startujemy'}.${match.decyzja_szefa.komentarz ? ` Notatka: „${match.decyzja_szefa.komentarz}”.` : ''}`, `Answer from the link: ${match.decyzja_szefa.decyzja === 'tak' ? 'we bid' : 'we pass'}.${match.decyzja_szefa.komentarz ? ` Note: “${match.decyzja_szefa.komentarz}”.` : ''}`)
+            : t('Wyślij szefowi link — zobaczy przetarg, termin i powody wyboru, i odpowie jednym kliknięciem, bez instalowania aplikacji. Odpowiedź dostaniesz w powiadomieniu i pod dzwonkiem na ekranie głównym.', 'Send your boss a link — they see the tender, deadline and reasons, and answer in one tap without the app. You get the answer as a notification and under the bell on the main screen.')}
+        </Text>
+        <Button title={t('Wyślij szefowi do decyzji', 'Send to the boss for a decision')} variant="ghost" loading={doSzefaTrwa} onPress={wyslijSzefowi} />
+      </View>
+
       <Button
         title={t('Udostępnij przetarg', 'Share tender')}
         variant="ghost"
@@ -878,6 +911,9 @@ const tworzStyleSzczegolow = tworzStyle((k) => ({
   },
   reasoning: { fontSize: 15, color: k.text, lineHeight: 22 },
   strPodtytul: { fontSize: 14, color: k.textMuted, lineHeight: 20 },
+  doSzefa: { marginTop: spacing.lg, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: k.border, backgroundColor: k.surface, gap: spacing.sm },
+  doSzefaTytul: { fontSize: 16, fontWeight: '800', color: k.text },
+  doSzefaOpis: { fontSize: 14, lineHeight: 20, color: k.textMuted },
   warsztatEtykieta: { fontSize: 13, fontWeight: '700', color: k.textMuted, marginTop: spacing.md, marginBottom: spacing.sm },
   warsztatOdstep: { marginTop: spacing.lg },
   notatka: {

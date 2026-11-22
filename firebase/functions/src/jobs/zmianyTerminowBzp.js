@@ -41,7 +41,7 @@ export async function runZmianyTerminowBzp({
       for (const n of surowe) {
         const z = zmianaTerminu(n);
         const o = zmianaOgloszenia(n);
-        if (z) zmiany.push(o?.pozycje?.length ? { ...z, inne: o.pozycje } : z);
+        if (z) zmiany.push(o?.pozycje?.length ? { ...z, inne: o.pozycje, inneZmiany: o.zmiany ?? [] } : z);
         else if (o?.pozycje?.length) zmianyOgloszen.set(o.numer ?? `${o.numerZmienianego}|${o.opublikowano}`, o);
       }
     } catch (err) {
@@ -83,7 +83,7 @@ export async function runZmianyTerminowBzp({
       if (!zmienione) return;
       wynik.zaktualizowane += 1;
       if (!powiadamiaj || !(Date.parse(z.nowyTermin) > teraz)) return;
-      const alert = alertZmianyTerminu({ tender: t, staryTermin: t.deadline, nowyTermin: z.nowyTermin, inne: z.inne ?? [] });
+      const alert = alertZmianyTerminu({ tender: t, staryTermin: t.deadline, nowyTermin: z.nowyTermin, inne: z.inne ?? [], inneZmiany: z.inneZmiany ?? [] });
       for (const userId of await kontaPrzetargu(t.id)) {
         const { nowy } = await alertyRepo.dodaj(userId, alert, nowIso());
         if (!nowy) continue;
@@ -110,7 +110,7 @@ export async function runZmianyTerminowBzp({
       const t = przetargiOgloszen.get(tenderDocId(o.numerZmienianego));
       if (!t || !(Date.parse(t.deadline ?? '') > teraz)) continue; // nie mamy go albo już po terminie
       try {
-        const alert = alertZmianyOgloszenia({ tender: t, pozycje: o.pozycje, numer: o.numer });
+        const alert = alertZmianyOgloszenia({ tender: t, pozycje: o.pozycje, numer: o.numer, zmiany: o.zmiany ?? [] });
         for (const userId of await kontaPrzetargu(t.id)) {
           const { nowy } = await alertyRepo.dodaj(userId, alert, nowIso());
           if (!nowy) continue;
