@@ -65,6 +65,12 @@ test('mail: pytanie o teren z liczbą województw tylko z linkiem', () => {
 
 test('mail: najwyżej 10 przetargów, reszta jednym zdaniem; temat liczy wszystkie', () => {
   const pozycje = Array.from({ length: 13 }, (_, i) => ({ ...POZ, tytul: `Przetarg nr ${i + 1}` }));
+  const proba = mailSelekcji({ pozycje, plan: 'standard', pelnaLista: true, ...LINKI });
+  for (const { tytul } of pozycje) {
+    assert.ok(proba.text.includes(tytul));
+    assert.ok(proba.html.includes(tytul));
+  }
+  assert.doesNotMatch(proba.text, /i jeszcze/);
   const m = mailSelekcji({ pozycje, plan: 'standard', ...LINKI });
   assert.equal(m.subject, 'Mamy dla Ciebie 13 nowych przetargów');
   assert.ok(m.text.includes('Przetarg nr 10') && !m.text.includes('Przetarg nr 11'));
