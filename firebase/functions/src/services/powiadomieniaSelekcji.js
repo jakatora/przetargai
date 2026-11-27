@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { env } from '../config.js';
 import { logger } from '../lib/logger.js';
 import { nowIso } from '../lib/ids.js';
-import { planEfektywny } from '../lib/plan.js';
+import { planEfektywny, stanProby } from '../lib/plan.js';
 import { ciszaNocna, dobaWarszawska } from '../lib/czasPolski.js';
 import { PUNKT_BEZ_WARUNKOW } from '../lib/warunkiUdzialu.js';
 import { mailSelekcji, mailTerenu, odmianaPrzetargow } from '../lib/mailSelekcji.js';
@@ -56,7 +56,7 @@ export async function powiadomPoPrzebiegu(user, { tryb = 'dzienny', teraz = nowI
   if (!lista.length) return 'brak';
 
   const ids = lista.map((m) => m.id);
-  // Najlepiej ocenione pierwsze — mail pokazuje najwyżej 10 (lib/mailSelekcji.js), reszta czeka w apce.
+  // Najlepiej ocenione pierwsze, również w pełnej liście dla kont próbnych.
   const pozycje = pozycjeZ([...lista].sort((a, b) => (b.confidence_score ?? 0) - (a.confidence_score ?? 0)), { zKrokiem: plan === 'standard', teraz });
   const doba = dobaWarszawska(teraz);
   const mailWlaczony = user.powiadomienia_pracownik_email !== false && Boolean(user.email);
@@ -72,7 +72,8 @@ export async function powiadomPoPrzebiegu(user, { tryb = 'dzienny', teraz = nowI
     // „Nie dla nas” przy każdej pozycji — jeden wielokrotny link na mail (services/ocenaZMaila.js).
     const ocena = await linkOceny(user.id);
     return mailSelekcji({
-      pozycje: pozycje.map((p) => ({ ...p, link_odrzuc: linkDoPozycji(ocena, p.id) })), plan, raport: await dziennik.pobierz(user.id, doba),
+      pozycje: pozycje.map((p) => ({ ...p, link_odrzuc: linkDoPozycji(ocena, p.id) })), plan,
+      pelnaLista: stanProby(user, teraz)?.aktywna === true, raport: await dziennik.pobierz(user.id, doba),
       linkWypisu: await linkWypisu(user.id), linkAplikacji: env.APP_LINK_URL, teren,
     });
   };

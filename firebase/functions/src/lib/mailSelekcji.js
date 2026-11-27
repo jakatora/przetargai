@@ -38,12 +38,12 @@ export function zdanieTerenu(teren) {
     + 'Zaznacz województwa — resztę pominiemy:';
 }
 
-/** Mail pokazuje najwyżej tyle przetargów (kolejność od wywołującego — najlepiej ocenione pierwsze); reszta w apce. */
+/** Rozmiar skrótu dla kont poza okresem próbnym. */
 export const MAKS_W_MAILU = 10;
 
-export function mailSelekcji({ pozycje: wszystkie, raport = null, plan = 'free', linkWypisu, linkAplikacji, teren = null }) {
+export function mailSelekcji({ pozycje: wszystkie, raport = null, plan = 'free', pelnaLista = false, linkWypisu, linkAplikacji, teren = null }) {
   const n = wszystkie.length;
-  const pozycje = wszystkie.slice(0, MAKS_W_MAILU);
+  const pozycje = pelnaLista ? wszystkie : wszystkie.slice(0, MAKS_W_MAILU);
   const reszta = n - pozycje.length;
   const zdanieReszty = reszta > 0 ? `…i jeszcze ${reszta} — wszystkie zobaczysz w aplikacji.` : null;
   const subject = plan === 'standard' && n === 1

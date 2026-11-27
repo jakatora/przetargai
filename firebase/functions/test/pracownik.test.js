@@ -54,6 +54,18 @@ test('Free: najwyżej 5 wybranych na dobę; nadwyżka czeka, nie jest odrzucana'
   assert.equal(znowu.oczekuje, 3);
 });
 
+test('w ostatniej minucie tygodniowej próby wszystkie pasujące pozycje trafiają do konta', async () => {
+  const u = await users.create({ email: `proba-${process.pid}-${++seq}@t.pl`, passwordHash: 'h', keywords: ['dach'], probaDni: 7 });
+  const karta = await zapiszKarte(u.id);
+  const przedKoncem = new Date(Date.parse(u.proba_do) - 60_000).toISOString();
+  const pula = [];
+  for (let i = 0; i < 12; i++) pula.push(await przetarg(`Remont dachu budynku nr ${i}`));
+  pula.push(await przetarg('Dostawa papieru'));
+  const wynik = await pracujDlaUzytkownika(karta, pula, { teraz: przedKoncem });
+  assert.deepEqual([wynik.wybrane, wynik.oczekuje, wynik.odrzucone.branza], [12, 0, 1]);
+  for (const t of pula.slice(0, 12)) assert.ok(await matches.detail(u.id, t.id));
+});
+
 test('REVIEW FOCUS 2: drugi przebieg nie ocenia drugi raz; zmiana karty — cały rynek od nowa', async () => {
   const u = await klient({ regiony: ['18'] });
   const poza = await przetarg('Remont dachu w Warszawie', { wojewodztwo: 'mazowieckie' });
